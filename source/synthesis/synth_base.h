@@ -26,6 +26,7 @@
 #include <string>
 #include "ModulationConnection.h"
 #include "circular_queue.h"
+#include "ModulatorBase.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
@@ -79,10 +80,10 @@ class SynthBase :  public juce::ValueTree::Listener {
             juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
     juce::AudioProcessorGraph::Node * getNodeForId(juce::AudioProcessorGraph::NodeID id);
     void addConnection(juce::AudioProcessorGraph::Connection& connect);
-
+  bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID) ;
     juce::ValueTree& getValueTree();
     juce::UndoManager& getUndoManager();
-    static constexpr size_t actionSize = 16; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
+    static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
     using AudioThreadAction = juce::dsp::FixedSizeFunction<actionSize, void()>;
     moodycamel::ReaderWriterQueue<AudioThreadAction> processorInitQueue { 10 };
     bool saveToFile(juce::File preset);
@@ -90,8 +91,9 @@ class SynthBase :  public juce::ValueTree::Listener {
     void clearActiveFile() { active_file_ = juce::File(); }
     juce::File getActiveFile() { return active_file_; }
     void addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
-
-
+    bool connectModulation(const std::string& source,const std::string& destination);
+    void connectModulation(bitklavier::ModulationConnection* connection);
+    SimpleFactory<ModulatorBase> modulator_factory;
     ///modulation functionality
 
     std::vector<bitklavier::ModulationConnection*> getSourceConnections(const std::string& sourceId) const;
@@ -101,7 +103,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     bitklavier::CircularQueue<bitklavier::ModulationConnection*> mod_connections_;
     int getNumModulations(const std::string& destination);
 protected:
-
+//    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
     juce::UndoManager um;
     virtual SynthGuiInterface* getGuiInterface() = 0;

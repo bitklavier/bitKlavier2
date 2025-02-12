@@ -6,7 +6,7 @@
 #include "Synthesiser/Sample.h"
 #include "common.h"
 #include <chowdsp_serialization/chowdsp_serialization.h>
-DirectProcessor::DirectProcessor (const juce::ValueTree& v) : PluginBase (v, nullptr, directBusLayout()),
+DirectProcessor::DirectProcessor (const juce::ValueTree& vt) : PluginBase (vt, nullptr, directBusLayout()),
 mainSynth(new BKSynthesiser(state.params.env, state.params.gainParam)),
 hammerSynth(new BKSynthesiser(state.params.env,state.params.hammerParam)),
 releaseResonanceSynth(new BKSynthesiser(state.params.env,state.params.releaseResonanceParam)),
@@ -26,6 +26,15 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
     bufferDebugger = new BufferDebugger();
+
+    int mod = 0;
+    for(auto [key, param] : state.params.modulatableParams){
+        juce::ValueTree modChan{IDs::MODULATABLE_PARAM};
+        modChan.setProperty(IDs::parameter, juce::String(key),nullptr);
+        modChan.setProperty(IDs::channel, mod, nullptr);
+        v.appendChild(modChan,nullptr);
+        mod++;
+    }
 
 }
 
@@ -98,7 +107,12 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 #endif
     auto modBus = getBus(true,1);
     auto index = modBus->getChannelIndexInProcessBlockBuffer(0);
-
+    int i = 0;
+    for(auto param: state.params.modulatableParams){
+        bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
+    }
+//    melatonin::printSparkline(buffer);
+    //should pull first two modinputs first or somehow have dummy ins????
     buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
 
@@ -125,5 +139,13 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 //DBG ("attack: " + juce::String (state.params.env.attackParam->get()));
     //juce::dsp::AudioBlock<float> block(buffer);
     //melatonin::printSparkline(buffer);
-    bufferDebugger->capture("direct", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
+
+//    bufferDebugger->capture("direct", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
+//    bufferDebugger->capture("mod1", buffer.getReadPointer(1), buffer.getNumSamples(), -1.f, 1.f);
+//    bufferDebugger->capture("mod2", buffer.getReadPointer(2), buffer.getNumSamples(), -1.f, 1.f);
+//    bufferDebugger->capture("mod", buffer.getReadPointer(3), buffer.getNumSamples(), -1.f, 1.f);
+//    bufferDebugger->capture("direct", buffer.getReadPointer(4), buffer.getNumSamples(), -1.f, 1.f);
+//    bufferDebugger->capture("direct", buffer.getReadPointer(5), buffer.getNumSamples(), -1.f, 1.f);
+//    bufferDebugger->capture("direct", buffer.getReadPointer(6), buffer.getNumSamples(), -1.f, 1.f);
+//    bufferDebugger->capture("direct", buffer.getReadPointer(7), buffer.getNumSamples(), -1.f, 1.f);
 }

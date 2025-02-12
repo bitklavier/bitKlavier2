@@ -192,6 +192,9 @@ public:
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OpenGlMidiSelector)
 };
+
+
+
 class KeymapPreparation : public PreparationSection {
 public:
 
@@ -210,7 +213,7 @@ public:
 
 // Public function definitions for the KeymapPreparation class, which override functions
 // in the PreparationSection base class
-    std::shared_ptr<SynthSection> getPrepPopup() override;
+    std::unique_ptr<SynthSection> getPrepPopup() override;
 
 
 
@@ -229,57 +232,52 @@ private:
 /*             NESTED CLASS: KeymapPopup, inherits from PreparationPopup            */
 /************************************************************************************/
 
-    class KeymapPopup : public PreparationPopup {
-    public:
-        void setColorRecursively(juce::Component *component, int color_id, const juce::Colour& color) {
-            component->setColour(color_id, color);
-            for (juce::Component *child : component->getChildren())
-                setColorRecursively(child, color_id, color);
-        }
-        // Constructor method that takes two arguments: a smart pointer to a KeymapProcessor,
-        // and a reference to an OpenGlWrapper
-        KeymapPopup(KeymapProcessor &proc, OpenGlWrapper &open_gl);
 
-        // Public function definitions for the class, which override the base class methods for
-        // initializing, rendering, resizing, and painting OpenGl components
-        void initOpenGlComponents(OpenGlWrapper &open_gl) override;
+};
+class KeymapPopup : public SynthSection {
+public:
+    void setColorRecursively(juce::Component *component, int color_id, const juce::Colour& color) {
+        component->setColour(color_id, color);
+        for (juce::Component *child : component->getChildren())
+            setColorRecursively(child, color_id, color);
+    }
+    // Constructor method that takes two arguments: a smart pointer to a KeymapProcessor,
+    // and a reference to an OpenGlWrapper
+    KeymapPopup(KeymapProcessor &, OpenGlWrapper &);
 
-
-
-        void resized() override;
-
-        void paintBackground(juce::Graphics &g) override {
-            SynthSection::paintContainer(g);
-            paintHeadingText(g);
-            paintBorder(g);
-            paintKnobShadows(g);
-            paintChildrenBackgrounds(g);
-        }
-
-        int getViewPosition() {
-            int view_height = getHeight();
-            return view_height; //std::max(0, std::min<int>(selections_.size() * getRowHeight() - view_height, view_position_));
-        }
-
-        ~KeymapPopup();
+    // Public function definitions for the class, which override the base class methods for
+    // initializing, rendering, resizing, and painting OpenGl components
+//    void initOpenGlComponents(OpenGlWrapper &open_gl) override;
 
 
-    private:
-        OpenGlWrapper &opengl;
-        // Private function definitions and member variables for the KeymapPopup class
-        void redoImage();
 
-        KeymapParams *params = nullptr;
-        KeymapProcessor &proc;
+    void resized() override;
 
-        std::unique_ptr<OpenGlMidiSelector> midi_selector_;
-        // Change based on other names
+    void paintBackground(juce::Graphics &g) override {
+        SynthSection::paintContainer(g);
+        paintHeadingText(g);
+        paintBorder(g);
+        paintKnobShadows(g);
+        paintChildrenBackgrounds(g);
+    }
 
-        //OpenGlWrapper& open_gl;
+    int getViewPosition() {
+        int view_height = getHeight();
+        return view_height; //std::max(0, std::min<int>(selections_.size() * getRowHeight() - view_height, view_position_));
+    }
 
-        OpenGlImage sliderShadows;
+    ~KeymapPopup();
 
-    };
+
+private:
+    OpenGlWrapper &opengl;
+    // Private function definitions and member variables for the KeymapPopup class
+    void redoImage();
+
+    KeymapParams *params = nullptr;
+    KeymapProcessor &proc;
+
+    std::unique_ptr<OpenGlMidiSelector> midi_selector_;
 
 };
 #endif //BITKLAVIER2_KEYMAPPREPARATION_H

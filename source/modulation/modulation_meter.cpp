@@ -184,7 +184,8 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 
 void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bool bipolar) {
   float range = destination_->getMaximum() - destination_->getMinimum();
-  float knob_percent = (destination_->getValue() - destination_->getMinimum()) / range;
+ float knob_percent = destination_->getNormalisableRange().convertTo0to1(destination_->getValue());
+  //float knob_percent = (destination->valueToProportionOfLength(destination_->getValue()) - destination_->getMinimum()) / range;
 
   float min_percent = std::min(knob_percent + amount, knob_percent);
   float max_percent = std::max(knob_percent + amount, knob_percent);

@@ -8,8 +8,10 @@ namespace bitklavier {
 /** Clone of juce::GenericAudioProcessorEditor, but usable as a generic component */
     class  ParametersView : public SynthSection {
     public:
-        ParametersView (chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl);
-        ParametersView (chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl);
+        ParametersView (chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl,bool isDefaultInit=true);
+        ParametersView (chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, juce::String name,bool isDefaultInit=true);
+        ParametersView (chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl,bool isDefaultInit=true);
+        ParametersView (chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params, juce::String name,bool isDefaultInit=true);
         ~ParametersView() override;
 
         void paint(juce::Graphics &) override;
@@ -38,7 +40,11 @@ namespace bitklavier {
         std::vector<std::unique_ptr<juce::Component>> paramHolderComps;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ParametersView)
     };
-
+namespace parameters_view_detail
+{
+    std::unique_ptr<juce::Component> createParameterComp(chowdsp::ParameterListeners& listeners, juce::RangedAudioParameter &parameter, SynthSection& parent);
+    std::unique_ptr<SynthSection> createEditorSection(chowdsp::ParamHolder &params, chowdsp::ParameterListeners& listeners, SynthSection &parent);
+}
 ///** Clone of juce::GenericAudioProcessorEditor. */
 //    class ParametersViewEditor : public juce::AudioProcessorEditor {
 //    public:

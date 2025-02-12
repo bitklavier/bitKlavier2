@@ -20,8 +20,9 @@
 #include "UserPreferences.h"
 
 #include "sound_engine.h"
-
-
+#include "load_save.h"
+#include "synth_base.h"
+#include "PreparationSection.h"
 SynthGuiData::SynthGuiData(SynthBase* synth_base) : synth(synth_base),
                                                      tree(synth_base->getValueTree()),
                                                      um(synth_base->getUndoManager())
@@ -92,10 +93,10 @@ void SynthGuiInterface::notifyModulationsChanged() {
 }
 
 void SynthGuiInterface::connectModulation(std::string source, std::string destination) {
-//  bool created = synth_->connectModulation(source, destination);
+  bool created = synth_->connectModulation(source, destination);
 //  if (created)
 //    initModulationValues(source, destination);
-//  notifyModulationsChanged();
+  notifyModulationsChanged();
 }
 void SynthGuiInterface::disconnectModulation(std::string source, std::string destination) {
    // synth_->disconnectModulation(source, destination);
@@ -112,6 +113,10 @@ bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
     //sampleLoadManager->loadSamples()
 }
 
+void SynthGuiInterface::tryEnqueueProcessorInitQueue(juce::FixedSizeFunction<64, void()> callback)
+{
+    synth_->processorInitQueue.try_enqueue(std::move(callback));
+}
 
 void SynthGuiInterface::setFocus() {
   if (gui_ == nullptr)
@@ -182,5 +187,49 @@ void SynthGuiInterface::addModulationNodeConnection(juce::AudioProcessorGraph::N
     getSynth()->processorInitQueue.try_enqueue ([this, source, destination] {
         synth_->addModulationConnection(source, destination);
     });
+}
+juce::File SynthGuiInterface::getActiveFile() {
+    return synth_->getActiveFile();
+}
+
+void SynthGuiInterface::openSaveDialog() {
+    getSynth()->getValueTree().getChild(0).setProperty("sync", 1, nullptr);
+    juce::String mystr = (getSynth()->getValueTree().toXmlString());
+    auto xml = getSynth()->getValueTree().createXml();
+    juce::XmlElement xml_ = *xml;
+    filechooser = std::make_unique<juce::FileChooser>("Export the gallery", juce::File(), juce::String("*.") + bitklavier::kPresetExtension,true);
+    filechooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectDirectories,
+                             [xml_](const juce::FileChooser& chooser)
+                             {
+
+                                 auto result = chooser.getURLResult();
+                                 auto name = result.isEmpty() ? juce::String()
+                                                              : (result.isLocalFile() ? result.getLocalFile().getFullPathName()
+                                                                                      : result.toString (true));
+                                 juce::File file (name);
+                                 if (! result.isEmpty())
+                                 {
+                                     juce::FileOutputStream output (file);
+                                     output.writeText(xml_.toString(),false,false,{}) ;
+//                                         std::unique_ptr<juce::InputStream> wi (file.createInputStream());
+//                                         std::unique_ptr<juce::OutputStream> wo (result.createOutputStream());
+//
+//                                         if (wi != nullptr && wo != nullptr)
+//                                         {
+//                                             //auto numWritten = wo->writeFromInputStream (*wi, -1);
+//                                             wo->flush();
+//                                         }
+                                     output.flush();
+                                 }
+
+                             });
+}
+//probably dont need to do this. i think we can just do this from the modulationmodulesection
+
+const juce::CriticalSection& SynthGuiInterface::getCriticalSection() {
+    return synth_->getCriticalSection();
+}
+bool SynthGuiInterface::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
+    return synth_->isConnected(src,dest);
 }
 #endif

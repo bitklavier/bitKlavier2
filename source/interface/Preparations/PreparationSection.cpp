@@ -69,15 +69,14 @@ void PreparationSection::paintBackground(juce::Graphics &g) {
 
 void PreparationSection::mouseDown(const juce::MouseEvent &e) {
 
-    if (e.getNumberOfClicks() == 2) {
-        showPrepPopup(this);
-
-    } else {
+//    if (e.getNumberOfClicks() == 2) {
+//        showPrepPopup(this);
+//    } else {
 //  selectedSet->addToSelectionBasedOnModifiers(this, e.mods);
-    }
-    pointBeforDrag = this->getPosition();
-    dynamic_cast< ConstructionSite *>(getParentComponent())->startDragging(state.toXmlString(), this,juce::ScaledImage(),true);
-//            myDragger.startDraggingComponent (this, e);
+        pointBeforDrag = this->getPosition();
+
+//    }
+
 }
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {
     dynamic_cast< ConstructionSite *>(getParentComponent())->item_dropped_on_prep_ = true;
@@ -204,3 +203,18 @@ void PreparationSection::valueTreeRedirected(juce::ValueTree &) {
 //{
 //    showPrepPopup(this);
 //}
+void PreparationSection::mouseDrag(const juce::MouseEvent &e)
+{
+        for (auto listener: listeners_) {
+            listener->_update();
+            listener->preparationDragged(this, e);
+        }
+        setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+        dynamic_cast< ConstructionSite *>(getParentComponent())->startDragging(state.toXmlString(), this,juce::ScaledImage(),true);
+    //    if (e.mods.isLeftButtonDown()) {
+//        auto newPos = this->getPosition() + e.getDistanceFromDragStart();
+//        this->setPosition(newPos);
+//    }
+}
+
+

@@ -27,7 +27,8 @@
 #include "synth_slider.h"
 #include <tracktion_ValueTreeUtilities.h>
 #include <set>
-#include "ModulationModuleSection.h"
+#include "ModuleListInterface.h"
+class ModulationSection;
 class ExpandModulationButton;
 class ModulationMatrix;
 class ModulationMeter;
@@ -174,7 +175,7 @@ class ModulationManager : public SynthSection,
                           public ModulationAmountKnob::Listener,
                           public SynthSlider::SliderListener,
                           public ModulationExpansionBox::Listener,
-                          public ModulesInterface<ModulationSection>::Listener
+                          public ModulesInterface::Listener
 
 {
   public:
@@ -273,7 +274,6 @@ class ModulationManager : public SynthSection,
 
     // this will be called by both
     //  ModulesInterface<ModulationSection>::Listener,
-    //    ModulesInterface<ModuleSection>::Listener
     void added() override
     {
         componentAdded();

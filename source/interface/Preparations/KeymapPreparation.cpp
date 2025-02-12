@@ -36,13 +36,9 @@ KeymapPreparation::~KeymapPreparation()
 
 }
 
-std::shared_ptr<SynthSection> KeymapPreparation::getPrepPopup()
+std::unique_ptr<SynthSection> KeymapPreparation::getPrepPopup()
 {
-    if(popup_view)
-        popup_view->destroyOpenGlComponents(_open_gl);
-    popup_view = std::make_shared<KeymapPopup>(proc, _open_gl);
-    popup_view->initOpenGlComponents(_open_gl);
-    return popup_view;
+    return std::make_unique<KeymapPopup>(proc, _open_gl);
 }
 
 juce::AudioProcessor* KeymapPreparation::getProcessor()
@@ -57,14 +53,14 @@ std::unique_ptr<juce::AudioProcessor> KeymapPreparation::getProcessorPtr()
 
 
 
-KeymapPreparation::KeymapPopup::KeymapPopup(KeymapProcessor& _proc, OpenGlWrapper &open_gl):  proc(_proc), opengl(open_gl),
-PreparationPopup(open_gl)
+KeymapPopup::KeymapPopup(KeymapProcessor& _proc, OpenGlWrapper &open_gl):  proc(_proc), opengl(open_gl), SynthSection("keymap")
  {
 
-    auto &_params = proc.getState().params;
+//    auto &_params = proc.getState().params;
 
 }
-void KeymapPreparation::KeymapPopup::resized()
+KeymapPopup::~KeymapPopup(){}
+void KeymapPopup::resized()
 {
     SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent && midi_selector_ == nullptr) {
@@ -99,7 +95,7 @@ void KeymapPreparation::KeymapPopup::resized()
     }
 }
 
-void KeymapPreparation::KeymapPopup::redoImage()
+void KeymapPopup::redoImage()
 {
     int mult = getPixelMultiple();
     int image_width = getWidth() * mult;
@@ -111,24 +107,3 @@ void KeymapPreparation::KeymapPopup::redoImage()
     //sliderShadows.setOwnImage(background_image);
 
 }
-void KeymapPreparation::KeymapPopup::initOpenGlComponents(OpenGlWrapper &open_gl) {
-//    SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
-//    if (parent && midi_selector_ == nullptr) {
-//        juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
-//        if (device_manager) {
-//            midi_selector_ = std::make_unique<OpenGlMidiSelector>
-//                    (*proc._midi.get(), proc._midi->enabledMidiInputs, *device_manager);
-//            addAndMakeVisible(midi_selector_.get());
-//            addOpenGlComponent(midi_selector_->getImageComponent());
-//        }
-//    }
-
-
-}
-
-KeymapPreparation::KeymapPopup::~KeymapPopup()
-{
-    //TODO
-    //constructor sends destroy message to opengl thread
-}
-

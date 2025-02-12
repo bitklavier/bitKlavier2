@@ -6,12 +6,23 @@
 #include "ConstructionSite.h"
 #include "open_gl_line.h"
 ModulationLineView::ModulationLineView(ConstructionSite &site) : SynthSection("modlineview"), site(site),
-tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState()),current_source_(nullptr)//, line_(std::make_shared<OpenGlLine>(nullptr, nullptr, this))
+tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getParent().getChildWithName(IDs::MODCONNECTIONS)),current_source_(nullptr)//, line_(std::make_shared<OpenGlLine>(nullptr, nullptr, this))
 {
     setInterceptsMouseClicks(false, false);
     setAlwaysOnTop(true);
 //    addAndMakeVisible(line_.get());
 
+}
+void ModulationLineView::reset()
+{
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    //safe to do on message thread because we have locked processing if this is called
+    //_parent->getSynth()->getEngine()->resetEngine();
+    parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::MODCONNECTIONS);
+}
+ModulationLineView::~ModulationLineView()
+{
+    freeObjects();
 }
 
 void ModulationLineView::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
@@ -102,9 +113,9 @@ ModulationLine* ModulationLineView::createNewObject(const juce::ValueTree &v) {
 void ModulationLineView::deleteObject(ModulationLine *at) {}
 
 void ModulationLineView::newObjectAdded(ModulationLine *) {
+//    auto interface
 
 }
 
-void ModulationLineView::reset() {}
 
 void ModulationLineView::valueTreeRedirected(juce::ValueTree &) {}

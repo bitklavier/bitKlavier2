@@ -5,7 +5,7 @@
 #ifndef BITKLAVIER2_MAIN_SECTION_H
 #define BITKLAVIER2_MAIN_SECTION_H
 #include "synth_section.h"
-#include "ConstructionSite.h"
+class ConstructionSite;
 class MainSection : public SynthSection
 {
 public:
@@ -17,7 +17,7 @@ public:
     };
 
     MainSection(juce::ValueTree v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData * data);
-
+    ~MainSection();
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
 //    void reset() override;

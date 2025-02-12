@@ -877,9 +877,8 @@ bool PresetBrowser::loadFromFile(juce::File& preset) {
   if (parent == nullptr)
     return false;
 
-  SynthBase* synth = parent->getSynth();
   std::string error;
-  if (synth->loadFromFile(preset, error)) {
+  if (parent->loadFromFile(preset, error)) {
     setPresetInfo(preset);
 
     return true;

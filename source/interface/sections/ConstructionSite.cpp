@@ -25,13 +25,13 @@ ConstructionSite::ConstructionSite (juce::ValueTree& v, juce::UndoManager& um, O
     data->synth->getEngine()->addChangeListener (this);
     //addMouseListener (&cableView, true);
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::createDirectSection);
-    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicPreparation::createNostalgicSection);
+//    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicPreparation::createNostalgicSection);
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
-    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeResonance, ResonancePreparation::createResonanceSection);
-    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicPreparation::createSynchronicSection);
-    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::createBlendronicSection);
-    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::createTempoSection);
-    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
+//    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeResonance, ResonancePreparation::createResonanceSection);
+//    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicPreparation::createSynchronicSection);
+//    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::createBlendronicSection);
+//    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::createTempoSection);
+//    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::createModulationSection);
 //    cableView.toBack();
     cableView.setAlwaysOnTop(true);
@@ -132,7 +132,7 @@ void ConstructionSite::reset()
     if(_parent->getSynth() != nullptr)
     {
         _parent->getSynth()->getEngine()->resetEngine();
-        parent = _parent->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
+        parent = _parent->getSynth()->getValueTree().getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS);
     }
 
 

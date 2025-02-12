@@ -13,7 +13,7 @@ class ModulationLineView : public PreparationSection::Listener,
 {
 public:
     explicit ModulationLineView(ConstructionSite &site);
-
+    ~ModulationLineView();
     ConstructionSite &site;
 
     void renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) override;
@@ -26,6 +26,7 @@ public:
     {
     }
 
+    void reset() override;
    std::shared_ptr<OpenGlLine> line_;
 
     //preparation seciton listerner
@@ -49,7 +50,6 @@ public:
     void deleteObject (ModulationLine* at) override;
 
 
-    void reset() override;
     void newObjectAdded (ModulationLine*) override;
     void objectRemoved (ModulationLine*) override     { resized();}//resized(); }
     void objectOrderChanged() override              {resized(); }//resized(); }

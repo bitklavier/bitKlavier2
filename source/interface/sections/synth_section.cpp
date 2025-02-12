@@ -23,11 +23,13 @@
 #include "synth_gui_interface.h"
 #include "synth_slider.h"
 #include "modulation_button.h"
+#include "Identifiers.h"
 SynthSection::SynthSection(const juce::String& name) : juce::Component(name), parent_(nullptr), activator_(nullptr),
                                                  preset_selector_(nullptr), preset_selector_half_width_(false),
                                                  skin_override_(Skin::kNone), size_ratio_(1.0f),
                                                  active_(true), sideways_heading_(true), background_(nullptr) {
   setWantsKeyboardFocus(true);
+
 }
 
 SynthSection::SynthSection(const juce::String& name, OpenGlWrapper* open_gl)  : juce::Component(name), parent_(nullptr), activator_(nullptr),
@@ -448,7 +450,7 @@ void SynthSection::destroyOpenGlComponent(OpenGlComponent & open_gl_component, O
     //moves the component to the end of the array
     //erases it from the vector
     /////TODO: remove this lock can cause opengldeadlocks
-    const juce::MessageManagerLock mmLock;
+   // const juce::MessageManagerLock mmLock;
     auto new_logical_end = std::remove_if(open_gl_components_.begin(), open_gl_components_.end(), [&](std::shared_ptr<OpenGlComponent> const& p)
     {
         return *p == open_gl_component;
@@ -522,11 +524,12 @@ void SynthSection::addButton(OpenGlShapeButton* button, bool show) {
 
 
 void SynthSection::addSlider(SynthSlider* slider, bool show, bool listen) {
+    slider->setComponentID(this->getComponentID().toStdString() + "_" + slider->getComponentID().toStdString());
   slider_lookup_[slider->getComponentID().toStdString()] = slider;
   all_sliders_[slider->getComponentID().toStdString()] = slider;
   all_sliders_v.push_back(slider);
-//  if (listen)
-//    slider->addListener(this);
+  if (listen)
+    slider->addListener(this);
   if (show)
     addAndMakeVisible(slider);
   else
@@ -694,7 +697,7 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::
 void SynthSection::lockCriticalSection() {
   SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
   if (parent)
-    parent->getSynth()->getCriticalSection().enter();
+    parent->getCriticalSection().enter();
 }
 
 void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<juce::Component*> knobs) {
@@ -716,7 +719,7 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<juce:
 void SynthSection::unlockCriticalSection() {
   SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
   if (parent)
-    parent->getSynth()->getCriticalSection().exit();
+    parent->getCriticalSection().exit();
 }
 
 float SynthSection::getTitleWidth() {
@@ -922,11 +925,19 @@ void SynthSection::showPopupSelector(juce::Component* source, juce::Point<int> p
 ////  if (all_buttons_.count(name))
 ////    all_buttons_[name]->setToggleState(value, notification);
 //}
-
-
+//this is probably causing some of the long compile times
+#include "PreparationSection.h"
 void SynthSection::showPrepPopup(PreparationSection* prep)
 {
     FullInterface* parent = findParentComponentOfClass<FullInterface>();
     if (parent)
-        parent->prepDisplay(prep);
+    {
+        if(prep->state.getProperty(IDs::type).operator int() == static_cast<int>(bitklavier::BKPreparationType::PreparationTypeModulation))
+        {
+            parent->modDisplay(prep);
+        } else
+        {
+            parent->prepDisplay(prep);
+        }
+    }
 }

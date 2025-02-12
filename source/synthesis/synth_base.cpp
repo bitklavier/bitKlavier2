@@ -24,6 +24,9 @@
 #include "Identifiers.h"
 #include "Synthesiser/Sample.h"
 #include "load_save.h"
+#include "RampModulator.h"
+#include "valuetree_utils/VariantConverters.h"
+#include "ModulationProcessor.h"
 SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false), manager(deviceManager) {
 
   self_reference_ = std::make_shared<SynthBase*>();
@@ -39,6 +42,9 @@ SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false)
   tree = juce::ValueTree(IDs::GALLERY);
   tree.setProperty(IDs::mainSampleSet,"Piano (Default)",nullptr);
   tree.addListener(this);
+  //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
+  modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree>("ramp");
+    mod_connections_.reserve(bitklavier::kMaxModulationConnections);
 }
 
 SynthBase::~SynthBase() {
@@ -76,7 +82,10 @@ juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor(std::unique_ptr<juc
     processor->prepareToPlay(engine_->getSampleRate(), engine_->getBufferSize());
     return engine_->addNode(std::move(processor) , id);
 }
+bool SynthBase::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
 
+    engine_->isConnected(src,dest);
+}
 juce::AudioProcessorGraph::Node * SynthBase::getNodeForId(juce::AudioProcessorGraph::NodeID id)
 {
 return engine_->getNodeForId(id);
@@ -254,4 +263,86 @@ int SynthBase::getNumModulations(const std::string& destination) {
 
 bitklavier::ModulationConnectionBank& SynthBase::getModulationBank() {
     return engine_->getModulationBank();
+}
+
+
+void SynthBase::connectModulation(bitklavier::ModulationConnection *connection) {
+   std::stringstream ss(connection->source_name);
+   std::string uuid;
+   std::getline(ss,uuid,'_');
+
+   auto mod_src = tree.getChildWithName(IDs::PIANO).getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid,juce::String(uuid));
+   std::stringstream dst_stream(connection->destination_name);
+   std::string dst_uuid;
+   std::getline(dst_stream,dst_uuid,'_');
+   std::string src_modulator_uuid_and_name;
+   std::getline(ss,src_modulator_uuid_and_name,'_');
+   auto pos = src_modulator_uuid_and_name.find_first_of("-");
+   std::string juse_uuid = src_modulator_uuid_and_name.substr(pos+1,src_modulator_uuid_and_name.size());
+   DBG(juse_uuid);
+//   auto it = std::find_if(src_modulator_uuid_and_name.begin(),src_modulator_uuid_and_name.end(),::isdigit);
+//   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
+   DBG(src_modulator_uuid_and_name);
+
+    auto mod_dst = tree.getChildWithName(IDs::PIANO).getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid,juce::String(dst_uuid));
+
+
+    auto mod_connections = tree.getChildWithName(IDs::PIANO).getChildWithName(IDs::MODCONNECTIONS);
+
+    auto mod_connection =    mod_connections.getChildWithProperty(IDs::dest,  mod_dst.getProperty(IDs::nodeID));
+//    connection->state.removeFromParent();
+
+
+    std::string dst_param;
+    std::getline(dst_stream,dst_param,'_');
+    auto source_node = engine_->getNodeForId(juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(mod_src.getProperty(IDs::nodeID)));
+    auto dest_node = engine_->getNodeForId(juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(mod_dst.getProperty(IDs::nodeID)));
+
+    auto parameter_tree = mod_dst.getChildWithProperty(IDs::parameter,juce::String(dst_param));
+    auto param_index = parameter_tree.getProperty(IDs::channel,-1);
+    connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*>(source_node->getProcessor());
+    //determine where this would actually output in the modulationprocessor
+    //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
+    // bus output
+    //////i dont think any of this is threadsafe
+    connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex(*connection);
+    connection->processor = connection->parent_processor->getModulatorBase(juse_uuid);
+    connection->parent_processor->addModulationConnection(connection);
+
+
+//    connection->parent_processor->modulation_connections_.push_back(connection);
+    DBG("mod output bus index" + juce::String(connection->modulation_output_bus_index));
+    auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer(false,1,0);//1 is mod
+    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer(true,1,param_index);
+    //this is safe since we know that every source will be a modulationprocessor
+
+//    juce::AudioProcessorGraph::Connection connection {{source_node->getId(), source_index}, {dest_node->getId(), dest_index}};
+//    engine_->addConnection(connection);
+    if(!parameter_tree.isValid() || !mod_src.isValid())
+    {
+        connection->destination_name = "";
+        connection->source_name = "";
+    }
+    else if (mod_connections_.count(connection) == 0){
+        mod_connections_.push_back(connection);
+        connection->connection_ = {{source_node->nodeID, source_index}, {dest_node->nodeID, dest_index}};
+        mod_connection.appendChild(connection->state, nullptr);
+        processorInitQueue.enqueue([this,connection](){
+
+            engine_->addConnection(connection->connection_);
+        });
+    }
+
+}
+bool SynthBase::connectModulation(const std::string &source, const std::string &destination) {
+    bitklavier::ModulationConnection* connection = getConnection(source, destination);
+    bool create = connection == nullptr;
+    if (create)
+    {
+        connection = getModulationBank().createConnection (source, destination);
+//        tree.appendChild(connection->state, nullptr);
+    }
+    if (connection)
+        connectModulation(connection);
+    return create;
 }

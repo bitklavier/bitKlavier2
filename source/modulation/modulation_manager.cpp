@@ -15,7 +15,8 @@
  */
 
 #include "modulation_manager.h"
-
+#include "valuetree_utils/VariantConverters.h"
+#include "ModulationModuleSection.h"
 #include "bar_renderer.h"
 #include "skin.h"
 //#include "modulation_connection_processor.h"
@@ -645,6 +646,73 @@ void 	ModulationManager::componentAdded()
         DBG (s.first);
     }
 
+    std::erase_if(sliders,[](const std::pair<std::string,SynthSlider*>& element)
+    {
+        return !element.second->isVisible();
+    });
+    DBG("erase");
+
+    for (auto s : sliders)
+    {
+        DBG (s.first);
+    }
+    std::unordered_set<std::string>  uniquePrefixes;
+
+    for (const auto& [key, value] : sliders) {
+        size_t pos = key.find('_');
+        if (pos != std::string::npos)
+            uniquePrefixes.insert(key.substr(0, pos));
+//        } else {
+//            uniquePrefixes.insert(key); // Handle keys without '_'
+//        }
+    }
+
+    std::unordered_set<std::string>  uniqueModPrefixes;
+    for (const auto& [key, value] : mod_buttons) {
+        size_t pos = key.find('_');
+        if (pos != std::string::npos)
+            uniqueModPrefixes.insert(key.substr(0, pos));
+//        } else {
+//            uniquePrefixes.insert(key); // Handle keys without '_'
+//        }
+    }
+    //should only have one prep view on at a time
+    jassert(uniquePrefixes.size()<=1);
+    jassert(uniqueModPrefixes.size()<=1);
+    std::string _dst, _src;
+    if(!uniquePrefixes.empty())
+        _dst = *uniquePrefixes.begin();
+    if(!uniqueModPrefixes.empty())
+        _src = *uniqueModPrefixes.begin();
+
+    auto dest = full->vt.getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid,juce::String(_dst));
+    auto src = full->vt.getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid,juce::String(_src));
+    if( dest.isValid() && src.isValid())
+    {
+        auto* interface = findParentComponentOfClass<SynthGuiInterface>();
+        //check the modconnections array first to see if there is psuedoconnection
+        auto modconnections = full->vt.getChildWithName(IDs::MODCONNECTIONS);
+        bool isConnected = false;
+
+        for (auto modconnection : modconnections)
+        {
+            if (modconnection.getProperty(IDs::src,-1) == src.getProperty(IDs::nodeID) && modconnection.getProperty(IDs::dest,-1) == dest.getProperty(IDs::nodeID))
+            {
+                isConnected = true;
+                break;
+            }
+        }
+                //interface->isConnected(juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(src.getProperty(IDs::nodeID)),
+                 //                       juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(dest.getProperty(IDs::nodeID)));
+
+
+        if(!isConnected)
+            sliders.clear();
+    }
+    else{
+        sliders.clear();
+    }
+
     full->open_gl_.context.executeOnGLThread ([this, &full] (juce::OpenGLContext& openGLContext) {
         for (auto& multiquad : rotary_destinations_)
         {
@@ -1197,7 +1265,10 @@ void ModulationManager::drawCurrentModulator(OpenGlWrapper& open_gl) {
     current_modulator_quad_.setAlpha(1.0f);
   }
   else
-    current_modulator_quad_.setAlpha(0.0f);
+  {
+      current_modulator_quad_.setAlpha(0.0f);
+      current_modulator_quad_.setTargetComponent(nullptr);
+  }
 
   current_modulator_quad_.setThickness(dragging_ ? 2.6f : 1.0f);
   current_modulator_quad_.render(open_gl, true);
@@ -1604,7 +1675,7 @@ void ModulationManager::removeModulation(std::string source, std::string destina
   
   int index = connection->index_in_all_mods;
   if (aux_connections_from_to_.count(index)) {
-    float current_value = 0.5; //connection->modulation_processor->currentBaseValue();
+    float current_value = connection->getCurrentBaseValue();
     int dest_index = aux_connections_from_to_[index];
     ModulationAmountKnob* modulation_amount = modulation_amount_sliders_[dest_index].get();
     removeAuxSourceConnection(index);
@@ -1696,7 +1767,8 @@ void ModulationManager::setModulationValues(std::string source, std::string dest
   modifying_ = true;
 //  parent->setModulationValues(source, destination, amount, bipolar, stereo, bypass);
   int index = getModulationIndex(source, destination);
-//  parent->notifyModulationValueChanged(index);
+//  notifyModulationValueChanged(index);
+setModulationAmounts();
   setModulationSliderValues(index, amount);
   setModulationSliderBipolar(index, bipolar);
 //

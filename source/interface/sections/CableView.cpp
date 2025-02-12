@@ -8,7 +8,7 @@
 #include "sound_engine.h"
 
 
-CableView::CableView (ConstructionSite &site) :site(site), tracktion::engine::ValueTreeObjectList<Cable>(site.getState()), /*pathTask (*this),*/ SynthSection("cableView")
+CableView::CableView (ConstructionSite &site) :site(site), tracktion::engine::ValueTreeObjectList<Cable>(site.getState().getParent().getChildWithName(IDs::CONNECTIONS)), /*pathTask (*this),*/ SynthSection("cableView")
 {
     setInterceptsMouseClicks (false,false);
     //startTimerHz (36);
@@ -85,7 +85,7 @@ void CableView::reset()
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
     //safe to do on message thread because we have locked processing if this is called
     //_parent->getSynth()->getEngine()->resetEngine();
-    parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO);
+    parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
 }
 void CableView::resized()
 {

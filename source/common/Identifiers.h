@@ -36,6 +36,7 @@ namespace IDs
     DECLARE_ID (nodeID)
 
     DECLARE_ID (CONNECTION)
+    DECLARE_ID (CONNECTIONS)
     DECLARE_ID (src)
     DECLARE_ID (dest)
     DECLARE_ID (srcIdx)
@@ -45,6 +46,7 @@ namespace IDs
     DECLARE_ID (chIdx)
 
     DECLARE_ID(MODCONNECTION)
+    DECLARE_ID(MODCONNECTIONS)
 
     DECLARE_ID (assignment)
 
@@ -64,6 +66,9 @@ namespace IDs
     DECLARE_ID(modAmt)
     DECLARE_ID(isBipolar)
     DECLARE_ID(isMod)
+    DECLARE_ID(channel)
+    DECLARE_ID(parameter)
+    DECLARE_ID(MODULATABLE_PARAM)
 }
 
 #undef DECLARE_ID

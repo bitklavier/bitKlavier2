@@ -6,10 +6,10 @@
 #define BITKLAVIER_MODULATIONCONNECTION_H
 #include <juce_data_structures/juce_data_structures.h>
 #include "Identifiers.h"
-
-
+#include <juce_audio_processors/juce_audio_processors.h>
+class ModulatorBase;
 namespace bitklavier {
-
+class ModulationProcessor;
     struct ModulationConnection {
         ModulationConnection(const std::string& from, const std::string& to, int index)
             : source_name(from), destination_name(to),state(IDs::ModulationConnection)
@@ -17,6 +17,7 @@ namespace bitklavier {
             createUuidProperty(state);
             uuid = state.getProperty(IDs::uuid);
             index_in_all_mods = index;
+            scalingValue_ = 0.5f;
         }
         ~ModulationConnection()
         {
@@ -48,21 +49,15 @@ namespace bitklavier {
 
         float getCurrentBaseValue()
         {
-            if(scalingValue_ != nullptr)
-            {
-                return scalingValue_->load();
-            }
-            return 0.5f;
+
+                return scalingValue_.load();
         }
         void setScalingValue(float val)
         {
-            if(scalingValue_ != nullptr)
-            {
                 if (isBipolar())
-                    scalingValue_->store(val *0.5f);
+                    scalingValue_.store(val *0.5f);
                 else
-                    scalingValue_->store(val);
-            }
+                    scalingValue_.store(val);
             DBG(juce::String(val));
         }
 
@@ -78,14 +73,14 @@ namespace bitklavier {
         }
         void setBipolar(bool bipolar) {
             bipolar_ = bipolar;
-            if(bipolarOffset != nullptr && !defaultBipolar)
-            {
-                *bipolarOffset = bipolar_ ? 0.5f : 0.0f;
-            }
-            if(bipolarOffset != nullptr && defaultBipolar)
-            {
-                *bipolarOffset = bipolar_ ? 0.0f : 0.5f;
-            }
+//            if(bipolarOffset != nullptr && !defaultBipolar)
+//            {
+//                *bipolarOffset = bipolar_ ? 0.5f : 0.0f;
+//            }
+//            if(bipolarOffset != nullptr && defaultBipolar)
+//            {
+//                *bipolarOffset = bipolar_ ? 0.0f : 0.5f;
+//            }
 
         }
 
@@ -100,9 +95,14 @@ namespace bitklavier {
         bool bypass_;
         bool stereo_;
         bool defaultBipolar;
+        juce::AudioProcessorGraph::Connection connection_;
+        ModulationProcessor* parent_processor;
+        ModulatorBase* processor;
+        int modulation_output_bus_index;
+    private:
+        std::atomic<float> scalingValue_;
+//        std::atomic<float>* bipolarOffset;
 
-        std::atomic<float>* scalingValue_;
-        std::atomic<float>* bipolarOffset;
 
 
     };

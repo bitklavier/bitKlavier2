@@ -51,7 +51,7 @@ public:
         proc.addSoundSet(s, h, r, p);
     }
 
-    std::shared_ptr<SynthSection> getPrepPopup() override;
+    std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
     void paintBackground(juce::Graphics &g);
     juce::AudioProcessor* getProcessor() override;

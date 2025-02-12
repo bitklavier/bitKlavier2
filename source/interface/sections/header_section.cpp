@@ -306,7 +306,7 @@ void HeaderSection::buttonClicked(juce::Button* clicked_button) {
   else if (clicked_button == loadButton.get())
     {
         SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
-        juce::File active_file = parent->getSynth()->getActiveFile();
+         auto active_file = parent->getActiveFile();
         filechooser = std::make_unique<juce::FileChooser> ("Open Preset", active_file, juce::String("*.") + bitklavier::kPresetExtension);
 
         auto flags = juce::FileBrowserComponent::openMode
@@ -334,36 +334,7 @@ void HeaderSection::buttonClicked(juce::Button* clicked_button) {
     else if (clicked_button == saveButton.get())
     {
         SynthGuiInterface* interface = findParentComponentOfClass<SynthGuiInterface>();
-        interface->getSynth()->getValueTree().getChild(0).setProperty("sync", 1, nullptr);
-        juce::String mystr = (interface->getSynth()->getValueTree().toXmlString());
-        auto xml = interface->getSynth()->getValueTree().createXml();
-        juce::XmlElement xml_ = *xml;
-        filechooser = std::make_unique<juce::FileChooser>("Export the gallery", juce::File(), juce::String("*.") + bitklavier::kPresetExtension,true);
-        filechooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectDirectories,
-                                 [xml_](const juce::FileChooser& chooser)
-                                 {
-
-                                     auto result = chooser.getURLResult();
-                                     auto name = result.isEmpty() ? juce::String()
-                                                                  : (result.isLocalFile() ? result.getLocalFile().getFullPathName()
-                                                                                          : result.toString (true));
-                                     juce::File file (name);
-                                     if (! result.isEmpty())
-                                     {
-                                         juce::FileOutputStream output (file);
-                                         output.writeText(xml_.toString(),false,false,{}) ;
-//                                         std::unique_ptr<juce::InputStream> wi (file.createInputStream());
-//                                         std::unique_ptr<juce::OutputStream> wo (result.createOutputStream());
-//
-//                                         if (wi != nullptr && wo != nullptr)
-//                                         {
-//                                             //auto numWritten = wo->writeFromInputStream (*wi, -1);
-//                                             wo->flush();
-//                                         }
-                                        output.flush();
-                                     }
-
-                                 });
+        interface->openSaveDialog();//getSynth()->getValueTree().getChild(0).setProperty("sync", 1, nullptr);
     }
     else
         SynthSection::buttonClicked(clicked_button);

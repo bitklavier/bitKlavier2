@@ -23,7 +23,7 @@
 #include "open_gl_component.h"
 #include "synth_section.h"
 #include "FullInterface.h"
-
+#include "PreparationSection.h"
 namespace {
     template<class Comparator>
     void sortSelectionArray(juce::Array<juce::File>& selection_array) {
@@ -1423,26 +1423,28 @@ PreparationPopup::PreparationPopup() : SynthSection("prep_popup"),
     //_border->setBorderThickness(juce::BorderSize<int>(20));
     //borderDrawer = std::make_unique<OpenGlAutoImageComponent<juce::ResizableBorderComponent>>()
 }
-void PreparationPopup::setContent(std::shared_ptr<SynthSection> prep_pop)
+void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
 {
-    if(prep != nullptr)
-    {
-        //auto* parent = findParentComponentOfClass<SynthGuiInterface>();
-        //prep->popup_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
-        //removeSubSection(prep->popup_view.get());
-    }
+
     if(prep_view.get() != nullptr )
     {
         removeSubSection(prep_view.get());
+        if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
+            SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+            _parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {
+                prep_view->destroyOpenGlComponents(*this->prep_view->open_gl);
+            }, true);
+        }
     }
+
     prep_view.reset();
-    prep_view = prep_pop;
+    prep_view = std::move(prep_pop);
     addSubSection(prep_view.get());
     Skin default_skin;
 
     prep_view->setSkinValues(default_skin,false);
     prep_view->setAlwaysOnTop(true);
-
+    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
     resized();
     repaintPrepBackground();
 }
@@ -1453,10 +1455,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
     {
         setVisible(false);
         removeSubSection(prep_view.get());
-        prep->popup_view.reset();
-//        auto *interface = findParentComponentOfClass<SynthGuiInterface>();
-//        interface->getOpenGlWrapper()->context.
-//
+
        prep_view->reset();
 
 
@@ -1495,4 +1494,16 @@ void PreparationPopup::resized() {
 
 
 
+}
+
+std::map<std::string, SynthSlider *> PreparationPopup::getAllSliders() {
+    if(prep_view!= nullptr)
+        return prep_view->getAllSliders();
+    return SynthSection::getAllSliders();
+}
+
+std::map<std::string, ModulationButton *> PreparationPopup::getAllModulationButtons() {
+    if(prep_view!= nullptr)
+        return prep_view->getAllModulationButtons();
+    return SynthSection::getAllModulationButtons();
 }

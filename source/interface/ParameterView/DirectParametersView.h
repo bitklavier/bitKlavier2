@@ -12,15 +12,20 @@
 class DirectParametersView : public bitklavier::ParametersView
 {
 public:
-    DirectParametersView(chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl) :
-                                                                                                                     bitklavier::ParametersView(pluginState,params,open_gl)
+    DirectParametersView(chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params,juce::String name, OpenGlWrapper *open_gl) :
+                                                                                                                     bitklavier::ParametersView(pluginState,params,open_gl,false)
     {
         //envelope = std::make_unique<EnvelopeSection>("ENV", "err");
+        setName("");
         //addSubSection(envelope.get());
+        setComponentID(name);
         auto& listeners = pluginState.getParameterListeners();
         params.doForAllParameterContainers(
                 [this,&listeners](auto &paramVec) {
-
+                    for (auto &param: paramVec) {
+                        comps.push_back(
+                                bitklavier::parameters_view_detail::createParameterComp(listeners, param, *this));
+                    }
                 },
                 [this, &listeners, &pluginState](auto &paramHolder) {
                     if(auto *transposeParam = dynamic_cast<TransposeParams*>(&paramHolder)) {
@@ -33,6 +38,12 @@ public:
 
                                    })};
                         });
+                    }
+                    else
+                    {
+                        auto section = bitklavier::parameters_view_detail::createEditorSection(paramHolder, listeners, *this);
+                        addSubSection(section.get());
+                        paramHolderComps.push_back(std::move(section));
                     }
                 });
 

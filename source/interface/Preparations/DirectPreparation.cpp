@@ -28,16 +28,17 @@ DirectPreparation::DirectPreparation (std::unique_ptr<DirectProcessor> p,
 
 }
 
-std::shared_ptr<SynthSection> DirectPreparation::getPrepPopup()
+std::unique_ptr<SynthSection> DirectPreparation::getPrepPopup()
 {
-    if(popup_view) {
-        popup_view->destroyOpenGlComponents(_open_gl);
-        popup_view->reset();
-        return popup_view;
-    }
-    popup_view = std::make_shared<DirectPopup>(proc, _open_gl);
-    popup_view->initOpenGlComponents(_open_gl);
-    return popup_view;
+//    if(popup_view) {
+//        popup_view->destroyOpenGlComponents(_open_gl);
+//        popup_view->reset();
+//        return popup_view;
+//    }
+//    popup_view = std::make_shared<DirectParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
+//
+//    popup_view->initOpenGlComponents(_open_gl);
+    return std::make_unique<DirectParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
 }
 
 
@@ -66,44 +67,5 @@ void DirectPreparation::paintBackground(juce::Graphics &g)  {
         port->redoImage();
     PreparationSection::paintBackground(g);
 }
-/*************************************************************************************************/
-/*                     NESTED CLASS: DirectPopup, inherits from PreparationPopup                 */
-/*************************************************************************************************/
-DirectPreparation::DirectPopup::DirectPopup(DirectProcessor& _proc, OpenGlWrapper &open_gl):  proc(_proc), PreparationPopup(open_gl),
-view(std::make_unique<DirectParametersView>(proc.getState(), proc.getState().params, &open_gl))
-{
 
-    auto& _params = proc.getState().params;
-    setSkinOverride (Skin::kDirect);
-    Skin default_skin;
-    view->setSkinValues(default_skin, false);
-    addSubSection(view.get());
 
-}
-
-DirectPreparation::DirectPopup::~DirectPopup()
-{
-    if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
-        open_gl->context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {
-            destroyOpenGlComponents(*this->open_gl);
-        }, true);
-    }
-}
-
-void DirectPreparation::DirectPopup::initOpenGlComponents(OpenGlWrapper &open_gl) {
-
-    view->initOpenGlComponents(open_gl);
-}
-
-// DISPLAY SLIDERS ON-SCREEN
-void DirectPreparation::DirectPopup::resized() {
-
-    juce::Rectangle<int> bounds = getLocalBounds();
-    int widget_margin = findValue(Skin::kWidgetMargin);
-    int section_height = getHeight();
-    int section_width = getWidth();
-    view->setBounds(getLocalBounds());
-
-    SynthSection::resized();
-
-}

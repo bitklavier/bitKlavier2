@@ -70,14 +70,18 @@ void DragMagnifyingGlass::mouseDoubleClick(const juce::MouseEvent& e) {
 
 EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection(name) {
 
+    setComponentID(parent.getComponentID());
     delay_ = std::make_unique<SynthSlider>("delay");
     delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
     //delay_ = std::make_unique<SynthSlider>(value_prepend + "_delay");
   addSlider(delay_.get());
+
   delay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
   delay_->setPopupPlacement(juce::BubbleComponent::below);
   delay_->parentHierarchyChanged();
-  
+  delay_->setVisible(false);
+
+
   attack_ = std::make_unique<SynthSlider>("attack");
   //attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, nullptr);
   addSlider(attack_.get());
@@ -86,26 +90,27 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
   attack_->parentHierarchyChanged();
   attack_->setValue(params.attackParam->getDefaultValue());
 
-  attack_power_ = std::make_unique<SynthSlider>(value_prepend + "_attack_power");
+  attack_power_ = std::make_unique<SynthSlider>( "attack_power");
   addSlider(attack_power_.get());
   attack_power_->setRange(-10., 10.); // don't need to do this in the original Vital version, not sure why we need this here
   attack_power_->setVisible(false);
 
-  hold_ = std::make_unique<SynthSlider>("hold");
+  hold_ = std::make_unique<SynthSlider>(parent.getComponentID() +"_hold");
   //hold_ = std::make_unique<SynthSlider>(value_prepend + "_hold");
   //hold_attachment = std::make_unique<chowdsp::SliderAttachment>(params.holdParam, listeners, *hold_, nullptr);
   addSlider(hold_.get());
   hold_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
   hold_->setPopupPlacement(juce::BubbleComponent::below);
   hold_->parentHierarchyChanged();
+  hold_->setVisible(false);
 
-  decay_ = std::make_unique<SynthSlider>("decay");
+  decay_ = std::make_unique<SynthSlider>( "decay");
   addSlider(decay_.get());
   decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
   decay_->setPopupPlacement(juce::BubbleComponent::below);
   decay_->setValue(params.decayParam->getDefaultValue());
   
-  decay_power_ = std::make_unique<SynthSlider>(value_prepend + "_decay_power");
+  decay_power_ = std::make_unique<SynthSlider>( "decay_power");
   addSlider(decay_power_.get());
   decay_power_->setRange(-10., 10.);
   decay_power_->setVisible(false);
@@ -117,7 +122,7 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
   release_->setPopupPlacement(juce::BubbleComponent::below);
   release_->setValue(params.releaseParam->getDefaultValue());
 
-  release_power_ = std::make_unique<SynthSlider>(value_prepend + "_release_power");
+  release_power_ = std::make_unique<SynthSlider>( "release_power");
   addSlider(release_power_.get());
   release_power_->setRange(-10., 10.);
   release_power_->setVisible(false);

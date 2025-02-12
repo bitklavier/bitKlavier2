@@ -25,12 +25,12 @@
 //#include "modulation_matrix.h"
 #include "synth_section.h"
 #include "Paths.h"
-ModulationButton:: ModulationButton(juce::String name) : PlainShapeComponent(std::move(name)), parent_(nullptr),
+ModulationButton:: ModulationButton(juce::String name) : PlainShapeComponent(name), parent_(nullptr),
                                                   mouse_state_(kNone), selected_(false), connect_right_(false),
                                                   draw_border_(false), active_modulation_(false), font_size_(12.0f),
                                                   show_drag_drop_(false), drag_drop_alpha_(0.0f),initialized(false) {
   setWantsKeyboardFocus(true);
-  setComponentID("mod");
+  setComponentID(name);
   juce::Path shape = Paths::dragDropArrows();
   shape.addLineSegment(juce::Line<float>(-50.0f, -50.0f, -50.0f, -50.0f), 0.2f);
   setShape(Paths::dragDropArrows());

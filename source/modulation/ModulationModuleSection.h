@@ -6,34 +6,29 @@
 #define BITKLAVIER_SOUNDMODULESECTION_H
 #include "ModuleListInterface.h"
 class ModulationSection;
-class ProcessorBase;
+class ModulatorBase;
 class ModulationManager;
-class ModulationModuleSection : public ModulesInterface<ModulationSection>
+namespace bitklavier {
+    class ModulationProcessor;
+}
+class ModulationModuleSection : public ModulesInterface
 {
+
 public:
-    explicit ModulationModuleSection(juce::ValueTree &, ModulationManager* m);
+    explicit ModulationModuleSection(ModulationList *,juce::ValueTree &, ModulationManager* m);
     virtual ~ModulationModuleSection();
-    ModulationSection* createNewObject(const juce::ValueTree& v) override;
-    void deleteObject (ModulationSection* at) override;
 
-
-    // void reset() override;
-//    void newObjectAdded (ModuleSection*) override;
-    void objectRemoved (ModulationSection*) override     { resized();}//resized(); }
-    void objectOrderChanged() override              {resized(); }//resized(); }
-    void valueTreeParentChanged (juce::ValueTree&) override{};
-//    void valueTreeRedirected (juce::ValueTree&) override;
-    bool isSuitableType (const juce::ValueTree& v) const override
-    {
-        return v.hasType (IDs::modulationproc);
-    }
     void setEffectPositions() override;
+
+    void modulatorAdded( ModulatorBase* ) override;
 
     PopupItems createPopupMenu() override;
     void handlePopupResult(int result) override;
-    Factory<ProcessorBase> factory;
+    juce::Array<ModulationSection*> objects;
+    juce::ValueTree parent;
     std::map<std::string, SynthSlider*> getAllSliders() override;
-
+    ModulationList* modulation_list_;
+    std::map<std::string, ModulationButton *> getAllModulationButtons() override;
 };
 
 #endif //BITKLAVIER_SOUNDMODULESECTION_H

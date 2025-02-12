@@ -21,13 +21,28 @@ struct DirectParams : chowdsp::ParamHolder
     float rangeStart = -60.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
-
+    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
+    std::unordered_map<std::string,ParamPtrVariant> modulatableParams;
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
         //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam, transpositionsParam);
         //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam);
         add (gainParam, hammerParam, releaseResonanceParam, pedalParam, blendronicSend, transpositionUsesTuning, env, transpose);
+        doForAllParameters ([this] (auto& param, size_t) {
+            if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
+                if(sliderParam->supportsMonophonicModulation())
+                    modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
+//
+            if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *> (&param))
+                if(sliderParam->supportsMonophonicModulation())
+                    modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
+
+            if (auto *sliderParam = dynamic_cast<chowdsp::FloatParameter *> (&param))
+                if(sliderParam->supportsMonophonicModulation())
+                    modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
+        });
+
     }
 
     // Gain param
@@ -35,7 +50,7 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Gain", 100 },
         "Gain",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        0.0f
+        0.0f,true
     };
 
     // Hammer param
@@ -51,7 +66,7 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Ring", 100 },
         "Release Resonance",
         juce::NormalisableRange { rangeStart, rangeEnd + 24, 0.0f, skewFactor, false },
-        6.0f
+        6.0f,true
     };
 
     // Pedal param
@@ -59,7 +74,7 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Pedal", 100 },
         "Pedal",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        -6.0f
+        -6.0f,true
     };
 
     // Gain param
@@ -67,7 +82,7 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Blendronic", 100 },
         "Blendronic Send",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        0.0f
+        0.0f,true
     };
 
     // Velocity param
@@ -161,7 +176,7 @@ public:
         return BusesProperties()
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), true)
                 .withInput("input",juce::AudioChannelSet::stereo(),false)
-            .withInput ("Modulation",juce::AudioChannelSet::discreteChannels(1) ,false);
+            .withInput ("Modulation",juce::AudioChannelSet::discreteChannels(9) ,true);
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
     bool hasEditor() const override { return false; }

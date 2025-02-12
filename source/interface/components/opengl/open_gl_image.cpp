@@ -26,7 +26,7 @@ namespace {
 } // namespace
 
 OpenGlImage::OpenGlImage() : dirty_(true), image_(nullptr), image_width_(0), image_height_(0), 
-                             additive_(false), use_alpha_(false), scissor_(false) {
+                             additive_(false), use_alpha_(false), scissor_(false),image_shader_(nullptr) {
   position_vertices_ = std::make_unique<float[]>(kNumPositions);
   float position_vertices[kNumPositions] = {
     0.0f, 1.0f, 0.0f, 1.0f,

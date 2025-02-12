@@ -25,13 +25,17 @@ class juce::AudioDeviceManager { };
 
 #endif
 
-#include "synth_base.h"
+//#include "synth_base.h"
 
+#include <juce_data_structures/juce_data_structures.h>
+#include <juce_audio_devices/juce_audio_devices.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+class SynthBase;
 class SampleLoadManager;
 class UserPreferencesWrapper;
 class FullInterface;
 struct OpenGlWrapper;
-
+class ModulatorBase;
 class PreparationSection;
 struct SynthGuiData {
   SynthGuiData(SynthBase* synth_base);
@@ -41,6 +45,7 @@ struct SynthGuiData {
 };
 namespace bitklavier
 {
+    class ModulationProcessor;
 class ModulationConnection;
 }
 class SynthGuiInterface {
@@ -54,7 +59,7 @@ class SynthGuiInterface {
     virtual void updateGuiControl(const std::string& name, float value);
     float getControlValue(const std::string& name);
     void tryEnqueueProcessorInitQueue(juce::FixedSizeFunction<64, void()> callback);
-
+    const juce::CriticalSection& getCriticalSection();
     void connectModulation(std::string source, std::string destination);
     void disconnectModulation(std::string source, std::string destination);
     void disconnectModulation(bitklavier::ModulationConnection* connection);
@@ -70,12 +75,15 @@ class SynthGuiInterface {
     void setGuiSize(float scale);
     bool loadFromFile(juce::File preset, std::string& error);
     bool isConnected(juce::AudioProcessorGraph::Connection &connection);
+    bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID);
+    void synchronizeValueTree();
     FullInterface* getGui() { return gui_.get(); }
     OpenGlWrapper* getOpenGlWrapper();
+    juce::File getActiveFile();
     std::shared_ptr<UserPreferencesWrapper> userPreferences;
     std::unique_ptr<SampleLoadManager> sampleLoadManager ;
   protected:
-
+    std::unique_ptr<juce::FileChooser> filechooser;
     SynthBase* synth_;
     std::unique_ptr<FullInterface> gui_;
   

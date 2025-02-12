@@ -20,12 +20,14 @@
 #include "about_section.h"
 #include "synth_slider.h"
 #include "modulation_manager.h"
+#include "ModulationPreparation.h"
+
 FullInterface::FullInterface(SynthGuiData* synth_data) : SynthSection("full_interface"), width_(0), resized_width_(0),
                                                          last_render_scale_(0.0f), display_scale_(1.0f),
                                                          pixel_multiple_(1),unsupported_(false), animate_(true),
                                                         enable_redo_background_(true),
-                                                         open_gl_(open_gl_context_),
-                                                          data(synth_data)
+                                                         open_gl_(open_gl_context_)
+
 
 {
    full_screen_section_ = nullptr;
@@ -39,13 +41,13 @@ FullInterface::FullInterface(SynthGuiData* synth_data) : SynthSection("full_inte
    juce::ValueTree t(IDs::PIANO);
    t.setProperty(IDs::name, "default", nullptr);
 
-
-   data->tree.addChild(t, -1, nullptr);
-   main_ = std::make_unique<MainSection>(data->tree.getChildWithName(IDs::PIANO), data->um, open_gl_, data);
+   synth_data->tree.addChild(t, -1, nullptr);
+    vt=t;
+   main_ = std::make_unique<MainSection>(synth_data->tree.getChildWithName(IDs::PIANO), synth_data->um, open_gl_, synth_data);
    addSubSection(main_.get());
    main_->addListener(this);
   valueTreeDebugger  = new
-          ValueTreeDebugger(data->tree);
+          ValueTreeDebugger(synth_data->tree);
     modulation_manager = std::make_unique<ModulationManager>(t, synth_data->synth);
     modulation_manager->setOpaque(false);
     modulation_manager->setAlwaysOnTop(true);
@@ -73,11 +75,7 @@ FullInterface::FullInterface(SynthGuiData* synth_data) : SynthSection("full_inte
    addSubSection(header_.get());
    header_->addListener(this);
 
-   popup_selector_ = std::make_unique<SinglePopupSelector>();
-   addSubSection(popup_selector_.get());
-   popup_selector_->setVisible(false);
-   popup_selector_->setAlwaysOnTop(true);
-   popup_selector_->setWantsKeyboardFocus(true);
+
 
 
     prep_popup = std::make_unique<PreparationPopup>();
@@ -85,6 +83,18 @@ FullInterface::FullInterface(SynthGuiData* synth_data) : SynthSection("full_inte
     prep_popup->setVisible(false);
     prep_popup->setAlwaysOnTop(true);
     prep_popup->setWantsKeyboardFocus(true);
+
+    mod_popup = std::make_unique<PreparationPopup>();
+    addSubSection(mod_popup.get());
+    mod_popup->setVisible(false);
+    mod_popup->setAlwaysOnTop(true);
+    mod_popup->setWantsKeyboardFocus(true);
+
+    popup_selector_ = std::make_unique<SinglePopupSelector>();
+    addSubSection(popup_selector_.get());
+    popup_selector_->setVisible(false);
+    popup_selector_->setAlwaysOnTop(true);
+    popup_selector_->setWantsKeyboardFocus(true);
 
    popup_display_1_ = std::make_unique<PopupDisplay>();
    addSubSection(popup_display_1_.get());
@@ -311,6 +321,7 @@ void FullInterface::resized() {
    main_->setBounds(main_bounds);
    //test_->setBounds(main_bounds);
    prep_popup->setBounds(100, 100, 700, 700);
+   mod_popup->setBounds(header_->getRight() - 200,header_->getBottom(),200,400);
    about_section_->setBounds(new_bounds);
    //inspectButton->setBounds(10, 0, 100, 100);
    if (getWidth() && getHeight())
@@ -354,10 +365,17 @@ void FullInterface::prepDisplay(PreparationSection* prep)
 {
 
     prep_popup->setContent(prep->getPrepPopup());
-    prep_popup->setPrep(prep);
+//    prep_popup->setPrep(prep);
     prep_popup->setVisible(true);
+    modulation_manager->added();
 }
 
+void FullInterface::modDisplay(PreparationSection *prep) {
+    mod_popup->setContent(prep->getPrepPopup());
+//    mod_popup->setPrep(prep);
+    mod_popup->setVisible(true);
+    modulation_manager->added();
+}
 void FullInterface::hideDisplay(bool primary) {
    PopupDisplay* display = primary ? popup_display_1_.get() : popup_display_2_.get();
    if (display)
@@ -429,9 +447,11 @@ void FullInterface::openGLContextClosing() {
     removeSubSection(main_.get());
     removeSubSection(header_.get());
     removeSubSection(prep_popup.get());
+    removeSubSection(mod_popup.get());
    main_ = nullptr;
    header_ = nullptr;
     prep_popup = nullptr;
+    mod_popup = nullptr;
    destroyOpenGlComponents(open_gl_);
 
    open_gl_.shaders = nullptr;
@@ -514,12 +534,12 @@ void FullInterface::showFullScreenSection(SynthSection* full_screen) {
 
 
 std::map<std::string, SynthSlider*> FullInterface::getAllSliders(){
-    return main_->getAllSliders();
+    return prep_popup->getAllSliders();
 }
 
 
 std::map<std::string, ModulationButton*> FullInterface::getAllModulationButtons(){
-    return main_->getAllModulationButtons();
+    return mod_popup->getAllModulationButtons();
 }
 
 void FullInterface::modulationChanged()

@@ -5,8 +5,13 @@
 #ifndef BITKLAVIER2_MODULATIONPROCESSOR_H
 #define BITKLAVIER2_MODULATIONPROCESSOR_H
 #include <juce_audio_processors/juce_audio_processors.h>
-namespace bitklavier {
+class ModulatorBase;
 
+namespace bitklavier {
+class ModulationConnection;
+    struct ModulatorRouting{
+        std::vector<bitklavier::ModulationConnection*> mod_connections;
+    };
     class ModulationProcessor : public juce::AudioProcessor {
     public:
         ModulationProcessor(juce::ValueTree& vt) :
@@ -30,8 +35,14 @@ namespace bitklavier {
             return "modulation";
         }
 
-        void prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock) override {
-
+        void prepareToPlay(double sampleRate, int samplesPerBlock) override {
+            setRateAndBufferSizeDetails(sampleRate,samplesPerBlock);
+            for(auto buffer : tmp_buffers)
+            {
+                buffer.setSize(1,samplesPerBlock);
+            }
+            sampleRate_ = sampleRate;
+            blockSize_ = samplesPerBlock;
         }
 
         void releaseResources() override
@@ -44,9 +55,9 @@ namespace bitklavier {
         }
 
 
-        void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override
-        {
-        }
+        void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
+
+        [[maybe_unused]] void addModulator(ModulatorBase*);
 
         juce::AudioProcessorEditor * createEditor() override
         {
@@ -91,7 +102,20 @@ namespace bitklavier {
         {
             return "";
         }
-
+         void addModulationConnection(bitklavier::ModulationConnection*);
+        int getNewModulationOutputIndex(const bitklavier::ModulationConnection&);
+        //could probabalt make this into a struct
+        std::vector<ModulatorBase*> modulators_;
+        std::vector<juce::AudioBuffer<float>> tmp_buffers;
+        std::vector<ModulatorRouting> mod_routing;
+        std::vector<bitklavier::ModulationConnection*> all_modulation_connections_;
+//        std::unordered_map<ModulatorBase*,> outchannel_to_mods_;
+int blockSize_ =0;
+int sampleRate_ = 0;
+        ModulatorBase* getModulatorBase(std::string& uuid);
+    private :
+        //could create new bus may need to happen on audio threafd?
+        int createNewModIndex();
     };
 
 } // bitklavier

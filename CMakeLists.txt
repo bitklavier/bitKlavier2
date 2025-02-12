@@ -59,7 +59,7 @@ add_subdirectory (third_party/melatonin_inspector)
 # need to install it when your main project gets installed.
 # set(JSON_Install OFF CACHE INTERNAL "")
 
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # See `docs/CMake API.md` in the JUCE repo for all config options
 juce_add_plugin("${PROJECT_NAME}"
     # Icons for the standalone app
@@ -221,7 +221,11 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE
         Melatonin::Perfetto
 )
 
-
+add_custom_target(graphviz ALL
+        COMMAND ${CMAKE_COMMAND} "--graphviz=foo.dot" .
+        COMMAND dot -Tpng foo.dot -o foo.png
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
 # IPP support, comment out to disable
 include(PamplejuceIPP)
 

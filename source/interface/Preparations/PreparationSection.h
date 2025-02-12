@@ -10,13 +10,13 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "tracktion_ValueTreeUtilities.h"
 #include "synth_section.h"
-#include "draggable_component.h"
+//#include "draggable_component.h"
 #include "common.h"
 #include "Identifiers.h"
 #include "BKItem.h"
-#include "opengl_ComponentDragger.h"
+//#include "opengl_ComponentDragger.h"
 #include "BKPort.h"
-
+#include "Sample.h" //need this for samplersound... should find a way not to need this
 /************************************************************************************/
 /*                            CLASS: SynthGuiInterface                              */
 /************************************************************************************/
@@ -104,7 +104,6 @@ public:
     juce::SelectedItemSet<PreparationSection *> *selectedSet;
     std::unique_ptr<BKItem> item;
     juce::CachedValue<int> x, y, width, height, numIns, numOuts;
-//    juce::ComponentDragger myDragger;
     juce::ComponentBoundsConstrainer constrainer;
 
     BKPort *createNewObject(const juce::ValueTree &v) override;
@@ -164,14 +163,7 @@ public:
         setMouseCursor(juce::MouseCursor::ParentCursor);
     }
 
-    void mouseDrag(const juce::MouseEvent &e) override {
-//        myDragger.dragComponent (this, e, &constrainer);
-        for (auto listener: listeners_) {
-            listener->_update();
-            listener->preparationDragged(this, e);
-        }
-        setMouseCursor(juce::MouseCursor::DraggingHandCursor);
-    }
+    void mouseDrag(const juce::MouseEvent &e) override;
 
     void mouseUp(const juce::MouseEvent &e) override {
         setMouseCursor(juce::MouseCursor::ParentCursor);
@@ -214,19 +206,7 @@ public:
     /*            NESTED CLASS: PreparationPopup, inherits from SynthSection            */
     /************************************************************************************/
 
-    class PreparationPopup : public SynthSection {
-    public:
-        PreparationPopup(OpenGlWrapper &open_gl) : SynthSection("prep_popup", &open_gl) {
 
-        }
-
-        void initOpenGlComponents(OpenGlWrapper &open_gl) {}
-
-        void resized() {}
-
-    private:
-
-    };
 
     juce::Point<float> getPinPos(int index, bool isInput) const {
         for (auto *port: objects)
@@ -237,19 +217,6 @@ public:
     }
 
     void setPortInfo() {
-        //use mainbus and for true audio. aux bus is modulation
-//        numIns = std::min(2,getProcessor()->getMainBusNumInputChannels());
-//        if(!getProcessor()->getBus(true,0)->isEnabled())
-//            numIns = 0;
-//        if (getProcessor()->acceptsMidi())
-//            numIns = numIns + 1;
-
-//        numOuts = std::min(2,getProcessor()->getMainBusNumOutputChannels());
-//        if(!getProcessor()->getBus(false,0)->isEnabled())
-//            numOuts=0;
-//        if (getProcessor()->producesMidi())
-//            numOuts = numOuts + 1;
-//
 
         auto &processor = *this->node->getProcessor();
         //check if main audio input bus is enabled
@@ -300,30 +267,9 @@ public:
             state.addChild(v, -1, nullptr);
         numOuts = numOuts  + 1;
         }
-
-
-
-
-
-//            this->_open_gl.initOpenGlComp.try_enqueue([ this] {
-//                for (auto *port: this->objects) {
-//
-//                    port->getImageComponent()->init(this->_open_gl);
-//                    juce::MessageManagerLock mm;
-//                    this->addOpenGlComponent(port->getImageComponent(),false, true);
-//                    this->addAndMakeVisible(port);
-//                    port->addListener(this);
-//                }
-//                juce::MessageManagerLock mm;
-//                this->resized();
-//            });
-
-
-
-
     }
 
-    virtual std::shared_ptr<SynthSection> getPrepPopup() {}
+    virtual std::unique_ptr<SynthSection> getPrepPopup() {}
 
     void setNodeInfo(juce::AudioProcessorGraph::Node::Ptr _node) {
         node = _node;
@@ -346,22 +292,10 @@ public:
     juce::AudioProcessorGraph::NodeID pluginID;
     juce::CachedValue<juce::Uuid> uuid;
 
-//juce::AudioProcessor _proc;
     virtual juce::AudioProcessor *getProcessor() {}
 
     virtual std::unique_ptr<juce::AudioProcessor> getProcessorPtr() {}
 
-    std::shared_ptr<PreparationPopup> popup_view;
-//std::shared_ptr<juce::AudioProcessor> _proc;
-//
-//    void itemDropped (const SourceDetails &dragSourceDetails) override
-//    {
-//        DBG(" dropped" + this->getName());
-//    }
-//    bool isInterestedInDragSource (const SourceDetails &dragSourceDetails) override
-//    {
-//        return true;
-//    }
 protected:
 
 
@@ -370,11 +304,6 @@ private:
     juce::Point<int> pointBeforDrag; // e.getEventRelativeTo (componentToDrag).getMouseDownPosition();
     bool isSelected = true;
     juce::AudioProcessor *_proc;
-
-    //void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
-    //SynthGuiInterface *_parent;
-
-
 
 };
 

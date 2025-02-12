@@ -133,6 +133,10 @@ namespace bitklavier {
      {
           return processorGraph->isConnected(connection);
      }
+     bool isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
+     {
+            return processorGraph->isConnected(src,dest);
+     }
 
      void addChangeListener(juce::ChangeListener* listener)
      {

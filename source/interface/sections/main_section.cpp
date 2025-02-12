@@ -8,7 +8,13 @@
 
 MainSection::MainSection(juce::ValueTree v, juce::UndoManager &um, OpenGlWrapper & open_gl, SynthGuiData* data) : SynthSection("main_section"), um(um)
 {
-    constructionSite_ = std::make_unique<ConstructionSite>(v, um, open_gl, data);
+    juce::ValueTree t{IDs::PREPARATIONS};
+    v.appendChild(t, nullptr);
+    juce::ValueTree t2{IDs::CONNECTIONS};
+    juce::ValueTree t3{IDs::MODCONNECTIONS};
+    v.appendChild(t2, nullptr);
+    v.appendChild(t3, nullptr);
+    constructionSite_ = std::make_unique<ConstructionSite>(t, um, open_gl, data);
     addMouseListener(constructionSite_.get(), true);
     //addAndMakeVisible(constructionSite_.get());
     //constructionPort.setViewedComponent(constructionSite_.get());
@@ -26,6 +32,10 @@ MainSection::MainSection(juce::ValueTree v, juce::UndoManager &um, OpenGlWrapper
     setSkinOverride(Skin::kNone);
 }
 
+MainSection::~MainSection()
+{
+
+}
 void MainSection::paintBackground(juce::Graphics& g)
 {
     paintContainer(g);

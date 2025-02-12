@@ -20,6 +20,7 @@ class AboutSection;
 struct SynthGuiData;
 class HeaderSection;
 class MainSection;
+class ModulationPreparation;
 class ModulationManager;
 namespace bitklavier{
     constexpr int kMinWindowWidth = 350;
@@ -41,6 +42,7 @@ public :
     void parentHierarchyChanged() override {
         SynthSection::parentHierarchyChanged();
         checkShouldReposition();
+
     }
     void timerCallback()   // to avoid flickering when resizing the window
     {
@@ -85,12 +87,13 @@ public :
         juce::BubbleComponent::BubblePlacement placement, bool primary);
 
     void prepDisplay(PreparationSection* source);
+    void modDisplay(PreparationSection* prep);
     std::unique_ptr<SinglePopupSelector> popup_selector_;
     std::unique_ptr<PreparationPopup> prep_popup;
+    std::unique_ptr<PreparationPopup> mod_popup;
     std::unique_ptr<PopupDisplay> popup_display_1_;
     std::unique_ptr<PopupDisplay> popup_display_2_;
-    SynthGuiData* data;
-    SynthSection* full_screen_section_;
+        SynthSection* full_screen_section_;
     std::unique_ptr<AboutSection> about_section_;
     std::unique_ptr<MainSection> main_;
     std::unique_ptr<ModulationManager> modulation_manager;
@@ -110,7 +113,8 @@ public :
     std::map<std::string, SynthSlider*> getAllSliders() override;
     std::map<std::string, ModulationButton*> getAllModulationButtons() override;
     void modulationChanged();
-
+    //is currently just the first piano. should be whateber is currentpiano
+    juce::ValueTree vt;
 private :
 
 

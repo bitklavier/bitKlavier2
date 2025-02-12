@@ -278,8 +278,8 @@ PopupItems SynthSlider::createPopupMenu() {
   if (has_parameter_assignment_)
     options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
 
-  if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getName().toStdString()))
-    options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
+//  if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getName().toStdString()))
+//    options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
 
   options.addItem(kManualEntry, "Enter juce::Value");
 
@@ -358,14 +358,14 @@ void SynthSlider::mouseUp(const juce::MouseEvent& e) {
 }
 
 void SynthSlider::mouseEnter(const juce::MouseEvent &e) {
-  OpenGlSlider::mouseEnter(e);
+ OpenGlSlider::mouseEnter(e);
   for (SliderListener* listener : slider_listeners_)
     listener->hoverStarted(this);
 
-//  if (show_popup_on_hover_)
-//    showPopup(true);
-//
-//  hovering_ = true;
+  if (show_popup_on_hover_)
+    showPopup(true);
+
+  hovering_ = true;
   redoImage();
 }
 
@@ -374,7 +374,7 @@ void SynthSlider::mouseExit(const juce::MouseEvent &e) {
   for (SynthSlider::SliderListener* listener : slider_listeners_)
     listener->hoverEnded(this);
 
-  //hidePopup(true);
+  hidePopup(true);
   hovering_ = false;
   redoImage();
 }
@@ -686,7 +686,7 @@ void SynthSlider::showPopup(bool primary) {
 }
 
 void SynthSlider::hidePopup(bool primary) {
-  //parent_->hidePopupDisplay(primary);
+  parent_->hidePopupDisplay(primary);
 }
 
 juce::String SynthSlider::formatValue(float value) {

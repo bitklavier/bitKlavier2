@@ -3,7 +3,9 @@
 //
 #include "common.h"
 #include "ModulationConnection.h"
-
+#include <regex>
+#include "ModulatorBase.h"
+#include "ModulationProcessor.h"
 namespace bitklavier
 {
     namespace
@@ -30,8 +32,19 @@ namespace bitklavier
     //    ModulationConnection::~ModulationConnection() { }
     bool ModulationConnection::isModulationSourceDefaultBipolar(const std::string& source) {
         //std::size_t pos = source.find(kModulationSourceDelimiter);
-        std::size_t pos = source.find_first_of("0123456789");
-        std::string prefix = source.substr(0, pos);
+
+        std::regex pattern(R"(_(.*?)_)");  // Matches text between underscores
+
+        std::smatch match;
+        std::regex_search(source,match, pattern);
+//        if (std::regex_search(text, match, pattern)) {
+//            std::cout << "Found: " << match[1] << std::endl;
+//        } else {
+//            std::cout << "No match found." << std::endl;
+//        }
+std::string check = match[1];
+        std::size_t pos = check.find_first_of("-");
+        std::string prefix = source.substr( 0,pos);
         return kBipolarModulationSourcePrefixes.count(prefix) > 0;
     }
 
