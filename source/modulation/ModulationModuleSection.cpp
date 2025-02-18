@@ -41,7 +41,7 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
     container_->addSubSection(module_section);
     module_section->setInterceptsMouseClicks(false,true);
     objects.add(module_section);
-    parentHierarchyChanged();
+    //parentHierarchyChanged();
     for (auto listener: listeners_)
         listener->added();
     resized();
@@ -49,6 +49,7 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 ModulationModuleSection::~ModulationModuleSection()
 {
 //    freeObjects();
+   modulation_list_->removeListener(this);
 }
 
 void ModulationModuleSection::handlePopupResult(int result) {
@@ -58,12 +59,14 @@ void ModulationModuleSection::handlePopupResult(int result) {
     {
         juce::ValueTree t(IDs::modulationproc);
         t.setProperty(IDs::type, "ramp", nullptr);
+        t.setProperty(IDs::isState, false, nullptr);
         parent.appendChild(t,nullptr);
     } else if (result == 2)
     {
-//        juce::ValueTree t(IDs::modulationproc);
-//        t.setProperty(IDs::type, "filt", nullptr);
-//        parent.appendChild(t,nullptr);
+        juce::ValueTree t(IDs::modulationproc);
+        t.setProperty(IDs::type, "state", nullptr);
+        t.setProperty(IDs::isState, true, nullptr);
+        parent.appendChild(t,nullptr);
     }
     //    if (result == kArmMidiLearn)
     //        synth->armMidiLearn(getName().toStdString());
@@ -124,7 +127,7 @@ PopupItems ModulationModuleSection::createPopupMenu()
 {
     PopupItems options;
     options.addItem(1, "add ramp" );
-//    options.addItem(2, "add filt");
+    options.addItem(2, "add state");
     return options;
 }
 

@@ -9,6 +9,7 @@ class ModulatorBase;
 
 namespace bitklavier {
 class ModulationConnection;
+class StateConnection;
     struct ModulatorRouting{
         std::vector<bitklavier::ModulationConnection*> mod_connections;
     };
@@ -103,12 +104,15 @@ class ModulationConnection;
             return "";
         }
          void addModulationConnection(bitklavier::ModulationConnection*);
+        void addModulationConnection(bitklavier::StateConnection*);
         int getNewModulationOutputIndex(const bitklavier::ModulationConnection&);
+        int getNewModulationOutputIndex(const bitklavier::StateConnection&);
         //could probabalt make this into a struct
         std::vector<ModulatorBase*> modulators_;
         std::vector<juce::AudioBuffer<float>> tmp_buffers;
         std::vector<ModulatorRouting> mod_routing;
         std::vector<bitklavier::ModulationConnection*> all_modulation_connections_;
+        std::vector<bitklavier::StateConnection*> all_state_connections_;
 //        std::unordered_map<ModulatorBase*,> outchannel_to_mods_;
 int blockSize_ =0;
 int sampleRate_ = 0;

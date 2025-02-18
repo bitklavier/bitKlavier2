@@ -69,6 +69,8 @@ namespace IDs
     DECLARE_ID(channel)
     DECLARE_ID(parameter)
     DECLARE_ID(MODULATABLE_PARAM)
+
+    DECLARE_ID(isState)
 }
 
 #undef DECLARE_ID

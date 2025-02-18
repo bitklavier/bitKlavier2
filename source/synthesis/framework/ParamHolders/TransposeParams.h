@@ -11,7 +11,7 @@ struct TransposeParams : chowdsp::ParamHolder
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
     {
 //        add(initialparam);
-add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11);
+add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
 
     }
 //    std::vector<chowdsp::FloatParameter::Ptr> transposeVec = {chowdsp::FloatParameter::Ptr initialparam(
@@ -69,6 +69,12 @@ add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11);
                                          "t11",
                                          chowdsp::ParamUtils::createNormalisableRange(-12.0f, 12.0f, 0.0f), // FIX
                                          0.0f};
+    // Transposition Uses Tuning param
+    chowdsp::BoolParameter::Ptr transpositionUsesTuning {
+            juce::ParameterID { "UseTuning", 100 },
+            "TranspositionUsesTuning",
+            false
+    };
 
 
 };

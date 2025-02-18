@@ -6,7 +6,7 @@
 #include "ModulationSection.h"
 #include "modulation_button.h"
 #include "modulation_manager.h"
-ModulationSection::ModulationSection( const juce::ValueTree &v, bitklavier::ParametersView* editor) : SynthSection(editor->getName()), state(v), _view(editor),
+ModulationSection::ModulationSection( const juce::ValueTree &v,SynthSection* editor) : SynthSection(editor->getName()), state(v), _view(editor),
 mod_button(new ModulationButton(editor->getName()+"_mod"))
 {
     setComponentID(v.getParent().getProperty(IDs::uuid).toString());
@@ -14,15 +14,12 @@ mod_button(new ModulationButton(editor->getName()+"_mod"))
     addAndMakeVisible(mod_button.get());
     mod_button->setAlwaysOnTop(true);
     addSubSection(_view.get());
+    mod_button->setStateModulation(v.getProperty(IDs::isState));
 }
 
 ModulationSection::~ModulationSection() = default;
 
-void ModulationSection::paintBackground(juce::Graphics &g)
-{
-        SynthSection::paintBackground(g);
-    // g.fillAll(juce::Colours::green);
-}
+
 
 void ModulationSection::resized()
 {
@@ -31,8 +28,6 @@ void ModulationSection::resized()
     int section_height = getKnobSectionHeight();
 
     juce::Rectangle<int> bounds = getLocalBounds().withLeft(title_width);
-    juce::Rectangle<int> knobs_area = getDividedAreaBuffered(bounds, 2, 1, widget_margin);
-    juce::Rectangle<int> settings_area = getDividedAreaUnbuffered(bounds, 4, 0, widget_margin);
     _view->setBounds(getLocalBounds());
     mod_button->setBounds(0, 0,40,40);
     int knob_y2 =0;

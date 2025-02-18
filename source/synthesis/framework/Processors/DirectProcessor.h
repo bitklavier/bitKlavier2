@@ -28,7 +28,7 @@ struct DirectParams : chowdsp::ParamHolder
     {
         //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam, transpositionsParam);
         //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam);
-        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, blendronicSend, transpositionUsesTuning, env, transpose);
+        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, blendronicSend,  env, transpose);
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
@@ -95,12 +95,7 @@ struct DirectParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    // Transposition Uses Tuning param
-    chowdsp::BoolParameter::Ptr transpositionUsesTuning {
-        juce::ParameterID { "UseTuning", 100 },
-        "TranspositionUsesTuning",
-        false
-    };
+
 
     // ADSR params
     EnvParams env;

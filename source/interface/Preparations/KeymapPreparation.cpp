@@ -13,8 +13,8 @@ KeymapPreparation::KeymapPreparation (std::unique_ptr<KeymapProcessor> p,
 
     item = std::make_unique<KeymapItem> (); // Initializes member variable `item` of PreparationSection class
     addOpenGlComponent (item->getImageComponent()); // Calls member function of SynthSection (parent class to PreparationSection)
-    _open_gl.initOpenGlComp.try_enqueue([this]
-                                        {item->getImageComponent()->init(_open_gl); });
+    _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
+                                        {item->getImageComponent()->init(_open_gl); },false);
     addAndMakeVisible (item.get());
 
     setSkinOverride (Skin::kKeymap);
@@ -70,9 +70,10 @@ void KeymapPopup::resized()
                     (proc.v);
             addAndMakeVisible(midi_selector_.get());
             addOpenGlComponent(midi_selector_->getImageComponent());
-            parent->getGui()->open_gl_.initOpenGlComp.try_enqueue([this]
-                                               {SynthGuiInterface* parent = this->findParentComponentOfClass<SynthGuiInterface>();
-                midi_selector_->getImageComponent()->init(parent->getGui()->open_gl_); });
+            parent->getGui()->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext& context)
+                                               {
+                SynthGuiInterface* parent = this->findParentComponentOfClass<SynthGuiInterface>();
+                midi_selector_->getImageComponent()->init(parent->getGui()->open_gl_); },false);
         }
     }
     if (midi_selector_) {

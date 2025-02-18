@@ -31,9 +31,6 @@ Cable::Cable (ConstructionSite* site, CableView& cableView) : juce::Component (C
 
 Cable::~Cable()
 {
-//    site->open_gl.initOpenGlComp.try_enqueue([this]{
-//        image_component_->destroy(site->open_gl);
-//    });
 }
 
 juce::ValueTree Cable::getValueTree() {

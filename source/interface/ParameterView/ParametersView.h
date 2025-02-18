@@ -5,9 +5,14 @@
 struct OpenGlWrapper;
 
 namespace bitklavier {
-/** Clone of juce::GenericAudioProcessorEditor, but usable as a generic component */
+
+    using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
+    using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
+
+    /** Clone of juce::GenericAudioProcessorEditor, but usable as a generic component */
     class  ParametersView : public SynthSection {
     public:
+
         ParametersView (chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl,bool isDefaultInit=true);
         ParametersView (chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, juce::String name,bool isDefaultInit=true);
         ParametersView (chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl,bool isDefaultInit=true);

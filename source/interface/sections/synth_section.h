@@ -59,7 +59,6 @@ struct PopupItems {
   void addItem(const PopupItems& item) { items.push_back(item); }
   int size() const { return static_cast<int>(items.size()); }
 };
-
 //class LoadingWheel : public OpenGlQuad {
 //  public:
 //    LoadingWheel() : OpenGlQuad(Shaders::kRotaryModulationFragment), tick_(0), complete_(false), complete_ticks_(0) {
@@ -234,7 +233,8 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
 
     void setParent(const SynthSection* parent) { parent_ = parent; }
     float findValue(Skin::ValueId value_id) const;
-
+    void hoverStarted(SynthButton* button) override;
+    void hoverEnded(SynthButton* button) override;
     virtual void reset();
     virtual void resized() override;
     virtual void paint(juce::Graphics& g) override;
@@ -304,7 +304,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     virtual void guiChanged(SynthButton* button) override;
 
     virtual std::map<std::string, SynthSlider*> getAllSliders() { return all_sliders_; }
-    virtual std::map<std::string, juce::ToggleButton*> getAllButtons() { return all_buttons_; }
+    virtual std::map<std::string, SynthButton*> getAllButtons() { return all_synth_buttons_; }
     virtual std::map<std::string, ModulationButton*> getAllModulationButtons() {
         return all_modulation_buttons_;
     }
@@ -320,7 +320,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void addSubSection(SynthSection* section, bool show = true);
     void removeSubSection(SynthSection* section);
     virtual void setScrollWheelEnabled(bool enabled);
-    juce::ToggleButton* activator() const { return activator_; }
+    SynthButton* activator() const { return activator_; }
     void showPrepPopup(PreparationSection* prep);
     float getTitleWidth();
     float getPadding();
@@ -355,6 +355,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void addToggleButton(juce::ToggleButton* button, bool show);
 
     void addButton(OpenGlShapeButton* button, bool show = true);
+    void addSynthButton(SynthButton* button, bool show = true);
 
 
     void addBackgroundComponent(OpenGlBackground* open_gl_component, bool to_beginning = false);
@@ -372,6 +373,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void placeTempoControls(int x, int y, int width, int height, SynthSlider* tempo, SynthSlider* sync);
     void placeRotaryOption(juce::Component* option, SynthSlider* rotary);
     void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<std::unique_ptr<juce::Component>> &knobs);
+    void placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthSlider>>& knobs);
     void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<juce::Component*> knobs);
     void lockCriticalSection();
     void unlockCriticalSection();
@@ -389,9 +391,12 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     std::map<std::string, juce::Button*> button_lookup_;
     std::map<std::string, ModulationButton*> modulation_buttons_;
 
+
     std::map<std::string, SynthSlider*> all_sliders_;
+
     std::vector<juce::Component*> all_sliders_v;
-    std::map<std::string, juce::ToggleButton*> all_buttons_;
+    std::map<std::string, SynthButton*> all_synth_buttons_;
+    std::map<std::string, juce::Button*> all_non_synth_buttons_;
     std::map<Skin::ValueId, float> value_lookup_;
     std::map<std::string, ModulationButton*> all_modulation_buttons_;
     const SynthSection* parent_;

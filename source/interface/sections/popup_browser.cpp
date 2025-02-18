@@ -1444,7 +1444,6 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
 
     prep_view->setSkinValues(default_skin,false);
     prep_view->setAlwaysOnTop(true);
-    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
     resized();
     repaintPrepBackground();
 }
@@ -1455,14 +1454,13 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
     {
         setVisible(false);
         removeSubSection(prep_view.get());
-
+        all_synth_buttons_.clear();
+        all_sliders_.clear();
+        all_modulation_buttons_.clear();
        prep_view->reset();
+       repaintBackground();
 
 
-
-        // this might be a race condition on the opengl thread. Might want to pass to opengl thread for destruction?
-        /// to do
-        // reset Preparation Section shared_ptr as well
     }
 
 }
@@ -1470,29 +1468,13 @@ void PreparationPopup::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
     int rounding = findValue(Skin::kBodyRounding);
 
-//    body_->setBounds(bounds);
-//    body_->setRounding(rounding);
-//    body_->setColor(findColour(Skin::kBody, true));
-//
-//    border_->setBounds(bounds);
-//    border_->setRounding(rounding);
-//    border_->setThickness(1.0f, true);
-//    border_->setColor(findColour(Skin::kBorder, true));
     auto header_bounds = bounds.removeFromTop(35);
     exit_button_->setBounds(header_bounds.removeFromLeft(35).reduced(5));
 
     if(prep_view != nullptr)
     {
         prep_view->setBounds(bounds);
-        //juce::Image image(juce::Image::ARGB, 1, 1, false);
-        //juce::Graphics g(image);
-        //paintOpenGlChildrenBackgrounds(g);
-        //paintChildBackground(g, prep_view.get());
-        //prep_view->paintKnobShadows(g);
     }
-    //_border->setBounds(bounds);
-
-
 
 }
 
@@ -1507,3 +1489,9 @@ std::map<std::string, ModulationButton *> PreparationPopup::getAllModulationButt
         return prep_view->getAllModulationButtons();
     return SynthSection::getAllModulationButtons();
 }
+std::map<std::string, SynthButton *> PreparationPopup::getAllButtons() {
+    if(prep_view!= nullptr)
+        return prep_view->getAllButtons();
+    return SynthSection::getAllButtons();
+}
+

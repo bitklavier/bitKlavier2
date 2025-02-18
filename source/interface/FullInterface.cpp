@@ -426,10 +426,6 @@ void FullInterface::renderOpenGL() {
    }
 
 
-/// initialize opengl components dynamically
-   OpenGlWrapper::glInitAction action;
-   while (open_gl_.initOpenGlComp.try_dequeue(action))
-       action();
 
 
    juce::ScopedLock lock(open_gl_critical_section_);
@@ -535,6 +531,10 @@ void FullInterface::showFullScreenSection(SynthSection* full_screen) {
 
 std::map<std::string, SynthSlider*> FullInterface::getAllSliders(){
     return prep_popup->getAllSliders();
+}
+
+std::map<std::string,SynthButton*> FullInterface::getAllButtons(){
+    return prep_popup->getAllButtons();
 }
 
 

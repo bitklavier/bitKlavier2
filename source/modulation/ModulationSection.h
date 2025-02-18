@@ -14,11 +14,10 @@ class ModulationManager;
 class ModulationSection : public SynthSection
 {
 public:
-    ModulationSection( const juce::ValueTree &, bitklavier::ParametersView* editor);
+    ModulationSection( const juce::ValueTree &, SynthSection* editor);
 
     virtual ~ModulationSection();
 
-    void paintBackground(juce::Graphics& g) override;
     //    void setParametersViewEditor(bitklavier::ParametersViewEditor&&);
     // void paintBackgroundShadow(Graphics& g) override { if (isActive()) paintTabShadow(g); }
     void resized() override;
@@ -30,7 +29,7 @@ public:
     void addModButtonListener(ModulationManager*);
 private:
 
-    std::unique_ptr<bitklavier::ParametersView> _view;
+    std::unique_ptr<SynthSection> _view;
     std::shared_ptr<ModulationButton> mod_button;
 
 };

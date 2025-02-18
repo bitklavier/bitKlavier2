@@ -29,7 +29,7 @@ PreparationSection::PreparationSection(juce::String name, juce::ValueTree v, Ope
     constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
     rebuildObjects();
     for (auto object: objects) {
-        open_gl.initOpenGlComp.try_enqueue([this, object, &open_gl] {
+        open_gl.context.executeOnGLThread([this,object,&open_gl](juce::OpenGLContext& context){
 
             object->getImageComponent()->init(open_gl);
 
@@ -38,7 +38,7 @@ PreparationSection::PreparationSection(juce::String name, juce::ValueTree v, Ope
             this->addAndMakeVisible(object);
             object->addListener(this);
             this->resized();
-        });
+        },false);
     }
 
 
@@ -157,7 +157,7 @@ void PreparationSection::reset() {
 void PreparationSection::newObjectAdded(BKPort *object) {
 
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-    parent->getGui()->open_gl_.initOpenGlComp.try_enqueue([this, object] {
+    parent->getGui()->open_gl_.context.executeOnGLThread([this,object](juce::OpenGLContext& context) {
         SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
         object->getImageComponent()->init(_parent->getGui()->open_gl_);
         juce::MessageManagerLock mm;
@@ -165,7 +165,7 @@ void PreparationSection::newObjectAdded(BKPort *object) {
         this->addAndMakeVisible(object);
         object->addListener(this);
         this->resized();
-    });
+    },false);
 }
 
 void PreparationSection::valueTreeRedirected(juce::ValueTree &) {

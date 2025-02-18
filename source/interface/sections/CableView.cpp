@@ -56,7 +56,7 @@ void CableView::beginConnectorDrag (juce::AudioProcessorGraph::NodeAndChannel so
     addChildComponent(draggingConnector.get(), 0);
 
     addOpenGlComponent(draggingConnector->getImageComponent(), true, false);
-    site.open_gl.initOpenGlComp.try_enqueue([this] {
+    site.open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context) {
         draggingConnector->getImageComponent()->init(site.open_gl);
         juce::MessageManager::callAsync(
             [safeComp = juce::Component::SafePointer<Cable>(draggingConnector.get())] {
@@ -65,7 +65,7 @@ void CableView::beginConnectorDrag (juce::AudioProcessorGraph::NodeAndChannel so
                comp->getImageComponent()->setVisible(true);
                 }
             });
-    });
+    },false);
     draggingConnector->setInput (source);
     draggingConnector->setOutput (dest);
 
@@ -160,10 +160,9 @@ void CableView::endDraggingConnector (const juce::MouseEvent& e)
     objectToDelete = draggingConnector->getImageComponent().get();
 
     draggingConnector = nullptr;
-    site.open_gl.initOpenGlComp.try_enqueue([this]{
-        destroyOpenGlComponent(*objectToDelete, site.open_gl);
-        objectToDelete = nullptr;
-    });
+    objectToDelete->setVisible(false);
+    site.open_gl.context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {destroyOpenGlComponent(*objectToDelete, site.open_gl);
+        objectToDelete = nullptr;},true);
     if (auto* pin = site.findPinAt (e2.position))
     {
         if (connection.source.nodeID == juce::AudioProcessorGraph::NodeID())
@@ -253,7 +252,7 @@ Cable* CableView::createNewObject(const juce::ValueTree &v) {
     addChildComponent(comp, 0);
 
     addOpenGlComponent(comp->getImageComponent(), true, false);
-    site.open_gl.initOpenGlComp.try_enqueue([this, comp] {
+    site.open_gl.context.executeOnGLThread([this,comp](juce::OpenGLContext& context) {
         comp->getImageComponent()->init(site.open_gl);
         juce::MessageManager::callAsync(
                 [safeComp = juce::Component::SafePointer<Cable>(comp)] {
@@ -263,7 +262,7 @@ Cable* CableView::createNewObject(const juce::ValueTree &v) {
                         _comp->resized();
                     }
                 });
-    });
+    },false);
     addAndMakeVisible (comp);
     comp->setValueTree(v);
 

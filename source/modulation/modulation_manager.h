@@ -36,6 +36,7 @@ class ModulationDestination;
 class SynthBase;
 namespace bitklavier{
     class ModulationConnectionBank;
+    class StateConnection;
 }
 class ModulationAmountKnob : public SynthSlider {
   public:
@@ -144,6 +145,43 @@ class ModulationAmountKnob : public SynthSlider {
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationAmountKnob)
 };
 
+class ModulationIndicator : public OpenGlQuad {
+public:
+    ModulationIndicator (juce::String name, int index, const juce::ValueTree &v):
+    OpenGlQuad(Shaders::kRoundedRectangleFragment) , index_(index), state(v)
+    {
+        setName(name);
+    }
+    int index_;
+    juce::ValueTree state;
+    void makeVisible(bool visible)
+    {
+        if (visible == showing_)
+            return;
+
+        showing_ = visible;
+        setVisible(visible);
+        setAlpha((showing_ || hovering_) ? 1.0f : 0.0f);
+    }
+    void render(OpenGlWrapper& open_gl, bool animate) override
+    {
+        OpenGlQuad::render(open_gl, animate);
+    }
+    class Listener {
+    public:
+        virtual ~Listener() { }
+        virtual void disconnectModulation(ModulationIndicator* modulation_knob) = 0;
+    };
+    void addModulationIndicatorListener(Listener* listener) { listeners_.push_back(listener); }
+    void setSource(const std::string& name);
+    void setCurrentModulator(bool current);
+private:
+    bool showing_;
+    bool current_modulator_;
+    bool hovering_;
+    std::vector<Listener*> listeners_;
+};
+
 class ModulationExpansionBox : public OpenGlQuad {
   public:
     class Listener {
@@ -175,7 +213,8 @@ class ModulationManager : public SynthSection,
                           public ModulationAmountKnob::Listener,
                           public SynthSlider::SliderListener,
                           public ModulationExpansionBox::Listener,
-                          public ModulesInterface::Listener
+                          public ModulesInterface::Listener,
+public ModulationIndicator::Listener
 
 {
   public:
@@ -191,16 +230,20 @@ class ModulationManager : public SynthSection,
     void createModulationSlider(std::string name, SynthSlider* slider, bool poly);
 
     void connectModulation(std::string source, std::string destination);
+    void connectStateModulation(std::string source, std::string destination);
     void removeModulation(std::string source, std::string destination);
+    void removeStateModulation(std::string source, std::string destination);
     void setModulationSliderValue(int index, float value);
     void setModulationSliderBipolar(int index, bool bipolar);
     void setModulationSliderValues(int index, float value);
     void setModulationSliderScale(int index);
     void setModulationValues(std::string source, std::string destination,
                              float amount, bool bipolar, bool stereo, bool bypass);
+    void setStateModulationValues(std::string source, std::string destination, float amount);
+    void setStateModulationAmounts();
     void reset() override;
     void initAuxConnections();
-
+    void makeCurrentStateModulatorsVisible();
     void resized() override;
     void parentHierarchyChanged() override;
     void updateModulationMeterLocations();
@@ -208,6 +251,7 @@ class ModulationManager : public SynthSection,
     void modulationRemoved(SynthSlider* slider) override;
 
     void modulationDisconnected(bitklavier::ModulationConnection* connection, bool last) override;
+    void modulationDisconnected(bitklavier::StateConnection* connection, bool last) override;
     void modulationSelected(ModulationButton* source) override;
     void modulationClicked(ModulationButton* source) override;
     void modulationCleared() override;
@@ -229,6 +273,7 @@ class ModulationManager : public SynthSection,
 
     void clearModulationSource();
 
+    void disconnectModulation(ModulationIndicator* modulation_knob) override{}
     void disconnectModulation(ModulationAmountKnob* modulation_knob) override;
     void setModulationSettings(ModulationAmountKnob* modulation_knob);
     void setModulationBypass(ModulationAmountKnob* modulation_knob, bool bypass) override;
@@ -248,7 +293,8 @@ class ModulationManager : public SynthSection,
 
     void setModulationAmounts();
     void setVisibleMeterBounds();
-
+    void hoverStarted(SynthButton* button) override;
+    void hoverEnded(SynthButton* button) override;
     void hoverStarted(SynthSlider* slider) override;
     void hoverEnded(SynthSlider* slider) override;
     void menuFinished(SynthSlider* slider) override;
@@ -257,6 +303,8 @@ class ModulationManager : public SynthSection,
     int getModulationIndex(std::string source, std::string destination);
     bitklavier::ModulationConnection* getConnectionForModulationSlider(juce::Slider* slider);
     bitklavier::ModulationConnection* getConnection(int index);
+    bitklavier::StateConnection* getStateConnection(int index);
+    bitklavier::StateConnection* getStateConnection(const std::string& source, const std::string& dest);
     bitklavier::ModulationConnection* getConnection(const std::string& source, const std::string& dest);
     void mouseDown(SynthSlider* slider) override;
     void mouseUp(SynthSlider* slider) override;
@@ -291,6 +339,7 @@ class ModulationManager : public SynthSection,
     void setDestinationQuadBounds(ModulationDestination* destination);
     void makeCurrentModulatorAmountsVisible();
     void makeModulationsVisible(SynthSlider* destination, bool visible);
+    void makeModulationsVisible(SynthButton* destination, bool visible);
     void positionModulationAmountSlidersInside(const std::string& source,
                                                std::vector<bitklavier::ModulationConnection*> connections);
     void positionModulationAmountSlidersCallout(const std::string& source,
@@ -309,10 +358,12 @@ class ModulationManager : public SynthSection,
     std::unique_ptr<juce::Component> modulation_destinations_;
     std::map<juce::Viewport*, int> num_rotary_meters;
     std::map<juce::Viewport*, int> num_linear_meters;
+    std::map<juce::Viewport*, int> num_button_meters;
     ModulationButton* current_source_;
     ExpandModulationButton* current_expanded_modulation_;
     ModulationDestination* temporarily_set_destination_;
     SynthSlider* temporarily_set_synth_slider_;
+    SynthButton* temporarily_set_button_;
     ModulationAmountKnob* temporarily_set_hover_slider_;
     bool temporarily_set_bipolar_;
     OpenGlQuad drag_quad_;
@@ -324,6 +375,8 @@ class ModulationManager : public SynthSection,
     std::map<juce::Viewport*, std::unique_ptr<OpenGlMultiQuad>> linear_destinations_;
     std::map<juce::Viewport*, std::shared_ptr<OpenGlMultiQuad>> rotary_meters_;
     std::map<juce::Viewport*, std::unique_ptr<OpenGlMultiQuad>> linear_meters_;
+    std::map<juce::Viewport*, std::unique_ptr<OpenGlMultiQuad>> button_meters_;
+    std::map<juce::Viewport*, std::unique_ptr<OpenGlMultiQuad>> button_destinations_;
     juce::Point<int> mouse_drag_start_;
     juce::Point<int> mouse_drag_position_;
     bool modifying_;
@@ -340,7 +393,9 @@ class ModulationManager : public SynthSection,
 
     std::map<std::string, ModulationDestination*> destination_lookup_;
     std::map<std::string, SynthSlider*> slider_model_lookup_;
+    std::map<std::string, SynthButton*> button_model_lookup_;
     std::map<std::string, ModulationAmountKnob*> modulation_amount_lookup_;
+    std::map<std::string, ModulationIndicator*> modulation_indicators_lookup_;
 
     std::vector<std::unique_ptr<ModulationDestination>> all_destinations_;
     std::map<std::string, std::unique_ptr<ModulationMeter>> meter_lookup_;
@@ -349,6 +404,11 @@ class ModulationManager : public SynthSection,
     std::unique_ptr<ModulationAmountKnob> modulation_amount_sliders_[bitklavier::kMaxModulationConnections];
     std::unique_ptr<ModulationAmountKnob> modulation_hover_sliders_[bitklavier::kMaxModulationConnections];
     std::unique_ptr<ModulationAmountKnob> selected_modulation_sliders_[bitklavier::kMaxModulationConnections];
+
+
+    std::unique_ptr<ModulationIndicator> modulation_indicators_[bitklavier::kMaxStateConnections];
+    std::unique_ptr<ModulationIndicator> modulation_hover_indicators_[bitklavier::kMaxStateConnections];
+    std::unique_ptr<ModulationIndicator> selected_modulation_indicators_[bitklavier::kMaxStateConnections];
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationManager)
 };

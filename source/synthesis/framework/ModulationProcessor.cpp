@@ -14,13 +14,13 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         modulators_[i]->getNextAudioBlock(tmp_buffers[i], midiMessages);
         for (auto connection : mod_routing[i].mod_connections)
         {
-            buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getCurrentBaseValue());
+//            buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getCurrentBaseValue());
            //buffer.getWritePointer(connection->modulation_output_bus_index) += tmp_buffers[i].getReadPointer(0,0);
         }
         //mod_routing[i]
         //output the modulation to the correct output buffers with scaling
     }
-    melatonin::printSparkline(buffer);
+    //melatonin::printSparkline(buffer);
 }
 
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
@@ -41,6 +41,17 @@ void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnecti
     mod_routing[index].mod_connections.push_back(connection);
 
 }
+void bitklavier::ModulationProcessor::addModulationConnection(StateConnection* connection){
+    all_state_connections_.push_back(connection);
+
+
+
+   // auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
+    //size_t index = std::distance(modulators_.begin(), it);
+
+    //mod_routing[index].mod_connections.push_back(connection);
+
+}
 int bitklavier::ModulationProcessor::createNewModIndex()
 {
 
@@ -58,6 +69,17 @@ int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavie
    }
 
         return createNewModIndex();
+}
+int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavier::StateConnection& connection)
+{
+    for(auto _connection : all_state_connections_) {
+        if (connection.destination_name == _connection->destination_name)
+        {
+            return  _connection->modulation_output_bus_index;
+        }
+    }
+
+    return createNewModIndex();
 }
 
 ModulatorBase* bitklavier::ModulationProcessor::getModulatorBase(std::string& uuid)

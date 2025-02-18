@@ -21,6 +21,7 @@
 
 namespace bitklavier {
   struct ModulationConnection;
+  struct StateConnection;
 } // namespace vital
 
 class SynthGuiInterface;
@@ -52,6 +53,7 @@ class ModulationButton : public PlainShapeComponent {
         virtual ~Listener() = default;
 
         virtual void modulationConnectionChanged() { }
+        virtual void modulationDisconnected(bitklavier::StateConnection* connection, bool last){}
         virtual void modulationDisconnected(bitklavier::ModulationConnection* connection, bool last) { }
         virtual void modulationSelected(ModulationButton* source) { }
         virtual void modulationLostFocus(ModulationButton* source) { }
@@ -96,7 +98,8 @@ class ModulationButton : public PlainShapeComponent {
     void setConnectRight(bool connect) { connect_right_ = connect; repaint(); }
     void setDrawBorder(bool border) { draw_border_ = border; repaint(); }
     void overrideText(juce::String text) { text_override_ = std::move(text); repaint(); }
-
+    void setStateModulation(bool state) { state_modulation = state; };
+    bool isStateModulation() const { return state_modulation; }
   private:
     void disconnectModulation(bitklavier::ModulationConnection* connection);
     bool initialized;
@@ -108,6 +111,7 @@ class ModulationButton : public PlainShapeComponent {
     bool connect_right_;
     bool draw_border_;
     bool active_modulation_;
+    bool state_modulation;
     OpenGlImageComponent drag_drop_;
     Component drag_drop_area_;
     float font_size_;

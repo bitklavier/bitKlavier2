@@ -133,6 +133,85 @@ class ModulationProcessor;
         std::vector<std::unique_ptr<ModulationConnection>> all_connections_;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationConnectionBank)
     };
+
+    struct StateConnection {
+        StateConnection(const std::string& from, const std::string& to, int index)
+                : source_name(from), destination_name(to),state(IDs::ModulationConnection)
+        {
+            createUuidProperty(state);
+            uuid = state.getProperty(IDs::uuid);
+            index_in_all_mods = index;
+            scalingValue_ = 1.f;
+        }
+        ~StateConnection()
+        {
+            //count--;
+        }
+        void setSource(int uuid_from)
+        {
+            state.setProperty(IDs::src, uuid_from, nullptr);
+        }
+
+        void setDestination(int uuid_to)
+        {
+            state.setProperty(IDs::src, uuid_to, nullptr);
+        }
+
+        void setModulationAmount(float amt)
+        {
+            state.setProperty(IDs::modAmt, amt, nullptr);
+        }
+        void resetConnection(const std::string& from, const std::string& to) {
+            source_name = from;
+            destination_name = to;
+        }
+
+        float getCurrentBaseValue()
+        {
+            return scalingValue_.load();
+        }
+        void setScalingValue(float val)
+        {
+                scalingValue_.store(val);
+            DBG(juce::String(val));
+        }
+
+
+        std::string source_name;
+        std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
+        // if i'll be using this for that or not
+        juce::ValueTree state;
+        int index_in_all_mods;
+        int index_in_mapping;
+        juce::Uuid uuid;
+        bool defaultBipolar;
+        juce::AudioProcessorGraph::Connection connection_;
+        ModulationProcessor* parent_processor;
+        ModulatorBase* processor;
+        int modulation_output_bus_index;
+    private:
+        std::atomic<float> scalingValue_;
+//        std::atomic<float>* bipolarOffset;
+
+
+
+    };
+
+
+    class StateConnectionBank {
+    public:
+        StateConnectionBank();
+        ~StateConnectionBank();
+        StateConnection* createConnection(const std::string& from, const std::string& to);
+
+        StateConnection* atIndex(int index) { return all_connections_[index].get(); }
+        size_t numConnections() { return all_connections_.size(); }
+
+    private:
+
+        std::vector<std::unique_ptr<StateConnection>> all_connections_;
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StateConnectionBank)
+    };
 }
 
 #endif //BITKLAVIER_MODULATIONCONNECTION_H

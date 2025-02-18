@@ -61,6 +61,7 @@ class SynthGuiInterface {
     void tryEnqueueProcessorInitQueue(juce::FixedSizeFunction<64, void()> callback);
     const juce::CriticalSection& getCriticalSection();
     void connectModulation(std::string source, std::string destination);
+    void connectStateModulation(std::string source, std::string destination);
     void disconnectModulation(std::string source, std::string destination);
     void disconnectModulation(bitklavier::ModulationConnection* connection);
     void notifyModulationsChanged();

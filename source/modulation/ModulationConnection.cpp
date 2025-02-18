@@ -78,5 +78,36 @@ std::string check = match[1];
 
         return nullptr;
     }
+    force_inline bool isConnectionAvailable (StateConnection* connection)
+    {
+        return connection->source_name.empty() && connection->destination_name.empty();
+    }
 
+     StateConnectionBank::StateConnectionBank ()
+    {
+        for (int i = 0; i < kMaxStateConnections; ++i)
+        {
+            std::unique_ptr<StateConnection> connection = std::make_unique<StateConnection> ("", "", i);
+            all_connections_.push_back (std::move (connection));
+        }
+    }
+
+    StateConnectionBank::~StateConnectionBank() {}
+
+
+    StateConnection* StateConnectionBank::createConnection (const std::string& from, const std::string& to)
+    {
+        int index = 1;
+        for (auto& connection : all_connections_)
+        {
+            std::string invalid_connection = "State_" + std::to_string (index++) + "_amount";
+            if (to != invalid_connection && isConnectionAvailable (connection.get()))
+            {
+                connection->resetConnection (from, to);
+                return connection.get();
+            }
+        }
+
+        return nullptr;
+    }
 }

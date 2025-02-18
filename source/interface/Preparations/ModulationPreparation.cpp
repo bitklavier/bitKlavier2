@@ -23,9 +23,9 @@ ModulationPreparation::ModulationPreparation (std::unique_ptr<bitklavier::Modula
 
     item = std::make_unique<ModulationItem> (); // Initializes member variable `item` of PreparationSection class
     addOpenGlComponent (item->getImageComponent()); // Calls member function of SynthSection (parent class to PreparationSection)
-    _open_gl.initOpenGlComp.try_enqueue([this]
+    _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
                                         {item->getImageComponent()->init(_open_gl);
-                                        });
+                                        },false);
 
     addAndMakeVisible (item.get());
     setSkinOverride (Skin::kModulation);

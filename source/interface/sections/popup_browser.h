@@ -110,6 +110,7 @@ public:
 
     std::map<std::string, SynthSlider *> getAllSliders() override;
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
+    std::map<std::string, SynthButton*> getAllButtons() override;
 private:
 
     std::shared_ptr<OpenGlBorder> _border;
@@ -133,7 +134,7 @@ public:
         virtual void doubleClickedSelected(PopupList* list, int id, int index) { }
     };
 
-    static constexpr float kRowHeight = 24.0f;
+    static constexpr float kRowHeight = 32.0f;
     static constexpr float kScrollSensitivity = 200.0f;
     static constexpr float kScrollBarWidth = 15.0f;
 

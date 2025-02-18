@@ -43,7 +43,10 @@ public:
     SynthBase* parent_;
     void addListener (Listener* l) { listeners_.push_back (l); }
 
-//    void removeListener (Listener* l) { listeners_.remove (l); }
+    void removeListener (Listener* l) {listeners_.erase(
+                std::remove(listeners_.begin(), listeners_.end(), l),
+                listeners_.end());
+    }
 private:
     std::vector<Listener*> listeners_;
 

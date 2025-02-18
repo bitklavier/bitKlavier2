@@ -23,14 +23,8 @@ ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
     std::any args = std::make_tuple( v );
 
     try {
-
         auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),args);
-//        auto *module_section = new ModulationSection(v, (proc->createEditor()));
 
-
-//        container_->addSubSection(module_section);
-//        module_section->setInterceptsMouseClicks(false,true);
-//        parentHierarchyChanged();
         parent_->processorInitQueue.try_enqueue(
                 [this, proc] {
                     this->proc_->addModulator(proc);

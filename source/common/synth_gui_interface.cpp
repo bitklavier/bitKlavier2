@@ -91,7 +91,12 @@ void SynthGuiInterface::updateGuiControl(const std::string& name, float value) {
 void SynthGuiInterface::notifyModulationsChanged() {
   gui_->modulationChanged();
 }
-
+void SynthGuiInterface::connectStateModulation(std::string source, std::string destination) {
+    bool created = synth_->connectStateModulation(source, destination);
+//  if (created)
+//    initModulationValues(source, destination);
+    notifyModulationsChanged();
+}
 void SynthGuiInterface::connectModulation(std::string source, std::string destination) {
   bool created = synth_->connectModulation(source, destination);
 //  if (created)

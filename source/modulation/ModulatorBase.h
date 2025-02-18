@@ -59,7 +59,7 @@ public:
     virtual void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages)  {}
     virtual void prepareToPlay (int samplesPerBlock, double sampleRate )  {}
     virtual void releaseResources() {}
-    virtual bitklavier::ParametersView* createEditor() = 0;
+    virtual SynthSection* createEditor() = 0;
 //    std::vector<bitklavier::ModulationConnection*> connections;
 };
 

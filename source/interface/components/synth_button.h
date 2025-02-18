@@ -393,6 +393,8 @@ class SynthButton : public OpenGlToggleButton {
       public:
         virtual ~ButtonListener() { }
         virtual void guiChanged(SynthButton* button) { }
+        virtual void hoverStarted(SynthButton* button) { }
+        virtual void hoverEnded(SynthButton* button) { }
     };
 
     SynthButton(juce::String name);
@@ -407,7 +409,8 @@ class SynthButton : public OpenGlToggleButton {
 
     virtual void mouseDown(const juce::MouseEvent& e) override;
     virtual void mouseUp(const juce::MouseEvent& e) override;
-
+    virtual void mouseEnter(const juce::MouseEvent& e) override;
+    virtual void mouseExit(const juce::MouseEvent& e) override;
     void addButtonListener(ButtonListener* listener);
 
     virtual void clicked() override {
@@ -417,6 +420,7 @@ class SynthButton : public OpenGlToggleButton {
     }
 
   private:
+    bool hovering_;
     void clicked(const juce::ModifierKeys& modifiers) override;
 
     const std::string* string_lookup_;

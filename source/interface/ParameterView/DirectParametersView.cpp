@@ -18,16 +18,13 @@ void DirectParametersView::resized()
 
     juce::Rectangle<int> knobs_area(title_width, knob_y, area_width, knob_section_height);
     knobs_area.setSize(knobs_area.getWidth() * getSizeRatio(), knobs_area.getHeight() * getSizeRatio());
-    placeKnobsInArea(knobs_area, comps);
+    placeKnobsInArea(knobs_area, _sliders);
 
-    for(auto section: sub_sections_)
-    {
-        if(section->getName() == "ENV")
-            section->setBounds(title_width, knob_section_height, area_width, knob_section_height * 4);
-    }
+            envSection->setBounds(title_width, knob_section_height, area_width, knob_section_height * 4);
 
-     transpose_uses_tuning->setBounds(area_width - title_width, 0, 100, knob_section_height);
-    transpositionSlider->setBounds(title_width, 0, area_width, knob_section_height);
+//     transpose_uses_tuning->setBounds(area_width - title_width, 0, 100, knob_section_height);
+    transpositionSlider->setBounds(title_width,0,   area_width, knob_section_height);
+
 
 
     SynthSection::resized();

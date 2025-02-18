@@ -64,6 +64,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     virtual const juce::CriticalSection& getCriticalSection() = 0;
     virtual void pauseProcessing(bool pause) = 0;
     bitklavier::ModulationConnectionBank& getModulationBank();
+    bitklavier::StateConnectionBank& getStateBank();
 
     struct ValueChangedCallback : public juce::CallbackMessage {
       ValueChangedCallback(std::shared_ptr<SynthBase*> listener, std::string name, float val) :
@@ -91,16 +92,22 @@ class SynthBase :  public juce::ValueTree::Listener {
     void clearActiveFile() { active_file_ = juce::File(); }
     juce::File getActiveFile() { return active_file_; }
     void addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
+    bool connectStateModulation(const std::string& source,const std::string& destination);
     bool connectModulation(const std::string& source,const std::string& destination);
     void connectModulation(bitklavier::ModulationConnection* connection);
+    void connectStateModulation(bitklavier::StateConnection* connection);
     SimpleFactory<ModulatorBase> modulator_factory;
     ///modulation functionality
 
     std::vector<bitklavier::ModulationConnection*> getSourceConnections(const std::string& sourceId) const;
+    std::vector<bitklavier::StateConnection*> getSourceStateConnections(const std::string& sourceId) const;
     std::vector<bitklavier::ModulationConnection*> getDestinationConnections(const std::string& destinationId) const;
+    std::vector<bitklavier::StateConnection*> getDestinationStateConnections(const std::string& destinationId) const;
     bitklavier::ModulationConnection* getConnection(const std::string& source, const std::string& destination) const;
+    bitklavier::StateConnection* getStateConnection(const std::string& source, const std::string& destination) const;
 
     bitklavier::CircularQueue<bitklavier::ModulationConnection*> mod_connections_;
+    bitklavier::CircularQueue<bitklavier::StateConnection*> state_connections_;
     int getNumModulations(const std::string& destination);
 protected:
 //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}

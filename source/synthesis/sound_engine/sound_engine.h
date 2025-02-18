@@ -113,6 +113,7 @@ namespace bitklavier {
 
 
         ModulationConnectionBank& getModulationBank() { return modulation_bank_; }
+        StateConnectionBank& getStateBank() { return state_bank_; }
       void processAudioAndMidi(juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
       {
           processorGraph->processBlock(audio_buffer, midi_buffer);
@@ -155,6 +156,7 @@ namespace bitklavier {
         Node::Ptr midiInputNode;
         Node::Ptr midiOutputNode;
         ModulationConnectionBank modulation_bank_;
+        StateConnectionBank state_bank_;
       JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SoundEngine)
   };
 } // namespace vital
