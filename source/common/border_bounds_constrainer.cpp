@@ -40,14 +40,16 @@ void BorderBoundsConstrainer::checkBounds(juce::Rectangle<int>& bounds, const ju
     int new_height = std::round(new_width / aspect_ratio);
     bounds.setWidth(new_width);
     bounds.setHeight(new_height);
+
   }
   if (display_area.getHeight() < bounds.getHeight()) {
     int new_height = display_area.getHeight();
     int new_width = std::round(new_height * aspect_ratio);
     bounds.setWidth(new_width);
     bounds.setHeight(new_height);
-  }
 
+  }
+  gui_->resize_image_ =  gui_->resize_image_.rescaled(bounds.getWidth(), bounds.getHeight(),juce::Graphics::ResamplingQuality::highResamplingQuality);
   border_.addTo(bounds);
 }
 
@@ -59,25 +61,12 @@ void BorderBoundsConstrainer::resizeStart() {
           const auto scaleFactor = 2.0;
           auto image = gui_->createComponentSnapshot (gui_->getBounds(), false, 1)
                   .convertedToFormat (juce::Image::ARGB);
-          image.multiplyAllAlphas (0.6f);
 
-
-
-
-          juce::Image composite (juce::Image::ARGB, image.getWidth(), image.getHeight(), true);
-          {
-              juce::Graphics compositeContext (composite);
-
-//               compositeContext.reduceClipRegion (fade, {});
-              compositeContext.drawImageAt (image, 0, 0);
-          }
-
-          return { composite };
+          return { image };
       }();
       if (!gui_->resize_image_.isValid())
           gui_->resize_image_ = imageToUse;
       gui_->open_gl_context_.detach();
-//      gui_.open_gl_context_.setComponentPaintingEnabled(true);
       gui_->enableRedoBackground(false);
       gui_->resizing = true;
   }

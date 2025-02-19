@@ -118,6 +118,8 @@ public :
     juce::ValueTree vt;
     bool resizing = false;
     juce::Image resize_image_;
+//    juce::Image original_resize_image_;
+
 private :
 
 //std::unique_ptr<TestSection> test_;
