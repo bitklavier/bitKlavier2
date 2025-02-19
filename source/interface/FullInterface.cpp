@@ -150,6 +150,12 @@ FullInterface::~FullInterface() {
    //open_gl_context_.setRenderer(nullptr);
 }
 
+
+void FullInterface::paint(juce::Graphics& g)
+{
+    g.drawImageAt(resize_image_, 0, 0);
+
+}
 void FullInterface::paintBackground(juce::Graphics& g) {
    g.fillAll(findColour(Skin::kBackground, true));
    paintChildrenShadows(g);
@@ -262,13 +268,9 @@ void FullInterface::checkShouldReposition(bool resize) {
 
 void FullInterface::resized() {
     checkShouldReposition(false);
-//SynthSection::resized();
 
    if (!enable_redo_background_)
    {
-      // open_gl_context_.detach();
-      //juce::DocumentWindow::resized();
-      // startTimer(100);
        return;
    }
    width_ = getWidth();
@@ -418,6 +420,15 @@ void FullInterface::newOpenGLContextCreated() {
 void FullInterface::renderOpenGL() {
    if (unsupported_)
        return;
+   if (resizing)
+   {
+
+
+
+       return;
+   }
+   resize_image_ = juce::Image();
+//   open_gl_context_.setComponentPaintingEnabled(false);
 
    float render_scale = open_gl_.context.getRenderingScale();
    if (render_scale != last_render_scale_) {
@@ -438,8 +449,9 @@ void FullInterface::renderOpenGL() {
 void FullInterface::openGLContextClosing() {
    if (unsupported_)
        return;
+   if (!resizing)
+   {
 
-   background_.destroy(open_gl_);
     removeSubSection(main_.get());
     removeSubSection(header_.get());
     removeSubSection(prep_popup.get());
@@ -448,10 +460,14 @@ void FullInterface::openGLContextClosing() {
    header_ = nullptr;
     prep_popup = nullptr;
     mod_popup = nullptr;
-   destroyOpenGlComponents(open_gl_);
+
 
    open_gl_.shaders = nullptr;
    shaders_ = nullptr;
+
+   }
+    destroyOpenGlComponents(open_gl_);
+    background_.destroy(open_gl_);
 }
 
 

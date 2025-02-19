@@ -36,6 +36,7 @@ class SynthEditor : public juce::AudioAppComponent, public SynthBase, public Syn
     void resized() override;
 
     const juce::CriticalSection& getCriticalSection() override { return critical_section_; }
+//    const juce::CriticalSection& getOpenGlCriticalSection() override { return this.open
     void pauseProcessing(bool pause) override {
       if (pause)
         critical_section_.enter();

@@ -79,6 +79,7 @@ class SynthGuiInterface {
     bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID);
     void synchronizeValueTree();
     FullInterface* getGui() { return gui_.get(); }
+    juce::CriticalSection* getOpenGlCriticalSection();
     OpenGlWrapper* getOpenGlWrapper();
     juce::File getActiveFile();
     std::shared_ptr<UserPreferencesWrapper> userPreferences;

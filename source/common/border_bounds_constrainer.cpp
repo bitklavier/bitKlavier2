@@ -53,12 +53,51 @@ void BorderBoundsConstrainer::checkBounds(juce::Rectangle<int>& bounds, const ju
 
 void BorderBoundsConstrainer::resizeStart() {
   if (gui_)
-    gui_->enableRedoBackground(false);
+  {
+      const auto imageToUse = [&]() -> juce::Image
+      {
+          const auto scaleFactor = 2.0;
+          auto image = gui_->createComponentSnapshot (gui_->getBounds(), false, 1)
+                  .convertedToFormat (juce::Image::ARGB);
+          image.multiplyAllAlphas (0.6f);
+
+
+
+
+          juce::Image composite (juce::Image::ARGB, image.getWidth(), image.getHeight(), true);
+          {
+              juce::Graphics compositeContext (composite);
+
+//               compositeContext.reduceClipRegion (fade, {});
+              compositeContext.drawImageAt (image, 0, 0);
+          }
+
+          return { composite };
+      }();
+      if (!gui_->resize_image_.isValid())
+          gui_->resize_image_ = imageToUse;
+      gui_->open_gl_context_.detach();
+//      gui_.open_gl_context_.setComponentPaintingEnabled(true);
+      gui_->enableRedoBackground(false);
+      gui_->resizing = true;
+  }
+
 }
 
 void BorderBoundsConstrainer::resizeEnd() {
   if (gui_) {
+
     //LoadSave::saveWindowSize(gui_->getWidth() / (1.0f * vital::kDefaultWindowWidth));
-    gui_->enableRedoBackground(true);
+
+      gui_->open_gl_context_.setContinuousRepainting(true);
+      gui_->open_gl_context_.setOpenGLVersionRequired(juce::OpenGLContext::openGL3_2);
+      gui_->open_gl_context_.setSwapInterval(0);
+      gui_->open_gl_context_.setRenderer(gui_);
+      //componentpaintingenabled fixes flickering
+      gui_->open_gl_context_.setComponentPaintingEnabled(false); // set to true, and the non-OpenGL components will draw
+      gui_->open_gl_context_.attachTo(*gui_);
+
+      gui_->resize_image_ = juce::Image();
+      gui_->resizing = false;
   }
 }

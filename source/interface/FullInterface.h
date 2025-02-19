@@ -36,7 +36,7 @@ public :
     static constexpr double kMinOpenGlVersion = 1.4;
     FullInterface(SynthGuiData *synth_gui_data);
      ~FullInterface() override;
-
+    void paint(juce::Graphics&) override;
      void paintBackground(juce::Graphics& g) override;
 
     void parentHierarchyChanged() override {
@@ -116,8 +116,9 @@ public :
     void modulationChanged();
     //is currently just the first piano. should be whateber is currentpiano
     juce::ValueTree vt;
+    bool resizing = false;
+    juce::Image resize_image_;
 private :
-
 
 //std::unique_ptr<TestSection> test_;
     int width_;

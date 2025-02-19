@@ -173,36 +173,7 @@ void PreparationSection::valueTreeRedirected(juce::ValueTree &) {
 
 
 
-//void PreparationSection::valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i)
-//{
-//    //if (v == state)
-//    //        if (i == IDs::name || i == IDs::colour)
-//    //            repaint();
-//}
 
-//PreparationSection* PreparationList::createNewObject (const juce::ValueTree& v)
-//{
-//
-//        auto s = prepFactory.CreateObject((int)v.getProperty(IDs::type), v, undo);
-//        addSubSection(s);
-//        return s;
-//
-//
-//}
-
-//PreparationList::PreparationList(juce::ValueTree editTree, juce::UndoManager& um)
-//    : SynthSection("preplist"),
-//      tracktion::engine::ValueTreeObjectList<PreparationSection>(editTree),
-//      undo(um)
-//{
-//
-//
-//}
-
-//void PreparationSection::mouseDoubleClick(const juce::MouseEvent &event)
-//{
-//    showPrepPopup(this);
-//}
 void PreparationSection::mouseDrag(const juce::MouseEvent &e)
 {
         for (auto listener: listeners_) {

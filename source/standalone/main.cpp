@@ -135,7 +135,7 @@ class SynthApplication : public juce::JUCEApplication {
 //        void resized() override
 //        {
 //          //if (editor_ != nullptr)
-//          //  editor_->setBounds(getBounds());
+//
 //        }
         void getAllCommands(juce::Array<juce::CommandID>& commands) override {
           commands.add(kSave);

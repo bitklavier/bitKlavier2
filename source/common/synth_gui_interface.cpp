@@ -237,4 +237,7 @@ const juce::CriticalSection& SynthGuiInterface::getCriticalSection() {
 bool SynthGuiInterface::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
     return synth_->isConnected(src,dest);
 }
+juce::CriticalSection* SynthGuiInterface::getOpenGlCriticalSection() {
+    return &gui_->open_gl_critical_section_;
+}
 #endif
