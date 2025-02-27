@@ -77,7 +77,12 @@ void ModulationLineView::modulationDropped(const juce::ValueTree &source, const 
 {
     auto sourceId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(source.getProperty(IDs::nodeID,-1));
     auto destId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( destination.getProperty(IDs::nodeID,-1));
+
+    //protects against short/accidental drag drops
+    if (sourceId == destId)
+        return;
     //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
+
     //right now is does make a connection on the backend but i think this should probably change once all this is fully implemented
     //actual connections should be children of modconnection vtrees
     juce::ValueTree _connection(IDs::MODCONNECTION);
