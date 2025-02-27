@@ -38,7 +38,11 @@ public:
     {
         return parent;
     }
-    void deleteObject(ModulatorBase*){}
+    void deleteObject(ModulatorBase*);
+
+
+
+
     bitklavier::ModulationProcessor *proc_;
     SynthBase* parent_;
     void addListener (Listener* l) { listeners_.push_back (l); }

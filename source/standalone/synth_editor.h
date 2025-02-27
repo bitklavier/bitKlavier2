@@ -21,9 +21,9 @@
 #include "synth_base.h"
 #include "synth_gui_interface.h"
 #include <juce_audio_utils/juce_audio_utils.h>
-//#include <melatonin_perfetto/melatonin_perfetto.h>
-//class SynthComputerKeyboard;
-
+//reminder that inheritance order matters for creation. if you inherit from
+//synthguiinterfce before synthbase, the synthguiinterface constructor
+// will get called first. causing a crash
 class SynthEditor : public juce::AudioAppComponent, public SynthBase, public SynthGuiInterface, public juce::Timer {
   public:
     SynthEditor(bool use_gui = true);

@@ -10,6 +10,9 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
     buffer.clear();
     for (int i = 0; i <modulators_.size();i++)
     {
+
+        if (modulators_[i] == nullptr)
+            continue;
         //process the modulation into a scratch buffer.
         modulators_[i]->getNextAudioBlock(tmp_buffers[i], midiMessages);
         for (auto connection : mod_routing[i].mod_connections)
@@ -24,10 +27,22 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
 }
 
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
-
+//update to search for any null locations
+    mod->parent_ = this;
     modulators_.push_back(mod);
     tmp_buffers.emplace_back(1,blockSize_);
     mod_routing.emplace_back();
+}
+
+void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
+    auto it  = std::find(modulators_.begin(), modulators_.end(), mod);
+    if(it != modulators_.end()) {
+        int index = std::distance(modulators_.begin(), it);
+        //set to null so that deallocation doesn't happen on audio thread
+        modulators_[index] = nullptr;
+        tmp_buffers[index] = {};
+        mod_routing[index] = {};
+    }
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnection* connection){
@@ -79,7 +94,7 @@ int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavie
         }
     }
 
-    return createNewModIndex();
+    return -1;
 }
 
 ModulatorBase* bitklavier::ModulationProcessor::getModulatorBase(std::string& uuid)

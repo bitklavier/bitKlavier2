@@ -17,7 +17,16 @@ ModulationList::~ModulationList()
     freeObjects();
 }
 
+void ModulationList::deleteObject(ModulatorBase * base)
+{
+    //this will call delete in the modulationprocessor
 
+    parent_->processorInitQueue.try_enqueue(
+            [this, base] {
+                base->parent_->removeModulator(base);
+            });
+    delete base;
+}
 ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
 //LEAF* leaf = parent->getLEAF();
     std::any args = std::make_tuple( v );

@@ -42,16 +42,20 @@ public:
 private:
     std::map<std::string, CreateFunction> creators;
 };
+namespace bitklavier{
 
+    class ModulationProcessor;
+}
 class ModulatorBase
 {
 public:
     explicit ModulatorBase(juce::ValueTree& tree, juce::UndoManager* um = nullptr) :
-        state(tree)
+        state(tree),parent_(nullptr)
     {
 
     }
-    ~ModulatorBase() = default;
+    //https://stackoverflow.com/questions/461203/when-to-use-virtual-destructors
+    virtual ~ModulatorBase(){}
     juce::ValueTree state;
 
     juce::String name;
@@ -60,6 +64,7 @@ public:
     virtual void prepareToPlay (int samplesPerBlock, double sampleRate )  {}
     virtual void releaseResources() {}
     virtual SynthSection* createEditor() = 0;
+    bitklavier::ModulationProcessor* parent_;
 //    std::vector<bitklavier::ModulationConnection*> connections;
 };
 
@@ -74,6 +79,7 @@ public :
     {
 
     }
+    ~ModulatorStateBase() override{}
     PluginStateType _state;
 };
 

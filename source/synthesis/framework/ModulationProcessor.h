@@ -107,6 +107,7 @@ class StateConnection;
         void addModulationConnection(bitklavier::StateConnection*);
         int getNewModulationOutputIndex(const bitklavier::ModulationConnection&);
         int getNewModulationOutputIndex(const bitklavier::StateConnection&);
+        void removeModulator(ModulatorBase*);
         //could probabalt make this into a struct
         std::vector<ModulatorBase*> modulators_;
         std::vector<juce::AudioBuffer<float>> tmp_buffers;
@@ -117,6 +118,7 @@ class StateConnection;
 int blockSize_ =0;
 int sampleRate_ = 0;
         ModulatorBase* getModulatorBase(std::string& uuid);
+        ModulationProcessor();
     private :
         //could create new bus may need to happen on audio threafd?
         int createNewModIndex();
