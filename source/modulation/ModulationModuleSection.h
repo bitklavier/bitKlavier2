@@ -24,7 +24,7 @@ public:
 
     PopupItems createPopupMenu() override;
     void handlePopupResult(int result) override;
-    juce::Array<ModulationSection*> objects;
+//    juce::Array<ModulationSection*> objects;
     juce::ValueTree parent;
     std::map<std::string, SynthSlider*> getAllSliders() override;
     ModulationList* modulation_list_;

@@ -17,7 +17,10 @@ mod_button(new ModulationButton(editor->getName()+"_mod"))
     mod_button->setStateModulation(v.getProperty(IDs::isState));
 }
 
-ModulationSection::~ModulationSection() = default;
+ModulationSection::~ModulationSection()
+{
+    _view.reset();
+}
 
 
 

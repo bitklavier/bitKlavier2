@@ -444,11 +444,15 @@ void FullInterface::openGLContextClosing() {
     removeSubSection(header_.get());
     removeSubSection(prep_popup.get());
     removeSubSection(mod_popup.get());
+    destroyOpenGlComponents(open_gl_);
+    prep_popup->destroyOpenGlComponents(open_gl_);
+    mod_popup->destroyOpenGlComponents(open_gl_);
+
    main_ = nullptr;
    header_ = nullptr;
     prep_popup = nullptr;
     mod_popup = nullptr;
-   destroyOpenGlComponents(open_gl_);
+
 
    open_gl_.shaders = nullptr;
    shaders_ = nullptr;

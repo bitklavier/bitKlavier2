@@ -21,12 +21,13 @@ ModulesInterface(v), modulation_list_(modulationProcessor)
     addAndMakeVisible(scroll_bar_.get());
     addOpenGlComponent(scroll_bar_->getGlComponent());
     scroll_bar_->addListener(this);
+    modulation_sections_.reserve(modulation_list_->objects.size());
      for (auto& mod : modulation_list_->objects)
      {
          auto *module_section = new ModulationSection(v, (mod->createEditor()));
         container_->addSubSection(module_section);
         module_section->setInterceptsMouseClicks(false,true);
-        objects.add(module_section);
+        modulation_sections_.emplace_back(std::move(module_section));
      }
      parent = modulation_list_->getValueTree();
      modulation_list_->addListener(this);
@@ -40,7 +41,11 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
     auto *module_section = new ModulationSection(obj->state,obj->createEditor());
     container_->addSubSection(module_section);
     module_section->setInterceptsMouseClicks(false,true);
-    objects.add(module_section);
+    //watch out for this invalidating ptrs to the object in places such as
+    //container->sub_sections
+    // a vector resize could invalidate ptrs
+    //could solve by rebuilidng the container sub section ptrs on add
+    modulation_sections_.emplace_back(std::move(module_section));
     //parentHierarchyChanged();
     for (auto listener: listeners_)
         listener->added();
@@ -48,7 +53,6 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 }
 ModulationModuleSection::~ModulationModuleSection()
 {
-//    freeObjects();
    modulation_list_->removeListener(this);
 }
 
@@ -107,7 +111,7 @@ void ModulationModuleSection::setEffectPositions() {
     int y = 0;
 
     juce::Point<int> position = viewport_.getViewPosition();
-    for(auto& section : objects)
+    for(auto& section : modulation_sections_)
     {
         section->setBounds(shadow_width, y, effect_width, effect_height);
         y += effect_height + padding;
@@ -121,6 +125,7 @@ void ModulationModuleSection::setEffectPositions() {
 
     container_->setScrollWheelEnabled(container_->getHeight() <= viewport_.getHeight());
     setScrollBarRange();
+
     repaintBackground();
 }
 PopupItems ModulationModuleSection::createPopupMenu()

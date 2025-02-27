@@ -1453,17 +1453,28 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
     if (clicked_button == exit_button_.get())
     {
         setVisible(false);
+        auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+        prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
         removeSubSection(prep_view.get());
         all_synth_buttons_.clear();
         all_sliders_.clear();
         all_modulation_buttons_.clear();
-       prep_view->reset();
-       repaintBackground();
+        all_state_modulated_components.clear();
+        //do not use ->reset that is a synthsection function. i want to reset the actual ptr
+        prep_view.reset();
+       repaintPrepBackground();
 
 
     }
 
 }
+PreparationPopup::~PreparationPopup()
+{
+//    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+//    prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
+//    prep_view.reset();
+}
+
 void PreparationPopup::resized() {
     juce::Rectangle<int> bounds = getLocalBounds();
     int rounding = findValue(Skin::kBodyRounding);
@@ -1495,3 +1506,9 @@ std::map<std::string, SynthButton *> PreparationPopup::getAllButtons() {
     return SynthSection::getAllButtons();
 }
 
+std::map<std::string, StateModulatedComponent*> PreparationPopup::getAllStateModulatedComponents()
+{
+    if (prep_view!= nullptr)
+        return prep_view->getAllStateModulatedComponents();
+    return SynthSection::getAllStateModulatedComponents();
+}

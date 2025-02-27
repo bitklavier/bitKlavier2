@@ -27,7 +27,7 @@ class OpenGlShapeButtonComponent : public OpenGlComponent {
     static constexpr float kHoverInc = 0.2f;
 
     OpenGlShapeButtonComponent(juce::Button* button) : button_(button), down_(false), hover_(false), hover_amount_(0.0f),
-                                                 use_on_colors_(false), shape_("shape") {
+                                                 use_on_colors_(false), shape_("shape" + button->getName()) {
       shape_.setComponent(button);
       shape_.setScissor(true);
     }

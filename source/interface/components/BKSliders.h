@@ -10,6 +10,7 @@
 #include "FullInterface.h"
 #include "PreparationSection.h"
 #include "BKLookAndFeel.h"
+#include "StateModulatedComponent.h"
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 
 /**
@@ -20,7 +21,7 @@
  *
  */
 class BKStackedSlider :
-    public juce::Component,
+    public StateModulatedComponent,
     public juce::Slider::Listener,
     public juce::TextEditor::Listener
 {

@@ -3,7 +3,7 @@
 //
 
 #include "ModuleListInterface.h"
-
+#include "ModulationSection.h"
 ModulesInterface::ModulesInterface(juce::ValueTree &v) : SynthSection("modules") {
     container_ = std::make_unique<ModulesContainer>("container");
 
@@ -28,9 +28,9 @@ ModulesInterface::~ModulesInterface() {
 }
 
 void ModulesInterface::paintBackground(juce::Graphics& g) {
-    juce::Colour background = findColour(Skin::kBackground, true);
-    g.setColour(background);
-    g.fillRect(getLocalBounds().withRight(getWidth() - findValue(Skin::kLargePadding) / 2));
+//    juce::Colour background = findColour(Skin::kBackground, true);
+//    g.setColour(background);
+//    g.fillRect(getLocalBounds().withRight(getWidth() - findValue(Skin::kLargePadding) / 2));
     //paintChildBackground(g, effect_order_.get());
 
     redoBackgroundImage();
@@ -115,7 +115,14 @@ void ModulesInterface::renderOpenGlComponents(OpenGlWrapper& open_gl, bool anima
     SynthSection::renderOpenGlComponents(open_gl, animate);
 }
 void ModulesInterface::destroyOpenGlComponents(OpenGlWrapper& open_gl) {
-    background_.destroy(open_gl);
+
+    if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
+        open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
+            background_.destroy(open_gl);
+        }, true);
+    }
+    else
+        background_.destroy(open_gl);
     SynthSection::destroyOpenGlComponents(open_gl);
 }
 void ModulesInterface::scrollBarMoved(juce::ScrollBar* scroll_bar, double range_start) {

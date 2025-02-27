@@ -28,7 +28,7 @@
 #include <functional>
 #include <map>
 #include <set>
-
+#include "StateModulatedComponent.h"
 
 
 class ModulationButton;
@@ -59,128 +59,6 @@ struct PopupItems {
   void addItem(const PopupItems& item) { items.push_back(item); }
   int size() const { return static_cast<int>(items.size()); }
 };
-//class LoadingWheel : public OpenGlQuad {
-//  public:
-//    LoadingWheel() : OpenGlQuad(Shaders::kRotaryModulationFragment), tick_(0), complete_(false), complete_ticks_(0) {
-//      setAlpha(1.0f);
-//    }
-//
-//    void resized() override {
-//      OpenGlQuad::resized();
-//
-//      juce::Colour color = findColour(Skin::kWidgetAccent1, true);
-//      setColor(color);
-//      setModColor(color);
-//      setAltColor(color);
-//    }
-//
-//    virtual void render(OpenGlWrapper& open_gl, bool animate) override {
-//      static constexpr float kRotationMult = 0.05f;
-//      static constexpr float kWidthFrequency = 0.025f;
-//      static constexpr float kMinRads = 0.6f;
-//      static constexpr float kMaxRads = 4.0f;
-//      static constexpr float kRadRange = kMaxRads - kMinRads;
-//      static constexpr float kCompleteSpeed = 0.15f;
-//      static constexpr float kStartRads = -vital::kPi - 0.05f;
-//
-//      tick_++;
-//      setStartPos(-tick_ * kRotationMult);
-//
-//      float width = (sinf(tick_ * kWidthFrequency) * 0.5f + 0.5f) * kRadRange + kMinRads;
-//      if (complete_) {
-//        complete_ticks_++;
-//        width += kCompleteSpeed * complete_ticks_;
-//      }
-//
-//      setShaderValue(0, kStartRads, 0);
-//      setShaderValue(0, kStartRads + width, 1);
-//      setShaderValue(0, kStartRads, 2);
-//      setShaderValue(0, kStartRads + width, 3);
-//
-//      OpenGlQuad::render(open_gl, animate);
-//    }
-//
-//    void completeRing() {
-//      complete_ = true;
-//    }
-//
-//  private:
-//    int tick_;
-//    bool complete_;
-//    int complete_ticks_;
-//};
-
-//class AppLogo : public OpenGlImageComponent {
-//  public:
-//    AppLogo(juce::String name) : OpenGlImageComponent(std::move(name)) {
-//      logo_letter_ = Paths::vitalV();
-//      logo_ring_ = Paths::vitalRing();
-//    }
-//
-//    void paint(juce::Graphics& g) override {
-//      const juce::DropShadow shadow(findColour(Skin::kShadow, true), 10.0f,juce::Point<int>(0, 0));
-//
-//      logo_letter_.applyTransform(logo_letter_.getTransformToScaleToFit(getLocalBounds().toFloat(), true));
-//      logo_ring_.applyTransform(logo_ring_.getTransformToScaleToFit(getLocalBounds().toFloat(), true));
-//
-//      shadow.drawForPath(g, logo_letter_);
-//      shadow.drawForPath(g, logo_ring_);
-//
-//      juce::Colour letter_top_color = findColour(Skin::kWidgetSecondary1, true);
-//      juce::Colour letter_bottom_color = findColour(Skin::kWidgetSecondary2, true);
-//      juce::Colour ring_top_color = findColour(Skin::kWidgetPrimary1, true);
-//      juce::Colour ring_bottom_color = findColour(Skin::kWidgetPrimary2, true);
-//      juce::ColourGradient letter_gradient(letter_top_color, 0.0f, 12.0f, letter_bottom_color, 0.0f, 96.0f, false);
-//      juce::ColourGradient ring_gradient(ring_top_color, 0.0f, 12.0f, ring_bottom_color, 0.0f, 96.0f, false);
-//      g.setGradientFill(letter_gradient);
-//      g.fillPath(logo_letter_);
-//
-//      g.setGradientFill(ring_gradient);
-//      g.fillPath(logo_ring_);
-//    }
-//
-//  private:
-//    juce::Path logo_letter_;
-//    juce::Path logo_ring_;
-//
-//    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AppLogo)
-//};
-
-
-//class AppLogo : public OpenGlImageComponent {
-//public:
-//    AppLogo(juce::String name) : OpenGlImageComponent(std::move(name)) {
-//
-//    }
-//
-//    void paint(juce::Graphics& g) override {
-//        const juce::DropShadow shadow(findColour(Skin::kShadow, true), 10.0f, juce::Point<int>(0, 0));
-//
-//        logo_letter_.applyTransform(logo_letter_.getTransformToScaleToFit(getLocalBounds().toFloat(), true));
-//        logo_ring_.applyTransform(logo_ring_.getTransformToScaleToFit(getLocalBounds().toFloat(), true));
-//
-//        shadow.drawForPath(g, logo_letter_);
-//        shadow.drawForPath(g, logo_ring_);
-//
-//        juce::Colour letter_top_color = findColour(Skin::kWidgetSecondary1, true);
-//        juce::Colour letter_bottom_color = findColour(Skin::kWidgetSecondary2, true);
-//        juce::Colour ring_top_color = findColour(Skin::kWidgetPrimary1, true);
-//        juce::Colour ring_bottom_color = findColour(Skin::kWidgetPrimary2, true);
-//        juce::ColourGradient letter_gradient(letter_top_color, 0.0f, 12.0f, letter_bottom_color, 0.0f, 96.0f, false);
-//        juce::ColourGradient ring_gradient(ring_top_color, 0.0f, 12.0f, ring_bottom_color, 0.0f, 96.0f, false);
-//        g.setGradientFill(letter_gradient);
-//        g.fillPath(logo_letter_);
-//
-//        g.setGradientFill(ring_gradient);
-//        g.fillPath(logo_ring_);
-//    }
-//
-//private:
-//    juce::Path logo_letter_;
-//    juce::Path logo_ring_;
-//
-//    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AppLogo)
-//};
 
 class SynthSection : public juce::Component, public juce::Slider::Listener,
                      public juce::Button::Listener, public SynthButton::ButtonListener {
@@ -308,6 +186,9 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     virtual std::map<std::string, ModulationButton*> getAllModulationButtons() {
         return all_modulation_buttons_;
     }
+    virtual std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() {
+        return all_state_modulated_components;
+    }
     std::vector<juce::Component*> getAllSlidersVec() { return all_sliders_v; }
     float getKnobSectionHeight();
 
@@ -356,7 +237,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
 
     void addButton(OpenGlShapeButton* button, bool show = true);
     void addSynthButton(SynthButton* button, bool show = true);
-
+    void addStateModulatedComponent(StateModulatedComponent* component, bool show = true);
 
     void addBackgroundComponent(OpenGlBackground* open_gl_component, bool to_beginning = false);
     void setActivator(SynthButton* activator);
@@ -390,7 +271,8 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     std::map<std::string, SynthSlider*> slider_lookup_;
     std::map<std::string, juce::Button*> button_lookup_;
     std::map<std::string, ModulationButton*> modulation_buttons_;
-
+    std::map<std::string, StateModulatedComponent*> state_modulated_components_lookup;
+    std::map<std::string, StateModulatedComponent*> all_state_modulated_components;
 
     std::map<std::string, SynthSlider*> all_sliders_;
 

@@ -63,6 +63,7 @@ private:
 class PreparationPopup : public SynthSection {
 public:
     PreparationPopup();
+    ~PreparationPopup();
     void paintBackground(juce::Graphics& g) override {SynthSection::paintContainer(g);
         paintHeadingText(g);
         paintBorder(g);
@@ -74,7 +75,8 @@ public:
         background_->lock();
         background_image_ = juce::Image(juce::Image::RGB, getWidth(),getHeight(), true);
         juce::Graphics g(background_image_);
-        paintChildBackground(g, prep_view.get());
+        if (prep_view.get() != nullptr)
+            paintChildBackground(g, prep_view.get());
         background_->updateBackgroundImage(background_image_);
         background_->unlock();
     }
@@ -107,10 +109,14 @@ public:
 //    {
 //        prep = prep_;
 //    }
-
+    void repaintBackground() override
+    {
+        repaintPrepBackground();
+    }
     std::map<std::string, SynthSlider *> getAllSliders() override;
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
     std::map<std::string, SynthButton*> getAllButtons() override;
+    std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() override;
 private:
 
     std::shared_ptr<OpenGlBorder> _border;

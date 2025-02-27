@@ -12,10 +12,18 @@
 #include <string>
 #include <iostream>
 #include "ModulationList.h"
+class ModulationSection;
 class ModulesContainer : public SynthSection {
 public:
     ModulesContainer(juce::String name) : SynthSection(name) {
         setInterceptsMouseClicks(false,true);
+    }
+    ~ModulesContainer()
+    {
+        //sub sections get added here
+        //but will not get deleted if this isn't called since it technically has
+        //ownership
+        sub_sections_.clear();
     }
     void paintBackground(juce::Graphics& g) override {
         g.fillAll(findColour(Skin::kBackground, true));
@@ -100,10 +108,8 @@ protected:
     std::unique_ptr<ModulesContainer> container_;
     OpenGlImage background_;
     juce::CriticalSection open_gl_critical_section_;
-
+    std::vector<std::unique_ptr<ModulationSection>> modulation_sections_;
     std::unique_ptr<OpenGlScrollBar> scroll_bar_;
-//
-//    std::vector<std::unique_ptr<SynthSection>> modules;
 
 
 

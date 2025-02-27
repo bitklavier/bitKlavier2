@@ -14,7 +14,7 @@ ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier:
 
 ModulationList::~ModulationList()
 {
-
+    freeObjects();
 }
 
 

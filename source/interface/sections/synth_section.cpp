@@ -425,7 +425,7 @@ void SynthSection::destroyOpenGlComponents(OpenGlWrapper &open_gl) {
                 background_->destroy(open_gl);
             GLenum gl = juce::gl::glGetError();
 
-        }, false);
+        }, true);
     } else {
         for (auto &open_gl_component: open_gl_components_)
             open_gl_component->destroy(open_gl);
@@ -525,7 +525,16 @@ void SynthSection::addSynthButton(SynthButton *button, bool show) {
         addAndMakeVisible(button);
 }
 
-
+void SynthSection::addStateModulatedComponent(StateModulatedComponent *component, bool show) {
+    component->setComponentID(this->getComponentID().toStdString() + "_" + component->getComponentID().toStdString());
+    state_modulated_components_lookup[component->getComponentID().toStdString()] = component;
+    all_state_modulated_components[component->getComponentID().toStdString()]  = component;
+    if (show)
+        addAndMakeVisible(component);
+    else
+        addChildComponent(component);
+    addOpenGlComponent(component->getImageComponent());
+}
 void SynthSection::addSlider(SynthSlider *slider, bool show, bool listen) {
     slider->setComponentID(this->getComponentID().toStdString() + "_" + slider->getComponentID().toStdString());
     slider_lookup_[slider->getComponentID().toStdString()] = slider;

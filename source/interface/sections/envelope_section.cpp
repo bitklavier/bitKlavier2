@@ -109,7 +109,7 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
   decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
   decay_->setPopupPlacement(juce::BubbleComponent::below);
   decay_->setValue(params.decayParam->getDefaultValue());
-  
+
   decay_power_ = std::make_unique<SynthSlider>( "decay_power");
   addSlider(decay_power_.get());
   decay_power_->setRange(-10., 10.);
@@ -150,6 +150,7 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
 
   drag_magnifying_glass_ = std::make_unique<DragMagnifyingGlass>();
   drag_magnifying_glass_->addListener(this);
+  drag_magnifying_glass_->setName(value_prepend + "_magnify");
   addAndMakeVisible(drag_magnifying_glass_.get());
   addOpenGlComponent(drag_magnifying_glass_->getGlComponent());
 

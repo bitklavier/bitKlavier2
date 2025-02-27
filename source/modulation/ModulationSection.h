@@ -16,15 +16,9 @@ class ModulationSection : public SynthSection
 public:
     ModulationSection( const juce::ValueTree &, SynthSection* editor);
 
-    virtual ~ModulationSection();
+     ~ModulationSection() override;
 
-    //    void setParametersViewEditor(bitklavier::ParametersViewEditor&&);
-    // void paintBackgroundShadow(Graphics& g) override { if (isActive()) paintTabShadow(g); }
     void resized() override;
-    //  void setActive(bool active) override;
-    //void sliderValueChanged(Slider* changed_slider) override;
-    //void setAllValues(vital::control_map& controls) override;
-    //void setFilterActive(bool active);
     juce::ValueTree state;
     void addModButtonListener(ModulationManager*);
 private:

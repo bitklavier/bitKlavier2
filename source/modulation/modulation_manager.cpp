@@ -29,6 +29,8 @@
 #include "ModulationConnection.h"
 #include "FullInterface.h"
 #include "synth_base.h"
+#include "StateModulatedComponent.h"
+
 namespace {
   constexpr float kDefaultModulationRatio = 0.25f;
   constexpr float kModSourceMeterWidth = 0.0018f;
@@ -119,11 +121,17 @@ class ModulationDestination : public juce::Component {
   public:
     ModulationDestination(SynthSlider* source) : destination_slider_(source), margin_(0), index_(0),
                                                  size_multiple_(1.0f),
-                                                 active_(false), rectangle_(false), rotary_(true) {
+                                                 active_(false), rectangle_(false), rotary_(true), nonSliderDestination(nullptr), stateModulatedComponent_(nullptr) {
       setComponentID(source->getComponentID());
     }
     ModulationDestination(SynthButton* source) : destination_slider_(nullptr), margin_(0), index_(0),
-    nonSliderDestination(source), size_multiple_(1.0f), active_(false), rectangle_(true), rotary_(false)
+    nonSliderDestination(source), size_multiple_(1.0f), active_(false), rectangle_(true), rotary_(false), stateModulatedComponent_(nullptr)
+    {
+        setComponentID(source->getComponentID());
+    }
+    ModulationDestination(StateModulatedComponent* source) : destination_slider_(nullptr), margin_(0), index_(0),
+                                                 nonSliderDestination(nullptr), size_multiple_(1.0f), active_(false),
+                                                 rectangle_(true), rotary_(false), stateModulatedComponent_(source)
     {
         setComponentID(source->getComponentID());
     }
@@ -184,6 +192,7 @@ class ModulationDestination : public juce::Component {
     bool hasExtraModulationTarget() { return destination_slider_ != nullptr && destination_slider_->getExtraModulationTarget() != nullptr; }
     bool isRotary() { return !rectangle_ && rotary_; }
     bool isRectangle () { return rectangle_; }
+    bool isStateModulated() { return stateModulatedComponent_ != nullptr; }
     bool isActive() { return active_; }
     int getIndex() { return index_; }
 
@@ -191,6 +200,7 @@ class ModulationDestination : public juce::Component {
     juce::Component* viewport_container_;
     SynthSlider* destination_slider_;
     SynthButton* nonSliderDestination;
+    StateModulatedComponent * stateModulatedComponent_;
     int margin_;
     int index_;
     float size_multiple_;
