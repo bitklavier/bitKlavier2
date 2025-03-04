@@ -150,9 +150,9 @@ public:
     ModulationIndicator (juce::String name, int index, const juce::ValueTree &v):
     OpenGlQuad(Shaders::kRoundedRectangleFragment) , index_(index), state(v)
     {
+        setInterceptsMouseClicks(true,false);
         setName(name);
     }
-    int index_;
     juce::ValueTree state;
     void makeVisible(bool visible)
     {
@@ -171,11 +171,21 @@ public:
     public:
         virtual ~Listener() { }
         virtual void disconnectModulation(ModulationIndicator* modulation_knob) = 0;
+        virtual void modulationClicked(ModulationIndicator* modulation) = 0;
+//        virtual void beginModulationEdit(ModulationIndicator* mod) = 0;
+//        virtual void endModulationEdit(ModulationIndicator* mod) = 0;
     };
     void addModulationIndicatorListener(Listener* listener) { listeners_.push_back(listener); }
     void setSource(const std::string& name);
+    void setDestination(const std::string& name);
     void setCurrentModulator(bool current);
+    void mouseDown(const juce::MouseEvent&) override;
+    void positionModulationIndicators();
+    void positionModulationIndicatorsInside();
+    int index() { return index_; }
 private:
+    int index_;
+
     bool showing_;
     bool current_modulator_;
     bool hovering_;
@@ -214,7 +224,8 @@ class ModulationManager : public SynthSection,
                           public SynthSlider::SliderListener,
                           public ModulationExpansionBox::Listener,
                           public ModulesInterface::Listener,
-public ModulationIndicator::Listener
+public ModulationIndicator::Listener,
+public StateModulatedComponent::Listener
 
 {
   public:
@@ -245,6 +256,7 @@ public ModulationIndicator::Listener
     void initAuxConnections();
     void makeCurrentStateModulatorsVisible();
     void resized() override;
+
     void parentHierarchyChanged() override;
     void updateModulationMeterLocations();
     void modulationAmountChanged(SynthSlider* slider) override;
@@ -291,6 +303,8 @@ public ModulationIndicator::Listener
     void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
     void paintBackground(juce::Graphics& g) override { positionModulationAmountSliders(); }
 
+
+    void modulationClicked(ModulationIndicator*);
     void setModulationAmounts();
     void setVisibleMeterBounds();
     void hoverStarted(SynthButton* button) override;
@@ -300,7 +314,10 @@ public ModulationIndicator::Listener
     void menuFinished(SynthSlider* slider) override;
     void modulationsChanged(const std::string& name) override;
     int getIndexForModulationSlider(juce::Slider* slider);
+    int getIndexForModulationIndicator(juce::Component* component);
     int getModulationIndex(std::string source, std::string destination);
+    int getStateModulationIndex(std::string source, std::string destination);
+    bitklavier::StateConnection* getConnectionForModulationIndicator(ModulationIndicator* component);
     bitklavier::ModulationConnection* getConnectionForModulationSlider(juce::Slider* slider);
     bitklavier::ModulationConnection* getConnection(int index);
     bitklavier::StateConnection* getStateConnection(int index);
@@ -311,6 +328,8 @@ public ModulationIndicator::Listener
     void doubleClick(SynthSlider* slider) override;
     void beginModulationEdit(SynthSlider* slider) override;
     void endModulationEdit(SynthSlider* slider) override;
+//    void beginModulationEdit(ModulationIndicator* slider) override;
+//    void endModulationEdit(ModulationIndicator* slider) override;
     void sliderValueChanged(juce::Slider* slider) override;
     void buttonClicked(juce::Button* button) override;
     void hideUnusedHoverModulations();
@@ -318,7 +337,8 @@ public ModulationIndicator::Listener
     void addAuxConnection(int from_index, int to_index);
     void removeAuxDestinationConnection(int to_index);
     void removeAuxSourceConnection(int from_index);
-
+    void hoverStarted(StateModulatedComponent* component) override;
+    void hoverEnded(StateModulatedComponent* component) override;
 
     // this will be called by both
     //  ModulesInterface<ModulationSection>::Listener,
@@ -339,6 +359,7 @@ public ModulationIndicator::Listener
     void setDestinationQuadBounds(ModulationDestination* destination);
     void makeCurrentModulatorAmountsVisible();
     void makeModulationsVisible(SynthSlider* destination, bool visible);
+    void makeModulationsVisible(StateModulatedComponent* destination, bool visible);
     void makeModulationsVisible(SynthButton* destination, bool visible);
     void positionModulationAmountSlidersInside(const std::string& source,
                                                std::vector<bitklavier::ModulationConnection*> connections);
@@ -364,6 +385,7 @@ public ModulationIndicator::Listener
     ModulationDestination* temporarily_set_destination_;
     SynthSlider* temporarily_set_synth_slider_;
     SynthButton* temporarily_set_button_;
+    StateModulatedComponent* temporarily_set_state_component_;
     ModulationAmountKnob* temporarily_set_hover_slider_;
     bool temporarily_set_bipolar_;
     OpenGlQuad drag_quad_;
@@ -371,6 +393,7 @@ public ModulationIndicator::Listener
     OpenGlQuad current_modulator_quad_;
     OpenGlQuad editing_rotary_amount_quad_;
     OpenGlQuad editing_linear_amount_quad_;
+    StateModulatedComponent* editing_state_component_ = nullptr;
     std::map<juce::Viewport*, std::shared_ptr<OpenGlMultiQuad>> rotary_destinations_;
     std::map<juce::Viewport*, std::unique_ptr<OpenGlMultiQuad>> linear_destinations_;
     std::map<juce::Viewport*, std::shared_ptr<OpenGlMultiQuad>> rotary_meters_;
@@ -394,6 +417,7 @@ public ModulationIndicator::Listener
     std::map<std::string, ModulationDestination*> destination_lookup_;
     std::map<std::string, SynthSlider*> slider_model_lookup_;
     std::map<std::string, SynthButton*> button_model_lookup_;
+    std::map<std::string, StateModulatedComponent*> state_model_lookup_;
     std::map<std::string, ModulationAmountKnob*> modulation_amount_lookup_;
     std::map<std::string, ModulationIndicator*> modulation_indicators_lookup_;
 

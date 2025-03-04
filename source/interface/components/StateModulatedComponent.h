@@ -38,7 +38,12 @@ struct StateModulatedComponent : juce::Component
 
     virtual std::shared_ptr<OpenGlImageComponent> getImageComponent() {}
     std::vector<Listener*> listeners_;
-    bool hovering_;
+    bool hovering_ = false;
+    bool isModulation_ = false;
+    virtual StateModulatedComponent* clone() = 0;
+    //should be replaced by valuetree wrapper or something along those lines
+    virtual void syncToValueTree() = 0;
+    juce::ValueTree modulationState;
 
 };
 #endif //BITKLAVIER2_STATEMODULATEDCOMPONET_H

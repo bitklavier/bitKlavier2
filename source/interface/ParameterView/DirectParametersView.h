@@ -25,6 +25,7 @@ public:
         addSynthButton(on.get());
         addAndMakeVisible(on.get());
         setActivator(on.get());
+        slider->setComponentID("transpose");
         addStateModulatedComponent(slider.get());
 //        addAndMakeVisible(*slider);
 //        addOpenGlComponent(slider->getImageComponent());

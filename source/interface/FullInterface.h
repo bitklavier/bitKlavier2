@@ -113,6 +113,7 @@ public :
     std::map<std::string, SynthSlider*> getAllSliders() override;
     std::map<std::string, ModulationButton*> getAllModulationButtons() override;
     std::map<std::string, SynthButton*> getAllButtons() override;
+    std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() override;
     void modulationChanged();
     //is currently just the first piano. should be whateber is currentpiano
     juce::ValueTree vt;

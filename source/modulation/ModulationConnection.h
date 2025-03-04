@@ -14,24 +14,28 @@ class ModulationProcessor;
         ModulationConnection(const std::string& from, const std::string& to, int index)
             : source_name(from), destination_name(to),state(IDs::ModulationConnection)
         {
+
             createUuidProperty(state);
             uuid = state.getProperty(IDs::uuid);
             index_in_all_mods = index;
             scalingValue_ = 0.5f;
+            setDestination(to);
+            setSource(from);
+
         }
         ~ModulationConnection()
         {
             //count--;
         }
         static bool isModulationSourceDefaultBipolar(const std::string& source);
-        void setSource(int uuid_from)
+        void setSource(const std::string& from)
         {
-            state.setProperty(IDs::src, uuid_from, nullptr);
+            state.setProperty(IDs::src, juce::String(from), nullptr);
         }
 
-        void setDestination(int uuid_to)
+        void setDestination(const std::string& uuid_to)
         {
-            state.setProperty(IDs::src, uuid_to, nullptr);
+            state.setProperty(IDs::dest, juce::String(uuid_to), nullptr);
         }
 
         void setModulationAmount(float amt)
@@ -45,6 +49,12 @@ class ModulationProcessor;
         void resetConnection(const std::string& from, const std::string& to) {
             source_name = from;
             destination_name = to;
+            setSource(source_name);
+            setDestination(destination_name);
+            if (source_name == "" || destination_name == "")
+            {
+                state.getParent().removeChild(state,nullptr);
+            }
         }
 
         float getCurrentBaseValue()
@@ -58,7 +68,8 @@ class ModulationProcessor;
                     scalingValue_.store(val *0.5f);
                 else
                     scalingValue_.store(val);
-            DBG(juce::String(val));
+
+            setModulationAmount(val);
         }
 
         void setBypass(bool bypass) {}
@@ -73,15 +84,6 @@ class ModulationProcessor;
         }
         void setBipolar(bool bipolar) {
             bipolar_ = bipolar;
-//            if(bipolarOffset != nullptr && !defaultBipolar)
-//            {
-//                *bipolarOffset = bipolar_ ? 0.5f : 0.0f;
-//            }
-//            if(bipolarOffset != nullptr && defaultBipolar)
-//            {
-//                *bipolarOffset = bipolar_ ? 0.0f : 0.5f;
-//            }
-
         }
 
         std::string source_name;
@@ -142,21 +144,23 @@ class ModulationProcessor;
             uuid = state.getProperty(IDs::uuid);
             index_in_all_mods = index;
             scalingValue_ = 1.f;
+            setSource(source_name);
+            setDestination(destination_name);
+
         }
         ~StateConnection()
         {
             //count--;
         }
-        void setSource(int uuid_from)
+        void setSource(const std::string& from)
         {
-            state.setProperty(IDs::src, uuid_from, nullptr);
+            state.setProperty(IDs::src, juce::String(from), nullptr);
         }
 
-        void setDestination(int uuid_to)
+        void setDestination(const std::string& uuid_to)
         {
-            state.setProperty(IDs::src, uuid_to, nullptr);
+            state.setProperty(IDs::dest, juce::String(uuid_to), nullptr);
         }
-
         void setModulationAmount(float amt)
         {
             state.setProperty(IDs::modAmt, amt, nullptr);
@@ -164,6 +168,12 @@ class ModulationProcessor;
         void resetConnection(const std::string& from, const std::string& to) {
             source_name = from;
             destination_name = to;
+            setSource(source_name);
+            setDestination(destination_name);
+            if (source_name == "" || destination_name == "")
+            {
+                state.getParent().removeChild(state,nullptr);
+            }
         }
 
         float getCurrentBaseValue()

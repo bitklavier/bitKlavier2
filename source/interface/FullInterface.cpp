@@ -546,6 +546,10 @@ std::map<std::string, ModulationButton*> FullInterface::getAllModulationButtons(
     return mod_popup->getAllModulationButtons();
 }
 
+std::map<std::string, StateModulatedComponent*> FullInterface::getAllStateModulatedComponents(){
+    return prep_popup->getAllStateModulatedComponents();
+}
+
 void FullInterface::modulationChanged()
 {
     if (modulation_manager)

@@ -99,6 +99,12 @@ public:
     void removeMyListener(Listener* listener)  { listeners.remove(listener);   }
 
     juce::OwnedArray<juce::Slider> dataSliders;  //displays data, user controls with topSlider
+    BKStackedSlider* clone ()
+    {
+        return new BKStackedSlider(sliderName, sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault, sliderDefault, sliderIncrement);
+    }
+    void syncToValueTree()
+    {}
 private:
 
     chowdsp::SliderAttachment attachment;

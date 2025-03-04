@@ -442,7 +442,7 @@ void SynthSection::destroyOpenGlComponent(OpenGlComponent &open_gl_component, Op
     //moves the component to the end of the array
     //using partition so that it won't overwite
     //std::remove_if can overwrite values which would call the destructor
-    open_gl_component.setVisible(false);
+//    open_gl_component.setVisible(false);
     auto new_logical_end = std::partition(open_gl_components_.begin(), open_gl_components_.end(),
                                           [&](std::shared_ptr<OpenGlComponent> const &p) {
                                               return *p != open_gl_component;
@@ -568,14 +568,17 @@ void SynthSection::addSubSection(SynthSection *sub_section, bool show) {
 
     sub_sections_.push_back(sub_section);
 
-    std::map<std::string, SynthSlider *> sub_sliders = sub_section->getAllSliders();
+    auto sub_sliders = sub_section->getAllSliders();
     all_sliders_.insert(sub_sliders.begin(), sub_sliders.end());
 
-    std::map<std::string, SynthButton *> sub_buttons = sub_section->getAllButtons();
+   auto sub_buttons = sub_section->getAllButtons();
     all_synth_buttons_.insert(sub_buttons.begin(), sub_buttons.end());
 
-    std::map<std::string, ModulationButton *> sub_mod_buttons = sub_section->getAllModulationButtons();
+    auto sub_mod_buttons = sub_section->getAllModulationButtons();
     all_modulation_buttons_.insert(sub_mod_buttons.begin(), sub_mod_buttons.end());
+
+    auto sub_state_modulated_components = sub_section->getAllStateModulatedComponents();
+    all_state_modulated_components.insert(sub_state_modulated_components.begin(), sub_state_modulated_components.end());
 }
 
 void SynthSection::removeSubSection(SynthSection *section) {
