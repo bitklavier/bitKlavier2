@@ -273,7 +273,8 @@ void BKStackedSlider::mouseDown (const juce::MouseEvent &event)
 
         if(event.mods.isCtrlDown())
         {
-            showModifyPopupMenu();
+            addSlider(juce::sendNotification);
+//            showModifyPopupMenu();
         }
 
     }
