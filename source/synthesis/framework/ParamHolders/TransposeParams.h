@@ -76,6 +76,24 @@ add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
             false
     };
 
+    void processStateChanges() override
+    {
+        auto float_params = getFloatParams();
+        for(auto [index, change] : stateChanges.changeState)
+        {
+
+            static juce::var nullVar;
+            for (int i = 0; i< 11; i++)
+            {
+                auto str = "t" + juce::String(i);
+                auto val = change.getProperty(str);
+                if (val == nullVar)
+                    break;
+                float_params->data()->get()->setParameterValue(val);
+            }
+        }
+
+    }
 
 };
 #endif //BITKLAVIER2_TRANSPOSEPARAMS_H

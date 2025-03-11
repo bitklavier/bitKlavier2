@@ -6,6 +6,8 @@
 #define BITKLAVIER2_PLUGINBASE_H
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_parameters/chowdsp_parameters.h>
+#include "Identifiers.h"
+class SynthBase;
 namespace bitklavier {
     /**
   * Base class for plugin processors.
@@ -27,7 +29,7 @@ namespace bitklavier {
 #endif
     {
     public:
-        explicit PluginBase (const  juce::ValueTree & v ={},juce::UndoManager* um = nullptr, const juce::AudioProcessor::BusesProperties& layout = getDefaultBusLayout());
+        explicit PluginBase ( SynthBase *parent, const  juce::ValueTree & v ={},juce::UndoManager* um = nullptr, const juce::AudioProcessor::BusesProperties& layout = getDefaultBusLayout());
         ~PluginBase() override = default;
 
 #if defined JucePlugin_Name
@@ -156,13 +158,15 @@ namespace bitklavier {
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
     template <class State>
-    PluginBase<State>::PluginBase (const juce::ValueTree &v, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
+    PluginBase<State>::PluginBase (SynthBase* parent,const juce::ValueTree &v_, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
             : juce::AudioProcessor (layout),
               state (*this, um),
-              v(v)
+              v(v_)
     {
+
                   if(v.getChild(0).isValid())
                     chowdsp::Serialization::deserialize<chowdsp::XMLSerializer>(v.createXml(),state);
+        createUuidProperty(v);
     }
 #else
     template <class Processor>

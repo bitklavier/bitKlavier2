@@ -4,7 +4,7 @@
 
 #include "KeymapProcessor.h"
 #include "common.h"
-KeymapProcessor::KeymapProcessor (const juce::ValueTree& v, juce::AudioDeviceManager* manager) : PluginBase (v, nullptr, keymapBusLayout()), _midi (std::make_unique<MidiManager> (&keyboard_state, manager, v))
+KeymapProcessor::KeymapProcessor (const juce::ValueTree& v, juce::AudioDeviceManager* manager) : PluginBase ( nullptr, v, nullptr, keymapBusLayout()), _midi (std::make_unique<MidiManager> (&keyboard_state, manager, v))
 {
     /**
      * user settings

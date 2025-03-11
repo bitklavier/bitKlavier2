@@ -418,6 +418,7 @@ void SynthBase::connectStateModulation(bitklavier::StateConnection *connection) 
     //////i dont think any of this is threadsafe
     connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex(*connection);
     connection->processor = connection->parent_processor->getModulatorBase(juse_uuid);
+    connection->processor->addListener(connection);
     connection->parent_processor->addModulationConnection(connection);
 
 

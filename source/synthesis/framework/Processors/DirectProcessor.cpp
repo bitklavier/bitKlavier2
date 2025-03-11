@@ -6,7 +6,8 @@
 #include "Synthesiser/Sample.h"
 #include "common.h"
 #include <chowdsp_serialization/chowdsp_serialization.h>
-DirectProcessor::DirectProcessor (const juce::ValueTree& vt) : PluginBase (vt, nullptr, directBusLayout()),
+#include "synth_base.h"
+DirectProcessor::DirectProcessor (SynthBase* parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
 mainSynth(new BKSynthesiser(state.params.env, state.params.gainParam)),
 hammerSynth(new BKSynthesiser(state.params.env,state.params.hammerParam)),
 releaseResonanceSynth(new BKSynthesiser(state.params.env,state.params.releaseResonanceParam)),
@@ -35,6 +36,7 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
         v.appendChild(modChan,nullptr);
         mod++;
     }
+    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
 
 }
 
@@ -112,8 +114,11 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
     }
 //    melatonin::printSparkline(buffer);
-    //should pull first two modinputs first or somehow have dummy ins????
+    //should pull first two modinputs first or somehow have dum
+    //
+    // my ins????
     buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
+    state.params.transpose.processStateChanges();
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
 
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();

@@ -8,6 +8,18 @@
 void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     buffer.clear();
+
+
+    for (auto msg : midiMessages)
+    {
+        if (msg.getMessage().isNoteOn())
+        {
+            for (auto mod : modulators_)
+                mod->triggerModulation();
+
+        }
+
+    }
     for (int i = 0; i <modulators_.size();i++)
     {
 
@@ -15,11 +27,14 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
             continue;
         //process the modulation into a scratch buffer.
         modulators_[i]->getNextAudioBlock(tmp_buffers[i], midiMessages);
-        for (auto connection : mod_routing[i].mod_connections)
+        if (modulators_[i]->type == ModulatorType::AUDIO)
         {
-//            buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getCurrentBaseValue());
-           //buffer.getWritePointer(connection->modulation_output_bus_index) += tmp_buffers[i].getReadPointer(0,0);
+            for (auto connection : mod_routing[i].mod_connections)
+            {
+                buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getCurrentBaseValue());
+            }
         }
+
         //mod_routing[i]
         //output the modulation to the correct output buffers with scaling
     }

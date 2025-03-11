@@ -104,10 +104,15 @@ std::string check = match[1];
             if (to != invalid_connection && isConnectionAvailable (connection.get()))
             {
                 connection->resetConnection (from, to);
+                connection->setChangeBuffer(parameter_map.find(to)->second);
                 return connection.get();
             }
         }
 
         return nullptr;
+    }
+
+    void StateConnectionBank::addParam(std::pair<std::string, bitklavier::ParameterChangeBuffer *> && pair) {
+        parameter_map.insert(pair);
     }
 }

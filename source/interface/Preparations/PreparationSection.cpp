@@ -21,7 +21,7 @@ PreparationSection::PreparationSection(juce::String name, juce::ValueTree v, Ope
     numIns.referTo(v, IDs::numIns, nullptr);
     numOuts.referTo(v, IDs::numOuts, nullptr);
     //constrainer.setBoundsForComponent(this,getParentComponent()->getLocalBounds() );
-    createUuidProperty(state);
+
     uuid.referTo(state, IDs::uuid, nullptr);
 
     pluginID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID));

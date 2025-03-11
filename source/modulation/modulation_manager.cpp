@@ -1273,7 +1273,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component* component,
                   temporarily_set_button_ = button_model_lookup_[name];
                   std::string source_name = current_modulator_->getComponentID().toStdString();
                   connectStateModulation(source_name, name);
-                  setStateModulationValues(source_name, name, 1.0f);//, false, false, false);
+                  //setStateModulationValues(source_name, name, 1.0f);//, false, false, false);
                   makeModulationsVisible(button, true);
               }
               else if (destination->getStateModulatedComponent())
@@ -1283,7 +1283,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component* component,
                   temporarily_set_state_component_   = state_model_lookup_[name];
                   std::string source_name = current_modulator_->getComponentID().toStdString();
                   connectStateModulation(source_name, name);
-                  setStateModulationValues(source_name, name, 1.0f);//, false, false, false);
+                  setStateModulationValues(source_name, name, state->modulationState);//, false, false, false);
                   makeModulationsVisible(state, true);
               }
           }
@@ -2258,17 +2258,23 @@ void ModulationManager::setModulationSliderScale(int index) {
   modulation_hover_sliders_[index]->setDisplayMultiply(1.0f);
   selected_modulation_sliders_[index]->setDisplayMultiply(1.0f);
 }
-void ModulationManager::setStateModulationValues(std::string source, std::string destination, float amount) {
+void ModulationManager::setStateModulationValues(std::string source, std::string destination,const juce::ValueTree& values) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent == nullptr || source.empty() || destination.empty())
         return;
 
     modifying_ = true;
-//  parent->setModulationValues(source, destination, amount, bipolar, stereo, bypass);
-    int index = getStateModulationIndex(source, destination);
-//  notifyModulationValueChanged(index);
+    std::vector<bitklavier::StateConnection*> connections = parent->getSynth()->getDestinationStateConnections(destination);
+
+    for (auto* connection : connections) {
+        if (connection->source_name == source)
+            connection->change = values;
+
+    }
+
     setStateModulationAmounts();
+    modifying_ = false;
 }
 
 void ModulationManager::setStateModulationAmounts() {
@@ -2277,20 +2283,7 @@ void ModulationManager::setStateModulationAmounts() {
     if (parent == nullptr || modifying_)
         return;
 
-//    bitklavier::StateConnectionBank& bank = parent->getSynth()->getStateBank();
-//    for (int i = 0; i < bitklavier::kMaxStateConnections; ++i) {
-//        bitklavier::StateConnection* connection = bank.atIndex(i);
-//        if (aux_connections_to_from_.count(i) == 0)
-//            setModulationSliderValues(i, connection->getCurrentBaseValue());
-//
-//        modulation_amount_sliders_[i]->setBipolar(bipolar);
-//        modulation_amount_sliders_[i]->setStereo(stereo);
-//        modulation_amount_sliders_[i]->setBypass(bypass);
-//
-//        modulation_hover_sliders_[i]->setBipolar(bipolar);
-//        modulation_hover_sliders_[i]->setStereo(stereo);
-//        modulation_hover_sliders_[i]->setBypass(bypass);
-//    }
+
 }
 void ModulationManager::setModulationValues(std::string source, std::string destination,
                                             float amount, bool bipolar, bool stereo, bool bypass) {

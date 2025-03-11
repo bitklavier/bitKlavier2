@@ -32,7 +32,7 @@ public:
     // Static function that returns a pointer to a DirectPreparation object
     static PreparationSection* createDirectSection(juce::ValueTree v, SynthGuiInterface* interface) {
 
-        return new DirectPreparation(std::make_unique<DirectProcessor>(v), v, interface->getGui()->open_gl_);
+        return new DirectPreparation(std::make_unique<DirectProcessor>(interface->getSynth(),v), v, interface->getGui()->open_gl_);
     }
 
     // Public function definitions for the DirectPreparation class, which override functions

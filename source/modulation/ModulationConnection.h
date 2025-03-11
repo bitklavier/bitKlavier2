@@ -7,6 +7,8 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include "Identifiers.h"
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <chowdsp_parameters/chowdsp_parameters.h>
+#include "StateModulator.h"
 class ModulatorBase;
 namespace bitklavier {
 class ModulationProcessor;
@@ -136,7 +138,7 @@ class ModulationProcessor;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationConnectionBank)
     };
 
-    struct StateConnection {
+struct StateConnection : public ModulatorBase::Listener{
         StateConnection(const std::string& from, const std::string& to, int index)
                 : source_name(from), destination_name(to),state(IDs::ModulationConnection)
         {
@@ -165,6 +167,9 @@ class ModulationProcessor;
         {
             state.setProperty(IDs::modAmt, amt, nullptr);
         }
+        void setChangeBuffer(bitklavier::ParameterChangeBuffer* buf) {
+            changeBuffer = buf;
+        }
         void resetConnection(const std::string& from, const std::string& to) {
             source_name = from;
             destination_name = to;
@@ -174,6 +179,7 @@ class ModulationProcessor;
             {
                 state.getParent().removeChild(state,nullptr);
             }
+            changeBuffer = nullptr;
         }
 
         float getCurrentBaseValue()
@@ -185,12 +191,16 @@ class ModulationProcessor;
                 scalingValue_.store(val);
             DBG(juce::String(val));
         }
-
+        void modulationTriggered()
+        {
+            changeBuffer->changeState.push_back(std::pair<int,juce::ValueTree>(0,change));
+        }
 
         std::string source_name;
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
         // if i'll be using this for that or not
         juce::ValueTree state;
+        juce::ValueTree change;
         int index_in_all_mods;
         int index_in_mapping;
         juce::Uuid uuid;
@@ -199,6 +209,7 @@ class ModulationProcessor;
         ModulationProcessor* parent_processor;
         ModulatorBase* processor;
         int modulation_output_bus_index;
+        bitklavier::ParameterChangeBuffer* changeBuffer = nullptr;
     private:
         std::atomic<float> scalingValue_;
 //        std::atomic<float>* bipolarOffset;
@@ -216,9 +227,10 @@ class ModulationProcessor;
 
         StateConnection* atIndex(int index) { return all_connections_[index].get(); }
         size_t numConnections() { return all_connections_.size(); }
+        void addParam(std::pair<std::string,bitklavier::ParameterChangeBuffer*>&&);
 
     private:
-
+        std::map<std::string,bitklavier::ParameterChangeBuffer*> parameter_map;
         std::vector<std::unique_ptr<StateConnection>> all_connections_;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StateConnectionBank)
     };

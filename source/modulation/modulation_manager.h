@@ -250,7 +250,7 @@ public StateModulatedComponent::Listener
     void setModulationSliderScale(int index);
     void setModulationValues(std::string source, std::string destination,
                              float amount, bool bipolar, bool stereo, bool bypass);
-    void setStateModulationValues(std::string source, std::string destination, float amount);
+    void setStateModulationValues(std::string source, std::string destination, const juce::ValueTree&);
     void setStateModulationAmounts();
     void reset() override;
     void initAuxConnections();

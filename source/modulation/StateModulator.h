@@ -26,6 +26,7 @@
 class StateModulatorProcessor : public ModulatorBase {
 
 public :
+
     StateModulatorProcessor(juce::ValueTree&);
     ~StateModulatorProcessor(){}
     void process() override {};
@@ -36,6 +37,7 @@ public :
     {
         return new SynthSection( state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
     }
+    static constexpr ModulatorType type = ModulatorType::STATE;
 
 };
 

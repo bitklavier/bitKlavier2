@@ -5,6 +5,7 @@
 #include "RampModulator.h"
 
 RampModulatorProcessor::RampModulatorProcessor(juce::ValueTree& vt) : ModulatorStateBase<bitklavier::PreparationStateImpl<RampParams>>(vt)
+
 {
 //    vt.setProperty(IDs::uuid, state.params.processor.processorUniqueID, nullptr);
 //    name = vt.getProperty(IDs::type).toString() + vt.getProperty(IDs::uuid).toString();

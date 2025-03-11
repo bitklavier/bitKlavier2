@@ -35,6 +35,12 @@ public :
     {
         return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
     }
+    void triggerModulation() override
+    {
+        trigger = true;
+    }
+    bool trigger = false;
+    static constexpr ModulatorType type = ModulatorType::AUDIO;
 
 };
 

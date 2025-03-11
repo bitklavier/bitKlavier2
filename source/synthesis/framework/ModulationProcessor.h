@@ -5,6 +5,7 @@
 #ifndef BITKLAVIER2_MODULATIONPROCESSOR_H
 #define BITKLAVIER2_MODULATIONPROCESSOR_H
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <Identifiers.h>
 class ModulatorBase;
 
 namespace bitklavier {
@@ -21,7 +22,7 @@ class StateConnection;
         .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
         .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true))
         {
-
+            createUuidProperty(vt);
         }
 
         bool acceptsMidi() const override {

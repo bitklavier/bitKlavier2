@@ -46,6 +46,11 @@ namespace bitklavier{
 
     class ModulationProcessor;
 }
+enum class ModulatorType{
+    NONE,
+    STATE,
+    AUDIO
+} ;
 class ModulatorBase
 {
 public:
@@ -57,7 +62,20 @@ public:
     //https://stackoverflow.com/questions/461203/when-to-use-virtual-destructors
     virtual ~ModulatorBase(){}
     juce::ValueTree state;
-
+    struct Listener {
+        virtual void modulationTriggered() = 0;
+    };
+    virtual void triggerModulation()
+    {
+        for (auto list: listeners_)
+        {
+            list->modulationTriggered();
+        }
+    }
+    std::vector<Listener*> listeners_;
+    void addListener(ModulatorBase::Listener* listener) {
+        listeners_.push_back(listener);
+    }
     juce::String name;
     virtual void process() =0;
     virtual void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages)  {}
@@ -65,7 +83,10 @@ public:
     virtual void releaseResources() {}
     virtual SynthSection* createEditor() = 0;
     bitklavier::ModulationProcessor* parent_;
+    static constexpr ModulatorType type = ModulatorType::NONE;
 //    std::vector<bitklavier::ModulationConnection*> connections;
+    bool trigger = false;
+
 };
 
 
