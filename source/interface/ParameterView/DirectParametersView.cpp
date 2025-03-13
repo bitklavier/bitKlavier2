@@ -17,13 +17,13 @@ void DirectParametersView::resized()
     int envelope_height = knob_y - widget_margin;
 
     juce::Rectangle<int> knobs_area(title_width, knob_y, area_width, knob_section_height);
-    knobs_area.setSize(knobs_area.getWidth() * getSizeRatio(), knobs_area.getHeight() * getSizeRatio());
+    knobs_area.setSize(knobs_area.getWidth() , knobs_area.getHeight() );
     placeKnobsInArea(knobs_area, _sliders);
 
-            envSection->setBounds(title_width, knob_section_height, area_width, knob_section_height * 4);
+    envSection->setBounds(title_width, knob_section_height, area_width, knob_section_height * 2);
 
 //     transpose_uses_tuning->setBounds(area_width - title_width, 0, 100, knob_section_height);
-    transpositionSlider->setBounds(title_width,0,   area_width, knob_section_height);
+    transpositionSlider->setBounds(title_width,0,   area_width, knob_section_height );
 
 
 

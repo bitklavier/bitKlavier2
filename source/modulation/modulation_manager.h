@@ -147,6 +147,12 @@ class ModulationAmountKnob : public SynthSlider {
 
 class ModulationIndicator : public OpenGlQuad {
 public:
+    enum MenuOptions {
+        kDisconnect = 0xff,
+        kToggleBypass,
+        kToggleBipolar,
+        kToggleStereo,
+    };
     ModulationIndicator (juce::String name, int index, const juce::ValueTree &v):
     OpenGlQuad(Shaders::kRoundedRectangleFragment) , index_(index), state(v)
     {
@@ -182,7 +188,9 @@ public:
     void mouseDown(const juce::MouseEvent&) override;
     void positionModulationIndicators();
     void positionModulationIndicatorsInside();
+    void handleModulationMenuCallback(int result);
     int index() { return index_; }
+
 private:
     int index_;
 
@@ -285,7 +293,7 @@ public StateModulatedComponent::Listener
 
     void clearModulationSource();
 
-    void disconnectModulation(ModulationIndicator* modulation_knob) override{}
+    void disconnectModulation(ModulationIndicator* modulation_knob) override;
     void disconnectModulation(ModulationAmountKnob* modulation_knob) override;
     void setModulationSettings(ModulationAmountKnob* modulation_knob);
     void setModulationBypass(ModulationAmountKnob* modulation_knob, bool bypass) override;

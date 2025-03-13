@@ -7,7 +7,7 @@
 StateModulatorProcessor::StateModulatorProcessor(juce::ValueTree& vt): ModulatorBase(vt)
 
 {
-
+    createUuidProperty(vt);
 }
 
 void StateModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& bufferToFill,juce::MidiBuffer& midiMessages) {

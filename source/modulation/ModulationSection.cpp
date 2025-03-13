@@ -7,7 +7,7 @@
 #include "modulation_button.h"
 #include "modulation_manager.h"
 ModulationSection::ModulationSection( const juce::ValueTree &v,SynthSection* editor) : SynthSection(editor->getName()), state(v), _view(editor),
-mod_button(new ModulationButton(editor->getName()+"_mod"))
+mod_button(new ModulationButton(editor->getComponentID()+"_mod"))
 {
     setComponentID(v.getParent().getProperty(IDs::uuid).toString());
     addModulationButton(mod_button);

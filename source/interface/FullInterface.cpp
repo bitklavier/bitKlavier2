@@ -284,8 +284,8 @@ void FullInterface::resized() {
 
    int left = 0;
    int top = 0;
-   int width = std::ceil(getWidth() * display_scale_);
-   int height = std::ceil(getHeight() * display_scale_);
+   int width = std::ceil(getWidth()* display_scale_);
+   int height = std::ceil(getHeight()* display_scale_);
    juce::Rectangle<int> bounds(0, 0, width, height);
    modulation_manager->setBounds(bounds);
 
@@ -294,12 +294,12 @@ void FullInterface::resized() {
    float height_ratio = getHeight() / (1.0f * bitklavier::kDefaultWindowHeight);
    if (width_ratio > height_ratio + 1.0f / bitklavier::kDefaultWindowHeight) {
        ratio = height_ratio;
-       width = height_ratio * bitklavier::kDefaultWindowWidth * display_scale_;
+       width = height_ratio * bitklavier::kDefaultWindowWidth* display_scale_;
        left = (getWidth() - width) / 2;
    }
    if (height_ratio > width_ratio + 1.0f / bitklavier::kDefaultWindowHeight) {
        ratio = width_ratio;
-       height = ratio * bitklavier::kDefaultWindowHeight * display_scale_;
+       height = ratio * bitklavier::kDefaultWindowHeight* display_scale_;
        top = (getHeight() - height) / 2;
    }
 
@@ -316,12 +316,11 @@ void FullInterface::resized() {
 
    header_->setTabOffset(2 * voice_padding);
    header_->setBounds(left, top, width,  top_height);
-   juce::Rectangle<int> main_bounds(0, 0, width, height);
    juce::Rectangle<int> new_bounds(0, 0, width, height);
-   main_->setBounds(main_bounds);
+   main_->setBounds(new_bounds);
    //test_->setBounds(main_bounds);
-   prep_popup->setBounds(100, 100, 700, 700);
-   mod_popup->setBounds(header_->getRight() - 200,header_->getBottom(),200,400);
+   prep_popup->setBounds(100, 100, new_bounds.getWidth() /(4*display_scale_),new_bounds.getHeight()/(2*display_scale_));
+   mod_popup->setBounds(bounds.getRight() - 200*ratio,header_->getBottom(),200,400);
    about_section_->setBounds(new_bounds);
    //inspectButton->setBounds(10, 0, 100, 100);
    if (getWidth() && getHeight())

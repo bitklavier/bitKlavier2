@@ -9,7 +9,11 @@
 ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier::ModulationProcessor* proc) : tracktion::ValueTreeObjectList<ModulatorBase>(v),
         parent_(p), proc_(proc)
 {
-
+    rebuildObjects();
+    for (auto object : objects)
+    {
+        newObjectAdded (object);
+    }
 }
 
 ModulationList::~ModulationList()

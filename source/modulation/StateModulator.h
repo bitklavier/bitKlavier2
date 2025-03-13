@@ -35,7 +35,7 @@ public :
     void releaseResources() override {}
     SynthSection* createEditor() override
     {
-        return new SynthSection( state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
+        return new SynthSection("state" ,state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
     }
     static constexpr ModulatorType type = ModulatorType::STATE;
 

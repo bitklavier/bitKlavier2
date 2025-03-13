@@ -15,13 +15,23 @@
  */
 
 #include "fonts.h"
-
+#include "BinaryData.h"
 Fonts::Fonts() :
-    proportional_regular_(juce::Font(juce::Font::plain)),
-    proportional_light_(juce::Font(juce::Font::plain)),
-    proportional_title_(juce::Font(juce::Font::plain)),
-    proportional_title_regular_(juce::Font(juce::Font::plain)),
-    monospace_(juce::Font(juce::Font::plain)) {
+        proportional_regular_(juce::Typeface::createSystemTypefaceFor(
+                BinaryData::LatoRegular_ttf, BinaryData::LatoRegular_ttfSize)),
+        proportional_light_(juce::Typeface::createSystemTypefaceFor(
+                BinaryData::LatoLight_ttf, BinaryData::LatoLight_ttfSize)),
+        proportional_title_(juce::Typeface::createSystemTypefaceFor(
+                BinaryData::MontserratLight_otf, BinaryData::MontserratLight_otfSize)),
+        proportional_title_regular_(juce::Typeface::createSystemTypefaceFor(
+                BinaryData::MontserratRegular_ttf, BinaryData::MontserratRegular_ttfSize)),
+        monospace_(juce::Typeface::createSystemTypefaceFor(
+                BinaryData::DroidSansMono_ttf, BinaryData::DroidSansMono_ttfSize)){
+//proportional_regular_(juce::Font(juce::Font::plain)),
+//    proportional_light_(juce::Font(juce::Font::plain)),
+//    proportional_title_(juce::Font(juce::Font::plain)),
+//    proportional_title_regular_(juce::Font(juce::Font::plain)),
+//    monospace_(juce::Font(juce::Font::plain)) {
 //
 //  juce::Array<int> glyphs;
 //  juce::Array<float> x_offsets;

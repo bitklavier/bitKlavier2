@@ -130,6 +130,10 @@ namespace bitklavier {
      {
           processorGraph->addConnection(connection);
      }
+     void removeConnection(juce::AudioProcessorGraph::Connection& connection)
+     {
+            processorGraph->removeConnection(connection);
+     }
      bool isConnected(juce::AudioProcessorGraph::Connection& connection)
      {
           return processorGraph->isConnected(connection);

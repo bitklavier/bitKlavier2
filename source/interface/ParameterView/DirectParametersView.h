@@ -58,7 +58,7 @@ public:
                                                                                                                      //bitklavier::ParametersView(pluginState,params,open_gl,false)
     {
         //envelope = std::make_unique<EnvelopeSection>("ENV", "err");
-        setName("");
+        setName("direct");
         setLookAndFeel(DefaultLookAndFeel::instance());
 
         //addSubSection(envelope.get());

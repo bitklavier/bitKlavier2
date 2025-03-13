@@ -153,13 +153,11 @@ public:
     void setSelections(PopupItems selections);
     PopupItems getSelectionItems(int index) const { return selections_.items[index]; }
     int getRowFromPosition(float mouse_position);
-    int getRowHeight() { return size_ratio_ * kRowHeight; }
+    int getRowHeight();
     int getTextPadding() { return getRowHeight() / 4; }
     int getBrowseWidth();
     int getBrowseHeight() { return getRowHeight() * selections_.size(); }
-    juce::Font getFont() {
-        return Fonts::instance()->proportional_light().withPointHeight(getRowHeight() * 0.55f * getPixelMultiple());
-    }
+    juce::Font getFont() ;
     void mouseMove(const juce::MouseEvent& e) override;
     void mouseDrag(const juce::MouseEvent& e) override;
     void mouseExit(const juce::MouseEvent& e) override;
@@ -208,136 +206,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PopupList)
 };
 
-//class SelectionList : public SynthSection, juce::ScrollBar::Listener {
-//  public:
-//    class Listener {
-//      public:
-//        virtual ~Listener() = default;
-//
-//        virtual void newSelection(juce::File selection) = 0;
-//        virtual void allSelected() { }
-//        virtual void favoritesSelected() { }
-//        virtual void doubleClickedSelected(juce::File selection) = 0;
-//    };
-//
-//    static constexpr int kNumCachedRows = 50;
-//    static constexpr float kRowHeight = 24.0f;
-//    static constexpr float kStarWidth = 38.0f;
-//    static constexpr float kScrollSensitivity = 200.0f;
-//    static constexpr float kScrollBarWidth = 15.0f;
-//
-//  static juce::File getAllFile() { return juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile("All"); }
-//  static juce::File getFavoritesFile() { return juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile("Favorites"); }
-//
-//    class FileNameAscendingComparator {
-//      public:
-//        static int compareElements(const juce::File& first, const juce::File& second) {
-//          juce::String first_name = first.getFullPathName().toLowerCase();
-//          juce::String second_name = second.getFullPathName().toLowerCase();
-//          return first_name.compareNatural(second_name);
-//        }
-//    };
-//
-//    SelectionList();
-//
-//    void paintBackground(juce::Graphics& g) override { }
-//    void paintBackgroundShadow(juce::Graphics& g) override { }
-//    void resized() override;
-//
-//    void addFavoritesOption() { favorites_option_ = true; selected_ = getAllFile(); }
-//    void setSelections(juce::Array<juce::File> presets);
-//    juce::Array<juce::File> getSelections() { return selections_; }
-//    juce::Array<juce::File> getAdditionalFolders() { return additional_roots_; }
-//    void resetScrollPosition();
-//    void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
-//    int getRowFromPosition(float mouse_position);
-//    int getRowHeight() { return size_ratio_ * kRowHeight; }
-//    int getIconPadding() { return getRowHeight() * 0.25f; }
-//    void mouseMove(const juce::MouseEvent& e) override;
-//    void mouseExit(const juce::MouseEvent& e) override;
-//    void respondToMenuCallback(int result);
-//    void menuClick(const juce::MouseEvent& e);
-//    void leftClick(const juce::MouseEvent& e);
-//    juce::File getSelection(const juce::MouseEvent& e);
-//    void mouseDown(const juce::MouseEvent& e) override;
-//    void mouseDoubleClick(const juce::MouseEvent& e) override;
-//    void addAdditionalFolder();
-//    void removeAdditionalFolder(const juce::File& folder);
-//
-//    void select(const juce::File& selection);
-//    juce::File selected() const { return selected_; }
-//    void setSelected(const juce::File& selection) { selected_ = selection; }
-//    void selectIcon(const juce::File& selection);
-//
-//    void scrollBarMoved(juce::ScrollBar* scroll_bar, double range_start) override;
-//    void setScrollBarRange();
-//
-//    void redoCache();
-//    int getFolderDepth(const juce::File& file);
-//    void addSubfolderSelections(const juce::File& selection, std::vector<juce::File>& selections);
-//    void setAdditionalRootsName(const std::string& name);
-//    void filter(const juce::String& filter_string);
-//    int getSelectedIndex();
-//    int getScrollableRange();
-//    void selectNext();
-//    void selectPrev();
-//
-//    void initOpenGlComponents(OpenGlWrapper& open_gl) override;
-//    void renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) override;
-//    void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
-//    void addListener(Listener* listener) {
-//      listeners_.push_back(listener);
-//    }
-//
-//    void setPassthroughFolderName(const std::string& name) { passthrough_name_ = name; }
-//    std::string getPassthroughFolderName() const { return passthrough_name_; }
-//    bool hasValidPath() {
-//      for (juce::File& selection : selections_) {
-//        if (selection.exists())
-//          return true;
-//      }
-//      return false;
-//    }
-//
-//  private:
-//    void viewPositionChanged();
-//    void toggleFavorite(const juce::File& selection);
-//    void toggleOpenFolder(const juce::File& selection);
-//    int getViewPosition() {
-//      int view_height = getHeight();
-//      return std::max(0, std::min<int>(num_view_selections_ * getRowHeight() - view_height, view_position_));
-//    }
-//    void loadBrowserCache(int start_index, int end_index);
-//    void moveQuadToRow(OpenGlQuad& quad, int row, float y_offset);
-//    void sort();
-//
-//    bool favorites_option_;
-//    std::vector<Listener*> listeners_;
-//    juce::Array<juce::File> selections_;
-//    std::string additional_roots_name_;
-//    juce::Array<juce::File> additional_roots_;
-//    int num_view_selections_;
-//    std::vector<juce::File> filtered_selections_;
-//    std::set<std::string> favorites_;
-//    std::map<std::string, int> open_folders_;
-//    std::unique_ptr<OpenGlScrollBar> scroll_bar_;
-//    juce::String filter_string_;
-//    juce::File selected_;
-//    int hovered_;
-//    bool x_area_;
-//
-//    juce::Component browse_area_;
-//    int cache_position_;
-//    OpenGlImage rows_[kNumCachedRows];
-//    bool is_additional_[kNumCachedRows];
-//    OpenGlQuad highlight_;
-//    OpenGlQuad hover_;
-//    PlainShapeComponent remove_additional_x_;
-//    float view_position_;
-//    std::string passthrough_name_;
-//
-//    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SelectionList)
-//};
+
 
 class SinglePopupSelector : public SynthSection, public PopupList::Listener {
 public:

@@ -57,7 +57,7 @@ void MainSection::resized()
     int width = getWidth();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int large_padding = findValue(Skin::kLargePadding);
-    constructionSite_->setBounds(large_padding, 0, getDisplayScale() * width + 1500,getDisplayScale() * height + 1500);
+    constructionSite_->setBounds(large_padding, 0,  width, height);
     //constructionPort.setBounds(large_padding, 0,getDisplayScale()* width, getDisplayScale() * height);
     //constructionPort.setBounds(large_padding, 0,width, height);
     SynthSection::resized();

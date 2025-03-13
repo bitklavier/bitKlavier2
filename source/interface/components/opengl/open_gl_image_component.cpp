@@ -60,12 +60,13 @@ void OpenGlImageComponent::redrawImage(bool force, bool clear) {
    float gl_height = bitklavier::utils::nextPowerOfTwo(height);
    float width_ratio = gl_width / width;
    float height_ratio = gl_height / height;
-
-   float right = -1.0f + 2.0f * width_ratio;
-   float bottom = 1.0f - 2.0f * height_ratio;
-//   image_.setTopRight(right, 1.0f);
-//   image_.setBottomLeft(-1.0f, bottom);
-//   image_.setBottomRight(right, bottom);
+//
+//    float right = -1.0f + 2.0f * width_ratio;
+//    float bottom = 1.0f - 2.0f * height_ratio;
+//    image_.setTopRight(right, 1.0f);
+//    image_.setBottomLeft(-1.0f, bottom);
+//    image_.setBottomRight(right, bottom);
+    image_.unlock();
    image_.unlock();
 }
 

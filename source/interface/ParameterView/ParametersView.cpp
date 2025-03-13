@@ -178,9 +178,9 @@ namespace bitklavier {
 
     }
     ParametersView::ParametersView(chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params,juce::String name,bool isDefaultInit)
-            :  SynthSection(name) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/{
+            :  SynthSection(params.getName(),name) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/{
 //        auto *viewport = pimpl->view.getViewport();
-//        setComponentID(name);
+
 if(isDefaultInit) {
     params.doForAllParameterContainers(
             [this, &paramListeners](auto &paramVec) {

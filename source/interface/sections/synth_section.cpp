@@ -33,6 +33,15 @@ SynthSection::SynthSection(const juce::String &name) : juce::Component(name), pa
 
 }
 
+SynthSection::SynthSection(const juce::String &name, const juce::String &id) : juce::Component(name), parent_(nullptr), activator_(nullptr),
+                                                       preset_selector_(nullptr), preset_selector_half_width_(false),
+                                                       skin_override_(Skin::kNone), size_ratio_(1.0f),
+                                                       active_(true), sideways_heading_(true), background_(nullptr) {
+    setWantsKeyboardFocus(true);
+    setComponentID(id);
+
+}
+
 SynthSection::SynthSection(const juce::String &name, OpenGlWrapper *open_gl) : juce::Component(name), parent_(nullptr),
                                                                                activator_(nullptr),
                                                                                preset_selector_(nullptr),
@@ -843,7 +852,7 @@ float SynthSection::getDisplayScale() const {
     juce::Rectangle<int> global_bounds = top_level->getLocalArea(this, getLocalBounds());
     float display_scale = juce::Desktop::getInstance().getDisplays().getDisplayForRect(
             top_level->getScreenBounds())->scale;
-    return 1;//display_scale * (1.0f * global_bounds.getWidth()) / getWidth();
+    return 1; display_scale * (1.0f * global_bounds.getWidth()) / getWidth();
 }
 
 int SynthSection::getPixelMultiple() const {

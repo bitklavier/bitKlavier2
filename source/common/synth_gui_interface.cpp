@@ -104,12 +104,20 @@ void SynthGuiInterface::connectModulation(std::string source, std::string destin
   notifyModulationsChanged();
 }
 void SynthGuiInterface::disconnectModulation(std::string source, std::string destination) {
-   // synth_->disconnectModulation(source, destination);
+    synth_->disconnectModulation(source, destination);
     notifyModulationsChanged();
 }
 
+void SynthGuiInterface::disconnectStateModulation(std::string source, std::string destination) {
+    synth_->disconnectStateModulation(source,destination);
+    notifyModulationsChanged();
+}
 void SynthGuiInterface::disconnectModulation(bitklavier::ModulationConnection* connection) {
    // synth_->disconnectModulation(connection);
+    notifyModulationsChanged();
+}
+void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection* connection) {
+    // synth_->disconnectModulation(connection);
     notifyModulationsChanged();
 }
 
@@ -198,7 +206,7 @@ juce::File SynthGuiInterface::getActiveFile() {
 }
 
 void SynthGuiInterface::openSaveDialog() {
-    getSynth()->getValueTree().getChild(0).setProperty("sync", 1, nullptr);
+    getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::PREPARATIONS).setProperty("sync", 1, nullptr);
     juce::String mystr = (getSynth()->getValueTree().toXmlString());
     auto xml = getSynth()->getValueTree().createXml();
     juce::XmlElement xml_ = *xml;

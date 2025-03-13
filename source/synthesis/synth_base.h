@@ -94,7 +94,11 @@ class SynthBase :  public juce::ValueTree::Listener {
     void addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
     bool connectStateModulation(const std::string& source,const std::string& destination);
     bool connectModulation(const std::string& source,const std::string& destination);
+    void disconnectModulation(const std::string& source, const std::string& destination);
+    void disconnectStateModulation(const std::string& source, const std::string& destination);
     void connectModulation(bitklavier::ModulationConnection* connection);
+    void disconnectModulation(bitklavier::ModulationConnection* connection);
+    void disconnectModulation(bitklavier::StateConnection* connection);
     void connectStateModulation(bitklavier::StateConnection* connection);
     SimpleFactory<ModulatorBase> modulator_factory;
     ///modulation functionality

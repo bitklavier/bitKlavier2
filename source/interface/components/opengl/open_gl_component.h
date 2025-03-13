@@ -69,7 +69,7 @@ public:
 
   juce::Colour getBodyColor() const { return body_color_; }
 
-  void setParent(const SynthSection *parent) { parent_ = parent; }
+  void setParent(SynthSection *parent) { parent_ = parent; }
 
   float findValue(Skin::ValueId value_id);
   void setSkinValues(const Skin &skin)
@@ -119,7 +119,7 @@ protected:
   juce::Colour background_color_;
   juce::Colour body_color_;
   Skin::SectionOverride skin_override_;
-  const SynthSection *parent_;
+  SynthSection *parent_;
 
 private:
   int id;

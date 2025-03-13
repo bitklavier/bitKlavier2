@@ -106,6 +106,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     };
 
     SynthSection(const juce::String& name);
+    SynthSection(const juce::String& name,const juce::String& id);
     SynthSection(const juce::String& name, OpenGlWrapper* open_gl);
     virtual ~SynthSection() = default;
 

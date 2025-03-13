@@ -28,7 +28,15 @@ public:
     void objectRemoved (ModulatorBase*) override     { }//resized(); }
     void objectOrderChanged() override              { }//resized(); }
     void valueTreeParentChanged (juce::ValueTree&) override{};
-    void valueTreeRedirected (juce::ValueTree&) override{};
+    void valueTreeRedirected (juce::ValueTree&) override{
+        deleteAllObjects();
+        rebuildObjects();
+        for (auto object : objects)
+        {
+            newObjectAdded (object);
+        }
+    };
+
     bool isSuitableType (const juce::ValueTree& v) const override
     {
         return v.hasType(IDs::modulationproc);

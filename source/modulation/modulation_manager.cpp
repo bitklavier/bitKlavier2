@@ -386,16 +386,44 @@ void ModulationIndicator::setSource(const std::string& name) {
 }
 void ModulationIndicator::mouseDown(const juce::MouseEvent& e)
 {
-    DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
-    for(auto l : listeners_)
-        l->modulationClicked(this);
+
+    if (e.mods.isPopupMenu()) {
+        mouseExit(e);
+
+        PopupItems options;
+        options.addItem(kDisconnect, "Remove");
+
+        options.addItem(-1, "");
+
+        hovering_ = false;
+
+
+        auto callback = [=](int selection) { handleModulationMenuCallback(selection); };
+        auto cancel = [=]() {
+
+        };
+        parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
+
+
+    }
+    else {
+        DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
+        for(auto l : listeners_)
+            l->modulationClicked(this);
+    }
 }
 
 void ModulationIndicator::setDestination(const std::string& name)
 {
 
 }
+void ModulationIndicator::handleModulationMenuCallback(int result) {
+    if (result == kDisconnect) {
+        for (Listener *listener: listeners_)
+            listener->disconnectModulation(this);
+    }
 
+}
 void ModulationIndicator::setCurrentModulator(bool current) {
     if (current_modulator_ == current)
         return;
@@ -534,6 +562,7 @@ ModulationManager::ModulationManager(juce::ValueTree &tree, SynthBase* base
         selected_modulation_indicators_[i]->addModulationIndicatorListener(this);
         selected_modulation_indicators_[i]->setLookAndFeel(DefaultLookAndFeel::instance());
         selected_modulation_indicators_[i]->setColor(juce::Colours::greenyellow);
+        selected_modulation_indicators_[i]->setParent(this);
 
     }
 
@@ -1485,7 +1514,16 @@ void ModulationManager::clearModulationSource() {
   current_modulator_ = nullptr;
   setModulationAmounts();
 }
+void ModulationManager::disconnectModulation(ModulationIndicator * indicator)
+{
+    bitklavier::StateConnection* connection = getConnectionForModulationIndicator(indicator);
+    while (connection && !connection->source_name.empty() && !connection->destination_name.empty()) {
+        removeStateModulation(connection->source_name, connection->destination_name);
+        connection = getConnectionForModulationIndicator(indicator);
+    }
 
+    setModulationAmounts();
+}
 void ModulationManager::disconnectModulation(ModulationAmountKnob* modulation_knob) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
 
@@ -2133,11 +2171,11 @@ void ModulationManager::removeStateModulation(std::string source, std::string de
     if (parent == nullptr || source.empty() || destination.empty())
         return;
 
-//    bitklavier::ModulationConnection* connection = getConnection(source, destination);
-//    if (connection == nullptr) {
-//        positionModulationAmountSliders();
-//        return;
-//    }
+    bitklavier::StateConnection* connection = getStateConnection(source, destination);
+    if (connection == nullptr) {
+        positionModulationAmountSliders();
+        return;
+    }
 //
 //    int index = connection->index_in_all_mods;
 //    if (aux_connections_from_to_.count(index)) {
@@ -2152,11 +2190,11 @@ void ModulationManager::removeStateModulation(std::string source, std::string de
 //    else
 //        removeAuxSourceConnection(index);
 //
-//    modifying_ = true;
-//    parent->disconnectModulation(source, destination);
-//    modulationsChanged(destination);
-//    modifying_ = false;
-//    positionModulationAmountSliders();
+    modifying_ = true;
+    parent->disconnectStateModulation(source, destination);
+    modulationsChanged(destination);
+    modifying_ = false;
+    positionModulationAmountSliders();
 }
 void ModulationManager::removeModulation(std::string source, std::string destination) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);

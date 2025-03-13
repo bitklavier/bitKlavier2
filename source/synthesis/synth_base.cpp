@@ -359,7 +359,6 @@ void SynthBase::connectModulation(bitklavier::ModulationConnection *connection) 
         connection->connection_ = {{source_node->nodeID, source_index}, {dest_node->nodeID, dest_index}};
         mod_connection.appendChild(connection->state, nullptr);
         processorInitQueue.enqueue([this,connection](){
-
             engine_->addConnection(connection->connection_);
         });
     }
@@ -376,6 +375,46 @@ bool SynthBase::connectModulation(const std::string &source, const std::string &
     if (connection)
         connectModulation(connection);
     return create;
+}
+
+void SynthBase::disconnectModulation(const std::string &source, const std::string &destination) {
+    bitklavier::ModulationConnection* connection = getConnection(source, destination);
+    if (connection)
+        disconnectModulation(connection);
+}
+
+void SynthBase::disconnectStateModulation(const std::string &source, const std::string &destination) {
+    bitklavier::StateConnection* connection = getStateConnection(source,destination);
+    if (connection)
+        disconnectModulation(connection);
+}
+
+void SynthBase::disconnectModulation(bitklavier::StateConnection *connection) {
+    if(state_connections_.count(connection) == 0)
+        return;
+    connection->source_name = "";
+    connection->destination_name = "";
+    state_connections_.remove(connection);
+    processorInitQueue.enqueue([this,connection](){
+        engine_->removeConnection(connection->connection_);
+        connection->connection_ = {};
+        connection->parent_processor->removeModulationConnection(connection);
+    });
+    connection->state.getParent().removeChild(connection->state, nullptr);
+}
+void SynthBase::disconnectModulation(bitklavier::ModulationConnection *connection) {
+    if (mod_connections_.count(connection) == 0)
+        return;
+    connection->source_name = "";
+    connection->destination_name = "";
+    mod_connections_.remove(connection);
+    processorInitQueue.enqueue([this,connection](){
+        engine_->removeConnection(connection->connection_);
+        connection->connection_ = {};
+        connection->parent_processor->removeModulationConnection(connection);
+    });
+    connection->state.getParent().removeChild(connection->state, nullptr);
+
 }
 void SynthBase::connectStateModulation(bitklavier::StateConnection *connection) {
     std::stringstream ss(connection->source_name);
@@ -437,12 +476,12 @@ void SynthBase::connectStateModulation(bitklavier::StateConnection *connection) 
 //    }
 //    else if (state_connections_.count(connection) == 0){
         state_connections_.push_back(connection);
-//        connection->connection_ = {{source_node->nodeID, source_index}, {dest_node->nodeID, dest_index}};
+        connection->connection_ = {{source_node->nodeID, 0}, {dest_node->nodeID, 0}};
         state_connection.appendChild(connection->state, nullptr);
-//        processorInitQueue.enqueue([this,connection](){
-//
-//            engine_->addConnection(connection->connection_);
-//        });
+        processorInitQueue.enqueue([this,connection](){
+
+            engine_->addConnection(connection->connection_);
+        });
 
 
 }

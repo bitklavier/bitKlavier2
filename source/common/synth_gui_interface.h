@@ -47,6 +47,7 @@ namespace bitklavier
 {
     class ModulationProcessor;
 class ModulationConnection;
+class StateConnection;
 }
 class SynthGuiInterface {
   public:
@@ -63,7 +64,9 @@ class SynthGuiInterface {
     void connectModulation(std::string source, std::string destination);
     void connectStateModulation(std::string source, std::string destination);
     void disconnectModulation(std::string source, std::string destination);
+    void disconnectStateModulation(std::string source, std::string destination);
     void disconnectModulation(bitklavier::ModulationConnection* connection);
+    void disconnectModulation(bitklavier::StateConnection* connection);
     void notifyModulationsChanged();
 
     void  addProcessor(PreparationSection* );

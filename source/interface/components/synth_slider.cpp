@@ -607,14 +607,14 @@ void SynthSlider::drawRotaryShadow(juce::Graphics &g) {
     juce::Colour shadow_color = findColour(Skin::kShadow, true);
 
 
-    int width = getWidth() *parent_->getDisplayScale();
-    int height = getHeight() *parent_->getDisplayScale();
-    int x = getX() * parent_->getDisplayScale();
-    int y = getY() * parent_->getDisplayScale();
+    int width = getWidth();// *parent_->getDisplayScale();
+    int height = getHeight();// *parent_->getDisplayScale();
+    int x = getX();//* parent_->getDisplayScale();
+    int y = getY();//* parent_->getDisplayScale();
     float center_x = (float)width / 2.0f;
     float center_y = (float)height / 2.0f;
     float stroke_width = findValue(Skin::kKnobArcThickness);
-    float radius = parent_->getDisplayScale() * knob_size_scale_ * findValue(Skin::kKnobArcSize) / 2.0f;
+    float radius =  knob_size_scale_ * findValue(Skin::kKnobArcSize) /( 2.0f );
     center_y += findValue(Skin::kKnobOffset);
     float shadow_width = findValue(Skin::kKnobShadowWidth);
     float shadow_offset = findValue(Skin::kKnobShadowOffset);
@@ -626,7 +626,7 @@ void SynthSlider::drawRotaryShadow(juce::Graphics &g) {
     //g.fillRect(x, y, width, height);
     g.setOrigin(x, y);
     juce::Colour body = findColour(Skin::kRotaryBody, true);
-    float body_radius = parent_->getDisplayScale() * knob_size_scale_ * findValue(Skin::kKnobBodySize) / 2.0f;
+    float body_radius = knob_size_scale_ * findValue(Skin::kKnobBodySize) /(  parent_->getDisplayScale() *2.0f);
     if (body_radius >= 0.0f && body_radius < width) {
 
 //        if (shadow_width > 0.0f) {

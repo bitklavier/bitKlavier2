@@ -50,6 +50,7 @@ public :
 //        open_gl_context_.attachTo(*this);
 //        stopTimer();
     }
+    int getPixelMultiple() const override { return pixel_multiple_; }
     void copySkinValues(const Skin& skin);
     void reloadSkin(const Skin& skin);
     void showAboutSection() override;
@@ -70,9 +71,6 @@ public :
     void notifyChange();
     void notifyFresh();
     float getResizingScale() const { return width_ * 1.0f / resized_width_; }
-    //float getPixelScaling() const override { return display_scale_; }
-    int getPixelMultiple() const override { return pixel_multiple_; }
-   // std::unique_ptr<HeaderSection> header_;
     void showFullScreenSection(SynthSection* full_screen);
     void enableRedoBackground(bool enable) {
         enable_redo_background_ = enable;

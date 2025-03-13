@@ -106,6 +106,9 @@ class StateConnection;
         }
          void addModulationConnection(bitklavier::ModulationConnection*);
         void addModulationConnection(bitklavier::StateConnection*);
+        void removeModulationConnection(bitklavier::ModulationConnection*);
+        void removeModulationConnection(bitklavier::StateConnection*);
+
         int getNewModulationOutputIndex(const bitklavier::ModulationConnection&);
         int getNewModulationOutputIndex(const bitklavier::StateConnection&);
         void removeModulator(ModulatorBase*);

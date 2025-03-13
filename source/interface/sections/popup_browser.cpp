@@ -99,11 +99,11 @@ void PopupDisplay::setContent(const std::string& text, juce::Rectangle<int> boun
     static constexpr int kHeight = 24;
 
     int height = kHeight * size_ratio_;
-    int mult = getPixelMultiple();
+    int mult = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale;
     juce::Font font = Fonts::instance()->proportional_light().withPointHeight(height * 0.5f * mult);
     int padding = height / 4;
     int buffer = padding * 2 + 2;
-    int width = (font.getStringWidth(text) / getPixelMultiple()) + buffer;
+    int width = (font.getStringWidth(text) /juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale) + buffer;
 
     int middle_x = bounds.getX() + bounds.getWidth() / 2;
     int middle_y = bounds.getY() + bounds.getHeight() / 2;
@@ -152,6 +152,9 @@ void PopupList::resized() {
 
     redoImage();
 }
+int PopupList::getRowHeight() {
+    return size_ratio_ * kRowHeight;
+}
 
 void PopupList::setSelections(PopupItems selections) {
     selections_ = std::move(selections);
@@ -178,7 +181,7 @@ int PopupList::getBrowseWidth() {
     int max_width = kMinWidth * size_ratio_;
     int buffer = getTextPadding() * 2 + 2;
     for (int i = 0; i < selections_.size(); ++i)
-        max_width = std::max(max_width, font.getStringWidth(selections_.items[i].name) / getPixelMultiple() + buffer);
+        max_width = std::max(max_width, (int)(font.getStringWidth(selections_.items[i].name) / juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale + buffer));
 
     return max_width;
 }
@@ -252,9 +255,13 @@ void PopupList::redoImage() {
     if (getWidth() <= 0 || getHeight() <= 0)
         return;
 
-    int mult = getPixelMultiple();
-    int row_height = getRowHeight() * mult;
+    int mult = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale;
+
+    int row_height = getRowHeight() * mult*2/juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale;
     int image_width = getWidth() * mult;
+
+    DBG("PopupList::redoImage - Row Height: " << row_height);  // Debug row height
+    DBG("PopupList::redoImage - Image Width: " << image_width);  // Debug image width
 
     juce::Colour text_color = findColour(Skin::kTextComponentText, true);
     juce::Colour lighten = findColour(Skin::kLightenScreen, true);
@@ -265,7 +272,7 @@ void PopupList::redoImage() {
     g.setFont(getFont());
 
     int padding = getTextPadding();
-    int width = (getWidth() - 2 * padding) * mult;
+    int width = (getWidth() - 2 * padding) * mult*2/juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale;
     for (int i = 0; i < selections_.size(); ++i) {
         if (selections_.items[i].id < 0) {
             g.setColour(lighten);
@@ -291,23 +298,27 @@ void PopupList::moveQuadToRow(OpenGlQuad& quad, int row) {
     float offset = row * open_gl_row_height - 2.0f * getViewPosition() / view_height;
 
     float y = 1.0f - offset;
-    quad.setQuad(0, -1.0f, y - open_gl_row_height, 2.0f, open_gl_row_height);
+    quad.setQuad(0, -1.0f, y-open_gl_row_height, 2.0f, open_gl_row_height);
 }
-
+juce::Font PopupList::getFont()
+{
+    return Fonts::instance()->proportional_light().withPointHeight(getRowHeight() * 0.8f);
+}
 void PopupList::renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) {
     juce::Rectangle<int> view_bounds(getLocalBounds());
     OpenGlComponent::setViewPort(this, view_bounds, open_gl);
+    float pixel_scale = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale;
+    int image_width = getWidth() * pixel_scale;
 
-    float image_width = bitklavier::utils::nextPowerOfTwo(getWidth());
-    float image_height = bitklavier::utils::nextPowerOfTwo(rows_->getImageHeight());
+    int image_height = rows_->getImageHeight()*pixel_scale;
     float width_ratio = image_width / getWidth();
-    float height_ratio = image_height / (getPixelMultiple() * getHeight());
+    float height_ratio = image_height / (getHeight()*pixel_scale);//(juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale * getHeight());
     float y_offset = 2.0f * getViewPosition() / getHeight();
 
     rows_->setTopLeft(-1.0f, 1.0f + y_offset);
-    rows_->setTopRight(2.0f * width_ratio - 1.0f, 1.0f + y_offset);
-    rows_->setBottomLeft(-1.0f, 1.0f + y_offset - 2.0f * height_ratio);
-    rows_->setBottomRight(2.0f * width_ratio - 1.0f, 1.0f + y_offset - 2.0f * height_ratio);
+    rows_->setTopRight(width_ratio - 1.0f, 1.0f + y_offset);
+    rows_->setBottomLeft(-1.0f, 1.0f + y_offset - height_ratio);
+    rows_->setBottomRight(width_ratio - 1.0f, 1.0f + y_offset - height_ratio);
     rows_->drawImage(open_gl);
 
     if (hovered_ >= 0) {
