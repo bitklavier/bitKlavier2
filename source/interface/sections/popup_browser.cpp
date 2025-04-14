@@ -312,7 +312,7 @@ void PopupList::renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) {
 
     int image_height = rows_->getImageHeight()*pixel_scale;
     float width_ratio = image_width / getWidth();
-    float height_ratio = image_height / (getHeight()*pixel_scale);//(juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale * getHeight());
+    float height_ratio = image_height / (getHeight()*pixel_scale);
     float y_offset = 2.0f * getViewPosition() / getHeight();
 
     rows_->setTopLeft(-1.0f, 1.0f + y_offset);

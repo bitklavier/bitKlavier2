@@ -102,12 +102,10 @@ BKStackedSlider::BKStackedSlider(
     editValsTextField->setName("PARAMTXTEDIT");
     editValsTextField->addListener(this);
     editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
-#if JUCE_IOS
-    editValsTextField->setReadOnly(true);
-    editValsTextField->setCaretVisible(true);
-#endif
     addAndMakeVisible(*editValsTextField);
     editValsTextField->setVisible(false);
+    editValsTextField->setInterceptsMouseClicks(false, false);
+    setInterceptsMouseClicks(true, true);
 
     numSliders = 12;
     numActiveSliders = 1;
@@ -264,6 +262,7 @@ void BKStackedSlider::setTo(juce::Array<float> newvals, juce::NotificationType n
 
 void BKStackedSlider::mouseDown (const juce::MouseEvent &event)
 {
+    DBG("mouseup");
     if(event.mouseWasClicked())
     {
         clickedSlider = whichSlider();
@@ -278,6 +277,10 @@ void BKStackedSlider::mouseDown (const juce::MouseEvent &event)
         }
 
     }
+    if (editValsTextField->hasKeyboardFocus(false)) {
+        editValsTextField->mouseDown(event);
+    }
+
 }
 
 
@@ -299,6 +302,9 @@ void BKStackedSlider::mouseDrag(const juce::MouseEvent& e)
         }
     }
     else mouseJustDown = false;
+    if (editValsTextField->hasKeyboardFocus(false)) {
+        editValsTextField->mouseDrag(e);
+    }
 }
 
 void BKStackedSlider::mouseUp(const juce::MouseEvent& e)
@@ -307,6 +313,10 @@ void BKStackedSlider::mouseUp(const juce::MouseEvent& e)
     listeners.call(&BKStackedSlider::Listener::BKStackedSliderValueChanged,
         getName(),
         getAllActiveValues());
+    if (editValsTextField->hasKeyboardFocus(false)) {
+        editValsTextField->mouseUp(e);
+    }
+
 
 }
 
@@ -343,7 +353,7 @@ void BKStackedSlider::mouseDoubleClick (const juce::MouseEvent &e)
     editValsTextField->toFront(true);
     editValsTextField->grabKeyboardFocus();
     editValsTextField->setText(BKfloatArrayToString(getAllActiveValues()), juce::dontSendNotification); //arrayFloatArrayToString
-
+    //editValsTextField->setInterceptsMouseClicks(true, true);
     juce::Range<int> highlightRange(startPoint, endPoint);
     editValsTextField->setHighlightedRegion(highlightRange);
 
@@ -356,7 +366,7 @@ void BKStackedSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
     {
         editValsTextField->setVisible(false);
         editValsTextField->toBack();
-
+       // editValsTextField->setInterceptsMouseClicks(false, false);
         setTo(BKstringToFloatArray(textEditor.getText()), juce::sendNotification);
         clickedSlider = 0;
         resized();
@@ -383,7 +393,10 @@ void BKStackedSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
     {
         focusLostByEscapeKey = true;
         editValsTextField->setVisible(false);
+        //editValsTextField->setInterceptsMouseClicks(false, false);
+
         editValsTextField->toBack();
+
         unfocusAllComponents();
     }
 }
@@ -547,6 +560,9 @@ void BKStackedSlider::resized ()
 
     editValsTextField->setBounds(area);
     editValsTextField->setVisible(false);
+   //
+   // editValsTextField->setInterceptsMouseClicks(false, false);
+
 
     for(int i=0; i<numSliders; i++)
     {
