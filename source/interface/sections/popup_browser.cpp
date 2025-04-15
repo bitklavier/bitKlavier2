@@ -1497,7 +1497,7 @@ void PreparationPopup::resized() {
     {
         prep_view->setBounds(bounds);
     }
-
+    repaintPrepBackground();
 }
 
 std::map<std::string, SynthSlider *> PreparationPopup::getAllSliders() {

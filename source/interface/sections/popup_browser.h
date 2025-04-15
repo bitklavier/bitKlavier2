@@ -64,11 +64,9 @@ class PreparationPopup : public SynthSection {
 public:
     PreparationPopup();
     ~PreparationPopup();
-    void paintBackground(juce::Graphics& g) override {SynthSection::paintContainer(g);
-        paintHeadingText(g);
-        paintBorder(g);
-        paintKnobShadows(g);
-        paintChildrenBackgrounds(g); }
+    void paintBackground(juce::Graphics& g) override {
+
+    }
     void paintBackgroundShadow(juce::Graphics& g) override { }
     void repaintPrepBackground()
     {
@@ -111,7 +109,7 @@ public:
 //    }
     void repaintBackground() override
     {
-        repaintPrepBackground();
+       // repaintPrepBackground();
     }
     std::map<std::string, SynthSlider *> getAllSliders() override;
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
