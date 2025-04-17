@@ -66,12 +66,7 @@ class SynthApplication : public juce::JUCEApplication {
   public:
     class MainWindow : public juce::DocumentWindow, public juce::ApplicationCommandTarget, private juce::AsyncUpdater {
       public:
-        enum PresetCommand {
-          kSave = 0x5001,
-          kSaveAs,
-          kOpen,
-          kToggleVideo,
-        };
+
 
         MainWindow(const juce::String& name, bool visible) :
             juce::DocumentWindow(name, juce::Colours::lightgrey, juce::DocumentWindow::allButtons, visible), editor_(nullptr) {
@@ -126,7 +121,7 @@ class SynthApplication : public juce::JUCEApplication {
         }
 
         juce::ApplicationCommandTarget* getNextCommandTarget() override {
-          return findFirstTargetParentComponent();
+          return editor_->getGuiInterface()->commandHandler.get();
         }
 
 
@@ -138,76 +133,80 @@ class SynthApplication : public juce::JUCEApplication {
 //          //  editor_->setBounds(getBounds());
 //        }
         void getAllCommands(juce::Array<juce::CommandID>& commands) override {
-          commands.add(kSave);
-          commands.add(kSaveAs);
-          commands.add(kOpen);
+          // commands.add(kSave);
+          // commands.add(kSaveAs);
+          // commands.add(kOpen);
+          editor_->getGuiInterface()->commandHandler.get()->getAllCommands(commands);
         }
 
         void getCommandInfo(const juce::CommandID commandID, juce::ApplicationCommandInfo& result) override {
-          if (commandID == kSave) {
-            result.setInfo(TRANS("Save"), TRANS("Save the current preset"), "Application", 0);
-            result.defaultKeypresses.add(juce::KeyPress('s', juce::ModifierKeys::commandModifier, 0));
-          }
-          else if (commandID == kSaveAs) {
-            result.setInfo(TRANS("Save As"), TRANS("Save preset to a new file"), "Application", 0);
-            juce::ModifierKeys modifier = juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier;
-            result.defaultKeypresses.add(juce::KeyPress('s', modifier, 0));
-          }
-          else if (commandID == kOpen) {
-            result.setInfo(TRANS("Open"), TRANS("Open a preset"), "Application", 0);
-            result.defaultKeypresses.add(juce::KeyPress('o', juce::ModifierKeys::commandModifier, 0));
-          }
-          else if (commandID == kToggleVideo) {
-            result.setInfo(TRANS("Toggle Zoom"), TRANS("Toggle zoom for recording"), "Application", 0);
-            juce::ModifierKeys modifier = juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier;
-            result.defaultKeypresses.add(juce::KeyPress('t', modifier, 0));
-          }
+        //   if (commandID == kSave) {
+        //     result.setInfo(TRANS("Save"), TRANS("Save the current preset"), "Application", 0);
+        //     result.defaultKeypresses.add(juce::KeyPress('s', juce::ModifierKeys::commandModifier, 0));
+        //   }
+        //   else if (commandID == kSaveAs) {
+        //     result.setInfo(TRANS("Save As"), TRANS("Save preset to a new file"), "Application", 0);
+        //     juce::ModifierKeys modifier = juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier;
+        //     result.defaultKeypresses.add(juce::KeyPress('s', modifier, 0));
+        //   }
+        //   else if (commandID == kOpen) {
+        //     result.setInfo(TRANS("Open"), TRANS("Open a preset"), "Application", 0);
+        //     result.defaultKeypresses.add(juce::KeyPress('o', juce::ModifierKeys::commandModifier, 0));
+        //   }
+        //   else if (commandID == kToggleVideo) {
+        //     result.setInfo(TRANS("Toggle Zoom"), TRANS("Toggle zoom for recording"), "Application", 0);
+        //     juce::ModifierKeys modifier = juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier;
+        //     result.defaultKeypresses.add(juce::KeyPress('t', modifier, 0));
+        //   }
+          editor_->getGuiInterface()->commandHandler.get()->getCommandInfo(commandID, result);
         }
 
+
         bool perform(const InvocationInfo& info) override {
-          if (info.commandID == kSave) {
-//            if (!editor_->saveToActiveFile())
-//              editor_->openSaveDialog();
-//            else {
-//              grabKeyboardFocus();
-//              editor_->setFocus();
-//            }
-            return true;
-          }
-          else if (info.commandID == kSaveAs) {
-//            juce::File active_file = editor_->getActiveFile();
-//            juce::FileChooser save_box("Export Preset", juce::File(), juce::String("*.") + vital::kPresetExtension);
-//            if (save_box.browseForFileToSave(true))
-//              editor_->saveToFile(save_box.getResult().withFileExtension(vital::kPresetExtension));
-//            grabKeyboardFocus();
-//            editor_->setFocus();
-            return true;
-          }
-          else if (info.commandID == kOpen) {
-            //juce::File active_file = editor_->getActiveFile();
-//            juce::FileChooser open_box("Open Preset", active_file, juce::String("*.") + vital::kPresetExtension);
-//            if (!open_box.browseForFileToOpen())
-//              return true;
-
-//            juce::File choice = open_box.getResult();
-//            if (!choice.exists())
-//              return true;
+//           if (info.commandID == kSave) {
+// //            if (!editor_->saveToActiveFile())
+// //              editor_->openSaveDialog();
+// //            else {
+// //              grabKeyboardFocus();
+// //              editor_->setFocus();
+// //            }
+//             return true;
+//           }
+//           else if (info.commandID == kSaveAs) {
+// //            juce::File active_file = editor_->getActiveFile();
+// //            juce::FileChooser save_box("Export Preset", juce::File(), juce::String("*.") + vital::kPresetExtension);
+// //            if (save_box.browseForFileToSave(true))
+// //              editor_->saveToFile(save_box.getResult().withFileExtension(vital::kPresetExtension));
+// //            grabKeyboardFocus();
+// //            editor_->setFocus();
+//             return true;
+//           }
+//           else if (info.commandID == kOpen) {
+//             //juce::File active_file = editor_->getActiveFile();
+// //            juce::FileChooser open_box("Open Preset", active_file, juce::String("*.") + vital::kPresetExtension);
+// //            if (!open_box.browseForFileToOpen())
+// //              return true;
 //
-//            std::string error;
-//            if (!editor_->loadFromFile(choice, error)) {
-//              error = "There was an error open the preset. " + error;
-//              juce::AlertWindow::showNativeDialogBox("Error opening preset", error, false);
-//            }
-//            else
-//              editor_->externalPresetLoaded(choice);
-//            grabKeyboardFocus();
-//            editor_->setFocus();
-            return true;
-          }
-          else if (info.commandID == kToggleVideo)
-//            editor_->getGui()->toggleFilter1Zoom();
-
-          return false;
+// //            juce::File choice = open_box.getResult();
+// //            if (!choice.exists())
+// //              return true;
+// //
+// //            std::string error;
+// //            if (!editor_->loadFromFile(choice, error)) {
+// //              error = "There was an error open the preset. " + error;
+// //              juce::AlertWindow::showNativeDialogBox("Error opening preset", error, false);
+// //            }
+// //            else
+// //              editor_->externalPresetLoaded(choice);
+// //            grabKeyboardFocus();
+// //            editor_->setFocus();
+//             return true;
+//           }
+//           else if (info.commandID == kToggleVideo)
+// //            editor_->getGui()->toggleFilter1Zoom();
+//
+//           return false;
+          return editor_->getGuiInterface()->commandHandler.get()->perform(info);
         }
 
         void handleAsyncUpdate() override {

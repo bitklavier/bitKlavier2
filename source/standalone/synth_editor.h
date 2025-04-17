@@ -17,41 +17,83 @@
 #pragma once
 
 
-
 #include "synth_base.h"
 #include "synth_gui_interface.h"
 #include <juce_audio_utils/juce_audio_utils.h>
+
+class MainMenuModel : public juce::MenuBarModel {
+public:
+    MainMenuModel(juce::ApplicationCommandManager &manager)
+        : commandManager(manager) {
+    }
+
+    juce::StringArray getMenuBarNames() override {
+        return {"File", "Edit"};
+    }
+
+    juce::PopupMenu getMenuForIndex(int topLevelMenuIndex, const juce::String &menuName) override {
+        juce::PopupMenu menu;
+
+        if (menuName == "File") {
+            menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::save);
+            menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::load);
+        } else if (menuName == "Edit") {
+
+            menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::undo);
+            menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::redo);
+        }
+
+        return menu;
+    }
+
+    void menuItemSelected(int menuItemID, int topLevelMenuIndex) override {
+    }
+
+private:
+    juce::ApplicationCommandManager &commandManager;
+
+
+};
+
 //reminder that inheritance order matters for creation. if you inherit from
 //synthguiinterfce before synthbase, the synthguiinterface constructor
 // will get called first. causing a crash
 class SynthEditor : public juce::AudioAppComponent, public SynthBase, public SynthGuiInterface, public juce::Timer {
-  public:
+public:
     SynthEditor(bool use_gui = true);
+
     ~SynthEditor();
 
     void prepareToPlay(int buffer_size, double sample_rate) override;
-    void getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer) override;
+
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo &buffer) override;
+
     void releaseResources() override;
-    void paint(juce::Graphics& g) override { }
+
+    void paint(juce::Graphics &g) override {
+    }
+
     void resized() override;
 
-    const juce::CriticalSection& getCriticalSection() override { return critical_section_; }
-    void pauseProcessing(bool pause) override {
-      if (pause)
-        critical_section_.enter();
-      else
-        critical_section_.exit();
-    }
-    SynthGuiInterface* getGuiInterface() override { return this; }
+    const juce::CriticalSection &getCriticalSection() override { return critical_section_; }
 
-    juce::AudioDeviceManager* getAudioDeviceManager() override { return &deviceManager; }
+    void pauseProcessing(bool pause) override {
+        if (pause)
+            critical_section_.enter();
+        else
+            critical_section_.exit();
+    }
+
+    SynthGuiInterface *getGuiInterface() override { return this; }
+
+    juce::AudioDeviceManager *getAudioDeviceManager() override { return &deviceManager; }
 
     void timerCallback() override;
-    
+
     void animate(bool animate);
 
-  private:
-    //std::unique_ptr<SynthComputerKeyboard> computer_keyboard_;
+private:
+    std::unique_ptr<MainMenuModel> menuModel;
     juce::CriticalSection critical_section_;
     juce::StringArray current_midi_ins_;
     double current_time_;
@@ -60,4 +102,3 @@ class SynthEditor : public juce::AudioAppComponent, public SynthBase, public Syn
 #endif
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthEditor)
 };
-

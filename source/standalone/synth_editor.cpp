@@ -81,6 +81,10 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
     //addKeyListener(computer_keyboard_.get());
     setOpaque(true);
   }
+ // mainmenumodel on mac
+
+  menuModel = std::make_unique<MainMenuModel>(commandManager);
+  juce::MenuBarModel::setMacMainMenu(menuModel.get());
 
   startTimer(500);
 }
@@ -91,6 +95,7 @@ SynthEditor::~SynthEditor() {
 #endif
   juce::PopupMenu::dismissAllActiveMenus();
   shutdownAudio();
+  juce::MenuBarModel::setMacMainMenu(nullptr);
 }
 
 void SynthEditor::prepareToPlay(int buffer_size, double sample_rate) {

@@ -27,6 +27,7 @@ class juce::AudioDeviceManager { };
 
 //#include "synth_base.h"
 
+#include "ApplicationCommandHandler.h"
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -86,8 +87,13 @@ class SynthGuiInterface {
     juce::File getActiveFile();
     std::shared_ptr<UserPreferencesWrapper> userPreferences;
     std::unique_ptr<SampleLoadManager> sampleLoadManager ;
+    std::unique_ptr<ApplicationCommandHandler> commandHandler;
   protected:
+
+juce::ApplicationCommandManager commandManager;
+
     std::unique_ptr<juce::FileChooser> filechooser;
+
     SynthBase* synth_;
     std::unique_ptr<FullInterface> gui_;
   
