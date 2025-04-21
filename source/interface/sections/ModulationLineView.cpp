@@ -4,6 +4,8 @@
 
 #include "ModulationLineView.h"
 #include "ConstructionSite.h"
+#include "fullInterface.h"
+#include "modulation_manager.h"
 #include "open_gl_line.h"
 ModulationLineView::ModulationLineView(ConstructionSite &site) : SynthSection("modlineview"), site(site),
 tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getParent().getChildWithName(IDs::MODCONNECTIONS)),current_source_(nullptr)//, line_(std::make_shared<OpenGlLine>(nullptr, nullptr, this))
@@ -90,6 +92,8 @@ void ModulationLineView::modulationDropped(const juce::ValueTree &source, const 
     _connection.setProperty(IDs::src,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(sourceId), nullptr);
     _connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(destId), nullptr);
     parent.addChild(_connection, -1, nullptr);
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    _parent->getGui()->modulation_manager->added();
 //    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
 //    parent->addModulationNodeConnection(sourceId, destId);
 }
