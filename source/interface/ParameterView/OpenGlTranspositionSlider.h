@@ -13,7 +13,7 @@
 
 class OpenGlTranspositionSlider : public OpenGlAutoImageComponent<BKStackedSlider>, BKStackedSlider::Listener {
 public:
-    OpenGlTranspositionSlider(TransposeParams *params,
+    OpenGlTranspositionSlider(TransposeParams *_params,
                               chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKStackedSlider>(
                                                                             "Transpositions", // slider name
                                                                             -12, // min
@@ -21,11 +21,13 @@ public:
                                                                             -12, // default min
                                                                             12, // default max
                                                                             0, // default val
-                                                                            0.01), // increment
-                                                                        params(params)
+                                                                            0.01,
+                                                                            _params->numActive), // increment
+                                                                        params(_params)
     //-12, 12, -12, 12, 0, 0.01
     {
         // increment
+
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
@@ -36,6 +38,33 @@ public:
                                                                    *slider, nullptr);
             attachmentVec.emplace_back(std::move(ptr));
         }
+        int j =0;
+        for (auto& param :*params->getFloatParams()) {
+            sliderChangedCallback +={ listeners.addParameterListener(
+                param,
+                chowdsp::ParameterListenerThread::MessageThread,
+                    [this,j]() {
+                        DBG(j);
+                        if (j > this->params->numActive - 1) {
+                            juce::Array<float> sliderVals = getAllActiveValues();
+                            sliderVals.add(dataSliders[j]->getValue());
+                            setTo(sliderVals, juce::sendNotification);
+                            this->listeners.call(&BKStackedSlider::Listener::BKStackedSliderValueChanged,
+                                getName(),
+                                getAllActiveValues());
+                        }
+                       redoImage();
+                    })};
+            j++;
+
+        }
+        sliderChangedCallback +={ listeners.addParameterListener(
+                params->t0,
+                chowdsp::ParameterListenerThread::MessageThread,
+                    [this]() {
+                        DBG("runme");
+                       redoImage();
+                    })};
     }
 
 
@@ -83,6 +112,11 @@ public:
     OpenGlTranspositionSlider *clone() {
         return new OpenGlTranspositionSlider();
     }
+    void addSlider(juce::NotificationType newnotify) override {
+        BKStackedSlider::addSlider(newnotify);
+        if (params != nullptr) // has no params if its a cloned component
+            params->numActive = (params->numActive + 1) % 12;
+    }
 
     void BKStackedSliderValueChanged(juce::String name, juce::Array<float> val) override {
         if (isModulation_) {
@@ -90,18 +124,10 @@ public:
                 auto str = "t" + juce::String(i);
                 modulationState.setProperty(str, val[i], nullptr);
             }
-            //           modulationState.setProperty("t0",val[0],nullptr);
-            //           modulationState.setProperty("t1",val[1],nullptr);
-            //           modulationState.setProperty("t2",val[2],nullptr);
-            //           modulationState.setProperty("t3",val[3],nullptr);
-            //           modulationState.setProperty("t4",val[4],nullptr);
-            //           modulationState.setProperty("t5",val[5],nullptr);
-            //           modulationState.setProperty("t6",val[6],nullptr);
-            //           modulationState.setProperty("t7",val[7],nullptr);
-            //           modulationState.setProperty("t8",val[8],nullptr);
-            //           modulationState.setProperty("t9",val[9],nullptr);
-            //           modulationState.setProperty("t10",val[10],nullptr);
-            //           modulationState.setProperty("t11",val[11],nullptr);
+            for (int i = val.size(); i < 11; i++) {
+                auto str = "t" + juce::String(i);
+                modulationState.removeProperty(str, nullptr);
+            }
         }
     }
 
@@ -113,9 +139,9 @@ public:
         for (int i = 0; i < 11; i++) {
             auto str = "t" + juce::String(i);
             auto val = modulationState.getProperty(str);
-            vals.add(val);
             if (val == nullVar)
                 break;
+            vals.add(val);
         }
 
         setTo(vals, juce::sendNotification);
@@ -139,7 +165,7 @@ private :
         -12, // default min
         12, // default max
         0, // default val
-        0.01) // increment
+        0.01,1) // increment
 
     {
         // increment
@@ -149,6 +175,7 @@ private :
         isModulation_ = true;
         addMyListener(this);
     }
+    chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
 #endif //BITKLAVIER2_OPENGLTRANSPOSITIONSLIDER_H

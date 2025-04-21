@@ -24,7 +24,7 @@ public:
         on->setComponentID(params->transpositionUsesTuning->paramID);
         addSynthButton(on.get());
         addAndMakeVisible(on.get());
-        setActivator(on.get());
+        //setActivator(on.get());
         slider->setComponentID("transpose");
         addStateModulatedComponent(slider.get());
 //        addAndMakeVisible(*slider);

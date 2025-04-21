@@ -83,14 +83,16 @@ BKStackedSlider::BKStackedSlider(
     double defmin,
     double defmax,
     double def,
-    double increment):
+
+    double increment, int numActiveSliders):
            sliderName(sliderName),
            sliderMin(min),
            sliderMax(max),
            sliderMinDefault(defmin),
            sliderMaxDefault(defmax),
            sliderDefault(def),
-           sliderIncrement(increment)
+           sliderIncrement(increment),
+            numActiveSliders(numActiveSliders)
 {
 
     showName.setText(sliderName, juce::dontSendNotification);
@@ -108,7 +110,7 @@ BKStackedSlider::BKStackedSlider(
     setInterceptsMouseClicks(true, true);
 
     numSliders = 12;
-    numActiveSliders = 1;
+
 
     for(int i=0; i<numSliders; i++)
     {
@@ -122,11 +124,11 @@ BKStackedSlider::BKStackedSlider(
         newSlider->setLookAndFeel(&stackedSliderLookAndFeel);
         //newSlider->addListener(this);
         addAndMakeVisible(newSlider);
-        if(i>0) {
+        if(i>(numActiveSliders -1)) {
             newSlider->setVisible(false);
             activeSliders.insert(i, false);
         }
-        else activeSliders.insert(0, true);
+        else activeSliders.insert(i, true);
     }
 
     topSlider = std::make_unique<juce::Slider>();

@@ -11,7 +11,7 @@ struct TransposeParams : chowdsp::ParamHolder
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
     {
 //        add(initialparam);
-add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
+        add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
 
     }
 //    std::vector<chowdsp::FloatParameter::Ptr> transposeVec = {chowdsp::FloatParameter::Ptr initialparam(
@@ -75,7 +75,7 @@ add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
             "TranspositionUsesTuning",
             false
     };
-
+    int numActive = 1;
     void processStateChanges() override
     {
         auto float_params = getFloatParams();
@@ -89,7 +89,9 @@ add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
                 auto val = change.getProperty(str);
                 if (val == nullVar)
                     break;
-                float_params->data()->get()->setParameterValue(val);
+                auto& float_param = float_params->at(i);
+                float_param.get()->setParameterValue(val);
+                //float_params[i].data()->get()->setParameterValue(val);
             }
         }
         stateChanges.changeState.clear();

@@ -27,7 +27,7 @@ class BKStackedSlider :
 {
 public:
 
-    BKStackedSlider(juce::String sliderName, double min, double max, double defmin, double defmax, double def, double increment);
+    BKStackedSlider(juce::String sliderName, double min, double max, double defmin, double defmax, double def, double increment, int numActiveSliders);
 
     ~BKStackedSlider()
     {
@@ -70,7 +70,7 @@ public:
     void resetRanges();
     int whichSlider();
     int whichSlider(const juce::MouseEvent& e);
-    void addSlider(juce::NotificationType newnotify);
+    virtual void addSlider(juce::NotificationType newnotify);
 
     inline juce::String getText(void) { return editValsTextField->getText(); }
     inline void setText(juce::String text) { editValsTextField->setText(text, juce::dontSendNotification); }
@@ -101,10 +101,18 @@ public:
     juce::OwnedArray<juce::Slider> dataSliders;  //displays data, user controls with topSlider
     BKStackedSlider* clone ()
     {
-        return new BKStackedSlider(sliderName, sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault, sliderDefault, sliderIncrement);
+        int i = 0;
+        for (auto slider : activeSliders) {
+            if (slider) {i++;}
+        }
+        return new BKStackedSlider(sliderName, sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault, sliderDefault, sliderIncrement,i);
     }
-    void syncToValueTree()
-    {}
+    void syncToValueTree() {
+
+    }
+    juce::Array<float> getAllActiveValues();
+
+
 private:
 
     chowdsp::SliderAttachment attachment;
@@ -136,10 +144,9 @@ private:
     bool focusLostByNumPad;
     bool mouseJustDown;
 
-    juce::Array<float> getAllActiveValues();
-
-    void showModifyPopupMenu();
+        void showModifyPopupMenu();
     static void sliderModifyMenuCallback (const int result, BKStackedSlider* ss);
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKStackedSlider)
 };
