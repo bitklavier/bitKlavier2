@@ -225,8 +225,8 @@ void HeaderSection::resized() {
     sampleSelectText->setBounds(sampleSelector->getBounds());
     float label_text_height = findValue(Skin::kLabelHeight);
     sampleSelectText->setTextSize(label_text_height);
-    loadButton->setBounds(sampleSelector->getRight() + 100, 0, 100, 50);
-    saveButton->setBounds(loadButton->getX() + 100, 0, 100, 50);
+    //loadButton->setBounds(sampleSelector->getRight() + 100, 0, 100, 50);
+    //saveButton->setBounds(loadButton->getX() + 100, 0, 100, 50);
   //int logo_width = findValue(Skin::kModulationButtonWidth);
  // logo_section_->setBounds(large_padding, 0, logo_width, height);
   //inspectButton->setBounds(large_padding, 0, 100, height);
@@ -306,35 +306,13 @@ void HeaderSection::buttonClicked(juce::Button* clicked_button) {
   else if (clicked_button == loadButton.get())
     {
         SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
-         auto active_file = parent->getActiveFile();
-        filechooser = std::make_unique<juce::FileChooser> ("Open Preset", active_file, juce::String("*.") + bitklavier::kPresetExtension);
-
-        auto flags = juce::FileBrowserComponent::openMode
-                     | juce::FileBrowserComponent::canSelectFiles;
-        filechooser->launchAsync(flags, [this] (const juce::FileChooser& fc) {
-            if (fc.getResult() == juce::File{})
-            {
-               return ;
-            }
-            SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-            std::string error;
-                    juce::File choice = fc.getResult();
-        if (!_parent->loadFromFile(choice, error)) {
-//            std::string name = ProjectInfo::projectName;
-//            error = "There was an error open the preset. " + error;
-            //juce::AlertWindow::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "PRESET ERROR, ""Error opening preset", error);
-            DBG(error);
-        }
-//        else
-//            parent->externalPresetLoaded(choice);
-
-        });
+        parent->openLoadDialog();
 
     }
     else if (clicked_button == saveButton.get())
     {
         SynthGuiInterface* interface = findParentComponentOfClass<SynthGuiInterface>();
-        interface->openSaveDialog();//getSynth()->getValueTree().getChild(0).setProperty("sync", 1, nullptr);
+        interface->openSaveDialog();
     }
     else
         SynthSection::buttonClicked(clicked_button);

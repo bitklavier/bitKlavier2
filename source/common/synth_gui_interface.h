@@ -76,6 +76,7 @@ class SynthGuiInterface {
     void notifyChange();
     void notifyFresh();
     void openSaveDialog();
+    void openLoadDialog();
     void externalPresetLoaded(juce::File preset);
     void setGuiSize(float scale);
     bool loadFromFile(juce::File preset, std::string& error);

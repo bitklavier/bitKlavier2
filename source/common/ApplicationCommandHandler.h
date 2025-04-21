@@ -5,10 +5,11 @@
 #ifndef APPLICATIONCOMMANDHANDLER_H
 #define APPLICATIONCOMMANDHANDLER_H
 #include <juce_gui_basics/juce_gui_basics.h>
-
+class SynthGuiInterface;
 class ApplicationCommandHandler : public juce::ApplicationCommandTarget {
 public:
-    ApplicationCommandHandler() = default;
+    ApplicationCommandHandler(SynthGuiInterface* parent);
+
 
     // Define your command IDs
     enum CommandIDs {
@@ -43,30 +44,12 @@ public:
         }
     }
 
-    bool perform(const InvocationInfo &info) override {
-        switch (info.commandID) {
-            case undo:
-                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", "Undo triggered");
-                return true;
-
-            case redo:
-                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
-                return true;
-
-            case save:
-                //juce::JUCEApplication::getInstance()->systemRequestedQuit();
-                return true;
-            case load:
-                //juce::JUCEApplication::getInstance()->systemRequestedQuit();
-            return true;
-
-            default:
-                return false;
-        }
-    }
+    bool perform(const InvocationInfo &info) override;
 
     juce::ApplicationCommandTarget *getNextCommandTarget() override {
         return nullptr;
     }
+        private:
+        SynthGuiInterface* parent;
 };
 #endif //APPLICATIONCOMMANDHANDLER_H

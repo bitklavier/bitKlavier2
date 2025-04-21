@@ -150,6 +150,7 @@ struct StateConnection : public ModulatorBase::Listener{
             setDestination(destination_name);
 
         }
+
         ~StateConnection()
         {
             //count--;
@@ -170,6 +171,7 @@ struct StateConnection : public ModulatorBase::Listener{
         void setChangeBuffer(bitklavier::ParameterChangeBuffer* buf) {
             changeBuffer = buf;
         }
+        void setChange(juce::ValueTree& _change) {change = _change;}
         void resetConnection(const std::string& from, const std::string& to) {
             source_name = from;
             destination_name = to;
@@ -191,7 +193,7 @@ struct StateConnection : public ModulatorBase::Listener{
                 scalingValue_.store(val);
             DBG(juce::String(val));
         }
-        void modulationTriggered()
+        void modulationTriggered() //listener funciton
         {
             changeBuffer->changeState.push_back(std::pair<int,juce::ValueTree>(0,change));
         }

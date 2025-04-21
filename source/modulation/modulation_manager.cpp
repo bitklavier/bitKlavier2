@@ -630,6 +630,7 @@ void ModulationManager::modulationClicked(ModulationIndicator* indicator)
                 editing_state_component_->setComponentID(juce::String(connection->destination_name));
             }
             editing_state_component_->syncToValueTree();
+            setStateModulationValues(connection->source_name,connection->destination_name,connection->state);
             DBG("found that hoe");
         }
     }
