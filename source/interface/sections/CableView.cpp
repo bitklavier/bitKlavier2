@@ -207,11 +207,8 @@ void CableView::valueTreeRedirected (juce::ValueTree&)
 {
     SynthGuiInterface* interface = findParentComponentOfClass<SynthGuiInterface>();
 
-    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     deleteAllObjects();
-    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     rebuildObjects();
-    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     for(auto object : objects)
     {
         newObjectAdded(object);

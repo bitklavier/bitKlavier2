@@ -21,17 +21,7 @@ void ModulationLineView::reset()
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
 
-    if (_parent->getSynth()->getCriticalSection().tryEnter())
-    {
-              //safe to do on message thread because we have locked processing if this is called
         parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::MODCONNECTIONS);
-        _parent->getSynth()->getCriticalSection().exit();
-    }
-    else
-    {
-        jassertfalse; // The message thread was NOT holding the lock
-    }
-    //leave it open for duration ofall restes
 
 }
 ModulationLineView::~ModulationLineView()
@@ -81,6 +71,7 @@ void ModulationLineView::modulationDropped(const juce::ValueTree &source, const 
 
     //right now is does make a connection on the backend but i think this should probably change once all this is fully implemented
     //actual connections should be children of modconnection vtrees
+    //does this add a connection to the backend audio proceessor graph or just the value tree - davis -- 4/25/25
     juce::ValueTree _connection(IDs::MODCONNECTION);
     _connection.setProperty(IDs::isMod, 1, nullptr);
     _connection.setProperty(IDs::src,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(sourceId), nullptr);
@@ -124,7 +115,16 @@ void ModulationLineView::deleteObject(ModulationLine *at) {
 
         at->setVisible(false);
         site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
-            this->destroyOpenGlComponent(*(at->line), this->site.open_gl);
+            //can't use destroy component since lineveiw renders the lines directy from the array as opposed to adding them
+                // to the open_gl_components vector... why?
+                    // idk maybe try to make it instantiate using addopenglcomponent and find out.. for now
+                        // i'll kep neing laxy --davis --4/25/25
+            at->line->destroy(this->site.open_gl);
+            juce::MessageManager::callAsync(
+            [at, this]()mutable {
+               delete at;
+            });
+
         },true);
     } else
         delete at;
@@ -132,9 +132,20 @@ void ModulationLineView::deleteObject(ModulationLine *at) {
 
 
 void ModulationLineView::newObjectAdded(ModulationLine *) {
-//    auto interface
 
+    //right now this doesn't need to do anything since this function mainly is used to alert the audio thread
+    // that some thing has change.
+    // in our case a new line does not cause any audio thread behaviour to occur
 }
 
 
-void ModulationLineView::valueTreeRedirected(juce::ValueTree &) {}
+void ModulationLineView::valueTreeRedirected(juce::ValueTree &) {
+    deleteAllObjects();
+    rebuildObjects();
+    for(auto object : objects)
+    {
+        newObjectAdded(object);
+    }
+    _update();
+    resized();
+}
