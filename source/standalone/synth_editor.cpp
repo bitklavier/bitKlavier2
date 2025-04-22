@@ -1,5 +1,5 @@
 /* Copyright 2013-2019 Matt Tytel
- *
+
  * vital is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -154,4 +154,13 @@ void SynthEditor::timerCallback() {
 void SynthEditor::animate(bool animate) {
   if (gui_)
     gui_->animate(animate);
+}
+void SynthEditor::pauseProcessing(bool pause) {
+  DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
+    DBG(juce::String(int(pause)));
+        if (pause)
+            critical_section_.enter();
+        else
+            critical_section_.exit();
+
 }

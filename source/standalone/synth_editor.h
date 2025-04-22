@@ -77,12 +77,7 @@ public:
 
     const juce::CriticalSection &getCriticalSection() override { return critical_section_; }
 
-    void pauseProcessing(bool pause) override {
-        if (pause)
-            critical_section_.enter();
-        else
-            critical_section_.exit();
-    }
+    void pauseProcessing(bool pause) override ;
 
     SynthGuiInterface *getGuiInterface() override { return this; }
 

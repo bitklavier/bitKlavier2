@@ -130,7 +130,7 @@ namespace bitklavier {
      {
           processorGraph->addConnection(connection);
      }
-     void removeConnection(juce::AudioProcessorGraph::Connection& connection)
+     void removeConnection(const juce::AudioProcessorGraph::Connection& connection)
      {
             processorGraph->removeConnection(connection);
      }

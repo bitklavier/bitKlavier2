@@ -262,8 +262,10 @@ void FullInterface::animate(bool animate) {
 }
 
 void FullInterface::reset() {
-    juce::ScopedLock lock(open_gl_critical_section_);
-
+    //object creation and destruction is thread safe internally should not need to put a scopedlock hereo
+    //vital previously had a scoped lock on this whole section. but this only really makes sense whenever we have a static system
+    //since individual components must be capable of being created and destroyed we want to lock or block in those
+    //individual destruction calls -- 4/25/25 -- davis
     SynthSection::reset();
     repaintSynthesisSection();
 }

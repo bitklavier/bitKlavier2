@@ -56,11 +56,6 @@ void ConstructionSite::valueTreeParentChanged(juce::ValueTree &changed) {
 void ConstructionSite::valueTreeRedirected(juce::ValueTree &) {
     SynthGuiInterface *interface = findParentComponentOfClass<SynthGuiInterface>();
 
-    //    for (auto object : objects)
-    //    {
-    //        object->destroyOpenGlComponents(interface->getGui()->open_gl_);
-    //        this->removeSubSection(object);
-    //    }
     deleteAllObjects();
     rebuildObjects();
     for (auto object: objects) {
@@ -120,12 +115,12 @@ PreparationSection *ConstructionSite::createNewObject(const juce::ValueTree &v) 
 }
 
 void ConstructionSite::reset() {
+    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
     if (_parent == nullptr)
         return;
     //safe to do on message thread because we have locked processing if this is called
     //_parent->getSynth()->getEngine()->resetEngine();
-    if (_parent->getSynth()->getCriticalSection().tryEnter()) {
         //safe to do on message thread because we have locked processing if this is called
         if (_parent->getSynth() != nullptr) {
             _parent->getSynth()->getEngine()->resetEngine();
@@ -133,11 +128,9 @@ void ConstructionSite::reset() {
                 IDs::PREPARATIONS);
         }
 
+        DBG("exit");
         cableView.reset();
-        _parent->getSynth()->getCriticalSection().exit();
-    } else {
-        jassertfalse; // The message thread was NOT holding the lock
-    }
+        modulationLineView.reset();
 }
 
 void ConstructionSite::newObjectAdded(PreparationSection *object) {

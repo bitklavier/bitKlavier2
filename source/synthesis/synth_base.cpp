@@ -98,7 +98,9 @@ void SynthBase::addConnection(juce::AudioProcessorGraph::Connection &connect)
 {
     engine_->addConnection(connect);
 }
-
+void SynthBase::removeConnection(const juce::AudioProcessorGraph::Connection &connect) {
+    engine_->removeConnection(connect);
+}
 bool SynthBase::loadFromValueTree(const juce::ValueTree& state)
 {
     pauseProcessing(true);
@@ -135,13 +137,11 @@ bool SynthBase::loadFromFile(juce::File preset, std::string& error) {
     }
 
     //setPresetName(preset.getFileNameWithoutExtension());
-    pauseProcessing(true);
     SynthGuiInterface* gui_interface = getGuiInterface();
     if (gui_interface) {
         gui_interface->updateFullGui();
         gui_interface->notifyFresh();
     }
-    pauseProcessing(false);
     return true;
 }
 

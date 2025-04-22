@@ -71,8 +71,8 @@ void CableView::beginConnectorDrag (juce::AudioProcessorGraph::NodeAndChannel so
     draggingConnector->setInput (source);
     draggingConnector->setOutput (dest);
 
-    addAndMakeVisible (draggingConnector.get());
     //draggingConnector->toFront (false);
+    addAndMakeVisible (draggingConnector.get());
 
     dragConnector (e);
 }
@@ -84,19 +84,20 @@ void CableView::paint (juce::Graphics& g)
 
 void CableView::reset()
 {
+    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
     //safe to do on message thread because we have locked processing if this is called
     //_parent->getSynth()->getEngine()->resetEngine();
-    if (_parent->getSynth()->getCriticalSection().tryEnter())
-    {
+    //if (_parent->getSynth()->getCriticalSection().tryEnter())
+    //{
        //safe to do on message thread because we have locked processing if this is called
         parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
-        _parent->getSynth()->getCriticalSection().exit();
-    }
-    else
-    {
-        jassertfalse; // The MESSAGE thread was NOT holding the lock
-    }
+        //_parent->getSynth()->getCriticalSection().exit();
+    //}
+    //else
+    //{
+     //   jassertfalse; // The MESSAGE thread was NOT holding the lock
+    //}
 }
 void CableView::resized()
 {
@@ -206,14 +207,11 @@ void CableView::valueTreeRedirected (juce::ValueTree&)
 {
     SynthGuiInterface* interface = findParentComponentOfClass<SynthGuiInterface>();
 
-//    for (auto object : objects)
-//    {
-//        DBG("bo");
-//        object->destroyOpenGlComponents(interface->getGui()->open_gl_);
-//        this->removeSubSection(object);
-//    }
+    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     deleteAllObjects();
+    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     rebuildObjects();
+    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     for(auto object : objects)
     {
         newObjectAdded(object);
@@ -235,16 +233,22 @@ void CableView::newObjectAdded(Cable *c) {
 
 }
 void CableView::deleteObject(Cable *at)  {
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    _parent->getSynth()->processorInitQueue.try_enqueue([this,connection=at->connection]
+                                                       {
+                                                           SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+                                                           _parent->getSynth()->removeConnection(connection);
+
+                                                       });
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
-        SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
 
-        //safe to do on message thread because we have locked processing if this is called
         at->setVisible(false);
         site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
             this->destroyOpenGlComponent(*(at->getImageComponent()), this->site.open_gl);
         },true);
-    }
+    }else
+        delete at;
 
 }
 

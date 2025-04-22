@@ -17,7 +17,10 @@ tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getParent
 }
 void ModulationLineView::reset()
 {
+
+    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+
     if (_parent->getSynth()->getCriticalSection().tryEnter())
     {
               //safe to do on message thread because we have locked processing if this is called
@@ -107,7 +110,26 @@ ModulationLine* ModulationLineView::createNewObject(const juce::ValueTree &v) {
 }
 
 
-void ModulationLineView::deleteObject(ModulationLine *at) {}
+void ModulationLineView::deleteObject(ModulationLine *at) {
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    _parent->getSynth()->processorInitQueue.try_enqueue([this]
+                                                       {
+                                                           SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+                                                           //_parent->getSynth()->removeConnection(connection);
+        //need to find all connections and remove them
+                                                       });
+    if ((juce::OpenGLContext::getCurrentContext() == nullptr))
+    {
+
+
+        at->setVisible(false);
+        site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
+            this->destroyOpenGlComponent(*(at->line), this->site.open_gl);
+        },true);
+    } else
+        delete at;
+}
+
 
 void ModulationLineView::newObjectAdded(ModulationLine *) {
 //    auto interface
