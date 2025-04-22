@@ -105,67 +105,9 @@ HeaderSection::HeaderSection() : SynthSection("header_section"), tab_offset_(0),
     loadButton->setButtonText("load");
     loadButton->setLookAndFeel(TextLookAndFeel::instance());
     loadButton->addListener(this);
-//  tab_selector_ = std::make_unique<TabSelector>("tab_selector");
-//  tab_selector_ = std::make_unique<TabSelector>("tab_selector");
-//  tab_selector_ = std::make_unique<TabSelector>("tab_selector");
-//  addAndMakeVisible(tab_selector_.get());
-//  addOpenGlComponent(tab_selector_->getImageComponent());
-//  tab_selector_->setSliderStyle(juce::Slider::LinearBar);
-//  tab_selector_->setRange(0, 3);
-//  tab_selector_->addListener(this);
-//  tab_selector_->setNames({"VOICE", "EFFECTS", "MATRIX", "ADVANCED"});
-//  tab_selector_->setScrollWheelEnabled(false);
 
-//  synth_preset_selector_ = std::make_unique<SynthPresetSelector>();
-//  addSubSection(synth_preset_selector_.get());
-//  synth_preset_selector_->addListener(this);
+  sampleSelectText->setText(string_constants::cBKSampleLoadTypes[0]);
 
-  
-//  volume_section_ = std::make_unique<VolumeSection>("VOLUME");
-//  addSubSection(volume_section_.get());
-//
-//  oscilloscope_ = std::make_unique<Oscilloscope>();
-//  addOpenGlComponent(oscilloscope_.get());
-//
-//  spectrogram_ = std::make_unique<Spectrogram>();
-//  addOpenGlComponent(spectrogram_.get());
-//  spectrogram_->setVisible(false);
-//  spectrogram_->paintBackgroundLines(false);
-//  spectrogram_->setMinDb(-40.0f);
-//  spectrogram_->setMaxDb(0.0f);
-//
-//  view_spectrogram_ = std::make_unique<SynthButton>("view_spectrogram");
-//  addButton(view_spectrogram_.get());
-//  view_spectrogram_->getGlComponent()->setVisible(false);
-
-//  exit_temporary_button_ = std::make_unique<OpenGlShapeButton>("Exit");
-//  addChildComponent(exit_temporary_button_.get());
-//  addOpenGlComponent(exit_temporary_button_->getGlComponent());
-//  exit_temporary_button_->addListener(this);
-//  exit_temporary_button_->setShape(Paths::exitX());
-//
-//  temporary_tab_ = std::make_unique<PlainTextComponent>("Temporary", "");
-//  addOpenGlComponent(temporary_tab_.get());
-//  temporary_tab_->setFontType(PlainTextComponent::kLight);
-//  temporary_tab_->setJustification(juce::Justification::centredLeft);
-  //inspectButton = std::make_unique<OpenGlToggleButton>("Inspect the UI");
-  //inspectButton->setUiButton(false);
-  //inspectButton->
-  //addAndMakeVisible(inspectButton.get());
-  //addChildComponent(inspectButton.get());
-
-//  addOpenGlComponent(inspectButton->getGlComponent());
-//  inspectButton->setText("Inspect");
-//  // this chunk of code instantiates and opens the melatonin inspector
-//  inspectButton->onClick = [&] {
-//      if (!inspector)
-//      {
-//          inspector = std::make_unique<melatonin::Inspector> (*this);
-//          inspector->onClose = [this]() { inspector.reset(); };
-//      }
-//
-//      inspector->setVisible (true);
-//  };
   setAlwaysOnTop(true);
   setSkinOverride(Skin::kHeader);
 }
@@ -185,21 +127,6 @@ void HeaderSection::paintBackground(juce::Graphics& g) {
   paintKnobShadows(g);
 
 
-  //g.saveState();
-//  juce::Rectangle<int> bounds = getLocalArea(synth_preset_selector_.get(), synth_preset_selector_->getLocalBounds());
-//  g.reduceClipRegion(bounds);
-//  g.setOrigin(bounds.getTopLeft());
-  //synth_preset_selector_->paintBackground(g);
-  //g.restoreState();
-
-//  if (LoadSave::doesExpire()) {
-//    juce::String countdown = "Beta expires in: " + juce::String(LoadSave::getDaysToExpire()) + " days";
-//    int countdown_height = volume_section_->getY() + volume_section_->getBuffer();
-//    g.setFont(Fonts::instance()->proportional_regular().withPointHeight(countdown_height / 2.0f));
-//    g.setColour(findColour(Skin::kTextComponentText, true));
-//    g.drawText(countdown, volume_section_->getX(), 0,
-//               volume_section_->getWidth(), countdown_height, juce::Justification::centred);
-//  }
 }
 
 void HeaderSection::resized() {
@@ -225,39 +152,9 @@ void HeaderSection::resized() {
     sampleSelectText->setBounds(sampleSelector->getBounds());
     float label_text_height = findValue(Skin::kLabelHeight);
     sampleSelectText->setTextSize(label_text_height);
-    //loadButton->setBounds(sampleSelector->getRight() + 100, 0, 100, 50);
-    //saveButton->setBounds(loadButton->getX() + 100, 0, 100, 50);
-  //int logo_width = findValue(Skin::kModulationButtonWidth);
- // logo_section_->setBounds(large_padding, 0, logo_width, height);
-  //inspectButton->setBounds(large_padding, 0, 100, height);
 
-  int preset_selector_width = width / 3;
-  int preset_selector_height = height * 0.6f;
-  int preset_selector_buffer = (height - preset_selector_height) * 0.5f;
-  int preset_selector_x = (getWidth() - preset_selector_width + 2 * preset_selector_height) / 2;
- // synth_preset_selector_->setBounds(preset_selector_x, preset_selector_buffer,
-//                                    preset_selector_width, preset_selector_height);
-  int component_padding = 12 * size_ratio_;
-//  int volume_width = (width - synth_preset_selector_->getRight() - 2 * component_padding) / 2;
-//  int oscilloscope_width = volume_width - widget_margin;
-//  int oscilloscope_x = width - oscilloscope_width - large_padding;
-//  volume_section_->setBounds(synth_preset_selector_->getRight() + component_padding, 0, volume_width, height);
-//  oscilloscope_->setBounds(oscilloscope_x, widget_margin, oscilloscope_width, height - 2 * widget_margin);
-//  view_spectrogram_->setBounds(oscilloscope_->getBounds());
-//  spectrogram_->setBounds(oscilloscope_->getBounds());
 
-  int tabs_width = preset_selector_x - component_padding - tab_offset_;
-//  tab_selector_->setBounds(tab_offset_, 0, tabs_width, height);
-//  exit_temporary_button_->setBounds(tab_offset_, 0, height, height);
-
-//  float temporary_height = getHeight() * kTextHeightRatio;
-//  temporary_tab_->setTextSize(temporary_height);
-
-//  int temporary_x = exit_temporary_button_->getRight() + getHeight() * kPaddingLeft;
-  //int temporary_width = synth_preset_selector_->getX() - temporary_x;
-//  temporary_tab_->setBounds(temporary_x, 0, temporary_width, getHeight());
-
-  SynthSection::resized();
+   SynthSection::resized();
 }
 
 void HeaderSection::reset() {
@@ -265,25 +162,12 @@ void HeaderSection::reset() {
 //    //synth_preset_selector_->resetText();
 }
 
-//void HeaderSection::setAllValues() {
-//  //SynthSection::setAllValues(controls);
-////  bool view_spectrogram = view_spectrogram_->getToggleState();
-////  oscilloscope_->setVisible(!view_spectrogram);
-////  spectrogram_->setVisible(view_spectrogram);
-//}
 
 void HeaderSection::buttonClicked(juce::Button* clicked_button) {
   if (clicked_button == exit_temporary_button_.get()) {
-//    for (Listener* listener : listeners_)
-//      listener->clearTemporaryTab(tab_selector_->getValue());
-//    setTemporaryTab("");
+
   }
-//  else if (clicked_button == view_spectrogram_.get()) {
-//    bool view_spectrogram = view_spectrogram_->getToggleState();
-//    oscilloscope_->setVisible(!view_spectrogram);
-//    spectrogram_->setVisible(view_spectrogram);
-//    SynthSection::buttonClicked(clicked_button);
-//  }
+
   else if (clicked_button == sampleSelector.get())
     {
       PopupItems options;

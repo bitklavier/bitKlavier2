@@ -71,6 +71,7 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
         commandManager.registerAllCommandsForTarget(commandHandler.get());
     }
     sampleLoadManager->preferences = userPreferences->userPreferences.get();
+    sampleLoadManager->loadSamples(0,true);
     //sampleLoadManager->loadSamples(0, true);
 }
 
@@ -81,7 +82,6 @@ void SynthGuiInterface::updateFullGui() {
     if (gui_ == nullptr)
         return;
 
-    //  gui_->setAllValues(synth_->getControls());
     gui_->reset();
 }
 

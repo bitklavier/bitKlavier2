@@ -16,19 +16,9 @@ MainSection::MainSection(juce::ValueTree v, juce::UndoManager &um, OpenGlWrapper
     v.appendChild(t3, nullptr);
     constructionSite_ = std::make_unique<ConstructionSite>(t, um, open_gl, data);
     addMouseListener(constructionSite_.get(), true);
-    //addAndMakeVisible(constructionSite_.get());
-    //constructionPort.setViewedComponent(constructionSite_.get());
     constructionSite_->view = &constructionPort;
-    //constructionPort.setScrollBarsShown(false, false, true, true);
     addSubSection(constructionSite_.get(), true);
-    //addAndMakeVisible(constructionSite_.get());
-    //addAndMakeVisible(constructionPort);
-//    juce::ValueTree t(IDs::PREPARATION);
-//
-//    t.setProperty(IDs::type,bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
-//    t.setProperty(IDs::x,255, nullptr);
-//    t.setProperty(IDs::y,255, nullptr);
-//    v.addChild(t,-1, nullptr);
+
     setSkinOverride(Skin::kNone);
 }
 

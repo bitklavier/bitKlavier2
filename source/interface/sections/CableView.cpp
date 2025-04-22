@@ -15,7 +15,9 @@ CableView::CableView (ConstructionSite &site) :site(site), tracktion::engine::Va
     setAlwaysOnTop(true);
 }
 
-CableView::~CableView() = default;
+CableView::~CableView() {
+    freeObjects();
+}
 
 
 bool CableView::mouseOverClickablePort()
@@ -85,7 +87,16 @@ void CableView::reset()
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
     //safe to do on message thread because we have locked processing if this is called
     //_parent->getSynth()->getEngine()->resetEngine();
-    parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
+    if (_parent->getSynth()->getCriticalSection().tryEnter())
+    {
+       //safe to do on message thread because we have locked processing if this is called
+        parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
+        _parent->getSynth()->getCriticalSection().exit();
+    }
+    else
+    {
+        jassertfalse; // The MESSAGE thread was NOT holding the lock
+    }
 }
 void CableView::resized()
 {

@@ -18,9 +18,18 @@ tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getParent
 void ModulationLineView::reset()
 {
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    //safe to do on message thread because we have locked processing if this is called
-    //_parent->getSynth()->getEngine()->resetEngine();
-    parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::MODCONNECTIONS);
+    if (_parent->getSynth()->getCriticalSection().tryEnter())
+    {
+              //safe to do on message thread because we have locked processing if this is called
+        parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::MODCONNECTIONS);
+        _parent->getSynth()->getCriticalSection().exit();
+    }
+    else
+    {
+        jassertfalse; // The message thread was NOT holding the lock
+    }
+    //leave it open for duration ofall restes
+
 }
 ModulationLineView::~ModulationLineView()
 {
@@ -28,28 +37,10 @@ ModulationLineView::~ModulationLineView()
 }
 
 void ModulationLineView::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
-
-//    for(auto line: lines)
-//    {
-//        line->render(open_gl,false);
-//    }
-
-//    if(!line_->isInit())
-//        line_->init(open_gl);
-//    line_->render(open_gl, animate);
-//    GLenum gl =  juce::gl::glGetError();
-//    //DBG(juce::String(gl));
-//    _ASSERT(gl == juce::gl::GL_NO_ERROR);
   for (auto line : objects)
   {
-//      if(!line->line->isInit())
-//          line->line->init(open_gl);
-
 
       line->line->render(open_gl, animate);
-//      gl =  juce::gl::glGetError();
-      //DBG(juce::String(gl));
-//      _ASSERT(gl == juce::gl::GL_NO_ERROR);
   }
 }
 
@@ -94,12 +85,9 @@ void ModulationLineView::modulationDropped(const juce::ValueTree &source, const 
     parent.addChild(_connection, -1, nullptr);
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
     _parent->getGui()->modulation_manager->added();
-//    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
-//    parent->addModulationNodeConnection(sourceId, destId);
 }
 void ModulationLineView::resized()
 {
-//    line_->setBounds(getLocalBounds());
     for(auto line: objects)
     {
         line->setBounds(getLocalBounds());

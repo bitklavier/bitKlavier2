@@ -64,7 +64,8 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
   if (use_gui) {
     setLookAndFeel(DefaultLookAndFeel::instance());
     addAndMakeVisible(gui_.get());
-    gui_->reset();
+    //maybe want this maybe not -- 4/22/25 -- using this breaks pauseprocessing checks
+   // gui_->reset();
 
 
     juce::Rectangle<int> total_bounds = juce::Desktop::getInstance().getDisplays().getTotalBounds(true);

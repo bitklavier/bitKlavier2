@@ -112,6 +112,7 @@ bool SynthBase::loadFromValueTree(const juce::ValueTree& state)
 }
 
 bool SynthBase::loadFromFile(juce::File preset, std::string& error) {
+
     if (!preset.exists())
         return false;
 
@@ -134,25 +135,16 @@ bool SynthBase::loadFromFile(juce::File preset, std::string& error) {
     }
 
     //setPresetName(preset.getFileNameWithoutExtension());
-
+    pauseProcessing(true);
     SynthGuiInterface* gui_interface = getGuiInterface();
     if (gui_interface) {
         gui_interface->updateFullGui();
         gui_interface->notifyFresh();
     }
-
+    pauseProcessing(false);
     return true;
 }
 
-void SynthBase::processAudio(juce::AudioSampleBuffer* buffer, int channels, int samples, int offset) {
-//  if (expired_)
-//    return;
-//  AudioThreadAction action;
-//  while (processorInitQueue.try_dequeue (action))
-//      action();
-//  engine_->process(samples, *buffer);
-//  writeAudio(buffer, channels, samples, offset);
-}
 void SynthBase::processAudioAndMidi(juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer) //, int channels, int samples, int offset, int start_sample = 0, int end_sample = 0)
 {
 
@@ -168,14 +160,6 @@ void SynthBase::processAudioAndMidi(juce::AudioBuffer<float>& audio_buffer, juce
 
 
 }
-//void SynthBase::processAudioWithInput(juce::AudioSampleBuffer* buffer, const float* input_buffer,
-//                                      int channels, int samples, int offset) {
-//  if (expired_)
-//    return;
-//
-//  //engine_->processWithInput(input_buffer, samples);
-//  writeAudio(buffer, channels, samples, offset);
-//}
 void SynthBase::addModulationConnection(juce::AudioProcessorGraph::NodeID source, juce::AudioProcessorGraph::NodeID dest) {
    auto* sourceNode = getNodeForId(source);
    auto* destNode   = getNodeForId(dest);
