@@ -28,16 +28,12 @@ PreparationSection::PreparationSection(juce::String name, juce::ValueTree v, Ope
     //pluginID.uid = static_cast<uint32>(int(state.getProperty(IDs::uuid)));
     constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
     rebuildObjects();
+
     for (auto object: objects) {
+        this->addOpenGlComponent(object->getImageComponent(), false, true);
+        object->addListener(this);
         open_gl.context.executeOnGLThread([this,object,&open_gl](juce::OpenGLContext& context){
-
             object->getImageComponent()->init(open_gl);
-
-            juce::MessageManagerLock mm;
-            this->addOpenGlComponent(object->getImageComponent(), false, true);
-            this->addAndMakeVisible(object);
-            object->addListener(this);
-            this->resized();
         },false);
     }
 

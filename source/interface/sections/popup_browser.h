@@ -62,8 +62,15 @@ private:
 
 class PreparationPopup : public SynthSection {
 public:
-    PreparationPopup();
+    PreparationPopup(bool isModulation);
     ~PreparationPopup();
+
+    // class Listener {
+    //     public:
+    //     virtual void preparationPopupClosed(PreparationPopup* popup) { }
+    // };
+    void reset() override;
+
     void paintBackground(juce::Graphics& g) override {
 
     }
@@ -87,11 +94,6 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-//        if(e.getNumberOfClicks() == 2)
-//        {
-//            showPrepPopup(this);
-//
-//        }
         myDragger.startDraggingComponent (this, e);
     }
 
@@ -99,24 +101,20 @@ public:
     {
         myDragger.dragComponent (this, e, &constrainer);
     }
-    //juce::ResizableBorderComponent _border;
     juce::ComponentDragger myDragger;
     juce::ComponentBoundsConstrainer constrainer;
 
-//    void setPrep(PreparationSection * prep_)
-//    {
-//        prep = prep_;
-//    }
     void repaintBackground() override
     {
-       // repaintPrepBackground();
     }
     std::map<std::string, SynthSlider *> getAllSliders() override;
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
     std::map<std::string, SynthButton*> getAllButtons() override;
     std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() override;
+    // void addListener(Listener* listener) {listeners_.push_back(listener);}
 private:
-
+    bool is_modulation_;
+    // std::vector<Listener*> listeners_;
     std::shared_ptr<OpenGlBorder> _border;
 
     std::shared_ptr<OpenGlShapeButton> exit_button_;

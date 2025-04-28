@@ -87,6 +87,10 @@ class ModulationProcessor;
         void setBipolar(bool bipolar) {
             bipolar_ = bipolar;
         }
+        void reset() {
+            source_name = "";
+            destination_name = "";
+        }
 
         std::string source_name;
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
@@ -131,6 +135,12 @@ class ModulationProcessor;
 
         ModulationConnection* atIndex(int index) { return all_connections_[index].get(); }
         size_t numConnections() { return all_connections_.size(); }
+        void reset() {
+            for ( auto& c : all_connections_ ) {
+                c->reset();
+            }
+
+        }
 
     private:
 
@@ -197,7 +207,10 @@ struct StateConnection : public ModulatorBase::Listener{
         {
             changeBuffer->changeState.push_back(std::pair<int,juce::ValueTree>(0,change));
         }
-
+        void reset() {
+            source_name = "";
+            destination_name = "";
+        }
         std::string source_name;
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
         // if i'll be using this for that or not
@@ -230,6 +243,12 @@ struct StateConnection : public ModulatorBase::Listener{
         StateConnection* atIndex(int index) { return all_connections_[index].get(); }
         size_t numConnections() { return all_connections_.size(); }
         void addParam(std::pair<std::string,bitklavier::ParameterChangeBuffer*>&&);
+        void reset() {
+            for ( auto& c : all_connections_ ) {
+                c->reset();
+            }
+
+        }
 
     private:
         std::map<std::string,bitklavier::ParameterChangeBuffer*> parameter_map;

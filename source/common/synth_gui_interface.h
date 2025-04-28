@@ -50,7 +50,8 @@ namespace bitklavier
 class ModulationConnection;
 class StateConnection;
 }
-class SynthGuiInterface {
+class
+SynthGuiInterface {
   public:
     SynthGuiInterface(SynthBase* synth, bool use_gui = true);
     virtual ~SynthGuiInterface();
@@ -90,7 +91,7 @@ class SynthGuiInterface {
     std::unique_ptr<SampleLoadManager> sampleLoadManager ;
     std::unique_ptr<ApplicationCommandHandler> commandHandler;
   protected:
-
+    std::atomic<bool> loading;
 juce::ApplicationCommandManager commandManager;
 
     std::unique_ptr<juce::FileChooser> filechooser;

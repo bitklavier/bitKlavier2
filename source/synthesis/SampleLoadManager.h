@@ -90,12 +90,12 @@ private:
 //private:
 //    juce::File file;
 //};
-
+class SynthGuiInterface;
 class SynthBase;
 class SampleLoadManager : public juce::AsyncUpdater
 {
 public:
-    SampleLoadManager (UserPreferences& preferences, SynthBase* synth_);
+    SampleLoadManager (UserPreferences& preferences, SynthGuiInterface* synth_, SynthBase * synth);
     ~SampleLoadManager();
 
     juce::ThreadPool sampleLoader;
@@ -114,7 +114,7 @@ public:
 
     UserPreferences& preferences;
     void handleAsyncUpdate() override;
-
+    SynthGuiInterface* synthGui;
     SynthBase* synth;
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<AudioFormatReaderFactory> readerFactory;

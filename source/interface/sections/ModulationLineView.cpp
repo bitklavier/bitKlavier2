@@ -103,7 +103,7 @@ ModulationLine* ModulationLineView::createNewObject(const juce::ValueTree &v) {
 
 void ModulationLineView::deleteObject(ModulationLine *at) {
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    _parent->getSynth()->processorInitQueue.try_enqueue([this]
+    _parent->tryEnqueueProcessorInitQueue([this]
                                                        {
                                                            SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
                                                            //_parent->getSynth()->removeConnection(connection);
@@ -131,11 +131,17 @@ void ModulationLineView::deleteObject(ModulationLine *at) {
 }
 
 
-void ModulationLineView::newObjectAdded(ModulationLine *) {
+void ModulationLineView::newObjectAdded(ModulationLine * line) {
 
     //right now this doesn't need to do anything since this function mainly is used to alert the audio thread
     // that some thing has change.
     // in our case a new line does not cause any audio thread behaviour to occur
+    for (const auto& v : line->state)
+        if (v.hasType(IDs::ModulationConnection)) {
+            findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectModulation(v);
+        }
+
+
 }
 
 

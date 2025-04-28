@@ -23,6 +23,7 @@
 #include "open_gl_component.h"
 #include "synth_section.h"
 #include "FullInterface.h"
+#include "modulation_manager.h"
 #include "PreparationSection.h"
 namespace {
     template<class Comparator>
@@ -1074,365 +1075,23 @@ void DualPopupSelector::newSelection(PopupList* list, int id, int index) {
         callback_(id);
 }
 
-//PopupBrowser::PopupBrowser() : SynthSection("Popup Browser"),
-//                               body_(Shaders::kRoundedRectangleFragment),
-//                               border_(Shaders::kRoundedRectangleBorderFragment),
-//                               horizontal_divider_(Shaders::kColorFragment),
-//                               vertical_divider_(Shaders::kColorFragment),
-//                               owner_(nullptr) {
-//  addKeyListener(this);
-//  setInterceptsMouseClicks(false, true);
-//
-//  addOpenGlComponent(&body_);
-//  addOpenGlComponent(&border_);
-//  addOpenGlComponent(&horizontal_divider_);
-//  addOpenGlComponent(&vertical_divider_);
-//
-//  folder_list_ = std::make_unique<SelectionList>();
-//  folder_list_->addFavoritesOption();
-//  folder_list_->addListener(this);
-//  addSubSection(folder_list_.get());
-//  folder_list_->setAlwaysOnTop(true);
-//
-//  selection_list_ = std::make_unique<SelectionList>();
-//  selection_list_->addListener(this);
-//  addSubSection(selection_list_.get());
-//  selection_list_->setAlwaysOnTop(true);
-//
-//  for (int i = 0; i < 4; ++i) {
-//    addAndMakeVisible(closing_areas_[i]);
-//    closing_areas_[i].addListener(this);
-//  }
-//
-//  exit_button_ = std::make_unique<OpenGlShapeButton>("Exit");
-//  addAndMakeVisible(exit_button_.get());
-//  addOpenGlComponent(exit_button_->getGlComponent());
-//  exit_button_->addListener(this);
-//  exit_button_->setShape(Paths::exitX());
-//
-//  store_button_ = std::make_unique<OpenGlToggleButton>("Store");
-//  store_button_->setUiButton(true);
-//  addButton(store_button_.get());
-//  store_button_->setVisible(false);
-//
-//  download_button_ = std::make_unique<OpenGlToggleButton>("Login");
-//  download_button_->setUiButton(true);
-//  download_button_->setText("Download content");
-//  addButton(download_button_.get());
-//  download_button_->setVisible(false);
-//
-//#if !defined(NO_TEXT_ENTRY)
-//  search_box_ = std::make_unique<OpenGlTextEditor>("Search");
-//  search_box_->addListener(this);
-//  search_box_->setSelectAllWhenFocused(true);
-//  search_box_->setMultiLine(false, false);
-//  search_box_->setJustification(juce::Justification::centredLeft);
-//  addAndMakeVisible(search_box_.get());
-//  addOpenGlComponent(search_box_->getImageComponent());
-//#endif
-//
-//  setWantsKeyboardFocus(true);
-//  setMouseClickGrabsKeyboardFocus(true);
-//  setSkinOverride(Skin::kPopupBrowser);
-//}
-//
-//PopupBrowser::~PopupBrowser() = default;
-//
-//void PopupBrowser::resized() {
-//  static constexpr float kBrowseWidthRatio = 0.5f;
-//  static constexpr float kTopHeight = 38.0f;
-//
-//  SynthSection::resized();
-//
-//  closing_areas_[0].setBounds(0, 0, passthrough_bounds_.getX(), getHeight());
-//  closing_areas_[1].setBounds(passthrough_bounds_.getRight(), 0,
-//                              getWidth() - passthrough_bounds_.getRight(), getHeight());
-//  closing_areas_[2].setBounds(0, 0, getWidth(), passthrough_bounds_.getY());
-//  closing_areas_[3].setBounds(0, passthrough_bounds_.getBottom(),
-//                              getWidth(), getHeight() - passthrough_bounds_.getBottom());
-//
-//  body_.setBounds(browser_bounds_);
-//  body_.setRounding(findValue(Skin::kBodyRounding));
-//  body_.setColor(findColour(Skin::kBody, true));
-//
-//  border_.setBounds(browser_bounds_);
-//  border_.setRounding(findValue(Skin::kBodyRounding));
-//  border_.setThickness(1.0f, true);
-//
-//  juce::Colour border = findColour(Skin::kBorder, true);
-//  border_.setColor(border);
-//  horizontal_divider_.setColor(border);
-//  vertical_divider_.setColor(border);
-//
-//  juce::Colour empty_color = findColour(Skin::kBodyText, true);
-//  empty_color = empty_color.withAlpha(0.5f * empty_color.getFloatAlpha());
-//
-//  if (search_box_) {
-//    search_box_->setTextToShowWhenEmpty(TRANS("Search"), empty_color);
-//    search_box_->setColour(juce::CaretComponent::caretColourId, findColour(Skin::kTextEditorCaret, true));
-//    search_box_->setColour(juce::TextEditor::textColourId, findColour(Skin::kBodyText, true));
-//    search_box_->setColour(juce::TextEditor::highlightedTextColourId, findColour(Skin::kBodyText, true));
-//    search_box_->setColour(juce::TextEditor::highlightColourId, findColour(Skin::kTextEditorSelection, true));
-//  }
-//
-//  int selection_list_width = browser_bounds_.getWidth() * kBrowseWidthRatio;
-//  int top_height = kTopHeight * size_ratio_;
-//  int folder_list_width = browser_bounds_.getWidth() - selection_list_width;
-//  int list_height = browser_bounds_.getHeight() - top_height - 2;
-//  int x = browser_bounds_.getX();
-//  int y = browser_bounds_.getY();
-//
-//  folder_list_->setBounds(x, y + top_height + 1, folder_list_width - 1, list_height);
-//  selection_list_->setBounds(x + folder_list_width, y + top_height + 1, selection_list_width - 3, list_height);
-//  horizontal_divider_.setBounds(x + 1, y + top_height - 1, browser_bounds_.getWidth() - 2, 1);
-//  vertical_divider_.setBounds(x + folder_list_width, y + top_height, 1, list_height);
-//
-//  int padding = getPadding();
-//  int text_height = top_height - 2 * padding;
-//  download_button_->setBounds(x + padding, y + padding, selection_list_width - 2 * padding, text_height);
-//  if (search_box_) {
-//    search_box_->setBounds(download_button_->getBounds());
-//    search_box_->resized();
-//  }
-//
-//  int store_x = x + padding + selection_list_width;
-//  store_button_->setBounds(store_x, y + padding, browser_bounds_.getRight() - store_x - top_height, text_height);
-//  exit_button_->setBounds(x + browser_bounds_.getWidth() - top_height, y, top_height, top_height);
-//
-//  juce::Image image(juce::Image::ARGB, 1, 1, false);
-//  juce::Graphics g(image);
-//  paintOpenGlChildrenBackgrounds(g);
-//}
-//
-//void PopupBrowser::visibilityChanged() {
-//  checkNoContent();
-//  checkStoreButton();
-//  SynthSection::visibilityChanged();
-//  if (search_box_)
-//    search_box_->setText("");
-//
-//  juce::File selected = folder_list_->selected();
-//  if (selected.exists())
-//    newSelection(selected);
-//}
-//
-//void PopupBrowser::newSelection(juce::File selection) {
-//  if (selection.exists() && selection.isDirectory()) {
-//    juce::Array<juce::File> files;
-//    selection.findChildFiles(files, juce::File::findFiles, true, extensions_);
-//    selection_list_->setSelections(files);
-//    selection_list_->resetScrollPosition();
-//  }
-//  else {
-//    if (owner_) {
-//      owner_->loadFile(selection);
-//      checkStoreButton();
-//    }
-//  }
-//}
-//
-//void PopupBrowser::allSelected() {
-//  juce::Array<juce::File> files;
-//  juce::Array<juce::File> folders = folder_list_->getSelections();
-//  folders.addArray(folder_list_->getAdditionalFolders());
-//  for (const juce::File& folder : folders) {
-//    if (folder.exists() && folder.isDirectory())
-//      folder.findChildFiles(files, juce::File::findFiles, true, extensions_);
-//  }
-//
-//  selection_list_->setSelections(files);
-//  selection_list_->resetScrollPosition();
-//}
-//
-//void PopupBrowser::favoritesSelected() {
-////  juce::Array<juce::File> files;
-////  juce::Array<juce::File> folders = folder_list_->getSelections();
-////  folders.addArray(folder_list_->getAdditionalFolders());
-////  for (const juce::File& folder : folders) {
-////    if (folder.exists() && folder.isDirectory())
-////      folder.findChildFiles(files, juce::File::findFiles, true, extensions_);
-////  }
-////  juce::Array<juce::File> favorites;
-////  std::set<std::string> favorite_lookup = LoadSave::getFavorites();
-////  for (const juce::File& file : files) {
-////    if (favorite_lookup.count(file.getFullPathName().toStdString()))
-////      favorites.add(file);
-////  }
-////  selection_list_->setSelections(favorites);
-////  selection_list_->resetScrollPosition();
-//}
-//
-//void PopupBrowser::doubleClickedSelected(juce::File selection) {
-//  if (selection.exists() && !selection.isDirectory())
-//    setVisible(false);
-//}
-//
-//bool PopupBrowser::keyPressed(const juce::KeyPress &key, juce::Component *origin) {
-//  if (!isVisible())
-//    return search_box_->hasKeyboardFocus(true);
-//
-//  if (key.getKeyCode() == juce::KeyPress::escapeKey) {
-//    setVisible(false);
-//    return true;
-//  }
-//  if (key.getKeyCode() == juce::KeyPress::upKey || key.getKeyCode() == juce::KeyPress::leftKey) {
-//    selection_list_->selectPrev();
-//    return true;
-//  }
-//  if (key.getKeyCode() == juce::KeyPress::downKey || key.getKeyCode() == juce::KeyPress::rightKey) {
-//    selection_list_->selectNext();
-//    return true;
-//  }
-//  return search_box_->hasKeyboardFocus(true);
-//}
-//
-//bool PopupBrowser::keyStateChanged(bool is_key_down, juce::Component *origin) {
-//  if (is_key_down)
-//    return search_box_->hasKeyboardFocus(true);
-//  return false;
-//}
-//
-//void PopupBrowser::closingAreaClicked(PopupClosingArea* closing_area, const juce::MouseEvent& e) {
-//  if (!browser_bounds_.contains(e.getPosition() + closing_area->getPosition()))
-//    setVisible(false);
-//}
-//
-//void PopupBrowser::checkNoContent() {
-////  bool has_content = LoadSave::hasDataDirectory();
-////  if (search_box_)
-////    search_box_->setVisible(has_content);
-////  download_button_->setVisible(!has_content);
-//}
-//
-//void PopupBrowser::checkStoreButton() {
-//  if (owner_) {
-//    std::string author = owner_->getFileAuthor();
-//    juce::String type = folder_list_->getPassthroughFolderName();
-//    store_button_->setText("Get more " + type.toLowerCase().toStdString() + " by " + author);
-//    juce::String cleaned = juce::String(author).removeCharacters(" _.").toLowerCase();
-//    store_button_->setVisible(more_author_presets_.count(cleaned.toStdString()));
-//  }
-//}
-//
-//void PopupBrowser::loadPresets(std::vector<juce::File> directories, const juce::String& extensions,
-//                               const std::string& passthrough_name, const std::string& additional_folders_name) {
-//  extensions_ = extensions;
-//  if (search_box_)
-//    search_box_->setText("");
-//
-//  juce::Array<juce::File> folders;
-//  for (const juce::File& directory : directories)
-//    folders.add(directory);
-//
-//  folder_list_->setPassthroughFolderName(passthrough_name);
-//  folder_list_->setAdditionalRootsName(additional_folders_name);
-//  folder_list_->setSelections(folders);
-//
-////  if (!additional_folders_name.empty()) {
-////    std::vector<std::string> additional = LoadSave::getAdditionalFolders(additional_folders_name);
-////    for (const std::string& path : additional)
-////      directories.emplace_back(juce::File(path));
-////  }
-//
-//  juce::Array<juce::File> presets;
-//  selection_list_->setSelected(juce::File());
-//  folder_list_->filter("");
-////  if (!folder_list_->selected().exists()) {
-////    LoadSave::getAllFilesOfTypeInDirectories(presets, extensions_, directories);
-////    selection_list_->setSelections(presets);
-////  }
-//  selection_list_->filter("");
-//  if (owner_)
-//    selection_list_->setSelected(owner_->getCurrentFile());
-//
-////  more_author_presets_.clear();
-////  try {
-////    json available = LoadSave::getAvailablePacks();
-////    json available_packs = available["packs"];
-////    for (auto& pack : available_packs) {
-////      if (pack.count(folder_list_->getPassthroughFolderName()) == 0)
-////        continue;
-////
-////      bool contains_files = pack[folder_list_->getPassthroughFolderName()];
-////      if (!contains_files)
-////        continue;
-////
-////      bool purchased = false;
-////      if (pack.count("Purchased"))
-////        purchased = pack["Purchased"];
-////      if (purchased)
-////        continue;
-////
-////      std::string author_data = pack["Author"];
-////      juce::StringArray authors;
-////      authors.addTokens(author_data, ",", "");
-////      for (const juce::String& author : authors)
-////        more_author_presets_.insert(author.removeCharacters(" ._").toLowerCase().toStdString());
-////    }
-////  }
-////  catch (const json::exception& e) {
-////  }
-////  checkNoContent();
-////  checkStoreButton();
-//}
-//
-//void PopupBrowser::filterPresets() {
-//  selection_list_->filter(search_box_->getText());
-//  selection_list_->redoCache();
-//}
-//
-//void PopupBrowser::textEditorTextChanged(juce::TextEditor& editor) {
-//  filterPresets();
-//}
-//
-//void PopupBrowser::textEditorEscapeKeyPressed(juce::TextEditor& editor) {
-//  editor.setText("");
-//}
-//
-//void PopupBrowser::buttonClicked(juce::Button* clicked_button) {
-//  if (clicked_button == exit_button_.get())
-//    setVisible(false);
-////  else if (clicked_button == download_button_.get()) {
-////    FullInterface* parent = findParentComponentOfClass<FullInterface>();
-////    if (parent) {
-////      setVisible(false);
-////      parent->startDownload();
-////    }
-////  }
-////  else if (clicked_button == store_button_.get() && owner_) {
-////    juce::String encoded_author = juce::URL::addEscapeChars(owner_->getFileAuthor(), true);
-////    encoded_author = encoded_author.replace("+", "%2B");
-////
-////    juce::URL url(juce::String(kStoreUrl) + encoded_author);
-////    url.launchInDefaultBrowser();
-////  }
-//}
 
-PreparationPopup::PreparationPopup() : SynthSection("prep_popup"),
+
+PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
                                        body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
                                        border_(new OpenGlQuad(Shaders::kRoundedRectangleBorderFragment)),
                                        exit_button_(new OpenGlShapeButton("Exit")),
-                                       background_(new OpenGlBackground())
+                                       background_(new OpenGlBackground()), is_modulation_(ismod)
 {
     addBackgroundComponent(background_.get());
-    //addOpenGlComponent(body_);
-    //addOpenGlComponent(border_);
     background_->setComponent(this);
-    //_border = std::make_unique<OpenGlBorder>(this, nullptr);
 
-    //addBackgroundComponent(&background_);
-    //image_component_.setComponent(this);
-    //addOpenGlComponent(&image_component_);
     exit_button_ = std::make_shared<OpenGlShapeButton>("Exit");
     addAndMakeVisible(exit_button_.get());
     addOpenGlComponent(exit_button_->getGlComponent());
     exit_button_->addListener(this);
     exit_button_->setShape(Paths::exitX());
     constrainer.setMinimumOnscreenAmounts(0xffffff,0xffffff,0xffffff,0xffffff);
-    //addAndMakeVisible(_border.get());
-    //addOpenGlComponent(_border->getImageComponent());
-    //_border->setBorderThickness(juce::BorderSize<int>(20));
-    //borderDrawer = std::make_unique<OpenGlAutoImageComponent<juce::ResizableBorderComponent>>()
 }
 void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
 {
@@ -1458,24 +1117,29 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
     resized();
     repaintPrepBackground();
 }
+void PreparationPopup::reset() {
+    setVisible(false);
+    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+    all_synth_buttons_.clear();
+    all_sliders_.clear();
+    all_modulation_buttons_.clear();
+    all_state_modulated_components.clear();
+    if (prep_view.get() != nullptr) {
+        prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
+        removeSubSection(prep_view.get());
+        //do not use ->reset that is a synthsection function. i want to reset the actual ptr
+        prep_view.reset();
+    }
+
+    parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
+    repaintPrepBackground();
+}
 
 void PreparationPopup::buttonClicked(juce::Button *clicked_button)
 {
     if (clicked_button == exit_button_.get())
     {
-        setVisible(false);
-        auto* parent = findParentComponentOfClass<SynthGuiInterface>();
-        prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
-        removeSubSection(prep_view.get());
-        all_synth_buttons_.clear();
-        all_sliders_.clear();
-        all_modulation_buttons_.clear();
-        all_state_modulated_components.clear();
-        //do not use ->reset that is a synthsection function. i want to reset the actual ptr
-        prep_view.reset();
-       repaintPrepBackground();
-
-
+        reset();
     }
 
 }
@@ -1503,13 +1167,13 @@ void PreparationPopup::resized() {
 std::map<std::string, SynthSlider *> PreparationPopup::getAllSliders() {
     if(prep_view!= nullptr)
         return prep_view->getAllSliders();
-    return SynthSection::getAllSliders();
+    return {};//SynthSection::getAllSliders();
 }
 
 std::map<std::string, ModulationButton *> PreparationPopup::getAllModulationButtons() {
     if(prep_view!= nullptr)
         return prep_view->getAllModulationButtons();
-    return SynthSection::getAllModulationButtons();
+    return {};//SynthSection::getAllModulationButtons();
 }
 std::map<std::string, SynthButton *> PreparationPopup::getAllButtons() {
     if(prep_view!= nullptr)

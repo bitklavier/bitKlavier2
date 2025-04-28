@@ -244,6 +244,7 @@ public StateModulatedComponent::Listener
                       );
     ~ModulationManager();
 
+
     void createModulationMeter(
                                SynthSlider* slider, OpenGlMultiQuad* quads, int index);
     void createModulationSlider(std::string name, SynthSlider* slider, bool poly);
@@ -290,6 +291,9 @@ public StateModulatedComponent::Listener
     void expansionFocusLost() override {
       hideModulationAmountCallout();
     }
+
+    void preparationClosed(bool isModulation);
+
 
     void clearModulationSource();
 
@@ -383,7 +387,6 @@ public StateModulatedComponent::Listener
     void componentAdded();
 
     juce::CriticalSection open_gl_critical_section_;
-    juce::ValueTree state_;
     std::unique_ptr<juce::Component> modulation_destinations_;
     std::map<juce::Viewport*, int> num_rotary_meters;
     std::map<juce::Viewport*, int> num_linear_meters;

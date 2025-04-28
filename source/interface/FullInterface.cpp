@@ -21,6 +21,7 @@
 #include "synth_slider.h"
 #include "modulation_manager.h"
 #include "ModulationPreparation.h"
+#include "synth_base.h"
 
 FullInterface::FullInterface(SynthGuiData *synth_data) : SynthSection("full_interface"), width_(0), resized_width_(0),
                                                          last_render_scale_(0.0f), display_scale_(1.0f),
@@ -58,13 +59,13 @@ FullInterface::FullInterface(SynthGuiData *synth_data) : SynthSection("full_inte
     header_->addListener(this);
 
 
-    prep_popup = std::make_unique<PreparationPopup>();
+    prep_popup = std::make_unique<PreparationPopup>(false);
     addSubSection(prep_popup.get());
     prep_popup->setVisible(false);
     prep_popup->setAlwaysOnTop(true);
     prep_popup->setWantsKeyboardFocus(true);
 
-    mod_popup = std::make_unique<PreparationPopup>();
+    mod_popup = std::make_unique<PreparationPopup>(true);
     addSubSection(mod_popup.get());
     mod_popup->setVisible(false);
     mod_popup->setAlwaysOnTop(true);
@@ -266,8 +267,12 @@ void FullInterface::reset() {
     //vital previously had a scoped lock on this whole section. but this only really makes sense whenever we have a static system
     //since individual components must be capable of being created and destroyed we want to lock or block in those
     //individual destruction calls -- 4/25/25 -- davis
+    vt = findParentComponentOfClass<SynthGuiInterface>()->getSynth()->getValueTree().getChildWithName(IDs::PIANO);
     SynthSection::reset();
     repaintSynthesisSection();
+    prep_popup->reset();
+    mod_popup->reset();
+
 }
 
 void FullInterface::popupDisplay(juce::Component *source, const std::string &text,
@@ -349,15 +354,17 @@ void FullInterface::renderOpenGL() {
 void FullInterface::openGLContextClosing() {
     if (unsupported_)
         return;
-
+    DBG("closing");
     background_.destroy(open_gl_);
+    prep_popup->destroyOpenGlComponents(open_gl_);
+    mod_popup->destroyOpenGlComponents(open_gl_);
     removeSubSection(main_.get());
     removeSubSection(header_.get());
+
     removeSubSection(prep_popup.get());
     removeSubSection(mod_popup.get());
     destroyOpenGlComponents(open_gl_);
-    prep_popup->destroyOpenGlComponents(open_gl_);
-    mod_popup->destroyOpenGlComponents(open_gl_);
+
 
     main_ = nullptr;
     header_ = nullptr;

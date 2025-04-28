@@ -44,7 +44,6 @@ public:
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,
                     [this,j]() {
-                        DBG(j);
                         if (j > this->params->numActive - 1) {
                             juce::Array<float> sliderVals = getAllActiveValues();
                             sliderVals.add(dataSliders[j]->getValue());
@@ -58,13 +57,6 @@ public:
             j++;
 
         }
-        sliderChangedCallback +={ listeners.addParameterListener(
-                params->t0,
-                chowdsp::ParameterListenerThread::MessageThread,
-                    [this]() {
-                        DBG("runme");
-                       redoImage();
-                    })};
     }
 
 

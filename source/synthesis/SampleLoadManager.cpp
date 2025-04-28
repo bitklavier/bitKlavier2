@@ -10,8 +10,9 @@
  * ******* SampleLoadManager stuff *******
  */
 
-SampleLoadManager::SampleLoadManager (UserPreferences& preferences, SynthBase* synth_) : preferences (preferences),
-                                                                                         synth (synth_),
+SampleLoadManager::SampleLoadManager (UserPreferences& preferences, SynthGuiInterface* synth_,SynthBase* synth) : preferences (preferences),
+                                                                                         synth (synth),
+                                                                                        synthGui(synth_),
                                                                                          audioFormatManager (new juce::AudioFormatManager())
 
 {
@@ -26,7 +27,7 @@ SampleLoadManager::SampleLoadManager (UserPreferences& preferences, SynthBase* s
             allPitches.add (noteOctave);
         }
     }
-    synth_->getValueTree().addChild(t,1,nullptr);
+    synth->getValueTree().addChild(t,1,nullptr);
 
 }
 
@@ -48,15 +49,7 @@ void SampleLoadManager::handleAsyncUpdate()
         return;
     DBG ("samples loaded, tell the audio thread its okay to change the move soundsets");
     DBG ("samplerSoundset size = " + juce::String (samplerSoundset[globalSoundset_name].size()));
-    synth->processorInitQueue.try_enqueue ([this] {
-        //SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-        //object->setNodeAndPortInfo(_parent->getSynth()->addProcessor(std::move(object->getProcessorPtr())));
-        //synth->updateMainSoundSets(&samplerSoundset[globalSoundset_name],&samplerSoundset[globalHammersSoundset_name],&samplerSoundset[globalReleaseResonanceSoundset_name],&samplerSoundset[globalPedalsSoundset_name] );
-//        globalSoundset = &samplerSoundset[globalSoundset_name];
-//        globalHammersSoundset = &samplerSoundset[globalHammersSoundset_name];
-//        globalReleaseResonanceSoundset = &samplerSoundset[globalReleaseResonanceSoundset_name];
-//        globalPedalsSoundset = &samplerSoundset[globalPedalsSoundset_name];
-        //last_proc.reset();
+    synthGui->tryEnqueueProcessorInitQueue([this] {
         t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
         t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
         t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="Piano (Default)">
+  <GLOBALPIANOSAMPLES mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+                      pedalSampleSet="/defaultPedals"/>
+  <PIANO name="default">
+    <PREPARATIONS/>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

@@ -114,7 +114,6 @@ bool SynthBase::loadFromValueTree(const juce::ValueTree& state)
 }
 
 bool SynthBase::loadFromFile(juce::File preset, std::string& error) {
-
     if (!preset.exists())
         return false;
 
@@ -130,6 +129,16 @@ bool SynthBase::loadFromFile(juce::File preset, std::string& error) {
         error = "Error converting XML to juce::ValueTree";
         return false;
     }
+    SynthGuiInterface* gui_interface = getGuiInterface();
+    if (gui_interface) {
+        this->mod_connections_.clear();
+        this->state_connections_.clear();
+        this->mod_connections_.reserve(bitklavier::kMaxModulationConnections);
+        this->state_connections_.reserve(bitklavier::kMaxStateConnections);
+        this->engine_->getModulationBank().reset();
+        this->engine_->getStateBank().reset();
+      gui_interface->updateFullGui();
+    }
     if(!loadFromValueTree(parsed_value_tree))
     {
         error = "Error Initializing juce::ValueTree";
@@ -137,11 +146,11 @@ bool SynthBase::loadFromFile(juce::File preset, std::string& error) {
     }
 
     //setPresetName(preset.getFileNameWithoutExtension());
-    SynthGuiInterface* gui_interface = getGuiInterface();
     if (gui_interface) {
         gui_interface->updateFullGui();
         gui_interface->notifyFresh();
     }
+
     return true;
 }
 
@@ -280,6 +289,13 @@ bitklavier::StateConnectionBank& SynthBase::getStateBank() {
     return engine_->getStateBank();
 }
 
+bool SynthBase::isSourceConnected(const std::string & source) {
+    for (auto* connection : mod_connections_) {
+        if (connection->source_name == source)
+            return true;
+    }
+    return false;
+}
 
 void SynthBase::connectModulation(bitklavier::ModulationConnection *connection) {
    std::stringstream ss(connection->source_name);
@@ -319,7 +335,8 @@ void SynthBase::connectModulation(bitklavier::ModulationConnection *connection) 
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
     // bus output
-    //////i dont think any of this is threadsafe
+    //////i dont think any of this is threadsaf
+    ///e
     connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex(*connection);
     connection->processor = connection->parent_processor->getModulatorBase(juse_uuid);
     connection->parent_processor->addModulationConnection(connection);
@@ -342,12 +359,25 @@ void SynthBase::connectModulation(bitklavier::ModulationConnection *connection) 
         mod_connections_.push_back(connection);
         connection->connection_ = {{source_node->nodeID, source_index}, {dest_node->nodeID, dest_index}};
         mod_connection.appendChild(connection->state, nullptr);
-        processorInitQueue.enqueue([this,connection](){
+        getGuiInterface()->tryEnqueueProcessorInitQueue([this,connection](){
             engine_->addConnection(connection->connection_);
         });
     }
 
 }
+bool SynthBase::connectModulation(const juce::ValueTree &v) {
+    bitklavier::ModulationConnection* connection = getConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+    bool create = connection == nullptr;
+    if (create)
+    {
+        connection = getModulationBank().createConnection (v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+        connection->state = v;
+    }
+    if (connection)
+        connectModulation(connection);
+    return create;
+}
+
 bool SynthBase::connectModulation(const std::string &source, const std::string &destination) {
     bitklavier::ModulationConnection* connection = getConnection(source, destination);
     bool create = connection == nullptr;
@@ -379,7 +409,7 @@ void SynthBase::disconnectModulation(bitklavier::StateConnection *connection) {
     connection->source_name = "";
     connection->destination_name = "";
     state_connections_.remove(connection);
-    processorInitQueue.enqueue([this,connection](){
+    getGuiInterface()->tryEnqueueProcessorInitQueue([this,connection](){
         engine_->removeConnection(connection->connection_);
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection(connection);
@@ -392,7 +422,7 @@ void SynthBase::disconnectModulation(bitklavier::ModulationConnection *connectio
     connection->source_name = "";
     connection->destination_name = "";
     mod_connections_.remove(connection);
-    processorInitQueue.enqueue([this,connection](){
+    getGuiInterface()->tryEnqueueProcessorInitQueue([this,connection](){
         engine_->removeConnection(connection->connection_);
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection(connection);
@@ -451,18 +481,10 @@ void SynthBase::connectStateModulation(bitklavier::StateConnection *connection) 
 //    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer(true,1,param_index);
     //this is safe since we know that every source will be a modulationprocessor
 
-//    juce::AudioProcessorGraph::Connection connection {{source_node->getId(), source_index}, {dest_node->getId(), dest_index}};
-//    engine_->addConnection(connection);
-//    if(!parameter_tree.isValid() || !mod_src.isValid())
-//    {
-//        connection->destination_name = "";
-//        connection->source_name = "";
-//    }
-//    else if (state_connections_.count(connection) == 0){
         state_connections_.push_back(connection);
         connection->connection_ = {{source_node->nodeID, 0}, {dest_node->nodeID, 0}};
         state_connection.appendChild(connection->state, nullptr);
-        processorInitQueue.enqueue([this,connection](){
+        getGuiInterface()->tryEnqueueProcessorInitQueue([this,connection](){
 
             engine_->addConnection(connection->connection_);
         });

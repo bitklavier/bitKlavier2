@@ -22,9 +22,10 @@ ModulesInterface(v), modulation_list_(modulationProcessor)
     addOpenGlComponent(scroll_bar_->getGlComponent());
     scroll_bar_->addListener(this);
     modulation_sections_.reserve(modulation_list_->objects.size());
+
      for (auto& mod : modulation_list_->objects)
      {
-         auto *module_section = new ModulationSection(v, (mod->createEditor()));
+         auto *module_section = new ModulationSection(mod->state, (mod->createEditor()));
         container_->addSubSection(module_section);
         module_section->setInterceptsMouseClicks(false,true);
         modulation_sections_.emplace_back(std::move(module_section));

@@ -438,7 +438,7 @@ ModulationManager::ModulationManager(juce::ValueTree &tree, SynthBase* base
                                           editing_rotary_amount_quad_(Shaders::kRotaryModulationFragment),
                                           editing_linear_amount_quad_(Shaders::kLinearModulationFragment),
                                           modifying_(false), dragging_(false), changing_hover_modulation_(false),
-                                          current_modulator_(nullptr), modulation_expansion_box_(std::make_shared<ModulationExpansionBox>()), state_(tree){
+                                          current_modulator_(nullptr), modulation_expansion_box_(std::make_shared<ModulationExpansionBox>()){
   current_modulator_quad_.setQuad(0, -1.0f, -1.0f, 2.0f, 2.0f);
   drag_quad_.setTargetComponent(this);
   editing_rotary_amount_quad_.setTargetComponent(this);
@@ -631,7 +631,6 @@ void ModulationManager::modulationClicked(ModulationIndicator* indicator)
             }
             editing_state_component_->syncToValueTree();
             setStateModulationValues(connection->source_name,connection->destination_name,connection->state);
-            DBG("found that hoe");
         }
     }
 }
@@ -828,6 +827,7 @@ bool ModulationManager::hasFreeConnection() {
 void 	ModulationManager::componentAdded()
 {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
+
     FullInterface* full = findParentComponentOfClass<FullInterface>();
     auto sliders = full->getAllSliders();
     auto modulatable_buttons = full->getAllButtons();
@@ -888,7 +888,7 @@ void 	ModulationManager::componentAdded()
         }
 
     }
-    else{
+    else if (!dest.isValid() && !src.isValid()) {
         sliders.clear();
         modulatable_buttons.clear();
         mod_state_components.clear();
@@ -1455,7 +1455,7 @@ void ModulationManager::modulationDragged(const juce::MouseEvent& e) {
     setTemporaryModulationBipolar(component, bipolar);
 
   if (hover_knob)
-    modulationDraggedToHoverSlider(hover_knob);
+    return;// modulationDraggedToHoverSlider(hover_knob);
   else
     modulationDraggedToComponent(component, bipolar);
 }
@@ -1721,6 +1721,40 @@ void ModulationManager::renderMeters(OpenGlWrapper& open_gl, bool animate) {
 //{
 //
 //}
+void ModulationManager::preparationClosed(bool isModulation) {
+    for (auto& ind : modulation_indicators_) {
+        ind->setVisible(false);
+    }
+    for (auto& ind : modulation_hover_indicators_) {
+        ind->setVisible(false);
+    }
+    for (auto& ind : selected_modulation_indicators_) {
+        ind->setVisible(false);
+    }
+    editing_rotary_amount_quad_.setVisible(false);
+    editing_linear_amount_quad_.setVisible(false);
+    if (editing_state_component_)
+        editing_state_component_->setVisible(false);
+    if (isModulation) {
+        // for (auto& slider : modulation_amount_sliders_) {
+        //     slider->makeVisible(false);
+        //     slider->redoImage();
+        // }
+    }
+    else {
+        // for (auto& selected_slider : selected_modulation_sliders_) {
+        //     selected_slider->makeVisible(false);
+        //     selected_slider->redoImage();
+        // }
+        for (auto& hover_slider : modulation_hover_sliders_) {
+            hover_slider->makeVisible(false);
+        }
+
+    }
+
+    componentAdded();
+}
+
 void ModulationManager::renderSourceMeters(OpenGlWrapper& open_gl, int index) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
   int i = 0;
@@ -2375,6 +2409,11 @@ void ModulationManager::reset() {
   SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
   if (parent == nullptr || modifying_)
     return;
+
+    //reset mod manager to point to current piano
+
+
+    componentAdded();
 
   for (auto& meter : meter_lookup_) {
     int num_modulations = parent->getSynth()->getNumModulations(meter.first);

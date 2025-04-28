@@ -50,7 +50,7 @@ ModulationButton::~ModulationButton() {
 
 bool ModulationButton::hasAnyModulation() {
   if (parent_)
-//    return parent_->getSynth()->isSourceConnected(getName().toStdString());
+    return parent_->getSynth()->isSourceConnected(getName().toStdString());
   return false;
 }
 

@@ -219,7 +219,7 @@ void CableView::valueTreeRedirected (juce::ValueTree&)
 
 void CableView::newObjectAdded(Cable *c) {
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    _parent->getSynth()->processorInitQueue.try_enqueue([this,c]
+    _parent-> tryEnqueueProcessorInitQueue([this,c]
                                                        {
                                                            SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
                                                            _parent->getSynth()->addConnection(c->connection);
@@ -231,7 +231,7 @@ void CableView::newObjectAdded(Cable *c) {
 }
 void CableView::deleteObject(Cable *at)  {
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    _parent->getSynth()->processorInitQueue.try_enqueue([this,connection=at->connection]
+    _parent->tryEnqueueProcessorInitQueue([this,connection=at->connection]
                                                        {
                                                            SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
                                                            _parent->getSynth()->removeConnection(connection);
@@ -242,7 +242,7 @@ void CableView::deleteObject(Cable *at)  {
 
         at->setVisible(false);
         site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
-            this->destroyOpenGlComponent(*(at->getImageComponent()), this->site.open_gl);
+            this->destroyOpenGlComponent(*(at->getImageComponent()), *this->open_gl);
         },true);
     }else
         delete at;

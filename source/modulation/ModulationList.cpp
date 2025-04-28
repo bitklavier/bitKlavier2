@@ -6,6 +6,8 @@
 #include "synth_base.h"
 #include "Identifiers.h"
 #include "ModulationProcessor.h"
+#include "synth_base.h"
+#include "synth_gui_interface.h"
 ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier::ModulationProcessor* proc) : tracktion::ValueTreeObjectList<ModulatorBase>(v),
         parent_(p), proc_(proc)
 {
@@ -25,7 +27,7 @@ void ModulationList::deleteObject(ModulatorBase * base)
 {
     //this will call delete in the modulationprocessor
 
-    parent_->processorInitQueue.try_enqueue(
+    parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
             [this, base] {
                 base->parent_->removeModulator(base);
             });
@@ -38,7 +40,7 @@ ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
     try {
         auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),args);
 
-        parent_->processorInitQueue.try_enqueue(
+        parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
                 [this, proc] {
                     this->proc_->addModulator(proc);
                 });

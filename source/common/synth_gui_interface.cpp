@@ -62,7 +62,7 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
                                                                        sampleLoadManager(
                                                                            new SampleLoadManager(
                                                                                userPreferences->userPreferences.get(),
-                                                                               synth)) {
+                                                                               this, synth)) {
     if (use_gui) {
         SynthGuiData synth_data(synth_);
         gui_ = std::make_unique<FullInterface>(&synth_data);
@@ -140,7 +140,12 @@ bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
 }
 
 void SynthGuiInterface::tryEnqueueProcessorInitQueue(juce::FixedSizeFunction<64, void()> callback) {
-    synth_->processorInitQueue.try_enqueue(std::move(callback));
+    if (loading) {
+        callback();
+    }
+    else {
+        synth_->processorInitQueue.try_enqueue(std::move(callback));
+    }
 }
 
 void SynthGuiInterface::setFocus() {
@@ -197,7 +202,7 @@ bool SynthGuiInterface::isConnected(juce::AudioProcessorGraph::Connection &conne
 }
 
 void SynthGuiInterface::addProcessor(PreparationSection *object) {
-    getSynth()->processorInitQueue.try_enqueue([this, object] {
+    tryEnqueueProcessorInitQueue([this, object] {
         if (auto listener = dynamic_cast<juce::ValueTree::Listener *>(object->getProcessor()))
             sampleLoadManager->t.addListener(listener);
         object->setNodeInfo(getSynth()->addProcessor(std::move(object->getProcessorPtr()), object->pluginID));
@@ -206,7 +211,7 @@ void SynthGuiInterface::addProcessor(PreparationSection *object) {
 
 void SynthGuiInterface::addModulationNodeConnection(juce::AudioProcessorGraph::NodeID source,
                                                     juce::AudioProcessorGraph::NodeID destination) {
-    getSynth()->processorInitQueue.try_enqueue([this, source, destination] {
+    tryEnqueueProcessorInitQueue([this, source, destination] {
         synth_->addModulationConnection(source, destination);
     });
 }
@@ -229,12 +234,14 @@ void SynthGuiInterface::openLoadDialog() {
 
         std::string error;
         juce::File choice = fc.getResult();
+        loading = true;
         if (!this->loadFromFile(choice, error)) {
             //            std::string name = ProjectInfo::projectName;
             //            error = "There was an error open the preset. " + error;
             //juce::AlertWindow::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "PRESET ERROR, ""Error opening preset", error);
             DBG(error);
         }
+        loading = false;
         //        else
         //            parent->externalPresetLoaded(choice);
     });

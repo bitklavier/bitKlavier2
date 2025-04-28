@@ -95,6 +95,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     void addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
     bool connectStateModulation(const std::string& source,const std::string& destination);
     bool connectModulation(const std::string& source,const std::string& destination);
+    bool connectModulation(const juce::ValueTree& v);
     void disconnectModulation(const std::string& source, const std::string& destination);
     void disconnectStateModulation(const std::string& source, const std::string& destination);
     void connectModulation(bitklavier::ModulationConnection* connection);
@@ -114,11 +115,12 @@ class SynthBase :  public juce::ValueTree::Listener {
     bitklavier::CircularQueue<bitklavier::ModulationConnection*> mod_connections_;
     bitklavier::CircularQueue<bitklavier::StateConnection*> state_connections_;
     int getNumModulations(const std::string& destination);
+    virtual SynthGuiInterface* getGuiInterface() = 0;
+    bool isSourceConnected(const std::string& source);
 protected:
 //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
     juce::UndoManager um;
-    virtual SynthGuiInterface* getGuiInterface() = 0;
 
     bool loadFromValueTree(const juce::ValueTree& state);
 
