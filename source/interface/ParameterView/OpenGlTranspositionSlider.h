@@ -58,6 +58,8 @@ public:
 
         }
     }
+   // ~OpenGlTranspositionSlider() {
+   //  }
 
 
     virtual void resized() override {
@@ -75,7 +77,6 @@ public:
         OpenGlAutoImageComponent<BKStackedSlider>::mouseDown(e);
         redoImage();
     }
-
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
         OpenGlAutoImageComponent<BKStackedSlider>::textEditorReturnKeyPressed(textEditor);
         redoImage();

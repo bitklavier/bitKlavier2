@@ -26,7 +26,7 @@ public:
     }
 };
 
-class BKButtonAndMenuLAF : public juce::LookAndFeel_V4, public juce::DeletedAtShutdown
+class BKButtonAndMenuLAF : public juce::LookAndFeel_V4/*, public juce::DeletedAtShutdown*/
 {
 public:
 

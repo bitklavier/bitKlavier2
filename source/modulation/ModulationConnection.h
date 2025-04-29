@@ -18,6 +18,7 @@ class ModulationProcessor;
         {
 
             createUuidProperty(state);
+            state.setProperty(IDs::isState,false,nullptr);
             uuid = state.getProperty(IDs::uuid);
             index_in_all_mods = index;
             scalingValue_ = 0.5f;
@@ -154,8 +155,8 @@ struct StateConnection : public ModulatorBase::Listener{
         {
             createUuidProperty(state);
             uuid = state.getProperty(IDs::uuid);
+            state.setProperty(IDs::isState,true,nullptr);
             index_in_all_mods = index;
-            scalingValue_ = 1.f;
             setSource(source_name);
             setDestination(destination_name);
 
@@ -181,7 +182,7 @@ struct StateConnection : public ModulatorBase::Listener{
         void setChangeBuffer(bitklavier::ParameterChangeBuffer* buf) {
             changeBuffer = buf;
         }
-        void setChange(juce::ValueTree& _change) {change = _change;}
+        void setChange(const juce::ValueTree& _change) {change = _change;}
         void resetConnection(const std::string& from, const std::string& to) {
             source_name = from;
             destination_name = to;
@@ -194,15 +195,6 @@ struct StateConnection : public ModulatorBase::Listener{
             changeBuffer = nullptr;
         }
 
-        float getCurrentBaseValue()
-        {
-            return scalingValue_.load();
-        }
-        void setScalingValue(float val)
-        {
-                scalingValue_.store(val);
-            DBG(juce::String(val));
-        }
         void modulationTriggered() //listener funciton
         {
             changeBuffer->changeState.push_back(std::pair<int,juce::ValueTree>(0,change));
@@ -215,7 +207,6 @@ struct StateConnection : public ModulatorBase::Listener{
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
         // if i'll be using this for that or not
         juce::ValueTree state;
-        juce::ValueTree change;
         int index_in_all_mods;
         int index_in_mapping;
         juce::Uuid uuid;
@@ -226,8 +217,9 @@ struct StateConnection : public ModulatorBase::Listener{
         int modulation_output_bus_index;
         bitklavier::ParameterChangeBuffer* changeBuffer = nullptr;
     private:
-        std::atomic<float> scalingValue_;
+       // std::atomic<float> scalingValue_;
 //        std::atomic<float>* bipolarOffset;
+        juce::ValueTree change;
 
 
 

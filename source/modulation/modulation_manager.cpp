@@ -616,6 +616,7 @@ void ModulationManager::modulationClicked(ModulationIndicator* indicator)
             {
                 editing_state_component_->setVisible(true);
                 editing_state_component_->getImageComponent()->setVisible(true);
+
             }
 
             if ( editing_state_component_ == nullptr)
@@ -631,6 +632,7 @@ void ModulationManager::modulationClicked(ModulationIndicator* indicator)
             }
             editing_state_component_->syncToValueTree();
             setStateModulationValues(connection->source_name,connection->destination_name,connection->state);
+            editing_state_component_->getImageComponent()->redrawImage(true);
         }
     }
 }
@@ -645,7 +647,7 @@ void ModulationManager::createModulationSlider(std::string name, SynthSlider* sl
   all_destinations_.push_back(std::move(destination));
 }
 
-ModulationManager::~ModulationManager() { }
+ModulationManager::~ModulationManager() { if (editing_state_component_!=nullptr) delete editing_state_component_; }
 
 void ModulationManager::resized() {
   float meter_thickness = findValue(Skin::kKnobModMeterArcThickness);
@@ -2342,7 +2344,7 @@ void ModulationManager::setStateModulationValues(std::string source, std::string
 
     for (auto* connection : connections) {
         if (connection->source_name == source)
-            connection->change = values;
+                connection->setChange(values);
 
     }
 

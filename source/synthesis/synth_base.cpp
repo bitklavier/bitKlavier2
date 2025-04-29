@@ -366,16 +366,30 @@ void SynthBase::connectModulation(bitklavier::ModulationConnection *connection) 
 
 }
 bool SynthBase::connectModulation(const juce::ValueTree &v) {
-    bitklavier::ModulationConnection* connection = getConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
-    bool create = connection == nullptr;
-    if (create)
-    {
-        connection = getModulationBank().createConnection (v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
-        connection->state = v;
+    if (v.getProperty(IDs::isState)) {
+        bitklavier::ModulationConnection* connection = getConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+        bool create = connection == nullptr;
+        if (create)
+        {
+            connection = getModulationBank().createConnection (v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+            connection->state = v;
+        }
+        if (connection)
+            connectModulation(connection);
+        return create;
     }
-    if (connection)
-        connectModulation(connection);
-    return create;
+    else {
+        bitklavier::StateConnection* connection =  getStateConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+        bool create = connection == nullptr;
+        if (create) {
+            connection = getStateBank().createConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+            connection->state = v;
+
+        }
+        if (connection)
+            connectStateModulation(connection);
+        return create;
+    }
 }
 
 bool SynthBase::connectModulation(const std::string &source, const std::string &destination) {
