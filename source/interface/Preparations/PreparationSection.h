@@ -228,7 +228,15 @@ public:
                               juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
                               nullptr);
                 v.setProperty(IDs::chIdx, i, nullptr);
-                state.addChild(v, -1, nullptr);
+                bool add = true;
+                for (auto vt: state) {
+                    if (vt.isEquivalentTo(v)) {
+                        add = false;
+                    }
+                }
+                if (add) {
+                    state.addChild(v, -1, nullptr);
+                }
                 numIns = numIns + 1;
             }
         }
@@ -240,7 +248,17 @@ public:
                           nullptr);
             v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
             v.setProperty(IDs::isIn, true, nullptr);
-            state.addChild(v, -1, nullptr);
+            bool add = true;
+            for (auto vt: state) {
+                if (vt.isEquivalentTo(v)) {
+                    add = false;
+                }
+            }
+            if (add) {
+                state.addChild(v, -1, nullptr);
+            }
+
+
             numIns = numIns + 1;
         }
 
@@ -254,7 +272,15 @@ public:
                               nullptr);
                 v.setProperty(IDs::chIdx, i, nullptr);
                 v.setProperty(IDs::isIn, false, nullptr);
-                state.addChild(v, -1, nullptr);
+                bool add = true;
+                for (auto vt: state) {
+                    if (vt.isEquivalentTo(v)) {
+                        add = false;
+                    }
+                }
+                if (add) {
+                    state.addChild(v, -1, nullptr);
+                }
                 numOuts = numOuts + 1;
             }
         }
@@ -264,9 +290,18 @@ public:
                           nullptr);
             v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
             v.setProperty(IDs::isIn, false, nullptr);
-            state.addChild(v, -1, nullptr);
+            bool add = true;
+            for (auto vt: state) {
+                if (vt.isEquivalentTo(v)) {
+                    add = false;
+                }
+            }
+            if (add) {
+                state.addChild(v, -1, nullptr);
+            }
         numOuts = numOuts  + 1;
         }
+        //this->resized();
     }
 
     virtual std::unique_ptr<SynthSection> getPrepPopup() {}

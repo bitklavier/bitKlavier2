@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="Piano (Default)">
+  <GLOBALPIANOSAMPLES mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+                      pedalSampleSet="/defaultPedals"/>
+  <PIANO name="default">
+    <PREPARATIONS>
+      <PREPARATION type="0" width="260" height="132" x="381" y="137" uuid="6089ca718c4f4f4ab4ed0fbb8f941a92"
+                   nodeID="4" numIns="1" numOuts="2">
+        <MODULATABLE_PARAM Gain="0.000" Hammers="-6.000" Ring="6.000" Pedal="-6.000" Blendronic="0.000"
+                           decay="0.000" sustain="1.000" release="50.000" attack="1.000"
+                           attackpower="0.000" hold="0.000" delay="0.000" decaypower="0.000"
+                           releasepower="0.000" t0="0.000" t1="0.000" t2="0.000" t3="0.000"
+                           t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000"
+                           t10="0.000" t11="0.000" UseTuning="0.000"/>
+        <MODULATABLE_PARAM parameter="release" channel="1"/>
+        <MODULATABLE_PARAM parameter="decay" channel="2"/>
+        <MODULATABLE_PARAM parameter="Pedal" channel="3"/>
+        <MODULATABLE_PARAM parameter="Ring" channel="4"/>
+        <MODULATABLE_PARAM parameter="Blendronic" channel="5"/>
+        <MODULATABLE_PARAM parameter="sustain" channel="6"/>
+        <MODULATABLE_PARAM parameter="Hammers" channel="7"/>
+        <MODULATABLE_PARAM parameter="Gain" channel="8"/>
+        <PORT nodeID="4" chIdx="4096" isIn="1"/>
+        <PORT nodeID="4" chIdx="0" isIn="0"/>
+        <PORT nodeID="4" chIdx="1" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="8" width="100" height="100" x="792" y="129" uuid="e8229018d08d4809a802e7de53c48576"
+                   nodeID="5" numIns="1">
+        <PORT nodeID="5" chIdx="4096" isIn="1"/>
+        <modulationproc type="state" isState="1" uuid="2a3967181ddc458e9c75c69f4926a2b8"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS>
+      <MODCONNECTION isMod="1" src="5" dest="4">
+        <ModulationConnection uuid="4ed18c18b86846ebbb7bbd2f23067ad5" src="e8229018d08d4809a802e7de53c48576_state-2a3967181ddc458e9c75c69f4926a2b8_mod"
+                              dest="6089ca718c4f4f4ab4ed0fbb8f941a92_transpose" t0="-5.610000133514404"
+                              t1="7.090000152587891" t2="-0.2800000011920929"/>
+      </MODCONNECTION>
+    </MODCONNECTIONS>
+  </PIANO>
+</GALLERY>

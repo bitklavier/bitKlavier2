@@ -30,11 +30,14 @@ PreparationSection::PreparationSection(juce::String name, juce::ValueTree v, Ope
     rebuildObjects();
 
     for (auto object: objects) {
-        this->addOpenGlComponent(object->getImageComponent(), false, true);
-        object->addListener(this);
         open_gl.context.executeOnGLThread([this,object,&open_gl](juce::OpenGLContext& context){
             object->getImageComponent()->init(open_gl);
-        },false);
+        },true);
+        this->addOpenGlComponent(object->getImageComponent(), false, true);
+        object->addListener(this);
+        addAndMakeVisible(object);
+        object->redoImage();
+
     }
 
 
@@ -57,6 +60,9 @@ void PreparationSection::paintBackground(juce::Graphics &g) {
     if (item) {
         //item->setColor(findColour (Skin::kWidgetPrimary1, true));
         item->redoImage();
+    }
+    for (auto object: objects) {
+        object->redoImage();
     }
 
 
@@ -117,6 +123,7 @@ void PreparationSection::resized() {
                                 portSize, portSize);
             }
         }
+
     }
 
     SynthSection::resized();

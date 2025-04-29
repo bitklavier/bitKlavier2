@@ -17,7 +17,7 @@ DirectPreparation::DirectPreparation (std::unique_ptr<DirectProcessor> p,
 {
 
     item = std::make_unique<DirectItem> (); // Initializes member variable `item` of PreparationSection class
-    addOpenGlComponent (item->getImageComponent()); // Calls member function of SynthSection (parent class to PreparationSection)
+    addOpenGlComponent (item->getImageComponent(),true); // Calls member function of SynthSection (parent class to PreparationSection)
     _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
         {item->getImageComponent()->init(_open_gl);
         },false);
