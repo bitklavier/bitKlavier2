@@ -66,45 +66,7 @@ private:
     DirectProcessor & proc;
     std::unique_ptr<DirectProcessor> _proc_ptr;
 
-    /************************************************************************************/
-    /*             NESTED CLASS: DirectPopup, inherits from PreparationPopup            */
-    /************************************************************************************/
 
-    class DirectPopup : public PreparationPopup {
-    public:
-
-        // Constructor method that takes two arguments: a smart pointer to a DirectProcessor,
-        // and a reference to an OpenGlWrapper
-        DirectPopup (DirectProcessor& proc, OpenGlWrapper& open_gl);
-
-        // Public function definitions for the class, which override the base class methods for
-        // initializing, rendering, resizing, and painting OpenGl components
-        void initOpenGlComponents(OpenGlWrapper &open_gl) override;
-        void resized() override;
-        void paintBackground(juce::Graphics& g) override
-        {
-             SynthSection::paintContainer(g);
-             paintHeadingText(g);
-             paintBorder(g);
-             paintKnobShadows(g);
-             paintChildrenBackgrounds(g);
-        }
-
-        int getViewPosition() {
-            int view_height = getHeight();
-            return view_height; //std::max(0, std::min<int>(selections_.size() * getRowHeight() - view_height, view_position_));
-        }
-
-        ~DirectPopup();
-
-
-    private:
-
-        // Private function definitions and member variables for the DirectPopup class
-        DirectParams* params = nullptr;
-        DirectProcessor& proc;
-        std::unique_ptr<DirectParametersView> view;
-    };
 };
 
 

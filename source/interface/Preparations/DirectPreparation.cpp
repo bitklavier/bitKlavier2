@@ -30,14 +30,6 @@ DirectPreparation::DirectPreparation (std::unique_ptr<DirectProcessor> p,
 
 std::unique_ptr<SynthSection> DirectPreparation::getPrepPopup()
 {
-//    if(popup_view) {
-//        popup_view->destroyOpenGlComponents(_open_gl);
-//        popup_view->reset();
-//        return popup_view;
-//    }
-//    popup_view = std::make_shared<DirectParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
-//
-//    popup_view->initOpenGlComponents(_open_gl);
     return std::make_unique<DirectParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
 }
 

@@ -12,7 +12,7 @@
 //#include "Preparations/SynchronicPreparation.h"
 //#include "Preparations/BlendronicPreparation.h"
 //#include "Preparations/TempoPreparation.h"
-//#include "Preparations/TuningPreparation.h"
+#include "Preparations/TuningPreparation.h"
 #include "Preparations/ModulationPreparation.h"
 
 

@@ -37,16 +37,37 @@ BKItem (bitklavier::BKPreparationType type);
 
         juce::Rectangle<float> bounds = getLocalBounds().toFloat();//.reduced(10).withX(0).withY(0);
 
-        juce::Rectangle<float> s = bounds.getProportion<float>({0.0f, 0.0f, 0.9f, 0.9f});
-        s.setCentre(bounds.getCentre());
-        layer_1_.applyTransform(layer_1_.getTransformToScaleToFit(s,true));
+        // juce::Rectangle<float> s = bounds;// bounds.getProportion<float>({0.0f, 0.0f, 1.f, 1.f});
+        // s.setCentre(bounds.getCentre());
+        // layer_1_.applyTransform(layer_1_.getTransformToScaleToFit(s,true));
         int width = getWidth();
         int height = getHeight();
-
+        hit_test_bounds = bounds;
         shadow_ = juce::Image(juce::Image::SingleChannel,width, height, true);
+        juce::Rectangle<float> fullBounds = getLocalBounds().toFloat(); // The full area you're drawing into
+        juce::Rectangle<float> targetArea = fullBounds.reduced(kMeterPixel);   // 5px margin
+        juce::Rectangle<float> pathBounds = layer_1_.getBounds();
 
-        juce::Graphics shadow_g(shadow_);
-        shadow.drawForPath(shadow_g, layer_1_);
+        if (!pathBounds.isEmpty())
+        {
+            // Compute uniform scaling factor
+            float scaleX = targetArea.getWidth()  / pathBounds.getWidth();
+            float scaleY = targetArea.getHeight() / pathBounds.getHeight();
+            float uniformScale = std::min(scaleX, scaleY); // Keep aspect ratio
+
+            // Compute the center offset after scaling
+            juce::Point<float> pathCentre = pathBounds.getCentre();
+            juce::Point<float> targetCentre = targetArea.getCentre();
+
+            juce::AffineTransform transform =
+                juce::AffineTransform::translation(-pathCentre.x, -pathCentre.y)   // move to origin
+                .scaled(uniformScale)                                              // scale
+                .translated(targetCentre.x, targetCentre.y);                       // move to target center
+
+            layer_1_.applyTransform(transform);
+        }
+        //juce::Graphics shadow_g(shadow_);
+        //shadow.drawForPath(shadow_g, layer_1_);
 
         redoImage();
     };
@@ -76,15 +97,17 @@ BKItem (bitklavier::BKPreparationType type);
 //
         float size_ratio;
 
+    juce::Path layer_1_;
+    juce::Rectangle<float> hit_test_bounds;
+    juce::Image shadow_;
+    static constexpr float kMeterPixel = 5.0f;
 protected:
     //void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
     //    juce::ValueTree &state;
     //    juce::UndoManager &um;
-    juce::Image shadow_;
     std::vector<Listener*> listeners_;
     std::shared_ptr<OpenGlImageComponent> image_component_;
 
-    juce::Path layer_1_;
     juce::Path layer_2_;
     juce::Path layer_3_;
     juce::Path layer_4_;
@@ -148,8 +171,9 @@ public:
         g.fillPath(layer_2_);
         g.fillPath(layer_3_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_,juce::PathStrokeType (5, juce::PathStrokeType::mitered) );
+        g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
+
 };
 
 class DirectItem : public BKItem
@@ -196,7 +220,7 @@ public:
         // Retrieves and sets the color of each layer
 
         g.setColour(findColour(Skin::kShadow, true));
-        g.drawImageAt(shadow_, 0, 0, true);
+        //g.drawImageAt(shadow_, 0, 0, true);
         g.fillPath(layer_1_);
 
         juce::Colour c;
@@ -205,7 +229,7 @@ public:
         g.fillPath(layer_2_);
         g.fillPath(layer_3_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_, juce::PathStrokeType(5, juce::PathStrokeType::mitered));
+        g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
 
@@ -262,7 +286,7 @@ public:
         g.fillPath(layer_2_);
         g.fillPath(layer_3_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_,juce::PathStrokeType (5, juce::PathStrokeType::mitered) );
+        g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 
 };
@@ -320,7 +344,7 @@ public:
         g.fillPath(layer_2_);
         g.fillPath(layer_3_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_,juce::PathStrokeType (5, juce::PathStrokeType::mitered));
+        g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered));
     }
 
 };
@@ -330,7 +354,6 @@ class BlendronicItem : public BKItem
 public:
     BlendronicItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeBlendronic)
     {
-
     }
 
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
@@ -378,7 +401,7 @@ public:
         g.fillPath(layer_2_);
         g.fillPath(layer_3_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_,juce::PathStrokeType (5, juce::PathStrokeType::mitered) );
+        g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 
 };
@@ -436,7 +459,7 @@ public:
         g.fillPath(layer_2_);
         g.fillPath(layer_3_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_, juce::PathStrokeType(5, juce::PathStrokeType::mitered));
+        g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
 
@@ -479,7 +502,7 @@ public:
         g.setColour(c);
         g.fillPath(layer_2_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_, juce::PathStrokeType(5, juce::PathStrokeType::mitered));
+        g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 
 };
@@ -523,7 +546,7 @@ public:
         g.setColour(c);
         g.fillPath(layer_2_);
         g.setColour(prep_color_);
-        g.strokePath(layer_1_, juce::PathStrokeType(5, juce::PathStrokeType::mitered));
+        g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
 

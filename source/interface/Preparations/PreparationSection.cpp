@@ -109,17 +109,22 @@ void PreparationSection::resized() {
 
             int total = isInput ? numIns : numOuts;
             int index = port->pin.isMIDI() ? (total - 1) : channelIndex;
-
             auto totalSpaces = static_cast<float> (total) +
                                (static_cast<float> (juce::jmax(0, processor->getBusCount(isInput) - 1)) * 0.5f);
             auto indexPos = static_cast<float> (index) + (static_cast<float> (busIdx) * 0.5f);
-            if (port->pin.isMIDI()) {
-                port->setBounds((proportionOfWidth((1.0f + indexPos) / (totalSpaces + 1.0f)) + portSize) * 0.9,
-                                port->isInput ? floor((getHeight() * 0.9) - portSize / 2) : (0 + item_padding_y),
+            auto transformedBounds = item->layer_1_.getBounds();
+            if (port->pin.isMIDI())
+            {
+                port->setBounds(transformedBounds.getX() + transformedBounds.getWidth() * ((1.0f + indexPos) / (totalSpaces + 1.0f)),
+                                isInput ? transformedBounds.getBottom() - portSize / 2 + BKItem::kMeterPixel
+                                        : transformedBounds.getY() - portSize / 2,
                                 portSize, portSize);
-            } else {
-                port->setBounds(port->isInput ? floor(item_padding_x + portSize / 2 * 0.9) - 1 : (getWidth() * 0.9),
-                                proportionOfHeight((1.0f + indexPos) / (totalSpaces + 1.0f)) - portSize / 2,
+            }
+            else
+            {
+                port->setBounds(isInput ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
+                                        : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel,
+                                transformedBounds.getY() + transformedBounds.getHeight() * ((1.0f + indexPos) / (totalSpaces + 1.0f)) - portSize / 2,
                                 portSize, portSize);
             }
         }

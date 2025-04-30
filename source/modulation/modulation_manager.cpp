@@ -616,7 +616,6 @@ void ModulationManager::modulationClicked(ModulationIndicator* indicator)
             {
                 editing_state_component_->setVisible(true);
                 editing_state_component_->getImageComponent()->setVisible(true);
-
             }
 
             if ( editing_state_component_ == nullptr)

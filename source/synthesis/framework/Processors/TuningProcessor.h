@@ -12,86 +12,16 @@
 #include <chowdsp_sources/chowdsp_sources.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 
-
+#include "PluginBase.h"
 // TODO change params
 
 struct TuningParams : chowdsp::ParamHolder
 {
 
     // Adds the appropriate parameters to the Tuning Processor
-    TuningParams()
+    TuningParams() : chowdsp::ParamHolder("tuning")
     {
-        add (gainParam, hammerParam, velocityParam, resonanceParam, attackParam,
-             decayParam, sustainParam, releaseParam);
     }
-
-    // juce::Gain param
-    chowdsp::GainDBParameter::Ptr gainParam {
-            juce::ParameterID { "gain", 100 },
-            "Gain",
-            juce::NormalisableRange { -30.0f, 0.0f },
-            -24.0f
-    };
-
-    // Hammer param
-    chowdsp::GainDBParameter::Ptr hammerParam {
-            juce::ParameterID { "hammer", 100 },
-            "Hammer",
-            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-            -24.0f
-    };
-
-    // Velocity param
-    chowdsp::FloatParameter::Ptr velocityParam {
-            juce::ParameterID { "Velocity", 100 },
-            "Velocity",
-            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f), // FIX
-            1000.0f,
-            &chowdsp::ParamUtils::floatValToString,
-            &chowdsp::ParamUtils::stringToFloatVal
-    };
-
-    // Resonance param
-    chowdsp::GainDBParameter::Ptr resonanceParam {
-            juce::ParameterID { "resonance", 100 },
-            "Resonance",
-            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-            -24.0f
-    };
-
-    // Attack param
-    chowdsp::TimeMsParameter::Ptr attackParam {
-            juce::ParameterID { "attack", 100 },
-            "attack",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f),
-            3.5f,
-    };
-
-    // Decay param
-    chowdsp::TimeMsParameter::Ptr decayParam {
-            juce::ParameterID { "decay", 100 },
-            "Decay",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f), // FIX
-            3.5f,
-    };
-
-    // Sustain param
-    chowdsp::FloatParameter::Ptr sustainParam {
-            juce::ParameterID { "sustain", 100 },
-            "Sustain",
-            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f),
-            1000.0f,
-            &chowdsp::ParamUtils::floatValToString,
-            &chowdsp::ParamUtils::stringToFloatVal
-    };
-
-    // Release param
-    chowdsp::TimeMsParameter::Ptr releaseParam {
-            juce::ParameterID { "release", 100 },
-            "Release",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f), // FIX
-            3.5f,
-    };
 
 };
 
@@ -99,24 +29,30 @@ struct TuningNonParameterState : chowdsp::NonParamState
 {
     TuningNonParameterState()
     {
-        addStateValues ({ &prepPoint });
     }
 
-    chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
-class TuningProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<TuningParams,TuningNonParameterState,chowdsp::XMLSerializer>>
+class TuningProcessor : public bitklavier::PluginBase<chowdsp::PluginStateImpl<TuningParams,TuningNonParameterState,chowdsp::XMLSerializer>>
 {
 public:
-    TuningProcessor();
+    TuningProcessor(SynthBase* parent,const juce::ValueTree& v);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
-
+    bool acceptsMidi() const override
+    {
+        return true;
+    }
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
 
-
+    juce::AudioProcessor::BusesProperties tuningBusLayout()
+    {
+        return BusesProperties()
+            .withOutput ("Output1", juce::AudioChannelSet::stereo(), false)
+                .withInput("input",juce::AudioChannelSet::stereo(),false);
+    }
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 

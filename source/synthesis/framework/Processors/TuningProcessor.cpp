@@ -4,7 +4,10 @@
 
 #include "TuningProcessor.h"
 
-TuningProcessor::TuningProcessor() = default;
+TuningProcessor::TuningProcessor(SynthBase* parent,const juce::ValueTree& v) : PluginBase(parent,v,nullptr,  tuningBusLayout())
+{
+
+}
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {

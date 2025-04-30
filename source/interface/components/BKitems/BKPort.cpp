@@ -21,8 +21,6 @@ image_component_(new OpenGlImageComponent())
     setAlwaysOnTop(true);
     image_component_->setComponent(this);
     auto path = Paths::portPaths();
-    port_fill = path.getUnchecked(1);
-    port_outline = path.getUnchecked(0);
 
 //    if (auto node = _parent->getSynth()->getNodeForId(pin.nodeID))
 //    {

@@ -33,7 +33,7 @@ ConstructionSite::ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, Op
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicPreparation::createSynchronicSection);
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::createBlendronicSection);
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::createTempoSection);
-    //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
+    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,
                          ModulationPreparation::createModulationSection);
     //    cableView.toBack();
@@ -174,10 +174,10 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         juce::ValueTree t(IDs::PREPARATION);
 
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
-        t.setProperty(IDs::width, 260, nullptr);
-        t.setProperty(IDs::height, 132, nullptr);
-        t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+        t.setProperty(IDs::width, 245, nullptr);
+        t.setProperty(IDs::height, 125, nullptr);
+        t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
         parent.addChild(t, -1, nullptr);
     } else if (code == 78) // N nostalgic
     {

@@ -57,7 +57,8 @@ BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem")
     paths = getPathForPreparation(type);
     layer_1_ = paths.getUnchecked(0);
     layer_2_ = paths.getUnchecked(1);
-    layer_3_ = paths.getUnchecked(2);
+    if (paths.size() > 2)
+        layer_3_ = paths.getUnchecked(2);
 
 
 }
