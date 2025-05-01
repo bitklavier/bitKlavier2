@@ -28,10 +28,10 @@ set(PROJECT_NAME "bitKlavier2")
 set(PRODUCT_NAME "bitKlavier2")
 
 # Change me! Used for the MacOS bundle name and Installers
-set(COMPANY_NAME "bitKlavier2 Company")
+set(COMPANY_NAME "Many Arrows Music")
 
 # Change me! Used for the MacOS bundle identifier (and signing)
-set(BUNDLE_ID "com.bitKlavier2.bitKlavier2")
+set(BUNDLE_ID "com.manyarrowsmusic.bitKlavier2")
 
 # Change me! Set the plugin formats you want built
 # Valid choices: AAX Unity VST VST3 AU AUv3 Standalone
