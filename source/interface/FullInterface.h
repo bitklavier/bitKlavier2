@@ -10,7 +10,6 @@
 #include "sections/header_section.h"
 #include "sections/main_section.h"
 #include "sections/synth_section.h"
-#include "melatonin_inspector/melatonin_inspector.h"
 #include "sections/popup_browser.h"
 #include "valuetree_utils/value_tree_debugger.h"
 //#include "buffer_debugger.h"
@@ -101,7 +100,6 @@ public :
     juce::Image background_image_;
     OpenGlBackground background_;
     //juce::TextButton inspectButton { "Inspect the UI" };
-    std::unique_ptr<melatonin::Inspector> inspector;
     std::unique_ptr<OpenGlToggleButton> inspectButton;
     juce::OpenGLContext open_gl_context_;
     juce::CriticalSection open_gl_critical_section_;

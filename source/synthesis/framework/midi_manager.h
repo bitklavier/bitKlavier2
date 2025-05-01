@@ -43,7 +43,7 @@ class juce::MidiMessageCollector {
 
 #endif
 #include <juce_data_structures/juce_data_structures.h>
-#include "tracktion_engine/tracktion_ValueTreeUtilities.h"
+#include "tracktion_ValueTreeUtilities.h"
 
 #include "Identifiers.h"
 
