@@ -209,23 +209,23 @@ target_link_libraries(SharedCode
 
 include (FetchContent)
 
-FetchContent_Declare (melatonin_perfetto
-        GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
-        GIT_TAG origin/main)
-
-FetchContent_MakeAvailable (melatonin_perfetto)
+#FetchContent_Declare (melatonin_perfetto
+#        GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
+#        GIT_TAG origin/main)
+#
+#FetchContent_MakeAvailable (melatonin_perfetto)
 # Link the JUCE plugin targets our SharedCode target
 target_link_libraries("${PROJECT_NAME}" PRIVATE
         SharedCode
 
-        Melatonin::Perfetto
+        #Melatonin::Perfetto
 )
 
-add_custom_target(graphviz ALL
-        COMMAND ${CMAKE_COMMAND} "--graphviz=foo.dot" .
-        COMMAND dot -Tpng foo.dot -o foo.png
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-)
+#add_custom_target(graphviz ALL
+#        COMMAND ${CMAKE_COMMAND} "--graphviz=foo.dot" .
+#        COMMAND dot -Tpng foo.dot -o foo.png
+#        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+#)
 # IPP support, comment out to disable
 include(PamplejuceIPP)
 
@@ -235,5 +235,5 @@ include(PamplejuceIPP)
 ## A separate target keeps the Tests target fast!
 #include(Benchmarks)
 #
-## Pass some config to GA (like our PRODUCT_NAME)
-#include(GitHubENV)
+# Pass some config to GA (like our PRODUCT_NAME)
+include(GitHubENV)
