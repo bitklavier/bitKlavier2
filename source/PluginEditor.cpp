@@ -9,32 +9,31 @@
 //    const int          versionNumber  = 0x30400;
 //}
 PluginEditor::PluginEditor (PluginProcessor& p)
-    : juce::AudioProcessorEditor (&p), SynthGuiInterface(&p), processorRef (p), was_animating_(true)
+    : juce::AudioProcessorEditor (&p), SynthGuiInterface (&p), processorRef (p), was_animating_ (true)
 {
     static constexpr int kHeightBuffer = 50;
     juce::ignoreUnused (processorRef);
-    setLookAndFeel(DefaultLookAndFeel::instance());
+    setLookAndFeel (DefaultLookAndFeel::instance());
     gui_->reset();
-    addAndMakeVisible(gui_.get());
+    addAndMakeVisible (gui_.get());
 
-    constrainer_.setMinimumSize(bitklavier::kMinWindowWidth, bitklavier::kMinWindowHeight);
+    constrainer_.setMinimumSize (bitklavier::kMinWindowWidth, bitklavier::kMinWindowHeight);
     double ratio = (1.0 * bitklavier::kDefaultWindowWidth) / bitklavier::kDefaultWindowHeight;
-    constrainer_.setFixedAspectRatio(ratio);
-    constrainer_.setGui(gui_.get());
-    setConstrainer(&constrainer_);
+    constrainer_.setFixedAspectRatio (ratio);
+    constrainer_.setGui (gui_.get());
+    setConstrainer (&constrainer_);
 
-
-   juce::Rectangle<int> total_bounds = juce::Desktop::getInstance().getDisplays().getTotalBounds(true);
-    total_bounds.removeFromBottom(kHeightBuffer);
+    juce::Rectangle<int> total_bounds = juce::Desktop::getInstance().getDisplays().getTotalBounds (true);
+    total_bounds.removeFromBottom (kHeightBuffer);
 
     float window_size = 1.0f;
-    window_size = std::min(window_size, total_bounds.getWidth() / (1.0f * bitklavier::kDefaultWindowWidth));
-    window_size = std::min(window_size, total_bounds.getHeight() / (1.0f * bitklavier::kDefaultWindowHeight));
-    int width = std::round(window_size * bitklavier::kDefaultWindowWidth);
-    int height = std::round(window_size * bitklavier::kDefaultWindowHeight);
+    window_size = std::min (window_size, total_bounds.getWidth() / (1.0f * bitklavier::kDefaultWindowWidth));
+    window_size = std::min (window_size, total_bounds.getHeight() / (1.0f * bitklavier::kDefaultWindowHeight));
+    int width = std::round (window_size * bitklavier::kDefaultWindowWidth);
+    int height = std::round (window_size * bitklavier::kDefaultWindowHeight);
 
-    setResizable(true, true);
-    setSize(width, height);
+    setResizable (true, true);
+    setSize (width, height);
 }
 
 PluginEditor::~PluginEditor()
@@ -57,25 +56,19 @@ void PluginEditor::resized()
 {
     // layout the positions of your child components here
     auto area = getLocalBounds();
-    area.removeFromBottom(50);
+    area.removeFromBottom (50);
     juce::AudioProcessorEditor::resized();
-    gui_->setBounds(getLocalBounds());
-
-
+    gui_->setBounds (getLocalBounds());
 }
 
-
-
-
-
-
-
-void PluginEditor::setScaleFactor(float newScale) {
-    juce::AudioProcessorEditor::setScaleFactor(newScale);
+void PluginEditor::setScaleFactor (float newScale)
+{
+    juce::AudioProcessorEditor::setScaleFactor (newScale);
     gui_->redoBackground();
 }
 
-void PluginEditor::updateFullGui() {
+void PluginEditor::updateFullGui()
+{
     SynthGuiInterface::updateFullGui();
     //synth_.updateHostDisplay();
 }

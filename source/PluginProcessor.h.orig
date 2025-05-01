@@ -1,13 +1,21 @@
 #pragma once
 
-#include "synth_base.h"
 #include <juce_audio_processors/juce_audio_processors.h>
+<<<<<<< HEAD
+#include "synth_base.h"
+
+=======
+>>>>>>> template/main
 
 #if (MSVC)
-    #include "ipps.h"
+#include "ipps.h"
 #endif
 
+<<<<<<< HEAD
 class PluginProcessor : public juce::AudioProcessor, public SynthBase
+=======
+class PluginProcessor : public juce::AudioProcessor
+>>>>>>> template/main
 {
 public:
     PluginProcessor();
@@ -39,10 +47,14 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+<<<<<<< HEAD
     const juce::CriticalSection& getCriticalSection() override;
-    void pauseProcessing (bool pause) override;
+    void pauseProcessing(bool pause) override;
     SynthGuiInterface* getGuiInterface() override;
 
+
+=======
+>>>>>>> template/main
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

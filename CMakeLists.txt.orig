@@ -1,12 +1,32 @@
 cmake_minimum_required(VERSION 3.25)
+<<<<<<< HEAD
+# Typically you don't care so much for a third party library's tests to be
+# run from your own project's code.
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+=======
+>>>>>>> template/main
 
 # This tells cmake we have goodies in the /cmake folder
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include (PamplejuceVersion)
+<<<<<<< HEAD
+include(CPM)
+add_compile_options(-w)
+# Configures universal binaries and decides which version of macOS to support
+include(PamplejuceMacOS)
+# Couple tweaks that IMO should be JUCE defaults
+include(JUCEDefaults)
+# Change me!
+# This is the internal name of the project and the name of JUCE's shared code "target"
+# Note: This cannot have spaces (it may be 2023, but you can't have it all!)
+# Worry not, JUCE's PRODUCT_NAME can have spaces (and is DAWs display)
+set(PROJECT_NAME "bitKlavier2")
+=======
 
 # Modern concise way to add dependencies to your project
 include (CPM)
-add_compile_options(-w)
+
 # Configures universal binaries and decides which version of macOS to support
 include(PamplejuceMacOS)
 
@@ -17,7 +37,8 @@ include(JUCEDefaults)
 # This is the internal name of the project and the name of JUCE's shared code target
 # Note: This cannot have spaces (it may be 2024, but you can't have it all!)
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is what DAWs display)
-set(PROJECT_NAME "bitKlavier2")
+set(PROJECT_NAME "Pamplejuce")
+>>>>>>> template/main
 
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is what DAWs will display)
 # You can also just have it be the same thing as PROJECT_NAME
@@ -25,6 +46,7 @@ set(PROJECT_NAME "bitKlavier2")
 #   set(PROJECT_NAME "MyPlugin_v${MAJOR_VERSION}")
 # Doing so enables major versions to show up in IDEs and DAWs as separate plugins
 # allowing you to change parameters and behavior without breaking existing user projects
+<<<<<<< HEAD
 set(PRODUCT_NAME "bitKlavier2 Demo")
 
 # Change me! Used for the MacOS bundle name and Installers
@@ -32,6 +54,15 @@ set(COMPANY_NAME "bitKlavier2 Company")
 
 # Change me! Used for the MacOS bundle identifier (and signing)
 set(BUNDLE_ID "com.bitKlavier2.bitKlavier2")
+=======
+set(PRODUCT_NAME "Pamplejuce Demo")
+
+# Change me! Used for the MacOS bundle name and Installers
+set(COMPANY_NAME "Pamplejuce Company")
+
+# Change me! Used for the MacOS bundle identifier (and signing)
+set(BUNDLE_ID "com.pamplejuce.pamplejuce")
+>>>>>>> template/main
 
 # Change me! Set the plugin formats you want built
 # Valid choices: AAX Unity VST VST3 AU AUv3 Standalone
@@ -40,11 +71,16 @@ set(FORMATS Standalone AU VST3 AUv3)
 # For simplicity, the name of the CMake project is also the name of the target
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> template/main
 # JUCE is setup as a submodule in the /JUCE folder
 # Locally, you must run `git submodule update --init --recursive` once
 # and later `git submodule update --remote --merge` to keep it up to date
 # On Github Actions, this is done as a part of actions/checkout
 add_subdirectory(JUCE)
+<<<<<<< HEAD
 # Link to any other modules you added (with juce_add_module) here!
 message("-- Adding juce modules")
 juce_add_module(modules/melatonin_audio_sparklines)
@@ -52,14 +88,25 @@ juce_add_module(modules/melatonin_audio_sparklines)
 # Add any other modules you want modules here, before the juce_add_plugin call
 message("-- Adding external libraries" )
 add_subdirectory(third_party/chowdsp_utils)
+# This adds the melatonin inspector module
+add_subdirectory (third_party/melatonin_inspector)
+# If you only include this third party in PRIVATE source files, you do not
+# need to install it when your main project gets installed.
+# set(JSON_Install OFF CACHE INTERNAL "")
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+=======
 
 # Add CLAP format
+add_subdirectory(modules/clap-juce-extensions EXCLUDE_FROM_ALL)
 
 # Add any other modules you want modules here, before the juce_add_plugin call
 # juce_add_module(modules/my_module)
 
 # This adds the melatonin inspector module
+add_subdirectory (modules/melatonin_inspector)
 
+>>>>>>> template/main
 # See `docs/CMake API.md` in the JUCE repo for all config options
 juce_add_plugin("${PROJECT_NAME}"
     # Icons for the standalone app
@@ -69,18 +116,30 @@ juce_add_plugin("${PROJECT_NAME}"
     COMPANY_NAME "${COMPANY_NAME}"
     BUNDLE_ID "${BUNDLE_ID}"
 
+<<<<<<< HEAD
+    # On MacOS, plugin is copied to ~/Users/yourname/Library/Audio/Plug-Ins/
+=======
     # On MacOS, plugin is copied to /Users/yourname/Library/Audio/Plug-Ins/
+>>>>>>> template/main
     COPY_PLUGIN_AFTER_BUILD TRUE
 
     # Change me!
     # A four-character plugin id
     # First character MUST be uppercase for AU formats
-    PLUGIN_MANUFACTURER_CODE Bitk 
+<<<<<<< HEAD
+    PLUGIN_MANUFACTURER_CODE bitK
+=======
+    PLUGIN_MANUFACTURER_CODE Pamp
+>>>>>>> template/main
 
     # Change me!
     # A unique four-character plugin id
     # Note: this must have at least one upper-case character
-    PLUGIN_CODE B202
+<<<<<<< HEAD
+    PLUGIN_CODE B303
+=======
+    PLUGIN_CODE P001
+>>>>>>> template/main
     FORMATS "${FORMATS}"
 
     # The name of your final executable
@@ -91,11 +150,25 @@ juce_add_plugin("${PROJECT_NAME}"
 
 # This lets us use our code in both the JUCE targets and our Test target
 # Without running into ODR violations
+<<<<<<< HEAD
+add_library(SharedCode INTERFACE
+        )
+# Enable fast math, C++20 and a few other target defaults
+include(SharedCodeDefaults)
+
+# Use cxx_std_23 for C++23 (as of CMake v 3.20)
+target_compile_features(SharedCode INTERFACE cxx_std_23)
+=======
 add_library(SharedCode INTERFACE)
+
+clap_juce_extensions_plugin(TARGET "${PROJECT_NAME}"
+    CLAP_ID "${BUNDLE_ID}"
+    CLAP_FEATURES audio-effect)
 
 # Enable fast math, C++20 and a few other target defaults
 include(SharedCodeDefaults)
 
+>>>>>>> template/main
 
 # Manually list all .h and .cpp files for the plugin
 # If you are like me, you'll use globs for your sanity.
@@ -110,8 +183,9 @@ include(Assets)
 
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
+<<<<<<< HEAD
 target_include_directories(SharedCode
-    INTERFACE
+        INTERFACE
         source/common
 
         #synthesis includes
@@ -134,6 +208,7 @@ target_include_directories(SharedCode
         source/modulation
 )
 
+
 #we were previously linking against the entire tracktion_engine and including
 # via git submodules. this was a source of many headaches and we only use a small
 # portion of the library so i moved the useful files here and removed the submodule
@@ -141,18 +216,25 @@ target_include_directories(SharedCode
         INTERFACE
         third_party/tracktion_engine)
 
+=======
+>>>>>>> template/main
 
 # This is where you can set preprocessor definitions for JUCE and your plugin
 target_compile_definitions(SharedCode
     INTERFACE
+<<<<<<< HEAD
         #JUCE_USE_CUSTOM_PLUGIN_STANDALONE_ENTRYPOINT=1
 
         JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1
+=======
+
+>>>>>>> template/main
     # JUCE_WEB_BROWSER and JUCE_USE_CURL off by default
     JUCE_WEB_BROWSER=0  # If you set this to 1, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
     JUCE_USE_CURL=0     # If you set this to 1, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
     JUCE_VST3_CAN_REPLACE_VST2=0
 
+<<<<<<< HEAD
         JUCE_OPENGL3=1
     # Uncomment if you are paying for a an Indie/Pro license or releasing under GPLv3
     # JUCE_DISPLAY_SPLASH_SCREEN=0
@@ -164,6 +246,7 @@ target_compile_definitions(SharedCode
     # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
     PRODUCT_NAME_WITHOUT_VERSION="bitKlavier2"
 )
+
 
 
 # Link to any other modules you added (with juce_add_module) here!
@@ -233,3 +316,48 @@ include(PamplejuceIPP)
 #
 # Pass some config to GA (like our PRODUCT_NAME)
 include(GitHubENV)
+=======
+    # Uncomment if you are paying for a an Indie/Pro license or releasing under GPLv3
+    # JUCE_DISPLAY_SPLASH_SCREEN=0
+
+    # lets the app known if we're Debug or Release
+    CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+    VERSION="${CURRENT_VERSION}"
+
+    # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
+    PRODUCT_NAME_WITHOUT_VERSION="Pamplejuce"
+)
+
+# Link to any other modules you added (with juce_add_module) here!
+# Usually JUCE modules must have PRIVATE visibility
+# See https://github.com/juce-framework/JUCE/blob/master/docs/CMake%20API.md#juce_add_module
+# However, with Pamplejuce, you'll link modules to SharedCode with INTERFACE visibility
+# This allows the JUCE plugin targets and the Tests target to link against it
+target_link_libraries(SharedCode
+    INTERFACE
+    Assets
+    melatonin_inspector
+    juce_audio_utils
+    juce_audio_processors
+    juce_dsp
+    juce_gui_basics
+    juce_gui_extra
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_lto_flags
+    juce::juce_recommended_warning_flags)
+
+# Link the JUCE plugin targets our SharedCode target
+target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
+
+# IPP support, comment out to disable
+include(PamplejuceIPP)
+
+# Everything related to the tests target
+include(Tests)
+
+# A separate target for Benchmarks (keeps the Tests target fast)
+include(Benchmarks)
+
+# Output some config for CI (like our PRODUCT_NAME)
+include(GitHubENV)
+>>>>>>> template/main

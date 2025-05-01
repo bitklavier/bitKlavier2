@@ -276,4 +276,8 @@ jobs:
           files: |
             */*.exe
             */*.zip
+<<<<<<< HEAD
             */*.dmg
+=======
+            */*.dmg
+>>>>>>> template/main

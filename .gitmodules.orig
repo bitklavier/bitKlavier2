@@ -1,0 +1,49 @@
+[submodule "JUCE"]
+	path = JUCE
+	url = https://github.com/juce-framework/JUCE/
+<<<<<<< HEAD
+	branch = master
+	update = merge
+[submodule "modules/melatonin_inspector"]
+	path = third_party/melatonin_inspector
+	url = https://github.com/sudara/melatonin_inspector.git
+	branch = main
+	update = merge
+[submodule "cmake"]
+	path = cmake
+	url = git@github.com:sudara/cmake-includes.git
+	branch = main
+	update = merge
+[submodule "third_party/chowdsp_utils"]
+	path = third_party/chowdsp_utils
+	url = git@github.com:davispolito/chowdsp_utilsPrinceton.git
+	branch = bitklavier
+	update = merge
+[submodule "third_party/sfzq"]
+	path = third_party/sfzq
+	url = git@github.com:stevefolta/sfzq.git
+	update = merge
+[submodule "modules/melatonin_audio_sparklines"]
+	path = modules/melatonin_audio_sparklines
+	url = https://github.com/sudara/melatonin_audio_sparklines
+	branch = main
+	update = merge
+[submodule "modules/juce-toys"]
+	path = modules/juce-toys
+	url = git@github.com:jcredland/juce-toys.git
+	update = merge
+=======
+	branch = develop
+[submodule "modules/melatonin_inspector"]
+	path = modules/melatonin_inspector
+	url = https://github.com/sudara/melatonin_inspector.git
+	branch = main
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/sudara/cmake-includes.git
+	branch = main
+[submodule "modules/clap-juce-extensions"]
+	path = modules/clap-juce-extensions
+	url = https://github.com/free-audio/clap-juce-extensions.git
+	branch = main
+>>>>>>> template/main

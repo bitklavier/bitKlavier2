@@ -1,26 +1,29 @@
-//#include <PluginProcessor.h>
+#include "helpers/test_helpers.h"
+#include <PluginProcessor.h>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
-TEST_CASE("one is equal to one", "[dummy]")
+TEST_CASE ("one is equal to one", "[dummy]")
 {
-  REQUIRE(1 == 1);
+    REQUIRE (1 == 1);
 }
 
-//// https://github.com/McMartin/FRUT/issues/490#issuecomment-663544272
-//PluginProcessor testPlugin;
-
-//TEST_CASE("Plugin instance name", "[name]")
-//{
-//  CHECK_THAT(testPlugin.getName().toStdString(),
-//             Catch::Matchers::Equals("Pamplejuce Demo"));
-//}
-//
-#ifdef PAMPLEJUCE_IPP
-#include <ipps.h>
-
-TEST_CASE("IPP version", "[ipp]")
+TEST_CASE ("Plugin instance", "[instance]")
 {
-  CHECK_THAT(ippsGetLibVersion()->Version, Catch::Matchers::Equals("2021.7 (r0xa954907f)"));
+    PluginProcessor testPlugin;
+
+    SECTION ("name")
+    {
+        CHECK_THAT (testPlugin.getName().toStdString(),
+            Catch::Matchers::Equals ("bitKlavier"));
+    }
+}
+
+#ifdef PAMPLEJUCE_IPP
+    #include <ipp.h>
+
+TEST_CASE ("IPP version", "[ipp]")
+{
+    CHECK_THAT (ippsGetLibVersion()->Version, Catch::Matchers::Equals ("2022.0.0 (r0x131e93b0)"));
 }
 #endif
