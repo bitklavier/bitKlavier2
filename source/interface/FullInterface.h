@@ -19,7 +19,6 @@ class TestSection;
 class AboutSection;
 struct SynthGuiData;
 class HeaderSection;
-class MainSection;
 class ModulationPreparation;
 class ModulationManager;
 namespace bitklavier{
@@ -29,7 +28,7 @@ namespace bitklavier{
     constexpr int kDefaultWindowHeight = 820;
 }
 class FullInterface : public SynthSection, public juce::OpenGLRenderer, public HeaderSection::Listener,
-                      public MainSection::Listener, juce::DragAndDropContainer, private juce::Timer
+                   juce::DragAndDropContainer, private juce::Timer
 {
 
 public :

@@ -9,12 +9,7 @@ class ConstructionSite;
 class MainSection : public SynthSection
 {
 public:
-    class Listener {
-    public:
-        virtual ~Listener() { }
 
-        //virtual void showAboutSection() = 0;
-    };
 
     MainSection(juce::ValueTree v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData * data);
     ~MainSection();

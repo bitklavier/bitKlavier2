@@ -195,10 +195,10 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         juce::ValueTree t(IDs::PREPARATION);
 
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
-        t.setProperty(IDs::width, 114, nullptr);
-        t.setProperty(IDs::height, 76, nullptr);
-        t.setProperty(IDs::x, lastX - 114 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 76 / 2, nullptr);
+        t.setProperty(IDs::width, 185, nullptr);
+        t.setProperty(IDs::height, 105, nullptr);
+        t.setProperty(IDs::x, lastX - 185 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 105 / 2, nullptr);
         parent.addChild(t, -1, nullptr);
     } else if (code == 82) // R resonance
     {
@@ -245,10 +245,10 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         juce::ValueTree t(IDs::PREPARATION);
 
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
-        t.setProperty(IDs::width, 132, nullptr);
-        t.setProperty(IDs::height, 260, nullptr);
-        t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
+        t.setProperty(IDs::width, 125, nullptr);
+        t.setProperty(IDs::height, 245, nullptr);
+        t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
         parent.addChild(t, -1, nullptr);
     } else if (k.getTextCharacter() == 'c') {
         juce::ValueTree t(IDs::PREPARATION);

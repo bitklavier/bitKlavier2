@@ -204,7 +204,7 @@ private:
 
 class LogoSection : public SynthSection {
   public:
-    static constexpr float kLogoPaddingY = 2.0f;
+    static constexpr float kLogoPaddingY = 6.0f;
 
     class Listener {
       public:

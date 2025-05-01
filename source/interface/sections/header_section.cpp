@@ -52,7 +52,7 @@ void LogoSection::resized() {
   int logo_height = getHeight() - 2 * logo_padding_y;
   int logo_padding_x = (getWidth() - logo_height) / 2;
   if (logo_button_)
-    logo_button_->setBounds(logo_padding_x, logo_padding_y, logo_height, logo_height);
+    logo_button_->setBounds(logo_padding_x, logo_padding_y + 4, logo_height, logo_height);
 }
 
 void LogoSection::paintBackground(juce::Graphics& g) {

@@ -13,6 +13,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "chowdsp_core/DataStructures/chowdsp_GraphicsHelpers.h"
+
 class BKTextFieldLAF : public juce::LookAndFeel_V3
 {
 public:
@@ -84,7 +86,12 @@ public:
                                             const bool hasSubMenu, const juce::String& text,
                                             const juce::String& shortcutKeyText,
                                             const juce::Drawable* icon, const juce::Colour* const textColourToUse) override;
-
+    virtual juce::PopupMenu::Options getOptionsForComboBoxPopupMenu (juce::ComboBox& j, juce::Label&) override{
+        return juce::PopupMenu::Options().withTargetComponent (j)
+                                                .withMinimumWidth (j.getWidth())
+                                                .withMaximumNumColumns (1)
+                                                .withStandardItemHeight (juce::jlimit (12, 24, j.getHeight()));
+    }
     void setComboBoxJustificationType (juce::Justification justification)    { comboBoxJustification = justification; }
     void setToggleBoxTextToRightBool (bool ttr)    { toggleTextToRight = ttr; }
     void drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,

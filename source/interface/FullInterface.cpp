@@ -22,6 +22,8 @@
 #include "modulation_manager.h"
 #include "ModulationPreparation.h"
 #include "synth_base.h"
+#include "sections/main_section.h"
+#include "sections/header_section.h"
 
 FullInterface::FullInterface(SynthGuiData *synth_data) : SynthSection("full_interface"), width_(0), resized_width_(0),
                                                          last_render_scale_(0.0f), display_scale_(1.0f),

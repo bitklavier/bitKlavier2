@@ -29,27 +29,43 @@ namespace bitklavier {
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BooleanParameterComponent)
         };
+       class OpenGLComboBox : public OpenGlAutoImageComponent<juce::ComboBox>{
 
+            public:
+            OpenGLComboBox() : OpenGlAutoImageComponent<juce::ComboBox> ("Combo box")
+            {
+                image_component_ = std::make_shared<OpenGlImageComponent> ();
+                setLookAndFeel(DefaultLookAndFeel::instance());
+                image_component_->setComponent(this);
+            }
+            virtual void resized() override
+            {
+                OpenGlAutoImageComponent<juce::ComboBox>::resized();
+                redoImage();
+            }
+        };
         class ChoiceParameterComponent : public juce::Component {
         public:
-            ChoiceParameterComponent(chowdsp::ChoiceParameter &param, chowdsp::ParameterListeners& listeners)
+            ChoiceParameterComponent(chowdsp::ChoiceParameter &param, chowdsp::ParameterListeners& listeners,SynthSection &parent)
                     : attachment(param, listeners, box, nullptr) {
-                setName(param.paramID);
                 addAndMakeVisible(box);
+                parent.addChildComponent (box);
+                parent.addOpenGlComponent (box.getImageComponent());
             }
 
             void resized() override {
-                auto area = getLocalBounds();
+                auto area = getBoundsInParent();
                 area.removeFromLeft(8);
                 box.setBounds(area.reduced(0, 10));
             }
 
         private:
-            juce::ComboBox box;
+
+            OpenGLComboBox box;
             chowdsp::ComboBoxAttachment attachment;
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChoiceParameterComponent)
-        };
+        };;
 
         class SliderParameterComponent : public juce::Component {
         public:
@@ -83,7 +99,7 @@ namespace bitklavier {
                 return std::make_unique<BooleanParameterComponent>(*boolParam, listeners,parent);
 
             if (auto *choiceParam = dynamic_cast<chowdsp::ChoiceParameter *> (&parameter))
-                return std::make_unique<ChoiceParameterComponent>(*choiceParam, listeners);
+                return std::make_unique<ChoiceParameterComponent>(*choiceParam, listeners,parent);
 
             if (auto *sliderParam = dynamic_cast<chowdsp::FloatParameter *> (&parameter))
                 return std::make_unique<SliderParameterComponent>(*sliderParam, listeners, parent);

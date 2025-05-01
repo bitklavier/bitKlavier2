@@ -9,6 +9,7 @@
 
 #include "TuningPreparation.h"
 #include "BKitems/BKItem.h"
+#include "TuningParametersView.h"
 
 #include "synth_slider.h"
 #include "ParametersView.h"
@@ -36,7 +37,7 @@ TuningPreparation::TuningPreparation (std::unique_ptr<TuningProcessor> p,
 std::unique_ptr<SynthSection> TuningPreparation::getPrepPopup()
 {
 
-    return std::make_unique<bitklavier::ParametersView>(proc.getState(), proc.getState().params, proc.v.getProperty(IDs::uuid).toString(), open_gl);
+    return std::make_unique<TuningParametersView>(proc.getState(), proc.getState().params, proc.v.getProperty(IDs::uuid).toString(), open_gl);
 }
 
 
