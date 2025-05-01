@@ -31,3 +31,7 @@
 	path = modules/juce-toys
 	url = git@github.com:jcredland/juce-toys.git
 	update = merge
+[submodule "modules/clap-juce-extensions"]
+	path = modules/clap-juce-extensions
+	url = https://github.com/free-audio/clap-juce-extensions.git
+	branch = main
