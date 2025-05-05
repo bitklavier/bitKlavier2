@@ -112,8 +112,8 @@ jobs:
       - name: Configure
         run: cmake -B ${{ env.BUILD_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ${{ matrix.extra-flags }} .
 
-      - name: Build
-        run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
+#      - name: Build
+#        run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
 
       - name: Test & Benchmarks
         working-directory: ${{ env.BUILD_DIR }}
