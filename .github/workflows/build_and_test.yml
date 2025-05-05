@@ -153,7 +153,7 @@ jobs:
       - name: Codesign (macOS)
         if: ${{ matrix.name == 'macOS' }}
         timeout-minutes: 5
-        run: |
+        run: | 
           # Each plugin must be code signed
           #codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.VST3_PATH }}" --deep --strict --options=runtime --timestamp
           #codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.AU_PATH }}" --deep --strict --options=runtime --timestamp
