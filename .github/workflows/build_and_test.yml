@@ -180,24 +180,17 @@ jobs:
         if: ${{ matrix.name == 'macOS' }}
         timeout-minutes: 5
         run: |
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.au.pkg" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
-          echo "au built"
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3.pkg" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
-          echo "vst3 built"
+          pkgbuild --identifier "${{ env.BUNDLE_ID }}.au" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
+          pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
+          
           # Standalone is special, needs a boolean to always install in /Applications
           pkgbuild --analyze --root "$(dirname "${{ env.STANDALONE_PATH }}")" standalone.plist
           plutil -replace BundleIsRelocatable -bool NO standalone.plist
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
-          echo "pkgbuild done"
+          pkgbuild --identifier "${{ env.BUNDLE_ID }}.app" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
+          
           cd packaging
-          echo "in packaing "
           envsubst < distribution.xml.template > distribution.xml
-          echo "subst"
-          cat distribution.xml
-          echo "${{env.ARTIFACT_NAME}}.pkg"
-          productbuild --synthesize --package "${{ env.PRODUCT_NAME }}.app.pkg"  distribution1.xml
-          cat distribution1.xml
-          productbuild --distribution distribution1.xml --resources ./resources --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
+          productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
 
           xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
           xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
