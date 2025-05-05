@@ -109,9 +109,9 @@ jobs:
       - name: Cache the build
         uses: mozilla-actions/sccache-action@v0.0.9
 
-      - name: Configure
-        run: cmake -B ${{ env.BUILD_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ${{ matrix.extra-flags }} .
-
+#      - name: Configure
+#        run: cmake -B ${{ env.BUILD_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ${{ matrix.extra-flags }} .
+#
 #      - name: Build
 #        run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
 
@@ -195,7 +195,7 @@ jobs:
           echo "subst"
           cat distribution.xml
           echo "${{env.ARTIFACT_NAME}}.pkg"
-          productbuild --synthesize --package "${{ env.PRODUCT_NAME }}.app.pkg"  distribution.1xml
+          productbuild --synthesize --package "${{ env.PRODUCT_NAME }}.app.pkg"  distribution1.xml
           cat distribution1.xml
           productbuild --distribution distribution1.xml --resources ./resources --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
 
