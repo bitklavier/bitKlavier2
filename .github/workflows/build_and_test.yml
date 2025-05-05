@@ -195,7 +195,7 @@ jobs:
           echo "subst"
           cat distribution.xml
           echo "${{env.ARTIFACT_NAME}}.pkg"
-          productbuild --synthesize --package "${{ env.BUNDLE_ID }}.app.pkg"  distribution.1xml
+          productbuild --synthesize --package "${{ env.PRODUCT_NAME }}.app.pkg"  distribution.1xml
           cat distribution1.xml
           productbuild --distribution distribution1.xml --resources ./resources --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
 
