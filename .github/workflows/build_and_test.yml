@@ -195,7 +195,9 @@ jobs:
           echo "subst"
           cat distribution.xml
           echo "${{env.ARTIFACT_NAME}}.pkg"
-          productbuild --distribution distribution.xml --resources ./resources --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
+          productbuild --synthesize --package "${{ env.BUNDLE_ID }}.app.pkg"  distribution.1xml
+          cat distribution1.xml
+          productbuild --distribution distribution1.xml --resources ./resources --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
 
           xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
           xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
