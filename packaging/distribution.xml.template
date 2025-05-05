@@ -4,8 +4,7 @@
     <allowed-os-versions>
         <os-version min="10.13" />
     </allowed-os-versions>
-    <license file="EULA" />
-    <readme file="README" />
+
     <background file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
     <background-darkAqua file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
     <options customize="always" rootVolumeOnly="true" hostArchitectures="x86_64,arm64" />

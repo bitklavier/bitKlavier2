@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf8'?>
+<installer-gui-script minSpecVersion="2">
+    <title>bitKlavier</title>
+    <allowed-os-versions>
+        <os-version min="10.13" />
+    </allowed-os-versions>
+    <license file="EULA" />
+    <readme file="README" />
+    <background file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
+    <background-darkAqua file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
+    <options customize="always" rootVolumeOnly="true" hostArchitectures="x86_64,arm64" />
+    <domain enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true" />
+
+    <choices-outline>
+        <line choice="app" />
+    </choices-outline>
+
+    <choice id="app" visible="true" start_selected="true" title="bitklavier Standalone">
+        <pkg-ref id="com.manyarrowsmusic.bitKlavierTwo.app.pkg" version="${VERSION}" onConclusion="none">bitKlavier.app.pkg</pkg-ref>
+    </choice>
+
+</installer-gui-script>
