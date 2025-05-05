@@ -16,7 +16,7 @@
     </choices-outline>
 
     <choice id="app" visible="true" start_selected="true" title="${PRODUCT_NAME} Standalone">
-        <pkg-ref id="${BUNDLE_ID}.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.app.pkg</pkg-ref>
+        <pkg-ref id="${BUNDLE_ID}.app.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.app.pkg</pkg-ref>
     </choice>
 
   </installer-gui-script>
