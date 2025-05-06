@@ -147,7 +147,7 @@ public:
         {
             if (parameters.release > 0.0f)
             {
-                envelopeVal = lastPreReleaseEnvelopeVal;
+                if (state != State::release) envelopeVal = lastPreReleaseEnvelopeVal;
                 releaseRate = (float) (envelopeVal / (parameters.release * sampleRate));
                 state = State::release;
             }
