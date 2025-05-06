@@ -253,7 +253,7 @@ public:
                     //return powerScale(envelopeVal / parameters.sustain, releaseCurve) * envelopeVal;
                 return envelopeVal;
 
-//                // further optimized
+//                // further optimized; don't use right now until fixing oneOverSustain to include lastPreReleaseEnvelopeVal
 //                if (parameters.releasePower != 0.0f)
 //                    return powerScale(envelopeVal * oneOverSustain, releaseCurve) * envelopeVal;
 //                return envelopeVal;
