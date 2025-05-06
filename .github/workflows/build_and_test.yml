@@ -190,7 +190,7 @@ jobs:
           
           cd packaging
           envsubst < distribution.xml.template > distribution.xml
-          productbuild --sign "3rd Party Mac Developer Installer: Princeton University (Y3TW367T4G)" --resources ./resources --distribution distribution.xml  --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
+          productbuild --sign "Developer ID Installer: Daniel Trueman (EFHE8JGE6R)" --resources ./resources --distribution distribution.xml  --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
 
           xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
           xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
