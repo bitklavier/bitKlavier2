@@ -191,8 +191,9 @@ jobs:
           
           cd packaging
           envsubst < distribution.xml.template > distribution.xml
-          productbuild --resources ./resources --distribution distribution.xml --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
+          productbuild --resources ./resources --distribution distribution.xml --timestamp "${{ env.ARTIFACT_NAME }}unsigned.pkg" 
 
+          productsign --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" "${{ env.ARTIFACT_NAME }}unsigned.pkg"  "${{ env.ARTIFACT_NAME }}.pkg" 
           xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
           xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
 
