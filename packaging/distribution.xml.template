@@ -4,15 +4,24 @@
     <allowed-os-versions>
         <os-version min="10.13" />
     </allowed-os-versions>
+    <license file="EULA" />
+    <readme file="README" />
+    <background file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
+    <background-darkAqua file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
     <options customize="always" rootVolumeOnly="true" hostArchitectures="x86_64,arm64" />
     <domain enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true" />
 
     <choices-outline>
+        <line choice="app" />
         <line choice="vst3" />
         <line choice="au" />
     </choices-outline>
 
-      <choice id="vst3" visible="true" start_selected="true" title="${PRODUCT_NAME} VST3">
+    <choice id="app" visible="true" start_selected="true" title="${PRODUCT_NAME} Standalone">
+        <pkg-ref id="${BUNDLE_ID}.app" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.app.pkg</pkg-ref>
+    </choice>
+
+    <choice id="vst3" visible="true" start_selected="true" title="${PRODUCT_NAME} VST3">
         <pkg-ref id="${BUNDLE_ID}.vst3" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.vst3.pkg</pkg-ref>
     </choice>
 

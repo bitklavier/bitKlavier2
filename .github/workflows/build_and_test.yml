@@ -112,9 +112,9 @@ jobs:
       - name: Configure
         run: cmake -B ${{ env.BUILD_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE}} -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ${{ matrix.extra-flags }} .
 
-#      - name: Build
-#        run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
-#
+      - name: Build
+        run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
+
 #      - name: Test & Benchmarks
 #        working-directory: ${{ env.BUILD_DIR }}
 #        run: ctest --verbose --output-on-failure
@@ -178,7 +178,7 @@ jobs:
 
       - name: pkgbuild, Productbuild and Notarize
         if: ${{ matrix.name == 'macOS' }}
-        timeout-minutes: 5
+        timeout-minutes: 1
         run: |
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.au" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
