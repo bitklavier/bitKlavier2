@@ -680,7 +680,7 @@ public:
     {
         if (allowTailOff)
         {
-            //DBG("Sample::stopNote rootMidiNote " + juce::String(this->samplerSound->rootMidiNote));
+            DBG("Sample::stopNote rootMidiNote " + juce::String(this->samplerSound->rootMidiNote));
             ampEnv.noteOff();
             tailOff = 1.;
         }

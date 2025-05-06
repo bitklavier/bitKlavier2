@@ -147,6 +147,7 @@ public:
         {
             if (parameters.release > 0.0f)
             {
+                envelopeVal = lastPreReleaseEnvelopeVal;
                 releaseRate = (float) (envelopeVal / (parameters.release * sampleRate));
                 state = State::release;
             }
@@ -180,15 +181,15 @@ public:
                     goToNextState();
                 }
 
-//                // unoptimized, calling powerScale directly
-//                if (parameters.attackPower != 0.0f)
-//                    return powerScale(envelopeVal, parameters.attackPower);
-//                return envelopeVal;
-
-                // optimized, using lookup table
+                // unoptimized, calling powerScale directly
                 if (parameters.attackPower != 0.0f)
-                    return powerScale(envelopeVal, attackCurve);
-                return envelopeVal;
+                    return lastPreReleaseEnvelopeVal = powerScale(envelopeVal, parameters.attackPower);
+                return lastPreReleaseEnvelopeVal = envelopeVal;
+
+//                // optimized, using lookup table
+//                if (parameters.attackPower != 0.0f)
+//                    return powerScale(envelopeVal, attackCurve);
+//                return envelopeVal;
             }
 
             case State::decay:
@@ -205,30 +206,30 @@ public:
                 {
                     if (parameters.sustain < 1.0f)
                     {
-//                        // unoptimized
-//                        return powerScale ((envelopeVal - parameters.sustain) / (1.0f - parameters.sustain), parameters.decayPower)
-//                                      * (1.0f - parameters.sustain)
-//                                  + parameters.sustain;
+                        // unoptimized
+                        return lastPreReleaseEnvelopeVal = powerScale ((envelopeVal - parameters.sustain) / (1.0f - parameters.sustain), parameters.decayPower)
+                                      * (1.0f - parameters.sustain)
+                                  + parameters.sustain;
 
 //                        // optimized, using lookup table
 //                        return powerScale((envelopeVal - parameters.sustain) / (1.0f - parameters.sustain), decayCurve)
 //                                   * (1.0f - parameters.sustain)
 //                               + parameters.sustain;
 
-                        // further optimized
-                        return powerScale((envelopeVal - parameters.sustain) * oneOverOneMinusSustain, decayCurve)
-                                   * oneMinusSustain
-                               + parameters.sustain;
+//                        // further optimized
+//                        return powerScale((envelopeVal - parameters.sustain) * oneOverOneMinusSustain, decayCurve)
+//                                   * oneMinusSustain
+//                               + parameters.sustain;
                     }
-                    return 1.0f;
+                    return lastPreReleaseEnvelopeVal = 1.0f;
                 }
-                return envelopeVal;
+                return lastPreReleaseEnvelopeVal = envelopeVal;
             }
 
             case State::sustain:
             {
                 envelopeVal = parameters.sustain;
-                return envelopeVal;
+                return lastPreReleaseEnvelopeVal = envelopeVal;
             }
 
             case State::release:
@@ -240,20 +241,21 @@ public:
                     goToNextState();
                 }
 
-//                // unoptimized
-//                if (parameters.releasePower != 0.0f)
-//                    return powerScale(envelopeVal / parameters.sustain, parameters.releasePower) * envelopeVal;
-//                return envelopeVal;
+                // unoptimized
+                if (parameters.releasePower != 0.0f)
+                    //return powerScale(envelopeVal / parameters.sustain, parameters.releasePower) * envelopeVal;
+                    return powerScale(envelopeVal / lastPreReleaseEnvelopeVal, parameters.releasePower) * envelopeVal;
+                return envelopeVal;
 
 //                // optimized, using lookup table
 //                if (parameters.releasePower != 0.0f)
 //                    return powerScale(envelopeVal / parameters.sustain, releaseCurve) * envelopeVal;
 //                return envelopeVal;
 
-                // further optimized
-                if (parameters.releasePower != 0.0f)
-                    return powerScale(envelopeVal * oneOverSustain, releaseCurve) * envelopeVal;
-                return envelopeVal;
+//                // further optimized
+//                if (parameters.releasePower != 0.0f)
+//                    return powerScale(envelopeVal * oneOverSustain, releaseCurve) * envelopeVal;
+//                return envelopeVal;
 
             }
         }
@@ -441,6 +443,7 @@ private:
 
     double sampleRate = 44100.0;
     float envelopeVal = 0.0f;
+    float lastPreReleaseEnvelopeVal = 0.0f;
     float attackRate = 0.0f, decayRate = 0.0f, releaseRate = 0.0f;
 
     static constexpr float kMinPower = 0.01f; // ignore k values less than this
