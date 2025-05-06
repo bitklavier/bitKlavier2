@@ -178,7 +178,7 @@ jobs:
           # Set custom icon attribute
           SetFile -a C "${{ env.VST3_PATH }}"
           SetFile -a C "${{ env.AU_PATH }}"
-          #SetFile -a C "${{ env.CLAP_PATH }}"
+          # SetFile -a C "${{ env.CLAP_PATH }}"
 
       - name: pkgbuild, Productbuild and Notarize
         if: ${{ matrix.name == 'macOS' }}
