@@ -25,7 +25,8 @@ set(PROJECT_NAME "bitKlavier2")
 #   set(PROJECT_NAME "MyPlugin_v${MAJOR_VERSION}")
 # Doing so enables major versions to show up in IDEs and DAWs as separate plugins
 # allowing you to change parameters and behavior without breaking existing user projects
-set(PRODUCT_NAME "bitKlavier")
+set(PROJECT_NAME "bitKlavier${MAJOR_VERSION}")
+set(PRODUCT_NAME "bitKlavier${MAJOR_VERSION}")
 
 # Change me! Used for the MacOS bundle name and Installers
 set(COMPANY_NAME "Many Arrows Music")
