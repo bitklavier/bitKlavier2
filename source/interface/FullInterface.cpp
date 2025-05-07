@@ -241,8 +241,8 @@ void FullInterface::resized() {
     header_->setBounds(left, top, width, top_height);
     juce::Rectangle<int> new_bounds(0, 0, width, height);
     main_->setBounds(new_bounds);
-    prep_popup->setBounds(100, 100, new_bounds.getWidth() / (4 * display_scale_),
-                          new_bounds.getHeight() / (2 * display_scale_));
+    prep_popup->setBounds(100, 100, new_bounds.getWidth() / (1.25 * display_scale_),
+                          new_bounds.getHeight() / (1.25 * display_scale_));
     mod_popup->setBounds(bounds.getRight() - 200 * ratio, header_->getBottom(), 200, 400);
     about_section_->setBounds(new_bounds);
     if (getWidth() && getHeight())
