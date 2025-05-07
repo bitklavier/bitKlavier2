@@ -193,7 +193,7 @@ jobs:
           productbuild --synthesize --package "${{ env.PRODUCT_NAME }}.app.pkg" distribution.xml 
           productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
 
-          productsign --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" "${{ env.ARTIFACT_NAME }}unsigned.pkg"  "${{ env.ARTIFACT_NAME }}.pkg" 
+         
           xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
           xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
 
