@@ -162,7 +162,7 @@ typedef enum BKRangeSliderType
 } BKRangeSliderType;
 
 class BKRangeSlider :
-    public juce::Component,
+    public StateModulatedComponent,
     public juce::Slider::Listener,
     public juce::TextEditor::Listener
 #if JUCE_IOS

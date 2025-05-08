@@ -6,6 +6,7 @@
 #define BITKLAVIER2_TRANSPOSEPARAMS_H
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
+
 struct TransposeParams : chowdsp::ParamHolder
 {
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
