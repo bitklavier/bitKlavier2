@@ -120,7 +120,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
     state.params.transpose.processStateChanges();
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
-
+    DBG("vel min" + state.params.velocityMinMax.velocityMinParam->getCurrentValueAsText());
+    DBG("vel max" + state.params.velocityMinMax.velocityMaxParam->getCurrentValueAsText());
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples() )

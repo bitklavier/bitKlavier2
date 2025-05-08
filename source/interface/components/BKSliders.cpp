@@ -710,7 +710,7 @@ void BKRangeSlider::sliderValueChanged (juce::Slider *slider)
         {
             if(!clickedOnMinSlider)
             {
-                maxSlider.setValue(invisibleSlider.getValue(), juce::dontSendNotification);
+                maxSlider.setValue(invisibleSlider.getValue(), juce::sendNotification);
                 maxValueTF.setText(juce::String(maxSlider.getValue()), juce::dontSendNotification);
                 if(isMinAlwaysLessThanMax)
                     if(maxSlider.getValue() < minSlider.getValue())
@@ -719,7 +719,7 @@ void BKRangeSlider::sliderValueChanged (juce::Slider *slider)
             }
             else
             {
-                minSlider.setValue(invisibleSlider.getValue(), juce::dontSendNotification);
+                minSlider.setValue(invisibleSlider.getValue(), juce::sendNotification);
                 minValueTF.setText(juce::String(minSlider.getValue()), juce::dontSendNotification);
                 if(isMinAlwaysLessThanMax)
                     if(minSlider.getValue() > maxSlider.getValue())

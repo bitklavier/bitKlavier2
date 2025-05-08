@@ -8,6 +8,7 @@
 #include "ParametersView.h"
 #include "TransposeParams.h"
 #include "envelope_section.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
@@ -91,10 +92,14 @@ public:
 
             if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
                 transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
+            if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
+                velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
         }
 
               addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
+        addAndMakeVisible(velocityMinMaxSlider.get());
+        addOpenGlComponent(velocityMinMaxSlider->getImageComponent());
 
 
 
@@ -119,6 +124,7 @@ public:
     chowdsp::ScopedCallbackList transposeCallbacks;
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 //    std::vector<std::unique_ptr<SynthButton>> _buttons;
 //    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> buttonAttachments;
 };

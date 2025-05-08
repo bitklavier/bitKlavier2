@@ -35,6 +35,8 @@ public:
         }
 
         int j = 0;
+        //add slider callbacks to allow the UI to update the number of sliders whenever a modulation changes it
+        //
         for (auto& param :*params->getFloatParams()) {
             sliderChangedCallback +={ listeners.addParameterListener(
                 param,

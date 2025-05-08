@@ -14,10 +14,10 @@ class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlide
 public:
     OpenGL_VelocityMinMaxSlider (VelocityMinMaxParams* _params,
         chowdsp::ParameterListeners& listeners) : OpenGlAutoImageComponent<BKRangeSlider> ("VelocityRange", // slider name
-                                                      0., // min
-                                                      128, // max
-                                                      0, // default min
-                                                      128, // default max
+                                                      0.f, // min
+                                                      128.f, // max
+                                                      0.f, // default min
+                                                      128.f, // default max
                                                       1 //increment
                                                       ),
                                                   params (_params)
@@ -35,24 +35,7 @@ public:
             maxSlider, nullptr);
         attachmentVec.emplace_back(std::move(maxsliderptr));
 
-        int j =0;
-        for (auto& param :*params->getFloatParams()) {
-            sliderChangedCallback +={ listeners.addParameterListener(
-                param,
-                chowdsp::ParameterListenerThread::MessageThread,
-                [this,j]() {
-                    if (j > this->params->numActive - 1) {
-                        juce::Array<float> sliderVals = getAllActiveValues();
-                        sliderVals.add(dataSliders[j]->getValue());
-                        setTo(sliderVals, juce::sendNotification);
-                        this->listeners.call(&BKStackedSlider::Listener::BKStackedSliderValueChanged,
-                            getName(),
-                            getAllActiveValues());
-                    }
-                    redoImage();
-                })};
-            j++;
-        }
+
     }
 
     virtual void resized() override {
@@ -140,7 +123,7 @@ private :
         isModulation_ = true;
         addMyListener(this);
     }
-    chowdsp::ScopedCallbackList sliderChangedCallback;
+    // chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
 #endif //BITKLAVIER2_OPENGL_VELOCITYMINMAXSLIDER_H

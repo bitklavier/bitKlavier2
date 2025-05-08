@@ -2,10 +2,8 @@
 // Created by Dan Trueman on 10/22/24.
 //
 
-#ifndef BITKLAVIER2_BKSLIDERS_H
-#define BITKLAVIER2_BKSLIDERS_H
 
-#endif //BITKLAVIER2_BKSLIDERS_H
+#pragma once
 
 #include "FullInterface.h"
 #include "PreparationSection.h"

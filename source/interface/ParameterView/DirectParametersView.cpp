@@ -24,7 +24,7 @@ void DirectParametersView::resized()
 
 //     transpose_uses_tuning->setBounds(area_width - title_width, 0, 100, knob_section_height);
     transpositionSlider->setBounds(title_width,0,   area_width, knob_section_height );
-
+    velocityMinMaxSlider->setBounds(0,envSection->getBottom(),area_width,40 );
 
 
     SynthSection::resized();
