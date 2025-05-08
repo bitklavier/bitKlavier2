@@ -4,19 +4,19 @@
 
 #ifndef BITKLAVIER2_TRANSPOSITIONSLIDERSECTION_H
 #define BITKLAVIER2_TRANSPOSITIONSLIDERSECTION_H
-#include "synth_section.h"
-#include "OpenGlTranspositionSlider.h" 
+#include "OpenGL_TranspositionSlider.h"
 #include "TransposeParams.h"
+#include "synth_section.h"
 class TranspositionSliderSection : public SynthSection
 {
     TranspositionSliderSection(TransposeParams *params, chowdsp::ParameterListenerThread& listeners)
-    : slider(std::make_unique<OpenGlTranspositionSlider>(params,listeners)), SynthSection("")
+    : slider(std::make_unique<OpenGL_TranspositionSlider>(params,listeners)), SynthSection("")
     {
         
     }
     
     void resized();
-    std::unique_ptr<OpenGlTranspositionSlider> slider; 
+    std::unique_ptr<OpenGL_TranspositionSlider> slider;
     std::unique_ptr<SynthButton> on_;
 };
 #endif //BITKLAVIER2_TRANSPOSITIONSLIDERSECTION_H

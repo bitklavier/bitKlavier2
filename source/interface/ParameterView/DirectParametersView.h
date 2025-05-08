@@ -4,10 +4,10 @@
 
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
+#include "OpenGL_TranspositionSlider.h"
 #include "ParametersView.h"
-#include "envelope_section.h"
 #include "TransposeParams.h"
-#include "OpenGlTranspositionSlider.h"
+#include "envelope_section.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
@@ -16,7 +16,7 @@ class TranspositionSliderSection : public SynthSection
 {
 public:
     TranspositionSliderSection(TransposeParams *params, chowdsp::ParameterListeners& listeners, std::string parent_uuid)
-            : slider(std::make_unique<OpenGlTranspositionSlider>(params,listeners)), SynthSection("")
+            : slider(std::make_unique<OpenGL_TranspositionSlider>(params,listeners)), SynthSection("")
     {
         setComponentID(parent_uuid);
         on = std::make_unique<SynthButton>(params->transpositionUsesTuning->paramID);
@@ -47,7 +47,7 @@ public:
         slider->redoImage();
         SynthSection::resized();
     }
-    std::unique_ptr<OpenGlTranspositionSlider> slider;
+    std::unique_ptr<OpenGL_TranspositionSlider> slider;
     std::unique_ptr<SynthButton> on;
     std::unique_ptr<chowdsp::ButtonAttachment> on_attachment;
 };

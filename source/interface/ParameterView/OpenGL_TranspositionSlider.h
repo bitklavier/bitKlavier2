@@ -5,15 +5,16 @@
 #ifndef BITKLAVIER2_OPENGLTRANSPOSITIONSLIDER_H
 #define BITKLAVIER2_OPENGLTRANSPOSITIONSLIDER_H
 #include "BKSliders.h"
+#include "TransposeParams.h"
 #include "open_gl_component.h"
 #include "juce_data_structures/juce_data_structures.h"
 /************************************************************************************/
 /*                              CLASS: OpenGlSlider                                 */
 /************************************************************************************/
 
-class OpenGlTranspositionSlider : public OpenGlAutoImageComponent<BKStackedSlider>, BKStackedSlider::Listener {
+class OpenGL_TranspositionSlider : public OpenGlAutoImageComponent<BKStackedSlider>, BKStackedSlider::Listener {
 public:
-    OpenGlTranspositionSlider(TransposeParams *_params,
+    OpenGL_TranspositionSlider (TransposeParams *_params,
                               chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKStackedSlider>(
                                                                             "Transpositions", // slider name
                                                                             -12, // min
@@ -58,7 +59,7 @@ public:
 
         }
     }
-   // ~OpenGlTranspositionSlider() {
+   // ~OpenGL_TranspositionSlider() {
    //  }
 
 
@@ -102,8 +103,8 @@ public:
         redoImage();
     }
 
-    OpenGlTranspositionSlider *clone() {
-        return new OpenGlTranspositionSlider();
+    OpenGL_TranspositionSlider*clone() {
+        return new OpenGL_TranspositionSlider();
     }
     void addSlider(juce::NotificationType newnotify) override {
         BKStackedSlider::addSlider(newnotify);
@@ -151,7 +152,7 @@ public:
     TransposeParams *params;
 
 private :
-    OpenGlTranspositionSlider() : OpenGlAutoImageComponent<BKStackedSlider>(
+    OpenGL_TranspositionSlider() : OpenGlAutoImageComponent<BKStackedSlider>(
         "Transpositions", // slider name
         -12, // min
         12, // max
