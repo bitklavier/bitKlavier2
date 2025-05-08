@@ -51,6 +51,8 @@ public:
     std::unique_ptr<SynthButton> on;
     std::unique_ptr<chowdsp::ButtonAttachment> on_attachment;
 };
+
+
 class DirectParametersView : public SynthSection
 {
 public:

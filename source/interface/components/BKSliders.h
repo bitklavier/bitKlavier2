@@ -13,13 +13,10 @@
 #include "StateModulatedComponent.h"
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 
-/**
- * BKStacked Slider
- *
- * for having multiple simultaneous overlaid sliders
- * main application: transposition sliders in Direct and Nostalgic
- *
- */
+// ******************************************************************************************************************** //
+// *************************************************  BKStackedSlider ************************************************* //
+// ******************************************************************************************************************** //
+
 class BKStackedSlider :
     public StateModulatedComponent,
     public juce::Slider::Listener,
@@ -149,4 +146,152 @@ private:
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKStackedSlider)
+};
+
+
+// ******************************************************************************************************************** //
+// **************************************************  BKRangeSlider ************************************************** //
+// ******************************************************************************************************************** //
+
+typedef enum BKRangeSliderType
+{
+    BKRangeSliderMin = 0,
+    BKRangeSliderMax,
+    BKRangeSliderNil
+
+} BKRangeSliderType;
+
+class BKRangeSlider :
+    public juce::Component,
+    public juce::Slider::Listener,
+    public juce::TextEditor::Listener
+#if JUCE_IOS
+    , public WantsBigOne
+#endif
+{
+public:
+    BKRangeSlider(juce::String sliderName, double min, double max, double defmin, double defmax, double increment);
+    ~BKRangeSlider()
+    {
+        minSlider.setLookAndFeel(nullptr);
+        maxSlider.setLookAndFeel(nullptr);
+        invisibleSlider.setLookAndFeel(nullptr);
+        displaySlider->setLookAndFeel(nullptr);
+    };
+
+    juce::Slider minSlider;
+    juce::Slider maxSlider;
+    juce::String minSliderName;
+    juce::String maxSliderName;
+
+    juce::Slider invisibleSlider;
+
+    std::unique_ptr<juce::Slider> displaySlider;
+
+    juce::String sliderName;
+    juce::Label showName;
+
+    juce::TextEditor minValueTF;
+    juce::TextEditor maxValueTF;
+
+    void setName(juce::String newName)    { sliderName = newName; showName.setText(sliderName, juce::dontSendNotification); }
+    juce::String getName()                { return sliderName; }
+    void setToolTipString(juce::String newTip) {  showName.setTooltip(newTip);
+        invisibleSlider.setTooltip(newTip);
+        minValueTF.setTooltip(newTip);
+        maxValueTF.setTooltip(newTip); }
+
+    void setMinValue(double newval, juce::NotificationType notify);
+    void setMaxValue(double newval, juce::NotificationType notify);
+    void setIsMinAlwaysLessThanMax(bool im) { isMinAlwaysLessThanMax = im; }
+
+    double getMinValue() { return sliderMin; }
+    double getMaxValue() { return sliderMax; }
+
+    void setDisplayValue(double newval) { displaySlider->setValue(newval); }
+    void displaySliderVisible(bool vis) { displaySlider->setVisible(vis); }
+
+    void setJustifyRight(bool jr)
+    {
+        justifyRight = jr;
+        if (justifyRight) showName.setJustificationType(juce::Justification::bottomRight);
+        else showName.setJustificationType(juce::Justification::bottomLeft);
+    }
+
+    inline void setText(BKRangeSliderType which, juce::String text)
+    {
+        if (which == BKRangeSliderMin)      minValueTF.setText(text, false);
+        else if (which == BKRangeSliderMax) maxValueTF.setText(text, false);
+    }
+
+    inline juce::TextEditor* getTextEditor(BKRangeSliderType which)
+    {
+        if (which == BKRangeSliderMin) return &minValueTF;
+        if (which == BKRangeSliderMax) return &maxValueTF;
+
+        return nullptr;
+    }
+
+    inline void dismissTextEditor(bool setValue = false)
+    {
+        if (setValue)
+        {
+            textEditorReturnKeyPressed(minValueTF);
+            textEditorReturnKeyPressed(maxValueTF);
+        }
+        else
+        {
+            textEditorEscapeKeyPressed(minValueTF);
+            textEditorEscapeKeyPressed(maxValueTF);
+        }
+    }
+
+    void checkValue(double newval);
+    void rescaleMinSlider();
+    void rescaleMaxSlider();
+
+    void sliderValueChanged (juce::Slider *slider) override;
+    void textEditorReturnKeyPressed(juce::TextEditor& textEditor) override;
+    void textEditorFocusLost(juce::TextEditor& textEditor) override;
+    void textEditorEscapeKeyPressed (juce::TextEditor& textEditor) override;
+    void textEditorTextChanged(juce::TextEditor& textEditor) override;
+    void resized() override;
+    void sliderDragEnded(juce::Slider *slider) override;
+    void mouseDown (const juce::MouseEvent &event) override;
+
+    void setDim(float newAlpha);
+    void setBright();
+
+    class Listener
+    {
+
+    public:
+        virtual ~Listener() {};
+
+        virtual void BKRangeSliderValueChanged(juce::String name, double min, double max) = 0;
+    };
+
+    juce::ListenerList<Listener> listeners;
+    void addMyListener(Listener* listener)     { listeners.add(listener);      }
+    void removeMyListener(Listener* listener)  { listeners.remove(listener);   }
+
+
+private:
+
+    double sliderMin, sliderMax;
+    double sliderDefaultMin, sliderDefaultMax;
+    double sliderIncrement;
+
+    bool newDrag;
+    bool clickedOnMinSlider;
+    bool isMinAlwaysLessThanMax;
+    bool focusLostByEscapeKey;
+    bool justifyRight;
+
+    BKRangeMinSliderLookAndFeel minSliderLookAndFeel;
+    BKRangeMaxSliderLookAndFeel maxSliderLookAndFeel;
+    BKDisplaySliderLookAndFeel displaySliderLookAndFeel;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKRangeSlider)
+
 };
