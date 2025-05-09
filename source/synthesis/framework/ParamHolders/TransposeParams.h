@@ -11,17 +11,9 @@ struct TransposeParams : chowdsp::ParamHolder
 {
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
     {
-//        add(initialparam);
         add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
-
     }
-//    std::vector<chowdsp::FloatParameter::Ptr> transposeVec = {chowdsp::FloatParameter::Ptr initialparam(
-//    chowdsp::SemitonesParameter::Ptr initialparam {
-//            juce::ParameterID{"t0", 100},
-//            "t0",
-//            chowdsp::ParamUtils::createNormalisableRange(-12.0f,12.0f,0.0f), // FIX
-//           0.0f
-//    };
+
     chowdsp::SemitonesParameter::Ptr t0{juce::ParameterID{"t0", 100},
                                          "t0",
                                          chowdsp::ParamUtils::createNormalisableRange(-12.0f, 12.0f, 0.0f), // FIX
@@ -70,12 +62,14 @@ struct TransposeParams : chowdsp::ParamHolder
                                          "t11",
                                          chowdsp::ParamUtils::createNormalisableRange(-12.0f, 12.0f, 0.0f), // FIX
                                          0.0f};
+
     // Transposition Uses Tuning param
     chowdsp::BoolParameter::Ptr transpositionUsesTuning {
             juce::ParameterID { "UseTuning", 100 },
             "TranspositionUsesTuning",
             false
     };
+
     int numActive = 1;
     void processStateChanges() override
     {
@@ -98,6 +92,5 @@ struct TransposeParams : chowdsp::ParamHolder
         stateChanges.changeState.clear();
 
     }
-
 };
 #endif //BITKLAVIER2_TRANSPOSEPARAMS_H

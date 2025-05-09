@@ -32,26 +32,23 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-//    void processStateChanges() override
-//    {
-//        auto float_params = getFloatParams();
-//        for(auto [index, change] : stateChanges.changeState)
-//        {
-//
-//            static juce::var nullVar;
-//            for (int i = 0; i< 11; i++)
-//            {
-//                auto str = "t" + juce::String(i);
-//                auto val = change.getProperty(str);
-//                if (val == nullVar)
-//                    break;
-//                auto& float_param = float_params->at(i);
-//                float_param.get()->setParameterValue(val);
-//                //float_params[i].data()->get()->setParameterValue(val);
-//            }
-//        }
-//        stateChanges.changeState.clear();
-//    }
+    void processStateChanges() override
+    {
+        auto float_params = getFloatParams();
+        for(auto [index, change] : stateChanges.changeState)
+        {
+
+            auto vminval = change.getProperty("velocitymin");
+            auto& vminparam = float_params->at(0);
+            vminparam.get()->setParameterValue(vminval);
+
+            auto vmaxval = change.getProperty("velocitymax");
+            auto& vmaxparam = float_params->at(1);
+            vmaxparam.get()->setParameterValue(vmaxval);
+
+        }
+        stateChanges.changeState.clear();
+    }
 };
 
 #endif //BITKLAVIER2_VELOCITYMINMAXPARAMS_H
