@@ -7,35 +7,62 @@
 #include "BKSliders.h"
 #include "VelocityMinMaxParams.h"
 #include "open_gl_component.h"
+#include "synth_slider.h"
 #include "juce_data_structures/juce_data_structures.h"
 
-class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>, BKRangeSlider::Listener
-{
+class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>, BKRangeSlider::Listener {
 public:
-    OpenGL_VelocityMinMaxSlider (VelocityMinMaxParams* _params,
-        chowdsp::ParameterListeners& listeners) : OpenGlAutoImageComponent<BKRangeSlider> ("VelocityRange", // slider name
-                                                      0.f, // min
-                                                      128.f, // max
-                                                      0.f, // default min
-                                                      128.f, // default max
-                                                      1 //increment
-                                                      ),
-                                                  params (_params)
+    OpenGL_VelocityMinMaxSlider(VelocityMinMaxParams *_params,
+                                chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKRangeSlider>(
+                                                                              "VelocityRange", // slider name
+                                                                              0.f, // min
+                                                                              128.f, // max
+                                                                              0.f, // default min
+                                                                              128.f, // default max
+                                                                              1 //increment
+                                                                          ),
+                                                                          params(_params)
     //juce::String sliderName, double min, double max, double defmin, double defmax, double increment
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
-        auto minsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[0].get(), listeners,
-            minSlider, nullptr);
+        auto minsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[0].get(),
+                                                                        listeners,
+                                                                        minSlider, nullptr);
         attachmentVec.emplace_back(std::move(minsliderptr));
 
-        auto maxsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[1].get(), listeners,
-            maxSlider, nullptr);
+        auto maxsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[1].get(),
+                                                                        listeners,
+                                                                        maxSlider, nullptr);
         attachmentVec.emplace_back(std::move(maxsliderptr));
-
-
+        sliderChangedCallback += {
+            listeners.addParameterListener(_params->velocityMinParam,
+                                           chowdsp::ParameterListenerThread::MessageThread,
+                                           [this] {
+                                               minValueTF.setText(juce::String(minSlider.getValue()),
+                                                                  juce::dontSendNotification);
+                                               this->listeners.call(&BKRangeSlider::Listener::BKRangeSliderValueChanged,
+                                                                    getName(),
+                                                                    minSlider.getValue(),
+                                                                    maxSlider.getValue());
+                                               redoImage();
+                                           }
+            ),
+            listeners.addParameterListener(_params->velocityMaxParam,
+                                           chowdsp::ParameterListenerThread::MessageThread,
+                                           [this] {
+                                               maxValueTF.setText(juce::String(maxSlider.getValue()),
+                                                                  juce::dontSendNotification);
+                                               this->listeners.call(&BKRangeSlider::Listener::BKRangeSliderValueChanged,
+                                                                    getName(),
+                                                                    minSlider.getValue(),
+                                                                    maxSlider.getValue());
+                                               redoImage();
+                                           }
+            )
+        };
     }
 
     virtual void resized() override {
@@ -78,7 +105,7 @@ public:
         redoImage();
     }
 
-    OpenGL_VelocityMinMaxSlider*clone() {
+    OpenGL_VelocityMinMaxSlider *clone() {
         return new OpenGL_VelocityMinMaxSlider();
     }
 
@@ -90,8 +117,7 @@ public:
     }
 
     void mouseExit(const juce::MouseEvent &e) override {
-        if (getTextEditor(BKRangeSliderMin)->isVisible() || getTextEditor(BKRangeSliderMax)->isVisible())
-            return;
+        //call hoverEnded for listeners like the modulation manager
         for (auto *listener: listeners_)
             listener->hoverEnded(this);
         hovering_ = false;
@@ -110,12 +136,12 @@ public:
 
 private :
     OpenGL_VelocityMinMaxSlider() : OpenGlAutoImageComponent<BKRangeSlider>(
-                                       "VelocityRange", // slider name
-                                       0, // min
-                                       128, // max
-                                       0, // default min
-                                       128, // default max
-                                       1) // increment
+        "VelocityRange", // slider name
+        0, // min
+        128, // max
+        0, // default min
+        128, // default max
+        1) // increment
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -123,7 +149,9 @@ private :
         isModulation_ = true;
         addMyListener(this);
     }
-    // chowdsp::ScopedCallbackList sliderChangedCallback;
+
+    // chowdsp::ScopedCallbackList minMaxSliderCallbacks;
+    chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
 #endif //BITKLAVIER2_OPENGL_VELOCITYMINMAXSLIDER_H

@@ -37,15 +37,11 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
         auto float_params = getFloatParams();
         for(auto [index, change] : stateChanges.changeState)
         {
-
             auto vminval = change.getProperty("velocitymin");
-            auto& vminparam = float_params->at(0);
-            vminparam.get()->setParameterValue(vminval);
+            velocityMinParam->setParameterValue(vminval);
 
             auto vmaxval = change.getProperty("velocitymax");
-            auto& vmaxparam = float_params->at(1);
-            vmaxparam.get()->setParameterValue(vmaxval);
-
+            velocityMaxParam->setParameterValue(vmaxval);
         }
         stateChanges.changeState.clear();
     }

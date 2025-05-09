@@ -36,7 +36,9 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
         v.appendChild(modChan,nullptr);
         mod++;
     }
+    //add state change params here
     parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
+    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
 
 }
 
@@ -52,16 +54,6 @@ void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     pedalSynth->setCurrentPlaybackSampleRate (sampleRate);
     setRateAndBufferSizeDetails(sampleRate,samplesPerBlock);
 }
-
-//void DirectProcessor::processAudioBlock (juce::AudioBuffer<float>& buffer)
-//{
-//    buffer.clear();
-//
-//
-//
-//    gain.setGainDecibels (*state.params.gainParam);
-//    gain.process (buffer);
-//}
 
 bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const
 {
@@ -119,9 +111,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // my ins????
     buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
     state.params.transpose.processStateChanges();
+    state.params.velocityMinMax.processStateChanges();
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
-//    DBG("vel min" + state.params.velocityMinMax.velocityMinParam->getCurrentValueAsText());
-//    DBG("vel max" + state.params.velocityMinMax.velocityMaxParam->getCurrentValueAsText());
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples() )

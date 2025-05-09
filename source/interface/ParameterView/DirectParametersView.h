@@ -29,10 +29,10 @@ public:
         addSynthButton(on.get());
         addAndMakeVisible(on.get());
         //setActivator(on.get());
+        //set componment id to map to statechange params set in processor constructor
         slider->setComponentID("transpose");
+        //needed to get picked up by modulations
         addStateModulatedComponent(slider.get());
-//        addAndMakeVisible(*slider);
-//        addOpenGlComponent(slider->getImageComponent());
     }
     ~TranspositionSliderSection() {}
 
@@ -55,38 +55,6 @@ public:
     std::unique_ptr<SynthButton> on;
     std::unique_ptr<chowdsp::ButtonAttachment> on_attachment;
 };
-
-//class VelocityMinMaxSliderSection : public SynthSection
-//{
-//public:
-//    VelocityMinMaxSliderSection(VelocityMinMaxParams *params, chowdsp::ParameterListeners& listeners, std::string parent_uuid)
-//        : slider(std::make_unique<OpenGL_VelocityMinMaxSlider>(params,listeners)), SynthSection("")
-//    {
-//        setComponentID(parent_uuid);
-//        slider->setComponentID("velocityminmax");
-//        addStateModulatedComponent(slider.get());
-//    }
-//    ~VelocityMinMaxSliderSection() {}
-//
-//    void paintBackground(juce::Graphics& g) {
-//        paintContainer(g);
-//        paintHeadingText(g);
-//
-//        paintKnobShadows(g);
-//        paintChildrenBackgrounds(g);
-//        paintBorder(g);
-//    }
-//
-//    void resized() override
-//    {
-//        int title_width = getTitleWidth();
-//        slider->setBounds(title_width, 0, getWidth() - title_width, getHeight());
-//        slider->redoImage();
-//        SynthSection::resized();
-//    }
-//
-//    std::unique_ptr<OpenGL_VelocityMinMaxSlider> slider;
-//};
 
 
 class DirectParametersView : public SynthSection
@@ -112,14 +80,7 @@ public:
             _sliders.emplace_back(std::move(slider));
 
         }
-//        for ( auto &param_ : *params.getBoolParams())
-//        {
-//            auto button = std::make_unique<SynthButton>(param_->paramID);
-//            auto attachment = std::make_unique<chowdsp::ButtonAttachment>(*param_.get(), listeners,  *button.get(), nullptr);
-//            _buttons.emplace_back(std::move(button));
-//            buttonAttachments.emplace_back(std::move(attachment));
-//        }
-
+        //find complex parameters
         for (auto paramHolder : *params.getParamHolders())
         {
             if (auto *envParams = dynamic_cast<EnvParams*>(paramHolder))
@@ -134,7 +95,10 @@ public:
               addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
         addAndMakeVisible(velocityMinMaxSlider.get());
-        addOpenGlComponent(velocityMinMaxSlider->getImageComponent());
+        //needed to get picked up by modulations
+        velocityMinMaxSlider->setComponentID("velocity_min_max");
+        addStateModulatedComponent(velocityMinMaxSlider.get());
+
     }
 
     void paintBackground(juce::Graphics& g) override
