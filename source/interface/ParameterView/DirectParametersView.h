@@ -5,14 +5,17 @@
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #include "OpenGL_TranspositionSlider.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
 #include "ParametersView.h"
 #include "TransposeParams.h"
+#include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
 #include "OpenGL_VelocityMinMaxSlider.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
 using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
+
 class TranspositionSliderSection : public SynthSection
 {
 public:
@@ -52,6 +55,38 @@ public:
     std::unique_ptr<SynthButton> on;
     std::unique_ptr<chowdsp::ButtonAttachment> on_attachment;
 };
+
+//class VelocityMinMaxSliderSection : public SynthSection
+//{
+//public:
+//    VelocityMinMaxSliderSection(VelocityMinMaxParams *params, chowdsp::ParameterListeners& listeners, std::string parent_uuid)
+//        : slider(std::make_unique<OpenGL_VelocityMinMaxSlider>(params,listeners)), SynthSection("")
+//    {
+//        setComponentID(parent_uuid);
+//        slider->setComponentID("velocityminmax");
+//        addStateModulatedComponent(slider.get());
+//    }
+//    ~VelocityMinMaxSliderSection() {}
+//
+//    void paintBackground(juce::Graphics& g) {
+//        paintContainer(g);
+//        paintHeadingText(g);
+//
+//        paintKnobShadows(g);
+//        paintChildrenBackgrounds(g);
+//        paintBorder(g);
+//    }
+//
+//    void resized() override
+//    {
+//        int title_width = getTitleWidth();
+//        slider->setBounds(title_width, 0, getWidth() - title_width, getHeight());
+//        slider->redoImage();
+//        SynthSection::resized();
+//    }
+//
+//    std::unique_ptr<OpenGL_VelocityMinMaxSlider> slider;
+//};
 
 
 class DirectParametersView : public SynthSection
@@ -100,11 +135,8 @@ public:
         addSubSection(transpositionSlider.get());
         addAndMakeVisible(velocityMinMaxSlider.get());
         addOpenGlComponent(velocityMinMaxSlider->getImageComponent());
-
-
-
-
     }
+
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
@@ -116,17 +148,16 @@ public:
         }
         paintChildrenBackgrounds(g);
     }
-//    std::unique_ptr<EnvelopeSection> envelope;
-    //std::unique_ptr<juce::Component> transpose_uses_tuning;
+
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
+
     void resized() override;
     chowdsp::ScopedCallbackList transposeCallbacks;
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
-//    std::vector<std::unique_ptr<SynthButton>> _buttons;
-//    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> buttonAttachments;
+
 };
 
 #endif //BITKLAVIER2_DIRECTPARAMETERSVIEW_H
