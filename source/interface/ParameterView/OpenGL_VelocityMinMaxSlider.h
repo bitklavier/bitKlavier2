@@ -37,6 +37,7 @@ public:
                                                                         listeners,
                                                                         maxSlider, nullptr);
         attachmentVec.emplace_back(std::move(maxsliderptr));
+
         sliderChangedCallback += {
             listeners.addParameterListener(_params->velocityMinParam,
                                            chowdsp::ParameterListenerThread::MessageThread,
