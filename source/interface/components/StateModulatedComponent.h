@@ -6,6 +6,7 @@
 #define BITKLAVIER2_STATEMODULATEDCOMPONET_H
 
 #include "juce_gui_basics/juce_gui_basics.h"
+#include "open_gl_image_component.h"
 struct StateModulatedComponent : juce::Component
 
 {

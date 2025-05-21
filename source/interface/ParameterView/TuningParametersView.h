@@ -10,6 +10,7 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "open_gl_combo_box.h"
+#include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
 using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
@@ -36,6 +37,9 @@ public:
             _sliders.emplace_back(std::move(slider));
 
         }
+        keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(*dynamic_cast<TuningParams*>(&params));
+        addOpenGlComponent(keyboard->getImageComponent());
+        addAndMakeVisible(keyboard.get());
       // for (auto &param_ : *params.getChoiceParams()) {
       //    auto box = std::make_unique<OpenGLComboBox>(param_->paramID.toStdString());
       //     auto attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*param_.get(), listeners,*box.get(), nullptr);
@@ -108,7 +112,7 @@ public:
     std::unique_ptr<chowdsp::ComboBoxAttachment> fundamental_attachment;
     std::unique_ptr<OpenGLComboBox> adaptive_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> adaptive_attachment;
-
+    std::unique_ptr<OpenGLAbsoluteKeyboardSlider> keyboard;
     //    std::vector<std::unique_ptr<SynthButton>> _buttons;
 //    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> buttonAttachments;
 };

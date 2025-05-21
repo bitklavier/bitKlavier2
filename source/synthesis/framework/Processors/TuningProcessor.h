@@ -79,6 +79,17 @@ enum AdaptiveSystems {
     Spring = 1<<3,
 };
 
+
+struct TuningKeyboardState  {
+    juce::MidiKeyboardState keyboardState;
+    std::array<float,128> tuningOffset = {0.f};
+    void setKeyOffset(int midiNoteNumber, float val)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128) tuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+    }
+};
+
+
 struct TuningParams : chowdsp::ParamHolder
 {
 
@@ -106,7 +117,7 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''},{'4', '#'},{'5','b'}}
     };
 
-
+    TuningKeyboardState keyboardState;
 };
 
 struct TuningNonParameterState : chowdsp::NonParamState

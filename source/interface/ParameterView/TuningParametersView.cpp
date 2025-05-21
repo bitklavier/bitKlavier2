@@ -18,5 +18,6 @@ void TuningParametersView::resized()
     adaptive_combo_box->setBounds(10,10, 100, 25);
     tuning_combo_box->setBounds(115,10,100, 25);
     fundamental_combo_box->setBounds(225, 10, 50,25);
+    keyboard->setBounds(50, 200, 500, 100);
     SynthSection::resized();
 }
