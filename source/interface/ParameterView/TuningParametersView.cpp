@@ -19,5 +19,6 @@ void TuningParametersView::resized()
     tuning_combo_box->setBounds(115,10,100, 25);
     fundamental_combo_box->setBounds(225, 10, 50,25);
     keyboard->setBounds(50, 200, 500, 100);
+    circular_keyboard->setBounds(50, 50, 500, 100);
     SynthSection::resized();
 }

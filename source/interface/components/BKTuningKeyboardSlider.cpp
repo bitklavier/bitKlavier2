@@ -4,14 +4,14 @@
 /*
   ==============================================================================
 
-    BKAbsoluteKeyboardSlider.cpp
+    BKTuningKeyboardSlider.cpp
     Created: 29 Jul 2018 4:40:55pm
     Author:  Daniel Trueman
 
   ==============================================================================
 */
 
-#include "BKAbsoluteKeyboardSlider.h"
+#include "BKTuningKeyboardSlider.h"
 
 #include "chowdsp_core/third_party/span-lite/test/lest/lest_cpp03.hpp"
 #include "juce_core/juce_core.h"
@@ -22,7 +22,7 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
     g.setColour (c);
     g.fillRect (area);
 
-    float keyVal = state.tuningOffset[midiNoteNumber];
+    float keyVal = isCircular ? state.circularTuningOffset[midiNoteNumber] : state.absoluteTuningOffset[midiNoteNumber];
     //if(keyVal != 0.)
     if(keyVal != midRange)
     {
@@ -66,7 +66,7 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
 void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) {
 
     auto c = juce::Colours::transparentWhite;
-    float keyVal = state.tuningOffset[midiNoteNumber];
+    float keyVal = isCircular ? state.circularTuningOffset[midiNoteNumber] : state.absoluteTuningOffset[midiNoteNumber];
 
 
     if(keyVal != midRange)
@@ -167,12 +167,12 @@ void KeyboardOffsetComponent::drawKeyboardBackground(juce::Graphics & g, juce::R
         }
     }
 }
-BKAbsoluteKeyboardSlider::BKAbsoluteKeyboardSlider(TuningKeyboardState* state,bool toggles, bool nos):
+BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningKeyboardState* state,bool toggles, bool nos,bool isCircular):
 needsOctaveSlider(nos),
 ratio(1.0),
-keyboardState(state)
+keyboardState(state), isCircular(isCircular)
 {
-    keyboard = std::make_unique<KeyboardOffsetComponent>(*keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard);
+    keyboard = std::make_unique<KeyboardOffsetComponent>(*keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard,isCircular);
 
     addAndMakeVisible (*keyboard);
 
@@ -182,11 +182,16 @@ keyboardState(state)
     minKey = 21; // 21
     maxKey = 108; // 108
     displayResolution = 1;
+    if (isCircular) {
+        minKey = 0;
+        maxKey = 11;
+    }
 
     keyboard->setRepaintsOnMouseActivity(false);
     keyboard->setScrollButtonsVisible(false);
     keyboard->setAvailableRange(minKey, maxKey);
     keyboard->setOctaveForMiddleC(4);
+
     // keyboard->setAllowDrag(false);
     // keyboard->doKeysToggle(toggles);
     keyboard->addMouseListener(this, true);
@@ -222,7 +227,7 @@ keyboardState(state)
 }
 
 #if JUCE_IOS
-void BKAbsoluteKeyboardSlider::sliderValueChanged     (juce::Slider* slider)
+void BKTuningKeyboardSlider::sliderValueChanged     (juce::Slider* slider)
 {
     if (slider == &octaveSlider)
     {
@@ -236,7 +241,7 @@ void BKAbsoluteKeyboardSlider::sliderValueChanged     (juce::Slider* slider)
 
 
 
-void BKAbsoluteKeyboardSlider::resized()
+void BKTuningKeyboardSlider::resized()
 {
     float heightUnit = getHeight() * 0.1;
     float widthUnit = getWidth() * 0.1;
@@ -276,7 +281,7 @@ void BKAbsoluteKeyboardSlider::resized()
 }
 
 
-void BKAbsoluteKeyboardSlider::setAvailableRange(int min, int max)
+void BKTuningKeyboardSlider::setAvailableRange(int min, int max)
 {
     minKey = min;
     maxKey = max;
@@ -286,12 +291,12 @@ void BKAbsoluteKeyboardSlider::setAvailableRange(int min, int max)
     keyboard->setAvailableRange(minKey, maxKey);
 }
 
-void BKAbsoluteKeyboardSlider::mouseMove(const juce::MouseEvent& e)
+void BKTuningKeyboardSlider::mouseMove(const juce::MouseEvent& e)
 {
    // keyboardValueTF.setText(juce::String(keyboard->getLastNoteOverValue(), displayResolution), dontSendNotification);
 }
 
-void BKAbsoluteKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
+void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
 {
     if (disabledKeys.contains(lastKeyPressed))
     {
@@ -310,40 +315,40 @@ void BKAbsoluteKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
         dragPos = 1. - 2. * dragPos;
         if(dragPos > 0.) dragPos = dragPos * dragPos;
         else dragPos = -1.* dragPos * dragPos;
-        DBG("BKAbsoluteKeyboardSlider::mouseDrag dragPos = " + juce::String(dragPos));
+        DBG("BKTuningKeyboardSlider::mouseDrag dragPos = " + juce::String(dragPos));
 
         float outval;
         if (dragPos > 0) outval = keyboard->midRange + dragPos * (keyboard->maxRange - keyboard->midRange);
         else outval = keyboard->midRange + dragPos * (keyboard->midRange - keyboard->minRange);
-        DBG("BKAbsoluteKeyboardSlider::mouseDrag outval = " + juce::String(outval));
+        DBG("BKTuningKeyboardSlider::mouseDrag outval = " + juce::String(outval));
         auto val  = std::clamp(outval, keyboard->minRange, keyboard->maxRange);
        // keyboardState->setKeyOffset(myNote, dragPos * 50.);
         keyboardValueTF.setText(juce::String(val, displayResolution), juce::dontSendNotification);
-        keyboardState->setKeyOffset(myNote, val);
+        keyboardState->setKeyOffset(myNote, val,isCircular);
 
         //DBG("dragging last key, height " + juce::String(keyboard->getLastKeySelected()) + " " + juce::String(dragPos));
     }
 }
 
-void BKAbsoluteKeyboardSlider::mouseUp(const juce::MouseEvent& e)
+void BKTuningKeyboardSlider::mouseUp(const juce::MouseEvent& e)
 {
     if(e.mouseWasClicked())
     {
         if(e.mods.isShiftDown())
         {
             keyboardValueTF.setText(juce::String(keyboard->midRange, displayResolution), juce::dontSendNotification);
-            keyboardState->setKeyOffset(lastKeyPressed, 0.);
+            keyboardState->setKeyOffset(lastKeyPressed, 0.,isCircular);
         }
     }
 
-    // listeners.call(&BKAbsoluteKeyboardSlider::Listener::keyboardSliderChanged,
+    // listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
     //                getName(),
     //                keyboard->getValues());
     lastKeyPressed = -1;
     keyboard->repaint();
 }
 
-void BKAbsoluteKeyboardSlider::mouseDoubleClick(const juce::MouseEvent& e)
+void BKTuningKeyboardSlider::mouseDoubleClick(const juce::MouseEvent& e)
 {
 #if JUCE_IOS
     lastKeyPressed = -1;
@@ -361,7 +366,7 @@ void BKAbsoluteKeyboardSlider::mouseDoubleClick(const juce::MouseEvent& e)
 #endif
 }
 
-void BKAbsoluteKeyboardSlider::mouseDown(const juce::MouseEvent& e)
+void BKTuningKeyboardSlider::mouseDown(const juce::MouseEvent& e)
 {
     if(e.y >= 0 && e.y <= keyboard->getHeight())
         lastKeyPressed =  keyboard->getNoteAndVelocityAtPosition(e.position).note;
@@ -475,21 +480,91 @@ juce::Array<float> stringOrderedPairsToFloatArray(juce::String s, int size, floa
 
     return newarray;
 }
-void BKAbsoluteKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
+juce::Array<float> stringToFloatArray(juce::String s)
+{
+    juce::Array<float> arr = juce::Array<float>();
+
+    juce::String temp = "";
+    bool inNumber = false;
+
+    juce::String::CharPointerType c = s.getCharPointer();
+
+    juce::juce_wchar prd = '.';
+    juce::juce_wchar dash = '-';
+    juce::juce_wchar slash = '/'; // blank: put a zero in
+
+    int prdCnt = 0;
+
+    // DEBUG
+    for (int i = 0; i < (s.length()+1); i++)
+    {
+        juce::juce_wchar c1 = c.getAndAdvance();
+
+        bool isPrd = !juce::CharacterFunctions::compare(c1, prd);
+        bool isDash = !juce::CharacterFunctions::compare(c1, dash);
+        bool isSlash = !juce::CharacterFunctions::compare(c1, slash);
+
+        if (isPrd) prdCnt += 1;
+
+        bool isNumChar = juce::CharacterFunctions::isDigit(c1) || isPrd || isDash;
+
+        if (!isNumChar)
+        {
+            if (inNumber)
+            {
+                arr.add(temp.getFloatValue());
+                temp = "";
+            }
+
+            // slash indicates a zero slot
+            if (isSlash) {
+                arr.add(0.);
+                temp = "";
+            }
+
+            inNumber = false;
+            continue;
+        }
+        else
+        {
+            inNumber = true;
+
+            temp += c1;
+        }
+    }
+
+    return arr;
+}
+void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 {
     if(textEditor.getName() == keyboardValsTextField->getName())
     {
-        auto array = stringOrderedPairsToFloatArray(keyboardValsTextField->getText(), 128,keyboard->midRange);
-        for(int i=0; i<array.size(); i++)
-        {
-            keyboardState->setKeyOffset(i, array.getUnchecked(i));
-        }
-        //
-        // listeners.call(&BKAbsoluteKeyboardSlider::Listener::keyboardSliderChanged,
-        //                getName(),
-        //                //keyboard->getValuesRotatedByFundamental());
-        //                keyboard->getValues());
+        if (isCircular) {
+             auto   tempVals = stringToFloatArray(keyboardValsTextField->getText());
+            if (tempVals.size() == maxKey - 1) {
+                int offset;
+                if(keyboardState->fundamental <= 0) offset = 0;
+                else offset = keyboardState->fundamental;
+                auto rangeAll  =  (keyboard->getRangeEnd() - keyboard->getRangeStart()) + 1;
+                for(int i=keyboard->getRangeStart(); i<=keyboard->getRangeEnd(); i++)
+                {
+                    int index = ((i - offset) + rangeAll) % rangeAll;
+                    keyboardState->setKeyOffset(index, tempVals.getUnchecked(index),isCircular);
+                }
+            }
 
+        }else {
+            auto array = stringOrderedPairsToFloatArray(keyboardValsTextField->getText(), 128,keyboard->midRange);
+            for(int i=0; i<array.size(); i++)
+            {
+                keyboardState->setKeyOffset(i, array.getUnchecked(i),isCircular);
+            }
+            //
+            // listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
+            //                getName(),
+            //                //keyboard->getValuesRotatedByFundamental());
+            //                keyboard->getValues());
+        }
         keyboardValsTextField->setAlpha(0);
         keyboardValsTextField->toBack();
         unfocusAllComponents();
@@ -499,9 +574,9 @@ void BKAbsoluteKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& text
     {
         if (lastKeyPressed < 0) return;
 
-        //keyboard->setKeyValue(lastKeyPressed, keyboardValueTF.getText().getDoubleValue());
+        keyboardState->setKeyOffset(lastKeyPressed, keyboardValueTF.getText().getDoubleValue(),isCircular);
 
-        // listeners.call(&BKAbsoluteKeyboardSlider::Listener::keyboardSliderChanged,
+        // listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
         //                getName(),
         //                //keyboard->getValuesRotatedByFundamental());
         //                keyboard->getValues());
@@ -511,7 +586,7 @@ void BKAbsoluteKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& text
 
 }
 
-void BKAbsoluteKeyboardSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
+void BKTuningKeyboardSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
 {
     focusLostByEscapeKey = true;
     if(textEditor.getName() == keyboardValsTextField->getName())
@@ -526,7 +601,7 @@ void BKAbsoluteKeyboardSlider::textEditorEscapeKeyPressed (juce::TextEditor& tex
     }
 }
 
-void BKAbsoluteKeyboardSlider::textEditorFocusLost(juce::TextEditor& textEditor)
+void BKTuningKeyboardSlider::textEditorFocusLost(juce::TextEditor& textEditor)
 {
 #if !JUCE_IOS
     if(!focusLostByEscapeKey)
@@ -536,7 +611,7 @@ void BKAbsoluteKeyboardSlider::textEditorFocusLost(juce::TextEditor& textEditor)
 #endif
 }
 
-void BKAbsoluteKeyboardSlider::textEditorTextChanged(juce::TextEditor& tf)
+void BKTuningKeyboardSlider::textEditorTextChanged(juce::TextEditor& tf)
 {
 #if JUCE_IOS
     if (hasBigOne)
@@ -548,24 +623,35 @@ void BKAbsoluteKeyboardSlider::textEditorTextChanged(juce::TextEditor& tf)
 }
 
 
-void BKAbsoluteKeyboardSlider::buttonClicked (juce::Button* b)
+void BKTuningKeyboardSlider::buttonClicked (juce::Button* b)
 {
     if(b->getName() == keyboardValsTextFieldOpen.getName())
     {
 
-//        keyboardValsTextField->setText(offsetArrayToString3(keyboard->getValues(), midRange), dontSendNotification);
-        juce::String s = "";
-        int key = 0;
-        for (auto offset : keyboardState->tuningOffset)
-        {
-            //if (offset != 0.0)  s += String(key) + ":" + String((int)(offset*100.0f)) + " ";
-            //DBG("offsetArrayToString3 val = " + juce::String(offset));
-            if (offset != 0.f)  s += juce::String(key) + ":" + juce::String((offset)) + " ";
+        if (isCircular) {
+            //        keyboardValsTextField->setText(offsetArrayToString3(keyboard->getValues(), midRange), dontSendNotification);
+            juce::String s = "";
 
-            ++key;
+            for (auto offset : keyboardState->circularTuningOffset) {
+                s += juce::String((offset)) + " ";
+            }
+            keyboardValsTextField->setText(s,juce::sendNotificationSync);
         }
-        keyboardValsTextField->setText(s,juce::sendNotificationSync);
+        else {
+            //        keyboardValsTextField->setText(offsetArrayToString3(keyboard->getValues(), midRange), dontSendNotification);
+            juce::String s = "";
+            int key = 0;
+            for (auto offset : keyboardState->absoluteTuningOffset)
+            {
+                //if (offset != 0.0)  s += String(key) + ":" + String((int)(offset*100.0f)) + " ";
+                //DBG("offsetArrayToString3 val = " + juce::String(offset));
+                if (offset != 0.f)  s += juce::String(key) + ":" + juce::String((offset)) + " ";
 
+                ++key;
+            }
+
+            keyboardValsTextField->setText(s,juce::sendNotificationSync);
+        }
 #if JUCE_IOS
         hasBigOne = true;
         WantsBigOne::listeners.call(&WantsBigOne::Listener::iWantTheBigOne, keyboardValsTextField.get(),
@@ -584,7 +670,7 @@ void BKAbsoluteKeyboardSlider::buttonClicked (juce::Button* b)
 
 }
 
-void BKAbsoluteKeyboardSlider::setValues(juce::Array<float> newvals)
+void BKTuningKeyboardSlider::setValues(juce::Array<float> newvals)
 {
     for(int i=0; i<newvals.size(); i++)
     {

@@ -116,7 +116,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 //    melatonin::printSparkline(buffer);
     //should pull first two modinputs first or somehow have dum
     //
-    // my ins????
+    // my ins???
+
     buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
     state.params.transpose.processStateChanges();
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider

@@ -37,7 +37,7 @@ public:
         {
             juce::Slider* newSlider = dataSliders.operator[](i);
             if(newSlider != nullptr)
-            {
+
                 newSlider->setLookAndFeel(nullptr);
             }
         }

@@ -8,7 +8,19 @@
 #include <chowdsp_parameters/chowdsp_parameters.h>
 #include "Identifiers.h"
 class SynthBase;
+class TuningProcessor;
 namespace bitklavier {
+    class TunableProcessor : public juce::AudioProcessor {
+    public:
+        TunableProcessor(juce::AudioProcessor::BusesProperties layout) : juce::AudioProcessor(layout)
+        {
+        }
+        TunableProcessor() : juce::AudioProcessor()
+        {
+        }
+
+        TuningProcessor* tuning = nullptr; //getTuningProcessor() const;
+    };
     /**
   * Base class for plugin processors.
   *
@@ -21,7 +33,7 @@ namespace bitklavier {
 #else
     template <class Processor>
 #endif
-    class PluginBase : public juce::AudioProcessor
+    class PluginBase : public TunableProcessor
 #if JUCE_MODULE_AVAILABLE_chowdsp_clap_extensions
         ,
                    public CLAPExtensions::CLAPInfoExtensions,
@@ -159,7 +171,7 @@ namespace bitklavier {
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
     template <class State>
     PluginBase<State>::PluginBase (SynthBase* parent,const juce::ValueTree &v_, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
-            : juce::AudioProcessor (layout),
+            : TunableProcessor (layout),
               state (*this, um),
               v(v_)
     {

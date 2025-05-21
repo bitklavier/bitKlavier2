@@ -82,11 +82,23 @@ enum AdaptiveSystems {
 
 struct TuningKeyboardState  {
     juce::MidiKeyboardState keyboardState;
-    std::array<float,128> tuningOffset = {0.f};
+    std::array<float,128> absoluteTuningOffset = {0.f};
+    int fundamental  =0;
     void setKeyOffset(int midiNoteNumber, float val)
     {
-        if (midiNoteNumber >= 0 && midiNoteNumber < 128) tuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128) absoluteTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
     }
+    std::array<float,12> circularTuningOffset = {0.f};
+    void setCircularKeyOffset(int midiNoteNumber, float val)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 12) circularTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+    }
+    void setKeyOffset(int midiNoteNumber, float val, bool circular)
+    {
+        if (circular) setCircularKeyOffset(midiNoteNumber,val);
+        else setKeyOffset(midiNoteNumber,val);
+    }
+
 };
 
 

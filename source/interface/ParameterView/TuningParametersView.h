@@ -40,6 +40,9 @@ public:
         keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(*dynamic_cast<TuningParams*>(&params));
         addOpenGlComponent(keyboard->getImageComponent());
         addAndMakeVisible(keyboard.get());
+        circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(*dynamic_cast<TuningParams*>(&params));
+        addOpenGlComponent(circular_keyboard->getImageComponent());
+        addAndMakeVisible(circular_keyboard.get());
       // for (auto &param_ : *params.getChoiceParams()) {
       //    auto box = std::make_unique<OpenGLComboBox>(param_->paramID.toStdString());
       //     auto attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*param_.get(), listeners,*box.get(), nullptr);
@@ -113,6 +116,7 @@ public:
     std::unique_ptr<OpenGLComboBox> adaptive_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> adaptive_attachment;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> keyboard;
+    std::unique_ptr<OpenGLCircularKeyboardSlider> circular_keyboard;
     //    std::vector<std::unique_ptr<SynthButton>> _buttons;
 //    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> buttonAttachments;
 };

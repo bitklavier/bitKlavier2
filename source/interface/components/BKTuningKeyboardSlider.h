@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    BKAbsoluteKeyboardSlider.h
+    BKTuningKeyboardSlider.h
     Created: 29 Jul 2018 4:40:55pm
     Author:  Daniel Trueman
 
@@ -36,7 +36,7 @@ public:
         upDownButtonArrowColourId       = 0x1005007,
         shadowColourId                  = 0x1005008
     };
-    KeyboardOffsetComponent(TuningKeyboardState &state, Orientation o) : juce::KeyboardComponentBase(o),state(state) {
+    KeyboardOffsetComponent(TuningKeyboardState &state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o),state(state),isCircular(isCircular) {
            setColour(whiteNoteColourId, juce::Colours::white);
             setColour(blackNoteColourId, juce::Colours::black);
         setColour(keySeparatorLineColourId, juce::Colours::grey);
@@ -57,10 +57,11 @@ public:
     float minRange = -50.f;
     float maxRange = 50.f;
     TuningKeyboardState &state;
+    bool isCircular;
 };
 
 
-class BKAbsoluteKeyboardSlider :
+class BKTuningKeyboardSlider :
 public StateModulatedComponent,
 public juce::MidiKeyboardState::Listener,
 public juce::TextEditor::Listener,
@@ -69,8 +70,8 @@ public juce::Button::Listener
 
 public:
 
-    BKAbsoluteKeyboardSlider(TuningKeyboardState* state, bool toggles, bool needsOctaveSlider = false);
-    ~BKAbsoluteKeyboardSlider()
+    BKTuningKeyboardSlider(TuningKeyboardState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false);
+    ~BKTuningKeyboardSlider()
     {
         keyboard = nullptr;
         setLookAndFeel(nullptr);
@@ -194,8 +195,8 @@ public:
 
     void setBright() { setDim(1.); }
 
-    BKAbsoluteKeyboardSlider* clone() {
-        return new BKAbsoluteKeyboardSlider(new TuningKeyboardState(),false,false);
+    BKTuningKeyboardSlider* clone() {
+        return new BKTuningKeyboardSlider(new TuningKeyboardState(),false,false);
     }
     void syncToValueTree() override {
 
@@ -220,6 +221,7 @@ private:
 
     juce::String sliderName;
     juce::Label showName;
+    bool isCircular;
 
     bool needsOctaveSlider;
 #if JUCE_IOS
@@ -253,7 +255,7 @@ private:
     bool focusLostByEscapeKey;
 
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKAbsoluteKeyboardSlider)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKTuningKeyboardSlider)
 };
 
 
