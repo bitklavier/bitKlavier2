@@ -76,14 +76,22 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * MIDI Processing Happens here
      *
      */
+    juce::MidiBuffer saveMidi (midiMessages);
+    midiMessages.clear();
+
+    for (auto m : saveMidi) {
+        auto msg = m.getMessage();
+        if (state.params.keyboard_state.keyStates.test(msg.getNoteNumber()))
+            midiMessages.addEvent (msg, m.samplePosition);
+
+    }
 
     // this could surely be optimized, though i'm not sure how important that is ./dlt
     // i'm also not 100% this properly retain the samplePosition, but again, it's not clear how important
     // that is when noteOn and noteOff are inverted... might be important for other MIDI processing, however
     if (invertNoteOnNoteOff)
     {
-        juce::MidiBuffer saveMidi (midiMessages);
-        midiMessages.clear();
+
         for (auto mi : saveMidi)
         {
             auto message = mi.getMessage();

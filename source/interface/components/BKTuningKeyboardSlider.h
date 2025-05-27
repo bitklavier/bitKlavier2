@@ -139,44 +139,8 @@ public:
         //keyboard->setMinMidMaxValues(min, mid, max);
     }
 
-    void disableKey(int midiNoteNumber)
-    {
-        disabledKeys.add(midiNoteNumber);
-        //keyboard->disableKey(midiNoteNumber);
-    }
 
-    void enableKey(int midiNoteNumber)
-    {
-        disabledKeys.removeAllInstancesOf(midiNoteNumber);
-        //keyboard->enableKey(midiNoteNumber);
-    }
 
-    void setKeys(juce::Array<int> midiNotes)
-    {
-        disableAllKeys();
-
-        for (auto key : midiNotes)
-        {
-            enableKey(key);
-        }
-    }
-
-    void disableAllKeys()
-    {
-        for (int i = minKey; i <= maxKey; i++) {
-            disableKey(i);
-        }
-    }
-
-    void enableAllKeys()
-    {
-        disabledKeys.clearQuick();
-        //keyboard->enableAllKeys();
-    }
-
-    void setKeysInKeymap(juce::Array<int> keys) {
-        //keyboard->setKeysInKeymap(keys);
-    };
 
 
     void setOctaveForMiddleC(int octave) { keyboard->setOctaveForMiddleC(octave);};
@@ -244,7 +208,6 @@ private:
 
     int displayResolution; // how many decimal points
 
-        juce::Array<int> disabledKeys;
 
     void setActiveValsFromString(juce::String s);
     void setActiveValsFromStringWithFundamentalOffset(juce::String s);

@@ -45,21 +45,6 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
             default: break;
         }
 
-    //     else g.setColour (c.brighter());
-    //     int w = area.getWidth();
-    // int h = area.getHeight();
-    // int x = area.getX();
-    // int y = area.getY();
-    //     const int xIndent = juce::jmax (1, juce::jmin (w, h) / 8);
-    //
-    //     switch (getOrientation())
-    //     {
-    //         case horizontalKeyboard:            g.fillRect (x + xIndent, y, w - xIndent * 2, 7 * h / 8); break;
-    //         case verticalKeyboardFacingLeft:    g.fillRect (x + w / 8, y + xIndent, w - w / 8, h - xIndent * 2); break;
-    //         case verticalKeyboardFacingRight:   g.fillRect (x, y + xIndent, 7 * w / 8, h - xIndent * 2); break;
-    //         default: break;
-    //     }
-
 
 }
 
@@ -298,11 +283,7 @@ void BKTuningKeyboardSlider::mouseMove(const juce::MouseEvent& e)
 
 void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
 {
-    if (disabledKeys.contains(lastKeyPressed))
-    {
-        DBG("key disabled");
-        return;
-    }
+
 
     if(lastKeyPressed != -1)
     {

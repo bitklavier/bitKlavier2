@@ -10,9 +10,20 @@
 #include <chowdsp_sources/chowdsp_sources.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <juce_audio_devices/juce_audio_devices.h>
+
+#include "json.hpp"
 #include "midi_manager.h"
 #include "PreparationStateImpl.h"
 #include "PluginBase.h"
+struct KeymapKeyboardState {
+    KeymapKeyboardState() {
+        keyStates.set();
+    }
+    std::bitset<128> harmonizationState;
+    std::bitset<128> keyToHarmonize;
+    std::bitset<128> keyStates;
+};
+
 struct KeymapParams : chowdsp::ParamHolder
 {
 
@@ -52,6 +63,7 @@ struct KeymapParams : chowdsp::ParamHolder
 //            3.5f,
 //    };
 
+    KeymapKeyboardState keyboard_state;
 
     /****************************************************************************************/
 };
