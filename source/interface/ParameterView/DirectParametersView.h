@@ -4,19 +4,23 @@
 
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
+#include "OpenGL_TranspositionSlider.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
 #include "ParametersView.h"
-#include "envelope_section.h"
 #include "TransposeParams.h"
-#include "OpenGlTranspositionSlider.h"
+#include "VelocityMinMaxParams.h"
+#include "envelope_section.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
 using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
+
 class TranspositionSliderSection : public SynthSection
 {
 public:
     TranspositionSliderSection(TransposeParams *params, chowdsp::ParameterListeners& listeners, std::string parent_uuid)
-            : slider(std::make_unique<OpenGlTranspositionSlider>(params,listeners)), SynthSection("")
+            : slider(std::make_unique<OpenGL_TranspositionSlider>(params,listeners)), SynthSection("")
     {
         setComponentID(parent_uuid);
         on = std::make_unique<SynthButton>(params->transpositionUsesTuning->paramID);
@@ -25,10 +29,10 @@ public:
         addSynthButton(on.get());
         addAndMakeVisible(on.get());
         //setActivator(on.get());
+        //set componment id to map to statechange params set in processor constructor
         slider->setComponentID("transpose");
+        //needed to get picked up by modulations
         addStateModulatedComponent(slider.get());
-//        addAndMakeVisible(*slider);
-//        addOpenGlComponent(slider->getImageComponent());
     }
     ~TranspositionSliderSection() {}
 
@@ -47,10 +51,12 @@ public:
         slider->redoImage();
         SynthSection::resized();
     }
-    std::unique_ptr<OpenGlTranspositionSlider> slider;
+    std::unique_ptr<OpenGL_TranspositionSlider> slider;
     std::unique_ptr<SynthButton> on;
     std::unique_ptr<chowdsp::ButtonAttachment> on_attachment;
 };
+
+
 class DirectParametersView : public SynthSection
 {
 public:
@@ -74,14 +80,7 @@ public:
             _sliders.emplace_back(std::move(slider));
 
         }
-//        for ( auto &param_ : *params.getBoolParams())
-//        {
-//            auto button = std::make_unique<SynthButton>(param_->paramID);
-//            auto attachment = std::make_unique<chowdsp::ButtonAttachment>(*param_.get(), listeners,  *button.get(), nullptr);
-//            _buttons.emplace_back(std::move(button));
-//            buttonAttachments.emplace_back(std::move(attachment));
-//        }
-
+        //find complex parameters
         for (auto paramHolder : *params.getParamHolders())
         {
             if (auto *envParams = dynamic_cast<EnvParams*>(paramHolder))
@@ -89,15 +88,19 @@ public:
 
             if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
                 transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
+            if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
+                velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
         }
 
               addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
-
-
-
+        addAndMakeVisible(velocityMinMaxSlider.get());
+        //needed to get picked up by modulations
+        velocityMinMaxSlider->setComponentID("velocity_min_max");
+        addStateModulatedComponent(velocityMinMaxSlider.get());
 
     }
+
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
@@ -109,16 +112,16 @@ public:
         }
         paintChildrenBackgrounds(g);
     }
-//    std::unique_ptr<EnvelopeSection> envelope;
-    //std::unique_ptr<juce::Component> transpose_uses_tuning;
+
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
+
     void resized() override;
     chowdsp::ScopedCallbackList transposeCallbacks;
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
-//    std::vector<std::unique_ptr<SynthButton>> _buttons;
-//    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> buttonAttachments;
+    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
+
 };
 
 #endif //BITKLAVIER2_DIRECTPARAMETERSVIEW_H

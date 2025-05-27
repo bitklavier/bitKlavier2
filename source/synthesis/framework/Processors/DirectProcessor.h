@@ -15,6 +15,8 @@
 #include "TransposeParams.h"
 #include "buffer_debugger.h"
 #include "Identifiers.h"
+#include "VelocityMinMaxParams.h"
+
 struct DirectParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
@@ -28,7 +30,7 @@ struct DirectParams : chowdsp::ParamHolder
     {
         //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam, transpositionsParam);
         //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam);
-        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, blendronicSend,  env, transpose);
+        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, blendronicSend,  env, transpose, velocityMinMax);
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
@@ -102,7 +104,7 @@ struct DirectParams : chowdsp::ParamHolder
 
     // Transposition slider (holds up to 12 transposition values)
     TransposeParams transpose;
-
+    VelocityMinMaxParams velocityMinMax;
 
     //
     //

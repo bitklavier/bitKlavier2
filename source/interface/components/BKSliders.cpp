@@ -3,6 +3,7 @@
 //
 
 #include "BKSliders.h"
+#include "BKGraphicsConstants.h"
 
 /**
  * move this stuff somewhere else
@@ -75,6 +76,9 @@ juce::Array<float> BKstringToFloatArray(juce::String s)
     return arr;
 }
 
+// ******************************************************************************************************************** //
+// *************************************************  BKStackedSlider ************************************************* //
+// ******************************************************************************************************************** //
 
 BKStackedSlider::BKStackedSlider(
     juce::String sliderName,
@@ -571,5 +575,337 @@ void BKStackedSlider::resized ()
         juce::Slider* newSlider = dataSliders.getUnchecked(i);
         newSlider->setBounds(area);
     }
+
+}
+
+// ******************************************************************************************************************** //
+// **************************************************  BKRangeSlider ************************************************** //
+// ******************************************************************************************************************** //
+
+BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double defmin, double defmax, double increment):
+                                                                                                                     sliderName(name),
+                                                                                                                     sliderMin(min),
+                                                                                                                     sliderMax(max),
+                                                                                                                     sliderDefaultMin(defmin),
+                                                                                                                     sliderDefaultMax(defmax),
+                                                                                                                     sliderIncrement(increment)
+{
+
+    justifyRight = true;
+
+    showName.setText(sliderName, juce::dontSendNotification);
+    if(justifyRight) showName.setJustificationType(juce::Justification::bottomRight);
+    else showName.setJustificationType(juce::Justification::bottomLeft);
+    addAndMakeVisible(showName);
+
+    minValueTF.setText(juce::String(sliderDefaultMin));
+    minValueTF.setName("minvalue");
+    minValueTF.addListener(this);
+    minValueTF.setSelectAllWhenFocused(true);
+    minValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    addAndMakeVisible(minValueTF);
+
+    maxValueTF.setText(juce::String(sliderDefaultMax));
+    maxValueTF.setName("maxvalue");
+    maxValueTF.addListener(this);
+    maxValueTF.setSelectAllWhenFocused(true);
+    maxValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    addAndMakeVisible(maxValueTF);
+
+    minSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    minSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    minSlider.setRange(sliderMin, sliderMax, sliderIncrement);
+    minSlider.setValue(sliderDefaultMin, juce::dontSendNotification);
+    minSlider.addListener(this);
+    minSlider.setLookAndFeel(&minSliderLookAndFeel);
+    //minSlider.setInterceptsMouseClicks(false, true);
+    //minSliderLookAndFeel.setColour(Slider::trackColourId, Colour::fromRGBA(55, 105, 250, 50));
+    addAndMakeVisible(minSlider);
+
+    maxSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    maxSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    maxSlider.setRange(sliderMin, sliderMax, sliderIncrement);
+    maxSlider.setValue(sliderDefaultMax, juce::dontSendNotification);
+    maxSlider.addListener(this);
+    maxSlider.setLookAndFeel(&maxSliderLookAndFeel);
+    //maxSlider.setInterceptsMouseClicks(false, true);
+    //maxSliderLookAndFeel.setColour(Slider::trackColourId, Colour::greyLevel (0.8f).contrasting().withAlpha (0.13f));
+    //maxSliderLookAndFeel.setColour(Slider::trackColourId, Colour::fromRGBA(55, 105, 250, 50));
+    addAndMakeVisible(maxSlider);
+
+    invisibleSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    invisibleSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    invisibleSlider.setRange(sliderMin, sliderMax, sliderIncrement);
+    invisibleSlider.setValue(sliderDefaultMin, juce::dontSendNotification);
+    invisibleSlider.setAlpha(0.0);
+    invisibleSlider.addListener(this);
+    invisibleSlider.addMouseListener(this, true);
+    //invisibleSlider.setInterceptsMouseClicks(true, true);
+    addAndMakeVisible(invisibleSlider);
+
+    newDrag = false;
+    isMinAlwaysLessThanMax = false;
+
+    displaySlider = std::make_unique<juce::Slider>();
+    displaySlider->setRange(min, max, increment);
+    displaySlider->setSliderStyle(juce::Slider::SliderStyle::LinearBar);
+    displaySlider->setLookAndFeel(&displaySliderLookAndFeel);
+    displaySlider->setInterceptsMouseClicks(false, false);
+    addAndMakeVisible(*displaySlider);
+
+#if JUCE_IOS
+    maxValueTF.setReadOnly(true);
+    maxValueTF.addMouseListener(this, true);
+
+    minValueTF.setReadOnly(true);
+    minValueTF.addMouseListener(this, true);
+#endif
+}
+
+void BKRangeSlider::setDim(float alphaVal)
+{
+    minSlider.setAlpha(alphaVal);
+    maxSlider.setAlpha(alphaVal);
+    showName.setAlpha(alphaVal);
+    minValueTF.setAlpha(alphaVal);
+    maxValueTF.setAlpha(alphaVal);
+}
+
+void BKRangeSlider::setBright()
+{
+    minSlider.setAlpha(1.);
+    maxSlider.setAlpha(1.);
+    showName.setAlpha(1.);
+    minValueTF.setAlpha(1.);
+    maxValueTF.setAlpha(1.);
+}
+
+
+void BKRangeSlider::setMinValue(double newval, juce::NotificationType notify)
+{
+    checkValue(newval);
+    minSlider.setValue(newval, notify);
+    minValueTF.setText(juce::String(minSlider.getValue()), juce::dontSendNotification);
+    rescaleMinSlider();
+    // displaySlider->setRange(sliderMin, sliderMax, sliderIncrement);
+}
+
+
+void BKRangeSlider::setMaxValue(double newval, juce::NotificationType notify)
+{
+    checkValue(newval);
+    maxSlider.setValue(newval, notify);
+    maxValueTF.setText(juce::String(maxSlider.getValue()), juce::dontSendNotification);
+    rescaleMaxSlider();
+
+}
+
+
+void BKRangeSlider::sliderValueChanged (juce::Slider *slider)
+{
+
+    if(slider == &invisibleSlider)
+    {
+        if(newDrag)
+        {
+            if(!clickedOnMinSlider)
+            {
+                maxSlider.setValue(invisibleSlider.getValue(), juce::sendNotification);
+                maxValueTF.setText(juce::String(maxSlider.getValue()), juce::dontSendNotification);
+                if(isMinAlwaysLessThanMax)
+                    if(maxSlider.getValue() < minSlider.getValue())
+                        setMinValue(maxSlider.getValue(), juce::dontSendNotification);
+                //displaySlider->setRange(0,invisibleSlider.getValue(), sliderIncrement);
+            }
+            else
+            {
+                minSlider.setValue(invisibleSlider.getValue(), juce::sendNotification);
+                minValueTF.setText(juce::String(minSlider.getValue()), juce::dontSendNotification);
+                if(isMinAlwaysLessThanMax)
+                    if(minSlider.getValue() > maxSlider.getValue())
+                        setMaxValue(minSlider.getValue(), juce::dontSendNotification);
+            }
+
+            listeners.call(&BKRangeSlider::Listener::BKRangeSliderValueChanged,
+                getName(),
+                minSlider.getValue(),
+                maxSlider.getValue());
+        }
+    }
+}
+
+
+void BKRangeSlider::mouseDown (const juce::MouseEvent &event)
+{
+    Component* ec = event.eventComponent;
+
+    if (ec == &invisibleSlider)
+    {
+        if(event.mouseWasClicked())
+        {
+            if(event.y > invisibleSlider.getHeight() / 2.)
+            {
+                clickedOnMinSlider = true;
+            }
+            else
+            {
+                clickedOnMinSlider = false;
+            }
+
+            newDrag = true;
+        }
+
+        unfocusAllComponents();
+    }
+}
+
+
+void BKRangeSlider::sliderDragEnded(juce::Slider *slider)
+{
+    newDrag = false;
+    unfocusAllComponents();
+}
+
+
+void BKRangeSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
+{
+    double newval = textEditor.getText().getDoubleValue();
+
+    //adjusts min/max of sldiers as needed
+    checkValue(newval);
+
+    if(textEditor.getName() == "minvalue")
+    {
+        minSlider.setValue(newval, juce::sendNotification);
+        if(isMinAlwaysLessThanMax)
+            if(minSlider.getValue() > maxSlider.getValue())
+                setMaxValue(minSlider.getValue(), juce::dontSendNotification);
+        rescaleMinSlider();
+    }
+    else if(textEditor.getName() == "maxvalue")
+    {
+        maxSlider.setValue(newval, juce::sendNotification);
+        if(isMinAlwaysLessThanMax)
+            if(maxSlider.getValue() < minSlider.getValue())
+                setMinValue(maxSlider.getValue(), juce::dontSendNotification);
+        rescaleMaxSlider();
+    }
+
+    unfocusAllComponents();
+
+    listeners.call(&BKRangeSlider::Listener::BKRangeSliderValueChanged,
+        getName(),
+        minSlider.getValue(),
+        maxSlider.getValue());
+}
+
+
+void BKRangeSlider::textEditorTextChanged(juce::TextEditor& textEditor)
+{
+    focusLostByEscapeKey = false;
+
+#if JUCE_IOS
+    if (hasBigOne)
+    {
+        hasBigOne = false;
+        textEditorReturnKeyPressed(textEditor);
+    }
+#endif
+}
+
+
+void BKRangeSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
+{
+    focusLostByEscapeKey = true;
+    unfocusAllComponents();
+}
+
+
+void BKRangeSlider::textEditorFocusLost(juce::TextEditor& textEditor)
+{
+#if !JUCE_IOS
+    if(!focusLostByEscapeKey)
+    {
+        textEditorReturnKeyPressed(textEditor);
+    }
+#endif
+}
+
+
+void BKRangeSlider::checkValue(double newval)
+{
+    if(newval > maxSlider.getMaximum()) {
+        maxSlider.setRange(minSlider.getMinimum(), newval, sliderIncrement);
+        minSlider.setRange(minSlider.getMinimum(), newval, sliderIncrement);
+        invisibleSlider.setRange(minSlider.getMinimum(), newval, sliderIncrement);
+    }
+
+    if(newval < minSlider.getMinimum()) {
+        maxSlider.setRange(newval, maxSlider.getMaximum(), sliderIncrement);
+        minSlider.setRange(newval, maxSlider.getMaximum(), sliderIncrement);
+        invisibleSlider.setRange(newval, maxSlider.getMaximum(), sliderIncrement);
+    }
+}
+
+
+void BKRangeSlider::rescaleMinSlider()
+{
+    if(minSlider.getMinimum() < sliderMin &&
+        minSlider.getValue() > sliderMin &&
+        maxSlider.getValue() > sliderMin)
+    {
+        maxSlider.setRange(sliderMin, maxSlider.getMaximum(), sliderIncrement);
+        minSlider.setRange(sliderMin, maxSlider.getMaximum(), sliderIncrement);
+        invisibleSlider.setRange(sliderMin, maxSlider.getMaximum(), sliderIncrement);
+
+    }
+}
+
+void BKRangeSlider::rescaleMaxSlider()
+{
+
+    if(maxSlider.getMaximum() > sliderMax &&
+        maxSlider.getValue() < sliderMax &&
+        minSlider.getValue() < sliderMax
+    )
+    {
+        maxSlider.setRange(minSlider.getMinimum(), sliderMax, sliderIncrement);
+        minSlider.setRange(minSlider.getMinimum(), sliderMax, sliderIncrement);
+        invisibleSlider.setRange(minSlider.getMinimum(), sliderMax, sliderIncrement);
+
+    }
+}
+
+void BKRangeSlider::resized()
+{
+
+    juce::Rectangle<int> area (getLocalBounds());
+    juce::Rectangle<int> topSlab (area.removeFromTop(gComponentTextFieldHeight));
+
+    if(justifyRight)
+    {
+        topSlab.removeFromRight(5);
+        maxValueTF.setBounds(topSlab.removeFromRight(75));
+        topSlab.removeFromRight(gXSpacing);
+        minValueTF.setBounds(topSlab.removeFromLeft(75));
+        showName.setBounds(topSlab.removeFromRight(getWidth() - 150));
+    }
+    else
+    {
+        topSlab.removeFromLeft(5);
+        minValueTF.setBounds(topSlab.removeFromLeft(75));
+        topSlab.removeFromLeft(gXSpacing);
+        maxValueTF.setBounds(topSlab.removeFromLeft(75));
+        showName.setBounds(topSlab.removeFromLeft(getWidth() - 150));
+    }
+
+    juce::Rectangle<int> sliderArea (area.removeFromTop(40));
+    minSlider.setBounds(sliderArea);
+    maxSlider.setBounds(sliderArea);
+    invisibleSlider.setBounds(sliderArea);
+
+    juce::Rectangle<int> displaySliderArea = maxSlider.getBounds();
+    displaySliderArea.reduce(8, 0);
+    displaySlider->setBounds(displaySliderArea.removeFromBottom(8));
 
 }
