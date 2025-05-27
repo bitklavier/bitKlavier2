@@ -2,10 +2,6 @@
 // Created by Dan Trueman on 10/22/24.
 //
 
-#ifndef BITKLAVIER2_BKSLIDERS_H
-#define BITKLAVIER2_BKSLIDERS_H
-
-#endif //BITKLAVIER2_BKSLIDERS_H
 
 #include "FullInterface.h"
 #include "PreparationSection.h"
@@ -21,100 +17,117 @@
  *
  */
 class BKStackedSlider :
-    public StateModulatedComponent,
-    public juce::Slider::Listener,
-    public juce::TextEditor::Listener
-{
+        public StateModulatedComponent,
+        public juce::Slider::Listener,
+        public juce::TextEditor::Listener {
 public:
+    BKStackedSlider(juce::String sliderName, double min, double max, double defmin, double defmax, double def,
+                    double increment, int numActiveSliders);
 
-    BKStackedSlider(juce::String sliderName, double min, double max, double defmin, double defmax, double def, double increment, int numActiveSliders);
-
-    ~BKStackedSlider()
-    {
+    ~BKStackedSlider() {
         topSlider->setLookAndFeel(nullptr);
 
-        for(int i=0; i<numSliders; i++)
-        {
-            juce::Slider* newSlider = dataSliders.operator[](i);
-            if(newSlider != nullptr)
+        for (int i = 0; i < numSliders; i++) {
+            juce::Slider *newSlider = dataSliders.operator[](i);
+            if (newSlider != nullptr)
 
                 newSlider->setLookAndFeel(nullptr);
-            }
         }
-    };
+    }
 
     void sliderValueChanged (juce::Slider *slider) override;
-    void textEditorReturnKeyPressed(juce::TextEditor& textEditor) override;
-    void textEditorFocusLost(juce::TextEditor& textEditor) override;
-    void textEditorEscapeKeyPressed (juce::TextEditor& textEditor) override;
-    void textEditorTextChanged(juce::TextEditor& textEditor) override;
-    void mouseDown (const juce::MouseEvent &event) override;
-    void mouseDrag(const juce::MouseEvent& e) override;
-    void mouseUp(const juce::MouseEvent& e) override;
-    void mouseMove(const juce::MouseEvent& e) override;
-    void mouseDoubleClick (const juce::MouseEvent &e) override;
 
-    inline juce::TextEditor* getTextEditor(void)
-    {
+    void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override;
+
+    void textEditorFocusLost(juce::TextEditor &textEditor) override;
+
+    void textEditorEscapeKeyPressed(juce::TextEditor &textEditor) override;
+
+    void textEditorTextChanged(juce::TextEditor &textEditor) override;
+
+    void mouseDown(const juce::MouseEvent &event) override;
+
+    void mouseDrag(const juce::MouseEvent &e) override;
+
+    void mouseUp(const juce::MouseEvent &e) override;
+
+    void mouseMove(const juce::MouseEvent &e) override;
+
+    void mouseDoubleClick(const juce::MouseEvent &e) override;
+
+    inline juce::TextEditor *getTextEditor(void) {
         return editValsTextField.get();
     }
 
-    inline void dismissTextEditor(bool setValue = false)
-    {
-        if (setValue)   textEditorReturnKeyPressed(*editValsTextField);
-        else            textEditorEscapeKeyPressed(*editValsTextField);
+    inline void dismissTextEditor(bool setValue = false) {
+        if (setValue) textEditorReturnKeyPressed(*editValsTextField);
+        else textEditorEscapeKeyPressed(*editValsTextField);
     }
 
     void setTo(juce::Array<float> newvals, juce::NotificationType newnotify);
+
     void setValue(juce::Array<float> newvals, juce::NotificationType newnotify) { setTo(newvals, newnotify); }
+
     void resetRanges();
+
     int whichSlider();
-    int whichSlider(const juce::MouseEvent& e);
+
+    int whichSlider(const juce::MouseEvent &e);
+
     virtual void addSlider(juce::NotificationType newnotify);
 
     inline juce::String getText(void) { return editValsTextField->getText(); }
     inline void setText(juce::String text) { editValsTextField->setText(text, juce::dontSendNotification); }
 
-    void setName(juce::String newName)    { sliderName = newName; showName.setText(sliderName, juce::dontSendNotification); }
-    juce::String getName()                { return sliderName; }
-    void setTooltip(juce::String newTip)  { topSlider->setTooltip(newTip); showName.setTooltip(newTip); }
+    void setName(juce::String newName) {
+        sliderName = newName;
+        showName.setText(sliderName, juce::dontSendNotification);
+    }
+
+    juce::String getName() { return sliderName; }
+
+    void setTooltip(juce::String newTip) {
+        topSlider->setTooltip(newTip);
+        showName.setTooltip(newTip);
+    }
 
     void resized() override;
 
     void setDim(float newAlpha);
+
     void setBright();
 
-    class Listener
-    {
-
+    class Listener {
     public:
+        virtual ~Listener() {
+        };
 
-        virtual ~Listener() {};
+        virtual void BKStackedSliderValueChanged(juce::String name, juce::Array<float> val) = 0;
 
-        virtual void BKStackedSliderValueChanged(juce::String name, juce::Array<float> val) = 0; //rewrite all this to pass "this" and check by slider ref instead of name?
+        //rewrite all this to pass "this" and check by slider ref instead of name?
     };
 
     juce::ListenerList<Listener> listeners;
-    void addMyListener(Listener* listener)     { listeners.add(listener);      }
-    void removeMyListener(Listener* listener)  { listeners.remove(listener);   }
+    void addMyListener(Listener *listener) { listeners.add(listener); }
+    void removeMyListener(Listener *listener) { listeners.remove(listener); }
 
-    juce::OwnedArray<juce::Slider> dataSliders;  //displays data, user controls with topSlider
-    BKStackedSlider* clone ()
-    {
+    juce::OwnedArray<juce::Slider> dataSliders; //displays data, user controls with topSlider
+    BKStackedSlider *clone() {
         int i = 0;
-        for (auto slider : activeSliders) {
-            if (slider) {i++;}
+        for (auto slider: activeSliders) {
+            if (slider) { i++; }
         }
-        return new BKStackedSlider(sliderName, sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault, sliderDefault, sliderIncrement,i);
+        return new BKStackedSlider(sliderName, sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault, sliderDefault,
+                                   sliderIncrement, i);
     }
-    void syncToValueTree() {
 
+    void syncToValueTree() {
     }
+
     juce::Array<float> getAllActiveValues();
 
-
-private:
-
+private
+:
     chowdsp::SliderAttachment attachment;
 
     std::unique_ptr<juce::Slider> topSlider; //user interacts with this
@@ -144,9 +157,10 @@ private:
     bool focusLostByNumPad;
     bool mouseJustDown;
 
-        void showModifyPopupMenu();
-    static void sliderModifyMenuCallback (const int result, BKStackedSlider* ss);
+    void showModifyPopupMenu();
+
+    static void sliderModifyMenuCallback(const int result, BKStackedSlider *ss);
 
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKStackedSlider)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BKStackedSlider)
 };
