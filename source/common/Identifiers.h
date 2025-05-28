@@ -70,6 +70,8 @@ namespace IDs
     DECLARE_ID(parameter)
     DECLARE_ID(MODULATABLE_PARAM)
 
+    DECLARE_ID(absoluteTuning)
+    DECLARE_ID(circularTuning)
     DECLARE_ID(isState)
 }
 

@@ -9,8 +9,8 @@
 #include "TransposeParams.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-#include "open_gl_combo_box.h"
-#include "OpenGL_AbsoluteKeyboardSlider.h"
+#include "../components/opengl/open_gl_combo_box.h"
+#include "../components/opengl/OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
 using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
@@ -37,12 +37,10 @@ public:
             _sliders.emplace_back(std::move(slider));
 
         }
-        keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(*dynamic_cast<TuningParams*>(&params));
-        addOpenGlComponent(keyboard->getImageComponent());
-        addAndMakeVisible(keyboard.get());
-        circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(*dynamic_cast<TuningParams*>(&params));
-        addOpenGlComponent(circular_keyboard->getImageComponent());
-        addAndMakeVisible(circular_keyboard.get());
+        keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->keyboardState);
+        addStateModulatedComponent(keyboard.get());
+        circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->keyboardState);
+        addStateModulatedComponent(circular_keyboard.get());
       // for (auto &param_ : *params.getChoiceParams()) {
       //    auto box = std::make_unique<OpenGLComboBox>(param_->paramID.toStdString());
       //     auto attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*param_.get(), listeners,*box.get(), nullptr);

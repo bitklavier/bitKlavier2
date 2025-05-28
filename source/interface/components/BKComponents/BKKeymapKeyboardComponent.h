@@ -5,7 +5,7 @@
 #ifndef BKKEYMAPKEYBOARDCOMPONENT_H
 #define BKKEYMAPKEYBOARDCOMPONENT_H
 
-#include "StateModulatedComponent.h"
+#include "../StateModulatedComponent.h"
 #include "BKOnOffKeyboardComponent.h"
 #include "KeymapProcessor.h"
 #include "juce_audio_utils/juce_audio_utils.h"
@@ -41,6 +41,8 @@ public:
         keyboardValsTextFieldOpen.setButtonText("edit all");
         keyboardValsTextFieldOpen.setTooltip("click drag on keys to set values by key, or press 'edit all' to edit as text");
         addAndMakeVisible(keyboardValsTextFieldOpen);
+        keyboardValsTextField->setInterceptsMouseClicks(false, false);
+        setInterceptsMouseClicks(true, true);
     }
     ~BKKeymapKeyboardComponent() {
         keyboardValsTextField->setLookAndFeel(nullptr);
@@ -60,6 +62,8 @@ public:
     void resized() override;
     void buttonClicked(juce::Button *) override;
     void textEditorReturnKeyPressed(juce::TextEditor &) override;
+    void textEditorFocusLost(juce::TextEditor &) override;
+    void textEditorEscapeKeyPressed(juce::TextEditor &) override;
 
     KeymapKeyboardState& keyboard_state_;
     BKOnOffKeyboardComponent keyboard_;

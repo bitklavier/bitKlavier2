@@ -93,9 +93,7 @@ juce_add_plugin("${PROJECT_NAME}"
 # This lets us use our code in both the JUCE targets and our Test target
 # Without running into ODR violations
 add_library(SharedCode INTERFACE
-        source/synthesis/framework/ParamHolders/VelocityMinMaxParams.h
-        source/interface/ParameterView/OpenGL_VelocityMinMaxSlider.h)
-
+)
 # Enable fast math, C++20 and a few other target defaults
 include(SharedCodeDefaults)
 
@@ -229,10 +227,10 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE
 include(PamplejuceIPP)
 
 ## Everything related to the tests target
-#include(Tests)
+include(Tests)
 #
-## A separate target keeps the Tests target fast!
-#include(Benchmarks)
+# A separate target keeps the Tests target fast!
+include(Benchmarks)
 #
 # Pass some config to GA (like our PRODUCT_NAME)
 include(GitHubENV)

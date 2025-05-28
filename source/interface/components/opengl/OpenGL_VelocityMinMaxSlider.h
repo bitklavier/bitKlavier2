@@ -4,7 +4,7 @@
 
 #ifndef BITKLAVIER2_OPENGL_VELOCITYMINMAXSLIDER_H
 #define BITKLAVIER2_OPENGL_VELOCITYMINMAXSLIDER_H
-#include "BKSliders.h"
+#include "../BKComponents/BKSliders.h"
 #include "VelocityMinMaxParams.h"
 #include "open_gl_component.h"
 #include "synth_slider.h"

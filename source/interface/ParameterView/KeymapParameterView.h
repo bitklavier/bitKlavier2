@@ -8,7 +8,7 @@
 #include "KeymapProcessor.h"
 #include "synth_section.h"
 #include "default_look_and_feel.h"
-#include "BKKeymapKeyboardComponent.h"
+#include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
 public:
     OpenGLKeymapKeyboardComponent(KeymapParams & params)

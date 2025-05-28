@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "StateModulatedComponent.h"
+#include "../StateModulatedComponent.h"
 #include "BKSliders.h"
 #include "TuningProcessor.h"
 typedef enum KSliderTextFieldType
@@ -181,6 +181,8 @@ public:
     void mouseUp(const juce::MouseEvent& e) override;
     void mouseDown(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
+    std::unique_ptr<juce::TextEditor> keyboardValsTextField;
+    TuningKeyboardState* keyboardState;
 private:
 
     juce::String sliderName;
@@ -197,9 +199,8 @@ private:
     float ratio;
 
     juce::TextEditor keyboardValueTF;
-    TuningKeyboardState* keyboardState;
     std::unique_ptr<KeyboardOffsetComponent> keyboard;
-    std::unique_ptr<juce::TextEditor> keyboardValsTextField;
+
     juce::TextButton keyboardValsTextFieldOpen;
 
     int keyboardSize, minKey, maxKey;

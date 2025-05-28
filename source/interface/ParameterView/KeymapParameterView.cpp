@@ -15,6 +15,7 @@ KeymapParameterView::KeymapParameterView(KeymapProcessor& _proc, OpenGlWrapper &
 KeymapParameterView::~KeymapParameterView(){}
 void KeymapParameterView::resized()
 {
+    const auto kTitleWidth = findValue(Skin::kTitleWidth);
     SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent && midi_selector_ == nullptr) {
         juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
@@ -30,7 +31,7 @@ void KeymapParameterView::resized()
         }
     }
     if (midi_selector_) {
-        midi_selector_->setBounds(10, 10, 200, 200);
+        midi_selector_->setBounds(kTitleWidth, 10, 200, 200);
         midi_selector_->redoImage();
         midi_selector_->setRowHeight(22);
         juce::Colour background = findColour(Skin::kPopupBackground, true);
@@ -47,7 +48,8 @@ void KeymapParameterView::resized()
         setColorRecursively(midi_selector_.get(), juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
         //setColorRecursively(midi_selector_.get(), juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
     }
-    keyboard_component_->setBounds(10, 220, 600, 100);
+
+    keyboard_component_->setBounds(kTitleWidth, 220, 600, 100);
 
 }
 

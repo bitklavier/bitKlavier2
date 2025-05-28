@@ -7,7 +7,7 @@
 #include "BKLookAndFeel.h"
 #include "FullInterface.h"
 #include "PreparationSection.h"
-#include "StateModulatedComponent.h"
+#include "../StateModulatedComponent.h"
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 
 // ******************************************************************************************************************** //
@@ -136,7 +136,7 @@ public:
     }
 
     juce::Array<float> getAllActiveValues();
-
+    bool isEditing;
 private
     :
     chowdsp::SliderAttachment attachment;

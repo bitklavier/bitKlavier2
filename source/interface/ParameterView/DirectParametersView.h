@@ -4,13 +4,13 @@
 
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
-#include "OpenGL_TranspositionSlider.h"
-#include "OpenGL_VelocityMinMaxSlider.h"
+#include "../components/opengl/OpenGL_TranspositionSlider.h"
+#include "../components/opengl/OpenGL_VelocityMinMaxSlider.h"
 #include "ParametersView.h"
 #include "TransposeParams.h"
 #include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
-#include "OpenGL_VelocityMinMaxSlider.h"
+#include "../components/opengl/OpenGL_VelocityMinMaxSlider.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;

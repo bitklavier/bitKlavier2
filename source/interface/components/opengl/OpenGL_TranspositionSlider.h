@@ -4,7 +4,7 @@
 
 #ifndef BITKLAVIER2_OPENGLTRANSPOSITIONSLIDER_H
 #define BITKLAVIER2_OPENGLTRANSPOSITIONSLIDER_H
-#include "BKSliders.h"
+#include "../BKComponents/BKSliders.h"
 #include "TransposeParams.h"
 #include "open_gl_component.h"
 #include "juce_data_structures/juce_data_structures.h"
@@ -42,7 +42,8 @@ public:
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,
                     [this,j]() {
-                        if (j > this->params->numActive - 1) {
+
+                        if ( this->isEditing and j > this->params->numActive - 1) {
                             juce::Array<float> sliderVals = getAllActiveValues();
                             sliderVals.add(dataSliders[j]->getValue());
                             setTo(sliderVals, juce::sendNotification);

@@ -33,14 +33,22 @@ void BKKeymapKeyboardComponent::mouseUp(const juce::MouseEvent& e) {
     keyboard_.repaint();
 }
 void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
-    if(e.y >= 0 && e.y <= keyboard_.getHeight()) {
+    if (keyboardValsTextField->hasKeyboardFocus(false)) {
+        keyboardValsTextField->mouseDown(e);
+    }
+    else if(e.y >= 0 && e.y <= keyboard_.getHeight()) {
         lastKeyPressed =  keyboard_.getNoteAndVelocityAtPosition(e.position).note;
         if (lastKeyPressed != -1)
             keyboard_state_.keyStates.flip(lastKeyPressed);
     }
 
+
 }
 void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
+    if (keyboardValsTextField->hasKeyboardFocus(false)) {
+        keyboardValsTextField->mouseDrag(e);
+        return;
+    }
     if(e.y >= 0 && e.y <= keyboard_.getHeight()) {
        auto key = keyboard_.getNoteAndVelocityAtPosition(e.position).note;
         if (key != lastKeyPressed)
@@ -53,6 +61,7 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
         }
     }
     keyboard_.repaint();
+
 }
 
 std::string getOnKeyString(const std::bitset<128>& bits) {
@@ -83,16 +92,33 @@ void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
     }
 
 }
-void setKeysFromString(std::bitset<128>& bits, const std::string& input) {
-    std::istringstream iss(input);
-    int key;
 
-    while (iss >> key) {
-        if (key >= 0 && key < 128) {
-            bits.set(key);
+void BKKeymapKeyboardComponent::textEditorReturnKeyPressed(juce::TextEditor &textEditor) {
+    if(textEditor.getName() == keyboardValsTextField->getName())
+    {
+        auto toString  = textEditor.getText().toStdString();
+        std::bitset<128> bits;
+        std::istringstream iss(toString);
+        int key;
+
+        while (iss >> key) {
+            if (key >= 0 && key < 128) {
+                bits.set(key);
+            }
         }
+        keyboard_state_.keyStates = bits;
+        keyboardValsTextField->setAlpha(0);
+        keyboardValsTextField->toBack();
+        unfocusAllComponents();
+
     }
 }
-void BKKeymapKeyboardComponent::textEditorReturnKeyPressed(juce::TextEditor &) {
+void BKKeymapKeyboardComponent::textEditorFocusLost(juce::TextEditor &textEditor) {
 
+        textEditorReturnKeyPressed(textEditor);
+}
+void BKKeymapKeyboardComponent::textEditorEscapeKeyPressed(juce::TextEditor &) {
+    keyboardValsTextField->setAlpha(0);
+    keyboardValsTextField->toBack();
+    unfocusAllComponents();
 }

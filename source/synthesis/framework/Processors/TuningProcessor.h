@@ -78,9 +78,46 @@ enum AdaptiveSystems {
     Adaptive_Anchored = 1<<2,
     Spring = 1<<3,
 };
+template <std::size_t N>
+std::array<float, N> parseIndexValueStringToArrayAbsolute(const std::string& input)
+{
+    std::array<float, N> result{0};
+    std::istringstream iss(input);
+    std::string token;
 
+    while (iss >> token)
+    {
+        auto colonPos = token.find(':');
+        if (colonPos == std::string::npos) continue;
 
-struct TuningKeyboardState  {
+        int index = std::stoi(token.substr(0, colonPos));
+        float value = std::stof(token.substr(colonPos + 1));
+
+        if (index >= 0 && static_cast<std::size_t>(index) < N)
+            result[index] = value;
+    }
+
+    return result;
+}
+template <std::size_t N>
+std::array<float, N> parseFloatStringToArrayCircular(const std::string& input)
+{
+    std::array<float, N> result{};
+    std::istringstream iss(input);
+    float value;
+    std::size_t i = 0;
+
+    while (i < N && iss >> value)
+    {
+        result[i++] = value;
+    }
+
+    // If fewer floats than N, remaining values stay zero (default initialized)
+
+    return result;
+}
+
+struct TuningKeyboardState : bitklavier::StateChangeableParameter {
     juce::MidiKeyboardState keyboardState;
     std::array<float,128> absoluteTuningOffset = {0.f};
     int fundamental  =0;
@@ -98,7 +135,21 @@ struct TuningKeyboardState  {
         if (circular) setCircularKeyOffset(midiNoteNumber,val);
         else setKeyOffset(midiNoteNumber,val);
     }
+    void processStateChanges() override {
+        for (auto [index,change] : stateChanges.changeState) {
+            static juce::var nullVar;
+            auto val    = change.getProperty(IDs::absoluteTuning);
+            auto val1  = change.getProperty(IDs::circularTuning);
+            if (val != nullVar) {
+                absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(val.toString().toStdString());
+            }else if (val1 !=nullVar) {
+                circularTuningOffset = parseFloatStringToArrayCircular<12>(val1.toString().toStdString());
+               // absoluteTuningOffset = std::array<float,128>(val1.toString().toStdString());
 
+            }
+
+        }
+    }
 };
 
 

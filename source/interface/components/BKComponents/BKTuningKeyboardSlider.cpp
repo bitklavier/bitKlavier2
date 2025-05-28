@@ -180,7 +180,7 @@ keyboardState(state), isCircular(isCircular)
     // keyboard->setAllowDrag(false);
     // keyboard->doKeysToggle(toggles);
     keyboard->addMouseListener(this, true);
-    keyboardState->keyboardState.addListener(this);
+   // keyboardState->keyboardState.addListener(this);
     lastKeyPressed = 0;
 
     showName.setText("unnamed keyboard slider", juce::dontSendNotification);
@@ -208,21 +208,12 @@ keyboardState(state), isCircular(isCircular)
     keyboardValsTextFieldOpen.addListener(this);
     keyboardValsTextFieldOpen.setButtonText("edit all");
     keyboardValsTextFieldOpen.setTooltip("click drag on keys to set values by key, or press 'edit all' to edit as text");
+    keyboardValsTextField->setInterceptsMouseClicks(false, false);
+    setInterceptsMouseClicks(true, true);
     addAndMakeVisible(keyboardValsTextFieldOpen);
+    keyboardValueTF.addMouseListener(this, true);
 }
 
-#if JUCE_IOS
-void BKTuningKeyboardSlider::sliderValueChanged     (juce::Slider* slider)
-{
-    if (slider == &octaveSlider)
-    {
-        int octave = (int) octaveSlider.getValue();
-
-        if (octave == 0)    keyboard->setAvailableRange(21, 45);
-        else                keyboard->setAvailableRange(12+octave*12, 36+octave*12);
-    }
-}
-#endif
 
 
 
@@ -283,8 +274,13 @@ void BKTuningKeyboardSlider::mouseMove(const juce::MouseEvent& e)
 
 void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
 {
-
-
+    if (e.originalComponent == &keyboardValueTF) {
+        return;
+    }
+    if (keyboardValsTextField->hasKeyboardFocus(false)) {
+        keyboardValsTextField->mouseDrag(e);
+        return;
+    }
     if(lastKeyPressed != -1)
     {
         auto myNote  = lastKeyPressed;
@@ -325,142 +321,33 @@ void BKTuningKeyboardSlider::mouseUp(const juce::MouseEvent& e)
     // listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
     //                getName(),
     //                keyboard->getValues());
-    lastKeyPressed = -1;
     keyboard->repaint();
 }
 
 void BKTuningKeyboardSlider::mouseDoubleClick(const juce::MouseEvent& e)
 {
-#if JUCE_IOS
-    lastKeyPressed = -1;
-    lastKeyPressed = keyboard->getLastNoteOver();
-
-    if (e.eventComponent == keyboard)
-    {
-        if (lastKeyPressed >= 0)
-        {
-            hasBigOne = true;
-            WantsBigOne::listeners.call(&WantsBigOne::Listener::iWantTheBigOne, &keyboardValueTF,
-                                        "value for note " + midiToPitchClass(lastKeyPressed));
-        }
-    }
-#endif
 }
 
 void BKTuningKeyboardSlider::mouseDown(const juce::MouseEvent& e)
 {
+    if (e.originalComponent == &keyboardValueTF) {
+        return;
+    }
     if(e.y >= 0 && e.y <= keyboard->getHeight())
         lastKeyPressed =  keyboard->getNoteAndVelocityAtPosition(e.position).note;
-
-}
-
-
-//takes string of ordered pairs in the form x1:y1 x2:y2
-//and converts into Array of floats of y, with indices x
-juce::Array<float> stringOrderedPairsToFloatArray(juce::String s, int size, float init)
-{
-
-    juce::String tempInt = "";
-    juce::String tempFloat = "";
-    juce::String::CharPointerType c = s.getCharPointer();
-
-    juce::juce_wchar colon = ':';
-    juce::juce_wchar dash = '-';
-    juce::juce_wchar prd = '.';
-
-    bool isNumber = false;
-    bool isColon  = false;
-    bool isSpace = false;
-    bool isDash = false;
-    bool isPeriod = false;
-
-    bool inInt = false;
-    bool inFloat = false;
-
-    bool previousColon = false;
-    bool previousSpace = true;
-
-    bool isEndOfString = false;
-
-    int newindex = 0;
-    float newval = 0.;
-
-    juce::Array<float> newarray;
-    newarray.ensureStorageAllocated(size);
-    // for(int i=0;i<size;i++) newarray.set(i, 0.);
-    for(int i=0;i<size;i++) newarray.set(i, init);
-
-    for (int i = 0; i < (s.length()+1); i++)
-    {
-        juce::juce_wchar c1 = c.getAndAdvance();
-
-        isColon     = !juce::CharacterFunctions::compare(c1, colon);
-        isNumber    = juce::CharacterFunctions::isDigit(c1);
-        isSpace     = juce::CharacterFunctions::isWhitespace(c1);
-        isDash      = !juce::CharacterFunctions::compare(c1, dash);
-        isPeriod    = !juce::CharacterFunctions::compare(c1, prd);
-        if (i==s.length()) isEndOfString = true;
-
-        //numbers
-        if(isNumber && previousSpace) //beginning index read
-        {
-            inInt = true;
-            tempInt += c1;
-        }
-        else if(isNumber && inInt) //still reading index
-        {
-            tempInt += c1;
-        }
-        else if( (isNumber && previousColon) || isDash || isPeriod ) //beginning val read
-        {
-            inFloat = true;
-            tempFloat += c1;
-        }
-        else if(isNumber && inFloat) //still reading float val
-        {
-            tempFloat += c1;
-        }
-
-
-        //colons and spaces
-        if(isColon)
-        {
-            previousColon = true;
-            inInt = false;
-            inFloat = false;
-
-            newindex = tempInt.getIntValue();
-            tempInt = "";
-        }
-        else previousColon = false;
-
-        if(isSpace && previousSpace) //skip repeated spaces
-        {
-            previousSpace = true;
-            inInt = false;
-            inFloat = false;
-        }
-        else if(previousSpace && isEndOfString)
-        {
-            //do nothing; previousSpace already finalized array
-        }
-        else if(isSpace || isEndOfString)
-        {
-            previousSpace = true;
-            inInt = false;
-            inFloat = false;
-
-            newval = tempFloat.getFloatValue();
-            tempFloat = "";
-
-            newarray.set(newindex, newval);
-        }
-        else previousSpace = false;
-
+    else
+        lastKeyPressed = -1;
+    if (keyboardValsTextField->hasKeyboardFocus(false)) {
+        keyboardValsTextField->mouseDown(e);
     }
+    // if (keyboardValueTF.hasKeyboardFocus(false)) {
+    //     keyboardValueTF.mouseDown(e);
+    // }
 
-    return newarray;
 }
+
+
+
 juce::Array<float> stringToFloatArray(juce::String s)
 {
     juce::Array<float> arr = juce::Array<float>();
@@ -521,7 +408,7 @@ void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEd
     if(textEditor.getName() == keyboardValsTextField->getName())
     {
         if (isCircular) {
-             auto   tempVals = stringToFloatArray(keyboardValsTextField->getText());
+             auto   tempVals = parseFloatStringToArrayCircular<12>(keyboardValsTextField->getText().toStdString());
             if (tempVals.size() == maxKey - 1) {
                 int offset;
                 if(keyboardState->fundamental <= 0) offset = 0;
@@ -530,16 +417,17 @@ void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEd
                 for(int i=keyboard->getRangeStart(); i<=keyboard->getRangeEnd(); i++)
                 {
                     int index = ((i - offset) + rangeAll) % rangeAll;
-                    keyboardState->setKeyOffset(index, tempVals.getUnchecked(index),isCircular);
+                    keyboardState->setKeyOffset(index, tempVals[index],isCircular);
                 }
             }
 
         }else {
-            auto array = stringOrderedPairsToFloatArray(keyboardValsTextField->getText(), 128,keyboard->midRange);
+            auto array = parseIndexValueStringToArrayAbsolute<128>(keyboardValsTextField->getText().toStdString());
             for(int i=0; i<array.size(); i++)
             {
-                keyboardState->setKeyOffset(i, array.getUnchecked(i),isCircular);
+                keyboardState->setKeyOffset(i, array[i],isCircular);
             }
+
             //
             // listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
             //                getName(),
@@ -584,23 +472,15 @@ void BKTuningKeyboardSlider::textEditorEscapeKeyPressed (juce::TextEditor& textE
 
 void BKTuningKeyboardSlider::textEditorFocusLost(juce::TextEditor& textEditor)
 {
-#if !JUCE_IOS
     if(!focusLostByEscapeKey)
     {
         textEditorReturnKeyPressed(textEditor);
     }
-#endif
+
 }
 
 void BKTuningKeyboardSlider::textEditorTextChanged(juce::TextEditor& tf)
 {
-#if JUCE_IOS
-    if (hasBigOne)
-    {
-        hasBigOne = false;
-        textEditorReturnKeyPressed(tf);
-    }
-#endif
 }
 
 

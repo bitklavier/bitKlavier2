@@ -4,7 +4,7 @@
 
 #ifndef BITKLAVIER2_TRANSPOSITIONSLIDERSECTION_H
 #define BITKLAVIER2_TRANSPOSITIONSLIDERSECTION_H
-#include "OpenGL_TranspositionSlider.h"
+#include "../components/opengl/OpenGL_TranspositionSlider.h"
 #include "TransposeParams.h"
 #include "synth_section.h"
 class TranspositionSliderSection : public SynthSection

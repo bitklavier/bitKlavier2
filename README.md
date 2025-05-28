@@ -119,3 +119,45 @@ which is integrated into the template. I will list a few keypoints from the arti
          ```
 For more info checkout [this](https://forum.juce.com/t/pkgbuild-and-productbuild-a-tutorial-pamplejuce-example/64977) post by sudara or his blog [https://melatonin.dev/blog/](https://melatonin.dev/blog/) for more info
 There is also a [manual](https://melatonin.dev/manuals/pamplejuce/) for the general template that might feature useful information on these topics.
+
+# MODULATION EXPLAINED
+In order for the UI to pick up a component as being modulated and thus allow it to be drag and dropped on it must be either a `SynthSlider`
+or `StateModulatedComponent`. 
+For all modulation. The name of the parameter and the ID of the component must match. i.e. the string value set via `Component::setComponentID`
+I do think that this pattern could and should be improved upon though...
+
+
+## UI 
+blah bla
+    1. State Modulated Component 
+        - inherit from the [`StateModulatedComponent`](./source/interface/components/StateModulatedComponent.h) class defining the 
+        `StateModulatedComponent::clone` and `StateModulatedComponent::syncToValueTree` functions
+        - add component to the section via `SynthSection::addStateModulatedComponent`
+## Backend
+The backend of a modulation is different depending on the type of modulation it allows. 
+    1. State Modulated Backend 
+        *******should update to using cachedvalues to avoid heap allocation***********
+        - A state modulated component must be represented by a Parameter that inherits from `bitklavier::StateChangeableParameter`.
+        - The ParamHolder defines a `ParameterChangeBuffer` and a `ProcessStateChange` function which is used to override the values of the Parameter
+        - When triggered, a modulation pushes to the stored stateChanges buffer which is processed in the `ProcessBlock` 
+            of the Processor whose parameter is changing
+        -
+        - A ValueTree is used to be able to easily represent any type of state. How the StateChange ValueTree is read 
+            is determined in the ProcessStateChangesFunction
+        - StateModulated Parameters must also be added to the ```StateConnectionBank::param_map``` via the ```StateConnectionBank::addParam``` function 
+    2. Audio Rate Modulated Backend (SynthSlider) (see [DirectProcessor.h](./source/synthesis/framework/Processors/DirectProcessor.h) for a full working example)
+        - audio rate modulatable parameters utilize the AudioProcessorGraph to send changing values over in the AudioBuffer that will be processsed in tHe
+            `processBlock ` function 
+        - the second input `AudioChannelSet` as defined in the `**busLayout` is reserved for the 'Modulation' bus. Here you define how many channels are 
+            audio rate modulatable
+        - You must pass true to the `supportsModulation` variable in the `FloatParameter` constructor in the params object.
+        - In the constructor of the processor you must define in the `ValueTree` which params are modulatable.
+            - A modulatable params ValueTree structure is as such
+        ```
+            <MODULATABLE_PARAM parameter = "paramname" channel="channelnumber">
+       ```
+            - This creates the mapping for both channelnumber and parameter. It
+                is useful to store it in a valuetree to make it easy to pass to other
+                processors so they know which channel to map a modulation to when it comes in
+            - 
+        
