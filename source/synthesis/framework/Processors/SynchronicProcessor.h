@@ -104,7 +104,7 @@ struct SynchronicNonParameterState : chowdsp::NonParamState
     chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
-class SynchronicProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<SynchronicParams,SynchronicNonParameterState,chowdsp::XMLSerializer>>
+class SynchronicProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<SynchronicParams,SynchronicNonParameterState>>
 {
 public:
     SynchronicProcessor();

@@ -169,6 +169,7 @@ namespace bitklavier {
     }
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
+#include "bk_XMLSerializer.h"
     template <class State>
     PluginBase<State>::PluginBase (SynthBase* parent,const juce::ValueTree &v_, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
             : TunableProcessor (layout),
@@ -177,7 +178,7 @@ namespace bitklavier {
     {
 
                   if(v.getChild(0).isValid())
-                    chowdsp::Serialization::deserialize<chowdsp::XMLSerializer>(v.createXml(),state);
+                    chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(v.createXml(),state);
         createUuidProperty(v);
     }
 #else

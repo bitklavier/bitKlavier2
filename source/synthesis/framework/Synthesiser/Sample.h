@@ -19,7 +19,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 //#ifdef DEBUG
 #include "common.h"
-#include "tuning_systems.h"
+
 #include "utils.h"
 #include "BKADSR.h"
 
@@ -936,7 +936,7 @@ private:
 
     double currentTransposition; // comes from Transposition sliders in Direct/Nostalgic/Synchronic
 
-    juce::Array<float> currentTuning = tPartialTuning; // hard-wire these static tuning setups to start
+    std::array<float,12> currentTuning = {0.}; // hard-wire these static tuning setups to start
     int currentTuningFundamental = 0;
     bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the currentTuning system
 

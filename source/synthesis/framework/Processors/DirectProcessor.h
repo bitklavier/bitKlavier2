@@ -130,7 +130,7 @@ struct DirectNonParameterState : chowdsp::NonParamState
     //chowdsp::StateValue<bool> isSelected { "selected", true };
 };
 class SynthBase;
-class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState, chowdsp::XMLSerializer>>,
+class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState>>,
 public juce::ValueTree::Listener
 {
 public:

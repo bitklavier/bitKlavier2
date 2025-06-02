@@ -59,8 +59,7 @@ void KeymapProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
     _midi->midi_collector_.reset (sampleRate);
-    gain.prepare (spec);
-    gain.setRampDurationSeconds (0.05);
+
 }
 
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

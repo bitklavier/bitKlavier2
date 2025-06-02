@@ -13,6 +13,7 @@
 
 #include "BKTuningKeyboardSlider.h"
 
+#include "base/source/fstring.h"
 #include "chowdsp_core/third_party/span-lite/test/lest/lest_cpp03.hpp"
 #include "juce_core/juce_core.h"
 void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) {
@@ -44,7 +45,25 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
             case verticalKeyboardFacingRight:   g.fillRect (area.reduced (0, h * sideIndent).removeFromLeft  (w * topIndent)); break;
             default: break;
         }
+    if (isCircular) {
+        if (state.fundamental == midiNoteNumber) {
 
+            int x = area.getX();
+            int y = area.getY();
+            const float height = juce::jmin (12.0f, getKeyWidth() * 0.9f);
+            juce::String text = "*";
+            g.setColour (c.contrasting());
+            g.setFont (juce::Font (height * 2));
+            int textOffset = 8;
+            switch (getOrientation())
+            {
+                case horizontalKeyboard:            g.drawText (text, x + 1, y + textOffset, w - 1, h - 2, juce::Justification::centredBottom, false); break;
+                case verticalKeyboardFacingLeft:    g.drawText (text, x + 2, y + 2, w - 4, h - 4, juce::Justification::centredLeft,   false); break;
+                case verticalKeyboardFacingRight:   g.drawText (text, x + 2, y + 2, w - 4, h - 4, juce::Justification::centredRight,  false); break;
+                default: break;
+            }
+        }
+    }
 
 }
 
@@ -54,7 +73,7 @@ void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g
     float keyVal = isCircular ? state.circularTuningOffset[midiNoteNumber] : state.absoluteTuningOffset[midiNoteNumber];
 
 
-    if(keyVal != midRange)
+    if(!juce::approximatelyEqual(keyVal,midRange))
     {
 
         if(keyVal > midRange) c = c.overlaidWith (juce::Colours::red.withSaturation ( sqrt((keyVal - midRange) / (maxRange - midRange))) );
@@ -95,6 +114,23 @@ void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g
             }
         }
     }
+    if (isCircular) {
+        if (state.fundamental == midiNoteNumber) {
+            const float height = juce::jmin (12.0f, getKeyWidth() * 0.9f);
+            juce::String text = "*";
+            g.setColour (c.contrasting());
+            g.setFont (juce::Font (height * 2));
+            int textOffset = 8;
+            switch (getOrientation())
+            {
+                case horizontalKeyboard:            g.drawText (text, x + 1, y + textOffset, w - 1, h - 2, juce::Justification::centredBottom, false); break;
+                case verticalKeyboardFacingLeft:    g.drawText (text, x + 2, y + 2, w - 4, h - 4, juce::Justification::centredLeft,   false); break;
+                case verticalKeyboardFacingRight:   g.drawText (text, x + 2, y + 2, w - 4, h - 4, juce::Justification::centredRight,  false); break;
+                default: break;
+            }
+        }
+    }
+
 
 }
 void KeyboardOffsetComponent::drawKeyboardBackground(juce::Graphics & g, juce::Rectangle<float> area) {

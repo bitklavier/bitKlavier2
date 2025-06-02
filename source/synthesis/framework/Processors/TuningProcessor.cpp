@@ -23,4 +23,66 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 {
 
 }
+   template <typename Serializer>
+typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
+{
+    auto serial = Serializer::createBaseElement("tuning");
+    paramHolder.doForAllParameters (
+        [&serial] (auto& param, size_t)
+        {
+            chowdsp::ParameterTypeHelpers::serializeParameter<Serializer> (serial, param);
+        });
 
+    return serial;
+}
+
+template <typename Serializer>
+void TuningParams::deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder)
+{
+
+    juce::StringArray paramIDsThatHaveBeenDeserialized {};
+    if (const auto numParamIDsAndVals = Serializer::getNumAttributes (deserial))
+    {
+        for (int i = 0; i < numParamIDsAndVals; i += 1)
+        {
+            juce::String paramID {};
+            paramID = Serializer::getAttributeName (deserial, i);
+//DBG("PArAMID" + paramID);
+            //Serialization::deserialize<Serializer> (, paramID);
+//const auto paramDeserial = Serializer::getAttribute (deserial,paramID);
+
+
+            paramHolder.doForAllParameters (
+                [&deserial,
+                 &paramID = std::as_const (paramID),
+                 &paramIDsThatHaveBeenDeserialized] (auto& param, size_t)
+                {
+                    if (param.paramID == paramID)
+                    {
+                        chowdsp::ParameterTypeHelpers::deserializeParameter<Serializer> (deserial, param);
+                        paramIDsThatHaveBeenDeserialized.add (paramID);
+                    }
+                });
+
+        }
+    }
+    else
+    {
+       // jassertfalse; // state loading error
+    }
+
+    for(auto id: paramIDsThatHaveBeenDeserialized)
+    {
+        DBG("deserialzied " + id);
+    }
+    // set all un-matched objects to their default values
+//    if (! paramIDsThatHaveBeenDeserialized.empty())
+//    {
+        paramHolder.doForAllParameters (
+            [&paramIDsThatHaveBeenDeserialized] (auto& param, size_t)
+            {
+                if (! paramIDsThatHaveBeenDeserialized.contains (param.paramID))
+                    chowdsp::ParameterTypeHelpers::resetParameter (param);
+            });
+//    }
+}

@@ -12,12 +12,13 @@
 #include "../components/opengl/open_gl_combo_box.h"
 #include "../components/opengl/OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
+#include "tuning_systems.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
 using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
 class TuningParametersView : public SynthSection
 {
 public:
-    TuningParametersView(chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params,juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
+    TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param,juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
                                                                                                                      //bitklavier::ParametersView(pluginState,params,open_gl,false)
     {
         //envelope = std::make_unique<EnvelopeSection>("ENV", "err");
@@ -87,6 +88,44 @@ public:
             addAndMakeVisible(adaptive_combo_box.get());
             addOpenGlComponent(adaptive_combo_box->getImageComponent());
         }
+        tuningComboBoxCallbacks += {listeners.addParameterListener(
+            params.tuningSystem,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() {
+                if (!params.keyboardState.setFromAudioThread) {
+                    TuningSystem t = params.tuningSystem->get();
+
+                    //this->params.keyboardState.circularTuningOffset = tuningMap[t].second;
+                    auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
+                           [t](const auto& pair) {
+                               return pair.first == t;
+                           });
+
+                    if (it != tuningMap.end()) {
+                        const auto& tuning = it->second;
+                        const auto tuningArray = TuningKeyboardState::rotateValuesByFundamental(tuning, params.fundamental->getIndex());
+                        int index  = 0;
+                        for (const auto val :tuningArray) {
+                            this->params.keyboardState.circularTuningOffset[index] = val * 100;
+                            index++;
+                        }
+                    }
+
+                }
+                params.keyboardState.setFromAudioThread = false;
+                circular_keyboard->redoImage();
+            }
+            )
+        };
+        tuningComboBoxCallbacks += {listeners.addParameterListener(
+            params.fundamental,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() {
+                params.keyboardState.setFundamental(params.fundamental->getIndex());
+                circular_keyboard->redoImage();
+                DBG("rotat");
+            }
+        )};
 
 
     }
@@ -96,7 +135,6 @@ public:
         paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
-
         for (auto& slider : _sliders) {
             drawLabelForComponent(g, slider->getName(), slider.get());
         }
@@ -115,7 +153,9 @@ public:
     std::unique_ptr<chowdsp::ComboBoxAttachment> adaptive_attachment;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> keyboard;
     std::unique_ptr<OpenGLCircularKeyboardSlider> circular_keyboard;
+    chowdsp::ScopedCallbackList tuningComboBoxCallbacks;
     //    std::vector<std::unique_ptr<SynthButton>> _buttons;
+    TuningParams& params;
 //    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> buttonAttachments;
 };
 
