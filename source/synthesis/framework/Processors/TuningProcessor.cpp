@@ -23,6 +23,7 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 {
 
 }
+
    template <typename Serializer>
 typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
 {
@@ -32,7 +33,9 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
         {
             chowdsp::ParameterTypeHelpers::serializeParameter<Serializer> (serial, param);
         });
-
+    Serializer::template addChildElement<12>(serial,"circularTuning",paramHolder.keyboardState.circularTuningOffset,arrayToString);
+    Serializer::template addChildElement<128>(serial,"absoluteTuning",paramHolder.keyboardState.absoluteTuningOffset,arrayToStringWithIndex);
+    Serializer::addChildElement(serial,"fundamental",paramHolder.keyboardState.fundamental);
     return serial;
 }
 

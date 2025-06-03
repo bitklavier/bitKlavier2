@@ -384,61 +384,6 @@ void BKTuningKeyboardSlider::mouseDown(const juce::MouseEvent& e)
 
 
 
-juce::Array<float> stringToFloatArray(juce::String s)
-{
-    juce::Array<float> arr = juce::Array<float>();
-
-    juce::String temp = "";
-    bool inNumber = false;
-
-    juce::String::CharPointerType c = s.getCharPointer();
-
-    juce::juce_wchar prd = '.';
-    juce::juce_wchar dash = '-';
-    juce::juce_wchar slash = '/'; // blank: put a zero in
-
-    int prdCnt = 0;
-
-    // DEBUG
-    for (int i = 0; i < (s.length()+1); i++)
-    {
-        juce::juce_wchar c1 = c.getAndAdvance();
-
-        bool isPrd = !juce::CharacterFunctions::compare(c1, prd);
-        bool isDash = !juce::CharacterFunctions::compare(c1, dash);
-        bool isSlash = !juce::CharacterFunctions::compare(c1, slash);
-
-        if (isPrd) prdCnt += 1;
-
-        bool isNumChar = juce::CharacterFunctions::isDigit(c1) || isPrd || isDash;
-
-        if (!isNumChar)
-        {
-            if (inNumber)
-            {
-                arr.add(temp.getFloatValue());
-                temp = "";
-            }
-
-            // slash indicates a zero slot
-            if (isSlash) {
-                arr.add(0.);
-                temp = "";
-            }
-
-            inNumber = false;
-            continue;
-        }
-        else
-        {
-            inNumber = true;
-
-            temp += c1;
-        }
-    }
-
-    return arr;
-}
 void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 {
     if(textEditor.getName() == keyboardValsTextField->getName())
@@ -527,40 +472,19 @@ void BKTuningKeyboardSlider::buttonClicked (juce::Button* b)
 
         if (isCircular) {
             //        keyboardValsTextField->setText(offsetArrayToString3(keyboard->getValues(), midRange), dontSendNotification);
-            juce::String s = "";
-
-            for (auto offset : keyboardState->circularTuningOffset) {
-                s += juce::String((offset)) + " ";
-            }
+        auto s = arrayToString(keyboardState->circularTuningOffset);
             keyboardValsTextField->setText(s,juce::sendNotificationSync);
         }
         else {
-            //        keyboardValsTextField->setText(offsetArrayToString3(keyboard->getValues(), midRange), dontSendNotification);
-            juce::String s = "";
-            int key = 0;
-            for (auto offset : keyboardState->absoluteTuningOffset)
-            {
-                //if (offset != 0.0)  s += String(key) + ":" + String((int)(offset*100.0f)) + " ";
-                //DBG("offsetArrayToString3 val = " + juce::String(offset));
-                if (offset != 0.f)  s += juce::String(key) + ":" + juce::String((offset)) + " ";
-
-                ++key;
-            }
-
+            auto s = arrayToStringWithIndex(keyboardState->absoluteTuningOffset);
             keyboardValsTextField->setText(s,juce::sendNotificationSync);
         }
-#if JUCE_IOS
-        hasBigOne = true;
-        WantsBigOne::listeners.call(&WantsBigOne::Listener::iWantTheBigOne, keyboardValsTextField.get(),
-                                    needsOctaveSlider ? "absolute offsets" : "scale offsets");
-#else
 
         focusLostByEscapeKey = false;
 
         keyboardValsTextField->setAlpha(1);
 
         keyboardValsTextField->toFront(true);
-#endif
 
     }
 

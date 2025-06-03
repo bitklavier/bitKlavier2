@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="Piano (Default)">
+  <GLOBALPIANOSAMPLES mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+                      pedalSampleSet="/defaultPedals"/>
+  <PIANO name="default">
+    <PREPARATIONS>
+      <PREPARATION type="5" width="125" height="245" x="595" y="312" uuid="b0e9383bdb6349bf9b222bb91b09e8f4"
+                   nodeID="4" numIns="1">
+        <tuning tuningSystem="0" fundamental="0" adaptiveSystem="0"/>
+        <PORT nodeID="4" chIdx="4096" isIn="1"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="Piano (Default)">
+  <GLOBALPIANOSAMPLES mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+                      pedalSampleSet="/defaultPedals"/>
+  <PIANO name="default">
+    <PREPARATIONS>
+      <PREPARATION type="5" width="125" height="245" x="517" y="183" uuid="49ca9b7f6b0848c8b40eaaf7b8350064"
+                   nodeID="4" numIns="1">
+        <tuning tuningSystem="0" fundamental="0" adaptiveSystem="0"/>
+        <PORT nodeID="4" chIdx="4096" isIn="1"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

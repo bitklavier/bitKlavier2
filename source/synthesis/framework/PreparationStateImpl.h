@@ -110,7 +110,7 @@ namespace bitklavier
 #endif
 
         //Serializer::addChildElement (serial, Serializer::template serialize<Serializer, chowdsp::NonParamState> (object.nonParams));
-        auto serial = Serializer::template serialize<Serializer, chowdsp::ParamHolder> (object.params);
+        auto serial = Serializer::template serialize<Serializer, ParameterState> (object.params);
         return serial;
     }
 
@@ -144,7 +144,7 @@ namespace bitklavier
 //
         //Serializer::template deserialize<Serializer, chowdsp::NonParamState> (Serializer::getChildElement (serial, "nonparam"), object.nonParams);
         if ( Serializer::getChildElement (serial, object.params.getName()))
-            Serializer::template deserialize<Serializer, chowdsp::ParamHolder> (Serializer::getChildElement (serial, object.params.getName()), object.params);
+            Serializer::template deserialize<Serializer, ParameterState> (Serializer::getChildElement (serial, object.params.getName()), object.params);
     }
 
     template <typename ParameterState, typename NonParameterState, typename Serializer>

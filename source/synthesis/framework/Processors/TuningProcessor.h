@@ -14,7 +14,7 @@
 #include "PluginBase.h"
 #include "PreparationStateImpl.h"
 #include "tuning_systems.h"
-
+#include "array_to_string.h"
 enum Fundamental : uint32_t {
     C        = 1 << 0,
     C41D5    = 1 << 1,
@@ -37,44 +37,7 @@ enum AdaptiveSystems {
     Adaptive_Anchored = 1<<2,
     Spring = 1<<3,
 };
-template <std::size_t N>
-std::array<float, N> parseIndexValueStringToArrayAbsolute(const std::string& input)
-{
-    std::array<float, N> result{0};
-    std::istringstream iss(input);
-    std::string token;
 
-    while (iss >> token)
-    {
-        auto colonPos = token.find(':');
-        if (colonPos == std::string::npos) continue;
-
-        int index = std::stoi(token.substr(0, colonPos));
-        float value = std::stof(token.substr(colonPos + 1));
-
-        if (index >= 0 && static_cast<std::size_t>(index) < N)
-            result[index] = value;
-    }
-
-    return result;
-}
-template <std::size_t N>
-std::array<float, N> parseFloatStringToArrayCircular(const std::string& input)
-{
-    std::array<float, N> result{};
-    std::istringstream iss(input);
-    float value;
-    std::size_t i = 0;
-
-    while (i < N && iss >> value)
-    {
-        result[i++] = value;
-    }
-
-    // If fewer floats than N, remaining values stay zero (default initialized)
-
-    return result;
-}
 
 struct TuningKeyboardState : bitklavier::StateChangeableParameter {
     juce::MidiKeyboardState keyboardState;
@@ -181,6 +144,7 @@ struct TuningNonParameterState : chowdsp::NonParamState
     }
 
 };
+
 
 
 class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams,TuningNonParameterState>>

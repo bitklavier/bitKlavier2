@@ -87,6 +87,10 @@ public:
         parent->setAttribute (element, juce::String(index));
     }
 
+    template<std::size_t N>
+    static void addChildElement(SerializedType& parent, juce::String element, std::array<float,N> array, std::function<juce::String(const std::array<float, N>&)> toString) {
+        parent->setAttribute (element, toString(array));
+    }
 
     static void addChildElement (SerializedType& parent, juce::String element, juce::String f) // NOSONAR
     {
