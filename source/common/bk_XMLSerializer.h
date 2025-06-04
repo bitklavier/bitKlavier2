@@ -90,6 +90,10 @@ public:
     static void addChildElement(SerializedType& parent, juce::String element, std::array<float,N> array, std::function<juce::String(const std::array<float, N>&)> toString) {
         parent->setAttribute (element, toString(array));
     }
+    template<std::size_t N>
+       static void addChildElement(SerializedType& parent, juce::String element, std::bitset<N> bitset, std::function<juce::String(const std::bitset<N>&)> toString) {
+        parent->setAttribute (element, toString(bitset));
+    }
 
     static void addChildElement (SerializedType& parent, juce::String element, juce::String f) // NOSONAR
     {

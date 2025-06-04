@@ -32,7 +32,13 @@ struct KeymapParams : chowdsp::ParamHolder
 //    };
 
     KeymapKeyboardState keyboard_state;
+    /** Custom serializer */
+    template <typename Serializer>
+    static typename Serializer::SerializedType serialize (const KeymapParams& paramHolder);
 
+    /** Custom deserializer */
+    template <typename Serializer>
+    static void deserialize (typename Serializer::DeserializedType deserial, KeymapParams& paramHolder);
     /****************************************************************************************/
 };
 

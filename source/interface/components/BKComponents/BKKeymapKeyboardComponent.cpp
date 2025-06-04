@@ -3,7 +3,7 @@
 //
 
 #include "BKKeymapKeyboardComponent.h"
-
+#include "array_to_string.h"
 void BKKeymapKeyboardComponent::resized() {
     float heightUnit = getHeight() * 0.1;
     float widthUnit = getWidth() * 0.1;
@@ -64,20 +64,7 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
 
 }
 
-std::string getOnKeyString(const std::bitset<128>& bits) {
-    std::ostringstream oss;
-    bool first = true;
 
-    for (size_t i = 0; i < bits.size(); ++i) {
-        if (bits.test(i)) {
-            if (!first) oss << ' ';
-            oss << i;
-            first = false;
-        }
-    }
-
-    return oss.str();
-}
 void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
     if (button == &keyboardValsTextFieldOpen) {
        auto onKeys = getOnKeyString(keyboard_state_.keyStates);
@@ -97,6 +84,7 @@ void BKKeymapKeyboardComponent::textEditorReturnKeyPressed(juce::TextEditor &tex
     if(textEditor.getName() == keyboardValsTextField->getName())
     {
         auto toString  = textEditor.getText().toStdString();
+        //also used in keymapprocesor deserialzie TODO - make a function
         std::bitset<128> bits;
         std::istringstream iss(toString);
         int key;

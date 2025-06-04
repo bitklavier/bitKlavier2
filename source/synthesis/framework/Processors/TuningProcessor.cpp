@@ -27,64 +27,18 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
    template <typename Serializer>
 typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
 {
-    auto serial = Serializer::createBaseElement("tuning");
-    paramHolder.doForAllParameters (
-        [&serial] (auto& param, size_t)
-        {
-            chowdsp::ParameterTypeHelpers::serializeParameter<Serializer> (serial, param);
-        });
-    Serializer::template addChildElement<12>(serial,"circularTuning",paramHolder.keyboardState.circularTuningOffset,arrayToString);
-    Serializer::template addChildElement<128>(serial,"absoluteTuning",paramHolder.keyboardState.absoluteTuningOffset,arrayToStringWithIndex);
+    auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
+    Serializer::template addChildElement<12>(ser,"circularTuning",paramHolder.keyboardState.circularTuningOffset,arrayToString);
+    Serializer::template addChildElement<128>(ser,"absoluteTuning",paramHolder.keyboardState.absoluteTuningOffset,arrayToStringWithIndex);
 
-    return serial;
+    return ser;
 }
 
 template <typename Serializer>
 void TuningParams::deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder)
 {
 
-    juce::StringArray paramIDsThatHaveBeenDeserialized {};
-    if (const auto numParamIDsAndVals = Serializer::getNumAttributes (deserial))
-    {
-        for (int i = 0; i < numParamIDsAndVals; i += 1)
-        {
-            juce::String paramID {};
-            paramID = Serializer::getAttributeName (deserial, i);
-
-            paramHolder.doForAllParameters (
-                [&deserial,
-                 &paramID = std::as_const (paramID),
-                 &paramIDsThatHaveBeenDeserialized] (auto& param, size_t)
-                {
-                    if (param.paramID == paramID)
-                    {
-                        chowdsp::ParameterTypeHelpers::deserializeParameter<Serializer> (deserial, param);
-                        paramIDsThatHaveBeenDeserialized.add (paramID);
-
-                    }
-                });
-
-        }
-    }
-    else
-    {
-       // jassertfalse; // state loading error
-    }
-
-    for(auto id: paramIDsThatHaveBeenDeserialized)
-    {
-        DBG("deserialzied " + id);
-    }
-    // set all un-matched objects to their default values
-//    if (! paramIDsThatHaveBeenDeserialized.empty())
-//    {
-        paramHolder.doForAllParameters (
-            [&paramIDsThatHaveBeenDeserialized] (auto& param, size_t)
-            {
-                if (! paramIDsThatHaveBeenDeserialized.contains (param.paramID))
-                    chowdsp::ParameterTypeHelpers::resetParameter (param);
-            });
-//    }
+    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
     auto myStr  = deserial->getStringAttribute ("circularTuning");
     paramHolder.keyboardState.circularTuningOffset = parseFloatStringToArrayCircular<12>(myStr.toStdString());
     myStr  = deserial->getStringAttribute ("absoluteTuning");

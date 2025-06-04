@@ -45,7 +45,7 @@ std::array<float, N> parseFloatStringToArrayCircular(const std::string& input){
     return result;
 }
 
-
+juce::String getOnKeyString(const std::bitset<128>& bits);
 juce::String arrayToString(const std::array<float, 12>& array);
 juce::String arrayToStringWithIndex(const std::array<float, 128>& array);
 #endif //ARRAY_TO_STRING_H
