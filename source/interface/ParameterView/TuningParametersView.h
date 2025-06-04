@@ -15,7 +15,7 @@
 #include "tuning_systems.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
 using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
-class TuningParametersView : public SynthSection
+class TuningParametersView : public SynthSection,BKTuningKeyboardSlider::Listener
 {
 public:
     TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param,juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
@@ -52,11 +52,12 @@ public:
       // }
         if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
             ///tuninng systems
+            auto index = tuningParams->tuningSystem->getIndex();
             tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningSystem->paramID.toStdString());
             tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningSystem.get(), listeners,*tuning_combo_box, nullptr);
             addAndMakeVisible(tuning_combo_box.get());
             addOpenGlComponent(tuning_combo_box->getImageComponent());
-            tuning_combo_box->clear();
+            tuning_combo_box->clear(juce::sendNotificationSync);
             juce::OwnedArray<juce::PopupMenu> submenus;
             submenus.add(new juce::PopupMenu());
             submenus.add(new juce::PopupMenu());
@@ -77,6 +78,7 @@ public:
             auto* pop_up = tuning_combo_box->getRootMenu();
             pop_up->addSubMenu("Historical",*submenus.getUnchecked(0));
             pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
+            tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
             //fundamental
 
             fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->fundamental->paramID.toStdString());
@@ -100,8 +102,10 @@ public:
                            [t](const auto& pair) {
                                return pair.first == t;
                            });
+                    if (it->first == TuningSystem::Custom) {
 
-                    if (it != tuningMap.end()) {
+                    }
+                    else if (it != tuningMap.end()) {
                         const auto& tuning = it->second;
                         const auto tuningArray = TuningKeyboardState::rotateValuesByFundamental(tuning, params.fundamental->getIndex());
                         int index  = 0;
@@ -126,7 +130,7 @@ public:
                 DBG("rotat");
             }
         )};
-
+    circular_keyboard->addMyListener(this);
 
     }
     void paintBackground(juce::Graphics& g) override
@@ -140,6 +144,7 @@ public:
         }
         paintChildrenBackgrounds(g);
     }
+    void keyboardSliderChanged(juce::String name) override;
 //    std::unique_ptr<EnvelopeSection> envelope;
     //std::unique_ptr<juce::Component> transpose_uses_tuning;
     void resized() override;

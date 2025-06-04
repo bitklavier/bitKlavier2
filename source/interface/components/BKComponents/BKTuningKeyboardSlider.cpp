@@ -338,7 +338,9 @@ void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
        // keyboardState->setKeyOffset(myNote, dragPos * 50.);
         keyboardValueTF.setText(juce::String(val, displayResolution), juce::dontSendNotification);
         keyboardState->setKeyOffset(myNote, val,isCircular);
-
+        if (isCircular)
+            listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
+                         "circular");
         //DBG("dragging last key, height " + juce::String(keyboard->getLastKeySelected()) + " " + juce::String(dragPos));
     }
 }
@@ -354,9 +356,8 @@ void BKTuningKeyboardSlider::mouseUp(const juce::MouseEvent& e)
         }
     }
 
-    // listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
-    //                getName(),
-    //                keyboard->getValues());
+
+
     keyboard->repaint();
 }
 

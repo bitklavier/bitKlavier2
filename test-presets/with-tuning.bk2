@@ -5,10 +5,10 @@
                       pedalSampleSet="/defaultPedals"/>
   <PIANO name="default">
     <PREPARATIONS>
-      <PREPARATION type="5" width="125" height="245" x="574" y="423" uuid="4220af9310bb46128c718583d0c65dc8"
+      <PREPARATION type="5" width="125" height="245" x="465" y="98" uuid="cee17eda8d494c6e821e9814e8982897"
                    nodeID="4" numIns="1">
-        <tuning tuningSystem="0" fundamental="0" adaptiveSystem="0" circularTuning="0 0 0 0 0 0 50 0 0 0 0 0 "
-                absoluteTuning="72:50 "/>
+        <tuning tuningSystem="6" fundamental="0" adaptiveSystem="0" circularTuning="0 0 0 0 0 50 0 0 0 0 0 0 "
+                absoluteTuning=""/>
         <PORT nodeID="4" chIdx="4096" isIn="1"/>
       </PREPARATION>
     </PREPARATIONS>

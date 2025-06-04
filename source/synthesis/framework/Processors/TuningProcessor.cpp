@@ -35,7 +35,7 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
         });
     Serializer::template addChildElement<12>(serial,"circularTuning",paramHolder.keyboardState.circularTuningOffset,arrayToString);
     Serializer::template addChildElement<128>(serial,"absoluteTuning",paramHolder.keyboardState.absoluteTuningOffset,arrayToStringWithIndex);
-    Serializer::addChildElement(serial,"fundamental",paramHolder.keyboardState.fundamental);
+
     return serial;
 }
 
@@ -50,10 +50,6 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
         {
             juce::String paramID {};
             paramID = Serializer::getAttributeName (deserial, i);
-//DBG("PArAMID" + paramID);
-            //Serialization::deserialize<Serializer> (, paramID);
-//const auto paramDeserial = Serializer::getAttribute (deserial,paramID);
-
 
             paramHolder.doForAllParameters (
                 [&deserial,
@@ -64,6 +60,7 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
                     {
                         chowdsp::ParameterTypeHelpers::deserializeParameter<Serializer> (deserial, param);
                         paramIDsThatHaveBeenDeserialized.add (paramID);
+
                     }
                 });
 
@@ -88,4 +85,12 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
                     chowdsp::ParameterTypeHelpers::resetParameter (param);
             });
 //    }
+    auto myStr  = deserial->getStringAttribute ("circularTuning");
+    paramHolder.keyboardState.circularTuningOffset = parseFloatStringToArrayCircular<12>(myStr.toStdString());
+    myStr  = deserial->getStringAttribute ("absoluteTuning");
+    paramHolder.keyboardState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(myStr.toStdString());
+    paramHolder.keyboardState.fundamental = paramHolder.fundamental->getIndex();
+
+
+
 }

@@ -1,5 +1,4 @@
 #pragma once
-
 namespace bitklavier
 {
 /** Serializer which serializes data into an XML format */
@@ -235,6 +234,7 @@ public:
 
         return serial->getStringAttribute (id);
     }
+
 
 private:
     XMLSerializer() = default; // static use only

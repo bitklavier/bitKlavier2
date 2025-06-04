@@ -31,7 +31,7 @@ class juce::AudioDeviceManager { };
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_processors/juce_audio_processors.h>
-class SynthBase;
+
 class SampleLoadManager;
 class UserPreferencesWrapper;
 class FullInterface;
@@ -58,6 +58,7 @@ SynthGuiInterface {
 
     virtual juce::AudioDeviceManager* getAudioDeviceManager() { return nullptr; }
     SynthBase* getSynth() { return synth_; }
+    juce::UndoManager* getUndoManager();
     virtual void updateFullGui();
     virtual void updateGuiControl(const std::string& name, float value);
     float getControlValue(const std::string& name);

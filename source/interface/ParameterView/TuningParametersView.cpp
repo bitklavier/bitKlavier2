@@ -22,3 +22,8 @@ void TuningParametersView::resized()
     circular_keyboard->setBounds(50, 50, 500, 100);
     SynthSection::resized();
 }
+void TuningParametersView::keyboardSliderChanged(juce::String name) {
+
+    if (name == "circular")
+        params.tuningSystem->setParameterValue(TuningSystem::Custom);
+}

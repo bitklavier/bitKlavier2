@@ -85,7 +85,7 @@ public:
     public:
         virtual ~Listener() {};
 
-        virtual void keyboardSliderChanged(juce::String name, juce::Array<float> values) = 0;
+        virtual void keyboardSliderChanged(juce::String name)= 0;
 
     };
 
