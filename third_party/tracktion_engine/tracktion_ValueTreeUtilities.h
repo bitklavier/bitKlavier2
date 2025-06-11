@@ -14,6 +14,7 @@
     Tracktion Engine uses a GPL/commercial licence - see LICENCE.md for details.
 */
 #include <juce_graphics/juce_graphics.h>
+
 #include <juce_data_structures/juce_data_structures.h>
 namespace juce
 {

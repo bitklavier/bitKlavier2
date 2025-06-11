@@ -5,16 +5,11 @@
 #ifndef BITKLAVIER2_PREPARATIONSECTION_H
 #define BITKLAVIER2_PREPARATIONSECTION_H
 
-#include "valuetree_utils/VariantConverters.h"
-#include <juce_data_structures/juce_data_structures.h>
-#include <juce_audio_formats/juce_audio_formats.h>
 #include "tracktion_ValueTreeUtilities.h"
+#include <juce_audio_formats/juce_audio_formats.h>
 #include "synth_section.h"
-//#include "draggable_component.h"
-#include "common.h"
 #include "Identifiers.h"
 #include "BKItem.h"
-//#include "opengl_ComponentDragger.h"
 #include "BKPort.h"
 #include "Sample.h" //need this for samplersound... should find a way not to need this
 #include "PluginWindow.h"
@@ -34,6 +29,11 @@ public:
     static constexpr float kItemPaddingY = 2.0f;
     static constexpr float kItemPaddingX = 2.0f;
 
+    // Constructor Declaration
+    PreparationSection(juce::String name, juce::ValueTree v, OpenGlWrapper &um, juce::AudioProcessorGraph::NodeID node);
+
+    // Destructor Declaration
+    ~PreparationSection();
     class Listener {
     public:
         virtual ~Listener() = default;
@@ -62,7 +62,7 @@ public:
 
     void beginConnectorDrag(juce::AudioProcessorGraph::NodeAndChannel source,
                             juce::AudioProcessorGraph::NodeAndChannel dest,
-                            const juce::MouseEvent &e) {
+                            const juce::MouseEvent &e) override{
         for (auto listener: listeners_) {
             listener->beginConnectorDrag(source,
                                          dest,
@@ -70,14 +70,14 @@ public:
         }
     }
 
-    void dragConnector(const juce::MouseEvent &e) {
+    void dragConnector(const juce::MouseEvent &e)override {
         for (auto listener: listeners_) {
             listener->dragConnector(e);
         }
 
     }
 
-    void endDraggingConnector(const juce::MouseEvent &e) {
+    void endDraggingConnector(const juce::MouseEvent &e)override {
         for (auto listener: listeners_) {
             listener->endDraggingConnector(
                     e);
@@ -88,11 +88,6 @@ public:
 
     std::vector<Listener *> listeners_;
 
-    // Constructor Declaration
-    PreparationSection(juce::String name, juce::ValueTree v, OpenGlWrapper &um, juce::AudioProcessor *proc);
-
-    // Destructor Declaration
-    ~PreparationSection();
 
     virtual void
     addSoundSet(std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> *s) {}
@@ -103,13 +98,7 @@ public:
             juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *r,
             juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *p) {}
 
-    // Public member variables for a PreparationSection object
-    juce::ValueTree state;
-    OpenGlWrapper &_open_gl;
-    juce::SelectedItemSet<PreparationSection *> *selectedSet;
-    std::unique_ptr<BKItem> item;
-    juce::CachedValue<int> x, y, width, height, numIns, numOuts;
-    juce::ComponentBoundsConstrainer constrainer;
+
     BKPort *createNewObject(const juce::ValueTree &v) override;
 
     void deleteObject(BKPort *at) override;
@@ -178,7 +167,8 @@ public:
     }
 
     void mouseDoubleClick(const juce::MouseEvent &event) override {
-        showPrepPopup(this);
+
+        showPrepPopup(std::move(this->getPrepPopup()),bitklavier::BKPreparationTypeNil);
     }
 
     ///drraganddrop for line view and modulator
@@ -202,15 +192,6 @@ public:
 
     }
 
-//    void 	itemDragMove (const SourceDetails &dragSourceDetails)
-//    void itemDragEnter (const SourceDetails &dragSourceDetails)
-//    void 	itemDragExit (const SourceDetails &dragSourceDetails)
-//    bool 	shouldDrawDragImageWhenOver ()
-    /************************************************************************************/
-    /*            NESTED CLASS: PreparationPopup, inherits from SynthSection            */
-    /************************************************************************************/
-
-
 
     juce::Point<float> getPinPos(int index, bool isInput) const {
         for (auto *port: objects)
@@ -220,121 +201,25 @@ public:
         return {};
     }
 
-    void setPortInfo() {
-
-        auto &processor = *this->node->getProcessor();
-        //check if main audio input bus is enabled
-        if (getProcessor()->getBus(true, 0) != nullptr && getProcessor()->getBus(true, 0)->isEnabled()) {
-            for (int i = 0; i < processor.getMainBusNumInputChannels(); ++i) {
-
-                juce::ValueTree v{IDs::PORT};
-                v.setProperty(IDs::nodeID,
-                              juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                              nullptr);
-                v.setProperty(IDs::chIdx, i, nullptr);
-                bool add = true;
-                for (auto vt: state) {
-                    if (vt.isEquivalentTo(v)) {
-                        add = false;
-                    }
-                }
-                if (add) {
-                    state.addChild(v, -1, nullptr);
-                }
-                numIns = numIns + 1;
-            }
-        }
-
-
-        if (processor.acceptsMidi()) {
-            juce::ValueTree v{IDs::PORT};
-            v.setProperty(IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                          nullptr);
-            v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
-            v.setProperty(IDs::isIn, true, nullptr);
-            bool add = true;
-            for (auto vt: state) {
-                if (vt.isEquivalentTo(v)) {
-                    add = false;
-                }
-            }
-            if (add) {
-                state.addChild(v, -1, nullptr);
-            }
-
-
-            numIns = numIns + 1;
-        }
-
-        //check if main audio output bus is enabled
-        if (getProcessor()->getBus(false, 0) != nullptr && getProcessor()->getBus(false, 0)->isEnabled()) {
-            for (int i = 0; i < processor.getTotalNumOutputChannels(); ++i) {
-
-                    juce::ValueTree v{IDs::PORT};
-                v.setProperty(IDs::nodeID,
-                              juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                              nullptr);
-                v.setProperty(IDs::chIdx, i, nullptr);
-                v.setProperty(IDs::isIn, false, nullptr);
-                bool add = true;
-                for (auto vt: state) {
-                    if (vt.isEquivalentTo(v)) {
-                        add = false;
-                    }
-                }
-                if (add) {
-                    state.addChild(v, -1, nullptr);
-                }
-                numOuts = numOuts + 1;
-            }
-        }
-        if (processor.producesMidi()) {
-            juce::ValueTree v{IDs::PORT};
-            v.setProperty(IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                          nullptr);
-            v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
-            v.setProperty(IDs::isIn, false, nullptr);
-            bool add = true;
-            for (auto vt: state) {
-                if (vt.isEquivalentTo(v)) {
-                    add = false;
-                }
-            }
-            if (add) {
-                state.addChild(v, -1, nullptr);
-            }
-        numOuts = numOuts  + 1;
-        }
-        //this->resized();
-    }
+    void setPortInfo();
 
     virtual std::unique_ptr<SynthSection> getPrepPopup() {}
 
-    void setNodeInfo(juce::AudioProcessorGraph::Node::Ptr _node) {
-        node = _node;
-        pluginID = node->nodeID;
-        this->state.setProperty(IDs::nodeID,
-                                juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                                nullptr);
-        int i = 0;
-        auto &processor = *_node->getProcessor();
-        if (objects.isEmpty()) {
-            juce::MessageManager::callAsync([safeComp = juce::Component::SafePointer<PreparationSection>(this)] {
-                safeComp->setPortInfo();
-            });
-        }
+    void setNodeInfo(juce::AudioProcessorGraph::Node::Ptr _node);
+    juce::AudioProcessor* getProcessor() const;
 
 
-    }
 
-    juce::AudioProcessorGraph::Node::Ptr node;
-    juce::AudioProcessorGraph::NodeID pluginID;
     juce::CachedValue<juce::Uuid> uuid;
 
-    virtual juce::AudioProcessor *getProcessor() {}
-
-    virtual std::unique_ptr<juce::AudioProcessor> getProcessorPtr() {}
-
+    // Public member variables for a PreparationSection object
+    juce::ValueTree state;
+    OpenGlWrapper &_open_gl;
+    juce::SelectedItemSet<PreparationSection *> *selectedSet;
+    std::unique_ptr<BKItem> item;
+    juce::CachedValue<int> x, y, width, height, numIns, numOuts;
+    juce::ComponentBoundsConstrainer constrainer;
+    const juce::AudioProcessorGraph::NodeID pluginID;
 protected:
 
 

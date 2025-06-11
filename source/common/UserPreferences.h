@@ -6,6 +6,8 @@
 #define BITKLAVIER2_USERPREFERENCES_H
 
 #include <juce_core/juce_core.h>
+#include "valuetree_utils/VariantConverters.h"
+
 #include <juce_data_structures/juce_data_structures.h>
 #include "tracktion_ValueTreeUtilities.h"
 #include "Identifiers.h"

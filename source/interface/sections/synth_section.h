@@ -35,7 +35,6 @@ class ModulationButton;
 class OpenGlComponent;
 class PresetSelector;
 class SynthSlider;
-class PreparationSection;
 class OpenGlBackground;
 struct PopupItems {
   int id;
@@ -203,7 +202,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void removeSubSection(SynthSection* section);
     virtual void setScrollWheelEnabled(bool enabled);
     SynthButton* activator() const { return activator_; }
-    void showPrepPopup(PreparationSection* prep);
+    void showPrepPopup(std::unique_ptr<SynthSection> prep, bitklavier::BKPreparationType);
     float getTitleWidth();
     float getPadding();
     float getPowerButtonOffset() const { return size_ratio_ * kDefaultPowerButtonOffset; }

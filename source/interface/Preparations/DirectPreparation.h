@@ -22,7 +22,7 @@ public:
 
     // Constructor method that takes three arguments: a smart pointer to a PolygonalOscProcessor,
     // a value tree, and a reference to an OpenGlWrapper object
-    DirectPreparation(std::unique_ptr<DirectProcessor> proc, juce::ValueTree v, OpenGlWrapper& um);
+    DirectPreparation(juce::ValueTree v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface*);
 
     // Destructor method
     ~DirectPreparation();
@@ -30,14 +30,15 @@ public:
     // Static function that returns a pointer to a DirectPreparation object
     static PreparationSection* createDirectSection(juce::ValueTree v, SynthGuiInterface* interface) {
 
-        return new DirectPreparation(std::make_unique<DirectProcessor>(interface->getSynth(),v), v, interface->getGui()->open_gl_);
+        return new DirectPreparation(v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
 
     // Public function definitions for the DirectPreparation class, which override functions
     // in the PreparationSection base class
     void addSoundSet(std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s) override
     {
-        proc.addSoundSet(s);
+        if (auto processor =dynamic_cast<DirectProcessor*>(getProcessor()))
+            processor->addSoundSet(s);
     }
 
     void addSoundSet(
@@ -46,23 +47,19 @@ public:
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r,
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) override
     {
-        proc.addSoundSet(s, h, r, p);
+        if (auto processor =dynamic_cast<DirectProcessor*>(getProcessor()))
+            processor->addSoundSet( s,h, r, p);
+
     }
 
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
     void paintBackground(juce::Graphics &g);
-    juce::AudioProcessor* getProcessor() override;
-    std::unique_ptr<juce::AudioProcessor> getProcessorPtr() override;
+
 
 //
 
 
-private:
-    // Private member variable for the DirectPreparation class: proc is a pointer to a
-    // DirectProcessor Object
-    DirectProcessor & proc;
-    std::unique_ptr<DirectProcessor> _proc_ptr;
 
 
 };

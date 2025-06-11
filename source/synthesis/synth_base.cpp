@@ -45,12 +45,22 @@ SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false)
   Startup::doStartupChecks();
   tree = juce::ValueTree(IDs::GALLERY);
   tree.setProperty(IDs::mainSampleSet,"Piano (Default)",nullptr);
+    juce::ValueTree preparations(IDs::PREPARATIONS);
+    juce::ValueTree connections(IDs::CONNECTIONS);
+    juce::ValueTree modconnections(IDs::MODCONNECTIONS);
+
+    tree.appendChild(preparations, nullptr);
+    tree.appendChild(connections, nullptr);
+    tree.appendChild(modconnections, nullptr);
   tree.addListener(this);
+
   //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
   modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree>("ramp");
   modulator_factory.registerType<StateModulatorProcessor, juce::ValueTree>("state");
     mod_connections_.reserve(bitklavier::kMaxModulationConnections);
     state_connections_.reserve(bitklavier::kMaxStateConnections);
+    preparationList = std::make_unique<PreparationList>(tree.getChildWithName(IDs::PREPARATIONS));
+
 }
 
 SynthBase::~SynthBase() {

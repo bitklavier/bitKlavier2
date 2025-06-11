@@ -8,15 +8,15 @@
 #include "sound_engine.h"
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
-#include "PluginPreparation.h"
-ConstructionSite::ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
+
+ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data) : SynthSection("Construction Site"),
-                                                         tracktion::engine::ValueTreeObjectList<PreparationSection>(v),
+                                                        prep_list(*data->synth->preparationList.get()),
                                                          undo(um),
                                                          open_gl(open_gl),
                                                          cableView(*this),
                                                          modulationLineView(*this),
-                                                         preparationSelector(*this)
+                                                         preparationSelector(*this), parent(v)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
     setWantsKeyboardFocus(true);
@@ -28,15 +28,15 @@ ConstructionSite::ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, Op
     //addMouseListener (&cableView, true);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::createDirectSection);
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicPreparation::createNostalgicSection);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
+    //prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeResonance, ResonancePreparation::createResonanceSection);
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicPreparation::createSynchronicSection);
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::createBlendronicSection);
     //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::createTempoSection);
-    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
+    //prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,
                          ModulationPreparation::createModulationSection);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST,PluginPreparation::createPluginSection);
+    //prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST,PluginPreparation::createPluginSection);
     //    cableView.toBack();
     cableView.setAlwaysOnTop(true);
     addSubSection(&cableView);
@@ -47,98 +47,33 @@ ConstructionSite::ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, Op
     //    addOpenGlComponent(_line);
 }
 
-void ConstructionSite::valueTreeParentChanged(juce::ValueTree &changed) {
-    //    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    //    ///changed.copyPropertiesAndChildrenFrom(_parent->getSynth()->getValueTree(),nullptr);
-    //
-    //    parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO);
-}
 
-void ConstructionSite::valueTreeRedirected(juce::ValueTree &) {
-    SynthGuiInterface *interface = findParentComponentOfClass<SynthGuiInterface>();
-
-    deleteAllObjects();
-    rebuildObjects();
-    for (auto object: objects) {
-        newObjectAdded(object);
-    }
-} // may need to add handling if this is hit
-
-void ConstructionSite::deleteObject(PreparationSection *at) {
-    if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
-        SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-
-        //safe to do on message thread because we have locked processing if this is called
-        at->setVisible(false);
-        open_gl.context.executeOnGLThread([this, &at](juce::OpenGLContext &openGLContext) {
-                                              this->removeSubSection(at);
-                                          },
-                                          false);
-    } else
-        delete at;
-}
-
-PreparationSection *ConstructionSite::createNewObject(const juce::ValueTree &v) {
-    SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-    //must use auto * so that it doesnt create a copy and call this constructor twice
-
-    PreparationSection* s;
-        s = prepFactory.CreateObject((int) v.getProperty(IDs::type), v, parent);
-
-        addSubSection(s);
-        Skin default_skin;
-        s->setSkinValues(default_skin, false);
-        s->setDefaultColor();
-        s->setSizeRatio(size_ratio_);
-        s->setCentrePosition(s->x, s->y);
-        s->setSize(s->width, s->height);
-
-
-        s->addSoundSet(&parent->sampleLoadManager->samplerSoundset);
-        if (!parent->sampleLoadManager->samplerSoundset.empty()) {
-            s->addSoundSet(
-                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalSoundset_name],
-                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalHammersSoundset_name],
-                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalReleaseResonanceSoundset_name],
-                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalPedalsSoundset_name]);
-        }
-
-
-    s->selectedSet = &(preparationSelector.getLassoSelection());
-    preparationSelector.getLassoSelection().addChangeListener(s);
-    s->addListener(&cableView);
-    s->addListener(&modulationLineView);
-    s->addListener(this);
-    //only add non modulations to the modulation line view in order to be able to check what is under the mouse that isnt a modprep
-    //this is cheap and hacky. should setup better down the line. possibly using a key modifier
-    //    if(dynamic_cast<ModulationPreparation*>(s) == nullptr)
-    //        modulationLineView.addAndMakeVisible(s);
-    // so that the component dragging doesnt actually move the componentn
-    return s;
-}
 
 void ConstructionSite::reset() {
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
     if (_parent == nullptr)
         return;
-        if (_parent->getSynth() != nullptr) {
-            _parent->getSynth()->getEngine()->resetEngine();
-            parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
-                IDs::PREPARATIONS);
-        }
+        // if (_parent->getSynth() != nullptr) {
+        //     _parent->getSynth()->getEngine()->resetEngine();
+        //     parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
+        //         IDs::PREPARATIONS);
+        // }
 
-        DBG("exit");
         cableView.reset();
         modulationLineView.reset();
 }
+PreparationSection *ConstructionSite::getComponentForPlugin(juce::AudioProcessorGraph::NodeID nodeID) const {
+    {
+        for (auto &comp : plugin_components)
+            if (comp->pluginID == nodeID)
+                return comp.get();
 
-void ConstructionSite::newObjectAdded(PreparationSection *object) {
-    SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-    //call preparetoplay on the message thread to follow VST3 spec and ensure allocation isn't occuring in the processblock
-    object->getProcessor()->prepareToPlay(parent->getSynth()->getSampleRate(), parent->getSynth()->getBufferSize());
-    parent->addProcessor(object);
+        return nullptr;
+    }
 }
+
+
 void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) {
     jassert (node != nullptr);
 
@@ -168,7 +103,6 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
 ConstructionSite::~ConstructionSite(void) {
     removeMouseListener(&cableView);
     removeChildComponent(&selectorLasso);
-    freeObjects();
 }
 
 void ConstructionSite::paintBackground(juce::Graphics &g) {
@@ -208,7 +142,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 125, nullptr);
         t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (code == 78) // N nostalgic
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -219,7 +153,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
         t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
 
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (code == 75) // K Keymap
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -229,7 +163,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 105, nullptr);
         t.setProperty(IDs::x, lastX - 185 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 105 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (code == 82) // R resonance
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -239,7 +173,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 132, nullptr);
         t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (code == 83) // S synchronic
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -249,7 +183,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 132, nullptr);
         t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (code == 66) // B blendronic
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -259,7 +193,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 132, nullptr);
         t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (code == 77) // M tempo
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -269,7 +203,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 260, nullptr);
         t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (code == 84) // T tuning
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -279,7 +213,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 245, nullptr);
         t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     } else if (k.getTextCharacter() == 'c') {
         juce::ValueTree t(IDs::PREPARATION);
 
@@ -288,7 +222,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 100, nullptr);
         t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t,  nullptr);
     }
     return true;
 }
@@ -486,7 +420,7 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
 
 void ConstructionSite::updateComponents() {
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-    for (int i = objects.size(); --i >= 0;) {
+    for (int i = prep_list.size(); --i >= 0;) {
         //            if (parent->getSynth()->getNodeForId(objects.getUnchecked(i)->pluginID) == nullptr) {
         //                parent.removeChild(objects.getUnchecked(i)->parent, nullptr);
         //            }

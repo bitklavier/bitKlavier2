@@ -42,9 +42,11 @@ class juce::MidiMessageCollector {
 };
 
 #endif
-#include <juce_data_structures/juce_data_structures.h>
+#include "valuetree_utils/VariantConverters.h"
+
 #include "tracktion_ValueTreeUtilities.h"
 
+#include <juce_data_structures/juce_data_structures.h>
 #include "Identifiers.h"
 
 class SynthBase;

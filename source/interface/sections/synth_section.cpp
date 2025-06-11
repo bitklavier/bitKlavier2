@@ -965,27 +965,14 @@ void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> p
 
 
 
-//void SynthSection::setValue(const std::string& name, float value, NotificationType notification) {
-////  if (all_sliders_.count(name)) {
-////    all_sliders_[name]->setValue(value, notification);
-////    if (notification == dontSendNotification)
-////      all_sliders_[name]->redoImage();
-////    all_sliders_[name]->notifyGuis();
-////  }
-////  if (all_buttons_.count(name))
-////    all_buttons_[name]->setToggleState(value, notification);
-//}
-//this is probably causing some of the long compile times
-#include "PreparationSection.h"
-
-void SynthSection::showPrepPopup(PreparationSection *prep) {
+void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,bitklavier::BKPreparationType type) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent) {
-        if (prep->state.getProperty(IDs::type).operator int() ==
-            static_cast<int>(bitklavier::BKPreparationType::PreparationTypeModulation)) {
-            parent->modDisplay(prep);
+        if (type ==
+            bitklavier::BKPreparationType::PreparationTypeModulation) {
+            parent->modDisplay(std::move(prep));
         } else {
-            parent->prepDisplay(prep);
+            parent->prepDisplay(std::move(prep));
         }
     }
 }

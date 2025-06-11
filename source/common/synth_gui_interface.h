@@ -28,6 +28,7 @@ class juce::AudioDeviceManager { };
 //#include "synth_base.h"
 
 #include "ApplicationCommandHandler.h"
+#include "valuetree_utils/VariantConverters.h"
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -37,7 +38,6 @@ class UserPreferencesWrapper;
 class FullInterface;
 struct OpenGlWrapper;
 class ModulatorBase;
-class PreparationSection;
 struct SynthGuiData {
   SynthGuiData(SynthBase* synth_base);
   juce::ValueTree& tree;
@@ -73,7 +73,7 @@ SynthGuiInterface {
     void disconnectModulation(bitklavier::StateConnection* connection);
     void notifyModulationsChanged();
 
-    void  addProcessor(PreparationSection* );
+    void  addProcessor(std::unique_ptr<juce::AudioPluginInstance> instance );
     void  addModulationNodeConnection(juce::AudioProcessorGraph::NodeID source, juce::AudioProcessorGraph::NodeID destination);
     void setFocus();
     void notifyChange();

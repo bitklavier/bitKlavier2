@@ -27,6 +27,7 @@
 #include "ModulationConnection.h"
 #include "circular_queue.h"
 #include "ModulatorBase.h"
+#include "PreparationList.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
@@ -124,11 +125,11 @@ class SynthBase :  public juce::ValueTree::Listener {
     int getNumModulations(const std::string& destination);
     virtual SynthGuiInterface* getGuiInterface() = 0;
     bool isSourceConnected(const std::string& source);
+  std::unique_ptr<PreparationList> preparationList;
 protected:
 //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
     juce::UndoManager um;
-
     bool loadFromValueTree(const juce::ValueTree& state);
 
 

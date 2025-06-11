@@ -82,8 +82,8 @@ public :
     void popupDisplay(juce::Component* source, const std::string& text,
         juce::BubbleComponent::BubblePlacement placement, bool primary);
 
-    void prepDisplay(PreparationSection* source);
-    void modDisplay(PreparationSection* prep);
+    void prepDisplay(std::unique_ptr<SynthSection> synth_section);
+    void modDisplay(std::unique_ptr<SynthSection> synth_section);
     std::unique_ptr<SinglePopupSelector> popup_selector_;
     std::unique_ptr<PreparationPopup> prep_popup;
     std::unique_ptr<PreparationPopup> mod_popup;

@@ -281,16 +281,16 @@ void FullInterface::popupDisplay (juce::Component* source, const std::string& te
     display->setVisible (true);
 }
 
-void FullInterface::prepDisplay (PreparationSection* prep)
+void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section)
 {
-    prep_popup->setContent (prep->getPrepPopup());
+    prep_popup->setContent (std::move(synth_section));
     prep_popup->setVisible (true);
     modulation_manager->added();
 }
 
-void FullInterface::modDisplay (PreparationSection* prep)
+void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section)
 {
-    mod_popup->setContent (prep->getPrepPopup());
+    mod_popup->setContent (std::move(synth_section));
     mod_popup->setVisible (true);
     modulation_manager->added();
 }

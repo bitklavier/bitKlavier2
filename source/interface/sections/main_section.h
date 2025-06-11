@@ -11,7 +11,7 @@ class MainSection : public SynthSection
 public:
 
 
-    MainSection(juce::ValueTree v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData * data);
+    MainSection(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData * data);
     ~MainSection();
     void paintBackground(juce::Graphics& g) override;
     void resized() override;

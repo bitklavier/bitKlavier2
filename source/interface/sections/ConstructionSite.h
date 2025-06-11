@@ -4,25 +4,25 @@
 
 #ifndef BITKLAVIER2_CONSTRUCTIONSITE_H
 #define BITKLAVIER2_CONSTRUCTIONSITE_H
-#include "PreparationSection.h"
 #include "PreparationSelector.h"
 #include "CableView.h"
 #include "ModulationLineView.h"
 #include "templates/Factory.h"
 #include "common.h"
 #include "PluginWindow.h"
+#include "PreparationList.h"
 class OpenGlLine;
 class SynthGuiInterface;
 typedef Loki::Factory<PreparationSection, int,  juce::ValueTree,  SynthGuiInterface*> PreparationFactory;
 class ConstructionSite : public SynthSection,
-                         public tracktion::engine::ValueTreeObjectList<PreparationSection>,private juce::KeyListener,
+                         private juce::KeyListener,
                          public juce::DragAndDropContainer,
-                         public juce::ChangeListener,
-                        public PreparationSection::Listener
+                         public juce::ChangeListener
+
 
 {
 public:
-    ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData* data);
+    ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData* data);
 
     ~ConstructionSite(void);
 
@@ -42,26 +42,11 @@ public:
     }
 
     void updateComponents();
-
-    bool isSuitableType (const juce::ValueTree& v) const override
-    {
-        return v.hasType (IDs::PREPARATION) ;
-    }
-
-    PreparationSection* createNewObject(const juce::ValueTree& v) override;
-    void deleteObject (PreparationSection* at) override;
-
-
-    void reset() override;
-    void newObjectAdded (PreparationSection*) override;
-    void objectRemoved (PreparationSection*) override     { resized();}//resized(); }
-    void objectOrderChanged() override              {resized(); }//resized(); }
-    void valueTreeParentChanged (juce::ValueTree&) override;
-    void valueTreeRedirected (juce::ValueTree&) override ;
+    void reset()    override;
 
     BKPort* findPinAt (juce::Point<float> pos) const
     {
-        for (auto* fc : objects)
+        for (auto &fc : plugin_components)
         {
             // NB: A Visual Studio optimiser error means we have to put this juce::Component* in a local
             // variable before trying to cast it, or it gets mysteriously optimised away..
@@ -73,18 +58,12 @@ public:
 
         return nullptr;
     }
-   PreparationSection* getComponentForPlugin (juce::AudioProcessorGraph::NodeID nodeID) const
-    {
-        for (auto* fc : objects)
-            if (fc->pluginID == nodeID)
-                return fc;
+   PreparationSection* getComponentForPlugin (juce::AudioProcessorGraph::NodeID nodeID) const;
 
-        return nullptr;
-    }
     juce::Viewport* view;
    juce::Point<float> mouse;
     OpenGlWrapper &open_gl;
-
+    juce::ValueTree parent;
     juce::ValueTree getState()
     {
         return parent;
@@ -116,8 +95,10 @@ public:
 
     juce::Point<int> mouse_drag_position_;
     juce::OwnedArray<PluginWindow> activePluginWindows;
-    void createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) override;
+    void createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type);
+    std::vector<std::unique_ptr<PreparationSection>> plugin_components;
 private:
+    PreparationList& prep_list;
     void handlePluginPopup(int selection,int index);
     SynthGuiInterface* _parent;
 
@@ -167,24 +148,7 @@ private:
     BKItem* getItemAtPoint(const int X, const int Y);
 
 
-    void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override
-    {
-        tracktion::engine::ValueTreeObjectList<PreparationSection>::valueTreePropertyChanged (v, i);
-        if(v.getProperty("sync",0))
-        {
-            for(auto obj : objects)
-            {
-                juce::MemoryBlock data;
-                obj->getProcessor()->getStateInformation(data);
-                auto xml = juce::parseXML(data.toString());
-//auto xml = juce::AudioProcessor::getXmlF(data.getData(), (int)data.getSize());
-                if (obj->state.getChild(0).isValid() && xml != nullptr)
-                    obj->state.getChild(0).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
-                  //  state.addChild(juce::ValueTree::fromXml(*xml),0,nullptr);
-            }
-            v.removeProperty("sync", nullptr);
-        }
-    }
+
 
     PreparationFactory prepFactory;
 
