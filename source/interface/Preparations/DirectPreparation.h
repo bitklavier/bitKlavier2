@@ -8,10 +8,8 @@
 #include "DirectProcessor.h"
 #include "PreparationSection.h"
 #include "popup_browser.h"
-#include "ParameterView/DirectParametersView.h"
 #include "FullInterface.h"
 
-#include "envelope_section.h"
 
 
 /************************************************************************************/

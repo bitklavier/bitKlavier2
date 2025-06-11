@@ -17,6 +17,7 @@
 //#include "opengl_ComponentDragger.h"
 #include "BKPort.h"
 #include "Sample.h" //need this for samplersound... should find a way not to need this
+#include "PluginWindow.h"
 /************************************************************************************/
 /*                            CLASS: SynthGuiInterface                              */
 /************************************************************************************/
@@ -40,13 +41,13 @@ public:
 //        virtual void portClicked(const juce::Point<int>& pos, juce::AudioProcessorGraph::Node::Ptr) = 0;
         virtual void beginConnectorDrag(juce::AudioProcessorGraph::NodeAndChannel source,
                                         juce::AudioProcessorGraph::NodeAndChannel dest,
-                                        const juce::MouseEvent &e) = 0;
+                                        const juce::MouseEvent &e) {};
 
-        virtual void dragConnector(const juce::MouseEvent &e) = 0;
+        virtual void dragConnector(const juce::MouseEvent &e) {};
 
-        virtual void endDraggingConnector(const juce::MouseEvent &e) = 0;
+        virtual void endDraggingConnector(const juce::MouseEvent &e) {};
 
-        virtual void _update() = 0;
+        virtual void _update() {};
 
         virtual void preparationDragged(juce::Component *prep, const juce::MouseEvent &e) {}
 
@@ -55,6 +56,8 @@ public:
         virtual void modulationDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
 
         virtual void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
+
+        virtual void createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type){}
     };
 
     void beginConnectorDrag(juce::AudioProcessorGraph::NodeAndChannel source,
@@ -107,7 +110,6 @@ public:
     std::unique_ptr<BKItem> item;
     juce::CachedValue<int> x, y, width, height, numIns, numOuts;
     juce::ComponentBoundsConstrainer constrainer;
-
     BKPort *createNewObject(const juce::ValueTree &v) override;
 
     void deleteObject(BKPort *at) override;

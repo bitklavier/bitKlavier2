@@ -50,6 +50,7 @@ namespace bitklavier
 class ModulationConnection;
 class StateConnection;
 }
+class PopupItems;
 class
 SynthGuiInterface {
   public:
@@ -91,14 +92,18 @@ SynthGuiInterface {
     std::shared_ptr<UserPreferencesWrapper> userPreferences;
     std::unique_ptr<SampleLoadManager> sampleLoadManager ;
     std::unique_ptr<ApplicationCommandHandler> commandHandler;
+    PopupItems getPluginPopupItems();
+    class PluginListWindow;
+    std::unique_ptr<PluginListWindow> pluginListWindow;
+   juce::ScopedMessageBox messageBox;
   protected:
     std::atomic<bool> loading;
 juce::ApplicationCommandManager commandManager;
 
     std::unique_ptr<juce::FileChooser> filechooser;
-
     SynthBase* synth_;
     std::unique_ptr<FullInterface> gui_;
+
   
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthGuiInterface)
 };

@@ -16,11 +16,12 @@ public:
         undo = 0x2000,
         redo,
         save,
-        load
+        load,
+        showPluginListEditor   = 0x30100
     };
 
     void getAllCommands(juce::Array<juce::CommandID> &commands) override {
-        commands.addArray({undo, redo, save, load});
+        commands.addArray({undo, redo, save, load,showPluginListEditor});
     }
 
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override {
@@ -40,6 +41,10 @@ public:
             case load:
                 info.setInfo("Load", "Load New Preset", "File", 0);
                 info.addDefaultKeypress('l', juce::ModifierKeys::commandModifier);
+                break;
+            case showPluginListEditor:
+                info.setInfo("Show Plugins", "Show Plugins", "Options", 0);
+                info.addDefaultKeypress ('p', juce::ModifierKeys::commandModifier);
                 break;
         }
     }

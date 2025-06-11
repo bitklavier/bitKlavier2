@@ -95,7 +95,7 @@ class SynthBase;
 class SampleLoadManager : public juce::AsyncUpdater
 {
 public:
-    SampleLoadManager (UserPreferences& preferences, SynthGuiInterface* synth_, SynthBase * synth);
+    SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences, SynthGuiInterface* synth_, SynthBase * synth);
     ~SampleLoadManager();
 
     juce::ThreadPool sampleLoader;
@@ -112,7 +112,7 @@ public:
     juce::String globalPedalsSoundset_name;
 
 
-    UserPreferences& preferences;
+    std::shared_ptr<UserPreferencesWrapper> preferences;
     void handleAsyncUpdate() override;
     SynthGuiInterface* synthGui;
     SynthBase* synth;

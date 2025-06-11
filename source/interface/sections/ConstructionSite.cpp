@@ -8,7 +8,7 @@
 #include "sound_engine.h"
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
-
+#include "PluginPreparation.h"
 ConstructionSite::ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data) : SynthSection("Construction Site"),
                                                          tracktion::engine::ValueTreeObjectList<PreparationSection>(v),
@@ -36,6 +36,7 @@ ConstructionSite::ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, Op
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,
                          ModulationPreparation::createModulationSection);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST,PluginPreparation::createPluginSection);
     //    cableView.toBack();
     cableView.setAlwaysOnTop(true);
     addSubSection(&cableView);
@@ -81,31 +82,33 @@ PreparationSection *ConstructionSite::createNewObject(const juce::ValueTree &v) 
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
     //must use auto * so that it doesnt create a copy and call this constructor twice
 
+    PreparationSection* s;
+        s = prepFactory.CreateObject((int) v.getProperty(IDs::type), v, parent);
 
-    auto *s = prepFactory.CreateObject((int) v.getProperty(IDs::type), v, parent);
-
-    addSubSection(s);
-    Skin default_skin;
-    s->setSkinValues(default_skin, false);
-    s->setDefaultColor();
-    s->setSizeRatio(size_ratio_);
-    s->setCentrePosition(s->x, s->y);
-    s->setSize(s->width, s->height);
+        addSubSection(s);
+        Skin default_skin;
+        s->setSkinValues(default_skin, false);
+        s->setDefaultColor();
+        s->setSizeRatio(size_ratio_);
+        s->setCentrePosition(s->x, s->y);
+        s->setSize(s->width, s->height);
 
 
-    s->addSoundSet(&parent->sampleLoadManager->samplerSoundset);
-    if (!parent->sampleLoadManager->samplerSoundset.empty()) {
-        s->addSoundSet(
-            &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalSoundset_name],
-            &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalHammersSoundset_name],
-            &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalReleaseResonanceSoundset_name],
-            &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalPedalsSoundset_name]);
-    }
+        s->addSoundSet(&parent->sampleLoadManager->samplerSoundset);
+        if (!parent->sampleLoadManager->samplerSoundset.empty()) {
+            s->addSoundSet(
+                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalSoundset_name],
+                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalHammersSoundset_name],
+                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalReleaseResonanceSoundset_name],
+                &parent->sampleLoadManager->samplerSoundset[parent->sampleLoadManager->globalPedalsSoundset_name]);
+        }
+
+
     s->selectedSet = &(preparationSelector.getLassoSelection());
     preparationSelector.getLassoSelection().addChangeListener(s);
     s->addListener(&cableView);
     s->addListener(&modulationLineView);
-
+    s->addListener(this);
     //only add non modulations to the modulation line view in order to be able to check what is under the mouse that isnt a modprep
     //this is cheap and hacky. should setup better down the line. possibly using a key modifier
     //    if(dynamic_cast<ModulationPreparation*>(s) == nullptr)
@@ -132,7 +135,34 @@ void ConstructionSite::reset() {
 
 void ConstructionSite::newObjectAdded(PreparationSection *object) {
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+    //call preparetoplay on the message thread to follow VST3 spec and ensure allocation isn't occuring in the processblock
+    object->getProcessor()->prepareToPlay(parent->getSynth()->getSampleRate(), parent->getSynth()->getBufferSize());
     parent->addProcessor(object);
+}
+void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) {
+    jassert (node != nullptr);
+
+#if JUCE_IOS || JUCE_ANDROID
+    closeAnyOpenPluginWindows();
+#else
+    for (auto* w : activePluginWindows)
+        if (w->node.get() == node && w->type == type)
+            w->toFront(true);
+#endif
+
+    if (auto* processor = node->getProcessor())
+    {
+        if (auto* plugin = dynamic_cast<juce::AudioPluginInstance*> (processor))
+        {
+            auto description = plugin->getPluginDescription();
+
+
+
+            auto window = activePluginWindows.add (new PluginWindow (node, type, activePluginWindows));
+            window->toFront(true);
+        }
+    }
+
 }
 
 ConstructionSite::~ConstructionSite(void) {
@@ -338,143 +368,45 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     // This must happen before the right-click menu or the menu will close
     grabKeyboardFocus();
 
-    //        processor.gallery->setGalleryDirty(true);
+    if (e.mods.isPopupMenu()) {
+        _parent = findParentComponentOfClass<SynthGuiInterface>();
+          auto callback = [=](int selection,int index) {handlePluginPopup(selection,index);};
+    auto cancel = [=]() {
 
-    // Right mouse click (must be first so right click overrides other mods)
-    if (e.mods.isRightButtonDown()) {
-        //            if (!itemToSelect->getSelected())
-        //            {
-        //                graph->deselectAll();
-        //                graph->select(itemToSelect);
-        //            }
-        //            if (processor.wrapperType == juce::AudioPluginInstance::wrapperType_Standalone)
-        //            {
-        //                getEditMenuStandalone(&buttonsAndMenusLAF, graph->getSelectedItems().size(), false, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-        //            else
-        //            {
-        //                getEditMenu(&buttonsAndMenusLAF, graph->getSelectedItems().size(), false, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-    }
-    // Control click (same as right click on Mac)
-#if JUCE_MAC
-    else if (e.mods.isCtrlDown()) {
-        //            if (!itemToSelect->getSelected())
-        //            {
-        //                graph->deselectAll();
-        //                graph->select(itemToSelect);
-        //            }
-        //            if (processor.wrapperType == juce::AudioPluginInstance::wrapperType_Standalone)
-        //            {
-        //                getEditMenuStandalone(&buttonsAndMenusLAF, graph->getSelectedItems().size(), false, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-        //            else
-        //            {
-        //                getEditMenu(&buttonsAndMenusLAF, graph->getSelectedItems().size(), false, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-    }
-#endif
-    else if (e.mods.isShiftDown()) {
-        //            // also select this item
-        //            if (itemToSelect != nullptr)
-        //            {
-        //                if (!itemToSelect->getSelected())   graph->select(itemToSelect);
-        //                else                                graph->deselect(itemToSelect);
-        //            }
-        //
-        //            for (auto item : graph->getSelectedItems())
-        //            {
-        //                prepareItemDrag(item, e, true);
-        //            }
-    } else if (e.mods.isAltDown()) {
-        //            // make a connection and look to make another
-        //            if (connect) makeConnection(e.x, e.y, true);
-        //
-        //            // Copy and drag
-        //            if (!itemToSelect->getSelected())
-        //            {
-        //                graph->deselectAll();
-        //                graph->select(itemToSelect);
-        //            }
-    }
-    // Command click
-    else if (e.mods.isCommandDown()) {
-        //            if (!itemToSelect->getSelected())
-        //            {
-        //                graph->deselectAll();
-        //                graph->select(itemToSelect);
-        //            }
-        //            if (connect) makeConnection(e.x, e.y);
-        //            else startConnection(e.x, e.y);
-    }
-    // Unmodified left mouse click
-    else {
-        //            if (connect) makeConnection(e.x, e.y);
-        //
-        //            if (!itemToSelect->getSelected())
-        //            {
-        //                graph->deselectAll();
-        //                graph->select(itemToSelect);
-        //            }
-        //
-        //            for (auto item : graph->getSelectedItems())
-        //            {
-        //                prepareItemDrag(item, e, true);
-        //            }
-    }
-
-    // Clicking on blank graph space
-
-    if (e.mods.isRightButtonDown()) {
-        //            if (processor.wrapperType == juce::AudioPluginInstance::wrapperType_Standalone)
-        //            {
-        //                getEditMenuStandalone(&buttonsAndMenusLAF, graph->getSelectedItems().size(), true, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-        //            else
-        //            {
-        //                getEditMenu(&buttonsAndMenusLAF, graph->getSelectedItems().size(), true, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-    }
-#if JUCE_MAC
-    else if (e.mods.isCtrlDown()) {
-        //            if (processor.wrapperType == juce::AudioPluginInstance::wrapperType_Standalone)
-        //            {
-        //                getEditMenuStandalone(&buttonsAndMenusLAF, graph->getSelectedItems().size(), true, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-        //            else
-        //            {
-        //                getEditMenu(&buttonsAndMenusLAF, graph->getSelectedItems().size(), true, true).showMenuAsync
-        //                    (juce::PopupMenu::Options(), juce::ModalCallbackFunction::forComponent (editMenuCallback, this) );
-        //            }
-    }
-#endif
-    else {
-        //            if (!e.mods.isShiftDown())
-        //            {
-        //                graph->deselectAll();
-        //            }
-        //            lassoSelection.deselectAll();
-        //
-        //            lasso = std::make_unique<juce::LassoComponent<BKItem*>>();
-        //            addAndMakeVisible(*lasso);
-        //
-        //            lasso->setAlpha(0.5);
-        //            lasso->setColour(juce::LassoComponent<BKItem*>::ColourIds::lassoFillColourId, juce::Colours::lightgrey);
-        //            lasso->setColour(juce::LassoComponent<BKItem*>::ColourIds::lassoOutlineColourId, juce::Colours::antiquewhite);
-        //
-        //            lasso->beginLasso(eo, this);
-        //            inLasso = true;
+    };
+        showPopupSelector(this, e.getPosition(), _parent->getPluginPopupItems(),callback,cancel);
     }
     // Stop trying to make a connection on blank space click
     connect = false;
 }
+void ConstructionSite::handlePluginPopup(int selection, int index) {
+    if (selection < bitklavier::BKPreparationType::PreparationTypeVST) {
+        juce::ValueTree t(IDs::PREPARATION);
+        t.setProperty(IDs::type, static_cast<bitklavier::BKPreparationType>(selection), nullptr);
+        t.setProperty(IDs::width, 132, nullptr);
+        t.setProperty(IDs::height, 260, nullptr);
+        t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
+        parent.addChild(t, -1, nullptr);
+    } else {
+        _parent = findParentComponentOfClass<SynthGuiInterface>();
+        juce::ValueTree t(IDs::PREPARATION);
+        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
+        t.setProperty(IDs::width, 245, nullptr);
+        t.setProperty(IDs::height, 125, nullptr);
+        t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+
+        auto desc = _parent->userPreferences->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
+        juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
+        t.addChild(plugin,-1, nullptr);
+        parent.addChild(t, -1, nullptr);
+
+    }
+
+
+}
+
 
 void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     //inLasso = false;
@@ -483,6 +415,7 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     removeChildComponent(&selectorLasso);
     if (edittingComment)
         return;
+
 
 
     juce::MouseEvent e = eo.getEventRelativeTo(this);

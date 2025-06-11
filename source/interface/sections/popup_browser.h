@@ -178,7 +178,7 @@ public:
     }
     void showSelected(bool show) { show_selected_ = show; }
     void select(int select);
-
+    int Ypos;
 private:
     int getViewPosition() {
         int view_height = getHeight();
@@ -220,13 +220,33 @@ public:
     void setPosition(juce::Point<int> position, juce::Rectangle<int> bounds);
 
     void newSelection(PopupList* list, int id, int index) override {
-        if (id >= 0) {
+        if (list == popup_list_.get()) {
+            if (id >= 0) {
+                if (!list->getSelectionItems(index).items.empty()) {
+                    int Ypos   = index * list->getRowHeight() + list->getX();
+                    popup_list_1->setBounds(popup_list_1->getX(),Ypos,popup_list_1->getWidth(),list->getRowHeight()*list->getSelectionItems(index).items.size());
+                    popup_list_1->setSelections(list->getSelectionItems(index));
+                    popup_list_1->showSelected(true);
+                    popup_list_1->setVisible(true);
+                    body_1->setBounds(popup_list_1->getBounds());
+                    border_1->setBounds(popup_list_1->getBounds());
+                    body_1->setVisible(true);
+                    border_1->setVisible(true);
+                } else {
+                    cancel_ = nullptr;
+                    callback_(id,index);
+                    setVisible(false);
+                }
+
+            }
+            else
+                cancel_();
+        } else if (list == popup_list_1.get()) {
+            DBG("asf");
             cancel_ = nullptr;
-            callback_(id);
+            callback_(id,index);
             setVisible(false);
         }
-        else
-            cancel_();
     }
 
     void focusLost(FocusChangeType cause) override {
@@ -235,20 +255,26 @@ public:
             cancel_();
     }
 
-    void setCallback(std::function<void(int)> callback) { callback_ = std::move(callback); }
+    void setCallback(std::function<void(int,int)> callback) { callback_ = std::move(callback); }
     void setCancelCallback(std::function<void()> cancel) { cancel_ = std::move(cancel); }
 
     void showSelections(const PopupItems& selections) {
         popup_list_->setSelections(selections);
+        popup_list_1->setVisible(false);
+        border_1->setVisible(false);
+        body_1->setVisible(false);
     }
 
 private:
     std::shared_ptr<OpenGlQuad> body_;
     std::shared_ptr<OpenGlQuad> border_;
+    std::shared_ptr<OpenGlQuad> body_1;
+    std::shared_ptr<OpenGlQuad> border_1;
 
-    std::function<void(int)> callback_;
+    std::function<void(int,int)> callback_;
     std::function<void()> cancel_;
     std::unique_ptr<PopupList> popup_list_;
+    std::unique_ptr<PopupList> popup_list_1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SinglePopupSelector)
 };

@@ -258,7 +258,7 @@ void ModulationAmountKnob::mouseDown(const juce::MouseEvent& e) {
     hovering_ = false;
     redoImage();
 
-    auto callback = [=](int selection) { handleModulationMenuCallback(selection); };
+    auto callback = [=](int selection,int) { handleModulationMenuCallback(selection); };
     auto cancel = [=]() {
       for (SliderListener* listener : slider_listeners_)
         listener->menuFinished(this);
@@ -398,7 +398,7 @@ void ModulationIndicator::mouseDown(const juce::MouseEvent& e)
         hovering_ = false;
 
 
-        auto callback = [=](int selection) { handleModulationMenuCallback(selection); };
+        auto callback = [=](int selection,int) { handleModulationMenuCallback(selection); };
         auto cancel = [=]() {
 
         };

@@ -301,7 +301,7 @@ void SynthSlider::mouseDown(const juce::MouseEvent& e) {
 
   if (e.mods.isPopupMenu()) {
     PopupItems options = createPopupMenu();
-    parent_->showPopupSelector(this, e.getPosition(), options, [=](int selection) { handlePopupResult(selection); });
+    parent_->showPopupSelector(this, e.getPosition(), options, [=](int selection,int) { handlePopupResult(selection); });
   }
   else {
     if (isRotary())

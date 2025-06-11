@@ -23,7 +23,7 @@
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_core/juce_core.h>
-
+#include "PluginScannerSubprocess.h"
 void handleBitklavierCrash(void* data) {
   //LoadSave::writeCrashLog(juce::SystemStats::getStackBacktrace());
 }
@@ -248,6 +248,13 @@ class SynthApplication : public juce::JUCEApplication {
     bool moreThanOneInstanceAllowed() override { return true; }
 
     void initialise(const juce::String& command_line) override {
+      auto scannerSubprocess = std::make_unique<PluginScannerSubprocess>();
+
+      if (scannerSubprocess->initialiseFromCommandLine (command_line,"bitklavierscanner" ))
+      {
+        storedScannerSubprocess = std::move (scannerSubprocess);
+        return;
+      }
       juce::String command = " " + command_line + " ";
       if (command.contains(" --version ") || command.contains(" -v ")) {
 //        std::cout << getApplicationName() << " " << getApplicationVersion() << newLine;
@@ -277,9 +284,8 @@ class SynthApplication : public juce::JUCEApplication {
       else if (command.contains(" --tableimages ")) {
 
       }
-      else if (command.contains(" --render ")) {
 
-      }
+      else if (command.contains(" --window ")) {}
       else {
         bool visible = !command.contains(" --headless ");
         main_window_ = std::make_unique<MainWindow>(getApplicationName(), visible);
@@ -333,6 +339,7 @@ class SynthApplication : public juce::JUCEApplication {
 
 //      setContentOwned (content, resizeAutomatically);
       }
+  std::unique_ptr<PluginScannerSubprocess> storedScannerSubprocess;
     std::unique_ptr<MainWindow> main_window_;
 };
 

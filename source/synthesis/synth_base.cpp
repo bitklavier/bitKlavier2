@@ -93,7 +93,8 @@ void SynthBase::setMpeEnabled(bool enabled) {
 
 juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor(std::unique_ptr<juce::AudioProcessor> processor , juce::AudioProcessorGraph::NodeID id)
 {
-    processor->prepareToPlay(engine_->getSampleRate(), engine_->getBufferSize());
+
+
     return engine_->addNode(std::move(processor) , id);
 }
 bool SynthBase::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
@@ -207,14 +208,19 @@ void SynthBase::writeAudio(juce::AudioSampleBuffer* buffer, int channels, int sa
 }
 
 
+juce::AudioProcessorGraph::Node::Ptr SynthBase::addPlugin(std::unique_ptr<juce::AudioPluginInstance> instance,
+                                 const juce::String& error,
+                                 juce::Point<double> pos,
+                                 PluginDescriptionAndPreference::UseARA useARA) {
 
 
-
-
+}
 int SynthBase::getSampleRate() {
   return engine_->getSampleRate();
 }
-
+int SynthBase::getBufferSize() {
+    return engine_->getBufferSize();
+}
 bool SynthBase::isMidiMapped(const std::string& name) {
   return midi_manager_->isMidiMapped(name);
 }

@@ -957,7 +957,7 @@ void SynthSection::hidePopupDisplay(bool primary) {
 }
 
 void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> position, const PopupItems &options,
-                                     std::function<void(int)> callback, std::function<void()> cancel) {
+                                     std::function<void(int,int)> callback, std::function<void()> cancel) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent)
         parent->popupSelector(source, position, options, callback, cancel);

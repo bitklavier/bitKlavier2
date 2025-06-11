@@ -10,13 +10,15 @@
 #include "ModulationLineView.h"
 #include "templates/Factory.h"
 #include "common.h"
+#include "PluginWindow.h"
 class OpenGlLine;
 class SynthGuiInterface;
 typedef Loki::Factory<PreparationSection, int,  juce::ValueTree,  SynthGuiInterface*> PreparationFactory;
 class ConstructionSite : public SynthSection,
                          public tracktion::engine::ValueTreeObjectList<PreparationSection>,private juce::KeyListener,
                          public juce::DragAndDropContainer,
-                         public juce::ChangeListener
+                         public juce::ChangeListener,
+                        public PreparationSection::Listener
 
 {
 public:
@@ -43,7 +45,7 @@ public:
 
     bool isSuitableType (const juce::ValueTree& v) const override
     {
-        return v.hasType (IDs::PREPARATION);
+        return v.hasType (IDs::PREPARATION) ;
     }
 
     PreparationSection* createNewObject(const juce::ValueTree& v) override;
@@ -113,8 +115,10 @@ public:
     bool    item_dropped_on_prep_ = false;
 
     juce::Point<int> mouse_drag_position_;
+    juce::OwnedArray<PluginWindow> activePluginWindows;
+    void createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) override;
 private:
-
+    void handlePluginPopup(int selection,int index);
     SynthGuiInterface* _parent;
 
 

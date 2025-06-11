@@ -2,18 +2,16 @@
 /*                           Created by Davis Polito and Joshua Warner                       */
 /*********************************************************************************************/
 
-#include "DirectPreparation.h"
-
-#include "DirectParametersView.h"
+#include "PluginPreparation.h"
 #include "BKitems/BKItem.h"
 #include "synth_slider.h"
 
-// Definition for the DirectPreparation constructor.  It takes three parameters: a pointer to
-// a Direct Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
-// the base class members and private DirectPreparation member proc with an initialization list.
-DirectPreparation::DirectPreparation (std::unique_ptr<DirectProcessor> p,
+// Definition for the PluginPreparation constructor.  It takes three parameters: a pointer to
+// a Plugin Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
+// the base class members and private PluginPreparation member proc with an initialization list.
+PluginPreparation::PluginPreparation (std::unique_ptr<juce::AudioPluginInstance> p,
     juce::ValueTree v, OpenGlWrapper& um) :
-                         PreparationSection(juce::String("direct"), v, um,p.get()),
+                         PreparationSection(juce::String("Plugin"), v, um,p.get()),
                          proc(*p.get()),
                          _proc_ptr(std::move(p))
 {
@@ -30,33 +28,33 @@ DirectPreparation::DirectPreparation (std::unique_ptr<DirectProcessor> p,
 
 }
 
-std::unique_ptr<SynthSection> DirectPreparation::getPrepPopup()
+std::unique_ptr<SynthSection> PluginPreparation::getPrepPopup()
 {
-    return std::make_unique<DirectParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
+    return nullptr;//std::make_unique<PluginParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
 }
 
 
-void DirectPreparation::resized()
+void PluginPreparation::resized()
 {
     PreparationSection::resized();
 }
 
-DirectPreparation::~DirectPreparation()
+PluginPreparation::~PluginPreparation()
 {
 }
 
-juce::AudioProcessor* DirectPreparation::getProcessor()
+juce::AudioProcessor* PluginPreparation::getProcessor()
 {
     return &proc;
 }
 
-std::unique_ptr<juce::AudioProcessor> DirectPreparation::getProcessorPtr()
+std::unique_ptr<juce::AudioProcessor> PluginPreparation::getProcessorPtr()
 {
     return std::move(_proc_ptr);
 }
 
 
-void DirectPreparation::paintBackground(juce::Graphics &g)  {
+void PluginPreparation::paintBackground(juce::Graphics &g)  {
     for (auto * port: objects)
         port->redoImage();
     PreparationSection::paintBackground(g);

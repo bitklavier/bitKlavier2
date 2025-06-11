@@ -30,7 +30,7 @@
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
-
+#include "PluginScannerSubprocess.h"
 class SynthBase :  public juce::ValueTree::Listener {
   public:
     static constexpr float kOutputWindowMinNote = 16.0f;
@@ -59,6 +59,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     bitklavier::SoundEngine* getEngine() { return engine_.get(); }
     juce::MidiKeyboardState* getKeyboardState() { return keyboard_state_.get(); }
     int getSampleRate();
+    int getBufferSize();
     void notifyOversamplingChanged();
     void checkOversampling();
     virtual const juce::CriticalSection& getCriticalSection() = 0;
@@ -78,7 +79,11 @@ class SynthBase :  public juce::ValueTree::Listener {
     };
     juce::AudioDeviceManager* manager;
 
-            juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
+    juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
+  juce::AudioProcessorGraph::Node::Ptr addPlugin(std::unique_ptr<juce::AudioPluginInstance> instance,
+                                   const juce::String& error,
+                                   juce::Point<double> pos,
+                                   PluginDescriptionAndPreference::UseARA useARA);
     juce::AudioProcessorGraph::Node * getNodeForId(juce::AudioProcessorGraph::NodeID id);
     void addConnection(juce::AudioProcessorGraph::Connection& connect);
     void removeConnection(const juce::AudioProcessorGraph::Connection& connect);

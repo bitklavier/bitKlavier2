@@ -10,7 +10,7 @@
  * ******* SampleLoadManager stuff *******
  */
 
-SampleLoadManager::SampleLoadManager (UserPreferences& preferences, SynthGuiInterface* synth_,SynthBase* synth) : preferences (preferences),
+SampleLoadManager::SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences, SynthGuiInterface* synth_,SynthBase* synth) : preferences (preferences),
                                                                                          synth (synth),
                                                                                         synthGui(synth_),
                                                                                          audioFormatManager (new juce::AudioFormatManager())
@@ -157,7 +157,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
     else if (thisSampleType == BKPianoPedal)
         soundsetName = globalPedalsSoundset_name;
 
-    juce::String samplePath = preferences.tree.getProperty("default_sample_path");
+    juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
     samplePath.append("/Default", 20);
     samplePath.append(BKPianoSampleType_string[thisSampleType], 20); // subfolders need to be named accordingly
     juce::File directory(samplePath);
@@ -242,7 +242,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
     bool SampleLoadManager::loadSamples (int selection, bool isGlobal)
     {
         MyComparator sorter;
-        juce::String samplePath = preferences.tree.getProperty ("default_sample_path");
+        juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
 
         samplePath.append (bitklavier::utils::samplepaths[selection], 10); // change to "orig" to test that way
         //samplePath.append("/orig", 10);

@@ -177,7 +177,7 @@ void HeaderSection::buttonClicked(juce::Button* clicked_button) {
       }
 
       juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
-      showPopupSelector(this,position, options, [=](int selection){
+      showPopupSelector(this,position, options, [=](int selection,int){
 
           SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
           parent->sampleLoadManager->loadSamples(selection, true);

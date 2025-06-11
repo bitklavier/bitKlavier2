@@ -28,7 +28,7 @@ public:
     }
 
     juce::StringArray getMenuBarNames() override {
-        return {"File", "Edit"};
+        return {"File", "Edit","Options"};
     }
 
     juce::PopupMenu getMenuForIndex(int topLevelMenuIndex, const juce::String &menuName) override {
@@ -41,6 +41,9 @@ public:
 
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::undo);
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::redo);
+        }
+        else if (menuName == "Options") {
+            menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::showPluginListEditor);
         }
 
         return menu;

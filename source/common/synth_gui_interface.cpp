@@ -56,12 +56,12 @@ void SynthGuiInterface::setGuiSize(float scale) { }
 #include "../interface/look_and_feel/default_look_and_feel.h"
 #include "../interface/fullInterface.h"
 
-
+#include "PluginList.h"
 SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(synth),
                                                                        userPreferences(new UserPreferencesWrapper()),
                                                                        sampleLoadManager(
                                                                            new SampleLoadManager(
-                                                                               userPreferences->userPreferences.get(),
+                                                                               userPreferences,
                                                                                this, synth)) {
     if (use_gui) {
         SynthGuiData synth_data(synth_);
@@ -70,7 +70,7 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
         commandHandler = std::make_unique<ApplicationCommandHandler>(this);
         commandManager.registerAllCommandsForTarget(commandHandler.get());
     }
-    sampleLoadManager->preferences = userPreferences->userPreferences.get();
+    sampleLoadManager->preferences = userPreferences;
     sampleLoadManager->loadSamples(0,true);
     //sampleLoadManager->loadSamples(0, true);
 }
@@ -297,4 +297,72 @@ const juce::CriticalSection &SynthGuiInterface::getCriticalSection() {
 bool SynthGuiInterface::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
     return synth_->isConnected(src, dest);
 }
+
+static bool containsDuplicateNames (const juce::Array<juce::PluginDescription>& plugins, const juce::String& name)
+{
+    int matches = 0;
+
+    for (auto& p : plugins)
+        if (p.name == name && ++matches > 1)
+            return true;
+
+    return false;
+}
+static constexpr int menuIDBase = bitklavier::BKPreparationType::PreparationTypeVST;
+static void addToMenu (const juce::KnownPluginList::PluginTree& tree,
+                       PopupItems& m,
+                       const juce::Array<juce::PluginDescription>& allPlugins,
+                       juce::Array<PluginDescriptionAndPreference>& addedPlugins)
+{
+    for (auto* sub : tree.subFolders)
+    {
+        PopupItems subMenu;
+        subMenu.name    = sub->folder.toStdString();
+        addToMenu (*sub, subMenu, allPlugins, addedPlugins);
+
+        m.addItem (subMenu);
+    }
+
+    auto addPlugin = [&] (const auto& descriptionAndPreference, const auto& pluginName)
+    {
+        addedPlugins.add (descriptionAndPreference);
+        const auto menuID = addedPlugins.size() - 1 + menuIDBase;
+        m.addItem (menuID, pluginName.toStdString());
+    };
+
+    for (auto& plugin : tree.plugins)
+    {
+        auto name = plugin.name;
+
+        if (containsDuplicateNames (tree.plugins, name))
+            name << " (" << plugin.pluginFormatName << ')';
+
+        addPlugin (PluginDescriptionAndPreference { plugin, PluginDescriptionAndPreference::UseARA::no }, name);
+
+#if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
+        if (plugin.hasARAExtension)
+        {
+            name << " (ARA)";
+            addPlugin (PluginDescriptionAndPreference { plugin }, name);
+        }
+#endif
+    }
+}
+PopupItems SynthGuiInterface::getPluginPopupItems() {
+    PopupItems popup;
+
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
+
+    auto pluginDescriptions = userPreferences->userPreferences->knownPluginList.getTypes();
+
+    auto tree = juce::KnownPluginList::createTree (pluginDescriptions, userPreferences->userPreferences->pluginSortMethod);
+    userPreferences->userPreferences->pluginDescriptionsAndPreference = {};
+    popup.addItem(-1,"");
+    addToMenu(*tree,popup,pluginDescriptions,userPreferences->userPreferences->pluginDescriptionsAndPreference);
+    return popup;
+}
+
 #endif

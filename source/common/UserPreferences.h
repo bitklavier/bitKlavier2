@@ -9,7 +9,10 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include "tracktion_ValueTreeUtilities.h"
 #include "Identifiers.h"
+#include "PluginScannerSubprocess.h"
+
 struct UserPreferences : private tracktion::engine::ValueTreeAllEventListener
+    , public juce::ChangeListener
 {
 public:
     juce::File file;
@@ -31,12 +34,34 @@ public:
         juce::String path_to_samples = "~/Library/Application Support/bitklavier/samples";
 
         tree.setProperty("default_sample_path", path_to_samples, nullptr);
+
         juce::ValueTree a (IDs::midiPrefs);
-        if(!tree.getChildWithName(IDs::midiInput).isValid())
+        if(!tree.getChildWithName(IDs::midiPrefs).isValid())
             tree.appendChild(a, nullptr);
+        if ( tree.getChildWithName("KNOWNPLUGINS").isValid()) {
+            knownPluginList.recreateFromXml(*tree.getChildWithName("KNOWNPLUGINS").createXml());
+        }
+        auto val   =int(tree.getProperty("pluginSortMethod", juce::KnownPluginList::sortByManufacturer));
+        pluginSortMethod = static_cast<juce::KnownPluginList::SortMethod>(val);
+        knownPluginList.setCustomScanner (std::make_unique<CustomPluginScanner>(tree));
+        knownPluginList.addChangeListener(this);
+        formatManager.addDefaultFormats();
+    }
+    void changeListenerCallback(juce::ChangeBroadcaster *source) override {
+        if (tree.getChildWithName("KNOWNPLUGINS").isValid()) {
+            auto pluginList = tree.getChildWithName("KNOWNPLUGINS");
+            pluginList.copyPropertiesAndChildrenFrom(juce::ValueTree::fromXml(*knownPluginList.createXml()),nullptr);
+        } else
+            tree.appendChild(juce::ValueTree::fromXml(*knownPluginList.createXml()),nullptr);
     }
 
-    void valueTreeChanged() override { file.replaceWithText(tree.toXmlString()); }
+    void valueTreeChanged() override {
+        file.replaceWithText(tree.toXmlString());
+    }
+    juce::AudioPluginFormatManager formatManager;
+    juce::KnownPluginList knownPluginList;
+    juce::KnownPluginList::SortMethod pluginSortMethod;
+    juce::Array<PluginDescriptionAndPreference> pluginDescriptionsAndPreference;
 };
 
 

@@ -302,7 +302,7 @@ void FullInterface::hideDisplay (bool primary)
         display->setVisible (false);
 }
 
-void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int)> callback, std::function<void()> cancel)
+void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int,int)> callback, std::function<void()> cancel)
 {
     popup_selector_->setCallback (callback);
     popup_selector_->setCancelCallback (cancel);

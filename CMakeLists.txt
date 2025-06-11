@@ -21,9 +21,9 @@ set(PROJECT_NAME "bitKlavier2")
 
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is what DAWs will display)
 # You can also just have it be the same thing as PROJECT_NAME
-# You may want to append the major version on the end of this (and PROJECT_NAME) ala:
+# You may want to append the major version on the end of this (and PROJECT_NAME) ala    JUCE_PLUGINHOST_VST3=1:
 #   set(PROJECT_NAME "MyPlugin_v${MAJOR_VERSION}")
-# Doing so enables major versions to show up in IDEs and DAWs as separate plugins
+# Doing so enables major versions to show up in IDEs and DAWs as separate plugin    JUCE_PLUGINHOST_VST3=
 # allowing you to change parameters and behavior without breaking existing user projects
 set(PROJECT_NAME "bitKlavier${MAJOR_VERSION}")
 set(PRODUCT_NAME "bitKlavier${MAJOR_VERSION}")
@@ -153,8 +153,8 @@ target_compile_definitions(SharedCode
     JUCE_WEB_BROWSER=0  # If you set this to 1, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
     JUCE_USE_CURL=0     # If you set this to 1, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
     JUCE_VST3_CAN_REPLACE_VST2=0
-
         JUCE_OPENGL3=1
+        JUCE_PLUGINHOST_VST3=1
     # Uncomment if you are paying for a an Indie/Pro license or releasing under GPLv3
     # JUCE_DISPLAY_SPLASH_SCREEN=0
         #JUCE_ENABLE_REPAINT_DEBUGGING=1
