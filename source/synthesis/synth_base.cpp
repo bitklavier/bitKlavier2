@@ -30,7 +30,7 @@
 #include "PluginBase.h"
 #include "StateModulator.h"
 #include "TuningProcessor.h"
-
+#include "PreparationList.h"
 SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false), manager(deviceManager) {
 
   self_reference_ = std::make_shared<SynthBase*>();
@@ -59,7 +59,7 @@ SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false)
   modulator_factory.registerType<StateModulatorProcessor, juce::ValueTree>("state");
     mod_connections_.reserve(bitklavier::kMaxModulationConnections);
     state_connections_.reserve(bitklavier::kMaxStateConnections);
-    preparationList = std::make_unique<PreparationList>(tree.getChildWithName(IDs::PREPARATIONS));
+    preparationList = std::make_unique<PreparationList>(*this, tree.getChildWithName(IDs::PREPARATIONS));
 
 }
 
@@ -90,7 +90,7 @@ SynthBase::~SynthBase() {
 void SynthBase::addTuningConnection(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
     auto* sourceNode = getNodeForId(src);
     auto* destNode   = getNodeForId(dest);
-    dynamic_cast<bitklavier::TunableProcessor*>(destNode->getProcessor())->tuning = dynamic_cast<TuningProcessor*>(sourceNode->getProcessor());
+    dynamic_cast<bitklavier::InternalProcessor*>(destNode->getProcessor())->tuning = dynamic_cast<TuningProcessor*>(sourceNode->getProcessor());
 }
 void SynthBase::connectTuning(const juce::ValueTree &v) {
     auto srcid =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( v.getProperty(IDs::src));
@@ -103,8 +103,6 @@ void SynthBase::setMpeEnabled(bool enabled) {
 
 juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor(std::unique_ptr<juce::AudioProcessor> processor , juce::AudioProcessorGraph::NodeID id)
 {
-
-
     return engine_->addNode(std::move(processor) , id);
 }
 bool SynthBase::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {

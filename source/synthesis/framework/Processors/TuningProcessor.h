@@ -150,7 +150,7 @@ struct TuningNonParameterState : chowdsp::NonParamState
 class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams,TuningNonParameterState>>
 {
 public:
-    TuningProcessor(SynthBase* parent,const juce::ValueTree& v);
+    TuningProcessor(SynthBase& parent,const juce::ValueTree& v);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

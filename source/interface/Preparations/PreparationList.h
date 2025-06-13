@@ -73,7 +73,7 @@ public:
     {
         description = getPluginDescription (*inner);
     }
-
+    std::unique_ptr<AudioProcessor> inner;
 private:
     static juce::PluginDescription getPluginDescription (const AudioProcessor& proc)
     {
@@ -112,26 +112,51 @@ private:
             removeBus (isInput);
     }
 
-    std::unique_ptr<AudioProcessor> inner;
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InternalPlugin)
 };
 #include <tracktion_ValueTreeUtilities.h>
 #include "Identifiers.h"
-class PluginInstanceWrapper : public juce::AudioPluginInstance {
+#include "synth_base.h"
+#include "templates/Factory.h"
+class PluginInstanceWrapper  {
     public:
+    PluginInstanceWrapper (juce::AudioProcessor* proc,const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc),node_id(nodeID) {
+        if (!v.getProperty(IDs::nodeID))
+            state.setProperty(IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeID),nullptr);
+    }
+    juce::AudioProcessor* proc;
+    juce::AudioProcessorGraph::NodeID node_id;
     juce::ValueTree state;
-};
 
-class PreparationList : public tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper>{
+};
+typedef Loki::Factory<std::unique_ptr<juce::AudioProcessor>, int,SynthBase& ,const juce::ValueTree&  > PreparationFactory;
+class PreparationList : public tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper>, public juce::ChangeBroadcaster{
 public:
-    PreparationList(const juce::ValueTree & v): tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper>(v) {}
+    PreparationList(SynthBase& parent, const juce::ValueTree & v);
+    ~PreparationList() {
+        freeObjects();
+    }
+
     bool isSuitableType (const juce::ValueTree& v) const override
     {
         return v.hasType (IDs::PREPARATION) ;
     }
+    class Listener {
+    public:
+        virtual ~Listener() {}
+        virtual void moduleListChanged() = 0;
+        virtual void moduleAdded(PluginInstanceWrapper* newModule) = 0;
+        virtual void removeModule(PluginInstanceWrapper* moduleToRemove) = 0;
+    };
+    void addListener (Listener* l) { listeners_.push_back (l); }
 
+    void removeListener (Listener* l) {listeners_.erase(
+                std::remove(listeners_.begin(), listeners_.end(), l),
+                listeners_.end());
+    }
     PluginInstanceWrapper* createNewObject(const juce::ValueTree& v) override;
     void deleteObject (PluginInstanceWrapper* at) override;
 
@@ -141,6 +166,7 @@ public:
     {
         this->parent.appendChild(child,undoManager);
     }
+
     void newObjectAdded (PluginInstanceWrapper*) override;
     void objectRemoved (PluginInstanceWrapper*) override     {}//resized(); }
     void objectOrderChanged() override              { }//resized(); }
@@ -154,7 +180,7 @@ public:
             for(auto obj : objects)
             {
                 juce::MemoryBlock data;
-                obj->getStateInformation(data);
+                obj->proc->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
                 //auto xml = juce::AudioProcessor::getXmlF(data.getData(), (int)data.getSize());
                 if (obj->state.getChild(0).isValid() && xml != nullptr)
@@ -164,7 +190,16 @@ public:
             v.removeProperty("sync", nullptr);
         }
     }
+    void addPlugin (const juce::PluginDescription& desc, const juce::ValueTree& v);
 
+    void addPluginCallback (std::unique_ptr<juce::AudioPluginInstance> instance,
+                                     const juce::String& error,
+                                     const juce::ValueTree &v);
+private:
+    std::unique_ptr<juce::AudioPluginInstance> temporary_instance;
+    PreparationFactory prepFactory;
+    std::vector<Listener*> listeners_;
+    SynthBase& synth;
 };
 
 

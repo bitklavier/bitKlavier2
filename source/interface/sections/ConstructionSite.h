@@ -13,11 +13,14 @@
 #include "PreparationList.h"
 class OpenGlLine;
 class SynthGuiInterface;
-typedef Loki::Factory<PreparationSection, int,  juce::ValueTree,  SynthGuiInterface*> PreparationFactory;
+typedef Loki::Factory<std::unique_ptr<PreparationSection>, int,const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
 class ConstructionSite : public SynthSection,
                          private juce::KeyListener,
                          public juce::DragAndDropContainer,
-                         public juce::ChangeListener
+                         public juce::ChangeListener,
+                        private PreparationList::Listener,
+public PreparationSection::Listener
+
 
 
 {
@@ -99,9 +102,12 @@ public:
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;
 private:
     PreparationList& prep_list;
+    void moduleListChanged() {}
+    void moduleAdded(PluginInstanceWrapper* newModule) override ;
+    void removeModule(PluginInstanceWrapper* moduleToRemove)override {};
     void handlePluginPopup(int selection,int index);
     SynthGuiInterface* _parent;
-
+    NodeFactory nodeFactory;
 
    std::shared_ptr<OpenGlLine> _line;
 
@@ -150,7 +156,7 @@ private:
 
 
 
-    PreparationFactory prepFactory;
+
 
     JUCE_LEAK_DETECTOR(ConstructionSite)
 };

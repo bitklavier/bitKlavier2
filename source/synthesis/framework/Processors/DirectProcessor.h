@@ -129,15 +129,18 @@ struct DirectNonParameterState : chowdsp::NonParamState
     //chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
     //chowdsp::StateValue<bool> isSelected { "selected", true };
 };
-class SynthBase;
+
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState>>,
 public juce::ValueTree::Listener
 {
 public:
-    DirectProcessor (SynthBase* parent,const juce::ValueTree& v);
+    DirectProcessor (SynthBase& parent,const juce::ValueTree& v);
     ~DirectProcessor()
     {
 
+    }
+    static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v) {
+        return std::make_unique<DirectProcessor>(parent,v);
     }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -201,6 +204,7 @@ public:
     void valueTreeChildOrderChanged (juce::ValueTree&, int, int)          {}
     void valueTreeParentChanged     (juce::ValueTree&)                    {}
     void valueTreeRedirected        (juce::ValueTree&)                    {}
+
 
 private:
     //chowdsp::experimental::Directillator<float> oscillator;

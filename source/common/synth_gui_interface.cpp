@@ -72,6 +72,7 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
     }
     sampleLoadManager->preferences = userPreferences;
     sampleLoadManager->loadSamples(0,true);
+    synth_->user_prefs = userPreferences;
     //sampleLoadManager->loadSamples(0, true);
 }
 

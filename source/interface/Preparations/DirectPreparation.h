@@ -20,17 +20,16 @@ class DirectPreparation : public PreparationSection
                             {
 public:
 
-    // Constructor method that takes three arguments: a smart pointer to a PolygonalOscProcessor,
-    // a value tree, and a reference to an OpenGlWrapper object
+
     DirectPreparation(juce::ValueTree v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface*);
 
     // Destructor method
     ~DirectPreparation();
 
     // Static function that returns a pointer to a DirectPreparation object
-    static PreparationSection* createDirectSection(juce::ValueTree v, SynthGuiInterface* interface) {
+    static std::unique_ptr<PreparationSection> createDirectSection(const juce::ValueTree& v, SynthGuiInterface* interface) {
 
-        return new DirectPreparation(v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
+        return std::make_unique<DirectPreparation> (v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
 
     // Public function definitions for the DirectPreparation class, which override functions
@@ -55,9 +54,6 @@ public:
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
     void paintBackground(juce::Graphics &g);
-
-
-//
 
 
 

@@ -257,7 +257,7 @@ void PopupList::initOpenGlComponents(OpenGlWrapper &open_gl) {
     hover_->init(open_gl);
     SynthSection::initOpenGlComponents(open_gl);
 }
-
+//font drawing
 void PopupList::redoImage() {
     if (getWidth() <= 0 || getHeight() <= 0)
         return;
@@ -312,7 +312,7 @@ juce::Font PopupList::getFont() {
     font.setHeightWithoutChangingWidth(getRowHeight() * 0.8f);
     return Fonts::instance()->proportional_light().withHeight(getRowHeight() * 0.8f);
 }
-
+//font drawing
 void PopupList::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
     juce::Rectangle<int> view_bounds(getLocalBounds());
     OpenGlComponent::setViewPort(this, view_bounds, open_gl);

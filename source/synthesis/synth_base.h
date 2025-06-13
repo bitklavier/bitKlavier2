@@ -31,6 +31,7 @@
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
+class PreparationList;
 #include "PluginScannerSubprocess.h"
 class SynthBase :  public juce::ValueTree::Listener {
   public:
@@ -79,7 +80,7 @@ class SynthBase :  public juce::ValueTree::Listener {
       float value;
     };
     juce::AudioDeviceManager* manager;
-
+    std::shared_ptr<UserPreferencesWrapper> user_prefs;
     juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
   juce::AudioProcessorGraph::Node::Ptr addPlugin(std::unique_ptr<juce::AudioPluginInstance> instance,
                                    const juce::String& error,

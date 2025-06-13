@@ -27,6 +27,8 @@ DirectPreparation::DirectPreparation (juce::ValueTree v, OpenGlWrapper &open_gl,
     setSkinOverride (Skin::kDirect);
     juce::MemoryBlock data;
 
+    width = 245;
+    height = 125;
 }
 
 std::unique_ptr<SynthSection> DirectPreparation::getPrepPopup()

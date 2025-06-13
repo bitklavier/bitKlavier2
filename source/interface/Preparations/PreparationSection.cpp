@@ -40,12 +40,7 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
     }
 
 
-    //get xml for valuetree from audioprocessor
-    // juce::MemoryBlock data;
-    // auto xml = juce::parseXML(data.toString());
-    //
-    // if (!state.getChild(0).isValid() && xml != nullptr)
-    //     state.addChild(juce::ValueTree::fromXml(*xml), 0, nullptr);
+
 }
 
 juce::AudioProcessor *PreparationSection::getProcessor() const {
@@ -71,16 +66,16 @@ void PreparationSection::paintBackground(juce::Graphics &g) {
 }
 
 
-void PreparationSection::setNodeInfo(juce::AudioProcessorGraph::Node::Ptr _node) {
+void PreparationSection::setNodeInfo() {
     if (auto interface = findParentComponentOfClass<SynthGuiInterface>()) {
         if (auto *node = interface->getSynth()->getNodeForId(pluginID)) {
-            node = _node;
+
 
             this->state.setProperty(IDs::nodeID,
                                     juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
                                     nullptr);
             int i = 0;
-            auto &processor = *_node->getProcessor();
+            auto &processor = *node->getProcessor();
             if (objects.isEmpty()) {
                 juce::MessageManager::callAsync([safeComp = juce::Component::SafePointer<PreparationSection>(this)] {
                     safeComp->setPortInfo();

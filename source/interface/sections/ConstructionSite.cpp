@@ -23,28 +23,18 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     addKeyListener(this);
     setSkinOverride(Skin::kConstructionSite);
     setInterceptsMouseClicks(false, true);
-    //addAndMakeVisible (cableView);
     data->synth->getEngine()->addChangeListener(this);
-    //addMouseListener (&cableView, true);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::createDirectSection);
-    //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicPreparation::createNostalgicSection);
-    //prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
-    //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeResonance, ResonancePreparation::createResonanceSection);
-    //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicPreparation::createSynchronicSection);
-    //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::createBlendronicSection);
-    //    prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::createTempoSection);
-    //prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningPreparation::createTuningSection);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,
-                         ModulationPreparation::createModulationSection);
-    //prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST,PluginPreparation::createPluginSection);
-    //    cableView.toBack();
+
     cableView.setAlwaysOnTop(true);
     addSubSection(&cableView);
     cableView.setAlwaysOnTop(true);
     addSubSection(&modulationLineView);
     modulationLineView.setAlwaysOnTop(false);
-    //    modulationLineView.setAlwaysOnTop(true);
-    //    addOpenGlComponent(_line);
+    prep_list.addListener(this);
+    prep_list.addChangeListener(this);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::createDirectSection);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::createPluginSection);
 }
 
 
@@ -100,6 +90,34 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
 
 }
 
+void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
+    auto * interface = findParentComponentOfClass<SynthGuiInterface>();
+    auto s = nodeFactory.CreateObject(wrapper->state.getProperty(IDs::type), wrapper->state,interface );
+    addSubSection(s.get());
+    Skin default_skin;
+    s->setSkinValues(default_skin, false);
+    s->setDefaultColor();
+    s->setSizeRatio(size_ratio_);
+    s->setCentrePosition(s->x, s->y);
+    s->setSize(s->width, s->height);
+
+
+    s->addSoundSet(&interface->sampleLoadManager->samplerSoundset);
+    if (!interface->sampleLoadManager->samplerSoundset.empty()) {
+        s->addSoundSet(
+            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalSoundset_name],
+            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalHammersSoundset_name],
+            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalReleaseResonanceSoundset_name],
+            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalPedalsSoundset_name]);
+    }
+    s->selectedSet = &(preparationSelector.getLassoSelection());
+    preparationSelector.getLassoSelection().addChangeListener(s.get());
+    s->addListener(&cableView);
+    s->addListener(&modulationLineView);
+    s->addListener(this);
+    s->setNodeInfo();
+    plugin_components.push_back(std::move(s));
+}
 ConstructionSite::~ConstructionSite(void) {
     removeMouseListener(&cableView);
     removeChildComponent(&selectorLasso);
@@ -321,7 +339,7 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::height, 260, nullptr);
         t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.appendChild(t, nullptr);
     } else {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::PREPARATION);
@@ -334,7 +352,7 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         auto desc = _parent->userPreferences->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
         t.addChild(plugin,-1, nullptr);
-        parent.addChild(t, -1, nullptr);
+        prep_list.addPlugin(desc.pluginDescription,t);
 
     }
 

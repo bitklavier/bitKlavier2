@@ -7,7 +7,7 @@
 #include "common.h"
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include "synth_base.h"
-DirectProcessor::DirectProcessor (SynthBase* parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
+DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
 mainSynth(new BKSynthesiser(state.params.env, state.params.gainParam)),
 hammerSynth(new BKSynthesiser(state.params.env,state.params.hammerParam)),
 releaseResonanceSynth(new BKSynthesiser(state.params.env,state.params.releaseResonanceParam)),
@@ -37,8 +37,8 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
         mod++;
     }
     //add state change params here
-    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
-    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
+    parent.getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
+    parent.getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
 
 }
 

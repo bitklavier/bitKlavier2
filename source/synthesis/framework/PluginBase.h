@@ -5,21 +5,23 @@
 #ifndef BITKLAVIER2_PLUGINBASE_H
 #define BITKLAVIER2_PLUGINBASE_H
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
-#include <chowdsp_parameters/chowdsp_parameters.h>
+
 #include "Identifiers.h"
+class SynthSection;
 class SynthBase;
 class TuningProcessor;
 namespace bitklavier {
-    class TunableProcessor : public juce::AudioProcessor {
+    class InternalProcessor : public juce::AudioProcessor {
     public:
-        TunableProcessor(juce::AudioProcessor::BusesProperties layout) : juce::AudioProcessor(layout)
+        InternalProcessor(juce::AudioProcessor::BusesProperties layout) : juce::AudioProcessor(layout)
         {
         }
-        TunableProcessor() : juce::AudioProcessor()
+        InternalProcessor() : juce::AudioProcessor()
         {
         }
 
         TuningProcessor* tuning = nullptr; //getTuningProcessor() const;
+        //virtual std::unique_ptr<SynthSection> createSynthSection() = 0;
     };
     /**
   * Base class for plugin processors.
@@ -33,7 +35,7 @@ namespace bitklavier {
 #else
     template <class Processor>
 #endif
-    class PluginBase : public TunableProcessor
+    class PluginBase : public InternalProcessor
 #if JUCE_MODULE_AVAILABLE_chowdsp_clap_extensions
         ,
                    public CLAPExtensions::CLAPInfoExtensions,
@@ -41,7 +43,7 @@ namespace bitklavier {
 #endif
     {
     public:
-        explicit PluginBase ( SynthBase *parent, const  juce::ValueTree & v ={},juce::UndoManager* um = nullptr, const juce::AudioProcessor::BusesProperties& layout = getDefaultBusLayout());
+        explicit PluginBase ( SynthBase &parent, const  juce::ValueTree & v ={},juce::UndoManager* um = nullptr, const juce::AudioProcessor::BusesProperties& layout = getDefaultBusLayout());
         ~PluginBase() override = default;
 
 #if defined JucePlugin_Name
@@ -171,8 +173,8 @@ namespace bitklavier {
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
 #include "bk_XMLSerializer.h"
     template <class State>
-    PluginBase<State>::PluginBase (SynthBase* parent,const juce::ValueTree &v_, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
-            : TunableProcessor (layout),
+    PluginBase<State>::PluginBase (SynthBase& parent,const juce::ValueTree &v_, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
+            : InternalProcessor (layout),
               state (*this, um),
               v(v_)
     {

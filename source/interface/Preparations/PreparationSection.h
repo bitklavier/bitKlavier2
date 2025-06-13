@@ -205,7 +205,7 @@ public:
 
     virtual std::unique_ptr<SynthSection> getPrepPopup() {}
 
-    void setNodeInfo(juce::AudioProcessorGraph::Node::Ptr _node);
+    void setNodeInfo();
     juce::AudioProcessor* getProcessor() const;
 
 
