@@ -17,6 +17,9 @@ KeymapPreparation::KeymapPreparation (const juce::ValueTree& v, OpenGlWrapper &o
     addAndMakeVisible (item.get());
 
     setSkinOverride (Skin::kKeymap);
+    state.setProperty(IDs::width, 185, nullptr);
+    state.setProperty(IDs::height, 105, nullptr);
+
 
 }
 

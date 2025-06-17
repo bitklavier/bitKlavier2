@@ -124,7 +124,7 @@ private:
 class PluginInstanceWrapper  {
     public:
     PluginInstanceWrapper (juce::AudioProcessor* proc,const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc),node_id(nodeID) {
-        if (!v.getProperty(IDs::nodeID))
+        // if (!v.getProperty(IDs::nodeID))
             state.setProperty(IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeID),nullptr);
     }
     juce::AudioProcessor* proc;
@@ -195,6 +195,7 @@ public:
     void addPluginCallback (std::unique_ptr<juce::AudioPluginInstance> instance,
                                      const juce::String& error,
                                      const juce::ValueTree &v);
+    void setValueTree(const juce::ValueTree& v);
 private:
     std::unique_ptr<juce::AudioPluginInstance> temporary_instance;
     PreparationFactory prepFactory;

@@ -37,7 +37,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data) : SynthSection ("full_in
 
     synth_data->tree.addChild (t, -1, nullptr);
     vt = t;
-    main_ = std::make_unique<MainSection> (synth_data->tree.getChildWithName (IDs::PIANO), synth_data->um, open_gl_, synth_data);
+    main_ = std::make_unique<MainSection> (synth_data->tree, synth_data->um, open_gl_, synth_data);
     addSubSection (main_.get());
     main_->addListener (this);
     valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);

@@ -44,14 +44,17 @@ SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false)
 
   Startup::doStartupChecks();
   tree = juce::ValueTree(IDs::GALLERY);
+
   tree.setProperty(IDs::mainSampleSet,"Piano (Default)",nullptr);
+    juce::ValueTree piano(IDs::PIANO);
     juce::ValueTree preparations(IDs::PREPARATIONS);
     juce::ValueTree connections(IDs::CONNECTIONS);
     juce::ValueTree modconnections(IDs::MODCONNECTIONS);
 
-    tree.appendChild(preparations, nullptr);
-    tree.appendChild(connections, nullptr);
-    tree.appendChild(modconnections, nullptr);
+    piano.appendChild(preparations, nullptr);
+    piano.appendChild(connections, nullptr);
+    piano.appendChild(modconnections, nullptr);
+    tree.appendChild(piano, nullptr);
   tree.addListener(this);
 
   //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
@@ -59,7 +62,7 @@ SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false)
   modulator_factory.registerType<StateModulatorProcessor, juce::ValueTree>("state");
     mod_connections_.reserve(bitklavier::kMaxModulationConnections);
     state_connections_.reserve(bitklavier::kMaxStateConnections);
-    preparationList = std::make_unique<PreparationList>(*this, tree.getChildWithName(IDs::PREPARATIONS));
+    preparationList = std::make_unique<PreparationList>(*this, tree.getChildWithName(IDs::PIANO).getChildWithName(IDs::PREPARATIONS));
 
 }
 

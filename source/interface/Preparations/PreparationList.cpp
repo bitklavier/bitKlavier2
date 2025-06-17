@@ -11,6 +11,7 @@ PreparationList::PreparationList(SynthBase& parent,const juce::ValueTree &v) : t
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap,KeymapProcessor::create);
 }
 
+
 PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v) {
     juce::AudioProcessor* rawPtr;
     juce::AudioProcessorGraph::Node::Ptr node_ptr;
@@ -38,12 +39,15 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
 
 }
 void PreparationList::deleteObject(PluginInstanceWrapper *at) {
-
-
+    delete at;
 }
 
 void PreparationList::valueTreeRedirected(juce::ValueTree &) {
-
+    deleteAllObjects();
+    rebuildObjects();
+    for (auto object: objects) {
+        newObjectAdded(object);
+    }
 }
 
 void PreparationList::newObjectAdded(PluginInstanceWrapper *instance_wrapper) {
@@ -104,4 +108,8 @@ void PreparationList::addPluginCallback (std::unique_ptr<juce::AudioPluginInstan
         temporary_instance = std::move(instance);
         parent.addChild(v,-1,nullptr);
     }
+}
+
+void PreparationList::setValueTree(const juce::ValueTree &v) {
+    parent = v;
 }

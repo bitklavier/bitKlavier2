@@ -9,20 +9,20 @@
 #include "ConstructionSite.h"
 #include "synth_base.h"
 
-PreparationSection::PreparationSection(juce::String name, juce::ValueTree v, OpenGlWrapper &open_gl,
+PreparationSection::PreparationSection(juce::String name, const juce::ValueTree& v, OpenGlWrapper &open_gl,
                                        juce::AudioProcessorGraph::NodeID node) :
 tracktion::engine::ValueTreeObjectList<BKPort>(v),
     SynthSection(name), state(v), _open_gl(open_gl),
-    pluginID(juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)))
+    pluginID(node)
 {
     //_parent = findParentComponentOfClass<SynthGuiInterface>();
     setInterceptsMouseClicks(true, false);
-    x.referTo(v, IDs::x, nullptr);
-    y.referTo(v, IDs::y, nullptr);
-    width.referTo(v, IDs::width, nullptr);
-    height.referTo(v, IDs::height, nullptr);
-    numIns.referTo(v, IDs::numIns, nullptr);
-    numOuts.referTo(v, IDs::numOuts, nullptr);
+    x.referTo(state, IDs::x, nullptr);
+    y.referTo(state, IDs::y, nullptr);
+    width.referTo(state, IDs::width, nullptr);
+    height.referTo(state, IDs::height, nullptr);
+    numIns.referTo(state, IDs::numIns, nullptr);
+    numOuts.referTo(state, IDs::numOuts, nullptr);
     //constrainer.setBoundsForComponent(this,getParentComponent()->getLocalBounds() );
     uuid.referTo(state, IDs::uuid, nullptr);
     //pluginID.uid = static_cast<uint32>(int(state.getProperty(IDs::uuid)));

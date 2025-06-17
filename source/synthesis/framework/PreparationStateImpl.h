@@ -129,19 +129,6 @@ namespace bitklavier
             expectedNumChildElements,
         };
 
-//        if (Serializer::getNumChildElements (serial) != expectedNumChildElements)
-//        {
-//            jassertfalse; // state load error!
-//            return;
-//        }
-
-//#if defined JucePlugin_VersionString
-//    Serializer::template deserialize<Serializer> (Serializer::getChildElement (serial, versionChildIndex), object.pluginStateVersion);
-//#else
-//    using namespace version_literals;
-//    object.pluginStateVersion = "0.0.0"_v;
-//#endif
-//
         //Serializer::template deserialize<Serializer, chowdsp::NonParamState> (Serializer::getChildElement (serial, "nonparam"), object.nonParams);
         if ( Serializer::getChildElement (serial, object.params.getName()))
             Serializer::template deserialize<Serializer, ParameterState> (Serializer::getChildElement (serial, object.params.getName()), object.params);

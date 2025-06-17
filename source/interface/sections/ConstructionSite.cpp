@@ -44,11 +44,11 @@ void ConstructionSite::reset() {
     SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
     if (_parent == nullptr)
         return;
-        // if (_parent->getSynth() != nullptr) {
-        //     _parent->getSynth()->getEngine()->resetEngine();
-        //     parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
-        //         IDs::PREPARATIONS);
-        // }
+        if (_parent->getSynth() != nullptr) {
+            _parent->getSynth()->getEngine()->resetEngine();
+            prep_list.setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
+                IDs::PREPARATIONS));
+        }
 
         cableView.reset();
         modulationLineView.reset();
@@ -163,15 +163,15 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         prep_list.appendChild(t,  nullptr);
     } else if (code == 78) // N nostalgic
     {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
-        t.setProperty(IDs::width, 260, nullptr);
-        t.setProperty(IDs::height, 132, nullptr);
-        t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
-        t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
-
-        prep_list.appendChild(t,  nullptr);
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
+        // t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
+        //
+        // prep_list.appendChild(t,  nullptr);
     } else if (code == 75) // K Keymap
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -184,63 +184,63 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         prep_list.appendChild(t,  nullptr);
     } else if (code == 82) // R resonance
     {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
-        t.setProperty(IDs::width, 260, nullptr);
-        t.setProperty(IDs::height, 132, nullptr);
-        t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
     } else if (code == 83) // S synchronic
     {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
-        t.setProperty(IDs::width, 260, nullptr);
-        t.setProperty(IDs::height, 132, nullptr);
-        t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
     } else if (code == 66) // B blendronic
     {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
-        t.setProperty(IDs::width, 260, nullptr);
-        t.setProperty(IDs::height, 132, nullptr);
-        t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
     } else if (code == 77) // M tempo
     {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
-        t.setProperty(IDs::width, 132, nullptr);
-        t.setProperty(IDs::height, 260, nullptr);
-        t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
+        // t.setProperty(IDs::width, 132, nullptr);
+        // t.setProperty(IDs::height, 260, nullptr);
+        // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
     } else if (code == 84) // T tuning
     {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
-        t.setProperty(IDs::width, 125, nullptr);
-        t.setProperty(IDs::height, 245, nullptr);
-        t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
+        // t.setProperty(IDs::width, 125, nullptr);
+        // t.setProperty(IDs::height, 245, nullptr);
+        // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
     } else if (k.getTextCharacter() == 'c') {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
-        t.setProperty(IDs::width, 100, nullptr);
-        t.setProperty(IDs::height, 100, nullptr);
-        t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
+        // t.setProperty(IDs::width, 100, nullptr);
+        // t.setProperty(IDs::height, 100, nullptr);
+        // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
     }
     return true;
 }

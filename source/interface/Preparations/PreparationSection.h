@@ -30,7 +30,7 @@ public:
     static constexpr float kItemPaddingX = 2.0f;
 
     // Constructor Declaration
-    PreparationSection(juce::String name, juce::ValueTree v, OpenGlWrapper &um, juce::AudioProcessorGraph::NodeID node);
+    PreparationSection(juce::String name,const juce::ValueTree& v, OpenGlWrapper &um, juce::AudioProcessorGraph::NodeID node);
 
     // Destructor Declaration
     ~PreparationSection();
