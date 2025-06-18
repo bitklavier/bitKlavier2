@@ -27,7 +27,9 @@
 #include "RampModulator.h"
 #include "valuetree_utils/VariantConverters.h"
 #include "ModulationProcessor.h"
+#include "PluginBase.h"
 #include "StateModulator.h"
+#include "TuningProcessor.h"
 
 SynthBase::SynthBase(juce::AudioDeviceManager * deviceManager) : expired_(false), manager(deviceManager) {
 
@@ -75,7 +77,16 @@ SynthBase::~SynthBase() {
 //}
 
 
-
+void SynthBase::addTuningConnection(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
+    auto* sourceNode = getNodeForId(src);
+    auto* destNode   = getNodeForId(dest);
+    dynamic_cast<bitklavier::TunableProcessor*>(destNode->getProcessor())->tuning = dynamic_cast<TuningProcessor*>(sourceNode->getProcessor());
+}
+void SynthBase::connectTuning(const juce::ValueTree &v) {
+    auto srcid =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( v.getProperty(IDs::src));
+    auto dstid =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(  v.getProperty(IDs::dest));
+    addTuningConnection(srcid,dstid);
+}
 void SynthBase::setMpeEnabled(bool enabled) {
   midi_manager_->setMpeEnabled(enabled);
 }
@@ -367,18 +378,6 @@ void SynthBase::connectModulation(bitklavier::ModulationConnection *connection) 
 }
 bool SynthBase::connectModulation(const juce::ValueTree &v) {
     if (v.getProperty(IDs::isState)) {
-        bitklavier::ModulationConnection* connection = getConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
-        bool create = connection == nullptr;
-        if (create)
-        {
-            connection = getModulationBank().createConnection (v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
-            connection->state = v;
-        }
-        if (connection)
-            connectModulation(connection);
-        return create;
-    }
-    else {
         bitklavier::StateConnection* connection =  getStateConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
         bool create = connection == nullptr;
         if (create) {
@@ -390,6 +389,19 @@ bool SynthBase::connectModulation(const juce::ValueTree &v) {
             connectStateModulation(connection);
         return create;
     }
+
+
+
+        bitklavier::ModulationConnection* connection = getConnection(v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+        bool create = connection == nullptr;
+        if (create)
+        {
+            connection = getModulationBank().createConnection (v.getProperty(IDs::src).toString().toStdString(),v.getProperty(IDs::dest).toString().toStdString());
+            connection->state = v;
+        }
+        if (connection)
+            connectModulation(connection);
+        return create;
 }
 
 bool SynthBase::connectModulation(const std::string &source, const std::string &destination) {

@@ -5,14 +5,20 @@
 #ifndef BITKLAVIER2_KEYMAPPROCESSOR_H
 #define BITKLAVIER2_KEYMAPPROCESSOR_H
 
-#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
-#include <chowdsp_sources/chowdsp_sources.h>
-#include <chowdsp_plugin_state/chowdsp_plugin_state.h>
-#include <juce_audio_devices/juce_audio_devices.h>
+
+#include "json.hpp"
 #include "midi_manager.h"
 #include "PreparationStateImpl.h"
 #include "PluginBase.h"
+struct KeymapKeyboardState {
+    KeymapKeyboardState() {
+        keyStates.set();
+    }
+    std::bitset<128> harmonizationState;
+    std::bitset<128> keyToHarmonize;
+    std::bitset<128> keyStates;
+};
+
 struct KeymapParams : chowdsp::ParamHolder
 {
 
@@ -21,38 +27,18 @@ struct KeymapParams : chowdsp::ParamHolder
 
     KeymapParams() : chowdsp::ParamHolder("keymap")
     {
-//        add (gainParam,
-//             sustainParam,
-//             attackParam
-//        );
     }
 
-//    // juce::Gain param
-//    chowdsp::GainDBParameter::Ptr gainParam {
-//            juce::ParameterID { "gain", 100 },
-//            "Gain",
-//            juce::NormalisableRange { -30.0f, 0.0f },
-//            -24.0f
-//    };
-//
-//    // Float param
-//    chowdsp::FloatParameter::Ptr sustainParam {
-//            juce::ParameterID { "sustain", 100 },
-//            "Sustain",
-//            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f),
-//            1000.0f,
-//            &chowdsp::ParamUtils::floatValToString,
-//            &chowdsp::ParamUtils::stringToFloatVal
-//    };
-//
-//    chowdsp::TimeMsParameter::Ptr attackParam {
-//            juce::ParameterID { "attack", 100 },
-//            "attack",
-//            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f),
-//            3.5f,
 //    };
 
+    KeymapKeyboardState keyboard_state;
+    /** Custom serializer */
+    template <typename Serializer>
+    static typename Serializer::SerializedType serialize (const KeymapParams& paramHolder);
 
+    /** Custom deserializer */
+    template <typename Serializer>
+    static void deserialize (typename Serializer::DeserializedType deserial, KeymapParams& paramHolder);
     /****************************************************************************************/
 };
 
@@ -66,7 +52,7 @@ struct KeymapNonParameterState : chowdsp::NonParamState
     //chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
-class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<KeymapParams,KeymapNonParameterState,chowdsp::XMLSerializer>>
+class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<KeymapParams,KeymapNonParameterState>>
 {
 public:
     KeymapProcessor(const juce::ValueTree& v, juce::AudioDeviceManager* manager);
@@ -101,8 +87,6 @@ public:
 
     std::unique_ptr<MidiManager> _midi;
 private:
-    //chowdsp::experimental::Keymapillator<float> oscillator;
-    chowdsp::Gain<float> gain;
     juce::MidiKeyboardState keyboard_state;
 
     // user settings

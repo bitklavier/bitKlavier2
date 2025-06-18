@@ -104,7 +104,7 @@ struct NostalgicNonParameterState : chowdsp::NonParamState
     chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
-class NostalgicProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<NostalgicParams,NostalgicNonParameterState,chowdsp::XMLSerializer>>
+class NostalgicProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<NostalgicParams,NostalgicNonParameterState>>
 {
 public:
     NostalgicProcessor();

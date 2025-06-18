@@ -104,7 +104,7 @@ struct ResonanceNonParameterState : chowdsp::NonParamState
     chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
-class ResonanceProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<ResonanceParams,ResonanceNonParameterState,chowdsp::XMLSerializer>>
+class ResonanceProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<ResonanceParams,ResonanceNonParameterState>>
 {
 public:
     ResonanceProcessor();

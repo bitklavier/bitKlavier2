@@ -82,6 +82,8 @@ class SynthBase :  public juce::ValueTree::Listener {
     juce::AudioProcessorGraph::Node * getNodeForId(juce::AudioProcessorGraph::NodeID id);
     void addConnection(juce::AudioProcessorGraph::Connection& connect);
     void removeConnection(const juce::AudioProcessorGraph::Connection& connect);
+    void addTuningConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
+    void connectTuning(const juce::ValueTree& v);
   bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID) ;
     juce::ValueTree& getValueTree();
     juce::UndoManager& getUndoManager();

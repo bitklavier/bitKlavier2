@@ -139,6 +139,9 @@ bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
     //sampleLoadManager->loadSamples()
 }
 
+juce::UndoManager *SynthGuiInterface::getUndoManager() {
+    return &getSynth()->getUndoManager();
+}
 void SynthGuiInterface::tryEnqueueProcessorInitQueue(juce::FixedSizeFunction<64, void()> callback) {
     if (loading) {
         callback();
@@ -269,6 +272,8 @@ void SynthGuiInterface::openSaveDialog() {
             juce::File file(name);
             if (!result.isEmpty()) {
                 juce::FileOutputStream output(file);
+                output.setPosition(0);
+                output.truncate();
                 output.writeText(xml_.toString(), false, false, {});
                 //                                         std::unique_ptr<juce::InputStream> wi (file.createInputStream());
                 //                                         std::unique_ptr<juce::OutputStream> wo (result.createOutputStream());

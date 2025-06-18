@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="Piano (Default)">
+  <GLOBALPIANOSAMPLES mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+                      pedalSampleSet="/defaultPedals"/>
+  <PIANO name="default">
+    <PREPARATIONS>
+      <PREPARATION type="5" width="125" height="245" x="465" y="98" uuid="cee17eda8d494c6e821e9814e8982897"
+                   nodeID="4" numIns="1">
+        <tuning tuningSystem="2" fundamental="3" adaptiveSystem="0" circularTuning="-15.641 -31.1745 -11.731 0 11.7313 3.9101 15.6414 -13.686 -1.9547 -17.4873 1.9547 13.6864 "
+                absoluteTuning=""/>
+        <PORT nodeID="4" chIdx="4096" isIn="1"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

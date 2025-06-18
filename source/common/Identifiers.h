@@ -44,7 +44,7 @@ namespace IDs
     DECLARE_ID(isIn)
     DECLARE_ID (PORT)
     DECLARE_ID (chIdx)
-
+    DECLARE_ID (TUNINGCONNECTION)
     DECLARE_ID(MODCONNECTION)
     DECLARE_ID(MODCONNECTIONS)
 
@@ -70,6 +70,8 @@ namespace IDs
     DECLARE_ID(parameter)
     DECLARE_ID(MODULATABLE_PARAM)
 
+    DECLARE_ID(absoluteTuning)
+    DECLARE_ID(circularTuning)
     DECLARE_ID(isState)
 }
 

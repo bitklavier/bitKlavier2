@@ -179,7 +179,7 @@ struct StateConnection : public ModulatorBase::Listener{
         {
             state.setProperty(IDs::modAmt, amt, nullptr);
         }
-        void setChangeBuffer(bitklavier::ParameterChangeBuffer* buf) {
+        void setChangeBuffer(ParameterChangeBuffer* buf) {
             changeBuffer = buf;
         }
         void setChange(const juce::ValueTree& _change) {change = _change;}
@@ -215,7 +215,7 @@ struct StateConnection : public ModulatorBase::Listener{
         ModulationProcessor* parent_processor;
         ModulatorBase* processor;
         int modulation_output_bus_index;
-        bitklavier::ParameterChangeBuffer* changeBuffer = nullptr;
+        ParameterChangeBuffer* changeBuffer = nullptr;
     private:
        // std::atomic<float> scalingValue_;
 //        std::atomic<float>* bipolarOffset;
@@ -234,7 +234,7 @@ struct StateConnection : public ModulatorBase::Listener{
 
         StateConnection* atIndex(int index) { return all_connections_[index].get(); }
         size_t numConnections() { return all_connections_.size(); }
-        void addParam(std::pair<std::string,bitklavier::ParameterChangeBuffer*>&&);
+        void addParam(std::pair<std::string,ParameterChangeBuffer*>&&);
         void reset() {
             for ( auto& c : all_connections_ ) {
                 c->reset();
@@ -243,7 +243,7 @@ struct StateConnection : public ModulatorBase::Listener{
         }
 
     private:
-        std::map<std::string,bitklavier::ParameterChangeBuffer*> parameter_map;
+        std::map<std::string,ParameterChangeBuffer*> parameter_map;
         std::vector<std::unique_ptr<StateConnection>> all_connections_;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StateConnectionBank)
     };

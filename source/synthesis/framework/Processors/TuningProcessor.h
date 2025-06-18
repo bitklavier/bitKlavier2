@@ -11,51 +11,10 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
-
 #include "PluginBase.h"
-// TODO change params
-
-typedef enum TuningSystem {
-    Equal_Temperament = 1 << 0,
-    Partial= 1 << 1,
-    Just = 1 << 2,
-    Duodene = 1 << 3,
-    Otonal= 1 << 4,
-    Utonal = 1 << 5,
-    Custom = 1 << 6,
-    Pythagorean = 1 << 9,
-    Grammateus = 1 << 10,
-    Kirnberger_II = 1 << 11,
-    Kirnberger_III = 1 << 12,
-    Werkmeister_III = 1 << 13,
-    Quarter2Comma_Meantone = 1 << 14,
-    Split2Wolf_QC_Meantone = 1 << 15,
-    Transposing_QC_Meantone = 1 << 16,
-    Corrette = 1 << 17,
-    Rameau = 1 << 18,
-    Marpurg = 1 << 19,
-    Eggars_English_Ord = 1 << 20,
-    Third2Comma_Meantone = 1 << 21,
-    D_Alembert_Rousseau = 1 << 22,
-    Kellner = 1 << 23,
-    Vallotti = 1 << 24,
-    Young_II = 1 << 25,
-    Sixth_Comma_Meantone = 1 << 26,
-    Bach1Barnes = 1 << 27,
-    Neidhardt = 1 << 28,
-    Bach1Lehman = 1 << 29,
-    Bach1O3Donnell = 1 << 30,
-    Bach1Hill = 1 << 31,
-    Bach1Swich = 1LL << 32,
-    Lambert = 1LL << 33,
-    Eighth2Comma_WT = 1LL << 34,
-    Pinnock_Modern = 1LL << 35,
-    Common_Just = 1LL << 36,
-    Symmetric_Just = 1LL << 37,
-    Youn_Well_Tuned_Piano = 1LL << 38,
-    Harrison_Strict_Songs = 1LL << 39,
-} TuningSystem;
-
+#include "PreparationStateImpl.h"
+#include "tuning_systems.h"
+#include "array_to_string.h"
 enum Fundamental : uint32_t {
     C        = 1 << 0,
     C41D5    = 1 << 1,
@@ -78,6 +37,67 @@ enum AdaptiveSystems {
     Adaptive_Anchored = 1<<2,
     Spring = 1<<3,
 };
+
+
+struct TuningKeyboardState : bitklavier::StateChangeableParameter {
+    juce::MidiKeyboardState keyboardState;
+    std::array<float,128> absoluteTuningOffset = {0.f};
+    int fundamental  =0;
+    void setKeyOffset(int midiNoteNumber, float val)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128) absoluteTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+    }
+    std::array<float,12> circularTuningOffset = {0.f};
+    void setCircularKeyOffset(int midiNoteNumber, float val)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 12) circularTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+    }
+    void setKeyOffset(int midiNoteNumber, float val, bool circular)
+    {
+        if (circular) setCircularKeyOffset(midiNoteNumber,val);
+        else setKeyOffset(midiNoteNumber,val);
+    }
+    void processStateChanges() override {
+        for (auto [index,change] : stateChanges.changeState) {
+            static juce::var nullVar;
+            auto val    = change.getProperty(IDs::absoluteTuning);
+            auto val1  = change.getProperty(IDs::circularTuning);
+            if (val != nullVar) {
+                absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(val.toString().toStdString());
+            }else if (val1 !=nullVar) {
+                circularTuningOffset = parseFloatStringToArrayCircular<12>(val1.toString().toStdString());
+               // absoluteTuningOffset = std::array<float,128>(val1.toString().toStdString());
+
+            }
+
+        }
+    }
+    static std::array<float,12> rotateValuesByFundamental(std::array<float,12> vals, int fundamental) {
+        int offset;
+        if(fundamental <= 0) offset = 0;
+        else offset = fundamental;
+        std::array<float,12> new_vals = {0.f};
+        for(int i=0; i<12; i++)
+        {
+            int index = ((i - offset) + 12) % 12;
+            new_vals[i] = vals[index];
+        }
+        return new_vals;
+    }
+    void setFundamental(int fund) {
+        //need to shift keyValues over by difference in fundamental
+        int oldFund = fundamental;
+        fundamental = fund;
+        int offset = fund - oldFund;
+        auto vals  = circularTuningOffset;
+        for ( int i= 0 ;i<12;i++) {
+            int index = ((i - offset) + 12) % 12;
+            circularTuningOffset[i] = vals[index];
+        }
+    }
+    std::atomic<bool> setFromAudioThread;
+};
+
 
 struct TuningParams : chowdsp::ParamHolder
 {
@@ -107,6 +127,14 @@ struct TuningParams : chowdsp::ParamHolder
     };
 
 
+    TuningKeyboardState keyboardState;
+    /** Custom serializer */
+    template <typename Serializer>
+    static typename Serializer::SerializedType serialize (const TuningParams& paramHolder);
+
+    /** Custom deserializer */
+    template <typename Serializer>
+    static void deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder);
 };
 
 struct TuningNonParameterState : chowdsp::NonParamState
@@ -117,7 +145,9 @@ struct TuningNonParameterState : chowdsp::NonParamState
 
 };
 
-class TuningProcessor : public bitklavier::PluginBase<chowdsp::PluginStateImpl<TuningParams,TuningNonParameterState,chowdsp::XMLSerializer>>
+
+
+class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams,TuningNonParameterState>>
 {
 public:
     TuningProcessor(SynthBase* parent,const juce::ValueTree& v);
@@ -139,6 +169,7 @@ public:
     }
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
+
 
 private:
 

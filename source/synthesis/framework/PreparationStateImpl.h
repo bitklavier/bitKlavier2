@@ -5,6 +5,7 @@
 #ifndef BITKLAVIER2_PREPARATIONSTATEIMPL_H
 #define BITKLAVIER2_PREPARATIONSTATEIMPL_H
 #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
+#include "bk_XMLSerializer.h"
 namespace bitklavier
 {
 /**
@@ -14,7 +15,7 @@ namespace bitklavier
  * @tparam NonParameterState    Struct containing all of the plugin's non-parameter state as StateValue objects.
  * @tparam Serializer           A type that implements chowdsp::BaseSerializer (JSONSerializer by default)
  */
-    template <typename ParameterState, typename NonParameterState = chowdsp::NonParamState, typename Serializer = chowdsp::XMLSerializer>
+    template <typename ParameterState, typename NonParameterState = chowdsp::NonParamState, typename Serializer = bitklavier::XMLSerializer>
     class PreparationStateImpl : public chowdsp::PluginState
     {
         static_assert (std::is_base_of_v<chowdsp::ParamHolder, ParameterState>, "ParameterState must be a chowdsp::ParamHolder!");
@@ -109,7 +110,7 @@ namespace bitklavier
 #endif
 
         //Serializer::addChildElement (serial, Serializer::template serialize<Serializer, chowdsp::NonParamState> (object.nonParams));
-        auto serial = Serializer::template serialize<Serializer, chowdsp::ParamHolder> (object.params);
+        auto serial = Serializer::template serialize<Serializer, ParameterState> (object.params);
         return serial;
     }
 
@@ -143,7 +144,7 @@ namespace bitklavier
 //
         //Serializer::template deserialize<Serializer, chowdsp::NonParamState> (Serializer::getChildElement (serial, "nonparam"), object.nonParams);
         if ( Serializer::getChildElement (serial, object.params.getName()))
-            Serializer::template deserialize<Serializer, chowdsp::ParamHolder> (Serializer::getChildElement (serial, object.params.getName()), object.params);
+            Serializer::template deserialize<Serializer, ParameterState> (Serializer::getChildElement (serial, object.params.getName()), object.params);
     }
 
     template <typename ParameterState, typename NonParameterState, typename Serializer>

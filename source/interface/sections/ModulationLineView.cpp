@@ -80,6 +80,24 @@ void ModulationLineView::modulationDropped(const juce::ValueTree &source, const 
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
     _parent->getGui()->modulation_manager->added();
 }
+
+void ModulationLineView::tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {
+    auto sourceId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(source.getProperty(IDs::nodeID,-1));
+    auto destId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( dest.getProperty(IDs::nodeID,-1));
+    //protects against short/accidental drag drops
+    if (sourceId == destId)
+        return;
+    //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
+    juce::ValueTree _connection(IDs::TUNINGCONNECTION);
+    _connection.setProperty(IDs::isMod, false, nullptr);
+    _connection.setProperty(IDs::src,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(sourceId), nullptr);
+    _connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(destId), nullptr);
+    parent.addChild(_connection, -1, nullptr);
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    _parent->getGui()->modulation_manager->added();
+
+}
+
 void ModulationLineView::resized()
 {
     for(auto line: objects)
@@ -136,11 +154,13 @@ void ModulationLineView::newObjectAdded(ModulationLine * line) {
     //right now this doesn't need to do anything since this function mainly is used to alert the audio thread
     // that some thing has change.
     // in our case a new line does not cause any audio thread behaviour to occur
-    for (const auto& v : line->state)
-        if (v.hasType(IDs::ModulationConnection)) {
-            findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectModulation(v);
+    // for (const auto& v : line->state) {
+        if (line->state.hasType(IDs::ModulationConnection)) {
+            findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectModulation(line->state);
         }
-
+        if (line->state.hasType(IDs::TUNINGCONNECTION))
+            findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectTuning(line->state);
+    // }
 
 }
 

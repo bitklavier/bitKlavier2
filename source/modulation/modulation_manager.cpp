@@ -621,11 +621,12 @@ void ModulationManager::modulationClicked(ModulationIndicator* indicator)
             if ( editing_state_component_ == nullptr)
             {
                 editing_state_component_ = comp->clone();
+
                 editing_state_component_->modulationState = connection->state;
 
-                editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(), comp->getWidth(), comp->getHeight());
                 addAndMakeVisible(editing_state_component_);
                 addOpenGlComponent(editing_state_component_->getImageComponent());
+                editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(), comp->getWidth(), comp->getHeight());
                 editing_state_component_->addListener(this);
                 editing_state_component_->setComponentID(juce::String(connection->destination_name));
             }

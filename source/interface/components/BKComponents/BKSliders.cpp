@@ -370,27 +370,28 @@ void BKStackedSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 {
     if(textEditor.getName() == editValsTextField->getName())
     {
+        isEditing = true;
         editValsTextField->setVisible(false);
         editValsTextField->toBack();
        // editValsTextField->setInterceptsMouseClicks(false, false);
-        setTo(BKstringToFloatArray(textEditor.getText()), juce::sendNotification);
+        setTo(BKstringToFloatArray(textEditor.getText()), juce::dontSendNotification);
         clickedSlider = 0;
         resized();
 
         listeners.call(&BKStackedSlider::Listener::BKStackedSliderValueChanged,
             getName(),
             getAllActiveValues());
-
+        isEditing = false;
     }
+
 }
 
 void BKStackedSlider::textEditorFocusLost(juce::TextEditor& textEditor)
 {
-#if !JUCE_IOS
-    if(!focusLostByEscapeKey) {
-        textEditorReturnKeyPressed(textEditor);
+    if(textEditor.getName() == editValsTextField->getName())
+    {
+            textEditorEscapeKeyPressed(textEditor);
     }
-#endif
 }
 
 void BKStackedSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
@@ -409,13 +410,6 @@ void BKStackedSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
 
 void BKStackedSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
-#if JUCE_IOS
-    if (hasBigOne)
-    {
-        hasBigOne = false;
-        textEditorReturnKeyPressed(textEditor);
-    }
-#endif
 }
 
 void BKStackedSlider::resetRanges()
@@ -653,13 +647,6 @@ BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double 
     displaySlider->setInterceptsMouseClicks(false, false);
     addAndMakeVisible(*displaySlider);
 
-#if JUCE_IOS
-    maxValueTF.setReadOnly(true);
-    maxValueTF.addMouseListener(this, true);
-
-    minValueTF.setReadOnly(true);
-    minValueTF.addMouseListener(this, true);
-#endif
 }
 
 void BKRangeSlider::setDim(float alphaVal)
@@ -804,13 +791,6 @@ void BKRangeSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
     focusLostByEscapeKey = false;
 
-#if JUCE_IOS
-    if (hasBigOne)
-    {
-        hasBigOne = false;
-        textEditorReturnKeyPressed(textEditor);
-    }
-#endif
 }
 
 
@@ -823,12 +803,6 @@ void BKRangeSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
 
 void BKRangeSlider::textEditorFocusLost(juce::TextEditor& textEditor)
 {
-#if !JUCE_IOS
-    if(!focusLostByEscapeKey)
-    {
-        textEditorReturnKeyPressed(textEditor);
-    }
-#endif
 }
 
 

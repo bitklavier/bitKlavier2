@@ -59,8 +59,7 @@ void KeymapProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
     _midi->midi_collector_.reset (sampleRate);
-    gain.prepare (spec);
-    gain.setRampDurationSeconds (0.05);
+
 }
 
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -76,14 +75,22 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * MIDI Processing Happens here
      *
      */
+    juce::MidiBuffer saveMidi (midiMessages);
+    midiMessages.clear();
+
+    for (auto m : saveMidi) {
+        auto msg = m.getMessage();
+        if (state.params.keyboard_state.keyStates.test(msg.getNoteNumber()))
+            midiMessages.addEvent (msg, m.samplePosition);
+
+    }
 
     // this could surely be optimized, though i'm not sure how important that is ./dlt
     // i'm also not 100% this properly retain the samplePosition, but again, it's not clear how important
     // that is when noteOn and noteOff are inverted... might be important for other MIDI processing, however
     if (invertNoteOnNoteOff)
     {
-        juce::MidiBuffer saveMidi (midiMessages);
-        midiMessages.clear();
+
         for (auto mi : saveMidi)
         {
             auto message = mi.getMessage();
@@ -136,3 +143,28 @@ juce::MidiMessage KeymapProcessor::swapNoteOnNoteOff (juce::MidiMessage inmsg)
 
     return inmsg;
 }
+
+#include "array_to_string.h"
+template<typename Serializer>
+typename Serializer::SerializedType KeymapParams::serialize(const KeymapParams &paramHolder) {
+    auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
+    Serializer::template addChildElement<128>(ser,"keyOn",paramHolder.keyboard_state.keyStates,getOnKeyString);
+    return ser;
+}
+template<typename Serializer>
+void KeymapParams::deserialize(typename Serializer::DeserializedType deserial, KeymapParams &paramHolder) {
+    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
+    auto mystr = deserial->getStringAttribute("keyOn");
+    //also used in bkkeymapkeyboardcomponent TODO - make a function
+    std::bitset<128> bits;
+    std::istringstream iss(mystr.toStdString());
+    int key;
+
+    while (iss >> key) {
+        if (key >= 0 && key < 128) {
+            bits.set(key);
+        }
+    }
+    paramHolder.keyboard_state.keyStates = bits;
+}
+
