@@ -28,9 +28,10 @@ public:
         on->setComponentID(params->transpositionUsesTuning->paramID);
         addSynthButton(on.get());
         addAndMakeVisible(on.get());
-        //setActivator(on.get());
-        //set componment id to map to statechange params set in processor constructor
+
+        //set component id to map to statechange params set in processor constructor
         slider->setComponentID("transpose");
+
         //needed to get picked up by modulations
         addStateModulatedComponent(slider.get());
     }
@@ -44,6 +45,7 @@ public:
         paintChildrenBackgrounds(g);
         paintBorder(g);
     }
+
     void resized() override
     {
         int title_width = getTitleWidth();
@@ -51,6 +53,7 @@ public:
         slider->redoImage();
         SynthSection::resized();
     }
+
     std::unique_ptr<OpenGL_TranspositionSlider> slider;
     std::unique_ptr<SynthButton> on;
     std::unique_ptr<chowdsp::ButtonAttachment> on_attachment;
@@ -80,6 +83,7 @@ public:
             _sliders.emplace_back(std::move(slider));
 
         }
+
         //find complex parameters
         for (auto paramHolder : *params.getParamHolders())
         {
@@ -88,13 +92,15 @@ public:
 
             if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
                 transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
+
             if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
                 velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
         }
 
-              addSubSection(envSection.get());
+        addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
         addAndMakeVisible(velocityMinMaxSlider.get());
+
         //needed to get picked up by modulations
         velocityMinMaxSlider->setComponentID("velocity_min_max");
         addStateModulatedComponent(velocityMinMaxSlider.get());
