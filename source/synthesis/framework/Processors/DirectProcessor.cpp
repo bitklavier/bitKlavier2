@@ -119,15 +119,29 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     if (mainSynth->hasSamples() )
     {
         mainSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
+        mainSynth->updateVelocityMinMax(
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
         mainSynth->renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (hammerSynth->hasSamples())
+    {
+        hammerSynth->updateVelocityMinMax(
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
 
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
+        releaseResonanceSynth->updateVelocityMinMax(
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 

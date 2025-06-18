@@ -303,18 +303,32 @@ class BKSynthesiser
                     synthGain.setParameterValue(g);
                 }
 
-                // add bool for "use tuning"
                 void updateMidiNoteTranspositions(juce::Array<float> newOffsets, bool tune_transpositions) {
                     midiNoteTranspositions = newOffsets;
                     tuneTranspositions = tune_transpositions;
                 }
 
-//<<<<<<< HEAD
-//
-//                BKADSR::Parameters globalADSR;
-//=======
-//                //BKADSR::Parameters globalADSR;
-//>>>>>>> feature/adsropt
+                void updateVelocityMinMax(float velmin, float velmax)
+                {
+                    velocityMin = velmin;
+                    velocityMax = velmax;
+                }
+
+                bool checkVelocityRange(float velocity)
+                {
+                    //in normal case where velocityMin < velocityMax, we only pass if both are true
+                    if (velocityMax >= velocityMin)
+                    {
+                        if (velocity >= velocityMin && velocity <= velocityMax) return true;
+                        else return false;
+                    }
+
+                    //case where velocityMin > velocityMax, we pass if either is true
+                    if (velocity >= velocityMin || velocity <= velocityMax) return true;
+                    else return false;
+
+                }
+
 protected:
                 //==============================================================================
                 /** This is used to control access to the rendering callback and the note trigger methods. */
@@ -415,6 +429,11 @@ private:
                 juce::Array<float> midiNoteTranspositions = { 0.}; // needs to be set via UI, for additional transpositions
                 bool tuneTranspositions = false;
                 juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
+
+                //set by owning processor state.params.velocityMinMax
+                float velocityMin = 0.;
+                float velocityMax = 128.;
+
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
 

@@ -260,6 +260,11 @@ void BKSynthesiser::noteOn (const int midiChannel,
     const juce::ScopedLock sl (lock);
 
     /**
+     * check first to see if velocity is within velocity min/max range, and return if not
+     */
+    if (!checkVelocityRange(velocity)) return;
+
+    /**
      * moved this out of the loop below because it was messing up voice handling with multiple transpositions
      * however, this move might break something else in the future, we'll have to see..
      */
