@@ -38,7 +38,14 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
     return new PluginInstanceWrapper(rawPtr,v,node_ptr->nodeID);
 
 }
+void PreparationList::objectRemoved (PluginInstanceWrapper* instance_wrapper){
+    for (auto listener: listeners_)
+        listener->removeModule(instance_wrapper);
+    synth.removeProcessor (instance_wrapper->node_id);
+}
+
 void PreparationList::deleteObject(PluginInstanceWrapper *at) {
+
     delete at;
 }
 

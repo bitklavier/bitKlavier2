@@ -168,7 +168,7 @@ public:
     }
 
     void newObjectAdded (PluginInstanceWrapper*) override;
-    void objectRemoved (PluginInstanceWrapper*) override     {}//resized(); }
+    void objectRemoved (PluginInstanceWrapper*) override;     //resized(); }
     void objectOrderChanged() override              { }//resized(); }
     void valueTreeParentChanged (juce::ValueTree&) override;
     void valueTreeRedirected (juce::ValueTree&) override ;

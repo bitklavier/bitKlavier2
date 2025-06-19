@@ -108,6 +108,10 @@ juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor(std::unique_ptr<juc
 {
     return engine_->addNode(std::move(processor) , id);
 }
+juce::AudioProcessorGraph::Node::Ptr SynthBase::removeProcessor(juce::AudioProcessorGraph::NodeID id )
+{
+    return engine_->removeNode(id);
+}
 bool SynthBase::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
 
     engine_->isConnected(src,dest);

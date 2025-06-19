@@ -82,6 +82,8 @@ class SynthBase :  public juce::ValueTree::Listener {
     juce::AudioDeviceManager* manager;
     std::shared_ptr<UserPreferencesWrapper> user_prefs;
     juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
+    //use this functino myra
+    juce::AudioProcessorGraph::Node::Ptr removeProcessor( juce::AudioProcessorGraph::NodeID id ) ;
   juce::AudioProcessorGraph::Node::Ptr addPlugin(std::unique_ptr<juce::AudioPluginInstance> instance,
                                    const juce::String& error,
                                    juce::Point<double> pos,

@@ -104,7 +104,7 @@ private:
     PreparationList& prep_list;
     void moduleListChanged() {}
     void moduleAdded(PluginInstanceWrapper* newModule) override ;
-    void removeModule(PluginInstanceWrapper* moduleToRemove)override {};
+    void removeModule(PluginInstanceWrapper* moduleToRemove)override;
     void handlePluginPopup(int selection,int index);
     SynthGuiInterface* _parent;
     NodeFactory nodeFactory;

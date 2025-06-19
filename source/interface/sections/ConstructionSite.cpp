@@ -118,6 +118,25 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->setNodeInfo();
     plugin_components.push_back(std::move(s));
 }
+
+void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
+    int index = -1;
+    for (int i=0; i<plugin_components.size(); i++){
+        if (plugin_components[i]->pluginID == wrapper->node_id){
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) jassertfalse;
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->getOpenGlWrapper()->context.executeOnGLThread ([this,index](juce::OpenGLContext& gl) {
+        plugin_components[index]->destroyOpenGlComponents (open_gl);
+        removeSubSection (plugin_components[index].get());
+    },true);
+    plugin_components.erase(plugin_components.begin()+index);
+
+}
+
 ConstructionSite::~ConstructionSite(void) {
     removeMouseListener(&cableView);
     removeChildComponent(&selectorLasso);
@@ -150,7 +169,7 @@ void ConstructionSite::redraw(void) {
 
 bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
     int code = k.getKeyCode();
-
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
     if (code == 68) //D Direct
     {
         juce::ValueTree t(IDs::PREPARATION);
@@ -160,7 +179,7 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         t.setProperty(IDs::height, 125, nullptr);
         t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
+        prep_list.appendChild(t,  interface->getUndoManager());
     } else if (code == 78) // N nostalgic
     {
         // juce::ValueTree t(IDs::PREPARATION);
@@ -332,6 +351,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     connect = false;
 }
 void ConstructionSite::handlePluginPopup(int selection, int index) {
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
     if (selection < bitklavier::BKPreparationType::PreparationTypeVST) {
         juce::ValueTree t(IDs::PREPARATION);
         t.setProperty(IDs::type, static_cast<bitklavier::BKPreparationType>(selection), nullptr);
@@ -339,7 +359,7 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::height, 260, nullptr);
         t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        prep_list.appendChild(t, nullptr);
+        prep_list.appendChild(t,  interface->getUndoManager());
     } else {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::PREPARATION);

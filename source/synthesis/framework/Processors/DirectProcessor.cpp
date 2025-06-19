@@ -26,7 +26,7 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
     hammerSynth->isKeyReleaseSynth (true);
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
-    bufferDebugger = new BufferDebugger();
+    // bufferDebugger = new BufferDebugger();
 
     int mod = 0;
     for(auto [key, param] : state.params.modulatableParams){
@@ -102,9 +102,9 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     auto modBus = getBus(true,1);
     auto index = modBus->getChannelIndexInProcessBlockBuffer(0);
     int i = 0;
-    for(auto param: state.params.modulatableParams){
-        bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
-    }
+    // for(auto param: state.params.modulatableParams){
+    //     bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
+    // }
 //    melatonin::printSparkline(buffer);
     //should pull first two modinputs first or somehow have dum
     //

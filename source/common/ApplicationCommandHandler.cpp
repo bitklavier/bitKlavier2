@@ -12,12 +12,18 @@ ApplicationCommandHandler::ApplicationCommandHandler(SynthGuiInterface* gui) : j
     {
         switch (info.commandID) {
             case undo:
+            {
+                parent->getUndoManager()->undo();
                 juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", "Undo triggered");
-            return true;
+                return true;
+            }
+
 
             case redo:
+            {
                 juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
-            return true;
+                return true;
+            }
 
             case save: {
                 parent->openSaveDialog();
@@ -25,15 +31,19 @@ ApplicationCommandHandler::ApplicationCommandHandler(SynthGuiInterface* gui) : j
             }
 
             case load:
+            {
                 parent->openLoadDialog();
                 return true;
+            }
 
             case CommandIDs::showPluginListEditor:
+            {
                 if (parent->pluginListWindow == nullptr)
                     parent->pluginListWindow.reset (new SynthGuiInterface::PluginListWindow (*parent, *parent->userPreferences, parent->userPreferences->userPreferences->formatManager));
 
                 parent->pluginListWindow->toFront (true);
                 return true;
+            }
 
             default:
                 return false;

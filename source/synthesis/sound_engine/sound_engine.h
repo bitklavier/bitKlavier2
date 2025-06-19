@@ -108,6 +108,11 @@ namespace bitklavier {
           return node;
       }
 
+      juce::AudioProcessorGraph::Node::Ptr removeNode(juce::AudioProcessorGraph::NodeID id)
+      {
+          return processorGraph->removeNode (id);
+      }
+
       Node::Ptr addNode(std::unique_ptr<bitklavier::ModulationProcessor> modProcessor, juce::AudioProcessorGraph::NodeID id);
 
 
