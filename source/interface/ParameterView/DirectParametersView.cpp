@@ -7,7 +7,6 @@
 
 void DirectParametersView::resized()
 {
-
     int knob_section_height = getKnobSectionHeight();
     int knob_y = getHeight() - knob_section_height;
 
@@ -23,7 +22,6 @@ void DirectParametersView::resized()
     envSection->setBounds(title_width, knob_section_height, area_width, knob_section_height * 2);
     transpositionSlider->setBounds(title_width,0,   area_width, knob_section_height );
     velocityMinMaxSlider->setBounds(title_width,envSection->getBottom(),area_width,40 );
-
 
     SynthSection::resized();
 }

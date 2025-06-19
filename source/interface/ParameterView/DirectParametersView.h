@@ -10,7 +10,6 @@
 #include "TransposeParams.h"
 #include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
-#include "../components/opengl/OpenGL_VelocityMinMaxSlider.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
@@ -23,9 +22,12 @@ public:
             : slider(std::make_unique<OpenGL_TranspositionSlider>(params,listeners)), SynthSection("")
     {
         setComponentID(parent_uuid);
+
+        //button for setting whether the transposition slider uses tuning from an attached Tuning pre
         on = std::make_unique<SynthButton>(params->transpositionUsesTuning->paramID);
         on_attachment = std::make_unique<chowdsp::ButtonAttachment>(params->transpositionUsesTuning,listeners,*on,nullptr);
         on->setComponentID(params->transpositionUsesTuning->paramID);
+        on->setText("use Tuning?");
         addSynthButton(on.get());
         addAndMakeVisible(on.get());
 
@@ -48,9 +50,14 @@ public:
 
     void resized() override
     {
-        int title_width = getTitleWidth();
-        slider->setBounds(title_width, 0, getWidth() - title_width, getHeight());
+        slider->setBounds(0, 0, getWidth(), getHeight());
         slider->redoImage();
+
+        int onWidth = 100;
+        int onHeight = 20;
+        on->setBounds(getWidth() - onWidth, getHeight() - onHeight, onWidth, onHeight);
+        on->toFront(false);
+
         SynthSection::resized();
     }
 
