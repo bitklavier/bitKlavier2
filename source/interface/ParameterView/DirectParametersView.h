@@ -4,7 +4,7 @@
 
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
-#include "../components/opengl/OpenGL_VelocityMinMaxSlider.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
 #include "TranspositionSliderSection.h"
 #include "VelocityMinMaxParams.h"
 #include "envelope_section.h"

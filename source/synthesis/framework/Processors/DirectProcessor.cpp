@@ -5,8 +5,9 @@
 #include "DirectProcessor.h"
 #include "Synthesiser/Sample.h"
 #include "common.h"
-#include <chowdsp_serialization/chowdsp_serialization.h>
+//#include <chowdsp_serialization/chowdsp_serialization.h>
 #include "synth_base.h"
+
 DirectProcessor::DirectProcessor (SynthBase* parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
 mainSynth(new BKSynthesiser(state.params.env, state.params.gainParam)),
 hammerSynth(new BKSynthesiser(state.params.env,state.params.hammerParam)),
@@ -20,7 +21,6 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
         releaseResonanceSynth->addVoice (new BKSamplerVoice());
         pedalSynth->addVoice (new BKSamplerVoice());
     }
-
 
     // these synths play their stuff on noteOff rather than noteOn
     hammerSynth->isKeyReleaseSynth (true);
@@ -36,6 +36,7 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
         v.appendChild(modChan,nullptr);
         mod++;
     }
+
     //add state change params here
     parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
     parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
@@ -45,6 +46,7 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
+
     mainSynth->setCurrentPlaybackSampleRate (sampleRate);
     gain.prepare (spec);
     gain.setRampDurationSeconds (0.05);
@@ -115,6 +117,10 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.params.velocityMinMax.processStateChanges();
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
+
+    // get the current tuning
+    //  we'll want to write some handlers for everything we want from Tuning, so it looks better/easier than this!
+    auto& currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
 
     if (mainSynth->hasSamples() )
     {

@@ -4,17 +4,15 @@
 
 #ifndef BITKLAVIER2_TUNINGPARAMETERSVIEW_H
 #define BITKLAVIER2_TUNINGPARAMETERSVIEW_H
-//#include "ParametersView.h"
 #include "envelope_section.h"
 #include "TransposeParams.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-#include "../components/opengl/open_gl_combo_box.h"
-#include "../components/opengl/OpenGL_AbsoluteKeyboardSlider.h"
+#include "open_gl_combo_box.h"
+#include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
 #include "tuning_systems.h"
-using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
-using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
+
 class TuningParametersView : public SynthSection,BKTuningKeyboardSlider::Listener
 {
 public:

@@ -24,7 +24,7 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
 }
 
-   template <typename Serializer>
+template <typename Serializer>
 typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
 {
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
@@ -37,14 +37,10 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
 template <typename Serializer>
 void TuningParams::deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder)
 {
-
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
     auto myStr  = deserial->getStringAttribute ("circularTuning");
     paramHolder.keyboardState.circularTuningOffset = parseFloatStringToArrayCircular<12>(myStr.toStdString());
     myStr  = deserial->getStringAttribute ("absoluteTuning");
     paramHolder.keyboardState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(myStr.toStdString());
     paramHolder.keyboardState.fundamental = paramHolder.fundamental->getIndex();
-
-
-
 }

@@ -16,6 +16,7 @@
 #include "buffer_debugger.h"
 #include "Identifiers.h"
 #include "VelocityMinMaxParams.h"
+#include "TuningProcessor.h"
 
 struct DirectParams : chowdsp::ParamHolder
 {
@@ -23,8 +24,10 @@ struct DirectParams : chowdsp::ParamHolder
     float rangeStart = -60.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
+
     using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
     std::unordered_map<std::string,ParamPtrVariant> modulatableParams;
+
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
@@ -96,8 +99,6 @@ struct DirectParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
-
-
 
     // ADSR params
     EnvParams env;
@@ -185,6 +186,7 @@ public:
             vt.setProperty (param.paramID, chowdsp::ParameterTypeHelpers::getValue (param), nullptr);
         });
     }
+
     void valueTreePropertyChanged   (juce::ValueTree& t, const juce::Identifier&) {
         juce::String a  = t.getProperty(IDs::mainSampleSet, "");
         juce::String b  = t.getProperty(IDs::hammerSampleSet, "");
@@ -196,6 +198,7 @@ public:
                 &(*ptrToSamples)[d]);
 
     }
+
     void valueTreeChildAdded        (juce::ValueTree&, juce::ValueTree&)        {}
     void valueTreeChildRemoved      (juce::ValueTree&, juce::ValueTree&, int)   {}
     void valueTreeChildOrderChanged (juce::ValueTree&, int, int)          {}
