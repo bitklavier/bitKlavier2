@@ -71,6 +71,11 @@ struct TransposeParams : chowdsp::ParamHolder
             false
     };
 
+    /*
+     * gets run whenever a state change gets run on the back end
+     * modulation that changes state will be triggered here
+     * called in process block (DirectProcessor)
+     */
     int numActive = 1;
     void processStateChanges() override
     {

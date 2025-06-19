@@ -6,15 +6,14 @@
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #include "../components/opengl/OpenGL_TranspositionSlider.h"
 #include "../components/opengl/OpenGL_VelocityMinMaxSlider.h"
-#include "ParametersView.h"
+//#include "ParametersView.h" // don't need this anymore! can probably delete this file completely
 #include "TransposeParams.h"
 #include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
-using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
 
+// move this out to its own class, since it will be needed by Nostalgic and maybe others
 class TranspositionSliderSection : public SynthSection
 {
 public:
@@ -35,6 +34,8 @@ public:
         slider->setComponentID("transpose");
 
         //needed to get picked up by modulations
+        // since we have 12 individual sliders here, these will be wrapped into one state change for all together
+        // don't need to call this for simpler things like a basic slider
         addStateModulatedComponent(slider.get());
     }
     ~TranspositionSliderSection() {}
@@ -48,6 +49,7 @@ public:
         paintBorder(g);
     }
 
+    // move to cpp file?
     void resized() override
     {
         slider->setBounds(0, 0, getWidth(), getHeight());
@@ -70,25 +72,31 @@ public:
 class DirectParametersView : public SynthSection
 {
 public:
-    DirectParametersView(chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params,juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
-                                                                                                                     //bitklavier::ParametersView(pluginState,params,open_gl,false)
+    DirectParametersView(chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
     {
-        //envelope = std::make_unique<EnvelopeSection>("ENV", "err");
+        // the name that will appear in the UI as the name of the section
         setName("direct");
-        setLookAndFeel(DefaultLookAndFeel::instance());
 
-        //addSubSection(envelope.get());
+        // every section needs a LaF
+        //  main settings for this LaF are in assets/default.bitklavierskin
+        //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
+        //  we probably want to merge these in the future
+        setLookAndFeel(DefaultLookAndFeel::instance());
         setComponentID(name);
+
+        // pluginState is really preparationState
+        // all the params for this prep are defineed in DirectParams, in DirectProcessor.h
         auto& listeners = pluginState.getParameterListeners();
+
+        // go through and get all the main float params (gain, hammer, etc...), make sliders for them
         for ( auto &param_ : *params.getFloatParams())
         {
             auto slider = std::make_unique<SynthSlider>(param_->paramID);
             auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
-            addSlider(slider.get());
+            addSlider(slider.get()); // adds the slider to the synthSection
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             floatAttachments.emplace_back(std::move(attachment));
             _sliders.emplace_back(std::move(slider));
-
         }
 
         //find complex parameters
@@ -106,9 +114,7 @@ public:
 
         addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
-        addAndMakeVisible(velocityMinMaxSlider.get());
 
-        //needed to get picked up by modulations
         velocityMinMaxSlider->setComponentID("velocity_min_max");
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
@@ -130,7 +136,7 @@ public:
     std::unique_ptr<EnvelopeSection> envSection;
 
     void resized() override;
-    chowdsp::ScopedCallbackList transposeCallbacks;
+
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
