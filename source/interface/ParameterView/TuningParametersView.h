@@ -4,7 +4,7 @@
 
 #ifndef BITKLAVIER2_TUNINGPARAMETERSVIEW_H
 #define BITKLAVIER2_TUNINGPARAMETERSVIEW_H
-#include "ParametersView.h"
+//#include "ParametersView.h"
 #include "envelope_section.h"
 #include "TransposeParams.h"
 #include "synth_section.h"

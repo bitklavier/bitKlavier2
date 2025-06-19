@@ -1,9 +1,8 @@
-x//
+//
 // Created by Dan Trueman on 11/5/24.
 //
 
 #include "DirectParametersView.h"
-
 
 void DirectParametersView::resized()
 {

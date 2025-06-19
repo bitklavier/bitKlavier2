@@ -6,9 +6,6 @@ struct OpenGlWrapper;
 
 namespace bitklavier {
 
-    using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
-    using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
-
     /** Clone of juce::GenericAudioProcessorEditor, but usable as a generic component */
     class  ParametersView : public SynthSection {
     public:
@@ -20,11 +17,9 @@ namespace bitklavier {
         ~ParametersView() override;
 
         void paint(juce::Graphics &) override;
-
         void resized() override;
-//        void initOpenGlComponents(OpenGlWrapper &open_gl) override;
-//        void renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) override;
         void init_();
+
         /** Returns nullptr if no component is found for the given parameter */
         [[nodiscard]] juce::Component* getComponentForParameter (const juce::RangedAudioParameter&);
         void paintBackground(juce::Graphics& g) override
