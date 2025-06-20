@@ -17,7 +17,7 @@ void DirectParametersView::resized()
     bounds.removeFromRight(title_width);
 
     // how much vertical space will we need for all the components?
-    int verticalAreaNeeded = knob_section_height * 6;
+    int verticalAreaNeeded = knob_section_height * 7;
 
     // how much vertical space is left, divided up so we have some buffer space between each component
     int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 5;
@@ -26,11 +26,15 @@ void DirectParametersView::resized()
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
+    // find width of all the knobs, so we can center them
+    int knobs_width = knob_section_height * _sliders.size();
+    if (outputKnobsArea.getWidth() > knobs_width)
+        outputKnobsArea.reduce((outputKnobsArea.getWidth() - knobs_width) / 2, 0);
     placeKnobsInArea(outputKnobsArea, _sliders);
 
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);
-    juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 3);
+    juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 4);
     envSection->setBounds(adsrArea);
 
     // add the transposition slider below that
