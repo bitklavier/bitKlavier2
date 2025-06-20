@@ -20,17 +20,12 @@ void DirectParametersView::resized()
     int verticalAreaNeeded = knob_section_height * 7;
 
     // how much vertical space is left, divided up so we have some buffer space between each component
-    int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 5;
+    int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 6;
     if (bufferSpaceForEach < 0 ) bufferSpaceForEach = 0;
 
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
-//    // find width of all the knobs, so we can center them
-//    int knobs_width = knob_section_height * _sliders.size();
-//    if (outputKnobsArea.getWidth() > knobs_width)
-//        outputKnobsArea.reduce((outputKnobsArea.getWidth() - knobs_width) / 2, 0);
-//    placeKnobsInArea(outputKnobsArea, _sliders);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
 
     // add the adsr below that
@@ -41,11 +36,13 @@ void DirectParametersView::resized()
     // add the transposition slider below that
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> transpositionSliderArea = bounds.removeFromTop(knob_section_height);
+    transpositionSliderArea.reduce(transpositionSliderArea.getWidth() / 6, 0);
     transpositionSlider->setBounds(transpositionSliderArea);
 
     // add the velocity range slider below that
-    bounds.removeFromTop(bufferSpaceForEach);
+    bounds.removeFromTop(bufferSpaceForEach * 2);
     juce::Rectangle<int> velocitySliderArea = bounds.removeFromTop(knob_section_height);
+    velocitySliderArea.reduce(velocitySliderArea.getWidth() / 4, 0); //narrow slightly; don't need the full width for this one!
     velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     SynthSection::resized();

@@ -225,6 +225,7 @@ public:
         showName.setText (sliderName, juce::dontSendNotification);
     }
     juce::String getName() { return sliderName; }
+
     void setToolTipString (juce::String newTip)
     {
         showName.setTooltip (newTip);

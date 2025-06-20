@@ -560,17 +560,16 @@ void BKStackedSlider::resized ()
 
     editValsTextField->setBounds(area);
     editValsTextField->setVisible(false);
-   //
-   // editValsTextField->setInterceptsMouseClicks(false, false);
-
 
     for(int i=0; i<numSliders; i++)
     {
         juce::Slider* newSlider = dataSliders.getUnchecked(i);
         newSlider->setBounds(area);
     }
-
 }
+
+
+
 
 // ******************************************************************************************************************** //
 // **************************************************  BKRangeSlider ************************************************** //

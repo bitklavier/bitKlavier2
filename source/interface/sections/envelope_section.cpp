@@ -204,11 +204,6 @@ void EnvelopeSection::resized() {
   envelope_->setBounds(widget_margin, widget_margin, getWidth() - 2 * widget_margin, envelope_height);
 
   juce::Rectangle<int> knobs_area(0, knob_y, getWidth(), knob_section_height);
-
-  // for now, leave out delay and hold, focus on just ADSR
-//  placeKnobsInArea(knobs_area, { delay_.get(), attack_.get(), hold_.get(),
-//                                 decay_.get(), sustain_.get(), release_.get() });
-
   placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
 
   SynthSection::resized();
