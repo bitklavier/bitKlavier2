@@ -873,6 +873,7 @@ void BKRangeSlider::resized()
         topSlab.removeFromLeft(5);
         //minValueTF.setBounds(topSlab.removeFromLeft(75));
         minValueTF.setBounds(bottomSlab.removeFromLeft(75));
+
         topSlab.removeFromLeft(gXSpacing);
         maxValueTF.setBounds(topSlab.removeFromLeft(75));
         showName.setBounds(topSlab.removeFromLeft(getWidth() - 150));

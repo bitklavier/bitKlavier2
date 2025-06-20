@@ -209,7 +209,7 @@ void EnvelopeSection::resized() {
 //  placeKnobsInArea(knobs_area, { delay_.get(), attack_.get(), hold_.get(),
 //                                 decay_.get(), sustain_.get(), release_.get() });
 
-  placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() });
+  placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
 
   SynthSection::resized();
   envelope_->setSizeRatio(getSizeRatio());
