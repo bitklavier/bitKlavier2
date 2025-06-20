@@ -40,23 +40,30 @@ enum AdaptiveSystems {
 
 
 struct TuningKeyboardState : bitklavier::StateChangeableParameter {
+
     juce::MidiKeyboardState keyboardState;
+
     std::array<float,128> absoluteTuningOffset = {0.f};
-    int fundamental  =0;
+    std::array<float,12> circularTuningOffset = {0.f};
+    int fundamental = 0;
+
     void setKeyOffset(int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 128) absoluteTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
     }
-    std::array<float,12> circularTuningOffset = {0.f};
+
     void setCircularKeyOffset(int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 12) circularTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+        DBG("setCircularKeyOffset " + juce::String(midiNoteNumber) + " : " + juce::String(val));
     }
+
     void setKeyOffset(int midiNoteNumber, float val, bool circular)
     {
         if (circular) setCircularKeyOffset(midiNoteNumber,val);
         else setKeyOffset(midiNoteNumber,val);
     }
+
     void processStateChanges() override {
         for (auto [index,change] : stateChanges.changeState) {
             static juce::var nullVar;
@@ -69,9 +76,9 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
                // absoluteTuningOffset = std::array<float,128>(val1.toString().toStdString());
 
             }
-
         }
     }
+
     static std::array<float,12> rotateValuesByFundamental(std::array<float,12> vals, int fundamental) {
         int offset;
         if(fundamental <= 0) offset = 0;
@@ -84,6 +91,7 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
         }
         return new_vals;
     }
+
     void setFundamental(int fund) {
         //need to shift keyValues over by difference in fundamental
         int oldFund = fundamental;
@@ -95,6 +103,7 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
             circularTuningOffset[i] = vals[index];
         }
     }
+
     std::atomic<bool> setFromAudioThread;
 };
 
@@ -107,25 +116,27 @@ struct TuningParams : chowdsp::ParamHolder
     {
         add (tuningSystem,fundamental,adaptive);
     }
+
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
         juce::ParameterID{"tuningSystem" , 100},
         "Tuning System",
         TuningSystem::Equal_Temperament,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''}}
     };
+
     chowdsp::EnumChoiceParameter<Fundamental>::Ptr fundamental {
         juce::ParameterID{"fundamental" , 100},
         "Fundamental",
         Fundamental::C,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''},{'4', '#'},{'5','b'}}
     };
+
     chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
         juce::ParameterID{"adaptiveSystem" , 100},
         "Adaptive System",
         AdaptiveSystems::None,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''},{'4', '#'},{'5','b'}}
     };
-
 
     TuningKeyboardState keyboardState;
     /** Custom serializer */
@@ -167,8 +178,12 @@ public:
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), false)
                 .withInput("input",juce::AudioChannelSet::stereo(),false);
     }
+
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
+
+    int& getFundamental() { return getState().params.keyboardState.fundamental; }
+    std::array<float, 12>& getCircularOffsets() { return tuning->getState().params.keyboardState.circularTuningOffset; }
 
 
 private:

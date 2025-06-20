@@ -855,19 +855,24 @@ void BKRangeSlider::resized()
 
     juce::Rectangle<int> area (getLocalBounds());
     juce::Rectangle<int> topSlab (area.removeFromTop(gComponentTextFieldHeight));
+    juce::Rectangle<int> bottomSlab (area.removeFromBottom(gComponentTextFieldHeight));
 
     if(justifyRight)
     {
         topSlab.removeFromRight(5);
         maxValueTF.setBounds(topSlab.removeFromRight(75));
         topSlab.removeFromRight(gXSpacing);
-        minValueTF.setBounds(topSlab.removeFromLeft(75));
+        //minValueTF.setBounds(topSlab.removeFromLeft(75));
+
+        bottomSlab.removeFromLeft(5);
+        minValueTF.setBounds(bottomSlab.removeFromLeft(75));
         showName.setBounds(topSlab.removeFromRight(getWidth() - 150));
     }
     else
     {
         topSlab.removeFromLeft(5);
-        minValueTF.setBounds(topSlab.removeFromLeft(75));
+        //minValueTF.setBounds(topSlab.removeFromLeft(75));
+        minValueTF.setBounds(bottomSlab.removeFromLeft(75));
         topSlab.removeFromLeft(gXSpacing);
         maxValueTF.setBounds(topSlab.removeFromLeft(75));
         showName.setBounds(topSlab.removeFromLeft(getWidth() - 150));

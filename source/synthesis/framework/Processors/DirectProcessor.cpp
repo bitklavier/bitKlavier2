@@ -121,6 +121,9 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // get the current tuning
     //  we'll want to write some handlers for everything we want from Tuning, so it looks better/easier than this!
     auto& currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
+    //auto currentTuning = tuning->getCircularOffsets();
+    //auto& newFund = tuning->getState().params.keyboardState.fundamental;
+    auto& newFund = tuning->getFundamental();
 
     if (mainSynth->hasSamples() )
     {

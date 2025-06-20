@@ -52,7 +52,7 @@ struct DirectParams : chowdsp::ParamHolder
 
     // Gain param
     chowdsp::GainDBParameter::Ptr gainParam {
-        juce::ParameterID { "Gain", 100 },
+        juce::ParameterID { "Main", 100 },
         "Gain",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,true
@@ -68,7 +68,7 @@ struct DirectParams : chowdsp::ParamHolder
 
     // Resonance param
     chowdsp::GainDBParameter::Ptr releaseResonanceParam {
-        juce::ParameterID { "Ring", 100 },
+        juce::ParameterID { "Resonance", 100 },
         "Release Resonance",
         juce::NormalisableRange { rangeStart, rangeEnd + 24, 0.0f, skewFactor, false },
         6.0f,true
@@ -84,8 +84,8 @@ struct DirectParams : chowdsp::ParamHolder
 
     // Gain param
     chowdsp::GainDBParameter::Ptr blendronicSend {
-        juce::ParameterID { "Blendronic", 100 },
-        "Blendronic Send",
+        juce::ParameterID { "Send", 100 },
+        "Send",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,true
     };
@@ -130,6 +130,7 @@ struct DirectNonParameterState : chowdsp::NonParamState
     //chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
     //chowdsp::StateValue<bool> isSelected { "selected", true };
 };
+
 class SynthBase;
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState>>,
 public juce::ValueTree::Listener
