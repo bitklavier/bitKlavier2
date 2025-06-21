@@ -13,8 +13,9 @@ void DirectParametersView::resized()
     int knob_section_height = getKnobSectionHeight();
 
     // get the prep area, with left/right border for title
-    juce::Rectangle<int> bounds = getLocalBounds().withLeft(title_width);
-    bounds.removeFromRight(title_width);
+    //juce::Rectangle<int> bounds = getLocalBounds().withLeft(title_width);
+    juce::Rectangle<int> bounds = getLocalBounds();
+    bounds.reduce(title_width + 4, 0);
 
     // how much vertical space will we need for all the components?
     int verticalAreaNeeded = knob_section_height * 7;
@@ -26,6 +27,7 @@ void DirectParametersView::resized()
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
+    knobsBorder.setBounds(outputKnobsArea);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
 
     // add the adsr below that

@@ -15,7 +15,6 @@
  */
 
 #include "synth_section.h"
-
 #include "look_and_feel/skin.h"
 #include "look_and_feel/fonts.h"
 #include "FullInterface.h"

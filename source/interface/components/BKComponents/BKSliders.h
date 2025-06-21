@@ -70,7 +70,7 @@ public:
     void setName (juce::String newName)
     {
         sliderName = newName;
-        showName.setText (sliderName, juce::dontSendNotification);
+        //showName.setText (sliderName, juce::dontSendNotification);
     }
 
     juce::String getName() { return sliderName; }
@@ -78,7 +78,7 @@ public:
     void setTooltip (juce::String newTip)
     {
         topSlider->setTooltip (newTip);
-        showName.setTooltip (newTip);
+        //showName.setTooltip (newTip);
     }
 
     void resized() override;
@@ -134,7 +134,7 @@ private
     float clickedPosition;
 
     juce::String sliderName;
-    juce::Label showName;
+    //juce::Label showName;
     bool justifyRight;
 
     BKMultiSliderLookAndFeel stackedSliderLookAndFeel;

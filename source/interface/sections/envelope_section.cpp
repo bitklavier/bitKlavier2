@@ -74,13 +74,12 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
     delay_ = std::make_unique<SynthSlider>("delay");
     delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
     //delay_ = std::make_unique<SynthSlider>(value_prepend + "_delay");
-  addSlider(delay_.get());
+    addSlider(delay_.get());
 
   delay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
   delay_->setPopupPlacement(juce::BubbleComponent::below);
   delay_->parentHierarchyChanged();
   delay_->setVisible(false);
-
 
   attack_ = std::make_unique<SynthSlider>("attack");
   //attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, nullptr);
@@ -154,18 +153,6 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
   addAndMakeVisible(drag_magnifying_glass_.get());
   addOpenGlComponent(drag_magnifying_glass_->getGlComponent());
 
-//  params.doForAllParameters([this, &listeners](auto& param, size_t) {
-//      if( auto *newparm = dynamic_cast<chowdsp::FloatParameter*>((static_cast<juce::RangedAudioParameter*>(&param))))
-//      {
-//          if(newparm->paramID == "attack") {
-//              DBG("yeet");
-//              attack_attachment = chowdsp::SliderAttachment(*newparm, listeners, *attack_, nullptr);
-//          }
-//      }
-//
-//      });
-//
-
   delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
   attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, nullptr);
   attackPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackPowerParam, listeners, *attack_power_, nullptr);
@@ -176,44 +163,65 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
   release_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releaseParam, listeners, *release_, nullptr);
   releasePower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releasePowerParam, listeners, *release_power_, nullptr);
 
+  envelopeSectionBorder.setName("envelope border");
+  envelopeSectionBorder.setText("Envelope");
+  envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
+  addAndMakeVisible(envelopeSectionBorder);
+
   //setSkinOverride(Skin::kEnvelope);
 }
 
 EnvelopeSection::~EnvelopeSection() { }
 
 void EnvelopeSection::paintBackground(juce::Graphics& g) {
-  setLabelFont(g);
-  drawLabelForComponent(g, TRANS("DELAY"), delay_.get());
-  drawLabelForComponent(g, TRANS("Attack"), attack_.get());
-  drawLabelForComponent(g, TRANS("HOLD"), hold_.get());
-  drawLabelForComponent(g, TRANS("Decay"), decay_.get());
-  drawLabelForComponent(g, TRANS("Sustain"), sustain_.get());
-  drawLabelForComponent(g, TRANS("Release"), release_.get());
+      setLabelFont(g);
+      drawLabelForComponent(g, TRANS("DELAY"), delay_.get());
+      drawLabelForComponent(g, TRANS("Attack"), attack_.get());
+      drawLabelForComponent(g, TRANS("HOLD"), hold_.get());
+      drawLabelForComponent(g, TRANS("Decay"), decay_.get());
+      drawLabelForComponent(g, TRANS("Sustain"), sustain_.get());
+      drawLabelForComponent(g, TRANS("Release"), release_.get());
 
-  paintKnobShadows(g);
-  paintChildrenBackgrounds(g);
+      paintKnobShadows(g);
+      paintChildrenBackgrounds(g);
+
+      envelopeSectionBorder.paint(g);
 }
 
 void EnvelopeSection::resized() {
-  static constexpr float kMagnifyingHeightRatio = 0.2f;
-  int knob_section_height = getKnobSectionHeight();
-  int knob_y = getHeight() - knob_section_height;
 
-  int widget_margin = findValue(Skin::kWidgetMargin);
-  int envelope_height = knob_y - widget_margin;
-  envelope_->setBounds(widget_margin, widget_margin, getWidth() - 2 * widget_margin, envelope_height);
+    juce::Rectangle<int> area (getLocalBounds());
+    envelopeSectionBorder.setBounds(area);
+    area.removeFromTop(17);
+    area.reduce(10, 0);
 
-  juce::Rectangle<int> knobs_area(0, knob_y, getWidth(), knob_section_height);
-  placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
+    juce::Rectangle<int> envArea = area.removeFromTop(area.getHeight() - getKnobSectionHeight());
+    envelope_->setBounds(envArea);
 
-  SynthSection::resized();
-  envelope_->setSizeRatio(getSizeRatio());
+    juce::Rectangle<int> knobs_area = area.removeFromTop(getKnobSectionHeight());
+    placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
 
-  int magnify_height = envelope_->getHeight() * kMagnifyingHeightRatio;
-  drag_magnifying_glass_->setBounds(envelope_->getRight() - magnify_height, envelope_->getY(),
+//    int knob_section_height = getKnobSectionHeight();
+//    //int knob_y = getHeight() - knob_section_height;
+//    int knob_y = area.getHeight() - knob_section_height;
+//
+//    int widget_margin = findValue(Skin::kWidgetMargin);
+//    int envelope_height = knob_y - widget_margin;
+//    envelope_->setBounds(widget_margin, widget_margin, area.getWidth() - 2 * widget_margin, envelope_height);
+//
+//    juce::Rectangle<int> knobs_area(0, area.getY(), area.getWidth(), knob_section_height);
+//    placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
+
+    envelope_->setSizeRatio(getSizeRatio());
+
+    static constexpr float kMagnifyingHeightRatio = 0.2f;
+    int magnify_height = envelope_->getHeight() * kMagnifyingHeightRatio;
+    drag_magnifying_glass_->setBounds(envelope_->getRight() - magnify_height, envelope_->getY(),
                                     magnify_height, magnify_height);
 
-  envelope_->magnifyReset();
+    envelope_->magnifyReset();
+
+    SynthSection::resized();
 }
 
 void EnvelopeSection::reset() {

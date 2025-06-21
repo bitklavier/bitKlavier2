@@ -55,6 +55,11 @@ public:
                 velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
         }
 
+        knobsBorder.setName("knobsBorder");
+        knobsBorder.setText("Output Gain Controls");
+        knobsBorder.setTextLabelPosition(juce::Justification::centred);
+        addAndMakeVisible(knobsBorder);
+
         // we add subsections for the elements that have been defined as sections
         addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
@@ -74,6 +79,7 @@ public:
             drawLabelForComponent(g, slider->getName(), slider.get());
         }
         paintChildrenBackgrounds(g);
+        knobsBorder.paint(g);
     }
 
     // complex UI elements in this prep
@@ -84,6 +90,8 @@ public:
     // generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+
+    juce::GroupComponent knobsBorder;
 
     void resized() override;
 

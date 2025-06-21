@@ -20,6 +20,7 @@
 #include "synth_section.h"
 #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
 #include "EnvParams.h"
+
 class EnvelopeEditor;
 class SynthSlider;
 
@@ -47,8 +48,9 @@ class DragMagnifyingGlass : public OpenGlShapeButton {
     std::vector<Listener*> listeners_;
 };
 
-class EnvelopeSection : public SynthSection, public DragMagnifyingGlass::Listener {
-  public:
+class EnvelopeSection : public SynthSection, DragMagnifyingGlass::Listener {
+
+public:
     EnvelopeSection(juce::String name, std::string value_prepend,EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent);
 
     virtual ~EnvelopeSection();
@@ -60,8 +62,6 @@ class EnvelopeSection : public SynthSection, public DragMagnifyingGlass::Listene
     void magnifyDoubleClicked() override;
 
   private:
-
-
     std::vector<std::unique_ptr<SynthSlider>> viewable;
     std::shared_ptr<EnvelopeEditor> envelope_;
     std::unique_ptr<SynthSlider> delay_;
@@ -83,6 +83,8 @@ class EnvelopeSection : public SynthSection, public DragMagnifyingGlass::Listene
     std::unique_ptr<chowdsp::SliderAttachment> sustain_attachment;
     std::unique_ptr<chowdsp::SliderAttachment> release_attachment;
     std::unique_ptr<chowdsp::SliderAttachment> releasePower_attachment;
+
+    juce::GroupComponent envelopeSectionBorder;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeSection)
 };

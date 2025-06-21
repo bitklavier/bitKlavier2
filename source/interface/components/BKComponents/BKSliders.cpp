@@ -98,11 +98,6 @@ BKStackedSlider::BKStackedSlider(
            sliderIncrement(increment),
            numActiveSliders(numActiveSliders)
 {
-
-//    showName.setText(sliderName, juce::dontSendNotification);
-//    showName.setInterceptsMouseClicks(false, true);
-//    addAndMakeVisible(showName);
-
     editValsTextField = std::make_unique<juce::TextEditor>();
     editValsTextField->setMultiLine(true);
     editValsTextField->setName("PARAMTXTEDIT");
@@ -160,7 +155,7 @@ BKStackedSlider::BKStackedSlider(
 
 void BKStackedSlider::setDim(float alphaVal)
 {
-    showName.setAlpha(alphaVal);
+    //showName.setAlpha(alphaVal);
     //topSlider->setAlpha(alphaVal);
 
     for(int i=0; i<numSliders; i++)
@@ -178,7 +173,7 @@ void BKStackedSlider::setDim(float alphaVal)
 
 void BKStackedSlider::setBright()
 {
-    showName.setAlpha(1.);
+    //showName.setAlpha(1.);
     //topSlider->setAlpha(1.);
 
     for(int i=0; i<numSliders; i++)
@@ -553,12 +548,7 @@ void BKStackedSlider::resized ()
     area.removeFromBottom(2);
     area.reduce(4, 0);
 
-//    showName.setBounds(area.toNearestInt());
-//    showName.setJustificationType(juce::Justification::topRight);
-//    showName.toFront(false);
-
     topSlider->setBounds(area);
-
     editValsTextField->setBounds(area);
     editValsTextField->setVisible(false);
 
