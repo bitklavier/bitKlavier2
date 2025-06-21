@@ -96,7 +96,7 @@ BKStackedSlider::BKStackedSlider(
            sliderMaxDefault(defmax),
            sliderDefault(def),
            sliderIncrement(increment),
-            numActiveSliders(numActiveSliders)
+           numActiveSliders(numActiveSliders)
 {
 
     showName.setText(sliderName, juce::dontSendNotification);
@@ -114,7 +114,6 @@ BKStackedSlider::BKStackedSlider(
     setInterceptsMouseClicks(true, true);
 
     numSliders = 12;
-
 
     for(int i=0; i<numSliders; i++)
     {
@@ -222,7 +221,6 @@ void BKStackedSlider::setTo(juce::Array<float> newvals, juce::NotificationType n
     //activate sliders
     for(int i=0; i<slidersToActivate; i++)
     {
-
         juce::Slider* newSlider = dataSliders.operator[](i);
         if(newSlider != nullptr)
         {
@@ -547,7 +545,6 @@ void BKStackedSlider::sliderModifyMenuCallback (const int result, BKStackedSlide
     }
 }
 
-
 void BKStackedSlider::resized ()
 {
     juce::Rectangle<int> area (getLocalBounds());
@@ -602,6 +599,7 @@ BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double 
     maxValueTF.setName("maxvalue");
     maxValueTF.addListener(this);
     maxValueTF.setSelectAllWhenFocused(true);
+    maxValueTF.setJustification(juce::Justification(2));
     maxValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     addAndMakeVisible(maxValueTF);
 
@@ -645,6 +643,11 @@ BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double 
     displaySlider->setLookAndFeel(&displaySliderLookAndFeel);
     displaySlider->setInterceptsMouseClicks(false, false);
     addAndMakeVisible(*displaySlider);
+
+    rangeSliderBorder.setName("rangeSlider");
+    rangeSliderBorder.setText("Velocity Range");
+    rangeSliderBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(rangeSliderBorder);
 
 }
 
@@ -851,40 +854,31 @@ void BKRangeSlider::rescaleMaxSlider()
 
 void BKRangeSlider::resized()
 {
-
+    // draw the border
     juce::Rectangle<int> area (getLocalBounds());
-    juce::Rectangle<int> topSlab (area.removeFromTop(gComponentTextFieldHeight));
-    juce::Rectangle<int> bottomSlab (area.removeFromBottom(gComponentTextFieldHeight));
+    rangeSliderBorder.setBounds(area);
+    area.removeFromTop(gComponentTextFieldHeight + 2);
 
-    if(justifyRight)
-    {
-        topSlab.removeFromRight(5);
-        maxValueTF.setBounds(topSlab.removeFromRight(75));
-        topSlab.removeFromRight(gXSpacing);
-        //minValueTF.setBounds(topSlab.removeFromLeft(75));
+    // figure out how much to remove from top and bottom to center slider
+    int areaHeight = area.getHeight();
+    int sliderHeight = gComponentRangeSliderHeight;
+    int removeFromTopAndBottom = areaHeight - (sliderHeight/2);
 
-        bottomSlab.removeFromLeft(5);
-        minValueTF.setBounds(bottomSlab.removeFromLeft(75));
-        showName.setBounds(topSlab.removeFromRight(getWidth() - 150));
-    }
-    else
-    {
-        topSlab.removeFromLeft(5);
-        //minValueTF.setBounds(topSlab.removeFromLeft(75));
-        minValueTF.setBounds(bottomSlab.removeFromLeft(75));
-
-        topSlab.removeFromLeft(gXSpacing);
-        maxValueTF.setBounds(topSlab.removeFromLeft(75));
-        showName.setBounds(topSlab.removeFromLeft(getWidth() - 150));
-    }
-
-    juce::Rectangle<int> sliderArea (area.removeFromTop(40));
+    // place the sliders
+    juce::Rectangle<int> sliderArea (area.removeFromTop(removeFromTopAndBottom).removeFromBottom(removeFromTopAndBottom));
     minSlider.setBounds(sliderArea);
     maxSlider.setBounds(sliderArea);
     invisibleSlider.setBounds(sliderArea);
 
+//    maxValueTF.setBounds(maxSlider.getRight() - 72, maxSlider.getY() - 12, 52, 22);
+//    minValueTF.setBounds(maxSlider.getX() + 20, maxSlider.getBottom() - 10, 52, 22);
+
+    // place the text fields
+    minValueTF.setBounds(maxSlider.getX() + 10, maxSlider.getY() - 14, 52, 22);
+    maxValueTF.setBounds(maxSlider.getRight() - 62, maxSlider.getBottom() - 8, 52, 22);
+
+    // blue slider to show most recently played velocity
     juce::Rectangle<int> displaySliderArea = maxSlider.getBounds();
     displaySliderArea.reduce(8, 0);
     displaySlider->setBounds(displaySliderArea.removeFromBottom(8));
-
 }

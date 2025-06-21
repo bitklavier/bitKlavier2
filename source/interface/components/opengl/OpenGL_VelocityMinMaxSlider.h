@@ -14,7 +14,7 @@ class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlide
 public:
     OpenGL_VelocityMinMaxSlider(VelocityMinMaxParams *_params,
                                 chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKRangeSlider>(
-                                                                              "VelocityRange", // slider name
+                                                                              "Accepted Velocity Range", // slider name
                                                                               0.f, // min
                                                                               128.f, // max
                                                                               0.f, // default min

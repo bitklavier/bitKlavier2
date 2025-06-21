@@ -125,6 +125,12 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     //auto& newFund = tuning->getState().params.keyboardState.fundamental;
     auto& newFund = tuning->getFundamental();
 
+    /*
+     * need to get tuning into the synths. should only need to update at the block, even for spring tuning
+     * also need to get note velocities OUT of the synth, so we can update velocity displaySliders
+     *      send to BKRangeSlider setDisplayValue()
+     */
+
     if (mainSynth->hasSamples() )
     {
         mainSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
