@@ -35,19 +35,12 @@ void DirectParametersView::resized()
     juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 5);
     envSection->setBounds(adsrArea);
 
-    // add the transposition slider below that
+    // add the transposition and velocity range sliders below that
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> transpositionSliderArea = bounds.removeFromTop(knob_section_height);
     juce::Rectangle<int> velocitySliderArea = transpositionSliderArea.removeFromLeft(transpositionSliderArea.getWidth() * 0.5);
-    //transpositionSliderArea.reduce(transpositionSliderArea.getWidth() / 6, 0);
     transpositionSlider->setBounds(transpositionSliderArea);
     velocityMinMaxSlider->setBounds(velocitySliderArea);
-
-    // add the velocity range slider below that
-//    bounds.removeFromTop(bufferSpaceForEach * 2);
-//    juce::Rectangle<int> velocitySliderArea = bounds.removeFromTop(knob_section_height);
-//    velocitySliderArea.reduce(velocitySliderArea.getWidth() / 4, 0); //narrow slightly; don't need the full width for this one!
-//    velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     SynthSection::resized();
 }
