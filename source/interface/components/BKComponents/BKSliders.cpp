@@ -132,13 +132,13 @@ BKStackedSlider::BKStackedSlider(
     topSlider = std::make_unique<juce::Slider>();
     topSlider->setSliderStyle(juce::Slider::LinearBar);
     topSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 0,0);
-    //topSlider->setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxLeft, true, 50,50);
+    //topSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 50,50);
     topSlider->setRange(sliderMin, sliderMax, sliderIncrement);
     topSlider->setValue(sliderDefault, juce::dontSendNotification);
     topSlider->addListener(this);
     topSlider->addMouseListener(this, true);
     topSlider->setLookAndFeel(&topSliderLookAndFeel);
-    topSlider->setAlpha(0.);
+    //topSlider->setAlpha(0.);
     addAndMakeVisible(*topSlider);
 
     topSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colour::greyLevel (0.8f).contrasting().withAlpha (0.0f));
