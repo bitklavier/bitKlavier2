@@ -21,7 +21,7 @@ void DirectParametersView::resized()
     int verticalAreaNeeded = knob_section_height * 7;
 
     // how much vertical space is left, divided up so we have some buffer space between each component
-    int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 6;
+    int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 5;
     if (bufferSpaceForEach < 0 ) bufferSpaceForEach = 0;
 
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
@@ -32,20 +32,22 @@ void DirectParametersView::resized()
 
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);
-    juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 4);
+    juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 5);
     envSection->setBounds(adsrArea);
 
     // add the transposition slider below that
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> transpositionSliderArea = bounds.removeFromTop(knob_section_height);
-    transpositionSliderArea.reduce(transpositionSliderArea.getWidth() / 6, 0);
+    juce::Rectangle<int> velocitySliderArea = transpositionSliderArea.removeFromLeft(transpositionSliderArea.getWidth() * 0.5);
+    //transpositionSliderArea.reduce(transpositionSliderArea.getWidth() / 6, 0);
     transpositionSlider->setBounds(transpositionSliderArea);
+    velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     // add the velocity range slider below that
-    bounds.removeFromTop(bufferSpaceForEach * 2);
-    juce::Rectangle<int> velocitySliderArea = bounds.removeFromTop(knob_section_height);
-    velocitySliderArea.reduce(velocitySliderArea.getWidth() / 4, 0); //narrow slightly; don't need the full width for this one!
-    velocityMinMaxSlider->setBounds(velocitySliderArea);
+//    bounds.removeFromTop(bufferSpaceForEach * 2);
+//    juce::Rectangle<int> velocitySliderArea = bounds.removeFromTop(knob_section_height);
+//    velocitySliderArea.reduce(velocitySliderArea.getWidth() / 4, 0); //narrow slightly; don't need the full width for this one!
+//    velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     SynthSection::resized();
 }
