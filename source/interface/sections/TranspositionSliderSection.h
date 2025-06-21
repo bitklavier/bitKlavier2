@@ -50,12 +50,12 @@ public:
     ~TranspositionSliderSection() {}
 
     void paintBackground(juce::Graphics& g) {
-        paintContainer(g);
-        paintHeadingText(g);
-
-        paintKnobShadows(g);
-        paintChildrenBackgrounds(g);
-        paintBorder(g);
+//        paintContainer(g);
+//        paintHeadingText(g);
+//
+//        paintKnobShadows(g);
+//        paintChildrenBackgrounds(g);
+//        paintBorder(g);
     }
 
     void resized() override;

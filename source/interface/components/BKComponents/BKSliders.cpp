@@ -99,9 +99,9 @@ BKStackedSlider::BKStackedSlider(
            numActiveSliders(numActiveSliders)
 {
 
-    showName.setText(sliderName, juce::dontSendNotification);
-    showName.setInterceptsMouseClicks(false, true);
-    addAndMakeVisible(showName);
+//    showName.setText(sliderName, juce::dontSendNotification);
+//    showName.setInterceptsMouseClicks(false, true);
+//    addAndMakeVisible(showName);
 
     editValsTextField = std::make_unique<juce::TextEditor>();
     editValsTextField->setMultiLine(true);
@@ -148,6 +148,11 @@ BKStackedSlider::BKStackedSlider(
 
     topSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colour::greyLevel (0.8f).contrasting().withAlpha (0.0f));
     stackedSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.95));
+
+    sliderBorder.setName("transpositionSlider");
+    sliderBorder.setText("Transpositions");
+    sliderBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(sliderBorder);
 
     //attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
 
@@ -279,12 +284,10 @@ void BKStackedSlider::mouseDown (const juce::MouseEvent &event)
             addSlider(juce::sendNotification);
 //            showModifyPopupMenu();
         }
-
     }
     if (editValsTextField->hasKeyboardFocus(false)) {
         editValsTextField->mouseDown(event);
     }
-
 }
 
 
@@ -320,8 +323,6 @@ void BKStackedSlider::mouseUp(const juce::MouseEvent& e)
     if (editValsTextField->hasKeyboardFocus(false)) {
         editValsTextField->mouseUp(e);
     }
-
-
 }
 
 void BKStackedSlider::mouseMove(const juce::MouseEvent& e)
@@ -381,7 +382,6 @@ void BKStackedSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
             getAllActiveValues());
         isEditing = false;
     }
-
 }
 
 void BKStackedSlider::textEditorFocusLost(juce::TextEditor& textEditor)
@@ -548,10 +548,14 @@ void BKStackedSlider::sliderModifyMenuCallback (const int result, BKStackedSlide
 void BKStackedSlider::resized ()
 {
     juce::Rectangle<int> area (getLocalBounds());
+    sliderBorder.setBounds(area);
+    area.removeFromTop(10);
+    area.removeFromBottom(2);
+    area.reduce(4, 0);
 
-    showName.setBounds(area.toNearestInt());
-    showName.setJustificationType(juce::Justification::topRight);
-    showName.toFront(false);
+//    showName.setBounds(area.toNearestInt());
+//    showName.setJustificationType(juce::Justification::topRight);
+//    showName.toFront(false);
 
     topSlider->setBounds(area);
 

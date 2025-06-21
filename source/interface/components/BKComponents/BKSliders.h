@@ -153,6 +153,8 @@ private
 
     static void sliderModifyMenuCallback (const int result, BKStackedSlider* ss);
 
+    juce::GroupComponent sliderBorder;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKStackedSlider)
 };
 
