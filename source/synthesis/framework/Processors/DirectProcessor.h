@@ -174,7 +174,7 @@ public:
     {
         return BusesProperties()
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), true)
-                .withInput("input",juce::AudioChannelSet::stereo(),false)
+            .withInput("input",juce::AudioChannelSet::stereo(),false)
             .withInput ("Modulation",juce::AudioChannelSet::discreteChannels(9) ,true);
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
@@ -226,5 +226,6 @@ private:
 
     chowdsp::ScopedCallbackList adsrCallbacks;
     chowdsp::ScopedCallbackList vtCallbacks;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };

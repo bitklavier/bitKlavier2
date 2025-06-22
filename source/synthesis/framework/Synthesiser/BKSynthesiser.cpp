@@ -185,15 +185,11 @@ void BKSynthesiser::renderNextBlock (juce::AudioBuffer<float>& outputAudio, cons
     processNextBlock (outputAudio, inputMidi, startSample, numSamples);
 }
 
-
-
 void BKSynthesiser::renderVoices (juce::AudioBuffer<float>& buffer, int startSample, int numSamples)
 {
     for (auto* voice : voices)
         voice->renderNextBlock (buffer, startSample, numSamples);
 }
-
-
 
 void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
 {
@@ -352,8 +348,14 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
 
-        voice->startNote (midiNoteNumber, velocity, transposition, tuneTranspositions, sound, // tuneTranspositions here
-                          lastPitchWheelValues [midiChannel - 1]);
+        voice->startNote (
+            midiNoteNumber,
+            velocity,
+            transposition,
+            tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
+            sound,
+            lastPitchWheelValues [midiChannel - 1]
+            );
     }
 }
 

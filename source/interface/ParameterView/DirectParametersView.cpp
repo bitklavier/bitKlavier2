@@ -13,7 +13,6 @@ void DirectParametersView::resized()
     int knob_section_height = getKnobSectionHeight();
 
     // get the prep area, with left/right border for title
-    //juce::Rectangle<int> bounds = getLocalBounds().withLeft(title_width);
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.reduce(title_width + 4, 0);
 

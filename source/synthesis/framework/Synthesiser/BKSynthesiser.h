@@ -7,6 +7,7 @@
 #include <juce_core/juce_core.h>
 #include "Sample.h"
 #include "EnvParams.h"
+
 //==============================================================================
 /**
     Base class for a musical device that can play sounds.
@@ -433,6 +434,8 @@ private:
                 //set by owning processor state.params.velocityMinMax
                 float velocityMin = 0.;
                 float velocityMax = 128.;
+
+                //TuningProcessor& tuning;
 
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);

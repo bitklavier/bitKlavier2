@@ -633,7 +633,8 @@ public:
          * also, if we want to update tuning mid-block, need to keep track of transposition as well...
          */
         //frequency.setTargetValue(mtof(midiNoteNumber + transposition)); // need to sort out A440 reference freq as well...
-        frequency.setTargetValue(getTargetFrequency());
+        frequency.setTargetValue(getTargetFrequency());    // don't think we need to call this here, since this is updated at the block
+                                                                    // in which case we don't need to pass Tuning through to here
         //melatonin::printSparkline(m_Buffer);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
@@ -882,8 +883,8 @@ private:
                                                double begin,
                                                double end) const
     {
+        // this is where we correct for A440? not sure I like doing this every sample!
         auto nextPitchRatio = (freq / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate;
-
         auto nextSamplePos = currentSamplePos;
         auto nextDirection = currentDirection;
 
