@@ -780,7 +780,7 @@ private:
                           Element* outR,
                           size_t writePos)
     {
-        auto currentFrequency = frequency.getNextValue();  // based on note pitch
+        auto currentFrequency = frequency.getNextValue();  // based on note pitch // change to currentOffset, and calculate target offset outside of this loop
         auto currentLoopBegin = loopBegin.getNextValue();
         auto currentLoopEnd = loopEnd.getNextValue();
 
@@ -838,7 +838,7 @@ private:
             outL[writePos] += (m_Buffer.getSample(0, 0) + m_Buffer.getSample(1, 0)) * 0.5f;
         }
 
-        std::tie(currentSamplePos, currentDirection) = getNextState(currentFrequency,
+        std::tie(currentSamplePos, currentDirection) = getNextState(currentFrequency, // replace currentFrequency with currentOffset
                                                                     currentLoopBegin,
                                                                     currentLoopEnd);
 
@@ -879,7 +879,7 @@ private:
         backward
     };
 
-    std::tuple<double, Direction> getNextState(double freq,
+    std::tuple<double, Direction> getNextState(double freq, // replace freq with offset, moving the nextPitchRatio calculation out of the sample loop
                                                double begin,
                                                double end) const
     {
