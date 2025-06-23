@@ -753,6 +753,13 @@ private:
 
         // update frequency target here at the block as well; i don't think we need to update this every sample!
         frequency.setTargetValue(getTargetFrequency());
+        //DBG("frequency smoothing is on? " + juce::String((int)frequency.isSmoothing()));
+        /*
+         * I don't think the smoothing stuff is actually being activated with all of these;
+         *      requires (reset), setting number of steps, and so on, afaik --dlt
+         */
+        // auto nextPitchRatio = (freq / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate;
+        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
@@ -783,6 +790,7 @@ private:
         auto currentFrequency = frequency.getNextValue();  // based on note pitch // change to currentOffset, and calculate target offset outside of this loop
         auto currentLoopBegin = loopBegin.getNextValue();
         auto currentLoopEnd = loopEnd.getNextValue();
+        auto currentSampleIncrement = sampleIncrement.getNextValue();
 
         float ampEnvLast = ampEnv.getNextSample();
         if (ampEnv.isActive() && isTailingOff())
@@ -883,8 +891,9 @@ private:
                                                double begin,
                                                double end) const
     {
-        // this is where we correct for A440? not sure I like doing this every sample!
-        auto nextPitchRatio = (freq / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate;
+        // this is where we correct for A440? and we should not be doing this every sample!
+        //auto nextPitchRatio = (freq / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate;
+        auto nextPitchRatio = sampleIncrement.getCurrentValue();
         auto nextSamplePos = currentSamplePos;
         auto nextDirection = currentDirection;
 
@@ -945,6 +954,8 @@ private:
     juce::SmoothedValue<double> frequency { 0 };
     juce::SmoothedValue<double> loopBegin;
     juce::SmoothedValue<double> loopEnd;
+    juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions; dependent on frequency
+
     double previousPressure { 0 };
     double currentSamplePos { 0 };
     double tailOff { 0 };
