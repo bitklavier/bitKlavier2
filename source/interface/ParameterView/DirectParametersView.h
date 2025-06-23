@@ -10,11 +10,14 @@
 #include "envelope_section.h"
 #include "synth_section.h"
 #include "synth_slider.h"
+#include "DirectProcessor.h"
+#include "peak_meter_viewer.h"
+
 
 class DirectParametersView : public SynthSection
 {
 public:
-    DirectParametersView(chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params, juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
+    DirectParametersView(chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
     {
         // the name that will appear in the UI as the name of the section
         setName("direct");
@@ -43,17 +46,21 @@ public:
         }
 
         // find and create the more complex parameters
-        for (auto paramHolder : *params.getParamHolders())
-        {
-            if (auto *envParams = dynamic_cast<EnvParams*>(paramHolder))
-                envSection = std::make_unique<EnvelopeSection>("ENV", "ENV",*envParams,listeners, *this);//std::make_unique<BooleanParameterComponent>(*boolParam, listeners);
+//        for (auto paramHolder : *params.getParamHolders())
+//        {
+//            if (auto *envParams = dynamic_cast<EnvParams*>(paramHolder))
+//                envSection = std::make_unique<EnvelopeSection>("ENV", "ENV",*envParams,listeners, *this);//std::make_unique<BooleanParameterComponent>(*boolParam, listeners);
+//
+//            if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
+//                transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
+//
+//            if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
+//                velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
+//        }
 
-            if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
-                transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
-
-            if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
-                velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
-        }
+        envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
+        transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
+        velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
         knobsBorder.setName("knobsBorder");
         knobsBorder.setText("Output Gain Controls");
@@ -67,6 +74,12 @@ public:
         // this slider does not need a section, since it's just one OpenGL component
         velocityMinMaxSlider->setComponentID("velocity_min_max");
         addStateModulatedComponent(velocityMinMaxSlider.get());
+
+        params.outputLevels; // to access the updating audio output levels
+        levelMeter = std::make_unique<PeakMeterViewer>(true, &params.outputLevels);
+        //addOpenGlComponent(levelMeter);
+        addAndMakeVisible(levelMeter.get());
+
     }
 
     void paintBackground(juce::Graphics& g) override
@@ -92,6 +105,7 @@ public:
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
     juce::GroupComponent knobsBorder;
+    std::unique_ptr<PeakMeterViewer> levelMeter;
 
     void resized() override;
 

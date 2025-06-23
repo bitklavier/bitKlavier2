@@ -163,6 +163,15 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     if (pedalSynth->hasSamples())
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
+    // level meter update stuff
+    int numSamples = buffer.getNumSamples();
+    if (numSamples != levelBuf.getNumSamples()) levelBuf.setSize(buffer.getNumChannels(), numSamples);
+
+    levelBuf.copyFrom(0, 0, buffer, 0, 0, numSamples);
+    std::get<0>(state.params.outputLevels) = getLevelL();
+    std::get<1>(state.params.outputLevels) = getLevelR();
+    //DBG("output level L = " + juce::String(std::get<0>(state.params.outputLevels)));
+
 //DBG ("attack: " + juce::String (state.params.env.attackParam->get()));
     //juce::dsp::AudioBlock<float> block(buffer);
     //melatonin::printSparkline(buffer);

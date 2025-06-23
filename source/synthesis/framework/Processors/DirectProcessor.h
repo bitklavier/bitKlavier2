@@ -47,7 +47,6 @@ struct DirectParams : chowdsp::ParamHolder
                 if(sliderParam->supportsMonophonicModulation())
                     modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
         });
-
     }
 
     // Gain param
@@ -106,6 +105,9 @@ struct DirectParams : chowdsp::ParamHolder
     // Transposition slider (holds up to 12 transposition values)
     TransposeParams transpose;
     VelocityMinMaxParams velocityMinMax;
+
+    // for storing outputLevels of this preparation for display
+    std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
 
     //
     //
@@ -206,6 +208,21 @@ public:
     void valueTreeParentChanged     (juce::ValueTree&)                    {}
     void valueTreeRedirected        (juce::ValueTree&)                    {}
 
+    double getLevelL()
+    {
+        if(levelBuf.getNumSamples() > 0) return levelBuf.getRMSLevel(0, 0, levelBuf.getNumSamples());
+        else return 0.;
+    }
+
+    double getLevelR()
+    {
+        if(levelBuf.getNumChannels() == 2) {
+            if(levelBuf.getNumSamples()) return levelBuf.getRMSLevel(1, 0, levelBuf.getNumSamples());
+            else return 0.;
+        }
+        else return getLevelL();
+    }
+
 private:
     //chowdsp::experimental::Directillator<float> oscillator;
     chowdsp::Gain<float> gain;
@@ -226,6 +243,8 @@ private:
 
     chowdsp::ScopedCallbackList adsrCallbacks;
     chowdsp::ScopedCallbackList vtCallbacks;
+
+    juce::AudioSampleBuffer levelBuf; //for storing samples for metering/RMS calculation
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };
