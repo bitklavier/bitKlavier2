@@ -631,10 +631,14 @@ public:
          *
          * need to be careful about tuning the transposition, which is a user option in the original bK
          * also, if we want to update tuning mid-block, need to keep track of transposition as well...
+         *
+         * don't think we need to call this here, since this is updated at the block
+         *      but, if we want smoothing, perhaps this is where we call sampleIncrement.reset(some num of samples to smooth over)?
          */
         //frequency.setTargetValue(mtof(midiNoteNumber + transposition)); // need to sort out A440 reference freq as well...
-        frequency.setTargetValue(getTargetFrequency());    // don't think we need to call this here, since this is updated at the block
-                                                                    // in which case we don't need to pass Tuning through to here
+        frequency.setTargetValue(getTargetFrequency()); // may not need frequency variable at all anymore
+        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+
         //melatonin::printSparkline(m_Buffer);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
@@ -660,6 +664,9 @@ public:
          *      according to the current tuning system
          *
          * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
+         *
+         * newOffset should be gotten via a call to Tuning, ideally including adaptive/spring tuning offsets as well
+         *
          */
         if (!tuneTranspositions)
         {
@@ -757,6 +764,11 @@ private:
         /*
          * I don't think the smoothing stuff is actually being activated with all of these;
          *      requires (reset), setting number of steps, and so on, afaik --dlt
+         */
+
+        /*
+         * shouldn't need to update this every sample, just at the block, so doing it here and removing it from getNextState()
+         *      need to sort out A440 reference freq as well...
          */
         // auto nextPitchRatio = (freq / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate;
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
@@ -954,7 +966,7 @@ private:
     juce::SmoothedValue<double> frequency { 0 };
     juce::SmoothedValue<double> loopBegin;
     juce::SmoothedValue<double> loopEnd;
-    juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions; dependent on frequency
+    juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions
 
     double previousPressure { 0 };
     double currentSamplePos { 0 };
