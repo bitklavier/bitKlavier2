@@ -119,11 +119,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     // get the current tuning
-    //  we'll want to write some handlers for everything we want from Tuning, so it looks better/easier than this!
     auto& currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
-    //auto currentTuning = tuning->getCircularOffsets();
-    //auto& newFund = tuning->getState().params.keyboardState.fundamental;
-    auto& newFund = tuning->getFundamental();
+    auto& newFund = tuning->getState().params.keyboardState.fundamental;
 
     /*
      * need to get tuning into the synths. should only need to update at the block, even for spring tuning
@@ -133,6 +130,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (mainSynth->hasSamples() )
     {
+        //mainSynth->setTuning(tuning);
         mainSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         mainSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -152,6 +150,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (releaseResonanceSynth->hasSamples())
     {
+        //releaseResonanceSynth->setTuning(tuning);
         releaseResonanceSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         releaseResonanceSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),

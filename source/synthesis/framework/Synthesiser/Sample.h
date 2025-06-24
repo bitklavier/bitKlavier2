@@ -19,9 +19,9 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 //#ifdef DEBUG
 #include "common.h"
-
 #include "utils.h"
 #include "BKADSR.h"
+#include "TuningProcessor.h"
 
 //#endif
 //==============================================================================
@@ -571,6 +571,8 @@ public:
         //jassert(samplerSound != nullptr);
         ampEnv.setParameters(BKADSR::Parameters(0.005, 0.5,1.0,0.1));
         m_Buffer.setSize(2, 1, false, true, false);
+
+        // call the smooth.reset() here if we want smoothing
     }
 
     static double mtof( double f )
@@ -649,6 +651,15 @@ public:
 
         ampEnv.noteOn();
     }
+
+//    void setTuning(TuningProcessor* attachedTuning)
+//    {
+//        if (attachedTuning == nullptr) return;
+//
+//        tuning = attachedTuning;
+//        currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
+//        currentTuningFundamental = tuning->getState().params.keyboardState.fundamental;
+//    }
 
     double getTargetFrequency()
     {
@@ -980,6 +991,8 @@ private:
     //juce::ADSR filterEnv;
     double filterCutoff = 20000.;
     double filterCutoffModAmt = 0.;
+
+    //TuningProcessor* tuning;
 
     //juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> m_Filter;
     juce::AudioBuffer<float> m_Buffer;

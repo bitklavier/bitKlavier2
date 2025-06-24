@@ -108,7 +108,7 @@ namespace bitklavier {
           return node;
       }
 
-      Node::Ptr addNode(std::unique_ptr<bitklavier::ModulationProcessor> modProcessor, juce::AudioProcessorGraph::NodeID id);
+      Node::Ptr addNode(std::unique_ptr<ModulationProcessor> modProcessor, juce::AudioProcessorGraph::NodeID id);
 
 
 

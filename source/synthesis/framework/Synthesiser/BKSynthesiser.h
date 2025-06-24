@@ -7,6 +7,7 @@
 #include <juce_core/juce_core.h>
 #include "Sample.h"
 #include "EnvParams.h"
+#include "TuningProcessor.h"
 
 //==============================================================================
 /**
@@ -51,7 +52,7 @@ class BKSynthesiser
                 void clearVoices();
 
                 /** Returns the number of voices that have been added. */
-                int getNumVoices() const noexcept                               { return voices.size(); }
+                int getNumVoices() const noexcept { return voices.size(); }
 
                 /** Returns one of the voices that have been added. */
                  BKSamplerVoice* getVoice (int index) const;
@@ -75,10 +76,10 @@ class BKSynthesiser
                 bool hasSamples() {return sounds != nullptr;}
 
                 /** Returns the number of sounds that have been added to the mainSynth. */
-                int getNumSounds() const noexcept                               { return sounds->size(); }
+                int getNumSounds() const noexcept { return sounds->size(); }
 
                 /** Returns one of the sounds. */
-                BKSamplerSound<juce::AudioFormatReader>::Ptr getSound (int index) const noexcept       { return (*sounds)[index]; }
+                BKSamplerSound<juce::AudioFormatReader>::Ptr getSound (int index) const noexcept { return (*sounds)[index]; }
 
                 /** Adds a new sound to the BKSynthesiser.
             
@@ -102,7 +103,7 @@ class BKSynthesiser
                 /** Returns true if note-stealing is enabled.
                     @see setNoteStealingEnabled
                 */
-                bool isNoteStealingEnabled() const noexcept                     { return shouldStealNotes; }
+                bool isNoteStealingEnabled() const noexcept { return shouldStealNotes; }
 
                 //==============================================================================
                 /** Triggers a note-on event.
@@ -330,6 +331,11 @@ class BKSynthesiser
 
                 }
 
+//                void setTuning(TuningProcessor* attachedTuning)
+//                {
+//                    tuning = attachedTuning;
+//                }
+
 protected:
                 //==============================================================================
                 /** This is used to control access to the rendering callback and the note trigger methods. */
@@ -409,6 +415,7 @@ private:
                 bool pedalSynth = false;                // for sustain pedal sounds; will ignore noteOn messages
                 bool sustainPedalAlreadyDown = false;   // to avoid re-triggering of pedalDown sounds
                 EnvParams& adsrParams;
+
                 /**
                  * midiNoteTranspositions is an arrays of tuning offsets, in MidiNoteCents (.01 = 1 cent)
                  *      - these offsets are set by currentTransposition controls in Direct, Nostalgic, and Synchronic
@@ -435,7 +442,7 @@ private:
                 float velocityMin = 0.;
                 float velocityMax = 128.;
 
-                //TuningProcessor& tuning;
+                //TuningProcessor* tuning;
 
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);

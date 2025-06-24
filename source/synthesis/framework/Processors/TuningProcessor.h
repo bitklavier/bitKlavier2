@@ -182,9 +182,6 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
-    int& getFundamental() { return getState().params.keyboardState.fundamental; }
-    std::array<float, 12>& getCircularOffsets() { return tuning->getState().params.keyboardState.circularTuningOffset; }
-
 
 private:
 
