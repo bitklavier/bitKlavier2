@@ -96,7 +96,9 @@ void PeakMeterViewer::updateVertices() {
       return;
 
   //float val = peak_output_->value()[left_ ? 0 : 1];
-  float val = std::get<0>(*peakOutput); // need check if wanting the right channel
+  float val;
+  if (left_) val = std::get<0>(*peakOutput);
+  else val = std::get<1>(*peakOutput);
   if (val > 1.0f)
     clamped_ = 1.0f;
 

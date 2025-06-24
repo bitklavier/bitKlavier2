@@ -11,7 +11,7 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "DirectProcessor.h"
-#include "peak_meter_viewer.h"
+#include "peak_meter_section.h"
 
 
 class DirectParametersView : public SynthSection
@@ -76,8 +76,9 @@ public:
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
         params.outputLevels; // to access the updating audio output levels
-        levelMeter = std::make_shared<PeakMeterViewer>(true, &params.outputLevels);
-        addOpenGlComponent(levelMeter);
+        levelMeter = std::make_shared<PeakMeterSection>("peakMeter",&params.outputLevels);
+        //addOpenGlComponent(levelMeter);
+        addSubSection(levelMeter.get());
         //addAndMakeVisible(levelMeter);
 
     }
@@ -105,7 +106,7 @@ public:
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
     juce::GroupComponent knobsBorder;
-    std::shared_ptr<PeakMeterViewer> levelMeter;
+    std::shared_ptr<PeakMeterSection> levelMeter;
 
     void resized() override;
 

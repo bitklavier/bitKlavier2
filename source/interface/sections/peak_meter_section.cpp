@@ -37,14 +37,23 @@ int PeakMeterSection::getBuffer() {
 }
 
 void PeakMeterSection::resized() {
-   int meter_height = getMeterHeight();
-   int volume_height = meter_height * 6.0f;
-   int end_volume = meter_height * 3.5f;
-   int padding = 1;
-   int buffer = getBuffer();
+//   int meter_height = getMeterHeight();
+//   int volume_height = meter_height * 6.0f;
+//   int end_volume = meter_height * 3.5f;
+//   int padding = 1;
+//   int buffer = getBuffer();
+//
+//   peak_meter_left_->setBounds(0, buffer, getWidth(), meter_height);
+//   peak_meter_right_->setBounds(0, peak_meter_left_->getBottom() + padding, getWidth(), meter_height);
 
-   peak_meter_left_->setBounds(0, buffer, getWidth(), meter_height);
-   peak_meter_right_->setBounds(0, peak_meter_left_->getBottom() + padding, getWidth(), meter_height);
+   juce::Rectangle<int> bounds = getLocalBounds();
+   bounds.reduce(0, 20);
+   juce::Rectangle<int> leftMeterBounds = bounds.removeFromLeft(bounds.getWidth()/2);
+   leftMeterBounds.reduce(2, 0);
+   bounds.reduce(2, 0);
+
+   peak_meter_left_->setBounds(leftMeterBounds);
+   peak_meter_right_->setBounds(bounds);
 
    SynthSection::resized();
 }
