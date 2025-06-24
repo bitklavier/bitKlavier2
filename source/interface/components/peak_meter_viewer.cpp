@@ -34,11 +34,12 @@ PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>,
 //  peak_memory_output_ = nullptr;
 
   float position_vertices[kNumPositions] = {
-    -1.0f, 1.0f,
-    -1.0f, -1.0f,
-    1.0f, -1.0f,
-    1.0f, 1.0f,
+    -1.0f, 1.0f,    // left top
+    -1.0f, -1.0f,   // left bottom
+    1.0f, -1.0f,    // right bottom
+    1.0f, 1.0f,     // right top
   };
+
   memcpy(position_vertices_, position_vertices, kNumPositions * sizeof(float));
 
   int position_triangles[6] = {
@@ -95,7 +96,7 @@ void PeakMeterViewer::updateVertices() {
       return;
 
   //float val = peak_output_->value()[left_ ? 0 : 1];
-  float val = std::get<0>(*peakOutput);
+  float val = std::get<0>(*peakOutput); // need check if wanting the right channel
   if (val > 1.0f)
     clamped_ = 1.0f;
 
@@ -103,10 +104,23 @@ void PeakMeterViewer::updateVertices() {
   float t = std::max((db - kMinDb) / (kMaxDb - kMinDb), 0.0f);
   t *= t;
   float position = bitklavier::utils::interpolate(-1.0f, 1.0f, t);
-  position_vertices_[0] = -1.0f;
-  position_vertices_[2] = -1.0f;
-  position_vertices_[4] = position;
-  position_vertices_[6] = position;
+
+  /*
+   * horizontal meter
+   */
+//  position_vertices_[0] = -1.0f;
+//  position_vertices_[2] = -1.0f;
+//  position_vertices_[4] = position;
+//  position_vertices_[6] = position;
+
+  /*
+   * vertical meter
+   */
+    position_vertices_[1] = position;
+    position_vertices_[2] = -1.0f;
+    position_vertices_[4] = 1.0f;
+    position_vertices_[7] = position;
+
 }
 
 // omit for now
@@ -133,8 +147,11 @@ void PeakMeterViewer::render(OpenGlWrapper& open_gl, bool animate) {
 //  if (!animate || peak_output_ == nullptr)
 //    return;
 
-  if (!animate || peakOutput == nullptr)
-    return;
+//  if (!animate || peakOutput == nullptr)
+//    return;
+
+if (peakOutput == nullptr) // ignore animate bool for now
+        return;
 
   juce::gl::glEnable(juce::gl::GL_BLEND);
   juce::gl::glBlendFunc(juce::gl::GL_ONE, juce::gl::GL_ONE_MINUS_SRC_ALPHA);
@@ -159,8 +176,8 @@ void PeakMeterViewer::render(OpenGlWrapper& open_gl, bool animate) {
 
   updateVertices();
   draw(open_gl);
-  updateVerticesMemory();
-  draw(open_gl);
+//  updateVerticesMemory();
+//  draw(open_gl);
 
   clamped_ = bitklavier::utils::max(clamped_ - kClampDecay, 0.0f);
 

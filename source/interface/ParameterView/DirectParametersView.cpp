@@ -20,6 +20,7 @@ void DirectParametersView::resized()
     juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
     levelMeter->setBounds(meterArea);
 
+
     // how much vertical space will we need for all the components?
     int verticalAreaNeeded = knob_section_height * 7;
 

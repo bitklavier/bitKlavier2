@@ -76,9 +76,9 @@ public:
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
         params.outputLevels; // to access the updating audio output levels
-        levelMeter = std::make_unique<PeakMeterViewer>(true, &params.outputLevels);
-        //addOpenGlComponent(levelMeter);
-        addAndMakeVisible(levelMeter.get());
+        levelMeter = std::make_shared<PeakMeterViewer>(true, &params.outputLevels);
+        addOpenGlComponent(levelMeter);
+        //addAndMakeVisible(levelMeter);
 
     }
 
@@ -105,7 +105,7 @@ public:
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
     juce::GroupComponent knobsBorder;
-    std::unique_ptr<PeakMeterViewer> levelMeter;
+    std::shared_ptr<PeakMeterViewer> levelMeter;
 
     void resized() override;
 

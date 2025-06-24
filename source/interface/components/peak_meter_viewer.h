@@ -19,6 +19,7 @@
 //#include "JuceHeader.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "open_gl_component.h"
+#include "synth_section.h"
 //#include "synth_module.h"
 
 class PeakMeterViewer : public OpenGlComponent {
