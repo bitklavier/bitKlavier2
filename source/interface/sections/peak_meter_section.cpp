@@ -59,20 +59,32 @@ void PeakMeterSection::resized() {
 }
 
 void PeakMeterSection::paintBackground(juce::Graphics& g) {
-   SynthSection::paintKnobShadows(g);
-   SynthSection::paintChildrenBackgrounds(g);
+//   SynthSection::paintKnobShadows(g);
+//   SynthSection::paintChildrenBackgrounds(g);
 
-   int ticks_y = peak_meter_right_->getBottom() + getPadding();
-   int tick_height = peak_meter_right_->getHeight() / 2;
-   //vital::ValueDetails details = vital::Parameters::getDetails("volume");
+//   int ticks_y = peak_meter_right_->getBottom() + getPadding();
+//   int tick_height = peak_meter_right_->getHeight() / 2;
+//   //vital::ValueDetails details = vital::Parameters::getDetails("volume");
+//
+//   g.setColour(findColour(Skin::kLightenScreen, true));
+//   for (int decibel = -66; decibel <= 6; decibel += 6) {
+//       //float offset = decibel - details.post_offset;
+//       float offset = decibel;
+//       //float percent = offset * offset / (details.max - details.min);
+//       float percent = offset * offset;
+//       int x = percent * getWidth();
+//       g.drawRect(x, ticks_y, 1, tick_height);
+//   }
+
+   int ticks_x = peak_meter_left_->getRight();
+   int tick_width = 8;
 
    g.setColour(findColour(Skin::kLightenScreen, true));
-   for (int decibel = -66; decibel <= 6; decibel += 6) {
-       //float offset = decibel - details.post_offset;
-       float offset = decibel;
-       //float percent = offset * offset / (details.max - details.min);
-       float percent = offset * offset;
-       int x = percent * getWidth();
-       g.drawRect(x, ticks_y, 1, tick_height);
+
+   for (int decibel = -66; decibel <6; decibel += 6) {
+       float offset = decibel + 66;
+       float percent = offset * offset / (72. * 72.);
+       int y = percent * peak_meter_left_->getHeight();
+       g.drawRect(ticks_x, peak_meter_left_->getBottom() - y, tick_width, 2);
    }
 }

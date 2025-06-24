@@ -29,7 +29,7 @@ namespace {
 
 PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels)
     : shader_(nullptr), clamped_(0.0f), left_(left), peakOutput(outputLevels) {
-  addRoundedCorners();
+  //addRoundedCorners();
 //  peak_output_ = nullptr;
 //  peak_memory_output_ = nullptr;
 
