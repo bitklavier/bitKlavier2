@@ -89,6 +89,7 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
   attack_->setPopupPlacement(juce::BubbleComponent::below);
   attack_->parentHierarchyChanged();
   attack_->setValue(params.attackParam->getDefaultValue());
+  //attack_->setLookAndFeel(TextLookAndFeel::instance());
 
   attack_power_ = std::make_unique<SynthSlider>( "attack_power");
   addSlider(attack_power_.get());

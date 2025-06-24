@@ -77,6 +77,7 @@ public:
             addSlider(slider.get());
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             floatAttachments.emplace_back(std::move(attachment));
+            //slider->setLookAndFeel(TextLookAndFeel::instance());
             _sliders.emplace_back(std::move(slider));
 
         }

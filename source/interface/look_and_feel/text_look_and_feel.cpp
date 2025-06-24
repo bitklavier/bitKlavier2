@@ -20,40 +20,40 @@
 #include "fonts.h"
 #include "synth_button.h"
 #include "synth_section.h"
-
+#include "synth_slider.h"
 
 TextLookAndFeel::TextLookAndFeel() { }
 
-//void TextLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
-//                                       float slider_t, float start_angle, float end_angle,
-//                                       juce::Slider& slider) {
-//  static constexpr float kTextPercentage = 0.5f;
-//
-//  SynthSlider* s_slider = dynamic_cast<SynthSlider*>(&slider);
-//  float text_percentage = kTextPercentage;
-//  bool active = true;
-//  juce::String text = slider.getTextFromValue(slider.getValue());
-//  float offset = 0.0f;
-//  float font_size = slider.getHeight() * text_percentage;
-//  if (s_slider) {
-//    text_percentage = s_slider->getTextHeightPercentage();
-//    font_size = slider.getHeight() * text_percentage;
-//    active = s_slider->isActive();
-//    text = s_slider->getSliderTextFromValue(slider.getValue());
-//
-//    offset = s_slider->findValue(Skin::kTextComponentOffset);
-//    if (text_percentage == 0.0f)
-//      font_size = s_slider->findValue(Skin::kTextComponentFontSize);
-//  }
-//
-//  juce::Colour text_color = slider.findColour(Skin::kTextComponentText, true);
-//  if (!active)
-//    text_color = text_color.withMultipliedAlpha(0.5f);
-//
-//  g.setColour(text_color);
-//  g.setFont(Fonts::instance()->proportional_light().withPointHeight(font_size));
-//  g.drawText(text, x, y + std::round(offset), width, height, juce::Justification::centred, false);
-//}
+void TextLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
+                                       float slider_t, float start_angle, float end_angle,
+                                       juce::Slider& slider) {
+  static constexpr float kTextPercentage = 0.5f;
+
+  SynthSlider* s_slider = dynamic_cast<SynthSlider*>(&slider);
+  float text_percentage = kTextPercentage;
+  bool active = true;
+  juce::String text = slider.getTextFromValue(slider.getValue());
+  float offset = 0.0f;
+  float font_size = slider.getHeight() * text_percentage;
+  if (s_slider) {
+    text_percentage = s_slider->getTextHeightPercentage();
+    font_size = slider.getHeight() * text_percentage;
+    active = s_slider->isActive();
+    text = s_slider->getSliderTextFromValue(slider.getValue());
+
+    offset = s_slider->findValue(Skin::kTextComponentOffset);
+    if (text_percentage == 0.0f)
+      font_size = s_slider->findValue(Skin::kTextComponentFontSize);
+  }
+
+  juce::Colour text_color = slider.findColour(Skin::kTextComponentText, true);
+  if (!active)
+    text_color = text_color.withMultipliedAlpha(0.5f);
+
+  g.setColour(text_color);
+  g.setFont(Fonts::instance()->proportional_light().withPointHeight(font_size));
+  g.drawText(text, x, y + std::round(offset), width, height, juce::Justification::centred, false);
+}
 
 void TextLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& button, bool hover, bool is_down) {
   static constexpr float kTextPercentage = 0.7f;
