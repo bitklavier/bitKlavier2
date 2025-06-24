@@ -652,14 +652,20 @@ public:
         ampEnv.noteOn();
     }
 
-//    void setTuning(TuningProcessor* attachedTuning)
-//    {
-//        if (attachedTuning == nullptr) return;
-//
-//        tuning = attachedTuning;
-//        currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
-//        currentTuningFundamental = tuning->getState().params.keyboardState.fundamental;
-//    }
+    void setTuning(TuningProcessor* attachedTuning)
+    {
+        if (attachedTuning == nullptr) return;
+
+        tuning = attachedTuning;
+        currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
+       // currentTuningFundamental = tuning->getState().params.keyboardState.fundamental;
+
+        for (auto offset : currentTuning)
+        {
+            DBG("BKSamplerVoice:setTuning, tuning offset = " + juce::String(offset));
+        }
+        DBG("BKSamplerVoice:setTuning, new tuning fundamental =  " + juce::String(currentTuningFundamental));
+    }
 
     double getTargetFrequency()
     {
@@ -681,12 +687,12 @@ public:
          */
         if (!tuneTranspositions)
         {
-            float newOffset = (currentTuning[(currentlyPlayingNote - currentTuningFundamental) % currentTuning.size()]);
+            float newOffset = (currentTuning[(currentlyPlayingNote - currentTuningFundamental) % currentTuning.size()] * .01);
             return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
         }
         else
         {
-            float newOffset = (currentTuning[(currentlyPlayingNote + (int)std::trunc(currentTransposition) - currentTuningFundamental) % currentTuning.size()]);
+            float newOffset = (currentTuning[(currentlyPlayingNote + (int)std::trunc(currentTransposition) - currentTuningFundamental) % currentTuning.size()] * .01);
             return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
         }
 
@@ -992,7 +998,7 @@ private:
     double filterCutoff = 20000.;
     double filterCutoffModAmt = 0.;
 
-    //TuningProcessor* tuning;
+    TuningProcessor* tuning;
 
     //juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> m_Filter;
     juce::AudioBuffer<float> m_Buffer;

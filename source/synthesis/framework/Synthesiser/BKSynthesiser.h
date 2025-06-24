@@ -331,10 +331,10 @@ class BKSynthesiser
 
                 }
 
-//                void setTuning(TuningProcessor* attachedTuning)
-//                {
-//                    tuning = attachedTuning;
-//                }
+                void setTuning(TuningProcessor* attachedTuning)
+                {
+                    tuning = attachedTuning;
+                }
 
 protected:
                 //==============================================================================
@@ -442,7 +442,7 @@ private:
                 float velocityMin = 0.;
                 float velocityMax = 128.;
 
-                //TuningProcessor* tuning;
+                TuningProcessor* tuning;
 
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);

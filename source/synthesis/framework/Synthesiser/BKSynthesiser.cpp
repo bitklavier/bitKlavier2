@@ -332,7 +332,7 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         if (voice->currentlyPlayingSound != nullptr)
             voice->stopNote (0.0f, false);
 
-        //voice->setTuning(tuning);
+        voice->setTuning(tuning);
         voice->copyAmpEnv( { adsrParams.attackParam->getCurrentValue() * 0.001f,
             adsrParams.decayParam->getCurrentValue() * 0.001f,
             adsrParams.sustainParam->getCurrentValue(),

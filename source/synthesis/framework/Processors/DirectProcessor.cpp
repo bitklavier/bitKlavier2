@@ -118,19 +118,9 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
-    // get the current tuning
-    auto& currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
-    auto& newFund = tuning->getState().params.keyboardState.fundamental;
-
-    /*
-     * need to get tuning into the synths. should only need to update at the block, even for spring tuning
-     * also need to get note velocities OUT of the synth, so we can update velocity displaySliders
-     *      send to BKRangeSlider setDisplayValue()
-     */
-
     if (mainSynth->hasSamples() )
     {
-        //mainSynth->setTuning(tuning);
+        mainSynth->setTuning(tuning);
         mainSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         mainSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -150,7 +140,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (releaseResonanceSynth->hasSamples())
     {
-        //releaseResonanceSynth->setTuning(tuning);
+        releaseResonanceSynth->setTuning(tuning);
         releaseResonanceSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         releaseResonanceSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),

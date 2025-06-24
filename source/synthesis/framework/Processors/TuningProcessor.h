@@ -55,7 +55,7 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
     void setCircularKeyOffset(int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 12) circularTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
-        DBG("setCircularKeyOffset " + juce::String(midiNoteNumber) + " : " + juce::String(val));
+        //DBG("setCircularKeyOffset " + juce::String(midiNoteNumber) + " : " + juce::String(val));
     }
 
     void setKeyOffset(int midiNoteNumber, float val, bool circular)
