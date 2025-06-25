@@ -318,6 +318,11 @@ class BKSynthesiser
 
                 bool checkVelocityRange(float velocity) const
                 {
+                    /**
+                    * need to send velocity back up, for display in velocity min/max slider, before returning
+                    */
+                    //
+
                     //in normal case where velocityMin < velocityMax, we only pass if both are true
                     if (velocityMax >= velocityMin)
                     {

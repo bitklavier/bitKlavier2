@@ -261,7 +261,6 @@ void BKSynthesiser::noteOn (const int midiChannel,
         if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
             stopVoice (voice, 1.0f, true);
 
-
     /**
      * a midiNoteNumber, reflective of what key the player plays, might result in multiple notes being played
      *      as set by currentTransposition sliders in Direct/Nostalgic/Synchronic.

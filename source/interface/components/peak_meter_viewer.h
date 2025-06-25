@@ -41,9 +41,6 @@ class PeakMeterViewer : public OpenGlComponent {
     void updateVertices();
     void updateVerticesMemory();
 
-//    const vital::StatusOutput* peak_output_;
-//    const vital::StatusOutput* peak_memory_output_;
-
     const std::tuple<std::atomic<float>, std::atomic<float>> *peakOutput;
 
     juce::OpenGLShaderProgram* shader_;

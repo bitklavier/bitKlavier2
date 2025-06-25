@@ -31,14 +31,12 @@ struct DirectParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
-        //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam, transpositionsParam);
-        //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam);
-        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, blendronicSend,  env, transpose, velocityMinMax);
+        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, outputSendParam,  env, transpose, velocityMinMax);
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
                     modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
-//
+
             if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
                     modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
@@ -81,8 +79,8 @@ struct DirectParams : chowdsp::ParamHolder
         -6.0f,true
     };
 
-    // Gain param
-    chowdsp::GainDBParameter::Ptr blendronicSend {
+    // Gain for output send (for blendronic, VSTs, etc...)
+    chowdsp::GainDBParameter::Ptr outputSendParam {
         juce::ParameterID { "Send", 100 },
         "Send",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
@@ -90,6 +88,9 @@ struct DirectParams : chowdsp::ParamHolder
     };
 
     // Velocity param
+    /**
+     * isn't this replaced by velocityMinMaxParams below?
+     */
     chowdsp::FloatParameter::Ptr velocityParam {
         juce::ParameterID { "Velocity", 100 },
         "Velocity",
@@ -108,16 +109,6 @@ struct DirectParams : chowdsp::ParamHolder
 
     // for storing outputLevels of this preparation for display
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
-
-    //
-    //
-    //    // Blendronic Send param
-    //    chowdsp::GainDBParameter::Ptr blendronicSendParam {
-    //            juce::ParameterID { "blendronicSend", 100 },
-    //            "BlendronicSend",
-    //            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-    //            -24.0f
-    //    };
 
     /****************************************************************************************/
 };

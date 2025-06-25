@@ -15,7 +15,6 @@
  */
 
 #include "peak_meter_viewer.h"
-
 #include "skin.h"
 #include "shaders.h"
 #include "synth_gui_interface.h"
@@ -39,7 +38,6 @@ PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>,
     1.0f, -1.0f,    // right bottom
     1.0f, 1.0f,     // right top
   };
-
   memcpy(position_vertices_, position_vertices, kNumPositions * sizeof(float));
 
   int position_triangles[6] = {
@@ -89,13 +87,10 @@ void PeakMeterViewer::init(OpenGlWrapper& open_gl) {
 }
 
 void PeakMeterViewer::updateVertices() {
-//  if (peak_output_ == nullptr)
-//    return;
 
   if (peakOutput == nullptr)
       return;
 
-  //float val = peak_output_->value()[left_ ? 0 : 1];
   float val;
   if (left_) val = std::get<0>(*peakOutput);
   else val = std::get<1>(*peakOutput);
@@ -161,14 +156,19 @@ if (peakOutput == nullptr) // ignore animate bool for now
   setViewPort(open_gl);
   shader_->use();
 
+  // color behavior isn't great, but gets the job done for now
   juce::Colour color_from, color_to;
   if (clamped_ > 0.0f) {
     color_from = findColour(Skin::kWidgetAccent1, true);
+    color_from = juce::Colours::yellow;
     color_to = findColour(Skin::kWidgetAccent2, true);
+    color_to = juce::Colours::red;
   }
   else {
     color_from = findColour(Skin::kWidgetSecondary1, true);
+    color_from = juce::Colours::green;
     color_to = findColour(Skin::kWidgetSecondary2, true);
+    color_to = juce::Colours::yellow;
   }
 
   color_from_->set(color_from.getFloatRed(), color_from.getFloatGreen(),
