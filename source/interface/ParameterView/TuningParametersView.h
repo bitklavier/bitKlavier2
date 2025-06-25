@@ -33,10 +33,10 @@ public:
             _sliders.emplace_back(std::move(slider));
         }
 
-        keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->keyboardState);
+        keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
         addStateModulatedComponent(keyboard.get());
 
-        circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->keyboardState);
+        circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
         addStateModulatedComponent(circular_keyboard.get());
 
       // for (auto &param_ : *params.getChoiceParams()) {
@@ -94,10 +94,10 @@ public:
             params.tuningSystem,
             chowdsp::ParameterListenerThread::MessageThread,
             [this]() {
-                if (!params.keyboardState.setFromAudioThread) {
+                if (!params.tuningState.setFromAudioThread) {
                     TuningSystem t = params.tuningSystem->get();
 
-                    //this->params.keyboardState.circularTuningOffset = tuningMap[t].second;
+                    //this->params.tuningState.circularTuningOffset = tuningMap[t].second;
                     auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
                            [t](const auto& pair) {
                                return pair.first == t;
@@ -107,17 +107,17 @@ public:
                     }
                     else if (it != tuningMap.end()) {
                         const auto& tuning = it->second;
-                        const auto tuningArray = TuningKeyboardState::rotateValuesByFundamental(tuning, params.fundamental->getIndex());
+                        const auto tuningArray = TuningState::rotateValuesByFundamental(tuning, params.fundamental->getIndex());
                         int index  = 0;
                         for (const auto val :tuningArray) {
-                            this->params.keyboardState.circularTuningOffset[index] = val * 100;
-                            DBG("new tuning " + juce::String(index) + " " + juce::String(this->params.keyboardState.circularTuningOffset[index]));
+                            this->params.tuningState.circularTuningOffset[index] = val * 100;
+                            DBG("new tuning " + juce::String(index) + " " + juce::String(this->params.tuningState.circularTuningOffset[index]));
                             index++;
                         }
                     }
                 }
 
-                params.keyboardState.setFromAudioThread = false;
+                params.tuningState.setFromAudioThread = false;
                 circular_keyboard->redoImage();
             }
             )
@@ -127,7 +127,7 @@ public:
             params.fundamental,
             chowdsp::ParameterListenerThread::MessageThread,
             [this]() {
-                params.keyboardState.setFundamental(params.fundamental->getIndex());
+                params.tuningState.setFundamental(params.fundamental->getIndex());
                 circular_keyboard->redoImage();
                 DBG("rotat");
             }

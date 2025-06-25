@@ -257,10 +257,10 @@ class BKSynthesiser
                 int startSample,
                 int numSamples);
 
-                void renderNextBlock (juce::AudioBuffer<double>& outputAudio,
-                const juce::MidiBuffer& inputMidi,
-                int startSample,
-                int numSamples);
+//                void renderNextBlock (juce::AudioBuffer<double>& outputAudio,
+//                const juce::MidiBuffer& inputMidi,
+//                int startSample,
+//                int numSamples);
 
                 /** Returns the current target sample rate at which rendering is being done.
                     Subclasses may need to know this so that they can pitch things correctly.
@@ -316,7 +316,7 @@ class BKSynthesiser
                     velocityMax = velmax;
                 }
 
-                bool checkVelocityRange(float velocity)
+                bool checkVelocityRange(float velocity) const
                 {
                     //in normal case where velocityMin < velocityMax, we only pass if both are true
                     if (velocityMax >= velocityMin)
@@ -331,7 +331,7 @@ class BKSynthesiser
 
                 }
 
-                void setTuning(TuningProcessor* attachedTuning)
+                void setTuning(TuningState* attachedTuning)
                 {
                     tuning = attachedTuning;
                 }
@@ -442,7 +442,7 @@ private:
                 float velocityMin = 0.;
                 float velocityMax = 128.;
 
-                TuningProcessor* tuning;
+                TuningState* tuning;
 
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);

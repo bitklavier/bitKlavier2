@@ -6,8 +6,8 @@
 #include "synth_base.h"
 TuningProcessor::TuningProcessor(SynthBase* parent,const juce::ValueTree& v) : PluginBase(parent,v,nullptr,  tuningBusLayout())
 {
-    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.keyboardState.stateChanges)));
-    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.keyboardState.stateChanges)));
+    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
+    parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -28,8 +28,8 @@ template <typename Serializer>
 typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
 {
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
-    Serializer::template addChildElement<12>(ser,"circularTuning",paramHolder.keyboardState.circularTuningOffset,arrayToString);
-    Serializer::template addChildElement<128>(ser,"absoluteTuning",paramHolder.keyboardState.absoluteTuningOffset,arrayToStringWithIndex);
+    Serializer::template addChildElement<12>(ser,"circularTuning",paramHolder.tuningState.circularTuningOffset,arrayToString);
+    Serializer::template addChildElement<128>(ser,"absoluteTuning",paramHolder.tuningState.absoluteTuningOffset,arrayToStringWithIndex);
 
     return ser;
 }
@@ -39,8 +39,8 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 {
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
     auto myStr  = deserial->getStringAttribute ("circularTuning");
-    paramHolder.keyboardState.circularTuningOffset = parseFloatStringToArrayCircular<12>(myStr.toStdString());
+    paramHolder.tuningState.circularTuningOffset = parseFloatStringToArrayCircular<12>(myStr.toStdString());
     myStr  = deserial->getStringAttribute ("absoluteTuning");
-    paramHolder.keyboardState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(myStr.toStdString());
-    paramHolder.keyboardState.fundamental = paramHolder.fundamental->getIndex();
+    paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(myStr.toStdString());
+    paramHolder.tuningState.fundamental = paramHolder.fundamental->getIndex();
 }

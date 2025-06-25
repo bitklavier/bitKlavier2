@@ -76,7 +76,7 @@ void PeakMeterSection::paintBackground(juce::Graphics& g) {
 //       g.drawRect(x, ticks_y, 1, tick_height);
 //   }
 
-   int ticks_x = peak_meter_left_->getRight();
+   int ticks_x = peak_meter_left_->getRight() - 2;
    int tick_width = 8;
 
    g.setColour(findColour(Skin::kLightenScreen, true));

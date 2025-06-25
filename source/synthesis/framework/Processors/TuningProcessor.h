@@ -40,8 +40,10 @@ enum AdaptiveSystems {
     Spring = 1<<3,
 };
 
-
-struct TuningKeyboardState : bitklavier::StateChangeableParameter {
+/**
+ * TuningState is the primary struct that is shared around to get/set tuning information
+ */
+struct TuningState : bitklavier::StateChangeableParameter {
 
     juce::MidiKeyboardState keyboardState;
 
@@ -66,14 +68,15 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
         else setKeyOffset(midiNoteNumber,val);
     }
 
-    void processStateChanges() override {
+    void processStateChanges() override
+    {
         for (auto [index,change] : stateChanges.changeState) {
             static juce::var nullVar;
             auto val    = change.getProperty(IDs::absoluteTuning);
             auto val1  = change.getProperty(IDs::circularTuning);
             if (val != nullVar) {
                 absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(val.toString().toStdString());
-            }else if (val1 !=nullVar) {
+            } else if (val1 != nullVar) {
                 circularTuningOffset = parseFloatStringToArrayCircular<12>(val1.toString().toStdString());
                // absoluteTuningOffset = std::array<float,128>(val1.toString().toStdString());
 
@@ -106,14 +109,14 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
         }
     }
 
+    /**
+     * getTargetFrequency() is the primary function for synthesizers to handle tuning
+     *      should include static and dynamic tunings
+     *      is called every block
+     */
     double getTargetFrequency(int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
     {
-        auto& currentTuning = circularTuningOffset;
-        //        double newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
-        //        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-
         /**
-         * Static Tuning
          *
          * by default, transpositions are tuned literally, relative to the played note
          *      using whatever value, fractional or otherwise, that the user indicates
@@ -125,31 +128,19 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
          *
          * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
          *
-         * newOffset should be gotten via a call to Tuning, ideally including adaptive/spring tuning offsets as well
-         *
          */
 
-        if (!tuneTranspositions)
-        {
-            //return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition);
-            //float newOffset = myTuningKeyboardState->circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
-            //float newOffset = tuning->getState().params.keyboardState.circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
-            float newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01);
+        if (!tuneTranspositions) {
+            double newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01); // i don't love the .01 changes here, let's see if this can be made consistent
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
 
         }
-        else
-        {
-            //return tuning->getTargetFrequency(currentlyPlayingNote + (int)std::trunc(currentTransposition), currentTransposition);
-            float newOffset = (circularTuningOffset[(currentlyPlayingNote + (int)std::trunc(currentTransposition)) % circularTuningOffset.size()] * .01);
+        else {
+            double newOffset = (circularTuningOffset[(currentlyPlayingNote + (int)std::trunc(currentTransposition)) % circularTuningOffset.size()] * .01);
             return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
         }
 
         // add A440 adjustments here
-
-        //        currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
-        //        float newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
-        //        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
     }
 
     std::atomic<bool> setFromAudioThread;
@@ -186,7 +177,9 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''},{'4', '#'},{'5','b'}}
     };
 
-    TuningKeyboardState keyboardState;
+    /** this contains the current state of the tuning system, with helper functions **/
+    TuningState tuningState;
+
     /** Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const TuningParams& paramHolder);
@@ -201,7 +194,6 @@ struct TuningNonParameterState : chowdsp::NonParamState
     TuningNonParameterState()
     {
     }
-
 };
 
 
@@ -209,7 +201,7 @@ struct TuningNonParameterState : chowdsp::NonParamState
 class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams,TuningNonParameterState>>
 {
 public:
-    TuningProcessor(SynthBase* parent,const juce::ValueTree& v);
+    TuningProcessor(SynthBase* parent, const juce::ValueTree& v);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -229,53 +221,6 @@ public:
 
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-
-    double getTargetFrequency(int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
-    {
-        auto& currentTuning = this->getState().params.keyboardState.circularTuningOffset;
-//        double newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
-//        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-
-        /**
-         * Static Tuning
-         *
-         * by default, transpositions are tuned literally, relative to the played note
-         *      using whatever value, fractional or otherwise, that the user indicates
-         *      and ignores the tuning system
-         *      The played note is tuned according to the tuning system, but the transpositions are not
-         *
-         * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
-         *      according to the current tuning system
-         *
-         * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
-         *
-         * newOffset should be gotten via a call to Tuning, ideally including adaptive/spring tuning offsets as well
-         *
-         */
-
-        if (!tuneTranspositions)
-        {
-            //return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition);
-            //float newOffset = myTuningKeyboardState->circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
-            //float newOffset = tuning->getState().params.keyboardState.circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
-            float newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
-            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
-
-        }
-        else
-        {
-            //return tuning->getTargetFrequency(currentlyPlayingNote + (int)std::trunc(currentTransposition), currentTransposition);
-            float newOffset = (currentTuning[(currentlyPlayingNote + (int)std::trunc(currentTransposition)) % currentTuning.size()] * .01);
-            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-        }
-
-        // add A440 adjustments here
-
-//        currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
-//        float newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
-//        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-    }
-
 
 private:
 

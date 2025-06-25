@@ -36,7 +36,7 @@ public:
         upDownButtonArrowColourId       = 0x1005007,
         shadowColourId                  = 0x1005008
     };
-    KeyboardOffsetComponent(TuningKeyboardState &state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o),state(state),isCircular(isCircular) {
+    KeyboardOffsetComponent(TuningState&state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o),state(state),isCircular(isCircular) {
            setColour(whiteNoteColourId, juce::Colours::white);
             setColour(blackNoteColourId, juce::Colours::black);
         setColour(keySeparatorLineColourId, juce::Colours::grey);
@@ -56,7 +56,7 @@ public:
     float midRange = 0.f;
     float minRange = -50.f;
     float maxRange = 50.f;
-    TuningKeyboardState &state;
+    TuningState&state;
     bool isCircular;
 };
 
@@ -70,7 +70,7 @@ public juce::Button::Listener
 
 public:
 
-    BKTuningKeyboardSlider(TuningKeyboardState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false);
+    BKTuningKeyboardSlider(TuningState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false);
     ~BKTuningKeyboardSlider()
     {
         keyboard = nullptr;
@@ -160,7 +160,7 @@ public:
     void setBright() { setDim(1.); }
 
     BKTuningKeyboardSlider* clone() {
-        return new BKTuningKeyboardSlider(new TuningKeyboardState(),false,false);
+        return new BKTuningKeyboardSlider(new TuningState(),false,false);
     }
     void syncToValueTree() override {
 
@@ -182,7 +182,7 @@ public:
     void mouseDown(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
     std::unique_ptr<juce::TextEditor> keyboardValsTextField;
-    TuningKeyboardState* keyboardState;
+    TuningState* keyboardState;
 private:
 
     juce::String sliderName;
