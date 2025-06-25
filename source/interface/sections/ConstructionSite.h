@@ -173,10 +173,9 @@ private:
                 juce::MemoryBlock data;
                 obj->getProcessor()->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
-//auto xml = juce::AudioProcessor::getXmlF(data.getData(), (int)data.getSize());
-                if (obj->state.getChild(0).isValid() && xml != nullptr)
-                    obj->state.getChild(0).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
-                  //  state.addChild(juce::ValueTree::fromXml(*xml),0,nullptr);
+
+                //get the inidviaul preparation data for params
+                obj->state.getOrCreateChildWithName(xml->getTagName(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
             }
             v.removeProperty("sync", nullptr);
         }

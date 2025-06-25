@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="Piano (Default)">
+  <GLOBALPIANOSAMPLES mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+                      pedalSampleSet="/defaultPedals"/>
+  <PIANO name="default">
+    <PREPARATIONS>
+      <PREPARATION type="0" width="245" height="125" x="374" y="115" uuid="2a16392c84fe4b2794f65a6f86262cd0"
+                   nodeID="4" numIns="1" numOuts="2">
+        <MODULATABLE_PARAM Gain="0.000" Hammers="-6.000" Ring="-60.000" Pedal="-6.000" Blendronic="0.000"
+                           decay="1000.000" sustain="0.000" release="50.000" attack="10000.000"
+                           attackpower="0.000" hold="0.000" delay="0.000" decaypower="0.000"
+                           releasepower="0.000" t0="0.000" t1="0.000" t2="0.000" t3="0.000"
+                           t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000"
+                           t10="0.000" t11="0.000" UseTuning="0" velocitymin="0.000" velocitymax="128.000"/>
+        <MODULATABLE_PARAM parameter="release" channel="1"/>
+        <MODULATABLE_PARAM parameter="decay" channel="2"/>
+        <MODULATABLE_PARAM parameter="Pedal" channel="3"/>
+        <MODULATABLE_PARAM parameter="Ring" channel="4"/>
+        <MODULATABLE_PARAM parameter="Blendronic" channel="5"/>
+        <MODULATABLE_PARAM parameter="sustain" channel="6"/>
+        <MODULATABLE_PARAM parameter="Hammers" channel="7"/>
+        <MODULATABLE_PARAM parameter="Gain" channel="8"/>
+        <PORT nodeID="4" chIdx="4096" isIn="1"/>
+        <PORT nodeID="4" chIdx="0" isIn="0"/>
+        <PORT nodeID="4" chIdx="1" isIn="0"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>
