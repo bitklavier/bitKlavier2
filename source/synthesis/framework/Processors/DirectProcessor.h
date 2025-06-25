@@ -16,6 +16,7 @@
 #include "buffer_debugger.h"
 #include "Identifiers.h"
 #include "VelocityMinMaxParams.h"
+#include "TuningProcessor.h"
 
 struct DirectParams : chowdsp::ParamHolder
 {
@@ -23,19 +24,19 @@ struct DirectParams : chowdsp::ParamHolder
     float rangeStart = -60.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
+
     using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
     std::unordered_map<std::string,ParamPtrVariant> modulatableParams;
+
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
-        //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam, transpositionsParam);
-        //add (gainParam, hammerParam, releaseResonanceParam, pedalParam, velocityParam, attackParam, decayParam, sustainParam, releaseParam);
-        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, blendronicSend,  env, transpose, velocityMinMax);
+        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, outputSendParam,  env, transpose, velocityMinMax);
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
                     modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
-//
+
             if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
                     modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
@@ -44,12 +45,11 @@ struct DirectParams : chowdsp::ParamHolder
                 if(sliderParam->supportsMonophonicModulation())
                     modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
         });
-
     }
 
     // Gain param
     chowdsp::GainDBParameter::Ptr gainParam {
-        juce::ParameterID { "Gain", 100 },
+        juce::ParameterID { "Main", 100 },
         "Gain",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,true
@@ -65,7 +65,7 @@ struct DirectParams : chowdsp::ParamHolder
 
     // Resonance param
     chowdsp::GainDBParameter::Ptr releaseResonanceParam {
-        juce::ParameterID { "Ring", 100 },
+        juce::ParameterID { "Resonance", 100 },
         "Release Resonance",
         juce::NormalisableRange { rangeStart, rangeEnd + 24, 0.0f, skewFactor, false },
         6.0f,true
@@ -79,16 +79,20 @@ struct DirectParams : chowdsp::ParamHolder
         -6.0f,true
     };
 
-    // Gain param
-    chowdsp::GainDBParameter::Ptr blendronicSend {
-        juce::ParameterID { "Blendronic", 100 },
-        "Blendronic Send",
+    // Gain for output send (for blendronic, VSTs, etc...)
+    chowdsp::GainDBParameter::Ptr outputSendParam {
+        juce::ParameterID { "Send", 100 },
+        "Send",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,true
     };
 
-    // Velocity param
-    chowdsp::FloatParameter::Ptr velocityParam {
+    // Last velocity param
+    /*
+     * this will be updated in BKSynthesizer, and then can be accessed for display in the velocityMinMaxslider
+     *      it should NOT be added to the param list above, as we are not going to use it in the UI
+     */
+    chowdsp::FloatParameter::Ptr lastVelocityParam {
         juce::ParameterID { "Velocity", 100 },
         "Velocity",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f), // FIX
@@ -97,8 +101,6 @@ struct DirectParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-
-
     // ADSR params
     EnvParams env;
 
@@ -106,15 +108,12 @@ struct DirectParams : chowdsp::ParamHolder
     TransposeParams transpose;
     VelocityMinMaxParams velocityMinMax;
 
-    //
-    //
-    //    // Blendronic Send param
-    //    chowdsp::GainDBParameter::Ptr blendronicSendParam {
-    //            juce::ParameterID { "blendronicSend", 100 },
-    //            "BlendronicSend",
-    //            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-    //            -24.0f
-    //    };
+    // for storing outputLevels of this preparation for display
+    /*
+     * because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
+     *      we simply update this in the processBlock() call
+     */
+    std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
 
     /****************************************************************************************/
 };
@@ -129,6 +128,7 @@ struct DirectNonParameterState : chowdsp::NonParamState
     //chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
     //chowdsp::StateValue<bool> isSelected { "selected", true };
 };
+
 class SynthBase;
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState>>,
 public juce::ValueTree::Listener
@@ -168,11 +168,12 @@ public:
         pedalSynth->addSoundSet (p);
     }
 
+    void setTuning(TuningProcessor* ) override;
     juce::AudioProcessor::BusesProperties directBusLayout()
     {
         return BusesProperties()
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), true)
-                .withInput("input",juce::AudioChannelSet::stereo(),false)
+            .withInput("input",juce::AudioChannelSet::stereo(),false)
             .withInput ("Modulation",juce::AudioChannelSet::discreteChannels(9) ,true);
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
@@ -185,6 +186,7 @@ public:
             vt.setProperty (param.paramID, chowdsp::ParameterTypeHelpers::getValue (param), nullptr);
         });
     }
+
     void valueTreePropertyChanged   (juce::ValueTree& t, const juce::Identifier&) {
         juce::String a  = t.getProperty(IDs::mainSampleSet, "");
         juce::String b  = t.getProperty(IDs::hammerSampleSet, "");
@@ -196,11 +198,27 @@ public:
                 &(*ptrToSamples)[d]);
 
     }
+
     void valueTreeChildAdded        (juce::ValueTree&, juce::ValueTree&)        {}
     void valueTreeChildRemoved      (juce::ValueTree&, juce::ValueTree&, int)   {}
     void valueTreeChildOrderChanged (juce::ValueTree&, int, int)          {}
     void valueTreeParentChanged     (juce::ValueTree&)                    {}
     void valueTreeRedirected        (juce::ValueTree&)                    {}
+
+    double getLevelL()
+    {
+        if(levelBuf.getNumSamples() > 0) return levelBuf.getRMSLevel(0, 0, levelBuf.getNumSamples());
+        else return 0.;
+    }
+
+    double getLevelR()
+    {
+        if(levelBuf.getNumChannels() == 2) {
+            if(levelBuf.getNumSamples()) return levelBuf.getRMSLevel(1, 0, levelBuf.getNumSamples());
+            else return 0.;
+        }
+        else return getLevelL();
+    }
 
 private:
     //chowdsp::experimental::Directillator<float> oscillator;
@@ -222,5 +240,8 @@ private:
 
     chowdsp::ScopedCallbackList adsrCallbacks;
     chowdsp::ScopedCallbackList vtCallbacks;
+
+    juce::AudioSampleBuffer levelBuf; //for storing samples for metering/RMS calculation
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };

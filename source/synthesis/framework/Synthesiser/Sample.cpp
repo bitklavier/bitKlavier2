@@ -3,10 +3,9 @@
 //
 #include "Sample.h"
 
-
-
 //==============================================================================
 BKSynthesiserVoice::BKSynthesiserVoice() {}
+
 BKSynthesiserVoice::~BKSynthesiserVoice() {}
 
 bool BKSynthesiserVoice::isPlayingChannel (const int midiChannel) const
@@ -32,6 +31,7 @@ void BKSynthesiserVoice::clearCurrentNote()
 }
 
 void BKSynthesiserVoice::aftertouchChanged (int) {}
+
 void BKSynthesiserVoice::channelPressureChanged (int) {}
 
 bool BKSynthesiserVoice::wasStartedBefore (const BKSynthesiserVoice& other) const noexcept
@@ -39,14 +39,3 @@ bool BKSynthesiserVoice::wasStartedBefore (const BKSynthesiserVoice& other) cons
     return noteOnTime < other.noteOnTime;
 }
 
-//void BKSynthesiserVoice::renderNextBlock (juce::AudioBuffer<double>& outputBuffer,
-//                                        int startSample, int numSamples)
-//{
-//    juce::AudioBuffer<double> subBuffer (outputBuffer.getArrayOfWritePointers(),
-//                                   outputBuffer.getNumChannels(),
-//                                   startSample, numSamples);
-//
-//    tempBuffer.makeCopyOf (subBuffer, true);
-//    renderNextBlock (tempBuffer, 0, numSamples);
-//    subBuffer.makeCopyOf (tempBuffer, true);
-//}

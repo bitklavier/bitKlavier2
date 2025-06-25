@@ -19,9 +19,9 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 //#ifdef DEBUG
 #include "common.h"
-
 #include "utils.h"
 #include "BKADSR.h"
+#include "TuningProcessor.h"
 
 //#endif
 //==============================================================================
@@ -39,9 +39,6 @@ template<class T>
 concept LoadImmediate = not (std::is_base_of_v<juce::MemoryMappedAudioFormatReader, T> || std::is_base_of_v<juce::BufferingAudioReader, T>);
 template<class T>
 concept NonLoadImmediate = (std::is_base_of_v<juce::MemoryMappedAudioFormatReader, T> || std::is_base_of_v<juce::BufferingAudioReader, T>);
-
-
-
 
 template<typename ReaderType>
 class Sample
@@ -389,10 +386,6 @@ public:
     /** Called to start a new note.
         This will be called during the rendering callback, so must be fast and thread-safe.
     */
-//    virtual void startNote (int midiNoteNumber,
-//                            float velocity,
-//                            juce::SynthesiserSound* sound,
-//                            int currentPitchWheelPosition)  {};
 
     /** Called to stop a note.
 
@@ -517,6 +510,7 @@ public:
     juce::uint32 noteOnTime = 0; int currentlyPlayingNote = -1, currentPlayingMidiChannel = 0;
     juce::SynthesiserSound::Ptr currentlyPlayingSound;
     bool keyIsDown = false, sustainPedalDown = false, sostenutoPedalDown = false;
+
 protected:
     /** Resets the state of this voice after a sound has finished playing.
 
@@ -531,8 +525,6 @@ protected:
         to have finished, e.g. if it's playing a sample and the sample finishes.
     */
     void clearCurrentNote();
-
-
 
 private:
     //==============================================================================
@@ -560,40 +552,19 @@ private:
    PURPOSE, ARE DISCLAIMED.
   ==============================================================================
 */
-//std::shared_ptr<const BKSamplerSound<juce::AudioFormatReader>> sound)
 
 class BKSamplerVoice : public BKSynthesiserVoice
 {
 public:
     explicit BKSamplerVoice()
-            /*: samplerSound(std::move(sound))*/
     {
-        //jassert(samplerSound != nullptr);
         ampEnv.setParameters(BKADSR::Parameters(0.005, 0.5,1.0,0.1));
         m_Buffer.setSize(2, 1, false, true, false);
-    }
 
-    static double mtof( double f )
-    {
-        if( f <= -1500 ) return (0);
-        else if( f > 1499 ) return (mtof(1499));
-            // else return (8.17579891564 * exp(.0577622650 * f));
-            // TODO: optimize
-        else return ( pow(2, (f - 69) / 12.0) * 440.0 );
-    }
-
-    static double mtof( double f, double a ) // a = frequency of A4
-    {
-        if( f <= -1500 ) return (0);
-        else if( f > 1499 ) return (mtof(1499));
-        // else return (8.17579891564 * exp(.0577622650 * f));
-        // TODO: optimize
-        else return ( pow(2, (f - 69) / 12.0) * a );
+        // call the smooth.reset() here if we want smoothing for various smoothingFloat vars
     }
 
     void setCurrentPlaybackSampleRate(double newRate) override {
-
-       // BKSynthesiserVoice::setCurrentPlaybackSampleRate(newRate);
 
         if (newRate <= 0) {
             return;
@@ -601,12 +572,6 @@ public:
 
         ampEnv.setSampleRate(newRate);
         ampEnv.setParameters(ampEnv.getParameters());
-       // filterEnv.setSampleRate(newRate);
-
-        int numChannels = 2;
-        int samplesPerBlock = 1;
-        //juce::dsp::ProcessSpec spec{ newRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (numChannels) };
-        //m_Filter.prepare(spec);
     }
 
     virtual void startNote (int midiNoteNumber,
@@ -626,15 +591,9 @@ public:
         //      dB difference between this layer and the layer below
         level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity) * voiceGain); // need gain setting for each synth
 
-        /**
-         * "frequency" handles transposition (from transposition sliders, which might be fractional) and tuning
-         *
-         * need to be careful about tuning the transposition, which is a user option in the original bK
-         * also, if we want to update tuning mid-block, need to keep track of transposition as well...
-         */
-        //frequency.setTargetValue(mtof(midiNoteNumber + transposition)); // need to sort out A440 reference freq as well...
-        frequency.setTargetValue(getTargetFrequency());
-        //melatonin::printSparkline(m_Buffer);
+        // set the sample increment, based on the target frequency for this note
+        //frequency.setTargetValue(getTargetFrequency()); // may not need frequency variable at all anymore
+        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
@@ -645,42 +604,25 @@ public:
         ampEnv.noteOn();
     }
 
+    void setTuning(TuningState* attachedTuning)
+    {
+        if (attachedTuning == nullptr) return;
+        tuning = attachedTuning;
+    }
+
     double getTargetFrequency()
     {
-        /**
-         * Static Tuning
-         *
-         * by default, transpositions are tuned literally, relative to the played note
-         *      using whatever value, fractional or otherwise, that the user indicates
-         *      and ignores the tuning system
-         *      The played note is tuned according to the tuning system, but the transpositions are not
-         *
-         * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
-         *      according to the current tuning system
-         *
-         * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
-         */
-        if (!tuneTranspositions)
-        {
-            float newOffset = (currentTuning[(currentlyPlayingNote - currentTuningFundamental) % currentTuning.size()]);
-            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-        }
-        else
-        {
-            float newOffset = (currentTuning[(currentlyPlayingNote + (int)std::trunc(currentTransposition) - currentTuningFundamental) % currentTuning.size()]);
-            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-        }
+        // if there is no Tuning prep connected, just return the equal tempered frequency
+        if (tuning == nullptr) return mtof ((double) currentlyPlayingNote + currentTransposition);
 
-        /**
-         * need to add functionality here for getting adaptive and spring tuning values
-         */
+        // otherwise, get the target frequency from the attached Tuning pre
+        return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
     virtual void stopNote (float velocity, bool allowTailOff)
     {
         if (allowTailOff)
         {
-            DBG("Sample::stopNote rootMidiNote " + juce::String(this->samplerSound->rootMidiNote));
             ampEnv.noteOff();
             tailOff = 1.;
         }
@@ -714,11 +656,6 @@ public:
         return currentSamplePos;
     }
 
-    //void sampleReaderChanged(std::shared_ptr<AudioFormatReaderFactory>) {}
-    void centreFrequencyHzChanged(double) {}
-    void loopModeChanged(LoopMode) {}
-    void loopPointsSecondsChanged(juce::Range<double>) {}
-
     void updateParams() {
         //updateAmpEnv();
     }
@@ -731,27 +668,17 @@ public:
 private:
 
     void updateAmpEnv(BKADSR::Parameters &parameters) {
-
-//        auto params = ampEnv.getParameters();
-////        params.attack = *valueTreeState.getRawParameterValue(IDs::ampEnvAttack) * .001;
-////        params.decay = *valueTreeState.getRawParameterValue(IDs::ampEnvDecay) * .001;
-////        params.sustain = *valueTreeState.getRawParameterValue(IDs::ampEnvSustain);
-////        params.release = *valueTreeState.getRawParameterValue(IDs::ampEnvRelease) *.001;
-//        ampEnv.setParameters(params);
-//
         ampEnv.setParameters(parameters);
-//        // todo: update mod amount
+        // todo: update mod amount
     }
 
     template <typename Element>
     void render(juce::AudioBuffer<Element>& outputBuffer, int startSample, int numSamples)
     {
         jassert(samplerSound->getSample() != nullptr);
+        //updateParams(); // NB: important line (except this function doesn't do anything right now!)
 
-        updateParams(); // NB: important line (except this function doesn't do anything right now!)
-
-        // update frequency target here at the block as well; i don't think we need to update this every sample!
-        frequency.setTargetValue(getTargetFrequency());
+        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
@@ -760,10 +687,8 @@ private:
         auto [inL, inR] = samplerSound->getSample()->getBuffer();
 
         auto outL = outputBuffer.getWritePointer(0, startSample);
-
         if (outL == nullptr)
             return;
-
         auto outR = outputBuffer.getNumChannels() > 1 ? outputBuffer.getWritePointer(1, startSample)
                                                       : nullptr;
 
@@ -779,9 +704,9 @@ private:
                           Element* outR,
                           size_t writePos)
     {
-        auto currentFrequency = frequency.getNextValue();  // based on note pitch
         auto currentLoopBegin = loopBegin.getNextValue();
         auto currentLoopEnd = loopEnd.getNextValue();
+        auto currentIncrement = sampleIncrement.getNextValue();
 
         float ampEnvLast = ampEnv.getNextSample();
         if (ampEnv.isActive() && isTailingOff())
@@ -802,7 +727,6 @@ private:
         auto l = static_cast<Element> ((inL[pos] * invAlpha + inL[nextPos] * alpha));
         auto r = static_cast<Element> ((inR != nullptr) ? (inR[pos] * invAlpha + inR[nextPos] * alpha)
                                                         : l);
-
         m_Buffer.setSample(0, 0, l);
         m_Buffer.setSample(1, 0, r);
 
@@ -814,19 +738,6 @@ private:
             m_Buffer.applyGain(ampEnvLast);
         }
 
-//        float cutoff = filterCutoff + filterCutoffModAmt*filterEnv.getNextSample();
-//        cutoff = fmax(40., fmin(20000., cutoff));
-
-//        float q_val = 0.70710678118;
-//        *m_Filter.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, cutoff, q_val);
-//
-//        if (*valueTreeState.getRawParameterValue(IDs::filterActive)) {
-//            // apply low pass filter
-//            juce::dsp::AudioBlock<float> block(m_Buffer);
-//            juce::dsp::ProcessContextReplacing<float> context(block);
-//            m_Filter.process(context);
-//        }
-
         if (outR != nullptr)
         {
             outL[writePos] += m_Buffer.getSample(0, 0);
@@ -837,9 +748,7 @@ private:
             outL[writePos] += (m_Buffer.getSample(0, 0) + m_Buffer.getSample(1, 0)) * 0.5f;
         }
 
-        std::tie(currentSamplePos, currentDirection) = getNextState(currentFrequency,
-                                                                    currentLoopBegin,
-                                                                    currentLoopEnd);
+        std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement,currentLoopBegin,currentLoopEnd);
 
         if (currentSamplePos > samplerSound->getSample()->getLength())
         {
@@ -850,8 +759,6 @@ private:
         return true;
     }
 
-    double getSampleValue() const;
-
     bool isTailingOff() const
     {
         return ! juce::approximatelyEqual (tailOff, 0.0);
@@ -859,14 +766,8 @@ private:
 
     void stopNote()
     {
-
         // todo: are these necessary?
             ampEnv.reset();
-//        if (filterEnv.isActive()) {
-//            filterEnv.reset();
-//        }
-//
-//        m_Filter.reset();
 
         clearCurrentNote();
         currentSamplePos = 0.0;
@@ -878,12 +779,11 @@ private:
         backward
     };
 
-    std::tuple<double, Direction> getNextState(double freq,
+    [[nodiscard]] std::tuple<double, Direction> getNextState(double inc,
                                                double begin,
                                                double end) const
     {
-        auto nextPitchRatio = (freq / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate;
-
+        auto nextPitchRatio = inc;
         auto nextSamplePos = currentSamplePos;
         auto nextDirection = currentDirection;
 
@@ -929,35 +829,24 @@ private:
         return std::tuple<double, Direction>(nextSamplePos, nextDirection);
     }
 
-    //juce::AudioProcessorValueTreeState& valueTreeState;  // from the SamplerAudioProcessor
-
     BKSamplerSound<juce::AudioFormatReader>* samplerSound;
     float voiceGain {1.};
 
     double currentTransposition; // comes from Transposition sliders in Direct/Nostalgic/Synchronic
-
-    std::array<float,12> currentTuning = {0.}; // hard-wire these static tuning setups to start
-    int currentTuningFundamental = 0;
-    bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the currentTuning system
+    bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the current tuning system (in TuningState)
 
     juce::SmoothedValue<double> level { 0 };
-    juce::SmoothedValue<double> frequency { 0 };
     juce::SmoothedValue<double> loopBegin;
     juce::SmoothedValue<double> loopEnd;
-    double previousPressure { 0 };
+    juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions
+
     double currentSamplePos { 0 };
     double tailOff { 0 };
     Direction currentDirection{ Direction::forward };
-    double smoothingLengthInSeconds{ 0.01 };
 
-    //juce::ADSR ampEnv;
     BKADSR ampEnv;
+    TuningState* tuning;
 
-    //juce::ADSR filterEnv;
-    double filterCutoff = 20000.;
-    double filterCutoffModAmt = 0.;
-
-    //juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> m_Filter;
     juce::AudioBuffer<float> m_Buffer;
 };
 

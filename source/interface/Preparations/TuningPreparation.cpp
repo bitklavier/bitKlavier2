@@ -12,7 +12,7 @@
 #include "TuningParametersView.h"
 
 #include "synth_slider.h"
-#include "ParametersView.h"
+//#include "ParametersView.h"
 // Definition for the TuningPreparation constructor.  It takes three parameters: a pointer to
 // a Tuning Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private TuningPreparation member proc with an initialization list.

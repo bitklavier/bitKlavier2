@@ -29,14 +29,15 @@ public:
 
         int i = 0;
         for (auto slider: dataSliders) {
-            auto ptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[i++].get(), listeners,
-                                                                   *slider, nullptr);
+            auto ptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[i++].get(),
+                listeners,
+                *slider,
+                nullptr);
             attachmentVec.emplace_back(std::move(ptr));
         }
 
+        // add slider callbacks to allow the UI to update the number of sliders whenever a modulation changes it
         int j = 0;
-        //add slider callbacks to allow the UI to update the number of sliders whenever a modulation changes it
-        //
         for (auto& param :*params->getFloatParams()) {
             sliderChangedCallback +={ listeners.addParameterListener(
                 param,
@@ -59,7 +60,6 @@ public:
 
     virtual void resized() override {
         OpenGlAutoImageComponent<BKStackedSlider>::resized();
-        // if (isShowing())
         redoImage();
     }
 
@@ -72,6 +72,7 @@ public:
         OpenGlAutoImageComponent<BKStackedSlider>::mouseDown(e);
         redoImage();
     }
+
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
         OpenGlAutoImageComponent<BKStackedSlider>::textEditorReturnKeyPressed(textEditor);
         redoImage();
@@ -163,6 +164,7 @@ private :
         isModulation_ = true;
         addMyListener(this);
     }
+
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 

@@ -15,6 +15,8 @@
 #include "PreparationStateImpl.h"
 #include "tuning_systems.h"
 #include "array_to_string.h"
+#include "utils.h"
+
 enum Fundamental : uint32_t {
     C        = 1 << 0,
     C41D5    = 1 << 1,
@@ -38,40 +40,50 @@ enum AdaptiveSystems {
     Spring = 1<<3,
 };
 
+/**
+ * TuningState is the primary struct that is shared around to get/set tuning information
+ */
+struct TuningState : bitklavier::StateChangeableParameter {
 
-struct TuningKeyboardState : bitklavier::StateChangeableParameter {
     juce::MidiKeyboardState keyboardState;
+
     std::array<float,128> absoluteTuningOffset = {0.f};
-    int fundamental  =0;
+    std::array<float,12> circularTuningOffset = {0.f};
+    int fundamental = 0;
+
     void setKeyOffset(int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 128) absoluteTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
     }
-    std::array<float,12> circularTuningOffset = {0.f};
+
     void setCircularKeyOffset(int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 12) circularTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+        //DBG("setCircularKeyOffset " + juce::String(midiNoteNumber) + " : " + juce::String(val));
     }
+
     void setKeyOffset(int midiNoteNumber, float val, bool circular)
     {
         if (circular) setCircularKeyOffset(midiNoteNumber,val);
         else setKeyOffset(midiNoteNumber,val);
     }
-    void processStateChanges() override {
+
+    void processStateChanges() override
+    {
         for (auto [index,change] : stateChanges.changeState) {
             static juce::var nullVar;
             auto val    = change.getProperty(IDs::absoluteTuning);
             auto val1  = change.getProperty(IDs::circularTuning);
             if (val != nullVar) {
                 absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128>(val.toString().toStdString());
-            }else if (val1 !=nullVar) {
+            } else if (val1 != nullVar) {
                 circularTuningOffset = parseFloatStringToArrayCircular<12>(val1.toString().toStdString());
                // absoluteTuningOffset = std::array<float,128>(val1.toString().toStdString());
 
             }
-
         }
     }
+
     static std::array<float,12> rotateValuesByFundamental(std::array<float,12> vals, int fundamental) {
         int offset;
         if(fundamental <= 0) offset = 0;
@@ -84,6 +96,7 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
         }
         return new_vals;
     }
+
     void setFundamental(int fund) {
         //need to shift keyValues over by difference in fundamental
         int oldFund = fundamental;
@@ -95,6 +108,41 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
             circularTuningOffset[i] = vals[index];
         }
     }
+
+    /**
+     * getTargetFrequency() is the primary function for synthesizers to handle tuning
+     *      should include static and dynamic tunings
+     *      is called every block
+     */
+    double getTargetFrequency(int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
+    {
+        /**
+         *
+         * by default, transpositions are tuned literally, relative to the played note
+         *      using whatever value, fractional or otherwise, that the user indicates
+         *      and ignores the tuning system
+         *      The played note is tuned according to the tuning system, but the transpositions are not
+         *
+         * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
+         *      according to the current tuning system
+         *
+         * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
+         *
+         */
+
+        if (!tuneTranspositions) {
+            double newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01); // i don't love the .01 changes here, let's see if this can be made consistent
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+
+        }
+        else {
+            double newOffset = (circularTuningOffset[(currentlyPlayingNote + (int)std::trunc(currentTransposition)) % circularTuningOffset.size()] * .01);
+            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+        }
+
+        // add A440 adjustments here
+    }
+
     std::atomic<bool> setFromAudioThread;
 };
 
@@ -107,18 +155,21 @@ struct TuningParams : chowdsp::ParamHolder
     {
         add (tuningSystem,fundamental,adaptive);
     }
+
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
         juce::ParameterID{"tuningSystem" , 100},
         "Tuning System",
         TuningSystem::Equal_Temperament,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''}}
     };
+
     chowdsp::EnumChoiceParameter<Fundamental>::Ptr fundamental {
         juce::ParameterID{"fundamental" , 100},
         "Fundamental",
         Fundamental::C,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''},{'4', '#'},{'5','b'}}
     };
+
     chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
         juce::ParameterID{"adaptiveSystem" , 100},
         "Adaptive System",
@@ -126,8 +177,9 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } ,{'1','/'} ,{'2','-'},{'3','\''},{'4', '#'},{'5','b'}}
     };
 
+    /** this contains the current state of the tuning system, with helper functions **/
+    TuningState tuningState;
 
-    TuningKeyboardState keyboardState;
     /** Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const TuningParams& paramHolder);
@@ -142,7 +194,6 @@ struct TuningNonParameterState : chowdsp::NonParamState
     TuningNonParameterState()
     {
     }
-
 };
 
 
@@ -150,7 +201,7 @@ struct TuningNonParameterState : chowdsp::NonParamState
 class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams,TuningNonParameterState>>
 {
 public:
-    TuningProcessor(SynthBase* parent,const juce::ValueTree& v);
+    TuningProcessor(SynthBase* parent, const juce::ValueTree& v);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -167,9 +218,9 @@ public:
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), false)
                 .withInput("input",juce::AudioChannelSet::stereo(),false);
     }
+
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-
 
 private:
 

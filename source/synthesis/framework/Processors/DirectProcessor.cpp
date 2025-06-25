@@ -5,8 +5,9 @@
 #include "DirectProcessor.h"
 #include "Synthesiser/Sample.h"
 #include "common.h"
-#include <chowdsp_serialization/chowdsp_serialization.h>
+//#include <chowdsp_serialization/chowdsp_serialization.h>
 #include "synth_base.h"
+
 DirectProcessor::DirectProcessor (SynthBase* parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
 mainSynth(new BKSynthesiser(state.params.env, state.params.gainParam)),
 hammerSynth(new BKSynthesiser(state.params.env,state.params.hammerParam)),
@@ -20,7 +21,6 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
         releaseResonanceSynth->addVoice (new BKSamplerVoice());
         pedalSynth->addVoice (new BKSamplerVoice());
     }
-
 
     // these synths play their stuff on noteOff rather than noteOn
     hammerSynth->isKeyReleaseSynth (true);
@@ -36,6 +36,7 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
         v.appendChild(modChan,nullptr);
         mod++;
     }
+
     //add state change params here
     parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
     parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
@@ -45,6 +46,7 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
+
     mainSynth->setCurrentPlaybackSampleRate (sampleRate);
     gain.prepare (spec);
     gain.setRampDurationSeconds (0.05);
@@ -105,45 +107,66 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     for(auto param: state.params.modulatableParams){
         bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
     }
-//    melatonin::printSparkline(buffer);
-    //should pull first two modinputs first or somehow have dum
-    //
-    // my ins???
 
     buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
+
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
+
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples() )
     {
+
         mainSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
+        mainSynth->updateVelocityMinMax(
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
         mainSynth->renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (hammerSynth->hasSamples())
+    {
+
+        hammerSynth->updateVelocityMinMax(
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
 
     if (releaseResonanceSynth->hasSamples())
     {
+
         releaseResonanceSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
+        releaseResonanceSynth->updateVelocityMinMax(
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (pedalSynth->hasSamples())
+    {
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
 
-//DBG ("attack: " + juce::String (state.params.env.attackParam->get()));
-    //juce::dsp::AudioBlock<float> block(buffer);
-    //melatonin::printSparkline(buffer);
+    // level meter update stuff
+    int numSamples = buffer.getNumSamples();
+    if (numSamples != levelBuf.getNumSamples()) levelBuf.setSize(buffer.getNumChannels(), numSamples);
+    levelBuf.copyFrom(0, 0, buffer, 0, 0, numSamples);
+    std::get<0>(state.params.outputLevels) = getLevelL();
+    std::get<1>(state.params.outputLevels) = getLevelR();
+}
 
-//    bufferDebugger->capture("direct", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
-//    bufferDebugger->capture("mod1", buffer.getReadPointer(1), buffer.getNumSamples(), -1.f, 1.f);
-//    bufferDebugger->capture("mod2", buffer.getReadPointer(2), buffer.getNumSamples(), -1.f, 1.f);
-//    bufferDebugger->capture("mod", buffer.getReadPointer(3), buffer.getNumSamples(), -1.f, 1.f);
-//    bufferDebugger->capture("direct", buffer.getReadPointer(4), buffer.getNumSamples(), -1.f, 1.f);
-//    bufferDebugger->capture("direct", buffer.getReadPointer(5), buffer.getNumSamples(), -1.f, 1.f);
-//    bufferDebugger->capture("direct", buffer.getReadPointer(6), buffer.getNumSamples(), -1.f, 1.f);
-//    bufferDebugger->capture("direct", buffer.getReadPointer(7), buffer.getNumSamples(), -1.f, 1.f);
+
+void DirectProcessor::setTuning (TuningProcessor* tun) {
+    tuning = tun;
+    releaseResonanceSynth->setTuning(&tuning->getState().params.tuningState);
+    pedalSynth->setTuning(&tuning->getState().params.tuningState);
+    hammerSynth->setTuning(&tuning->getState().params.tuningState);
+    mainSynth->setTuning(&tuning->getState().params.tuningState);
+
 }

@@ -188,7 +188,7 @@ void KeyboardOffsetComponent::drawKeyboardBackground(juce::Graphics & g, juce::R
         }
     }
 }
-BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningKeyboardState* state,bool toggles, bool nos,bool isCircular):
+BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningState* state,bool toggles, bool nos,bool isCircular):
 needsOctaveSlider(nos),
 ratio(1.0),
 keyboardState(state), isCircular(isCircular)
@@ -216,7 +216,7 @@ keyboardState(state), isCircular(isCircular)
     // keyboard->setAllowDrag(false);
     // keyboard->doKeysToggle(toggles);
     keyboard->addMouseListener(this, true);
-   // keyboardState->keyboardState.addListener(this);
+   // tuningState->tuningState.addListener(this);
     lastKeyPressed = 0;
 
     showName.setText("unnamed keyboard slider", juce::dontSendNotification);
@@ -335,7 +335,7 @@ void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
         else outval = keyboard->midRange + dragPos * (keyboard->midRange - keyboard->minRange);
         DBG("BKTuningKeyboardSlider::mouseDrag outval = " + juce::String(outval));
         auto val  = std::clamp(outval, keyboard->minRange, keyboard->maxRange);
-       // keyboardState->setKeyOffset(myNote, dragPos * 50.);
+       // tuningState->setKeyOffset(myNote, dragPos * 50.);
         keyboardValueTF.setText(juce::String(val, displayResolution), juce::dontSendNotification);
         keyboardState->setKeyOffset(myNote, val,isCircular);
         if (isCircular)

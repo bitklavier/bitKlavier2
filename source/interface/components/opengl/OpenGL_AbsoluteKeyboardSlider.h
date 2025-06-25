@@ -8,7 +8,7 @@
 #include "open_gl_image_component.h"
 class OpenGLAbsoluteKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
-    OpenGLAbsoluteKeyboardSlider(TuningKeyboardState & keystate)
+    OpenGLAbsoluteKeyboardSlider(TuningState& keystate)
         : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, false) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -84,11 +84,11 @@ public:
 
     }
 
-    TuningKeyboardState mod_key_state;
+    TuningState mod_key_state;
 };
 class OpenGLCircularKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
-    OpenGLCircularKeyboardSlider(TuningKeyboardState & keystate)
+    OpenGLCircularKeyboardSlider(TuningState& keystate)
         : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, true) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -155,7 +155,7 @@ public:
     void syncToValueTree() override {
 
     }
-    TuningKeyboardState mod_key_state;
+    TuningState mod_key_state;
 
 };
 #endif //OPENGL_ABSOLUTEKEYBOARDSLIDER_H

@@ -4,100 +4,82 @@
 
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
-#include "../components/opengl/OpenGL_TranspositionSlider.h"
-#include "../components/opengl/OpenGL_VelocityMinMaxSlider.h"
-#include "ParametersView.h"
-#include "TransposeParams.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
+#include "TranspositionSliderSection.h"
 #include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
-#include "../components/opengl/OpenGL_VelocityMinMaxSlider.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
-using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
-
-class TranspositionSliderSection : public SynthSection
-{
-public:
-    TranspositionSliderSection(TransposeParams *params, chowdsp::ParameterListeners& listeners, std::string parent_uuid)
-            : slider(std::make_unique<OpenGL_TranspositionSlider>(params,listeners)), SynthSection("")
-    {
-        setComponentID(parent_uuid);
-        on = std::make_unique<SynthButton>(params->transpositionUsesTuning->paramID);
-        on_attachment = std::make_unique<chowdsp::ButtonAttachment>(params->transpositionUsesTuning,listeners,*on,nullptr);
-        on->setComponentID(params->transpositionUsesTuning->paramID);
-        addSynthButton(on.get());
-        addAndMakeVisible(on.get());
-        //setActivator(on.get());
-        //set componment id to map to statechange params set in processor constructor
-        slider->setComponentID("transpose");
-        //needed to get picked up by modulations
-        addStateModulatedComponent(slider.get());
-    }
-    ~TranspositionSliderSection() {}
-
-    void paintBackground(juce::Graphics& g) {
-        paintContainer(g);
-        paintHeadingText(g);
-
-        paintKnobShadows(g);
-        paintChildrenBackgrounds(g);
-        paintBorder(g);
-    }
-    void resized() override
-    {
-        int title_width = getTitleWidth();
-        slider->setBounds(title_width, 0, getWidth() - title_width, getHeight());
-        slider->redoImage();
-        SynthSection::resized();
-    }
-    std::unique_ptr<OpenGL_TranspositionSlider> slider;
-    std::unique_ptr<SynthButton> on;
-    std::unique_ptr<chowdsp::ButtonAttachment> on_attachment;
-};
+#include "DirectProcessor.h"
+#include "peak_meter_section.h"
 
 
 class DirectParametersView : public SynthSection
 {
 public:
-    DirectParametersView(chowdsp::PluginState& pluginState, chowdsp::ParamHolder& params,juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
-                                                                                                                     //bitklavier::ParametersView(pluginState,params,open_gl,false)
+    DirectParametersView(chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
     {
-        //envelope = std::make_unique<EnvelopeSection>("ENV", "err");
+        // the name that will appear in the UI as the name of the section
         setName("direct");
-        setLookAndFeel(DefaultLookAndFeel::instance());
 
-        //addSubSection(envelope.get());
+        // every section needs a LaF
+        //  main settings for this LaF are in assets/default.bitklavierskin
+        //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
+        //  we probably want to merge these in the future, but ok for now
+        setLookAndFeel(DefaultLookAndFeel::instance());
         setComponentID(name);
+
+        // pluginState is really preparationState; the state holder for this preparation (not the whole app/plugin)
+        // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
+
+        // go through and get all the main float params (gain, hammer, etc...), make sliders for them
+        // all the params for this prep are defined in struct DirectParams, in DirectProcessor.h
         for ( auto &param_ : *params.getFloatParams())
         {
             auto slider = std::make_unique<SynthSlider>(param_->paramID);
             auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
-            addSlider(slider.get());
+            addSlider(slider.get()); // adds the slider to the synthSection
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             floatAttachments.emplace_back(std::move(attachment));
             _sliders.emplace_back(std::move(slider));
-
-        }
-        //find complex parameters
-        for (auto paramHolder : *params.getParamHolders())
-        {
-            if (auto *envParams = dynamic_cast<EnvParams*>(paramHolder))
-                envSection = std::make_unique<EnvelopeSection>("ENV", "ENV",*envParams,listeners, *this);//std::make_unique<BooleanParameterComponent>(*boolParam, listeners);
-
-            if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
-                transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
-            if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
-                velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
         }
 
-              addSubSection(envSection.get());
+        // find and create the more complex parameters
+//        for (auto paramHolder : *params.getParamHolders())
+//        {
+//            if (auto *envParams = dynamic_cast<EnvParams*>(paramHolder))
+//                envSection = std::make_unique<EnvelopeSection>("ENV", "ENV",*envParams,listeners, *this);//std::make_unique<BooleanParameterComponent>(*boolParam, listeners);
+//
+//            if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
+//                transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
+//
+//            if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
+//                velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
+//        }
+
+        envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
+        transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
+        velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
+
+        knobsBorder.setName("knobsBorder");
+        knobsBorder.setText("Output Gain Controls");
+        knobsBorder.setTextLabelPosition(juce::Justification::centred);
+        addAndMakeVisible(knobsBorder);
+
+        // we add subsections for the elements that have been defined as sections
+        addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
-        addAndMakeVisible(velocityMinMaxSlider.get());
-        //needed to get picked up by modulations
+
+        // this slider does not need a section, since it's just one OpenGL component
         velocityMinMaxSlider->setComponentID("velocity_min_max");
         addStateModulatedComponent(velocityMinMaxSlider.get());
+
+        params.outputLevels; // to access the updating audio output levels
+        levelMeter = std::make_shared<PeakMeterSection>("peakMeter",&params.outputLevels);
+        //addOpenGlComponent(levelMeter);
+        addSubSection(levelMeter.get());
+        //addAndMakeVisible(levelMeter);
 
     }
 
@@ -111,16 +93,22 @@ public:
             drawLabelForComponent(g, slider->getName(), slider.get());
         }
         paintChildrenBackgrounds(g);
+        knobsBorder.paint(g);
     }
 
+    // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
+    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
-    void resized() override;
-    chowdsp::ScopedCallbackList transposeCallbacks;
+    // generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
-    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
+
+    juce::GroupComponent knobsBorder;
+    std::shared_ptr<PeakMeterSection> levelMeter;
+
+    void resized() override;
 
 };
 

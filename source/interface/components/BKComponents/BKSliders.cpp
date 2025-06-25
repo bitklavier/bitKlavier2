@@ -96,13 +96,8 @@ BKStackedSlider::BKStackedSlider(
            sliderMaxDefault(defmax),
            sliderDefault(def),
            sliderIncrement(increment),
-            numActiveSliders(numActiveSliders)
+           numActiveSliders(numActiveSliders)
 {
-
-    showName.setText(sliderName, juce::dontSendNotification);
-    showName.setInterceptsMouseClicks(false, true);
-    addAndMakeVisible(showName);
-
     editValsTextField = std::make_unique<juce::TextEditor>();
     editValsTextField->setMultiLine(true);
     editValsTextField->setName("PARAMTXTEDIT");
@@ -114,7 +109,6 @@ BKStackedSlider::BKStackedSlider(
     setInterceptsMouseClicks(true, true);
 
     numSliders = 12;
-
 
     for(int i=0; i<numSliders; i++)
     {
@@ -138,17 +132,22 @@ BKStackedSlider::BKStackedSlider(
     topSlider = std::make_unique<juce::Slider>();
     topSlider->setSliderStyle(juce::Slider::LinearBar);
     topSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 0,0);
-    //topSlider->setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxLeft, true, 50,50);
+    //topSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 50,50);
     topSlider->setRange(sliderMin, sliderMax, sliderIncrement);
     topSlider->setValue(sliderDefault, juce::dontSendNotification);
     topSlider->addListener(this);
     topSlider->addMouseListener(this, true);
     topSlider->setLookAndFeel(&topSliderLookAndFeel);
-    topSlider->setAlpha(0.);
+    //topSlider->setAlpha(0.);
     addAndMakeVisible(*topSlider);
 
     topSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colour::greyLevel (0.8f).contrasting().withAlpha (0.0f));
     stackedSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.95));
+
+    sliderBorder.setName("transpositionSlider");
+    sliderBorder.setText("Transpositions");
+    sliderBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(sliderBorder);
 
     //attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
 
@@ -156,7 +155,7 @@ BKStackedSlider::BKStackedSlider(
 
 void BKStackedSlider::setDim(float alphaVal)
 {
-    showName.setAlpha(alphaVal);
+    //showName.setAlpha(alphaVal);
     //topSlider->setAlpha(alphaVal);
 
     for(int i=0; i<numSliders; i++)
@@ -174,7 +173,7 @@ void BKStackedSlider::setDim(float alphaVal)
 
 void BKStackedSlider::setBright()
 {
-    showName.setAlpha(1.);
+    //showName.setAlpha(1.);
     //topSlider->setAlpha(1.);
 
     for(int i=0; i<numSliders; i++)
@@ -222,7 +221,6 @@ void BKStackedSlider::setTo(juce::Array<float> newvals, juce::NotificationType n
     //activate sliders
     for(int i=0; i<slidersToActivate; i++)
     {
-
         juce::Slider* newSlider = dataSliders.operator[](i);
         if(newSlider != nullptr)
         {
@@ -281,12 +279,10 @@ void BKStackedSlider::mouseDown (const juce::MouseEvent &event)
             addSlider(juce::sendNotification);
 //            showModifyPopupMenu();
         }
-
     }
     if (editValsTextField->hasKeyboardFocus(false)) {
         editValsTextField->mouseDown(event);
     }
-
 }
 
 
@@ -322,8 +318,6 @@ void BKStackedSlider::mouseUp(const juce::MouseEvent& e)
     if (editValsTextField->hasKeyboardFocus(false)) {
         editValsTextField->mouseUp(e);
     }
-
-
 }
 
 void BKStackedSlider::mouseMove(const juce::MouseEvent& e)
@@ -383,7 +377,6 @@ void BKStackedSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
             getAllActiveValues());
         isEditing = false;
     }
-
 }
 
 void BKStackedSlider::textEditorFocusLost(juce::TextEditor& textEditor)
@@ -547,30 +540,27 @@ void BKStackedSlider::sliderModifyMenuCallback (const int result, BKStackedSlide
     }
 }
 
-
 void BKStackedSlider::resized ()
 {
     juce::Rectangle<int> area (getLocalBounds());
-
-    showName.setBounds(area.toNearestInt());
-    showName.setJustificationType(juce::Justification::topRight);
-    showName.toFront(false);
+    sliderBorder.setBounds(area);
+    area.removeFromTop(10);
+    area.removeFromBottom(2);
+    area.reduce(4, 0);
 
     topSlider->setBounds(area);
-
     editValsTextField->setBounds(area);
     editValsTextField->setVisible(false);
-   //
-   // editValsTextField->setInterceptsMouseClicks(false, false);
-
 
     for(int i=0; i<numSliders; i++)
     {
         juce::Slider* newSlider = dataSliders.getUnchecked(i);
         newSlider->setBounds(area);
     }
-
 }
+
+
+
 
 // ******************************************************************************************************************** //
 // **************************************************  BKRangeSlider ************************************************** //
@@ -603,6 +593,7 @@ BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double 
     maxValueTF.setName("maxvalue");
     maxValueTF.addListener(this);
     maxValueTF.setSelectAllWhenFocused(true);
+    maxValueTF.setJustification(juce::Justification(2));
     maxValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     addAndMakeVisible(maxValueTF);
 
@@ -646,6 +637,11 @@ BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double 
     displaySlider->setLookAndFeel(&displaySliderLookAndFeel);
     displaySlider->setInterceptsMouseClicks(false, false);
     addAndMakeVisible(*displaySlider);
+
+    rangeSliderBorder.setName("rangeSlider");
+    rangeSliderBorder.setText("Velocity Range");
+    rangeSliderBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(rangeSliderBorder);
 
 }
 
@@ -852,34 +848,31 @@ void BKRangeSlider::rescaleMaxSlider()
 
 void BKRangeSlider::resized()
 {
-
+    // draw the border
     juce::Rectangle<int> area (getLocalBounds());
-    juce::Rectangle<int> topSlab (area.removeFromTop(gComponentTextFieldHeight));
+    rangeSliderBorder.setBounds(area);
+    area.removeFromTop(gComponentTextFieldHeight + 2);
 
-    if(justifyRight)
-    {
-        topSlab.removeFromRight(5);
-        maxValueTF.setBounds(topSlab.removeFromRight(75));
-        topSlab.removeFromRight(gXSpacing);
-        minValueTF.setBounds(topSlab.removeFromLeft(75));
-        showName.setBounds(topSlab.removeFromRight(getWidth() - 150));
-    }
-    else
-    {
-        topSlab.removeFromLeft(5);
-        minValueTF.setBounds(topSlab.removeFromLeft(75));
-        topSlab.removeFromLeft(gXSpacing);
-        maxValueTF.setBounds(topSlab.removeFromLeft(75));
-        showName.setBounds(topSlab.removeFromLeft(getWidth() - 150));
-    }
+    // figure out how much to remove from top and bottom to center slider
+    int areaHeight = area.getHeight();
+    int sliderHeight = gComponentRangeSliderHeight;
+    int removeFromTopAndBottom = areaHeight - (sliderHeight/2);
 
-    juce::Rectangle<int> sliderArea (area.removeFromTop(40));
+    // place the sliders
+    juce::Rectangle<int> sliderArea (area.removeFromTop(removeFromTopAndBottom).removeFromBottom(removeFromTopAndBottom));
     minSlider.setBounds(sliderArea);
     maxSlider.setBounds(sliderArea);
     invisibleSlider.setBounds(sliderArea);
 
+//    maxValueTF.setBounds(maxSlider.getRight() - 72, maxSlider.getY() - 12, 52, 22);
+//    minValueTF.setBounds(maxSlider.getX() + 20, maxSlider.getBottom() - 10, 52, 22);
+
+    // place the text fields
+    minValueTF.setBounds(maxSlider.getX() + 10, maxSlider.getY() - 14, 52, 22);
+    maxValueTF.setBounds(maxSlider.getRight() - 62, maxSlider.getBottom() - 8, 52, 22);
+
+    // blue slider to show most recently played velocity
     juce::Rectangle<int> displaySliderArea = maxSlider.getBounds();
     displaySliderArea.reduce(8, 0);
     displaySlider->setBounds(displaySliderArea.removeFromBottom(8));
-
 }
