@@ -118,7 +118,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (mainSynth->hasSamples() )
     {
-        mainSynth->setTuning(&tuning->getState().params.tuningState);
+
         mainSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         mainSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -129,7 +129,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (hammerSynth->hasSamples())
     {
-        hammerSynth->setTuning(&tuning->getState().params.tuningState);
+
         hammerSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
             state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
@@ -139,7 +139,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (releaseResonanceSynth->hasSamples())
     {
-        releaseResonanceSynth->setTuning(&tuning->getState().params.tuningState);
+
         releaseResonanceSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         releaseResonanceSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -150,7 +150,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (pedalSynth->hasSamples())
     {
-        pedalSynth->setTuning(&tuning->getState().params.tuningState);
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -160,4 +159,14 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     levelBuf.copyFrom(0, 0, buffer, 0, 0, numSamples);
     std::get<0>(state.params.outputLevels) = getLevelL();
     std::get<1>(state.params.outputLevels) = getLevelR();
+}
+
+
+void DirectProcessor::setTuning (TuningProcessor* tun) {
+    tuning = tun;
+    releaseResonanceSynth->setTuning(&tuning->getState().params.tuningState);
+    pedalSynth->setTuning(&tuning->getState().params.tuningState);
+    hammerSynth->setTuning(&tuning->getState().params.tuningState);
+    mainSynth->setTuning(&tuning->getState().params.tuningState);
+
 }

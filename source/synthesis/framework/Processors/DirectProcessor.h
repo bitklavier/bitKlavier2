@@ -87,11 +87,12 @@ struct DirectParams : chowdsp::ParamHolder
         0.0f,true
     };
 
-    // Velocity param
-    /**
-     * isn't this replaced by velocityMinMaxParams below?
+    // Last velocity param
+    /*
+     * this will be updated in BKSynthesizer, and then can be accessed for display in the velocityMinMaxslider
+     *      it should NOT be added to the param list above, as we are not going to use it in the UI
      */
-    chowdsp::FloatParameter::Ptr velocityParam {
+    chowdsp::FloatParameter::Ptr lastVelocityParam {
         juce::ParameterID { "Velocity", 100 },
         "Velocity",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f), // FIX
@@ -108,6 +109,10 @@ struct DirectParams : chowdsp::ParamHolder
     VelocityMinMaxParams velocityMinMax;
 
     // for storing outputLevels of this preparation for display
+    /*
+     * because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
+     *      we simply update this in the processBlock() call
+     */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
 
     /****************************************************************************************/
@@ -163,6 +168,7 @@ public:
         pedalSynth->addSoundSet (p);
     }
 
+    void setTuning(TuningProcessor* ) override;
     juce::AudioProcessor::BusesProperties directBusLayout()
     {
         return BusesProperties()

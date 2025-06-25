@@ -80,7 +80,8 @@ SynthBase::~SynthBase() {
 void SynthBase::addTuningConnection(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
     auto* sourceNode = getNodeForId(src);
     auto* destNode   = getNodeForId(dest);
-    dynamic_cast<bitklavier::TunableProcessor*>(destNode->getProcessor())->tuning = dynamic_cast<TuningProcessor*>(sourceNode->getProcessor());
+    dynamic_cast<bitklavier::TunableProcessor*>(destNode->getProcessor())->setTuning(dynamic_cast<TuningProcessor*>(sourceNode->getProcessor()));
+
 }
 void SynthBase::connectTuning(const juce::ValueTree &v) {
     auto srcid =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( v.getProperty(IDs::src));

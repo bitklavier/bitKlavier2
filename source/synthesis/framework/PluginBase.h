@@ -18,6 +18,13 @@ namespace bitklavier {
         TunableProcessor() : juce::AudioProcessor()
         {
         }
+        virtual void setTuning(TuningProcessor* tun)
+        {
+            tuning = tun;
+        }
+
+            protected:
+
 
         TuningProcessor* tuning = nullptr; //getTuningProcessor() const;
     };

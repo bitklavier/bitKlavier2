@@ -612,6 +612,10 @@ public:
 
     double getTargetFrequency()
     {
+        // if there is no Tuning prep connected, just return the equal tempered frequency
+        if (tuning == nullptr) return mtof ((double) currentlyPlayingNote + currentTransposition);
+
+        // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
@@ -619,7 +623,6 @@ public:
     {
         if (allowTailOff)
         {
-            DBG("Sample::stopNote rootMidiNote " + juce::String(this->samplerSound->rootMidiNote));
             ampEnv.noteOff();
             tailOff = 1.;
         }
