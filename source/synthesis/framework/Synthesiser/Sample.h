@@ -575,23 +575,23 @@ public:
         // call the smooth.reset() here if we want smoothing
     }
 
-    static double mtof( double f )
-    {
-        if( f <= -1500 ) return (0);
-        else if( f > 1499 ) return (mtof(1499));
-            // else return (8.17579891564 * exp(.0577622650 * f));
-            // TODO: optimize
-        else return ( pow(2, (f - 69) / 12.0) * 440.0 );
-    }
-
-    static double mtof( double f, double a ) // a = frequency of A4
-    {
-        if( f <= -1500 ) return (0);
-        else if( f > 1499 ) return (mtof(1499));
-        // else return (8.17579891564 * exp(.0577622650 * f));
-        // TODO: optimize
-        else return ( pow(2, (f - 69) / 12.0) * a );
-    }
+//    static double mtof( double f )
+//    {
+//        if( f <= -1500 ) return (0);
+//        else if( f > 1499 ) return (mtof(1499));
+//            // else return (8.17579891564 * exp(.0577622650 * f));
+//            // TODO: optimize
+//        else return ( pow(2, (f - 69) / 12.0) * 440.0 );
+//    }
+//
+//    static double mtof( double f, double a ) // a = frequency of A4
+//    {
+//        if( f <= -1500 ) return (0);
+//        else if( f > 1499 ) return (mtof(1499));
+//        // else return (8.17579891564 * exp(.0577622650 * f));
+//        // TODO: optimize
+//        else return ( pow(2, (f - 69) / 12.0) * a );
+//    }
 
     void setCurrentPlaybackSampleRate(double newRate) override {
 
@@ -658,43 +658,32 @@ public:
 
         tuning = attachedTuning;
         currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
-       // currentTuningFundamental = tuning->getState().params.keyboardState.fundamental;
-
-        for (auto offset : currentTuning)
-        {
-            DBG("BKSamplerVoice:setTuning, tuning offset = " + juce::String(offset));
-        }
-        DBG("BKSamplerVoice:setTuning, new tuning fundamental =  " + juce::String(currentTuningFundamental));
+        myTuningKeyboardState = &tuning->getState().params.keyboardState;
     }
 
     double getTargetFrequency()
     {
-        /**
-         * Static Tuning
-         *
-         * by default, transpositions are tuned literally, relative to the played note
-         *      using whatever value, fractional or otherwise, that the user indicates
-         *      and ignores the tuning system
-         *      The played note is tuned according to the tuning system, but the transpositions are not
-         *
-         * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
-         *      according to the current tuning system
-         *
-         * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
-         *
-         * newOffset should be gotten via a call to Tuning, ideally including adaptive/spring tuning offsets as well
-         *
-         */
-        if (!tuneTranspositions)
-        {
-            float newOffset = (currentTuning[(currentlyPlayingNote - currentTuningFundamental) % currentTuning.size()] * .01);
-            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-        }
-        else
-        {
-            float newOffset = (currentTuning[(currentlyPlayingNote + (int)std::trunc(currentTransposition) - currentTuningFundamental) % currentTuning.size()] * .01);
-            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
-        }
+
+        //return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+        return myTuningKeyboardState->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+//
+//        if (!tuneTranspositions)
+//        {
+//            return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition);
+//            //float newOffset = myTuningKeyboardState->circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
+//            //float newOffset = tuning->getState().params.keyboardState.circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
+//            //float newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
+//            //return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+//
+//        }
+//        else
+//        {
+//            return tuning->getTargetFrequency(currentlyPlayingNote + (int)std::trunc(currentTransposition), currentTransposition);
+//            //float newOffset = (currentTuning[(currentlyPlayingNote + (int)std::trunc(currentTransposition)) % currentTuning.size()] * .01);
+//            //return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+//        }
+
+
 
         /**
          * need to add functionality here for getting adaptive and spring tuning values
@@ -975,7 +964,7 @@ private:
 
     double currentTransposition; // comes from Transposition sliders in Direct/Nostalgic/Synchronic
 
-    std::array<float,12> currentTuning = {0.}; // hard-wire these static tuning setups to start
+    std::array<float,12> currentTuning = {0.f}; // hard-wire these static tuning setups to start
     int currentTuningFundamental = 0;
     bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the currentTuning system
 
@@ -999,6 +988,7 @@ private:
     double filterCutoffModAmt = 0.;
 
     TuningProcessor* tuning;
+    TuningKeyboardState* myTuningKeyboardState;
 
     //juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> m_Filter;
     juce::AudioBuffer<float> m_Buffer;

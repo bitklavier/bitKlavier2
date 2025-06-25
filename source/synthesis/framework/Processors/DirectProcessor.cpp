@@ -131,6 +131,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (hammerSynth->hasSamples())
     {
+        hammerSynth->setTuning(tuning);
         hammerSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
             state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
@@ -150,7 +151,10 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
 
     if (pedalSynth->hasSamples())
+    {
+        pedalSynth->setTuning (tuning);
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
 
     // level meter update stuff
     int numSamples = buffer.getNumSamples();

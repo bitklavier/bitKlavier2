@@ -15,6 +15,8 @@
 #include "PreparationStateImpl.h"
 #include "tuning_systems.h"
 #include "array_to_string.h"
+#include "utils.h"
+
 enum Fundamental : uint32_t {
     C        = 1 << 0,
     C41D5    = 1 << 1,
@@ -104,6 +106,52 @@ struct TuningKeyboardState : bitklavier::StateChangeableParameter {
         }
     }
 
+    double getTargetFrequency(int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
+    {
+        auto& currentTuning = circularTuningOffset;
+        //        double newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
+        //        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+
+        /**
+         * Static Tuning
+         *
+         * by default, transpositions are tuned literally, relative to the played note
+         *      using whatever value, fractional or otherwise, that the user indicates
+         *      and ignores the tuning system
+         *      The played note is tuned according to the tuning system, but the transpositions are not
+         *
+         * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
+         *      according to the current tuning system
+         *
+         * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
+         *
+         * newOffset should be gotten via a call to Tuning, ideally including adaptive/spring tuning offsets as well
+         *
+         */
+
+        if (!tuneTranspositions)
+        {
+            //return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition);
+            //float newOffset = myTuningKeyboardState->circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
+            //float newOffset = tuning->getState().params.keyboardState.circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
+            float newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01);
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+
+        }
+        else
+        {
+            //return tuning->getTargetFrequency(currentlyPlayingNote + (int)std::trunc(currentTransposition), currentTransposition);
+            float newOffset = (circularTuningOffset[(currentlyPlayingNote + (int)std::trunc(currentTransposition)) % circularTuningOffset.size()] * .01);
+            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+        }
+
+        // add A440 adjustments here
+
+        //        currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
+        //        float newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
+        //        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+    }
+
     std::atomic<bool> setFromAudioThread;
 };
 
@@ -181,6 +229,52 @@ public:
 
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
+
+    double getTargetFrequency(int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
+    {
+        auto& currentTuning = this->getState().params.keyboardState.circularTuningOffset;
+//        double newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
+//        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+
+        /**
+         * Static Tuning
+         *
+         * by default, transpositions are tuned literally, relative to the played note
+         *      using whatever value, fractional or otherwise, that the user indicates
+         *      and ignores the tuning system
+         *      The played note is tuned according to the tuning system, but the transpositions are not
+         *
+         * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
+         *      according to the current tuning system
+         *
+         * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
+         *
+         * newOffset should be gotten via a call to Tuning, ideally including adaptive/spring tuning offsets as well
+         *
+         */
+
+        if (!tuneTranspositions)
+        {
+            //return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition);
+            //float newOffset = myTuningKeyboardState->circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
+            //float newOffset = tuning->getState().params.keyboardState.circularTuningOffset[(currentlyPlayingNote) % currentTuning.size()] * .01;
+            float newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+
+        }
+        else
+        {
+            //return tuning->getTargetFrequency(currentlyPlayingNote + (int)std::trunc(currentTransposition), currentTransposition);
+            float newOffset = (currentTuning[(currentlyPlayingNote + (int)std::trunc(currentTransposition)) % currentTuning.size()] * .01);
+            return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+        }
+
+        // add A440 adjustments here
+
+//        currentTuning = tuning->getState().params.keyboardState.circularTuningOffset;
+//        float newOffset = (currentTuning[(currentlyPlayingNote) % currentTuning.size()] * .01);
+//        return mtof ( newOffset + (double)currentlyPlayingNote + currentTransposition );
+    }
 
 
 private:
