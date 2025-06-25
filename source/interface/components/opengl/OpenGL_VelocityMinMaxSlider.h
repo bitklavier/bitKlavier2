@@ -22,7 +22,6 @@ public:
                                                                               1 //increment
                                                                           ),
                                                                           params(_params)
-    //juce::String sliderName, double min, double max, double defmin, double defmax, double increment
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -62,7 +61,14 @@ public:
                                                                     maxSlider.getValue());
                                                redoImage();
                                            }
-            )
+            ),
+            listeners.addParameterListener(_params->lastVelocityParam,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this] {
+                    setDisplayValue(this->params->lastVelocityParam->getCurrentValue());
+                    redoImage();
+                }
+                )
         };
     }
 

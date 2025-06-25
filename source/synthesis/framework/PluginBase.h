@@ -25,7 +25,6 @@ namespace bitklavier {
 
             protected:
 
-
         TuningProcessor* tuning = nullptr; //getTuningProcessor() const;
     };
 

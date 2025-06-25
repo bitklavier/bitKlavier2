@@ -240,10 +240,9 @@ public:
         setCentreFrequencyInHz(mtof(rootMidiNote));
         dBFSLevel = sample->getRMS();
 
-
         // Print the highest bit and bit count for midiNotes
-        int midiNotesHighestBit = midiNotes.getHighestBit();
-        int midiNotesBitCount = midiNotes.countNumberOfSetBits();
+//        int midiNotesHighestBit = midiNotes.getHighestBit();
+//        int midiNotesBitCount = midiNotes.countNumberOfSetBits();
 
         // Print the highest bit and bit count for midiVelocities
         //int midiVelocitiesHighestBit = midiVelocities.getHighestBit();
@@ -560,7 +559,7 @@ public:
     {
         ampEnv.setParameters(BKADSR::Parameters(0.005, 0.5,1.0,0.1));
         m_Buffer.setSize(2, 1, false, true, false);
-
+        tuningAttached = false;
         // call the smooth.reset() here if we want smoothing for various smoothingFloat vars
     }
 
@@ -592,7 +591,6 @@ public:
         level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity) * voiceGain); // need gain setting for each synth
 
         // set the sample increment, based on the target frequency for this note
-        //frequency.setTargetValue(getTargetFrequency()); // may not need frequency variable at all anymore
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
@@ -608,12 +606,13 @@ public:
     {
         if (attachedTuning == nullptr) return;
         tuning = attachedTuning;
+        tuningAttached = true;
     }
 
     double getTargetFrequency()
     {
         // if there is no Tuning prep connected, just return the equal tempered frequency
-        if (tuning == nullptr) return mtof ((double) currentlyPlayingNote + currentTransposition);
+        if (tuning == nullptr || !tuningAttached) return mtof ((double) currentlyPlayingNote + currentTransposition);
 
         // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
@@ -846,6 +845,7 @@ private:
 
     BKADSR ampEnv;
     TuningState* tuning;
+    bool tuningAttached;
 
     juce::AudioBuffer<float> m_Buffer;
 };

@@ -211,10 +211,10 @@ class SynthApplication : public juce::JUCEApplication {
 
         void handleAsyncUpdate() override {
           if (command_manager_ == nullptr) {
-            command_manager_ = std::make_unique<juce::ApplicationCommandManager>();
-            command_manager_->registerAllCommandsForTarget(juce::JUCEApplication::getInstance());
-            command_manager_->registerAllCommandsForTarget(this);
-            addKeyListener(command_manager_->getKeyMappings());
+//            command_manager_ = std::make_unique<juce::ApplicationCommandManager>();
+//            command_manager_->registerAllCommandsForTarget(juce::JUCEApplication::getInstance());
+//            command_manager_->registerAllCommandsForTarget(this);
+//            addKeyListener(command_manager_->getKeyMappings());
           }
           
           if (file_to_load_.exists()) {

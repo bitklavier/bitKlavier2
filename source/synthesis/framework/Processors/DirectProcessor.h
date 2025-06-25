@@ -87,20 +87,6 @@ struct DirectParams : chowdsp::ParamHolder
         0.0f,true
     };
 
-    // Last velocity param
-    /*
-     * this will be updated in BKSynthesizer, and then can be accessed for display in the velocityMinMaxslider
-     *      it should NOT be added to the param list above, as we are not going to use it in the UI
-     */
-    chowdsp::FloatParameter::Ptr lastVelocityParam {
-        juce::ParameterID { "Velocity", 100 },
-        "Velocity",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f), // FIX
-        127.0f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
-    };
-
     // ADSR params
     EnvParams env;
 
@@ -112,6 +98,7 @@ struct DirectParams : chowdsp::ParamHolder
     /*
      * because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
      *      we simply update this in the processBlock() call
+     *      and then the level meter will update its values during the OpenGL cycle
      */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
 
@@ -120,13 +107,7 @@ struct DirectParams : chowdsp::ParamHolder
 
 struct DirectNonParameterState : chowdsp::NonParamState
 {
-    DirectNonParameterState()
-    {
-        //addStateValues ({ /*,&isSelected*/});
-    }
-
-    //chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
-    //chowdsp::StateValue<bool> isSelected { "selected", true };
+    DirectNonParameterState() {}
 };
 
 class SynthBase;
@@ -135,21 +116,12 @@ public juce::ValueTree::Listener
 {
 public:
     DirectProcessor (SynthBase* parent,const juce::ValueTree& v);
-    ~DirectProcessor()
-    {
-
-    }
+    ~DirectProcessor(){}
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
-
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-
-    bool acceptsMidi() const override
-    {
-        return true;
-    }
-
+    bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
     {
         ptrToSamples = s;
@@ -161,7 +133,6 @@ public:
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
     {
-        DBG ("adding main, hammer and releaseResonance synths");
         mainSynth->addSoundSet (s);
         hammerSynth->addSoundSet (h);
         releaseResonanceSynth->addSoundSet (r);
@@ -196,7 +167,6 @@ public:
                 &(*ptrToSamples)[b],
                 &(*ptrToSamples)[c],
                 &(*ptrToSamples)[d]);
-
     }
 
     void valueTreeChildAdded        (juce::ValueTree&, juce::ValueTree&)        {}
@@ -205,25 +175,8 @@ public:
     void valueTreeParentChanged     (juce::ValueTree&)                    {}
     void valueTreeRedirected        (juce::ValueTree&)                    {}
 
-    double getLevelL()
-    {
-        if(levelBuf.getNumSamples() > 0) return levelBuf.getRMSLevel(0, 0, levelBuf.getNumSamples());
-        else return 0.;
-    }
-
-    double getLevelR()
-    {
-        if(levelBuf.getNumChannels() == 2) {
-            if(levelBuf.getNumSamples()) return levelBuf.getRMSLevel(1, 0, levelBuf.getNumSamples());
-            else return 0.;
-        }
-        else return getLevelL();
-    }
-
 private:
-    //chowdsp::experimental::Directillator<float> oscillator;
     chowdsp::Gain<float> gain;
-    //juce::ADSR::Parameters adsrParams;
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
     std::unique_ptr<BKSynthesiser> mainSynth;
     std::unique_ptr<BKSynthesiser> hammerSynth;
@@ -231,17 +184,13 @@ private:
     std::unique_ptr<BKSynthesiser> pedalSynth;
 
     float releaseResonanceSynthGainMultiplier = 10.; // because these are very soft
-    //juce::HashMap<int, juce::Array<float>> transpositionsByNoteOnNumber; // indexed by noteNumber
     juce::Array<float> midiNoteTranspositions;
     juce::Array<float> getMidiNoteTranspositions();
 
-    //juce::HashMap<int, juce::Array<float>> transpositionsByNoteOnNumber; // indexed by noteNumber
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
     chowdsp::ScopedCallbackList adsrCallbacks;
     chowdsp::ScopedCallbackList vtCallbacks;
-
-    juce::AudioSampleBuffer levelBuf; //for storing samples for metering/RMS calculation
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };

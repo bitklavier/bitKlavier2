@@ -5,7 +5,6 @@
 #include "DirectProcessor.h"
 #include "Synthesiser/Sample.h"
 #include "common.h"
-//#include <chowdsp_serialization/chowdsp_serialization.h>
 #include "synth_base.h"
 
 DirectProcessor::DirectProcessor (SynthBase* parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
@@ -95,6 +94,11 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
     return transps;
 }
 
+void DirectProcessor::setTuning (TuningProcessor* tun) {
+    tuning = tun;
+    mainSynth->setTuning(&tuning->getState().params.tuningState);
+    releaseResonanceSynth->setTuning(&tuning->getState().params.tuningState);
+}
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -108,17 +112,19 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
     }
 
-    buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
+    // always top of the chain as an instrument source; doesn't take audio in
+    buffer.clear();
 
+    // need to call these every block
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
 
+    // update transposition slider values
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples() )
     {
-
         mainSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         mainSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -129,7 +135,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (hammerSynth->hasSamples())
     {
-
         hammerSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
             state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
@@ -139,7 +144,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (releaseResonanceSynth->hasSamples())
     {
-
         releaseResonanceSynth->updateMidiNoteTranspositions(updatedTransps, useTuningForTranspositions);
         releaseResonanceSynth->updateVelocityMinMax(
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -154,19 +158,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
 
     // level meter update stuff
-    int numSamples = buffer.getNumSamples();
-    if (numSamples != levelBuf.getNumSamples()) levelBuf.setSize(buffer.getNumChannels(), numSamples);
-    levelBuf.copyFrom(0, 0, buffer, 0, 0, numSamples);
-    std::get<0>(state.params.outputLevels) = getLevelL();
-    std::get<1>(state.params.outputLevels) = getLevelR();
-}
-
-
-void DirectProcessor::setTuning (TuningProcessor* tun) {
-    tuning = tun;
-    releaseResonanceSynth->setTuning(&tuning->getState().params.tuningState);
-    pedalSynth->setTuning(&tuning->getState().params.tuningState);
-    hammerSynth->setTuning(&tuning->getState().params.tuningState);
-    mainSynth->setTuning(&tuning->getState().params.tuningState);
-
+    std::get<0>(state.params.outputLevels) = buffer.getRMSLevel(0, 0, buffer.getNumSamples());
+    std::get<1>(state.params.outputLevels) = buffer.getRMSLevel(1, 0, buffer.getNumSamples());
 }

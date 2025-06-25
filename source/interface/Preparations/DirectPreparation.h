@@ -57,18 +57,11 @@ public:
     juce::AudioProcessor* getProcessor() override;
     std::unique_ptr<juce::AudioProcessor> getProcessorPtr() override;
 
-//
-
-
 private:
-    // Private member variable for the DirectPreparation class: proc is a pointer to a
-    // DirectProcessor Object
+
+     //Private member variable for the DirectPreparation class: proc is a pointer to a DirectProcessor Object
     DirectProcessor & proc;
     std::unique_ptr<DirectProcessor> _proc_ptr;
-
-
 };
-
-
 
 #endif // BITKLAVIER2_DIRECTPREPARATION_H

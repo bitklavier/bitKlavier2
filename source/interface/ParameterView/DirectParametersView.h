@@ -13,7 +13,6 @@
 #include "DirectProcessor.h"
 #include "peak_meter_section.h"
 
-
 class DirectParametersView : public SynthSection
 {
 public:
@@ -45,23 +44,12 @@ public:
             _sliders.emplace_back(std::move(slider));
         }
 
-        // find and create the more complex parameters
-//        for (auto paramHolder : *params.getParamHolders())
-//        {
-//            if (auto *envParams = dynamic_cast<EnvParams*>(paramHolder))
-//                envSection = std::make_unique<EnvelopeSection>("ENV", "ENV",*envParams,listeners, *this);//std::make_unique<BooleanParameterComponent>(*boolParam, listeners);
-//
-//            if (auto *sliderParams = dynamic_cast<TransposeParams*>(paramHolder))
-//                transpositionSlider = std::make_unique<TranspositionSliderSection>(sliderParams,listeners,name.toStdString());
-//
-//            if (auto *sliderParam = dynamic_cast<VelocityMinMaxParams*>(paramHolder))
-//                velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(sliderParam,listeners);
-//        }
-
+        // create larger UI sections
         envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
+        // border for the collection of output knobs
         knobsBorder.setName("knobsBorder");
         knobsBorder.setText("Output Gain Controls");
         knobsBorder.setTextLabelPosition(juce::Justification::centred);
@@ -75,12 +63,13 @@ public:
         velocityMinMaxSlider->setComponentID("velocity_min_max");
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
-        params.outputLevels; // to access the updating audio output levels
+        // to access and display the updating audio output levels
+        params.outputLevels;
         levelMeter = std::make_shared<PeakMeterSection>("peakMeter",&params.outputLevels);
-        //addOpenGlComponent(levelMeter);
         addSubSection(levelMeter.get());
-        //addAndMakeVisible(levelMeter);
 
+//        params.lastVelocityParam; // this should be passed to BKSynth and updated with the most recent noteOn velocity
+//        velocityMinMaxSlider->setDisplayValue(56.5); // this is what we should callback to to set the display velocity
     }
 
     void paintBackground(juce::Graphics& g) override

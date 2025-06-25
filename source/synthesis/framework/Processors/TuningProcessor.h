@@ -130,6 +130,10 @@ struct TuningState : bitklavier::StateChangeableParameter {
          *
          */
 
+        if (circularTuningOffset.empty()) {
+            return mtof (currentlyPlayingNote + currentTransposition);
+        }
+
         if (!tuneTranspositions) {
             double newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01); // i don't love the .01 changes here, let's see if this can be made consistent
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
@@ -197,7 +201,6 @@ struct TuningNonParameterState : chowdsp::NonParamState
 };
 
 
-
 class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams,TuningNonParameterState>>
 {
 public:
@@ -228,6 +231,5 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TuningProcessor)
 };
-
 
 #endif //BITKLAVIER2_TUNINGPROCESSOR_H

@@ -63,18 +63,15 @@ private:
 class PreparationPopup : public SynthSection {
 public:
     PreparationPopup(bool isModulation);
+
     ~PreparationPopup();
 
-    // class Listener {
-    //     public:
-    //     virtual void preparationPopupClosed(PreparationPopup* popup) { }
-    // };
     void reset() override;
 
-    void paintBackground(juce::Graphics& g) override {
+    void paintBackground(juce::Graphics& g) override {}
 
-    }
-    void paintBackgroundShadow(juce::Graphics& g) override { }
+    void paintBackgroundShadow(juce::Graphics& g) override {}
+
     void repaintPrepBackground()
     {
         background_->lock();
@@ -112,6 +109,7 @@ public:
     std::map<std::string, SynthButton*> getAllButtons() override;
     std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() override;
     // void addListener(Listener* listener) {listeners_.push_back(listener);}
+
 private:
     bool is_modulation_;
     // std::vector<Listener*> listeners_;
@@ -173,9 +171,11 @@ public:
     void initOpenGlComponents(OpenGlWrapper& open_gl) override;
     void renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) override;
     void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
+
     void addListener(Listener* listener) {
         listeners_.push_back(listener);
     }
+
     void showSelected(bool show) { show_selected_ = show; }
     void select(int select);
 

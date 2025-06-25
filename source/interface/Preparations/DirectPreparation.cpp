@@ -15,7 +15,6 @@ DirectPreparation::DirectPreparation (std::unique_ptr<DirectProcessor> p,
                          proc(*p.get()),
                          _proc_ptr(std::move(p))
 {
-
     item = std::make_unique<DirectItem> (); // Initializes member variable `item` of PreparationSection class
     addOpenGlComponent (item->getImageComponent(),true); // Calls member function of SynthSection (parent class to PreparationSection)
     _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
@@ -25,14 +24,12 @@ DirectPreparation::DirectPreparation (std::unique_ptr<DirectProcessor> p,
     addAndMakeVisible (item.get());
     setSkinOverride (Skin::kDirect);
     juce::MemoryBlock data;
-
 }
 
 std::unique_ptr<SynthSection> DirectPreparation::getPrepPopup()
 {
     return std::make_unique<DirectParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
 }
-
 
 void DirectPreparation::resized()
 {
@@ -52,7 +49,6 @@ std::unique_ptr<juce::AudioProcessor> DirectPreparation::getProcessorPtr()
 {
     return std::move(_proc_ptr);
 }
-
 
 void DirectPreparation::paintBackground(juce::Graphics &g)  {
     for (auto * port: objects)
