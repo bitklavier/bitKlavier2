@@ -67,13 +67,48 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
         SynthGuiData synth_data(synth_);
         gui_ = std::make_unique<FullInterface>(&synth_data);
         // for registering hotkeys etc.
-        commandHandler = std::make_unique<ApplicationCommandHandler>(this);
-        commandManager.registerAllCommandsForTarget(commandHandler.get());
+
+        //commandHandler = std::make_unique<ApplicationCommandHandler>(this);
+        commandManager.registerAllCommandsForTarget(this);
+        commandManager.getKeyMappings()->resetToDefaultMappings();
+        commandManager.setFirstCommandTarget (this);
+
+
     }
     sampleLoadManager->preferences = userPreferences;
     sampleLoadManager->loadSamples(0,true);
     synth_->user_prefs = userPreferences;
+
     //sampleLoadManager->loadSamples(0, true);
+}
+
+bool SynthGuiInterface::perform(const InvocationInfo & info) {
+    {
+        switch (info.commandID) {
+            case undo:
+            {
+                getUndoManager()->undo();
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", " Undo triggered");
+                return true;
+            }
+            case redo:
+            {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
+                return true;
+            }
+            case CommandIDs::showPluginListEditor:
+            {
+                if (pluginListWindow == nullptr)
+                    pluginListWindow.reset (new SynthGuiInterface::PluginListWindow (*this, *userPreferences, userPreferences->userPreferences->formatManager));
+
+                pluginListWindow->toFront (true);
+                return true;
+            }
+
+            default:
+                return false;
+        }
+    }
 }
 
 SynthGuiInterface::~SynthGuiInterface() {

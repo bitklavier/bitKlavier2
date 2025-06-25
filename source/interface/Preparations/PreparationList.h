@@ -164,7 +164,9 @@ public:
 
     void appendChild (const juce::ValueTree& child, juce::UndoManager* undoManager)
     {
+        undoManager->beginNewTransaction();
         this->parent.appendChild(child,undoManager);
+
     }
 
     void newObjectAdded (PluginInstanceWrapper*) override;

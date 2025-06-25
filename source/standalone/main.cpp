@@ -64,7 +64,7 @@ int loadAudioFile(juce::AudioSampleBuffer& destination, juce::InputStream* audio
 
 class SynthApplication : public juce::JUCEApplication {
   public:
-    class MainWindow : public juce::DocumentWindow, public juce::ApplicationCommandTarget, private juce::AsyncUpdater {
+    class MainWindow : public juce::DocumentWindow, private juce::AsyncUpdater {
       public:
 
 
@@ -85,6 +85,7 @@ class SynthApplication : public juce::JUCEApplication {
           }
           //setConstrainer(constrainer_);
           editor_ = new SynthEditor(visible);
+
           constrainer_.setGui(editor_->getGui());
           if (visible) {
             editor_->animate(true);
@@ -120,102 +121,8 @@ class SynthApplication : public juce::JUCEApplication {
           editor_->shutdownAudio();
         }
 
-        juce::ApplicationCommandTarget* getNextCommandTarget() override {
-          return editor_->getGuiInterface()->commandHandler.get();
-        }
-
-
-
-        //empty resized function fixes flickering
-//        void resized() override
-//        {
-//          //if (editor_ != nullptr)
-//          //  editor_->setBounds(getBounds());
-//        }
-        void getAllCommands(juce::Array<juce::CommandID>& commands) override {
-          // commands.add(kSave);
-          // commands.add(kSaveAs);
-          // commands.add(kOpen);
-          editor_->getGuiInterface()->commandHandler.get()->getAllCommands(commands);
-        }
-
-        void getCommandInfo(const juce::CommandID commandID, juce::ApplicationCommandInfo& result) override {
-        //   if (commandID == kSave) {
-        //     result.setInfo(TRANS("Save"), TRANS("Save the current preset"), "Application", 0);
-        //     result.defaultKeypresses.add(juce::KeyPress('s', juce::ModifierKeys::commandModifier, 0));
-        //   }
-        //   else if (commandID == kSaveAs) {
-        //     result.setInfo(TRANS("Save As"), TRANS("Save preset to a new file"), "Application", 0);
-        //     juce::ModifierKeys modifier = juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier;
-        //     result.defaultKeypresses.add(juce::KeyPress('s', modifier, 0));
-        //   }
-        //   else if (commandID == kOpen) {
-        //     result.setInfo(TRANS("Open"), TRANS("Open a preset"), "Application", 0);
-        //     result.defaultKeypresses.add(juce::KeyPress('o', juce::ModifierKeys::commandModifier, 0));
-        //   }
-        //   else if (commandID == kToggleVideo) {
-        //     result.setInfo(TRANS("Toggle Zoom"), TRANS("Toggle zoom for recording"), "Application", 0);
-        //     juce::ModifierKeys modifier = juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier;
-        //     result.defaultKeypresses.add(juce::KeyPress('t', modifier, 0));
-        //   }
-          editor_->getGuiInterface()->commandHandler.get()->getCommandInfo(commandID, result);
-        }
-
-
-        bool perform(const InvocationInfo& info) override {
-//           if (info.commandID == kSave) {
-// //            if (!editor_->saveToActiveFile())
-// //              editor_->openSaveDialog();
-// //            else {
-// //              grabKeyboardFocus();
-// //              editor_->setFocus();
-// //            }
-//             return true;
-//           }
-//           else if (info.commandID == kSaveAs) {
-// //            juce::File active_file = editor_->getActiveFile();
-// //            juce::FileChooser save_box("Export Preset", juce::File(), juce::String("*.") + vital::kPresetExtension);
-// //            if (save_box.browseForFileToSave(true))
-// //              editor_->saveToFile(save_box.getResult().withFileExtension(vital::kPresetExtension));
-// //            grabKeyboardFocus();
-// //            editor_->setFocus();
-//             return true;
-//           }
-//           else if (info.commandID == kOpen) {
-//             //juce::File active_file = editor_->getActiveFile();
-// //            juce::FileChooser open_box("Open Preset", active_file, juce::String("*.") + vital::kPresetExtension);
-// //            if (!open_box.browseForFileToOpen())
-// //              return true;
-//
-// //            juce::File choice = open_box.getResult();
-// //            if (!choice.exists())
-// //              return true;
-// //
-// //            std::string error;
-// //            if (!editor_->loadFromFile(choice, error)) {
-// //              error = "There was an error open the preset. " + error;
-// //              juce::AlertWindow::showNativeDialogBox("Error opening preset", error, false);
-// //            }
-// //            else
-// //              editor_->externalPresetLoaded(choice);
-// //            grabKeyboardFocus();
-// //            editor_->setFocus();
-//             return true;
-//           }
-//           else if (info.commandID == kToggleVideo)
-// //            editor_->getGui()->toggleFilter1Zoom();
-//
-//           return false;
-          return editor_->getGuiInterface()->commandHandler.get()->perform(info);
-        }
-
         void handleAsyncUpdate() override {
-          if (command_manager_ == nullptr) {
-            command_manager_ = std::make_unique<juce::ApplicationCommandManager>();
-            command_manager_->registerAllCommandsForTarget(juce::JUCEApplication::getInstance());
-            command_manager_->registerAllCommandsForTarget(this);
-            addKeyListener(command_manager_->getKeyMappings());
-          }
+
           
           if (file_to_load_.exists()) {
             loadFileAsyncUpdate();
@@ -224,22 +131,57 @@ class SynthApplication : public juce::JUCEApplication {
           
           editor_->setFocus();
         }
-
+        SynthEditor* editor_;
       private:
         void loadFileAsyncUpdate() {
-//          std::string error;
-//          bool success = editor_->loadFromFile(file_to_load_, error);
-//          if (success)
-//            editor_->externalPresetLoaded(file_to_load_);
+
         }
       
         juce::File file_to_load_;
-        SynthEditor* editor_;
-        std::unique_ptr<juce::ApplicationCommandManager> command_manager_;
+
+        // std::unique_ptr<juce::ApplicationCommandManager> command_manager_;
         BorderBoundsConstrainer constrainer_;
       
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
     };
+
+    bool perform(const InvocationInfo& info) override {
+        switch (info.commandID)
+        {
+            case SynthGuiInterface::CommandIDs::save: {
+                main_window_->editor_->getGuiInterface()->openSaveDialog();
+                return true;
+            }
+
+            case SynthGuiInterface::CommandIDs::load:
+            {
+                main_window_->editor_->getGuiInterface()->openLoadDialog();
+                return true;
+            }
+        }
+
+
+        return false;
+    }
+    void getCommandInfo(const juce::CommandID commandID, juce::ApplicationCommandInfo& info) override {
+
+        switch (commandID)
+        {
+            case SynthGuiInterface::CommandIDs::save:
+                info.setInfo("Save", "Save Current Preset", "File", 0);
+                info.addDefaultKeypress('s', juce::ModifierKeys::commandModifier);
+            break;
+            case SynthGuiInterface::CommandIDs::load:
+                info.setInfo("Load", "Load New Preset", "File", 0);
+                info.addDefaultKeypress('l', juce::ModifierKeys::commandModifier);
+            break;
+        }
+
+    }
+    void getAllCommands(juce::Array<juce::CommandID>& commands) override {
+        commands.add(SynthGuiInterface::CommandIDs::save);
+        commands.add(SynthGuiInterface::CommandIDs::load);
+    }
 
     SynthApplication() = default;
 
@@ -289,7 +231,8 @@ class SynthApplication : public juce::JUCEApplication {
       else {
         bool visible = !command.contains(" --headless ");
         main_window_ = std::make_unique<MainWindow>(getApplicationName(), visible);
-
+         main_window_-> editor_->commandManager.registerAllCommandsForTarget (this);
+          main_window_->editor_->getGui()->addKeyListener (main_window_->editor_->commandManager.getKeyMappings());
         juce::StringArray args = getCommandLineParameterArray();
         bool last_arg_was_option = false;
         for (const juce::String& arg : args) {

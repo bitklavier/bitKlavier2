@@ -29,7 +29,7 @@ SynthSection::SynthSection(const juce::String &name) : juce::Component(name), pa
                                                        preset_selector_(nullptr), preset_selector_half_width_(false),
                                                        skin_override_(Skin::kNone), size_ratio_(1.0f),
                                                        active_(true), sideways_heading_(true), background_(nullptr) {
-    setWantsKeyboardFocus(true);
+    //setWantsKeyboardFocus(true);
 
 }
 
@@ -37,7 +37,7 @@ SynthSection::SynthSection(const juce::String &name, const juce::String &id) : j
                                                        preset_selector_(nullptr), preset_selector_half_width_(false),
                                                        skin_override_(Skin::kNone), size_ratio_(1.0f),
                                                        active_(true), sideways_heading_(true), background_(nullptr) {
-    setWantsKeyboardFocus(true);
+    //setWantsKeyboardFocus(true);
     setComponentID(id);
 
 }
@@ -50,7 +50,7 @@ SynthSection::SynthSection(const juce::String &name, OpenGlWrapper *open_gl) : j
                                                                                size_ratio_(1.0f),
                                                                                active_(true), sideways_heading_(true),
                                                                                background_(nullptr), open_gl(open_gl) {
-    setWantsKeyboardFocus(true);
+    //setWantsKeyboardFocus(true);
 }
 
 

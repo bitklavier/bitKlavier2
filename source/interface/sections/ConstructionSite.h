@@ -17,7 +17,7 @@ typedef Loki::Factory<std::unique_ptr<PreparationSection>, int,const juce::Value
 class ConstructionSite : public SynthSection,
                          private juce::KeyListener,
                          public juce::DragAndDropContainer,
-                         public juce::ChangeListener,
+                         // public juce::ChangeListener,
                         private PreparationList::Listener,
 public PreparationSection::Listener
 
@@ -38,11 +38,11 @@ public:
 
     void addItem(bitklavier::BKPreparationType type, bool center = false);
 
-    void changeListenerCallback(juce::ChangeBroadcaster *source) override
-
-    {
-        updateComponents();
-    }
+    // void changeListenerCallback(juce::ChangeBroadcaster *source) override
+    //
+    // {
+    //     updateComponents();
+    // }
 
     void updateComponents();
     void reset()    override;
@@ -100,6 +100,7 @@ public:
     juce::OwnedArray<PluginWindow> activePluginWindows;
     void createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type);
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;
+    void renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) override;
 private:
     PreparationList& prep_list;
     void moduleListChanged() {}
@@ -108,7 +109,7 @@ private:
     void handlePluginPopup(int selection,int index);
     SynthGuiInterface* _parent;
     NodeFactory nodeFactory;
-
+    juce::CriticalSection open_gl_critical_section_;
    std::shared_ptr<OpenGlLine> _line;
 
     bool edittingComment;

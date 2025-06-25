@@ -19,11 +19,11 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                          preparationSelector(*this), parent(v)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
-    setWantsKeyboardFocus(true);
+    //setWantsKeyboardFocus(true);
     addKeyListener(this);
     setSkinOverride(Skin::kConstructionSite);
     setInterceptsMouseClicks(false, true);
-    data->synth->getEngine()->addChangeListener(this);
+    //data->synth->getEngine()->addChangeListener(this);
 
     cableView.setAlwaysOnTop(true);
     addSubSection(&cableView);
@@ -31,7 +31,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     addSubSection(&modulationLineView);
     modulationLineView.setAlwaysOnTop(false);
     prep_list.addListener(this);
-    prep_list.addChangeListener(this);
+    // prep_list.addChangeListener(this);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::createDirectSection);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::createPluginSection);
@@ -119,6 +119,14 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     plugin_components.push_back(std::move(s));
 }
 
+void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate)
+{
+    juce::ScopedLock lock(open_gl_critical_section_);
+    SynthSection::renderOpenGlComponents(open_gl, animate);
+
+}
+
+
 void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     int index = -1;
     for (int i=0; i<plugin_components.size(); i++){
@@ -128,13 +136,20 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
         }
     }
     if (index == -1) jassertfalse;
-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    interface->getOpenGlWrapper()->context.executeOnGLThread ([this,index](juce::OpenGLContext& gl) {
-        plugin_components[index]->destroyOpenGlComponents (open_gl);
-        removeSubSection (plugin_components[index].get());
-    },true);
-    plugin_components.erase(plugin_components.begin()+index);
 
+    //cleanup
+    preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
+    //cleanup opengl
+    {
+        juce::ScopedLock lock(open_gl_critical_section_);
+        removeSubSection (plugin_components[index].get());
+    }
+
+    //delete opengl
+    plugin_components[index]->destroyOpenGlComponents (open_gl);
+    //delete heap memory
+    plugin_components.erase(plugin_components.begin()+index);
+DBG("moduleRemoved");
 }
 
 ConstructionSite::~ConstructionSite(void) {
@@ -336,8 +351,8 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
 
     mouse = e.position;
 
-    // This must happen before the right-click menu or the menu will close
-    grabKeyboardFocus();
+    // // This must happen before the right-click menu or the menu will close
+    // grabKeyboardFocus();
 
     if (e.mods.isPopupMenu()) {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -407,7 +422,7 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     //    DBG(eo.y);
     //getParentComponent()->grabKeyboardFocus();
 
-    grabKeyboardFocus();
+    //grabKeyboardFocus();
 
     //    if (lassoSelection.getNumSelected())
     //    {

@@ -34,6 +34,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     setResizable (true, true);
     setSize (width, height);
+    gui_->addKeyListener (commandManager.getKeyMappings());
 }
 
 PluginEditor::~PluginEditor()
