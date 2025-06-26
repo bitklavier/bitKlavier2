@@ -56,9 +56,8 @@ We will use the direct preparation as an example for simplicity.
 
 **NICE!**
 ## Deleting
-So you open up bitKlavier. You add a direct preparation. Oops, didn't mean to do that. There are three ways to immediately get rid of the direct preparation:
-
-- press the 'delete' key on your keyboard
+There are 3 ways a preparation could be deleted
+- press the 'delete' key on your keyboard with the preparation selected
 - press 'CMD + z' on your keyboard
 - click Edit > Undo
 
