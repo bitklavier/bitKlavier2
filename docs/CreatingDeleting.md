@@ -1,10 +1,11 @@
 # Creating and Deleting
 # Creating
-So you open up bitKlavier and want to create a direct preparation. There are two ways to do this:
-- Press the 'd' key
-- Right click anywhere on the screen and select 'Direct' from the popup
+There are two ways to do this:
+- Press the one of the hot keys
+- Right click anywhere on the screen and select the preparation you want from the from the popup
 
-Either one of these actions results in the direct preparation popping up on your screen. Let's first walk through how this happens at a high level then we'll dig into some details in a function call trace.
+Either one of these actions results in the a preparation popping up on your screen. Let's first walk through how this happens at a high level then we'll dig into some details in a function call trace.
+We will use the direct preparation as an example for simplicity.
 
 ## Creation Overview
 1. ConstructionSite registers a key press or handles the popup selection (however you decide to create the preparation)
