@@ -64,8 +64,7 @@ public:
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
         // to access and display the updating audio output levels
-        params.outputLevels;
-        levelMeter = std::make_shared<PeakMeterSection>("peakMeter",&params.outputLevels);
+        levelMeter = std::make_unique<PeakMeterSection>("peakMeter", &params.outputLevels);
         addSubSection(levelMeter.get());
 
 //        params.lastVelocityParam; // this should be passed to BKSynth and updated with the most recent noteOn velocity
@@ -95,7 +94,7 @@ public:
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
     juce::GroupComponent knobsBorder;
-    std::shared_ptr<PeakMeterSection> levelMeter;
+    std::shared_ptr<PeakMeterSection> levelMeter; // this should not have to be a shared pointer, nor should its components.
 
     void resized() override;
 

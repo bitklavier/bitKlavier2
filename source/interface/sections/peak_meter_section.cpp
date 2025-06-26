@@ -19,11 +19,47 @@
 #include "skin.h"
 #include "synth_slider.h"
 
+class VolumeSlider : public SynthSlider {
+public:
+    VolumeSlider(juce::String name) : SynthSlider(name), point_y_(0), end_y_(1) {
+        paintToImage(true);
+        //details_ = vital::Parameters::getDetails("volume");
+    }
+
+    void paint(juce::Graphics& g) override {
+        float x = getPositionOfValue(getValue());
+
+        juce::Path arrow;
+        arrow.startNewSubPath(x, point_y_);
+        int arrow_height = end_y_ - point_y_;
+        arrow.lineTo(x + arrow_height / 2.0f, end_y_);
+        arrow.lineTo(x - arrow_height / 2.0f, end_y_);
+        arrow.closeSubPath();
+        g.setColour(findColour(Skin::kLinearSliderThumb, true));
+        g.fillPath(arrow);
+    }
+
+//    void setPointY(int y) { point_y_ = y; repaint(); }
+//    void setEndY(int y) { end_y_ = y; repaint(); }
+//    int getEndY() { return end_y_; }
+
+private:
+    //vital::ValueDetails details_;
+    int point_y_;
+    int end_y_;
+};
+
 PeakMeterSection::PeakMeterSection(juce::String name, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels) : SynthSection(name) {
-   peak_meter_left_ = std::make_shared<PeakMeterViewer>(true, outputLevels);
+
+   peak_meter_left_ = std::make_shared<PeakMeterViewer>(true, outputLevels); // if we make this unique_ptrs, then this constructor fails
    addOpenGlComponent(peak_meter_left_);
    peak_meter_right_ = std::make_shared<PeakMeterViewer>(false, outputLevels);
    addOpenGlComponent(peak_meter_right_);
+
+//   volume_ = std::make_unique<VolumeSlider>("volume");
+//   addSlider(volume_.get());
+//   volume_->setSliderStyle(juce::Slider::LinearBarVertical);
+//   volume_->setPopupPlacement(juce::BubbleComponent::below);
 }
 
 PeakMeterSection::~PeakMeterSection() { }
@@ -48,6 +84,9 @@ void PeakMeterSection::resized() {
 
    juce::Rectangle<int> bounds = getLocalBounds();
    bounds.reduce(0, 20);
+
+//   volume_->setBounds(bounds);
+
    juce::Rectangle<int> leftMeterBounds = bounds.removeFromLeft(bounds.getWidth()/2);
    leftMeterBounds.reduce(2, 0);
    bounds.reduce(2, 0);
