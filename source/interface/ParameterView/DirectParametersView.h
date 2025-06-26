@@ -12,6 +12,7 @@
 #include "synth_slider.h"
 #include "DirectProcessor.h"
 #include "peak_meter_section.h"
+#include "KnobsSection.h"
 
 class DirectParametersView : public SynthSection
 {
@@ -48,16 +49,18 @@ public:
         envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
+        //outputKnobsSection      = std::make_unique<KnobsSection>(&params, listeners, name.toStdString());
 
         // border for the collection of output knobs
-        knobsBorder.setName("knobsBorder");
-        knobsBorder.setText("Output Gain Controls");
-        knobsBorder.setTextLabelPosition(juce::Justification::centred);
-        addAndMakeVisible(knobsBorder);
+//        knobsBorder.setName("knobsBorder");
+//        knobsBorder.setText("Output Gain Controls");
+//        knobsBorder.setTextLabelPosition(juce::Justification::centred);
+//        addAndMakeVisible(knobsBorder);
 
         // we add subsections for the elements that have been defined as sections
         addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
+        //addSubSection(outputKnobsSection.get());
 
         // this slider does not need a section, since it's just one OpenGL component
         velocityMinMaxSlider->setComponentID("velocity_min_max");
@@ -66,9 +69,6 @@ public:
         // to access and display the updating audio output levels
         levelMeter = std::make_unique<PeakMeterSection>(name, &params.outputLevels);
         addSubSection(levelMeter.get());
-
-//        params.lastVelocityParam; // this should be passed to BKSynth and updated with the most recent noteOn velocity
-//        velocityMinMaxSlider->setDisplayValue(56.5); // this is what we should callback to to set the display velocity
     }
 
     void paintBackground(juce::Graphics& g) override
@@ -81,19 +81,20 @@ public:
             drawLabelForComponent(g, slider->getName(), slider.get());
         }
         paintChildrenBackgrounds(g);
-        knobsBorder.paint(g);
+        //knobsBorder.paint(g);
     }
 
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
+    std::unique_ptr<KnobsSection> outputKnobsSection;
 
     // generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
-    juce::GroupComponent knobsBorder;
+    //juce::GroupComponent knobsBorder;
     std::shared_ptr<PeakMeterSection> levelMeter; // this should not have to be a shared pointer, nor should its components.
 
     void resized() override;

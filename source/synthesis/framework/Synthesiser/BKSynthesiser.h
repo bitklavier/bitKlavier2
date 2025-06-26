@@ -306,6 +306,12 @@ class BKSynthesiser
                     synthGain.setParameterValue(g);
                 }
 
+                /**
+                 * todo
+                 * remove full array copy from this
+                 * @param newOffsets
+                 * @param tune_transpositions
+                 */
                 void updateMidiNoteTranspositions(juce::Array<float> newOffsets, bool tune_transpositions) {
                     midiNoteTranspositions = newOffsets;
                     tuneTranspositions = tune_transpositions;

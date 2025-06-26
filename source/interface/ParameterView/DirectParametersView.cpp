@@ -31,8 +31,9 @@ void DirectParametersView::resized()
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
+    //outputKnobsSection->setBounds(outputKnobsArea);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
-    knobsBorder.setBounds(outputKnobsArea); // not working properly for some reason
+//    knobsBorder.setBounds(outputKnobsArea); // not working properly for some reason
 
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);

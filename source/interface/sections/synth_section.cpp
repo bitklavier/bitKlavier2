@@ -1026,3 +1026,4 @@ void SynthSection::showPrepPopup(PreparationSection *prep) {
         }
     }
 }
+SynthSection::SynthSection() {}
