@@ -33,9 +33,14 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
     };
 
     // Last velocity param
-    /*
-     * this will be updated in BKSynthesizer, and then can be accessed for display in the velocityMinMaxslider
-     *      it should NOT be added to the param list above, as we are not going to save/recall it, etc...
+    /**
+     * this will be updated in BKSynthesizer (via lastSynthState), and then can be accessed for display
+     * in the velocityMinMaxslider
+     *
+     * note that we need to add a callback in OpenGL_VelocityMinMaxSlider.h so that the slider is notified
+     * when this value changes. since we are using a legacy bK UI component for the velocityMinMax slider
+     * we need this callback, to trigger a redraw and so on, something we don't need to do with the
+     * newer OpenGL components we're using (like the leveMeter)
      */
     chowdsp::FloatParameter::Ptr lastVelocityParam {
         juce::ParameterID { "LastVelocity", 100 },

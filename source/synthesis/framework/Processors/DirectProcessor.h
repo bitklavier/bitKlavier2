@@ -93,11 +93,18 @@ struct DirectParams : chowdsp::ParamHolder
 
     // Transposition slider (holds up to 12 transposition values)
     TransposeParams transpose;
+
+    /**
+     * for storing min/max values for the velocityMinMax slider
+     * and also keeping track of the lastVelocity, which we'll get
+     * from the lastSynthState in processBlock()
+     * the code for OpenGL_VelocityMinMaxSlider has further comments about
+     * how the chowdsp system works with params, callbacks, and so on.
+     */
     VelocityMinMaxParams velocityMinMax;
 
-    // for storing outputLevels of this preparation for display
-    /*
-     * because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
+    /** for storing outputLevels of this preparation for display
+     *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
      *      we simply update this in the processBlock() call
      *      and then the level meter will update its values during the OpenGL cycle
      */
@@ -184,7 +191,6 @@ private:
     std::unique_ptr<BKSynthesiser> releaseResonanceSynth;
     std::unique_ptr<BKSynthesiser> pedalSynth;
 
-    float releaseResonanceSynthGainMultiplier = 10.; // because these are very soft
     juce::Array<float> midiNoteTranspositions;
     juce::Array<float> getMidiNoteTranspositions();
 

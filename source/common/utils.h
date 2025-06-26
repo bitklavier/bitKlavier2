@@ -408,6 +408,12 @@ static double mtof( double f, double a ) // a = frequency of A4
     else return ( pow(2, (f - 69) / 12.0) * a );
 }
 
+/**
+ * struct to put information about the last state of the synth
+ * at the end of each block. useful for UI, and also needed
+ * for Nostalgic, Synchronic, etc... to keep track of which
+ * notes are on and so on
+ */
 struct BKSynthesizerState
 {
     int lastVelocity;

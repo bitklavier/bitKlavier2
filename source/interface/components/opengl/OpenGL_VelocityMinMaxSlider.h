@@ -27,6 +27,15 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
+        /**
+         * these SliderAttachments contain the listeners for each slider, and so will be notified when the slider is manipulated
+         * the attachmentVec is just a place to put them, since some objects have might have many or variable number of them.
+         * these attach the sliders changes to the chowdsp params, so they can be managed appropriately, with the callbacks
+         * in the "sliderChangedCallback" list called
+         *
+         * we don't need one for the displaySlider, since that one will not be changed by the user, so we don't need to listen to it
+         * but, we do need a parameter listener for displaySlider, which is added to the sliderChangeCallback list.
+         */
         auto minsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[0].get(),
                                                                         listeners,
                                                                         minSlider, nullptr);
@@ -37,11 +46,10 @@ public:
                                                                         maxSlider, nullptr);
         attachmentVec.emplace_back(std::move(maxsliderptr));
 
-//        auto displaysliderptr = std::make_unique<chowdsp::SliderAttachment>(*(params->lastVelocityParam.get()),
-//            listeners,
-//            invisibleSlider, nullptr);
-//        attachmentVec.emplace_back(std::move(displaysliderptr));
-
+        /**
+         * this list of callbacks is handled by the chowdsp system.
+         * each of these will be called, and the lambda executed, when the parameters are changed anywhere in the code
+         */
         sliderChangedCallback += {
             listeners.addParameterListener(_params->velocityMinParam,
                                            chowdsp::ParameterListenerThread::MessageThread,
@@ -67,6 +75,14 @@ public:
                                                redoImage();
                                            }
             ),
+            /**
+             * this callback is to notify this slider when the lastVelocityParam is changed.
+             * since we're using a legacy bK component for the velocityMinMax slider, we
+             * want this callback to trigger the value update and redoImage. We don't
+             * need that for the newer OpenGL UI elements, which will just update automatically
+             * when the param changes.
+             * also, since this is not a slider that the user touches, we don't need a SliderAttachment
+             */
             listeners.addParameterListener(_params->lastVelocityParam,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this] {
@@ -162,7 +178,6 @@ private :
         addMyListener(this);
     }
 
-    // chowdsp::ScopedCallbackList minMaxSliderCallbacks;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
