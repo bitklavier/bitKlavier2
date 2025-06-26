@@ -37,6 +37,11 @@ public:
                                                                         maxSlider, nullptr);
         attachmentVec.emplace_back(std::move(maxsliderptr));
 
+//        auto displaysliderptr = std::make_unique<chowdsp::SliderAttachment>(*(params->lastVelocityParam.get()),
+//            listeners,
+//            invisibleSlider, nullptr);
+//        attachmentVec.emplace_back(std::move(displaysliderptr));
+
         sliderChangedCallback += {
             listeners.addParameterListener(_params->velocityMinParam,
                                            chowdsp::ParameterListenerThread::MessageThread,
@@ -61,14 +66,14 @@ public:
                                                                     maxSlider.getValue());
                                                redoImage();
                                            }
-            ),
-            listeners.addParameterListener(_params->lastVelocityParam,
-                chowdsp::ParameterListenerThread::MessageThread,
-                [this] {
-                    setDisplayValue(this->params->lastVelocityParam->getCurrentValue());
-                    redoImage();
-                }
-                )
+            )
+//            listeners.addParameterListener(_params->lastVelocityParam,
+//                chowdsp::ParameterListenerThread::MessageThread,
+//                [this] {
+//                    setDisplayValue(this->params->lastVelocityParam->getCurrentValue());
+//                    redoImage();
+//                }
+//                )
         };
     }
 

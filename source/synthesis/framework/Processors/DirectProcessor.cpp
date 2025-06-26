@@ -39,7 +39,6 @@ pedalSynth(new BKSynthesiser(state.params.env,state.params.pedalParam))
     //add state change params here
     parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
     parent->getStateBank().addParam(std::make_pair<std::string,bitklavier::ParameterChangeBuffer*>(v.getProperty(IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
-
 }
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -119,6 +118,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
 
+    //state.params.velocityMinMax.lastVelocityParam->setParameterValue(0.6);
+
     // update transposition slider values
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
@@ -156,6 +157,9 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     {
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
+
+    // if we want to implement a final output gain stage
+    //buffer.applyGain(0.5);
 
     // level meter update stuff
     std::get<0>(state.params.outputLevels) = buffer.getRMSLevel(0, 0, buffer.getNumSamples());
