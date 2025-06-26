@@ -615,7 +615,7 @@ void BKMultiSliderLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y
                                                  float sliderPos, float minSliderPos, float maxSliderPos,
                                                  const juce::Slider::SliderStyle style, juce::Slider& slider)
 {
-    g.fillAll (slider.findColour (juce::Slider::backgroundColourId));
+    //g.fillAll (slider.findColour (juce::Slider::backgroundColourId)); // Transposition slider works better without this line
     
     if (style == juce::Slider::LinearBar || style == juce::Slider::LinearBarVertical)
     {
@@ -638,13 +638,11 @@ void BKMultiSliderLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y
         g.fillPath (p);
         
         g.setColour (baseColour.darker (0.2f));
-        
-        
+
         if (style == juce::Slider::LinearBarVertical)
             g.fillRect (fx, sliderPos, fw, 1.0f);
         else
             g.fillRect (sliderPos, fy, 1.0f, fh);
-        
     }
     else
     {

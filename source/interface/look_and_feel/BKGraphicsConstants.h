@@ -27,7 +27,7 @@ static const int fontHeight = 15;
 
 static const int gComponentComboBoxHeight = 24;
 static const int gComponentLabelHeight = 17;
-static const int gComponentTextFieldHeight = 17;
+static const int gComponentTextFieldHeight = 24;
 
 static const int gComponentRangeSliderHeight = 40;
 static const int gComponentSingleSliderHeight = 40;

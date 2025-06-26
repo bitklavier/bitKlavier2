@@ -207,7 +207,8 @@ namespace {
       "uniform " MEDIUMP " vec4 color_from;\n"
       "uniform " MEDIUMP " vec4 color_to;\n"
       "void main() {\n"
-      "    " MEDIUMP " float t = (position_out.x + 1.0) / 2.0;\n"
+      //"    " MEDIUMP " float t = (position_out.x + 1.0) / 2.0;\n"
+      "    " MEDIUMP " float t = (position_out.y + 1.0) / 2.0;\n"
       "    gl_FragColor = color_to * t + color_from * (1.0 - t);\n"
       "}\n";
 

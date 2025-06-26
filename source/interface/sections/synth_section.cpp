@@ -15,7 +15,6 @@
  */
 
 #include "synth_section.h"
-
 #include "look_and_feel/skin.h"
 #include "look_and_feel/fonts.h"
 #include "FullInterface.h"
@@ -718,6 +717,18 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::
     }
 }
 
+void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<juce::Component>> &knobs, bool center) {
+
+    if (center) {
+        int knob_width = getKnobSectionHeight();
+        int knobs_width = knob_width * knobs.size();
+        if (area.getWidth() > knobs_width)
+            area.reduce((area.getWidth() - knobs_width) / 2, 0);
+    }
+
+    placeKnobsInArea(area, knobs);
+}
+
 void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthSlider>> &knobs) {
     int widget_margin = findValue(Skin::kWidgetMargin);
     //kKnobSectionHeight
@@ -736,6 +747,19 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::
             knob->setBounds(left, y, right - left, height);
         x += component_width + widget_margin;
     }
+}
+
+// center the knobs and reduce the width so they are closer together
+void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthSlider>> &knobs, bool center) {
+
+    if (center) {
+        int knob_width = getKnobSectionHeight();
+        int knobs_width = knob_width * knobs.size();
+        if (area.getWidth() > knobs_width)
+            area.reduce((area.getWidth() - knobs_width) / 2, 0);
+    }
+
+    placeKnobsInArea(area, knobs);
 }
 
 
@@ -760,6 +784,19 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<juce:
             knob->setBounds(left, y, right - left, height);
         x += component_width + widget_margin;
     }
+}
+
+void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<juce::Component *> knobs, bool center) {
+
+    if (center) {
+        int knob_width = getKnobSectionHeight();
+        int knobs_width = knob_width * knobs.size();
+        if (area.getWidth() > knobs_width)
+            area.reduce((area.getWidth() - knobs_width) / 2, 0);
+    }
+
+    placeKnobsInArea(area, knobs);
+
 }
 
 void SynthSection::unlockCriticalSection() {

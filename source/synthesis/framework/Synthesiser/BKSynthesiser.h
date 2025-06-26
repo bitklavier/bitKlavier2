@@ -7,6 +7,8 @@
 #include <juce_core/juce_core.h>
 #include "Sample.h"
 #include "EnvParams.h"
+#include "TuningProcessor.h"
+
 //==============================================================================
 /**
     Base class for a musical device that can play sounds.
@@ -50,7 +52,7 @@ class BKSynthesiser
                 void clearVoices();
 
                 /** Returns the number of voices that have been added. */
-                int getNumVoices() const noexcept                               { return voices.size(); }
+                int getNumVoices() const noexcept { return voices.size(); }
 
                 /** Returns one of the voices that have been added. */
                  BKSamplerVoice* getVoice (int index) const;
@@ -74,10 +76,10 @@ class BKSynthesiser
                 bool hasSamples() {return sounds != nullptr;}
 
                 /** Returns the number of sounds that have been added to the mainSynth. */
-                int getNumSounds() const noexcept                               { return sounds->size(); }
+                int getNumSounds() const noexcept { return sounds->size(); }
 
                 /** Returns one of the sounds. */
-                BKSamplerSound<juce::AudioFormatReader>::Ptr getSound (int index) const noexcept       { return (*sounds)[index]; }
+                BKSamplerSound<juce::AudioFormatReader>::Ptr getSound (int index) const noexcept { return (*sounds)[index]; }
 
                 /** Adds a new sound to the BKSynthesiser.
             
@@ -101,7 +103,7 @@ class BKSynthesiser
                 /** Returns true if note-stealing is enabled.
                     @see setNoteStealingEnabled
                 */
-                bool isNoteStealingEnabled() const noexcept                     { return shouldStealNotes; }
+                bool isNoteStealingEnabled() const noexcept { return shouldStealNotes; }
 
                 //==============================================================================
                 /** Triggers a note-on event.
@@ -255,10 +257,10 @@ class BKSynthesiser
                 int startSample,
                 int numSamples);
 
-                void renderNextBlock (juce::AudioBuffer<double>& outputAudio,
-                const juce::MidiBuffer& inputMidi,
-                int startSample,
-                int numSamples);
+//                void renderNextBlock (juce::AudioBuffer<double>& outputAudio,
+//                const juce::MidiBuffer& inputMidi,
+//                int startSample,
+//                int numSamples);
 
                 /** Returns the current target sample rate at which rendering is being done.
                     Subclasses may need to know this so that they can pitch things correctly.
@@ -303,18 +305,42 @@ class BKSynthesiser
                     synthGain.setParameterValue(g);
                 }
 
-                // add bool for "use tuning"
                 void updateMidiNoteTranspositions(juce::Array<float> newOffsets, bool tune_transpositions) {
                     midiNoteTranspositions = newOffsets;
                     tuneTranspositions = tune_transpositions;
                 }
 
-//<<<<<<< HEAD
-//
-//                BKADSR::Parameters globalADSR;
-//=======
-//                //BKADSR::Parameters globalADSR;
-//>>>>>>> feature/adsropt
+                void updateVelocityMinMax(float velmin, float velmax)
+                {
+                    velocityMin = velmin;
+                    velocityMax = velmax;
+                }
+
+                bool checkVelocityRange(float velocity) const
+                {
+                    /**
+                    * need to send velocity back up, for display in velocity min/max slider, before returning
+                    */
+                    //
+
+                    //in normal case where velocityMin < velocityMax, we only pass if both are true
+                    if (velocityMax >= velocityMin)
+                    {
+                        if (velocity >= velocityMin && velocity <= velocityMax) return true;
+                        else return false;
+                    }
+
+                    //case where velocityMin > velocityMax, we pass if either is true
+                    if (velocity >= velocityMin || velocity <= velocityMax) return true;
+                    else return false;
+
+                }
+
+                void setTuning(TuningState* attachedTuning)
+                {
+                    tuning = attachedTuning;
+                }
+
 protected:
                 //==============================================================================
                 /** This is used to control access to the rendering callback and the note trigger methods. */
@@ -394,6 +420,7 @@ private:
                 bool pedalSynth = false;                // for sustain pedal sounds; will ignore noteOn messages
                 bool sustainPedalAlreadyDown = false;   // to avoid re-triggering of pedalDown sounds
                 EnvParams& adsrParams;
+
                 /**
                  * midiNoteTranspositions is an arrays of tuning offsets, in MidiNoteCents (.01 = 1 cent)
                  *      - these offsets are set by currentTransposition controls in Direct, Nostalgic, and Synchronic
@@ -415,6 +442,13 @@ private:
                 juce::Array<float> midiNoteTranspositions = { 0.}; // needs to be set via UI, for additional transpositions
                 bool tuneTranspositions = false;
                 juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
+
+                //set by owning processor state.params.velocityMinMax
+                float velocityMin = 0.;
+                float velocityMax = 128.;
+
+                TuningState* tuning;
+
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
 

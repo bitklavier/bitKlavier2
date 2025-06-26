@@ -4,39 +4,37 @@
 
 #ifndef BITKLAVIER2_CONSTRUCTIONSITE_H
 #define BITKLAVIER2_CONSTRUCTIONSITE_H
-#include "PreparationSelector.h"
 #include "CableView.h"
 #include "ModulationLineView.h"
-#include "templates/Factory.h"
-#include "common.h"
 #include "PluginWindow.h"
 #include "PreparationList.h"
+#include "PreparationSelector.h"
+#include "common.h"
+#include "templates/Factory.h"
 class OpenGlLine;
 class SynthGuiInterface;
-typedef Loki::Factory<std::unique_ptr<PreparationSection>, int,const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
+typedef Loki::Factory<std::unique_ptr<PreparationSection>, int, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
 class ConstructionSite : public SynthSection,
                          private juce::KeyListener,
                          public juce::DragAndDropContainer,
                          // public juce::ChangeListener,
-                        private PreparationList::Listener,
-public PreparationSection::Listener
-
-
+                         private PreparationList::Listener,
+                         public PreparationSection::Listener
 
 {
 public:
-    ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData* data);
+    ConstructionSite (const juce::ValueTree& v, juce::UndoManager& um, OpenGlWrapper& open_gl, SynthGuiData* data);
 
-    ~ConstructionSite(void);
+    ~ConstructionSite (void);
 
-    void redraw(void);
+    void redraw (void);
 
-    bool keyPressed(const juce::KeyPress &k, juce::Component *c) override;
-    void itemIsBeingDragged(BKItem* thisItem, const juce::MouseEvent& e);
+    bool keyPressed (const juce::KeyPress& k, juce::Component* c) override;
+    void itemIsBeingDragged (BKItem* thisItem, const juce::MouseEvent& e);
 
-    void paintBackground(juce::Graphics& g) override;
+    void paintBackground (juce::Graphics& g) override;
 
-    void addItem(bitklavier::BKPreparationType type, bool center = false);
+    void addItem (bitklavier::BKPreparationType type, bool center = false);
 
     // void changeListenerCallback(juce::ChangeBroadcaster *source) override
     //
@@ -45,11 +43,11 @@ public:
     // }
 
     void updateComponents();
-    void reset()    override;
+    void reset() override;
 
     BKPort* findPinAt (juce::Point<float> pos) const
     {
-        for (auto &fc : plugin_components)
+        for (auto& fc : plugin_components)
         {
             // NB: A Visual Studio optimiser error means we have to put this juce::Component* in a local
             // variable before trying to cast it, or it gets mysteriously optimised away..
@@ -61,63 +59,64 @@ public:
 
         return nullptr;
     }
-   PreparationSection* getComponentForPlugin (juce::AudioProcessorGraph::NodeID nodeID) const;
+    PreparationSection* getComponentForPlugin (juce::AudioProcessorGraph::NodeID nodeID) const;
 
     juce::Viewport* view;
-   juce::Point<float> mouse;
-    OpenGlWrapper &open_gl;
+    juce::Point<float> mouse;
+    OpenGlWrapper& open_gl;
     juce::ValueTree parent;
     juce::ValueTree getState()
     {
         return parent;
     }
-    void copyValueTree(const juce::ValueTree& vt){
-        parent.copyPropertiesFrom(vt,nullptr);
+    void copyValueTree (const juce::ValueTree& vt)
+    {
+        parent.copyPropertiesFrom (vt, nullptr);
     }
-    void 	dragOperationStarted (const juce::DragAndDropTarget::SourceDetails &)
+    void dragOperationStarted (const juce::DragAndDropTarget::SourceDetails&)
     {
         //wsetMouseCursor(juce::MouseCursor::DraggingHandCursor);
     }
 
-    void dragOperationEnded(const juce::DragAndDropTarget::SourceDetails &source)
+    void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails& source)
     {
-
         //setMouseCursor(juce::MouseCursor::ParentCursor);
-        if(!item_dropped_on_prep_) {
-//            source.sourceComponent->setCentrePosition(source.sourceComponent->getX() + source.localPosition.getX(),
-//                                                      source.sourceComponent->getY() + source.localPosition.getY());
-            if(modulationLineView.current_source_ == nullptr)
+        if (!item_dropped_on_prep_)
+        {
+            //            source.sourceComponent->setCentrePosition(source.sourceComponent->getX() + source.localPosition.getX(),
+            //                                                      source.sourceComponent->getY() + source.localPosition.getY());
+            if (modulationLineView.current_source_ == nullptr)
                 return;
-            source.sourceComponent->setCentrePosition(mouse_drag_position_);
+            source.sourceComponent->setCentrePosition (mouse_drag_position_);
             cableView._update();
             modulationLineView._update();
         }
         item_dropped_on_prep_ = false;
     }
-    bool    item_dropped_on_prep_ = false;
+    bool item_dropped_on_prep_ = false;
 
     juce::Point<int> mouse_drag_position_;
     juce::OwnedArray<PluginWindow> activePluginWindows;
-    void createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type);
+    void createWindow (juce::AudioProcessorGraph::Node* node, PluginWindow::Type type);
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;
-    void renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) override;
+    void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
+
 private:
     PreparationList& prep_list;
     void moduleListChanged() {}
-    void moduleAdded(PluginInstanceWrapper* newModule) override ;
-    void removeModule(PluginInstanceWrapper* moduleToRemove)override;
-    void handlePluginPopup(int selection,int index);
+    void moduleAdded (PluginInstanceWrapper* newModule) override;
+    void removeModule (PluginInstanceWrapper* moduleToRemove) override;
+    void handlePluginPopup (int selection, int index);
     SynthGuiInterface* _parent;
     NodeFactory nodeFactory;
     juce::CriticalSection open_gl_critical_section_;
-   std::shared_ptr<OpenGlLine> _line;
+    std::shared_ptr<OpenGlLine> _line;
 
     bool edittingComment;
 
-    juce::OwnedArray<juce::HashMap<int,int>> pastemap;
+    juce::OwnedArray<juce::HashMap<int, int>> pastemap;
     friend class ModulationLineView;
     ModulationLineView modulationLineView;
-
 
     bool connect;
 
@@ -126,19 +125,17 @@ private:
     bool multiple;
     bool held;
 
-
-
     PreparationSelector preparationSelector;
     juce::LassoComponent<PreparationSection*> selectorLasso;
 
     friend class CableView;
     CableView cableView;
 
-    juce::UndoManager &undo;
+    juce::UndoManager& undo;
 
-    void draw(void);
+    void draw (void);
 
-    void prepareItemDrag(BKItem* item, const juce::MouseEvent& e, bool center);
+    void prepareItemDrag (BKItem* item, const juce::MouseEvent& e, bool center);
 
     void resized() override;
 
@@ -152,15 +149,9 @@ private:
 
     void deleteItem (BKItem* item);
 
-    BKItem* getItemAtPoint(const int X, const int Y);
+    BKItem* getItemAtPoint (const int X, const int Y);
 
-
-
-
-
-
-    JUCE_LEAK_DETECTOR(ConstructionSite)
+    JUCE_LEAK_DETECTOR (ConstructionSite)
 };
-
 
 #endif //BITKLAVIER2_CONSTRUCTIONSITE_H

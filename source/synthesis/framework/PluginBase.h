@@ -19,11 +19,19 @@ namespace bitklavier {
         InternalProcessor() : juce::AudioProcessor()
         {
         }
+        virtual void setTuning(TuningProcessor* tun)
+        {
+            tuning = tun;
+        }
+
+            protected:
+
 
         TuningProcessor* tuning = nullptr; //getTuningProcessor() const;
         //virtual std::unique_ptr<SynthSection> createSynthSection() = 0;
     };
-    /**
+
+/**
   * Base class for plugin processors.
   *
   * Derived classes must override `prepareToPlay` and `releaseResources`

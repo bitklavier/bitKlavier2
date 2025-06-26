@@ -14,6 +14,12 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Handles OpenGL rendering
+ * defacto JUCE Component, takes place of juce_component
+ *
+ */
+
 #pragma once
 
 
@@ -254,8 +260,12 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void placeTempoControls(int x, int y, int width, int height, SynthSlider* tempo, SynthSlider* sync);
     void placeRotaryOption(juce::Component* option, SynthSlider* rotary);
     void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<std::unique_ptr<juce::Component>> &knobs);
+    void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<std::unique_ptr<juce::Component>> &knobs, bool center);
     void placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthSlider>>& knobs);
+    void placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthSlider>>& knobs, bool center);
     void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<juce::Component*> knobs);
+    void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<juce::Component*> knobs, bool center);
+
     void lockCriticalSection();
     void unlockCriticalSection();
     juce::Rectangle<int> getPresetBrowserBounds();

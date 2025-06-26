@@ -4,26 +4,49 @@
 
 #include "DirectParametersView.h"
 
-
 void DirectParametersView::resized()
 {
-
-    int knob_section_height = getKnobSectionHeight();
-    int knob_y = getHeight() - knob_section_height;
-
-    int widget_margin = findValue(Skin::kWidgetMargin);
+    // width of the title at left, used in all preparations
     int title_width = getTitleWidth();
-    int area_width = getWidth() - 2 * title_width;
-    int envelope_height = knob_y - widget_margin;
 
-    juce::Rectangle<int> knobs_area(title_width, knob_y, area_width, knob_section_height);
-    knobs_area.setSize(knobs_area.getWidth() , knobs_area.getHeight() );
-    placeKnobsInArea(knobs_area, _sliders);
+    // height for most of these components
+    int knob_section_height = getKnobSectionHeight();
 
-    envSection->setBounds(title_width, knob_section_height, area_width, knob_section_height * 2);
-    transpositionSlider->setBounds(title_width,0,   area_width, knob_section_height );
-    velocityMinMaxSlider->setBounds(title_width,envSection->getBottom(),area_width,40 );
+    // get the prep area, with left/right border for title
+    juce::Rectangle<int> bounds = getLocalBounds();
+    //bounds.reduce(title_width + 4, 0);
+    bounds.removeFromLeft(title_width);
 
+    juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
+    levelMeter->setBounds(meterArea);
+
+
+    // how much vertical space will we need for all the components?
+    int verticalAreaNeeded = knob_section_height * 7;
+
+    // how much vertical space is left, divided up so we have some buffer space between each component
+    int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 5;
+    if (bufferSpaceForEach < 0 ) bufferSpaceForEach = 0;
+
+    // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
+    bounds.removeFromTop(bufferSpaceForEach);
+    juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
+    //DBG(outputKnobsArea.getX());
+    //DBG(outputKnobsArea.getX());
+    placeKnobsInArea(outputKnobsArea, _sliders, true);
+    knobsBorder.setBounds(outputKnobsArea); // not working properly for some reason
+
+    // add the adsr below that
+    bounds.removeFromTop(bufferSpaceForEach);
+    juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 5);
+    envSection->setBounds(adsrArea);
+
+    // add the transposition and velocity range sliders below that
+    bounds.removeFromTop(bufferSpaceForEach);
+    juce::Rectangle<int> transpositionSliderArea = bounds.removeFromTop(knob_section_height);
+    juce::Rectangle<int> velocitySliderArea = transpositionSliderArea.removeFromLeft(transpositionSliderArea.getWidth() * 0.5);
+    transpositionSlider->setBounds(transpositionSliderArea);
+    velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     SynthSection::resized();
 }

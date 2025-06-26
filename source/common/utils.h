@@ -397,3 +397,13 @@ static double mtof( double f )
     // TODO: optimize
     else return ( pow(2, (f - 69) / 12.0) * 440.0 );
 }
+
+
+static double mtof( double f, double a ) // a = frequency of A4
+{
+    if( f <= -1500 ) return (0);
+    else if( f > 1499 ) return (mtof(1499));
+    // else return (8.17579891564 * exp(.0577622650 * f));
+    // TODO: optimize
+    else return ( pow(2, (f - 69) / 12.0) * a );
+}

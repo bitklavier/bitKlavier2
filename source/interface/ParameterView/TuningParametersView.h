@@ -4,29 +4,24 @@
 
 #ifndef BITKLAVIER2_TUNINGPARAMETERSVIEW_H
 #define BITKLAVIER2_TUNINGPARAMETERSVIEW_H
-#include "ParametersView.h"
 #include "envelope_section.h"
 #include "TransposeParams.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-#include "../components/opengl/open_gl_combo_box.h"
-#include "../components/opengl/OpenGL_AbsoluteKeyboardSlider.h"
+#include "open_gl_combo_box.h"
+#include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
 #include "tuning_systems.h"
-using SliderAttachmentTuple = std::tuple<std::shared_ptr<SynthSlider>, std::unique_ptr<chowdsp::SliderAttachment>>;
-using BooleanAttachmentTuple = std::tuple<std::shared_ptr<SynthButton>, std::unique_ptr<chowdsp::ButtonAttachment>>;
+
 class TuningParametersView : public SynthSection,BKTuningKeyboardSlider::Listener
 {
 public:
     TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param,juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
-                                                                                                                     //bitklavier::ParametersView(pluginState,params,open_gl,false)
     {
-        //envelope = std::make_unique<EnvelopeSection>("ENV", "err");
         setName("tuning");
         setLookAndFeel(DefaultLookAndFeel::instance());
-
-        //addSubSection(envelope.get());
         setComponentID(name);
+
         auto& listeners = pluginState.getParameterListeners();
         for ( auto &param_ : *params.getFloatParams())
         {
@@ -36,12 +31,14 @@ public:
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             floatAttachments.emplace_back(std::move(attachment));
             _sliders.emplace_back(std::move(slider));
-
         }
-        keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->keyboardState);
+
+        keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
         addStateModulatedComponent(keyboard.get());
-        circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->keyboardState);
+
+        circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
         addStateModulatedComponent(circular_keyboard.get());
+
       // for (auto &param_ : *params.getChoiceParams()) {
       //    auto box = std::make_unique<OpenGLComboBox>(param_->paramID.toStdString());
       //     auto attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*param_.get(), listeners,*box.get(), nullptr);
@@ -50,6 +47,7 @@ public:
       //     combo_box_attachments.emplace_back(std::move(attachment));
       //     _comboBoxes.emplace_back(std::move(box));
       // }
+
         if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
             ///tuninng systems
             auto index = tuningParams->tuningSystem->getIndex();
@@ -74,30 +72,32 @@ public:
 
                 i++;
             }
+
             tuning_combo_box->addSeparator();
             auto* pop_up = tuning_combo_box->getRootMenu();
             pop_up->addSubMenu("Historical",*submenus.getUnchecked(0));
             pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
             tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
-            //fundamental
 
             fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->fundamental->paramID.toStdString());
             fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->fundamental.get(), listeners,*fundamental_combo_box, nullptr);
             addAndMakeVisible(fundamental_combo_box.get());
             addOpenGlComponent(fundamental_combo_box->getImageComponent());
+
             adaptive_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->adaptive->paramID.toStdString());
             adaptive_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->adaptive.get(), listeners,*adaptive_combo_box, nullptr);
             addAndMakeVisible(adaptive_combo_box.get());
             addOpenGlComponent(adaptive_combo_box->getImageComponent());
         }
+
         tuningComboBoxCallbacks += {listeners.addParameterListener(
             params.tuningSystem,
             chowdsp::ParameterListenerThread::MessageThread,
             [this]() {
-                if (!params.keyboardState.setFromAudioThread) {
+                if (!params.tuningState.setFromAudioThread) {
                     TuningSystem t = params.tuningSystem->get();
 
-                    //this->params.keyboardState.circularTuningOffset = tuningMap[t].second;
+                    //this->params.tuningState.circularTuningOffset = tuningMap[t].second;
                     auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
                            [t](const auto& pair) {
                                return pair.first == t;
@@ -107,32 +107,34 @@ public:
                     }
                     else if (it != tuningMap.end()) {
                         const auto& tuning = it->second;
-                        const auto tuningArray = TuningKeyboardState::rotateValuesByFundamental(tuning, params.fundamental->getIndex());
+                        const auto tuningArray = TuningState::rotateValuesByFundamental(tuning, params.fundamental->getIndex());
                         int index  = 0;
                         for (const auto val :tuningArray) {
-                            this->params.keyboardState.circularTuningOffset[index] = val * 100;
+                            this->params.tuningState.circularTuningOffset[index] = val * 100;
+                            DBG("new tuning " + juce::String(index) + " " + juce::String(this->params.tuningState.circularTuningOffset[index]));
                             index++;
                         }
                     }
-
                 }
-                params.keyboardState.setFromAudioThread = false;
+
+                params.tuningState.setFromAudioThread = false;
                 circular_keyboard->redoImage();
             }
             )
         };
+
         tuningComboBoxCallbacks += {listeners.addParameterListener(
             params.fundamental,
             chowdsp::ParameterListenerThread::MessageThread,
             [this]() {
-                params.keyboardState.setFundamental(params.fundamental->getIndex());
+                params.tuningState.setFundamental(params.fundamental->getIndex());
                 circular_keyboard->redoImage();
                 DBG("rotat");
             }
         )};
     circular_keyboard->addMyListener(this);
-
     }
+
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
@@ -144,10 +146,10 @@ public:
         }
         paintChildrenBackgrounds(g);
     }
+
     void keyboardSliderChanged(juce::String name) override;
-//    std::unique_ptr<EnvelopeSection> envelope;
-    //std::unique_ptr<juce::Component> transpose_uses_tuning;
     void resized() override;
+
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
     std::unique_ptr<OpenGLComboBox> tuning_combo_box;
@@ -159,9 +161,8 @@ public:
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> keyboard;
     std::unique_ptr<OpenGLCircularKeyboardSlider> circular_keyboard;
     chowdsp::ScopedCallbackList tuningComboBoxCallbacks;
-    //    std::vector<std::unique_ptr<SynthButton>> _buttons;
+
     TuningParams& params;
-//    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> buttonAttachments;
 };
 
 #endif //BITKLAVIER2_TUNINGPARAMETERSVIEW_H

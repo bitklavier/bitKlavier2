@@ -19,7 +19,6 @@
 #include "skin.h"
 #include "open_gl_image.h"
 #include "open_gl_line_renderer.h"
-
 #include "synth_slider.h"
 
 class EnvelopeEditor : public OpenGlLineRenderer, public SynthSlider::SliderListener {

@@ -35,23 +35,14 @@ public:
     }
 
     void sliderValueChanged (juce::Slider* slider) override;
-
     void textEditorReturnKeyPressed (juce::TextEditor& textEditor) override;
-
     void textEditorFocusLost (juce::TextEditor& textEditor) override;
-
     void textEditorEscapeKeyPressed (juce::TextEditor& textEditor) override;
-
     void textEditorTextChanged (juce::TextEditor& textEditor) override;
-
     void mouseDown (const juce::MouseEvent& event) override;
-
     void mouseDrag (const juce::MouseEvent& e) override;
-
     void mouseUp (const juce::MouseEvent& e) override;
-
     void mouseMove (const juce::MouseEvent& e) override;
-
     void mouseDoubleClick (const juce::MouseEvent& e) override;
 
     inline juce::TextEditor* getTextEditor (void)
@@ -68,24 +59,18 @@ public:
     }
 
     void setTo (juce::Array<float> newvals, juce::NotificationType newnotify);
-
     void setValue (juce::Array<float> newvals, juce::NotificationType newnotify) { setTo (newvals, newnotify); }
-
     void resetRanges();
-
     int whichSlider();
-
     int whichSlider (const juce::MouseEvent& e);
-
     virtual void addSlider (juce::NotificationType newnotify);
-
     inline juce::String getText (void) { return editValsTextField->getText(); }
     inline void setText (juce::String text) { editValsTextField->setText (text, juce::dontSendNotification); }
 
     void setName (juce::String newName)
     {
         sliderName = newName;
-        showName.setText (sliderName, juce::dontSendNotification);
+        //showName.setText (sliderName, juce::dontSendNotification);
     }
 
     juce::String getName() { return sliderName; }
@@ -93,13 +78,11 @@ public:
     void setTooltip (juce::String newTip)
     {
         topSlider->setTooltip (newTip);
-        showName.setTooltip (newTip);
+        //showName.setTooltip (newTip);
     }
 
     void resized() override;
-
     void setDim (float newAlpha);
-
     void setBright();
 
     class Listener
@@ -137,14 +120,12 @@ public:
 
     juce::Array<float> getAllActiveValues();
     bool isEditing;
+
 private
     :
     chowdsp::SliderAttachment attachment;
-
     std::unique_ptr<juce::Slider> topSlider; //user interacts with this
-
     juce::Array<bool> activeSliders;
-
     std::unique_ptr<juce::TextEditor> editValsTextField;
 
     int numSliders;
@@ -153,7 +134,7 @@ private
     float clickedPosition;
 
     juce::String sliderName;
-    juce::Label showName;
+    //juce::Label showName;
     bool justifyRight;
 
     BKMultiSliderLookAndFeel stackedSliderLookAndFeel;
@@ -171,6 +152,8 @@ private
     void showModifyPopupMenu();
 
     static void sliderModifyMenuCallback (const int result, BKStackedSlider* ss);
+
+    juce::GroupComponent sliderBorder;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKStackedSlider)
 };
@@ -225,6 +208,7 @@ public:
         showName.setText (sliderName, juce::dontSendNotification);
     }
     juce::String getName() { return sliderName; }
+
     void setToolTipString (juce::String newTip)
     {
         showName.setTooltip (newTip);
@@ -326,6 +310,8 @@ private:
     BKRangeMinSliderLookAndFeel minSliderLookAndFeel;
     BKRangeMaxSliderLookAndFeel maxSliderLookAndFeel;
     BKDisplaySliderLookAndFeel displaySliderLookAndFeel;
+
+    juce::GroupComponent rangeSliderBorder;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKRangeSlider)
 };
