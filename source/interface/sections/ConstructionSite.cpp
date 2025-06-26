@@ -35,6 +35,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::createDirectSection);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::createPluginSection);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::createModulationSection);
 }
 
 
@@ -267,14 +268,14 @@ bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
         // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
         // prep_list.appendChild(t,  nullptr);
     } else if (k.getTextCharacter() == 'c') {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
-        // t.setProperty(IDs::width, 100, nullptr);
-        // t.setProperty(IDs::height, 100, nullptr);
-        // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-        // prep_list.appendChild(t,  nullptr);
+        juce::ValueTree t(IDs::PREPARATION);
+
+        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
+        t.setProperty(IDs::width, 100, nullptr);
+        t.setProperty(IDs::height, 100, nullptr);
+        t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
+        prep_list.appendChild(t,  nullptr);
     }
     return true;
 }

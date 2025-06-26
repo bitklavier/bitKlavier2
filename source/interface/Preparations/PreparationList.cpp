@@ -5,10 +5,11 @@
 #include "PreparationList.h"
 #include "DirectProcessor.h"
 #include "KeymapProcessor.h"
-
+#include "ModulationProcessor.h"
 PreparationList::PreparationList(SynthBase& parent,const juce::ValueTree &v) : tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper>(v), synth(parent){
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap,KeymapProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,bitklavier::ModulationProcessor::create);
 }
 
 

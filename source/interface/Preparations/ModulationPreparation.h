@@ -34,14 +34,14 @@ public:
     // Destructor method
     ~ModulationPreparation();
 
-    // Static function that returns a pointer to a ModulationPreparation object
-    static PreparationSection* createModulationSection(juce::ValueTree v, SynthGuiInterface* interface) {
+    static std::unique_ptr<PreparationSection> createModulationSection(const juce::ValueTree& v, SynthGuiInterface* interface) {
 
-        return new ModulationPreparation(v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
+        return std::make_unique<ModulationPreparation> (v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
+    void mouseDoubleClick(const juce::MouseEvent &event) override {
 
-
-
+        showPrepPopup(std::move(this->getPrepPopup()),bitklavier::BKPreparationType::PreparationTypeModulation);
+    }
 
 
     std::unique_ptr<SynthSection> getPrepPopup() override;

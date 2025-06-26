@@ -8,7 +8,7 @@
 #include "modulation_manager.h"
 #include "open_gl_line.h"
 ModulationLineView::ModulationLineView(ConstructionSite &site) : SynthSection("modlineview"), site(site),
-tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getParent().getChildWithName(IDs::MODCONNECTIONS)),current_source_(nullptr)//, line_(std::make_shared<OpenGlLine>(nullptr, nullptr, this))
+tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getChildWithName(IDs::MODCONNECTIONS)),current_source_(nullptr)//, line_(std::make_shared<OpenGlLine>(nullptr, nullptr, this))
 {
     setInterceptsMouseClicks(false, false);
     setAlwaysOnTop(true);
