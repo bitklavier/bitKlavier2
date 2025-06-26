@@ -18,7 +18,7 @@ We will use the direct preparation as an example for simplicity.
 
 ## Creation Function Call Trace
 
-1. When we press the 'd' key, [ConstructionSite::keyPressed()](../source/interface/sections/ConstructionSite.cpp) gets called. When we right-click on the ConstructionSite and select 'Direct' from the popup, [ConstructionSite::handlePluginPopup()](../source/interface/sections/ConstructionSite.cpp) gets called
+1. When we press the 'd' key, [ConstructionSite::keyPressed()](../source/interface/sections/ConstructionSite.cpp#L100) gets called. When we right-click on the ConstructionSite and select 'Direct' from the popup, [ConstructionSite::handlePluginPopup()](../source/interface/sections/ConstructionSite.cpp) gets called
     
     - In both functions, we create a [ValueTree](#the-valuetree) with ID "PREPARATION" and set the properties (type, width, height, and x & y positions)
 2. From either the keyPressed() or the handlePluginPopup() function, we call [prep_list.appendChild()](../source/interface/Preparations/PreparationList.h)
