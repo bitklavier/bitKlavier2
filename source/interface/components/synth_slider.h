@@ -73,7 +73,7 @@ class OpenGlSlider : public juce::Slider {
       juce::Slider::valueChanged();
       redoImage();
     }
-    virtual void paint(juce::Graphics &g) override {}
+    // virtual void paint(juce::Graphics &g) override {}
 //    virtual  void  paint(juce::Graphics &g) override
 //    {
 //        juce::Colour shadow_color = findColour(Skin::kShadow, true);

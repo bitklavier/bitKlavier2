@@ -90,7 +90,9 @@ void SynthSection::paint(juce::Graphics &g) {}
 void SynthSection::paintSidewaysHeadingText(juce::Graphics &g) {
     int title_width = findValue(Skin::kTitleWidth);
     g.setColour(findColour(Skin::kHeadingText, true));
-    g.setFont(Fonts::instance()->proportional_light().withPointHeight(size_ratio_ * 14.0f));
+    // int mult = juce::Desktop::getInstance().getDisplays().getDisplayForPoint(getScreenPosition())->scale;
+    juce::Font font = Fonts::instance()->proportional_light().withPointHeight(14.0f);
+    g.setFont(font);
     g.saveState();
     g.setOrigin(juce::Point<int>(0, getHeight()));
     g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f));
