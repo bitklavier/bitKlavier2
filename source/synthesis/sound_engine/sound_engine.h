@@ -117,10 +117,7 @@ namespace bitklavier
 
         Node::Ptr addNode (std::unique_ptr<ModulationProcessor> modProcessor, juce::AudioProcessorGraph::NodeID id);
 
-        juce::AudioProcessorGraph::Node::Ptr removeNode (juce::AudioProcessorGraph::NodeID id)
-        {
-            return processorGraph->removeNode (id);
-        }
+
 
         ModulationConnectionBank& getModulationBank() { return modulation_bank_; }
         StateConnectionBank& getStateBank() { return state_bank_; }
