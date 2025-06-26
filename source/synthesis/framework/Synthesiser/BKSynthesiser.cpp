@@ -246,6 +246,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
+    lastSynthState.lastVelocity = velocity;
+
     /**
      * check first to see if velocity is within velocity min/max range, and return if not
      */

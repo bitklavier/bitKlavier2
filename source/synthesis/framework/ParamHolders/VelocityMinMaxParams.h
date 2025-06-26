@@ -11,7 +11,7 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
 {
     VelocityMinMaxParams() : chowdsp::ParamHolder("VELOCITYMINMAX")
     {
-        add(velocityMinParam, velocityMaxParam);
+        add(velocityMinParam, velocityMaxParam,lastVelocityParam);
     }
 
     chowdsp::FloatParameter::Ptr velocityMinParam {
@@ -37,14 +37,14 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
      * this will be updated in BKSynthesizer, and then can be accessed for display in the velocityMinMaxslider
      *      it should NOT be added to the param list above, as we are not going to save/recall it, etc...
      */
-//    chowdsp::FloatParameter::Ptr lastVelocityParam {
-//        juce::ParameterID { "LastVelocity", 100 },
-//        "LastVelocity",
-//        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f), // FIX
-//        127.0f,
-//        &chowdsp::ParamUtils::floatValToString,
-//        &chowdsp::ParamUtils::stringToFloatVal
-//    };
+    chowdsp::FloatParameter::Ptr lastVelocityParam {
+        juce::ParameterID { "LastVelocity", 100 },
+        "LastVelocity",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f), // FIX
+        127.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
 
     void processStateChanges() override
     {

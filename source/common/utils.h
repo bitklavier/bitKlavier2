@@ -407,3 +407,8 @@ static double mtof( double f, double a ) // a = frequency of A4
     // TODO: optimize
     else return ( pow(2, (f - 69) / 12.0) * a );
 }
+
+struct BKSynthesizerState
+{
+    int lastVelocity;
+};

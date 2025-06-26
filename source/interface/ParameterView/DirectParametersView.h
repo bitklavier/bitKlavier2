@@ -64,7 +64,7 @@ public:
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
         // to access and display the updating audio output levels
-        levelMeter = std::make_unique<PeakMeterSection>("peakMeter", &params.outputLevels);
+        levelMeter = std::make_unique<PeakMeterSection>(name, &params.outputLevels);
         addSubSection(levelMeter.get());
 
 //        params.lastVelocityParam; // this should be passed to BKSynth and updated with the most recent noteOn velocity

@@ -856,6 +856,12 @@ void 	ModulationManager::componentAdded()
             uniqueModPrefixes.insert(key.substr(0, pos));
     }
     //should only have one prep view on at a time
+    /*
+     * checking to make sure that there is only one prep view open at a time
+     * would also fail if there is a component without a UUID attached
+     * need to add setComponentID() for any sections within a preparationView, to the same as the owning preparationView
+     * see peak_meter_section.cpp for an example
+     */
     jassert(uniquePrefixes.size()<=1);
     jassert(uniqueModPrefixes.size()<=1);
     std::string _dst, _src;

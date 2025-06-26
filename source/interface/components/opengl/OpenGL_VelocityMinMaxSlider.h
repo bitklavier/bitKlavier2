@@ -66,14 +66,14 @@ public:
                                                                     maxSlider.getValue());
                                                redoImage();
                                            }
-            )
-//            listeners.addParameterListener(_params->lastVelocityParam,
-//                chowdsp::ParameterListenerThread::MessageThread,
-//                [this] {
-//                    setDisplayValue(this->params->lastVelocityParam->getCurrentValue());
-//                    redoImage();
-//                }
-//                )
+            ),
+            listeners.addParameterListener(_params->lastVelocityParam,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this] {
+                    setDisplayValue(this->params->lastVelocityParam->getCurrentValue());
+                    redoImage();
+                }
+                )
         };
     }
 

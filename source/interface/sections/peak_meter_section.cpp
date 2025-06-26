@@ -51,15 +51,16 @@ private:
 
 PeakMeterSection::PeakMeterSection(juce::String name, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels) : SynthSection(name) {
 
+    setComponentID(name); // sets the UUID for this component, inherits the UUID from the owning preparation
    peak_meter_left_ = std::make_shared<PeakMeterViewer>(true, outputLevels); // if we make this unique_ptrs, then this constructor fails
    addOpenGlComponent(peak_meter_left_);
    peak_meter_right_ = std::make_shared<PeakMeterViewer>(false, outputLevels);
    addOpenGlComponent(peak_meter_right_);
 
-//   volume_ = std::make_unique<VolumeSlider>("volume");
-//   addSlider(volume_.get());
-//   volume_->setSliderStyle(juce::Slider::LinearBarVertical);
-//   volume_->setPopupPlacement(juce::BubbleComponent::below);
+   volume_ = std::make_shared<VolumeSlider>("volume");
+   addSlider(volume_.get());
+   volume_->setSliderStyle(juce::Slider::LinearBarVertical);
+   volume_->setPopupPlacement(juce::BubbleComponent::below);
 }
 
 PeakMeterSection::~PeakMeterSection() { }
@@ -85,7 +86,7 @@ void PeakMeterSection::resized() {
    juce::Rectangle<int> bounds = getLocalBounds();
    bounds.reduce(0, 20);
 
-//   volume_->setBounds(bounds);
+   volume_->setBounds(bounds);
 
    juce::Rectangle<int> leftMeterBounds = bounds.removeFromLeft(bounds.getWidth()/2);
    leftMeterBounds.reduce(2, 0);

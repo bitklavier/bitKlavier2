@@ -118,8 +118,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
 
-    //state.params.velocityMinMax.lastVelocityParam->setParameterValue(0.6);
-
     // update transposition slider values
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
@@ -164,4 +162,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // level meter update stuff
     std::get<0>(state.params.outputLevels) = buffer.getRMSLevel(0, 0, buffer.getNumSamples());
     std::get<1>(state.params.outputLevels) = buffer.getRMSLevel(1, 0, buffer.getNumSamples());
+
+    // get last synthesizer state and update things accordingly
+    lastSynthState = mainSynth->getSynthesizerState();
+    state.params.velocityMinMax.lastVelocityParam->setParameterValue(lastSynthState.lastVelocity);
 }

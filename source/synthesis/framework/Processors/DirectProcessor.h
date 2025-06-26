@@ -17,6 +17,7 @@
 #include "Identifiers.h"
 #include "VelocityMinMaxParams.h"
 #include "TuningProcessor.h"
+#include "utils.h"
 
 struct DirectParams : chowdsp::ParamHolder
 {
@@ -191,6 +192,8 @@ private:
 
     chowdsp::ScopedCallbackList adsrCallbacks;
     chowdsp::ScopedCallbackList vtCallbacks;
+
+    BKSynthesizerState lastSynthState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };

@@ -8,6 +8,7 @@
 #include "Sample.h"
 #include "EnvParams.h"
 #include "TuningProcessor.h"
+#include "utils.h"
 
 //==============================================================================
 /**
@@ -341,6 +342,11 @@ class BKSynthesiser
                     tuning = attachedTuning;
                 }
 
+                BKSynthesizerState getSynthesizerState()
+                {
+                    return lastSynthState;
+                }
+
 protected:
                 //==============================================================================
                 /** This is used to control access to the rendering callback and the note trigger methods. */
@@ -453,6 +459,8 @@ private:
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
 
                 chowdsp::GainDBParameter& synthGain; //= 1.0; //global gain for this synth
+
+                BKSynthesizerState lastSynthState;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };
