@@ -101,6 +101,7 @@ public:
             modulationLineView._update();
         }
         item_dropped_on_prep_ = false;
+
     }
     bool item_dropped_on_prep_ = false;
 

@@ -34,11 +34,14 @@ ModulationPreparation::ModulationPreparation ( juce::ValueTree v, OpenGlWrapper 
 
 std::unique_ptr<SynthSection> ModulationPreparation::getPrepPopup()
 {
-
-    return std::make_unique<ModulationModuleSection>(
+    if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
+        if (auto *proc = dynamic_cast<bitklavier::ModulationProcessor*>(getProcessor()))
+            return std::make_unique<ModulationModuleSection>(
             &mod_list,
                                                       state,
                                                       findParentComponentOfClass<SynthGuiInterface>()->getGui()->modulation_manager.get());
+
+    return nullptr;
 
 }
 
@@ -58,5 +61,4 @@ void ModulationPreparation::paintBackground(juce::Graphics &g)  {
         port->redoImage();
     PreparationSection::paintBackground(g);
 }
-/*                     NESTED CLASS: ModulationPopup, inherits from PreparationPopup                 */
-/*************************************************************************************************/
+

@@ -14,7 +14,7 @@ ApplicationCommandHandler::ApplicationCommandHandler(SynthGuiInterface* gui) : j
             case undo:
             {
                 parent->getUndoManager()->undo();
-                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", " Undo triggered");
+                // juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", " Undo triggered");
                 return true;
             }
 

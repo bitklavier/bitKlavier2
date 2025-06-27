@@ -218,15 +218,10 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case deletion:
             {
-
-                auto& lasso = preparationSelector.getLassoSelection();
-                auto lassoCopy  = lasso;
-                lasso.deselectAll();
-                for (auto prep : lassoCopy)
+                for (auto prep : preparationSelector.getLassoSelection())
                 {
                     prep_list.removeChild(prep->state, &undo);
                 }
-
                 return true;
             }
             default:
@@ -377,6 +372,106 @@ void ConstructionSite::redraw(void) {
     draw();
 }
 
+<<<<<<< HEAD
+=======
+bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
+    int code = k.getKeyCode();
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (code == 68) //D Direct
+    {
+        juce::ValueTree t(IDs::PREPARATION);
+
+        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
+        t.setProperty(IDs::width, 245, nullptr);
+        t.setProperty(IDs::height, 125, nullptr);
+        t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+        prep_list.appendChild(t,  interface->getUndoManager());
+    } else if (code == 78) // N nostalgic
+    {
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
+        // t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
+        //
+        // prep_list.appendChild(t,  nullptr);
+    } else if (code == 75) // K Keymap
+    {
+        juce::ValueTree t(IDs::PREPARATION);
+
+        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
+        t.setProperty(IDs::width, 185, nullptr);
+        t.setProperty(IDs::height, 105, nullptr);
+        t.setProperty(IDs::x, lastX - 185 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 105 / 2, nullptr);
+        prep_list.appendChild(t,  nullptr);
+    } else if (code == 82) // R resonance
+    {
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
+    } else if (code == 83) // S synchronic
+    {
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
+    } else if (code == 66) // B blendronic
+    {
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
+        // t.setProperty(IDs::width, 260, nullptr);
+        // t.setProperty(IDs::height, 132, nullptr);
+        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
+    } else if (code == 77) // M tempo
+    {
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
+        // t.setProperty(IDs::width, 132, nullptr);
+        // t.setProperty(IDs::height, 260, nullptr);
+        // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
+    } else if (code == 84) // T tuning
+    {
+        // juce::ValueTree t(IDs::PREPARATION);
+        //
+        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
+        // t.setProperty(IDs::width, 125, nullptr);
+        // t.setProperty(IDs::height, 245, nullptr);
+        // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+        // prep_list.appendChild(t,  nullptr);
+    } else if (k.getTextCharacter() == 'c') {
+        juce::ValueTree t(IDs::PREPARATION);
+
+        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
+        t.setProperty(IDs::width, 100, nullptr);
+        t.setProperty(IDs::height, 100, nullptr);
+        t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
+        t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
+        prep_list.appendChild(t,  nullptr);
+    }
+    return true;
+}
+
+>>>>>>> 61d9fa3313df0cc280f23dfd5a15b273053ecb86
 void ConstructionSite::itemIsBeingDragged(BKItem *thisItem, const juce::MouseEvent &e) {
     repaint();
 }

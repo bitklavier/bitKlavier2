@@ -109,7 +109,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     //should pull first two modinputs first or somehow have dum
     //
     // my ins???
-    //DBG(juce::String(state.params.velocityMinMax.velocityMaxParam->getCurrentValue()));
+
     buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
 
     state.params.transpose.processStateChanges();

@@ -90,7 +90,7 @@ bool SynthGuiInterface::perform(const InvocationInfo & info) {
             case undo:
             {
                 getUndoManager()->undo();
-                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", " Undo triggered");
+                // juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", " Undo triggered");
                 return true;
             }
             case redo:

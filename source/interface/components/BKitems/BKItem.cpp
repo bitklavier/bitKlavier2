@@ -43,6 +43,9 @@ namespace
 
         if (type == bitklavier::BKPreparationType::PreparationTypeModulation)
             return Paths::modulationPaths();
+
+        if (type == bitklavier::BKPreparationType::PreparationTypeVST)
+            return Paths::vstPaths();
     }
 }
 
