@@ -28,7 +28,7 @@ public:
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
-        // pluginState is really preparationState; the state holder for this preparation (not the whole app/plugin)
+        // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
@@ -38,7 +38,7 @@ public:
         // we're leaving out "outputGain" since that has its own VolumeSlider
         for (auto& param_ : *params.getFloatParams())
         {
-            if(
+            if ( // make group of params to display together
                 param_->paramID == "Main" ||
                 param_->paramID == "Hammers" ||
                 param_->paramID == "Resonance" ||
@@ -67,7 +67,8 @@ public:
         velocityMinMaxSlider->setComponentID ("velocity_min_max");
         addStateModulatedComponent (velocityMinMaxSlider.get());
 
-        // the level meter and output gain slider (right side of preparation popup
+        // the level meter and output gain slider (right side of preparation popup)
+        // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         addSubSection(levelMeter.get());
 
@@ -79,14 +80,12 @@ public:
         paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
+
         for (auto& slider : _sliders)
         {
             drawLabelForComponent (g, slider->getName(), slider.get());
         }
-        for (auto& slider : outputGainKnobs)
-        {
-            drawLabelForComponent (g, slider->getName(), slider.get());
-        }
+
         paintChildrenBackgrounds (g);
     }
 
@@ -99,10 +98,7 @@ public:
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
-    // vector of sliders/knobs to display together
-    std::vector<std::unique_ptr<SynthSlider>> outputGainKnobs;
-
-    //juce::GroupComponent knobsBorder;
+    // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;
 
     void resized() override;

@@ -25,11 +25,13 @@
     - `levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);`
       - (the `outputLevels` parameter is used to display the audio levels for the meter, so we pass that parameter here as well, but it doesn't require an attachment since it's not an element that the users would interact with)
     - since the `levelMeter` combines a few elements, its a "section" that needs to get added with `addSubSection`
-    - one of the nice things about this setup is that we don't have to go into the `levelMeter` to get the slider value; since it's registered with the chowdsp parameter system, that will keep track of the slider value, and we can query it elsehwere
-      - in fact, if you look at the bottom of `DirectProcessor::processBlock` you will see these two lines:
-        - `auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());`
-        - `buffer.applyGain(outputgainmult);`
-      - which is where we can find the slider setting and use it. 
+      - one of the nice things about this setup is that we don't have to go into the `levelMeter` to get the slider value; since it's registered with the chowdsp parameter system, that will keep track of the slider value, and we can query it elsehwere
+        - in fact, if you look at the bottom of `DirectProcessor::processBlock` you will see these two lines:
+          - `auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());`
+          - `buffer.applyGain(outputgainmult);`
+        - which is where we can find the slider setting and use it. 
+  - if you need information back from the BKSynthesizer, you can use `lastSynthState = mainSynth->getSynthesizerState();`, which will return a struct with various info, which you might need to extend. We use this with the velocityMinMax slider, getting the lastVelocity back from BKSynthesizer, since that's where all the MIDI msgs get unpacked
+
 
 
 - then, in `DirectParametersView::resized()` you need to actually place the UI elements in the window

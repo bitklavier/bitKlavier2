@@ -24,7 +24,6 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     hammerSynth->isKeyReleaseSynth (true);
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
-    // bufferDebugger = new BufferDebugger();
 
     int mod = 0;
     for (auto [key, param] : state.params.modulatableParams)
@@ -155,11 +154,9 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
     buffer.applyGain(outputgainmult);
-
 
     // level meter update stuff
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
