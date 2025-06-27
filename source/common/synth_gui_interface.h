@@ -54,11 +54,6 @@ class PopupItems;
 class
 SynthGuiInterface :  public juce::ApplicationCommandTarget {
 public:
-
-
-
-
-
     SynthGuiInterface(SynthBase* synth, bool use_gui = true);
     virtual ~SynthGuiInterface();
     // Define your command IDs
@@ -137,9 +132,9 @@ public:
     std::unique_ptr<PluginListWindow> pluginListWindow;
    juce::ScopedMessageBox messageBox;
     juce::ApplicationCommandManager commandManager;
+
   protected:
     std::atomic<bool> loading;
-
 
     std::unique_ptr<juce::FileChooser> filechooser;
     SynthBase* synth_;

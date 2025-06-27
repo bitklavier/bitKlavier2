@@ -25,7 +25,9 @@
 #include "synth_slider.h"
 #include "text_look_and_feel.h"
 
-FullInterface::FullInterface (SynthGuiData* synth_data) : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_)
+FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommandManager& _manager)
+    : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_),
+    commandManager (_manager)
 {
     full_screen_section_ = nullptr;
     Skin default_skin;
@@ -37,7 +39,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data) : SynthSection ("full_in
 
     synth_data->tree.addChild (t, -1, nullptr);
     vt = synth_data->tree.getChildWithName(IDs::PIANO);
-    main_ = std::make_unique<MainSection> (synth_data->tree, synth_data->um, open_gl_, synth_data);
+    main_ = std::make_unique<MainSection> (synth_data->tree, synth_data->um, open_gl_, synth_data, commandManager);
     addSubSection (main_.get());
     main_->addListener (this);
     valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);

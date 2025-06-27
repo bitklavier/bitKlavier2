@@ -15,21 +15,30 @@ class OpenGlLine;
 class SynthGuiInterface;
 typedef Loki::Factory<std::unique_ptr<PreparationSection>, int, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
 class ConstructionSite : public SynthSection,
-                         private juce::KeyListener,
+
                          public juce::DragAndDropContainer,
                          // public juce::ChangeListener,
                          private PreparationList::Listener,
-                         public PreparationSection::Listener
+                         public PreparationSection::Listener,
+                        public juce::ApplicationCommandTarget
 
 {
 public:
-    ConstructionSite (const juce::ValueTree& v, juce::UndoManager& um, OpenGlWrapper& open_gl, SynthGuiData* data);
-
+    ConstructionSite (const juce::ValueTree& v, juce::UndoManager& um, OpenGlWrapper& open_gl, SynthGuiData* data, juce::ApplicationCommandManager &_manager);
     ~ConstructionSite (void);
 
     void redraw (void);
 
-    bool keyPressed (const juce::KeyPress& k, juce::Component* c) override;
+    ApplicationCommandTarget* getNextCommandTarget() override {
+        return findFirstTargetParentComponent();
+        //return findParentComponentOfClass<SynthGuiInterface>();
+    }
+    void getAllCommands(juce::Array<juce::CommandID> &commands) override;
+    void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override;
+    bool perform(const InvocationInfo &info) override;
+    // void initializeCommandManager();
+
+    // bool keyPressed (const juce::KeyPress& k, juce::Component* c) override;
     void itemIsBeingDragged (BKItem* thisItem, const juce::MouseEvent& e);
 
     void paintBackground (juce::Graphics& g) override;
@@ -103,6 +112,7 @@ public:
 
 private:
     PreparationList& prep_list;
+    juce::ApplicationCommandManager& commandManager;
     void moduleListChanged() {}
     void moduleAdded (PluginInstanceWrapper* newModule) override;
     void removeModule (PluginInstanceWrapper* moduleToRemove) override;

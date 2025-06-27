@@ -65,13 +65,15 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
                                                                                this, synth)) {
     if (use_gui) {
         SynthGuiData synth_data(synth_);
-        gui_ = std::make_unique<FullInterface>(&synth_data);
+        gui_ = std::make_unique<FullInterface>(&synth_data, commandManager);
         // for registering hotkeys etc.
 
         //commandHandler = std::make_unique<ApplicationCommandHandler>(this);
+
         commandManager.registerAllCommandsForTarget(this);
+        // TODO: questions about when this needs to be called.
         commandManager.getKeyMappings()->resetToDefaultMappings();
-        commandManager.setFirstCommandTarget (this);
+        // commandManager.setFirstCommandTarget (this);
 
 
     }
@@ -113,6 +115,7 @@ bool SynthGuiInterface::perform(const InvocationInfo & info) {
 
 SynthGuiInterface::~SynthGuiInterface() {
 }
+
 
 void SynthGuiInterface::updateFullGui() {
     if (gui_ == nullptr)

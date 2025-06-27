@@ -169,6 +169,12 @@ public:
 
     }
 
+    void removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)
+    {
+        undoManager->beginNewTransaction();
+        this->parent.removeChild(child,undoManager);
+    }
+
     void newObjectAdded (PluginInstanceWrapper*) override;
     void objectRemoved (PluginInstanceWrapper*) override;     //resized(); }
     void objectOrderChanged() override              { }//resized(); }

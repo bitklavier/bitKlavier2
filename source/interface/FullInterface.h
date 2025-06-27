@@ -32,7 +32,7 @@ class FullInterface : public SynthSection, public juce::OpenGLRenderer, public H
 
 public :
     static constexpr double kMinOpenGlVersion = 1.4;
-    FullInterface(SynthGuiData *synth_gui_data);
+    FullInterface(SynthGuiData *synth_gui_data, juce::ApplicationCommandManager& _manager);
      ~FullInterface() override;
 
      void paintBackground(juce::Graphics& g) override;
@@ -116,6 +116,7 @@ private :
 
 
 //std::unique_ptr<TestSection> test_;
+    juce::ApplicationCommandManager& commandManager;
     int width_;
     int resized_width_;
     bool animate_;

@@ -11,7 +11,7 @@ class MainSection : public SynthSection
 public:
 
 
-    MainSection(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData * data);
+    MainSection(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData * data, juce::ApplicationCommandManager& _manager);
     ~MainSection();
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
@@ -26,6 +26,7 @@ public:
 private:
 
     juce::UndoManager &um;
+    juce::ApplicationCommandManager& commandManager;
     juce::Viewport constructionPort;
     std::unique_ptr<ConstructionSite> constructionSite_;
     std::vector<Listener*> listeners_;

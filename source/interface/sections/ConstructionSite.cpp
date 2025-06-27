@@ -10,17 +10,23 @@
 #include "open_gl_line.h"
 
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
-                                   SynthGuiData *data) : SynthSection("Construction Site"),
+                                   SynthGuiData *data, juce::ApplicationCommandManager &_manager)
+                                                        : SynthSection("Construction Site"),
                                                         prep_list(*data->synth->preparationList.get()),
                                                          undo(um),
                                                          open_gl(open_gl),
                                                          cableView(*this),
                                                          modulationLineView(*this),
-                                                         preparationSelector(*this), parent(v)
+                                                         preparationSelector(*this), parent(v),
+                                                        commandManager (_manager)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
-    //setWantsKeyboardFocus(true);
-    addKeyListener(this);
+    commandManager.registerAllCommandsForTarget (this);
+
+
+
+    setWantsKeyboardFocus(true);
+    //addKeyListener(this);
     setSkinOverride(Skin::kConstructionSite);
     setInterceptsMouseClicks(false, true);
     //data->synth->getEngine()->addChangeListener(this);
@@ -37,7 +43,190 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::createPluginSection);
 }
 
+// Define your command IDs
+enum CommandIDs {
+    direct = 0x0613,
+    nostalgic = 0x0614,
+    keymap = 0x0615,
+    resonance = 0x0616,
+    synchronic   = 0x0617,
+    blendronic = 0x0618,
+    tempo = 0x0619,
+    tuning = 0x0620,
+    modulation = 0x0621,
+    deletion = 0x0622
+};
 
+void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
+    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, blendronic, tempo, modulation, deletion});
+}
+void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
+        switch (id) {
+            case direct:
+                info.setInfo("Direct", "Create Direct Preparation", "Edit", 0);
+                info.addDefaultKeypress('d', juce::ModifierKeys::noModifiers);
+            break;
+            case nostalgic:
+                info.setInfo("Nostalgic", "Create Nostalgic Preparation", "Edit", 0);
+            info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
+            break;
+            case keymap:
+                info.setInfo("Keymap", "Create Keymap Preparation", "Edit", 0);
+                info.addDefaultKeypress('k', juce::ModifierKeys::noModifiers);
+            break;
+            case resonance:
+                info.setInfo("Resonance", "Create Resonance Preparation", "Edit", 0);
+                info.addDefaultKeypress('r', juce::ModifierKeys::noModifiers);
+            break;
+            case synchronic:
+                info.setInfo("Synchronic", "Create Synchronic Preparation", "Edit", 0);
+                info.addDefaultKeypress('s', juce::ModifierKeys::noModifiers);
+            break;
+            case blendronic:
+                info.setInfo("Blendronic", "Create Blendronic Preparation", "Edit", 0);
+                info.addDefaultKeypress('b', juce::ModifierKeys::noModifiers);
+            break;
+            case tempo:
+                info.setInfo("Tempo", "Create Tempo Preparation", "Edit", 0);
+                info.addDefaultKeypress('m', juce::ModifierKeys::noModifiers);
+            break;
+            case tuning:
+                info.setInfo("Tuning", "Create Tuning Preparation", "Edit", 0);
+                info.addDefaultKeypress('t', juce::ModifierKeys::noModifiers);
+            break;
+            case modulation:
+                info.setInfo("Modulation", "Create Modulation", "Edit", 0);
+                info.addDefaultKeypress('c', juce::ModifierKeys::noModifiers);
+            break;
+            case deletion:
+                info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
+                info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
+            break;
+        }
+    }
+bool ConstructionSite::perform(const InvocationInfo &info) {
+        switch (info.commandID) {
+            case direct:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
+                t.setProperty(IDs::width, 245, nullptr);
+                t.setProperty(IDs::height, 125, nullptr);
+                t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+                t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+                // prep_list.appendChild(t,  interface->getUndoManager());
+                prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case nostalgic:
+            {
+                // juce::ValueTree t(IDs::PREPARATION);
+                //
+                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
+                // t.setProperty(IDs::width, 260, nullptr);
+                // t.setProperty(IDs::height, 132, nullptr);
+                // t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
+                // t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
+                //
+                // prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case keymap:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
+                t.setProperty(IDs::width, 185, nullptr);
+                t.setProperty(IDs::height, 105, nullptr);
+                t.setProperty(IDs::x, lastX - 185 / 2, nullptr);
+                t.setProperty(IDs::y, lastY - 105 / 2, nullptr);
+                prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case resonance:
+            {
+                // juce::ValueTree t(IDs::PREPARATION);
+                //
+                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
+                // t.setProperty(IDs::width, 260, nullptr);
+                // t.setProperty(IDs::height, 132, nullptr);
+                // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+                // prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case synchronic:
+            {
+                // juce::ValueTree t(IDs::PREPARATION);
+                //
+                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
+                // t.setProperty(IDs::width, 260, nullptr);
+                // t.setProperty(IDs::height, 132, nullptr);
+                // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+                // prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case blendronic:
+            {
+                // juce::ValueTree t(IDs::PREPARATION);
+                //
+                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
+                // t.setProperty(IDs::width, 260, nullptr);
+                // t.setProperty(IDs::height, 132, nullptr);
+                // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
+                // prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case tempo:
+            {
+                // juce::ValueTree t(IDs::PREPARATION);
+                //
+                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
+                // t.setProperty(IDs::width, 132, nullptr);
+                // t.setProperty(IDs::height, 260, nullptr);
+                // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
+                // prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case tuning:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
+                t.setProperty(IDs::width, 125, nullptr);
+                t.setProperty(IDs::height, 245, nullptr);
+                t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+                t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+                prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case modulation:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
+                t.setProperty(IDs::width, 100, nullptr);
+                t.setProperty(IDs::height, 100, nullptr);
+                t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
+                t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
+                prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case deletion:
+            {
+                for (auto prep : preparationSelector.getLassoSelection())
+                {
+                    prep_list.removeChild(prep->state, &undo);
+                }
+                return true;
+            }
+            default:
+                return false;
+        }
+}
 
 void ConstructionSite::reset() {
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
@@ -182,103 +371,6 @@ void ConstructionSite::redraw(void) {
     draw();
 }
 
-bool ConstructionSite::keyPressed(const juce::KeyPress &k, juce::Component *c) {
-    int code = k.getKeyCode();
-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    if (code == 68) //D Direct
-    {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
-        t.setProperty(IDs::width, 245, nullptr);
-        t.setProperty(IDs::height, 125, nullptr);
-        t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
-        prep_list.appendChild(t,  interface->getUndoManager());
-    } else if (code == 78) // N nostalgic
-    {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
-        // t.setProperty(IDs::width, 260, nullptr);
-        // t.setProperty(IDs::height, 132, nullptr);
-        // t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
-        // t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
-        //
-        // prep_list.appendChild(t,  nullptr);
-    } else if (code == 75) // K Keymap
-    {
-        juce::ValueTree t(IDs::PREPARATION);
-
-        t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
-        t.setProperty(IDs::width, 185, nullptr);
-        t.setProperty(IDs::height, 105, nullptr);
-        t.setProperty(IDs::x, lastX - 185 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 105 / 2, nullptr);
-        prep_list.appendChild(t,  nullptr);
-    } else if (code == 82) // R resonance
-    {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
-        // t.setProperty(IDs::width, 260, nullptr);
-        // t.setProperty(IDs::height, 132, nullptr);
-        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        // prep_list.appendChild(t,  nullptr);
-    } else if (code == 83) // S synchronic
-    {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
-        // t.setProperty(IDs::width, 260, nullptr);
-        // t.setProperty(IDs::height, 132, nullptr);
-        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        // prep_list.appendChild(t,  nullptr);
-    } else if (code == 66) // B blendronic
-    {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
-        // t.setProperty(IDs::width, 260, nullptr);
-        // t.setProperty(IDs::height, 132, nullptr);
-        // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-        // prep_list.appendChild(t,  nullptr);
-    } else if (code == 77) // M tempo
-    {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
-        // t.setProperty(IDs::width, 132, nullptr);
-        // t.setProperty(IDs::height, 260, nullptr);
-        // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        // prep_list.appendChild(t,  nullptr);
-    } else if (code == 84) // T tuning
-    {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
-        // t.setProperty(IDs::width, 125, nullptr);
-        // t.setProperty(IDs::height, 245, nullptr);
-        // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
-        // prep_list.appendChild(t,  nullptr);
-    } else if (k.getTextCharacter() == 'c') {
-        // juce::ValueTree t(IDs::PREPARATION);
-        //
-        // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
-        // t.setProperty(IDs::width, 100, nullptr);
-        // t.setProperty(IDs::height, 100, nullptr);
-        // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-        // prep_list.appendChild(t,  nullptr);
-    }
-    return true;
-}
-
 void ConstructionSite::itemIsBeingDragged(BKItem *thisItem, const juce::MouseEvent &e) {
     repaint();
 }
@@ -352,7 +444,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     mouse = e.position;
 
     // // This must happen before the right-click menu or the menu will close
-    // grabKeyboardFocus();
+    grabKeyboardFocus();
 
     if (e.mods.isPopupMenu()) {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -374,7 +466,8 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::height, 260, nullptr);
         t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
         t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        prep_list.appendChild(t,  interface->getUndoManager());
+        // prep_list.appendChild(t,  interface->getUndoManager());
+        prep_list.appendChild(t,  &undo);
     } else {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::PREPARATION);
@@ -386,7 +479,7 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
 
         auto desc = _parent->userPreferences->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
-        t.addChild(plugin,-1, nullptr);
+        t.addChild(plugin,-1, &undo);
         prep_list.addPlugin(desc.pluginDescription,t);
 
     }
