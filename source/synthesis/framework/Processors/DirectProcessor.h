@@ -4,20 +4,20 @@
 
 #pragma once
 
+#include "EnvParams.h"
+#include "Identifiers.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "Synthesiser/Sample.h"
+#include "TransposeParams.h"
+#include "TuningProcessor.h"
+#include "VelocityMinMaxParams.h"
+#include "buffer_debugger.h"
+#include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-#include "EnvParams.h"
-#include "TransposeParams.h"
-#include "buffer_debugger.h"
-#include "Identifiers.h"
-#include "VelocityMinMaxParams.h"
-#include "TuningProcessor.h"
-#include "utils.h"
 
 struct DirectParams : chowdsp::ParamHolder
 {
@@ -27,7 +27,7 @@ struct DirectParams : chowdsp::ParamHolder
     float skewFactor = 2.0f;
 
     using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::unordered_map<std::string,ParamPtrVariant> modulatableParams;
+    std::unordered_map<std::string, ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
@@ -43,16 +43,16 @@ struct DirectParams : chowdsp::ParamHolder
             velocityMinMax);
 
         doForAllParameters ([this] (auto& param, size_t) {
-            if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
-                if(sliderParam->supportsMonophonicModulation())
-                    modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
+            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.insert ({ sliderParam->paramID.toStdString(), sliderParam });
 
-            if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *> (&param))
-                if(sliderParam->supportsMonophonicModulation())
-                    modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
+            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.insert ({ sliderParam->paramID.toStdString(), sliderParam });
 
-            if (auto *sliderParam = dynamic_cast<chowdsp::FloatParameter *> (&param))
-                if(sliderParam->supportsMonophonicModulation())
+            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.insert ({ sliderParam->paramID.toStdString(), sliderParam });
         });
     }
@@ -62,7 +62,8 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Main", 100 },
         "Main",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        0.0f,true
+        0.0f,
+        true
     };
 
     // Hammer param
@@ -78,7 +79,8 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Resonance", 100 },
         "Release Resonance",
         juce::NormalisableRange { rangeStart, rangeEnd + 24, 0.0f, skewFactor, false },
-        6.0f,true
+        6.0f,
+        true
     };
 
     // Pedal param
@@ -86,7 +88,8 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Pedal", 100 },
         "Pedal",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        -6.0f,true
+        -6.0f,
+        true
     };
 
     // Gain for output send (for blendronic, VSTs, etc...)
@@ -94,7 +97,8 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Send", 100 },
         "Send",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        0.0f,true
+        0.0f,
+        true
     };
 
     // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
@@ -102,7 +106,8 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "OutputGain", 100 },
         "Output Gain",
         juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
-        0.0f,true
+        0.0f,
+        true
     };
 
     // ADSR params
@@ -135,13 +140,18 @@ struct DirectNonParameterState : chowdsp::NonParamState
     DirectNonParameterState() {}
 };
 
-class SynthBase;
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState>>,
-public juce::ValueTree::Listener
+                        public juce::ValueTree::Listener
 {
 public:
-    DirectProcessor (SynthBase* parent,const juce::ValueTree& v);
-    ~DirectProcessor(){}
+    DirectProcessor (SynthBase& parent, const juce::ValueTree& v);
+    ~DirectProcessor()
+    {
+    }
+    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
+    {
+        return std::make_unique<DirectProcessor> (parent, v);
+    }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
@@ -164,13 +174,13 @@ public:
         pedalSynth->addSoundSet (p);
     }
 
-    void setTuning(TuningProcessor* ) override;
+    void setTuning (TuningProcessor*) override;
     juce::AudioProcessor::BusesProperties directBusLayout()
     {
         return BusesProperties()
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), true)
-            .withInput("input",juce::AudioChannelSet::stereo(),false)
-            .withInput ("Modulation",juce::AudioChannelSet::discreteChannels(9) ,true);
+            .withInput ("input", juce::AudioChannelSet::stereo(), false)
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (9), true);
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
     bool hasEditor() const override { return false; }
@@ -183,22 +193,25 @@ public:
         });
     }
 
-    void valueTreePropertyChanged   (juce::ValueTree& t, const juce::Identifier&) {
-        juce::String a  = t.getProperty(IDs::mainSampleSet, "");
-        juce::String b  = t.getProperty(IDs::hammerSampleSet, "");
-        juce::String c  = t.getProperty(IDs::releaseResonanceSampleSet, "");
-        juce::String d  = t.getProperty(IDs::pedalSampleSet, "");
+    void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
+    {
+        juce::String a = t.getProperty (IDs::mainSampleSet, "");
+        juce::String b = t.getProperty (IDs::hammerSampleSet, "");
+        juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
+        juce::String d = t.getProperty (IDs::pedalSampleSet, "");
         addSoundSet (&(*ptrToSamples)[a],
-                &(*ptrToSamples)[b],
-                &(*ptrToSamples)[c],
-                &(*ptrToSamples)[d]);
+            &(*ptrToSamples)[b],
+            &(*ptrToSamples)[c],
+            &(*ptrToSamples)[d]);
     }
 
-    void valueTreeChildAdded        (juce::ValueTree&, juce::ValueTree&)        {}
-    void valueTreeChildRemoved      (juce::ValueTree&, juce::ValueTree&, int)   {}
-    void valueTreeChildOrderChanged (juce::ValueTree&, int, int)          {}
-    void valueTreeParentChanged     (juce::ValueTree&)                    {}
-    void valueTreeRedirected        (juce::ValueTree&)                    {}
+    void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) {}
+    void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) {}
+    void valueTreeChildOrderChanged (juce::ValueTree&, int, int) {}
+    void valueTreeParentChanged (juce::ValueTree&) {}
+    void valueTreeRedirected (juce::ValueTree&) {}
+
+
 
 private:
     chowdsp::Gain<float> gain;

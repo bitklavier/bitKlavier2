@@ -13,8 +13,7 @@
 #include "ModulationProcessor.h"
 #include "PreparationSection.h"
 #include "popup_browser.h"
-//#include "ParameterView/ModulationParametersView.h"
-#include "ModulationProcessor.h"
+
 #include "FullInterface.h"
 
 #include "envelope_section.h"
@@ -30,33 +29,27 @@ public:
 
     // Constructor method that takes three arguments: a smart pointer to a PolygonalOscProcessor,
     // a value tree, and a reference to an OpenGlWrapper object
-    ModulationPreparation(std::unique_ptr<bitklavier::ModulationProcessor> proc, juce::ValueTree v, OpenGlWrapper& um, SynthGuiInterface*);
+    ModulationPreparation( juce::ValueTree v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface*);
 
     // Destructor method
     ~ModulationPreparation();
 
-    // Static function that returns a pointer to a ModulationPreparation object
-    static PreparationSection* createModulationSection(juce::ValueTree v, SynthGuiInterface* interface) {
+    static std::unique_ptr<PreparationSection> create(const juce::ValueTree& v, SynthGuiInterface* interface) {
 
-        return new ModulationPreparation(std::make_unique<bitklavier::ModulationProcessor>(v), v, interface->getGui()->open_gl_,interface);
+        return std::make_unique<ModulationPreparation> (v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
+    void mouseDoubleClick(const juce::MouseEvent &event) override {
 
-
-
+        showPrepPopup(std::move(this->getPrepPopup()),bitklavier::BKPreparationType::PreparationTypeModulation);
+    }
 
 
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
     void paintBackground(juce::Graphics &g);
-    juce::AudioProcessor* getProcessor() override;
-    std::unique_ptr<juce::AudioProcessor> getProcessorPtr() override;
+
 
 private:
-    // Private member variable for the ModulationPreparation class: proc is a pointer to a
-    // ModulationProcessor Object
-    bitklavier::ModulationProcessor & proc;
-    std::unique_ptr<bitklavier::ModulationProcessor> _proc_ptr;
-
     ModulationList mod_list;
 
 };

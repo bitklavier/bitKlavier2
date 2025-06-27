@@ -36,7 +36,7 @@ namespace Loki
             const char* what() const throw() { return "Unknown Type"; }
         };
         
-        static AbstractProduct* OnUnknownType(IdentifierType)
+        static AbstractProduct OnUnknownType(IdentifierType)
         {
             throw Exception();
         }
@@ -53,7 +53,7 @@ namespace Loki
         typename IdentifierType,
             typename InputA,
             typename InputB,
-        typename ProductCreator = AbstractProduct* (*)(InputA, InputB),
+        typename ProductCreator = AbstractProduct (*)(InputA, InputB),
 
         template<typename, class>
             class FactoryErrorPolicy = DefaultFactoryError
@@ -75,7 +75,7 @@ namespace Loki
         }
 
 
-        AbstractProduct* CreateObject(const IdentifierType& id, InputA a, InputB b)
+        AbstractProduct CreateObject(const IdentifierType& id, InputA a, InputB b)
         {
             typename IdToProductMap::iterator i = associations_.find(id);
             if (i != associations_.end())

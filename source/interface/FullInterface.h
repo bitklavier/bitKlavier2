@@ -32,7 +32,7 @@ class FullInterface : public SynthSection, public juce::OpenGLRenderer, public H
 
 public :
     static constexpr double kMinOpenGlVersion = 1.4;
-    FullInterface(SynthGuiData *synth_gui_data);
+    FullInterface(SynthGuiData *synth_gui_data, juce::ApplicationCommandManager& _manager);
      ~FullInterface() override;
 
      void paintBackground(juce::Graphics& g) override;
@@ -77,13 +77,13 @@ public :
     }
     void hideDisplay(bool primary);
     void popupSelector(juce::Component* source, juce::Point<int> position, const PopupItems& options,
-        std::function<void(int)> callback, std::function<void()> cancel);
+        std::function<void(int,int)> callback, std::function<void()> cancel);
 
     void popupDisplay(juce::Component* source, const std::string& text,
         juce::BubbleComponent::BubblePlacement placement, bool primary);
 
-    void prepDisplay(PreparationSection* source);
-    void modDisplay(PreparationSection* prep);
+    void prepDisplay(std::unique_ptr<SynthSection> synth_section);
+    void modDisplay(std::unique_ptr<SynthSection> synth_section);
     std::unique_ptr<SinglePopupSelector> popup_selector_;
     std::unique_ptr<PreparationPopup> prep_popup;
     std::unique_ptr<PreparationPopup> mod_popup;
@@ -116,6 +116,7 @@ private :
 
 
 //std::unique_ptr<TestSection> test_;
+    juce::ApplicationCommandManager& commandManager;
     int width_;
     int resized_width_;
     bool animate_;

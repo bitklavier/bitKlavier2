@@ -33,7 +33,7 @@
       </PREPARATION>
     </PREPARATIONS>
     <CONNECTIONS>
-      <CONNECTION isMod="0" src="5" srcIdx="4096" dest="4" destIdx="4096"/>
+
     </CONNECTIONS>
     <MODCONNECTIONS/>
   </PIANO>

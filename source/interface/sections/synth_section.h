@@ -41,7 +41,6 @@ class ModulationButton;
 class OpenGlComponent;
 class PresetSelector;
 class SynthSlider;
-class PreparationSection;
 class OpenGlBackground;
 struct PopupItems {
   int id;
@@ -131,9 +130,9 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void showPopupBrowser(SynthSection* owner, juce::Rectangle<int> bounds, std::vector<juce::File> directories,
                           juce::String extensions, std::string passthrough_name, std::string additional_folders_name);
 //    void updatePopupBrowser(SynthSection* owner);
-//
+
     void showPopupSelector(juce::Component* source,juce::Point<int> position, const PopupItems& options,
-                           std::function<void(int)> callback, std::function<void()> cancel = { });
+                           std::function<void(int,int)> callback, std::function<void()> cancel = { });
 //    void showDualPopupSelector(juce::Component* source,juce::Point<int> position, int width,
 //                               const PopupItems& options, std::function<void(int)> callback);
     void showPopupDisplay(juce::Component* source, const std::string& text,
@@ -210,7 +209,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void removeSubSection(SynthSection* section);
     virtual void setScrollWheelEnabled(bool enabled);
     SynthButton* activator() const { return activator_; }
-    void showPrepPopup(PreparationSection* prep);
+    void showPrepPopup(std::unique_ptr<SynthSection> prep, bitklavier::BKPreparationType);
     float getTitleWidth();
     float getPadding();
     float getPowerButtonOffset() const { return size_ratio_ * kDefaultPowerButtonOffset; }

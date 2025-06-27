@@ -150,13 +150,7 @@ void OpenGlSlider:: redoImage(bool skip_image) {
     slider_quad_->setRounding(slider_width * kRoundingMult);
     slider_quad_->setThumbAmount(handle_width);
   }
-  if (!skip_image) {
-//      juce::Image _image(juce::Image::SingleChannel, getWidth(), getHeight(), true);
-//      juce::Graphics g(_image);
-//      g.setColour(findColour(Skin::kRotaryBody,true));
-//      g.fillAll();
-//      image_component_.image().setOwnImage(_image);
-//    image_component_.draw_image_ = std::make_unique<juce::Image>(_image);
+ else if (!skip_image) {
     image_component_->setActive(true);
     image_component_->redrawImage(true, false);
   }
@@ -301,7 +295,7 @@ void SynthSlider::mouseDown(const juce::MouseEvent& e) {
 
   if (e.mods.isPopupMenu()) {
     PopupItems options = createPopupMenu();
-    parent_->showPopupSelector(this, e.getPosition(), options, [=](int selection) { handlePopupResult(selection); });
+    parent_->showPopupSelector(this, e.getPosition(), options, [=](int selection,int) { handlePopupResult(selection); });
   }
   else {
     if (isRotary())

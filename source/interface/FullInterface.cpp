@@ -25,7 +25,9 @@
 #include "synth_slider.h"
 #include "text_look_and_feel.h"
 
-FullInterface::FullInterface (SynthGuiData* synth_data) : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_)
+FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommandManager& _manager)
+    : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_),
+    commandManager (_manager)
 {
     full_screen_section_ = nullptr;
     Skin default_skin;
@@ -36,8 +38,8 @@ FullInterface::FullInterface (SynthGuiData* synth_data) : SynthSection ("full_in
     t.setProperty (IDs::name, "default", nullptr);
 
     synth_data->tree.addChild (t, -1, nullptr);
-    vt = t;
-    main_ = std::make_unique<MainSection> (synth_data->tree.getChildWithName (IDs::PIANO), synth_data->um, open_gl_, synth_data);
+    vt = synth_data->tree.getChildWithName(IDs::PIANO);
+    main_ = std::make_unique<MainSection> (synth_data->tree, synth_data->um, open_gl_, synth_data, commandManager);
     addSubSection (main_.get());
     main_->addListener (this);
     valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);
@@ -281,16 +283,16 @@ void FullInterface::popupDisplay (juce::Component* source, const std::string& te
     display->setVisible (true);
 }
 
-void FullInterface::prepDisplay (PreparationSection* prep)
+void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section)
 {
-    prep_popup->setContent (prep->getPrepPopup());
+    prep_popup->setContent (std::move(synth_section));
     prep_popup->setVisible (true);
     modulation_manager->added();
 }
 
-void FullInterface::modDisplay (PreparationSection* prep)
+void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section)
 {
-    mod_popup->setContent (prep->getPrepPopup());
+    mod_popup->setContent (std::move(synth_section));
     mod_popup->setVisible (true);
     modulation_manager->added();
 }
@@ -302,7 +304,7 @@ void FullInterface::hideDisplay (bool primary)
         display->setVisible (false);
 }
 
-void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int)> callback, std::function<void()> cancel)
+void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int,int)> callback, std::function<void()> cancel)
 {
     popup_selector_->setCallback (callback);
     popup_selector_->setCancelCallback (cancel);

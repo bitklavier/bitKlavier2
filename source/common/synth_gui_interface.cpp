@@ -56,27 +56,66 @@ void SynthGuiInterface::setGuiSize(float scale) { }
 #include "../interface/look_and_feel/default_look_and_feel.h"
 #include "../interface/fullInterface.h"
 
-
+#include "PluginList.h"
 SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(synth),
                                                                        userPreferences(new UserPreferencesWrapper()),
                                                                        sampleLoadManager(
                                                                            new SampleLoadManager(
-                                                                               userPreferences->userPreferences.get(),
+                                                                               userPreferences,
                                                                                this, synth)) {
     if (use_gui) {
         SynthGuiData synth_data(synth_);
-        gui_ = std::make_unique<FullInterface>(&synth_data);
+        gui_ = std::make_unique<FullInterface>(&synth_data, commandManager);
         // for registering hotkeys etc.
-        commandHandler = std::make_unique<ApplicationCommandHandler>(this);
-        commandManager.registerAllCommandsForTarget(commandHandler.get());
+
+        //commandHandler = std::make_unique<ApplicationCommandHandler>(this);
+
+        commandManager.registerAllCommandsForTarget(this);
+        // TODO: questions about when this needs to be called.
+        commandManager.getKeyMappings()->resetToDefaultMappings();
+        // commandManager.setFirstCommandTarget (this);
+
+
     }
-    sampleLoadManager->preferences = userPreferences->userPreferences.get();
+    sampleLoadManager->preferences = userPreferences;
     sampleLoadManager->loadSamples(0,true);
+    synth_->user_prefs = userPreferences;
+
     //sampleLoadManager->loadSamples(0, true);
+}
+
+bool SynthGuiInterface::perform(const InvocationInfo & info) {
+    {
+        switch (info.commandID) {
+            case undo:
+            {
+                getUndoManager()->undo();
+                // juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Undo", " Undo triggered");
+                return true;
+            }
+            case redo:
+            {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
+                return true;
+            }
+            case CommandIDs::showPluginListEditor:
+            {
+                if (pluginListWindow == nullptr)
+                    pluginListWindow.reset (new SynthGuiInterface::PluginListWindow (*this, *userPreferences, userPreferences->userPreferences->formatManager));
+
+                pluginListWindow->toFront (true);
+                return true;
+            }
+
+            default:
+                return false;
+        }
+    }
 }
 
 SynthGuiInterface::~SynthGuiInterface() {
 }
+
 
 void SynthGuiInterface::updateFullGui() {
     if (gui_ == nullptr)
@@ -204,12 +243,12 @@ bool SynthGuiInterface::isConnected(juce::AudioProcessorGraph::Connection &conne
     return synth_->getEngine()->isConnected(connection);
 }
 
-void SynthGuiInterface::addProcessor(PreparationSection *object) {
-    tryEnqueueProcessorInitQueue([this, object] {
-        if (auto listener = dynamic_cast<juce::ValueTree::Listener *>(object->getProcessor()))
-            sampleLoadManager->t.addListener(listener);
-        object->setNodeInfo(getSynth()->addProcessor(std::move(object->getProcessorPtr()), object->pluginID));
-    });
+void SynthGuiInterface::addProcessor(std::unique_ptr<juce::AudioPluginInstance> instance ) {
+    // tryEnqueueProcessorInitQueue([this, object] {
+    //     if (auto listener = dynamic_cast<juce::ValueTree::Listener *>(object->getProcessor()))
+    //         sampleLoadManager->t.addListener(listener);
+    //     object->setNodeInfo(getSynth()->addProcessor(std::move(object->getProcessorPtr()), object->pluginID));
+    // });
 }
 
 void SynthGuiInterface::addModulationNodeConnection(juce::AudioProcessorGraph::NodeID source,
@@ -297,4 +336,72 @@ const juce::CriticalSection &SynthGuiInterface::getCriticalSection() {
 bool SynthGuiInterface::isConnected(juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest) {
     return synth_->isConnected(src, dest);
 }
+
+static bool containsDuplicateNames (const juce::Array<juce::PluginDescription>& plugins, const juce::String& name)
+{
+    int matches = 0;
+
+    for (auto& p : plugins)
+        if (p.name == name && ++matches > 1)
+            return true;
+
+    return false;
+}
+static constexpr int menuIDBase = bitklavier::BKPreparationType::PreparationTypeVST;
+static void addToMenu (const juce::KnownPluginList::PluginTree& tree,
+                       PopupItems& m,
+                       const juce::Array<juce::PluginDescription>& allPlugins,
+                       juce::Array<PluginDescriptionAndPreference>& addedPlugins)
+{
+    for (auto* sub : tree.subFolders)
+    {
+        PopupItems subMenu;
+        subMenu.name    = sub->folder.toStdString();
+        addToMenu (*sub, subMenu, allPlugins, addedPlugins);
+
+        m.addItem (subMenu);
+    }
+
+    auto addPlugin = [&] (const auto& descriptionAndPreference, const auto& pluginName)
+    {
+        addedPlugins.add (descriptionAndPreference);
+        const auto menuID = addedPlugins.size() - 1 + menuIDBase;
+        m.addItem (menuID, pluginName.toStdString());
+    };
+
+    for (auto& plugin : tree.plugins)
+    {
+        auto name = plugin.name;
+
+        if (containsDuplicateNames (tree.plugins, name))
+            name << " (" << plugin.pluginFormatName << ')';
+
+        addPlugin (PluginDescriptionAndPreference { plugin, PluginDescriptionAndPreference::UseARA::no }, name);
+
+#if JUCE_PLUGINHOST_ARA && (JUCE_MAC || JUCE_WINDOWS || JUCE_LINUX)
+        if (plugin.hasARAExtension)
+        {
+            name << " (ARA)";
+            addPlugin (PluginDescriptionAndPreference { plugin }, name);
+        }
+#endif
+    }
+}
+PopupItems SynthGuiInterface::getPluginPopupItems() {
+    PopupItems popup;
+
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
+
+    auto pluginDescriptions = userPreferences->userPreferences->knownPluginList.getTypes();
+
+    auto tree = juce::KnownPluginList::createTree (pluginDescriptions, userPreferences->userPreferences->pluginSortMethod);
+    userPreferences->userPreferences->pluginDescriptionsAndPreference = {};
+    popup.addItem(-1,"");
+    addToMenu(*tree,popup,pluginDescriptions,userPreferences->userPreferences->pluginDescriptionsAndPreference);
+    return popup;
+}
+
 #endif

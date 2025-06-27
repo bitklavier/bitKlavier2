@@ -6,17 +6,14 @@
 #include "synth_section.h"
 #include "ConstructionSite.h"
 
-MainSection::MainSection(juce::ValueTree v, juce::UndoManager &um, OpenGlWrapper & open_gl, SynthGuiData* data) : SynthSection("main_section"), um(um)
+MainSection::MainSection(const juce::ValueTree& v, juce::UndoManager &um, OpenGlWrapper & open_gl, SynthGuiData* data, juce::ApplicationCommandManager& _manager)
+    : SynthSection("main_section"), um(um), commandManager (_manager)
 {
-    juce::ValueTree t{IDs::PREPARATIONS};
-    v.appendChild(t, nullptr);
-    juce::ValueTree t2{IDs::CONNECTIONS};
-    juce::ValueTree t3{IDs::MODCONNECTIONS};
-    v.appendChild(t2, nullptr);
-    v.appendChild(t3, nullptr);
-    constructionSite_ = std::make_unique<ConstructionSite>(t, um, open_gl, data);
+
+    constructionSite_ = std::make_unique<ConstructionSite>(v.getChildWithName(IDs::PIANO), um, open_gl, data, commandManager);
     addMouseListener(constructionSite_.get(), true);
     constructionSite_->view = &constructionPort;
+    // constructionSite_->initializeCommandManager();
     addSubSection(constructionSite_.get(), true);
 
     setSkinOverride(Skin::kNone);

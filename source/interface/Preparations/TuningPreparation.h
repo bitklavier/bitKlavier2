@@ -30,31 +30,20 @@ public:
 
     // Constructor method that takes three arguments: a smart pointer to a PolygonalOscProcessor,
     // a value tree, and a reference to an OpenGlWrapper object
-    TuningPreparation(std::unique_ptr<TuningProcessor> proc, juce::ValueTree v, OpenGlWrapper& um);
+    TuningPreparation(juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface*);
 
     // Destructor method
     ~TuningPreparation();
 
     // Static function that returns a pointer to a TuningPreparation object
-    static PreparationSection* createTuningSection(juce::ValueTree v, SynthGuiInterface* interface) {
-
-        return new TuningPreparation(std::make_unique<TuningProcessor>(interface->getSynth(),v), v, interface->getGui()->open_gl_);
+    static std::unique_ptr<PreparationSection> create(const juce::ValueTree& v, SynthGuiInterface* interface){
+        return std::make_unique<TuningPreparation> (v, interface->getGui()->open_gl_, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::nodeID)), interface);
     }
 
     // Public function definitions for the TuningPreparation class, which override functions
     // in the PreparationSection base class
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
-
-    juce::AudioProcessor* getProcessor() override;
-    std::unique_ptr<juce::AudioProcessor> getProcessorPtr() override;
-private:
-
-    // Private member variable for the TuningPreparation class: proc is a pointer to a
-    // TuningProcessor Object
-    TuningProcessor & proc;
-    std::unique_ptr<TuningProcessor> _proc_ptr;
-
 
 
 };

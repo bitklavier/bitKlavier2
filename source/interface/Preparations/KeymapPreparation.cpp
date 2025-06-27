@@ -5,11 +5,9 @@
 #include "KeymapPreparation.h"
 #include "FullInterface.h"
 #include "KeymapParameterView.h"
-KeymapPreparation::KeymapPreparation (std::unique_ptr<KeymapProcessor> p,
-                                      juce::ValueTree v, OpenGlWrapper& um) :
-        PreparationSection(juce::String("keymap"), v, um,p.get()),
-        proc(*p.get()),
-        _proc_ptr(std::move(p))
+KeymapPreparation::KeymapPreparation (const juce::ValueTree& v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface*) :
+        PreparationSection(juce::String("keymap"), v, open_gl,node)
+
 {
 
     item = std::make_unique<KeymapItem> (); // Initializes member variable `item` of PreparationSection class
@@ -19,16 +17,9 @@ KeymapPreparation::KeymapPreparation (std::unique_ptr<KeymapProcessor> p,
     addAndMakeVisible (item.get());
 
     setSkinOverride (Skin::kKeymap);
+    state.setProperty(IDs::width, 185, nullptr);
+    state.setProperty(IDs::height, 105, nullptr);
 
-//    SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
-//    if (parent) {
-//        juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
-//        if (device_manager)
-//                    (*proc._midi.get(), proc._midi->enabledMidiInputs, *device_manager);
-//            addAndMakeVisible(midi_selector_.get());
-//            addOpenGlComponent(midi_selector_->getImageComponent());
-//        }
-//    }
 
 }
 
@@ -39,19 +30,11 @@ KeymapPreparation::~KeymapPreparation()
 
 std::unique_ptr<SynthSection> KeymapPreparation::getPrepPopup()
 {
-    return std::make_unique<KeymapParameterView>(proc, _open_gl);
+    if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
+        if (auto *proc = dynamic_cast<KeymapProcessor*>(getProcessor()))
+            return std::make_unique<KeymapParameterView>(*proc, *parent->getOpenGlWrapper());
+
+    return nullptr;
 }
-
-juce::AudioProcessor* KeymapPreparation::getProcessor()
-{
-    return &proc;
-}
-
-std::unique_ptr<juce::AudioProcessor> KeymapPreparation::getProcessorPtr()
-{
-    return std::move(_proc_ptr);
-}
-
-
 
 

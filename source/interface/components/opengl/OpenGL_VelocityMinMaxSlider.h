@@ -6,8 +6,8 @@
 #define BITKLAVIER2_OPENGL_VELOCITYMINMAXSLIDER_H
 #include "../BKComponents/BKSliders.h"
 #include "VelocityMinMaxParams.h"
-#include "open_gl_component.h"
 #include "synth_slider.h"
+#include "valuetree_utils/VariantConverters.h"
 #include "juce_data_structures/juce_data_structures.h"
 
 class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>, BKRangeSlider::Listener {

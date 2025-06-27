@@ -76,7 +76,7 @@ void ModulesInterface::mouseDown (const juce::MouseEvent& e)
     if(e.mods.isPopupMenu())
     {
         PopupItems options = createPopupMenu();
-        showPopupSelector(this, e.getPosition(), options, [=](int selection) { handlePopupResult(selection); });
+        showPopupSelector(this, e.getPosition(), options, [=](int selection,int) { handlePopupResult(selection); });
     }
     juce::Component::mouseDown(e);
 }

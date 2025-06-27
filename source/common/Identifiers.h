@@ -73,6 +73,8 @@ namespace IDs
     DECLARE_ID(absoluteTuning)
     DECLARE_ID(circularTuning)
     DECLARE_ID(isState)
+
+    DECLARE_ID(PLUGIN)
 }
 
 #undef DECLARE_ID

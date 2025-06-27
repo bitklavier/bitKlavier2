@@ -4,6 +4,8 @@
 
 #ifndef OPEN_GL_COMBOBOX_H
 #define OPEN_GL_COMBOBOX_H
+#include "valuetree_utils/VariantConverters.h"
+
 #include "juce_data_structures/juce_data_structures.h"
 #include "open_gl_component.h"
 #include "open_gl_image_component.h"

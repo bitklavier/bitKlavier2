@@ -28,7 +28,7 @@ SynthSection::SynthSection(const juce::String &name) : juce::Component(name), pa
                                                        preset_selector_(nullptr), preset_selector_half_width_(false),
                                                        skin_override_(Skin::kNone), size_ratio_(1.0f),
                                                        active_(true), sideways_heading_(true), background_(nullptr) {
-    setWantsKeyboardFocus(true);
+    //setWantsKeyboardFocus(true);
 
 }
 
@@ -36,7 +36,7 @@ SynthSection::SynthSection(const juce::String &name, const juce::String &id) : j
                                                        preset_selector_(nullptr), preset_selector_half_width_(false),
                                                        skin_override_(Skin::kNone), size_ratio_(1.0f),
                                                        active_(true), sideways_heading_(true), background_(nullptr) {
-    setWantsKeyboardFocus(true);
+    //setWantsKeyboardFocus(true);
     setComponentID(id);
 
 }
@@ -49,7 +49,7 @@ SynthSection::SynthSection(const juce::String &name, OpenGlWrapper *open_gl) : j
                                                                                size_ratio_(1.0f),
                                                                                active_(true), sideways_heading_(true),
                                                                                background_(nullptr), open_gl(open_gl) {
-    setWantsKeyboardFocus(true);
+    //setWantsKeyboardFocus(true);
 }
 
 
@@ -90,7 +90,9 @@ void SynthSection::paint(juce::Graphics &g) {}
 void SynthSection::paintSidewaysHeadingText(juce::Graphics &g) {
     int title_width = findValue(Skin::kTitleWidth);
     g.setColour(findColour(Skin::kHeadingText, true));
-    g.setFont(Fonts::instance()->proportional_light().withPointHeight(size_ratio_ * 14.0f));
+    // int mult = juce::Desktop::getInstance().getDisplays().getDisplayForPoint(getScreenPosition())->scale;
+    juce::Font font = Fonts::instance()->proportional_light().withPointHeight(14.0f);
+    g.setFont(font);
     g.saveState();
     g.setOrigin(juce::Point<int>(0, getHeight()));
     g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f));
@@ -994,7 +996,7 @@ void SynthSection::hidePopupDisplay(bool primary) {
 }
 
 void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> position, const PopupItems &options,
-                                     std::function<void(int)> callback, std::function<void()> cancel) {
+                                     std::function<void(int,int)> callback, std::function<void()> cancel) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent)
         parent->popupSelector(source, position, options, callback, cancel);
@@ -1002,27 +1004,14 @@ void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> p
 
 
 
-//void SynthSection::setValue(const std::string& name, float value, NotificationType notification) {
-////  if (all_sliders_.count(name)) {
-////    all_sliders_[name]->setValue(value, notification);
-////    if (notification == dontSendNotification)
-////      all_sliders_[name]->redoImage();
-////    all_sliders_[name]->notifyGuis();
-////  }
-////  if (all_buttons_.count(name))
-////    all_buttons_[name]->setToggleState(value, notification);
-//}
-//this is probably causing some of the long compile times
-#include "PreparationSection.h"
-
-void SynthSection::showPrepPopup(PreparationSection *prep) {
+void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,bitklavier::BKPreparationType type) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent) {
-        if (prep->state.getProperty(IDs::type).operator int() ==
-            static_cast<int>(bitklavier::BKPreparationType::PreparationTypeModulation)) {
-            parent->modDisplay(prep);
+        if (type ==
+            bitklavier::BKPreparationType::PreparationTypeModulation) {
+            parent->modDisplay(std::move(prep));
         } else {
-            parent->prepDisplay(prep);
+            parent->prepDisplay(std::move(prep));
         }
     }
 }

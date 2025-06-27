@@ -55,6 +55,7 @@ MidiManager::MidiManager(juce::MidiKeyboardState* keyboard_state, juce::AudioDev
 }
 
 MidiManager::~MidiManager() {
+  freeObjects();
 }
 
 void MidiManager::armMidiLearn(std::string name) {

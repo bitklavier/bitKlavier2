@@ -8,7 +8,6 @@
 
 #pragma once
 #include "synth_base.h"
-#include "valuetree_utils/VariantConverters.h"
 #include "Cable.h"
 #include "PreparationSection.h"
 

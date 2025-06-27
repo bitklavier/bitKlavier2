@@ -14,6 +14,6 @@
 //#include "Preparations/TempoPreparation.h"
 #include "Preparations/TuningPreparation.h"
 #include "Preparations/ModulationPreparation.h"
-
+#include "Preparations/PluginPreparation.h"
 
 #endif //BITKLAVIER2_PREPARATIONS_H

@@ -1097,7 +1097,7 @@ namespace bitklavier
         jassert (minInputChannels >= 0 && minInputChannels <= maxInputChannels);
         for (auto device : juce::MidiInput::getAvailableDevices())
         {
-            if (auto _child = state.getChildWithName("midiPrefs").getChildWithProperty("midiDeviceId", device.identifier); _child.isValid())
+            if (auto _child = state.getChildWithName("midiPrefs").getChildWithProperty("name", device.name); _child.isValid())
             {
                 auto enabled = _child.getProperty("active", 0);
                 deviceManager.setMidiInputDeviceEnabled (device.identifier, enabled);

@@ -55,8 +55,10 @@ struct KeymapNonParameterState : chowdsp::NonParamState
 class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<KeymapParams,KeymapNonParameterState>>
 {
 public:
-    KeymapProcessor(const juce::ValueTree& v, juce::AudioDeviceManager* manager);
-
+    KeymapProcessor(const juce::ValueTree& v, SynthBase& parent);
+    static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v) {
+        return std::make_unique<KeymapProcessor>(v,parent);
+    }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override  {};

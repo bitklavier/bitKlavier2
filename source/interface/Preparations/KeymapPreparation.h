@@ -16,15 +16,14 @@ public:
 
 // Constructor method that takes three arguments: a smart pointer to a PolygonalOscProcessor,
 // a value tree, and a reference to an OpenGlWrapper object
-    KeymapPreparation(std::unique_ptr<KeymapProcessor> proc, juce::ValueTree v, OpenGlWrapper &um);
+    KeymapPreparation(const juce::ValueTree& v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface*);
 
 // Destructor method
     ~KeymapPreparation();
 
 // Static function that returns a pointer to a KeymapPreparation object
-    static PreparationSection *createKeymapSection(juce::ValueTree v, SynthGuiInterface* interface) {
-
-        return new KeymapPreparation(std::make_unique<KeymapProcessor>(v,interface->getAudioDeviceManager()), v, interface->getGui()->open_gl_);
+    static std::unique_ptr<PreparationSection> create(const juce::ValueTree& v, SynthGuiInterface* interface) {
+        return  std::make_unique<KeymapPreparation>(v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
 
 // Public function definitions for the KeymapPreparation class, which override functions
@@ -33,16 +32,9 @@ public:
 
 
 
-    juce::AudioProcessor *getProcessor() override;
 
-    std::unique_ptr<juce::AudioProcessor> getProcessorPtr() override;
 
 private:
-
-// Private member variable for the KeymapPreparation class: proc is a pointer to a
-// KeymapProcessor Object
-    KeymapProcessor &proc;
-    std::unique_ptr<KeymapProcessor> _proc_ptr;
 
 /************************************************************************************/
 /*             NESTED CLASS: KeymapPopup, inherits from PreparationPopup            */

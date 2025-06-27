@@ -4,62 +4,59 @@
 
 #ifndef BITKLAVIER2_CONSTRUCTIONSITE_H
 #define BITKLAVIER2_CONSTRUCTIONSITE_H
-#include "PreparationSection.h"
-#include "PreparationSelector.h"
 #include "CableView.h"
 #include "ModulationLineView.h"
-#include "templates/Factory.h"
+#include "PluginWindow.h"
+#include "PreparationList.h"
+#include "PreparationSelector.h"
 #include "common.h"
+#include "templates/Factory.h"
 class OpenGlLine;
 class SynthGuiInterface;
-typedef Loki::Factory<PreparationSection, int,  juce::ValueTree,  SynthGuiInterface*> PreparationFactory;
+typedef Loki::Factory<std::unique_ptr<PreparationSection>, int, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
 class ConstructionSite : public SynthSection,
-                         public tracktion::engine::ValueTreeObjectList<PreparationSection>,private juce::KeyListener,
+
                          public juce::DragAndDropContainer,
-                         public juce::ChangeListener
+                         // public juce::ChangeListener,
+                         private PreparationList::Listener,
+                         public PreparationSection::Listener,
+                        public juce::ApplicationCommandTarget
 
 {
 public:
-    ConstructionSite(juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl, SynthGuiData* data);
+    ConstructionSite (const juce::ValueTree& v, juce::UndoManager& um, OpenGlWrapper& open_gl, SynthGuiData* data, juce::ApplicationCommandManager &_manager);
+    ~ConstructionSite (void);
 
-    ~ConstructionSite(void);
+    void redraw (void);
 
-    void redraw(void);
-
-    bool keyPressed(const juce::KeyPress &k, juce::Component *c) override;
-    void itemIsBeingDragged(BKItem* thisItem, const juce::MouseEvent& e);
-
-    void paintBackground(juce::Graphics& g) override;
-
-    void addItem(bitklavier::BKPreparationType type, bool center = false);
-
-    void changeListenerCallback(juce::ChangeBroadcaster *source) override
-
-    {
-        updateComponents();
+    ApplicationCommandTarget* getNextCommandTarget() override {
+        return findFirstTargetParentComponent();
+        //return findParentComponentOfClass<SynthGuiInterface>();
     }
+    void getAllCommands(juce::Array<juce::CommandID> &commands) override;
+    void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override;
+    bool perform(const InvocationInfo &info) override;
+    // void initializeCommandManager();
+
+    // bool keyPressed (const juce::KeyPress& k, juce::Component* c) override;
+    void itemIsBeingDragged (BKItem* thisItem, const juce::MouseEvent& e);
+
+    void paintBackground (juce::Graphics& g) override;
+
+    void addItem (bitklavier::BKPreparationType type, bool center = false);
+
+    // void changeListenerCallback(juce::ChangeBroadcaster *source) override
+    //
+    // {
+    //     updateComponents();
+    // }
 
     void updateComponents();
-
-    bool isSuitableType (const juce::ValueTree& v) const override
-    {
-        return v.hasType (IDs::PREPARATION);
-    }
-
-    PreparationSection* createNewObject(const juce::ValueTree& v) override;
-    void deleteObject (PreparationSection* at) override;
-
-
     void reset() override;
-    void newObjectAdded (PreparationSection*) override;
-    void objectRemoved (PreparationSection*) override     { resized();}//resized(); }
-    void objectOrderChanged() override              {resized(); }//resized(); }
-    void valueTreeParentChanged (juce::ValueTree&) override;
-    void valueTreeRedirected (juce::ValueTree&) override ;
 
     BKPort* findPinAt (juce::Point<float> pos) const
     {
-        for (auto* fc : objects)
+        for (auto& fc : plugin_components)
         {
             // NB: A Visual Studio optimiser error means we have to put this juce::Component* in a local
             // variable before trying to cast it, or it gets mysteriously optimised away..
@@ -71,61 +68,66 @@ public:
 
         return nullptr;
     }
-   PreparationSection* getComponentForPlugin (juce::AudioProcessorGraph::NodeID nodeID) const
-    {
-        for (auto* fc : objects)
-            if (fc->pluginID == nodeID)
-                return fc;
+    PreparationSection* getComponentForPlugin (juce::AudioProcessorGraph::NodeID nodeID) const;
 
-        return nullptr;
-    }
     juce::Viewport* view;
-   juce::Point<float> mouse;
-    OpenGlWrapper &open_gl;
-
+    juce::Point<float> mouse;
+    OpenGlWrapper& open_gl;
+    juce::ValueTree parent;
     juce::ValueTree getState()
     {
         return parent;
     }
-    void copyValueTree(const juce::ValueTree& vt){
-        parent.copyPropertiesFrom(vt,nullptr);
+    void copyValueTree (const juce::ValueTree& vt)
+    {
+        parent.copyPropertiesFrom (vt, nullptr);
     }
-    void 	dragOperationStarted (const juce::DragAndDropTarget::SourceDetails &)
+    void dragOperationStarted (const juce::DragAndDropTarget::SourceDetails&)
     {
         //wsetMouseCursor(juce::MouseCursor::DraggingHandCursor);
     }
 
-    void dragOperationEnded(const juce::DragAndDropTarget::SourceDetails &source)
+    void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails& source)
     {
-
         //setMouseCursor(juce::MouseCursor::ParentCursor);
-        if(!item_dropped_on_prep_) {
-//            source.sourceComponent->setCentrePosition(source.sourceComponent->getX() + source.localPosition.getX(),
-//                                                      source.sourceComponent->getY() + source.localPosition.getY());
-            if(modulationLineView.current_source_ == nullptr)
+        if (!item_dropped_on_prep_)
+        {
+            //            source.sourceComponent->setCentrePosition(source.sourceComponent->getX() + source.localPosition.getX(),
+            //                                                      source.sourceComponent->getY() + source.localPosition.getY());
+            if (modulationLineView.current_source_ == nullptr)
                 return;
-            source.sourceComponent->setCentrePosition(mouse_drag_position_);
+            source.sourceComponent->setCentrePosition (mouse_drag_position_);
             cableView._update();
             modulationLineView._update();
         }
         item_dropped_on_prep_ = false;
+
     }
-    bool    item_dropped_on_prep_ = false;
+    bool item_dropped_on_prep_ = false;
 
     juce::Point<int> mouse_drag_position_;
+    juce::OwnedArray<PluginWindow> activePluginWindows;
+    void createWindow (juce::AudioProcessorGraph::Node* node, PluginWindow::Type type);
+    std::vector<std::unique_ptr<PreparationSection>> plugin_components;
+    void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
+
 private:
-
+    PreparationList& prep_list;
+    juce::ApplicationCommandManager& commandManager;
+    void moduleListChanged() {}
+    void moduleAdded (PluginInstanceWrapper* newModule) override;
+    void removeModule (PluginInstanceWrapper* moduleToRemove) override;
+    void handlePluginPopup (int selection, int index);
     SynthGuiInterface* _parent;
-
-
-   std::shared_ptr<OpenGlLine> _line;
+    NodeFactory nodeFactory;
+    juce::CriticalSection open_gl_critical_section_;
+    std::shared_ptr<OpenGlLine> _line;
 
     bool edittingComment;
 
-    juce::OwnedArray<juce::HashMap<int,int>> pastemap;
+    juce::OwnedArray<juce::HashMap<int, int>> pastemap;
     friend class ModulationLineView;
     ModulationLineView modulationLineView;
-
 
     bool connect;
 
@@ -134,19 +136,17 @@ private:
     bool multiple;
     bool held;
 
-
-
     PreparationSelector preparationSelector;
     juce::LassoComponent<PreparationSection*> selectorLasso;
 
     friend class CableView;
     CableView cableView;
 
-    juce::UndoManager &undo;
+    juce::UndoManager& undo;
 
-    void draw(void);
+    void draw (void);
 
-    void prepareItemDrag(BKItem* item, const juce::MouseEvent& e, bool center);
+    void prepareItemDrag (BKItem* item, const juce::MouseEvent& e, bool center);
 
     void resized() override;
 
@@ -160,31 +160,9 @@ private:
 
     void deleteItem (BKItem* item);
 
-    BKItem* getItemAtPoint(const int X, const int Y);
+    BKItem* getItemAtPoint (const int X, const int Y);
 
-
-    void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override
-    {
-        tracktion::engine::ValueTreeObjectList<PreparationSection>::valueTreePropertyChanged (v, i);
-        if(v.getProperty("sync",0))
-        {
-            for(auto obj : objects)
-            {
-                juce::MemoryBlock data;
-                obj->getProcessor()->getStateInformation(data);
-                auto xml = juce::parseXML(data.toString());
-
-                //get the inidviaul preparation data for params
-                obj->state.getOrCreateChildWithName(xml->getTagName(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
-            }
-            v.removeProperty("sync", nullptr);
-        }
-    }
-
-    PreparationFactory prepFactory;
-
-    JUCE_LEAK_DETECTOR(ConstructionSite)
+    JUCE_LEAK_DETECTOR (ConstructionSite)
 };
-
 
 #endif //BITKLAVIER2_CONSTRUCTIONSITE_H

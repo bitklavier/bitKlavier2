@@ -551,5 +551,56 @@ public:
 };
 
 
+class VSTItem : public BKItem {
+    public:
+    VSTItem (): BKItem(bitklavier::BKPreparationType::PreparationTypeVST){}
+     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+    {
+        // Ascertains the current window size
+        juce::Rectangle<float> bounds = getLocalBounds().toFloat();
+
+        // Ascertains the appropriate location for layer_2 based on the preparation
+        // window size
+        float layer_2_x = bounds.getX() + (bounds.getWidth() * 9 / 30);
+        float layer_2_y = bounds.getY() + (bounds.getHeight() / 7);
+        float layer_2_width = bounds.getWidth() * 18 / 30;
+        float layer_2_height = bounds.getHeight() * 5 / 7;
+
+        // Transforms layer_2 to fit appropriately in the preparation window
+        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+                                                                  layer_2_y,
+                                                                  layer_2_width,
+                                                                  layer_2_height,
+                                                                  false));
+
+        // Ascertains the appropriate location for layer_3 based on the preparation
+        // window size
+        float layer_3_x = bounds.getX() + (bounds.getWidth() / 10);
+        float layer_3_y = bounds.getY() + (bounds.getHeight() * 10 / 30);
+        float layer_3_width = bounds.getWidth() / 7;
+        float layer_3_height = bounds.getHeight() / 2;
+
+        // Transforms layer_3 to fit appropriately in the preparation window
+        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+                                                                  layer_3_y,
+                                                                  layer_3_width,
+                                                                  layer_3_height,
+                                                                  true));
+
+        // Retrieves and sets the color of each layer
+
+        g.setColour(findColour(Skin::kShadow, true));
+        g.drawImageAt(shadow_, 0, 0, true);
+        g.fillPath(layer_1_);
+
+        juce::Colour c;
+        c = findColour(Skin::kWidgetPrimary1, true);
+        g.setColour(c);
+        g.fillPath(layer_2_);
+        g.fillPath(layer_3_);
+        g.setColour(prep_color_);
+        g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
+    }
+};
 
 #endif //BITKLAVIER2_BKITEM_H

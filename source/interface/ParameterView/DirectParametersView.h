@@ -4,29 +4,29 @@
 
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
+#include "DirectProcessor.h"
 #include "OpenGL_VelocityMinMaxSlider.h"
 #include "TranspositionSliderSection.h"
 #include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
+#include "peak_meter_section.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-#include "DirectProcessor.h"
-#include "peak_meter_section.h"
 
 class DirectParametersView : public SynthSection
 {
 public:
-    DirectParametersView(chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
+    DirectParametersView (chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection ("")
     {
         // the name that will appear in the UI as the name of the section
-        setName("direct");
+        setName ("direct");
 
         // every section needs a LaF
         //  main settings for this LaF are in assets/default.bitklavierskin
         //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
         //  we probably want to merge these in the future, but ok for now
-        setLookAndFeel(DefaultLookAndFeel::instance());
-        setComponentID(name);
+        setLookAndFeel (DefaultLookAndFeel::instance());
+        setComponentID (name);
 
         // pluginState is really preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
@@ -34,8 +34,9 @@ public:
 
         // go through and get all the main float params (gain, hammer, etc...), make sliders for them
         // all the params for this prep are defined in struct DirectParams, in DirectProcessor.h
-        for ( auto &param_ : *params.getFloatParams())
+        for (auto& param_ : *params.getFloatParams())
         {
+
             if(param_->paramID == "OutputGain") // ignore this one for now
                 continue;
             auto slider = std::make_unique<SynthSlider>(param_->paramID);
@@ -50,32 +51,36 @@ public:
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
+
         // we add subsections for the elements that have been defined as sections
-        addSubSection(envSection.get());
-        addSubSection(transpositionSlider.get());
+        addSubSection (envSection.get());
+        addSubSection (transpositionSlider.get());
 
         // this slider does not need a section, since it's just one OpenGL component
-        velocityMinMaxSlider->setComponentID("velocity_min_max");
-        addStateModulatedComponent(velocityMinMaxSlider.get());
+        velocityMinMaxSlider->setComponentID ("velocity_min_max");
+        addStateModulatedComponent (velocityMinMaxSlider.get());
 
-        params.outputLevels; // to access the updating audio output levels
+ // to access the updating audio output levels
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         addSubSection(levelMeter.get());
+
     }
 
-    void paintBackground(juce::Graphics& g) override
+    void paintBackground (juce::Graphics& g) override
     {
-        SynthSection::paintContainer(g);
-        paintHeadingText(g);
-        paintBorder(g);
-        paintKnobShadows(g);
-        for (auto& slider : _sliders) {
-            drawLabelForComponent(g, slider->getName(), slider.get());
+        SynthSection::paintContainer (g);
+        paintHeadingText (g);
+        paintBorder (g);
+        paintKnobShadows (g);
+        for (auto& slider : _sliders)
+        {
+            drawLabelForComponent (g, slider->getName(), slider.get());
         }
-        for (auto& slider : outputGainKnobs) {
-            drawLabelForComponent(g, slider->getName(), slider.get());
+        for (auto& slider : outputGainKnobs)
+        {
+            drawLabelForComponent (g, slider->getName(), slider.get());
         }
-        paintChildrenBackgrounds(g);
+        paintChildrenBackgrounds (g);
         //knobsBorder.paint(g);
     }
 
@@ -95,7 +100,6 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter; // this should not have to be a shared pointer, nor should its components.
 
     void resized() override;
-
 };
 
 #endif //BITKLAVIER2_DIRECTPARAMETERSVIEW_H

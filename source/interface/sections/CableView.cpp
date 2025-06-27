@@ -8,7 +8,7 @@
 #include "sound_engine.h"
 
 
-CableView::CableView (ConstructionSite &site) :site(site), tracktion::engine::ValueTreeObjectList<Cable>(site.getState().getParent().getChildWithName(IDs::CONNECTIONS)), /*pathTask (*this),*/ SynthSection("cableView")
+CableView::CableView (ConstructionSite &site) :site(site), tracktion::engine::ValueTreeObjectList<Cable>(site.getState().getChildWithName(IDs::CONNECTIONS)), /*pathTask (*this),*/ SynthSection("cableView")
 {
     setInterceptsMouseClicks (false,false);
     //startTimerHz (36);
@@ -191,7 +191,10 @@ void CableView::endDraggingConnector (const juce::MouseEvent& e)
 
             connection.destination = pin->pin;
         }
-        if (!(connection.source.isMIDI() && connection.destination.isMIDI())) {
+        if (!connection.source.isMIDI() && connection.destination.isMIDI()) {
+            return;
+        }
+        if (connection.source.isMIDI() && !connection.destination.isMIDI()) {
             return;
         }
 

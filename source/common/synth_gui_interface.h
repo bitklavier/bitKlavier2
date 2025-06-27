@@ -28,6 +28,7 @@ class juce::AudioDeviceManager { };
 //#include "synth_base.h"
 
 #include "ApplicationCommandHandler.h"
+#include "valuetree_utils/VariantConverters.h"
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -37,7 +38,6 @@ class UserPreferencesWrapper;
 class FullInterface;
 struct OpenGlWrapper;
 class ModulatorBase;
-class PreparationSection;
 struct SynthGuiData {
   SynthGuiData(SynthBase* synth_base);
   juce::ValueTree& tree;
@@ -50,11 +50,47 @@ namespace bitklavier
 class ModulationConnection;
 class StateConnection;
 }
+class PopupItems;
 class
-SynthGuiInterface {
-  public:
+SynthGuiInterface :  public juce::ApplicationCommandTarget {
+public:
     SynthGuiInterface(SynthBase* synth, bool use_gui = true);
     virtual ~SynthGuiInterface();
+    // Define your command IDs
+    enum CommandIDs {
+        undo = 0x2000,
+        redo,
+        save,
+        load,
+        showPluginListEditor   = 0x30100
+    };
+
+    void getAllCommands(juce::Array<juce::CommandID> &commands) override {
+        commands.addArray({undo, redo,showPluginListEditor});
+    }
+
+    void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override {
+        switch (id) {
+            case undo:
+                info.setInfo("Undo", "Undo last action", "Edit", 0);
+                info.addDefaultKeypress('z', juce::ModifierKeys::commandModifier);
+            break;
+            case redo:
+                info.setInfo("Redo", "Redo last action", "Edit", 0);
+                info.addDefaultKeypress('z', juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier);
+            break;
+
+            case showPluginListEditor:
+                info.setInfo("Show Plugins", "Show Plugins", "Options", 0);
+                info.addDefaultKeypress ('p', juce::ModifierKeys::commandModifier);
+            break;
+        }
+    }
+
+    bool perform(const InvocationInfo &info) override;
+
+
+    ApplicationCommandTarget* getNextCommandTarget() override {return nullptr;}
 
     virtual juce::AudioDeviceManager* getAudioDeviceManager() { return nullptr; }
     SynthBase* getSynth() { return synth_; }
@@ -72,7 +108,7 @@ SynthGuiInterface {
     void disconnectModulation(bitklavier::StateConnection* connection);
     void notifyModulationsChanged();
 
-    void  addProcessor(PreparationSection* );
+    void  addProcessor(std::unique_ptr<juce::AudioPluginInstance> instance );
     void  addModulationNodeConnection(juce::AudioProcessorGraph::NodeID source, juce::AudioProcessorGraph::NodeID destination);
     void setFocus();
     void notifyChange();
@@ -90,15 +126,20 @@ SynthGuiInterface {
     juce::File getActiveFile();
     std::shared_ptr<UserPreferencesWrapper> userPreferences;
     std::unique_ptr<SampleLoadManager> sampleLoadManager ;
-    std::unique_ptr<ApplicationCommandHandler> commandHandler;
+   // std::unique_ptr<ApplicationCommandHandler> commandHandler;
+    PopupItems getPluginPopupItems();
+    class PluginListWindow;
+    std::unique_ptr<PluginListWindow> pluginListWindow;
+   juce::ScopedMessageBox messageBox;
+    juce::ApplicationCommandManager commandManager;
+
   protected:
     std::atomic<bool> loading;
-juce::ApplicationCommandManager commandManager;
 
     std::unique_ptr<juce::FileChooser> filechooser;
-
     SynthBase* synth_;
     std::unique_ptr<FullInterface> gui_;
+
   
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthGuiInterface)
 };

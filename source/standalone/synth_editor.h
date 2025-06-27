@@ -23,24 +23,28 @@
 
 class MainMenuModel : public juce::MenuBarModel {
 public:
-    MainMenuModel(juce::ApplicationCommandManager &manager)
-        : commandManager(manager) {
+    MainMenuModel(juce::ApplicationCommandManager &_manager)
+        : commandManager(_manager) {
+        setApplicationCommandManagerToWatch (&_manager);
     }
 
     juce::StringArray getMenuBarNames() override {
-        return {"File", "Edit"};
+        return {"File", "Edit","Options"};
     }
 
     juce::PopupMenu getMenuForIndex(int topLevelMenuIndex, const juce::String &menuName) override {
         juce::PopupMenu menu;
 
         if (menuName == "File") {
-            menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::save);
-            menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::load);
+            menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::load);
+            menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::save);
         } else if (menuName == "Edit") {
 
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::undo);
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::redo);
+        }
+        else if (menuName == "Options") {
+            menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::showPluginListEditor);
         }
 
         return menu;

@@ -102,6 +102,7 @@ namespace bitklavier {
         PreparationTypePiano,
         PreparationTypeComment,
         PreparationTypeCompressor,
+        PreparationTypeVST,
         BKPreparationTypeNil,
     } BKPreparationType;
 

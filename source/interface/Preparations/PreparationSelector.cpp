@@ -16,8 +16,8 @@ void PreparationSelector::findLassoItemsInArea (juce::Array<PreparationSection*>
             results.add (editor);
     };
 
-    for (auto* editor : csite.objects)
-        checkAndAddEditor (editor);
+    for (auto &editor : csite.plugin_components)
+        checkAndAddEditor (editor.get());
 //    checkAndAddEditor (csite.getInputProcessorEditor());
 //    checkAndAddEditor (csite.getOutputProcessorEditor());
 }

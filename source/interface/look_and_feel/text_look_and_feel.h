@@ -23,9 +23,9 @@ class TextLookAndFeel : public DefaultLookAndFeel {
   public:
     virtual ~TextLookAndFeel() { }
 
-//    void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
-//                          float slider_t, float start_angle, float end_angle,
-//                          juce::Slider& slider) override;
+    void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
+                          float slider_t, float start_angle, float end_angle,
+                          juce::Slider& slider) override;
 
     void drawToggleButton(juce::Graphics& g, juce::ToggleButton& button, bool hover, bool is_down) override;
 

@@ -27,10 +27,12 @@
 #include "ModulationConnection.h"
 #include "circular_queue.h"
 #include "ModulatorBase.h"
+#include "PreparationList.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
-
+class PreparationList;
+#include "PluginScannerSubprocess.h"
 class SynthBase :  public juce::ValueTree::Listener {
   public:
     static constexpr float kOutputWindowMinNote = 16.0f;
@@ -59,6 +61,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     bitklavier::SoundEngine* getEngine() { return engine_.get(); }
     juce::MidiKeyboardState* getKeyboardState() { return keyboard_state_.get(); }
     int getSampleRate();
+    int getBufferSize();
     void notifyOversamplingChanged();
     void checkOversampling();
     virtual const juce::CriticalSection& getCriticalSection() = 0;
@@ -77,8 +80,14 @@ class SynthBase :  public juce::ValueTree::Listener {
       float value;
     };
     juce::AudioDeviceManager* manager;
-
-            juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
+    std::shared_ptr<UserPreferencesWrapper> user_prefs;
+    juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
+    //use this functino myra
+    juce::AudioProcessorGraph::Node::Ptr removeProcessor( juce::AudioProcessorGraph::NodeID id ) ;
+  juce::AudioProcessorGraph::Node::Ptr addPlugin(std::unique_ptr<juce::AudioPluginInstance> instance,
+                                   const juce::String& error,
+                                   juce::Point<double> pos,
+                                   PluginDescriptionAndPreference::UseARA useARA);
     juce::AudioProcessorGraph::Node * getNodeForId(juce::AudioProcessorGraph::NodeID id);
     void addConnection(juce::AudioProcessorGraph::Connection& connect);
     void removeConnection(const juce::AudioProcessorGraph::Connection& connect);
@@ -119,11 +128,11 @@ class SynthBase :  public juce::ValueTree::Listener {
     int getNumModulations(const std::string& destination);
     virtual SynthGuiInterface* getGuiInterface() = 0;
     bool isSourceConnected(const std::string& source);
+  std::unique_ptr<PreparationList> preparationList;
 protected:
 //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
     juce::UndoManager um;
-
     bool loadFromValueTree(const juce::ValueTree& state);
 
 

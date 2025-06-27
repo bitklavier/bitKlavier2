@@ -231,7 +231,7 @@ void PresetList::menuClick(const juce::MouseEvent& e) {
       options.addItem(kDelete, "Delete");
     }
 
-    showPopupSelector(this, e.getPosition(), options, [=](int selection) { respondToMenuCallback(selection); });
+    showPopupSelector(this, e.getPosition(), options, [=](int selection,int) { respondToMenuCallback(selection); });
   }
 }
 

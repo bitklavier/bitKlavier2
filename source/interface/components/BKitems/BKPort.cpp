@@ -14,7 +14,7 @@ image_component_(new OpenGlImageComponent())
 
 {
     setLookAndFeel(DefaultLookAndFeel::instance());
-    pin = juce::AudioProcessorGraph::NodeAndChannel{juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)), v.getProperty(IDs::chIdx)};
+    pin = juce::AudioProcessorGraph::NodeAndChannel{juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getParent().getProperty(IDs::nodeID)), v.getProperty(IDs::chIdx)};
 
     isInput.referTo(v, IDs::isIn, nullptr);
     setInterceptsMouseClicks(true, true);

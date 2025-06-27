@@ -4,6 +4,9 @@
 
 #ifndef BITKLAVIER_MODULATIONCONNECTION_H
 #define BITKLAVIER_MODULATIONCONNECTION_H
+#include "open_gl_component.h"
+#include "valuetree_utils/VariantConverters.h"
+
 #include <juce_data_structures/juce_data_structures.h>
 #include "Identifiers.h"
 #include <juce_audio_processors/juce_audio_processors.h>

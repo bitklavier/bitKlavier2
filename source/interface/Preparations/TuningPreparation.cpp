@@ -12,15 +12,13 @@
 #include "TuningParametersView.h"
 
 #include "synth_slider.h"
-//#include "ParametersView.h"
+#include "ParametersView.h"
 // Definition for the TuningPreparation constructor.  It takes three parameters: a pointer to
 // a Tuning Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private TuningPreparation member proc with an initialization list.
-TuningPreparation::TuningPreparation (std::unique_ptr<TuningProcessor> p,
-                                    juce::ValueTree v, OpenGlWrapper& um) :
-        PreparationSection(juce::String("tuning"), v, um,p.get()),
-        proc(*p.get()),
-        _proc_ptr(std::move(p))
+TuningPreparation::TuningPreparation( juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface*):
+        PreparationSection(juce::String("tuning"),  v, open_gl, node)
+
 {
 
     item = std::make_unique<TuningItem> (); // Initializes member variable `item` of PreparationSection class
@@ -36,8 +34,11 @@ TuningPreparation::TuningPreparation (std::unique_ptr<TuningProcessor> p,
 
 std::unique_ptr<SynthSection> TuningPreparation::getPrepPopup()
 {
+    if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
+        if (auto* proc = dynamic_cast<TuningProcessor*> (getProcessor()))
+            return std::make_unique<TuningParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
 
-    return std::make_unique<TuningParametersView>(proc.getState(), proc.getState().params, proc.v.getProperty(IDs::uuid).toString(), open_gl);
+    return nullptr;
 }
 
 
@@ -49,15 +50,4 @@ void TuningPreparation::resized()
 TuningPreparation::~TuningPreparation()
 {
 }
-
-juce::AudioProcessor* TuningPreparation::getProcessor()
-{
-    return &proc;
-}
-
-std::unique_ptr<juce::AudioProcessor> TuningPreparation::getProcessorPtr()
-{
-    return std::move(_proc_ptr);
-}
-
 
