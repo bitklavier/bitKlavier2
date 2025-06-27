@@ -163,7 +163,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
 
     // if we want to implement a final output gain stage
-    //buffer.applyGain(0.5);
+//    auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
+//    buffer.applyGain(outputgainmult);
 
     // level meter update stuff
     std::get<0>(state.params.outputLevels) = buffer.getRMSLevel(0, 0, buffer.getNumSamples());

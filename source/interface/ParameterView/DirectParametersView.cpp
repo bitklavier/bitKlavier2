@@ -32,7 +32,8 @@ void DirectParametersView::resized()
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
     //outputKnobsSection->setBounds(outputKnobsArea);
-    placeKnobsInArea(outputKnobsArea, _sliders, true);
+//    placeKnobsInArea(outputKnobsArea, _sliders, true);
+    placeKnobsInArea(outputKnobsArea, outputGainKnobs, true);
 //    knobsBorder.setBounds(outputKnobsArea); // not working properly for some reason
 
     // add the adsr below that

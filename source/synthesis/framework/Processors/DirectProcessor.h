@@ -32,7 +32,15 @@ struct DirectParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
-        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, outputSendParam,  env, transpose, velocityMinMax);
+        add (gainParam,
+            hammerParam,
+            releaseResonanceParam,
+            pedalParam,
+            outputSendParam,
+            outputGain,
+            env,
+            transpose,
+            velocityMinMax);
 
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
@@ -52,7 +60,7 @@ struct DirectParams : chowdsp::ParamHolder
     // Gain param
     chowdsp::GainDBParameter::Ptr gainParam {
         juce::ParameterID { "Main", 100 },
-        "Gain",
+        "Main",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,true
     };
@@ -86,6 +94,14 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Send", 100 },
         "Send",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,true
+    };
+
+    // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
+    chowdsp::GainDBParameter::Ptr outputGain {
+        juce::ParameterID { "OutputGain", 100 },
+        "Output Gain",
+        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
         0.0f,true
     };
 

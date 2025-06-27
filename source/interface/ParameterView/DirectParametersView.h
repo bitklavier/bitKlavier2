@@ -41,7 +41,20 @@ public:
             addSlider(slider.get()); // adds the slider to the synthSection
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             floatAttachments.emplace_back(std::move(attachment));
-            _sliders.emplace_back(std::move(slider));
+
+            auto currentSlider = slider->getName();
+
+            // group of knobs to display together
+            if (currentSlider == "Main" ||
+                currentSlider == "Hammers" ||
+                currentSlider == "Resonance" ||
+                currentSlider == "Pedal" ||
+                currentSlider == "Send")
+            {
+                outputGainKnobs.emplace_back(std::move(slider));
+            }
+            // rest of the generic sliders/knobs, handled separately
+            else _sliders.emplace_back(std::move(slider));
         }
 
         // create larger UI sections
@@ -58,14 +71,13 @@ public:
         // we add subsections for the elements that have been defined as sections
         addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
-        //addSubSection(outputKnobsSection.get());
 
         // this slider does not need a section, since it's just one OpenGL component
         velocityMinMaxSlider->setComponentID("velocity_min_max");
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
         // to access and display the updating audio output levels
-        levelMeter = std::make_unique<PeakMeterSection>(name, &params.outputLevels);
+        levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, &params.outputLevels);
         addSubSection(levelMeter.get());
     }
 
@@ -76,6 +88,9 @@ public:
         paintBorder(g);
         paintKnobShadows(g);
         for (auto& slider : _sliders) {
+            drawLabelForComponent(g, slider->getName(), slider.get());
+        }
+        for (auto& slider : outputGainKnobs) {
             drawLabelForComponent(g, slider->getName(), slider.get());
         }
         paintChildrenBackgrounds(g);
@@ -90,6 +105,9 @@ public:
     // generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+
+    // vector of sliders/knobs to display together
+    std::vector<std::unique_ptr<SynthSlider>> outputGainKnobs;
 
     //juce::GroupComponent knobsBorder;
     std::shared_ptr<PeakMeterSection> levelMeter; // this should not have to be a shared pointer, nor should its components.

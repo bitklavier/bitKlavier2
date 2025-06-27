@@ -21,7 +21,7 @@
 
 class VolumeSlider : public SynthSlider {
 public:
-    VolumeSlider(juce::String name) : SynthSlider(name) {
+    VolumeSlider(juce::String name, chowdsp::GainDBParameter::Ptr &gc) : SynthSlider(name), gainChangeDBFS(gc) {
         paintToImage(true);
     }
 
@@ -49,9 +49,15 @@ public:
         g.setColour(findColour(Skin::kLinearSliderThumb, true));
         g.drawRect((getWidth() / 2) - 6, (int)getPositionOfValue(0), 12, 2);
     }
+
+//    void valueChanged() override {
+//        //gainChangeDBFS->setParameterValue(getValue());
+//    }
+
+    chowdsp::GainDBParameter::Ptr &gainChangeDBFS;
 };
 
-PeakMeterSection::PeakMeterSection(juce::String name, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels) : SynthSection(name) {
+PeakMeterSection::PeakMeterSection(juce::String name, chowdsp::GainDBParameter::Ptr &outGainDB, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels) : SynthSection(name) {
 
    setComponentID(name); // sets the UUID for this component, inherits the UUID from the owning preparation
    peak_meter_left_ = std::make_shared<PeakMeterViewer>(true, outputLevels); // if we make this unique_ptrs, then this constructor fails
@@ -59,7 +65,7 @@ PeakMeterSection::PeakMeterSection(juce::String name, const std::tuple<std::atom
    peak_meter_right_ = std::make_shared<PeakMeterViewer>(false, outputLevels);
    addOpenGlComponent(peak_meter_right_);
 
-   volume_ = std::make_shared<VolumeSlider>("volume");
+   volume_ = std::make_shared<VolumeSlider>("volume", outGainDB);
    addSlider(volume_.get());
    volume_->setSliderStyle(juce::Slider::LinearBarVertical);
    volume_->setRange(-80.0, 6.0);

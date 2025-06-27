@@ -9,13 +9,14 @@
 
 #include "synth_section.h"
 #include "peak_meter_viewer.h"
+#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 
 class PeakMeterViewer;
 class VolumeSlider;
 
 class PeakMeterSection : public SynthSection {
 public:
-    PeakMeterSection(juce::String name, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels);
+    PeakMeterSection(juce::String name, chowdsp::GainDBParameter::Ptr &outGainDB, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels);
     ~PeakMeterSection();
 
     int getMeterHeight();
