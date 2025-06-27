@@ -6,7 +6,7 @@
   - define the new chowdsp param in the DirectParams struct 
   - if it's a simple parameter (a single float, for instance) requiring only a basic knob, add it as a chowdsp param
     - `chowdsp::GainDBParameter::Ptr gainParam` for instance 
-    - for a more complex set of parameters requiring a more complex UI element, you might need to create a `ParamHolder`
-             6. see `TransposeParams` for instance
-       7. Call `add` and include your new param with the others 
-          8. first line in the DirectParams struct, for instance
+  - for a more complex set of parameters requiring a more complex UI element, you might need to create a `ParamHolder`
+    - see `TransposeParams` for instance 
+  - Call `add` and include your new param with the others 
+    - first line in the DirectParams struct, for instance
