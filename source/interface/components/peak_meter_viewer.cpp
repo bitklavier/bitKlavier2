@@ -217,28 +217,9 @@ void PeakMeterViewer::destroy(OpenGlWrapper& open_gl) {
 }
 
 void PeakMeterViewer::paintBackground(juce::Graphics& g) {
-  float t = -kMinDb / (kMaxDb - kMinDb);
-  t *= t;
 
-//  float x = getWidth() * t;
-//  juce::Colour background = findColour(Skin::kWidgetBackground, true);
-//  g.setColour(background.interpolatedWith(findColour(Skin::kBackground, true), 0.5f));
-//  g.fillRect(x, 0.0f, getWidth() - x, 1.0f * getHeight());
-//
-//  g.setColour(background);
-//  g.fillRect(0.0f, 0.0f, x, 1.0f * getHeight());
-//
-//  g.setColour(findColour(Skin::kLightenScreen, true));
-//  g.fillRect((int)x, 0, 1, getHeight());
+    juce::Colour background = findColour(Skin::kWidgetBackground, true);
+    g.setColour(background);
+    g.fillRect(0.0f, 0.0f, getWidth() * 1.0f, getHeight() * 1.0f);
 
-  float y = getHeight() * t;
-  juce::Colour background = findColour(Skin::kWidgetBackground, true);
-  g.setColour(background.interpolatedWith(findColour(Skin::kBackground, true), 0.5f));
-  g.fillRect(0.0f, y, getWidth() * 1.0f, getHeight() - y);
-
-  g.setColour(background);
-  g.fillRect(0.0f, 0.0f, getWidth() * 1.0f, y);
-
-  g.setColour(findColour(Skin::kLightenScreen, true));
-  g.fillRect(0.0f, y, getWidth() * 1.0f, 1.0f);
 }

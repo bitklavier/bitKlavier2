@@ -21,37 +21,39 @@
 
 class VolumeSlider : public SynthSlider {
 public:
-    VolumeSlider(juce::String name) : SynthSlider(name), point_y_(0), end_y_(1) {
+    VolumeSlider(juce::String name) : SynthSlider(name) {
         paintToImage(true);
-        //details_ = vital::Parameters::getDetails("volume");
     }
 
     void paint(juce::Graphics& g) override {
-        float x = getPositionOfValue(getValue());
 
+        // draw cursor at current value location
+        float y = getPositionOfValue(getValue());
         juce::Path arrow;
-        arrow.startNewSubPath(x, point_y_);
-        int arrow_height = end_y_ - point_y_;
-        arrow.lineTo(x + arrow_height / 2.0f, end_y_);
-        arrow.lineTo(x - arrow_height / 2.0f, end_y_);
+        arrow.startNewSubPath(8, y);
+        int arrow_height = 8;
+        arrow.lineTo(1, y + arrow_height / 2.0f);
+        arrow.lineTo(1, y - arrow_height / 2.0f);
         arrow.closeSubPath();
         g.setColour(findColour(Skin::kLinearSliderThumb, true));
         g.fillPath(arrow);
+
+        // draw log tick marks
+        g.setColour(findColour(Skin::kLightenScreen, true));
+        for (int decibel = 6; decibel >= -66; decibel -= 6) {
+            int y = getPositionOfValue(decibel);
+            g.drawRect((getWidth() / 2) - 4, y, 8, 2);
+        }
+
+        // draw bigger tick mark at 0 dBFS
+        g.setColour(findColour(Skin::kLinearSliderThumb, true));
+        g.drawRect((getWidth() / 2) - 6, (int)getPositionOfValue(0), 12, 2);
     }
-
-//    void setPointY(int y) { point_y_ = y; repaint(); }
-//    void setEndY(int y) { end_y_ = y; repaint(); }
-//    int getEndY() { return end_y_; }
-
-private:
-    //vital::ValueDetails details_;
-    int point_y_;
-    int end_y_;
 };
 
 PeakMeterSection::PeakMeterSection(juce::String name, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels) : SynthSection(name) {
 
-    setComponentID(name); // sets the UUID for this component, inherits the UUID from the owning preparation
+   setComponentID(name); // sets the UUID for this component, inherits the UUID from the owning preparation
    peak_meter_left_ = std::make_shared<PeakMeterViewer>(true, outputLevels); // if we make this unique_ptrs, then this constructor fails
    addOpenGlComponent(peak_meter_left_);
    peak_meter_right_ = std::make_shared<PeakMeterViewer>(false, outputLevels);
@@ -60,38 +62,25 @@ PeakMeterSection::PeakMeterSection(juce::String name, const std::tuple<std::atom
    volume_ = std::make_shared<VolumeSlider>("volume");
    addSlider(volume_.get());
    volume_->setSliderStyle(juce::Slider::LinearBarVertical);
-   volume_->setPopupPlacement(juce::BubbleComponent::below);
+   volume_->setRange(-80.0, 6.0);
+   volume_->setNumDecimalPlacesToDisplay(2);
+   volume_->setValue(0.0, juce::dontSendNotification);
+   volume_->setSkewFactor(2.0);
+   volume_->setPopupPlacement(juce::BubbleComponent::right);
+   volume_->setTextValueSuffix(" dBFS");
+   volume_->setDoubleClickReturnValue(true, 0.0);
 }
 
 PeakMeterSection::~PeakMeterSection() { }
 
-int PeakMeterSection::getMeterHeight() {
-   return getHeight() / 8;
-}
-
-int PeakMeterSection::getBuffer() {
-   return getHeight() / 2 - getMeterHeight();
-}
-
 void PeakMeterSection::resized() {
-//   int meter_height = getMeterHeight();
-//   int volume_height = meter_height * 6.0f;
-//   int end_volume = meter_height * 3.5f;
-//   int padding = 1;
-//   int buffer = getBuffer();
-//
-//   peak_meter_left_->setBounds(0, buffer, getWidth(), meter_height);
-//   peak_meter_right_->setBounds(0, peak_meter_left_->getBottom() + padding, getWidth(), meter_height);
 
    juce::Rectangle<int> bounds = getLocalBounds();
-   bounds.reduce(0, 20);
-
    volume_->setBounds(bounds);
 
    juce::Rectangle<int> leftMeterBounds = bounds.removeFromLeft(bounds.getWidth()/2);
    leftMeterBounds.reduce(2, 0);
    bounds.reduce(2, 0);
-
    peak_meter_left_->setBounds(leftMeterBounds);
    peak_meter_right_->setBounds(bounds);
 
@@ -99,32 +88,5 @@ void PeakMeterSection::resized() {
 }
 
 void PeakMeterSection::paintBackground(juce::Graphics& g) {
-//   SynthSection::paintKnobShadows(g);
-//   SynthSection::paintChildrenBackgrounds(g);
-
-//   int ticks_y = peak_meter_right_->getBottom() + getPadding();
-//   int tick_height = peak_meter_right_->getHeight() / 2;
-//   //vital::ValueDetails details = vital::Parameters::getDetails("volume");
-//
-//   g.setColour(findColour(Skin::kLightenScreen, true));
-//   for (int decibel = -66; decibel <= 6; decibel += 6) {
-//       //float offset = decibel - details.post_offset;
-//       float offset = decibel;
-//       //float percent = offset * offset / (details.max - details.min);
-//       float percent = offset * offset;
-//       int x = percent * getWidth();
-//       g.drawRect(x, ticks_y, 1, tick_height);
-//   }
-
-   int ticks_x = peak_meter_left_->getRight() - 2;
-   int tick_width = 8;
-
-   g.setColour(findColour(Skin::kLightenScreen, true));
-
-   for (int decibel = -66; decibel <6; decibel += 6) {
-       float offset = decibel + 66;
-       float percent = offset * offset / (72. * 72.);
-       int y = percent * peak_meter_left_->getHeight();
-       g.drawRect(ticks_x, peak_meter_left_->getBottom() - y, tick_width, 2);
-   }
+    SynthSection::paintChildrenBackgrounds(g);
 }
