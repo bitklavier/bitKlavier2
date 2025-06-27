@@ -28,9 +28,6 @@ namespace {
 
 PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels)
     : shader_(nullptr), clamped_(0.0f), left_(left), peakOutput(outputLevels) {
-  //addRoundedCorners();
-//  peak_output_ = nullptr;
-//  peak_memory_output_ = nullptr;
 
   float position_vertices[kNumPositions] = {
     -1.0f, 1.0f,    // left top
@@ -53,12 +50,6 @@ PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>,
 PeakMeterViewer::~PeakMeterViewer() { }
 
 void PeakMeterViewer::resized() {
-//  if (peak_output_ == nullptr || peak_memory_output_ == nullptr) {
-//    SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
-//    peak_output_ = parent->getSynth()->getStatusOutput("peak_meter");
-//    peak_memory_output_ = parent->getSynth()->getStatusOutput("peak_meter_memory");
-//  }
-
   OpenGlComponent::resized();
 }
 
@@ -140,14 +131,9 @@ void PeakMeterViewer::updateVerticesMemory() {
 //  position_vertices_[6] = position;
 }
 
-void PeakMeterViewer::render(OpenGlWrapper& open_gl, bool animate) {
-//  if (!animate || peak_output_ == nullptr)
-//    return;
-
-//  if (!animate || peakOutput == nullptr)
-//    return;
-
-if (peakOutput == nullptr) // ignore animate bool for now
+void PeakMeterViewer::render(OpenGlWrapper& open_gl, bool animate)
+{
+    if (peakOutput == nullptr) // ignore animate bool for now
         return;
 
   juce::gl::glEnable(juce::gl::GL_BLEND);

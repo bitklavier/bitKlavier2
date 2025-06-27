@@ -34,23 +34,30 @@ public:
 
         // go through and get all the main float params (gain, hammer, etc...), make sliders for them
         // all the params for this prep are defined in struct DirectParams, in DirectProcessor.h
+        // we're only including the ones that we want to group together and call "placeKnobsInArea" on
+        // we're leaving out "outputGain" since that has its own VolumeSlider
         for (auto& param_ : *params.getFloatParams())
         {
-
-            if(param_->paramID == "OutputGain") // ignore this one for now
-                continue;
-            auto slider = std::make_unique<SynthSlider>(param_->paramID);
-            auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
-            addSlider(slider.get()); // adds the slider to the synthSection
-            slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-            floatAttachments.emplace_back(std::move(attachment));
-            _sliders.emplace_back(std::move(slider));
+            if(
+                param_->paramID == "Main" ||
+                param_->paramID == "Hammers" ||
+                param_->paramID == "Resonance" ||
+                param_->paramID == "Pedal" ||
+                param_->paramID == "Send")
+            {
+                auto slider = std::make_unique<SynthSlider> (param_->paramID);
+                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                addSlider (slider.get()); // adds the slider to the synthSection
+                slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                floatAttachments.emplace_back (std::move (attachment));
+                _sliders.emplace_back (std::move (slider));
+            }
         }
 
+        // create the more complex UI elements
         envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
-
 
         // we add subsections for the elements that have been defined as sections
         addSubSection (envSection.get());
@@ -60,7 +67,7 @@ public:
         velocityMinMaxSlider->setComponentID ("velocity_min_max");
         addStateModulatedComponent (velocityMinMaxSlider.get());
 
- // to access the updating audio output levels
+        // the level meter and output gain slider (right side of preparation popup
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         addSubSection(levelMeter.get());
 
@@ -81,7 +88,6 @@ public:
             drawLabelForComponent (g, slider->getName(), slider.get());
         }
         paintChildrenBackgrounds (g);
-        //knobsBorder.paint(g);
     }
 
     // complex UI elements in this prep
@@ -89,7 +95,7 @@ public:
     std::unique_ptr<EnvelopeSection> envSection;
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
-    // generic sliders/knobs for this prep, with their attachments for tracking/updating values
+    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
@@ -97,7 +103,7 @@ public:
     std::vector<std::unique_ptr<SynthSlider>> outputGainKnobs;
 
     //juce::GroupComponent knobsBorder;
-    std::shared_ptr<PeakMeterSection> levelMeter; // this should not have to be a shared pointer, nor should its components.
+    std::shared_ptr<PeakMeterSection> levelMeter;
 
     void resized() override;
 };

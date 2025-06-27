@@ -31,7 +31,7 @@ public:
 
 private:
 
-    std::shared_ptr<PeakMeterViewer> peak_meter_left_; // this shouldn't have to be shared_ptr, perhaps passing the pointer to the constructor above is the problem?
+    std::shared_ptr<PeakMeterViewer> peak_meter_left_;
     std::shared_ptr<PeakMeterViewer> peak_meter_right_;
     std::shared_ptr<VolumeSlider> volume_;
     std::unique_ptr<chowdsp::SliderAttachment> volumeAttach_;
