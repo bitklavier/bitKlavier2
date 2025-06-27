@@ -191,7 +191,10 @@ void CableView::endDraggingConnector (const juce::MouseEvent& e)
 
             connection.destination = pin->pin;
         }
-        if (!(connection.source.isMIDI() && connection.destination.isMIDI())) {
+        if (!connection.source.isMIDI() && connection.destination.isMIDI()) {
+            return;
+        }
+        if (connection.source.isMIDI() && !connection.destination.isMIDI()) {
             return;
         }
 

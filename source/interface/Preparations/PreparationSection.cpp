@@ -90,14 +90,15 @@ void PreparationSection::setPortInfo() {
         if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
             if (auto *node = parent->getSynth()->getNodeForId(pluginID)) {
                 auto processor = node->getProcessor();
-                //check if main audio input bus is enabled
-                if (getProcessor()->getBus(true, 0) != nullptr && getProcessor()->getBus(true, 0)->isEnabled()) {
+                //check if main audio input bus/ is enabled
+                if (processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
                     for (int i = 0; i < processor->getMainBusNumInputChannels(); ++i) {
                         juce::ValueTree v{IDs::PORT};
                         v.setProperty(IDs::nodeID,
                                       juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
                                       nullptr);
                         v.setProperty(IDs::chIdx, i, nullptr);
+                        v.setProperty(IDs::isIn, true, nullptr);
                         bool add = true;
                         for (auto vt: state) {
                             if (vt.isEquivalentTo(v)) {
@@ -134,7 +135,7 @@ void PreparationSection::setPortInfo() {
                 }
 
                 //check if main audio output bus is enabled
-                if (getProcessor()->getBus(false, 0) != nullptr && getProcessor()->getBus(false, 0)->isEnabled()) {
+                if (processor->getBus(false, 0) != nullptr && getProcessor()->getBus(false, 0)->isEnabled()) {
                     for (int i = 0; i < processor->getTotalNumOutputChannels(); ++i) {
                         juce::ValueTree v{IDs::PORT};
                         v.setProperty(IDs::nodeID,
