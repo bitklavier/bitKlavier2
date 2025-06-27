@@ -101,15 +101,7 @@ void DirectProcessor::setTuning (TuningProcessor* tun) {
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-#if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
     state.getParameterListeners().callAudioThreadBroadcasters();
-#endif
-//    auto modBus = getBus(true,1);
-//    auto index = modBus->getChannelIndexInProcessBlockBuffer(0);
-//    int i = 0;
-//    for(auto param: state.params.modulatableParams){
-//        bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
-//    }
 
     // always top of the chain as an instrument source; doesn't take audio in
     buffer.clear();
@@ -162,8 +154,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-    // if we want to implement a final output gain stage
-    // DBG("state.params.outputGain->getCurrentValue() = " + juce::String(state.params.outputGain->getCurrentValue()));
+    // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
     buffer.applyGain(outputgainmult);
 

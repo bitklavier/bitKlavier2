@@ -1,11 +1,12 @@
 # Notes about how to do stuff in the bK codebase
 
 ---------
-## adding a parameter to a preparation (Direct, for example)
-1. in DirectProcessor.h (in Source/synthesis/Processors)
-   2. add the new param in the DirectParams struct
-      3. if it's a simple parameter (a single float, for instance) requiring only a basic knob, add it as a chowdsp param 
-         4. `chowdsp::GainDBParameter::Ptr gainParam` for instance
-      5. for a more complex set of parameters requiring a more complex UI element, you might need to create a `ParamHolder`
-         6. see `TransposeParams` for instance
-      7. be sure to `add` your new param!
+## Adding a Parameter to a Preparation (Direct, for example)
+- in DirectProcessor.h (in Source/synthesis/Processors)
+  - define the new chowdsp param in the DirectParams struct 
+  - if it's a simple parameter (a single float, for instance) requiring only a basic knob, add it as a chowdsp param
+    - `chowdsp::GainDBParameter::Ptr gainParam` for instance 
+    - for a more complex set of parameters requiring a more complex UI element, you might need to create a `ParamHolder`
+             6. see `TransposeParams` for instance
+       7. Call `add` and include your new param with the others 
+          8. first line in the DirectParams struct, for instance

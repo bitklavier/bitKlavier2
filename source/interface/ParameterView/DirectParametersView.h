@@ -50,11 +50,6 @@ public:
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
-//        knobsBorder.setName("knobsBorder");
-//        knobsBorder.setText("Output Gain Controls");
-//        knobsBorder.setTextLabelPosition(juce::Justification::centred);
-//        addAndMakeVisible(knobsBorder);
-
         // we add subsections for the elements that have been defined as sections
         addSubSection(envSection.get());
         addSubSection(transpositionSlider.get());
@@ -64,78 +59,9 @@ public:
         addStateModulatedComponent(velocityMinMaxSlider.get());
 
         params.outputLevels; // to access the updating audio output levels
-        //levelMeter = std::make_shared<PeakMeterSection>("peakMeter",&params.outputLevels);
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-        //addOpenGlComponent(levelMeter);
-        addSubSection(levelMeter.get());
-        //addAndMakeVisible(levelMeter);
-    }
-    /*
-    DirectParametersView(chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper *open_gl) : SynthSection("")
-    {
-        // the name that will appear in the UI as the name of the section
-        setName("direct");
-
-        // every section needs a LaF
-        //  main settings for this LaF are in assets/default.bitklavierskin
-        //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
-        //  we probably want to merge these in the future, but ok for now
-        setLookAndFeel(DefaultLookAndFeel::instance());
-        setComponentID(name);
-
-        // pluginState is really preparationState; the state holder for this preparation (not the whole app/plugin)
-        // we need to grab the listeners for this preparation here, so we can pass them to components below
-        auto& listeners = pluginState.getParameterListeners();
-
-        // go through and get all the main float params (gain, hammer, etc...), make sliders for them
-        // all the params for this prep are defined in struct DirectParams, in DirectProcessor.h
-        for ( auto &param_ : *params.getFloatParams())
-        {
-            auto slider = std::make_unique<SynthSlider>(param_->paramID);
-            auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
-            addSlider(slider.get()); // adds the slider to the synthSection
-            slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-            floatAttachments.emplace_back(std::move(attachment));
-
-            auto currentSlider = slider->getName();
-
-            // group of knobs to display together
-            if (currentSlider == "Main" ||
-                currentSlider == "Hammers" ||
-                currentSlider == "Resonance" ||
-                currentSlider == "Pedal" ||
-                currentSlider == "Send")
-            {
-                outputGainKnobs.emplace_back(std::move(slider));
-            }
-            // rest of the generic sliders/knobs, handled separately
-            else _sliders.emplace_back(std::move(slider));
-        }
-
-        // create larger UI sections
-        envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
-        transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
-        velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
-
-        // border for the collection of output knobs
-//        knobsBorder.setName("knobsBorder");
-//        knobsBorder.setText("Output Gain Controls");
-//        knobsBorder.setTextLabelPosition(juce::Justification::centred);
-//        addAndMakeVisible(knobsBorder);
-
-        // we add subsections for the elements that have been defined as sections
-        addSubSection(envSection.get());
-        addSubSection(transpositionSlider.get());
-
-        // this slider does not need a section, since it's just one OpenGL component
-        velocityMinMaxSlider->setComponentID("velocity_min_max");
-        addStateModulatedComponent(velocityMinMaxSlider.get());
-
-        // to access and display the updating audio output levels
-        levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, &params.outputLevels);
         addSubSection(levelMeter.get());
     }
-     */
 
     void paintBackground(juce::Graphics& g) override
     {
