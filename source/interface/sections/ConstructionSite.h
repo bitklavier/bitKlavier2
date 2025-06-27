@@ -31,7 +31,6 @@ public:
 
     ApplicationCommandTarget* getNextCommandTarget() override {
         return findFirstTargetParentComponent();
-        //return findParentComponentOfClass<SynthGuiInterface>();
     }
     void getAllCommands(juce::Array<juce::CommandID> &commands) override;
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override;

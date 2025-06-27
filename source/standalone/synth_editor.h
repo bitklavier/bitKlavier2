@@ -60,7 +60,7 @@ private:
 };
 
 //reminder that inheritance order matters for creation. if you inherit from
-//synthguiinterfce before synthbase, the synthguiinterface constructor
+//synthguiinterface before synthbase, the synthguiinterface constructor
 // will get called first. causing a crash
 class SynthEditor : public juce::AudioAppComponent, public SynthBase, public SynthGuiInterface, public juce::Timer {
 public:

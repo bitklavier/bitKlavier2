@@ -18,7 +18,7 @@ We will use the direct preparation as an example for simplicity.
 
 ## Creation Function Call Trace
 
-1. When we press the 'd' key, [ConstructionSite::keyPressed()](../source/interface/sections/ConstructionSite.cpp#L185) gets called. When we right-click on the ConstructionSite and select 'Direct' from the popup, [ConstructionSite::handlePluginPopup()](../source/interface/sections/ConstructionSite.cpp) gets called
+1. When we press the 'd' key, [a whole bunch of stuff](#the-applicationcommandtarget) happens [ConstructionSite::perform()](../source/interface/sections/ConstructionSite.cpp#L185) gets called. When we right-click on the ConstructionSite and select 'Direct' from the popup, [ConstructionSite::handlePluginPopup()](../source/interface/sections/ConstructionSite.cpp) gets called
     
     - In both functions, we create a [ValueTree](#the-valuetree) with ID "PREPARATION" and set the properties (type, width, height, and x & y positions)
 2. From either the keyPressed() or the handlePluginPopup() function, we call [prep_list.appendChild()](../source/interface/Preparations/PreparationList.h)
@@ -57,7 +57,7 @@ We will use the direct preparation as an example for simplicity.
 **NICE!**
 ## Deleting
 There are 3 ways a preparation could be deleted
-- press the 'delete' key on your keyboard with the preparation selected
+- press the 'backspace' key on your keyboard with the preparation selected
 - press 'CMD + z' on your keyboard
 - click Edit > Undo
 
@@ -76,16 +76,31 @@ Let's first walk through how this happens at a high level then we'll dig into so
 ## Deletion Function Call Trace
 Before tracing, let's think about everything we had to do to create the preparation. To make sure we clean up all of the moving pieces, we need to make sure that we: 1) remove the parameter from the ValueTree, 2) remove the parameter from the AudioProcessorGraph, 3) remove the parameter from `objects`, 4) remove the parameter from `sub_sections_`, and 5) remove the parameter from `plugin_components`. Not only do we need to remove it from all of these things, but we need to make sure that it is deleted as well. Starting from the top...
 
-1. When we select Edit > Undo, [ApplicationCommandHandler::perform()](../source/common/ApplicationCommandHandler.cpp) will call
-   ```c++
-   parent->getUndoManager()->undo();
-   ```
-   This gets the [UndoManager](#the-undomanager) from `parent`, which is a pointer to the SynthGuiInterface, and calls the UndoManager's undo() function
+1a) Deleting with Undo:
+
+   - When we select Edit > Undo, [ApplicationCommandHandler::perform()](../source/common/ApplicationCommandHandler.cpp) will call
+      ```c++
+      parent->getUndoManager()->undo();
+      ```
+      This gets the [UndoManager](#the-undomanager) from `parent`, which is a pointer to the SynthGuiInterface, and calls the UndoManager's undo() function 
+   - When we press 'CMD + z', [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call `getUndoManager()->undo()`.
+   - In both cases, [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp) is called. This function is implemented by JUCE and takes care of removing our preparation from the ValueTree.
+
+1b) Deleting with 'Backspace' key:
+
+   - When we press the 'Backspace' key, ConstructionSite::perform() calls `prep_list.removeChild(prep->state, &undo)`, which looks like this
+       ```c++
+       void removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)
+       {
+           undoManager->beginNewTransaction();
+           this->parent.removeChild(child,undoManager);
+       }
+       ```
+   - Side note: Since we've passed the UndoManager into this function and called `undoManager->beginNewTransaction()`, if someone deletes their preparation on accident, they can undo to get it back!
+   - Since `parent` is a ValueTree, this calls JUCE's ValueTree::removeChild() which takes care of removing our preparation from the ValueTree.
    
-   When we press 'CMD + z' [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call `getUndoManager()->undo()`.
-2. [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp) is implemented by JUCE and takes care of removing our preparation from the ValueTree. 
-   - **We've removed from the ValueTree - 1 of 5 removal steps accomplished**
-3. When our preparation is removed from the ValueTree, the [valueTreeChildRemoved()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening...
+   **Great! In all 3 ways of deleting a preparation, we've removed from the ValueTree - 1 of 5 removal steps accomplished**
+2. When our preparation is removed from the ValueTree, the [valueTreeChildRemoved()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening...
    - In this function, we call
       ```c++
       o = objects.removeAndReturn (oldIndex);
@@ -156,6 +171,7 @@ If you read through function call traces and you had a hard time keeping track o
 - [The PluginInstanceWrapper](#the-plugininstancewrapper)
 - [The PreparationList](#the-preparationlist)
 - [The UndoManager](#the-undomanager)
+- [The ApplicationCommandTarget](#the-applicationcommandtarget)
 - [The AudioProcessorGraph](#the-audioprocessorgraph)
 - [Locking](#locking)
 - [Listeners](#listeners)
@@ -209,6 +225,88 @@ The PreparationList object is created in SynthBase and is passed into the Constr
 One of the convenient things about using JUCE's value tree is that we get access to undo/redo functions implemented by their UndoManager. You can read the documentation [here](https://docs.juce.com/master/classUndoManager.html).
 
 Like our top-level value tree, the UndoManager gets created in [SynthBase](../source/synthesis/synth_base.cpp), which is the start of our backend stuff. This UndoManager gets passed around all over the place. We first use it in ConstructionSite, but how does it get there? Buckle up... ConstructionSite receives it as an argument when it is constructed in MainSection. Similarly, MainSection receives it as an argument when it is constructed in FullInterface. FullInterface is constructed in SynthGuiInterface with a single argument: `SynthGuiData* synth_data`. The UndoManager is lumped into that SynthGuiData object, which holds the SynthBase where the UndoManager was created.
+
+### The ApplicationCommandTarget
+In our codebase, some of our classes - currently SynthGuiInterface and ConstructionSite - inherit from JUCE's ApplicationCommandTarget class (documentation [here](https://docs.juce.com/master/classApplicationCommandTarget.html)). By inheriting ApplicationCommandTarget, the ApplicationCommandManager knows to check our classes when certain commands are called. Below, I've included the functions that our classes need to implement and the way that we did so in the ConstructionSite
+
+- **getNextCommandTarget()** - returns the next target to try after this one
+   ```c++
+    ApplicationCommandTarget* getNextCommandTarget() override {
+        return findFirstTargetParentComponent();
+    }
+   ```
+- **getAllCommands()** - adds the commandIDs to the ApplicationCommandManager's commands array. 
+   ```c++
+   enum CommandIDs {
+       direct = 0x0613,
+       nostalgic = 0x0614,
+       keymap = 0x0615,
+       resonance = 0x0616,
+       synchronic   = 0x0617,
+       blendronic = 0x0618,
+       tempo = 0x0619,
+       tuning = 0x0620,
+       modulation = 0x0621,
+       deletion = 0x0622
+   };
+   
+   void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
+       commands.addArray({direct, nostalgic, keymap, resonance, synchronic, blendronic, tempo, modulation, deletion});
+   }
+   ```
+  The commandIDs can be whatever number you want
+- **getCommandInfo()** - associates the commandID with a name, description, category, and default key press
+   ```c++
+   void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
+     switch (id) {
+         case direct:
+             info.setInfo("Direct", "Create Direct Preparation", "Edit", 0);
+             info.addDefaultKeypress('d', juce::ModifierKeys::noModifiers);
+         break;
+         case nostalgic:
+             info.setInfo("Nostalgic", "Create Nostalgic Preparation", "Edit", 0);
+         info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
+         break;
+         // info for the rest of the commands...
+      }
+   }
+   ```
+- **perform()** - holds the code that is supposed to be executed once the command is triggered
+   ```c++
+   bool ConstructionSite::perform(const InvocationInfo &info) {
+     switch (info.commandID) {
+         case direct:
+         {
+             juce::ValueTree t(IDs::PREPARATION);
+             t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
+             t.setProperty(IDs::width, 245, nullptr);
+             t.setProperty(IDs::height, 125, nullptr);
+             t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+             t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+             // prep_list.appendChild(t,  interface->getUndoManager());
+             prep_list.appendChild(t,  &undo);
+             return true;
+         }
+         // implementations for the rest of the commands...
+      }
+   }
+   ```
+Once these are implemented, ConstructionSite and SynthGuiInterface have done everything that they need to do to be ApplicationCommandTargets! Now we need an [ApplicationCommandManager](https://docs.juce.com/master/classApplicationCommandManager.html) to take care of the commands, so we create that in SynthGuiInterface and pass it around. Note that an ApplicationCommandManager cannot be copied!
+
+So, to get the command manager from SynthGuiInterface to the ConstructionSite, we pass it as a constructor argument for the FullInterface, MainSection, and finally the ConstructionSite. In the constructor of both SynthGuiInterface and ConstructionSite (and any ApplicationCommandTarget), we need to tell the command manager to register the commands in this target like so
+```c++
+commandManager.registerAllCommandsForTarget (this);
+```
+Nice! Now everything should be working! A quick trace of what happens when we run bitKlavier:
+
+1. SynthGuiInterface creates FullInterface creates MainSection creates ConstructionSite, passing its ApplicationCommandManager the whole way down.
+2. Once we're in the ConstructionSite constructor, we call commandManager.registerAllCommandsForThisTarget()
+3. This calls getAllCommands() on our ConstructionSite, which adds the ConstructionSite's list of commandIDs to the ApplicationCommandManager's list of commandIDs
+4. From registerAllCommandsForThisTarget() we also call the ConstructionSite's getCommandInfo() which sets up the ApplicationCommandInfo object for each CommandID.
+5. The command manager registers each ApplicationCommandInfo object and then returns
+6. Once we're done constructing the ConstructionSite, we crawl back up to the SynthGuiInterface's constructor where we call commandManager.registerAllCommandsForThisTarget(). This repeats steps 3-5 for the SynthGuiInterface.
+7. Finally, we press 'd' and whole bunch of people start talking to each other. ComponentPeer::handleKeyPress tells KeyPressMappingSet tells ApplicationCommandManager tells ApplicationCommandTarget tells ConstructionSite::perform to do whatever we should be doing when 'd' is pressed. And it does! Our direct preparation shows up!
+8. Next, we press 'CMD + Z', and all the same people start talking to each other but this time ApplicationCommandTarget tells SynthGuiInterface::perform to do whatever we should do when 'CMD + Z' is pressed.
 
 ### The AudioProcessorGraph
 ### Locking

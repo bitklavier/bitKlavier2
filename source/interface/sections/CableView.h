@@ -13,7 +13,6 @@
 
 class ConstructionSite;
 class CableView :
-//                  private juce::Timer,
                   public PreparationSection::Listener,
                   public SynthSection,
                   public tracktion::engine::ValueTreeObjectList<Cable>

@@ -49,6 +49,8 @@ public:
 
         virtual void _update() {};
 
+        virtual void preparationDeleted(const juce::ValueTree&) {};
+
         virtual void preparationDragged(juce::Component *prep, const juce::MouseEvent &e) {}
 
         virtual void preparationDropped(const juce::MouseEvent &e, juce::Point<int> originalComponentPoint) {}
