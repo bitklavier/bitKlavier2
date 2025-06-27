@@ -8,6 +8,7 @@
 #include "Sample.h"
 #include "EnvParams.h"
 #include "TuningProcessor.h"
+#include "utils.h"
 
 //==============================================================================
 /**
@@ -305,6 +306,12 @@ class BKSynthesiser
                     synthGain.setParameterValue(g);
                 }
 
+                /**
+                 * todo
+                 * remove full array copy from this
+                 * @param newOffsets
+                 * @param tune_transpositions
+                 */
                 void updateMidiNoteTranspositions(juce::Array<float> newOffsets, bool tune_transpositions) {
                     midiNoteTranspositions = newOffsets;
                     tuneTranspositions = tune_transpositions;
@@ -339,6 +346,11 @@ class BKSynthesiser
                 void setTuning(TuningState* attachedTuning)
                 {
                     tuning = attachedTuning;
+                }
+
+                BKSynthesizerState getSynthesizerState()
+                {
+                    return lastSynthState;
                 }
 
 protected:
@@ -453,6 +465,8 @@ private:
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
 
                 chowdsp::GainDBParameter& synthGain; //= 1.0; //global gain for this synth
+
+                BKSynthesizerState lastSynthState;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

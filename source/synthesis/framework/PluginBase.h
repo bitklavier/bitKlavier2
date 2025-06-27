@@ -26,7 +26,6 @@ namespace bitklavier {
 
             protected:
 
-
         TuningProcessor* tuning = nullptr; //getTuningProcessor() const;
         //virtual std::unique_ptr<SynthSection> createSynthSection() = 0;
     };

@@ -2,6 +2,7 @@
 // Created by Davis Polito on 1/17/24.
 //
 
+
 #include "ConstructionSite.h"
 #include "Preparations.h"
 #include "SampleLoadManager.h"
@@ -38,10 +39,11 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     modulationLineView.setAlwaysOnTop(false);
     prep_list.addListener(this);
     // prep_list.addChangeListener(this);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::createDirectSection);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::createKeymapSection);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::createPluginSection);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::createModulationSection);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
 }
 
 // Define your command IDs
@@ -59,7 +61,7 @@ enum CommandIDs {
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
-    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, blendronic, tempo, modulation, deletion});
+    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion});
 }
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
         switch (id) {

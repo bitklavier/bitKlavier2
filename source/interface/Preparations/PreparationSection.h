@@ -227,7 +227,6 @@ protected:
 private:
     juce::Point<int> pointBeforDrag; // e.getEventRelativeTo (componentToDrag).getMouseDownPosition();
     bool isSelected = true;
-    juce::AudioProcessor *_proc;
 
 };
 

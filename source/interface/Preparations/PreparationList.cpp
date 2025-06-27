@@ -10,6 +10,7 @@ PreparationList::PreparationList(SynthBase& parent,const juce::ValueTree &v) : t
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap,KeymapProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,bitklavier::ModulationProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningProcessor::create);
 }
 
 

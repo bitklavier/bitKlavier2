@@ -5,7 +5,6 @@
 #include "DirectProcessor.h"
 #include "Synthesiser/Sample.h"
 #include "common.h"
-//#include <chowdsp_serialization/chowdsp_serialization.h>
 #include "synth_base.h"
 DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
                                                                                   mainSynth (new BKSynthesiser (state.params.env, state.params.gainParam)),
@@ -94,27 +93,30 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
     return transps;
 }
 
+void DirectProcessor::setTuning (TuningProcessor* tun)
+{
+    tuning = tun;
+    mainSynth->setTuning (&tuning->getState().params.tuningState);
+    releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
+}
+
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
     state.getParameterListeners().callAudioThreadBroadcasters();
 #endif
-    auto modBus = getBus (true, 1);
-    auto index = modBus->getChannelIndexInProcessBlockBuffer (0);
-    int i = 0;
-    // for(auto param: state.params.modulatableParams){
-    //     bufferDebugger->capture(param.first, buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
-    // }
-    //    melatonin::printSparkline(buffer);
-    //should pull first two modinputs first or somehow have dum
-    //
-    // my ins???
 
-    buffer.clear(); // always top of the chain as an instrument source; doesn't take audio in
-
+    // need to call these every block
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
 
+    // update transposition slider values
+    /**
+     * todo:
+     * used fixed length array since we know the max
+     * and reduce numbers of copies of this array
+     * fastest would be to have an array of pointers that points to the chowdsp version of these
+     */
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
@@ -152,20 +154,15 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-    // level meter update stuff
-    int numSamples = buffer.getNumSamples();
-    if (numSamples != levelBuf.getNumSamples())
-        levelBuf.setSize (buffer.getNumChannels(), numSamples);
-    levelBuf.copyFrom (0, 0, buffer, 0, 0, numSamples);
-    std::get<0> (state.params.outputLevels) = getLevelL();
-    std::get<1> (state.params.outputLevels) = getLevelR();
-}
+    // if we want to implement a final output gain stage
+    //    auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
+    //    buffer.applyGain(outputgainmult);
 
-void DirectProcessor::setTuning (TuningProcessor* tun)
-{
-    tuning = tun;
-    releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
-    pedalSynth->setTuning (&tuning->getState().params.tuningState);
-    hammerSynth->setTuning (&tuning->getState().params.tuningState);
-    mainSynth->setTuning (&tuning->getState().params.tuningState);
+    // level meter update stuff
+    std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
+    std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
+
+    // get last synthesizer state and update things accordingly
+    lastSynthState = mainSynth->getSynthesizerState();
+    state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
 }

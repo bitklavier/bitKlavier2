@@ -28,7 +28,7 @@ public:
     ~PluginPreparation();
 
     // Static function that returns a pointer to a PluginPreparation object
-    static std::unique_ptr<PreparationSection> createPluginSection(const juce::ValueTree& v, SynthGuiInterface* interface) {
+    static std::unique_ptr<PreparationSection> create(const juce::ValueTree& v, SynthGuiInterface* interface) {
 
         return std::make_unique<PluginPreparation> (v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }

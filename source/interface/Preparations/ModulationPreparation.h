@@ -34,7 +34,7 @@ public:
     // Destructor method
     ~ModulationPreparation();
 
-    static std::unique_ptr<PreparationSection> createModulationSection(const juce::ValueTree& v, SynthGuiInterface* interface) {
+    static std::unique_ptr<PreparationSection> create(const juce::ValueTree& v, SynthGuiInterface* interface) {
 
         return std::make_unique<ModulationPreparation> (v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
