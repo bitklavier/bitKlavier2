@@ -33,6 +33,7 @@ struct DirectParams : chowdsp::ParamHolder
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
         add (gainParam, hammerParam, releaseResonanceParam, pedalParam, outputSendParam,  env, transpose, velocityMinMax);
+
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
@@ -44,7 +45,7 @@ struct DirectParams : chowdsp::ParamHolder
 
             if (auto *sliderParam = dynamic_cast<chowdsp::FloatParameter *> (&param))
                 if(sliderParam->supportsMonophonicModulation())
-                    modulatableParams.insert({ sliderParam->paramID.toStdString(),  sliderParam});
+                    modulatableParams.insert ({ sliderParam->paramID.toStdString(), sliderParam });
         });
     }
 

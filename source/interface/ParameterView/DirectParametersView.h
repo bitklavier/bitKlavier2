@@ -12,7 +12,6 @@
 #include "synth_slider.h"
 #include "DirectProcessor.h"
 #include "peak_meter_section.h"
-#include "KnobsSection.h"
 
 class DirectParametersView : public SynthSection
 {
@@ -49,7 +48,6 @@ public:
         envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
-        //outputKnobsSection      = std::make_unique<KnobsSection>(&params, listeners, name.toStdString());
 
         // border for the collection of output knobs
 //        knobsBorder.setName("knobsBorder");
@@ -88,7 +86,6 @@ public:
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
-    std::unique_ptr<KnobsSection> outputKnobsSection;
 
     // generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
