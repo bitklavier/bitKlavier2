@@ -193,6 +193,19 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
+    /**
+     * params to add:
+     * - semitone width and root (float slider, two menus)
+     * - offset (float slider)
+     * - note and interval text boxes (display only)
+     *
+     * then:
+     * - adaptive tunings
+     * - spring tuning
+     * - scala functionality
+     * - MTS
+     */
+
     /** this contains the current state of the tuning system, with helper functions **/
     TuningState tuningState;
 
