@@ -464,7 +464,7 @@ private:
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
 
-                chowdsp::GainDBParameter& synthGain; //= 1.0; //global gain for this synth
+                chowdsp::GainDBParameter& synthGain; //global gain for this synth
 
                 BKSynthesizerState lastSynthState;
 
