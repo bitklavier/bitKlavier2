@@ -17,6 +17,7 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 
+// why are we assigning these this way? is this from the original bK?
 enum Fundamental : uint32_t {
     C = 1 << 0,
     C41D5 = 1 << 1,
@@ -45,23 +46,16 @@ enum AdaptiveSystems {
  */
 struct TuningState : bitklavier::StateChangeableParameter
 {
-    juce::MidiKeyboardState keyboardState;
-
-    std::array<float, 128> absoluteTuningOffset = { 0.f };
-    std::array<float, 12> circularTuningOffset = { 0.f };
-    int fundamental = 0;
-
     void setKeyOffset (int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 128)
-            absoluteTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+            absoluteTuningOffset[midiNoteNumber] = val;
     }
 
     void setCircularKeyOffset (int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 12)
-            circularTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
-        //DBG("setCircularKeyOffset " + juce::String(midiNoteNumber) + " : " + juce::String(val));
+            circularTuningOffset[midiNoteNumber] = val;
     }
 
     void setKeyOffset (int midiNoteNumber, float val, bool circular)
@@ -149,17 +143,33 @@ struct TuningState : bitklavier::StateChangeableParameter
 
         if (!tuneTranspositions)
         {
-            double newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01); // i don't love the .01 changes here, let's see if this can be made consistent
+            double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
+            newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
         }
         else
         {
             double newOffset = (circularTuningOffset[(currentlyPlayingNote + (int) std::trunc (currentTransposition)) % circularTuningOffset.size()] * .01);
+            newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            newOffset *= .01;
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
         }
 
-        // add A440 adjustments here
+        /**
+         * to add here:
+         * - A440 adjustments
+         *
+         * then:
+         * - adaptive tunings 1 and 2
+         * - spring tuning
+         */
     }
+
+    juce::MidiKeyboardState keyboardState;
+    std::array<float, 128> absoluteTuningOffset = { 0.f };
+    std::array<float, 12> circularTuningOffset = { 0.f };
+    int fundamental = 0;
 
     std::atomic<bool> setFromAudioThread;
 };
@@ -195,8 +205,11 @@ struct TuningParams : chowdsp::ParamHolder
 
     /**
      * params to add:
-     * - semitone width and root (float slider, two menus)
-     * - offset (float slider)
+     * as a section:
+     * - semitone width and root (float slider/knob, two menus)
+     *
+     * individually:
+     * - offset (float slider/knob)
      * - note and interval text boxes (display only)
      *
      * then:
@@ -209,6 +222,9 @@ struct TuningParams : chowdsp::ParamHolder
     /** this contains the current state of the tuning system, with helper functions **/
     TuningState tuningState;
 
+    /**
+     * Davis: what are these, what do they do?
+     */
     /** Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const TuningParams& paramHolder);
