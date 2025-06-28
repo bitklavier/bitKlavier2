@@ -184,6 +184,9 @@ void BKSynthesiser::renderVoices (juce::AudioBuffer<float>& buffer, int startSam
 
 void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
 {
+    if (synthGain <= 65.) return; // mute instruments that are turned down this far
+    // is this an ok place to do this? might cause issues with hung notes, but minor...
+
     const int channel = m.getChannel();
 
     /**
@@ -308,16 +311,15 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
             voice->stopNote (0.0f, false);
 
         voice->setTuning(tuning);
-        if (!keyReleaseSynth) // don't apply the envelope from the attached prep for release synths (hammers, resonance, etc...)
-        {
-            voice->copyAmpEnv ({ adsrParams.attackParam->getCurrentValue() * 0.001f,
-                adsrParams.decayParam->getCurrentValue() * 0.001f,
-                adsrParams.sustainParam->getCurrentValue(),
-                adsrParams.releaseParam->getCurrentValue() * 0.001f,
-                static_cast<float> (adsrParams.attackPowerParam->getCurrentValue() * -1.),
-                static_cast<float> (adsrParams.decayPowerParam->getCurrentValue() * -1.),
-                static_cast<float> (adsrParams.releasePowerParam->getCurrentValue() * -1.) });
-        }
+
+        voice->copyAmpEnv ({ adsrParams.attackParam->getCurrentValue() * 0.001f,
+            adsrParams.decayParam->getCurrentValue() * 0.001f,
+            adsrParams.sustainParam->getCurrentValue(),
+            adsrParams.releaseParam->getCurrentValue() * 0.001f,
+            static_cast<float> (adsrParams.attackPowerParam->getCurrentValue() * -1.),
+            static_cast<float> (adsrParams.decayPowerParam->getCurrentValue() * -1.),
+            static_cast<float> (adsrParams.releasePowerParam->getCurrentValue() * -1.) });
+
         voice->setGain(juce::Decibels::decibelsToGain (synthGain.getCurrentValue()));
         voice->currentlyPlayingNote = midiNoteNumber;
         voice->currentPlayingMidiChannel = midiChannel;

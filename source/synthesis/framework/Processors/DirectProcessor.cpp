@@ -20,8 +20,9 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         pedalSynth->addVoice (new BKSamplerVoice());
     }
 
-    // these synths play their stuff on noteOff rather than noteOn
-    // - we don't want them to apply the user-set envelopes, so internally they are ignored for keyReleaseSynths
+    /**
+     * these synths play their stuff on noteOff rather than noteOn
+     */
     hammerSynth->isKeyReleaseSynth (true);
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
