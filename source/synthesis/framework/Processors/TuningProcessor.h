@@ -12,6 +12,7 @@
 #include "array_to_string.h"
 #include "tuning_systems.h"
 #include "utils.h"
+#include "SemitoneWidthParams.h"
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -162,7 +163,7 @@ struct TuningParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams() : chowdsp::ParamHolder ("tuning")
     {
-        add (tuningSystem, fundamental, adaptive);
+        add (tuningSystem, fundamental, adaptive, semitoneWidthParams);
     }
 
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
@@ -185,6 +186,8 @@ struct TuningParams : chowdsp::ParamHolder
         AdaptiveSystems::None,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
+
+    SemitoneWidthParams semitoneWidthParams;
 
     /**
      * params to add:

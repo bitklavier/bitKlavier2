@@ -7,7 +7,6 @@
 
 void TuningParametersView::resized()
 {
-
     int knob_section_height = getKnobSectionHeight();
     int knob_y = getHeight() - knob_section_height;
 
@@ -20,6 +19,9 @@ void TuningParametersView::resized()
     fundamental_combo_box->setBounds(225, 10, 50,25);
     keyboard->setBounds(50, 200, 500, 100);
     circular_keyboard->setBounds(50, 50, 500, 100);
+
+    semitoneSection->setBounds(50, 350, 200, 200);
+
     SynthSection::resized();
 }
 void TuningParametersView::keyboardSliderChanged(juce::String name) {

@@ -435,3 +435,14 @@ enum Fundamental : uint32_t {
     B = 1 << 11,
     none = 0
 };
+
+enum Octave : uint32_t {
+    One = 1 << 0,
+    Two = 1 << 1,
+    Three = 1 << 2,
+    Four = 1 << 3,
+    Five = 1 << 4,
+    Six = 1 << 5,
+    Seven = 1 << 6,
+    Eight = 1 << 7,
+};

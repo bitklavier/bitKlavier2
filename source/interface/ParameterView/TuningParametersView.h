@@ -12,11 +12,12 @@
 #include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
 #include "tuning_systems.h"
+#include "SemitoneWidthSection.h"
 
 class TuningParametersView : public SynthSection,BKTuningKeyboardSlider::Listener
 {
 public:
-    TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param,juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
+    TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param, juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
     {
         setName("tuning");
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -39,6 +40,10 @@ public:
         circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
         addStateModulatedComponent(circular_keyboard.get());
 
+        //semitoneSection = std::make_unique<SemiToneWidthSection>("SEMITONESECTION", "SEMITONESECTION", params.semitoneWidthParams, listeners, *this);
+        semitoneSection = std::make_unique<SemiToneWidthSection>(name, params.semitoneWidthParams, listeners, *this);
+        addSubSection(semitoneSection.get());
+
       // for (auto &param_ : *params.getChoiceParams()) {
       //    auto box = std::make_unique<OpenGLComboBox>(param_->paramID.toStdString());
       //     auto attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*param_.get(), listeners,*box.get(), nullptr);
@@ -49,7 +54,7 @@ public:
       // }
 
         if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
-            ///tuninng systems
+            ///tuning systems
             auto index = tuningParams->tuningSystem->getIndex();
             tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningSystem->paramID.toStdString());
             tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningSystem.get(), listeners,*tuning_combo_box, nullptr);
@@ -163,6 +168,7 @@ public:
     chowdsp::ScopedCallbackList tuningComboBoxCallbacks;
 
     TuningParams& params;
+    std::unique_ptr<SemiToneWidthSection> semitoneSection;
 };
 
 #endif //BITKLAVIER2_TUNINGPARAMETERSVIEW_H

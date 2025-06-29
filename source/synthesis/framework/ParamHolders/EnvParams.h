@@ -6,6 +6,7 @@
 #define BITKLAVIER2_ENVPARAMS_H
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
+
 struct EnvParams : public chowdsp::ParamHolder
 {
     EnvParams() : chowdsp::ParamHolder("ENV")
