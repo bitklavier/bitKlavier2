@@ -103,6 +103,7 @@ struct TuningState : bitklavier::StateChangeableParameter
      * getTargetFrequency() is the primary function for synthesizers to handle tuning
      *      should include static and dynamic tunings
      *      is called every block
+     *      return fractional MIDI value, NOT cents
      */
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
     {
@@ -122,20 +123,23 @@ struct TuningState : bitklavier::StateChangeableParameter
 
         if (circularTuningOffset.empty())
         {
-            return mtof (currentlyPlayingNote + currentTransposition);
+            double newOffset = (currentlyPlayingNote + currentTransposition);
+            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            newOffset *= .01;
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
         if (!tuneTranspositions)
         {
             double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
-            newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
             newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
         else
         {
             double newOffset = (circularTuningOffset[(currentlyPlayingNote + (int) std::trunc (currentTransposition)) % circularTuningOffset.size()] * .01);
-            newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
             newOffset *= .01;
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
