@@ -82,7 +82,6 @@ struct TransposeParams : chowdsp::ParamHolder
         auto float_params = getFloatParams();
         for(auto [index, change] : stateChanges.changeState)
         {
-
             static juce::var nullVar;
             for (int i = 0; i< 11; i++)
             {
@@ -96,7 +95,6 @@ struct TransposeParams : chowdsp::ParamHolder
             }
         }
         stateChanges.changeState.clear();
-
     }
 };
 #endif //BITKLAVIER2_TRANSPOSEPARAMS_H

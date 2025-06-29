@@ -32,6 +32,5 @@
         - which is where we can find the slider setting and use it. 
   - if you need information back from the BKSynthesizer, you can use `lastSynthState = mainSynth->getSynthesizerState();`, which will return a struct with various info, which you might need to extend. We use this with the velocityMinMax slider, getting the lastVelocity back from BKSynthesizer, since that's where all the MIDI msgs get unpacked
 
-
-
+  
 - then, in `DirectParametersView::resized()` you need to actually place the UI elements in the window

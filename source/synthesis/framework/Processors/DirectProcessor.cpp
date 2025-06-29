@@ -20,7 +20,9 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         pedalSynth->addVoice (new BKSamplerVoice());
     }
 
-    // these synths play their stuff on noteOff rather than noteOn
+    /**
+     * these synths play their stuff on noteOff rather than noteOn
+     */
     hammerSynth->isKeyReleaseSynth (true);
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
@@ -74,10 +76,14 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
  *
  * these operate at the synthesizer level, not the voice level, so need to be passed here
  * and not just looked at by individual voices in the synth
+ *
+ * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
 juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
     juce::Array<float> transps;
+//    std::vector<float> testarr;
+//    if (std::find(testarr.begin(), testarr.end(), target) != testarr.end()) // finds whether target is in testarr
 
     auto paramVals = state.params.transpose.getFloatParams();
     for (auto const& tp : *paramVals)
