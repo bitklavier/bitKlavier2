@@ -2,13 +2,14 @@
 
 ---------
 ## Questions for Davis (or things to check on with him)
-1) check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
-2) check on Mods with Direct; are they working for all params? do they save?
-3) i’m not clear when we need to create and run processStateChanges for params; is it only when dealing with legacy bK UI elements? like TuningState, or velocityMinMaxSlider?)
-4) and what about the serializer/deserializers, like in TuningProcessor.h? do i need to add SemitoneWidthParams to them? 
-5) what’s up with the initializer_lists in TuningProcessor.h, like chowdsp::EnumChoiceParameter<Fundamental>? 
-6) in DirectParametersView.h, constructor args question for EnvSection, for instance 
-7) for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK? // 8) currently getting tuning info from TuningState, but not sure how to get other param info into it; for instance, the SemitoneWidthParams
+and hopefully with answers included here for the record!
+-[ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
+-[ ] check on Mods with Direct; are they working for all params? do they save?
+-[ ] i’m not clear when we need to create and run processStateChanges for params; is it only when dealing with legacy bK UI elements? like TuningState, or velocityMinMaxSlider?)
+-[ ] and what about the serializer/deserializers, like in TuningProcessor.h? do i need to add SemitoneWidthParams to them? 
+-[ ] what’s up with the initializer_lists in TuningProcessor.h, like chowdsp::EnumChoiceParameter<Fundamental>? 
+-[ ] in DirectParametersView.h, constructor args question for EnvSection, for instance 
+-[ ] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK? // 8) currently getting tuning info from TuningState, but not sure how to get other param info into it; for instance, the SemitoneWidthParams
 
 ---------
 ## Adding a Parameter to a Preparation (Direct, for example)
