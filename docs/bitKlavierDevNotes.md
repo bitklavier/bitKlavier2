@@ -10,6 +10,8 @@ and hopefully with answers included here for the record!
 -[ ] what’s up with the initializer_lists in TuningProcessor.h, like chowdsp::EnumChoiceParameter<Fundamental>? 
 -[ ] in DirectParametersView.h, constructor args question for EnvSection, for instance 
 -[ ] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK? // 8) currently getting tuning info from TuningState, but not sure how to get other param info into it; for instance, the SemitoneWidthParams
+- [ ] currently getting tuning info from TuningState, but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
+
 
 ---------
 ## Adding a Parameter to a Preparation (Direct, for example)
