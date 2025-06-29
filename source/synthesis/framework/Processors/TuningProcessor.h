@@ -140,6 +140,11 @@ struct TuningState : bitklavier::StateChangeableParameter
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
+
+        /**
+         * how to get semitoneWidth params here?
+         */
+
         /**
          * to add here:
          * - need to get A4frequency from gallery preferences
