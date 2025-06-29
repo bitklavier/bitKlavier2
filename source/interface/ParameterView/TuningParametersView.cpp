@@ -20,7 +20,8 @@ void TuningParametersView::resized()
     keyboard->setBounds(50, 200, 500, 100);
     circular_keyboard->setBounds(50, 50, 500, 100);
 
-    semitoneSection->setBounds(50, 350, 200, 200);
+    //semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 50, getKnobSectionHeight() + 50 + getTextComponentHeight() * 2);
+    semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 105, getKnobSectionHeight() + 10);
 
     SynthSection::resized();
 }

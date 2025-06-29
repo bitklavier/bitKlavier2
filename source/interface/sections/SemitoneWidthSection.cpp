@@ -40,7 +40,7 @@ SemiToneWidthSection::~SemiToneWidthSection() { }
 
 void SemiToneWidthSection::paintBackground(juce::Graphics& g) {
     setLabelFont(g);
-    drawLabelForComponent(g, TRANS("WIDTH"), widthSlider_.get());
+    drawLabelForComponent(g, TRANS("Cents"), widthSlider_.get());
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
@@ -53,12 +53,22 @@ void SemiToneWidthSection::resized() {
     juce::Rectangle<int> area (getLocalBounds());
     sectionBorder.setBounds(area);
 
-    juce::Rectangle<int> widthKnobArea = area.removeFromLeft(area.getWidth() / 2);
+    //area.reduce(getKnobSectionHeight(), 0);
+    area.reduce(10, 10);
+
+    juce::Rectangle<int> widthKnobArea = area.removeFromLeft(getKnobSectionHeight());
     widthSlider_->setBounds(widthKnobArea);
 
-    juce::Rectangle<int> fundamentalComboBoxArea = area.removeFromTop(100);
+    area.removeFromLeft(10);
+    area.removeFromTop(10);
+
+    juce::Rectangle<int> fundamentalComboBoxArea = area.removeFromTop(25);
     fundamentalComboBox->setBounds(fundamentalComboBoxArea);
-    octaveComboBox->setBounds(area);
+
+    area.removeFromTop(2);
+
+    juce::Rectangle<int> octaveComboBoxArea = area.removeFromTop(25);
+    octaveComboBox->setBounds(octaveComboBoxArea);
 
 
 
