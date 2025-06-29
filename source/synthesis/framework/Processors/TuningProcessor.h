@@ -209,6 +209,7 @@ struct TuningParams : chowdsp::ParamHolder
     /** this contains the current state of the tuning system, with helper functions **/
     TuningState tuningState;
 
+    // question for Davis: what are these about?
     /** Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const TuningParams& paramHolder);
