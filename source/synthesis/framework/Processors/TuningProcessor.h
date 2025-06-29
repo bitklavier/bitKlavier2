@@ -17,23 +17,6 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 
-// why are we assigning these this way? is this from the original bK?
-enum Fundamental : uint32_t {
-    C = 1 << 0,
-    C41D5 = 1 << 1,
-    D = 1 << 2,
-    D41E5 = 1 << 3,
-    E = 1 << 4,
-    F = 1 << 5,
-    F41G5 = 1 << 6,
-    G = 1 << 7,
-    G41A5 = 1 << 8,
-    A = 1 << 9,
-    A41B5 = 1 << 10,
-    B = 1 << 11,
-    none = 0
-};
-
 enum AdaptiveSystems {
     None = 1 << 0,
     Adaptive = 1 << 1,
@@ -146,21 +129,20 @@ struct TuningState : bitklavier::StateChangeableParameter
             double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
             newOffset += absoluteTuningOffset[currentlyPlayingNote];
             newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
-            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
         else
         {
             double newOffset = (circularTuningOffset[(currentlyPlayingNote + (int) std::trunc (currentTransposition)) % circularTuningOffset.size()] * .01);
             newOffset += absoluteTuningOffset[currentlyPlayingNote];
             newOffset *= .01;
-            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
         /**
          * to add here:
-         * - A440 adjustments
+         * - need to get A4frequency from gallery preferences
          *
-         * then:
          * - adaptive tunings 1 and 2
          * - spring tuning
          */
@@ -170,6 +152,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::array<float, 128> absoluteTuningOffset = { 0.f };
     std::array<float, 12> circularTuningOffset = { 0.f };
     int fundamental = 0;
+    float A4frequency = 440.; // set this in gallery preferences
 
     std::atomic<bool> setFromAudioThread;
 };

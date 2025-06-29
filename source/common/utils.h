@@ -418,3 +418,20 @@ struct BKSynthesizerState
 {
     int lastVelocity;
 };
+
+// why are we assigning these this way? is this from the original bK?
+enum Fundamental : uint32_t {
+    C = 1 << 0,
+    C41D5 = 1 << 1,
+    D = 1 << 2,
+    D41E5 = 1 << 3,
+    E = 1 << 4,
+    F = 1 << 5,
+    F41G5 = 1 << 6,
+    G = 1 << 7,
+    G41A5 = 1 << 8,
+    A = 1 << 9,
+    A41B5 = 1 << 10,
+    B = 1 << 11,
+    none = 0
+};

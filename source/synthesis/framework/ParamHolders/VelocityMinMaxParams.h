@@ -40,7 +40,7 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
      * note that we need to add a callback in OpenGL_VelocityMinMaxSlider.h so that the slider is notified
      * when this value changes. since we are using a legacy bK UI component for the velocityMinMax slider
      * we need this callback, to trigger a redraw and so on, something we don't need to do with the
-     * newer OpenGL components we're using (like the leveMeter)
+     * newer OpenGL components we're using (like the levelMeter)
      */
     chowdsp::FloatParameter::Ptr lastVelocityParam {
         juce::ParameterID { "LastVelocity", 100 },
