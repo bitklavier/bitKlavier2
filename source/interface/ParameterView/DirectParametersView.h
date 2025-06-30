@@ -34,6 +34,8 @@ public:
 
         // go through and get all the main float params (gain, hammer, etc...), make sliders for them
         // all the params for this prep are defined in struct DirectParams, in DirectProcessor.h
+        // we're only including the ones that we want to group together and call "placeKnobsInArea" on
+        // we're leaving out "outputGain" since that has its own VolumeSlider
         for (auto& param_ : *params.getFloatParams())
         {
             if (param_->paramID == "OutputGain") // ignore this one for now
@@ -78,7 +80,6 @@ public:
             drawLabelForComponent (g, slider->getName(), slider.get());
         }
         paintChildrenBackgrounds (g);
-        //knobsBorder.paint(g);
     }
 
     // complex UI elements in this prep
@@ -86,7 +87,7 @@ public:
     std::unique_ptr<EnvelopeSection> envSection;
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
-    // generic sliders/knobs for this prep, with their attachments for tracking/updating values
+    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
@@ -94,7 +95,7 @@ public:
     std::vector<std::unique_ptr<SynthSlider>> outputGainKnobs;
 
     //juce::GroupComponent knobsBorder;
-    std::shared_ptr<PeakMeterSection> levelMeter; // this should not have to be a shared pointer, nor should its components.
+    std::shared_ptr<PeakMeterSection> levelMeter;
 
     void resized() override;
 };

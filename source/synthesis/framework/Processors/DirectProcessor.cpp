@@ -104,6 +104,9 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
 
+    // always top of the chain as an instrument source; doesn't take audio in
+    buffer.clear();
+
     // need to call these every block
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();

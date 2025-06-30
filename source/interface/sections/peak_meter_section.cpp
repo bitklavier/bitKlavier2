@@ -50,10 +50,6 @@ public:
         g.setColour(findColour(Skin::kLinearSliderThumb, true));
         g.drawRect((getWidth() / 2) - 6, (int)getPositionOfValue(0), 12, 2);
     }
-
-//    void valueChanged() override {
-//        //gainChangeDBFS->setParameterValue(getValue());
-//    }
 };
 
 PeakMeterSection::PeakMeterSection(
@@ -80,7 +76,6 @@ PeakMeterSection::PeakMeterSection(
    volume_->setValue(0.0, juce::dontSendNotification);
    volume_->setSkewFactor(2.0);
    volume_->setPopupPlacement(juce::BubbleComponent::right);
-   volume_->setTextValueSuffix(" dBFS");
    volume_->setDoubleClickReturnValue(true, 0.0);
 }
 
