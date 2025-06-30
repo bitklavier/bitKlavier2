@@ -119,11 +119,10 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // always top of the chain as an instrument source; doesn't take audio in
     buffer.clear();
 
-    // need to call these every block
+    // need to call these every block; this is for state change discrete mods (as opposed to audio rate continuous mods)
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
 
-    // update transposition slider values
     /**
      * todo:
      * used fixed length array since we know the max
@@ -131,6 +130,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * fastest would be to have an array of pointers that points to the chowdsp version of these
      * but, these are small arrays, at the block, not a huge concern
      */
+    // update transposition slider values
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
