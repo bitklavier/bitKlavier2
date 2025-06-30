@@ -17,7 +17,6 @@ SemiToneWidthSection::SemiToneWidthSection (
     addSlider(widthSlider_.get());
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
-    //widthSlider_->parentHierarchyChanged();
     widthSliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.semitoneWidthSliderParam, listeners, *widthSlider_, nullptr);
 
     fundamentalComboBox = std::make_unique<OpenGLComboBox>(params.reffundamental->paramID.toStdString());
@@ -53,41 +52,25 @@ void SemiToneWidthSection::resized() {
     juce::Rectangle<int> area (getLocalBounds());
     sectionBorder.setBounds(area);
 
-    //area.reduce(getKnobSectionHeight(), 0);
-    area.reduce(10, 10);
+    int smallpadding = findValue(Skin::kPadding);
+    int largepadding = findValue(Skin::kLargePadding);
+    area.reduce(largepadding, largepadding);
 
     juce::Rectangle<int> widthKnobArea = area.removeFromLeft(getKnobSectionHeight());
     widthSlider_->setBounds(widthKnobArea);
 
-    area.removeFromLeft(10);
-    area.removeFromTop(10);
+    area.removeFromLeft(largepadding);
+    area.removeFromTop(largepadding);
 
-    juce::Rectangle<int> fundamentalComboBoxArea = area.removeFromTop(25);
+    int comboboxheight = findValue(Skin::kComboMenuHeight);
+
+    juce::Rectangle<int> fundamentalComboBoxArea = area.removeFromTop(comboboxheight);
     fundamentalComboBox->setBounds(fundamentalComboBoxArea);
 
-    area.removeFromTop(2);
+    area.removeFromTop(smallpadding);
 
-    juce::Rectangle<int> octaveComboBoxArea = area.removeFromTop(25);
+    juce::Rectangle<int> octaveComboBoxArea = area.removeFromTop(comboboxheight);
     octaveComboBox->setBounds(octaveComboBoxArea);
-
-
-
-
-//
-//    juce::Rectangle<int> envArea = area.removeFromTop(area.getHeight() - getKnobSectionHeight());
-//    envelope_->setBounds(envArea);
-//
-//    juce::Rectangle<int> knobs_area = area.removeFromTop(getKnobSectionHeight());
-//    placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
-//
-//    envelope_->setSizeRatio(getSizeRatio());
-//
-//    static constexpr float kMagnifyingHeightRatio = 0.2f;
-//    int magnify_height = envelope_->getHeight() * kMagnifyingHeightRatio;
-//    drag_magnifying_glass_->setBounds(envelope_->getRight() - magnify_height, envelope_->getY(),
-//        magnify_height, magnify_height);
-//
-//    envelope_->magnifyReset();
 
     SynthSection::resized();
 }

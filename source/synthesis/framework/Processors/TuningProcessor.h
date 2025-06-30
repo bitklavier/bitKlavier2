@@ -175,6 +175,10 @@ struct TuningParams : chowdsp::ParamHolder
         add (tuningSystem, fundamental, adaptive, semitoneWidthParams);
     }
 
+    /*
+     * these params are not audio-rate modulatable, so will need to be handled
+     * in a processStateChanges() call, called every block
+     */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
         juce::ParameterID { "tuningSystem", 100 },
         "Tuning System",
@@ -218,7 +222,8 @@ struct TuningParams : chowdsp::ParamHolder
     TuningState tuningState;
 
     /**
-     * Davis: what are these, what do they do?
+     * serializers are used for more complex params
+     *      - here we need arrays and indexed arrays for circular and absolute tunings, for instance
      */
     /** Custom serializer */
     template <typename Serializer>

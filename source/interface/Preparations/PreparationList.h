@@ -191,9 +191,10 @@ public:
                 obj->proc->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
                 //auto xml = juce::AudioProcessor::getXmlF(data.getData(), (int)data.getSize());
-                if (obj->state.getChild(0).isValid() && xml != nullptr)
-                    obj->state.getChild(0).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
-                //  state.addChild(juce::ValueTree::fromXml(*xml),0,nullptr);
+                obj->state.getOrCreateChildWithName(xml->getNamespace(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);;
+//                if (obj->state.getChild(0).isValid() && xml != nullptr)
+//                    obj->state.getChild(0).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
+//                //  state.addChild(juce::ValueTree::fromXml(*xml),0,nullptr);
             }
             v.removeProperty("sync", nullptr);
         }

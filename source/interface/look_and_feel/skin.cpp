@@ -87,6 +87,7 @@ namespace {
             "Wavetable Draw Width",
             "Wavetable Draw Height",
             "Wavetable Y Offset",
+            "Combo Menu Height"
     };
 
     const std::string kColorNames[Skin::kNumColors] = {

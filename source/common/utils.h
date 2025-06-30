@@ -419,10 +419,14 @@ struct BKSynthesizerState
     int lastVelocity;
 };
 
-// why are we assigning these this way? is this from the original bK?
+/*
+ * sharp/flat mappings use subsitutions in std::initializer_list
+ * as part of the param defintion (reffundamental, for instance)
+ */
+
 enum Fundamental : uint32_t {
     C = 1 << 0,
-    C41D5 = 1 << 1,
+    C41D5 = 1 << 1, // 4 => #, 1=>/, 5 => b, so C41D5 becomes "C#/Db"
     D = 1 << 2,
     D41E5 = 1 << 3,
     E = 1 << 4,
@@ -437,12 +441,12 @@ enum Fundamental : uint32_t {
 };
 
 enum Octave : uint32_t {
-    One = 1 << 0,
-    Two = 1 << 1,
-    Three = 1 << 2,
-    Four = 1 << 3,
-    Five = 1 << 4,
-    Six = 1 << 5,
-    Seven = 1 << 6,
-    Eight = 1 << 7,
+    _1 = 1 << 0, //tricked this enum into displaying integers (_ => space)
+    _2 = 1 << 1,
+    _3 = 1 << 2,
+    _4 = 1 << 3,
+    _5 = 1 << 4,
+    _6 = 1 << 5,
+    _7 = 1 << 6,
+    _8 = 1 << 7,
 };

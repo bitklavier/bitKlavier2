@@ -27,6 +27,12 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
 
+    /*
+     * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
+     *      from a modification preparation
+     *      modulations like this come on an audio channel
+     *      this is on a separate bus from the regular audio graph that carries audio between preparations
+     */
     int mod = 0;
     for (auto [key, param] : state.params.modulatableParams)
     {
@@ -37,7 +43,8 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         mod++;
     }
 
-    //add state change params here
+    //add state change params here; this will add this to the set of params that are exposed to the state change mod system
+        // not needed for audio-rate modulatable params
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
 }

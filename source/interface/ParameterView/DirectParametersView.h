@@ -55,10 +55,6 @@ public:
         }
 
         // create the more complex UI elements
-        /**
-         * question for Davis: what is the "value_prepend" parameter? it doesn't seem to be used
-         * also, should the name be an arbitrary string, or "name", as in levelMeter below
-         */
         envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
@@ -75,7 +71,7 @@ public:
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         addSubSection(levelMeter.get());
-
+        setSkinOverride(Skin::kDirect);
     }
 
     void paintBackground (juce::Graphics& g) override

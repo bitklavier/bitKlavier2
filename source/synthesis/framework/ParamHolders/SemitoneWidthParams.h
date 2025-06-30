@@ -39,8 +39,7 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
     chowdsp::EnumChoiceParameter<Octave>::Ptr octave {
         juce::ParameterID{"octave", 100},
         "Octave",
-        Octave::Four,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+        Octave::_4 // _ is subbed by a space
     };
 
 };

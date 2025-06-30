@@ -14,7 +14,7 @@
 // *************************************************  BKStackedSlider ************************************************* //
 // ******************************************************************************************************************** //
 
-class BKStackedSlider : public StateModulatedComponent,
+class BKStackedSlider : public StateModulatedComponent, // needed for this to be param-state modulatable
                         public juce::Slider::Listener,
                         public juce::TextEditor::Listener
 {
@@ -101,6 +101,10 @@ public:
     void removeMyListener (Listener* listener) { listeners.remove (listener); }
 
     juce::OwnedArray<juce::Slider> dataSliders; //displays data, user controls with topSlider
+
+    /*
+     * needed for the state modulation system
+     */
     BKStackedSlider* clone()
     {
         int i = 0;
@@ -113,6 +117,7 @@ public:
         }
         return new BKStackedSlider (sliderName, sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault, sliderDefault, sliderIncrement, i);
     }
+
 
     void syncToValueTree()
     {

@@ -60,6 +60,8 @@ public:
             tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningSystem.get(), listeners,*tuning_combo_box, nullptr);
             addAndMakeVisible(tuning_combo_box.get());
             addOpenGlComponent(tuning_combo_box->getImageComponent());
+
+            // clear the default menu so we can make submenus
             tuning_combo_box->clear(juce::sendNotificationSync);
             juce::OwnedArray<juce::PopupMenu> submenus;
             submenus.add(new juce::PopupMenu());

@@ -42,6 +42,8 @@ struct DirectParams : chowdsp::ParamHolder
             transpose,
             velocityMinMax);
 
+        // params that are audio-rate modulatable are added to vector of all continuously modulatable params
+        // used in the DirectProcessor constructor
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -63,7 +65,7 @@ struct DirectParams : chowdsp::ParamHolder
         "Main",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
-        true
+        true // true => audio rate modulatable (continuously)
     };
 
     // Hammer param
@@ -71,7 +73,8 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Hammers", 100 },
         "Hammer",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        -6.0f
+        -6.0f,
+        true
     };
 
     // Resonance param
@@ -175,6 +178,12 @@ public:
     }
 
     void setTuning (TuningProcessor*) override;
+
+    /*
+     * this is where we define the buses for audio in/out, including the param modulation channels
+     *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have
+     *      so if you add new params, might need to increase that number
+     */
     juce::AudioProcessor::BusesProperties directBusLayout()
     {
         return BusesProperties()
