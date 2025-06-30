@@ -11,6 +11,7 @@ and hopefully with answers included here for the record!
 -[ ] in DirectParametersView.h, constructor args question for EnvSection, for instance 
 -[ ] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK? // 8) currently getting tuning info from TuningState, but not sure how to get other param info into it; for instance, the SemitoneWidthParams
 - [ ] currently getting tuning info into BKSynthezier from TuningState, with getTargetFrequency(), but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
+- [ ] I need some help understanding how the tuningComboBoxCallbacks work in TuningParametersView.h. In particular how the static tuning systems get updated on the back end after the user makes a choice.
 
 
 ---------

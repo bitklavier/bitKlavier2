@@ -280,6 +280,9 @@ void BKSynthesiser::noteOn (const int midiChannel,
     {
         for (auto* sound : *sounds)
         {
+            /*
+             * add semitoneWidth check here, to make sure the closest sounding sample is chosen
+             */
             if (sound->appliesToNote (std::round(midiNoteNumber + transp)) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
                 startVoice (findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes),
