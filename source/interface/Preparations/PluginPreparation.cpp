@@ -10,7 +10,7 @@
 // a Plugin Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private PluginPreparation member proc with an initialization list.
 PluginPreparation::PluginPreparation (const juce::ValueTree& v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface* interface) :
-                         PreparationSection(juce::String("Plugin"), v, open_gl,node)
+                         PreparationSection(juce::String("Plugin"), v, open_gl,node, *interface->getUndoManager())
 
 {
 

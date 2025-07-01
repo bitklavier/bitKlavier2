@@ -21,11 +21,9 @@ Cable::Cable (ConstructionSite* site, CableView& cableView) : juce::Component (C
     startColour = juce::Colours::black;
     endColour = juce::Colours::black;
     cableThickness = getCableThickness();
-    state.setProperty(IDs::src,"",nullptr);
-    state.setProperty(IDs::dest,"",nullptr);
-    state.setProperty(IDs::srcIdx,"",nullptr);
-    state.setProperty(IDs::destIdx,"",nullptr);
-    createUuidProperty(state);
+    // src_id.referTo(state, IDs::src, nullptr);
+    // dest_id.referTo(state, IDs::dest, nullptr);
+
 }
 
 

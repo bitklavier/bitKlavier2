@@ -27,8 +27,8 @@ namespace IDs
     DECLARE_ID (PREPARATION)
     DECLARE_ID (id)
     DECLARE_ID (type)
-    DECLARE_ID (x)
-    DECLARE_ID (y)
+    // DECLARE_ID (x)
+    // DECLARE_ID (y)
     DECLARE_ID (height)
     DECLARE_ID (width)
     DECLARE_ID (numIns)
@@ -75,6 +75,7 @@ namespace IDs
     DECLARE_ID(isState)
 
     DECLARE_ID(PLUGIN)
+    DECLARE_ID(x_y)
 }
 
 #undef DECLARE_ID

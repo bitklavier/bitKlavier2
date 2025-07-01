@@ -13,14 +13,13 @@
 
 class ConstructionSite;
 class CableView :
-//                  private juce::Timer,
                   public PreparationSection::Listener,
                   public SynthSection,
                   public tracktion::engine::ValueTreeObjectList<Cable>
 
 {
 public:
-    explicit CableView (ConstructionSite &site);
+    explicit CableView (ConstructionSite &site, juce::UndoManager& um);
     ~CableView() override;
 
     void paint (juce::Graphics& g) override;
@@ -90,10 +89,13 @@ public:
         return v.hasType (IDs::CONNECTION);
     }
 
+    void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
+
 private:
 //    void timerCallback() override;
 
     ConstructionSite& site;
+    juce::UndoManager& undoManager;
 
 
     float scaleFactor = 1.0f;

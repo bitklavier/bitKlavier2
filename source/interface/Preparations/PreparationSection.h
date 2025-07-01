@@ -30,7 +30,7 @@ public:
     static constexpr float kItemPaddingX = 2.0f;
 
     // Constructor Declaration
-    PreparationSection(juce::String name,const juce::ValueTree& v, OpenGlWrapper &um, juce::AudioProcessorGraph::NodeID node);
+    PreparationSection(juce::String name,const juce::ValueTree& v, OpenGlWrapper &um, juce::AudioProcessorGraph::NodeID node, juce::UndoManager& undo);
 
     // Destructor Declaration
     ~PreparationSection();
@@ -48,6 +48,8 @@ public:
         virtual void endDraggingConnector(const juce::MouseEvent &e) {};
 
         virtual void _update() {};
+
+        virtual void preparationDeleted(const juce::ValueTree&) {};
 
         virtual void preparationDragged(juce::Component *prep, const juce::MouseEvent &e) {}
 
@@ -115,6 +117,10 @@ public:
 
     void valueTreePropertyChanged(juce::ValueTree &v, const juce::Identifier &i) override {
         tracktion::engine::ValueTreeObjectList<BKPort>::valueTreePropertyChanged(v, i);
+        if (i == IDs::x_y)
+        {
+            this->setCentrePosition (juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty (i)));
+        }
     }
 
     bool isSuitableType(const juce::ValueTree &v) const override {
@@ -143,7 +149,7 @@ public:
         item->setColor(findColour(Skin::kWidgetPrimary1, true));
         item->redoImage();
     }
-
+    void moved() override;
     // Public function definitions, which override base class (SynthSection) virtual functions
     void setSizeRatio(float ratio) override {
         size_ratio_ = ratio;
@@ -164,6 +170,7 @@ public:
             listener->_update();
             listener->preparationDropped(e, pointBeforDrag);
         }
+
     }
 
     void mouseDoubleClick(const juce::MouseEvent &event) override {
@@ -217,9 +224,13 @@ public:
     OpenGlWrapper &_open_gl;
     juce::SelectedItemSet<PreparationSection *> *selectedSet;
     std::unique_ptr<BKItem> item;
-    juce::CachedValue<int> x, y, width, height, numIns, numOuts;
+    juce::CachedValue<int>  width, height, numIns, numOuts;
+    juce::CachedValue<juce::Point<int>> curr_point;
+
     juce::ComponentBoundsConstrainer constrainer;
     const juce::AudioProcessorGraph::NodeID pluginID;
+    juce::UndoManager& undo;
+
 protected:
 
 

@@ -32,22 +32,19 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
     }
     if (node_ptr)
     {
-        node_ptr->properties.set ("x", v.getProperty(IDs::x));
-        node_ptr->properties.set ("y",v.getProperty(IDs::y));
+        node_ptr->properties.set ("x", juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty(IDs::x_y)).getX());
+        node_ptr->properties.set ("y",juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty(IDs::x_y)).getY());
         node_ptr->properties.set ("type", v.getProperty(IDs::type));
         //sendChangeMessage();
     }
     return new PluginInstanceWrapper(rawPtr,v,node_ptr->nodeID);
 
 }
-void PreparationList::objectRemoved (PluginInstanceWrapper* instance_wrapper){
-    for (auto listener: listeners_)
-        listener->removeModule(instance_wrapper);
-    synth.removeProcessor (instance_wrapper->node_id);
-}
 
 void PreparationList::deleteObject(PluginInstanceWrapper *at) {
-
+    for (auto listener: listeners_)
+        listener->removeModule(at);
+    synth.removeProcessor (at->node_id);
     delete at;
 }
 

@@ -8,7 +8,10 @@
 #include "sound_engine.h"
 
 
-CableView::CableView (ConstructionSite &site) :site(site), tracktion::engine::ValueTreeObjectList<Cable>(site.getState().getChildWithName(IDs::CONNECTIONS)), /*pathTask (*this),*/ SynthSection("cableView")
+CableView::CableView (ConstructionSite &site, juce::UndoManager& um)
+    : site(site), tracktion::engine::ValueTreeObjectList<Cable>(site.getState().getChildWithName(IDs::CONNECTIONS)),
+    /*pathTask (*this),*/ SynthSection("cableView"),
+    undoManager (um)
 {
     setInterceptsMouseClicks (false,false);
     //startTimerHz (36);
@@ -209,7 +212,10 @@ void CableView::endDraggingConnector (const juce::MouseEvent& e)
         _connection.setProperty(IDs::srcIdx, connection.source.channelIndex, nullptr);
         _connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(connection.destination.nodeID), nullptr);
         _connection.setProperty(IDs::destIdx, connection.destination.channelIndex, nullptr);
-        parent.appendChild(_connection,nullptr);
+        undoManager.beginNewTransaction();
+        parent.appendChild(_connection, &undoManager);
+        // parent.appendChild(_connection, nullptr);
+
     }
 }
 
@@ -230,24 +236,24 @@ void CableView::valueTreeRedirected (juce::ValueTree&)
 
 void CableView::newObjectAdded(Cable *c) {
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    _parent-> tryEnqueueProcessorInitQueue([this,c]
-                                                       {
-                                                           SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    // _parent-> tryEnqueueProcessorInitQueue([this,c]
+    //                                                    {
+                                                           // SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
                                                            _parent->getSynth()->addConnection(c->connection);
-                                                           //changelistener callback is causing timing errors here.
-
-                                                           //last_proc.reset();
-                                                       });
+                                                       //     //changelistener callback is causing timing errors here.
+                                                       //
+                                                       //     //last_proc.reset();
+                                                       // });
 
 }
 void CableView::deleteObject(Cable *at)  {
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    _parent->tryEnqueueProcessorInitQueue([this,connection=at->connection]
-                                                       {
-                                                           SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-                                                           _parent->getSynth()->removeConnection(connection);
+    // _parent->tryEnqueueProcessorInitQueue([this,connection=at->connection]
+    //                                                    {
+    //                                                        SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+                                                           _parent->getSynth()->removeConnection(at->connection);
 
-                                                       });
+                                                       // });
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
 
@@ -271,6 +277,7 @@ void CableView::updateCablePositions()
 }
 
 Cable* CableView::createNewObject(const juce::ValueTree &v) {
+    // undoManager.beginNewTransaction();
     auto* comp = new Cable(&site, *this);
     addChildComponent(comp, 0);
 
@@ -285,10 +292,9 @@ Cable* CableView::createNewObject(const juce::ValueTree &v) {
                         _comp->resized();
                     }
                 });
-    },false);
-    addAndMakeVisible (comp);
+    },true);
+    // addAndMakeVisible (comp);
     comp->setValueTree(v);
-
     return comp;
 
 }
@@ -348,6 +354,15 @@ void CableView::dragConnector(const juce::MouseEvent& e)
             else
                 draggingConnector->dragEnd (pos);
         }
+}
+
+void CableView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id)
+{
+    for (auto connection : objects){
+        if (connection->src_id == delete_id || connection->dest_id == delete_id){
+            deleteObject (connection);
+        }
+    }
 }
 
 

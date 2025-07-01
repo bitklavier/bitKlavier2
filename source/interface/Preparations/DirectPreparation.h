@@ -17,7 +17,7 @@
 class DirectPreparation : public PreparationSection
 {
 public:
-    DirectPreparation (juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface*);
+    DirectPreparation (juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface* _synth_gui_interface);
 
     // Destructor method
     ~DirectPreparation();

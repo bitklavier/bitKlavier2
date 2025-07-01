@@ -31,7 +31,6 @@ public:
 
     ApplicationCommandTarget* getNextCommandTarget() override {
         return findFirstTargetParentComponent();
-        //return findParentComponentOfClass<SynthGuiInterface>();
     }
     void getAllCommands(juce::Array<juce::CommandID> &commands) override;
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override;
@@ -92,11 +91,15 @@ public:
         //setMouseCursor(juce::MouseCursor::ParentCursor);
         if (!item_dropped_on_prep_)
         {
-            //            source.sourceComponent->setCentrePosition(source.sourceComponent->getX() + source.localPosition.getX(),
-            //                                                      source.sourceComponent->getY() + source.localPosition.getY());
-            if (modulationLineView.current_source_ == nullptr)
-                return;
-            source.sourceComponent->setCentrePosition (mouse_drag_position_);
+
+            for (auto& fc : plugin_components)
+            {
+                if (fc.get() == source.sourceComponent)
+                {
+                    fc->undo.beginNewTransaction();
+                    fc->curr_point = mouse_drag_position_;
+                }
+            }
             cableView._update();
             modulationLineView._update();
         }
