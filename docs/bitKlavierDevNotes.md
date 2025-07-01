@@ -13,7 +13,7 @@ and hopefully with answers included here for the record!
     - the mod stuff is complicated and needs a full section in this doc!
 -[ ] and what about the serializer/deserializers, like in TuningProcessor.h? do i need to add SemitoneWidthParams to them? 
   - these are used for more complex parameters, like the arrays of tuning values in circular and absolute tuning
-- [ ] what’s up with the initializer_lists in TuningProcessor.h, like chowdsp::EnumChoiceParameter<Fundamental>? 
+- [ ] what’s up with the `initializer_lists` in TuningProcessor.h, like `chowdsp::EnumChoiceParameter<Fundamental>`? 
   - these looks strange but the `initializer_lists` provide substitution patterns for text
     - `{ '_', ' ' }, { '1', '/' }` means _ will be replaced by a space, and 1 will replaced by a /
     - so, then in the `Fundamental` enum, 

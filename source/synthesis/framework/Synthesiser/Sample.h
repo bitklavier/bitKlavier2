@@ -614,6 +614,12 @@ public:
 
         // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+
+        /*
+         * change this so it just converts the offset to a target frequency
+         * the offset should have been determined at the top, the processor block where the transps are created, and passed to the synth and then to hear
+         * should not be doing any handling of tuneTranspositions state down here!
+         */
     }
 
     virtual void stopNote (float velocity, bool allowTailOff)

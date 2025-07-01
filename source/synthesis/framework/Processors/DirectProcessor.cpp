@@ -86,8 +86,76 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
  *
  * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
+
+/*
+ * Tuning approaches:
+ *
+ * can integrate semitonewidth at this stage, which is only active for static tunings
+ * in fact, could differentiate between static and dynamic tunings (spring being the only one that needs to update at the block)
+ *      and for static tunings, handle everything here before noteOn, and only do the block updates for dynamic tunings?
+ * spring tuning would still need to handle transpositions, and actually we *could* assign an initial tuning here for them as well
+ *      so perhaps ALL tunings could be setup here, and we only worry about updating them within Sample for dynamic (spring) tuning?
+ *      in which case semitonewidth *could* be active, setting the initial "transposition" for every note,
+ *          which would then be at work in BKsynth when the spring tuning is updated?
+ * i think we want t0 to always "useTuning" no? otherwise, we'd need to have that checked in the UI for tuning to work at all!
+ *      or always "useTuning" when there is only one value in there? or always "useTuning" for a transposition value of 0?
+ *
+ * soooo.... handle all the tuning here, and then including a "dynamic" flag as true for spring tuning, and only those would update in Sample.h in the block
+ *      and always "useTuning" for t0?
+ *      or always "useTuning" if there is only one value in transpositions?
+ *      or always "useTuning" for a transposition value of 0?
+ *      sooo.... in the old bK, the transpositions values are all initially relative to the attached Tuning!
+ *          for example, if there is only one value in the transposition slider, -2, and tuning is Partial-C:
+ *              with useTuning = false, playing a C will result in an ET Bb
+ *              with useTuning = true,  playing a C will result in a 7th-partial of C
+ *              with useTuning = false, playing a Bb will result in an Ab whole-step down (-2) from a Partial-C Bb! (basically have transposed to Partial-Bb?)
+ *                  so our reference pitch is the Partial-C Bb, as set in Tuning
+ *              with useTuning = true,  playing a Bb will result in an Ab tuned to the 13th-partial of C
+ *                  so our pitch gets further filtered to fit in the Partial-C from Tuning; Ab being the 13th in that system
+ *          so i think this means that with transp = 0, the behavior is the same regardless of whether useTuning is true or false, which is what we want
+ *              and it doesn't matter where it is in the list of transpositions
+ *
+ * could we remove the useTuning dependency from tuning->getTargetFrequency? and handle that all right here?
+ *
+ * so, looking at the bK code:
+ *      first, we call getOffset on every transposition, and determine whether we useTransp at this stage:
+ *
+     * if (prep->dTranspUsesTuning.value) // use the Tuning setting
+     *      offset = t + tuner->getOffset(round(t) + noteNumber, false); // t is the transposition value
+     * else  // or set it absolutely, tuning only the note that is played (default, and original behavior)
+     *      offset = t + tuner->getOffset(noteNumber, false);
+ *
+ * then, inside getOffset we do the semitoneSize, circular, absolute, fundamentaloffset adjustments
+ */
 juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
+
+    if (tuning != nullptr) {
+        // use these to adjust transpositions, if useTuning is true
+        tuning->getState().params.semitoneWidthParams.reffundamental->getCurrentValueAsText();
+        tuning->getState().params.semitoneWidthParams.octave->getCurrentValueAsText();
+        tuning->getState().params.semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
+        state.params.transpose.transpositionUsesTuning->get();
+        // make helper functions for the above, including one that cooks the reff and octave down to a midinotenumber for the fund
+    }
+
+    /*
+     * in tuner->getOffset(), we have
+     * newTransp =.01 * (midiNoteNumber - tuning->prep->getNToneRoot()) * (tuning->prep->getNToneSemitoneWidth() - 100); // this is an offset to midiNoteNumber
+     *
+    // and then this gets filtered through current circularTuning, and further adjusted by absoluteTuning, for nearest key
+    /* int midiNoteNumberTemp = round(midiNoteNumber + newTransp);
+     * newTransp += (currentTuning[(midiNoteNumberTemp - tuning->prep->getFundamental()) % currentTuning.size()]
+     *           + tuning->prep->getAbsoluteOffsets().getUnchecked(midiNoteNumber)
+     *           + tuning->prep->getFundamentalOffset());
+     *
+     * this is preceded by:
+     * if (prep->dTranspUsesTuning.value) // use the Tuning setting
+     *      offset = t + tuner->getOffset(round(t) + noteNumber, false);
+     * else  // or set it absolutely, tuning only the note that is played (default, and original behavior)
+     *      offset = t + tuner->getOffset(noteNumber, false);
+     */
+
     juce::Array<float> transps;
 //    std::vector<float> testarr;
 //    if (std::find(testarr.begin(), testarr.end(), target) != testarr.end()) // finds whether target is in testarr
@@ -100,6 +168,9 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
     }
 
     // make sure that the first slider is always represented
+    /*
+     * and shouldn't this one always "useTuning"? only if it is 0.
+     */
     transps.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
 
     return transps;
