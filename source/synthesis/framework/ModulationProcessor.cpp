@@ -50,6 +50,7 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
 }
 
 void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
+
     auto it  = std::find(modulators_.begin(), modulators_.end(), mod);
     if(it != modulators_.end()) {
         int index = std::distance(modulators_.begin(), it);

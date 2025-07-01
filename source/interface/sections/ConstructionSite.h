@@ -94,8 +94,8 @@ public:
         {
             //            source.sourceComponent->setCentrePosition(source.sourceComponent->getX() + source.localPosition.getX(),
             //                                                      source.sourceComponent->getY() + source.localPosition.getY());
-            if (modulationLineView.current_source_ == nullptr)
-                return;
+            // if (modulationLineView.current_source_ == nullptr)
+            //     return;
             source.sourceComponent->setCentrePosition (mouse_drag_position_);
             cableView._update();
             modulationLineView._update();

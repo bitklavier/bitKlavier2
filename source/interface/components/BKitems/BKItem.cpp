@@ -54,7 +54,7 @@ BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem")
 
     image_component_ = std::make_shared<OpenGlImageComponent>();
     image_component_->setComponent(this);
-
+    image_component_->setAlwaysOnTop(false);
 
     juce::Array<juce::Path> paths;
     paths = getPathForPreparation(type);

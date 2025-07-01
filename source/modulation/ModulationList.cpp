@@ -29,9 +29,17 @@ void ModulationList::deleteObject(ModulatorBase * base)
 
     parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
             [this, base] {
-                base->parent_->removeModulator(base);
+                if (base->parent_ != nullptr) {
+
+                    base->parent_->removeModulator(base);
+                    delete base;
+                }
+
+                //this is not ideal or safe.
+                // TODO: make this not delete on the audio thread
+
             });
-    delete base;
+
 }
 ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
 //LEAF* leaf = parent->getLEAF();
