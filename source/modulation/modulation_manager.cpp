@@ -1342,6 +1342,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component* component,
 
               std::string source_name = current_modulator_->getComponentID().toStdString();
               connectModulation(source_name, name);
+              DBG("mods connected");
               setModulationValues(source_name, name, modulation_amount, bipolar, false, false);
               destination->setActive(true);
               setDestinationQuadBounds(destination);
@@ -1359,9 +1360,13 @@ void ModulationManager::modulationDraggedToComponent(juce::Component* component,
 
               setVisibleMeterBounds();
               makeModulationsVisible(slider, true);
+              DBG("dragged to slider");
           }
           else //this line is what allows the modulation to show whenever you initially drop it
+          {
+              DBG("modulationchanged");
               modulationsChanged(name);
+          }
       }
 
 
@@ -2195,6 +2200,8 @@ void ModulationManager::connectStateModulation(std::string source, std::string d
     parent->connectStateModulation(source, destination);
     modifying_ = false;
 }
+
+
 
 
 void ModulationManager::connectModulation(std::string source, std::string destination) {
