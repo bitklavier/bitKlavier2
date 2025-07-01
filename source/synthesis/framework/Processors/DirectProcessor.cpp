@@ -130,13 +130,33 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
 juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
 
+    juce::Array<float> transps = {0.};
+    //    std::vector<float> testarr;
+    //    if (std::find(testarr.begin(), testarr.end(), target) != testarr.end()) // finds whether target is in testarr
+    //      if want to replace juce:Array with std::vector
+
     if (tuning != nullptr) {
-        // use these to adjust transpositions, if useTuning is true
-        tuning->getState().params.semitoneWidthParams.reffundamental->getCurrentValueAsText();
-        tuning->getState().params.semitoneWidthParams.octave->getCurrentValueAsText();
-        tuning->getState().params.semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
-        state.params.transpose.transpositionUsesTuning->get();
-        // make helper functions for the above, including one that cooks the reff and octave down to a midinotenumber for the fund
+
+        getTranspositionUsesTuning();
+        tuning->getState().params.tuningState.getSemitoneWidthFundamental();
+        tuning->getState().params.tuningState.getSemitoneWidth();
+
+        // this holds an array of output noteNumbers to replace the input midiNoteNumber
+        std::array<float, 128> midiNoteNumber_semitoneWidth_table;
+
+        auto paramVals = state.params.transpose.getFloatParams();
+        int i = 0;
+        for (auto const& tp : *paramVals)
+        {
+            if (tp->getCurrentValue() != 0.)
+            {
+                DBG ("transp " + juce::String (i) + " = " + juce::String (tp->getCurrentValue()));
+                i++;
+            }
+
+//            if (tp->getCurrentValue() != 0.)
+//                transps.addIfNotAlreadyThere (tp->getCurrentValue());
+        }
     }
 
     /*
@@ -170,10 +190,6 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
      * figure out how to deal with spring tuning separately.
      */
 
-    juce::Array<float> transps;
-//    std::vector<float> testarr;
-//    if (std::find(testarr.begin(), testarr.end(), target) != testarr.end()) // finds whether target is in testarr
-
     auto paramVals = state.params.transpose.getFloatParams();
     for (auto const& tp : *paramVals)
     {
@@ -182,9 +198,6 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
     }
 
     // make sure that the first slider is always represented
-    /*
-     * and shouldn't this one always "useTuning"? only if it is 0.
-     */
     transps.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
 
     return transps;

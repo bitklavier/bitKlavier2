@@ -55,7 +55,7 @@ public:
         }
 
         // create the more complex UI elements
-        envSection              = std::make_unique<EnvelopeSection>("ENV", "ENV", params.env ,listeners, *this);
+        envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 

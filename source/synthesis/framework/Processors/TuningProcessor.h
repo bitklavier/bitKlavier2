@@ -100,6 +100,35 @@ struct TuningState : bitklavier::StateChangeableParameter
     }
 
     /**
+     * helper function for the semitone width fundamental UI elements
+     * @return the fundamental in midinote number value, given the octave and pitchclass name (so C4 will return 60)
+     */
+    int getSemitoneWidthFundamental()
+    {
+        auto fund = semitoneWidthParams.reffundamental.get()->getIndex();
+        auto oct = semitoneWidthParams.octave->getCurrentValueAsText().juce::String::getIntValue();
+        return fund + (oct + 1) * 12;
+    }
+
+    float getSemitoneWidth()
+    {
+        return semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
+    }
+
+    /**
+     *
+     * @param midiNoteNumber
+     * @return new transposition to new midiNoteNumber based on semitone width setting (fractional midi value)
+     * if semitone width is 100, then output = 0
+     * otherwise the output will be transposed by the return value
+     * for example: if the semitone width = 50, the semitone fundamental = 60, and midiNoteNumber = 61, the output will be -0.5
+     */
+    double getSemitoneWidthOffsetForMidiNote(int midiNoteNumber)
+    {
+        return .01 * (midiNoteNumber - getSemitoneWidthFundamental()) * (getSemitoneWidth() - 100);
+    }
+
+    /**
      * getTargetFrequency() is the primary function for synthesizers to handle tuning
      *      should include static and dynamic tunings
      *      is called every block
@@ -121,6 +150,8 @@ struct TuningState : bitklavier::StateChangeableParameter
          *
          */
 
+        double tempPlayingNote = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote);
+
         if (circularTuningOffset.empty())
         {
             double newOffset = (currentlyPlayingNote + currentTransposition);
@@ -129,12 +160,18 @@ struct TuningState : bitklavier::StateChangeableParameter
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
+
         if (!tuneTranspositions)
         {
             double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
             if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
             newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
+
+//            double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
+//            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
+//            newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
+//            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
         else
         {
@@ -165,6 +202,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     float A4frequency = 440.; // set this in gallery preferences
 
     std::atomic<bool> setFromAudioThread;
+    SemitoneWidthParams semitoneWidthParams;
 };
 
 struct TuningParams : chowdsp::ParamHolder
@@ -172,7 +210,7 @@ struct TuningParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams() : chowdsp::ParamHolder ("tuning")
     {
-        add (tuningSystem, fundamental, adaptive, semitoneWidthParams);
+        add (tuningSystem, fundamental, adaptive, tuningState.semitoneWidthParams);
     }
 
     /*
@@ -199,8 +237,6 @@ struct TuningParams : chowdsp::ParamHolder
         AdaptiveSystems::None,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
-
-    SemitoneWidthParams semitoneWidthParams;
 
     /**
      * params to add:

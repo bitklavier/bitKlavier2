@@ -67,7 +67,7 @@ PeakMeterSection::PeakMeterSection(
    peak_meter_right_ = std::make_shared<PeakMeterViewer>(false, outputLevels);
    addOpenGlComponent(peak_meter_right_);
 
-   volume_ = std::make_shared<VolumeSlider>("volume");
+   volume_ = std::make_shared<VolumeSlider>(outGainDB.paramID);
    volumeAttach_ = std::make_unique<chowdsp::SliderAttachment>(outGainDB, listeners, *volume_, nullptr);
    addSlider(volume_.get());
    volume_->setSliderStyle(juce::Slider::LinearBarVertical);

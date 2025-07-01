@@ -41,7 +41,7 @@ public:
         addStateModulatedComponent(circular_keyboard.get());
 
         //semitoneSection = std::make_unique<SemiToneWidthSection>("SEMITONESECTION", "SEMITONESECTION", params.semitoneWidthParams, listeners, *this);
-        semitoneSection = std::make_unique<SemiToneWidthSection>(name, params.semitoneWidthParams, listeners, *this);
+        semitoneSection = std::make_unique<SemiToneWidthSection>(name, params.tuningState.semitoneWidthParams, listeners, *this);
         addSubSection(semitoneSection.get());
 
       // for (auto &param_ : *params.getChoiceParams()) {

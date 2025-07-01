@@ -220,6 +220,7 @@ public:
     void valueTreeParentChanged (juce::ValueTree&) {}
     void valueTreeRedirected (juce::ValueTree&) {}
 
+    bool getTranspositionUsesTuning() { return state.params.transpose.transpositionUsesTuning->get();}
 
 
 private:

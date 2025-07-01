@@ -68,7 +68,7 @@ void DragMagnifyingGlass::mouseDoubleClick(const juce::MouseEvent& e) {
   OpenGlShapeButton::mouseDoubleClick(e);
 }
 
-EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection(name) {
+EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection("") {
 
     setComponentID(parent.getComponentID());
 
@@ -126,9 +126,9 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
     sustain_->setPopupPlacement(juce::BubbleComponent::below);
     sustain_->setValue(params.sustainParam->getDefaultValue());
 
-    envelope_ = std::make_shared<EnvelopeEditor>(value_prepend);
+    envelope_ = std::make_shared<EnvelopeEditor>("");
     addOpenGlComponent(envelope_);
-    envelope_->setName(value_prepend);
+    //envelope_->setName(value_prepend);
     envelope_->setDelaySlider(delay_.get());
     envelope_->setAttackSlider(attack_.get());
     envelope_->setAttackPowerSlider(attack_power_.get());
@@ -142,7 +142,7 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
 
     drag_magnifying_glass_ = std::make_unique<DragMagnifyingGlass>();
     drag_magnifying_glass_->addListener(this);
-    drag_magnifying_glass_->setName(value_prepend + "_magnify");
+    //drag_magnifying_glass_->setName(value_prepend + "_magnify");
     addAndMakeVisible(drag_magnifying_glass_.get());
     addOpenGlComponent(drag_magnifying_glass_->getGlComponent());
 
