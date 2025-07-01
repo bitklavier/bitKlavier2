@@ -150,10 +150,24 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
      *           + tuning->prep->getFundamentalOffset());
      *
      * this is preceded by:
-     * if (prep->dTranspUsesTuning.value) // use the Tuning setting
+     * if (prep->dTranspUsesTuning.value)
+     *      // use the Tuning setting
      *      offset = t + tuner->getOffset(round(t) + noteNumber, false);
-     * else  // or set it absolutely, tuning only the note that is played (default, and original behavior)
+     * else
+     *      // or set it absolutely, tuning only the note that is played (default, and original behavior)
      *      offset = t + tuner->getOffset(noteNumber, false);
+     *
+     * so the aim here should be:
+     *      assemble a complete collection of all the notes for the synth to play, given a particular midiNoteNumber coming from the input keyboard
+     *          including the tuning offsets for each note, so each value can be a midiFloat value
+     *          these will be transpositions from the original int midiNoteNumber input
+     *      these values will boil down everything needed from semitoneWidth, useTuning, circular, absolute, fundamentaloffset to a single offset from the input midiNoteNumber
+     *      pass that array on to the synth, which then only has to tune the notes exactly as specified
+     *          it will also choose the closest sample to the desired sounding pitch for Sample to use
+     *      so the midiNoteNumber that the synth gets from the midi messages becomes just the reference for this array of notes to actually play
+     *          which it uses to turn on/off all those notes
+     *
+     * figure out how to deal with spring tuning separately.
      */
 
     juce::Array<float> transps;
