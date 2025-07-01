@@ -1,6 +1,56 @@
 # Notes about how to do stuff in the bK codebase
 
 ---------
+## Questions for Davis (or things to check on with him)
+and hopefully with answers included here for the record!
+-[ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
+  - Myra is working on. but Direct saves now, except Transpositions, so check that
+-[ ] check on Mods with Direct; are they working for all params? do they save?
+  - need to be tested and fixed
+-[ ] i’m not clear when we need to create and run processStateChanges for params
+  - this for ui sections, where we don't do audio-rate mods, just param-state mods, and want to change the whole thing
+    - for instance, the transposition slider: we're going to change all those values at once, and try to change them individually continuously
+    - the mod stuff is complicated and needs a full section in this doc!
+-[ ] and what about the serializer/deserializers, like in TuningProcessor.h? do i need to add SemitoneWidthParams to them? 
+  - these are used for more complex parameters, like the arrays of tuning values in circular and absolute tuning
+- [ ] what’s up with the `initializer_lists` in TuningProcessor.h, like `chowdsp::EnumChoiceParameter<Fundamental>`? 
+  - these looks strange but the `initializer_lists` provide substitution patterns for text
+    - `{ '_', ' ' }, { '1', '/' }` means _ will be replaced by a space, and 1 will replaced by a /
+    - so, then in the `Fundamental` enum, 
+      - 4 => #
+      - 1 =>/
+      - 5 => b
+      - so `C41D5` becomes "C#/Db"
+    - this is all because certain characters are not allowed in enums
+-[ ] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK?
+  - see the section below about Default Color and Graphics Constants
+- [ ] currently getting tuning info into BKSynthezier from TuningState, with getTargetFrequency(), but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
+- [x] I need some help understanding how the tuningComboBoxCallbacks work in TuningParametersView.h. In particular how the static tuning systems get updated on the back end after the user makes a choice.
+
+---------
+## Default Colors and Graphics Constants
+- in `assets/default.bitklavierskin` we have all the values
+  - this includes the global values (hex for colors, ints/floats for other things), but also overrides for particular subsections
+    - in section "default", for instance, we've overridden the "Rotary Arc" color to match the color of Direct
+- the names of these values are then matched in arrays in `skin.cpp`
+- the ValueIDs for these are in enums in `skin.h`, which are in the same order the names are held in string arrays in `skin.cpp`
+  - so, if you want to add new values, they need to be in the same placement/order in both `skin.cpp` and `skin.h`
+- `synth_section.cpp` then has helper functions to get some of these vals (`SynthSection::getKnobSectionHeight()` for instance)
+
+---------
+## Modulatable Parameters
+- we need a section here about how they work!
+- when creating a parameter that should be continuously modulatable, the last argument should be `true
+`. For instance:
+  - `chowdsp::GainDBParameter::Ptr gainParam { juce::ParameterID { "Main", 100 }, "Main", juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false }, 0.0f, true };`
+- all of these need to get added to a parameter vector of `ParamPtrVariant` (like this in DirectProcessor.h: `std::unordered_map<std::string, ParamPtrVariant> modulatableParams;`)
+- and then these are assigned to modulation audio channels: see DirectProcessor constructor, the `modChan.setProperty` calls
+
+## State Change Parameters
+- as opposed to Modulatable parameters; these are not changed continuously at the audio rate, the way Modulatable Parameters are, but rather are changed together, all at once
+- see the `parent.getStateBank().addParam` call in the DirectProcessor constructor
+
+---------
 ## Adding a Parameter to a Preparation (Direct, for example)
 - in `DirectProcessor.h` (in Source/framework/synthesis/Processors):
   - define the new chowdsp param in the DirectParams struct 
@@ -12,8 +62,8 @@
     - first line in the DirectParams struct, for instance 
   - Note that in the UI elements that are OpenGL wrappers around legacy bitKlavier components (like the transposition slider, and the velocityMinMax slider) you'll need to create a `void processStateChanges() override` function and call it with every block
     - see `struct VelocityMinMaxParams : chowdsp::ParamHolder` for instance, and also where they are called in `DirectProcessor::processBlock`
-    
-  
+
+
 - in `DirectParametersView.h` (in Source/interface/ParameterView):
   - this is where we'll connect the parameters from the previous step with specific UI elements
   - so, in Direct, each of the generic output stage knobs is created:
@@ -25,11 +75,12 @@
     - `levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);`
       - (the `outputLevels` parameter is used to display the audio levels for the meter, so we pass that parameter here as well, but it doesn't require an attachment since it's not an element that the users would interact with)
     - since the `levelMeter` combines a few elements, its a "section" that needs to get added with `addSubSection`
-    - one of the nice things about this setup is that we don't have to go into the `levelMeter` to get the slider value; since it's registered with the chowdsp parameter system, that will keep track of the slider value, and we can query it elsehwere
-      - in fact, if you look at the bottom of `DirectProcessor::processBlock` you will see these two lines:
-        - `auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());`
-        - `buffer.applyGain(outputgainmult);`
-      - which is where we can find the slider setting and use it. 
+      - one of the nice things about this setup is that we don't have to go into the `levelMeter` to get the slider value; since it's registered with the chowdsp parameter system, that will keep track of the slider value, and we can query it elsehwere
+        - in fact, if you look at the bottom of `DirectProcessor::processBlock` you will see these two lines:
+          - `auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());`
+          - `buffer.applyGain(outputgainmult);`
+        - which is where we can find the slider setting and use it. 
+  - if you need information back from the BKSynthesizer, you can use `lastSynthState = mainSynth->getSynthesizerState();`, which will return a struct with various info, which you might need to extend. We use this with the velocityMinMax slider, getting the lastVelocity back from BKSynthesizer, since that's where all the MIDI msgs get unpacked
 
-
+  
 - then, in `DirectParametersView::resized()` you need to actually place the UI elements in the window

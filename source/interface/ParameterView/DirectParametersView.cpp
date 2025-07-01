@@ -14,7 +14,6 @@ void DirectParametersView::resized()
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
-    //bounds.reduce(title_width + 4, 0);
     bounds.removeFromLeft(title_width);
 
     // bounds for level meter on right side
