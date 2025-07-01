@@ -56,7 +56,7 @@ void ModulationLineView::preparationDropped(const juce::MouseEvent& e, juce::Poi
         DBG(comp->getName());
     }
     site.mouse_drag_position_ = mouse_drag_position_;
-
+    current_source_ = nullptr;
 }
 
 

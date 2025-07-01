@@ -26,6 +26,7 @@ class ConstructionSite;
 class Cable : public juce::Component {
 public:
     Cable(ConstructionSite* site, CableView& cableView);
+    // Cable(ConstructionSite* site, CableView& cableView, const juce::ValueTree& v);
     ~Cable();
 
     void paint (juce::Graphics& g) override;
@@ -195,9 +196,15 @@ public:
         state = v;
         connection.source = {juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::src)), v.getProperty(IDs::srcIdx)};
         connection.destination = {juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::dest)), v.getProperty(IDs::destIdx)};
+        src_id.referTo(state, IDs::src, nullptr);
+        dest_id.referTo(state, IDs::dest, nullptr);
         update();
     }
     juce::ValueTree state {IDs::CONNECTION};
+    juce::CachedValue<juce::AudioProcessorGraph::NodeID> src_id;
+    juce::CachedValue<juce::AudioProcessorGraph::NodeID> dest_id;
+
+
 
 private:
     float getCableThickness() const;
