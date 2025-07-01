@@ -5,8 +5,8 @@
 #include "KeymapPreparation.h"
 #include "FullInterface.h"
 #include "KeymapParameterView.h"
-KeymapPreparation::KeymapPreparation (const juce::ValueTree& v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface*) :
-        PreparationSection(juce::String("keymap"), v, open_gl,node)
+KeymapPreparation::KeymapPreparation (const juce::ValueTree& v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface* _synth_gui_interface) :
+        PreparationSection(juce::String("keymap"), v, open_gl,node, *_synth_gui_interface->getUndoManager())
 
 {
 

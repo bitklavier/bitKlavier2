@@ -15,7 +15,7 @@
 // a Modulation Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private ModulationPreparation member proc with an initialization list.
 ModulationPreparation::ModulationPreparation ( juce::ValueTree v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID no,  SynthGuiInterface* interface) :
-        PreparationSection(juce::String("Modulation"), v, open_gl,no),
+        PreparationSection(juce::String("Modulation"), v, open_gl,no, *interface->getUndoManager()),
 
         mod_list(v,interface->getSynth(),dynamic_cast<bitklavier::ModulationProcessor*>(interface->getSynth()->getNodeForId(no)->getProcessor()))
 {

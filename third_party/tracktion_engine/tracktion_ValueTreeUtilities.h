@@ -21,19 +21,36 @@ namespace juce
     template <>
     struct VariantConverter<Colour>
     {
-        static Colour fromVar (const var& v)           { return Colour::fromString (v.toString()); }
-        static var toVar (const Colour& c)             { return c.toString(); }
+        static Colour fromVar (const var& v) { return Colour::fromString (v.toString()); }
+        static var toVar (const Colour& c) { return c.toString(); }
+    };
+    template <>
+    struct VariantConverter<juce::Point<int>>
+    {
+        static Point<int> fromVar (const var& v)
+        {
+            auto parts = StringArray::fromTokens (v.toString(), ",", "");
+            if (parts.size() == 2)
+            {
+                int x = parts[0].getIntValue();
+                int y = parts[1].getIntValue();
+                return { x, y };
+            }
+        }
+        static var toVar (const Point<int>& p) { return p.toString(); }
     };
 }
 
-namespace tracktion { inline namespace engine
+namespace tracktion
+{
+    inline namespace engine
     {
 
-//==============================================================================
-/** Ensures a property is a given type which can avoid having to parse a string
+        //==============================================================================
+        /** Ensures a property is a given type which can avoid having to parse a string
     every time it is read after loading from XML.
 */
-        template<typename VarType>
+        template <typename VarType>
         inline void convertPropertyToType (juce::ValueTree& v, const juce::Identifier& id)
         {
             if (const auto* prop = v.getPropertyPointer (id))
@@ -41,7 +58,7 @@ namespace tracktion { inline namespace engine
                     (*const_cast<juce::var*> (prop)) = static_cast<VarType> (*prop);
         }
 
-/** Sets a value if it is different and returns true, otherwise simply returns false. */
+        /** Sets a value if it is different and returns true, otherwise simply returns false. */
         template <typename T>
         static bool setIfDifferent (T& val, T newVal) noexcept
         {
@@ -52,8 +69,8 @@ namespace tracktion { inline namespace engine
             return true;
         }
 
-/** Returns true if the needle is found in the haystack. */
-        template<typename Type>
+        /** Returns true if the needle is found in the haystack. */
+        template <typename Type>
         bool matchesAnyOf (const Type& needle, const std::initializer_list<Type>& haystack)
         {
             for (auto&& h : haystack)
@@ -63,15 +80,15 @@ namespace tracktion { inline namespace engine
             return false;
         }
 
-/** Calls a function object on each item in an array. */
-        template<typename Type, typename UnaryFunction>
+        /** Calls a function object on each item in an array. */
+        template <typename Type, typename UnaryFunction>
         inline void forEachItem (const juce::Array<Type*>& items, const UnaryFunction& fn)
         {
             for (auto f : items)
                 fn (f);
         }
 
-//==============================================================================
+        //==============================================================================
         template <typename... Others>
         void addValueTreeProperties (juce::ValueTree& v, const juce::Identifier& name, const juce::var& value, Others&&... others)
         {
@@ -93,13 +110,12 @@ namespace tracktion { inline namespace engine
             return v;
         }
 
-
-//==============================================================================
-        template<typename ObjectType, typename CriticalSectionType = juce::DummyCriticalSection>
-        class ValueTreeObjectList   : public juce::ValueTree::Listener
+        //==============================================================================
+        template <typename ObjectType, typename CriticalSectionType = juce::DummyCriticalSection>
+        class ValueTreeObjectList : public juce::ValueTree::Listener
         {
         public:
-            ValueTreeObjectList (const juce::ValueTree& parentTree)  : parent (parentTree)
+            ValueTreeObjectList (const juce::ValueTree& parentTree) : parent (parentTree)
             {
                 parent.addListener (this);
             }
@@ -109,14 +125,14 @@ namespace tracktion { inline namespace engine
                 jassert (objects.isEmpty()); // must call freeObjects() in the subclass destructor!
             }
 
-            inline int size() const                 { return objects.size();    }
-            inline bool isEmpty() const noexcept    { return size() == 0;       }
-            ObjectType* operator[] (int idx) const  { return objects[idx];      }
-            ObjectType* at (int idx)                { return objects[idx];      }
-            ObjectType** begin()                    { return objects.begin();   }
-            ObjectType* const* begin() const        { return objects.begin();   }
-            ObjectType** end()                      { return objects.end();     }
-            ObjectType* const* end() const          { return objects.end();     }
+            inline int size() const { return objects.size(); }
+            inline bool isEmpty() const noexcept { return size() == 0; }
+            ObjectType* operator[] (int idx) const { return objects[idx]; }
+            ObjectType* at (int idx) { return objects[idx]; }
+            ObjectType** begin() { return objects.begin(); }
+            ObjectType* const* begin() const { return objects.begin(); }
+            ObjectType** end() { return objects.end(); }
+            ObjectType* const* end() const { return objects.end(); }
 
             // call in the sub-class when being created
             void rebuildObjects()
@@ -234,7 +250,7 @@ namespace tracktion { inline namespace engine
             int indexOf (const juce::ValueTree& v) const noexcept
             {
                 for (int i = 0; i < objects.size(); ++i)
-                    if (objects.getUnchecked(i)->state == v)
+                    if (objects.getUnchecked (i)->state == v)
                         return i;
 
                 return -1;
@@ -257,12 +273,12 @@ namespace tracktion { inline namespace engine
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ValueTreeObjectList)
         };
 
-//==============================================================================
-        template<typename ObjectType>
-        struct SortedValueTreeObjectList    : protected ValueTreeObjectList<ObjectType>
+        //==============================================================================
+        template <typename ObjectType>
+        struct SortedValueTreeObjectList : protected ValueTreeObjectList<ObjectType>
         {
             SortedValueTreeObjectList (const juce::ValueTree& v)
-                    : ValueTreeObjectList<ObjectType> (v)
+                : ValueTreeObjectList<ObjectType> (v)
             {
             }
 
@@ -285,7 +301,7 @@ namespace tracktion { inline namespace engine
             const juce::Array<ObjectType*>& getSortedObjects() const
             {
                 jassert (juce::MessageManager::getInstance()->currentThreadHasLockedMessageManager());
-                        jassert (! insidePropertyChangedMethod);
+                jassert (!insidePropertyChangedMethod);
 
                 if (setIfDifferent (needsSorting, false))
                 {
@@ -298,14 +314,14 @@ namespace tracktion { inline namespace engine
 
             //==============================================================================
             // Make sure you call the base class implementation of these methods if you override them.
-            void newObjectAdded (ObjectType* o) override                    { triggerSortIfNeeded (o, -1); }
-            void objectOrderChanged() override                              { triggerSort(); }
+            void newObjectAdded (ObjectType* o) override { triggerSortIfNeeded (o, -1); }
+            void objectOrderChanged() override { triggerSort(); }
 
             void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& id) override
             {
                 const juce::ScopedValueSetter<bool> svs (insidePropertyChangedMethod, true);
 
-                if (! (this->isChildTree (v) && isSortableProperty (v, id)))
+                if (!(this->isChildTree (v) && isSortableProperty (v, id)))
                     return;
 
                 const int objectIndex = getSortedIndex (v);
@@ -329,7 +345,7 @@ namespace tracktion { inline namespace engine
             void triggerSort() const
             {
                 jassert (juce::MessageManager::getInstance()->currentThreadHasLockedMessageManager());
-                        needsSorting = true;
+                needsSorting = true;
             }
 
             void triggerSortIfNeeded (ObjectType* o, int objectIndex)
@@ -343,20 +359,20 @@ namespace tracktion { inline namespace engine
                 jassert (o != nullptr);
 
                 if (objectIndex > 0
-                    && (! objectsAreSorted (*sortedObjects.getUnchecked (objectIndex - 1), *o)))
+                    && (!objectsAreSorted (*sortedObjects.getUnchecked (objectIndex - 1), *o)))
                     return triggerSort();
 
                 if (objectIndex < (sortedObjects.size() - 1)
-                    && (! objectsAreSorted (*o, *sortedObjects.getUnchecked (objectIndex + 1))))
+                    && (!objectsAreSorted (*o, *sortedObjects.getUnchecked (objectIndex + 1))))
                     return triggerSort();
             }
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SortedValueTreeObjectList)
         };
 
-//==============================================================================
-/** Returns the object for a given state if it exists. */
-        template<typename ObjectType>
+        //==============================================================================
+        /** Returns the object for a given state if it exists. */
+        template <typename ObjectType>
         static ObjectType* getObjectFor (const ValueTreeObjectList<ObjectType>& objectList, const juce::ValueTree& v)
         {
             for (auto* o : objectList.objects)
@@ -366,28 +382,29 @@ namespace tracktion { inline namespace engine
             return {};
         }
 
-//==============================================================================
-// Easy way to get one callback for all value tree change events
-        struct ValueTreeAllEventListener  : public juce::ValueTree::Listener
+        //==============================================================================
+        // Easy way to get one callback for all value tree change events
+        struct ValueTreeAllEventListener : public juce::ValueTree::Listener
         {
             virtual void valueTreeChanged() = 0;
 
             //==============================================================================
-            void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override  { valueTreeChanged(); }
-            void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) override              { valueTreeChanged(); }
-            void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) override       { valueTreeChanged(); }
-            void valueTreeChildOrderChanged (juce::ValueTree&, int, int) override               { valueTreeChanged(); }
-            void valueTreeParentChanged (juce::ValueTree&) override                             { valueTreeChanged(); }
-            void valueTreeRedirected (juce::ValueTree&) override                                { valueTreeChanged(); }
+            void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override { valueTreeChanged(); }
+            void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) override { valueTreeChanged(); }
+            void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) override { valueTreeChanged(); }
+            void valueTreeChildOrderChanged (juce::ValueTree&, int, int) override { valueTreeChanged(); }
+            void valueTreeParentChanged (juce::ValueTree&) override { valueTreeChanged(); }
+            void valueTreeRedirected (juce::ValueTree&) override { valueTreeChanged(); }
         };
 
-        template<typename Type>
+        template <typename Type>
         struct ValueTreeComparator
         {
         public:
             ValueTreeComparator (const juce::Identifier& attributeToSort_, bool forwards)
-                    : attributeToSort (attributeToSort_), direction (forwards ? 1 : -1)
-            {}
+                : attributeToSort (attributeToSort_), direction (forwards ? 1 : -1)
+            {
+            }
 
             inline int compareElements (const juce::ValueTree& first, const juce::ValueTree& second) const
             {
@@ -403,7 +420,7 @@ namespace tracktion { inline namespace engine
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ValueTreeComparator)
         };
 
-        template<>
+        template <>
         inline int ValueTreeComparator<juce::String>::compareElements (const juce::ValueTree& first, const juce::ValueTree& second) const
         {
             const int result = first[attributeToSort].toString().compareNatural (second[attributeToSort].toString());
@@ -411,29 +428,30 @@ namespace tracktion { inline namespace engine
             return direction * result;
         }
 
-//==============================================================================
-/**
+        //==============================================================================
+        /**
     Holds a ValueTree as a ReferenceCountedObject.
 
     This is somewhat obfuscated but makes it easy to transfer ValueTrees as var objects
     such as when using them as DragAndDropTarget::SourceDetails::description members.
 */
-        class ReferenceCountedValueTree  : public juce::ReferenceCountedObject
+        class ReferenceCountedValueTree : public juce::ReferenceCountedObject
         {
         public:
             /** Creates a ReferenceCountedValueTree for a given ValueTree. */
             ReferenceCountedValueTree (const juce::ValueTree& treeToReference) noexcept
-                    : tree (treeToReference)
-            {}
+                : tree (treeToReference)
+            {
+            }
 
             /** Destructor. */
             ~ReferenceCountedValueTree() {}
 
             /** Sets the ValueTree being held. */
-            void setValueTree (juce::ValueTree newTree)   { tree = newTree; }
+            void setValueTree (juce::ValueTree newTree) { tree = newTree; }
 
             /** Returns the ValueTree being held. */
-            juce::ValueTree getValueTree() noexcept       { return tree; }
+            juce::ValueTree getValueTree() noexcept { return tree; }
 
             using Ptr = juce::ReferenceCountedObjectPtr<ReferenceCountedValueTree>;
 
@@ -453,8 +471,8 @@ namespace tracktion { inline namespace engine
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReferenceCountedValueTree)
         };
 
-//==============================================================================
-/** Attempts to load a ValueTree from a file. */
+        //==============================================================================
+        /** Attempts to load a ValueTree from a file. */
         static inline juce::ValueTree loadValueTree (const juce::File& file, bool asXml)
         {
             if (asXml)
@@ -473,7 +491,7 @@ namespace tracktion { inline namespace engine
             return {};
         }
 
-/** Attempts to load a ValueTree from a file if the outer tag matches a given name.
+        /** Attempts to load a ValueTree from a file if the outer tag matches a given name.
     This will first try to read as XML and the fall back to binary.
 */
         static inline juce::ValueTree loadValueTree (const juce::File& file, const juce::Identifier& requiredTag)
@@ -488,7 +506,7 @@ namespace tracktion { inline namespace engine
             return {};
         }
 
-/** Saves a ValueTree to a File. */
+        /** Saves a ValueTree to a File. */
         static inline bool saveValueTree (const juce::File& file, const juce::ValueTree& v, bool asXml)
         {
             const juce::TemporaryFile temp (file);
@@ -496,7 +514,7 @@ namespace tracktion { inline namespace engine
             {
                 juce::FileOutputStream os (temp.getFile());
 
-                if (! os.getStatus().wasOk())
+                if (!os.getStatus().wasOk())
                     return false;
 
                 if (asXml)
@@ -516,17 +534,16 @@ namespace tracktion { inline namespace engine
             return false;
         }
 
-        static inline void setPropertyIfMissing (juce::ValueTree& v, const juce::Identifier& id,
-                                                 const juce::var& value, juce::UndoManager* um)
+        static inline void setPropertyIfMissing (juce::ValueTree& v, const juce::Identifier& id, const juce::var& value, juce::UndoManager* um)
         {
-            if (! v.hasProperty (id))
+            if (!v.hasProperty (id))
                 v.setProperty (id, value, um);
         }
 
-/** Creates a deep copy of another ValueTree in an undoable way, maintaining the destination's parent. */
+        /** Creates a deep copy of another ValueTree in an undoable way, maintaining the destination's parent. */
         static inline juce::ValueTree copyValueTree (juce::ValueTree& dest, const juce::ValueTree& src, juce::UndoManager* um)
         {
-            if (! dest.getParent().isValid())
+            if (!dest.getParent().isValid())
             {
                 dest = src.createCopy();
             }
@@ -543,8 +560,7 @@ namespace tracktion { inline namespace engine
         }
 
         template <typename Predicate>
-        static inline void copyValueTreeProperties (juce::ValueTree& dest, const juce::ValueTree& src,
-                                                    juce::UndoManager* um, Predicate&& shouldCopyProperty)
+        static inline void copyValueTreeProperties (juce::ValueTree& dest, const juce::ValueTree& src, juce::UndoManager* um, Predicate&& shouldCopyProperty)
         {
             for (int i = 0; i < src.getNumProperties(); ++i)
             {
@@ -556,8 +572,8 @@ namespace tracktion { inline namespace engine
         }
 
         static inline juce::ValueTree getChildWithPropertyRecursively (const juce::ValueTree& p,
-                                                                       const juce::Identifier& propertyName,
-                                                                       const juce::var& propertyValue)
+            const juce::Identifier& propertyName,
+            const juce::var& propertyValue)
         {
             const int numChildren = p.getNumChildren();
 
@@ -577,7 +593,7 @@ namespace tracktion { inline namespace engine
             return {};
         }
 
-        template<typename ValueType, typename... CachedValues>
+        template <typename ValueType, typename... CachedValues>
         static void copyPropertiesToCachedValues (const juce::ValueTree& v, juce::CachedValue<ValueType>& cachedValue, CachedValues&&... cachedValues)
         {
             if (auto p = v.getPropertyPointer (cachedValue.getPropertyID()))
@@ -589,19 +605,19 @@ namespace tracktion { inline namespace engine
                 copyPropertiesToCachedValues (v, std::forward<CachedValues> (cachedValues)...);
         }
 
-/** Strips out any invalid trees from the array. */
+        /** Strips out any invalid trees from the array. */
         inline juce::Array<juce::ValueTree>& removeInvalidValueTrees (juce::Array<juce::ValueTree>& trees)
         {
             for (int i = trees.size(); --i >= 0;)
-                if (! trees.getReference (i).isValid())
+                if (!trees.getReference (i).isValid())
                     trees.remove (i);
 
             return trees;
         }
 
-/** Returns a new array with any trees without the given type removed. */
+        /** Returns a new array with any trees without the given type removed. */
         inline juce::Array<juce::ValueTree> getTreesOfType (const juce::Array<juce::ValueTree>& trees,
-                                                            const juce::Identifier& type)
+            const juce::Identifier& type)
         {
             juce::Array<juce::ValueTree> newTrees;
 
@@ -613,7 +629,7 @@ namespace tracktion { inline namespace engine
         }
 
         inline void getChildTreesRecursive (juce::Array<juce::ValueTree>& result,
-                                            const juce::ValueTree& tree)
+            const juce::ValueTree& tree)
         {
             for (auto child : tree)
             {
@@ -623,9 +639,9 @@ namespace tracktion { inline namespace engine
         }
 
         inline void renamePropertyRecursive (juce::ValueTree& tree,
-                                             const juce::Identifier& oldName,
-                                             const juce::Identifier& newName,
-                                             juce::UndoManager* um)
+            const juce::Identifier& oldName,
+            const juce::Identifier& newName,
+            juce::UndoManager* um)
         {
             if (auto oldProp = tree.getPropertyPointer (oldName))
             {
@@ -637,5 +653,6 @@ namespace tracktion { inline namespace engine
                 renamePropertyRecursive (child, oldName, newName, um);
         }
 
-    }} // namespace tracktion { inline namespace engine
+    }
+} // namespace tracktion { inline namespace engine
 #endif //BITKLAVIER2_TRACKTION_VALUETREEUTILITIES_H

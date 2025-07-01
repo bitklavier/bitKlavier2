@@ -29,6 +29,7 @@ void BKPort::mouseDown (const juce::MouseEvent& e)
     juce::AudioProcessorGraph::NodeAndChannel dummy { {}, 0 };
     for (auto listener: listeners_)
     {
+        // if it's an input pin, drag from dummy to pin. otherwise pin to dummy
         listener->beginConnectorDrag(isInput ? dummy : pin,
                                  isInput ? pin : dummy,
                                  e);

@@ -20,22 +20,22 @@ class ConstructionSite : public SynthSection,
                          // public juce::ChangeListener,
                          private PreparationList::Listener,
                          public PreparationSection::Listener,
-                        public juce::ApplicationCommandTarget
+                         public juce::ApplicationCommandTarget
 
 {
 public:
-    ConstructionSite (const juce::ValueTree& v, juce::UndoManager& um, OpenGlWrapper& open_gl, SynthGuiData* data, juce::ApplicationCommandManager &_manager);
+    ConstructionSite (const juce::ValueTree& v, juce::UndoManager& um, OpenGlWrapper& open_gl, SynthGuiData* data, juce::ApplicationCommandManager& _manager);
     ~ConstructionSite (void);
 
     void redraw (void);
 
-    ApplicationCommandTarget* getNextCommandTarget() override {
+    ApplicationCommandTarget* getNextCommandTarget() override
+    {
         return findFirstTargetParentComponent();
-        //return findParentComponentOfClass<SynthGuiInterface>();
     }
-    void getAllCommands(juce::Array<juce::CommandID> &commands) override;
-    void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override;
-    bool perform(const InvocationInfo &info) override;
+    void getAllCommands (juce::Array<juce::CommandID>& commands) override;
+    void getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info) override;
+    bool perform (const InvocationInfo& info) override;
     // void initializeCommandManager();
 
     // bool keyPressed (const juce::KeyPress& k, juce::Component* c) override;
@@ -92,16 +92,18 @@ public:
         //setMouseCursor(juce::MouseCursor::ParentCursor);
         if (!item_dropped_on_prep_)
         {
-            //            source.sourceComponent->setCentrePosition(source.sourceComponent->getX() + source.localPosition.getX(),
-            //                                                      source.sourceComponent->getY() + source.localPosition.getY());
-            // if (modulationLineView.current_source_ == nullptr)
-            //     return;
-            source.sourceComponent->setCentrePosition (mouse_drag_position_);
+            for (auto& fc : plugin_components)
+            {
+                if (fc.get() == source.sourceComponent)
+                {
+                    fc->undo.beginNewTransaction();
+                    fc->curr_point = mouse_drag_position_;
+                }
+            }
             cableView._update();
             modulationLineView._update();
         }
         item_dropped_on_prep_ = false;
-
     }
     bool item_dropped_on_prep_ = false;
 
