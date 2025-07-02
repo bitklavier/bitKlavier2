@@ -88,9 +88,7 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
  */
 juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
-
     juce::Array<float> transps;
-
     auto paramVals = state.params.transpose.getFloatParams();
     for (auto const& tp : *paramVals)
     {
@@ -142,30 +140,30 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
-//
-//    if (hammerSynth->hasSamples())
-//    {
-//        hammerSynth->updateVelocityMinMax (
-//            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-//            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-//
-//        hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-//    }
-//
-//    if (releaseResonanceSynth->hasSamples())
-//    {
-//        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-//        releaseResonanceSynth->updateVelocityMinMax (
-//            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-//            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-//
-//        releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-//    }
-//
-//    if (pedalSynth->hasSamples())
-//    {
-//        pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-//    }
+
+    if (hammerSynth->hasSamples())
+    {
+        hammerSynth->updateVelocityMinMax (
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
+        hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (releaseResonanceSynth->hasSamples())
+    {
+        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        releaseResonanceSynth->updateVelocityMinMax (
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
+        releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (pedalSynth->hasSamples())
+    {
+        pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
