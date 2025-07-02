@@ -23,6 +23,11 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         setComponentID(name);
 
+        lastPitch = std::make_unique<PlainTextComponent>("lastpitch", "0");
+        lastInterval = std::make_unique<PlainTextComponent>("lastinterval", "0");
+        lastFrequency = std::make_unique<PlainTextComponent>("lastfrequency", "0");
+        param.tuningState;
+
         auto& listeners = pluginState.getParameterListeners();
         for ( auto &param_ : *params.getFloatParams())
         {
@@ -136,7 +141,6 @@ public:
             [this]() {
                 params.tuningState.setFundamental(params.fundamental->getIndex());
                 circular_keyboard->redoImage();
-                DBG("rotat");
             }
         )};
     circular_keyboard->addMyListener(this);
@@ -171,6 +175,10 @@ public:
 
     TuningParams& params;
     std::unique_ptr<SemiToneWidthSection> semitoneSection;
+
+    std::unique_ptr<PlainTextComponent> lastPitch;
+    std::unique_ptr<PlainTextComponent> lastInterval;
+    std::unique_ptr<PlainTextComponent> lastFrequency;
 };
 
 #endif //BITKLAVIER2_TUNINGPARAMETERSVIEW_H

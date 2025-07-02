@@ -27,6 +27,8 @@ void TuningParametersView::resized()
         //bounds.removeFromTop(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
 
+
+
     SynthSection::resized();
 }
 void TuningParametersView::keyboardSliderChanged(juce::String name) {

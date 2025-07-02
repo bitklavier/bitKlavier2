@@ -389,6 +389,11 @@ static inline int noteNameToRoot(juce::String name)
     return root;
 }
 
+/**
+ * Midi to Frequency convertor
+ * @param f
+ * @return freq (Hertz)
+ */
 static double mtof( double f )
 {
     if( f <= -1500 ) return (0);
@@ -398,7 +403,12 @@ static double mtof( double f )
     else return ( pow(2, (f - 69) / 12.0) * 440.0 );
 }
 
-
+/**
+ * Midi to Frequency convertor
+ * @param f
+ * @param a = concert pitch
+ * @return freq (Hertz)
+ */
 static double mtof( double f, double a ) // a = frequency of A4
 {
     if( f <= -1500 ) return (0);
@@ -407,6 +417,25 @@ static double mtof( double f, double a ) // a = frequency of A4
     // TODO: optimize
     else return ( pow(2, (f - 69) / 12.0) * a );
 }
+/* better than...
+ *
+ * float mtof(const float midiNote) // converts midiPitch to frequency in Hz
+{
+    return concertPitchHz * std::pow(2.0f, ((midiNote - 69.0f) / 12.0f));
+};
+ *  ?
+ */
+
+/**
+ * Frequency to Midi convertory
+ * @param inputFreq
+ * @param concertPitchHz
+ * @return
+ */
+static double ftom(const double inputFreq, double concertPitchHz)
+{
+    return 12.0f * log2(inputFreq / concertPitchHz) + 69.0f;
+};
 
 /**
  * struct to put information about the last state of the synth

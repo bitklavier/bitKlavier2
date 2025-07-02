@@ -36,14 +36,18 @@ struct TuningState : bitklavier::StateChangeableParameter
     double getSemitoneWidthOffsetForMidiNote(double midiNoteNumber);
     int getClosestKey(int noteNum, float transp, bool tuneTranspositions);
 
-    double getOffset();
+    double getOverallOffset();
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
+    void updateLastFrequency(double lastFreq);
 
     juce::MidiKeyboardState keyboardState;
     std::array<float, 128> absoluteTuningOffset = { 0.f };
     std::array<float, 12> circularTuningOffset = { 0.f };
     int fundamental = 0;
     float A4frequency = 440.; // set this in gallery preferences
+    double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
+    double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
+    double lastMidiNote = 69.;      //pitch of last frequency returned
 
     SemitoneWidthParams semitoneWidthParams;
 
@@ -74,7 +78,7 @@ struct TuningParams : chowdsp::ParamHolder
     }
 
     /*
-     * these params are not audio-rate modulatable, so will need to be handled
+     * the params below are not audio-rate modulatable, so will need to be handled
      * in a processStateChanges() call, called every block
      */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
@@ -103,7 +107,6 @@ struct TuningParams : chowdsp::ParamHolder
      * params to add:
      *
      * individually:
-     * - offset (float slider/knob)
      * - note and interval text boxes (display only)
      *
      * then:
@@ -141,28 +144,21 @@ class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
 public:
     TuningProcessor (SynthBase& parent, const juce::ValueTree& v);
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<TuningProcessor> (parent, v);
-    }
+    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v) {
+        return std::make_unique<TuningProcessor> (parent, v); }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
-    bool acceptsMidi() const override
-    {
-        return true;
-    }
+    bool acceptsMidi() const override { return true; }
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    bool hasEditor() const override { return false; }
+    juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
-    juce::AudioProcessor::BusesProperties tuningBusLayout()
-    {
+    juce::AudioProcessor::BusesProperties tuningBusLayout() {
         return BusesProperties()
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), false)
             .withInput ("input", juce::AudioChannelSet::stereo(), false);
     }
-
-    bool hasEditor() const override { return false; }
-    juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
 private:
     chowdsp::Gain<float> gain;
