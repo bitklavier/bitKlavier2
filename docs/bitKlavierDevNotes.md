@@ -1,5 +1,11 @@
 # Notes about how to do stuff in the bK codebase
-
+## Quick Bug/Feature Notes
+- [ ] transposition slider limits to -12/12, and should allow for larger values when typed in
+- [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
+- [ ] weird dialog boxes when control-clicking on knobs
+- [ ] for the transposition slider, if 0 isn't the first element we don't get it at all. so [0 4] works but [4 0] does not
+- [ ] maybe we should allow drag/drop to make audio connections between preps as well
+- [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!

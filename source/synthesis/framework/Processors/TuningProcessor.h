@@ -110,7 +110,7 @@ struct TuningState : bitklavier::StateChangeableParameter
         return fund + (oct + 1) * 12;
     }
 
-    float getSemitoneWidth()
+    double getSemitoneWidth()
     {
         return semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
     }
@@ -123,9 +123,12 @@ struct TuningState : bitklavier::StateChangeableParameter
      * otherwise the output will be transposed by the return value
      * for example: if the semitone width = 50, the semitone fundamental = 60, and midiNoteNumber = 61, the output will be -0.5
      */
-    double getSemitoneWidthOffsetForMidiNote(int midiNoteNumber)
+    double getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
     {
-        return .01 * (midiNoteNumber - getSemitoneWidthFundamental()) * (getSemitoneWidth() - 100);
+        double offset;
+        if (fabs(getSemitoneWidth() - 100.) < 1.) offset = 0.; // return 0 for cases within a cent of 100
+        else offset = .01 * (midiNoteNumber - getSemitoneWidthFundamental()) * (getSemitoneWidth() - 100.);
+        return offset;
     }
 
     /**
@@ -136,15 +139,36 @@ struct TuningState : bitklavier::StateChangeableParameter
      * @param transp
      * @return
      */
-    int getClosestKey(int noteNum, float transp)
+    int getClosestKey(int noteNum, float transp, bool tuneTranspositions)
     {
-        double workingOffset = getSemitoneWidthOffsetForMidiNote(noteNum + transp);
-        return static_cast<int>(std::round(noteNum + transp + workingOffset)); // this is the midiNote we want the synth to use to choose the closest sample
+        /*
+         * check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
+         */
+        if (getSemitoneWidthOffsetForMidiNote(noteNum) == 0)
+        {
+            return (noteNum + transp);
+        }
+
+        double workingOffset;
+        if (!tuneTranspositions) {
+            workingOffset = getSemitoneWidthOffsetForMidiNote (noteNum); // only track semitone width changes for the played note, note the transposition
+        }
+        else {
+            workingOffset = getSemitoneWidthOffsetForMidiNote (noteNum + transp); // track semitone width for transposition as well
+        }
+
+        int key = static_cast<int>(std::round(noteNum + workingOffset + transp));
+
+//        DBG("closest key for " + juce::String(noteNum)
+//             + " with transp " + juce::String(transp)
+//             + " = " + juce::String(key));
+
+        return key;
     }
 
     /**
      * getTargetFrequency() is the primary function for synthesizers to handle tuning
-     *      should include static and dynamic tunings
+     *      should include static and dynamic tunings, and account for semitone width changes
      *      is called every block
      *      return fractional MIDI value, NOT cents
      *
@@ -157,6 +181,8 @@ struct TuningState : bitklavier::StateChangeableParameter
     {
         /**
          *
+         * Regarding Transpositions (from transposition sliders, for instance):
+         *
          * by default, transpositions are tuned literally, relative to the played note
          *      using whatever value, fractional or otherwise, that the user indicates
          *      and ignores the tuning system
@@ -167,8 +193,14 @@ struct TuningState : bitklavier::StateChangeableParameter
          *
          * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
          *
+         * all this becomes quite a bit more complicated when semitone width becomes a parameter and is not necessary 100 cents
+         *      and especially so with transpositions (fro Direct, for instance), that might or might not "useTuning"
+         *      all of the combination cases are handled separately below, mostly to make it all clearer to follow and debug
+         *      (i had a single set of code that handled it all with out the separate cases, but it got very convoluted!)
+         *
          */
 
+        // do we really need this check?
         if (circularTuningOffset.empty())
         {
             double newOffset = (currentlyPlayingNote + currentTransposition);
@@ -177,28 +209,71 @@ struct TuningState : bitklavier::StateChangeableParameter
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
-        if (!tuneTranspositions)
+        // simple case: no transpositions and no semitone width adjustments
+        if (currentTransposition == 0 && getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote) == 0.)
         {
-            double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote); // don't apply the tunings settings to the transpositions; base transp off of played note
-            int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset); // this is the midiNote we want the synth to use to choose the closest sample
-            workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp;
-
-            workingOffset += circularTuningOffset[(midiNoteNumberTemp - (int)std::round(currentTransposition)) % circularTuningOffset.size()] * .01;
-            if (!absoluteTuningOffset.empty()) workingOffset += absoluteTuningOffset[midiNoteNumberTemp - std::round(currentTransposition)] * .01;
-
-            return mtof (workingOffset + (double) midiNoteNumberTemp) * A4frequency / 440.;
+            double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
+            workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
+            return mtof (workingOffset + (double) currentlyPlayingNote) * A4frequency / 440.;
         }
-        else
+
+        // next case: transpositions, but no semitone width adjustments
+        if (currentTransposition != 0 && getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote + currentTransposition) == 0)
         {
-            double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote + currentTransposition); // transposition is also impacted by semitone width in Tuning
-            int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset); // this is the midiNote we want the synth to use to choose the closest sample
-            workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp;
+            if (!tuneTranspositions)
+            {
+                double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
+                workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
+                return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
+            }
+            else
+            {
+                double workingOffset = circularTuningOffset[(currentlyPlayingNote + (int)std::round(currentTransposition)) % circularTuningOffset.size()] * .01;
+                workingOffset += absoluteTuningOffset[currentlyPlayingNote + (int)std::round(currentTransposition)] * .01;
+                return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
+            }
+        }
+
+        // next case: semitone width changes, but no transpositions
+        if (currentTransposition == 0. && getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote) != 0.)
+        {
+            double midiNoteAdjustment = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote);
+            int midiNoteNumberTemp = std::round(currentlyPlayingNote + midiNoteAdjustment);
+            double workingOffset = (currentlyPlayingNote + midiNoteAdjustment) - midiNoteNumberTemp;
 
             workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
-            if (!absoluteTuningOffset.empty()) workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
-
-            return mtof (workingOffset + (double) midiNoteNumberTemp) * A4frequency / 440.;
+            workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
+            return mtof (workingOffset + midiNoteNumberTemp) * A4frequency / 440.;
         }
+
+        // final case: semitone width changes AND transpositions
+        if (currentTransposition != 0. && getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote + currentTransposition) != 0.)
+        {
+            if (!tuneTranspositions)
+            {
+                double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote); // don't apply the tunings settings to the transpositions; tune transp relative to played note
+                int tuningNote = std::round(currentlyPlayingNote + workingOffset);
+                int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset);
+                workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp; // fractional offset
+                workingOffset += circularTuningOffset[tuningNote % circularTuningOffset.size()] * .01;
+                workingOffset += absoluteTuningOffset[tuningNote] * .01;
+
+                return mtof (workingOffset + (double) midiNoteNumberTemp) * A4frequency / 440.;
+            }
+            else
+            {
+                double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote + currentTransposition); // transposition is also impacted by semitone width in Tuning
+                int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset);
+                workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp; // fractional offset
+                workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
+                workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
+
+                return mtof (workingOffset + (double) midiNoteNumberTemp) * A4frequency / 440.;
+            }
+        }
+
+        DBG("should never reach this point!");
+        jassert(true);
 
         /**
          * to add here:
