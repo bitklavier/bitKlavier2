@@ -129,10 +129,29 @@ struct TuningState : bitklavier::StateChangeableParameter
     }
 
     /**
+     * BKSynth will use this to find the closest sample for a particular note
+     *      need something like this to find the best sample for this midiNoteNumber
+     *      it may be very far from the original midi key played because of the semitone width variable
+     * @param noteNum
+     * @param transp
+     * @return
+     */
+    int getClosestKey(int noteNum, float transp)
+    {
+        double workingOffset = getSemitoneWidthOffsetForMidiNote(noteNum + transp);
+        return static_cast<int>(std::round(noteNum + transp + workingOffset)); // this is the midiNote we want the synth to use to choose the closest sample
+    }
+
+    /**
      * getTargetFrequency() is the primary function for synthesizers to handle tuning
      *      should include static and dynamic tunings
      *      is called every block
      *      return fractional MIDI value, NOT cents
+     *
+     * @param currentlyPlayingNote
+     * @param currentTransposition
+     * @param tuneTranspositions
+     * @return fractional MIDI value (not cents)
      */
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
     {
@@ -150,8 +169,6 @@ struct TuningState : bitklavier::StateChangeableParameter
          *
          */
 
-        double tempPlayingNote = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote);
-
         if (circularTuningOffset.empty())
         {
             double newOffset = (currentlyPlayingNote + currentTransposition);
@@ -160,31 +177,28 @@ struct TuningState : bitklavier::StateChangeableParameter
             return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
-
         if (!tuneTranspositions)
         {
-            double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
-            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
-            newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
-            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
+            double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote); // don't apply the tunings settings to the transpositions; base transp off of played note
+            int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset); // this is the midiNote we want the synth to use to choose the closest sample
+            workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp;
 
-//            double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
-//            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
-//            newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
-//            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
+            workingOffset += circularTuningOffset[(midiNoteNumberTemp - (int)std::round(currentTransposition)) % circularTuningOffset.size()] * .01;
+            if (!absoluteTuningOffset.empty()) workingOffset += absoluteTuningOffset[midiNoteNumberTemp - std::round(currentTransposition)] * .01;
+
+            return mtof (workingOffset + (double) midiNoteNumberTemp) * A4frequency / 440.;
         }
         else
         {
-            double newOffset = (circularTuningOffset[(currentlyPlayingNote + (int) std::trunc (currentTransposition)) % circularTuningOffset.size()] * .01);
-            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
-            newOffset *= .01;
-            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
+            double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote + currentTransposition); // transposition is also impacted by semitone width in Tuning
+            int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset); // this is the midiNote we want the synth to use to choose the closest sample
+            workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp;
+
+            workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
+            if (!absoluteTuningOffset.empty()) workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
+
+            return mtof (workingOffset + (double) midiNoteNumberTemp) * A4frequency / 440.;
         }
-
-
-        /**
-         * how to get semitoneWidth params here?
-         */
 
         /**
          * to add here:
