@@ -64,6 +64,7 @@ and hopefully with answers included here for the record!
     - `chowdsp::GainDBParameter::Ptr gainParam` for instance 
   - for a more complex set of parameters requiring a more complex UI element, you might need to create a `ParamHolder`
     - see `TransposeParams` for instance 
+  - see the section here about Modulatable parameters; last argument for the parameter definition should probably be `true` if this parameter is to be available to mod.
   - Call `add` and include your new param with the others 
     - first line in the DirectParams struct, for instance 
   - Note that in the UI elements that are OpenGL wrappers around legacy bitKlavier components (like the transposition slider, and the velocityMinMax slider) you'll need to create a `void processStateChanges() override` function and call it with every block

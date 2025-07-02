@@ -23,6 +23,10 @@ void TuningParametersView::resized()
     //semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 50, getKnobSectionHeight() + 50 + getTextComponentHeight() * 2);
     semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 105, getKnobSectionHeight() + 10);
 
+    juce::Rectangle<int> outputKnobsArea = {50, semitoneSection->getBottom() + knob_section_height, 100, 100};
+        //bounds.removeFromTop(knob_section_height);
+    placeKnobsInArea(outputKnobsArea, _sliders, true);
+
     SynthSection::resized();
 }
 void TuningParametersView::keyboardSliderChanged(juce::String name) {
