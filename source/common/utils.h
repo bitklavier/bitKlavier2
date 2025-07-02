@@ -450,3 +450,10 @@ enum Octave : uint32_t {
     _7 = 1 << 6,
     _8 = 1 << 7,
 };
+
+enum AdaptiveSystems {
+    None = 1 << 0,
+    Adaptive = 1 << 1,
+    Adaptive_Anchored = 1 << 2,
+    Spring = 1 << 3,
+};
