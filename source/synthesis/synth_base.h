@@ -128,7 +128,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     int getNumModulations(const std::string& destination);
     virtual SynthGuiInterface* getGuiInterface() = 0;
     bool isSourceConnected(const std::string& source);
-  std::unique_ptr<PreparationList> preparationList;
+
 protected:
 //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
@@ -153,8 +153,9 @@ protected:
     juce::File active_file_;
 
     bool expired_;
-
-
+//make sure this is desytroyed before the soundengine
+public:
+  std::unique_ptr<PreparationList> preparationList;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)
 };
 

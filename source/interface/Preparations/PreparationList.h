@@ -190,8 +190,16 @@ public:
                 juce::MemoryBlock data;
                 obj->proc->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
-                if (xml != nullptr)
-                     obj->state.getOrCreateChildWithName(xml->getNamespace(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);;
+                if (xml != nullptr) {
+                    obj->state.getOrCreateChildWithName(xml->getNamespace(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);;
+                }
+                else if ( obj->state.getChildWithName(IDs::PLUGIN).isValid() ) {
+
+                    juce::MemoryBlock m;
+                    obj->proc->getStateInformation (m);
+                    obj->state.getOrCreateChildWithName("STATE",nullptr).setProperty ("base64",m.toBase64Encoding(),nullptr);
+                }
+
             }
             v.removeProperty("sync", nullptr);
         }

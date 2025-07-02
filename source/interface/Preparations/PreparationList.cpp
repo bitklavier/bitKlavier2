@@ -6,6 +6,7 @@
 #include "DirectProcessor.h"
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
+#include "UserPreferences.h"
 PreparationList::PreparationList (SynthBase& parent, const juce::ValueTree& v) : tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper> (v), synth (parent)
 {
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
@@ -18,21 +19,52 @@ PluginInstanceWrapper* PreparationList::createNewObject (const juce::ValueTree& 
 {
     juce::AudioProcessor* rawPtr;
     juce::AudioProcessorGraph::Node::Ptr node_ptr;
-    if (temporary_instance == nullptr && static_cast<int> (v.getProperty (IDs::type)) < bitklavier::BKPreparationType::PreparationTypeVST)
+    juce::ValueTree state = v;
+    if (temporary_instance == nullptr && static_cast<int> (state.getProperty (IDs::type)) < bitklavier::BKPreparationType::PreparationTypeVST)
     {
-        auto processor = prepFactory.CreateObject ((int) v.getProperty (IDs::type), synth, v);
+        auto processor = prepFactory.CreateObject ((int) state.getProperty (IDs::type), synth, v);
         rawPtr = processor.get();
         processor->prepareToPlay (synth.getSampleRate(), synth.getBufferSize());
         //looking at ProcessorGraph i actually don't think their is any need to try to wrap this in thread safety because
         //the graph rebuild is inherently gonna trigger some async blocking
 
-        node_ptr = synth.addProcessor (std::move (processor), juce::AudioProcessorGraph::NodeID (juce::Uuid (v.getProperty (IDs::uuid).toString()).getTimeLow()));
+        node_ptr = synth.addProcessor (std::move (processor), juce::AudioProcessorGraph::NodeID (juce::Uuid (state.getProperty (IDs::uuid).toString()).getTimeLow()));
+    } else if (temporary_instance == nullptr &&static_cast<int> (state.getProperty (IDs::type)) == bitklavier::BKPreparationType::PreparationTypeVST ) {
+
+
+        juce::String err;
+
+        juce::PluginDescription pd;
+        pd.loadFromXml(*v.getChildWithName(IDs::PLUGIN).createXml());
+        temporary_instance = synth.user_prefs->userPreferences->formatManager.createPluginInstance (
+            pd,
+            synth.getSampleRate(),
+            synth.getBufferSize(),
+            err);
+        if (temporary_instance == nullptr)
+        {
+            auto options = juce::MessageBoxOptions::makeOptionsOk (juce::MessageBoxIconType::WarningIcon,
+                TRANS ("Couldn't create plugin"),
+                err);
+            //TODO show error
+
+        }
+        if ( v.getChildWithName("STATE").isValid()) {
+           juce:: MemoryBlock m;
+            m.fromBase64Encoding (v.getChildWithName("STATE").getProperty("base64").toString());
+            temporary_instance->setStateInformation(m.getData(), (int) m.getSize());
+        }
+        // createUuidProperty(state);
+        rawPtr = temporary_instance.get();
+        temporary_instance->prepareToPlay (synth.getSampleRate(), synth.getBufferSize());
+        node_ptr = synth.addProcessor (std::move (temporary_instance), juce::AudioProcessorGraph::NodeID (juce::Uuid (state.getProperty (IDs::uuid).toString()).getTimeLow()));
     }
     else
     {
+        createUuidProperty(state);
         rawPtr = temporary_instance.get();
         temporary_instance->prepareToPlay (synth.getSampleRate(), synth.getBufferSize());
-        node_ptr = synth.addProcessor (std::move (temporary_instance));
+        node_ptr = synth.addProcessor (std::move (temporary_instance), juce::AudioProcessorGraph::NodeID (juce::Uuid (state.getProperty (IDs::uuid).toString()).getTimeLow()));
     }
     if (node_ptr)
     {
@@ -41,7 +73,7 @@ PluginInstanceWrapper* PreparationList::createNewObject (const juce::ValueTree& 
         node_ptr->properties.set ("type", v.getProperty (IDs::type));
         //sendChangeMessage();
     }
-    return new PluginInstanceWrapper (rawPtr, v, node_ptr->nodeID);
+    return new PluginInstanceWrapper (rawPtr, state, node_ptr->nodeID);
 }
 
 void PreparationList::deleteObject (PluginInstanceWrapper* at)
@@ -70,7 +102,7 @@ void PreparationList::newObjectAdded (PluginInstanceWrapper* instance_wrapper)
 void PreparationList::valueTreeParentChanged (juce::ValueTree&)
 {
 }
-#include "UserPreferences.h"
+
 void PreparationList::addPlugin (const juce::PluginDescription& desc, const juce::ValueTree& v)
 {
     if (desc.pluginFormatName != "AudioUnit")

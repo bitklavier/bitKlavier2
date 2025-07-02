@@ -16,8 +16,8 @@
 // Definition for the TuningPreparation constructor.  It takes three parameters: a pointer to
 // a Tuning Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private TuningPreparation member proc with an initialization list.
-TuningPreparation::TuningPreparation( juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface*):
-        PreparationSection(juce::String("tuning"),  v, open_gl, node)
+TuningPreparation::TuningPreparation( juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface* interface):
+        PreparationSection(juce::String("tuning"),  v, open_gl, node,*interface->getUndoManager())
 
 {
 

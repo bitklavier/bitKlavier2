@@ -36,7 +36,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     self_reference_ = std::make_shared<SynthBase*>();
     *self_reference_ = this;
 
-    engine_ = std::make_unique<bitklavier::SoundEngine>();
+
 
     keyboard_state_ = std::make_unique<juce::MidiKeyboardState>();
     juce::ValueTree v;
@@ -63,6 +63,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
     preparationList = std::make_unique<PreparationList> (*this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS));
+
+    engine_ = std::make_unique<bitklavier::SoundEngine>();
 }
 
 SynthBase::~SynthBase()
