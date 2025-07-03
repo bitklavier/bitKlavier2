@@ -175,7 +175,20 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
 
     //****************************** Adaptive Tuning Section ******************************//
 
+    //do adaptive tunings if using
+    if(getAdaptiveType() == AdaptiveSystems::Adaptive || getAdaptiveType() == Adaptive_Anchored)
+    {
+        double lastNoteOffset = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01; // added getFundamentalOffset()
 
+        if(updateLastInterval)
+        {
+            lastNoteTuning = currentlyPlayingNote + lastNoteOffset;
+            lastIntervalTuning = lastNoteTuning - lastNoteTuningTemp;
+        }
+
+        if(updateLastInterval) lastOffsets.set(currentlyPlayingNote, lastNoteOffset);
+        return lastNoteOffset;
+    }
 
     //****************************** Static Tuning Section ******************************//
     /**
@@ -336,7 +349,7 @@ void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void TuningProcessor::noteOn (int midiChannel,int midiNoteNumber,float velocity)
 {
-
+    //state.params.tuningState.noteOn();
 }
 void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity)
 {
@@ -359,7 +372,7 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
     }
 }
 
-float TuningProcessor::intervalToRatio(float interval) const {
+float TuningState::intervalToRatio(float interval) const {
     return mtof(interval + 60.,  getGlobalTuningReference()) / mtof(60., getGlobalTuningReference());
 }
 
@@ -367,16 +380,16 @@ float TuningProcessor::intervalToRatio(float interval) const {
  * get the current cluster time, in ms
  * @return cluster time in ms
  */
-int TuningProcessor::getAdaptiveClusterTimer()
+int TuningState::getAdaptiveClusterTimer()
 {
-    return clusterTime * (1000.0 / getSampleRate());
+    return clusterTimeMS;
 }
 
 /**
  * add note to the adaptive tuning history, update adaptive fundamental
  * @param noteNumber
  */
-void TuningProcessor::keyPressed(int noteNumber)
+void TuningState::keyPressed(int noteNumber)
 {
     adaptiveHistoryCounter++;
 
@@ -396,7 +409,8 @@ void TuningProcessor::keyPressed(int noteNumber)
         {
             adaptiveHistoryCounter = 0;
 
-            const juce::Array<float> anchorTuning = tuning->tuningLibrary.getUnchecked(getAdaptiveAnchorScale());
+            //const juce::Array<float> anchorTuning = tuning->tuningLibrary.getUnchecked(getAdaptiveAnchorScale());
+            const std::array<float, 12> anchorTuning = getTuningSystem(getAdaptiveAnchorScale());
             adaptiveFundamentalFreq = mtof(
                 noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % anchorTuning.size()],
                 getGlobalTuningReference()
@@ -413,11 +427,11 @@ void TuningProcessor::keyPressed(int noteNumber)
     /*
      * reset cluster timer with each new note
      */
-    clusterTime = 0;
+    clusterTimeMS = 0;
 
 }
 
-void TuningProcessor::keyReleased(int noteNumber)
+void TuningState::keyReleased(int noteNumber)
 {
     /*
      * todo: spring
@@ -425,19 +439,23 @@ void TuningProcessor::keyReleased(int noteNumber)
     //tuning->prep->getSpringTuning()->removeNote(noteNumber);
 }
 
-float TuningProcessor::adaptiveCalculateRatio(const int midiNoteNumber) const
+float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
 {
     int tempnote = midiNoteNumber;
     float newnote;
     float newratio;
 
-    auto testt = tuningMap[TuningSystem(Custom)].second;
+    //juce::Array<float> intervalScale;
+    std::array<float, 12> intervalScale;
+    if(getAdaptiveIntervalScale() == Custom) {
 
-    juce::Array<float> intervalScale;
-    if(getAdaptiveIntervalScale() == Custom)
-        intervalScale = tuning->prep->getCustomScale();
+        /**
+         * todo: figure custom scales out
+         */
+        //intervalScale = tuning->prep->getCustomScale();
+    }
     else
-        intervalScale = tuning->tuningLibrary.getUnchecked(getAdaptiveIntervalScale());
+        intervalScale = getTuningSystem(getAdaptiveIntervalScale());
 
     if(!getAdaptiveInversional() || tempnote >= adaptiveFundamentalNote)
     {
@@ -457,18 +475,17 @@ float TuningProcessor::adaptiveCalculateRatio(const int midiNoteNumber) const
     return newratio;
 }
 
-float TuningProcessor::adaptiveCalculate(int midiNoteNumber)
+float TuningState::adaptiveCalculate(int midiNoteNumber)
 {
     float newnote = adaptiveFundamentalFreq * adaptiveCalculateRatio(midiNoteNumber);
     return ftom(newnote, getGlobalTuningReference()) - midiNoteNumber;
 }
 
-void TuningProcessor::adaptiveReset()
+void TuningState::adaptiveReset()
 {
     adaptiveFundamentalNote = getFundamental();
     adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     adaptiveHistoryCounter = 0;
-
 }
 
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -477,7 +494,9 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * increment timer for adaptive tuning cluster measurements.
      *      - will get reset elsewhere
      */
-    clusterTime += buffer.getNumSamples();
+    //clusterTime += buffer.getNumSamples();
+    //state.params.tuningState.clusterTime += buffer.getNumSamples();
+    incrementClusterTime((long)buffer.getNumSamples());
 
     /*
      * iterate through each Midi message
