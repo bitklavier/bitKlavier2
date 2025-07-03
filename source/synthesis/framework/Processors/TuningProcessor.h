@@ -168,7 +168,9 @@ public:
     juce::AudioProcessor::BusesProperties tuningBusLayout() {
         return BusesProperties()
             .withOutput ("Output1", juce::AudioChannelSet::stereo(), false)
-            .withInput ("input", juce::AudioChannelSet::stereo(), false);
+            .withInput ("input", juce::AudioChannelSet::stereo(), false)
+        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
+        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true);
     }
 
 private:

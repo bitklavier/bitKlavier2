@@ -94,6 +94,8 @@ void SynthBase::addTuningConnection (juce::AudioProcessorGraph::NodeID src, juce
     auto* sourceNode = getNodeForId (src);
     auto* destNode = getNodeForId (dest);
     dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor())->setTuning(dynamic_cast<TuningProcessor*> (sourceNode->getProcessor()));
+    addModulationConnection(src,dest);
+
 }
 void SynthBase::connectTuning (const juce::ValueTree& v)
 {
@@ -203,10 +205,10 @@ void SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID sourc
 {
     auto* sourceNode = getNodeForId (source);
     auto* destNode = getNodeForId (dest);
-    destNode->getProcessor()->getBus (true, 1)->enable (true); //should always be modulation bus
-    sourceNode->getProcessor()->getBus (false, 1)->enable (true); //should always be modulation bus
-    auto dest_index = destNode->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, 0);
-    auto source_index = sourceNode->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0);
+    destNode->getProcessor()->getBus(true, 1)->enable(true); //should always be modulation bus
+    sourceNode->getProcessor()->getBus(false, 1)->enable(true); //should always be modulation bus
+    auto dest_index = destNode->getProcessor()->getChannelIndexInProcessBlockBuffer(true, 1, 0);
+    auto source_index = sourceNode->getProcessor()->getChannelIndexInProcessBlockBuffer(false, 1, 0);
 
     juce::AudioProcessorGraph::Connection connection { { source, source_index }, { dest, dest_index } };
     engine_->addConnection (connection);

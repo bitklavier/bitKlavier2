@@ -320,6 +320,7 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     //DBG(juce::String(getState().params.tuningState.getOverallOffset()));
+    DBG("tuning");
     auto midiIterator = midiMessages.findNextSamplePosition (0);
 
     std::for_each(midiIterator,midiMessages.cend(),
