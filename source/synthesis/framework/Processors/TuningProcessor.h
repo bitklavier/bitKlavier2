@@ -161,6 +161,7 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     bool acceptsMidi() const override { return true; }
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void handleMidiEvent (const juce::MidiMessage& m);
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 

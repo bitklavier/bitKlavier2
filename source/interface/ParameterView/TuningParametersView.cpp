@@ -28,7 +28,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(circular_keyboard.get());
 
-    //semitoneSection = std::make_unique<SemitoneWidthSection>("SEMITONESECTION", "SEMITONESECTION", params.semitoneWidthParams, listeners, *this);
     semitoneSection = std::make_unique<SemitoneWidthSection>(name, params.tuningState.semitoneWidthParams, listeners, *this);
     addSubSection(semitoneSection.get());
 
@@ -133,7 +132,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     lastNoteDisplay->setJustification(juce::Justification::left);
 
     /*
-     * this will hear changes to tuningState.lastNote, which are triggered by the last tuned note in the synth (through synthState)
+     * this will hear changes to tuningState.lastNote, which are triggered by the last tuned note in the synth (through synthState, called in DirectProcessor, etc...)
      */
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.lastNote,
         chowdsp::ParameterListenerThread::MessageThread,

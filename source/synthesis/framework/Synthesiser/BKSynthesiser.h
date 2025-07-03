@@ -254,9 +254,9 @@ class BKSynthesiser
                     with timestamps outside the specified region will be ignored.
                 */
                 void renderNextBlock (juce::AudioBuffer<float>& outputAudio,
-                const juce::MidiBuffer& inputMidi,
-                int startSample,
-                int numSamples);
+                    const juce::MidiBuffer& inputMidi,
+                    int startSample,
+                    int numSamples);
 
 //                void renderNextBlock (juce::AudioBuffer<double>& outputAudio,
 //                const juce::MidiBuffer& inputMidi,

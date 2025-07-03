@@ -112,8 +112,6 @@ void BKSynthesiser::processNextBlock (juce::AudioBuffer<floatType>& outputAudio,
                                     int startSample,
                                     int numSamples)
 {
-    // perhaps return here if synthGain is below a min threshold?
-
     // must set the sample rate before using this!
     jassert (! juce::exactlyEqual (sampleRate, 0.0));
     const int targetChannels = outputAudio.getNumChannels();
@@ -197,6 +195,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
      */
     if (m.isNoteOn())
     {
+        DBG("BKSynthesizer Note On " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
         if(pedalSynth) return;
         if (!keyReleaseSynth)
             noteOn (channel, m.getNoteNumber(), m.getVelocity());

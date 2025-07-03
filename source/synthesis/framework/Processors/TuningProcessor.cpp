@@ -179,6 +179,8 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
 
     //****************************** Static Tuning Section ******************************//
     /**
+         * The most common part of this function...
+         *
          *
          * Regarding Transpositions (from transposition sliders, for instance):
          *
@@ -206,9 +208,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
         newOffset *= .01;
         newOffset += getOverallOffset();
-
-//        updateLastFrequency(mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
-//        return lastFrequencyHz;
         return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
     }
 
@@ -218,9 +217,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
-
-//        updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote, A4frequency));
-//        return lastFrequencyHz;
         return mtof (workingOffset + (double) currentlyPlayingNote, A4frequency);
     }
 
@@ -232,9 +228,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
             workingOffset += getOverallOffset();
-
-//            updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
-//            return lastFrequencyHz;
             return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
         }
         else
@@ -242,9 +235,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             double workingOffset = circularTuningOffset[(currentlyPlayingNote + (int)std::round(currentTransposition)) % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote + (int)std::round(currentTransposition)] * .01;
             workingOffset += getOverallOffset();
-
-//            updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
-//            return lastFrequencyHz;
             return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
         }
     }
@@ -258,9 +248,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
         workingOffset += getOverallOffset();
-
-//        updateLastFrequency(mtof (workingOffset + midiNoteNumberTemp, A4frequency));
-//        return lastFrequencyHz;
         return mtof (workingOffset + midiNoteNumberTemp, A4frequency);
     }
 
@@ -276,9 +263,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             workingOffset += circularTuningOffset[tuningNote % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[tuningNote] * .01;
             workingOffset += getOverallOffset();
-
-//            updateLastFrequency(mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency));
-//            return lastFrequencyHz;
             return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
         }
         else
@@ -289,9 +273,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
             workingOffset += getOverallOffset();
-
-//            updateLastFrequency(mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency));
-//            return lastFrequencyHz;
             return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
         }
     }
@@ -324,9 +305,28 @@ void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     gain.setRampDurationSeconds (0.05);
 }
 
+void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
+{
+    if (m.isNoteOn())
+    {
+        DBG("Tuning Processor Note On " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
+    }
+    else if (m.isNoteOff())
+    {
+        DBG("Tuning Processor Note Off " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
+    }
+}
+
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     //DBG(juce::String(getState().params.tuningState.getOverallOffset()));
+    auto midiIterator = midiMessages.findNextSamplePosition (0);
+
+    std::for_each(midiIterator,midiMessages.cend(),
+        [&] (const juce::MidiMessageMetadata& meta)
+        {
+            handleMidiEvent (meta.getMessage());
+        });
 }
 
 template <typename Serializer>
