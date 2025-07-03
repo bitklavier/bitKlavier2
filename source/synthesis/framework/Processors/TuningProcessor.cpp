@@ -65,8 +65,8 @@ std::array<float, 12> TuningState::rotateValuesByFundamental (std::array<float, 
 void TuningState::setFundamental (int fund)
 {
     //need to shift keyValues over by difference in fundamental
-    int oldFund = fundamental;
-    fundamental = fund;
+    int oldFund = fundamental_;
+    fundamental_ = fund;
     int offset = fund - oldFund;
     auto vals = circularTuningOffset;
     for (int i = 0; i < 12; i++)
@@ -322,7 +322,7 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
     paramHolder.tuningState.circularTuningOffset = parseFloatStringToArrayCircular<12> (myStr.toStdString());
     myStr = deserial->getStringAttribute ("absoluteTuning");
     paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
-    paramHolder.tuningState.fundamental = paramHolder.fundamental->getIndex();
+    paramHolder.tuningState.fundamental_ = paramHolder.tuningState.fundamental->getIndex();
 }
 
 

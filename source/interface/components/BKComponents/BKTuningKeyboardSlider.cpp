@@ -46,7 +46,7 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
             default: break;
         }
     if (isCircular) {
-        if (state.fundamental == midiNoteNumber) {
+        if (state.fundamental_ == midiNoteNumber) {
 
             int x = area.getX();
             int y = area.getY();
@@ -115,7 +115,7 @@ void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g
         }
     }
     if (isCircular) {
-        if (state.fundamental == midiNoteNumber) {
+        if (state.fundamental_ == midiNoteNumber) {
             const float height = juce::jmin (12.0f, getKeyWidth() * 0.9f);
             juce::String text = "*";
             g.setColour (c.contrasting());
@@ -393,8 +393,8 @@ void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEd
              auto   tempVals = parseFloatStringToArrayCircular<12>(keyboardValsTextField->getText().toStdString());
             if (tempVals.size() == maxKey - 1) {
                 int offset;
-                if(keyboardState->fundamental <= 0) offset = 0;
-                else offset = keyboardState->fundamental;
+                if(keyboardState->fundamental_ <= 0) offset = 0;
+                else offset = keyboardState->fundamental_;
                 auto rangeAll  =  (keyboard->getRangeEnd() - keyboard->getRangeStart()) + 1;
                 for(int i=keyboard->getRangeStart(); i<=keyboard->getRangeEnd(); i++)
                 {

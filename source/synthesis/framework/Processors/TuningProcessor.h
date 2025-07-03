@@ -43,15 +43,41 @@ struct TuningState : bitklavier::StateChangeableParameter
     juce::MidiKeyboardState keyboardState;
     std::array<float, 128> absoluteTuningOffset = { 0.f };
     std::array<float, 12> circularTuningOffset = { 0.f };
-    int fundamental = 0;
-    float A4frequency = 440.; // set this in gallery preferences
+    int fundamental_ = 0;
+    float A4frequency = 440.;       // set this in gallery preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
-    double lastMidiNote = 69.;      //pitch of last frequency returned
+    double lastMidiNote = 69.;      // pitch of last frequency returned
 
-    SemitoneWidthParams semitoneWidthParams;
+    // ********************* PARAMETERS ******************** //
 
-    // offset of tuning system (cents)
+    /*
+     * some of the params below are not audio-rate modulatable, so will need to be handled
+     * in a processStateChanges() call, called every block
+     */
+    /**
+     * tuningSystem = overall system for static tunings
+     */
+    chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
+        juce::ParameterID { "tuningSystem", 100 },
+        "Tuning System",
+        TuningSystem::Equal_Temperament,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
+    };
+
+    /**
+     * fundamental = fundamental for tuningSystem
+     */
+    chowdsp::EnumChoiceParameter<Fundamental>::Ptr fundamental {
+        juce::ParameterID { "fundamental", 100 },
+        "Fundamental",
+        Fundamental::C,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
+
+    /**
+     * offset of tuning system (cents)
+     */
     chowdsp::FloatParameter::Ptr offSet {
         juce::ParameterID { "offSet", 100 },
         "Offset",
@@ -62,6 +88,9 @@ struct TuningState : bitklavier::StateChangeableParameter
         true
     };
 
+    /**
+     * for keeping track of the tuning of the last note played
+     */
     chowdsp::FloatParameter::Ptr lastNote {
         juce::ParameterID { "lastNote", 100 },
         "Last Note",
@@ -71,17 +100,13 @@ struct TuningState : bitklavier::StateChangeableParameter
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    std::atomic<bool> setFromAudioThread;
-
-    /** adaptive stuff */
-
     /**
      * adaptive = which adaptive system to use, anchored or not
      */
     chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
         juce::ParameterID { "adaptiveSystem", 100 },
         "Adaptive System",
-        AdaptiveSystems::Adaptive,
+        AdaptiveSystems::None,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
@@ -147,6 +172,10 @@ struct TuningState : bitklavier::StateChangeableParameter
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
+    SemitoneWidthParams semitoneWidthParams;
+
+    // ********************* OTHER VARS ******************** //
+
     int getAdaptiveClusterTimer();
     void keyReleased(int noteNumber);
     void keyPressed(int noteNumber);
@@ -156,7 +185,7 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     float getGlobalTuningReference() const { return A4frequency; };
     std::array<float, 12> getTuningSystem(TuningSystem which) const { return tuningMap[TuningSystem(which)].second; }
-    int getFundamental() const { return fundamental; };
+    int getFundamental() const { return fundamental_; };
     AdaptiveSystems getAdaptiveType() const { return adaptive->get(); }
     inline const bool getAdaptiveInversional() const noexcept { return tAdaptiveInversional->get(); }
     inline const int getAdaptiveClusterThresh() const noexcept { return tAdaptiveClusterThresh->get(); }
@@ -173,6 +202,8 @@ struct TuningState : bitklavier::StateChangeableParameter
     float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
     int adaptiveHistoryCounter = 0;
     float clusterTimeMS = 0.;
+
+    std::atomic<bool> setFromAudioThread;
 };
 
 struct TuningParams : chowdsp::ParamHolder
@@ -180,8 +211,8 @@ struct TuningParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams() : chowdsp::ParamHolder ("tuning")
     {
-        add (tuningSystem,
-            fundamental,
+        add (tuningState.tuningSystem,
+            tuningState.fundamental,
             tuningState.adaptive,
             tuningState.semitoneWidthParams,
             tuningState.offSet,
@@ -194,49 +225,9 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.tAdaptiveHistory);
     }
 
-    /*
-     * the params below are not audio-rate modulatable, so will need to be handled
-     * in a processStateChanges() call, called every block
-     */
-    /**
-     * tuningSystem = overall system for static tunings
-     */
-    chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
-        juce::ParameterID { "tuningSystem", 100 },
-        "Tuning System",
-        TuningSystem::Equal_Temperament,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
-    };
-
-    /**
-     * fundamental = fundamental for tuningSystem
-     */
-    chowdsp::EnumChoiceParameter<Fundamental>::Ptr fundamental {
-        juce::ParameterID { "fundamental", 100 },
-        "Fundamental",
-        Fundamental::C,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
-    };
-
-//    /**
-//     * adaptive = which adaptive system to use, anchored or not
-//     */
-//    chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
-//        juce::ParameterID { "adaptiveSystem", 100 },
-//        "Adaptive System",
-//        AdaptiveSystems::None,
-//        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
-//    };
-
-
 
     /**
      * params to add:
-     *
-     * individually:
-     * - note and interval text boxes (display only)
-     *
-     * then:
      * - adaptive tunings
      * - spring tuning
      * - scala functionality

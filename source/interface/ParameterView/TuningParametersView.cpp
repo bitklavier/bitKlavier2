@@ -14,6 +14,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     for ( auto &param_ : *params.getFloatParams())
     {
         if (param_->getParameterID() == "lastNote") continue;
+        if (param_->getParameterID() == "tAdaptiveClusterThresh") continue;
+        if (param_->getParameterID() == "tAdaptiveHistory") continue;
         auto slider = std::make_unique<SynthSlider>(param_->paramID);
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
         addSlider(slider.get());
@@ -33,9 +35,9 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
 
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
-        auto index = tuningParams->tuningSystem->getIndex();
-        tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningSystem->paramID.toStdString());
-        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningSystem.get(), listeners,*tuning_combo_box, nullptr);
+        auto index = tuningParams->tuningState.tuningSystem->getIndex();
+        tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString());
+        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners,*tuning_combo_box, nullptr);
         addAndMakeVisible(tuning_combo_box.get());
         addOpenGlComponent(tuning_combo_box->getImageComponent());
 
@@ -45,7 +47,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         submenus.add(new juce::PopupMenu());
         submenus.add(new juce::PopupMenu());
         int i = 0;
-        for (auto choice : tuningParams->tuningSystem->choices) {
+        for (auto choice : tuningParams->tuningState.tuningSystem->choices) {
             if (i <= 6)
                 tuning_combo_box->addItem(choice,i+1);
             if (i>6 && i <33) {
@@ -63,8 +65,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
         tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
 
-        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->fundamental->paramID.toStdString());
-        fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->fundamental.get(), listeners,*fundamental_combo_box, nullptr);
+        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString());
+        fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners,*fundamental_combo_box, nullptr);
         addAndMakeVisible(fundamental_combo_box.get());
         addOpenGlComponent(fundamental_combo_box->getImageComponent());
 
@@ -75,11 +77,11 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     }
 
     tuningCallbacks += {listeners.addParameterListener(
-        params.tuningSystem,
+        params.tuningState.tuningSystem,
         chowdsp::ParameterListenerThread::MessageThread,
         [this]() {
             if (!params.tuningState.setFromAudioThread) {
-                TuningSystem t = params.tuningSystem->get();
+                TuningSystem t = params.tuningState.tuningSystem->get();
 
                 //this->params.tuningState.circularTuningOffset = tuningMap[t].second;
                 auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
@@ -91,7 +93,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
                 }
                 else if (it != tuningMap.end()) {
                     const auto& tuning = it->second;
-                    const auto tuningArray = TuningState::rotateValuesByFundamental(tuning, params.fundamental->getIndex());
+                    const auto tuningArray = TuningState::rotateValuesByFundamental(tuning, params.tuningState.fundamental->getIndex());
                     int index  = 0;
                     for (const auto val :tuningArray) {
                         this->params.tuningState.circularTuningOffset[index] = val * 100;
@@ -108,10 +110,10 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     };
 
     tuningCallbacks += {listeners.addParameterListener(
-        params.fundamental,
+        params.tuningState.fundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this]() {
-            params.tuningState.setFundamental(params.fundamental->getIndex());
+            params.tuningState.setFundamental(params.tuningState.fundamental->getIndex());
             circular_keyboard->redoImage();
         }
         )};
@@ -177,5 +179,5 @@ void TuningParametersView::resized()
 void TuningParametersView::keyboardSliderChanged(juce::String name) {
 
     if (name == "circular")
-        params.tuningSystem->setParameterValue(TuningSystem::Custom);
+        params.tuningState.tuningSystem->setParameterValue(TuningSystem::Custom);
 }
