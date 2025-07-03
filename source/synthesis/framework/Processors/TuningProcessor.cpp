@@ -157,37 +157,17 @@ void TuningState::updateLastFrequency(double lastFreq)
 }
 
 /**
-     * getTargetFrequency() is the primary function for synthesizers to handle tuning
-     *      should include static and dynamic tunings, and account for semitone width changes
-     *      is called every block
-     *      return fractional MIDI value, NOT cents
-     *
-     * @param currentlyPlayingNote
-     * @param currentTransposition
-     * @param tuneTranspositions
-     * @return fractional MIDI value (not cents)
-     */
-double TuningState::getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
+ * Primary function for calculating target frequencies for the common static tunings
+ *
+ * @param currentlyPlayingNote
+ * @param currentTransposition
+ * @param tuneTranspositions
+ * @return target frequency (Hz) for given currentPlayingNote/transposition
+ */
+double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
 {
-    //****************************** Spring Tuning Section ******************************//
-
-    /* nothing to see here yet */
-
-    //****************************** Adaptive Tuning Section ******************************//
-
-    //do adaptive tunings if using
-    if(getAdaptiveType() == AdaptiveSystems::Adaptive || getAdaptiveType() == Adaptive_Anchored)
-    {
-        /**
-         * todo: adaptiveCalculate has a ftom in its return line, see whether that should be simplified, since we do mtof here
-         */
-        float newPitch = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
-        return mtof(newPitch);
-    }
-
-    //****************************** Static Tuning Section ******************************//
     /**
-         * The most common part of this function...
+     * The most common tuning...
          *
          *
          * Regarding Transpositions (from transposition sliders, for instance):
@@ -287,14 +267,52 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
 
     DBG("should never reach this point!");
     jassert(true);
+}
 
+/**
+ * getTargetFrequency() is the primary function for synthesizers to handle tuning
+ *      should include static and dynamic tunings, and account for semitone width changes
+ *      is called every block
+ *      return fractional MIDI value, NOT cents
+ *
+ *      called by BKSynth every block
+ *
+ * @param currentlyPlayingNote
+ * @param currentTransposition
+ * @param tuneTranspositions
+ * @return target frequency (Hz) for given note params
+ */
+double TuningState::getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
+{
     /**
-         * to add here:
-         * - need to get A4frequency from gallery preferences
-         *
-         * - adaptive tunings 1 and 2
-         * - spring tuning
+     * todo: need to be able to get A4frequency from gallery preferences
+     */
+
+    /*
+     * Spring Tuning, if active
+     */
+    if(getAdaptiveType() == AdaptiveSystems::Spring)
+    {
+        // nothing to see here yet
+    }
+
+    /*
+     * or Adaptive Tunings, if active
+     */
+    if(getAdaptiveType() == AdaptiveSystems::Adaptive || getAdaptiveType() == Adaptive_Anchored)
+    {
+        /**
+         * todo: adaptiveCalculate has a ftom in its return line, see whether that should be simplified, since we do mtof here
          */
+        float newPitch = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
+        return mtof(newPitch);
+    }
+
+    /*
+     * or the regular Static Tuning, if we get this far
+     */
+    return getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+
 }
 
 template <typename Serializer>
@@ -330,8 +348,10 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 
 TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
 {
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

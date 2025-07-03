@@ -38,6 +38,7 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     double getOverallOffset();
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
+    double getStaticTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
     void updateLastFrequency(double lastFreq);
 
     juce::MidiKeyboardState keyboardState;
