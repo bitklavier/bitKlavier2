@@ -123,6 +123,7 @@ namespace bitklavier
         StateConnectionBank& getStateBank() { return state_bank_; }
         void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
         {
+            //DBG("----------------------------------------------------------");
             processorGraph->processBlock (audio_buffer, midi_buffer);
         }
         void setInputsOutputs (int newNumIns, int newNumOuts)

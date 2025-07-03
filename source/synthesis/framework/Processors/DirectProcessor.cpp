@@ -112,6 +112,7 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
+    //("direct");
 
     // always top of the chain as an instrument source; doesn't take audio in
     buffer.clear();
