@@ -91,6 +91,9 @@ struct TuningParams : chowdsp::ParamHolder
      * the params below are not audio-rate modulatable, so will need to be handled
      * in a processStateChanges() call, called every block
      */
+    /**
+     * tuningSystem = overall system for static tunings
+     */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
         juce::ParameterID { "tuningSystem", 100 },
         "Tuning System",
@@ -98,6 +101,9 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
     };
 
+    /**
+     * fundamental = fundamental for tuningSystem
+     */
     chowdsp::EnumChoiceParameter<Fundamental>::Ptr fundamental {
         juce::ParameterID { "fundamental", 100 },
         "Fundamental",
@@ -105,6 +111,9 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
+    /**
+     * adaptive = which adaptive system to use, anchored or not
+     */
     chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
         juce::ParameterID { "adaptiveSystem", 100 },
         "Adaptive System",
@@ -112,6 +121,67 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
+    /**
+     * tAdaptiveIntervalScale = scale to use to determine successive interval tuning
+     */
+    chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tAdaptiveIntervalScale {
+        juce::ParameterID { "tAdaptiveIntervalScale", 100 },
+        "tAdaptiveIntervalScale",
+        TuningSystem::Equal_Temperament,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
+    };
+
+    /**
+     * tAdaptiveAnchorScale = scale to tune new fundamentals to when in anchored
+     */
+    chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tAdaptiveAnchorScale {
+        juce::ParameterID { "tAdaptiveAnchorScale", 100 },
+        "tAdaptiveAnchorScale",
+        TuningSystem::Equal_Temperament,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
+    };
+
+    /**
+     * tAdaptiveAnchorFundamental = fundamental for anchor scale
+     */
+    chowdsp::EnumChoiceParameter<Fundamental>::Ptr tAdaptiveAnchorFundamental {
+        juce::ParameterID { "tAdaptiveAnchorFundamental", 100 },
+        "tAdaptiveAnchorFundamental",
+        Fundamental::C,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
+
+    /**
+     * tAdaptiveInversional = treat the adaptive scale inversionally?
+     */
+    chowdsp::BoolParameter::Ptr tAdaptiveInversional {
+        juce::ParameterID { "tAdaptiveInversional", 100},
+        "on_off",
+        false
+    };
+
+    /**
+     * tAdaptiveClusterThresh = ms; max time before fundamental is reset
+     */
+    chowdsp::TimeMsParameter::Ptr tAdaptiveClusterThresh {
+        juce::ParameterID { "tAdaptiveClusterThresh", 100 },
+        "tAdaptiveClusterThresh",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1000.0f, 500.0f),
+        0.0f,
+        true
+    };
+
+    /**
+     * tAdaptiveHistory = max number of notes before fundamental is reset
+     */
+    chowdsp::FloatParameter::Ptr tAdaptiveHistory {
+        juce::ParameterID { "tAdaptiveHistory", 100 },
+        "tAdaptiveHistory",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 8.0f, 4.0f),
+        0.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
 
     /**
      * params to add:
@@ -164,6 +234,30 @@ public:
     void handleMidiEvent (const juce::MidiMessage& m);
     void noteOn (int midiChannel,int midiNoteNumber,float velocity);
     void noteOff (int midiChannel,int midiNoteNumber,float velocity);
+
+    const std::array<float, 12>
+
+    /*
+     * Adaptive Tuning functions
+     */
+    int getAdaptiveClusterTimer();
+    void keyReleased(int noteNumber);
+    void keyPressed(int noteNumber);
+    float adaptiveCalculateRatio(const int midiNoteNumber) const;
+    float adaptiveCalculate(int midiNoteNumber);
+    void adaptiveReset();
+
+    float getGlobalTuningReference() const { return state.params.tuningState.A4frequency; };
+    int getFundamental() const { return state.params.tuningState.fundamental; };
+    AdaptiveSystems getAdaptiveType() const { return state.params.adaptive->get(); }
+    inline const bool getAdaptiveInversional() const noexcept { return state.params.tAdaptiveInversional->get(); }
+    inline const int getAdaptiveClusterThresh() const noexcept { return state.params.tAdaptiveClusterThresh->get(); }
+    inline const int getAdaptiveHistory() const noexcept { return state.params.tAdaptiveHistory->get(); }
+    inline const int getAdaptiveAnchorFundamental() const noexcept { return state.params.tAdaptiveAnchorFundamental->get(); }
+    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return state.params.tAdaptiveIntervalScale->get(); }
+    inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return state.params.tAdaptiveAnchorScale->get(); }
+    float intervalToRatio(float interval) const;
+
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
@@ -177,6 +271,13 @@ public:
 
 private:
     chowdsp::Gain<float> gain;
+
+    /*
+     * Adaptive vars
+     */
+    int adaptiveFundamentalNote = 60; //moves with adaptive tuning
+    float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
+    int adaptiveHistoryCounter = 0;
     long clusterTime;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TuningProcessor)

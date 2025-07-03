@@ -289,7 +289,36 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
          */
 }
 
-// ************* Tuning Processor ************* //
+template <typename Serializer>
+typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
+{
+    /*
+     * first, call the default serializer, which gets all the simple params
+     */
+    auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
+
+    /*
+     * then serialize the more complex params
+     */
+    Serializer::template addChildElement<12> (ser, "circularTuning", paramHolder.tuningState.circularTuningOffset, arrayToString);
+    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex);
+
+    return ser;
+}
+
+template <typename Serializer>
+void TuningParams::deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder)
+{
+    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
+    auto myStr = deserial->getStringAttribute ("circularTuning");
+    paramHolder.tuningState.circularTuningOffset = parseFloatStringToArrayCircular<12> (myStr.toStdString());
+    myStr = deserial->getStringAttribute ("absoluteTuning");
+    paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
+    paramHolder.tuningState.fundamental = paramHolder.fundamental->getIndex();
+}
+
+
+// ************************** Tuning Processor ************************** //
 
 TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
 {
@@ -330,6 +359,118 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
     }
 }
 
+float TuningProcessor::intervalToRatio(float interval) const {
+    return mtof(interval + 60.,  getGlobalTuningReference()) / mtof(60., getGlobalTuningReference());
+}
+
+/**
+ * get the current cluster time, in ms
+ * @return cluster time in ms
+ */
+int TuningProcessor::getAdaptiveClusterTimer()
+{
+    return clusterTime * (1000.0 / getSampleRate());
+}
+
+/**
+ * add note to the adaptive tuning history, update adaptive fundamental
+ * @param noteNumber
+ */
+void TuningProcessor::keyPressed(int noteNumber)
+{
+    adaptiveHistoryCounter++;
+
+    AdaptiveSystems type = getAdaptiveType();
+    if (type == Adaptive)
+    {
+        if (getAdaptiveClusterTimer() > getAdaptiveClusterThresh() || adaptiveHistoryCounter >= getAdaptiveHistory())
+        {
+            adaptiveHistoryCounter = 0;
+            adaptiveFundamentalFreq = adaptiveFundamentalFreq * adaptiveCalculateRatio(noteNumber);
+            adaptiveFundamentalNote = noteNumber;
+        }
+    }
+    else if (type == Adaptive_Anchored)
+    {
+        if (getAdaptiveClusterTimer() > getAdaptiveClusterThresh() || adaptiveHistoryCounter >= getAdaptiveHistory())
+        {
+            adaptiveHistoryCounter = 0;
+
+            const juce::Array<float> anchorTuning = tuning->tuningLibrary.getUnchecked(getAdaptiveAnchorScale());
+            adaptiveFundamentalFreq = mtof(
+                noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % anchorTuning.size()],
+                getGlobalTuningReference()
+            );
+            adaptiveFundamentalNote = noteNumber;
+        }
+    }
+
+    /*
+     * todo: spring
+     */
+    //tuning->prep->getSpringTuning()->addNote(noteNumber);
+
+    /*
+     * reset cluster timer with each new note
+     */
+    clusterTime = 0;
+
+}
+
+void TuningProcessor::keyReleased(int noteNumber)
+{
+    /*
+     * todo: spring
+     */
+    //tuning->prep->getSpringTuning()->removeNote(noteNumber);
+}
+
+float TuningProcessor::adaptiveCalculateRatio(const int midiNoteNumber) const
+{
+    int tempnote = midiNoteNumber;
+    float newnote;
+    float newratio;
+
+    auto testt = tuningMap[TuningSystem(Custom)].second;
+
+    juce::Array<float> intervalScale;
+    if(getAdaptiveIntervalScale() == Custom)
+        intervalScale = tuning->prep->getCustomScale();
+    else
+        intervalScale = tuning->tuningLibrary.getUnchecked(getAdaptiveIntervalScale());
+
+    if(!getAdaptiveInversional() || tempnote >= adaptiveFundamentalNote)
+    {
+
+        while((tempnote - adaptiveFundamentalNote) < 0) tempnote += 12;
+
+        newnote = midiNoteNumber + intervalScale[(tempnote - adaptiveFundamentalNote) % intervalScale.size()];
+        newratio = intervalToRatio(newnote - adaptiveFundamentalNote);
+
+        return newratio;
+
+    }
+
+    newnote = midiNoteNumber - intervalScale[(adaptiveFundamentalNote - tempnote) % intervalScale.size()];
+    newratio = intervalToRatio(newnote - adaptiveFundamentalNote);
+
+    return newratio;
+}
+
+float TuningProcessor::adaptiveCalculate(int midiNoteNumber)
+{
+    float newnote = adaptiveFundamentalFreq * adaptiveCalculateRatio(midiNoteNumber);
+    return ftom(newnote, getGlobalTuningReference()) - midiNoteNumber;
+}
+
+void TuningProcessor::adaptiveReset()
+{
+    adaptiveFundamentalNote = getFundamental();
+    adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
+    adaptiveHistoryCounter = 0;
+
+}
+
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     /*
@@ -350,30 +491,5 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         });
 }
 
-template <typename Serializer>
-typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
-{
-    /*
-     * first, call the default serializer, which gets all the simple params
-     */
-    auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
 
-    /*
-     * then serialize the more complex params
-     */
-    Serializer::template addChildElement<12> (ser, "circularTuning", paramHolder.tuningState.circularTuningOffset, arrayToString);
-    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex);
 
-    return ser;
-}
-
-template <typename Serializer>
-void TuningParams::deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder)
-{
-    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
-    auto myStr = deserial->getStringAttribute ("circularTuning");
-    paramHolder.tuningState.circularTuningOffset = parseFloatStringToArrayCircular<12> (myStr.toStdString());
-    myStr = deserial->getStringAttribute ("absoluteTuning");
-    paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
-    paramHolder.tuningState.fundamental = paramHolder.fundamental->getIndex();
-}
