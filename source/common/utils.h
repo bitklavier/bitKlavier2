@@ -446,6 +446,7 @@ static double ftom(const double inputFreq, double concertPitchHz)
 struct BKSynthesizerState
 {
     int lastVelocity;
+    double lastPitch;
 };
 
 /*

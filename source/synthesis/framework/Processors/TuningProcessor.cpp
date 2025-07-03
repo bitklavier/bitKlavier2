@@ -151,7 +151,8 @@ void TuningState::updateLastFrequency(double lastFreq)
         lastIntervalCents = ftom(lastFreq, A4frequency) - ftom(lastFrequencyHz, A4frequency);
         lastMidiNote = ftom(lastFreq, A4frequency);
         lastFrequencyHz = lastFreq;
-        // DBG("lastNote = " + juce::String(lastMidiNote) + " lastInterval = " + juce::String(lastIntervalCents));
+
+        lastNote->setParameterValue(lastMidiNote); // will update UI
     }
 }
 
@@ -206,9 +207,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         newOffset *= .01;
         newOffset += getOverallOffset();
 
-        updateLastFrequency(mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
-        return lastFrequencyHz;
-        //return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
+//        updateLastFrequency(mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
+//        return lastFrequencyHz;
+        return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
     }
 
     // simple case: no transpositions and no semitone width adjustments
@@ -218,9 +219,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
 
-        updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote, A4frequency));
-        return lastFrequencyHz;
-        //return mtof (workingOffset + (double) currentlyPlayingNote, A4frequency);
+//        updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote, A4frequency));
+//        return lastFrequencyHz;
+        return mtof (workingOffset + (double) currentlyPlayingNote, A4frequency);
     }
 
     // next case: transpositions, but no semitone width adjustments
@@ -232,9 +233,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
             workingOffset += getOverallOffset();
 
-            updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
-            return lastFrequencyHz;
-            //return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
+//            updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
+//            return lastFrequencyHz;
+            return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
         }
         else
         {
@@ -242,9 +243,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             workingOffset += absoluteTuningOffset[currentlyPlayingNote + (int)std::round(currentTransposition)] * .01;
             workingOffset += getOverallOffset();
 
-            updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
-            return lastFrequencyHz;
-            //return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
+//            updateLastFrequency(mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency));
+//            return lastFrequencyHz;
+            return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
         }
     }
 
@@ -258,9 +259,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
         workingOffset += getOverallOffset();
 
-        updateLastFrequency(mtof (workingOffset + midiNoteNumberTemp, A4frequency));
-        return lastFrequencyHz;
-        //return mtof (workingOffset + midiNoteNumberTemp, A4frequency);
+//        updateLastFrequency(mtof (workingOffset + midiNoteNumberTemp, A4frequency));
+//        return lastFrequencyHz;
+        return mtof (workingOffset + midiNoteNumberTemp, A4frequency);
     }
 
     // final case: semitone width changes AND transpositions
@@ -276,9 +277,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             workingOffset += absoluteTuningOffset[tuningNote] * .01;
             workingOffset += getOverallOffset();
 
-            updateLastFrequency(mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency));
-            return lastFrequencyHz;
-            //return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
+//            updateLastFrequency(mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency));
+//            return lastFrequencyHz;
+            return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
         }
         else
         {
@@ -289,9 +290,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
             workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
             workingOffset += getOverallOffset();
 
-            updateLastFrequency(mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency));
-            return lastFrequencyHz;
-            //return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
+//            updateLastFrequency(mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency));
+//            return lastFrequencyHz;
+            return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
         }
     }
 

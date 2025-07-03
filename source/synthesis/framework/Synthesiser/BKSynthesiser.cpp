@@ -281,7 +281,10 @@ void BKSynthesiser::noteOn (const int midiChannel,
         for (auto* sound : *sounds)
         {
             int closestKey;
-            if(tuning != nullptr) closestKey = tuning->getClosestKey(midiNoteNumber, transp, tuneTranspositions);
+            if(tuning != nullptr) {
+                closestKey = tuning->getClosestKey(midiNoteNumber, transp, tuneTranspositions);
+                lastSynthState.lastPitch = tuning->getTargetFrequency(midiNoteNumber, transp, tuneTranspositions);
+            }
             else closestKey = std::round(midiNoteNumber + transp);
             //if (sound->appliesToNote (std::round(midiNoteNumber + transp)) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             if (sound->appliesToNote ( closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))

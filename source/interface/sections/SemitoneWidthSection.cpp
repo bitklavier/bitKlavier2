@@ -5,7 +5,7 @@
 #include "SemitoneWidthSection.h"
 #include "synth_slider.h"
 
-SemiToneWidthSection::SemiToneWidthSection (
+SemitoneWidthSection::SemitoneWidthSection (
     juce::String name,
     SemitoneWidthParams &params,
     chowdsp::ParameterListeners &listeners,
@@ -13,7 +13,7 @@ SemiToneWidthSection::SemiToneWidthSection (
 {
     setComponentID(parent.getComponentID());
 
-    widthSlider_ = std::make_unique<SynthSlider>("width");
+    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->paramID);
     addSlider(widthSlider_.get());
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
@@ -35,9 +35,9 @@ SemiToneWidthSection::SemiToneWidthSection (
     addAndMakeVisible(sectionBorder);
 }
 
-SemiToneWidthSection::~SemiToneWidthSection() { }
+SemitoneWidthSection::~SemitoneWidthSection() { }
 
-void SemiToneWidthSection::paintBackground(juce::Graphics& g) {
+void SemitoneWidthSection::paintBackground(juce::Graphics& g) {
     setLabelFont(g);
     drawLabelForComponent(g, TRANS("Cents"), widthSlider_.get());
 
@@ -47,7 +47,7 @@ void SemiToneWidthSection::paintBackground(juce::Graphics& g) {
     sectionBorder.paint(g);
 }
 
-void SemiToneWidthSection::resized() {
+void SemitoneWidthSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());
     sectionBorder.setBounds(area);

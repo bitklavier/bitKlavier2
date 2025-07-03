@@ -176,4 +176,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // get last synthesizer state and update things accordingly
     lastSynthState = mainSynth->getSynthesizerState();
     state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
+    if (tuning != nullptr) tuning->getState().params.tuningState.updateLastFrequency(lastSynthState.lastPitch);
+
 }

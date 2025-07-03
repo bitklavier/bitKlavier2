@@ -62,6 +62,15 @@ struct TuningState : bitklavier::StateChangeableParameter
         true
     };
 
+    chowdsp::FloatParameter::Ptr lastNote {
+        juce::ParameterID { "lastNote", 100 },
+        "Last Note",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 128.0f, 64.0f),
+        60.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
     std::atomic<bool> setFromAudioThread;
 };
 
@@ -74,7 +83,8 @@ struct TuningParams : chowdsp::ParamHolder
             fundamental,
             adaptive,
             tuningState.semitoneWidthParams,
-            tuningState.offSet);
+            tuningState.offSet,
+            tuningState.lastNote);
     }
 
     /*

@@ -45,7 +45,7 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr lastVelocityParam {
         juce::ParameterID { "LastVelocity", 100 },
         "LastVelocity",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f), // FIX
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f),
         127.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal

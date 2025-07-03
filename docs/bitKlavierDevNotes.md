@@ -31,7 +31,7 @@ and hopefully with answers included here for the record!
 -[ ] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK?
   - see the section below about Default Color and Graphics Constants
 - [ ] currently getting tuning info into BKSynthezier from TuningState, with getTargetFrequency(), but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
-- [x] I need some help understanding how the tuningComboBoxCallbacks work in TuningParametersView.h. In particular how the static tuning systems get updated on the back end after the user makes a choice.
+- [x] I need some help understanding how the tuningCallbacks work in TuningParametersView.h. In particular how the static tuning systems get updated on the back end after the user makes a choice.
 
 ---------
 ## Default Colors and Graphics Constants
@@ -42,6 +42,7 @@ and hopefully with answers included here for the record!
 - the ValueIDs for these are in enums in `skin.h`, which are in the same order the names are held in string arrays in `skin.cpp`
   - so, if you want to add new values, they need to be in the same placement/order in both `skin.cpp` and `skin.h`
 - `synth_section.cpp` then has helper functions to get some of these vals (`SynthSection::getKnobSectionHeight()` for instance)
+- can add to all these as needed!
 
 ---------
 ## Modulatable Parameters
