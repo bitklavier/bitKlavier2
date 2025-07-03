@@ -162,6 +162,8 @@ public:
     bool acceptsMidi() const override { return true; }
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void handleMidiEvent (const juce::MidiMessage& m);
+    void noteOn (int midiChannel,int midiNoteNumber,float velocity);
+    void noteOff (int midiChannel,int midiNoteNumber,float velocity);
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
@@ -173,6 +175,7 @@ public:
 
 private:
     chowdsp::Gain<float> gain;
+    long clusterTime;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TuningProcessor)
 };

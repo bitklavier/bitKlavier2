@@ -305,23 +305,44 @@ void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     gain.setRampDurationSeconds (0.05);
 }
 
+void TuningProcessor::noteOn (int midiChannel,int midiNoteNumber,float velocity)
+{
+
+}
+void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity)
+{
+
+}
+
 void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
 {
+    const int channel = m.getChannel();
+
     if (m.isNoteOn())
     {
         DBG("Tuning Processor Note On " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
+        noteOn (channel, m.getNoteNumber(), m.getVelocity());
     }
     else if (m.isNoteOff())
     {
         DBG("Tuning Processor Note Off " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
+        noteOff (channel, m.getNoteNumber(), m.getVelocity());
     }
 }
 
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    //DBG(juce::String(getState().params.tuningState.getOverallOffset()));
-    auto midiIterator = midiMessages.findNextSamplePosition (0);
+    /*
+     * increment timer for adaptive tuning cluster measurements.
+     *      - will get reset elsewhere
+     */
+    clusterTime += buffer.getNumSamples();
 
+    /*
+     * iterate through each Midi message
+     *      - I don't think we need all the timing stuff that's in BKSynth
+     */
+    auto midiIterator = midiMessages.findNextSamplePosition (0);
     std::for_each(midiIterator,midiMessages.cend(),
         [&] (const juce::MidiMessageMetadata& meta)
         {
