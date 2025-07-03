@@ -68,8 +68,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         addAndMakeVisible(fundamental_combo_box.get());
         addOpenGlComponent(fundamental_combo_box->getImageComponent());
 
-        adaptive_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->adaptive->paramID.toStdString());
-        adaptive_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->adaptive.get(), listeners,*adaptive_combo_box, nullptr);
+        adaptive_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.adaptive->paramID.toStdString());
+        adaptive_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.adaptive.get(), listeners,*adaptive_combo_box, nullptr);
         addAndMakeVisible(adaptive_combo_box.get());
         addOpenGlComponent(adaptive_combo_box->getImageComponent());
     }

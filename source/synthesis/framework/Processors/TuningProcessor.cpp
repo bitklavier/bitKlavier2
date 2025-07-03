@@ -178,16 +178,11 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     //do adaptive tunings if using
     if(getAdaptiveType() == AdaptiveSystems::Adaptive || getAdaptiveType() == Adaptive_Anchored)
     {
-        double lastNoteOffset = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01; // added getFundamentalOffset()
-
-        if(updateLastInterval)
-        {
-            lastNoteTuning = currentlyPlayingNote + lastNoteOffset;
-            lastIntervalTuning = lastNoteTuning - lastNoteTuningTemp;
-        }
-
-        if(updateLastInterval) lastOffsets.set(currentlyPlayingNote, lastNoteOffset);
-        return lastNoteOffset;
+        /**
+         * todo: adaptiveCalculate has a ftom in its return line, see whether that should be simplified, since we do mtof here
+         */
+        float newPitch = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
+        return mtof(newPitch);
     }
 
     //****************************** Static Tuning Section ******************************//
@@ -349,8 +344,9 @@ void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void TuningProcessor::noteOn (int midiChannel,int midiNoteNumber,float velocity)
 {
-    //state.params.tuningState.noteOn();
+    state.params.tuningState.keyPressed(midiNoteNumber);
 }
+
 void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity)
 {
 
@@ -401,6 +397,8 @@ void TuningState::keyPressed(int noteNumber)
             adaptiveHistoryCounter = 0;
             adaptiveFundamentalFreq = adaptiveFundamentalFreq * adaptiveCalculateRatio(noteNumber);
             adaptiveFundamentalNote = noteNumber;
+            DBG("adaptiveFundamentalFreq =" + juce::String(adaptiveFundamentalFreq));
+            DBG("adaptiveFundamentalNote =" + juce::String(adaptiveFundamentalNote));
         }
     }
     else if (type == Adaptive_Anchored)
@@ -409,7 +407,6 @@ void TuningState::keyPressed(int noteNumber)
         {
             adaptiveHistoryCounter = 0;
 
-            //const juce::Array<float> anchorTuning = tuning->tuningLibrary.getUnchecked(getAdaptiveAnchorScale());
             const std::array<float, 12> anchorTuning = getTuningSystem(getAdaptiveAnchorScale());
             adaptiveFundamentalFreq = mtof(
                 noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % anchorTuning.size()],

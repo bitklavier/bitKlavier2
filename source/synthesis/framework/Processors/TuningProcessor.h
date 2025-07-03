@@ -81,7 +81,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
         juce::ParameterID { "adaptiveSystem", 100 },
         "Adaptive System",
-        AdaptiveSystems::None,
+        AdaptiveSystems::Adaptive,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
@@ -91,7 +91,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tAdaptiveIntervalScale {
         juce::ParameterID { "tAdaptiveIntervalScale", 100 },
         "tAdaptiveIntervalScale",
-        TuningSystem::Equal_Temperament,
+        TuningSystem::Partial,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
     };
 
@@ -185,7 +185,13 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.adaptive,
             tuningState.semitoneWidthParams,
             tuningState.offSet,
-            tuningState.lastNote);
+            tuningState.lastNote,
+            tuningState.tAdaptiveIntervalScale,
+            tuningState.tAdaptiveAnchorScale,
+            tuningState.tAdaptiveAnchorFundamental,
+            tuningState.tAdaptiveInversional,
+            tuningState.tAdaptiveClusterThresh,
+            tuningState.tAdaptiveHistory);
     }
 
     /*
@@ -321,6 +327,7 @@ private:
 //    float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
 //    int adaptiveHistoryCounter = 0;
 //    long clusterTime;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TuningProcessor)
 };
