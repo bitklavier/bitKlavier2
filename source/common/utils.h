@@ -432,10 +432,29 @@ static double mtof( double f, double a ) // a = frequency of A4
  * @param concertPitchHz
  * @return
  */
-static double ftom(const double inputFreq, double concertPitchHz)
+//static double ftom(const double inputFreq, double concertPitchHz)
+//{
+//    return 12.0f * log2(inputFreq / concertPitchHz) + 69.0f;
+//};
+
+//-----------------------------------------------------------------------------
+// name: ftom()
+// desc: freq to midi
+//-----------------------------------------------------------------------------
+#define LOGTWO 0.69314718055994528623
+//#define LOGTEN 2.302585092994
+//static double ftom(const double f )
+//{
+//    // return (f > 0 ? 17.3123405046 * log(.12231220585 * f) : -1500);
+//    // TODO: optimize
+//    return (f > 0 ? (log(f / 440.0) / LOGTWO) * 12.0 + 69. : -1500);
+//}
+
+static double ftom(const double f, double a440 )
 {
-    return 12.0f * log2(inputFreq / concertPitchHz) + 69.0f;
-};
+    // TODO: optimize
+    return (f > 0 ? (log(f / a440) / LOGTWO) * 12.0 + 69. : -1500);
+}
 
 /**
  * struct to put information about the last state of the synth
@@ -469,6 +488,7 @@ enum Fundamental : uint32_t {
     B = 1 << 11,
     none = 0
 };
+
 
 enum Octave : uint32_t {
     _1 = 1 << 0, //tricked this enum into displaying integers (_ => space)

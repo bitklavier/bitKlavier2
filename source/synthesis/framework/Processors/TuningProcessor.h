@@ -31,6 +31,9 @@ struct TuningState : bitklavier::StateChangeableParameter
     void processStateChanges() override;
 
     void setFundamental (int fund);
+    int getFundamental() { return fundamental->getIndex(); }
+    int getOldFundamental() { return oldFundamental; }
+    void setOldFundamental(int newold) { oldFundamental = newold; }
     int getSemitoneWidthFundamental();
     double getSemitoneWidth();
     double getSemitoneWidthOffsetForMidiNote(double midiNoteNumber);
@@ -44,7 +47,8 @@ struct TuningState : bitklavier::StateChangeableParameter
     juce::MidiKeyboardState keyboardState;
     std::array<float, 128> absoluteTuningOffset = { 0.f };
     std::array<float, 12> circularTuningOffset = { 0.f };
-    int fundamental_ = 0;
+
+    int oldFundamental = 0;
     float A4frequency = 440.;       // set this in gallery preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
@@ -186,7 +190,6 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     float getGlobalTuningReference() const { return A4frequency; };
     std::array<float, 12> getTuningSystem(TuningSystem which) const { return tuningMap[TuningSystem(which)].second; }
-    int getFundamental() const { return fundamental_; };
     AdaptiveSystems getAdaptiveType() const { return adaptive->get(); }
     inline const bool getAdaptiveInversional() const noexcept { return tAdaptiveInversional->get(); }
     inline const int getAdaptiveClusterThresh() const noexcept { return tAdaptiveClusterThresh->get(); }
@@ -203,6 +206,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
     int adaptiveHistoryCounter = 0;
     float clusterTimeMS = 0.;
+    double lastAdaptiveTarget = 440.;
 
     std::atomic<bool> setFromAudioThread;
 };
@@ -226,6 +230,9 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.tAdaptiveHistory);
     }
 
+    /**
+     * todo: wrap all the adaptive params into their own holder
+     */
 
     /**
      * params to add:
@@ -273,28 +280,6 @@ public:
     void handleMidiEvent (const juce::MidiMessage& m);
     void noteOn (int midiChannel,int midiNoteNumber,float velocity);
     void noteOff (int midiChannel,int midiNoteNumber,float velocity);
-    //std::array<float, 12> getTuningSystem(TuningSystem which) const { return tuningMap[TuningSystem(which)].second; }
-
-    /*
-     * Adaptive Tuning functions
-     */
-//    int getAdaptiveClusterTimer();
-//    void keyReleased(int noteNumber);
-//    void keyPressed(int noteNumber);
-//    float adaptiveCalculateRatio(const int midiNoteNumber) const;
-//    float adaptiveCalculate(int midiNoteNumber);
-//    void adaptiveReset();
-//
-//    float getGlobalTuningReference() const { return state.params.tuningState.A4frequency; };
-//    int getFundamental() const { return state.params.tuningState.fundamental; };
-//    AdaptiveSystems getAdaptiveType() const { return state.params.adaptive->get(); }
-//    inline const bool getAdaptiveInversional() const noexcept { return state.params.tAdaptiveInversional->get(); }
-//    inline const int getAdaptiveClusterThresh() const noexcept { return state.params.tAdaptiveClusterThresh->get(); }
-//    inline const int getAdaptiveHistory() const noexcept { return state.params.tAdaptiveHistory->get(); }
-//    inline const int getAdaptiveAnchorFundamental() const noexcept { return state.params.tAdaptiveAnchorFundamental->get(); }
-//    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return state.params.tAdaptiveIntervalScale->get(); }
-//    inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return state.params.tAdaptiveAnchorScale->get(); }
-//    float intervalToRatio(float interval) const;
 
     void incrementClusterTime(long numSamples) { state.params.tuningState.clusterTimeMS += numSamples * 1000. / getSampleRate(); }
 
@@ -311,15 +296,6 @@ public:
 
 private:
     chowdsp::Gain<float> gain;
-
-//    /*
-//     * Adaptive vars
-//     */
-//    int adaptiveFundamentalNote = 60; //moves with adaptive tuning
-//    float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
-//    int adaptiveHistoryCounter = 0;
-//    long clusterTime;
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TuningProcessor)
 };

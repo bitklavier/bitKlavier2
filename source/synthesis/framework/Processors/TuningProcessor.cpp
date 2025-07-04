@@ -65,8 +65,9 @@ std::array<float, 12> TuningState::rotateValuesByFundamental (std::array<float, 
 void TuningState::setFundamental (int fund)
 {
     //need to shift keyValues over by difference in fundamental
-    int oldFund = fundamental_;
-    fundamental_ = fund;
+    int oldFund = getOldFundamental();
+    setOldFundamental(fund);
+
     int offset = fund - oldFund;
     auto vals = circularTuningOffset;
     for (int i = 0; i < 12; i++)
@@ -118,6 +119,11 @@ double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
      */
 int TuningState::getClosestKey(int noteNum, float transp, bool tuneTranspositions)
 {
+    if(getAdaptiveType() == AdaptiveSystems::Adaptive || getAdaptiveType() == Adaptive_Anchored)
+    {
+        return static_cast<int>(ftom(lastAdaptiveTarget, getGlobalTuningReference()));
+    }
+
     //first check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
     if (getSemitoneWidthOffsetForMidiNote(noteNum) == 0)
     {
@@ -167,27 +173,30 @@ void TuningState::updateLastFrequency(double lastFreq)
 double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
 {
     /**
-     * The most common tuning...
-         *
-         *
-         * Regarding Transpositions (from transposition sliders, for instance):
-         *
-         * by default, transpositions are tuned literally, relative to the played note
-         *      using whatever value, fractional or otherwise, that the user indicates
-         *      and ignores the tuning system
-         *      The played note is tuned according to the tuning system, but the transpositions are not
-         *
-         * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
-         *      according to the current tuning system
-         *
-         * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
-         *
-         * all this becomes quite a bit more complicated when semitone width becomes a parameter and is not necessary 100 cents
-         *      and especially so with transpositions (fro Direct, for instance), that might or might not "useTuning"
-         *      all of the combination cases are handled separately below, mostly to make it all clearer to follow and debug
-         *      (i had a single set of code that handled it all with out the separate cases, but it got very convoluted!)
-         *
-         */
+     * The Most Common Tuning call...
+     *
+     *
+     * regarding Transpositions (from transposition sliders, for instance):
+     *
+     * by default, transpositions are tuned literally, relative to the played note
+     *      using whatever value, fractional or otherwise, that the user indicates
+     *      and ignores the tuning system
+     *      The played note is tuned according to the tuning system, but the transpositions are not
+     *
+     * if "tuneTranspositions" is set to true, then the transposed notes themselves are also tuned
+     *      according to the current tuning system
+     *
+     * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
+     *
+     * all this becomes quite a bit more complicated when semitone width becomes a parameter and is not necessary 100 cents
+     *      and especially so with transpositions (fro Direct, for instance), that might or might not "useTuning"
+     *      all of the combination cases are handled separately below, mostly to make it all clearer to follow and debug
+     *      (i had a single set of code that handled it all with out the separate cases, but it got very convoluted!)
+     *
+     * => take care revising any of this or trying to make it more efficient!
+     *      - it's fussy, and i've left it a bit verbose to make it more readable and debuggable.
+     *
+     */
 
     // do we really need this check?
     if (circularTuningOffset.empty())
@@ -304,8 +313,12 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         /**
          * todo: adaptiveCalculate has a ftom in its return line, see whether that should be simplified, since we do mtof here
          */
-        float newPitch = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
-        return mtof(newPitch);
+//        float newPitch = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
+//        DBG("adaptive target pitch = " + juce::String(newPitch));
+//        return mtof(newPitch);
+
+        lastAdaptiveTarget = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
+        return lastAdaptiveTarget;
     }
 
     /*
@@ -340,7 +353,7 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
     paramHolder.tuningState.circularTuningOffset = parseFloatStringToArrayCircular<12> (myStr.toStdString());
     myStr = deserial->getStringAttribute ("absoluteTuning");
     paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
-    paramHolder.tuningState.fundamental_ = paramHolder.tuningState.fundamental->getIndex();
+    //paramHolder.tuningState.fundamental_ = paramHolder.tuningState.fundamental->getIndex();
 }
 
 
@@ -417,8 +430,8 @@ void TuningState::keyPressed(int noteNumber)
             adaptiveHistoryCounter = 0;
             adaptiveFundamentalFreq = adaptiveFundamentalFreq * adaptiveCalculateRatio(noteNumber);
             adaptiveFundamentalNote = noteNumber;
-            DBG("adaptiveFundamentalFreq =" + juce::String(adaptiveFundamentalFreq));
-            DBG("adaptiveFundamentalNote =" + juce::String(adaptiveFundamentalNote));
+//            DBG("adaptiveFundamentalFreq = " + juce::String(adaptiveFundamentalFreq));
+//            DBG("adaptiveFundamentalNote = " + juce::String(adaptiveFundamentalNote));
         }
     }
     else if (type == Adaptive_Anchored)
@@ -462,7 +475,6 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
     float newnote;
     float newratio;
 
-    //juce::Array<float> intervalScale;
     std::array<float, 12> intervalScale;
     if(getAdaptiveIntervalScale() == Custom) {
 
@@ -471,19 +483,18 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
          */
         //intervalScale = tuning->prep->getCustomScale();
     }
-    else
+    else {
         intervalScale = getTuningSystem(getAdaptiveIntervalScale());
+    }
 
     if(!getAdaptiveInversional() || tempnote >= adaptiveFundamentalNote)
     {
-
         while((tempnote - adaptiveFundamentalNote) < 0) tempnote += 12;
 
         newnote = midiNoteNumber + intervalScale[(tempnote - adaptiveFundamentalNote) % intervalScale.size()];
         newratio = intervalToRatio(newnote - adaptiveFundamentalNote);
 
         return newratio;
-
     }
 
     newnote = midiNoteNumber - intervalScale[(adaptiveFundamentalNote - tempnote) % intervalScale.size()];
@@ -492,10 +503,18 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
     return newratio;
 }
 
+/**
+ *
+ * @param midiNoteNumber
+ * @return target frequency...
+ */
 float TuningState::adaptiveCalculate(int midiNoteNumber)
 {
     float newnote = adaptiveFundamentalFreq * adaptiveCalculateRatio(midiNoteNumber);
-    return ftom(newnote, getGlobalTuningReference()) - midiNoteNumber;
+
+    return newnote;
+    //return ftom(newnote, getGlobalTuningReference());
+    //return ftom(newnote, getGlobalTuningReference()) - midiNoteNumber;
 }
 
 void TuningState::adaptiveReset()

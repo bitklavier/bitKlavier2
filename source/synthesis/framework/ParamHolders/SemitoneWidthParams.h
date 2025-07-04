@@ -33,9 +33,6 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
-    /**
-     * need to figure out how to make this one hold a set of integers, 0 to 8
-     */
     chowdsp::EnumChoiceParameter<Octave>::Ptr octave {
         juce::ParameterID{"octave", 100},
         "Octave",
