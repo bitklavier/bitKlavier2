@@ -119,7 +119,7 @@ double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
      */
 int TuningState::getClosestKey(int noteNum, float transp, bool tuneTranspositions)
 {
-    if(getAdaptiveType() == AdaptiveSystems::Adaptive || getAdaptiveType() == Adaptive_Anchored)
+    if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
         return static_cast<int>(ftom(lastAdaptiveTarget, getGlobalTuningReference()));
     }
@@ -154,8 +154,8 @@ double TuningState::getOverallOffset() { return offSet->getCurrentValue() * 0.01
 void TuningState::updateLastFrequency(double lastFreq)
 {
     if (lastFreq != lastFrequencyHz) {
-        lastIntervalCents = ftom(lastFreq, A4frequency) - ftom(lastFrequencyHz, A4frequency);
-        lastMidiNote = ftom(lastFreq, A4frequency);
+        lastIntervalCents = ftom(lastFreq, getGlobalTuningReference()) - ftom(lastFrequencyHz, getGlobalTuningReference());
+        lastMidiNote = ftom(lastFreq, getGlobalTuningReference());
         lastFrequencyHz = lastFreq;
 
         lastNote->setParameterValue(lastMidiNote); // will update UI
@@ -205,7 +205,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
         newOffset *= .01;
         newOffset += getOverallOffset();
-        return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
+        return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition, getGlobalTuningReference());
     }
 
     // simple case: no transpositions and no semitone width adjustments
@@ -214,7 +214,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
-        return mtof (workingOffset + (double) currentlyPlayingNote, A4frequency);
+        return mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference());
     }
 
     // next case: transpositions, but no semitone width adjustments
@@ -225,14 +225,14 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
             double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
             workingOffset += getOverallOffset();
-            return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
+            return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, getGlobalTuningReference());
         }
         else
         {
             double workingOffset = circularTuningOffset[(currentlyPlayingNote + (int)std::round(currentTransposition)) % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote + (int)std::round(currentTransposition)] * .01;
             workingOffset += getOverallOffset();
-            return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, A4frequency);
+            return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, getGlobalTuningReference());
         }
     }
 
@@ -245,7 +245,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
         workingOffset += getOverallOffset();
-        return mtof (workingOffset + midiNoteNumberTemp, A4frequency);
+        return mtof (workingOffset + midiNoteNumberTemp, getGlobalTuningReference());
     }
 
     // final case: semitone width changes AND transpositions
@@ -260,7 +260,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
             workingOffset += circularTuningOffset[tuningNote % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[tuningNote] * .01;
             workingOffset += getOverallOffset();
-            return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
+            return mtof (workingOffset + (double) midiNoteNumberTemp, getGlobalTuningReference());
         }
         else
         {
@@ -270,7 +270,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
             workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
             workingOffset += getOverallOffset();
-            return mtof (workingOffset + (double) midiNoteNumberTemp, A4frequency);
+            return mtof (workingOffset + (double) midiNoteNumberTemp, getGlobalTuningReference());
         }
     }
 
@@ -300,7 +300,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     /*
      * Spring Tuning, if active
      */
-    if(getAdaptiveType() == AdaptiveSystems::Spring)
+    if(getTuningType() == TuningType::Spring)
     {
         // nothing to see here yet
     }
@@ -308,13 +308,13 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     /*
      * or Adaptive Tunings, if active
      */
-    if(getAdaptiveType() == AdaptiveSystems::Adaptive || getAdaptiveType() == Adaptive_Anchored)
+    if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
         /**
          * todo: adaptiveCalculate has a ftom in its return line, see whether that should be simplified, since we do mtof here
          */
 //        float newPitch = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
-//        DBG("adaptive target pitch = " + juce::String(newPitch));
+//        DBG("tuningType target pitch = " + juce::String(newPitch));
 //        return mtof(newPitch);
 
         lastAdaptiveTarget = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
@@ -415,14 +415,14 @@ int TuningState::getAdaptiveClusterTimer()
 }
 
 /**
- * add note to the adaptive tuning history, update adaptive fundamental
+ * add note to the tuningType tuning history, update tuningType fundamental
  * @param noteNumber
  */
 void TuningState::keyPressed(int noteNumber)
 {
     adaptiveHistoryCounter++;
 
-    AdaptiveSystems type = getAdaptiveType();
+    TuningType type = getTuningType();
     if (type == Adaptive)
     {
         if (getAdaptiveClusterTimer() > getAdaptiveClusterThresh() || adaptiveHistoryCounter >= getAdaptiveHistory())
@@ -527,7 +527,7 @@ void TuningState::adaptiveReset()
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     /*
-     * increment timer for adaptive tuning cluster measurements.
+     * increment timer for tuningType tuning cluster measurements.
      *      - will get reset elsewhere
      */
     //clusterTime += buffer.getNumSamples();

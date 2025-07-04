@@ -469,10 +469,9 @@ struct BKSynthesizerState
 };
 
 /*
- * sharp/flat mappings use subsitutions in std::initializer_list
- * as part of the param defintion (reffundamental, for instance)
+ * sharp/flat mappings use substitutions in std::initializer_list
+ * as part of the param definition (reffundamental, for instance)
  */
-
 enum Fundamental : uint32_t {
     C = 1 << 0,
     C41D5 = 1 << 1, // 4 => #, 1=>/, 5 => b, so C41D5 becomes "C#/Db"
@@ -489,7 +488,6 @@ enum Fundamental : uint32_t {
     none = 0
 };
 
-
 enum Octave : uint32_t {
     _1 = 1 << 0, //tricked this enum into displaying integers (_ => space)
     _2 = 1 << 1,
@@ -501,8 +499,8 @@ enum Octave : uint32_t {
     _8 = 1 << 7,
 };
 
-enum AdaptiveSystems {
-    None = 1 << 0,
+enum TuningType {
+    Static = 1 << 0,
     Adaptive = 1 << 1,
     Adaptive_Anchored = 1 << 2,
     Spring = 1 << 3,

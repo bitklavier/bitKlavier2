@@ -53,7 +53,7 @@ struct AdaptiveTuningParams : public chowdsp::ParamHolder
     };
 
     /**
-     * tAdaptiveInversional = treat the adaptive scale inversionally?
+     * tAdaptiveInversional = treat the tuningType scale inversionally?
      */
     chowdsp::BoolParameter::Ptr tAdaptiveInversional {
         juce::ParameterID { "tAdaptiveInversional", 100},

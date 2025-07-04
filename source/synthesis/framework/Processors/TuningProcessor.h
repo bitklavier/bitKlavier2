@@ -61,8 +61,23 @@ struct TuningState : bitklavier::StateChangeableParameter
      * some of the params below are not audio-rate modulatable, so will need to be handled
      * in a processStateChanges() call, called every block
      */
+
     /**
-     * tuningSystem = overall system for static tunings
+     * tuningType = which tuning type to use:
+     *  - static
+     *  - adaptive
+     *  - adaptive anchored
+     *  - spring
+     */
+    chowdsp::EnumChoiceParameter<TuningType>::Ptr tuningType {
+        juce::ParameterID { "tuningType", 100 },
+        "Tuning Type",
+        TuningType::Static,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
+
+    /**
+     * tuningSystem = 12tet system for circular tuning (ET, partial, etc...)
      */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
         juce::ParameterID { "tuningSystem", 100 },
@@ -106,17 +121,6 @@ struct TuningState : bitklavier::StateChangeableParameter
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    /**
-     * adaptive = which adaptive system to use, anchored or not
-     * or none, which means regular tuning!
-     */
-    chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
-        juce::ParameterID { "adaptiveSystem", 100 },
-        "Adaptive System",
-        AdaptiveSystems::Adaptive,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
-    };
-
     AdaptiveTuningParams adaptiveParams;
     SemitoneWidthParams semitoneWidthParams;
 
@@ -130,8 +134,9 @@ struct TuningState : bitklavier::StateChangeableParameter
     void adaptiveReset();
 
     float getGlobalTuningReference() const { return A4frequency; };
+    TuningType getTuningType() const { return tuningType->get(); }
     std::array<float, 12> getTuningSystem(TuningSystem which) const { return tuningMap[TuningSystem(which)].second; }
-    AdaptiveSystems getAdaptiveType() const { return adaptive->get(); }
+
     inline const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
     inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
     inline const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
@@ -143,7 +148,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     /*
      * Adaptive vars
      */
-    int adaptiveFundamentalNote = 60; //moves with adaptive tuning
+    int adaptiveFundamentalNote = 60; //moves with tuningType tuning
     float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
     int adaptiveHistoryCounter = 0;
     float clusterTimeMS = 0.;
@@ -159,7 +164,7 @@ struct TuningParams : chowdsp::ParamHolder
     {
         add (tuningState.tuningSystem,
             tuningState.fundamental,
-            tuningState.adaptive,
+            tuningState.tuningType,
             tuningState.semitoneWidthParams,
             tuningState.offSet,
             tuningState.lastNote,
@@ -167,12 +172,8 @@ struct TuningParams : chowdsp::ParamHolder
     }
 
     /**
-     * todo: wrap all the adaptive params into their own holder
-     */
-
-    /**
+     * todo:
      * params to add:
-     * - adaptive tunings
      * - spring tuning
      * - scala functionality
      * - MTS

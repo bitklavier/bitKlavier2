@@ -590,7 +590,7 @@ public:
         level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity) * voiceGain); // need gain setting for each synth
 
         /* set the sample increment, based on the target frequency for this note
-         *  - we will update this every block for spring and regular tunings, but not for adaptive tunings
+         *  - we will update this every block for spring and regular tunings, but not for tuningType tunings
          */
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
@@ -681,10 +681,10 @@ private:
         //updateParams(); // NB: important line (except this function doesn't do anything right now!)
 
         /*
-         * don't change tuning after noteOn for adaptive tunings
+         * don't change tuning after noteOn for tuningType tunings
          * do need to for spring, and probably for regular notes it might be handy
          */
-         if((tuning->getAdaptiveType() == None) || (tuning->getAdaptiveType() == Spring)) {
+         if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring)) {
              sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
          }
 
