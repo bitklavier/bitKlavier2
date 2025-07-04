@@ -54,6 +54,8 @@ struct AdaptiveTuningParams : public chowdsp::ParamHolder
 
     /**
      * tAdaptiveInversional = treat the tuningType scale inversionally?
+     *      - when toggled on, downward intervals are treated like vertical intervals in the scale
+     *          so, for Partial tuning, going down a whole-step would be treated like a 9/8 (not a 8/7) when this is true
      */
     chowdsp::BoolParameter::Ptr tAdaptiveInversional {
         juce::ParameterID { "tAdaptiveInversional", 100},

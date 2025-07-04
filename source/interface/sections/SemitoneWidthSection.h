@@ -9,6 +9,7 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include "SemiToneWidthParams.h"
 #include "open_gl_combo_box.h"
+#include "synth_slider.h"
 
 class SemitoneWidthSection : public SynthSection
 {

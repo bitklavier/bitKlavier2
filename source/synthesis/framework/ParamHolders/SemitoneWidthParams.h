@@ -14,7 +14,6 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
     SemitoneWidthParams() : chowdsp::ParamHolder("SEMITONEWIDTH")
     {
         add(semitoneWidthSliderParam, reffundamental, octave);
-        //add(semitoneWidthSliderParam, reffundamental);
     }
 
     chowdsp::FloatParameter::Ptr semitoneWidthSliderParam {

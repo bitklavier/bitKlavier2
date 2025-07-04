@@ -13,7 +13,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     auto& listeners = pluginState.getParameterListeners();
     for ( auto &param_ : *params.getFloatParams())
     {
-        if (param_->getParameterID() == "lastNote") continue;
+        if (param_->getParameterID() == "lastNote") continue; // handle this separately
         auto slider = std::make_unique<SynthSlider>(param_->paramID);
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
         addSlider(slider.get());

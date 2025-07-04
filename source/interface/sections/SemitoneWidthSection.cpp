@@ -3,7 +3,6 @@
 //
 
 #include "SemitoneWidthSection.h"
-#include "synth_slider.h"
 
 SemitoneWidthSection::SemitoneWidthSection (
     juce::String name,
