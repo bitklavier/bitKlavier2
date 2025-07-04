@@ -357,7 +357,7 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 }
 
 
-// ************************** Tuning Processor ************************** //
+// *********************************************** Tuning Processor *********************************************** //
 
 TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
 {
@@ -506,15 +506,13 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
 /**
  *
  * @param midiNoteNumber
- * @return target frequency...
+ * @return target frequency (Hz)
  */
 float TuningState::adaptiveCalculate(int midiNoteNumber)
 {
     float newnote = adaptiveFundamentalFreq * adaptiveCalculateRatio(midiNoteNumber);
 
     return newnote;
-    //return ftom(newnote, getGlobalTuningReference());
-    //return ftom(newnote, getGlobalTuningReference()) - midiNoteNumber;
 }
 
 void TuningState::adaptiveReset()
@@ -530,13 +528,12 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * increment timer for tuningType tuning cluster measurements.
      *      - will get reset elsewhere
      */
-    //clusterTime += buffer.getNumSamples();
-    //state.params.tuningState.clusterTime += buffer.getNumSamples();
     incrementClusterTime((long)buffer.getNumSamples());
 
     /*
      * iterate through each Midi message
      *      - I don't think we need all the timing stuff that's in BKSynth
+     *          so leaving it out for now
      */
     auto midiIterator = midiMessages.findNextSamplePosition (0);
     std::for_each(midiIterator,midiMessages.cend(),

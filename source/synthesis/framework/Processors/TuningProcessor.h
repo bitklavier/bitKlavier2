@@ -55,11 +55,11 @@ struct TuningState : bitklavier::StateChangeableParameter
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
     double lastMidiNote = 69.;      // pitch of last frequency returned
 
-    // ********************* PARAMETERS ******************** //
+    // ****************************************** PARAMETERS ***************************************** //
 
     /*
-     * some of the params below are not audio-rate modulatable, so will need to be handled
-     * in a processStateChanges() call, called every block
+     * some of the params below are not audio-rate modulatable (like tuningSystem, which are arrays),
+     * so will need to be handled in a TuningState::processStateChanges() call, called every block
      */
 
     /**
@@ -124,7 +124,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     AdaptiveTuningParams adaptiveParams;
     SemitoneWidthParams semitoneWidthParams;
 
-    // ********************* OTHER VARS ******************** //
+    // ****************************************** OTHER VARS ***************************************** //
 
     int getAdaptiveClusterTimer();
     void keyReleased(int noteNumber);
@@ -148,7 +148,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     /*
      * Adaptive vars
      */
-    int adaptiveFundamentalNote = 60; //moves with tuningType tuning
+    int adaptiveFundamentalNote = 60;
     float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
     int adaptiveHistoryCounter = 0;
     float clusterTimeMS = 0.;
@@ -157,6 +157,9 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::atomic<bool> setFromAudioThread;
 };
 
+/**
+ * todo: not totally clear to me we need this wrapper around TuningState
+ */
 struct TuningParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Tuning Processor
@@ -179,18 +182,18 @@ struct TuningParams : chowdsp::ParamHolder
      * - MTS
      */
 
-    /** this contains the current state of the tuning system, with helper functions **/
+    /* this contains the current state of the tuning system, with helper functions */
     TuningState tuningState;
 
-    /**
+    /*
      * serializers are used for more complex params
      *      - here we need arrays and indexed arrays for circular and absolute tunings, for instance
      */
-    /** Custom serializer */
+    /* Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const TuningParams& paramHolder);
 
-    /** Custom deserializer */
+    /* Custom deserializer */
     template <typename Serializer>
     static void deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder);
 };

@@ -14,8 +14,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     for ( auto &param_ : *params.getFloatParams())
     {
         if (param_->getParameterID() == "lastNote") continue;
-        if (param_->getParameterID() == "tAdaptiveClusterThresh") continue;
-        if (param_->getParameterID() == "tAdaptiveHistory") continue;
         auto slider = std::make_unique<SynthSlider>(param_->paramID);
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
         addSlider(slider.get());
