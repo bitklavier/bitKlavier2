@@ -591,7 +591,7 @@ public:
 
         /* set the sample increment, based on the target frequency for this note
          *  - we will update this every block for spring and regular tunings, but not for adaptive tunings
-         * /
+         */
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();

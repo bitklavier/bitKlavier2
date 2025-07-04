@@ -13,6 +13,7 @@
 #include "tuning_systems.h"
 #include "utils.h"
 #include "SemitoneWidthParams.h"
+#include "AdaptiveTuningParams.h"
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -107,6 +108,7 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     /**
      * adaptive = which adaptive system to use, anchored or not
+     * or none, which means regular tuning!
      */
     chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
         juce::ParameterID { "adaptiveSystem", 100 },
@@ -115,68 +117,7 @@ struct TuningState : bitklavier::StateChangeableParameter
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
-    /**
-     * tAdaptiveIntervalScale = scale to use to determine successive interval tuning
-     */
-    chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tAdaptiveIntervalScale {
-        juce::ParameterID { "tAdaptiveIntervalScale", 100 },
-        "tAdaptiveIntervalScale",
-        TuningSystem::Partial,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
-    };
-
-    /**
-     * tAdaptiveAnchorScale = scale to tune new fundamentals to when in anchored
-     */
-    chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tAdaptiveAnchorScale {
-        juce::ParameterID { "tAdaptiveAnchorScale", 100 },
-        "tAdaptiveAnchorScale",
-        TuningSystem::Equal_Temperament,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
-    };
-
-    /**
-     * tAdaptiveAnchorFundamental = fundamental for anchor scale
-     */
-    chowdsp::EnumChoiceParameter<Fundamental>::Ptr tAdaptiveAnchorFundamental {
-        juce::ParameterID { "tAdaptiveAnchorFundamental", 100 },
-        "tAdaptiveAnchorFundamental",
-        Fundamental::C,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
-    };
-
-    /**
-     * tAdaptiveInversional = treat the adaptive scale inversionally?
-     */
-    chowdsp::BoolParameter::Ptr tAdaptiveInversional {
-        juce::ParameterID { "tAdaptiveInversional", 100},
-        "on_off",
-        false
-    };
-
-    /**
-     * tAdaptiveClusterThresh = ms; max time before fundamental is reset
-     */
-    chowdsp::TimeMsParameter::Ptr tAdaptiveClusterThresh {
-        juce::ParameterID { "tAdaptiveClusterThresh", 100 },
-        "tAdaptiveClusterThresh",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1000.0f, 500.0f),
-        0.0f,
-        true
-    };
-
-    /**
-     * tAdaptiveHistory = max number of notes before fundamental is reset
-     */
-    chowdsp::FloatParameter::Ptr tAdaptiveHistory {
-        juce::ParameterID { "tAdaptiveHistory", 100 },
-        "tAdaptiveHistory",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 8.0f, 4.0f),
-        0.0f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
-    };
-
+    AdaptiveTuningParams adaptiveParams;
     SemitoneWidthParams semitoneWidthParams;
 
     // ********************* OTHER VARS ******************** //
@@ -191,12 +132,12 @@ struct TuningState : bitklavier::StateChangeableParameter
     float getGlobalTuningReference() const { return A4frequency; };
     std::array<float, 12> getTuningSystem(TuningSystem which) const { return tuningMap[TuningSystem(which)].second; }
     AdaptiveSystems getAdaptiveType() const { return adaptive->get(); }
-    inline const bool getAdaptiveInversional() const noexcept { return tAdaptiveInversional->get(); }
-    inline const int getAdaptiveClusterThresh() const noexcept { return tAdaptiveClusterThresh->get(); }
-    inline const int getAdaptiveHistory() const noexcept { return tAdaptiveHistory->get(); }
-    inline const int getAdaptiveAnchorFundamental() const noexcept { return tAdaptiveAnchorFundamental->get(); }
-    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return tAdaptiveIntervalScale->get(); }
-    inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return tAdaptiveAnchorScale->get(); }
+    inline const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
+    inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
+    inline const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
+    inline const int getAdaptiveAnchorFundamental() const noexcept { return adaptiveParams.tAdaptiveAnchorFundamental->get(); }
+    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
+    inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
     float intervalToRatio(float interval) const;
 
     /*
@@ -222,12 +163,7 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.semitoneWidthParams,
             tuningState.offSet,
             tuningState.lastNote,
-            tuningState.tAdaptiveIntervalScale,
-            tuningState.tAdaptiveAnchorScale,
-            tuningState.tAdaptiveAnchorFundamental,
-            tuningState.tAdaptiveInversional,
-            tuningState.tAdaptiveClusterThresh,
-            tuningState.tAdaptiveHistory);
+            tuningState.adaptiveParams);
     }
 
     /**
