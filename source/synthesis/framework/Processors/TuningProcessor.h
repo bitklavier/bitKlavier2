@@ -111,7 +111,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     chowdsp::EnumChoiceParameter<AdaptiveSystems>::Ptr adaptive {
         juce::ParameterID { "adaptiveSystem", 100 },
         "Adaptive System",
-        AdaptiveSystems::None,
+        AdaptiveSystems::Adaptive,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 

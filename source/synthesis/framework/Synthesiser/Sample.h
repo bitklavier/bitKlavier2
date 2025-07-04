@@ -584,11 +584,14 @@ public:
         currentTransposition = transposition;
         tuneTranspositions = tune_transpositions;
 
-        // this will adjust the loudness of this layer according to velocity, based on the
-        //      dB difference between this layer and the layer below
+        /* this will adjust the loudness of this layer according to velocity, based on the
+         *  - dB difference between this layer and the layer below
+         */
         level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity) * voiceGain); // need gain setting for each synth
 
-        // set the sample increment, based on the target frequency for this note
+        /* set the sample increment, based on the target frequency for this note
+         *  - we will update this every block for spring and regular tunings, but not for adaptive tunings
+         * /
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
@@ -615,11 +618,7 @@ public:
         // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
 
-        /*
-         * change this so it just converts the offset to a target frequency
-         * the offset should have been determined at the top, the processor block where the transps are created, and passed to the synth and then to hear
-         * should not be doing any handling of tuneTranspositions state down here!
-         */
+
     }
 
     virtual void stopNote (float velocity, bool allowTailOff)
@@ -681,7 +680,13 @@ private:
         jassert(samplerSound->getSample() != nullptr);
         //updateParams(); // NB: important line (except this function doesn't do anything right now!)
 
-        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+        /*
+         * don't change tuning after noteOn for adaptive tunings
+         * do need to for spring, and probably for regular notes it might be handy
+         */
+         if((tuning->getAdaptiveType() == None) || (tuning->getAdaptiveType() == Spring)) {
+             sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+         }
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
