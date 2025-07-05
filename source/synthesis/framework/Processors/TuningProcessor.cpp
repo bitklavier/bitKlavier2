@@ -5,6 +5,12 @@
 #include "TuningProcessor.h"
 #include "synth_base.h"
 
+
+// ********************************************************************************************************************* //
+// **************************************************** TuningState **************************************************** //
+// ********************************************************************************************************************* //
+
+
 std::string TuningState::fundamentalToString(Fundamental value) {
     switch (value) {
         case Fundamental::C: return "C";
@@ -60,14 +66,12 @@ Fundamental TuningState::floatToFundamental(float value) {
 /**
  * takes a float or int representing a note value, and converts it into a string representing the pitch class
  * @param value
- * @return
+ * @return string pitchclass name
  */
 std::string TuningState::floatToFundamentalString(float value) {
     Fundamental note = floatToFundamental(value);
     return fundamentalToString(note);
 }
-
-// ************* TuningState ************* //
 
 void TuningState::setKeyOffset (int midiNoteNumber, float val)
 {
@@ -372,13 +376,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      */
     if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        /**
-         * todo: adaptiveCalculate has a ftom in its return line, see whether that should be simplified, since we do mtof here
-         */
-//        float newPitch = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
-//        DBG("tuningType target pitch = " + juce::String(newPitch));
-//        return mtof(newPitch);
-
         lastAdaptiveTarget = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
         return lastAdaptiveTarget;
     }
@@ -416,51 +413,6 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
     myStr = deserial->getStringAttribute ("absoluteTuning");
     paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
     //paramHolder.tuningState.fundamental_ = paramHolder.tuningState.fundamental->getIndex();
-}
-
-
-// *********************************************** Tuning Processor *********************************************** //
-
-TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
-{
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
-}
-
-void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{
-    const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
-
-    gain.prepare (spec);
-    gain.setRampDurationSeconds (0.05);
-}
-
-void TuningProcessor::noteOn (int midiChannel,int midiNoteNumber,float velocity)
-{
-    state.params.tuningState.keyPressed(midiNoteNumber);
-}
-
-void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity)
-{
-
-}
-
-void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
-{
-    const int channel = m.getChannel();
-
-    if (m.isNoteOn())
-    {
-        DBG("Tuning Processor Note On " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
-        noteOn (channel, m.getNoteNumber(), m.getVelocity());
-    }
-    else if (m.isNoteOff())
-    {
-        DBG("Tuning Processor Note Off " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
-        noteOff (channel, m.getNoteNumber(), m.getVelocity());
-    }
 }
 
 float TuningState::intervalToRatio(float interval) const {
@@ -594,6 +546,55 @@ void TuningState::adaptiveReset()
     updateAdaptiveFundamentalValue(getFundamental());
     adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     adaptiveHistoryCounter = 0;
+}
+
+
+// ********************************************************************************************************************* //
+// ************************************************* Tuning Processor ************************************************** //
+// ********************************************************************************************************************* //
+
+
+
+TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
+{
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
+}
+
+void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+{
+    const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
+
+    gain.prepare (spec);
+    gain.setRampDurationSeconds (0.05);
+}
+
+void TuningProcessor::noteOn (int midiChannel,int midiNoteNumber,float velocity)
+{
+    state.params.tuningState.keyPressed(midiNoteNumber);
+}
+
+void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity)
+{
+
+}
+
+void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
+{
+    const int channel = m.getChannel();
+
+    if (m.isNoteOn())
+    {
+        DBG("Tuning Processor Note On " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
+        noteOn (channel, m.getNoteNumber(), m.getVelocity());
+    }
+    else if (m.isNoteOff())
+    {
+        DBG("Tuning Processor Note Off " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
+        noteOff (channel, m.getNoteNumber(), m.getVelocity());
+    }
 }
 
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
