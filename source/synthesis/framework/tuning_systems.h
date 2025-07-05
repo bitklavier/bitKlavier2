@@ -97,6 +97,7 @@
         Symmetric_Just = 1LL << 37,
         Young_Well_Tuned_Piano = 1LL << 38,
         Harrison_Strict_Songs = 1LL << 39,
+        TuningSystemNil = 1LL << 40,
     } TuningSystem;
 
 // Create the mapping

@@ -485,7 +485,12 @@ enum PitchClass : uint32_t {
     A = 1 << 9,
     A41B5 = 1 << 10,
     B = 1 << 11,
-    none = 0
+    none = 1 << 12,
+    lowest = 1 << 13,
+    highest = 1 << 14,
+    last = 1 << 15,
+    automatic = 1 << 16,
+    PitchClassNil
 };
 
 enum Octave : uint32_t {
@@ -504,5 +509,7 @@ enum TuningType {
     Static = 1 << 0,
     Adaptive = 1 << 1,
     Adaptive_Anchored = 1 << 2,
-    Spring = 1 << 3,
+    Spring_Tuning = 1 << 3,
 };
+
+

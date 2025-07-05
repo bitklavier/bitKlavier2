@@ -684,7 +684,7 @@ private:
          * don't change tuning after noteOn for tuningType tunings
          * do need to for spring, and probably for regular notes it might be handy
          */
-         if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring)) {
+         if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring_Tuning)) {
              sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
          }
 

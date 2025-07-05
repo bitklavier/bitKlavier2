@@ -4,19 +4,19 @@
 
 #ifndef BITKLAVIER2_TUNINGPARAMETERSVIEW_H
 #define BITKLAVIER2_TUNINGPARAMETERSVIEW_H
-#include "envelope_section.h"
-#include "TransposeParams.h"
+//#include "envelope_section.h"
+//#include "TransposeParams.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "open_gl_combo_box.h"
 #include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
-#include "tuning_systems.h"
+//#include "tuning_systems.h"
 #include "SemitoneWidthSection.h"
 #include "AdaptiveTuningSection.h"
 
 class AdaptiveTuningSection;
-class TuningParametersView : public SynthSection,BKTuningKeyboardSlider::Listener
+class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener
 {
 public:
     TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param, juce::String name, OpenGlWrapper *open_gl);

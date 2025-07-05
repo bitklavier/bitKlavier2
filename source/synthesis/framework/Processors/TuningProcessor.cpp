@@ -366,7 +366,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     /*
      * Spring Tuning, if active
      */
-    if(getTuningType() == TuningType::Spring)
+    if(getTuningType() == TuningType::Spring_Tuning)
     {
         // nothing to see here yet
     }
