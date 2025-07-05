@@ -19,7 +19,9 @@ struct AdaptiveTuningParams : public chowdsp::ParamHolder
             tAdaptiveAnchorFundamental,
             tAdaptiveInversional,
             tAdaptiveClusterThresh,
-            tAdaptiveHistory);
+            tAdaptiveHistory,
+            tReset,
+            tCurrentAdaptiveFundamental);
     }
 
     /**
@@ -85,6 +87,29 @@ struct AdaptiveTuningParams : public chowdsp::ParamHolder
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
+
+    /**
+     * to catch presses of the reset button, for TuningState::adaptiveReset()
+     */
+    chowdsp::BoolParameter::Ptr tReset {
+        juce::ParameterID { "tReset", 100},
+        "reset",
+        false
+    };
+
+    /**
+     * tCurrentAdaptiveFundamental = current adaptive fundamental, for display
+     */
+    chowdsp::FloatParameter::Ptr tCurrentAdaptiveFundamental {
+        juce::ParameterID { "tCurrentAdaptiveFundamental", 100 },
+        "tCurrentAdaptiveFundamental",
+            chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.0f, 6.0f),
+            0.0f,
+            &chowdsp::ParamUtils::floatValToString,
+            &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    juce::String tCurrentAdaptiveFundamental_string;
 };
 
 #endif //BITKLAVIER0_ADAPTIVETUNINGPARAMS_H

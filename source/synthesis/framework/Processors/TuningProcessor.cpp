@@ -5,6 +5,68 @@
 #include "TuningProcessor.h"
 #include "synth_base.h"
 
+std::string TuningState::fundamentalToString(Fundamental value) {
+    switch (value) {
+        case Fundamental::C: return "C";
+        case Fundamental::C41D5: return "C#/Db";
+        case Fundamental::D: return "D";
+        case Fundamental::D41E5: return "D#/Eb";
+        case Fundamental::E: return "E";
+        case Fundamental::F: return "F";
+        case Fundamental::F41G5: return "F#/Gb";
+        case Fundamental::G: return "G";
+        case Fundamental::G41A5: return "G#/Ab";
+        case Fundamental::A: return "A";
+        case Fundamental::A41B5: return "A#/Bb";
+        case Fundamental::B: return "B";
+        case Fundamental::none: return "none";
+        default: return "Unknown";
+    }
+}
+
+Fundamental TuningState::floatToFundamental(float value) {
+    int ivalue = static_cast<int>(value);
+    ivalue = ivalue % 12;
+
+    if (ivalue >= 0.0 && value < 1.) {
+        return Fundamental::C;
+    } else if (value >= 1. && value < 2.) {
+        return Fundamental::C41D5;
+    } else if (value >= 2. && value < 3.) {
+        return Fundamental::D;
+    } else if (value >= 3. && value < 4.) {
+        return Fundamental::D41E5;
+    } else if (value >= 4. && value < 5.) {
+        return Fundamental::E;
+    } else if (value >= 5. && value < 6.) {
+        return Fundamental::F;
+    } else if (value >= 6. && value < 7.) {
+        return Fundamental::F41G5;
+    } else if (value >= 7. && value < 8.) {
+        return Fundamental::G;
+    } else if (value >= 8. && value < 9.) {
+        return Fundamental::G41A5;
+    } else if (value >= 9. && value < 10.) {
+        return Fundamental::A;
+    } else if (value >= 10. && value < 11.) {
+        return Fundamental::A41B5;
+    } else if (value >= 11. && value < 12.) {
+        return Fundamental::B;
+    }
+
+    return Fundamental::none; // Handle cases where the float doesn't map to a note
+}
+
+/**
+ * takes a float or int representing a note value, and converts it into a string representing the pitch class
+ * @param value
+ * @return
+ */
+std::string TuningState::floatToFundamentalString(float value) {
+    Fundamental note = floatToFundamental(value);
+    return fundamentalToString(note);
+}
+
 // ************* TuningState ************* //
 
 void TuningState::setKeyOffset (int midiNoteNumber, float val)
@@ -429,9 +491,9 @@ void TuningState::keyPressed(int noteNumber)
         {
             adaptiveHistoryCounter = 0;
             adaptiveFundamentalFreq = adaptiveFundamentalFreq * adaptiveCalculateRatio(noteNumber);
-            adaptiveFundamentalNote = noteNumber;
-//            DBG("adaptiveFundamentalFreq = " + juce::String(adaptiveFundamentalFreq));
-//            DBG("adaptiveFundamentalNote = " + juce::String(adaptiveFundamentalNote));
+            updateAdaptiveFundamentalValue(noteNumber);
+            //adaptiveFundamentalNote = noteNumber;
+
         }
     }
     else if (type == Adaptive_Anchored)
@@ -445,7 +507,8 @@ void TuningState::keyPressed(int noteNumber)
                 noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % anchorTuning.size()],
                 getGlobalTuningReference()
             );
-            adaptiveFundamentalNote = noteNumber;
+            updateAdaptiveFundamentalValue(noteNumber);
+            //adaptiveFundamentalNote = noteNumber;
         }
     }
 
@@ -459,6 +522,17 @@ void TuningState::keyPressed(int noteNumber)
      */
     clusterTimeMS = 0;
 
+}
+
+/**
+ * update the value internally, but also update parameter holder for it, so the UI knows
+ * @param newFund
+ */
+void TuningState::updateAdaptiveFundamentalValue(int newFund)
+{
+    adaptiveFundamentalNote = newFund;
+    adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(newFund % 12);
+    adaptiveParams.tCurrentAdaptiveFundamental_string = floatToFundamentalString(adaptiveParams.tCurrentAdaptiveFundamental->getCurrentValue());
 }
 
 void TuningState::keyReleased(int noteNumber)
@@ -510,14 +584,14 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
  */
 float TuningState::adaptiveCalculate(int midiNoteNumber)
 {
-    float newnote = adaptiveFundamentalFreq * adaptiveCalculateRatio(midiNoteNumber);
-
-    return newnote;
+    return adaptiveFundamentalFreq * adaptiveCalculateRatio(midiNoteNumber);
 }
 
 void TuningState::adaptiveReset()
 {
-    adaptiveFundamentalNote = getFundamental();
+    DBG("adaptiveReset() called");
+    //adaptiveFundamentalNote = getFundamental();
+    updateAdaptiveFundamentalValue(getFundamental());
     adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     adaptiveHistoryCounter = 0;
 }

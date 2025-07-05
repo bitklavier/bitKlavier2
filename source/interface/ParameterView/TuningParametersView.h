@@ -13,7 +13,9 @@
 #include "TuningProcessor.h"
 #include "tuning_systems.h"
 #include "SemitoneWidthSection.h"
+#include "AdaptiveTuningSection.h"
 
+class AdaptiveTuningSection;
 class TuningParametersView : public SynthSection,BKTuningKeyboardSlider::Listener
 {
 public:
@@ -40,18 +42,23 @@ public:
     std::unique_ptr<chowdsp::ComboBoxAttachment> tuning_attachment;
     std::unique_ptr<OpenGLComboBox> fundamental_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> fundamental_attachment;
-    std::unique_ptr<OpenGLComboBox> adaptive_combo_box;
-    std::unique_ptr<chowdsp::ComboBoxAttachment> adaptive_attachment;
+    std::unique_ptr<OpenGLComboBox> tuningtype_combo_box;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> tuningtype_attachment;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> keyboard;
     std::unique_ptr<OpenGLCircularKeyboardSlider> circular_keyboard;
     chowdsp::ScopedCallbackList tuningCallbacks;
 
-    TuningParams& params;
     std::unique_ptr<SemitoneWidthSection> semitoneSection;
+    std::unique_ptr<AdaptiveTuningSection> adaptiveSection;
 
     std::shared_ptr<PlainTextComponent> lastNoteDisplay;
     std::shared_ptr<PlainTextComponent> lastIntervalDisplay;
     std::shared_ptr<PlainTextComponent> lastFrequencyDisplay;
+
+    TuningParams& params;
+
 };
+
+void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_, TuningParams* &tuningParams_);
 
 #endif //BITKLAVIER2_TUNINGPARAMETERSVIEW_H

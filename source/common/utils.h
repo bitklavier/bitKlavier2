@@ -488,6 +488,8 @@ enum Fundamental : uint32_t {
     none = 0
 };
 
+
+
 enum Octave : uint32_t {
     _1 = 1 << 0, //tricked this enum into displaying integers (_ => space)
     _2 = 1 << 1,

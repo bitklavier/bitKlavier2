@@ -30,7 +30,7 @@ private:
     std::unique_ptr<chowdsp::SliderAttachment> widthSliderAttachment;
     std::unique_ptr<OpenGLComboBox> fundamentalComboBox;
     std::unique_ptr<chowdsp::ComboBoxAttachment> fundamentalComboBoxAttachment;
-    std::unique_ptr<OpenGLComboBox> octaveComboBox; // which octave the fundamental is in; this sets which pitch on the keyboard anchors the tuning
+    std::unique_ptr<OpenGLComboBox> octaveComboBox;
     std::unique_ptr<chowdsp::ComboBoxAttachment> octaveComboBoxAttachment;
 
     juce::GroupComponent sectionBorder;

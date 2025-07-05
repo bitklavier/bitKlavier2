@@ -23,15 +23,23 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     history_Slider->setPopupPlacement(juce::BubbleComponent::below);
     history_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveHistory, listeners, *history_Slider, nullptr);
 
-    adaptiveIntervalScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveIntervalScale->paramID.toStdString());
-    adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, nullptr);
-    addAndMakeVisible(adaptiveIntervalScale_ComboBox.get());
-    addOpenGlComponent(adaptiveIntervalScale_ComboBox->getImageComponent());
+    if (auto* tuningParams = dynamic_cast<AdaptiveTuningParams*>(&params)) {
+        auto index = tuningParams->tAdaptiveIntervalScale->getIndex();
+        adaptiveIntervalScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveIntervalScale->paramID.toStdString());
+        adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, nullptr);
+        addAndMakeVisible(adaptiveIntervalScale_ComboBox.get());
+        addOpenGlComponent(adaptiveIntervalScale_ComboBox->getImageComponent());
+        setupTuningSystemMenu(adaptiveIntervalScale_ComboBox, tuningParams);
+        adaptiveIntervalScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
-    adaptiveAnchorScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorScale->paramID.toStdString());
-    adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, nullptr);
-    addAndMakeVisible(adaptiveAnchorScale_ComboBox.get());
-    addOpenGlComponent(adaptiveAnchorScale_ComboBox->getImageComponent());
+        index = tuningParams->tAdaptiveAnchorScale->getIndex();
+        adaptiveAnchorScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorScale->paramID.toStdString());
+        adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, nullptr);
+        addAndMakeVisible(adaptiveAnchorScale_ComboBox.get());
+        addOpenGlComponent(adaptiveAnchorScale_ComboBox->getImageComponent());
+        setupTuningSystemMenu(adaptiveAnchorScale_ComboBox, tuningParams);
+        adaptiveAnchorScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
+    }
 
     adaptiveAnchorFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorFundamental->paramID.toStdString());
     adaptiveAnchorFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorFundamental, listeners, *adaptiveAnchorFundamental_ComboBox, nullptr);
@@ -44,6 +52,28 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     addSynthButton(useInversionOfIntervalScale_Toggle.get(), true);
     useInversionOfIntervalScale_Toggle->setText("invert?");
 
+    resetButton = std::make_unique<SynthButton>("reset");
+    resetButton_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.tReset,listeners,*resetButton,nullptr);
+    resetButton->setComponentID("reset");
+    addSynthButton(resetButton.get(), true);
+    resetButton->setText("reset!");
+    resetButton->setToggleable(true); // this one is just to trigger a reset to the adaptive system
+
+    currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");
+    addOpenGlComponent(currentFundamental);
+    currentFundamental->setTextSize (12.0f);
+    currentFundamental->setJustification(juce::Justification::left);
+
+    intervalsLabel = std::make_shared<PlainTextComponent>("intervals", "Intervals");
+    addOpenGlComponent(intervalsLabel);
+    intervalsLabel->setTextSize (12.0f);
+    intervalsLabel->setJustification(juce::Justification::centred);
+
+    anchorsLabel = std::make_shared<PlainTextComponent>("anchors", "Anchors");
+    addOpenGlComponent(anchorsLabel);
+    anchorsLabel->setTextSize (12.0f);
+    anchorsLabel->setJustification(juce::Justification::centred);
+
     sectionBorder.setName("adaptivetuning");
     sectionBorder.setText("Adaptive Tuning");
     sectionBorder.setTextLabelPosition(juce::Justification::centred);
@@ -54,7 +84,8 @@ AdaptiveTuningSection::~AdaptiveTuningSection() { }
 
 void AdaptiveTuningSection::paintBackground(juce::Graphics& g) {
     setLabelFont(g);
-    //drawLabelForComponent(g, TRANS("Cents"), widthSlider_.get());
+    drawLabelForComponent(g, TRANS("Cluster Threshold (ms)"), clusterThreshold_Slider.get());
+    drawLabelForComponent(g, TRANS("History (notes)"), history_Slider.get());
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
@@ -69,24 +100,71 @@ void AdaptiveTuningSection::resized() {
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
+    int comboboxheight = findValue(Skin::kComboMenuHeight);
+    int knobsectionheight = findValue(Skin::kKnobSectionHeight);
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+
     area.reduce(largepadding, largepadding);
 
-//    juce::Rectangle<int> widthKnobArea = area.removeFromLeft(getKnobSectionHeight());
-//    widthSlider_->setBounds(widthKnobArea);
-//
-//    area.removeFromLeft(largepadding);
-//    area.removeFromTop(largepadding);
-//
-//    int comboboxheight = findValue(Skin::kComboMenuHeight);
-//
-//    juce::Rectangle<int> fundamentalComboBoxArea = area.removeFromTop(comboboxheight);
-//    fundamentalComboBox->setBounds(fundamentalComboBoxArea);
-//
-//    area.removeFromTop(smallpadding);
-//
-//    juce::Rectangle<int> octaveComboBoxArea = area.removeFromTop(comboboxheight);
-//    octaveComboBox->setBounds(octaveComboBoxArea);
+    juce::Rectangle<int> tuningSystemLabelsBox = area.removeFromTop(comboboxheight);
+    intervalsLabel->setBounds(tuningSystemLabelsBox.removeFromLeft(tuningSystemLabelsBox.getWidth() * 0.5));
+    anchorsLabel->setBounds(tuningSystemLabelsBox);
+
+    area.removeFromTop(smallpadding);
+
+    juce::Rectangle<int>comboBoxArea = area.removeFromTop(comboboxheight);
+    juce::Rectangle<int>intervalComboBoxArea = comboBoxArea.removeFromLeft(comboBoxArea.getWidth() * 0.5);
+    adaptiveIntervalScale_ComboBox->setBounds(intervalComboBoxArea.removeFromLeft(intervalComboBoxArea.getWidth() * 0.5));
+    useInversionOfIntervalScale_Toggle->setBounds(intervalComboBoxArea);
+    adaptiveAnchorScale_ComboBox->setBounds(comboBoxArea.removeFromLeft(comboBoxArea.getWidth() * 0.5));
+    adaptiveAnchorFundamental_ComboBox->setBounds(comboBoxArea);
+
+    area.removeFromTop(smallpadding);
+
+    juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
+//    knobsBox.reduce(knobsBox.getWidth() * 0.5, 0);
+//    placeKnobsInArea(knobsBox, sliderVec, false);
+    clusterThreshold_Slider->setBounds(knobsBox.removeFromLeft(knobsBox.getWidth() * 0.5));
+    history_Slider->setBounds(knobsBox);
+
+    area.removeFromTop(smallpadding);
+
+    juce::Rectangle<int> resetBox = area.removeFromTop(comboboxheight);
+    resetButton->setBounds(resetBox.removeFromLeft(resetBox.getWidth() * 0.5));
+    currentFundamental->setBounds(resetBox);
 
     SynthSection::resized();
 }
 
+/**
+ * puts all the different tuning systems in the menu and sub-menus
+ * @param tuning_combo_box_
+ * @param tuningParams_
+ *
+ * todo: figure out how to use the same setupTuningSystemMenu as in TuningParametersView.h; stupid things about tuningParams type passing
+ */
+void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_, AdaptiveTuningParams* &tuningParams_)
+{
+    // clear the default menu so we can make submenus
+    tuning_combo_box_->clear(juce::sendNotificationSync);
+    juce::OwnedArray<juce::PopupMenu> submenus;
+    submenus.add(new juce::PopupMenu());
+    submenus.add(new juce::PopupMenu());
+    int i = 0;
+    for (auto choice : tuningParams_->tAdaptiveIntervalScale->choices) {
+        if (i <= 6)
+            tuning_combo_box_->addItem(choice,i+1);
+        if (i>6 && i <33) {
+            submenus.getUnchecked(0)->addItem(i+1,choice);
+        }
+        else if (i>=33) {
+            submenus.getUnchecked(1)->addItem(i+1,choice);
+        }
+        i++;
+    }
+
+    tuning_combo_box_->addSeparator();
+    auto* pop_up = tuning_combo_box_->getRootMenu();
+    pop_up->addSubMenu("Historical",*submenus.getUnchecked(0));
+    pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
+}

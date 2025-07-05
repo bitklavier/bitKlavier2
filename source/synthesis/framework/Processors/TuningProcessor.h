@@ -40,6 +40,10 @@ struct TuningState : bitklavier::StateChangeableParameter
     double getSemitoneWidthOffsetForMidiNote(double midiNoteNumber);
     int getClosestKey(int noteNum, float transp, bool tuneTranspositions);
 
+    std::string fundamentalToString(Fundamental value);
+    Fundamental floatToFundamental(float value);
+    std::string floatToFundamentalString(float value);
+
     double getOverallOffset();
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
     double getStaticTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
@@ -132,6 +136,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     float adaptiveCalculateRatio(const int midiNoteNumber) const;
     float adaptiveCalculate(int midiNoteNumber);
     void adaptiveReset();
+    void updateAdaptiveFundamentalValue(int newFund);
 
     float getGlobalTuningReference() const { return A4frequency; };
     TuningType getTuningType() const { return tuningType->get(); }

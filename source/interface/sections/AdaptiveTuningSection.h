@@ -22,6 +22,8 @@ public:
 
     virtual ~AdaptiveTuningSection();
 
+    std::shared_ptr<PlainTextComponent> currentFundamental;
+
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
 
@@ -40,11 +42,15 @@ private:
 
     std::unique_ptr<SynthButton> useInversionOfIntervalScale_Toggle;
     std::unique_ptr<chowdsp::ButtonAttachment> useInversionOfIntervalScale_ToggleAttachment;
+    std::unique_ptr<SynthButton> resetButton;
+    std::unique_ptr<chowdsp::ButtonAttachment> resetButton_attachment;
+
+    std::shared_ptr<PlainTextComponent> intervalsLabel;
+    std::shared_ptr<PlainTextComponent> anchorsLabel;
 
     juce::GroupComponent sectionBorder;
 };
 
-{
-};
+void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_, AdaptiveTuningParams* &tuningParams_);
 
 #endif //BITKLAVIER0_ADAPTIVETUNINGSECTION_H
