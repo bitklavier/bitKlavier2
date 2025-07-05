@@ -29,14 +29,19 @@
   ==============================================================================
 */
 
+/**
+ * todo: rewrite ALL the spring code to remove JUCE dependencies
+ *  would be nice for it to be more modular, and might have other benefits as well
+ */
+
 #pragma once
-#include "SpringTuningUtilities.h"
-//#include "BKUtilities.h"
-//#include "AudioConstants.h"
+//#include "SpringTuningUtilities.h"
 #include "Particle.h"
 #include "Spring.h"
 #include "SpringTuningParams.h"
 
+//class Particle;
+//class Spring;
 class SpringTuning : public juce::ReferenceCountedObject, private juce::HighResolutionTimer
 {
 public:
@@ -60,7 +65,8 @@ public:
 	void toggleSpring();
 	void addParticle(int pc);
 	void removeParticle(int pc);
-    Particle* getParticle(int note) { return particleArray[note];}
+    Particle* getParticle(int note);
+//    Particle::Ptr getParticle(int note);
 
 	void addNote(int noteIndex);
 	void removeNote(int noteIndex);
@@ -74,9 +80,7 @@ public:
 	void removeSpringsByInterval(double interval);
 	void adjustSpringsByInterval(double interval, double stiffness);
 
-    inline void setRate(double r, bool start = true);
-    inline double getRate(void) { return sparams.rate->getCurrentValue(); }
-    inline void stop(void) { stopTimer(); DBG("SpringTuning: stopping timer");}
+    inline void stop(void);
 
     inline void setStiffness(double stiff);
     inline void setTetherStiffness(double stiff);
@@ -85,28 +89,38 @@ public:
     void tetherStiffnessChanged();
     void intervalStiffnessChanged();
 
-    inline double getStiffness(void) { return sparams.stiffness->getCurrentValue(); }
-    inline double getTetherStiffness(void) { return sparams.tetherStiffness->getCurrentValue(); }
-    inline double getIntervalStiffness(void) { return sparams.intervalStiffness->getCurrentValue(); }
-    inline void setDrag(double newdrag) { sparams.drag->setParameterValue(newdrag); }
-    inline double getDrag(void) { return sparams.drag->getCurrentValue(); }
-
     inline juce::Array<float> getTetherWeights(void);
     inline void setTetherWeights(juce::Array<float> weights);
     inline juce::Array<float> getSpringWeights(void);
     inline void setSpringWeights(juce::Array<float> weights);
     inline void setSpringMode(int which, bool on);
 
-    bool getFundamentalSetsTether() { return sparams.fundamentalSetsTether->get(); }
-    void setFundamentalSetsTether(bool s) { sparams.fundamentalSetsTether->setParameterValue(s); }
-
-    double getTetherWeightGlobal() { return sparams.tetherWeightGlobal->getCurrentValue(); }
-    double getTetherWeightSecondaryGlobal() { return sparams.tetherWeightSecondaryGlobal->getCurrentValue(); }
-    void setTetherWeightGlobal(double s) { sparams.tetherWeightGlobal->setParameterValue(s); }
-    void setTetherWeightSecondaryGlobal(double s) { sparams.tetherWeightSecondaryGlobal->setParameterValue(s); }
-
-    bool getSpringMode(int which) {return springMode.getUnchecked(which);}
-    bool getSpringModeButtonState(int which) {return springMode.getUnchecked(which);}
+    inline void setRate(double r, bool start = true);
+    inline double getRate(void);
+    inline double getStiffness(void);
+    inline double getTetherStiffness(void);
+    inline double getIntervalStiffness(void);
+    inline void setDrag(double newdrag);
+    inline double getDrag(void);
+    bool getFundamentalSetsTether();
+    void setFundamentalSetsTether(bool s);
+    double getTetherWeightGlobal();
+    double getTetherWeightSecondaryGlobal();
+    void setTetherWeightGlobal(double s);
+    void setTetherWeightSecondaryGlobal(double s);
+    bool getSpringMode(int which);
+    bool getSpringModeButtonState(int which);
+    PitchClass getIntervalFundamental(void);
+    PitchClass getIntervalFundamentalActive(void);
+    juce::Array<float> getIntervalTuning(void);
+    PitchClass getTetherFundamental(void);
+    juce::Array<float> getTetherTuning(void);
+    void setUsingFundamentalForIntervalSprings(bool use);
+    bool getUsingFundamentalForIntervalSprings(void);
+    inline void setScaleId(TuningSystem which);
+    inline void setActive(bool status);
+    inline bool getActive(void);
+    inline TuningSystem getScaleId(void);
 
 	double getFrequency(int index);
 	bool pitchEnabled(int index);
@@ -118,31 +132,20 @@ public:
 
 	bool checkEnabledParticle(int index);
 
-    Particle::PtrArr& getTetherParticles(void) { return tetherParticleArray;}
-    Spring::PtrArr& getTetherSprings(void) { return tetherSpringArray;}
-    Particle::PtrArr& getParticles(void) { return particleArray;}
-    Spring::PtrMap& getSprings(void) { return springArray; }
-    Spring::PtrArr& getEnabledSprings(void) { return enabledSpringArray;}
+    Particle::PtrArr& getTetherParticles(void);
+    Spring::PtrArr& getTetherSprings(void);
+    Particle::PtrArr& getParticles(void);
+    Spring::PtrMap& getSprings(void);
+    Spring::PtrArr& getEnabledSprings(void);
     juce::String getTetherSpringName(int which);
     juce::String getSpringName(int which);
 
     void setTetherTuning(juce::Array<float> tuning);
-    juce::Array<float> getTetherTuning(void) {return tetherTuning;}
-
     void setTetherFundamental(PitchClass newfundamental);
-    PitchClass getTetherFundamental(void) {return tetherFundamental;}
-
     void setIntervalTuning(juce::Array<float> tuning);
-    juce::Array<float> getIntervalTuning(void){return intervalTuning;}
-
     void setIntervalFundamental(PitchClass newfundamental);
     void intervalFundamentalChanged();
-
-    PitchClass getIntervalFundamental(void) { return sparams.intervalFundamental->get(); }
-    PitchClass getIntervalFundamentalActive(void) { return intervalFundamentalActive; }
-
     void findFundamental();
-
     void retuneIndividualSpring(Spring::Ptr spring);
     void retuneAllActiveSprings(void);
 
@@ -152,17 +155,8 @@ public:
     void setTetherWeight(int which, double weight);
     double getTetherWeight(int which);
 
-    void setUsingFundamentalForIntervalSprings(bool use) { usingFundamentalForIntervalSprings = use; }
-    bool getUsingFundamentalForIntervalSprings(void) { return usingFundamentalForIntervalSprings; }
-
     int getLowestActiveParticle();
     int getHighestActiveParticle();
-
-    inline void setActive(bool status) { sparams.active->setParameterValue(status); }
-    inline bool getActive(void) { return sparams.active->get(); }
-
-    inline void setScaleId(TuningSystem which) { sparams.scaleId->setParameterValue(which); }
-    inline TuningSystem getScaleId(void) { return sparams.scaleId->get(); }
 
     SpringTuningParams &sparams;
 
@@ -196,13 +190,5 @@ private:
     float springWeights[13];
     void addSpring(Spring::Ptr spring);
 
-    void hiResTimerCallback(void) override
-    {
-        // DBG("Spring Tuning timer callback");
-        if (sparams.active->get())
-        {
-            simulate();
-        }
-    }
-
+    void hiResTimerCallback(void) override;
 };

@@ -15,6 +15,7 @@
 #include "SemitoneWidthParams.h"
 #include "AdaptiveTuningParams.h"
 #include "SpringTuningParams.h"
+#include "SpringTuning/SpringTuning.h"
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>

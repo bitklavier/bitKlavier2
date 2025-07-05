@@ -10,7 +10,9 @@
 
 #include "Spring.h"
 
-Spring::Spring(Particle* firstPoint, Particle* secondPoint, double length, double str, int index, const juce::String& name, bool enabled) :
+//Spring::Spring(Particle* firstPoint, Particle* secondPoint, double length, double str, int index, const juce::String& name, bool enabled) :
+
+Spring::Spring(Particle::Ptr firstPoint, Particle::Ptr secondPoint, double length, double str, int index, const juce::String& name, bool enabled) :
 	a(firstPoint),
 	b(secondPoint),
     strength(str),
@@ -19,7 +21,7 @@ Spring::Spring(Particle* firstPoint, Particle* secondPoint, double length, doubl
     name(name),
     enabled(enabled)
 {
-    
+
 }
 
 Spring::Ptr Spring::copy(void)
@@ -27,6 +29,11 @@ Spring::Ptr Spring::copy(void)
     Spring::Ptr copySpring = new Spring(a, b, restingLength, strength, intervalIndex, name, enabled);
 	return copySpring;
 }
+
+//std::shared_ptr<Spring> Spring::copy(void)
+//{
+//    return std::make_shared<Spring>(Spring(a, b, restingLength, strength, intervalIndex, name, enabled));
+//}
 
 bool Spring::compare(Spring* that)
 {
@@ -44,10 +51,13 @@ void Spring::print()
 	DBG("Strength: " + juce::String(strength));
 }
 
+Particle* Spring::getA() { return a; }
+Particle* Spring::getB() { return b; }
+
 void Spring::setStrength(double newStrength)
 {
 	strength = newStrength;
-    
+
     // adjusted strength is scaled non-linearly to make the exposed parameter more intuitive and usable
     double warpCoeff = 100.;
     adjustedStrength = 0.6 * stiffness * (pow(warpCoeff, strength) - 1.) / (warpCoeff - 1.); //replace with dt_asymwarp, for clarity
@@ -65,22 +75,22 @@ void Spring::satisfyConstraints(void)
 {
     // difference of the particle positions; basically the current length of the spring, signed
     double diff = b->getX() - a->getX();
-    
+
     // length of spring; don't need this here, but other functions will need it, so we update
     length = abs(diff);
-    
+
 	if (diff == 0.0) return;
-    
+
     // update the strength factor, if stiffness has changed
     if(stiffness != oldStiffness)
     {
         oldStiffness = stiffness;
         setStrength(strength);
     }
-    
+
     // adjust the spring length based on how far it is from the resting length, and how strong it is
     double increment = (diff - restingLength) * adjustedStrength;
-    
+
     // send the new positions to the particles, if they are not locked
     // we are essentially applying a force to the particles here
     if (!a->getLocked())

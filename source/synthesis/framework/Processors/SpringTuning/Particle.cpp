@@ -83,12 +83,12 @@ void Particle::subX(double that)
 /*
  integrate() updates the position of the particle based on its velocity
  and attenuated by a drag/friction factor
- 
+
  newX = x + (velocity * deltatime) * dragFactor
  newX = x + (x - prevX) * deltatime * dragFactor; // velocity ~ deltaPosition
- 
+
  deltatime = 1; our time unit is simply the iteration time
- 
+
  drag is actually the inverse of drag; no drag if == 1, infinite drag if == 0
  */
 
@@ -102,11 +102,11 @@ void Particle::integrate(double drag)
 
     // save this as old position, for the next iteration
     prevX = x;
-    
+
     x = newX;
-    
+
     // boundary cases
     if (x < 0.0) x = 0.0;
     else if (x > 13000.0f) x = 13000.0f;
-	
+
 }

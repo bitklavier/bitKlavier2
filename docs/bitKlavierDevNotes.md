@@ -6,6 +6,7 @@
 - [ ] for the transposition slider, if 0 isn't the first element we don't get it at all. so [0 4] works but [4 0] does not
 - [ ] maybe we should allow drag/drop to make audio connections between preps as well
 - [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
+- [ ] i believe pitchbend is not yet implemented
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!

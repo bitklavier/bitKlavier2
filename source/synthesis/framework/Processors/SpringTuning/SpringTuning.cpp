@@ -15,7 +15,7 @@
 #include "SpringTuning.h"
 #include "SpringTuningUtilities.h"
 
-using namespace std;
+//using namespace std;
 
 SpringTuning::SpringTuning(SpringTuning::Ptr st, SpringTuningParams &params) : sparams(params)
 {
@@ -88,6 +88,8 @@ SpringTuning::~SpringTuning()
     stopTimer();
     DBG("SpringTuning: stopping timer");
 };
+
+inline void SpringTuning::stop(void) { stopTimer(); DBG("SpringTuning: stopping timer");}
 
 void SpringTuning::copy(SpringTuning::Ptr st)
 {
@@ -188,6 +190,32 @@ void SpringTuning::intervalStiffnessChanged()
         spring->setStiffness(sparams.intervalStiffness->getCurrentValue());
     }
 }
+
+inline double SpringTuning::getRate(void) { return sparams.rate->getCurrentValue(); }
+inline double SpringTuning::getStiffness(void) { return sparams.stiffness->getCurrentValue(); }
+inline double SpringTuning::getTetherStiffness(void) { return sparams.tetherStiffness->getCurrentValue(); }
+inline double SpringTuning::getIntervalStiffness(void) { return sparams.intervalStiffness->getCurrentValue(); }
+inline void SpringTuning::setDrag(double newdrag) { sparams.drag->setParameterValue(newdrag); }
+inline double SpringTuning::getDrag(void) { return sparams.drag->getCurrentValue(); }
+bool SpringTuning::getFundamentalSetsTether() { return sparams.fundamentalSetsTether->get(); }
+void SpringTuning::setFundamentalSetsTether(bool s) { sparams.fundamentalSetsTether->setParameterValue(s); }
+double SpringTuning::getTetherWeightGlobal() { return sparams.tetherWeightGlobal->getCurrentValue(); }
+double SpringTuning::getTetherWeightSecondaryGlobal() { return sparams.tetherWeightSecondaryGlobal->getCurrentValue(); }
+void SpringTuning::setTetherWeightGlobal(double s) { sparams.tetherWeightGlobal->setParameterValue(s); }
+void SpringTuning::setTetherWeightSecondaryGlobal(double s) { sparams.tetherWeightSecondaryGlobal->setParameterValue(s); }
+bool SpringTuning::getSpringMode(int which) {return springMode.getUnchecked(which);}
+bool SpringTuning::getSpringModeButtonState(int which) {return springMode.getUnchecked(which);}
+PitchClass SpringTuning::getIntervalFundamental(void) { return sparams.intervalFundamental->get(); }
+PitchClass SpringTuning::getIntervalFundamentalActive(void) { return intervalFundamentalActive; }
+juce::Array<float> SpringTuning::getIntervalTuning(void){return intervalTuning;}
+PitchClass SpringTuning::getTetherFundamental(void) {return tetherFundamental;}
+juce::Array<float> SpringTuning::getTetherTuning(void) {return tetherTuning;}
+void SpringTuning::setUsingFundamentalForIntervalSprings(bool use) { usingFundamentalForIntervalSprings = use; }
+bool SpringTuning::getUsingFundamentalForIntervalSprings(void) { return usingFundamentalForIntervalSprings; }
+inline void SpringTuning::setScaleId(TuningSystem which) { sparams.scaleId->setParameterValue(which); }
+inline void SpringTuning::setActive(bool status) { sparams.active->setParameterValue(status); }
+inline bool SpringTuning::getActive(void) { return sparams.active->get(); }
+inline TuningSystem SpringTuning::getScaleId(void) { return sparams.scaleId->get(); }
 
 inline juce::Array<float> SpringTuning::getTetherWeights(void)
 {
@@ -431,6 +459,9 @@ void SpringTuning::removeParticle(int note)
     p->setEnabled(false);
     tetherParticleArray[note]->setEnabled(false);
 }
+
+Particle* SpringTuning::getParticle(int note) { return particleArray[note];}
+//Particle::Ptr SpringTuning::getParticle(int note) { return particleArray[note];}
 
 void SpringTuning::addNote(int note)
 {
@@ -832,6 +863,20 @@ bool SpringTuning::checkEnabledParticle(int index)
 	return particleArray[index]->getEnabled();
 }
 
+Particle::PtrArr& SpringTuning::getTetherParticles(void) { return tetherParticleArray;}
+Spring::PtrArr& SpringTuning::getTetherSprings(void) { return tetherSpringArray;}
+Particle::PtrArr& SpringTuning::getParticles(void) { return particleArray;}
+Spring::PtrMap& SpringTuning::getSprings(void) { return springArray; }
+Spring::PtrArr& SpringTuning::getEnabledSprings(void) { return enabledSpringArray;}
+
+void SpringTuning::hiResTimerCallback(void)
+{
+    // DBG("Spring Tuning timer callback");
+    if (sparams.active->get())
+    {
+        simulate();
+    }
+}
 
 /*
  * don't think we need the below

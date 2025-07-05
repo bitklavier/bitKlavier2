@@ -9,7 +9,6 @@
 */
 
 #pragma once
-
 #include "TuningProcessor.h"
 
 static const std::vector<std::string> notesInAnOctave = {
