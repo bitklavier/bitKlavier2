@@ -11,56 +11,56 @@
 // ********************************************************************************************************************* //
 
 
-std::string TuningState::fundamentalToString(Fundamental value) {
+std::string TuningState::fundamentalToString(PitchClass value) {
     switch (value) {
-        case Fundamental::C: return "C";
-        case Fundamental::C41D5: return "C#/Db";
-        case Fundamental::D: return "D";
-        case Fundamental::D41E5: return "D#/Eb";
-        case Fundamental::E: return "E";
-        case Fundamental::F: return "F";
-        case Fundamental::F41G5: return "F#/Gb";
-        case Fundamental::G: return "G";
-        case Fundamental::G41A5: return "G#/Ab";
-        case Fundamental::A: return "A";
-        case Fundamental::A41B5: return "A#/Bb";
-        case Fundamental::B: return "B";
-        case Fundamental::none: return "none";
+        case PitchClass::C: return "C";
+        case PitchClass::C41D5: return "C#/Db";
+        case PitchClass::D: return "D";
+        case PitchClass::D41E5: return "D#/Eb";
+        case PitchClass::E: return "E";
+        case PitchClass::F: return "F";
+        case PitchClass::F41G5: return "F#/Gb";
+        case PitchClass::G: return "G";
+        case PitchClass::G41A5: return "G#/Ab";
+        case PitchClass::A: return "A";
+        case PitchClass::A41B5: return "A#/Bb";
+        case PitchClass::B: return "B";
+        case PitchClass::none: return "none";
         default: return "Unknown";
     }
 }
 
-Fundamental TuningState::floatToFundamental(float value) {
+PitchClass TuningState::floatToFundamental(float value) {
     int ivalue = static_cast<int>(value);
     ivalue = ivalue % 12;
 
     if (ivalue >= 0.0 && value < 1.) {
-        return Fundamental::C;
+        return PitchClass::C;
     } else if (value >= 1. && value < 2.) {
-        return Fundamental::C41D5;
+        return PitchClass::C41D5;
     } else if (value >= 2. && value < 3.) {
-        return Fundamental::D;
+        return PitchClass::D;
     } else if (value >= 3. && value < 4.) {
-        return Fundamental::D41E5;
+        return PitchClass::D41E5;
     } else if (value >= 4. && value < 5.) {
-        return Fundamental::E;
+        return PitchClass::E;
     } else if (value >= 5. && value < 6.) {
-        return Fundamental::F;
+        return PitchClass::F;
     } else if (value >= 6. && value < 7.) {
-        return Fundamental::F41G5;
+        return PitchClass::F41G5;
     } else if (value >= 7. && value < 8.) {
-        return Fundamental::G;
+        return PitchClass::G;
     } else if (value >= 8. && value < 9.) {
-        return Fundamental::G41A5;
+        return PitchClass::G41A5;
     } else if (value >= 9. && value < 10.) {
-        return Fundamental::A;
+        return PitchClass::A;
     } else if (value >= 10. && value < 11.) {
-        return Fundamental::A41B5;
+        return PitchClass::A41B5;
     } else if (value >= 11. && value < 12.) {
-        return Fundamental::B;
+        return PitchClass::B;
     }
 
-    return Fundamental::none; // Handle cases where the float doesn't map to a note
+    return PitchClass::none; // Handle cases where the float doesn't map to a note
 }
 
 /**
@@ -69,7 +69,7 @@ Fundamental TuningState::floatToFundamental(float value) {
  * @return string pitchclass name
  */
 std::string TuningState::floatToFundamentalString(float value) {
-    Fundamental note = floatToFundamental(value);
+    PitchClass note = floatToFundamental(value);
     return fundamentalToString(note);
 }
 

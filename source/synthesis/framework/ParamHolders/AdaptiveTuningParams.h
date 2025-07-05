@@ -47,10 +47,10 @@ struct AdaptiveTuningParams : public chowdsp::ParamHolder
     /**
      * tAdaptiveAnchorFundamental = fundamental for anchor scale
      */
-    chowdsp::EnumChoiceParameter<Fundamental>::Ptr tAdaptiveAnchorFundamental {
+    chowdsp::EnumChoiceParameter<PitchClass>::Ptr tAdaptiveAnchorFundamental {
         juce::ParameterID { "tAdaptiveAnchorFundamental", 100 },
         "tAdaptiveAnchorFundamental",
-        Fundamental::C,
+        PitchClass::C,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 

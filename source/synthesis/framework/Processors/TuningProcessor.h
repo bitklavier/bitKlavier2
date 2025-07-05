@@ -40,8 +40,8 @@ struct TuningState : bitklavier::StateChangeableParameter
     double getSemitoneWidthOffsetForMidiNote(double midiNoteNumber);
     int getClosestKey(int noteNum, float transp, bool tuneTranspositions);
 
-    std::string fundamentalToString(Fundamental value);
-    Fundamental floatToFundamental(float value);
+    std::string fundamentalToString(PitchClass value);
+    PitchClass floatToFundamental(float value);
     std::string floatToFundamentalString(float value);
 
     double getOverallOffset();
@@ -93,10 +93,10 @@ struct TuningState : bitklavier::StateChangeableParameter
     /**
      * fundamental = fundamental for tuningSystem
      */
-    chowdsp::EnumChoiceParameter<Fundamental>::Ptr fundamental {
+    chowdsp::EnumChoiceParameter<PitchClass>::Ptr fundamental {
         juce::ParameterID { "fundamental", 100 },
-        "Fundamental",
-        Fundamental::C,
+        "PitchClass",
+        PitchClass::C,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 

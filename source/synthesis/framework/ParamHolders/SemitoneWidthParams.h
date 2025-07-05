@@ -25,10 +25,10 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    chowdsp::EnumChoiceParameter<Fundamental>::Ptr reffundamental {
+    chowdsp::EnumChoiceParameter<PitchClass>::Ptr reffundamental {
         juce::ParameterID { "reffundamental", 100 },
         "RefFundamental",
-        Fundamental::C,
+        PitchClass::C,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
