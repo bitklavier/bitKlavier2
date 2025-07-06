@@ -35,21 +35,24 @@
  */
 
 #pragma once
-//#include "SpringTuningUtilities.h"
+#include "SpringTuningUtilities.h"
 #include "Particle.h"
 #include "Spring.h"
 #include "SpringTuningParams.h"
 
-//class Particle;
-//class Spring;
-class SpringTuning : public juce::ReferenceCountedObject, private juce::HighResolutionTimer
+class Particle;
+class Spring;
+//class SpringTuning : public juce::ReferenceCountedObject, private juce::HighResolutionTimer
+class SpringTuning : private juce::HighResolutionTimer
 {
 public:
-    typedef juce::ReferenceCountedObjectPtr<SpringTuning> Ptr;
+//    typedef juce::ReferenceCountedObjectPtr<SpringTuning> Ptr;
 
-    SpringTuning(SpringTuning::Ptr st, SpringTuningParams &params);
+//    SpringTuning(SpringTuning::Ptr st, SpringTuningParams &params);
+    SpringTuning(SpringTuningParams &params);
     ~SpringTuning();
-    void copy(SpringTuning::Ptr st);
+//    void copy(SpringTuning::Ptr st);
+    void copy(SpringTuning* st);
 
     /*
      simulate() first moves through the entire particle array and "integrates" their position,
@@ -132,11 +135,15 @@ public:
 
 	bool checkEnabledParticle(int index);
 
-    Particle::PtrArr& getTetherParticles(void);
-    Spring::PtrArr& getTetherSprings(void);
-    Particle::PtrArr& getParticles(void);
-    Spring::PtrMap& getSprings(void);
-    Spring::PtrArr& getEnabledSprings(void);
+//    Particle::PtrArr& getTetherParticles(void);
+    juce::Array<Particle*> getTetherParticles(void);
+//    Spring::PtrArr& getTetherSprings(void);
+    juce::Array<Spring*> getTetherSprings(void);
+    juce::Array<Particle*> getParticles(void);
+//    Spring::PtrMap& getSprings(void);
+//    juce::HashMap<int, Spring*> getSprings(void);
+    juce::Array<Spring*> getEnabledSprings(void);
+//    Spring::PtrArr& getEnabledSprings(void);
     juce::String getTetherSpringName(int which);
     juce::String getSpringName(int which);
 
@@ -146,7 +153,8 @@ public:
     void setIntervalFundamental(PitchClass newfundamental);
     void intervalFundamentalChanged();
     void findFundamental();
-    void retuneIndividualSpring(Spring::Ptr spring);
+//    void retuneIndividualSpring(Spring::Ptr spring);
+    void retuneIndividualSpring(Spring* spring);
     void retuneAllActiveSprings(void);
 
     void setSpringWeight(int which, double weight);
@@ -178,17 +186,24 @@ private:
     TuningSystem tetherTuningId;
     PitchClass tetherFundamental;
 
-    Particle::PtrArr    particleArray;
-    Spring::PtrMap      springArray; // efficiency fix: make this ordered by spring interval
+//    Particle::PtrArr    particleArray;
+//    juce::Array<Spring::Ptr> particleArray;
+//    Spring::PtrMap      springArray; // efficiency fix: make this ordered by spring interval
+    juce::Array<Particle*> particleArray;
+    juce::HashMap<int, Spring*> springArray; // efficiency fix: make this ordered by spring interval
 
-    Particle::PtrArr    tetherParticleArray;
-    Spring::PtrArr      tetherSpringArray;
-
-    Spring::PtrArr      enabledSpringArray;
-    Spring::PtrArr      enabledParticleArray;
+//    Particle::PtrArr    tetherParticleArray;
+    juce::Array<Particle*> tetherParticleArray;
+//    Spring::PtrArr      tetherSpringArray;
+//    Spring::PtrArr      enabledSpringArray;
+//    Spring::PtrArr      enabledParticleArray;
+    juce::Array<Spring*>      tetherSpringArray;
+    juce::Array<Spring*>      enabledSpringArray;
+    juce::Array<Spring*>      enabledParticleArray;
 
     float springWeights[13];
-    void addSpring(Spring::Ptr spring);
+//    void addSpring(Spring::Ptr spring);
+    void addSpring(Spring* spring);
 
     void hiResTimerCallback(void) override;
 };

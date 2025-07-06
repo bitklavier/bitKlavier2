@@ -42,9 +42,12 @@ double Particle::getX()
 	return x;
 }
 
-Particle::Ptr Particle::copy()
+//Particle::Ptr Particle::copy()
+//Particle* Particle::copy()
+std::unique_ptr<Particle> Particle::copy()
 {
-	Particle* p = new Particle(x, note * 100, name);
+//	Particle* p = new Particle(x, note * 100, name);
+    std::unique_ptr<Particle> p = std::make_unique<Particle>(x, note * 100, name);
 	p->setEnabled(enabled);
 	p->setLocked(locked);
 

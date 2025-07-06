@@ -23,14 +23,17 @@
 
 #pragma once
 #include "SpringTuningUtilities.h"
-#include <juce_core/juce_core.h>
+//#include <juce_core/juce_core.h>
 
-class Particle : public juce::ReferenceCountedObject
+//class Particle : public juce::ReferenceCountedObject
+//{
+//public:
+//
+//    typedef juce::ReferenceCountedObjectPtr<Particle> Ptr;
+//    typedef juce::Array<Particle::Ptr> PtrArr;
+class Particle
 {
 public:
-
-    typedef juce::ReferenceCountedObjectPtr<Particle> Ptr;
-    typedef juce::Array<Particle::Ptr> PtrArr;
 
 	Particle(double xVal, int n, juce::String s);
 
@@ -40,7 +43,9 @@ public:
     void setX(double);
 	double getX();
 
-    Particle::Ptr copy();
+//    Particle::Ptr copy();
+//    Particle* copy();
+    std::unique_ptr<Particle> copy();
 	bool compare(Particle* that);
 	void print();
 

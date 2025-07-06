@@ -12,7 +12,8 @@
 
 //Spring::Spring(Particle* firstPoint, Particle* secondPoint, double length, double str, int index, const juce::String& name, bool enabled) :
 
-Spring::Spring(Particle::Ptr firstPoint, Particle::Ptr secondPoint, double length, double str, int index, const juce::String& name, bool enabled) :
+//Spring::Spring(Particle::Ptr firstPoint, Particle::Ptr secondPoint, double length, double str, int index, const juce::String& name, bool enabled) :
+Spring::Spring(Particle* firstPoint, Particle* secondPoint, double length, double str, int index, const juce::String& name, bool enabled) :
 	a(firstPoint),
 	b(secondPoint),
     strength(str),
@@ -24,16 +25,19 @@ Spring::Spring(Particle::Ptr firstPoint, Particle::Ptr secondPoint, double lengt
 
 }
 
-Spring::Ptr Spring::copy(void)
-{
-    Spring::Ptr copySpring = new Spring(a, b, restingLength, strength, intervalIndex, name, enabled);
-	return copySpring;
-}
-
-//std::shared_ptr<Spring> Spring::copy(void)
+//Spring::Ptr Spring::copy(void)
 //{
-//    return std::make_shared<Spring>(Spring(a, b, restingLength, strength, intervalIndex, name, enabled));
+//    Spring::Ptr copySpring = new Spring(a, b, restingLength, strength, intervalIndex, name, enabled);
+//	return copySpring;
 //}
+
+std::unique_ptr<Spring> Spring::copy(void)
+//Spring* Spring::copy(void)
+{
+    //Spring* scopy = new Spring(a, b, restingLength, strength, intervalIndex, name, enabled);
+    std::unique_ptr<Spring> scopy = std::make_unique<Spring>(a, b, restingLength, strength, intervalIndex, name, enabled);
+    return scopy;
+}
 
 bool Spring::compare(Spring* that)
 {

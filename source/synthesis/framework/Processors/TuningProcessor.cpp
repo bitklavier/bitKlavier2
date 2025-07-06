@@ -373,7 +373,8 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
          * the main spot in the OLD code where the spring system is converted into pitch information is BKPianoSampler::updatePitch()
          * ultimately, updatePitch() updates the variable "bentRatio", which is the amount to increment the sample position.
          *
-         * but it may be that all we need is to call SpringTuning::double getFrequency(int index);
+         * but it may be that all we need is to call SpringTuning::double getFrequency(int index). that doesn't look like it's actually
+         * used in the old bK, though, and seems to return offset from middle-C, so i think we'll need something else
          */
     }
 
@@ -469,11 +470,15 @@ void TuningState::keyPressed(int noteNumber)
             //adaptiveFundamentalNote = noteNumber;
         }
     }
+    else if (type == Spring_Tuning)
+    {
 
-    /*
+    /**
      * todo: spring
      */
-    //tuning->prep->getSpringTuning()->addNote(noteNumber);
+        //tuning->prep->getSpringTuning()->addNote(noteNumber);
+        springTuner->addNote(noteNumber);
+    }
 
     /*
      * reset cluster timer with each new note
@@ -563,6 +568,7 @@ void TuningState::adaptiveReset()
 
 TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
 {
+//    state.params.tuningState.springTuner = std::make_unique<SpringTuning>(state.params.tuningState.springTuningParams);
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>

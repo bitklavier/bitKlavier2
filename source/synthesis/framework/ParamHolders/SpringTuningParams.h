@@ -29,7 +29,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     }
 
     /**
-     * todo: set the proper ranges for all of these
+     * todo: check the proper ranges for all of these
      */
 
     /**
@@ -48,7 +48,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr active {
         juce::ParameterID { "active", 100},
         "active",
-        false
+        true
     };
 
     /**
@@ -66,8 +66,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr rate {
         juce::ParameterID { "rate", 100 },
         "rate",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 8.0f, 4.0f),
-        0.0f,
+        chowdsp::ParamUtils::createNormalisableRange (5.0f, 400.0f, 100.0f),
+        100.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
@@ -78,8 +78,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr stiffness {
         juce::ParameterID { "stiffness", 100 },
         "stiffness",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.0f, 6.0f),
-        0.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
@@ -90,8 +90,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr tetherStiffness {
         juce::ParameterID { "tetherStiffness", 100 },
         "tetherStiffness",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 8.0f, 4.0f),
-        0.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
@@ -102,8 +102,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr intervalStiffness {
         juce::ParameterID { "intervalStiffness", 100 },
         "intervalStiffness",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.0f, 6.0f),
-        0.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
@@ -114,8 +114,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr drag {
         juce::ParameterID { "drag", 100 },
         "drag",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.0f, 6.0f),
-        0.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.97f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
@@ -126,8 +126,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr tetherWeightGlobal {
         juce::ParameterID { "tetherWeightGlobal", 100 },
         "tetherWeightGlobal",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.0f, 6.0f),
-        0.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.8f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
@@ -138,8 +138,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr tetherWeightSecondaryGlobal {
         juce::ParameterID { "tetherWeightSecondaryGlobal", 100 },
         "tetherWeightSecondaryGlobal",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.0f, 6.0f),
-        0.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.2f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };

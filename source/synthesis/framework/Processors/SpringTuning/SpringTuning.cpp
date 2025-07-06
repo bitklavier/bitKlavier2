@@ -17,7 +17,8 @@
 
 //using namespace std;
 
-SpringTuning::SpringTuning(SpringTuning::Ptr st, SpringTuningParams &params) : sparams(params)
+//SpringTuning::SpringTuning(SpringTuning::Ptr st, SpringTuningParams &params) : sparams(params)
+SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
 {
     particleArray.ensureStorageAllocated(128);
     tetherParticleArray.ensureStorageAllocated(128);
@@ -77,9 +78,12 @@ SpringTuning::SpringTuning(SpringTuning::Ptr st, SpringTuningParams &params) : s
     }
 
     numNotes = 0;
-    if (st != nullptr) copy(st);
+//    if (st != nullptr) copy(st);
 
-    setRate(sparams.rate->getCurrentValue());
+    /**
+     * todo: remove true here
+     */
+    setRate(sparams.rate->getCurrentValue(), true);
     setIntervalFundamental((PitchClass)(automatic + 1));
 }
 
@@ -91,7 +95,8 @@ SpringTuning::~SpringTuning()
 
 inline void SpringTuning::stop(void) { stopTimer(); DBG("SpringTuning: stopping timer");}
 
-void SpringTuning::copy(SpringTuning::Ptr st)
+//void SpringTuning::copy(SpringTuning::Ptr st)
+void SpringTuning::copy(SpringTuning* st)
 {
     /**
      * todo: is this copying ok with the sparams? do we have a new sparams that these values are copying into?
@@ -466,7 +471,7 @@ Particle* SpringTuning::getParticle(int note) { return particleArray[note];}
 void SpringTuning::addNote(int note)
 {
     addParticle(note);
-    // DBG("SpringTuning::addNote, useAutomaticFundamental " + String((int)useAutomaticFundamental));
+    DBG("SpringTuning::addNote, useAutomaticFundamental " + juce::String((int)useAutomaticFundamental));
 
     if(useLowestNoteForFundamental)
     {
@@ -626,7 +631,22 @@ void SpringTuning::findFundamental()
     }
 }
 
-void SpringTuning::addSpring(Spring::Ptr spring)
+//void SpringTuning::addSpring(Spring::Ptr spring)
+//{
+//    const juce::ScopedLock sl (lock);
+//
+//    if (enabledSpringArray.contains(spring)) return;
+//    int interval = spring->getIntervalIndex();
+//
+//    spring->setEnabled(true);
+//    spring->setStiffness(sparams.intervalStiffness->getCurrentValue());
+//    spring->setStrength(springWeights[interval]);
+//    enabledSpringArray.add(spring);
+//
+//    retuneIndividualSpring(spring);
+//}
+
+void SpringTuning::addSpring(Spring* spring)
 {
     const juce::ScopedLock sl (lock);
 
@@ -718,13 +738,39 @@ void SpringTuning::addSpringsByNote(int note)
 
 }
 
-void SpringTuning::retuneIndividualSpring(Spring::Ptr spring)
+//void SpringTuning::retuneIndividualSpring(Spring::Ptr spring)
+//{
+//    int interval = spring->getIntervalIndex();
+//
+//    //set spring length locally, for all if !usingFundamentalForIntervalSprings, or for individual springs as set by L/F
+//    if(!usingFundamentalForIntervalSprings ||
+//       !getSpringMode(interval - 1))
+//    {
+//        int diff = spring->getA()->getRestX() - spring->getB()->getRestX();
+//        spring->setRestingLength(fabs(diff) + intervalTuning[interval]);
+//    }
+//
+//    //otherwise, set resting length to interval scale relative to intervalFundamental (F)
+//    else
+//    {
+//        int scaleDegree1 = spring->getA()->getNote();
+//        int scaleDegree2 = spring->getB()->getNote();
+//        //int intervalFundamental = 0; //temporary, will set in preparation
+//
+//        float diff =    (100. * scaleDegree2 + intervalTuning[(scaleDegree2 - (int)intervalFundamentalActive) % 12]) -
+//        (100. * scaleDegree1 + intervalTuning[(scaleDegree1 - (int)intervalFundamentalActive) % 12]);
+//
+//        spring->setRestingLength(fabs(diff));
+//    }
+//}
+
+void SpringTuning::retuneIndividualSpring(Spring* spring)
 {
     int interval = spring->getIntervalIndex();
 
     //set spring length locally, for all if !usingFundamentalForIntervalSprings, or for individual springs as set by L/F
     if(!usingFundamentalForIntervalSprings ||
-       !getSpringMode(interval - 1))
+        !getSpringMode(interval - 1))
     {
         int diff = spring->getA()->getRestX() - spring->getB()->getRestX();
         spring->setRestingLength(fabs(diff) + intervalTuning[interval]);
@@ -738,7 +784,7 @@ void SpringTuning::retuneIndividualSpring(Spring::Ptr spring)
         //int intervalFundamental = 0; //temporary, will set in preparation
 
         float diff =    (100. * scaleDegree2 + intervalTuning[(scaleDegree2 - (int)intervalFundamentalActive) % 12]) -
-        (100. * scaleDegree1 + intervalTuning[(scaleDegree1 - (int)intervalFundamentalActive) % 12]);
+                     (100. * scaleDegree1 + intervalTuning[(scaleDegree1 - (int)intervalFundamentalActive) % 12]);
 
         spring->setRestingLength(fabs(diff));
     }
@@ -863,11 +909,17 @@ bool SpringTuning::checkEnabledParticle(int index)
 	return particleArray[index]->getEnabled();
 }
 
-Particle::PtrArr& SpringTuning::getTetherParticles(void) { return tetherParticleArray;}
-Spring::PtrArr& SpringTuning::getTetherSprings(void) { return tetherSpringArray;}
-Particle::PtrArr& SpringTuning::getParticles(void) { return particleArray;}
-Spring::PtrMap& SpringTuning::getSprings(void) { return springArray; }
-Spring::PtrArr& SpringTuning::getEnabledSprings(void) { return enabledSpringArray;}
+//Particle::PtrArr& SpringTuning::getTetherParticles(void) { return tetherParticleArray;}
+//Spring::PtrArr& SpringTuning::getTetherSprings(void) { return tetherSpringArray;}
+//Particle::PtrArr& SpringTuning::getParticles(void) { return particleArray;}
+//Spring::PtrMap& SpringTuning::getSprings(void) { return springArray; }
+//Spring::PtrArr& SpringTuning::getEnabledSprings(void) { return enabledSpringArray;}
+
+juce::Array<Particle*> SpringTuning::getTetherParticles(void) { return tetherParticleArray;}
+juce::Array<Spring*> SpringTuning::getTetherSprings(void) { return tetherSpringArray;}
+juce::Array<Particle*> SpringTuning::getParticles(void) { return particleArray;}
+//juce::HashMap<int, Spring*> SpringTuning::getSprings(void) { return springArray; }
+juce::Array<Spring*>SpringTuning::getEnabledSprings(void) { return enabledSpringArray;}
 
 void SpringTuning::hiResTimerCallback(void)
 {

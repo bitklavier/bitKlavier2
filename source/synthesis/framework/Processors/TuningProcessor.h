@@ -25,8 +25,13 @@
 /**
  * TuningState is the primary struct that is shared around to get/set tuning information
  */
+//class SpringTuning;
 struct TuningState : bitklavier::StateChangeableParameter
 {
+    TuningState()
+    {
+//        springTuner = std::make_unique<SpringTuning>(springTuningParams);
+    }
     void setKeyOffset (int midiNoteNumber, float val);
     void setCircularKeyOffset (int midiNoteNumber, float val);
     void setKeyOffset (int midiNoteNumber, float val, bool circular);
@@ -130,6 +135,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     AdaptiveTuningParams adaptiveParams;
     SemitoneWidthParams semitoneWidthParams;
     SpringTuningParams springTuningParams;
+    std::unique_ptr<SpringTuning> springTuner;
 
     // ****************************************** OTHER VARS ***************************************** //
 
@@ -163,6 +169,9 @@ struct TuningState : bitklavier::StateChangeableParameter
     double lastAdaptiveTarget = 440.;
 
     std::atomic<bool> setFromAudioThread;
+
+//    std::unique_ptr<SpringTuning> springTuner;
+//    std::unique_ptr<SpringTuning> springTuner = std::make_unique<SpringTuning>(springTuningParams);
 };
 
 /**
@@ -179,7 +188,10 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.semitoneWidthParams,
             tuningState.offSet,
             tuningState.lastNote,
-            tuningState.adaptiveParams);
+            tuningState.adaptiveParams,
+            tuningState.springTuningParams);
+
+        tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams);
     }
 
     /**

@@ -9,7 +9,11 @@
 */
 
 #pragma once
-#include "TuningProcessor.h"
+//#include "TuningProcessor.h"
+#include <cmath>
+#include <complex>
+#include <cstdlib>
+#include <juce_core/juce_core.h>
 
 static const std::vector<std::string> notesInAnOctave = {
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"

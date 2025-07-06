@@ -21,18 +21,23 @@
 #pragma once
 #include "Particle.h"
 
-//class Particle;
-class Spring : public juce::ReferenceCountedObject
+class Particle;
+//class Spring : public juce::ReferenceCountedObject
+//{
+//public:
+//    typedef juce::ReferenceCountedObjectPtr<Spring> Ptr;
+//    typedef juce::Array<Spring::Ptr> PtrArr;
+//    typedef juce::HashMap<int, Spring::Ptr> PtrMap;
+class Spring
 {
 public:
-    typedef juce::ReferenceCountedObjectPtr<Spring> Ptr;
-    typedef juce::Array<Spring::Ptr> PtrArr;
-    typedef juce::HashMap<int, Spring::Ptr> PtrMap;
 
-    //Spring(Particle* firstPoint, Particle* secondPoint, double length, double str, int index, const juce::String& name, bool enabled);
-	Spring(Particle::Ptr firstPoint, Particle::Ptr secondPoint, double length, double str, int index, const juce::String& name, bool enabled);
+    Spring(Particle* firstPoint, Particle* secondPoint, double length, double str, int index, const juce::String& name, bool enabled);
+//	Spring(Particle::Ptr firstPoint, Particle::Ptr secondPoint, double length, double str, int index, const juce::String& name, bool enabled);
 
-    Spring::Ptr copy();
+//    Spring::Ptr copy();
+//    Spring* copy();
+    std::unique_ptr<Spring> copy(void);
 //    std::shared_ptr<Spring> copy();
 	bool compare(Spring* that);
 	void print();
