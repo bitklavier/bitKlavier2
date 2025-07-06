@@ -376,6 +376,10 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
          * but it may be that all we need is to call SpringTuning::double getFrequency(int index). that doesn't look like it's actually
          * used in the old bK, though, and seems to return offset from middle-C, so i think we'll need something else
          */
+
+        //DBG("springTuner->getFrequency = " + juce::String(currentlyPlayingNote) + " " + juce::String(springTuner->getFrequency(currentlyPlayingNote)));
+        lastAdaptiveTarget = springTuner->getFrequency(currentlyPlayingNote);
+        return lastAdaptiveTarget;
     }
 
     /*
@@ -487,6 +491,17 @@ void TuningState::keyPressed(int noteNumber)
 
 }
 
+void TuningState::keyReleased(int noteNumber)
+{
+    /*
+     * todo: adaptive remove?
+     */
+    TuningType type = getTuningType();
+    if (type == Spring_Tuning) {
+        springTuner->removeNote(noteNumber);
+    }
+}
+
 /**
  * update the value internally, but also update parameter holder for it, so the UI knows
  * @param newFund
@@ -496,14 +511,6 @@ void TuningState::updateAdaptiveFundamentalValue(int newFund)
     adaptiveFundamentalNote = newFund;
     adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(newFund % 12);
     adaptiveParams.tCurrentAdaptiveFundamental_string = floatToFundamentalString(adaptiveParams.tCurrentAdaptiveFundamental->getCurrentValue());
-}
-
-void TuningState::keyReleased(int noteNumber)
-{
-    /*
-     * todo: spring
-     */
-    //tuning->prep->getSpringTuning()->removeNote(noteNumber);
 }
 
 float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const

@@ -28,10 +28,6 @@
 //class SpringTuning;
 struct TuningState : bitklavier::StateChangeableParameter
 {
-    TuningState()
-    {
-//        springTuner = std::make_unique<SpringTuning>(springTuningParams);
-    }
     void setKeyOffset (int midiNoteNumber, float val);
     void setCircularKeyOffset (int midiNoteNumber, float val);
     void setKeyOffset (int midiNoteNumber, float val, bool circular);

@@ -825,7 +825,26 @@ void SpringTuning::removeSpringsByNote(int note)
 
 double SpringTuning::getFrequency(int note)
 {
-	return Utilities::centsToFreq((int) particleArray[note]->getX());
+//    Particle::PtrArr particles = tuning->getTuning()->prep->getParticles();
+//      double x = particles[getCurrentlyPlayingKey()]->getX();
+//    int octave = particles[getCurrentlyPlayingKey()]->getOctave();
+//    //double transpOffset = (currentMidiNoteNumber - getCurrentlyPlayingKey()) * 100.;
+//    double transpOffset = (cookedNote - getCurrentlyPlayingKey()) * 100.;
+//    //DBG("BKPianoSamplerVoice::updatePitch cookedNote = " + String(cookedNote));
+//        double midi = Utilities::clip(0, ftom(Utilities::centsToFreq((x + transpOffset) - 1200.0 * octave)
+
+
+auto particles = getParticles();
+    double x = particles[note]->getX();
+    int octave = particles[note]->getOctave();
+    //double transpOffset = (currentMidiNoteNumber - getCurrentlyPlayingKey()) * 100.;
+    //double transpOffset = (cookedNote - getCurrentlyPlayingKey()) * 100.;
+    //DBG("BKPianoSamplerVoice::updatePitch cookedNote = " + String(cookedNote));
+        double midi = Utilities::centsToFreq(x - 1200.0 * octave);
+
+        return midi;
+
+	//return Utilities::centsToFreq((int) particleArray[note]->getX());
 }
 
 void SpringTuning::print()
