@@ -368,15 +368,6 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      */
     if(getTuningType() == TuningType::Spring_Tuning)
     {
-        // nothing to see here yet
-        /*
-         * the main spot in the OLD code where the spring system is converted into pitch information is BKPianoSampler::updatePitch()
-         * ultimately, updatePitch() updates the variable "bentRatio", which is the amount to increment the sample position.
-         *
-         * but it may be that all we need is to call SpringTuning::double getFrequency(int index). that doesn't look like it's actually
-         * used in the old bK, though, and seems to return offset from middle-C, so i think we'll need something else
-         */
-
         //DBG("springTuner->getFrequency = " + juce::String(currentlyPlayingNote) + " " + juce::String(springTuner->getFrequency(currentlyPlayingNote)));
         lastAdaptiveTarget = springTuner->getFrequency(currentlyPlayingNote);
         return lastAdaptiveTarget;
