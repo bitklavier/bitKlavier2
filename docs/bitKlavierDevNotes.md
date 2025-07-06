@@ -14,6 +14,7 @@ and hopefully with answers included here for the record!
   - Myra is working on. but Direct saves now, except Transpositions, so check that
 -[ ] check on Mods with Direct; are they working for all params? do they save?
   - need to be tested and fixed
+  - let's prioritize this, for Direct and Tuning
 -[ ] i’m not clear when we need to create and run processStateChanges for params
   - this for ui sections, where we don't do audio-rate mods, just param-state mods, and want to change the whole thing
     - for instance, the transposition slider: we're going to change all those values at once, and try to change them individually continuously

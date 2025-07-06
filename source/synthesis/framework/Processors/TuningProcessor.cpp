@@ -473,6 +473,7 @@ void TuningState::keyPressed(int noteNumber)
      */
         //tuning->prep->getSpringTuning()->addNote(noteNumber);
         springTuner->addNote(noteNumber);
+//        springTuner->print();
     }
 
     /*
@@ -588,7 +589,7 @@ void TuningProcessor::noteOn (int midiChannel,int midiNoteNumber,float velocity)
 
 void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity)
 {
-
+    state.params.tuningState.keyReleased(midiNoteNumber);
 }
 
 void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)

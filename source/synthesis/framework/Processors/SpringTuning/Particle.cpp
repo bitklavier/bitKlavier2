@@ -97,7 +97,6 @@ void Particle::subX(double that)
 
 void Particle::integrate(double drag)
 {
-
     // newPosition = oldPosition + velocity * deltatime * inverseOfDragFactor
     //                             velocity = newPosition - oldPosition
     //                                        deltatime = 1 (iteration)

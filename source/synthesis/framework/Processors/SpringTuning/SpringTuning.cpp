@@ -37,7 +37,7 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
     useHighestNoteForFundamental = false;
     useLastNoteForFundamental = false;
 
-    setFundamentalSetsTether(true);        //needs UI toggle; when on, don't show tether sliders for current notes, only the two tether weight sliders
+    //setFundamentalSetsTether(true);        //needs UI toggle; when on, don't show tether sliders for current notes, only the two tether weight sliders
     tetherFundamental = C;
 
     for (int i = 0; i < 13; i++) springWeights[i] = 0.5;
@@ -84,7 +84,7 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
      * todo: remove true here
      */
     setRate(sparams.rate->getCurrentValue(), true);
-    setIntervalFundamental((PitchClass)(automatic + 1));
+//    setIntervalFundamental((PitchClass)(automatic + 1));
 }
 
 SpringTuning::~SpringTuning()
@@ -470,8 +470,8 @@ Particle* SpringTuning::getParticle(int note) { return particleArray[note];}
 
 void SpringTuning::addNote(int note)
 {
+    DBG("SpringTuning::addNote " + juce::String(note));
     addParticle(note);
-    DBG("SpringTuning::addNote, useAutomaticFundamental " + juce::String((int)useAutomaticFundamental));
 
     if(useLowestNoteForFundamental)
     {
@@ -507,6 +507,7 @@ void SpringTuning::addNote(int note)
 
 void SpringTuning::removeNote(int note)
 {
+    DBG("SpringTuning::removeNote " + juce::String(note));
     removeParticle(note);
 
     if(useLowestNoteForFundamental)
@@ -649,14 +650,19 @@ void SpringTuning::findFundamental()
 void SpringTuning::addSpring(Spring* spring)
 {
     const juce::ScopedLock sl (lock);
-
     if (enabledSpringArray.contains(spring)) return;
-    int interval = spring->getIntervalIndex();
 
+    int interval = spring->getIntervalIndex();
     spring->setEnabled(true);
     spring->setStiffness(sparams.intervalStiffness->getCurrentValue());
     spring->setStrength(springWeights[interval]);
     enabledSpringArray.add(spring);
+
+//    DBG("addSpring          = " + juce::String(spring->getIntervalIndex()) +
+//         "\nresting length   = " + juce::String(spring->getRestingLength()) +
+//         "\nstrength         = " + juce::String(spring->getStrength()) +
+//         "\nstiffness        = " + juce::String(spring->getStiffness()) +
+//         "\nenabled          = " + juce::String((int)spring->getEnabled()));
 
     retuneIndividualSpring(spring);
 }
@@ -664,16 +670,21 @@ void SpringTuning::addSpring(Spring* spring)
 void SpringTuning::addSpringsByNote(int note)
 {
     const juce::ScopedLock sl (lock);
+    //DBG("addSpringsByNote " + juce::String(note));
 
     for (auto p : particleArray)
     {
         int otherNote = p->getNote();
         if (otherNote == note) continue;
+
         if (p->getEnabled())
         {
             int upperNote = note > otherNote ? note : otherNote;
             int lowerNote = note < otherNote ? note : otherNote;
             int hash = (upperNote << 16 | lowerNote);
+
+            //DBG("addSpringsByNote hash = " + juce::String(hash));
+
             if (!springArray.contains(hash))
             {
                 float diff = upperNote - lowerNote;
@@ -773,7 +784,8 @@ void SpringTuning::retuneIndividualSpring(Spring* spring)
         !getSpringMode(interval - 1))
     {
         int diff = spring->getA()->getRestX() - spring->getB()->getRestX();
-        spring->setRestingLength(fabs(diff) + intervalTuning[interval]);
+//        spring->setRestingLength(fabs(diff) + intervalTuning[interval]);
+        spring->setRestingLength(fabs(diff) + 100. * intervalTuning[interval]);
     }
 
     //otherwise, set resting length to interval scale relative to intervalFundamental (F)
@@ -788,6 +800,8 @@ void SpringTuning::retuneIndividualSpring(Spring* spring)
 
         spring->setRestingLength(fabs(diff));
     }
+
+    DBG("retuneIndividualSpring " + juce::String(interval) + " " + juce::String(spring->getRestingLength()));
 }
 
 void SpringTuning::retuneAllActiveSprings(void)
@@ -825,37 +839,42 @@ void SpringTuning::removeSpringsByNote(int note)
 
 double SpringTuning::getFrequency(int note)
 {
-//    Particle::PtrArr particles = tuning->getTuning()->prep->getParticles();
-//      double x = particles[getCurrentlyPlayingKey()]->getX();
-//    int octave = particles[getCurrentlyPlayingKey()]->getOctave();
-//    //double transpOffset = (currentMidiNoteNumber - getCurrentlyPlayingKey()) * 100.;
-//    double transpOffset = (cookedNote - getCurrentlyPlayingKey()) * 100.;
-//    //DBG("BKPianoSamplerVoice::updatePitch cookedNote = " + String(cookedNote));
-//        double midi = Utilities::clip(0, ftom(Utilities::centsToFreq((x + transpOffset) - 1200.0 * octave)
-
-
-auto particles = getParticles();
+    auto particles = getParticles();
     double x = particles[note]->getX();
     int octave = particles[note]->getOctave();
-    //double transpOffset = (currentMidiNoteNumber - getCurrentlyPlayingKey()) * 100.;
-    //double transpOffset = (cookedNote - getCurrentlyPlayingKey()) * 100.;
-    //DBG("BKPianoSamplerVoice::updatePitch cookedNote = " + String(cookedNote));
-        double midi = Utilities::centsToFreq(x - 1200.0 * octave);
+    double midi = mtof(x * .01, 440.);
+    /**
+     * todo: need to get globalTuningReference in here
+     */
 
-        return midi;
+//    DBG("SpringTuning::getFrequency for " + juce::String(note) +
+//        " x = " + juce::String(x) +
+//        " octave = " + juce::String(octave) +
+//        " output frequency = " + juce::String(midi));
 
-	//return Utilities::centsToFreq((int) particleArray[note]->getX());
+    return midi;
 }
 
 void SpringTuning::print()
 {
-    DBG("~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~");
+    DBG("~ ~ ~ ~ ~ ~ ~ Spring Tuning ~ ~ ~ ~ ~ ~");
+    DBG("scaleId                        = " + sparams.scaleId->getCurrentValueAsText());
+    DBG("active                         = " + sparams.active->getCurrentValueAsText());
+    DBG("rate                           = " + sparams.rate->getCurrentValueAsText());
+    DBG("drag                           = " + sparams.drag->getCurrentValueAsText());
+    DBG("intervalStiffness              = " + sparams.intervalStiffness->getCurrentValueAsText());
+    DBG("tetherStiffness                = " + sparams.tetherStiffness->getCurrentValueAsText());
+    DBG("fundamentalSetsTether          = " + sparams.fundamentalSetsTether->getCurrentValueAsText());
+    DBG("tetherWeightGlobal             = " + sparams.tetherWeightGlobal->getCurrentValueAsText());
+    DBG("tetherWeightSecondaryGlobal    = " + sparams.tetherWeightSecondaryGlobal->getCurrentValueAsText());
+    DBG("intervalFundamental            = " + sparams.intervalFundamental->getCurrentValueAsText());
+
 	for (int i = 0; i < 128; i++)
 	{
         juce::String printStatus = "";
 		if (particleArray[i]->getEnabled())
         {
-            DBG(juce::String(i));
+            DBG("particle: " + juce::String(i) + " " + juce::String(particleArray[i]->getX()));
         }
 	}
 }
