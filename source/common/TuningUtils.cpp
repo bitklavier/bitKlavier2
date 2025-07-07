@@ -122,6 +122,7 @@ void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_)
             submenus.getUnchecked(0)->addItem(i+1,choice);
         }
         else if (i>=33) {
+            if (choice == "TuningSystemNil") continue;
             submenus.getUnchecked(1)->addItem(i+1,choice);
         }
         i++;
