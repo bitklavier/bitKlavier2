@@ -89,6 +89,7 @@ int intFromFundamental(Fundamental p);
 int intFromPitchClass(PitchClass p);
 std::string fundamentalToString(Fundamental value);
 std::string pitchClassToString(PitchClass value);
+PitchClass getPitchClassFromInt(int pitchNumber);
 
 void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_);
 void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<float, 12>& circularTuningVec);

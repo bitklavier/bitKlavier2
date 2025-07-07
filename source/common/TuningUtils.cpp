@@ -66,6 +66,26 @@ int intFromPitchClass(PitchClass p) {
     return shift;
 }
 
+/**
+ * @brief Converts an integer representing a bit position to a PitchClass.
+ *
+ * This function takes an integer 'bitPosition' and left-shifts 1 by that
+ * amount to generate the corresponding PitchClass enum value. It returns
+ * std::nullopt if the bit position is outside the valid range (0-11).
+ *
+ * @param bitPosition An integer representing the bit position (0 for C, 1 for C#/Db, etc.).
+ * @return An std::optional<PitchClass> containing the corresponding PitchClass if valid,
+ * or std::nullopt if the bitPosition is out of range.
+ */
+PitchClass getPitchClassFromInt(int bitPosition) {
+    if (bitPosition >= 0 && bitPosition <= 11) {
+        return static_cast<PitchClass>(1U << bitPosition);
+    } else {
+        // Handle out-of-range or invalid bit positions
+        return PitchClass::PitchClassNil;
+    }
+}
+
 
 // Helper function to get the string representation of a Fundamental value
 std::string fundamentalToString(Fundamental value) {

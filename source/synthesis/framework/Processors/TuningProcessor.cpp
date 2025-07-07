@@ -432,15 +432,12 @@ void TuningState::keyReleased(int noteNumber)
 
 /**
  * update the value internally, but also update parameter holder for it, so the UI knows
- * @param newFund
+ * @param newFundt
  */
 void TuningState::updateAdaptiveFundamentalValue(int newFund)
 {
     adaptiveFundamentalNote = newFund;
-    //adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(newFund % 12);
-    adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(static_cast<PitchClass>(newFund % 12));
-//    adaptiveParams.tCurrentAdaptiveFundamental_string = floatToFundamentalString(adaptiveParams.tCurrentAdaptiveFundamental->getCurrentValue());
-    //adaptiveParams.tCurrentAdaptiveFundamental_string = fundamentalToString(static_cast<Fundamental>(adaptiveParams.tCurrentAdaptiveFundamental->getCurrentValue()));
+    adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(getPitchClassFromInt(newFund % 12));
     adaptiveParams.tCurrentAdaptiveFundamental_string = pitchClassToString((adaptiveParams.tCurrentAdaptiveFundamental->get()));
 }
 

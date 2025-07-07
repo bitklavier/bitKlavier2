@@ -1,7 +1,7 @@
 # Notes about how to do stuff in the bK codebase
 ## Priorities before Davis leaves
 - [ ] finish mods for Direct and Tuning:
-  - working, saving, Dan mostly understanding the code
+  - working, saving/loading, Dan mostly understanding the code
 - [ ] Blendrónic audio in 
 - [ ] Sample load crash
 - [ ] Blurry fonts ;--}
