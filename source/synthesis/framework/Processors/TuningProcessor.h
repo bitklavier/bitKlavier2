@@ -32,7 +32,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     void setKeyOffset (int midiNoteNumber, float val);
     void setCircularKeyOffset (int midiNoteNumber, float val);
     void setKeyOffset (int midiNoteNumber, float val, bool circular);
-    static std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental);
+    //static std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental);
     void processStateChanges() override;
 
     void setFundamental (int fund);
@@ -148,7 +148,10 @@ struct TuningState : bitklavier::StateChangeableParameter
     inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
     inline const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
     inline const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
-    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
+    inline const TuningSystem getAdaptiveIntervalScale() const noexcept {
+        DBG("tAdaptiveIntervalScale = " + adaptiveParams.tAdaptiveIntervalScale->getCurrentValueAsText());
+        return adaptiveParams.tAdaptiveIntervalScale->get();
+    }
     inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
     float intervalToRatio(float interval) const;
 
@@ -162,9 +165,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     double lastAdaptiveTarget = 440.;
 
     std::atomic<bool> setFromAudioThread;
-
-//    std::unique_ptr<SpringTuning> springTuner;
-//    std::unique_ptr<SpringTuning> springTuner = std::make_unique<SpringTuning>(springTuningParams);
 };
 
 /**

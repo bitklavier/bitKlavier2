@@ -58,41 +58,19 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         addOpenGlComponent(tuningtype_combo_box->getImageComponent());
     }
 
-    /**
-     * todo: make the content of this lambda a function, so it can be used in all the other places where we have tuning system menus
-     *          setOffsetsFromTuningSystem(chowdsp::EnumChoiceParameter<TuningSystem>::Ptr newTuning)
-     */
     tuningCallbacks += {listeners.addParameterListener(
         params.tuningState.tuningSystem,
         chowdsp::ParameterListenerThread::MessageThread,
-        [this]() {
-            if (!params.tuningState.setFromAudioThread) {
-                TuningSystem t = params.tuningState.tuningSystem->get();
+        [this]()
+        {
+            setOffsetsFromTuningSystem(
+                params.tuningState.tuningSystem->get(),
+                params.tuningState.fundamental->getIndex(),
+                this->params.tuningState.circularTuningOffset);
 
-                //this->params.tuningState.circularTuningOffset = tuningMap[t].second;
-                auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
-                    [t](const auto& pair) {
-                        return pair.first == t;
-                    });
-                if (it->first == TuningSystem::Custom) {
-
-                }
-                else if (it != tuningMap.end()) {
-                    const auto& tuning = it->second;
-                    const auto tuningArray = TuningState::rotateValuesByFundamental(tuning, params.tuningState.fundamental->getIndex());
-                    int index  = 0;
-                    for (const auto val :tuningArray) {
-                        this->params.tuningState.circularTuningOffset[index] = val * 100;
-                        DBG("new tuning " + juce::String(index) + " " + juce::String(this->params.tuningState.circularTuningOffset[index]));
-                        index++;
-                    }
-                }
-            }
-
-            params.tuningState.setFromAudioThread = false;
+            //params.tuningState.setFromAudioThread = false;
             circular_keyboard->redoImage();
-        }
-        )
+        })
     };
 
     tuningCallbacks += {listeners.addParameterListener(
@@ -101,8 +79,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         [this]() {
             params.tuningState.setFundamental(params.tuningState.fundamental->getIndex());
             circular_keyboard->redoImage();
-        }
-        )};
+        })
+    };
 
     // to catch presses of the reset button
     tuningCallbacks += {listeners.addParameterListener(
@@ -113,8 +91,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
                 params.tuningState.adaptiveReset();
                 params.tuningState.adaptiveParams.tReset->setParameterValue(false);
             }
-        }
-        )};
+        })
+    };
 
     lastNoteDisplay = std::make_shared<PlainTextComponent>("lastpitch", "Last Pitch = 69.00");
     addOpenGlComponent(lastNoteDisplay);
@@ -140,7 +118,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
             lastNoteDisplay->setText ("Last Pitch = " + this->params.tuningState.lastNote->getCurrentValueAsText());
             lastFrequencyDisplay->setText ("Last Frequency = " + juce::String(mtof(this->params.tuningState.lastNote->getCurrentValue()),2));
             lastIntervalDisplay->setText ("Last Interval = " + juce::String(this->params.tuningState.lastIntervalCents, 2));
-        })};
+        })
+    };
 
     /*
      * similar, listening for changes to current adaptive fundamental, for display
@@ -149,7 +128,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
             adaptiveSection->currentFundamental->setText ("Current Fundamental = " + this->params.tuningState.adaptiveParams.tCurrentAdaptiveFundamental_string);
-        })};
+        })
+    };
 
     circular_keyboard->addMyListener(this);
 }

@@ -78,6 +78,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     sectionBorder.setText("Adaptive Tuning");
     sectionBorder.setTextLabelPosition(juce::Justification::centred);
     addAndMakeVisible(sectionBorder);
+
 }
 
 AdaptiveTuningSection::~AdaptiveTuningSection() { }

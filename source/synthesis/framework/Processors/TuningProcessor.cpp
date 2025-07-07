@@ -48,21 +48,21 @@ void TuningState::processStateChanges()
     }
 }
 
-std::array<float, 12> TuningState::rotateValuesByFundamental (std::array<float, 12> vals, int fundamental)
-{
-    int offset;
-    if (fundamental <= 0)
-        offset = 0;
-    else
-        offset = fundamental;
-    std::array<float, 12> new_vals = { 0.f };
-    for (int i = 0; i < 12; i++)
-    {
-        int index = ((i - offset) + 12) % 12;
-        new_vals[i] = vals[index];
-    }
-    return new_vals;
-}
+//std::array<float, 12> TuningState::rotateValuesByFundamental (std::array<float, 12> vals, int fundamental)
+//{
+//    int offset;
+//    if (fundamental <= 0)
+//        offset = 0;
+//    else
+//        offset = fundamental;
+//    std::array<float, 12> new_vals = { 0.f };
+//    for (int i = 0; i < 12; i++)
+//    {
+//        int index = ((i - offset) + 12) % 12;
+//        new_vals[i] = vals[index];
+//    }
+//    return new_vals;
+//}
 
 void TuningState::setFundamental (int fund)
 {
@@ -437,9 +437,11 @@ void TuningState::keyReleased(int noteNumber)
 void TuningState::updateAdaptiveFundamentalValue(int newFund)
 {
     adaptiveFundamentalNote = newFund;
-    adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(newFund % 12);
+    //adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(newFund % 12);
+    adaptiveParams.tCurrentAdaptiveFundamental->setParameterValue(static_cast<PitchClass>(newFund % 12));
 //    adaptiveParams.tCurrentAdaptiveFundamental_string = floatToFundamentalString(adaptiveParams.tCurrentAdaptiveFundamental->getCurrentValue());
-    adaptiveParams.tCurrentAdaptiveFundamental_string = fundamentalToString(static_cast<Fundamental>(adaptiveParams.tCurrentAdaptiveFundamental->getCurrentValue()));
+    //adaptiveParams.tCurrentAdaptiveFundamental_string = fundamentalToString(static_cast<Fundamental>(adaptiveParams.tCurrentAdaptiveFundamental->getCurrentValue()));
+    adaptiveParams.tCurrentAdaptiveFundamental_string = pitchClassToString((adaptiveParams.tCurrentAdaptiveFundamental->get()));
 }
 
 float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
@@ -451,6 +453,7 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
     std::array<float, 12> intervalScale;
     if(getAdaptiveIntervalScale() == Custom) {
 
+        DBG("TuningState::adaptiveCalculateRatio ==> need to implement Custom state!");
         /**
          * todo: figure custom scales out
          */

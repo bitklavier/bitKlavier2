@@ -18,10 +18,10 @@ int intFromFundamental(Fundamental p) {
     auto pitchValue = static_cast<std::underlying_type_t<Fundamental>>(p);
 
     // If the value is 0 (PitchClassNil), return -1 or handle as an error
-    if (pitchValue == 0) {
-        // You can return a special value like -1 to indicate an invalid input
-        return -1;
-    }
+//    if (pitchValue == 0) {
+//        // You can return a special value like -1 to indicate an invalid input
+//        return -1;
+//    }
 
     // Since each enumerator is a power of 2 (1 << N), we need to find N.
     // We can do this by counting the number of trailing zeros.
@@ -44,11 +44,11 @@ int intFromPitchClass(PitchClass p) {
     // Cast the enum class value to its underlying integer type
     auto pitchValue = static_cast<std::underlying_type_t<PitchClass>>(p);
 
-    // If the value is 0 (PitchClassNil), return -1 or handle as an error
-    if (pitchValue == 0) {
-        // You can return a special value like -1 to indicate an invalid input
-        return -1;
-    }
+//    // If the value is 0 (PitchClassNil), return -1 or handle as an error
+//    if (pitchValue == 0) {
+//        // You can return a special value like -1 to indicate an invalid input
+//        return -1;
+//    }
 
     // Since each enumerator is a power of 2 (1 << N), we need to find N.
     // We can do this by counting the number of trailing zeros.
@@ -141,4 +141,44 @@ void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_)
     auto* pop_up = tuning_combo_box_->getRootMenu();
     pop_up->addSubMenu("Historical",*submenus.getUnchecked(0));
     pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
+}
+
+void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<float, 12>& circularTuningVec)
+{
+    //if (!params.tuningState.setFromAudioThread) { // it's not clear whether this is necessary; see bitKlavierDevNotes
+
+    auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
+        [t](const auto& pair) {
+            return pair.first == t;
+        });
+    if (it->first == TuningSystem::Custom) {
+
+    }
+    else if (it != tuningMap.end()) {
+        const auto& tuning = it->second;
+        const auto tuningArray = rotateValuesByFundamental(tuning, newFund);
+        int index  = 0;
+        for (const auto val :tuningArray) {
+            circularTuningVec[index] = val * 100;
+            DBG("new tuning " + juce::String(index) + " " + juce::String(circularTuningVec[index]));
+            index++;
+        }
+    }
+}
+
+std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental)
+{
+    int offset;
+    if (fundamental <= 0)
+        offset = 0;
+    else
+        offset = fundamental;
+
+    std::array<float, 12> new_vals = { 0.f };
+    for (int i = 0; i < 12; i++)
+    {
+        int index = ((i - offset) + 12) % 12;
+        new_vals[i] = vals[index];
+    }
+    return new_vals;
 }

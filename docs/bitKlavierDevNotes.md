@@ -1,4 +1,11 @@
 # Notes about how to do stuff in the bK codebase
+## Priorities before Davis leaves
+- [ ] finish mods for Direct and Tuning:
+  - working, saving, Dan mostly understanding the code
+- [ ] Blendrónic audio in 
+- [ ] Sample load crash
+- [ ] Blurry fonts ;--}
+
 ## Quick Bug/Feature Notes
 - [ ] adaptive tuning interval scale stuff isn't actually registering; need callback, like for main tuning system, or update at the block
 - [ ] transposition slider limits to -12/12, and should allow for larger values when typed in
@@ -13,6 +20,8 @@
 and hopefully with answers included here for the record!
 - [ ] thinking the spiral view my be best as its own separate pop-up window, so it can be unobscured by all the knobs and sliders
 - [ ] for DP: tell me more about `params.tuningState.setFromAudioThread` and why it might be important. In TuningParametersView.cpp
+  - this was a conditional that Davis was working with, concerned that there may be parameters that are updated on the audio thread for some reason that would then trigger this callback
+    - however, it's not being set anywhere at the moment, so it may not be necessary in the end
 - [ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
   - Myra is working on. but Direct saves now, except Transpositions, so check that
 -[ ] check on Mods with Direct; are they working for all params? do they save?
