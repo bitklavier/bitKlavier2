@@ -113,10 +113,10 @@ public:
     void setTetherWeightSecondaryGlobal(double s);
     bool getSpringMode(int which);
     bool getSpringModeButtonState(int which);
-    PitchClass getIntervalFundamental(void);
-    PitchClass getIntervalFundamentalActive(void);
+    Fundamental getIntervalFundamental();
+    Fundamental getIntervalFundamentalActive();
     juce::Array<float> getIntervalTuning(void);
-    PitchClass getTetherFundamental(void);
+    Fundamental getTetherFundamental();
     juce::Array<float> getTetherTuning(void);
     void setUsingFundamentalForIntervalSprings(bool use);
     bool getUsingFundamentalForIntervalSprings(void);
@@ -148,9 +148,9 @@ public:
     juce::String getSpringName(int which);
 
     void setTetherTuning(juce::Array<float> tuning);
-    void setTetherFundamental(PitchClass newfundamental);
+    void setTetherFundamental(Fundamental newfundamental);
     void setIntervalTuning(juce::Array<float> tuning);
-    void setIntervalFundamental(PitchClass newfundamental);
+    void setIntervalFundamental(Fundamental newfundamental);
     void intervalFundamentalChanged();
     void findFundamental();
 //    void retuneIndividualSpring(Spring::Ptr spring);
@@ -166,6 +166,9 @@ public:
     int getLowestActiveParticle();
     int getHighestActiveParticle();
 
+    int intFromFundamental(Fundamental p);
+    int intFromPitchClass(PitchClass p);
+
     SpringTuningParams &sparams;
 
 private:
@@ -179,12 +182,12 @@ private:
     bool useAutomaticFundamental; //uses findFundamental() to set fundamental automatically, based on what is played
 
     juce::Array<float> intervalTuning;
-    PitchClass intervalFundamentalActive; //one actually used in the moment, changed by auto/last/highest/lowest modes
+    Fundamental intervalFundamentalActive; //one actually used in the moment, changed by auto/last/highest/lowest modes
     juce::Array<bool> springMode;
 
     juce::Array<float> tetherTuning;
     TuningSystem tetherTuningId;
-    PitchClass tetherFundamental;
+    Fundamental tetherFundamental;
 
 //    Particle::PtrArr    particleArray;
 //    juce::Array<Spring::Ptr> particleArray;

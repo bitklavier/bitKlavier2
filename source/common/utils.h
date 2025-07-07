@@ -324,6 +324,7 @@
 
 
 
+
   } // namespace bitklavier::utils
 
 // namespace vital
@@ -472,7 +473,23 @@ struct BKSynthesizerState
  * sharp/flat mappings use substitutions in std::initializer_list
  * as part of the param definition (reffundamental, for instance)
  */
-enum PitchClass : uint32_t {
+enum class PitchClass : uint32_t {
+    C = 1 << 0,
+    C41D5 = 1 << 1, // substitutions: 4 => #, 1=>/, 5 => b, so C41D5 becomes "C#/Db"
+    D = 1 << 2,
+    D41E5 = 1 << 3,
+    E = 1 << 4,
+    F = 1 << 5,
+    F41G5 = 1 << 6,
+    G = 1 << 7,
+    G41A5 = 1 << 8,
+    A = 1 << 9,
+    A41B5 = 1 << 10,
+    B = 1 << 11,
+    PitchClassNil
+};
+
+enum class Fundamental : uint32_t {
     C = 1 << 0,
     C41D5 = 1 << 1, // substitutions: 4 => #, 1=>/, 5 => b, so C41D5 becomes "C#/Db"
     D = 1 << 2,
@@ -490,7 +507,7 @@ enum PitchClass : uint32_t {
     highest = 1 << 14,
     last = 1 << 15,
     automatic = 1 << 16,
-    PitchClassNil
+    FundamentalNil
 };
 
 enum Octave : uint32_t {

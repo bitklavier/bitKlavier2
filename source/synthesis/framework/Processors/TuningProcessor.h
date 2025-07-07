@@ -12,6 +12,7 @@
 #include "array_to_string.h"
 #include "tuning_systems.h"
 #include "utils.h"
+#include "synth_base.h"
 #include "SemitoneWidthParams.h"
 #include "AdaptiveTuningParams.h"
 #include "SpringTuningParams.h"
@@ -20,7 +21,6 @@
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-
 
 /**
  * TuningState is the primary struct that is shared around to get/set tuning information
@@ -43,9 +43,15 @@ struct TuningState : bitklavier::StateChangeableParameter
     double getSemitoneWidthOffsetForMidiNote(double midiNoteNumber);
     int getClosestKey(int noteNum, float transp, bool tuneTranspositions);
 
-    std::string fundamentalToString(PitchClass value);
-    PitchClass floatToFundamental(float value);
+    /**
+     * todo: do we still need these stupid things?
+     * @param value
+     * @return
+     */
+    std::string fundamentalToString(Fundamental value);
+    Fundamental floatToFundamental(float value);
     std::string floatToFundamentalString(float value);
+
 
     double getOverallOffset();
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
@@ -150,7 +156,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     inline const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
     inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
     inline const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
-    inline const int getAdaptiveAnchorFundamental() const noexcept { return adaptiveParams.tAdaptiveAnchorFundamental->get(); }
+    inline const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
     inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
     inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
     float intervalToRatio(float interval) const;

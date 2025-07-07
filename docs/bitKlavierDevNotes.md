@@ -10,7 +10,8 @@
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
--[ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
+- [ ] thinking the spiral view my be best as its own separate pop-up window, so it can be unobscured by all the knobs and sliders
+- [ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
   - Myra is working on. but Direct saves now, except Transpositions, so check that
 -[ ] check on Mods with Direct; are they working for all params? do they save?
   - need to be tested and fixed

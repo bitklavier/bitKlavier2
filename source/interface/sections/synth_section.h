@@ -22,8 +22,6 @@
 
 #pragma once
 
-
-
 #include "synth_button.h"
 #include "look_and_feel/fonts.h"
 #include "paths.h"

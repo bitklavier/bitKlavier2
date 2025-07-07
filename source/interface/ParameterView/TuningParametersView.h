@@ -14,6 +14,7 @@
 //#include "tuning_systems.h"
 #include "SemitoneWidthSection.h"
 #include "AdaptiveTuningSection.h"
+#include "SpringTuningParams.h"
 
 class AdaptiveTuningSection;
 class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener

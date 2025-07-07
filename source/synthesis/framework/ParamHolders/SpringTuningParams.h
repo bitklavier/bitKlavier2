@@ -67,12 +67,11 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     };
 
     /**
-     * sets the friction on the spring system; higher drag will reduce oscillations
+     * sets the friction on the spring system; higher drag (actually represented by a low number) will reduce oscillations
      *  - from the original bK code: "actually 1 - drag; drag of 1 => no drag, drag of 0 => infinite drag"
-     *      is that true here?
      *      right: so in old bK, the UI shows a high drag value doing what you expect, but sends 1 - drag to the system
      *          so, this default value should be very low, for high drag
- *          is there a way for this to be handled in an inverted way by chowdsp?
+ *          need to make sure this is handled properly on the UI side
      */
     chowdsp::FloatParameter::Ptr drag {
         juce::ParameterID { "drag", 100 },
@@ -170,10 +169,10 @@ struct SpringTuningParams : public chowdsp::ParamHolder
       *                         this analysis is based on the notion of the phantom fundamental
       *                         described in our 2020 Computer Music Journal article
       */
-     chowdsp::EnumChoiceParameter<PitchClass>::Ptr intervalFundamental {
+     chowdsp::EnumChoiceParameter<Fundamental>::Ptr intervalFundamental {
          juce::ParameterID { "intervalFundamental", 100 },
          "intervalFundamental",
-         PitchClass::automatic,
+         Fundamental::automatic,
          std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
      };
 

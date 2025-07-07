@@ -3,64 +3,61 @@
 //
 
 #include "TuningProcessor.h"
-#include "synth_base.h"
-
 
 // ********************************************************************************************************************* //
 // **************************************************** TuningState **************************************************** //
 // ********************************************************************************************************************* //
 
-
-std::string TuningState::fundamentalToString(PitchClass value) {
+std::string TuningState::fundamentalToString(Fundamental value) {
     switch (value) {
-        case PitchClass::C: return "C";
-        case PitchClass::C41D5: return "C#/Db";
-        case PitchClass::D: return "D";
-        case PitchClass::D41E5: return "D#/Eb";
-        case PitchClass::E: return "E";
-        case PitchClass::F: return "F";
-        case PitchClass::F41G5: return "F#/Gb";
-        case PitchClass::G: return "G";
-        case PitchClass::G41A5: return "G#/Ab";
-        case PitchClass::A: return "A";
-        case PitchClass::A41B5: return "A#/Bb";
-        case PitchClass::B: return "B";
-        case PitchClass::none: return "none";
+        case Fundamental::C: return "C";
+        case Fundamental::C41D5: return "C#/Db";
+        case Fundamental::D: return "D";
+        case Fundamental::D41E5: return "D#/Eb";
+        case Fundamental::E: return "E";
+        case Fundamental::F: return "F";
+        case Fundamental::F41G5: return "F#/Gb";
+        case Fundamental::G: return "G";
+        case Fundamental::G41A5: return "G#/Ab";
+        case Fundamental::A: return "A";
+        case Fundamental::A41B5: return "A#/Bb";
+        case Fundamental::B: return "B";
+        case Fundamental::none: return "none";
         default: return "Unknown";
     }
 }
 
-PitchClass TuningState::floatToFundamental(float value) {
+Fundamental TuningState::floatToFundamental(float value) {
     int ivalue = static_cast<int>(value);
     ivalue = ivalue % 12;
 
     if (ivalue >= 0.0 && value < 1.) {
-        return PitchClass::C;
+        return Fundamental::C;
     } else if (value >= 1. && value < 2.) {
-        return PitchClass::C41D5;
+        return Fundamental::C41D5;
     } else if (value >= 2. && value < 3.) {
-        return PitchClass::D;
+        return Fundamental::D;
     } else if (value >= 3. && value < 4.) {
-        return PitchClass::D41E5;
+        return Fundamental::D41E5;
     } else if (value >= 4. && value < 5.) {
-        return PitchClass::E;
+        return Fundamental::E;
     } else if (value >= 5. && value < 6.) {
-        return PitchClass::F;
+        return Fundamental::F;
     } else if (value >= 6. && value < 7.) {
-        return PitchClass::F41G5;
+        return Fundamental::F41G5;
     } else if (value >= 7. && value < 8.) {
-        return PitchClass::G;
+        return Fundamental::G;
     } else if (value >= 8. && value < 9.) {
-        return PitchClass::G41A5;
+        return Fundamental::G41A5;
     } else if (value >= 9. && value < 10.) {
-        return PitchClass::A;
+        return Fundamental::A;
     } else if (value >= 10. && value < 11.) {
-        return PitchClass::A41B5;
+        return Fundamental::A41B5;
     } else if (value >= 11. && value < 12.) {
-        return PitchClass::B;
+        return Fundamental::B;
     }
 
-    return PitchClass::none; // Handle cases where the float doesn't map to a note
+    return Fundamental::none; // Handle cases where the float doesn't map to a note
 }
 
 /**
@@ -69,7 +66,7 @@ PitchClass TuningState::floatToFundamental(float value) {
  * @return string pitchclass name
  */
 std::string TuningState::floatToFundamentalString(float value) {
-    PitchClass note = floatToFundamental(value);
+    Fundamental note = floatToFundamental(value);
     return fundamentalToString(note);
 }
 
@@ -564,10 +561,8 @@ void TuningState::adaptiveReset()
 // ********************************************************************************************************************* //
 
 
-
 TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
 {
-//    state.params.tuningState.springTuner = std::make_unique<SpringTuning>(state.params.tuningState.springTuningParams);
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
@@ -607,6 +602,7 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
         noteOff (channel, m.getNoteNumber(), m.getVelocity());
     }
 }
+
 
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
