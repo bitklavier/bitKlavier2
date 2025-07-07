@@ -51,6 +51,4 @@ private:
     juce::GroupComponent sectionBorder;
 };
 
-void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_, AdaptiveTuningParams* &tuningParams_);
-
 #endif //BITKLAVIER0_ADAPTIVETUNINGSECTION_H

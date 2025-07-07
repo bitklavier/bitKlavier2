@@ -57,7 +57,14 @@ int intFromPitchClass(PitchClass p) {
     return shift;
 }
 
+
+// Helper function to get the string representation of a Fundamental value
 std::string fundamentalToString(Fundamental value) {
+    // You'll need a way to map the enum value to its corresponding string.
+    // Since you have a fixed order in both vectors, you could potentially
+    // find the index of the enum value in fundamentalValues and use that
+    // index to get the string from fundamentalStrings.
+    // A switch statement is also a very common and clear approach for this mapping.
     switch (value) {
         case Fundamental::C: return "C";
         case Fundamental::C41D5: return "C#/Db";
@@ -76,7 +83,8 @@ std::string fundamentalToString(Fundamental value) {
         case Fundamental::highest: return "highest";
         case Fundamental::last: return "last";
         case Fundamental::automatic: return "automatic";
-        default: return "Unknown";
+        case Fundamental::FundamentalNil: return "FundamentalNil";
+        default: return "Unknown Fundamental"; // Handle potential unknown values
     }
 }
 
@@ -94,6 +102,33 @@ std::string pitchClassToString(PitchClass value) {
         case PitchClass::A: return "A";
         case PitchClass::A41B5: return "A#/Bb";
         case PitchClass::B: return "B";
-        default: return "Unknown";
+        case PitchClass::PitchClassNil: return "PitchClassNil"; // Include if you choose to iterate over it
+        default: return "Unknown PitchClass";
     }
+}
+
+void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_)
+{
+    // clear the default menu so we can make submenus
+    tuning_combo_box_->clear(juce::sendNotificationSync);
+    juce::OwnedArray<juce::PopupMenu> submenus;
+    submenus.add(new juce::PopupMenu());
+    submenus.add(new juce::PopupMenu());
+    int i = 0;
+    for (auto choice : TuningSystemNames) {
+        if (i <= 6)
+            tuning_combo_box_->addItem(choice,i+1);
+        if (i>6 && i <33) {
+            submenus.getUnchecked(0)->addItem(i+1,choice);
+        }
+        else if (i>=33) {
+            submenus.getUnchecked(1)->addItem(i+1,choice);
+        }
+        i++;
+    }
+
+    tuning_combo_box_->addSeparator();
+    auto* pop_up = tuning_combo_box_->getRootMenu();
+    pop_up->addSubMenu("Historical",*submenus.getUnchecked(0));
+    pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
 }

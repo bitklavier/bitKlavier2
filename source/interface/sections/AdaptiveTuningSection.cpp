@@ -29,7 +29,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
         adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, nullptr);
         addAndMakeVisible(adaptiveIntervalScale_ComboBox.get());
         addOpenGlComponent(adaptiveIntervalScale_ComboBox->getImageComponent());
-        setupTuningSystemMenu(adaptiveIntervalScale_ComboBox, tuningParams);
+        setupTuningSystemMenu(adaptiveIntervalScale_ComboBox);
         adaptiveIntervalScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         index = tuningParams->tAdaptiveAnchorScale->getIndex();
@@ -37,7 +37,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
         adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, nullptr);
         addAndMakeVisible(adaptiveAnchorScale_ComboBox.get());
         addOpenGlComponent(adaptiveAnchorScale_ComboBox->getImageComponent());
-        setupTuningSystemMenu(adaptiveAnchorScale_ComboBox, tuningParams);
+        setupTuningSystemMenu(adaptiveAnchorScale_ComboBox);
         adaptiveAnchorScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
     }
 
@@ -134,37 +134,4 @@ void AdaptiveTuningSection::resized() {
     currentFundamental->setBounds(resetBox);
 
     SynthSection::resized();
-}
-
-/**
- * puts all the different tuning systems in the menu and sub-menus
- * @param tuning_combo_box_
- * @param tuningParams_
- *
- * todo: figure out how to use the same setupTuningSystemMenu as in TuningParametersView.h; stupid things about tuningParams type passing
- */
-void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_, AdaptiveTuningParams* &tuningParams_)
-{
-    // clear the default menu so we can make submenus
-    tuning_combo_box_->clear(juce::sendNotificationSync);
-    juce::OwnedArray<juce::PopupMenu> submenus;
-    submenus.add(new juce::PopupMenu());
-    submenus.add(new juce::PopupMenu());
-    int i = 0;
-    for (auto choice : tuningParams_->tAdaptiveIntervalScale->choices) {
-        if (i <= 6)
-            tuning_combo_box_->addItem(choice,i+1);
-        if (i>6 && i <33) {
-            submenus.getUnchecked(0)->addItem(i+1,choice);
-        }
-        else if (i>=33) {
-            submenus.getUnchecked(1)->addItem(i+1,choice);
-        }
-        i++;
-    }
-
-    tuning_combo_box_->addSeparator();
-    auto* pop_up = tuning_combo_box_->getRootMenu();
-    pop_up->addSubMenu("Historical",*submenus.getUnchecked(0));
-    pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
 }

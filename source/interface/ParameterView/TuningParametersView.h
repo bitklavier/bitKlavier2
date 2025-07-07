@@ -60,6 +60,5 @@ public:
 
 };
 
-void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_, TuningParams* &tuningParams_);
 
 #endif //BITKLAVIER2_TUNINGPARAMETERSVIEW_H

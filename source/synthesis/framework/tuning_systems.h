@@ -140,5 +140,48 @@
         {TuningSystem::Young_Well_Tuned_Piano, tYoungWellTunedPiano},
         {TuningSystem::Harrison_Strict_Songs, tHarrisonStrict}
     }};
+
+    // Create the const std::vector<juice::String> using an initializer list
+    const std::vector<juce::String> TuningSystemNames = {
+        "Equal_Temperament",
+        "Partial",
+        "Just",
+        "Duodene",
+        "Otonal",
+        "Utonal",
+        "Custom",
+        "Pythagorean",
+        "Grammateus",
+        "Kirnberger_II",
+        "Kirnberger_III",
+        "Werkmeister_III",
+        "Quarter2Comma_Meantone",
+        "Split2Wolf_QC_Meantone",
+        "Transposing_QC_Meantone",
+        "Corrette",
+        "Rameau",
+        "Marpourg",
+        "Eggars_English_Ord",
+        "Third2Comma_Meantone",
+        "D_Alembert_Rousseau",
+        "Kellner",
+        "Vallotti",
+        "Young_II",
+        "Sixth_Comma_Meantone",
+        "Bach1Barnes",
+        "Neidhardt",
+        "Bach1Lehman",
+        "Bach1O3Donnell",
+        "Bach1Hill",
+        "Bach1Swich",
+        "Lambert",
+        "Eighth2Comma_WT",
+        "Pinnock_Modern",
+        "Common_Just",
+        "Symmetric_Just",
+        "Young_Well_Tuned_Piano",
+        "Harrison_Strict_Songs",
+        "TuningSystemNil"
+    };
 #endif //BITKLAVIER2_TUNING_SYSTEMS_H
 

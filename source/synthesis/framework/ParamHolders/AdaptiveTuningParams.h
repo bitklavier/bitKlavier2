@@ -8,6 +8,7 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include "tuning_systems.h"
 #include "utils.h"
+#include "TuningUtils.h"
 
 struct AdaptiveTuningParams : public chowdsp::ParamHolder
 {

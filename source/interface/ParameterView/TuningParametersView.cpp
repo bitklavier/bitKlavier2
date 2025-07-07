@@ -44,7 +44,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners,*tuning_combo_box, nullptr);
         addAndMakeVisible(tuning_combo_box.get());
         addOpenGlComponent(tuning_combo_box->getImageComponent());
-        setupTuningSystemMenu(tuning_combo_box, tuningParams);
+        setupTuningSystemMenu(tuning_combo_box);
         tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString());
@@ -184,35 +184,4 @@ void TuningParametersView::keyboardSliderChanged(juce::String name) {
 
     if (name == "circular")
         params.tuningState.tuningSystem->setParameterValue(TuningSystem::Custom);
-}
-
-/**
- * puts all the different tuning systems in the menu and sub-menus
- * @param tuning_combo_box_
- * @param tuningParams_
- */
-void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_, TuningParams* &tuningParams_)
-{
-    // clear the default menu so we can make submenus
-    tuning_combo_box_->clear(juce::sendNotificationSync);
-    juce::OwnedArray<juce::PopupMenu> submenus;
-    submenus.add(new juce::PopupMenu());
-    submenus.add(new juce::PopupMenu());
-    int i = 0;
-    for (auto choice : tuningParams_->tuningState.tuningSystem->choices) {
-        if (i <= 6)
-            tuning_combo_box_->addItem(choice,i+1);
-        if (i>6 && i <33) {
-            submenus.getUnchecked(0)->addItem(i+1,choice);
-        }
-        else if (i>=33) {
-            submenus.getUnchecked(1)->addItem(i+1,choice);
-        }
-        i++;
-    }
-
-    tuning_combo_box_->addSeparator();
-    auto* pop_up = tuning_combo_box_->getRootMenu();
-    pop_up->addSubMenu("Historical",*submenus.getUnchecked(0));
-    pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
 }
