@@ -166,8 +166,8 @@ public:
     int getLowestActiveParticle();
     int getHighestActiveParticle();
 
-    int intFromFundamental(Fundamental p);
-    int intFromPitchClass(PitchClass p);
+//    int intFromFundamental(Fundamental p);
+//    int intFromPitchClass(PitchClass p);
 
     SpringTuningParams &sparams;
 

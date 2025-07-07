@@ -12,6 +12,7 @@
 #include "array_to_string.h"
 #include "tuning_systems.h"
 #include "utils.h"
+#include "TuningUtils.h"
 #include "synth_base.h"
 #include "SemitoneWidthParams.h"
 #include "AdaptiveTuningParams.h"
@@ -42,16 +43,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     double getSemitoneWidth();
     double getSemitoneWidthOffsetForMidiNote(double midiNoteNumber);
     int getClosestKey(int noteNum, float transp, bool tuneTranspositions);
-
-    /**
-     * todo: do we still need these stupid things?
-     * @param value
-     * @return
-     */
-    std::string fundamentalToString(Fundamental value);
-    Fundamental floatToFundamental(float value);
-    std::string floatToFundamentalString(float value);
-
 
     double getOverallOffset();
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);

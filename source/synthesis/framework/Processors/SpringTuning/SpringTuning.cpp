@@ -960,59 +960,6 @@ juce::Array<Particle*> SpringTuning::getParticles(void) { return particleArray;}
 juce::Array<Spring*>SpringTuning::getEnabledSprings(void) { return enabledSpringArray;}
 
 
-int SpringTuning::intFromFundamental(Fundamental p) {
-    // Cast the enum class value to its underlying integer type
-    auto pitchValue = static_cast<std::underlying_type_t<Fundamental>>(p);
-
-    // If the value is 0 (PitchClassNil), return -1 or handle as an error
-    if (pitchValue == 0) {
-        // You can return a special value like -1 to indicate an invalid input
-        return -1;
-    }
-
-    // Since each enumerator is a power of 2 (1 << N), we need to find N.
-    // We can do this by counting the number of trailing zeros.
-    // For example:
-    // 1 (0001 in binary) has 0 trailing zeros -> bit shift 0
-    // 2 (0010 in binary) has 1 trailing zero -> bit shift 1
-    // 4 (0100 in binary) has 2 trailing zeros -> bit shift 2
-
-    // A generic approach using a loop
-    int shift = 0;
-    while ((pitchValue & 1) == 0) {
-        pitchValue >>= 1;
-        shift++;
-    }
-    return shift;
-}
-
-// Function to convert a single PitchClass flag to its bit shift value (0-11)
-int SpringTuning::intFromPitchClass(PitchClass p) {
-    // Cast the enum class value to its underlying integer type
-    auto pitchValue = static_cast<std::underlying_type_t<PitchClass>>(p);
-
-    // If the value is 0 (PitchClassNil), return -1 or handle as an error
-    if (pitchValue == 0) {
-        // You can return a special value like -1 to indicate an invalid input
-        return -1;
-    }
-
-    // Since each enumerator is a power of 2 (1 << N), we need to find N.
-    // We can do this by counting the number of trailing zeros.
-    // For example:
-    // 1 (0001 in binary) has 0 trailing zeros -> bit shift 0
-    // 2 (0010 in binary) has 1 trailing zero -> bit shift 1
-    // 4 (0100 in binary) has 2 trailing zeros -> bit shift 2
-
-    // A generic approach using a loop
-    int shift = 0;
-    while ((pitchValue & 1) == 0) {
-        pitchValue >>= 1;
-        shift++;
-    }
-    return shift;
-}
-
 void SpringTuning::hiResTimerCallback(void)
 {
     // DBG("Spring Tuning timer callback");
