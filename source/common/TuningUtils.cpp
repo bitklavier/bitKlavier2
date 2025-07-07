@@ -86,6 +86,15 @@ PitchClass getPitchClassFromInt(int bitPosition) {
     }
 }
 
+Fundamental getFundamentalFromInt(int bitPosition) {
+    if (bitPosition >= 0 && bitPosition <= 11) {
+        return static_cast<Fundamental>(1U << bitPosition);
+    } else {
+        // Handle out-of-range or invalid bit positions
+        return Fundamental::FundamentalNil;
+    }
+}
+
 
 // Helper function to get the string representation of a Fundamental value
 std::string fundamentalToString(Fundamental value) {
@@ -173,6 +182,9 @@ void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::ar
         });
     if (it->first == TuningSystem::Custom) {
 
+        /**
+         * todo: implement Custom here!
+         */
     }
     else if (it != tuningMap.end()) {
         const auto& tuning = it->second;
@@ -201,4 +213,13 @@ std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int
         new_vals[i] = vals[index];
     }
     return new_vals;
+}
+
+std::array<float, 12> getOffsetsFromTuningSystem (TuningSystem ts)
+{
+    auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
+        [ts](const auto& pair) {
+            return pair.first == ts;
+        });
+    return it->second;
 }

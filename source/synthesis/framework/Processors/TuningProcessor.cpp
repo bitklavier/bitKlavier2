@@ -392,7 +392,7 @@ void TuningState::keyPressed(int noteNumber)
         {
             adaptiveHistoryCounter = 0;
 
-            const std::array<float, 12> anchorTuning = getTuningSystem(getAdaptiveAnchorScale());
+            const std::array<float, 12> anchorTuning = getOffsetsFromTuningSystem(getAdaptiveAnchorScale());
             adaptiveFundamentalFreq = mtof(
                 noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % anchorTuning.size()],
                 getGlobalTuningReference()
@@ -457,7 +457,7 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
         //intervalScale = tuning->prep->getCustomScale();
     }
     else {
-        intervalScale = getTuningSystem(getAdaptiveIntervalScale());
+        intervalScale = getOffsetsFromTuningSystem(getAdaptiveIntervalScale());
     }
 
     if(!getAdaptiveInversional() || tempnote >= adaptiveFundamentalNote)

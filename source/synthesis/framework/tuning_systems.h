@@ -9,7 +9,7 @@
 #pragma once
 #include <array>
 
-    inline constexpr std::array<float,12> tEqualTuning     =  {0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f} ;
+    inline constexpr std::array<float,12> tEqualTuning     = { 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. } ;
 	inline constexpr std::array<float,12> tJustTuning      = { 0., .117313, .039101, .156414, -.13686, -.019547, -.174873, .019547, .136864, -.15641, -.311745, -.11731 };
 	inline constexpr std::array<float,12> tPartialTuning   = { 0., .117313, .039101, -.331291, -.13686, -.019547, -.486824, .019547, .405273, -.15641, -.311745, -.506371 };
 	inline constexpr std::array<float,12> tDuodeneTuning   = { 0., .117313, .039101, .156414, -.13686, -.019547, -.097763, .019547, .136864, -.15641, -.039101, -.11731 };
