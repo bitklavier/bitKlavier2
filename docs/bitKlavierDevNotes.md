@@ -1,5 +1,6 @@
 # Notes about how to do stuff in the bK codebase
 ## Quick Bug/Feature Notes
+- [ ] adaptive tuning interval scale stuff isn't actually registering; need callback, like for main tuning system, or update at the block
 - [ ] transposition slider limits to -12/12, and should allow for larger values when typed in
 - [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
 - [ ] weird dialog boxes when control-clicking on knobs
@@ -11,6 +12,7 @@
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
 - [ ] thinking the spiral view my be best as its own separate pop-up window, so it can be unobscured by all the knobs and sliders
+- [ ] for DP: tell me more about `params.tuningState.setFromAudioThread` and why it might be important. In TuningParametersView.cpp
 - [ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
   - Myra is working on. but Direct saves now, except Transpositions, so check that
 -[ ] check on Mods with Direct; are they working for all params? do they save?

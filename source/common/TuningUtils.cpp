@@ -4,6 +4,15 @@
 
 #include "TuningUtils.h"
 
+/**
+ * since the PitchClass and Fundamental enums are uint_32, we can't just map them to pitch classes
+ *      - these two functions are here to help
+ *
+ * todo: could probably combine these into a single template function
+ *          but these are very clear, so maybe better for readability
+ * @param Fundamental p
+ * @return int corresponding to PitchClass of Fundamental p
+ */
 int intFromFundamental(Fundamental p) {
     // Cast the enum class value to its underlying integer type
     auto pitchValue = static_cast<std::underlying_type_t<Fundamental>>(p);

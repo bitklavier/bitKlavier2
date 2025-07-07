@@ -58,6 +58,10 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         addOpenGlComponent(tuningtype_combo_box->getImageComponent());
     }
 
+    /**
+     * todo: make the content of this lambda a function, so it can be used in all the other places where we have tuning system menus
+     *          setOffsetsFromTuningSystem(chowdsp::EnumChoiceParameter<TuningSystem>::Ptr newTuning)
+     */
     tuningCallbacks += {listeners.addParameterListener(
         params.tuningState.tuningSystem,
         chowdsp::ParameterListenerThread::MessageThread,

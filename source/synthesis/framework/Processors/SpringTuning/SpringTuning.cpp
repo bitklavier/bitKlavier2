@@ -103,7 +103,7 @@ void SpringTuning::copy(SpringTuning* st)
      */
     // DBG("SpringTuning::copy called!!");
     sparams.rate->setParameterValue(st->getRate());
-    sparams.stiffness->setParameterValue(st->getStiffness());
+//    sparams.stiffness->setParameterValue(st->getStiffness());
     sparams.active->setParameterValue(st->getActive());
     sparams.drag->setParameterValue(st->getDrag());
     sparams.intervalStiffness->setParameterValue(st->getIntervalStiffness());
@@ -149,11 +149,11 @@ inline void SpringTuning::setRate(double r, bool start)
     }
 }
 
-inline void SpringTuning::setStiffness(double stiff)
-{
-    sparams.stiffness->setParameterValue(stiff);
-    stiffnessChanged();
-}
+//inline void SpringTuning::setStiffness(double stiff)
+//{
+//    sparams.stiffness->setParameterValue(stiff);
+//    stiffnessChanged();
+//}
 
 inline void SpringTuning::setTetherStiffness(double stiff)
 {
@@ -167,18 +167,18 @@ inline void SpringTuning::setIntervalStiffness(double stiff)
     intervalStiffnessChanged();
 }
 
-void SpringTuning::stiffnessChanged()
-{
-    for (auto spring : enabledSpringArray)
-    {
-        spring->setStiffness(sparams.stiffness->getCurrentValue());
-    }
-
-    for (auto spring : tetherSpringArray)
-    {
-        spring->setStiffness(sparams.stiffness->getCurrentValue());
-    }
-}
+//void SpringTuning::stiffnessChanged()
+//{
+//    for (auto spring : enabledSpringArray)
+//    {
+//        spring->setStiffness(sparams.stiffness->getCurrentValue());
+//    }
+//
+//    for (auto spring : tetherSpringArray)
+//    {
+//        spring->setStiffness(sparams.stiffness->getCurrentValue());
+//    }
+//}
 
 void SpringTuning::tetherStiffnessChanged()
 {
@@ -197,7 +197,7 @@ void SpringTuning::intervalStiffnessChanged()
 }
 
 inline double SpringTuning::getRate(void) { return sparams.rate->getCurrentValue(); }
-inline double SpringTuning::getStiffness(void) { return sparams.stiffness->getCurrentValue(); }
+//inline double SpringTuning::getStiffness(void) { return sparams.stiffness->getCurrentValue(); }
 inline double SpringTuning::getTetherStiffness(void) { return sparams.tetherStiffness->getCurrentValue(); }
 inline double SpringTuning::getIntervalStiffness(void) { return sparams.intervalStiffness->getCurrentValue(); }
 inline void SpringTuning::setDrag(double newdrag) { sparams.drag->setParameterValue(newdrag); }

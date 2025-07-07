@@ -85,10 +85,10 @@ public:
 
     inline void stop(void);
 
-    inline void setStiffness(double stiff);
+//    inline void setStiffness(double stiff);
     inline void setTetherStiffness(double stiff);
     inline void setIntervalStiffness(double stiff);
-    void stiffnessChanged();
+//    void stiffnessChanged();
     void tetherStiffnessChanged();
     void intervalStiffnessChanged();
 
@@ -100,7 +100,7 @@ public:
 
     inline void setRate(double r, bool start = true);
     inline double getRate(void);
-    inline double getStiffness(void);
+//    inline double getStiffness(void);
     inline double getTetherStiffness(void);
     inline double getIntervalStiffness(void);
     inline void setDrag(double newdrag);

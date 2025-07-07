@@ -15,28 +15,26 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     SpringTuningParams() : chowdsp::ParamHolder("SPRINGTUNING")
     {
         add(
-            scaleId,
-            active,
-            fundamentalSetsTether,
-            rate,
-            stiffness,
-            tetherStiffness,
-            intervalStiffness,
-            drag,
-            tetherWeightGlobal,
-            tetherWeightSecondaryGlobal,
-            intervalFundamental);
+            scaleId,                        // menu: interval-spring-length tuning system/scale
+            intervalFundamental,            // menu: fundamental for scaleId
+            scaleId_tether,                 // menu: tether-spring-location tuning system — where the anchor/tether points are located
+            tetherFundamental,              // menu: fundamental for scaleId_tether
+            active,                         // bool: system is on. hide from user, just needed for saving/loading
+            fundamentalSetsTether,          // bool: does the intervalFundamental affect the weights for the tethers? hide for now, keep always true
+            rate,                           // float: update rate for Timer running spring dynamics (Hz)
+            drag,                           // float: drag on the system (or 1 - drag)
+            intervalStiffness,              // float: relative stiffness of the interval springs
+            tetherStiffness,                // float: relative stiffness of tether springs
+            tetherWeightGlobal,             // float: fundamental weight
+            tetherWeightSecondaryGlobal     // float: other weights
+            );
     }
 
     /**
-     * todo: check the proper ranges for all of these
-     */
-
-    /**
-     * springs are active?
+     * active = springs are active if true
      */
      /**
-      * todo: probably should be false by default
+      * todo: probably should be false by default, so the timer doesn't start
       */
     chowdsp::BoolParameter::Ptr active {
         juce::ParameterID { "active", 100},
@@ -52,6 +50,49 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         "scaleId",
         TuningSystem::Just,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
+    };
+
+    /**
+      * intervalFundamental determines which fundamental to use for determining non-unique JI intervals
+      *     - for instance, if the fundamental is C, the C-D whole-step will be 9/8, and the D-E whole-step will be 10/9
+      *     - the PitchClass enum also includes other options
+      *         - none      => the system will always choose the most basic option (9/8, for instance, in the above example),
+      *                         so non-unique interval options go away
+  *             - lowest    => the lowest pitch in the current sounding cluster will be the fundamental
+      *         - highest   => the highest pitch in the current sounding cluster will be the fundamental
+      *         - last      => the most recent pitch played in the current sounding cluster will be the fundamental
+      *         - automatic => the fundamental is chosen based on an analysis of the current sounding cluster
+      *                         this analysis is based on the notion of the phantom fundamental
+      *                         described in our 2020 Computer Music Journal article
+      */
+    chowdsp::EnumChoiceParameter<Fundamental>::Ptr intervalFundamental {
+        juce::ParameterID { "intervalFundamental", 100 },
+        "intervalFundamental",
+        Fundamental::automatic,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
+
+    /**
+     * scaleId_tether = scale to use to determine the placement of the tether/anchor positions
+     *      - usually ET
+     */
+    chowdsp::EnumChoiceParameter<TuningSystem>::Ptr scaleId_tether {
+        juce::ParameterID { "scaleId_tether", 100 },
+        "scaleId_tether",
+        TuningSystem::Equal_Temperament,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
+    };
+
+    /**
+     * tetherFundamental = sets the fundamental for the anchor scale.
+     *      - the tether/anchor scale is most commonly ET, so tetherFundamental usually doesn't matter
+     *      - this is type PitchClass, since the additions in Fundamental (automatic, for instance) are not relevant
+     */
+    chowdsp::EnumChoiceParameter<PitchClass>::Ptr tetherFundamental {
+        juce::ParameterID { "tetherFundamental", 100 },
+        "tetherFundamental",
+        PitchClass::C,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
     /**
@@ -71,28 +112,29 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      *  - from the original bK code: "actually 1 - drag; drag of 1 => no drag, drag of 0 => infinite drag"
      *      right: so in old bK, the UI shows a high drag value doing what you expect, but sends 1 - drag to the system
      *          so, this default value should be very low, for high drag
- *          need to make sure this is handled properly on the UI side
+     *          need to make sure this is handled properly on the UI side, or perhaps in SpringTuning::setDrag, do the 1 - there?
+     *  - also, may want the center much higher, or a log slider in some way?
      */
     chowdsp::FloatParameter::Ptr drag {
         juce::ParameterID { "drag", 100 },
         "drag",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
-        0.1f,
+        0.1f, // high drag
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    /**
-     *  I THINK THIS DOESN'T DO ANYTHING AND CAN BE DELETED!
-     */
-    chowdsp::FloatParameter::Ptr stiffness {
-        juce::ParameterID { "stiffness", 100 },
-        "stiffness",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
-        0.5f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
-    };
+//    /**
+//     *  I THINK THIS DOESN'T DO ANYTHING AND CAN BE DELETED!
+//     */
+//    chowdsp::FloatParameter::Ptr stiffness {
+//        juce::ParameterID { "stiffness", 100 },
+//        "stiffness",
+//        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+//        0.5f,
+//        &chowdsp::ParamUtils::floatValToString,
+//        &chowdsp::ParamUtils::stringToFloatVal
+//    };
 
     /**
      * stiffness of the tether springs
@@ -122,6 +164,10 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      * when true, the fundamental will be used to set the relative tether weights
      *  - the fundamental will have a weight set by tetherWeightGlobal
      *  - the rest of the pitches will have weights set by tetherWeightSecondaryGlobal
+     *
+     *  this is super handy, so we don't have to set all the weights individually
+     *  - in fact, it may be smart to remove the old functionality, with a slider for EVERY pitch,
+     *      since it really isn't practical.
      */
     chowdsp::BoolParameter::Ptr fundamentalSetsTether {
         juce::ParameterID { "fundamentalSetsTether", 100},
@@ -156,25 +202,6 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-     /**
-      * intervalFundamental determines which fundamental to use for determining non-unique JI intervals
-      *     - for instance, if the fundamental is C, the C-D whole-step will be 9/8, and the D-E whole-step will be 10/9
-      *     - the PitchClass enum also includes other options
-      *         - none      => the system will always choose the most basic option (9/8, for instance, in the above example),
-      *                         so non-unique interval options go away
-  *             - lowest    => the lowest pitch in the current sounding cluster will be the fundamental
-      *         - highest   => the highest pitch in the current sounding cluster will be the fundamental
-      *         - last      => the most recent pitch played in the current sounding cluster will be the fundamental
-      *         - automatic => the fundamental is chosen based on an analysis of the current sounding cluster
-      *                         this analysis is based on the notion of the phantom fundamental
-      *                         described in our 2020 Computer Music Journal article
-      */
-     chowdsp::EnumChoiceParameter<Fundamental>::Ptr intervalFundamental {
-         juce::ParameterID { "intervalFundamental", 100 },
-         "intervalFundamental",
-         Fundamental::automatic,
-         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
-     };
 
      /**
       * todo:
