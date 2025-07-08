@@ -14,7 +14,7 @@
 //#include "tuning_systems.h"
 #include "SemitoneWidthSection.h"
 #include "AdaptiveTuningSection.h"
-#include "SpringTuningParams.h"
+#include "SpringTuningSection.h"
 
 class AdaptiveTuningSection;
 class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener
@@ -51,6 +51,7 @@ public:
 
     std::unique_ptr<SemitoneWidthSection> semitoneSection;
     std::unique_ptr<AdaptiveTuningSection> adaptiveSection;
+    std::unique_ptr<SpringTuningSection> springTuningSection;
 
     std::shared_ptr<PlainTextComponent> lastNoteDisplay;
     std::shared_ptr<PlainTextComponent> lastIntervalDisplay;

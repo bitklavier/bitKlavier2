@@ -10,6 +10,7 @@
 #include "SpringTuningParams.h"
 #include "open_gl_combo_box.h"
 #include "synth_slider.h"
+#include "TuningUtils.h"
 
 class SpringTuningSection : public SynthSection
 {

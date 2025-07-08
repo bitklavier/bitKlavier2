@@ -20,42 +20,58 @@ SpringTuningSection::SpringTuningSection (
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
         addSlider(slider.get());
         slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        slider->setName(param_->name); // will this break the mods?
         floatAttachments.emplace_back(std::move(attachment));
         _sliders.emplace_back(std::move(slider));
     }
 
-//
-//    if (auto* tuningParams = dynamic_cast<AdaptiveTuningParams*>(&params)) {
-//        auto index = tuningParams->tAdaptiveIntervalScale->getIndex();
-//        adaptiveIntervalScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveIntervalScale->paramID.toStdString());
-//        adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, nullptr);
-//        addAndMakeVisible(adaptiveIntervalScale_ComboBox.get());
-//        addOpenGlComponent(adaptiveIntervalScale_ComboBox->getImageComponent());
-//        setupTuningSystemMenu(adaptiveIntervalScale_ComboBox);
-//        adaptiveIntervalScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
-//
-//        index = tuningParams->tAdaptiveAnchorScale->getIndex();
-//        adaptiveAnchorScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorScale->paramID.toStdString());
-//        adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, nullptr);
-//        addAndMakeVisible(adaptiveAnchorScale_ComboBox.get());
-//        addOpenGlComponent(adaptiveAnchorScale_ComboBox->getImageComponent());
-//        setupTuningSystemMenu(adaptiveAnchorScale_ComboBox);
-//        adaptiveAnchorScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
-//    }
-//
-//    adaptiveAnchorFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorFundamental->paramID.toStdString());
-//    adaptiveAnchorFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorFundamental, listeners, *adaptiveAnchorFundamental_ComboBox, nullptr);
-//    addAndMakeVisible(adaptiveAnchorFundamental_ComboBox.get());
-//    addOpenGlComponent(adaptiveAnchorFundamental_ComboBox->getImageComponent());
+    if (auto* tuningParams = dynamic_cast<SpringTuningParams*>(&params)) {
+        auto index = tuningParams->scaleId->getIndex();
+        scaleId_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId->paramID.toStdString());
+        scaleId_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId, listeners, *scaleId_ComboBox, nullptr);
+        addAndMakeVisible(scaleId_ComboBox.get());
+        addOpenGlComponent(scaleId_ComboBox->getImageComponent());
+        setupTuningSystemMenu(scaleId_ComboBox);
+        scaleId_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
+        index = tuningParams->scaleId_tether->getIndex();
+        scaleId_tether_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId_tether->paramID.toStdString());
+        scaleId_tether_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId_tether, listeners, *scaleId_tether_ComboBox, nullptr);
+        addAndMakeVisible(scaleId_tether_ComboBox.get());
+        addOpenGlComponent(scaleId_tether_ComboBox->getImageComponent());
+        setupTuningSystemMenu(scaleId_tether_ComboBox);
+        scaleId_tether_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
+    }
+
+    intervalFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
+    intervalFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.intervalFundamental, listeners, *intervalFundamental_ComboBox, nullptr);
+    addAndMakeVisible(intervalFundamental_ComboBox.get());
+    addOpenGlComponent(intervalFundamental_ComboBox->getImageComponent());
+
+    tetherFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
+    tetherFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tetherFundamental, listeners, *tetherFundamental_ComboBox, nullptr);
+    addAndMakeVisible(tetherFundamental_ComboBox.get());
+    addOpenGlComponent(tetherFundamental_ComboBox->getImageComponent());
+
+    // label to show current fundamental
     currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");
     addOpenGlComponent(currentFundamental);
     currentFundamental->setTextSize (12.0f);
     currentFundamental->setJustification(juce::Justification::left);
 
-    sectionBorder.setName("adaptivetuning");
-    sectionBorder.setText("Adaptive Tuning");
+    intervalsLabel = std::make_shared<PlainTextComponent>("intervals", "Intervals");
+    addOpenGlComponent(intervalsLabel);
+    intervalsLabel->setTextSize (12.0f);
+    intervalsLabel->setJustification(juce::Justification::centred);
+
+    anchorsLabel = std::make_shared<PlainTextComponent>("anchors", "Anchors");
+    addOpenGlComponent(anchorsLabel);
+    anchorsLabel->setTextSize (12.0f);
+    anchorsLabel->setJustification(juce::Justification::centred);
+
+    sectionBorder.setName("springtuning");
+    sectionBorder.setText("Spring Tuning");
     sectionBorder.setTextLabelPosition(juce::Justification::centred);
     addAndMakeVisible(sectionBorder);
 }
@@ -63,14 +79,17 @@ SpringTuningSection::SpringTuningSection (
 SpringTuningSection::~SpringTuningSection() { }
 
 void SpringTuningSection::paintBackground(juce::Graphics& g) {
-//    setLabelFont(g);
-//    drawLabelForComponent(g, TRANS("Cluster Threshold (ms)"), clusterThreshold_Slider.get());
-//    drawLabelForComponent(g, TRANS("History (notes)"), history_Slider.get());
-//
-//    paintKnobShadows(g);
-//    paintChildrenBackgrounds(g);
-//
-//    sectionBorder.paint(g);
+
+    setLabelFont(g);
+    for (auto& slider : _sliders)
+    {
+        drawLabelForComponent (g, slider->getName(), slider.get());
+    }
+
+    paintKnobShadows(g);
+    paintChildrenBackgrounds(g);
+
+    sectionBorder.paint(g);
 }
 
 void SpringTuningSection::resized() {
@@ -85,6 +104,31 @@ void SpringTuningSection::resized() {
     int labelsectionheight = findValue(Skin::kLabelHeight);
 
     area.reduce(largepadding, largepadding);
+
+    juce::Rectangle<int> tuningSystemLabelsBox = area.removeFromTop(comboboxheight);
+    intervalsLabel->setBounds(tuningSystemLabelsBox.removeFromLeft(tuningSystemLabelsBox.getWidth() * 0.5));
+    anchorsLabel->setBounds(tuningSystemLabelsBox);
+
+    area.removeFromTop(smallpadding);
+
+    juce::Rectangle<int> menusBox = area.removeFromTop(comboboxheight);
+    juce::Rectangle<int> scaleIdMenuBox = menusBox.removeFromLeft(menusBox.getWidth() * 0.5);
+    scaleIdMenuBox.reduce(20, 0);
+    menusBox.reduce(20, 0);
+    juce::Rectangle<int> intervalFundamental_ComboBoxBox = scaleIdMenuBox.removeFromRight(scaleIdMenuBox.getWidth() * 0.5);
+    juce::Rectangle<int> scaleIdTetherMenuBox = menusBox.removeFromLeft(menusBox.getWidth() * 0.5);
+    juce::Rectangle<int> tetherFundamental_ComboBoxBox = menusBox;
+
+    scaleId_ComboBox->setBounds(scaleIdMenuBox);
+    intervalFundamental_ComboBox->setBounds(intervalFundamental_ComboBoxBox);
+    scaleId_tether_ComboBox->setBounds(scaleIdTetherMenuBox);
+    tetherFundamental_ComboBox->setBounds(tetherFundamental_ComboBoxBox);
+
+    area.removeFromTop(smallpadding);
+
+    juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
+//    knobsBox.reduce(knobsBox.getWidth() * 0.5, 0);
+    placeKnobsInArea(knobsBox, _sliders, true);
 
 //
 //    juce::Rectangle<int> tuningSystemLabelsBox = area.removeFromTop(comboboxheight);

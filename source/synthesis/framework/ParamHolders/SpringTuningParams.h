@@ -47,7 +47,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr scaleId {
         juce::ParameterID { "scaleId", 100 },
-        "scaleId",
+        "Interval Tuning",
         TuningSystem::Just,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
     };
@@ -67,7 +67,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
       */
     chowdsp::EnumChoiceParameter<Fundamental>::Ptr intervalFundamental {
         juce::ParameterID { "intervalFundamental", 100 },
-        "intervalFundamental",
+        "Interval Fundamental",
         Fundamental::automatic,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
@@ -78,7 +78,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr scaleId_tether {
         juce::ParameterID { "scaleId_tether", 100 },
-        "scaleId_tether",
+        "Anchor Tuning",
         TuningSystem::Equal_Temperament,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }
     };
@@ -90,7 +90,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::EnumChoiceParameter<PitchClass>::Ptr tetherFundamental {
         juce::ParameterID { "tetherFundamental", 100 },
-        "tetherFundamental",
+        "Anchor Fundamental",
         PitchClass::C,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
@@ -100,7 +100,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr rate {
         juce::ParameterID { "rate", 100 },
-        "rate",
+        "Rate",
         chowdsp::ParamUtils::createNormalisableRange (5.0f, 400.0f, 100.0f),
         100.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -117,7 +117,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr drag {
         juce::ParameterID { "drag", 100 },
-        "drag",
+        "Drag",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.1f, // high drag
         &chowdsp::ParamUtils::floatValToString,
@@ -141,7 +141,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr tetherStiffness {
         juce::ParameterID { "tetherStiffness", 100 },
-        "tetherStiffness",
+        "Tether Stiffness",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
@@ -153,7 +153,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr intervalStiffness {
         juce::ParameterID { "intervalStiffness", 100 },
-        "intervalStiffness",
+        "Interval Stiffness",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
@@ -183,7 +183,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr tetherWeightGlobal {
         juce::ParameterID { "tetherWeightGlobal", 100 },
-        "tetherWeightGlobal",
+        "Fund Weight",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
@@ -195,7 +195,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr tetherWeightSecondaryGlobal {
         juce::ParameterID { "tetherWeightSecondaryGlobal", 100 },
-        "tetherWeightSecondaryGlobal",
+        "Other Weights",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.1f,
         &chowdsp::ParamUtils::floatValToString,

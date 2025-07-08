@@ -37,6 +37,9 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     adaptiveSection = std::make_unique<AdaptiveTuningSection>(name, params.tuningState.adaptiveParams, listeners, *this);
     addSubSection(adaptiveSection.get());
 
+    springTuningSection = std::make_unique<SpringTuningSection>(name, params.tuningState.springTuningParams, listeners, *this);
+    addSubSection(springTuningSection.get());
+
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
         auto index = tuningParams->tuningState.tuningSystem->getIndex();
@@ -151,15 +154,18 @@ void TuningParametersView::resized()
 
     //semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 50, getKnobSectionHeight() + 50 + getTextComponentHeight() * 2);
     semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 105, getKnobSectionHeight() + 10);
-    adaptiveSection->setBounds(circular_keyboard->getRight(), circular_keyboard->getY(), 500, 200);
+    adaptiveSection->setBounds(circular_keyboard->getRight() + 20, circular_keyboard->getY(), 500, 200);
 
     juce::Rectangle<int> outputKnobsArea = {50, semitoneSection->getBottom() + knob_section_height, 100, 100};
         //bounds.removeFromTop(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
 
-    lastNoteDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY(), 200, 200);
-    lastFrequencyDisplay->setBounds(lastNoteDisplay->getRight() + 20, semitoneSection->getY(), 200, 200);
-    lastIntervalDisplay->setBounds(lastFrequencyDisplay->getRight() + 20, semitoneSection->getY(), 200, 200);
+    juce::Rectangle<int> springTuningBox = {adaptiveSection->getX(), semitoneSection->getY(), 500, 200};
+    springTuningSection->setBounds(springTuningBox);
+
+    lastNoteDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY(), 100, 30);
+    lastFrequencyDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 30, 100, 30);
+    lastIntervalDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 60, 100, 30);
 
     SynthSection::resized();
 }
