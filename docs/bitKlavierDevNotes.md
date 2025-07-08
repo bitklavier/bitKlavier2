@@ -18,6 +18,7 @@
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
+- [ ] how to think about copy constructors and parameters: `void SpringTuning::copy(SpringTuning* st)` for instance. these require that the parameters be set internally, which feels off. 
 - [ ] thinking the spiral view my be best as its own separate pop-up window, so it can be unobscured by all the knobs and sliders
 - [ ] for DP: tell me more about `params.tuningState.setFromAudioThread` and why it might be important. In TuningParametersView.cpp
   - this was a conditional that Davis was working with, concerned that there may be parameters that are updated on the audio thread for some reason that would then trigger this callback

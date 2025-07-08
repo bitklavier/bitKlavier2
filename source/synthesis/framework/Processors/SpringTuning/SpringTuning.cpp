@@ -26,20 +26,28 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
     enabledSpringArray.ensureStorageAllocated(128);
     enabledSpringArray.clear();
 
-    tetherTuning = juce::Array<float>({0,0,0,0,0,0,0,0,0,0,0,0});
-
     springMode.ensureStorageAllocated(12);
     for(int i=0; i<12; i++) springMode.insert(i, true);
-
-    intervalTuning = juce::Array<float>({0.0, 0.117313, 0.039101, 0.156414, -0.13686, -0.019547, -0.174873, 0.019547, 0.136864, -0.15641, -0.311745, -0.11731});
 
     useLowestNoteForFundamental = false;
     useHighestNoteForFundamental = false;
     useLastNoteForFundamental = false;
 
-    //setFundamentalSetsTether(true);        //needs UI toggle; when on, don't show tether sliders for current notes, only the two tether weight sliders
-    tetherFundamental = Fundamental::C;
+    /**
+     *
+     * in this version, we ALWAYS do this, except in None mode
+     */
+    usingFundamentalForIntervalSprings = true;
 
+    /**
+     * todo: remove all this setFundamentalSetsTether, which is either broken or not needed anymore.
+     */
+    //setFundamentalSetsTether(true);        //needs UI toggle; when on, don't show tether sliders for current notes, only the two tether weight sliders
+//    tetherFundamental = Fundamental::C;
+
+    /**
+     * todo: check these initialization vals, probably should be overwritten by params in SpringTuningParams
+     */
     for (int i = 0; i < 13; i++) springWeights[i] = 0.5;
     springWeights[7] = 0.75;
     springWeights[9] = 0.25;
@@ -81,10 +89,21 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
 //    if (st != nullptr) copy(st);
 
     /**
-     * todo: remove true here
+     * todo: remove true here; this starts the Timer on construction, which we don't want ultimately
      */
     setRate(sparams.rate->getCurrentValue(), true);
 //    setIntervalFundamental((PitchClass)(automatic + 1));
+
+
+    setTetherFundamental(PitchClass::C);
+    juce::Array<float> _tetherTuning = juce::Array<float>({0,0,0,0,0,0,0,0,0,0,0,0});
+    setTetherTuning(_tetherTuning);
+
+
+    setIntervalFundamental(Fundamental::automatic);
+    juce::Array<float> _intervalTuning = juce::Array<float>({0.0, 0.117313, 0.039101, 0.156414, -0.13686, -0.019547, -0.174873, 0.019547, 0.136864, -0.15641, -0.311745, -0.11731});
+    setIntervalTuning(_intervalTuning);
+
 }
 
 SpringTuning::~SpringTuning()
@@ -95,45 +114,50 @@ SpringTuning::~SpringTuning()
 
 inline void SpringTuning::stop(void) { stopTimer(); DBG("SpringTuning: stopping timer");}
 
+/**
+ * shouldn't need this copy constructor
+ *      preps will be copied by valueTree
+ *
+ */
 //void SpringTuning::copy(SpringTuning::Ptr st)
-void SpringTuning::copy(SpringTuning* st)
-{
-    /**
-     * todo: is this copying ok with the sparams? do we have a new sparams that these values are copying into?
-     */
-    // DBG("SpringTuning::copy called!!");
-    sparams.rate->setParameterValue(st->getRate());
-//    sparams.stiffness->setParameterValue(st->getStiffness());
-    sparams.active->setParameterValue(st->getActive());
-    sparams.drag->setParameterValue(st->getDrag());
-    sparams.intervalStiffness->setParameterValue(st->getIntervalStiffness());
-    sparams.tetherStiffness->setParameterValue(st->getTetherStiffness());
-
-    for (int i = 0; i < 13; i++)
-    {
-        springWeights[i] = st->springWeights[i];
-    }
-
-    for (int i=0; i<12; i++)
-    {
-        setSpringMode(i, st->getSpringMode(i));
-    }
-
-    sparams.scaleId->setParameterValue(st->getScaleId());
-
-    setIntervalTuning(st->getIntervalTuning());
-    setTetherTuning(st->getTetherTuning());
-
-    setSpringWeights(st->getSpringWeights());
-    setTetherWeights(st->getTetherWeights());
-
-    setIntervalFundamental(st->getIntervalFundamental());
-    //setUsingFundamentalForIntervalSprings(st->getUsingFundamentalForIntervalSprings());
-
-    setFundamentalSetsTether(st->getFundamentalSetsTether());
-    setTetherWeightGlobal(st->getTetherWeightGlobal());
-    setTetherWeightSecondaryGlobal(st->getTetherWeightSecondaryGlobal());
-}
+//void SpringTuning::copy(SpringTuning* st)
+//{
+//    /**
+//     * todo: is this copying ok with the sparams? do we have a new sparams that these values are copying into?
+//     */
+//    // DBG("SpringTuning::copy called!!");
+//    sparams.rate->setParameterValue(st->getRate());
+////    sparams.stiffness->setParameterValue(st->getStiffness());
+//    sparams.active->setParameterValue(st->getActive());
+//    sparams.drag->setParameterValue(st->getDrag());
+//    sparams.intervalStiffness->setParameterValue(st->getIntervalStiffness());
+//    sparams.tetherStiffness->setParameterValue(st->getTetherStiffness());
+//
+//    for (int i = 0; i < 13; i++)
+//    {
+//        springWeights[i] = st->springWeights[i];
+//    }
+//
+//    for (int i=0; i<12; i++)
+//    {
+//        setSpringMode(i, st->getSpringMode(i));
+//    }
+//
+//    sparams.scaleId->setParameterValue(st->getScaleId());
+//
+//    setIntervalTuning(st->getIntervalTuning());
+//    setTetherTuning(st->getTetherTuning());
+//
+//    setSpringWeights(st->getSpringWeights());
+//    setTetherWeights(st->getTetherWeights());
+//
+//    setIntervalFundamental(st->getIntervalFundamental());
+//    //setUsingFundamentalForIntervalSprings(st->getUsingFundamentalForIntervalSprings());
+//
+//    setFundamentalSetsTether(st->getFundamentalSetsTether());
+//    setTetherWeightGlobal(st->getTetherWeightGlobal());
+//    setTetherWeightSecondaryGlobal(st->getTetherWeightSecondaryGlobal());
+//}
 
 inline void SpringTuning::setRate(double r, bool start)
 {
@@ -211,9 +235,9 @@ void SpringTuning::setTetherWeightSecondaryGlobal(double s) { sparams.tetherWeig
 bool SpringTuning::getSpringMode(int which) {return springMode.getUnchecked(which);}
 bool SpringTuning::getSpringModeButtonState(int which) {return springMode.getUnchecked(which);}
 Fundamental SpringTuning::getIntervalFundamental() { return sparams.intervalFundamental->get(); }
-Fundamental SpringTuning::getIntervalFundamentalActive() { return intervalFundamentalActive; }
+PitchClass SpringTuning::getIntervalFundamentalActive() { return intervalFundamentalActive; }
 juce::Array<float> SpringTuning::getIntervalTuning(void){return intervalTuning;}
-Fundamental SpringTuning::getTetherFundamental() {return tetherFundamental;}
+PitchClass SpringTuning::getTetherFundamental() {return tetherFundamental;}
 juce::Array<float> SpringTuning::getTetherTuning(void) {return tetherTuning;}
 void SpringTuning::setUsingFundamentalForIntervalSprings(bool use) { usingFundamentalForIntervalSprings = use; }
 bool SpringTuning::getUsingFundamentalForIntervalSprings(void) { return usingFundamentalForIntervalSprings; }
@@ -272,18 +296,19 @@ void SpringTuning::setTetherTuning(juce::Array<float> tuning)
     const juce::ScopedLock sl (lock);
 
     tetherTuning = tuning;
+    DBG("intFromPitchClass(tetherFundamental) =  " + juce::String(intFromPitchClass(tetherFundamental)));
 
     for (int i = 0; i < 128; i++)
     {
-        tetherParticleArray[i]->setX( (i * 100.0) + tetherTuning[(i - static_cast<int>(tetherFundamental)) % 12] );
-        tetherParticleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - static_cast<int>(tetherFundamental)) % 12] );
+        tetherParticleArray[i]->setX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        tetherParticleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
 
         //DBG("rest X: " + String((i * 100.0) + tetherTuning[i % 12]));
-        particleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - static_cast<int>(tetherFundamental)) % 12] );
+        particleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
     }
 }
 
-void SpringTuning::setTetherFundamental(Fundamental newfundamental)
+void SpringTuning::setTetherFundamental(PitchClass newfundamental)
 {
     tetherFundamental = newfundamental;
     setTetherTuning(getTetherTuning());
@@ -299,11 +324,23 @@ void SpringTuning::setIntervalFundamental(Fundamental newfundamental)
     sparams.intervalFundamental->setParameterValue(newfundamental);
     intervalFundamentalChanged();
 }
+
 void SpringTuning::intervalFundamentalChanged()
 {
     auto newfundamental = sparams.intervalFundamental->get();
 
-    if(newfundamental < Fundamental::none) intervalFundamentalActive = newfundamental;
+    /**
+     * todo: this is not getting called ever, so none of these are getting set correctly
+     */
+    DBG("intervalFundamentalChanged " + fundamentalToString(newfundamental));
+
+
+    if(newfundamental < Fundamental::none) {
+
+        //intervalFundamentalActive = newfundamental;
+        intervalFundamentalActive = getPitchClassFromInt(intFromFundamental(newfundamental));
+        DBG("intervalFundamentalActive set to " + pitchClassToString(intervalFundamentalActive));
+    }
 
     if(newfundamental == Fundamental::none) setUsingFundamentalForIntervalSprings(false);
     else setUsingFundamentalForIntervalSprings(true);
@@ -320,7 +357,15 @@ void SpringTuning::intervalFundamentalChanged()
     if(newfundamental == Fundamental::automatic) useAutomaticFundamental = true;
     else useAutomaticFundamental = false;
 
-    setTetherFundamental(intervalFundamentalActive);
+    DBG("new interval fundamental setting = " + fundamentalToString(newfundamental));
+    DBG("useAutomaticFundamental = " + juce::String((int)useAutomaticFundamental));
+
+    /*
+     * this was in the original code and seems to be a mistake to me
+     * the tetherFundamental should only change when the user changes it in the menu
+     *      not by the system in this function here
+     */
+//    setTetherFundamental(intervalFundamentalActive);
 }
 
 /*
@@ -470,39 +515,40 @@ Particle* SpringTuning::getParticle(int note) { return particleArray[note];}
 
 void SpringTuning::addNote(int note)
 {
-    DBG("SpringTuning::addNote " + juce::String(note));
     addParticle(note);
 
     if(useLowestNoteForFundamental)
     {
         // DBG("lowest current note = " + String(getLowestActiveParticle()));
-        intervalFundamentalActive = (Fundamental)(getLowestActiveParticle() % 12);
+        intervalFundamentalActive = getPitchClassFromInt(getLowestActiveParticle() % 12);
 
-        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
+//        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
     }
     else if(useHighestNoteForFundamental)
     {
         // DBG("highest current note = " + String(getHighestActiveParticle()));
-        intervalFundamentalActive = (Fundamental)(getHighestActiveParticle() % 12);
+        intervalFundamentalActive = getPitchClassFromInt(getHighestActiveParticle() % 12);
 
-        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
+//        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
     }
     else if(useLastNoteForFundamental)
     {
         // DBG("last note = " + String(note));
-        intervalFundamentalActive = (Fundamental)(note % 12);
+        intervalFundamentalActive = getPitchClassFromInt(note % 12);
 
-        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
+//        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
     }
     else if(useAutomaticFundamental)
     {
         findFundamental(); //sets intervalFundamental internally
-        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
+//        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
     }
 
     addSpringsByNote(note);
 
     if(useLowestNoteForFundamental || useHighestNoteForFundamental || useLastNoteForFundamental || useAutomaticFundamental) retuneAllActiveSprings();
+
+    DBG("addNote: intervalFundamentalActive = " + intFromPitchClass(intervalFundamentalActive));
 }
 
 void SpringTuning::removeNote(int note)
@@ -513,12 +559,12 @@ void SpringTuning::removeNote(int note)
     if(useLowestNoteForFundamental)
     {
         // DBG("lowest current note = " + String(getLowestActiveParticle()));
-        intervalFundamentalActive = (Fundamental)(getLowestActiveParticle() % 12);
+        intervalFundamentalActive = getPitchClassFromInt(getLowestActiveParticle() % 12);
     }
     else if(useHighestNoteForFundamental)
     {
         // DBG("highest current note = " + String(getHighestActiveParticle()));
-        intervalFundamentalActive = (Fundamental)(getHighestActiveParticle() % 12);
+        intervalFundamentalActive = getPitchClassFromInt(getHighestActiveParticle() % 12);
     }
     else if(useAutomaticFundamental)
     {
@@ -554,6 +600,7 @@ void SpringTuning::toggleNote(int noteIndex)
 
 void SpringTuning::findFundamental()
 {
+    DBG("findFundamental() called");
     const juce::ScopedLock sl (lock);
 
     //create sorted array of notes
@@ -615,21 +662,25 @@ void SpringTuning::findFundamental()
         if(fundamental_57 > -1)
         {
             // DBG("CHOICE = " + String(fundamental_57));
-            intervalFundamentalActive = (Fundamental(fundamental_57));
+//            intervalFundamentalActive = (Fundamental(fundamental_57));
+            intervalFundamentalActive = getPitchClassFromInt(fundamental_57);
         }
         else if(fundamental_48 > -1)
         {
             // DBG("CHOICE = " + String(fundamental_48));
-            intervalFundamentalActive = (Fundamental(fundamental_48));
+            intervalFundamentalActive = getPitchClassFromInt(fundamental_48);
 
         }
         else if(fundamental_39 > -1)
         {
             // DBG("CHOICE = " + String(fundamental_39));
-            intervalFundamentalActive = (Fundamental(fundamental_39));
+            intervalFundamentalActive = getPitchClassFromInt(fundamental_39);
 
         }
     }
+
+    DBG("spring tuning findFundamental() = " + pitchClassToString(intervalFundamentalActive));
+    sparams.tCurrentSpringTuningFundamental->setParameterValue(intervalFundamentalActive);
 }
 
 //void SpringTuning::addSpring(Spring::Ptr spring)
@@ -705,9 +756,9 @@ void SpringTuning::addSpringsByNote(int note)
 
                     diff = fabs(100. *
                     ((scaleDegree1 +
-                      intervalTuning.getUnchecked((scaleDegree1 - intFromFundamental(intervalFundamentalActive)) % 12)) -
+                      intervalTuning.getUnchecked((scaleDegree1 - intFromPitchClass(intervalFundamentalActive)) % 12)) -
                     (scaleDegree2 +
-                     intervalTuning.getUnchecked((scaleDegree2 - intFromFundamental(intervalFundamentalActive)) % 12))));
+                     intervalTuning.getUnchecked((scaleDegree2 - intFromPitchClass(intervalFundamentalActive)) % 12))));
                 }
                 else diff = diff * 100 + intervalTuning.getUnchecked(interval) * 100;
 
@@ -734,7 +785,7 @@ void SpringTuning::addSpringsByNote(int note)
                 int tnoteA = tether->getA()->getNote();
                 int tnoteB = tether->getB()->getNote();
 
-                if(tnoteA % 12 == static_cast<int>(getTetherFundamental()) || tnoteB % 12 == static_cast<int>(getTetherFundamental()))
+                if(tnoteA % 12 == intFromPitchClass(getTetherFundamental()) || tnoteB % 12 == intFromPitchClass(getTetherFundamental()))
                 {
                     // DBG("SpringTuning::addSpringsByNote getTetherWeightGlobal = " + String((int)getTetherWeightGlobal()));
                     setTetherWeight(tnoteA, getTetherWeightGlobal());
@@ -795,8 +846,8 @@ void SpringTuning::retuneIndividualSpring(Spring* spring)
         int scaleDegree2 = spring->getB()->getNote();
         //int intervalFundamental = 0; //temporary, will set in preparation
 
-        float diff =    (100. * scaleDegree2 + intervalTuning[(scaleDegree2 - intFromFundamental(intervalFundamentalActive)) % 12]) -
-                     (100. * scaleDegree1 + intervalTuning[(scaleDegree1 - intFromFundamental(intervalFundamentalActive)) % 12]);
+        float diff =    (100. * scaleDegree2 + intervalTuning[(scaleDegree2 - intFromPitchClass(intervalFundamentalActive)) % 12]) -
+                     (100. * scaleDegree1 + intervalTuning[(scaleDegree1 - intFromPitchClass(intervalFundamentalActive)) % 12]);
 
         spring->setRestingLength(fabs(diff));
     }
@@ -859,24 +910,25 @@ void SpringTuning::print()
 {
     DBG("~ ~ ~ ~ ~ ~ ~ Spring Tuning ~ ~ ~ ~ ~ ~");
     DBG("scaleId                        = " + sparams.scaleId->getCurrentValueAsText());
-    DBG("active                         = " + sparams.active->getCurrentValueAsText());
+    DBG("  intervalFundamental          = " + sparams.intervalFundamental->getCurrentValueAsText());
+    DBG("tether scaleId                 = " + sparams.scaleId_tether->getCurrentValueAsText());
+    DBG("  tetherFundamental =          = " + sparams.tetherFundamental->getCurrentValueAsText());
     DBG("rate                           = " + sparams.rate->getCurrentValueAsText());
     DBG("drag                           = " + sparams.drag->getCurrentValueAsText());
     DBG("intervalStiffness              = " + sparams.intervalStiffness->getCurrentValueAsText());
     DBG("tetherStiffness                = " + sparams.tetherStiffness->getCurrentValueAsText());
-    DBG("fundamentalSetsTether          = " + sparams.fundamentalSetsTether->getCurrentValueAsText());
     DBG("tetherWeightGlobal             = " + sparams.tetherWeightGlobal->getCurrentValueAsText());
     DBG("tetherWeightSecondaryGlobal    = " + sparams.tetherWeightSecondaryGlobal->getCurrentValueAsText());
-    DBG("intervalFundamental            = " + sparams.intervalFundamental->getCurrentValueAsText());
 
-	for (int i = 0; i < 128; i++)
-	{
-        juce::String printStatus = "";
-		if (particleArray[i]->getEnabled())
-        {
-            DBG("particle: " + juce::String(i) + " " + juce::String(particleArray[i]->getX()));
-        }
-	}
+
+//	for (int i = 0; i < 128; i++)
+//	{
+//        juce::String printStatus = "";
+//		if (particleArray[i]->getEnabled())
+//        {
+//            DBG("particle: " + juce::String(i) + " " + juce::String(particleArray[i]->getX()));
+//        }
+//	}
 }
 
 void SpringTuning::printParticles()

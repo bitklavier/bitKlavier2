@@ -16,17 +16,18 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     {
         add(
             scaleId,                        // menu: interval-spring-length tuning system/scale
-            intervalFundamental,            // menu: fundamental for scaleId
+            intervalFundamental,            // menu: fundamental for scaleId; note that this using the enum Fundamental, which is NOT ints, so can't just be cast to an actual fundamental [0-11]
             scaleId_tether,                 // menu: tether-spring-location tuning system — where the anchor/tether points are located
-            tetherFundamental,              // menu: fundamental for scaleId_tether
+            tetherFundamental,              // menu: fundamental for scaleId_tether (Fundamental)
             active,                         // bool: system is on. hide from user, just needed for saving/loading
-            fundamentalSetsTether,          // bool: does the intervalFundamental affect the weights for the tethers? hide for now, keep always true
+            fundamentalSetsTether,          // bool: does the intervalFundamental affect the weights for the tethers? hide for now, keep always true //**** get rid of this, should always be false, bug from previous version
             rate,                           // float: update rate for Timer running spring dynamics (Hz)
             drag,                           // float: drag on the system (or 1 - drag)
             intervalStiffness,              // float: relative stiffness of the interval springs
             tetherStiffness,                // float: relative stiffness of tether springs
             tetherWeightGlobal,             // float: fundamental weight
-            tetherWeightSecondaryGlobal     // float: other weights
+            tetherWeightSecondaryGlobal,    // float: other weights
+            tCurrentSpringTuningFundamental // PitchClass: for keeping track of the current fundamental, given by automatic/last/first, etc... for UI
             );
     }
 
@@ -172,7 +173,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr fundamentalSetsTether {
         juce::ParameterID { "fundamentalSetsTether", 100},
         "fundamentalSetsTether",
-        true
+        false
     };
 
     /**
@@ -200,6 +201,13 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         0.1f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::EnumChoiceParameter<PitchClass>::Ptr tCurrentSpringTuningFundamental {
+        juce::ParameterID { "tCurrentSpringTuningFundamental", 100 },
+        "tCurrentSpringTuningFundamental",
+        PitchClass::C,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
 

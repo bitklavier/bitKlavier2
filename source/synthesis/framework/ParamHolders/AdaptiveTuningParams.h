@@ -101,14 +101,6 @@ struct AdaptiveTuningParams : public chowdsp::ParamHolder
     /**
      * tCurrentAdaptiveFundamental = current adaptive fundamental, for display
      */
-//    chowdsp::FloatParameter::Ptr tCurrentAdaptiveFundamental {
-//        juce::ParameterID { "tCurrentAdaptiveFundamental", 100 },
-//        "tCurrentAdaptiveFundamental",
-//            chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.0f, 6.0f),
-//            0.0f,
-//            &chowdsp::ParamUtils::floatValToString,
-//            &chowdsp::ParamUtils::stringToFloatVal
-//    };
     chowdsp::EnumChoiceParameter<PitchClass>::Ptr tCurrentAdaptiveFundamental {
         juce::ParameterID { "tCurrentAdaptiveFundamental", 100 },
         "tCurrentAdaptiveFundamental",

@@ -17,6 +17,12 @@ int intFromFundamental(Fundamental p) {
     // Cast the enum class value to its underlying integer type
     auto pitchValue = static_cast<std::underlying_type_t<Fundamental>>(p);
 
+    if (p == Fundamental::FundamentalNil || pitchValue == 0)
+    {
+        DBG("intFromFundamental failure, returning 0");
+        return 0;
+    }
+
     // If the value is 0 (PitchClassNil), return -1 or handle as an error
 //    if (pitchValue == 0) {
 //        // You can return a special value like -1 to indicate an invalid input
@@ -43,6 +49,12 @@ int intFromFundamental(Fundamental p) {
 int intFromPitchClass(PitchClass p) {
     // Cast the enum class value to its underlying integer type
     auto pitchValue = static_cast<std::underlying_type_t<PitchClass>>(p);
+
+    if (p == PitchClass::PitchClassNil || pitchValue == 0)
+    {
+        DBG("intFromPitchClass failure, returning 0");
+        return 0;
+    }
 
 //    // If the value is 0 (PitchClassNil), return -1 or handle as an error
 //    if (pitchValue == 0) {

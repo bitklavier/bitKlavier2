@@ -409,7 +409,7 @@ void TuningState::keyPressed(int noteNumber)
      */
         //tuning->prep->getSpringTuning()->addNote(noteNumber);
         springTuner->addNote(noteNumber);
-//        springTuner->print();
+        springTuner->print();
     }
 
     /*

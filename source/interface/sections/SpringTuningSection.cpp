@@ -129,5 +129,7 @@ void SpringTuningSection::resized() {
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
     placeKnobsInArea(knobsBox, _sliders, true);
 
+    currentFundamental->setBounds(area);
+
     SynthSection::resized();
 }

@@ -134,6 +134,28 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         })
     };
 
+    /*
+     * similar, listening for changes to current spring tuning fundamental, for display
+     */
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.tCurrentSpringTuningFundamental,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("updating spring tuning current fundamental display");
+            springTuningSection->currentFundamental->setText ("Current Fundamental = " + this->params.tuningState.springTuningParams.tCurrentSpringTuningFundamental->getCurrentValueAsText());
+        })
+    };
+
+    /*
+     * need call back for intervalFundamentalChanged, to notify when the user changes this and make updates
+     */
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.intervalFundamental,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("intervalFundamental changed by user");
+            params.tuningState.springTuner->intervalFundamentalChanged();
+        })
+    };
+
     circular_keyboard->addMyListener(this);
 }
 
