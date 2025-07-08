@@ -115,6 +115,8 @@ void AdaptiveTuningSection::resized() {
 
     juce::Rectangle<int>comboBoxArea = area.removeFromTop(comboboxheight);
     juce::Rectangle<int>intervalComboBoxArea = comboBoxArea.removeFromLeft(comboBoxArea.getWidth() * 0.5);
+    comboBoxArea.reduce(20,0);
+    intervalComboBoxArea.reduce(20,0);
     adaptiveIntervalScale_ComboBox->setBounds(intervalComboBoxArea.removeFromLeft(intervalComboBoxArea.getWidth() * 0.5));
     useInversionOfIntervalScale_Toggle->setBounds(intervalComboBoxArea);
     adaptiveAnchorScale_ComboBox->setBounds(comboBoxArea.removeFromLeft(comboBoxArea.getWidth() * 0.5));
@@ -123,8 +125,6 @@ void AdaptiveTuningSection::resized() {
     area.removeFromTop(smallpadding);
 
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
-//    knobsBox.reduce(knobsBox.getWidth() * 0.5, 0);
-//    placeKnobsInArea(knobsBox, sliderVec, false);
     clusterThreshold_Slider->setBounds(knobsBox.removeFromLeft(knobsBox.getWidth() * 0.5));
     history_Slider->setBounds(knobsBox);
 

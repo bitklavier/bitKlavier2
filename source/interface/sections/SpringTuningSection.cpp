@@ -127,36 +127,7 @@ void SpringTuningSection::resized() {
     area.removeFromTop(smallpadding);
 
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
-//    knobsBox.reduce(knobsBox.getWidth() * 0.5, 0);
     placeKnobsInArea(knobsBox, _sliders, true);
-
-//
-//    juce::Rectangle<int> tuningSystemLabelsBox = area.removeFromTop(comboboxheight);
-////    intervalsLabel->setBounds(tuningSystemLabelsBox.removeFromLeft(tuningSystemLabelsBox.getWidth() * 0.5));
-////    anchorsLabel->setBounds(tuningSystemLabelsBox);
-//
-//    area.removeFromTop(smallpadding);
-//
-//    juce::Rectangle<int>comboBoxArea = area.removeFromTop(comboboxheight);
-//    juce::Rectangle<int>intervalComboBoxArea = comboBoxArea.removeFromLeft(comboBoxArea.getWidth() * 0.5);
-//    adaptiveIntervalScale_ComboBox->setBounds(intervalComboBoxArea.removeFromLeft(intervalComboBoxArea.getWidth() * 0.5));
-//    useInversionOfIntervalScale_Toggle->setBounds(intervalComboBoxArea);
-//    adaptiveAnchorScale_ComboBox->setBounds(comboBoxArea.removeFromLeft(comboBoxArea.getWidth() * 0.5));
-//    adaptiveAnchorFundamental_ComboBox->setBounds(comboBoxArea);
-//
-//    area.removeFromTop(smallpadding);
-//
-//    juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
-//    //    knobsBox.reduce(knobsBox.getWidth() * 0.5, 0);
-//    //    placeKnobsInArea(knobsBox, sliderVec, false);
-//    clusterThreshold_Slider->setBounds(knobsBox.removeFromLeft(knobsBox.getWidth() * 0.5));
-//    history_Slider->setBounds(knobsBox);
-//
-//    area.removeFromTop(smallpadding);
-//
-//    juce::Rectangle<int> resetBox = area.removeFromTop(comboboxheight);
-//    resetButton->setBounds(resetBox.removeFromLeft(resetBox.getWidth() * 0.5));
-//    currentFundamental->setBounds(resetBox);
 
     SynthSection::resized();
 }
