@@ -86,11 +86,14 @@ public:
     inline void stop(void);
 
 //    inline void setStiffness(double stiff);
-    inline void setTetherStiffness(double stiff);
-    inline void setIntervalStiffness(double stiff);
+    //inline void setTetherStiffness(double stiff);
+    //inline void setIntervalStiffness(double stiff);
 //    void stiffnessChanged();
+    void rateChanged();
     void tetherStiffnessChanged();
     void intervalStiffnessChanged();
+    void intervalScaleChanged();
+    void intervalFundamentalChanged();
 
     inline juce::Array<float> getTetherWeights(void);
     inline void setTetherWeights(juce::Array<float> weights);
@@ -112,7 +115,7 @@ public:
     void setTetherWeightGlobal(double s);
     void setTetherWeightSecondaryGlobal(double s);
     bool getSpringMode(int which);
-    bool getSpringModeButtonState(int which);
+//    bool getSpringModeButtonState(int which);
     Fundamental getIntervalFundamental();
     PitchClass getIntervalFundamentalActive();
     juce::Array<float> getIntervalTuning(void);
@@ -151,7 +154,6 @@ public:
     void setTetherFundamental(PitchClass newfundamental);
     void setIntervalTuning(juce::Array<float> tuning);
     void setIntervalFundamental(Fundamental newfundamental);
-    void intervalFundamentalChanged();
     void findFundamental();
 //    void retuneIndividualSpring(Spring::Ptr spring);
     void retuneIndividualSpring(Spring* spring);

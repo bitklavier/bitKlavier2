@@ -235,3 +235,37 @@ std::array<float, 12> getOffsetsFromTuningSystem (TuningSystem ts)
         });
     return it->second;
 }
+
+// Function to copy std::array<float, 12> into a juce::Array<float>
+// This function will resize the juceArray and copy the elements.
+void copyStdArrayIntoJuceArray(const std::array<float, 12>& stdArr,
+    juce::Array<float>& juceArray)
+{
+    // 1. Resize the juce::Array to exactly 12 elements.
+    // This will clear existing elements and allocate space for 12.
+    juceArray.resize(static_cast<int>(stdArr.size()));
+
+    // 2. Copy the elements.
+    // juce::Array::getRawDataPointer() gives us a writable pointer to its internal buffer.
+    // std::array::data() gives us a pointer to its internal buffer.
+    std::copy(stdArr.data(),                // Source start
+        stdArr.data() + stdArr.size(),// Source end (12 elements after start)
+        juceArray.getRawDataPointer());// Destination start
+
+    // Alternative using operator[] (less efficient for large arrays, but clear)
+    /*
+    for (size_t i = 0; i < stdArr.size(); ++i)
+    {
+        juceArray.set(static_cast<int>(i), stdArr[i]);
+    }
+    */
+    // Another alternative using juceArray.add (might be less efficient due to reallocations
+    // if not pre-sized, but fine after resize())
+    /*
+    juceArray.clear(); // Clear existing elements if not using resize()
+    for (float value : stdArr)
+    {
+        juceArray.add(value);
+    }
+    */
+}

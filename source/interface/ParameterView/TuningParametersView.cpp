@@ -148,6 +148,17 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     /*
      * need call back for intervalFundamentalChanged, to notify when the user changes this and make updates
      */
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.scaleId,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("intervalScale (scaleId) changed by user");
+            params.tuningState.springTuner->intervalScaleChanged();
+        })
+    };
+
+    /*
+     * need call back for intervalFundamentalChanged, to notify when the user changes this and make updates
+     */
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.intervalFundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
