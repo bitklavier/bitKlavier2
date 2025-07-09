@@ -51,6 +51,10 @@ private:
     std::vector<std::unique_ptr<SynthSlider>> intervalWeightSliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> intervalWeightsSliders_sliderAttachments;
 
+    // toggles for setting springMode for each interval weight
+    std::vector<std::unique_ptr<SynthButton>> useLocalOrFundamentalToggles;
+    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> useLocalOrFundamentalToggles_sliderAttachments;
+
     juce::GroupComponent sectionBorder;
 };
 

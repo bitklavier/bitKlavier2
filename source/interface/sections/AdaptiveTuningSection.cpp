@@ -62,7 +62,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");
     addOpenGlComponent(currentFundamental);
     currentFundamental->setTextSize (12.0f);
-    currentFundamental->setJustification(juce::Justification::left);
+    currentFundamental->setJustification(juce::Justification::centred);
 
     intervalsLabel = std::make_shared<PlainTextComponent>("intervals", "Intervals");
     addOpenGlComponent(intervalsLabel);

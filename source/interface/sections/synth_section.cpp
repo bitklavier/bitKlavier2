@@ -751,6 +751,26 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::
     }
 }
 
+void SynthSection::placeButtonsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthButton>> &knobs) {
+    int widget_margin = findValue(Skin::kWidgetMargin);
+    //kKnobSectionHeight
+    float component_width = (area.getWidth() - (knobs.size() + 1) * widget_margin) / (1.0f * knobs.size());
+
+    int y = area.getY();
+    //int height = area.getHeight() - widget_margin;
+    int height = area.getHeight() - widget_margin;//std::min<int>(area.getHeight(), component_width) - widget_margin;
+    float x = area.getX() + widget_margin;
+    for (const auto &knob: knobs) {
+
+        int left = std::round(x);
+        int right = std::round(x + component_width);
+        //DBG("knob " + juce::String(left));
+        if (knob)
+            knob->setBounds(left, y, right - left, height);
+        x += component_width + widget_margin;
+    }
+}
+
 // center the knobs and reduce the width so they are closer together
 void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthSlider>> &knobs, bool center) {
 

@@ -37,6 +37,7 @@ SpringTuningSection::SpringTuningSection (
         }
     }
 
+    // create setup the tuning system combo boxes
     if (auto* tuningParams = dynamic_cast<SpringTuningParams*>(&params))
     {
         auto index = tuningParams->scaleId->getIndex();
@@ -56,6 +57,22 @@ SpringTuningSection::SpringTuningSection (
         scaleId_tether_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
     }
 
+    // create and gather the useLocalOrFundamental toggle buttons
+    for ( auto &param_ : *params.getBoolParams())
+    {
+        if(param_->paramID.startsWith("useLocalOrFundamental_")){
+            auto button = std::make_unique<SynthButton>(param_->paramID);
+            auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_,listeners, *button, nullptr);
+            button->setComponentID(param_->paramID);
+            addSynthButton(button.get(), true);
+            button->setButtonText("F");
+
+            useLocalOrFundamentalToggles_sliderAttachments.emplace_back(std::move(button_ToggleAttachment));
+            useLocalOrFundamentalToggles.emplace_back(std::move(button));
+        }
+    }
+
+    // the tuning system fundamental combo boxes
     intervalFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
     intervalFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.intervalFundamental, listeners, *intervalFundamental_ComboBox, nullptr);
     addAndMakeVisible(intervalFundamental_ComboBox.get());
@@ -66,11 +83,11 @@ SpringTuningSection::SpringTuningSection (
     addAndMakeVisible(tetherFundamental_ComboBox.get());
     addOpenGlComponent(tetherFundamental_ComboBox->getImageComponent());
 
-    // label to show current fundamental
+    // labels...
     currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");
     addOpenGlComponent(currentFundamental);
     currentFundamental->setTextSize (12.0f);
-    currentFundamental->setJustification(juce::Justification::left);
+    currentFundamental->setJustification(juce::Justification::centred);
 
     intervalsLabel = std::make_shared<PlainTextComponent>("intervals", "Intervals");
     addOpenGlComponent(intervalsLabel);
@@ -147,12 +164,14 @@ void SpringTuningSection::resized() {
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
     placeKnobsInArea(knobsBox, _sliders, true);
 
-    area.removeFromTop(smallpadding);
+    area.removeFromTop(largepadding);
 
-    juce::Rectangle<int> intervalknobsBox = area.removeFromTop(knobsectionheight + largepadding);
+    juce::Rectangle<int> intervalknobsBox = area.removeFromTop(knobsectionheight);
     placeKnobsInArea(intervalknobsBox, intervalWeightSliders);
+    juce::Rectangle<int> fundamentalToggles = area.removeFromTop(comboboxheight);
+    placeButtonsInArea(fundamentalToggles, useLocalOrFundamentalToggles);
 
-    area.removeFromTop(smallpadding);
+    area.removeFromTop(largepadding);
 
     currentFundamental->setBounds(area.removeFromTop(labelsectionheight));
 

@@ -39,7 +39,19 @@ struct SpringTuningParams : public chowdsp::ParamHolder
             intervalWeight_9,
             intervalWeight_10,
             intervalWeight_11,
-            intervalWeight_12
+            intervalWeight_12,
+            useLocalOrFundamental_1,        // toggles for set springMode for each interval weight (Local or Fundamental)
+            useLocalOrFundamental_2,
+            useLocalOrFundamental_3,
+            useLocalOrFundamental_4,
+            useLocalOrFundamental_5,
+            useLocalOrFundamental_6,
+            useLocalOrFundamental_7,
+            useLocalOrFundamental_8,
+            useLocalOrFundamental_9,
+            useLocalOrFundamental_10,
+            useLocalOrFundamental_11,
+            useLocalOrFundamental_12
             );
     }
 
@@ -339,6 +351,78 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_1 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_1", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_2 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_2", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_3 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_3", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_4 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_4", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_5 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_5", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_6 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_6", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_7 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_7", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_8 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_8", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_9 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_9", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_10 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_10", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_11 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_11", 100},
+        "F",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr useLocalOrFundamental_12 { // button for setting springMode for each interval weight
+        juce::ParameterID { "useLocalOrFundamental_12", 100},
+        "F",
+        true
     };
 
     juce::String tCurrentSpringFundamental_string;
