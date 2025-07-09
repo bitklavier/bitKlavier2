@@ -7,8 +7,10 @@
 #include "fullInterface.h"
 #include "modulation_manager.h"
 #include "open_gl_line.h"
-ModulationLineView::ModulationLineView(ConstructionSite &site) : SynthSection("modlineview"), site(site),
-tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getChildWithName(IDs::MODCONNECTIONS)),current_source_(nullptr)//, line_(std::make_shared<OpenGlLine>(nullptr, nullptr, this))
+ModulationLineView::ModulationLineView(ConstructionSite &site, juce::UndoManager& um)
+    : SynthSection("modlineview"), site(site),
+tracktion::engine::ValueTreeObjectList<ModulationLine>(site.getState().getChildWithName(IDs::MODCONNECTIONS)),
+    current_source_(nullptr), undoManager(um)//, line_(std::make_shared<OpenGlLine>(nullptr, nullptr, this))
 {
     setInterceptsMouseClicks(false, false);
     setAlwaysOnTop(true);
@@ -30,10 +32,11 @@ ModulationLineView::~ModulationLineView()
 }
 
 void ModulationLineView::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
+    juce::ScopedLock lock(open_gl_lock);
   for (auto line : objects)
   {
-
-      line->line->render(open_gl, animate);
+     if (line != nullptr)
+        line->line->render(open_gl, animate);
   }
 }
 
@@ -77,7 +80,8 @@ void ModulationLineView::modulationDropped(const juce::ValueTree &source, const 
     _connection.setProperty(IDs::isMod, 1, nullptr);
     _connection.setProperty(IDs::src,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(sourceId), nullptr);
     _connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(destId), nullptr);
-    parent.addChild(_connection, -1, nullptr);
+    undoManager.beginNewTransaction();
+    parent.addChild(_connection, -1, &undoManager);
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
     _parent->getGui()->modulation_manager->added();
 }
@@ -123,13 +127,7 @@ ModulationLine* ModulationLineView::createNewObject(const juce::ValueTree &v) {
 
 
 void ModulationLineView::deleteObject(ModulationLine *at) {
-    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    _parent->tryEnqueueProcessorInitQueue([this]
-                                                       {
-                                                           SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-                                                           //_parent->getSynth()->removeConnection(connection);
-        //need to find all connections and remove them
-                                                       });
+
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
 
@@ -141,14 +139,13 @@ void ModulationLineView::deleteObject(ModulationLine *at) {
                     // idk maybe try to make it instantiate using addopenglcomponent and find out.. for now
                         // i'll kep neing laxy --davis --4/25/25
             at->line->destroy(this->site.open_gl);
-            juce::MessageManager::callAsync(
-            [at, this]()mutable {
-               delete at;
-            });
+          //DBG("delete Line");
 
         },true);
-    } else
-        delete at;
+    }
+    //DBG("delete line object");
+    juce::ScopedLock lock(open_gl_lock);
+    delete at;
 }
 
 
@@ -165,6 +162,16 @@ void ModulationLineView::newObjectAdded(ModulationLine * line) {
             findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectTuning(line->state);
     // }
 
+}
+
+void ModulationLineView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id)
+{
+    for (auto connection : objects){
+        if (connection->src_id == delete_id || connection->dest_id == delete_id){
+            parent.removeChild (connection->state, &undoManager);
+            //deleteObject (connection);
+        }
+    }
 }
 
 

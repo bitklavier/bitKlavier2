@@ -12,7 +12,7 @@ class ModulationLineView : public PreparationSection::Listener,
                            public tracktion::engine::ValueTreeObjectList<ModulationLine>
 {
 public:
-    explicit ModulationLineView(ConstructionSite &site);
+    explicit ModulationLineView(ConstructionSite &site, juce::UndoManager& um);
     ~ModulationLineView();
     ConstructionSite &site;
 
@@ -43,6 +43,9 @@ public:
 
     void _update() override;
 
+    juce::UndoManager& undoManager;
+    void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
+
 
 
     ///valutreeobectlist:
@@ -62,6 +65,7 @@ public:
     {
         return v.hasType (IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION);
     }
+    juce::CriticalSection open_gl_lock;
 };
 
 #endif //BITKLAVIER2_MODULATIONLINEVIEW_H
