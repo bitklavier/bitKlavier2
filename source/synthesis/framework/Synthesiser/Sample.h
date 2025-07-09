@@ -17,13 +17,11 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_core/juce_core.h>
 #include <juce_audio_formats/juce_audio_formats.h>
-//#ifdef DEBUG
 #include "common.h"
 #include "utils.h"
 #include "BKADSR.h"
 #include "TuningProcessor.h"
 
-//#endif
 //==============================================================================
 // Represents the constant parts of an audio sample: its name, sample rate,
 // length, and the audio sample data itself.
@@ -616,6 +614,12 @@ public:
 
         // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+
+        /*
+         * change this so it just converts the offset to a target frequency
+         * the offset should have been determined at the top, the processor block where the transps are created, and passed to the synth and then to hear
+         * should not be doing any handling of tuneTranspositions state down here!
+         */
     }
 
     virtual void stopNote (float velocity, bool allowTailOff)

@@ -335,6 +335,8 @@ void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool anim
 void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     // find preparation section with the same id as the one we're removing
     int index = -1;
+    if (plugin_components.empty())
+        return;
     for (int i=0; i<plugin_components.size(); i++){
         if (plugin_components[i]->pluginID == wrapper->node_id){
             index = i;

@@ -6,6 +6,7 @@
         "Body Text": "ffd3d6d6",
         "Border": "8ffffff",
         "Button Font Size": 11.0,
+        "Combo Menu Height": 25.0,
         "Heading Text": "ffdfdfdf",
         "Icon Button Off": "ff848789",
         "Icon Button Off Hover": "ffaaacad",
@@ -167,9 +168,10 @@
             "Shadow": "0xff000000"
         },
         "direct": {
-            "Body" : "333333",
+            "Widget Primary 2" : "333333",
             "Widget Primary 1" : "0xfffbb040",
-            "Shadow": "0xff000000"
+            "Shadow": "0xff000000",
+            "Rotary Arc": "0xfffbb040"
         },
         "nostalgic": {
             "Body" : "333333",

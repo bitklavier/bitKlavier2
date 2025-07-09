@@ -12,26 +12,11 @@
 #include "array_to_string.h"
 #include "tuning_systems.h"
 #include "utils.h"
+#include "SemitoneWidthParams.h"
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-
-enum Fundamental : uint32_t {
-    C = 1 << 0,
-    C41D5 = 1 << 1,
-    D = 1 << 2,
-    D41E5 = 1 << 3,
-    E = 1 << 4,
-    F = 1 << 5,
-    F41G5 = 1 << 6,
-    G = 1 << 7,
-    G41A5 = 1 << 8,
-    A = 1 << 9,
-    A41B5 = 1 << 10,
-    B = 1 << 11,
-    none = 0
-};
 
 enum AdaptiveSystems {
     None = 1 << 0,
@@ -45,23 +30,16 @@ enum AdaptiveSystems {
  */
 struct TuningState : bitklavier::StateChangeableParameter
 {
-    juce::MidiKeyboardState keyboardState;
-
-    std::array<float, 128> absoluteTuningOffset = { 0.f };
-    std::array<float, 12> circularTuningOffset = { 0.f };
-    int fundamental = 0;
-
     void setKeyOffset (int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 128)
-            absoluteTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
+            absoluteTuningOffset[midiNoteNumber] = val;
     }
 
     void setCircularKeyOffset (int midiNoteNumber, float val)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 12)
-            circularTuningOffset[midiNoteNumber] = val; //.set(midiNoteNumber, val);
-        //DBG("setCircularKeyOffset " + juce::String(midiNoteNumber) + " : " + juce::String(val));
+            circularTuningOffset[midiNoteNumber] = val;
     }
 
     void setKeyOffset (int midiNoteNumber, float val, bool circular)
@@ -125,6 +103,7 @@ struct TuningState : bitklavier::StateChangeableParameter
      * getTargetFrequency() is the primary function for synthesizers to handle tuning
      *      should include static and dynamic tunings
      *      is called every block
+     *      return fractional MIDI value, NOT cents
      */
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
     {
@@ -144,22 +123,46 @@ struct TuningState : bitklavier::StateChangeableParameter
 
         if (circularTuningOffset.empty())
         {
-            return mtof (currentlyPlayingNote + currentTransposition);
+            double newOffset = (currentlyPlayingNote + currentTransposition);
+            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            newOffset *= .01;
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
         if (!tuneTranspositions)
         {
-            double newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01); // i don't love the .01 changes here, let's see if this can be made consistent
-            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+            double newOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()];
+            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            newOffset *= .01; // i don't love the .01 changes here, let's see if this can be made consistent
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
         else
         {
             double newOffset = (circularTuningOffset[(currentlyPlayingNote + (int) std::trunc (currentTransposition)) % circularTuningOffset.size()] * .01);
-            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition);
+            if (!absoluteTuningOffset.empty()) newOffset += absoluteTuningOffset[currentlyPlayingNote];
+            newOffset *= .01;
+            return mtof (newOffset + (double) currentlyPlayingNote + currentTransposition) * A4frequency / 440.;
         }
 
-        // add A440 adjustments here
+
+        /**
+         * how to get semitoneWidth params here?
+         */
+
+        /**
+         * to add here:
+         * - need to get A4frequency from gallery preferences
+         *
+         * - adaptive tunings 1 and 2
+         * - spring tuning
+         */
     }
+
+    juce::MidiKeyboardState keyboardState;
+    std::array<float, 128> absoluteTuningOffset = { 0.f };
+    std::array<float, 12> circularTuningOffset = { 0.f };
+    int fundamental = 0;
+    float A4frequency = 440.; // set this in gallery preferences
 
     std::atomic<bool> setFromAudioThread;
 };
@@ -169,9 +172,13 @@ struct TuningParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams() : chowdsp::ParamHolder ("tuning")
     {
-        add (tuningSystem, fundamental, adaptive);
+        add (tuningSystem, fundamental, adaptive, semitoneWidthParams);
     }
 
+    /*
+     * these params are not audio-rate modulatable, so will need to be handled
+     * in a processStateChanges() call, called every block
+     */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr tuningSystem {
         juce::ParameterID { "tuningSystem", 100 },
         "Tuning System",
@@ -193,9 +200,31 @@ struct TuningParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
+    SemitoneWidthParams semitoneWidthParams;
+
+    /**
+     * params to add:
+     * as a section:
+     * - semitone width and root (float slider/knob, two menus)
+     *
+     * individually:
+     * - offset (float slider/knob)
+     * - note and interval text boxes (display only)
+     *
+     * then:
+     * - adaptive tunings
+     * - spring tuning
+     * - scala functionality
+     * - MTS
+     */
+
     /** this contains the current state of the tuning system, with helper functions **/
     TuningState tuningState;
 
+    /**
+     * serializers are used for more complex params
+     *      - here we need arrays and indexed arrays for circular and absolute tunings, for instance
+     */
     /** Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const TuningParams& paramHolder);

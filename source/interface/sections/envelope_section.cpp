@@ -71,105 +71,95 @@ void DragMagnifyingGlass::mouseDoubleClick(const juce::MouseEvent& e) {
 EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection(name) {
 
     setComponentID(parent.getComponentID());
+
     delay_ = std::make_unique<SynthSlider>("delay");
-    delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
-    //delay_ = std::make_unique<SynthSlider>(value_prepend + "_delay");
     addSlider(delay_.get());
+    delay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    delay_->setPopupPlacement(juce::BubbleComponent::below);
+    delay_->parentHierarchyChanged();
+    delay_->setVisible(false);
 
-  delay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-  delay_->setPopupPlacement(juce::BubbleComponent::below);
-  delay_->parentHierarchyChanged();
-  delay_->setVisible(false);
+    attack_ = std::make_unique<SynthSlider>("attack");
+    addSlider(attack_.get());
+    attack_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    attack_->setPopupPlacement(juce::BubbleComponent::below);
+    attack_->parentHierarchyChanged();
+    attack_->setValue(params.attackParam->getDefaultValue());
 
-  attack_ = std::make_unique<SynthSlider>("attack");
-  //attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, nullptr);
-  addSlider(attack_.get());
-  attack_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-  attack_->setPopupPlacement(juce::BubbleComponent::below);
-  attack_->parentHierarchyChanged();
-  attack_->setValue(params.attackParam->getDefaultValue());
-  //attack_->setLookAndFeel(TextLookAndFeel::instance());
+    attack_power_ = std::make_unique<SynthSlider>( "attack_power");
+    addSlider(attack_power_.get());
+    attack_power_->setRange(-10., 10.); // don't need to do this in the original Vital version, not sure why we need this here
+    attack_power_->setVisible(false);
 
-  attack_power_ = std::make_unique<SynthSlider>( "attack_power");
-  addSlider(attack_power_.get());
-  attack_power_->setRange(-10., 10.); // don't need to do this in the original Vital version, not sure why we need this here
-  attack_power_->setVisible(false);
+    hold_ = std::make_unique<SynthSlider>(parent.getComponentID() +"_hold");
+    addSlider(hold_.get());
+    hold_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    hold_->setPopupPlacement(juce::BubbleComponent::below);
+    hold_->parentHierarchyChanged();
+    hold_->setVisible(false);
 
-  hold_ = std::make_unique<SynthSlider>(parent.getComponentID() +"_hold");
-  //hold_ = std::make_unique<SynthSlider>(value_prepend + "_hold");
-  //hold_attachment = std::make_unique<chowdsp::SliderAttachment>(params.holdParam, listeners, *hold_, nullptr);
-  addSlider(hold_.get());
-  hold_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-  hold_->setPopupPlacement(juce::BubbleComponent::below);
-  hold_->parentHierarchyChanged();
-  hold_->setVisible(false);
+    decay_ = std::make_unique<SynthSlider>( "decay");
+    addSlider(decay_.get());
+    decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    decay_->setPopupPlacement(juce::BubbleComponent::below);
+    decay_->setValue(params.decayParam->getDefaultValue());
 
-  decay_ = std::make_unique<SynthSlider>( "decay");
-  addSlider(decay_.get());
-  decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-  decay_->setPopupPlacement(juce::BubbleComponent::below);
-  decay_->setValue(params.decayParam->getDefaultValue());
+    decay_power_ = std::make_unique<SynthSlider>( "decay_power");
+    addSlider(decay_power_.get());
+    decay_power_->setRange(-10., 10.);
+    decay_power_->setVisible(false);
 
-  decay_power_ = std::make_unique<SynthSlider>( "decay_power");
-  addSlider(decay_power_.get());
-  decay_power_->setRange(-10., 10.);
-  decay_power_->setVisible(false);
+    release_ = std::make_unique<SynthSlider>("release");
+    addSlider(release_.get());
+    release_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    release_->setPopupPlacement(juce::BubbleComponent::below);
+    release_->setValue(params.releaseParam->getDefaultValue());
 
-  //release_ = std::make_unique<SynthSlider>(value_prepend + "_release");
-  release_ = std::make_unique<SynthSlider>("release");
-  addSlider(release_.get());
-  release_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-  release_->setPopupPlacement(juce::BubbleComponent::below);
-  release_->setValue(params.releaseParam->getDefaultValue());
+    release_power_ = std::make_unique<SynthSlider>( "release_power");
+    addSlider(release_power_.get());
+    release_power_->setRange(-10., 10.);
+    release_power_->setVisible(false);
 
-  release_power_ = std::make_unique<SynthSlider>( "release_power");
-  addSlider(release_power_.get());
-  release_power_->setRange(-10., 10.);
-  release_power_->setVisible(false);
+    sustain_ = std::make_unique<SynthSlider>("sustain");
+    addSlider(sustain_.get());
+    sustain_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    sustain_->setPopupPlacement(juce::BubbleComponent::below);
+    sustain_->setValue(params.sustainParam->getDefaultValue());
 
-  sustain_ = std::make_unique<SynthSlider>("sustain");
-  //sustain_ = std::make_unique<SynthSlider>(value_prepend + "_sustain");
-  addSlider(sustain_.get());
-  sustain_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-  sustain_->setPopupPlacement(juce::BubbleComponent::below);
-  sustain_->setValue(params.sustainParam->getDefaultValue());
+    envelope_ = std::make_shared<EnvelopeEditor>(value_prepend);
+    addOpenGlComponent(envelope_);
+    envelope_->setName(value_prepend);
+    envelope_->setDelaySlider(delay_.get());
+    envelope_->setAttackSlider(attack_.get());
+    envelope_->setAttackPowerSlider(attack_power_.get());
+    envelope_->setHoldSlider(hold_.get());
+    envelope_->setDecaySlider(decay_.get());
+    envelope_->setDecayPowerSlider(decay_power_.get());
+    envelope_->setSustainSlider(sustain_.get());
+    envelope_->setReleaseSlider(release_.get());
+    envelope_->setReleasePowerSlider(release_power_.get());
+    envelope_->resetEnvelopeLine(-1);
 
-  envelope_ = std::make_shared<EnvelopeEditor>(value_prepend);
-  addOpenGlComponent(envelope_);
-  envelope_->setName(value_prepend);
-  envelope_->setDelaySlider(delay_.get());
-  envelope_->setAttackSlider(attack_.get());
-  envelope_->setAttackPowerSlider(attack_power_.get());
-  envelope_->setHoldSlider(hold_.get());
-  envelope_->setDecaySlider(decay_.get());
-  envelope_->setDecayPowerSlider(decay_power_.get());
-  envelope_->setSustainSlider(sustain_.get());
-  envelope_->setReleaseSlider(release_.get());
-  envelope_->setReleasePowerSlider(release_power_.get());
-  envelope_->resetEnvelopeLine(-1);
+    drag_magnifying_glass_ = std::make_unique<DragMagnifyingGlass>();
+    drag_magnifying_glass_->addListener(this);
+    drag_magnifying_glass_->setName(value_prepend + "_magnify");
+    addAndMakeVisible(drag_magnifying_glass_.get());
+    addOpenGlComponent(drag_magnifying_glass_->getGlComponent());
 
-  drag_magnifying_glass_ = std::make_unique<DragMagnifyingGlass>();
-  drag_magnifying_glass_->addListener(this);
-  drag_magnifying_glass_->setName(value_prepend + "_magnify");
-  addAndMakeVisible(drag_magnifying_glass_.get());
-  addOpenGlComponent(drag_magnifying_glass_->getGlComponent());
+    delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
+    attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, nullptr);
+    attackPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackPowerParam, listeners, *attack_power_, nullptr);
+    hold_attachment = std::make_unique<chowdsp::SliderAttachment>(params.holdParam, listeners, *hold_, nullptr);
+    decay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayParam, listeners, *decay_, nullptr);
+    decayPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayPowerParam, listeners, *decay_power_, nullptr);
+    sustain_attachment = std::make_unique<chowdsp::SliderAttachment>(params.sustainParam, listeners, *sustain_, nullptr);
+    release_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releaseParam, listeners, *release_, nullptr);
+    releasePower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releasePowerParam, listeners, *release_power_, nullptr);
 
-  delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
-  attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, nullptr);
-  attackPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackPowerParam, listeners, *attack_power_, nullptr);
-  hold_attachment = std::make_unique<chowdsp::SliderAttachment>(params.holdParam, listeners, *hold_, nullptr);
-  decay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayParam, listeners, *decay_, nullptr);
-  decayPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayPowerParam, listeners, *decay_power_, nullptr);
-  sustain_attachment = std::make_unique<chowdsp::SliderAttachment>(params.sustainParam, listeners, *sustain_, nullptr);
-  release_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releaseParam, listeners, *release_, nullptr);
-  releasePower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releasePowerParam, listeners, *release_power_, nullptr);
-
-  envelopeSectionBorder.setName("envelope border");
-  envelopeSectionBorder.setText("Envelope");
-  envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
-  addAndMakeVisible(envelopeSectionBorder);
-
-  //setSkinOverride(Skin::kEnvelope);
+    envelopeSectionBorder.setName("envelope border");
+    envelopeSectionBorder.setText("Envelope");
+    envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(envelopeSectionBorder);
 }
 
 EnvelopeSection::~EnvelopeSection() { }

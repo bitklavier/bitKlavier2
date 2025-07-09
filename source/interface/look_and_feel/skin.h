@@ -91,6 +91,7 @@ public:
         kWavetableDrawWidth,
         kWavetableWaveHeight,
         kWavetableYOffset,
+        kComboMenuHeight,
         kNumSkinValueIds,
         kFrequencyDisplay = kNumSkinValueIds,
         kNumAllValueIds,

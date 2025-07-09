@@ -72,9 +72,18 @@ struct TransposeParams : chowdsp::ParamHolder
     };
 
     /*
+     * processStateChanges() is used to handle state change modifications
+     * that are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
+     *
+     * so.... if you want a collection of params (like TranspParams or velocityMinMaxParams) to be
+     * state modulatable, they ahve to be in here, and this needs to be called
+     *
      * gets run whenever a state change gets run on the back end
      * modulation that changes state will be triggered here
      * called in process block (DirectProcessor)
+     *
+     * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
+     *      so these are ones like Transpose, where they all change at once
      */
     int numActive = 1;
     void processStateChanges() override
@@ -82,7 +91,6 @@ struct TransposeParams : chowdsp::ParamHolder
         auto float_params = getFloatParams();
         for(auto [index, change] : stateChanges.changeState)
         {
-
             static juce::var nullVar;
             for (int i = 0; i< 11; i++)
             {
@@ -96,7 +104,6 @@ struct TransposeParams : chowdsp::ParamHolder
             }
         }
         stateChanges.changeState.clear();
-
     }
 };
 #endif //BITKLAVIER2_TRANSPOSEPARAMS_H

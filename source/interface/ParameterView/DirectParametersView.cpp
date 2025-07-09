@@ -14,7 +14,6 @@ void DirectParametersView::resized()
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
-    //bounds.reduce(title_width + 4, 0);
     bounds.removeFromLeft(title_width);
 
     // bounds for level meter on right side
@@ -31,10 +30,7 @@ void DirectParametersView::resized()
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
-    //outputKnobsSection->setBounds(outputKnobsArea);
-//    placeKnobsInArea(outputKnobsArea, _sliders, true);
-    placeKnobsInArea(outputKnobsArea, outputGainKnobs, true);
-//    knobsBorder.setBounds(outputKnobsArea); // not working properly for some reason
+    placeKnobsInArea(outputKnobsArea, _sliders, true);
 
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);

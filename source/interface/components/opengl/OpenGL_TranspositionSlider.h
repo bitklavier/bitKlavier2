@@ -125,6 +125,9 @@ public:
 
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
 
+    /*
+     * needed for the param-state modulation
+     */
     void syncToValueTree() override {
         juce::Array<float> vals;
         static juce::var nullVar;

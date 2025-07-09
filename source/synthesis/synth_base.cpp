@@ -36,7 +36,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     self_reference_ = std::make_shared<SynthBase*>();
     *self_reference_ = this;
 
-    engine_ = std::make_unique<bitklavier::SoundEngine>();
+
 
     keyboard_state_ = std::make_unique<juce::MidiKeyboardState>();
     juce::ValueTree v;
@@ -63,6 +63,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
     preparationList = std::make_unique<PreparationList> (*this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS));
+
+    engine_ = std::make_unique<bitklavier::SoundEngine>();
 }
 
 SynthBase::~SynthBase()
@@ -382,6 +384,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     auto dest_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
 
     auto parameter_tree = mod_dst.getChildWithProperty (IDs::parameter, juce::String (dst_param));
+    jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
     auto param_index = parameter_tree.getProperty (IDs::channel, -1);
     connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
     //determine where this would actually output in the modulationprocessor

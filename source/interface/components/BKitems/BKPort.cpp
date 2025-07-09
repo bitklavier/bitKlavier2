@@ -22,50 +22,7 @@ image_component_(new OpenGlImageComponent())
     image_component_->setComponent(this);
     auto path = Paths::portPaths();
 
-//    if (auto node = _parent->getSynth()->getNodeForId(pin.nodeID))
-//    {
-//        juce::String tip;
-//
-//        if (pin.isMIDI())
-//        {
-//            tip = isInput ? "MIDI Input"
-//                          : "MIDI Output";
-//        }
-//        else
-//        {
-//            auto& processor = *node->getProcessor();
-//            auto channel = processor.getOffsetInBusBufferForAbsoluteChannelIndex (isInput, pin.channelIndex, busIdx);
-//
-//            if (auto* bus = processor.getBus (isInput, busIdx))
-//                tip = bus->getName() + ": " + juce::AudioChannelSet::getAbbreviatedChannelTypeName (bus->getCurrentLayout().getTypeOfChannel (channel));
-//            else
-//                tip = (isInput ? "Main Input: "
-//                               : "Main Output: ") + juce::String (pin.channelIndex + 1);
-//
-//        }
-
-//        setTooltip (tip);
-//    }
 }
-//void BKPort::mouseDown(const juce::MouseEvent& e)
-//{
-//    //getParentComponent()->mouseDown(e);]
-//    for(auto listener : listeners_)
-//    {
-//        listener->portClicked(getBounds().getCentre());
-//    }
-//}
-//
-//void BKPort::mouseEnter(const juce::MouseEvent& e)
-//{
-//    //getParentComponent()->mouseDown(e);
-//}
-
-
-//void BKPort::mouseDoubleClick(const juce::MouseEvent& e)
-//{
-//
-//}
 
 void BKPort::mouseDown (const juce::MouseEvent& e)
 {

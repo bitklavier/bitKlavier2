@@ -190,10 +190,16 @@ public:
                 juce::MemoryBlock data;
                 obj->proc->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
-                //auto xml = juce::AudioProcessor::getXmlF(data.getData(), (int)data.getSize());
-                if (obj->state.getChild(0).isValid() && xml != nullptr)
-                    obj->state.getChild(0).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
-                //  state.addChild(juce::ValueTree::fromXml(*xml),0,nullptr);
+                if (xml != nullptr) {
+                    obj->state.getOrCreateChildWithName(xml->getNamespace(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);;
+                }
+                else if ( obj->state.getChildWithName(IDs::PLUGIN).isValid() ) {
+
+                    juce::MemoryBlock m;
+                    obj->proc->getStateInformation (m);
+                    obj->state.getOrCreateChildWithName("STATE",nullptr).setProperty ("base64",m.toBase64Encoding(),nullptr);
+                }
+
             }
             v.removeProperty("sync", nullptr);
         }

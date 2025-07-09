@@ -20,12 +20,19 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         pedalSynth->addVoice (new BKSamplerVoice());
     }
 
-    // these synths play their stuff on noteOff rather than noteOn
+    /**
+     * these synths play their stuff on noteOff rather than noteOn
+     */
     hammerSynth->isKeyReleaseSynth (true);
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
-    // bufferDebugger = new BufferDebugger();
 
+    /*
+     * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
+     *      from a modification preparation
+     *      modulations like this come on an audio channel
+     *      this is on a separate bus from the regular audio graph that carries audio between preparations
+     */
     int mod = 0;
     for (auto [key, param] : state.params.modulatableParams)
     {
@@ -36,7 +43,8 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         mod++;
     }
 
-    //add state change params here
+    //add state change params here; this will add this to the set of params that are exposed to the state change mod system
+    // not needed for audio-rate modulatable params
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
 }
@@ -75,10 +83,82 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
  *
  * these operate at the synthesizer level, not the voice level, so need to be passed here
  * and not just looked at by individual voices in the synth
+ *
+ * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
+ */
+
+/*
+ * Tuning approaches:
+ *
+ * can integrate semitonewidth at this stage, which is only active for static tunings
+ * in fact, could differentiate between static and dynamic tunings (spring being the only one that needs to update at the block)
+ *      and for static tunings, handle everything here before noteOn, and only do the block updates for dynamic tunings?
+ * spring tuning would still need to handle transpositions, and actually we *could* assign an initial tuning here for them as well
+ *      so perhaps ALL tunings could be setup here, and we only worry about updating them within Sample for dynamic (spring) tuning?
+ *      in which case semitonewidth *could* be active, setting the initial "transposition" for every note,
+ *          which would then be at work in BKsynth when the spring tuning is updated?
+ * i think we want t0 to always "useTuning" no? otherwise, we'd need to have that checked in the UI for tuning to work at all!
+ *      or always "useTuning" when there is only one value in there? or always "useTuning" for a transposition value of 0?
+ *
+ * soooo.... handle all the tuning here, and then including a "dynamic" flag as true for spring tuning, and only those would update in Sample.h in the block
+ *      and always "useTuning" for t0?
+ *      or always "useTuning" if there is only one value in transpositions?
+ *      or always "useTuning" for a transposition value of 0?
+ *      sooo.... in the old bK, the transpositions values are all initially relative to the attached Tuning!
+ *          for example, if there is only one value in the transposition slider, -2, and tuning is Partial-C:
+ *              with useTuning = false, playing a C will result in an ET Bb
+ *              with useTuning = true,  playing a C will result in a 7th-partial of C
+ *              with useTuning = false, playing a Bb will result in an Ab whole-step down (-2) from a Partial-C Bb! (basically have transposed to Partial-Bb?)
+ *                  so our reference pitch is the Partial-C Bb, as set in Tuning
+ *              with useTuning = true,  playing a Bb will result in an Ab tuned to the 13th-partial of C
+ *                  so our pitch gets further filtered to fit in the Partial-C from Tuning; Ab being the 13th in that system
+ *          so i think this means that with transp = 0, the behavior is the same regardless of whether useTuning is true or false, which is what we want
+ *              and it doesn't matter where it is in the list of transpositions
+ *
+ * could we remove the useTuning dependency from tuning->getTargetFrequency? and handle that all right here?
+ *
+ * so, looking at the bK code:
+ *      first, we call getOffset on every transposition, and determine whether we useTransp at this stage:
+ *
+     * if (prep->dTranspUsesTuning.value) // use the Tuning setting
+     *      offset = t + tuner->getOffset(round(t) + noteNumber, false); // t is the transposition value
+     * else  // or set it absolutely, tuning only the note that is played (default, and original behavior)
+     *      offset = t + tuner->getOffset(noteNumber, false);
+ *
+ * then, inside getOffset we do the semitoneSize, circular, absolute, fundamentaloffset adjustments
  */
 juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
+    if (tuning != nullptr)
+    {
+        // use these to adjust transpositions, if useTuning is true
+        tuning->getState().params.semitoneWidthParams.reffundamental->getCurrentValueAsText();
+        tuning->getState().params.semitoneWidthParams.octave->getCurrentValueAsText();
+        tuning->getState().params.semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
+        state.params.transpose.transpositionUsesTuning->get();
+        // make helper functions for the above, including one that cooks the reff and octave down to a midinotenumber for the fund
+    }
+
+    /*
+     * in tuner->getOffset(), we have
+     * newTransp =.01 * (midiNoteNumber - tuning->prep->getNToneRoot()) * (tuning->prep->getNToneSemitoneWidth() - 100); // this is an offset to midiNoteNumber
+     *
+    // and then this gets filtered through current circularTuning, and further adjusted by absoluteTuning, for nearest key
+    /* int midiNoteNumberTemp = round(midiNoteNumber + newTransp);
+     * newTransp += (currentTuning[(midiNoteNumberTemp - tuning->prep->getFundamental()) % currentTuning.size()]
+     *           + tuning->prep->getAbsoluteOffsets().getUnchecked(midiNoteNumber)
+     *           + tuning->prep->getFundamentalOffset());
+     *
+     * this is preceded by:
+     * if (prep->dTranspUsesTuning.value) // use the Tuning setting
+     *      offset = t + tuner->getOffset(round(t) + noteNumber, false);
+     * else  // or set it absolutely, tuning only the note that is played (default, and original behavior)
+     *      offset = t + tuner->getOffset(noteNumber, false);
+     */
+
     juce::Array<float> transps;
+    //    std::vector<float> testarr;
+    //    if (std::find(testarr.begin(), testarr.end(), target) != testarr.end()) // finds whether target is in testarr
 
     auto paramVals = state.params.transpose.getFloatParams();
     for (auto const& tp : *paramVals)
@@ -88,6 +168,9 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
     }
 
     // make sure that the first slider is always represented
+    /*
+     * and shouldn't this one always "useTuning"? only if it is 0.
+     */
     transps.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
 
     return transps;
@@ -102,21 +185,23 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-#if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
     state.getParameterListeners().callAudioThreadBroadcasters();
-#endif
 
-    // need to call these every block
+    // always top of the chain as an instrument source; doesn't take audio in
+    buffer.clear();
+
+    // need to call these every block; this is for state change discrete mods (as opposed to audio rate continuous mods)
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
 
-    // update transposition slider values
     /**
      * todo:
      * used fixed length array since we know the max
      * and reduce numbers of copies of this array
      * fastest would be to have an array of pointers that points to the chowdsp version of these
+     * but, these are small arrays, at the block, not a huge concern
      */
+    // update transposition slider values
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
@@ -154,9 +239,9 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-    // if we want to implement a final output gain stage
-    //    auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
-    //    buffer.applyGain(outputgainmult);
+    // final output gain stage, from rightmost slider in DirectParametersView
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain (outputgainmult);
 
     // level meter update stuff
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());

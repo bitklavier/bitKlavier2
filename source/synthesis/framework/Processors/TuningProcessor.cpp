@@ -25,7 +25,14 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 template <typename Serializer>
 typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
 {
+    /*
+     * first, call the default serializer, which gets all the simple params
+     */
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
+
+    /*
+     * then serialize the more complex params
+     */
     Serializer::template addChildElement<12> (ser, "circularTuning", paramHolder.tuningState.circularTuningOffset, arrayToString);
     Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex);
 

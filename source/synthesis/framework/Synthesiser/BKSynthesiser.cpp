@@ -246,6 +246,14 @@ void BKSynthesiser::noteOn (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
+    /**
+     * mute instruments with gain turned all the way down
+     */
+    if (synthGain <= -60.) return;
+
+    /**
+     * store this velocity for the UI to use
+     */
     lastSynthState.lastVelocity = velocity;
 
     /**
@@ -272,6 +280,9 @@ void BKSynthesiser::noteOn (const int midiChannel,
     {
         for (auto* sound : *sounds)
         {
+            /*
+             * add semitoneWidth check here, to make sure the closest sounding sample is chosen
+             */
             if (sound->appliesToNote (std::round(midiNoteNumber + transp)) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
                 startVoice (findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes),
@@ -308,13 +319,15 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
             voice->stopNote (0.0f, false);
 
         voice->setTuning(tuning);
-        voice->copyAmpEnv( { adsrParams.attackParam->getCurrentValue() * 0.001f,
+
+        voice->copyAmpEnv ({ adsrParams.attackParam->getCurrentValue() * 0.001f,
             adsrParams.decayParam->getCurrentValue() * 0.001f,
             adsrParams.sustainParam->getCurrentValue(),
             adsrParams.releaseParam->getCurrentValue() * 0.001f,
-                            static_cast<float>(adsrParams.attackPowerParam->getCurrentValue() * -1.),
-                            static_cast<float>(adsrParams.decayPowerParam->getCurrentValue() * -1.),
-                            static_cast<float>(adsrParams.releasePowerParam->getCurrentValue() * -1.)});
+            static_cast<float> (adsrParams.attackPowerParam->getCurrentValue() * -1.),
+            static_cast<float> (adsrParams.decayPowerParam->getCurrentValue() * -1.),
+            static_cast<float> (adsrParams.releasePowerParam->getCurrentValue() * -1.) });
+
         voice->setGain(juce::Decibels::decibelsToGain (synthGain.getCurrentValue()));
         voice->currentlyPlayingNote = midiNoteNumber;
         voice->currentPlayingMidiChannel = midiChannel;
