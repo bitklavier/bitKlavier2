@@ -213,15 +213,12 @@ void CableView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete
 {
     for (auto connection : objects){
         if (connection->src_id == delete_id || connection->dest_id == delete_id){
-            deleteObject (connection);
+            parent.removeChild (connection->state, &undoManager);
         }
     }
 }
 ```
 Note that we're using CachedValues to get the Cable's `src_id` and `dest_id`. I originally had the referTo() functions in the wrong place. They're supposed to live in Cable's [setValueTree()](../source/interface/components/Cable/Cable.h) function.
-
-# Undoing Deletion of Multiple Objects
-We've managed to create a preparation and delete it by pressing 'CMD + z'. We've also managed to create a cable and delete it by pressing 'CMD + z'. But now, if you create a preparation with a cable, and delete it, both the preparation and the cable are deleted. Pressing 'CMD + z' only brings back the preparation. Here we will bring back the cable with the preparation.
 
 # Undoing Preparation Dragging
 Here's what happens when you drag and undo:

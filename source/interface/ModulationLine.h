@@ -14,7 +14,7 @@ class ModulationLineView;
 class OpenGlLine;
 class ModulationLine : public juce::Component {
 public:
-    ModulationLine(ConstructionSite *site, ModulationLineView* lineView,const juce::ValueTree& state);
+    ModulationLine(ConstructionSite *site, ModulationLineView* lineView,const juce::ValueTree& );
 
 //    juce::AudioProcessorGraph::Connection connection{{{}, 0},
 //                                                     {{}, 0}};
@@ -51,7 +51,8 @@ public:
       juce::ValueTree state;
 
     std::shared_ptr<OpenGlLine> line;
-
+    juce::CachedValue<juce::AudioProcessorGraph::NodeID> src_id;
+    juce::CachedValue<juce::AudioProcessorGraph::NodeID> dest_id;
 
 
 private:

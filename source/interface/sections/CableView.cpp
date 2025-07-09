@@ -248,12 +248,9 @@ void CableView::newObjectAdded(Cable *c) {
 }
 void CableView::deleteObject(Cable *at)  {
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    // _parent->tryEnqueueProcessorInitQueue([this,connection=at->connection]
-    //                                                    {
-    //                                                        SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-                                                           _parent->getSynth()->removeConnection(at->connection);
 
-                                                       // });
+    _parent->getSynth()->removeConnection(at->connection);
+
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
 
@@ -360,7 +357,7 @@ void CableView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete
 {
     for (auto connection : objects){
         if (connection->src_id == delete_id || connection->dest_id == delete_id){
-            deleteObject (connection);
+            parent.removeChild (connection->state, &undoManager);
         }
     }
 }

@@ -6,11 +6,13 @@
 #include "ConstructionSite.h"
 #include "open_gl_line.h"
 ModulationLine::ModulationLine(ConstructionSite *site, ModulationLineView *lineView,
-                               const juce::ValueTree &state) : site(site), lineView(lineView), state(state) {
+                               const juce::ValueTree &v) : site(site), lineView(lineView), state(v) {
 
     line = std::make_shared<OpenGlLine>(site->getComponentForPlugin(juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(state.getProperty(IDs::src))),
                                         site->getComponentForPlugin(juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(state.getProperty(IDs::dest))),
                                         lineView);
+    src_id.referTo(state, IDs::src, nullptr);
+    dest_id.referTo(state, IDs::dest, nullptr);
 }
 void ModulationLine::getPoints (juce::Point<int>& p1, juce::Point<int>& p2) const
 {

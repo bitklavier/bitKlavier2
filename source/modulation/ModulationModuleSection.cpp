@@ -12,8 +12,8 @@
 #include "ModulationProcessor.h"
 #include "tracktion_ValueTreeUtilities.h"
 #include "ModulationList.h"
-ModulationModuleSection::ModulationModuleSection(ModulationList* modulationProcessor,juce::ValueTree &v, ModulationManager *m) :
-ModulesInterface(v), modulation_list_(modulationProcessor)
+ModulationModuleSection::ModulationModuleSection(ModulationList* modulationProcessor,juce::ValueTree &v, ModulationManager *m, juce::UndoManager &um) :
+ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
 {
     container_->setComponentID(v.getProperty(IDs::uuid));
     scroll_bar_ = std::make_unique<OpenGlScrollBar>();
@@ -23,9 +23,10 @@ ModulesInterface(v), modulation_list_(modulationProcessor)
     scroll_bar_->addListener(this);
     modulation_sections_.reserve(modulation_list_->objects.size());
 
+
      for (auto& mod : modulation_list_->objects)
      {
-         auto *module_section = new ModulationSection(mod->state, (mod->createEditor()));
+         auto *module_section = new ModulationSection(mod->state, (mod->createEditor()), undo);
         container_->addSubSection(module_section);
         module_section->setInterceptsMouseClicks(false,true);
         modulation_sections_.emplace_back(std::move(module_section));
@@ -39,8 +40,12 @@ ModulesInterface(v), modulation_list_(modulationProcessor)
 void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 {
 //    auto obj = tracktion::engine::getObjectFor(*modulation_list_, v);
-    auto *module_section = new ModulationSection(obj->state,obj->createEditor());
-    container_->addSubSection(module_section);
+    auto *module_section = new ModulationSection(obj->state,obj->createEditor(), undo);
+    {
+        //TODO : make sure all the addSubsections are getting locked
+        juce::ScopedLock lock(open_gl_critical_section_);
+        container_->addSubSection(module_section);
+    }
     module_section->setInterceptsMouseClicks(false,true);
     //watch out for this invalidating ptrs to the object in places such as
     //container->sub_sections
@@ -48,10 +53,44 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
     //could solve by rebuilidng the container sub section ptrs on add
     modulation_sections_.emplace_back(std::move(module_section));
     //parentHierarchyChanged();
+    resized();
     for (auto listener: listeners_)
         listener->added();
-    resized();
+
 }
+
+void ModulationModuleSection::removeModulator (ModulatorBase* base)
+{
+    // find preparation section with the same id as the one we're removing
+    int index = -1;
+    if (modulation_sections_.empty())
+        return;
+    for (int i=0; i<modulation_sections_.size(); i++){
+        if (modulation_sections_[i]->state == base->state){
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) jassertfalse;
+
+
+    //cleanup opengl
+    {
+        juce::ScopedLock lock(open_gl_critical_section_);
+        container_->removeSubSection (modulation_sections_[index].get());
+    }
+
+    //delete opengl
+    modulation_sections_[index]->destroyOpenGlComponents (*findParentComponentOfClass<SynthGuiInterface>()->getOpenGlWrapper());
+    //delete heap memory
+    modulation_sections_.erase(modulation_sections_.begin()+index);
+    for (auto listener: listeners_)
+        listener->removed();
+    DBG("moduleRemoved");
+    resized();
+
+}
+
 ModulationModuleSection::~ModulationModuleSection()
 {
    modulation_list_->removeListener(this);
@@ -60,18 +99,21 @@ ModulationModuleSection::~ModulationModuleSection()
 void ModulationModuleSection::handlePopupResult(int result) {
 
     //std::vector<vital::ModulationConnection*> connections = getConnections();
-    if (result == 1 )
+    if (result == 1)
     {
         juce::ValueTree t(IDs::modulationproc);
         t.setProperty(IDs::type, "ramp", nullptr);
         t.setProperty(IDs::isState, false, nullptr);
-        parent.appendChild(t,nullptr);
+        undo.beginNewTransaction();
+        parent.appendChild(t,&undo);
+
     } else if (result == 2)
     {
         juce::ValueTree t(IDs::modulationproc);
         t.setProperty(IDs::type, "state", nullptr);
         t.setProperty(IDs::isState, true, nullptr);
-        parent.appendChild(t,nullptr);
+        undo.beginNewTransaction();
+        parent.appendChild(t,&undo);
     }
 }
 
@@ -125,3 +167,5 @@ std::map<std::string, SynthSlider*> ModulationModuleSection::getAllSliders()
 std::map<std::string, ModulationButton *> ModulationModuleSection::getAllModulationButtons() {
     return container_->getAllModulationButtons();
 }
+
+

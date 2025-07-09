@@ -501,8 +501,9 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
     connection->source_name = "";
     connection->destination_name = "";
     state_connections_.remove (connection);
+    engine_->removeConnection (connection->connection_);
     getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        engine_->removeConnection (connection->connection_);
+
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection (connection);
     });
@@ -515,8 +516,9 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
     connection->source_name = "";
     connection->destination_name = "";
     mod_connections_.remove (connection);
+    engine_->removeConnection (connection->connection_);
+
     getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        engine_->removeConnection (connection->connection_);
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection (connection);
     });

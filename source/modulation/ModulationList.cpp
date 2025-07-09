@@ -32,7 +32,15 @@ void ModulationList::deleteObject(ModulatorBase * base)
                 if (base->parent_ != nullptr) {
 
                     base->parent_->removeModulator(base);
-                    delete base;
+                    base->parent_->callOnMainThread ([this, base] {
+                        for (auto listener: listeners_)
+                        {
+                            listener->removeModulator(base);
+                        }
+                        delete base;
+
+                    });
+                    // delete base;
                 }
 
                 //this is not ideal or safe.
