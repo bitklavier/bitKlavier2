@@ -13,6 +13,7 @@
 #include "TuningProcessor.h"
 #include "VelocityMinMaxParams.h"
 #include "buffer_debugger.h"
+#include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
@@ -31,7 +32,16 @@ struct DirectParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
-        add (gainParam, hammerParam, releaseResonanceParam, pedalParam, outputSendParam, env, transpose, velocityMinMax);
+        add (gainParam,
+            hammerParam,
+            releaseResonanceParam,
+            pedalParam,
+            outputSendParam,
+            outputGain,
+            env,
+            transpose,
+            velocityMinMax);
+
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -50,7 +60,7 @@ struct DirectParams : chowdsp::ParamHolder
     // Gain param
     chowdsp::GainDBParameter::Ptr gainParam {
         juce::ParameterID { "Main", 100 },
-        "Gain",
+        "Main",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
         true
@@ -91,18 +101,13 @@ struct DirectParams : chowdsp::ParamHolder
         true
     };
 
-    // Last velocity param
-    /*
-     * this will be updated in BKSynthesizer, and then can be accessed for display in the velocityMinMaxslider
-     *      it should NOT be added to the param list above, as we are not going to use it in the UI
-     */
-    chowdsp::FloatParameter::Ptr lastVelocityParam {
-        juce::ParameterID { "Velocity", 100 },
-        "Velocity",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f), // FIX
-        127.0f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+    // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
+    chowdsp::GainDBParameter::Ptr outputGain {
+        juce::ParameterID { "OutputGain", 100 },
+        "Output Gain",
+        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
     };
 
     // ADSR params
@@ -110,12 +115,20 @@ struct DirectParams : chowdsp::ParamHolder
 
     // Transposition slider (holds up to 12 transposition values)
     TransposeParams transpose;
+
+    /**
+     * for storing min/max values for the velocityMinMax slider
+     * and also keeping track of the lastVelocity, which we'll get
+     * from the lastSynthState in processBlock()
+     * the code for OpenGL_VelocityMinMaxSlider has further comments about
+     * how the chowdsp system works with params, callbacks, and so on.
+     */
     VelocityMinMaxParams velocityMinMax;
 
-    // for storing outputLevels of this preparation for display
-    /*
-     * because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
+    /** for storing outputLevels of this preparation for display
+     *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
      *      we simply update this in the processBlock() call
+     *      and then the level meter will update its values during the OpenGL cycle
      */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
 
@@ -124,13 +137,7 @@ struct DirectParams : chowdsp::ParamHolder
 
 struct DirectNonParameterState : chowdsp::NonParamState
 {
-    DirectNonParameterState()
-    {
-        //addStateValues ({ /*,&isSelected*/});
-    }
-
-    //chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
-    //chowdsp::StateValue<bool> isSelected { "selected", true };
+    DirectNonParameterState() {}
 };
 
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState>>,
@@ -148,14 +155,8 @@ public:
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
-
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-
-    bool acceptsMidi() const override
-    {
-        return true;
-    }
-
+    bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
     {
         ptrToSamples = s;
@@ -167,7 +168,6 @@ public:
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
     {
-        DBG ("adding main, hammer and releaseResonance synths");
         mainSynth->addSoundSet (s);
         hammerSynth->addSoundSet (h);
         releaseResonanceSynth->addSoundSet (r);
@@ -211,49 +211,25 @@ public:
     void valueTreeParentChanged (juce::ValueTree&) {}
     void valueTreeRedirected (juce::ValueTree&) {}
 
-    double getLevelL()
-    {
-        if (levelBuf.getNumSamples() > 0)
-            return levelBuf.getRMSLevel (0, 0, levelBuf.getNumSamples());
-        else
-            return 0.;
-    }
 
-    double getLevelR()
-    {
-        if (levelBuf.getNumChannels() == 2)
-        {
-            if (levelBuf.getNumSamples())
-                return levelBuf.getRMSLevel (1, 0, levelBuf.getNumSamples());
-            else
-                return 0.;
-        }
-        else
-            return getLevelL();
-    }
 
 private:
-    //chowdsp::experimental::Directillator<float> oscillator;
     chowdsp::Gain<float> gain;
-    //juce::ADSR::Parameters adsrParams;
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
     std::unique_ptr<BKSynthesiser> mainSynth;
     std::unique_ptr<BKSynthesiser> hammerSynth;
     std::unique_ptr<BKSynthesiser> releaseResonanceSynth;
     std::unique_ptr<BKSynthesiser> pedalSynth;
 
-    float releaseResonanceSynthGainMultiplier = 10.; // because these are very soft
-    //juce::HashMap<int, juce::Array<float>> transpositionsByNoteOnNumber; // indexed by noteNumber
     juce::Array<float> midiNoteTranspositions;
     juce::Array<float> getMidiNoteTranspositions();
 
-    //juce::HashMap<int, juce::Array<float>> transpositionsByNoteOnNumber; // indexed by noteNumber
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
     chowdsp::ScopedCallbackList adsrCallbacks;
     chowdsp::ScopedCallbackList vtCallbacks;
 
-    juce::AudioSampleBuffer levelBuf; //for storing samples for metering/RMS calculation
+    BKSynthesizerState lastSynthState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };

@@ -142,6 +142,11 @@ struct TuningState : bitklavier::StateChangeableParameter
          *
          */
 
+        if (circularTuningOffset.empty())
+        {
+            return mtof (currentlyPlayingNote + currentTransposition);
+        }
+
         if (!tuneTranspositions)
         {
             double newOffset = (circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01); // i don't love the .01 changes here, let's see if this can be made consistent
@@ -212,6 +217,10 @@ class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
 public:
     TuningProcessor (SynthBase& parent, const juce::ValueTree& v);
 
+    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
+    {
+        return std::make_unique<TuningProcessor> (parent, v);
+    }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};

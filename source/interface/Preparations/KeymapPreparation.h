@@ -22,7 +22,7 @@ public:
     ~KeymapPreparation();
 
 // Static function that returns a pointer to a KeymapPreparation object
-    static std::unique_ptr<PreparationSection> createKeymapSection(const juce::ValueTree& v, SynthGuiInterface* interface) {
+    static std::unique_ptr<PreparationSection> create(const juce::ValueTree& v, SynthGuiInterface* interface) {
         return  std::make_unique<KeymapPreparation>(v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
 

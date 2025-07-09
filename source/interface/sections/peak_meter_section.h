@@ -9,12 +9,14 @@
 
 #include "synth_section.h"
 #include "peak_meter_viewer.h"
+#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 
 class PeakMeterViewer;
+class VolumeSlider;
 
 class PeakMeterSection : public SynthSection {
 public:
-    PeakMeterSection(juce::String name, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels);
+    PeakMeterSection(juce::String name, chowdsp::GainDBParameter::Ptr &outGainDB, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels);
     ~PeakMeterSection();
 
     int getMeterHeight();
@@ -24,8 +26,9 @@ public:
 
 private:
 
-    std::shared_ptr<PeakMeterViewer> peak_meter_left_;
+    std::shared_ptr<PeakMeterViewer> peak_meter_left_; // this shouldn't have to be shared_ptr, perhaps passing the pointer to the constructor above is the problem?
     std::shared_ptr<PeakMeterViewer> peak_meter_right_;
+    std::shared_ptr<VolumeSlider> volume_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PeakMeterSection)
 };

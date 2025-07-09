@@ -1015,3 +1015,4 @@ void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,bitklavier::
         }
     }
 }
+SynthSection::SynthSection() {}
