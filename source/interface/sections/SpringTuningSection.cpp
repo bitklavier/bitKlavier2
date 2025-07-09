@@ -21,11 +21,24 @@ SpringTuningSection::SpringTuningSection (
         addSlider(slider.get());
         slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         slider->setName(param_->name); // will this break the mods?
-        floatAttachments.emplace_back(std::move(attachment));
-        _sliders.emplace_back(std::move(slider));
+
+        /*
+         * put the intervalWeight knobs in their own vector, so we can group them in the UI
+         *      - the rest of the knobs will go in the vector of more general controls
+         */
+        if(param_->paramID.startsWith("intervalWeight_"))
+        {
+            intervalWeightsSliders_sliderAttachments.emplace_back(std::move(attachment));
+            intervalWeightSliders.emplace_back(std::move(slider));
+        }
+        else {
+            floatAttachments.emplace_back(std::move(attachment));
+            _sliders.emplace_back(std::move(slider));
+        }
     }
 
-    if (auto* tuningParams = dynamic_cast<SpringTuningParams*>(&params)) {
+    if (auto* tuningParams = dynamic_cast<SpringTuningParams*>(&params))
+    {
         auto index = tuningParams->scaleId->getIndex();
         scaleId_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId->paramID.toStdString());
         scaleId_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId, listeners, *scaleId_ComboBox, nullptr);
@@ -41,7 +54,6 @@ SpringTuningSection::SpringTuningSection (
         addOpenGlComponent(scaleId_tether_ComboBox->getImageComponent());
         setupTuningSystemMenu(scaleId_tether_ComboBox);
         scaleId_tether_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
-
     }
 
     intervalFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
@@ -81,7 +93,13 @@ SpringTuningSection::~SpringTuningSection() { }
 void SpringTuningSection::paintBackground(juce::Graphics& g) {
 
     setLabelFont(g);
+
     for (auto& slider : _sliders)
+    {
+        drawLabelForComponent (g, slider->getName(), slider.get());
+    }
+
+    for (auto& slider : intervalWeightSliders)
     {
         drawLabelForComponent (g, slider->getName(), slider.get());
     }
@@ -129,7 +147,14 @@ void SpringTuningSection::resized() {
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
     placeKnobsInArea(knobsBox, _sliders, true);
 
-    currentFundamental->setBounds(area);
+    area.removeFromTop(smallpadding);
+
+    juce::Rectangle<int> intervalknobsBox = area.removeFromTop(knobsectionheight + largepadding);
+    placeKnobsInArea(intervalknobsBox, intervalWeightSliders);
+
+    area.removeFromTop(smallpadding);
+
+    currentFundamental->setBounds(area.removeFromTop(labelsectionheight));
 
     SynthSection::resized();
 }

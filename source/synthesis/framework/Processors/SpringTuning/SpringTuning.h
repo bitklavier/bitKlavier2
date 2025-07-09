@@ -65,15 +65,6 @@ public:
     void tetherScaleChanged();
     void tetherFundamentalChanged();
 
-    /**
-     simulate() first moves through the entire particle array and "integrates" their position,
-     moving them based on their "velocities" and the drag values
-
-     it then moves through both spring arrays (the tether springs and interval springs) and
-     calls satisfyConstraints(), which updates the spring values based on the spring strengths,
-     stiffnesses, and offsets from their rest lengths. This in turn updates the target positions
-     for the two particles associated with each spring.
-     */
     void simulate();
     inline void stop(void);
 
@@ -88,7 +79,6 @@ public:
 	void removeSpringsByNote(int removeIndex);
 
     inline void setTetherWeights(juce::Array<float> weights);
-    inline void setSpringWeights(juce::Array<float> weights);
     inline void setSpringMode(int which, bool on);
     inline void setRate(double r, bool start = true);
     inline void setScaleId(TuningSystem which);
@@ -213,3 +203,5 @@ private:
 //	bool pitchEnabled(int index);
 
 //    void retuneIndividualSpring(Spring::Ptr spring);
+
+//    inline void setSpringWeights(juce::Array<float> weights);

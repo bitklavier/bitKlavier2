@@ -230,7 +230,7 @@ void TuningParametersView::resized()
         //bounds.removeFromTop(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
 
-    juce::Rectangle<int> springTuningBox = {adaptiveSection->getX(), semitoneSection->getY(), 500, 200};
+    juce::Rectangle<int> springTuningBox = {adaptiveSection->getX(), adaptiveSection->getBottom() + 20, 500, 300};
     springTuningSection->setBounds(springTuningBox);
 
     lastNoteDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY(), 100, 30);

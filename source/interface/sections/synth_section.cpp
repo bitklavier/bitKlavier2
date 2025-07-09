@@ -738,7 +738,7 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::
 
     int y = area.getY();
     //int height = area.getHeight() - widget_margin;
-    int height = std::min<int>(area.getHeight(), component_width) - widget_margin;
+    int height = area.getHeight() - widget_margin;//std::min<int>(area.getHeight(), component_width) - widget_margin;
     float x = area.getX() + widget_margin;
     for (const auto &knob: knobs) {
 

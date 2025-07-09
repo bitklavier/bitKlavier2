@@ -20,14 +20,26 @@ struct SpringTuningParams : public chowdsp::ParamHolder
             scaleId_tether,                 // menu: tether-spring-location tuning system — where the anchor/tether points are located
             tetherFundamental,              // menu: fundamental for scaleId_tether (Fundamental)
             active,                         // bool: system is on. hide from user, just needed for saving/loading
-            fundamentalSetsTether,          // bool: does the intervalFundamental affect the weights for the tethers? hide for now, keep always true
+            fundamentalSetsTether,          // bool: does the intervalFundamental affect the weights for the tethers springs? hide for now, keep always true
             rate,                           // float: update rate for Timer running spring dynamics (Hz)
             drag,                           // float: drag on the system (or 1 - drag)
             intervalStiffness,              // float: relative stiffness of the interval springs
             tetherStiffness,                // float: relative stiffness of tether springs
-            tetherWeightGlobal,             // float: fundamental weight
-            tetherWeightSecondaryGlobal,    // float: other weights
-            tCurrentSpringTuningFundamental // PitchClass: for keeping track of the current fundamental, given by automatic/last/first, etc... for UI
+            tetherWeightGlobal,             // float: fundamental weight; if fundamentalSetsTether, then the fundamental tether spring is weighted by this
+            tetherWeightSecondaryGlobal,    // float: other weights; if fundamentalSetsTether, then all the non-fundamental tether springs are weighted by this
+            tCurrentSpringTuningFundamental,// PitchClass: for keeping track of the current fundamental, given by automatic/last/first, etc... for UI
+            intervalWeight_1,               // float: weight for m2 (1) interval springs
+            intervalWeight_2,               // float: weight for M2 (2) interval springs
+            intervalWeight_3,               // etc...
+            intervalWeight_4,
+            intervalWeight_5,
+            intervalWeight_6,
+            intervalWeight_7,
+            intervalWeight_8,
+            intervalWeight_9,
+            intervalWeight_10,
+            intervalWeight_11,
+            intervalWeight_12
             );
     }
 
@@ -173,7 +185,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr fundamentalSetsTether {
         juce::ParameterID { "fundamentalSetsTether", 100},
         "fundamentalSetsTether",
-        false
+        true
     };
 
     /**
@@ -220,6 +232,114 @@ struct SpringTuningParams : public chowdsp::ParamHolder
 *             perhaps ignore for now? this should be addable pretty easily later, especially if we keep them non-moddable.
       *
       */
+
+    chowdsp::FloatParameter::Ptr intervalWeight_1 { // minor 2nd
+        juce::ParameterID { "intervalWeight_1", 100 },
+        "m2",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_2 { // major 2nd
+        juce::ParameterID { "intervalWeight_2", 100 },
+        "M2",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_3 { // minor 3
+        juce::ParameterID { "intervalWeight_3", 100 },
+        "m3",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_4 { // major 3
+        juce::ParameterID { "intervalWeight_4", 100 },
+        "M3",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_5 { // perfect 4
+        juce::ParameterID { "intervalWeight_5", 100 },
+        "P4",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_6 { // tritone
+        juce::ParameterID { "intervalWeight_6", 100 },
+        "TT",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_7 { // perfect 5
+        juce::ParameterID { "intervalWeight_7", 100 },
+        "P5",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_8 { // minor 6
+        juce::ParameterID { "intervalWeight_8", 100 },
+        "m6",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_9 { // major 6
+        juce::ParameterID { "intervalWeight_9", 100 },
+        "M2",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_10 { // minor 7
+        juce::ParameterID { "intervalWeight_10", 100 },
+        "m7",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_11 { // major 7
+        juce::ParameterID { "intervalWeight_11", 100 },
+        "M7",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr intervalWeight_12 { // octave
+        juce::ParameterID { "intervalWeight_12", 100 },
+        "P8",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
 
     juce::String tCurrentSpringFundamental_string;
 };

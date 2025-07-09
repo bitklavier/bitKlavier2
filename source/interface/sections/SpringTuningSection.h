@@ -47,6 +47,10 @@ private:
     std::unique_ptr<chowdsp::ComboBoxAttachment> tetherFundamental_ComboBoxAttachment;
     std::shared_ptr<PlainTextComponent> anchorsLabel;
 
+    // individual interval weight knobs
+    std::vector<std::unique_ptr<SynthSlider>> intervalWeightSliders;
+    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> intervalWeightsSliders_sliderAttachments;
+
     juce::GroupComponent sectionBorder;
 };
 

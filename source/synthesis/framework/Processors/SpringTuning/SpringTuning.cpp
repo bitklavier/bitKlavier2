@@ -35,9 +35,6 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
     /**
      * todo: check these initialization vals, probably should be overwritten by params in SpringTuningParams
      */
-    for (int i = 0; i < 13; i++) springWeights[i] = 0.5;
-    springWeights[7] = 0.75;
-    springWeights[9] = 0.25;
     setSpringMode(6, false);
 
     // Converting std::string to juce::String takes time so
@@ -225,14 +222,6 @@ inline juce::Array<float> SpringTuning::getSpringWeights(void)
     return weights;
 }
 
-inline void SpringTuning::setSpringWeights(juce::Array<float> weights)
-{
-    for (int i = 0; i < 12; i++)
-    {
-        setSpringWeight(i, weights[i]);
-    }
-}
-
 inline void SpringTuning::setSpringMode(int which, bool on)
 {
     springMode.set(which, on);
@@ -243,14 +232,13 @@ bool SpringTuning::getSpringMode(int which)
     return springMode.getUnchecked(which);
 }
 
-/*
-simulate() first moves through the entire particle array and "integrates" their position,
-moving them based on their "velocities" and the drag values
-
-it then moves through both spring arrays (the tether springs and interval springs) and
-calls satisfyConstraints(), which updates the spring values based on the spring strengths,
-stiffnesses, and offsets from their rest lengths. This in turn updates the target positions
-for the two particles associated with each spring.
+/**
+ * simulate() first moves through the entire particle array and "integrates" their position,
+ * moving them based on their "velocities" and the drag values
+ * it then moves through both spring arrays (the tether springs and interval springs) and
+ * calls satisfyConstraints(), which updates the spring values based on the spring strengths,
+ * stiffnesses, and offsets from their rest lengths. This in turn updates the target positions
+ * for the two particles associated with each spring.
 */
 void SpringTuning::simulate()
 {
@@ -281,30 +269,37 @@ void SpringTuning::simulate()
 	}
 }
 
-void SpringTuning::setSpringWeight(int which, double weight)
-{
-    const juce::ScopedLock sl (lock);
-
-    which += 1;
-
-    springWeights[which] = weight;
-
-    for (auto spring : enabledSpringArray)
-    {
-        if (spring->getIntervalIndex() == which)
-        {
-            spring->setStrength(weight);
-
-            // DBG("reweighting interval " + String(which) +  " to " + String(weight));
-        }
-    }
-}
+//void SpringTuning::setSpringWeight(int which, double weight)
+//{
+//    const juce::ScopedLock sl (lock);
+//
+//    which += 1;
+//
+//    springWeights[which] = weight;
+//
+//    for (auto spring : enabledSpringArray)
+//    {
+//        if (spring->getIntervalIndex() == which)
+//        {
+//            spring->setStrength(weight);
+//
+//            // DBG("reweighting interval " + String(which) +  " to " + String(weight));
+//        }
+//    }
+//}
 
 double SpringTuning::getSpringWeight(int which)
 {
-    which += 1;
+    juce::String whichWeightId = "intervalWeight_" + juce::String(which);
+    for ( auto &param_ : *sparams.getFloatParams())
+    {
+        if(param_->getParameterID() == whichWeightId)
+        {
+            return param_->getCurrentValue();
+        }
+    }
 
-    return springWeights[which];
+    return 0.5;
 }
 
 void SpringTuning::setTetherWeight(int which, double weight)
@@ -391,11 +386,13 @@ PitchClass SpringTuning::getTetherFundamental()
 
 double SpringTuning::getTetherWeightGlobal()
 {
-     return sparams.tetherWeightGlobal->getCurrentValue();
+    DBG("getTetherWeightGlobal = " + sparams.tetherWeightGlobal->getCurrentValueAsText());
+    return sparams.tetherWeightGlobal->getCurrentValue();
 }
 
 double SpringTuning::getTetherWeightSecondaryGlobal()
 {
+    DBG("getTetherWeightSecondaryGlobal = " + sparams.tetherWeightSecondaryGlobal->getCurrentValueAsText());
     return sparams.tetherWeightSecondaryGlobal->getCurrentValue();
 }
 
@@ -542,7 +539,8 @@ void SpringTuning::addSpring(Spring* spring)
     int interval = spring->getIntervalIndex();
     spring->setEnabled(true);
     spring->setStiffness(sparams.intervalStiffness->getCurrentValue());
-    spring->setStrength(springWeights[interval]);
+    //spring->setStrength(springWeights[interval]);
+    spring->setStrength(getSpringWeight(interval));
     enabledSpringArray.add(spring);
 
 //    DBG("addSpring          = " + juce::String(spring->getIntervalIndex()) +
@@ -1192,4 +1190,13 @@ void SpringTuning::hiResTimerCallback(void)
 //{
 //    const juce::ScopedLock sl (lock);
 //	return particleArray[index]->getEnabled();
+//}
+
+
+//inline void SpringTuning::setSpringWeights(juce::Array<float> weights)
+//{
+//    for (int i = 0; i < 12; i++)
+//    {
+//        setSpringWeight(i, weights[i]);
+//    }
 //}
