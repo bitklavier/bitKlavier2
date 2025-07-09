@@ -14,7 +14,9 @@ class BKKeymapKeyboardComponent : public StateModulatedComponent,
                                   public juce::TextEditor::Listener,
                                   public juce::Button::Listener {
 public:
-    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state) : keyboard_state_(*keyboard_state), keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard,keyboard_state->keyStates){
+    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state) : StateModulatedComponent(juce::ValueTree{}),
+    keyboard_state_(*keyboard_state), keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard,keyboard_state->keyStates){
+
         minKey = 21; // 21
 
         maxKey = 108; // 108

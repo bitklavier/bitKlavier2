@@ -19,7 +19,7 @@ class BKStackedSlider : public StateModulatedComponent, // needed for this to be
                         public juce::TextEditor::Listener
 {
 public:
-    BKStackedSlider (juce::String sliderName, double min, double max, double defmin, double defmax, double def, double increment, int numActiveSliders);
+    BKStackedSlider (juce::String sliderName, double min, double max, double defmin, double defmax, double def, double increment, int numActiveSliders, const juce::ValueTree& defaultState={});
 
     ~BKStackedSlider()
     {
@@ -183,7 +183,7 @@ class BKRangeSlider : public StateModulatedComponent,
 #endif
 {
 public:
-    BKRangeSlider (juce::String sliderName, double min, double max, double defmin, double defmax, double increment);
+    BKRangeSlider (juce::String sliderName, double min, double max, double defmin, double defmax, double increment, const juce::ValueTree& stateDefault);
     ~BKRangeSlider()
     {
         minSlider.setLookAndFeel (nullptr);

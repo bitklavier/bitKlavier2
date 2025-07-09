@@ -19,7 +19,8 @@ public:
                                                                               128.f, // max
                                                                               0.f, // default min
                                                                               128.f, // default max
-                                                                              1 //increment
+                                                                              1 ,//increment
+                                                                             _params->paramDefault
                                                                           ),
                                                                           params(_params)
     {
@@ -141,7 +142,11 @@ public:
         if (isModulation_) {
             modulationState.setProperty("velocitymin", min, nullptr);
             modulationState.setProperty("velocitymax", max, nullptr);
+        } else if (isModulated) {
+            defaultState.setProperty("velocitymin", min, nullptr);
+            defaultState.setProperty("velocitymax", max, nullptr);
         }
+
     }
 
     void mouseExit(const juce::MouseEvent &e) override {
@@ -169,7 +174,7 @@ private :
         128, // max
         0, // default min
         128, // default max
-        1) // increment
+        1, juce::ValueTree{}) // increment
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());

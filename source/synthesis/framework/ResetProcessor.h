@@ -2,8 +2,7 @@
 // Created by Davis Polito on 1/30/25.
 //
 
-#ifndef BITKLAVIER2_MODULATIONPROCESSOR_H
-#define BITKLAVIER2_MODULATIONPROCESSOR_H
+#pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"
@@ -12,22 +11,22 @@ class ModulatorBase;
 namespace bitklavier {
 class ModulationConnection;
 class StateConnection;
-    struct ModulatorRouting{
-        std::vector<ModulationConnection*> mod_connections;
-    };
-    class ModulationProcessor : public juce::AudioProcessor {
+    // struct ModulatorRouting{
+    //     std::vector<ModulationConnection*> mod_connections;
+    // };
+    class ResetProcessor : public juce::AudioProcessor {
     public:
-        ModulationProcessor(const juce::ValueTree& vt,SynthBase& parent) :
+        ResetProcessor(const juce::ValueTree& vt,SynthBase& parent) :
         juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
         .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-        .withInput("Reset",juce::AudioChannelSet::discreteChannels(1),true)), state(vt)
+        .withOutput("Reset",juce::AudioChannelSet::discreteChannels(1),true)), state(vt)
         {
             createUuidProperty(state);
         }
         static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v) {
-            return std::make_unique<ModulationProcessor>(v,parent);
+            return std::make_unique<ResetProcessor>(v,parent);
         }
         bool acceptsMidi() const override {
             return true;
@@ -43,10 +42,10 @@ class StateConnection;
 
         void prepareToPlay(double sampleRate, int samplesPerBlock) override {
             setRateAndBufferSizeDetails(sampleRate,samplesPerBlock);
-            for(auto buffer : tmp_buffers)
-            {
-                buffer.setSize(1,samplesPerBlock);
-            }
+            // for(auto buffer : tmp_buffers)
+            // {
+            //     buffer.setSize(1,samplesPerBlock);
+            // }
             sampleRate_ = sampleRate;
             blockSize_ = samplesPerBlock;
         }
@@ -108,7 +107,7 @@ class StateConnection;
         {
             return "";
         }
-         void addModulationConnection(ModulationConnection*);
+        void addModulationConnection(ModulationConnection*);
         void addModulationConnection(StateConnection*);
         void removeModulationConnection(ModulationConnection*);
         void removeModulationConnection(StateConnection*);
@@ -116,23 +115,16 @@ class StateConnection;
         int getNewModulationOutputIndex(const ModulationConnection&);
         int getNewModulationOutputIndex(const StateConnection&);
         void removeModulator(ModulatorBase*);
-        //could probabalt make this into a struct
-        std::vector<ModulatorBase*> modulators_;
-        std::vector<juce::AudioBuffer<float>> tmp_buffers;
-        std::vector<ModulatorRouting> mod_routing;
-        std::vector<ModulationConnection*> all_modulation_connections_;
-        std::vector<StateConnection*> all_state_connections_;
+
+
 //        std::unordered_map<ModulatorBase*,> outchannel_to_mods_;
 int blockSize_ =0;
 int sampleRate_ = 0;
-        ModulatorBase* getModulatorBase(std::string& uuid);
+
         juce::ValueTree state;
     private :
-        //could create new bus may need to happen on audio threafd?
-        int createNewModIndex();
 
     };
 
 } // bitklavier
 
-#endif //BITKLAVIER2_MODULATIONPROCESSOR_H

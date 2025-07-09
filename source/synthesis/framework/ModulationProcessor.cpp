@@ -7,6 +7,13 @@
 #include "ModulationConnection.h"
 void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    auto reset_in = getBusBuffer(buffer,true,2);
+    auto sample = buffer.getSample(0,0);
+    auto sample1 = buffer.getSample(1,0);
+    auto channel   = getChannelIndexInProcessBlockBuffer(true, 1, 0);
+    if (        reset_in.getSample(0,0))
+        DBG(reset_in.getSample(0,0));
+
     buffer.clear();
 
 

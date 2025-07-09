@@ -88,7 +88,7 @@ BKStackedSlider::BKStackedSlider(
     double defmax,
     double def,
 
-    double increment, int numActiveSliders):
+    double increment, int numActiveSliders, const juce::ValueTree& stateDefault): StateModulatedComponent(stateDefault),
            sliderName(sliderName),
            sliderMin(min),
            sliderMax(max),
@@ -244,7 +244,7 @@ void BKStackedSlider::setTo(juce::Array<float> newvals, juce::NotificationType n
         juce::Slider* newSlider = dataSliders.operator[](i);
         if(newSlider != nullptr)
         {
-            newSlider->setValue(sliderDefault);
+            //newSlider->setValue(sliderDefault);
             newSlider->setVisible(false);
         }
 
@@ -566,7 +566,8 @@ void BKStackedSlider::resized ()
 // **************************************************  BKRangeSlider ************************************************** //
 // ******************************************************************************************************************** //
 
-BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double defmin, double defmax, double increment):
+BKRangeSlider::BKRangeSlider (juce::String name, double min, double max, double defmin, double defmax, double increment, const juce::ValueTree& stateDefault):
+StateModulatedComponent(stateDefault),
                                                                                                                      sliderName(name),
                                                                                                                      sliderMin(min),
                                                                                                                      sliderMax(max),

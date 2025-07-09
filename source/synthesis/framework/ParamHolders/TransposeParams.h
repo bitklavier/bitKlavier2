@@ -12,7 +12,7 @@ struct TransposeParams : chowdsp::ParamHolder
 {
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
     {
-        add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,transpositionUsesTuning);
+        add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11, numActiveSliders, transpositionUsesTuning);
     }
 
     chowdsp::SemitonesParameter::Ptr t0{juce::ParameterID{"t0", 100},
@@ -70,6 +70,17 @@ struct TransposeParams : chowdsp::ParamHolder
             "TranspositionUsesTuning",
             false
     };
+    chowdsp::FloatParameter::Ptr numActiveSliders{
+        juce::ParameterID{"numActiveSliders", 100},
+        "numActiveSliders",
+        chowdsp::ParamUtils::createNormalisableRange(0.0f, 12.0f, 6.0f),
+        1.f,
+        [](float value) -> juce::String {
+            return juce::String(value, 0); // No decimals since values are whole numbers
+        },
+        [](const juce::String& text) -> float {
+            return text.getFloatValue();
+        }};
 
     /*
      * processStateChanges() is used to handle state change modifications
@@ -85,24 +96,32 @@ struct TransposeParams : chowdsp::ParamHolder
      * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
      *      so these are ones like Transpose, where they all change at once
      */
-    int numActive = 1;
+    std::atomic<int> numActive = 1;
     void processStateChanges() override
     {
         auto float_params = getFloatParams();
+        int i = numActiveSliders->getCurrentValue();
         for(auto [index, change] : stateChanges.changeState)
         {
+
             static juce::var nullVar;
-            for (int i = 0; i< 11; i++)
+
+            for (i = 0; i< 11; i++)
             {
                 auto str = "t" + juce::String(i);
                 auto val = change.getProperty(str);
+
                 if (val == nullVar)
                     break;
+                // numActive = i +1;
+
                 auto& float_param = float_params->at(i);
                 float_param.get()->setParameterValue(val);
                 //float_params[i].data()->get()->setParameterValue(val);
             }
+
         }
+        numActiveSliders->setParameterValue(i);
         stateChanges.changeState.clear();
     }
 };

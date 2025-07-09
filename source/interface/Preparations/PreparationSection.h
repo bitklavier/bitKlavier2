@@ -56,6 +56,7 @@ public:
         virtual void preparationDropped(const juce::MouseEvent &e, juce::Point<int> originalComponentPoint) {}
 
         virtual void modulationDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
+        virtual void resetDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
 
         virtual void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
 

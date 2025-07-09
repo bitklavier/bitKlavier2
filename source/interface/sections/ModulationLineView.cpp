@@ -82,6 +82,28 @@ void ModulationLineView::modulationDropped(const juce::ValueTree &source, const 
     _parent->getGui()->modulation_manager->added();
 }
 
+void ModulationLineView::resetDropped(const juce::ValueTree &source, const juce::ValueTree &destination)
+{
+    auto sourceId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(source.getProperty(IDs::nodeID,-1));
+    auto destId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( destination.getProperty(IDs::nodeID,-1));
+
+    //protects against short/accidental drag drops
+    if (sourceId == destId)
+        return;
+    //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
+
+    //right now is does make a connection on the backend but i think this should probably change once all this is fully implemented
+    //actual connections should be children of modconnection vtrees
+    //does this add a connection to the backend audio proceessor graph or just the value tree - davis -- 4/25/25
+    juce::ValueTree _connection(IDs::RESETCONNECTION);
+    _connection.setProperty(IDs::isMod, 1, nullptr);
+    _connection.setProperty(IDs::src,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(sourceId), nullptr);
+    _connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(destId), nullptr);
+    parent.addChild(_connection, -1, nullptr);
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    // _parent->getGui()->modulation_manager->added();
+}
+
 void ModulationLineView::tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {
     auto sourceId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(source.getProperty(IDs::nodeID,-1));
     auto destId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( dest.getProperty(IDs::nodeID,-1));
@@ -158,12 +180,14 @@ void ModulationLineView::newObjectAdded(ModulationLine * line) {
     // that some thing has change.
     // in our case a new line does not cause any audio thread behaviour to occur
     // for (const auto& v : line->state) {
-        if (line->state.hasType(IDs::ModulationConnection)) {
-            findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectModulation(line->state);
-        }
+        // if (line->state.hasType(IDs::MODCONNECTION)) {
+        //     findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectModulation(line->state);
+        // }
         if (line->state.hasType(IDs::TUNINGCONNECTION))
             findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectTuning(line->state);
     // }
+        if (line->state.hasType(IDs::RESETCONNECTION))
+            findParentComponentOfClass<SynthGuiInterface>()->getSynth()->connectReset(line->state);
 
 }
 

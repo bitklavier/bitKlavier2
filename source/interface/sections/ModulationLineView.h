@@ -38,6 +38,7 @@ public:
     void preparationDropped(const juce::MouseEvent& e, juce::Point<int>) override;
     void preparationDragged(juce::Component*, const juce::MouseEvent&e) override;
     void modulationDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
+    void resetDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) override;
 
 
@@ -60,7 +61,7 @@ public:
     }
     bool isSuitableType (const juce::ValueTree& v) const override
     {
-        return v.hasType (IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION);
+        return v.hasType (IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION) || v.hasType(IDs::RESETCONNECTION);
     }
 };
 
