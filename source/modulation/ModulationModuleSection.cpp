@@ -12,8 +12,8 @@
 #include "ModulationProcessor.h"
 #include "tracktion_ValueTreeUtilities.h"
 #include "ModulationList.h"
-ModulationModuleSection::ModulationModuleSection(ModulationList* modulationProcessor,juce::ValueTree &v, ModulationManager *m) :
-ModulesInterface(v), modulation_list_(modulationProcessor)
+ModulationModuleSection::ModulationModuleSection(ModulationList* modulationProcessor,juce::ValueTree &v, ModulationManager *m, juce::UndoManager &um) :
+ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
 {
     container_->setComponentID(v.getProperty(IDs::uuid));
     scroll_bar_ = std::make_unique<OpenGlScrollBar>();
@@ -52,6 +52,13 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
         listener->added();
     resized();
 }
+
+void ModulationModuleSection::removeModulator (ModulatorBase*)
+{
+
+
+}
+
 ModulationModuleSection::~ModulationModuleSection()
 {
    modulation_list_->removeListener(this);
@@ -60,18 +67,21 @@ ModulationModuleSection::~ModulationModuleSection()
 void ModulationModuleSection::handlePopupResult(int result) {
 
     //std::vector<vital::ModulationConnection*> connections = getConnections();
-    if (result == 1 )
+    if (result == 1)
     {
         juce::ValueTree t(IDs::modulationproc);
         t.setProperty(IDs::type, "ramp", nullptr);
         t.setProperty(IDs::isState, false, nullptr);
-        parent.appendChild(t,nullptr);
+        undo.beginNewTransaction();
+        parent.appendChild(t,&undo);
+
     } else if (result == 2)
     {
         juce::ValueTree t(IDs::modulationproc);
         t.setProperty(IDs::type, "state", nullptr);
         t.setProperty(IDs::isState, true, nullptr);
-        parent.appendChild(t,nullptr);
+        undo.beginNewTransaction();
+        parent.appendChild(t,&undo);
     }
 }
 

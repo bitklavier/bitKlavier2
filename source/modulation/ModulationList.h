@@ -19,6 +19,7 @@ public:
     public :
         virtual ~Listener(){}
         virtual void modulatorAdded( ModulatorBase*) = 0;
+        virtual void removeModulator(ModulatorBase*) = 0;
 //        virtual void modulationRemoved() = 0;
     };
     ModulationList(const juce::ValueTree&, SynthBase*, bitklavier::ModulationProcessor*);
