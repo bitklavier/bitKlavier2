@@ -15,9 +15,6 @@
 #include "SpringTuning.h"
 #include "SpringTuningUtilities.h"
 
-//using namespace std;
-
-//SpringTuning::SpringTuning(SpringTuning::Ptr st, SpringTuningParams &params) : sparams(params)
 SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
 {
     particleArray.ensureStorageAllocated(128);
@@ -86,7 +83,6 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
     }
 
     numNotes = 0;
-//    if (st != nullptr) copy(st);
 
     /**
      * todo: remove true here; this starts the Timer on construction, which we don't want ultimately
@@ -95,16 +91,19 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
 //    setIntervalFundamental((PitchClass)(automatic + 1));
 
 
-    /**
-     * todo: should remove these, have initiated by params
-     */
-    setTetherFundamental(PitchClass::C);
-    juce::Array<float> _tetherTuning = juce::Array<float>({0,0,0,0,0,0,0,0,0,0,0,0});
-    setTetherTuning(_tetherTuning);
+    intervalScaleChanged();
+    intervalFundamentalChanged();
+    tetherScaleChanged();
+    tetherFundamentalChanged();
 
-    setIntervalFundamental(Fundamental::automatic);
-    juce::Array<float> _intervalTuning = juce::Array<float>({0.0, 0.117313, 0.039101, 0.156414, -0.13686, -0.019547, -0.174873, 0.019547, 0.136864, -0.15641, -0.311745, -0.11731});
-    setIntervalTuning(_intervalTuning);
+
+//    setTetherFundamental(PitchClass::C);
+//    juce::Array<float> _tetherTuning = juce::Array<float>({0,0,0,0,0,0,0,0,0,0,0,0});
+//    setTetherTuning(_tetherTuning);
+//
+//    setIntervalFundamental(Fundamental::automatic);
+//    juce::Array<float> _intervalTuning = juce::Array<float>({0.0, 0.117313, 0.039101, 0.156414, -0.13686, -0.019547, -0.174873, 0.019547, 0.136864, -0.15641, -0.311745, -0.11731});
+//    setIntervalTuning(_intervalTuning);
 
 }
 
@@ -143,13 +142,8 @@ void SpringTuning::intervalStiffnessChanged()
 
 void SpringTuning::intervalScaleChanged()
 {
-    auto newtuning = sparams.scaleId->get();
-    DBG("SpringTuning::intervalScaleChanged() called " + sparams.scaleId->getCurrentValueAsText());
-
-    auto newtuningv = getOffsetsFromTuningSystem(newtuning);
-    juce::Array<float> newtuningvj;
-    copyStdArrayIntoJuceArray(newtuningv, newtuningvj); // so i don't have to rewrite all this with std:vectors right now...
-    setIntervalTuning(newtuningvj);
+    auto newtuningv = getOffsetsFromTuningSystem(sparams.scaleId->get());
+    copyStdArrayIntoJuceArray(newtuningv, intervalTuning);
 }
 
 void SpringTuning::intervalFundamentalChanged()
@@ -160,8 +154,11 @@ void SpringTuning::intervalFundamentalChanged()
         intervalFundamentalActive = getPitchClassFromInt(intFromFundamental(newfundamental));
     }
 
-    if(newfundamental == Fundamental::none) setUsingFundamentalForIntervalSprings(false);
-    else setUsingFundamentalForIntervalSprings(true);
+//    if(newfundamental == Fundamental::none) setUsingFundamentalForIntervalSprings(false);
+//    else setUsingFundamentalForIntervalSprings(true);
+
+    if(newfundamental == Fundamental::none) usingFundamentalForIntervalSprings = false;
+    else usingFundamentalForIntervalSprings = true;
 
     if(newfundamental == Fundamental::lowest) useLowestNoteForFundamental = true;
     else useLowestNoteForFundamental = false;
@@ -181,7 +178,43 @@ void SpringTuning::intervalFundamentalChanged()
      *      not by the system in this function here
      */
     //    setTetherFundamental(intervalFundamentalActive);
+    /*
+     * have new function: Non-Unique-Interval Fundamental
+     *      updateNUIFundamental()
+     * which then sets everything for that system to do its thing
+     */
 }
+
+void SpringTuning::tetherScaleChanged()
+{
+    auto newtuningv = getOffsetsFromTuningSystem(sparams.scaleId_tether->get());
+    copyStdArrayIntoJuceArray(newtuningv, tetherTuning); // so i don't have to rewrite all this with std:vectors right now...
+
+    updateTetherTuning();
+}
+
+void SpringTuning::updateTetherTuning()
+{
+    const juce::ScopedLock sl (lock);
+
+    for (int i = 0; i < 128; i++)
+    {
+        tetherParticleArray[i]->setX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        tetherParticleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+
+        particleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+    }
+}
+
+void SpringTuning::tetherFundamentalChanged()
+{
+    updateTetherTuning();
+}
+
+//void SpringTuning::setIntervalFundamental(Fundamental newfundamental)
+//{
+//    intervalFundamentalChanged();
+//}
 
 
 inline void SpringTuning::setRate(double r, bool start)
@@ -215,9 +248,9 @@ Fundamental SpringTuning::getIntervalFundamental() { return sparams.intervalFund
 PitchClass SpringTuning::getIntervalFundamentalActive() { return intervalFundamentalActive; }
 juce::Array<float> SpringTuning::getIntervalTuning(void){return intervalTuning;}
 PitchClass SpringTuning::getTetherFundamental() {return tetherFundamental;}
-juce::Array<float> SpringTuning::getTetherTuning(void) {return tetherTuning;}
-void SpringTuning::setUsingFundamentalForIntervalSprings(bool use) { usingFundamentalForIntervalSprings = use; }
-bool SpringTuning::getUsingFundamentalForIntervalSprings(void) { return usingFundamentalForIntervalSprings; }
+//juce::Array<float> SpringTuning::getTetherTuning(void) {return tetherTuning;}
+//void SpringTuning::setUsingFundamentalForIntervalSprings(bool use) { usingFundamentalForIntervalSprings = use; }
+//bool SpringTuning::getUsingFundamentalForIntervalSprings(void) { return usingFundamentalForIntervalSprings; }
 //inline void SpringTuning::setScaleId(TuningSystem which) { sparams.scaleId->setParameterValue(which); }
 //inline void SpringTuning::setActive(bool status) { sparams.active->setParameterValue(status); }
 inline bool SpringTuning::getActive(void) { return sparams.active->get(); }
@@ -268,38 +301,7 @@ inline void SpringTuning::setSpringMode(int which, bool on)
 }
 
 
-void SpringTuning::setTetherTuning(juce::Array<float> tuning)
-{
-    const juce::ScopedLock sl (lock);
 
-    tetherTuning = tuning;
-    for (int i = 0; i < 128; i++)
-    {
-        tetherParticleArray[i]->setX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
-        tetherParticleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
-
-        particleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
-    }
-}
-
-void SpringTuning::setTetherFundamental(PitchClass newfundamental)
-{
-    tetherFundamental = newfundamental;
-    setTetherTuning(getTetherTuning());
-}
-
-void SpringTuning::setIntervalTuning(juce::Array<float> tuning)
-{
-    intervalTuning = tuning;
-    for (auto off : intervalTuning)
-        DBG("interval tuning offset : " + juce::String(off));
-}
-
-void SpringTuning::setIntervalFundamental(Fundamental newfundamental)
-{
-    //sparams.intervalFundamental->setParameterValue(newfundamental);
-    intervalFundamentalChanged();
-}
 
 
 
@@ -504,7 +506,10 @@ void SpringTuning::removeNote(int note)
     else if(useAutomaticFundamental)
     {
         findFundamental();
-        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
+        /**
+         * todo: need to fix all this!
+         */
+//        if(sparams.fundamentalSetsTether->get()) setTetherFundamental(intervalFundamentalActive);
     }
 
     removeSpringsByNote(note);
@@ -727,8 +732,7 @@ void SpringTuning::retuneIndividualSpring(Spring* spring)
     int interval = spring->getIntervalIndex();
 
     //set spring length locally, for all if !usingFundamentalForIntervalSprings, or for individual springs as set by L/F
-    if(!usingFundamentalForIntervalSprings ||
-        !getSpringMode(interval - 1))
+    if(!usingFundamentalForIntervalSprings || !getSpringMode(interval - 1))
     {
         int diff = spring->getA()->getRestX() - spring->getB()->getRestX();
 //        spring->setRestingLength(fabs(diff) + intervalTuning[interval]);
@@ -1214,4 +1218,17 @@ void SpringTuning::hiResTimerCallback(void)
 //    enabledSpringArray.add(spring);
 //
 //    retuneIndividualSpring(spring);
+//}
+
+
+
+//void SpringTuning::setTetherFundamental(PitchClass newfundamental)
+//{
+//    tetherFundamental = newfundamental;
+//    updateTetherTuning();
+//}
+
+//void SpringTuning::setIntervalTuning(juce::Array<float> tuning)
+//{
+//    intervalTuning = tuning;
 //}

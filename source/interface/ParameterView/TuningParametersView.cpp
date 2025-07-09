@@ -146,7 +146,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     };
 
     /*
-     * need call back for intervalFundamentalChanged, to notify when the user changes this and make updates
+     * callbacks for all the spring tuning params
      */
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.scaleId,
         chowdsp::ParameterListenerThread::MessageThread,
@@ -156,14 +156,51 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         })
     };
 
-    /*
-     * need call back for intervalFundamentalChanged, to notify when the user changes this and make updates
-     */
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.intervalFundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
             DBG("intervalFundamental changed by user");
             params.tuningState.springTuner->intervalFundamentalChanged();
+        })
+    };
+
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.scaleId_tether,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("scaleId_tether (scaleId) changed by user");
+            params.tuningState.springTuner->tetherScaleChanged();
+        })
+    };
+
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.tetherFundamental,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("tetherFundamental changed by user");
+            params.tuningState.springTuner->tetherFundamentalChanged();
+        })
+    };
+
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.rate,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("rate changed by user");
+            params.tuningState.springTuner->rateChanged();
+        })
+    };
+
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.tetherStiffness,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("tetherStiffness changed by user");
+            params.tuningState.springTuner->tetherStiffnessChanged();
+        })
+    };
+
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.intervalStiffness,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("intervalStiffness changed by user");
+            params.tuningState.springTuner->intervalStiffnessChanged();
         })
     };
 

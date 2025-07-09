@@ -89,11 +89,24 @@ public:
     //inline void setTetherStiffness(double stiff);
     //inline void setIntervalStiffness(double stiff);
 //    void stiffnessChanged();
+
+
+    /**
+     * this are callbacks for the UI, to update values internally
+     *  - note that "drag" does not need a callback, since it can be used directly without anything further
+     *  - all the rest of these require additional setup
+     */
     void rateChanged();
     void tetherStiffnessChanged();
     void intervalStiffnessChanged();
     void intervalScaleChanged();
     void intervalFundamentalChanged();
+    void tetherScaleChanged();
+    void tetherFundamentalChanged();
+
+
+
+
 
     inline juce::Array<float> getTetherWeights(void);
     inline void setTetherWeights(juce::Array<float> weights);
@@ -120,9 +133,9 @@ public:
     PitchClass getIntervalFundamentalActive();
     juce::Array<float> getIntervalTuning(void);
     PitchClass getTetherFundamental();
-    juce::Array<float> getTetherTuning(void);
-    void setUsingFundamentalForIntervalSprings(bool use);
-    bool getUsingFundamentalForIntervalSprings(void);
+    //juce::Array<float> getTetherTuning(void);
+//    void setUsingFundamentalForIntervalSprings(bool use);
+//    bool getUsingFundamentalForIntervalSprings(void);
     inline void setScaleId(TuningSystem which);
     inline void setActive(bool status);
     inline bool getActive(void);
@@ -150,10 +163,10 @@ public:
     juce::String getTetherSpringName(int which);
     juce::String getSpringName(int which);
 
-    void setTetherTuning(juce::Array<float> tuning);
-    void setTetherFundamental(PitchClass newfundamental);
-    void setIntervalTuning(juce::Array<float> tuning);
-    void setIntervalFundamental(Fundamental newfundamental);
+    void updateTetherTuning();
+//    void setTetherFundamental(PitchClass newfundamental);
+//    void setIntervalTuning(juce::Array<float> tuning);
+//    void setIntervalFundamental(Fundamental newfundamental);
     void findFundamental();
 //    void retuneIndividualSpring(Spring::Ptr spring);
     void retuneIndividualSpring(Spring* spring);
