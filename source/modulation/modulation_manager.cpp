@@ -943,6 +943,7 @@ void 	ModulationManager::componentAdded()
         button_model_lookup_.clear();
         slider_model_lookup_.clear();
         state_model_lookup_.clear();
+        modulation_callout_buttons_.clear();
 
 
         //count things up

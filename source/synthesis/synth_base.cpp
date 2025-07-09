@@ -414,9 +414,9 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         mod_connections_.push_back (connection);
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
         mod_connection.appendChild (connection->state, nullptr);
-        getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
+        // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
             engine_->addConnection (connection->connection_);
-        });
+        // });
     }
 }
 bool SynthBase::connectModulation (const juce::ValueTree& v)
@@ -482,8 +482,9 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
     connection->source_name = "";
     connection->destination_name = "";
     state_connections_.remove (connection);
+    engine_->removeConnection (connection->connection_);
     getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        engine_->removeConnection (connection->connection_);
+
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection (connection);
     });
@@ -496,8 +497,9 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
     connection->source_name = "";
     connection->destination_name = "";
     mod_connections_.remove (connection);
+    engine_->removeConnection (connection->connection_);
+
     getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        engine_->removeConnection (connection->connection_);
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection (connection);
     });
@@ -555,9 +557,9 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     state_connections_.push_back (connection);
     connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
     state_connection.appendChild (connection->state, nullptr);
-    getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
+    // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
         engine_->addConnection (connection->connection_);
-    });
+    // });
 }
 bool SynthBase::connectStateModulation (const std::string& source, const std::string& destination)
 {

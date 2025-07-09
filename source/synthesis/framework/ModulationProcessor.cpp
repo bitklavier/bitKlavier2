@@ -44,9 +44,30 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
 //update to search for any null locations
     mod->parent_ = this;
-    modulators_.push_back(mod);
-    tmp_buffers.emplace_back(1,blockSize_);
-    mod_routing.emplace_back();
+    // modulators_.push_back(mod);
+    // Replace nullptrs with new instances
+    // Add modulator to first nullptr slot or append at the end
+    auto it = std::find(modulators_.begin(), modulators_.end(), nullptr);
+    std::size_t index;
+
+    if (it != modulators_.end()) {
+        index = std::distance(modulators_.begin(), it);
+        *it = mod; // replace nullptr with new modulator
+    } else {
+        index = modulators_.size();
+        modulators_.push_back(mod); // add to end
+    }
+
+    // Ensure the auxiliary vectors are sized correctly
+    if (tmp_buffers.size() <= index) {
+        tmp_buffers.resize(index + 1);
+    }
+    tmp_buffers[index] = juce::AudioBuffer<float>(1, blockSize_); // or whatever buffer type
+
+    if (mod_routing.size() <= index) {
+        mod_routing.resize(index + 1);
+    }
+    mod_routing[index] = {}; // default construct routing entry
 }
 
 void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
@@ -54,6 +75,7 @@ void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
     auto it  = std::find(modulators_.begin(), modulators_.end(), mod);
     if(it != modulators_.end()) {
         int index = std::distance(modulators_.begin(), it);
+
         //set to null so that deallocation doesn't happen on audio thread
         modulators_[index] = nullptr;
         tmp_buffers[index] = {};

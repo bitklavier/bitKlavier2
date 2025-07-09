@@ -26,7 +26,10 @@ class RampModulatorProcessor : public ModulatorStateBase<bitklavier::Preparation
 
 public :
     RampModulatorProcessor(juce::ValueTree&);
-    ~RampModulatorProcessor(){}
+    ~RampModulatorProcessor()
+    {
+
+    }
     void process() override{};
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;
     void prepareToPlay (int samplesPerBlock, double sampleRate ) override {}

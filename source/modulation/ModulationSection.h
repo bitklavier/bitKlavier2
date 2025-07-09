@@ -14,18 +14,20 @@ class ModulationManager;
 class ModulationSection : public SynthSection
 {
 public:
-    ModulationSection( const juce::ValueTree &, SynthSection* editor);
+    ModulationSection( const juce::ValueTree &, SynthSection* editor, juce::UndoManager &um);
 
      ~ModulationSection() override;
 
     void resized() override;
     juce::ValueTree state;
     void addModButtonListener(ModulationManager*);
-private:
+    void buttonClicked(juce::Button* button) override;
 
+private:
+    std::unique_ptr<OpenGlShapeButton> exit_button_;
     std::unique_ptr<SynthSection> _view;
     std::shared_ptr<ModulationButton> mod_button;
-
+    juce::UndoManager& undo;
 };
 
 #endif //BITKLAVIER_MODULATIONSECTION_H

@@ -127,9 +127,16 @@ int sampleRate_ = 0;
         ModulatorBase* getModulatorBase(std::string& uuid);
         ModulationProcessor();
         juce::ValueTree state;
+        /** Calls an action on the main thread via chowdsp::DeferredAction */
+        template <typename Callable>
+        void callOnMainThread (Callable&& func, bool couldBeAudioThread = false)
+        {
+            mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
+        }
     private :
         //could create new bus may need to happen on audio threafd?
         int createNewModIndex();
+        chowdsp::DeferredAction mainThreadAction;
 
     };
 

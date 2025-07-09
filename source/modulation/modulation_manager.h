@@ -356,11 +356,15 @@ public StateModulatedComponent::Listener
     //  ModulesInterface<ModulationSection>::Listener,
     void added() override
     {
+        DBG("added");
         componentAdded();
+        DBG("done adding");
     }
     void removed() override
     {
+        DBG("remove");
         componentAdded();
+        DBG("doneremoving");
     }
     void effectsMoved() override
     {

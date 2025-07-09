@@ -76,6 +76,7 @@ namespace IDs
 
     DECLARE_ID(PLUGIN)
     DECLARE_ID(x_y)
+    DECLARE_ID(PARAM_DEFAULT)
 }
 
 #undef DECLARE_ID

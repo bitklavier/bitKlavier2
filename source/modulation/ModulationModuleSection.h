@@ -31,7 +31,6 @@ public:
     ModulationList* modulation_list_;
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
     juce::UndoManager& undo;
-
 };
 
 #endif //BITKLAVIER_SOUNDMODULESECTION_H
