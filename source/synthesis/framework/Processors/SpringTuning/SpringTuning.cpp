@@ -26,21 +26,11 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
     springMode.ensureStorageAllocated(12);
     for(int i=0; i<12; i++) springMode.insert(i, true);
 
+    tetherFundamental = PitchClass::C;
     useLowestNoteForFundamental = false;
     useHighestNoteForFundamental = false;
     useLastNoteForFundamental = false;
-
-    /**
-     *
-     * ALWAYS true, except in None mode
-     */
     usingFundamentalForIntervalSprings = true;
-
-    /**
-     * todo: remove all this setFundamentalSetsTether, which is either broken or not needed anymore.
-     */
-    //setFundamentalSetsTether(true);        //needs UI toggle; when on, don't show tether sliders for current notes, only the two tether weight sliders
-//    tetherFundamental = Fundamental::C;
 
     /**
      * todo: check these initialization vals, probably should be overwritten by params in SpringTuningParams
@@ -84,26 +74,17 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
 
     numNotes = 0;
 
+    intervalFundamentalChanged();
+    intervalScaleChanged();
+    tetherScaleChanged();
+    tetherFundamentalChanged();
+    tetherStiffnessChanged();
+    intervalStiffnessChanged();
+
     /**
      * todo: remove true here; this starts the Timer on construction, which we don't want ultimately
      */
     setRate(sparams.rate->getCurrentValue(), true);
-//    setIntervalFundamental((PitchClass)(automatic + 1));
-
-
-    intervalScaleChanged();
-    intervalFundamentalChanged();
-    tetherScaleChanged();
-    tetherFundamentalChanged();
-
-
-//    setTetherFundamental(PitchClass::C);
-//    juce::Array<float> _tetherTuning = juce::Array<float>({0,0,0,0,0,0,0,0,0,0,0,0});
-//    setTetherTuning(_tetherTuning);
-//
-//    setIntervalFundamental(Fundamental::automatic);
-//    juce::Array<float> _intervalTuning = juce::Array<float>({0.0, 0.117313, 0.039101, 0.156414, -0.13686, -0.019547, -0.174873, 0.019547, 0.136864, -0.15641, -0.311745, -0.11731});
-//    setIntervalTuning(_intervalTuning);
 
 }
 
@@ -151,11 +132,9 @@ void SpringTuning::intervalFundamentalChanged()
     auto newfundamental = sparams.intervalFundamental->get();
 
     if(newfundamental < Fundamental::none) {
+        DBG("found fixed fundamental for intervals " + juce::String(intFromFundamental(newfundamental)));
         intervalFundamentalActive = getPitchClassFromInt(intFromFundamental(newfundamental));
     }
-
-//    if(newfundamental == Fundamental::none) setUsingFundamentalForIntervalSprings(false);
-//    else setUsingFundamentalForIntervalSprings(true);
 
     if(newfundamental == Fundamental::none) usingFundamentalForIntervalSprings = false;
     else usingFundamentalForIntervalSprings = true;
@@ -169,8 +148,17 @@ void SpringTuning::intervalFundamentalChanged()
     if(newfundamental == Fundamental::last) useLastNoteForFundamental = true;
     else useLastNoteForFundamental = false;
 
-    if(newfundamental == Fundamental::automatic) useAutomaticFundamental = true;
+    if(newfundamental == Fundamental::automatic) {
+        useAutomaticFundamental = true;
+        intervalFundamentalActive = PitchClass::C; //init, probably not necessary
+    }
     else useAutomaticFundamental = false;
+
+//    DBG("*** SpringTuning::intervalFundamentalChanged ***");
+//    DBG("       newfundamental                     = " + sparams.intervalFundamental->getCurrentValueAsText());
+//    DBG("       intervalFundamentalActive          = " + juce::String(intFromPitchClass(intervalFundamentalActive)));
+//    DBG("       usingFundamentalForIntervalSprings = " + juce::String((int)usingFundamentalForIntervalSprings));
+//    DBG("       useAutomaticFundamental            = " + juce::String((int)useAutomaticFundamental));
 
     /*
      * this was in the original code and seems to be a mistake to me
@@ -178,11 +166,7 @@ void SpringTuning::intervalFundamentalChanged()
      *      not by the system in this function here
      */
     //    setTetherFundamental(intervalFundamentalActive);
-    /*
-     * have new function: Non-Unique-Interval Fundamental
-     *      updateNUIFundamental()
-     * which then sets everything for that system to do its thing
-     */
+
 }
 
 void SpringTuning::tetherScaleChanged()
@@ -646,7 +630,7 @@ void SpringTuning::addSpring(Spring* spring)
 void SpringTuning::addSpringsByNote(int note)
 {
     const juce::ScopedLock sl (lock);
-    //DBG("addSpringsByNote " + juce::String(note));
+    DBG("addSpringsByNote " + juce::String(note));
 
     for (auto p : particleArray)
     {
@@ -684,6 +668,7 @@ void SpringTuning::addSpringsByNote(int note)
                       intervalTuning.getUnchecked((scaleDegree1 - intFromPitchClass(intervalFundamentalActive)) % 12)) -
                     (scaleDegree2 +
                      intervalTuning.getUnchecked((scaleDegree2 - intFromPitchClass(intervalFundamentalActive)) % 12))));
+                    DBG("diff = " + juce::String(diff));
                 }
                 else diff = diff * 100 + intervalTuning.getUnchecked(interval) * 100;
 
@@ -701,29 +686,27 @@ void SpringTuning::addSpringsByNote(int note)
 
     tetherSpringArray[note]->setEnabled(true);
 
-    /*
-     * i think all this getFundamentalSetsTether stuff is just not right or not useful
-     */
 //    if(getFundamentalSetsTether())
-//    {
-//        for (auto tether : tetherSpringArray)
-//        {
-//            if(tether->getEnabled())
-//            {
-//                int tnoteA = tether->getA()->getNote();
-//                int tnoteB = tether->getB()->getNote();
-//
-//                if(tnoteA % 12 == intFromPitchClass(getTetherFundamental()) || tnoteB % 12 == intFromPitchClass(getTetherFundamental()))
-//                {
-//                    // DBG("SpringTuning::addSpringsByNote getTetherWeightGlobal = " + String((int)getTetherWeightGlobal()));
-//                    setTetherWeight(tnoteA, getTetherWeightGlobal());
-//                }
-//                else{
-//                    setTetherWeight(tnoteA, getTetherWeightSecondaryGlobal());
-//                }
-//            }
-//        }
-//    }
+    if(sparams.fundamentalSetsTether->get() == true)
+    {
+        for (auto tether : tetherSpringArray)
+        {
+            if(tether->getEnabled())
+            {
+                int tnoteA = tether->getA()->getNote();
+                int tnoteB = tether->getB()->getNote();
+
+                if(tnoteA % 12 == intFromPitchClass(getTetherFundamental()) || tnoteB % 12 == intFromPitchClass(getTetherFundamental()))
+                {
+                    // DBG("SpringTuning::addSpringsByNote getTetherWeightGlobal = " + String((int)getTetherWeightGlobal()));
+                    setTetherWeight(tnoteA, getTetherWeightGlobal());
+                }
+                else{
+                    setTetherWeight(tnoteA, getTetherWeightSecondaryGlobal());
+                }
+            }
+        }
+    }
 }
 
 
@@ -744,10 +727,10 @@ void SpringTuning::retuneIndividualSpring(Spring* spring)
     {
         int scaleDegree1 = spring->getA()->getNote();
         int scaleDegree2 = spring->getB()->getNote();
-        //int intervalFundamental = 0; //temporary, will set in preparation
 
-        float diff =    (100. * scaleDegree2 + intervalTuning[(scaleDegree2 - intFromPitchClass(intervalFundamentalActive)) % 12]) -
-                     (100. * scaleDegree1 + intervalTuning[(scaleDegree1 - intFromPitchClass(intervalFundamentalActive)) % 12]);
+        float diff =  100. *
+                         ((scaleDegree2 + intervalTuning[(scaleDegree2 - intFromPitchClass(intervalFundamentalActive)) % 12])
+                     -   (scaleDegree1 + intervalTuning[(scaleDegree1 - intFromPitchClass(intervalFundamentalActive)) % 12]));
 
         spring->setRestingLength(fabs(diff));
     }

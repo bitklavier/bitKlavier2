@@ -20,7 +20,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
             scaleId_tether,                 // menu: tether-spring-location tuning system — where the anchor/tether points are located
             tetherFundamental,              // menu: fundamental for scaleId_tether (Fundamental)
             active,                         // bool: system is on. hide from user, just needed for saving/loading
-            fundamentalSetsTether,          // bool: does the intervalFundamental affect the weights for the tethers? hide for now, keep always true //**** get rid of this, should always be false, bug from previous version
+            fundamentalSetsTether,          // bool: does the intervalFundamental affect the weights for the tethers? hide for now, keep always true
             rate,                           // float: update rate for Timer running spring dynamics (Hz)
             drag,                           // float: drag on the system (or 1 - drag)
             intervalStiffness,              // float: relative stiffness of the interval springs
