@@ -53,8 +53,9 @@ public:
     ~SpringTuning();
 
     /**
-     * this are callbacks for the UI, to update values internally
+     * these first functions are callbacks for the UI, to update values internally
      *  - note that "drag" does not need a callback, since it can be used directly without anything further
+     *      there are others like that as well...
      *  - all the rest of these require additional setup
      */
     void rateChanged();
@@ -65,41 +66,29 @@ public:
     void tetherScaleChanged();
     void tetherFundamentalChanged();
 
+    inline void setRate(double r, bool start = true);
+    inline void setActive(bool status);
+
     void simulate();
     inline void stop(void);
 
 	void addParticle(int pc);
 	void removeParticle(int pc);
-    Particle* getParticle(int note);
 
 	void addNote(int noteIndex);
 	void removeNote(int noteIndex);
-    void removeAllNotes(void);
+    void addSpring(Spring* spring);
 	void addSpringsByNote(int pc);
 	void removeSpringsByNote(int removeIndex);
 
-    inline void setTetherWeights(juce::Array<float> weights);
-    inline void setSpringMode(int which, bool on);
-    inline void setRate(double r, bool start = true);
-    inline void setScaleId(TuningSystem which);
-    inline void setActive(bool status);
-    void setSpringWeight(int which, double weight);
     void setTetherWeight(int which, double weight);
-
-    inline juce::Array<float> getTetherWeights(void);
-    inline juce::Array<float> getSpringWeights(void);
     double getTetherWeightGlobal();
     double getTetherWeightSecondaryGlobal();
     bool getSpringMode(int which);
     double getFrequency(int index);
     PitchClass getTetherFundamental();
-    juce::Array<Particle*> getTetherParticles(void);
-    juce::Array<Spring*> getTetherSprings(void);
+
     juce::Array<Particle*> getParticles(void);
-    juce::Array<Spring*> getEnabledSprings(void);
-    juce::String getTetherSpringName(int which);
-    juce::String getSpringName(int which);
-    double getTetherWeight(int which);
     int getLowestActiveParticle();
     int getHighestActiveParticle();
     double getSpringWeight(int which);
@@ -124,10 +113,8 @@ private:
 
     juce::Array<float> intervalTuning;
     PitchClass intervalFundamentalActive; //the one actually used currently, changed by auto/last/highest/lowest modes
-    juce::Array<bool> springMode;
 
     juce::Array<float> tetherTuning;
-    TuningSystem tetherTuningId;
     PitchClass tetherFundamental;
 
     juce::Array<Particle*> particleArray;
@@ -138,70 +125,5 @@ private:
     juce::Array<Spring*>    enabledSpringArray;
     juce::Array<Spring*>    enabledParticleArray;
 
-    float springWeights[13];
-    void addSpring(Spring* spring);
-
     void hiResTimerCallback(void) override;
 };
-
-
-
-//********* below not needed? *********//
-
-//	void toggleNote(int noteIndex);
-//	void updateNotes();
-//    void updateFreq();
-
-//	void addSpringsByInterval(double interval);
-//	void removeSpringsByInterval(double interval);
-//	void adjustSpringsByInterval(double interval, double stiffness);
-
-
-//    inline void setStiffness(double stiff);
-//inline void setTetherStiffness(double stiff);
-//inline void setIntervalStiffness(double stiff);
-//    void stiffnessChanged();
-
-//	void toggleSpring();
-
-//    void setTetherFundamental(PitchClass newfundamental);
-//    void setIntervalTuning(juce::Array<float> tuning);
-//    void setIntervalFundamental(Fundamental newfundamental);
-
-//    inline double getRate(void);
-//    inline double getStiffness(void);
-//    inline double getTetherStiffness(void);
-//    inline double getIntervalStiffness(void);
-//    inline void setDrag(double newdrag);
-//    inline double getDrag(void);
-//    bool getFundamentalSetsTether();
-//    void setFundamentalSetsTether(bool s);
-
-//    void setTetherWeightGlobal(double s);
-//    void setTetherWeightSecondaryGlobal(double s);
-
-//    bool getSpringModeButtonState(int which);
-//    Fundamental getIntervalFundamental();
-//    PitchClass getIntervalFundamentalActive();
-//    juce::Array<float> getIntervalTuning(void);
-
-//juce::Array<float> getTetherTuning(void);
-//    void setUsingFundamentalForIntervalSprings(bool use);
-//    bool getUsingFundamentalForIntervalSprings(void);
-
-//	void printParticles();
-//	void printActiveParticles();
-//	void printActiveSprings();
-//
-//	bool checkEnabledParticle(int index);
-
-//    Particle::PtrArr& getTetherParticles(void);
-
-//    inline bool getActive(void);
-//    inline TuningSystem getScaleId(void);
-
-//	bool pitchEnabled(int index);
-
-//    void retuneIndividualSpring(Spring::Ptr spring);
-
-//    inline void setSpringWeights(juce::Array<float> weights);

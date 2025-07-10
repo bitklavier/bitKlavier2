@@ -7,7 +7,6 @@
 - [ ] Blurry fonts ;--}
 
 ## Quick Bug/Feature Notes
-- [ ] adaptive tuning interval scale stuff isn't actually registering; need callback, like for main tuning system, or update at the block
 - [ ] transposition slider limits to -12/12, and should allow for larger values when typed in
 - [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
 - [ ] weird dialog boxes when control-clicking on knobs
@@ -15,6 +14,7 @@
 - [ ] maybe we should allow drag/drop to make audio connections between preps as well
 - [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
 - [ ] i believe pitchbend is not yet implemented
+- [ ] MTS still needs to be implemented for Tuning, as does Scala
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!

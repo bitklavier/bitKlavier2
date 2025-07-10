@@ -392,7 +392,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_7 { // button for setting springMode for each interval weight
         juce::ParameterID { "useLocalOrFundamental_7", 100},
         "F",
-        true
+        false
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_8 { // button for setting springMode for each interval weight
