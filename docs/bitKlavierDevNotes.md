@@ -2,14 +2,29 @@
 ## Priorities before Davis leaves
 - [ ] finish mods for Direct and Tuning:
   - working, saving/loading, Dan mostly understanding the code
-- [ ] Blendrónic audio in 
-- [ ] Keymap parameter targeting; we had discussed a different way of doing that
+- [ ] Target preparation
+- [ ] Blendrónic audio in
 - [ ] Sample load crash
 - [ ] Blurry fonts ;--}
 - [ ] global preferences, like A440
 
 ## Quick Bug/Feature Notes
-- [ ] transposition slider limits to -12/12, and should allow for larger values when typed in
+- [ ] Keymap parameter targeting: 
+  - requires a big new solution!
+  - a new preparation: the Target Prep
+  - Keymap => Preparation, we get the default behavior, as always
+  - Keymap => Target => Preparation (let's say Synchronic for this example)
+  - in Target, we have 
+    - all non-default behaviors (Pattern Sync, Beat Sync, etc...) that were in the old Keymap 
+    - along with the NoteOn/Off/Both options for each that were in the old Synchronic
+    - for every behavior that is checked on, we repack the MIDI messages with a new channel, assigned to that behavior, and filter according to the NoteOn/Off/Both settings
+      - so, if Pattern Sync is checked on, with Note-Off as the mode, the MIDI messages will be unpacked, NoteOn messages discarded, and the NoteOn messages reassigned to channel 2 (for Pattern Sync, 3 for Beat Sync, etc..), and the messages are repacked and sent out
+      - if there are multiple behaviors checked on, then there will be multiple MIDI messages for each original MIDI message, one on each behavior channel
+  - once Target is connected to a particular kind of prep, it can only be connected to that class of prep (so only to Synchronics in this example)
+  - this is essentially a new class of MIDI filter prep, which could be useful going forward
+    - all/some of the filtering in the old Keymap might now be here (invert noteOn/Off, for example)
+      - but for now, let's just focus on the Target functionality
+    - perhaps it's not called Target, but Midi or Note or Message, or.... Filter (F). We're using V for VST for audio plugin and F is available
 - [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
 - [ ] weird dialog boxes when control-clicking on knobs
 - [ ] for the transposition slider, if 0 isn't the first element we don't get it at all. so [0 4] works but [4 0] does not
@@ -17,6 +32,7 @@
 - [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
 - [ ] i believe pitchbend is not yet implemented
 - [ ] MTS still needs to be implemented for Tuning, as does Scala
+- [ ] Spring and Adaptive tuning don't handle Transpositions properly
 - [ ] dragging preps around the construction site is a little frustrating; sometimes they move, sometimes they just pop back where they were
 ---------
 ## Questions for Davis (or things to check on with him)

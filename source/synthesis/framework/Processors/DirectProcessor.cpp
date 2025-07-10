@@ -174,9 +174,10 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
 
     /**
-     * todo: is all this thread-safe?
+     * Q: is all this thread-safe?
      *      - outputLevels above is std::atomic
      *      - the stuff below is not, but uses chowdsp params, so maybe that's ok?
+     *          the answer is: yes! chowdsp handles the threading for us!
      */
     // get last synthesizer state and update things accordingly
     lastSynthState = mainSynth->getSynthesizerState();

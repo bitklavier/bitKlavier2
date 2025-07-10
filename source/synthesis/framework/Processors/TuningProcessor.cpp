@@ -299,6 +299,10 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      * todo: need to be able to get A4frequency from gallery preferences
      */
 
+    /**
+     * todo: Spring and Adaptive are not handling transpositions properly
+     */
+
     /*
      * Spring Tuning, if active
      */
