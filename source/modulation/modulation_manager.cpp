@@ -431,7 +431,7 @@ void ModulationIndicator::setCurrentModulator(bool current) {
     setColour(Skin::kRotaryArc, findColour(Skin::kModulationMeterControl, true));
     current_modulator_ = current;
 }
-ModulationManager::ModulationManager(juce::ValueTree &tree, SynthBase* base
+ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase* base
     ) : SynthSection("modulation_manager"),
                                           drag_quad_(Shaders::kRingFragment),
                                           current_modulator_quad_(Shaders::kRoundedRectangleBorderFragment),

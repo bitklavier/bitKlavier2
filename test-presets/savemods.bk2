@@ -3,8 +3,8 @@
 <GALLERY mainSampleSet="Piano (Default)">
   <PIANO>
     <PREPARATIONS>
-      <PREPARATION type="0" width="245" height="125" x="389" y="210" uuid="859c8654e86f4746a06ce528b8f756c1"
-                   nodeID="2241627732" numIns="1" numOuts="2">
+      <PREPARATION type="0" width="245" height="125" x_y="396, 349" uuid="7073fa52842741c68a3d505ea739394c"
+                   nodeID="1886648914" numIns="1" numOuts="2">
         <MODULATABLE_PARAM parameter="OutputGain" channel="0"/>
         <MODULATABLE_PARAM parameter="attack" channel="1"/>
         <MODULATABLE_PARAM parameter="Resonance" channel="2"/>
@@ -15,25 +15,31 @@
         <MODULATABLE_PARAM parameter="sustain" channel="7"/>
         <MODULATABLE_PARAM parameter="Hammers" channel="8"/>
         <MODULATABLE_PARAM parameter="Main" channel="9"/>
-        <PORT nodeID="2241627732" chIdx="4096" isIn="1"/>
-        <PORT nodeID="2241627732" chIdx="0" isIn="0"/>
-        <PORT nodeID="2241627732" chIdx="1" isIn="0"/>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="1886648914" chIdx="4096" isIn="1"/>
+        <PORT nodeID="1886648914" chIdx="0" isIn="0"/>
+        <PORT nodeID="1886648914" chIdx="1" isIn="0"/>
         <direct Main="0.000" Hammers="-6.000" Resonance="6.000" Pedal="-6.000"
                 Send="0.000" OutputGain="0.000" decay="0.000" sustain="1.000"
                 release="50.000" attack="1.000" attackpower="0.000" hold="0.000"
                 delay="0.000" decaypower="0.000" releasepower="0.000" t0="0.000"
                 t1="0.000" t2="0.000" t3="0.000" t4="0.000" t5="0.000" t6="0.000"
-                t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" UseTuning="0"
-                velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000"/>
+                t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" numActiveSliders="1.000"
+                UseTuning="0" velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000"/>
       </PREPARATION>
-      <PREPARATION type="8" width="100" height="100" x="744" y="196" uuid="37d6c539caa44ad097be20302c98b208"
-                   nodeID="936822073" numIns="1">
-        <PORT nodeID="936822073" chIdx="4096" isIn="1"/>
-        <modulationproc type="ramp" isState="0" uuid="69248f476778484ab93c8b06df5a6408"/>
+      <PREPARATION type="8" width="100" height="100" x_y="882, 230" uuid="8b34d655f48247ad91b4ea6de2ae66d4"
+                   nodeID="2335495765" numIns="1">
+        <PORT nodeID="2335495765" chIdx="4096" isIn="1"/>
+        <modulationproc type="ramp" isState="0" uuid="12a9974abffb478abe29496b30c9067b"/>
       </PREPARATION>
     </PREPARATIONS>
     <CONNECTIONS/>
-    <MODCONNECTIONS/>
+    <MODCONNECTIONS>
+      <MODCONNECTION isMod="1" src="2335495765" dest="1886648914">
+        <ModulationConnection uuid="f590e8724d2346099600bfff5dc8c435" isState="0" dest="7073fa52842741c68a3d505ea739394c_Send"
+                              src="8b34d655f48247ad91b4ea6de2ae66d4_ramp-12a9974abffb478abe29496b30c9067b_mod"/>
+      </MODCONNECTION>
+    </MODCONNECTIONS>
   </PIANO>
   <GLOBALPIANOSAMPLES mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
                       pedalSampleSet="/defaultPedals"/>

@@ -197,6 +197,11 @@ void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetail
     if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeTuning)
         for (auto listener: listeners_)
             listener->tuningDropped(dropped_tree, state);
+    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) ==
+        bitklavier::BKPreparationType::PreparationTypeReset) {
+        for (auto listener: listeners_)
+            listener->resetDropped(dropped_tree, state);
+    }
 }
 
 void PreparationSection::resized() {

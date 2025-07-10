@@ -30,6 +30,7 @@
 #include "Synthesiser/Sample.h"
 #include "TuningProcessor.h"
 #include "load_save.h"
+#include "chowdsp_sources/chowdsp_sources.h"
 #include "valuetree_utils/VariantConverters.h"
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager)
 {
@@ -418,6 +419,24 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
             engine_->addConnection (connection->connection_);
         // });
     }
+}
+
+bool SynthBase::connectReset(const juce::ValueTree& v) {
+
+    auto sourceId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::src,-1));
+    auto destId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( v.getProperty(IDs::dest,-1));
+    auto source_index = engine_->getNodeForId (sourceId)->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 2, 0); //2 is reset
+    auto dest_index = engine_->getNodeForId (destId)->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 2, 0); //1 is mod
+
+
+    juce::AudioProcessorGraph::Connection connection_ = { { sourceId, source_index}, { destId, dest_index } };
+
+     auto b =   engine_->addConnection (connection_);
+    if(b)
+        DBG("Connected");
+    else
+        DBG("not connected");
+
 }
 bool SynthBase::connectModulation (const juce::ValueTree& v)
 {

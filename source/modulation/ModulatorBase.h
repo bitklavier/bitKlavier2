@@ -64,6 +64,7 @@ public:
     juce::ValueTree state;
     struct Listener {
         virtual void modulationTriggered() = 0;
+
     };
     virtual void triggerModulation()
     {

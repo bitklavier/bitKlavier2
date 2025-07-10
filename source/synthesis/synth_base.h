@@ -107,6 +107,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     bool connectStateModulation(const std::string& source,const std::string& destination);
     bool connectModulation(const std::string& source,const std::string& destination);
     bool connectModulation(const juce::ValueTree& v);
+    bool connectReset(const juce::ValueTree& v);
     void disconnectModulation(const std::string& source, const std::string& destination);
     void disconnectStateModulation(const std::string& source, const std::string& destination);
     void connectModulation(bitklavier::ModulationConnection* connection);

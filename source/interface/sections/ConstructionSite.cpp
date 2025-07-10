@@ -45,6 +45,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,ResetPreparation::create);
+
 }
 
 // Define your command IDs
@@ -58,11 +60,12 @@ enum CommandIDs {
     tempo = 0x0619,
     tuning = 0x0620,
     modulation = 0x0621,
-    deletion = 0x0622
+    deletion = 0x0622,
+    resetMod = 0x0623
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
-    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion});
+    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion,resetMod});
 }
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
         switch (id) {
@@ -105,7 +108,11 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
             case deletion:
                 info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
                 info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
-            break;
+                break;
+            case resetMod:
+                info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);
+                info.addDefaultKeypress('q', juce::ModifierKeys::noModifiers);
+                break;
         }
     }
 bool ConstructionSite::perform(const InvocationInfo &info) {
@@ -215,6 +222,20 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 juce::ValueTree t(IDs::PREPARATION);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
+                t.setProperty(IDs::width, 100, nullptr);
+                t.setProperty(IDs::height, 100, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
+                prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case resetMod: {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeReset, nullptr);
                 t.setProperty(IDs::width, 100, nullptr);
                 t.setProperty(IDs::height, 100, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(

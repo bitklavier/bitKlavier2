@@ -46,6 +46,8 @@ namespace
 
         if (type == bitklavier::BKPreparationType::PreparationTypeVST)
             return Paths::vstPaths();
+
+        return Paths::tuningPaths();
     }
 }
 

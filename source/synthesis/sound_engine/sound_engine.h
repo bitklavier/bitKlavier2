@@ -133,9 +133,9 @@ namespace bitklavier
         {
             return processorGraph->getNodeForId (id);
         }
-        void addConnection (juce::AudioProcessorGraph::Connection& connection)
+        bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
-            processorGraph->addConnection (connection);
+           return processorGraph->addConnection (connection);
         }
         void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
         {

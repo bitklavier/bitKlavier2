@@ -6,6 +6,7 @@
 #include "DirectProcessor.h"
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
+#include "ResetProcessor.h"
 #include "UserPreferences.h"
 PreparationList::PreparationList (SynthBase& parent, const juce::ValueTree& v) : tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper> (v), synth (parent)
 {
@@ -13,6 +14,7 @@ PreparationList::PreparationList (SynthBase& parent, const juce::ValueTree& v) :
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapProcessor::create);
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeModulation, bitklavier::ModulationProcessor::create);
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,bitklavier::ResetProcessor::create);
 }
 
 PluginInstanceWrapper* PreparationList::createNewObject (const juce::ValueTree& v)
