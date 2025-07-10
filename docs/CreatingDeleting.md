@@ -218,7 +218,27 @@ void CableView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete
     }
 }
 ```
-Note that we're using CachedValues to get the Cable's `src_id` and `dest_id`. I originally had the referTo() functions in the wrong place. They're supposed to live in Cable's [setValueTree()](../source/interface/components/Cable/Cable.h) function.
+Note that we're using CachedValues to get the Cable's `src_id` and `dest_id`. I originally had the referTo() functions in the wrong place. They're supposed to live in Cable's [setValueTree()](../source/interface/components/Cable/Cable.h) function, which is where they are now.
+
+# All Things Modulation
+Let's say you have a direct preparation. That direct preparation has a resonance parameter that you want to modulate. Here's how you would do that:
+1. Create a Modulation Preparation by pressing 'c' on your keyboard or right-clicking in the ConstructionSite and selecting 'Modulation'.
+2. Connect the Modulation Preparation to the Direct Preparation by dragging the Modulation on top of the Direct. You'll see a thin "Modulation Line" appear between the two preparations
+3. Double-click on the Modulation Preparation, and the ModulationModuleSection will appear.
+4. Right click in the ModulationModuleSection and we have the option to create either a RampModulator or a StateModulator. In this example, the Direct's resonance parameter will use a ramp modulator, so we select that.
+5. In the top left corner of the RampModulator, we can click and drag a modulator button onto the Direct parameter that we want to modulate.
+
+Let's take a deeper look at how this is being implemented. Creating the Modulation Preparation is easy - it's the same as any other preparation. The creation process is explained in the [Preparation Creation Function Call Trace](#preparation-creation-function-call-trace).
+
+## Creating a Modulation Connection
+Creating a Modulation Connection is similar to creating a Cable connection.
+1. Once you drop the Modulation onto the Direct, JUCE recognizes the mouse up and after going through a chain of listeners, PreparationSection's itemDropped() function gets called
+2. PreparationSection's itemDropped() likewise goes through its listeners and since we've dropped a Modulation, it calls ModulationLineView's modulationDropped() function 
+3. ModulationLineView's modulationDropped() figures out some stuff and adds the MODCONNECTION value tree to the CONNECTIONS value tree
+4. valueTreeChildAdded() is listening (as we remember from adding preparations!) and calls createNewObject()
+6. ModulationLineView's createNewObject() simply creates a new ModulationLine
+7. The ModulationLine's constructor takes care of drawing the line between the preparations
+8. Next, valueTreeChildAdded() calls CableView's newObjectAdded() function, which adds the connection to the AudioProcessorGraph
 
 # Undoing Preparation Dragging
 Here's what happens when you drag and undo:
