@@ -131,10 +131,12 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
     juce::Array<float> transps;
     auto paramVals = state.params.transpose.getFloatParams();
+    int i =0;
     for (auto const& tp : *paramVals)
     {
-        if (tp->getCurrentValue() != 0.)
+        if (tp->getCurrentValue() != 0. && state.params.transpose.numActiveSliders->getCurrentValue() > i)
             transps.addIfNotAlreadyThere (tp->getCurrentValue());
+        i++;
     }
 
     // make sure that the first slider is always represented
