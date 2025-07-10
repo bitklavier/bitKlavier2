@@ -305,7 +305,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     if(getTuningType() == TuningType::Spring_Tuning)
     {
         //DBG("springTuner->getFrequency = " + juce::String(currentlyPlayingNote) + " " + juce::String(springTuner->getFrequency(currentlyPlayingNote)));
-        lastAdaptiveTarget = springTuner->getFrequency(currentlyPlayingNote);
+        lastAdaptiveTarget = springTuner->getFrequency(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
         return lastAdaptiveTarget;
     }
 
@@ -321,7 +321,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     /*
      * or the regular Static Tuning, if we get this far
      */
-    return getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+    return getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions); // offset is handled internally here
 
 }
 

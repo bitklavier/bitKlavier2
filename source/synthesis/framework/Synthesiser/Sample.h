@@ -684,16 +684,17 @@ private:
         //updateParams(); // NB: important line (except this function doesn't do anything right now!)
 
         /*
-         * don't change tuning after noteOn for tuningType tunings
+         * don't change tuning after noteOn for adaptive tunings
          * do need to for spring, and probably for regular notes it might be handy
          */
-        if(tuning != nullptr) {
+        if(tuning != nullptr && tuningAttached) {
             if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring_Tuning)) {
                 sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
             }
+            // skip for adaptive tunings
         }
-        else sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
-
+        // otherwise just return ET
+        else sampleIncrement.setTargetValue (mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());

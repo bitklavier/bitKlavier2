@@ -467,6 +467,7 @@ struct BKSynthesizerState
 {
     int lastVelocity;
     double lastPitch;
+    std::map<int, float> currentNotesFrequencies; //notenumber, frequency
 };
 
 /*

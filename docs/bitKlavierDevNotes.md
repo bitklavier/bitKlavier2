@@ -3,6 +3,7 @@
 - [ ] finish mods for Direct and Tuning:
   - working, saving/loading, Dan mostly understanding the code
 - [ ] Blendrónic audio in 
+- [ ] Keymap parameter targeting; we had discussed a different way of doing that
 - [ ] Sample load crash
 - [ ] Blurry fonts ;--}
 - [ ] global preferences, like A440
@@ -16,6 +17,7 @@
 - [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
 - [ ] i believe pitchbend is not yet implemented
 - [ ] MTS still needs to be implemented for Tuning, as does Scala
+- [ ] dragging preps around the construction site is a little frustrating; sometimes they move, sometimes they just pop back where they were
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
