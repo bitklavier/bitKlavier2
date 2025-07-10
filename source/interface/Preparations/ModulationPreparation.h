@@ -50,6 +50,7 @@ public:
 
 
 private:
+    juce::UndoManager& undo;
     ModulationList mod_list;
 
 };

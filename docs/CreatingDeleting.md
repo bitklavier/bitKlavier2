@@ -1,5 +1,5 @@
-# Creating and Deleting
-# Creating
+# Creating and Deleting Preparations
+# Creating Preparations
 There are two ways to do this:
 - Press the one of the hot keys
 - Right click anywhere on the screen and select the preparation you want from the from the popup
@@ -7,7 +7,7 @@ There are two ways to do this:
 Either one of these actions results in the a preparation popping up on your screen. Let's first walk through how this happens at a high level then we'll dig into some details in a function call trace.
 We will use the direct preparation as an example for simplicity.
 
-## Creation Overview
+## Preparation Creation Overview
 1. ConstructionSite registers a key press or handles the popup selection (however you decide to create the preparation)
 2. We add a direct preparation ValueTree to the PREPARATIONS ValueTree
 3. We create and set up the AudioProcessor for the direct preparation
@@ -16,9 +16,9 @@ We will use the direct preparation as an example for simplicity.
 6. We add the PreparationSection to the ConstructionSite's list of components so that we can continue to work with it
 7. OpenGL draws the preparation that is now properly hooked up and ready to use
 
-## Creation Function Call Trace
+## Preparation Creation Function Call Trace
 
-1. When we press the 'd' key, [ConstructionSite::keyPressed()](../source/interface/sections/ConstructionSite.cpp#L185) gets called. When we right-click on the ConstructionSite and select 'Direct' from the popup, [ConstructionSite::handlePluginPopup()](../source/interface/sections/ConstructionSite.cpp) gets called
+1. When we press the 'd' key, [a whole bunch of stuff](#the-applicationcommandtarget) happens [ConstructionSite::perform()](../source/interface/sections/ConstructionSite.cpp#L185) gets called. When we right-click on the ConstructionSite and select 'Direct' from the popup, [ConstructionSite::handlePluginPopup()](../source/interface/sections/ConstructionSite.cpp) gets called
     
     - In both functions, we create a [ValueTree](#the-valuetree) with ID "PREPARATION" and set the properties (type, width, height, and x & y positions)
 2. From either the keyPressed() or the handlePluginPopup() function, we call [prep_list.appendChild()](../source/interface/Preparations/PreparationList.h)
@@ -55,15 +55,15 @@ We will use the direct preparation as an example for simplicity.
 - [`plugin_components`](../source/interface/sections/ConstructionSite.h): the vector of unique pointers to PreparationSections in ConstructionSite
 
 **NICE!**
-## Deleting
+## Deleting Preparations
 There are 3 ways a preparation could be deleted
-- press the 'delete' key on your keyboard with the preparation selected
+- press the 'backspace' key on your keyboard with the preparation selected
 - press 'CMD + z' on your keyboard
 - click Edit > Undo
 
 Let's first walk through how this happens at a high level then we'll dig into some details in a function call trace.
 
-## Deletion Overview
+## Preparation Deletion Overview
 1. ApplicationCommandHandler registers the selection of Edit > Undo, ApplicationCommandManager registers when you press 'CMD + z' or 'delete' on your keyboard.
 2. We remove the direct preparation from the ValueTree
 3. We remove it from `objects` - the ValueTreeObjectList's array of PluginInstanceWrapper objects
@@ -73,34 +73,53 @@ Let's first walk through how this happens at a high level then we'll dig into so
 7. We remove the preparation's AudioProcessor from the AudioProcessorGraph
 8. Our direct preparation disappears from the screen and is removed from the audio processing.
 
-## Deletion Function Call Trace
+## Preparation Deletion Function Call Trace
 Before tracing, let's think about everything we had to do to create the preparation. To make sure we clean up all of the moving pieces, we need to make sure that we: 1) remove the parameter from the ValueTree, 2) remove the parameter from the AudioProcessorGraph, 3) remove the parameter from `objects`, 4) remove the parameter from `sub_sections_`, and 5) remove the parameter from `plugin_components`. Not only do we need to remove it from all of these things, but we need to make sure that it is deleted as well. Starting from the top...
 
-1. When we select Edit > Undo, [ApplicationCommandHandler::perform()](../source/common/ApplicationCommandHandler.cpp) will call
-   ```c++
-   parent->getUndoManager()->undo();
-   ```
-   This gets the [UndoManager](#the-undomanager) from `parent`, which is a pointer to the SynthGuiInterface, and calls the UndoManager's undo() function
+1a) Deleting with Undo:
+
+   - When we select Edit > Undo, [ApplicationCommandHandler::perform()](../source/common/ApplicationCommandHandler.cpp) will call
+      ```c++
+      parent->getUndoManager()->undo();
+      ```
+      This gets the [UndoManager](#the-undomanager) from `parent`, which is a pointer to the SynthGuiInterface, and calls the UndoManager's undo() function 
+   - When we press 'CMD + z', [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call `getUndoManager()->undo()`.
+   - In both cases, [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp) is called. This function is implemented by JUCE and takes care of removing our preparation from the ValueTree.
+
+1b) Deleting with 'Backspace' key:
+
+   - When we press the 'Backspace' key, ConstructionSite::perform() calls `prep_list.removeChild(prep->state, &undo)`, which looks like this
+       ```c++
+       void removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)
+       {
+           undoManager->beginNewTransaction();
+           this->parent.removeChild(child,undoManager);
+       }
+       ```
+   - Side note: Since we've passed the UndoManager into this function and called `undoManager->beginNewTransaction()`, if someone deletes their preparation on accident, they can undo to get it back!
+   - Since `parent` is a ValueTree, this calls JUCE's ValueTree::removeChild() which takes care of removing our preparation from the ValueTree.
    
-   When we press 'CMD + z' [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call `getUndoManager()->undo()`.
-2. [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp) is implemented by JUCE and takes care of removing our preparation from the ValueTree. 
-   - **We've removed from the ValueTree - 1 of 5 removal steps accomplished**
-3. When our preparation is removed from the ValueTree, the [valueTreeChildRemoved()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening...
+   **Great! In all 3 ways of deleting a preparation, we've removed from the ValueTree - 1 of 5 removal steps accomplished**
+2. When our preparation is removed from the ValueTree, the [valueTreeChildRemoved()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening...
    - In this function, we call
       ```c++
       o = objects.removeAndReturn (oldIndex);
       ```
       where `objects` is an array of pointers to [PluginInstanceWrapper](#the-plugininstancewrapper) objects and removeAndReturn() is a juce_Array function that returns a pointer to the preparation (PluginInstanceWrapper) that we're removing.
    - **We've removed from `objects` - 2 of 5 removal steps accomplished**
-4. Then it calls [objectRemoved()](../source/interface/Preparations/PreparationList.cpp) which has been implemented by our [PreparationList](#the-preparationlist) object.
-   - objectRemoved() says "Hey, who's listening? Who needs to know if we've removed something?" And the ConstructionSite says "Ooo! Me!"
-5. From objectRemoved(), we call the ConstructionSite's [removeModule()](../source/interface/sections/ConstructionSite.cpp) function.
+4. Then it calls [deleteObject()](../source/interface/Preparations/PreparationList.cpp) which has been implemented by our [PreparationList](#the-preparationlist) object.
+   - deleteObject() says "Hey, who's listening? Who needs to know if we've removed something?" And the ConstructionSite says "Ooo! Me!"
+5. From deleteObject(), we call the ConstructionSite's [removeModule()](../source/interface/sections/ConstructionSite.cpp) function.
 
    - Here, we go through `plugin_components`, find the PreparationSection with the same ID as the PluginInstanceWrapper that we’re removing.
    - Now that we have the PreparationSection, we have to remove the preparation's listener with the following code
    ```c++
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
    ```
+   - Finally, we delete any cables attached to our preparation with the following code
+    ```c++
+    cableView.deleteConnectionsWithId(wrapper->node_id);
+    ```
    - Next, we need to remove the PreparationSection from both `sub_sections_` and `plugin_components`.
 6. From removeModule(), we call [removeSubSection()](../source/interface/sections/synth_section.cpp) to remove the PreparationSection from `sub_sections_`.
 
@@ -127,7 +146,7 @@ Before tracing, let's think about everything we had to do to create the preparat
    - But wait! Deleting OpenGL components should be happening on the OpenGL thread, so why aren't we locking like we did in step 7? It's already taken care of for us in the destroyOpenGlComponents() function.
    - **We've removed from `plugin_components` - 4 of 5 removal steps accomplished**
    - Now, if we build and run, create a direct preparation, and click Edit > Undo, it works! The direct preparation disappears! But we have one removal step left: Removing our preparation from the AudioProcessorGraph.
-8. Back in step 4 of the deletion process, we were in the PreparationList's [objectRemoved()](../source/interface/Preparations/PreparationList.cpp) function. After it calls the ConstructionSite's removeModule() function, we call SynthBase's [synth.removeProcessor()](../source/synthesis/synth_base.cpp), which calls [engine_->removeNode()](../source/synthesis/sound_engine/sound_engine.h)
+8. Back in step 4 of the deletion process, we were in the PreparationList's [deleteObject()](../source/interface/Preparations/PreparationList.cpp) function. After it calls the ConstructionSite's removeModule() function, we call SynthBase's [synth.removeProcessor()](../source/synthesis/synth_base.cpp), which calls [engine_->removeNode()](../source/synthesis/sound_engine/sound_engine.h)
    - removeNode() is a JUCE function that takes care of removing the node for our preparation from the [AudioProcessorGraph](#the-audioprocessorgraph)
    - **We've removed from the AudioProcessorGraph - 5 of 5 removal steps accomplished**
 9. We might think we're done, but we have one more bug to take care of. If we create a direct preparation and undo, it appears to work just fine. If we create two direct preparation and undo, both of our direct preparations disappear. To fix this, we modify the PreparationList's [appendChild()](../source/interface/Preparations/PreparationList.h) function like so
@@ -148,7 +167,183 @@ Before tracing, let's think about everything we had to do to create the preparat
 - [`plugin_components`](../source/interface/sections/ConstructionSite.h): the vector of unique pointers to PreparationSections in ConstructionSite
 
 **NICE!**
-## Important Pieces of The Puzzle
+
+# Creating and Deleting Cables
+## Creating Cables
+Let's say you create a direct preparation and a keymap preparation. You can connect them by clicking on the port of one and dragging to the port of the other. This creates a "cable line" - the thick black lines that connect preparations. Here's a brief overview of how we create a cable line
+
+1. JUCE recognizes the mouse up and calls BKPort's mouseUp() function. 
+2. BKPort goes through its listeners on mouseUp and calls PreparationSection's endDraggingConnector()
+3. PreparationSection's endDraggingConnector() likewise goes through its listeners on endDraggingConnector() and calls CableView's endDraggingConnector()
+4. CableView's endDraggingConnector() figures out some stuff and adds the CONNECTION value tree to the CONNECTIONS value tree
+5. valueTreeChildAdded() is listening (as we remember from adding preparations!) and calls createNewObject()
+6. CableView's createNewObject() function does a few things for us
+
+    - creates a new Cable
+    - adds the new Cable as a childComponent to the CableView
+    - adds the Cable OpenGL component to the SynthSection
+    - makes the Cable component visible on the OpenGL thread
+    - associates the CONNECTION value tree we just made with the Cable we just made
+7. Next, valueTreeChildAdded() calls CableView's newObjectAdded() function, which adds the connection to the AudioProcessorGraph
+
+## Deleting Cables
+Currently, there are two ways to delete a cable: 1) press 'CMD + z' immediately after making the connection, or 2) delete one of the preparations it's connected to.
+
+When you draw a cable then press 'CMD + z', here's what happens...
+1. When we press 'CMD + z', [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp), which is implemented by JUCE and takes care of removing our connection from the ValueTree.
+2. When our connection is removed from the ValueTree, the [valueTreeChildRemoved()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening...
+3. It calls [deleteObject()](../source/interface/Preparations/PreparationList.cpp) which has been implemented by our [CableView](#the-cableview) object.
+    - deleteObject() removes the connection from the AudioProcessorGraph and deletes the OpenGL components
+4. The last thing we need to do to ensure undo functionality is begin a new undo transaction to the CableView's [endDraggingConnector()](../source/interface/sections/CableView.cpp) function right before the CONNECTION value tree is added to the CONNECTIONS value tree like so...
+    ```c++
+    void CableView::endDraggingConnector (const juce::MouseEvent& e)
+    {
+        // ...
+        undoManager.beginNewTransaction();
+        parent.appendChild(_connection, &undoManager);
+    }
+    ```
+When we delete a cable by deleting a preparation that it's attached to, we follow all of the same steps outlined earlier in [Preparation Deletion Function Call Trace](#preparation-deletion-function-call-trace). In step 4, we call
+```c++
+cableView.deleteConnectionsWithId(wrapper->node_id);
+```
+from the ConstructionSite's removeModule() function. CableView's deleteConnectionsWithId() function simply goes through the list of cable connections and deletes any cables whose source or destination preparations match the preparation that is being deleted.
+```c++
+void CableView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id)
+{
+    for (auto connection : objects){
+        if (connection->src_id == delete_id || connection->dest_id == delete_id){
+            parent.removeChild (connection->state, &undoManager);
+        }
+    }
+}
+```
+Note that we're using CachedValues to get the Cable's `src_id` and `dest_id`. I originally had the referTo() functions in the wrong place. They're supposed to live in Cable's [setValueTree()](../source/interface/components/Cable/Cable.h) function.
+
+# Undoing Preparation Dragging
+Here's what happens when you drag and undo:
+
+Our ConstructionSite inherits from JUCE's DragAndDropContainer class and PreparationSection inherits from JUCE's DragAndDropTarget class. When we drag and drop a preparation somewhere, JUCE takes care of calling ConstructionSite's [dragOperationEnded()](../source/interface/sections/ConstructionSite.cpp) function.
+
+From within dragOperationEnded(), we begin a new undo transaction and set the PreparationSection's point property to be wherever the "mouse up" occurred like so
+
+```c++
+void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails& source)
+{
+    // ...
+    fc->undo.beginNewTransaction();
+    fc->curr_point = mouse_drag_position_;
+    // ...
+}
+```
+
+Note that curr_point is a `juce::CachedValue<juce::Point<int>>` object as defined in the PreparationSection [header file](../source/interface/Preparations/PreparationSection.h). In the PreparationSection [source file](../source/interface/Preparations/PreparationSection.cpp), we call `curr_point.referTo(state,IDs::x_y,&undo)`, which allows us to access the point property of `state` (which is the value tree associated with this PreparationSection).
+
+The PreparationSection has a [valueTreePropertyChanged()](../source/interface/Preparations/PreparationSection.h) function that is listening... when we change the CONNECTION value tree, PreparationSection sets its center position to equal the point where the user releases their mouse.
+
+**Nice!** This works! Dragging a preparation to a new location then pressing 'CMD + z' returns the preparation to its original position!
+
+This took some refactoring and finagling. We had to change the x and y properties of our preparation value trees to be a juce::Point objects since we couldn't change both the x and y properties with one undo transaction without defining our own UndoableAction. This meant replacing `DECLARE_ID(x)` and `DECLARE_ID(y)` with `DECLARE_ID(x_y)` in the Identifiers [header file](../source/common/Identifiers.h). We also had to change everywhere we set the x and y properties of the value trees. And finally, we created a struct in tracktion's ValueTreeUtilities [header file](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) to convert a juce::Point to a juce::Var
+```c++
+template <>
+struct VariantConverter<juce::Point<int>>
+{
+    static Point<int> fromVar (const var& v)
+    {
+        auto parts = StringArray::fromTokens (v.toString(), ",", "");
+        if (parts.size() == 2)
+        {
+            int x = parts[0].getIntValue();
+            int y = parts[1].getIntValue();
+            return { x, y };
+        }
+    }
+    static var toVar (const Point<int>& p) { return p.toString(); }
+};
+```
+# The ApplicationCommandTarget
+In our codebase, some of our classes - currently SynthGuiInterface and ConstructionSite - inherit from JUCE's ApplicationCommandTarget class (documentation [here](https://docs.juce.com/master/classApplicationCommandTarget.html)). By inheriting ApplicationCommandTarget, the ApplicationCommandManager knows to check our classes when certain commands are called. Below, I've included the functions that our classes need to implement and the way that we did so in the ConstructionSite
+
+- **getNextCommandTarget()** - returns the next target to try after this one
+   ```c++
+    ApplicationCommandTarget* getNextCommandTarget() override {
+        return findFirstTargetParentComponent();
+    }
+   ```
+- **getAllCommands()** - adds the commandIDs to the ApplicationCommandManager's commands array.
+   ```c++
+   enum CommandIDs {
+       direct = 0x0613,
+       nostalgic = 0x0614,
+       keymap = 0x0615,
+       resonance = 0x0616,
+       synchronic   = 0x0617,
+       blendronic = 0x0618,
+       tempo = 0x0619,
+       tuning = 0x0620,
+       modulation = 0x0621,
+       deletion = 0x0622
+   };
+   
+   void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
+       commands.addArray({direct, nostalgic, keymap, resonance, synchronic, blendronic, tempo, modulation, deletion});
+   }
+   ```
+  The commandIDs can be whatever number you want
+- **getCommandInfo()** - associates the commandID with a name, description, category, and default key press
+   ```c++
+   void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
+     switch (id) {
+         case direct:
+             info.setInfo("Direct", "Create Direct Preparation", "Edit", 0);
+             info.addDefaultKeypress('d', juce::ModifierKeys::noModifiers);
+         break;
+         case nostalgic:
+             info.setInfo("Nostalgic", "Create Nostalgic Preparation", "Edit", 0);
+         info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
+         break;
+         // info for the rest of the commands...
+      }
+   }
+   ```
+- **perform()** - holds the code that is supposed to be executed once the command is triggered
+   ```c++
+   bool ConstructionSite::perform(const InvocationInfo &info) {
+     switch (info.commandID) {
+         case direct:
+         {
+             juce::ValueTree t(IDs::PREPARATION);
+             t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
+             t.setProperty(IDs::width, 245, nullptr);
+             t.setProperty(IDs::height, 125, nullptr);
+             t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+             t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+             // prep_list.appendChild(t,  interface->getUndoManager());
+             prep_list.appendChild(t,  &undo);
+             return true;
+         }
+         // implementations for the rest of the commands...
+      }
+   }
+   ```
+Once these are implemented, ConstructionSite and SynthGuiInterface have done everything that they need to do to be ApplicationCommandTargets! Now we need an [ApplicationCommandManager](https://docs.juce.com/master/classApplicationCommandManager.html) to take care of the commands, so we create that in SynthGuiInterface and pass it around. Note that an ApplicationCommandManager cannot be copied!
+
+So, to get the command manager from SynthGuiInterface to the ConstructionSite, we pass it as a constructor argument for the FullInterface, MainSection, and finally the ConstructionSite. In the constructor of both SynthGuiInterface and ConstructionSite (and any ApplicationCommandTarget), we need to tell the command manager to register the commands in this target like so
+```c++
+commandManager.registerAllCommandsForTarget (this);
+```
+Nice! Now everything should be working! A quick trace of what happens when we run bitKlavier:
+
+1. SynthGuiInterface creates FullInterface creates MainSection creates ConstructionSite, passing its ApplicationCommandManager the whole way down.
+2. Once we're in the ConstructionSite constructor, we call commandManager.registerAllCommandsForThisTarget()
+3. This calls getAllCommands() on our ConstructionSite, which adds the ConstructionSite's list of commandIDs to the ApplicationCommandManager's list of commandIDs
+4. From registerAllCommandsForThisTarget() we also call the ConstructionSite's [getCommandInfo()](../source/interface/sections/ConstructionSite.cpp) which sets up the ApplicationCommandInfo object for each CommandID.
+5. The command manager registers each ApplicationCommandInfo object and then returns
+6. Once we're done constructing the ConstructionSite, we crawl back up to the SynthGuiInterface's constructor where we call commandManager.registerAllCommandsForThisTarget(). This repeats steps 3-5 for the SynthGuiInterface.
+7. Finally, we press 'd' and whole bunch of people start talking to each other. ComponentPeer::handleKeyPress tells KeyPressMappingSet tells ApplicationCommandManager tells ApplicationCommandTarget tells ConstructionSite::perform to do whatever we should be doing when 'd' is pressed. And it does! Our direct preparation shows up!
+8. Next, we press 'CMD + Z', and all the same people start talking to each other but this time ApplicationCommandTarget tells SynthGuiInterface::perform to do whatever we should do when 'CMD + Z' is pressed.
+
+# Important Pieces of The Puzzle
 If you read through function call traces and you had a hard time keeping track of all the moving pieces... me too. So, here's some more information about the important parts of the puzzle, namely:
 
 - [The ValueTree](#the-valuetree)
@@ -156,12 +351,13 @@ If you read through function call traces and you had a hard time keeping track o
 - [The PluginInstanceWrapper](#the-plugininstancewrapper)
 - [The PreparationList](#the-preparationlist)
 - [The UndoManager](#the-undomanager)
+- [The CableView](#the-cableview)
 - [The AudioProcessorGraph](#the-audioprocessorgraph)
 - [Locking](#locking)
 - [Listeners](#listeners)
 - Sections?
 
-### The ValueTree
+## The ValueTree
 The ValueTree is implemented by JUCE and provides a whole lot of useful functionality for us. The creators explain it best, so you can read more about it [here](https://juce.com/tutorials/tutorial_value_tree/). A ValueTree is made up of other ValueTrees, and our main ValueTree gets created in [SynthBase](../source/synthesis/synth_base.cpp), which is the start of our backend stuff. There, we create a ValueTree with ID "GALLERY" then create another ValueTree with ID "PIANO". We make the PIANO ValueTree a child of the GALLERY ValueTree. Then we make three more ValueTrees that are all children of the "PIANO" ValueTree. Once we're done setting it up, it looks like this
 ``` xml
 <GALLERY>
@@ -184,10 +380,10 @@ For creating and deleting preparations, you just need to concern yourself with t
    </PIANO>
 </GALLERY>
 ```
-### The ValueTreeObjectList
+## The ValueTreeObjectList
 The ValueTreeObjectList is a class created by Tracktion that facilitates responding to changes in the Value Tree. You can read the documentation [here](https://tracktion.github.io/tracktion_engine/classtracktion_1_1engine_1_1ValueTreeObjectList.html). In general, the ValueTreeObjectList listens to the value tree and implements any necessary functions. This class has a few virtual void functions, which means we have to write our own versions of these functions. Such functions include newObjectAdded(), objectRemoved(), etc. We implement these functions in the [PreparationList](#the-preparationlist) class.
 
-### The PluginInstanceWrapper
+## The PluginInstanceWrapper
 The [PluginInstanceWrapper](../source/interface/Preparations/PreparationList.h) is a class that we have created to bundle all of the important information for an instance of a plugin (a preparation in our case). The member variables are:
 
 - a pointer to a JUCE AudioProcessor
@@ -196,7 +392,7 @@ The [PluginInstanceWrapper](../source/interface/Preparations/PreparationList.h) 
 
 You can simply think of this as the parameter (with all of its important information)
 
-### The PreparationList
+## The PreparationList
 The [PreparationList](../source/interface/Preparations/PreparationList.h) is a class that we have created to keep track of all of the preparations. It has an array of [PluginInstanceWrappers](#the-plugininstancewrapper) called `objects` that holds all of the preparations. It also has a value tree called `parent`, which is the PREPARATIONS value tree. Any preparation that we add will be a child of PREPARATIONS.
 
 Whenever the value tree is changed, the PreparationList will notice (it's always [listening](#listeners)...) and it will update any variables and run any functions that it needs to.
@@ -205,12 +401,23 @@ How is our PreparationList always listening? And why don't I see `objects` or `p
 
 The PreparationList object is created in SynthBase and is passed into the ConstructionSite as part of the SynthGuiData. The PreparationList only lives in the ConstructionSite (no where else) as `prep_list`.
 
-### The UndoManager
+## The UndoManager
 One of the convenient things about using JUCE's value tree is that we get access to undo/redo functions implemented by their UndoManager. You can read the documentation [here](https://docs.juce.com/master/classUndoManager.html).
 
 Like our top-level value tree, the UndoManager gets created in [SynthBase](../source/synthesis/synth_base.cpp), which is the start of our backend stuff. This UndoManager gets passed around all over the place. We first use it in ConstructionSite, but how does it get there? Buckle up... ConstructionSite receives it as an argument when it is constructed in MainSection. Similarly, MainSection receives it as an argument when it is constructed in FullInterface. FullInterface is constructed in SynthGuiInterface with a single argument: `SynthGuiData* synth_data`. The UndoManager is lumped into that SynthGuiData object, which holds the SynthBase where the UndoManager was created.
 
-### The AudioProcessorGraph
-### Locking
-### Listeners
-### Sections
+## The CableView
+The [CableView](../source/interface/sections/CableView.cpp) is a class that we have created to keep track of all of the cable connections. It has an array of Cables called `objects` that holds the cable connections. It also has a value tree called `parent`, which is the CONNECTIONS value tree. Any connection that we add will be a child of CONNECTIONS.
+
+Whenever the value tree is changed, the CableView will notice (it's always [listening](#listeners)...) and it will update any variables and run any functions that it needs to.
+
+How is our CableView always listening? And why don't I see `objects` or `parent` in the CableView files? This is because CableView inherits from [tracktion::engine::ValueTreeObjectList\<PluginInstanceWrapper>](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h), which is a third-party class called the [ValueTreeObjectList](#the-valuetreeobjectlist). Our CableView is like an extension of the [ValueTreeObjectList](#the-valuetreeobjectlist) that makes their awesome functions work on our specific project. We just have to implement our versions of certain ValueTreeObjectList functions, such as newObjectAdded() and objectRemoved() in CableView to make sure everything works correctly.
+
+The CableView object is created in the ConstructionSite and only exists in the ConstructionSite (no where else) as `cableView`.
+
+An astute observer will realize that I copied and pasted the explanation of [PreparationList](#the-preparationlist) and tweaked the names and files to fit for CableView. This is because the CableView is to cable connections as PreparationList is to preparations. We just don't call it CableList because it also takes care of the GUI elements of the cables.
+
+## The AudioProcessorGraph
+## Locking
+## Listeners
+## Sections

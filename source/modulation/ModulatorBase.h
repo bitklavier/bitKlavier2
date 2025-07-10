@@ -64,6 +64,7 @@ public:
     juce::ValueTree state;
     struct Listener {
         virtual void modulationTriggered() = 0;
+
     };
     virtual void triggerModulation()
     {
@@ -86,7 +87,9 @@ public:
     static constexpr ModulatorType type = ModulatorType::NONE;
 //    std::vector<bitklavier::ModulationConnection*> connections;
     bool trigger = false;
-
+    // /** Calls an action on the main thread via chowdsp::DeferredAction */
+    // template <typename Callable>
+    // virtual void callOnMainThread (Callable&& func, bool couldBeAudioThread = false) = 0;
 };
 
 

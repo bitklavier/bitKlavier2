@@ -16,13 +16,13 @@
 // Definition for the TuningPreparation constructor.  It takes three parameters: a pointer to
 // a Tuning Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private TuningPreparation member proc with an initialization list.
-TuningPreparation::TuningPreparation( juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface*):
-        PreparationSection(juce::String("tuning"),  v, open_gl, node)
+TuningPreparation::TuningPreparation( juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface* interface):
+        PreparationSection(juce::String("tuning"),  v, open_gl, node,*interface->getUndoManager())
 
 {
 
     item = std::make_unique<TuningItem> (); // Initializes member variable `item` of PreparationSection class
-    addOpenGlComponent (item->getImageComponent()); // Calls member function of SynthSection (parent class to PreparationSection)
+    addOpenGlComponent (item->getImageComponent(),true); // Calls member function of SynthSection (parent class to PreparationSection)
     _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
          {item->getImageComponent()->init(_open_gl);
          },false);

@@ -594,7 +594,20 @@ void SynthSection::addSubSection(SynthSection *sub_section, bool show) {
 void SynthSection::removeSubSection(SynthSection *section) {
     auto location = std::find(sub_sections_.begin(), sub_sections_.end(), section);
     if (location != sub_sections_.end())
+    {
+        auto mod_buttons = section->getAllModulationButtons();
+        if (!mod_buttons.empty())
+        {
+            // delete any modulation buttons from the parent of this subsection
+            for (const auto& mod_button : mod_buttons) {
+                all_modulation_buttons_.erase(mod_button.first);
+            }
+        }
         sub_sections_.erase(location);
+
+    }
+
+    else jassertfalse;
 }
 
 void SynthSection::setScrollWheelEnabled(bool enabled) {

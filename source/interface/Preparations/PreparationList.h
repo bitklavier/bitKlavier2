@@ -176,7 +176,7 @@ public:
     }
 
     void newObjectAdded (PluginInstanceWrapper*) override;
-    void objectRemoved (PluginInstanceWrapper*) override;     //resized(); }
+    void objectRemoved (PluginInstanceWrapper*) override {};     //resized(); }
     void objectOrderChanged() override              { }//resized(); }
     void valueTreeParentChanged (juce::ValueTree&) override;
     void valueTreeRedirected (juce::ValueTree&) override ;
@@ -190,11 +190,16 @@ public:
                 juce::MemoryBlock data;
                 obj->proc->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
-                //auto xml = juce::AudioProcessor::getXmlF(data.getData(), (int)data.getSize());
-                obj->state.getOrCreateChildWithName(xml->getNamespace(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);;
-//                if (obj->state.getChild(0).isValid() && xml != nullptr)
-//                    obj->state.getChild(0).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
-//                //  state.addChild(juce::ValueTree::fromXml(*xml),0,nullptr);
+                if (xml != nullptr) {
+                    obj->state.getOrCreateChildWithName(xml->getNamespace(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);;
+                }
+                else if ( obj->state.getChildWithName(IDs::PLUGIN).isValid() ) {
+
+                    juce::MemoryBlock m;
+                    obj->proc->getStateInformation (m);
+                    obj->state.getOrCreateChildWithName("STATE",nullptr).setProperty ("base64",m.toBase64Encoding(),nullptr);
+                }
+
             }
             v.removeProperty("sync", nullptr);
         }

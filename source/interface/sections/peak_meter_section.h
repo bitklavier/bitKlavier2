@@ -29,11 +29,11 @@ public:
     void resized() override;
     void paintBackground(juce::Graphics& g) override;
 
+    std::shared_ptr<VolumeSlider> volume_;
 private:
 
     std::shared_ptr<PeakMeterViewer> peak_meter_left_;
     std::shared_ptr<PeakMeterViewer> peak_meter_right_;
-    std::shared_ptr<VolumeSlider> volume_;
     std::unique_ptr<chowdsp::SliderAttachment> volumeAttach_;
 
 

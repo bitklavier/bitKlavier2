@@ -67,16 +67,9 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
         SynthGuiData synth_data(synth_);
         gui_ = std::make_unique<FullInterface>(&synth_data, commandManager);
         // for registering hotkeys etc.
-
-        //commandHandler = std::make_unique<ApplicationCommandHandler>(this);
-
         commandManager.registerAllCommandsForTarget(this);
-        // TODO: questions about when this needs to be called.
-        commandManager.getKeyMappings()->resetToDefaultMappings();
-        // commandManager.setFirstCommandTarget (this);
-
-
     }
+
     sampleLoadManager->preferences = userPreferences;
     sampleLoadManager->loadSamples(0,true);
     synth_->user_prefs = userPreferences;
@@ -148,8 +141,8 @@ void SynthGuiInterface::connectStateModulation(std::string source, std::string d
 
 void SynthGuiInterface::connectModulation(std::string source, std::string destination) {
     bool created = synth_->connectModulation(source, destination);
-    //  if (created)
-    //    initModulationValues(source, destination);
+    // if (created)
+    //   initModulationValues(source, destination);
     notifyModulationsChanged();
 }
 

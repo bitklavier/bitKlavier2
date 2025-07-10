@@ -7,10 +7,11 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "open_gl_image_component.h"
+#include "Identifiers.h"
 struct StateModulatedComponent : juce::Component
 
 {
-
+    StateModulatedComponent(const juce::ValueTree& stateDefault) : defaultState(stateDefault){}
     class Listener {
     public:
         virtual ~Listener() { }
@@ -41,10 +42,12 @@ struct StateModulatedComponent : juce::Component
     std::vector<Listener*> listeners_;
     bool hovering_ = false;
     bool isModulation_ = false;
+    bool isModulated  = false;
     virtual StateModulatedComponent* clone() = 0;
     //should be replaced by valuetree wrapper or something along those lines
     virtual void syncToValueTree() = 0;
     juce::ValueTree modulationState;
+    juce::ValueTree defaultState;// {IDs::PARAM_DEFAULT};
 
 };
 #endif //BITKLAVIER2_STATEMODULATEDCOMPONET_H

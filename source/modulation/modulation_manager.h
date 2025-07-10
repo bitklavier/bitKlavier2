@@ -240,7 +240,7 @@ public StateModulatedComponent::Listener
     static constexpr int kIndicesPerMeter = 6;
     static constexpr float kDragImageWidthPercent = 0.018f;
 
-    ModulationManager(juce::ValueTree& tree,SynthBase* bank
+    ModulationManager(const juce::ValueTree& tree,SynthBase* bank
                       );
     ~ModulationManager();
 
@@ -356,11 +356,15 @@ public StateModulatedComponent::Listener
     //  ModulesInterface<ModulationSection>::Listener,
     void added() override
     {
+        DBG("added");
         componentAdded();
+        DBG("done adding");
     }
     void removed() override
     {
+        DBG("remove");
         componentAdded();
+        DBG("doneremoving");
     }
     void effectsMoved() override
     {

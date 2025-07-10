@@ -242,14 +242,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginBase<Processor>::creat
     template <class P>
     bool PluginBase<P>::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const
     {
-        // only supports mono and stereo (for now)
-        if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-            && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-            return false;
-
-        // input and output layout must be the same
-        if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-            return false;
+        // // only supports mono and stereo (for now)
+        // if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
+        //     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+        //     return false;
+        //
+        // // input and output layout must be the same
+        // if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
+        //     return false;
 
         return true;
     }

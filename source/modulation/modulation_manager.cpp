@@ -431,7 +431,7 @@ void ModulationIndicator::setCurrentModulator(bool current) {
     setColour(Skin::kRotaryArc, findColour(Skin::kModulationMeterControl, true));
     current_modulator_ = current;
 }
-ModulationManager::ModulationManager(juce::ValueTree &tree, SynthBase* base
+ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase* base
     ) : SynthSection("modulation_manager"),
                                           drag_quad_(Shaders::kRingFragment),
                                           current_modulator_quad_(Shaders::kRoundedRectangleBorderFragment),
@@ -943,6 +943,7 @@ void 	ModulationManager::componentAdded()
         button_model_lookup_.clear();
         slider_model_lookup_.clear();
         state_model_lookup_.clear();
+        modulation_callout_buttons_.clear();
 
 
         //count things up
@@ -1342,6 +1343,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component* component,
 
               std::string source_name = current_modulator_->getComponentID().toStdString();
               connectModulation(source_name, name);
+              DBG("mods connected");
               setModulationValues(source_name, name, modulation_amount, bipolar, false, false);
               destination->setActive(true);
               setDestinationQuadBounds(destination);
@@ -1359,9 +1361,13 @@ void ModulationManager::modulationDraggedToComponent(juce::Component* component,
 
               setVisibleMeterBounds();
               makeModulationsVisible(slider, true);
+              DBG("dragged to slider");
           }
           else //this line is what allows the modulation to show whenever you initially drop it
+          {
+              DBG("modulationchanged");
               modulationsChanged(name);
+          }
       }
 
 
@@ -2195,6 +2201,8 @@ void ModulationManager::connectStateModulation(std::string source, std::string d
     parent->connectStateModulation(source, destination);
     modifying_ = false;
 }
+
+
 
 
 void ModulationManager::connectModulation(std::string source, std::string destination) {

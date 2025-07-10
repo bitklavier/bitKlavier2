@@ -603,4 +603,50 @@ class VSTItem : public BKItem {
     }
 };
 
+
+class ResetItem : public BKItem
+{
+public:
+    ResetItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeReset)
+    {
+
+    }
+
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+    {
+        auto bounds = getLocalBounds().toFloat();
+        float centerX = bounds.getCentreX();
+        float centerY = bounds.getCentreY();
+        float radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.5f;
+
+        juce::Path stopSign;
+
+        const int numSides = 8;
+        const float angleStep = juce::MathConstants<float>::twoPi / numSides;
+        const float rotation = juce::MathConstants<float>::pi / 8.0f; // 22.5 degrees
+
+        for (int i = 0; i < numSides; ++i)
+        {
+            float angle = angleStep * i + rotation; // Add rotation here
+            float x = centerX + radius * std::cos(angle);
+            float y = centerY + radius * std::sin(angle);
+
+            if (i == 0)
+                stopSign.startNewSubPath(x, y);
+            else
+                stopSign.lineTo(x, y);
+        }
+
+        stopSign.closeSubPath();
+
+        // Red fill
+        g.setColour(juce::Colours::red);
+        g.fillPath(stopSign);
+
+        // White border
+        g.setColour(juce::Colours::white);
+        g.strokePath(stopSign, juce::PathStrokeType(6.0f));
+    }
+};
+
 #endif //BITKLAVIER2_BKITEM_H

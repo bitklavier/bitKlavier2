@@ -5,13 +5,13 @@
 #include "KeymapPreparation.h"
 #include "FullInterface.h"
 #include "KeymapParameterView.h"
-KeymapPreparation::KeymapPreparation (const juce::ValueTree& v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface*) :
-        PreparationSection(juce::String("keymap"), v, open_gl,node)
+KeymapPreparation::KeymapPreparation (const juce::ValueTree& v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID node,  SynthGuiInterface* _synth_gui_interface) :
+        PreparationSection(juce::String("keymap"), v, open_gl,node, *_synth_gui_interface->getUndoManager())
 
 {
 
     item = std::make_unique<KeymapItem> (); // Initializes member variable `item` of PreparationSection class
-    addOpenGlComponent (item->getImageComponent()); // Calls member function of SynthSection (parent class to PreparationSection)
+    addOpenGlComponent (item->getImageComponent(),true); // Calls member function of SynthSection (parent class to PreparationSection)
     _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
                                         {item->getImageComponent()->init(_open_gl); },false);
     addAndMakeVisible (item.get());

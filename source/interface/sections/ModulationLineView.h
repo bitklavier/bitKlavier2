@@ -12,7 +12,7 @@ class ModulationLineView : public PreparationSection::Listener,
                            public tracktion::engine::ValueTreeObjectList<ModulationLine>
 {
 public:
-    explicit ModulationLineView(ConstructionSite &site);
+    explicit ModulationLineView(ConstructionSite &site, juce::UndoManager& um);
     ~ModulationLineView();
     ConstructionSite &site;
 
@@ -38,10 +38,14 @@ public:
     void preparationDropped(const juce::MouseEvent& e, juce::Point<int>) override;
     void preparationDragged(juce::Component*, const juce::MouseEvent&e) override;
     void modulationDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
+    void resetDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) override;
 
 
     void _update() override;
+
+    juce::UndoManager& undoManager;
+    void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
 
 
 
@@ -60,8 +64,9 @@ public:
     }
     bool isSuitableType (const juce::ValueTree& v) const override
     {
-        return v.hasType (IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION);
+        return v.hasType (IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION) || v.hasType(IDs::RESETCONNECTION);
     }
+    juce::CriticalSection open_gl_lock;
 };
 
 #endif //BITKLAVIER2_MODULATIONLINEVIEW_H

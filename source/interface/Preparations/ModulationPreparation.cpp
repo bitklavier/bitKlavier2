@@ -15,13 +15,13 @@
 // a Modulation Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private ModulationPreparation member proc with an initialization list.
 ModulationPreparation::ModulationPreparation ( juce::ValueTree v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID no,  SynthGuiInterface* interface) :
-        PreparationSection(juce::String("Modulation"), v, open_gl,no),
-
+        PreparationSection(juce::String("Modulation"), v, open_gl,no, *interface->getUndoManager()),
+        undo (*interface->getUndoManager()),
         mod_list(v,interface->getSynth(),dynamic_cast<bitklavier::ModulationProcessor*>(interface->getSynth()->getNodeForId(no)->getProcessor()))
 {
 
     item = std::make_unique<ModulationItem> (); // Initializes member variable `item` of PreparationSection class
-    addOpenGlComponent (item->getImageComponent()); // Calls member function of SynthSection (parent class to PreparationSection)
+    addOpenGlComponent (item->getImageComponent(),true); // Calls member function of SynthSection (parent class to PreparationSection)
     _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
                                         {item->getImageComponent()->init(_open_gl);
                                         },false);
@@ -39,7 +39,8 @@ std::unique_ptr<SynthSection> ModulationPreparation::getPrepPopup()
             return std::make_unique<ModulationModuleSection>(
             &mod_list,
                                                       state,
-                                                      findParentComponentOfClass<SynthGuiInterface>()->getGui()->modulation_manager.get());
+                                                      findParentComponentOfClass<SynthGuiInterface>()->getGui()->modulation_manager.get(),
+                                                      undo);
 
     return nullptr;
 

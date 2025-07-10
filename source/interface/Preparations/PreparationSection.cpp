@@ -10,22 +10,25 @@
 #include "synth_base.h"
 
 PreparationSection::PreparationSection(juce::String name, const juce::ValueTree& v, OpenGlWrapper &open_gl,
-                                       juce::AudioProcessorGraph::NodeID node) :
+                                       juce::AudioProcessorGraph::NodeID node, juce::UndoManager &um) :
 tracktion::engine::ValueTreeObjectList<BKPort>(v),
     SynthSection(name), state(v), _open_gl(open_gl),
-    pluginID(node)
+    pluginID(node), undo(um)
 {
     //_parent = findParentComponentOfClass<SynthGuiInterface>();
     setInterceptsMouseClicks(true, false);
-    x.referTo(state, IDs::x, nullptr);
-    y.referTo(state, IDs::y, nullptr);
+    //make this undoable
+    curr_point.referTo(state,IDs::x_y,&undo);
+    // x.referTo(state, IDs::x, &undo);
+    // y.referTo(state, IDs::y, &undo);
+
+    //dont make this undoable
     width.referTo(state, IDs::width, nullptr);
     height.referTo(state, IDs::height, nullptr);
     numIns.referTo(state, IDs::numIns, nullptr);
     numOuts.referTo(state, IDs::numOuts, nullptr);
-    //constrainer.setBoundsForComponent(this,getParentComponent()->getLocalBounds() );
     uuid.referTo(state, IDs::uuid, nullptr);
-    //pluginID.uid = static_cast<uint32>(int(state.getProperty(IDs::uuid)));
+
     constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
     rebuildObjects();
 
@@ -194,6 +197,11 @@ void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetail
     if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeTuning)
         for (auto listener: listeners_)
             listener->tuningDropped(dropped_tree, state);
+    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) ==
+        bitklavier::BKPreparationType::PreparationTypeReset) {
+        for (auto listener: listeners_)
+            listener->resetDropped(dropped_tree, state);
+    }
 }
 
 void PreparationSection::resized() {
@@ -239,6 +247,7 @@ void PreparationSection::resized() {
     }
 
     SynthSection::resized();
+
 }
 
 PreparationSection::~PreparationSection() {
@@ -296,4 +305,12 @@ void PreparationSection::mouseDrag(const juce::MouseEvent &e) {
     //        auto newPos = this->getPosition() + e.getDistanceFromDragStart();
     //        this->setPosition(newPos);
     //    }
+
+}
+
+void PreparationSection::moved()
+{
+    // //undo.beg
+    // x = this->getX();
+    // y = this->getY();
 }

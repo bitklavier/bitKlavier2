@@ -9,6 +9,7 @@
 #include "sound_engine.h"
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
+#include "tracktion_ValueTreeUtilities.h"
 
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data, juce::ApplicationCommandManager &_manager)
@@ -16,8 +17,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                         prep_list(*data->synth->preparationList.get()),
                                                          undo(um),
                                                          open_gl(open_gl),
-                                                         cableView(*this),
-                                                         modulationLineView(*this),
+                                                         cableView(*this, um),
+                                                         modulationLineView(*this, um),
                                                          preparationSelector(*this), parent(v),
                                                         commandManager (_manager)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
@@ -44,6 +45,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,ResetPreparation::create);
+
 }
 
 // Define your command IDs
@@ -57,11 +60,12 @@ enum CommandIDs {
     tempo = 0x0619,
     tuning = 0x0620,
     modulation = 0x0621,
-    deletion = 0x0622
+    deletion = 0x0622,
+    resetMod = 0x0623
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
-    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion});
+    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion,resetMod});
 }
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
         switch (id) {
@@ -104,7 +108,11 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
             case deletion:
                 info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
                 info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
-            break;
+                break;
+            case resetMod:
+                info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);
+                info.addDefaultKeypress('q', juce::ModifierKeys::noModifiers);
+                break;
         }
     }
 bool ConstructionSite::perform(const InvocationInfo &info) {
@@ -115,9 +123,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
                 t.setProperty(IDs::width, 245, nullptr);
                 t.setProperty(IDs::height, 125, nullptr);
-                t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
-                t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
-                // prep_list.appendChild(t,  interface->getUndoManager());
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+                //t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
                 prep_list.appendChild(t,  &undo);
                 return true;
             }
@@ -141,8 +148,9 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
                 t.setProperty(IDs::width, 185, nullptr);
                 t.setProperty(IDs::height, 105, nullptr);
-                t.setProperty(IDs::x, lastX - 185 / 2, nullptr);
-                t.setProperty(IDs::y, lastY - 105 / 2, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
                 prep_list.appendChild(t,  &undo);
                 return true;
             }
@@ -201,8 +209,11 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
                 t.setProperty(IDs::width, 125, nullptr);
                 t.setProperty(IDs::height, 245, nullptr);
-                t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
-                t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
                 prep_list.appendChild(t,  &undo);
                 return true;
             }
@@ -213,8 +224,25 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
                 t.setProperty(IDs::width, 100, nullptr);
                 t.setProperty(IDs::height, 100, nullptr);
-                t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
-                t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
+                prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case resetMod: {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeReset, nullptr);
+                t.setProperty(IDs::width, 100, nullptr);
+                t.setProperty(IDs::height, 100, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
                 prep_list.appendChild(t,  &undo);
                 return true;
             }
@@ -295,7 +323,8 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->setSkinValues(default_skin, false);
     s->setDefaultColor();
     s->setSizeRatio(size_ratio_);
-    s->setCentrePosition(s->x, s->y);
+    s->setCentrePosition (s->curr_point);
+    // s->setCentrePosition(s->x, s->y);
     s->setSize(s->width, s->height);
 
 
@@ -325,7 +354,10 @@ void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool anim
 
 
 void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
+    // find preparation section with the same id as the one we're removing
     int index = -1;
+    if (plugin_components.empty())
+        return;
     for (int i=0; i<plugin_components.size(); i++){
         if (plugin_components[i]->pluginID == wrapper->node_id){
             index = i;
@@ -336,6 +368,11 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
 
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
+
+    // find and delete cables and modulation lines associated with this preparation section
+    cableView.deleteConnectionsWithId(wrapper->node_id);
+    modulationLineView.deleteConnectionsWithId(wrapper->node_id);
+
     //cleanup opengl
     {
         juce::ScopedLock lock(open_gl_critical_section_);
@@ -472,8 +509,8 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::type, static_cast<bitklavier::BKPreparationType>(selection), nullptr);
         t.setProperty(IDs::width, 132, nullptr);
         t.setProperty(IDs::height, 260, nullptr);
-        t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
+        // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
         // prep_list.appendChild(t,  interface->getUndoManager());
         prep_list.appendChild(t,  &undo);
     } else {
@@ -482,8 +519,8 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
         t.setProperty(IDs::width, 245, nullptr);
         t.setProperty(IDs::height, 125, nullptr);
-        t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
-        t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+        // t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+        // t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
 
         auto desc = _parent->userPreferences->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
