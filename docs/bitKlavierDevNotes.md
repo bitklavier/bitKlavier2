@@ -5,6 +5,7 @@
 - [ ] Blendrónic audio in 
 - [ ] Sample load crash
 - [ ] Blurry fonts ;--}
+- [ ] global preferences, like A440
 
 ## Quick Bug/Feature Notes
 - [ ] transposition slider limits to -12/12, and should allow for larger values when typed in
@@ -18,25 +19,23 @@
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
-- [x] how to think about copy constructors and parameters: `void SpringTuning::copy(SpringTuning* st)` for instance. these require that the parameters be set internally, which feels off. 
-  - shouldn't need them, using valueTrees instead
-- [ ] thinking the spiral view my be best as its own separate pop-up window, so it can be unobscured by all the knobs and sliders
-  - actually, maybe not: i think it could fit nicely in half the Tuning display, with the relevant controls in the other half, and only those visible for the current mode
-- [ ] for DP: tell me more about `params.tuningState.setFromAudioThread` and why it might be important. In TuningParametersView.cpp
-  - this was a conditional that Davis was working with, concerned that there may be parameters that are updated on the audio thread for some reason that would then trigger this callback
-    - however, it's not being set anywhere at the moment, so it may not be necessary in the end
+- [ ] check out `lastSynthState` in DirectProcessor and whether it's thread-safe
+  - need to extend this with std::map of currently play notes/tunings, for spiralview
+- [ ] will creating global preferences, probably under Options menu with new window, be straightforward? 
+  - need A440, for instance. 
+  - and will save? will app, or with gallery?
 - [ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
   - Myra is working on. but Direct saves now, except Transpositions, so check that
--[ ] check on Mods with Direct; are they working for all params? do they save?
+- [ ] check on Mods with Direct; are they working for all params? do they save?
   - need to be tested and fixed
   - let's prioritize this, for Direct and Tuning
--[ ] i’m not clear when we need to create and run processStateChanges for params
+- [ ] i’m not clear when we need to create and run processStateChanges for params
   - this for ui sections, where we don't do audio-rate mods, just param-state mods, and want to change the whole thing
     - for instance, the transposition slider: we're going to change all those values at once, and try to change them individually continuously
     - the mod stuff is complicated and needs a full section in this doc!
--[ ] and what about the serializer/deserializers, like in TuningProcessor.h? do i need to add SemitoneWidthParams to them? 
+- [ ] and what about the serializer/deserializers, like in TuningProcessor.h? do i need to add SemitoneWidthParams to them? 
   - these are used for more complex parameters, like the arrays of tuning values in circular and absolute tuning
-- [ ] what’s up with the `initializer_lists` in TuningProcessor.h, like `chowdsp::EnumChoiceParameter<PitchClass>`? 
+- [x] what’s up with the `initializer_lists` in TuningProcessor.h, like `chowdsp::EnumChoiceParameter<PitchClass>`? 
   - these looks strange but the `initializer_lists` provide substitution patterns for text
     - `{ '_', ' ' }, { '1', '/' }` means _ will be replaced by a space, and 1 will replaced by a /
     - so, then in the `PitchClass` enum, 
@@ -45,11 +44,15 @@ and hopefully with answers included here for the record!
       - 5 => b
       - so `C41D5` becomes "C#/Db"
     - this is all because certain characters are not allowed in enums
--[ ] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK?
+- [x] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK?
   - see the section below about Default Color and Graphics Constants
-- [ ] currently getting tuning info into BKSynthezier from TuningState, with getTargetFrequency(), but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
+- [x] currently getting tuning info into BKSynthezier from TuningState, with getTargetFrequency(), but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
 - [x] I need some help understanding how the tuningCallbacks work in TuningParametersView.h. In particular how the static tuning systems get updated on the back end after the user makes a choice.
-
+- [x] how to think about copy constructors and parameters: `void SpringTuning::copy(SpringTuning* st)` for instance. these require that the parameters be set internally, which feels off.
+  - shouldn't need them, using valueTrees instead
+- [x] for DP: tell me more about `params.tuningState.setFromAudioThread` and why it might be important. In TuningParametersView.cpp
+  - this was a conditional that Davis was working with, concerned that there may be parameters that are updated on the audio thread for some reason that would then trigger this callback
+    - however, it's not being set anywhere at the moment, so it may not be necessary in the end
 ---------
 ## Default Colors and Graphics Constants
 - in `assets/default.bitklavierskin` we have all the values

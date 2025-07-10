@@ -141,29 +141,29 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-//    if (hammerSynth->hasSamples())
-//    {
-//        hammerSynth->updateVelocityMinMax (
-//            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-//            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-//
-//        hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-//    }
-//
-//    if (releaseResonanceSynth->hasSamples())
-//    {
-//        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-//        releaseResonanceSynth->updateVelocityMinMax (
-//            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-//            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-//
-//        releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-//    }
-//
-//    if (pedalSynth->hasSamples())
-//    {
-//        pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-//    }
+    if (hammerSynth->hasSamples())
+    {
+        hammerSynth->updateVelocityMinMax (
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
+        hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (releaseResonanceSynth->hasSamples())
+    {
+        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        releaseResonanceSynth->updateVelocityMinMax (
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
+        releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (pedalSynth->hasSamples())
+    {
+        pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
@@ -173,6 +173,11 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
 
+    /**
+     * todo: is all this thread-safe?
+     *      - outputLevels above is std::atomic
+     *      - the stuff below is not, but uses chowdsp params, so maybe that's ok?
+     */
     // get last synthesizer state and update things accordingly
     lastSynthState = mainSynth->getSynthesizerState();
     state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);

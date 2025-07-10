@@ -188,6 +188,14 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         })
     };
 
+    tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.drag,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this] {
+            DBG("drag changed by user");
+            params.tuningState.springTuner->dragChanged();
+        })
+    };
+
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.tetherStiffness,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {

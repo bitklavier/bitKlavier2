@@ -65,6 +65,7 @@ SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
     /*
      * initialize primary user params to defaults
      */
+    dragChanged();
     intervalFundamentalChanged();
     intervalScaleChanged();
     tetherScaleChanged();
@@ -95,6 +96,11 @@ inline void SpringTuning::stop(void)
 void SpringTuning::rateChanged() // called from UI
 {
     setRate(sparams.rate->getCurrentValue(), true);
+}
+
+void SpringTuning::dragChanged() // called from UI
+{
+    dragLocal = 1. - sparams.drag->getCurrentValue();
 }
 
 void SpringTuning::tetherStiffnessChanged()
@@ -214,7 +220,8 @@ void SpringTuning::simulate()
     {
 		if (particle->getEnabled() && !particle->getLocked())
         {
-            particle->integrate(sparams.drag->getCurrentValue());
+            //particle->integrate(sparams.drag->getCurrentValue());
+            particle->integrate(dragLocal);
         }
 	}
 
@@ -305,13 +312,11 @@ PitchClass SpringTuning::getTetherFundamental()
 
 double SpringTuning::getTetherWeightGlobal()
 {
-    DBG("getTetherWeightGlobal = " + sparams.tetherWeightGlobal->getCurrentValueAsText());
     return sparams.tetherWeightGlobal->getCurrentValue();
 }
 
 double SpringTuning::getTetherWeightSecondaryGlobal()
 {
-    DBG("getTetherWeightSecondaryGlobal = " + sparams.tetherWeightSecondaryGlobal->getCurrentValueAsText());
     return sparams.tetherWeightSecondaryGlobal->getCurrentValue();
 }
 

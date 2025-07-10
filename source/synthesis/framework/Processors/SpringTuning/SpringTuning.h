@@ -30,10 +30,6 @@
 */
 
 /**
- * todo: implement individual interval weights, and whether to use Local or Fundamental springs
- */
-
-/**
  * todo: rewrite ALL the spring code to remove JUCE dependencies
  *  would be nice for it to be more modular, and might have other benefits as well
  */
@@ -53,12 +49,14 @@ public:
     ~SpringTuning();
 
     /**
+     * todo: add a callback for drag, to do the 1 - drag conversion?
+     */
+
+    /**
      * these first functions are callbacks for the UI, to update values internally
-     *  - note that "drag" does not need a callback, since it can be used directly without anything further
-     *      there are others like that as well...
-     *  - all the rest of these require additional setup
      */
     void rateChanged();
+    void dragChanged();
     void tetherStiffnessChanged();
     void intervalStiffnessChanged();
     void intervalScaleChanged();
@@ -124,6 +122,8 @@ private:
     juce::Array<Spring*>    tetherSpringArray;
     juce::Array<Spring*>    enabledSpringArray;
     juce::Array<Spring*>    enabledParticleArray;
+
+    float dragLocal; //internally, work with 1. - drag as given in the UI
 
     void hiResTimerCallback(void) override;
 };

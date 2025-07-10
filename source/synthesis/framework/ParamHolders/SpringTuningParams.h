@@ -144,7 +144,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         juce::ParameterID { "drag", 100 },
         "Drag",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
-        0.1f, // high drag
+        0.98f, // high drag
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };

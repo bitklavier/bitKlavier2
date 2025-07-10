@@ -382,7 +382,6 @@ void TuningState::keyPressed(int noteNumber)
             adaptiveHistoryCounter = 0;
             adaptiveFundamentalFreq = adaptiveFundamentalFreq * adaptiveCalculateRatio(noteNumber);
             updateAdaptiveFundamentalValue(noteNumber);
-            //adaptiveFundamentalNote = noteNumber;
 
         }
     }
@@ -398,18 +397,11 @@ void TuningState::keyPressed(int noteNumber)
                 getGlobalTuningReference()
             );
             updateAdaptiveFundamentalValue(noteNumber);
-            //adaptiveFundamentalNote = noteNumber;
         }
     }
     else if (type == Spring_Tuning)
     {
-
-    /**
-     * todo: spring
-     */
-        //tuning->prep->getSpringTuning()->addNote(noteNumber);
         springTuner->addNote(noteNumber);
-        //springTuner->print();
     }
 
     /*
@@ -432,7 +424,7 @@ void TuningState::keyReleased(int noteNumber)
 
 /**
  * update the value internally, but also update parameter holder for it, so the UI knows
- * @param newFundt
+ * @param newFund
  */
 void TuningState::updateAdaptiveFundamentalValue(int newFund)
 {

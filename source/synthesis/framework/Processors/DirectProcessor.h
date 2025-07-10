@@ -73,7 +73,7 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Hammers", 100 },
         "Hammer",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        -6.0f,
+        -24.0f,
         true
     };
 
