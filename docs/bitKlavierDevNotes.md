@@ -11,24 +11,24 @@
 ## Quick Bug/Feature Notes
 - [ ] Keymap parameter targeting: 
   - requires a big new solution!
-  - a new preparation: the Target Prep
+  - a new preparation: the Target Prep, or actually a MidiFilter prep
   - Keymap => Preparation, we get the default behavior, as always
-  - Keymap => Target => Preparation (let's say Synchronic for this example)
+  - Keymap => MidiFilter => Preparation (let's say Synchronic for this example)
   - in Target, we have 
     - all non-default behaviors (Pattern Sync, Beat Sync, etc...) that were in the old Keymap 
     - along with the NoteOn/Off/Both options for each that were in the old Synchronic
     - for every behavior that is checked on, we repack the MIDI messages with a new channel, assigned to that behavior, and filter according to the NoteOn/Off/Both settings
       - so, if Pattern Sync is checked on, with Note-Off as the mode, the MIDI messages will be unpacked, NoteOn messages discarded, and the NoteOn messages reassigned to channel 2 (for Pattern Sync, 3 for Beat Sync, etc..), and the messages are repacked and sent out
       - if there are multiple behaviors checked on, then there will be multiple MIDI messages for each original MIDI message, one on each behavior channel
-  - once Target is connected to a particular kind of prep, it can only be connected to that class of prep (so only to Synchronics in this example)
   - this is essentially a new class of MIDI filter prep, which could be useful going forward
     - all/some of the filtering in the old Keymap might now be here (invert noteOn/Off, for example)
       - but for now, let's just focus on the Target functionality
-    - perhaps it's not called Target, but Midi or Note or Message, or.... Filter (F). We're using V for VST for audio plugin and F is available
+    - MidiFilter.... Filter (F). We're using V for VST for audio plugin and F is available
 - [ ] control-click menu is completely unmanageable right now with all the plugins there...
 - [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
 - [ ] we'll need to be able to override the default ranges of params, when a user types in a value outside the default range. 
   - should be able to create a public function in chowdsp_ParameterTypes that accesses `const juce::NormalisableRange<float>& valueRange`. should able to make that not a `const` where it is privately declared there
+  - for changes to chowdsp, need to add/commit to that submodule branch, and then push. supdate first. we have our own fork of chowdsp, also used by electrosynth
 - [ ] weird dialog boxes when control-clicking on knobs
 - [ ] for the transposition slider, if 0 isn't the first element we don't get it at all. so [0 4] works but [4 0] does not
 - [ ] maybe we should allow drag/drop to make audio connections between preps as well
