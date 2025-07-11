@@ -46,6 +46,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,ResetPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterPreparation::create);
 
 }
 
@@ -61,50 +62,51 @@ enum CommandIDs {
     tuning = 0x0620,
     modulation = 0x0621,
     deletion = 0x0622,
-    resetMod = 0x0623
+    resetMod = 0x0623,
+    midifilter = 0x0624
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
-    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion,resetMod});
+    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion, resetMod, midifilter});
 }
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
         switch (id) {
             case direct:
                 info.setInfo("Direct", "Create Direct Preparation", "Edit", 0);
                 info.addDefaultKeypress('d', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case nostalgic:
                 info.setInfo("Nostalgic", "Create Nostalgic Preparation", "Edit", 0);
-            info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
-            break;
+                info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
+                break;
             case keymap:
                 info.setInfo("Keymap", "Create Keymap Preparation", "Edit", 0);
                 info.addDefaultKeypress('k', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case resonance:
                 info.setInfo("Resonance", "Create Resonance Preparation", "Edit", 0);
                 info.addDefaultKeypress('r', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case synchronic:
                 info.setInfo("Synchronic", "Create Synchronic Preparation", "Edit", 0);
                 info.addDefaultKeypress('s', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case blendronic:
                 info.setInfo("Blendronic", "Create Blendronic Preparation", "Edit", 0);
                 info.addDefaultKeypress('b', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case tempo:
                 info.setInfo("Tempo", "Create Tempo Preparation", "Edit", 0);
                 info.addDefaultKeypress('m', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case tuning:
                 info.setInfo("Tuning", "Create Tuning Preparation", "Edit", 0);
                 info.addDefaultKeypress('t', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case modulation:
                 info.setInfo("Modulation", "Create Modulation", "Edit", 0);
                 info.addDefaultKeypress('c', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case deletion:
                 info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
                 info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
@@ -112,6 +114,10 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
             case resetMod:
                 info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);
                 info.addDefaultKeypress('q', juce::ModifierKeys::noModifiers);
+                break;
+            case midifilter:
+                info.setInfo("Midifilter", "Create Midifilter Preparation", "Edit", 0);
+                info.addDefaultKeypress('f', juce::ModifierKeys::noModifiers);
                 break;
         }
     }
@@ -211,6 +217,21 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::height, 245, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+                prep_list.appendChild(t,  &undo);
+                return true;
+            }
+            case midifilter:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiFilter, nullptr);
+                t.setProperty(IDs::width, 125, nullptr);
+                t.setProperty(IDs::height, 245, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                                             juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
                 // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);

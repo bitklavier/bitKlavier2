@@ -187,7 +187,6 @@ struct TuningParams : chowdsp::ParamHolder
     /**
      * todo:
      * params to add:
-     * - spring tuning
      * - scala functionality
      * - MTS
      */

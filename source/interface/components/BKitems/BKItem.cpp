@@ -47,6 +47,9 @@ namespace
         if (type == bitklavier::BKPreparationType::PreparationTypeVST)
             return Paths::vstPaths();
 
+        if (type == bitklavier::BKPreparationType::PreparationTypeMidiFilter)
+            return Paths::midiFilterPaths();
+
         return Paths::tuningPaths();
     }
 }

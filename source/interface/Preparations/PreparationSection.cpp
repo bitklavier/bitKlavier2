@@ -186,22 +186,28 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {
+
     dynamic_cast<ConstructionSite *>(getParentComponent())->item_dropped_on_prep_ = true;
     auto dropped_tree = juce::ValueTree::fromXml(dragSourceDetails.description);
+
     //should switch to strings for type names
-    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) ==
-        bitklavier::BKPreparationType::PreparationTypeModulation) {
+    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeModulation) {
         for (auto listener: listeners_)
             listener->modulationDropped(dropped_tree, state);
     }
+
     if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeTuning)
         for (auto listener: listeners_)
             listener->tuningDropped(dropped_tree, state);
-    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) ==
-        bitklavier::BKPreparationType::PreparationTypeReset) {
+
+    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeReset) {
         for (auto listener: listeners_)
             listener->resetDropped(dropped_tree, state);
     }
+
+    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeMidiFilter)
+        for (auto listener: listeners_)
+            listener->midifilterDropped(dropped_tree, state);
 }
 
 void PreparationSection::resized() {

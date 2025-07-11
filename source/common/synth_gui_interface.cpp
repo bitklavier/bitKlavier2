@@ -387,6 +387,7 @@ PopupItems SynthGuiInterface::getPluginPopupItems() {
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiFilter,"MidiFilter");
 
     auto pluginDescriptions = userPreferences->userPreferences->knownPluginList.getTypes();
 

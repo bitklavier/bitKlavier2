@@ -99,7 +99,7 @@ class Paths {
 
         return arr;
     }
-  // Returns the paths for a blendronic preparation window
+  // Returns the paths for a vst preparation window
   static juce::Array<juce::Path> vstPaths()
     {
       juce::Array<juce::Path> arr;
@@ -109,6 +109,21 @@ class Paths {
       arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
 
       return arr;
+    }
+
+    /**
+     * todo replace vst icon stuff here
+     * @return
+     */
+    static juce::Array<juce::Path> midiFilterPaths()
+    {
+        juce::Array<juce::Path> arr;
+        arr.add(fromSvgData((const void*)BinaryData::Layer_1_vst_svg,BinaryData::Layer_1_vst_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_2_vst_svg,BinaryData::Layer_2_vst_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_3_vst_svg,BinaryData::Layer_3_vst_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
+
+        return arr;
     }
 
     // Returns the paths for a resonance preparation window

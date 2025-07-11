@@ -103,6 +103,7 @@ namespace bitklavier {
         PreparationTypeComment,
         PreparationTypeCompressor,
         PreparationTypeVST,
+        PreparationTypeMidiFilter,
         BKPreparationTypeNil,
     } BKPreparationType;
 

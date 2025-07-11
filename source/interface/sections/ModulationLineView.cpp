@@ -125,6 +125,23 @@ void ModulationLineView::tuningDropped(const juce::ValueTree &source, const juce
 
 }
 
+void ModulationLineView::midifilterDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {
+    auto sourceId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(source.getProperty(IDs::nodeID,-1));
+    auto destId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( dest.getProperty(IDs::nodeID,-1));
+    //protects against short/accidental drag drops
+    if (sourceId == destId)
+        return;
+    //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
+    juce::ValueTree _connection(IDs::MIDIFILTERCONNECTION);
+    _connection.setProperty(IDs::isMod, false, nullptr);
+    _connection.setProperty(IDs::src,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(sourceId), nullptr);
+    _connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(destId), nullptr);
+    parent.addChild(_connection, -1, nullptr);
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    _parent->getGui()->modulation_manager->added();
+
+}
+
 void ModulationLineView::resized()
 {
     for(auto line: objects)

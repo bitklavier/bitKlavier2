@@ -31,11 +31,9 @@ PluginInstanceWrapper* PreparationList::createNewObject (const juce::ValueTree& 
         //the graph rebuild is inherently gonna trigger some async blocking
 
         node_ptr = synth.addProcessor (std::move (processor), juce::AudioProcessorGraph::NodeID (juce::Uuid (state.getProperty (IDs::uuid).toString()).getTimeLow()));
-    } else if (temporary_instance == nullptr &&static_cast<int> (state.getProperty (IDs::type)) == bitklavier::BKPreparationType::PreparationTypeVST ) {
-
-
+    } else if (temporary_instance == nullptr &&static_cast<int> (state.getProperty (IDs::type)) == bitklavier::BKPreparationType::PreparationTypeVST )
+    {
         juce::String err;
-
         juce::PluginDescription pd;
         pd.loadFromXml(*v.getChildWithName(IDs::PLUGIN).createXml());
         temporary_instance = synth.user_prefs->userPreferences->formatManager.createPluginInstance (

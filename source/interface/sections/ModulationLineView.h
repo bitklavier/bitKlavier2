@@ -40,6 +40,7 @@ public:
     void modulationDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void resetDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) override;
+    void midifilterDropped(const juce::ValueTree &source, const juce::ValueTree &dest) override;
 
 
     void _update() override;
