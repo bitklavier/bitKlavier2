@@ -63,7 +63,7 @@ PluginInstanceWrapper* PreparationList::createNewObject (const juce::ValueTree& 
     {
         createUuidProperty(state);
         rawPtr = temporary_instance.get();
-        temporary_instance->prepareToPlay (synth.getSampleRate(), synth.getBufferSize());
+        temporary_instance->prepareToPlay (synth.getSampleRate(), synth.getBufferSize()); // midiFilter crashes here EXC_BAD_ACCESS
         node_ptr = synth.addProcessor (std::move (temporary_instance), juce::AudioProcessorGraph::NodeID (juce::Uuid (state.getProperty (IDs::uuid).toString()).getTimeLow()));
     }
     if (node_ptr)

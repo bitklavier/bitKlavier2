@@ -97,13 +97,13 @@ namespace bitklavier {
         PreparationTypeTempo,
         PreparationTypeKeymap,
         PreparationTypeModulation,
+        PreparationTypeMidiFilter,
         PreparationTypePianoMap,
         PreparationTypeReset,
         PreparationTypePiano,
         PreparationTypeComment,
         PreparationTypeCompressor,
         PreparationTypeVST,
-        PreparationTypeMidiFilter,
         BKPreparationTypeNil,
     } BKPreparationType;
 
