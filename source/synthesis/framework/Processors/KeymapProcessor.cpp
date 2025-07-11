@@ -78,80 +78,70 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     //MidiBuffer midi_messages;
     _midi->removeNextBlockOfMessages (midiMessages, num_samples);
     _midi->replaceKeyboardMessages (midiMessages, num_samples);
-
-    /**
-     *
-     * MIDI Processing Happens here
-     *
-     */
-    juce::MidiBuffer saveMidi (midiMessages);
-    midiMessages.clear();
-
-    for (auto m : saveMidi) {
-        auto msg = m.getMessage();
-        if (state.params.keyboard_state.keyStates.test(msg.getNoteNumber()))
-            midiMessages.addEvent (msg, m.samplePosition);
-
-    }
-
-    // this could surely be optimized, though i'm not sure how important that is ./dlt
-    // i'm also not 100% this properly retain the samplePosition, but again, it's not clear how important
-    // that is when noteOn and noteOff are inverted... might be important for other MIDI processing, however
-    if (invertNoteOnNoteOff)
-    {
-
-        for (auto mi : saveMidi)
-        {
-            auto message = mi.getMessage();
-            if (message.isNoteOn() || message.isNoteOff())
-                midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
-            else
-                midiMessages.addEvent (message, mi.samplePosition);
-        }
-    }
-
-    /**
-     * others to do from the original KeyMap
-     *
-     * Trigger All Notes Off
-     * Ignore Sustain Pedal
-     * Use as Sustain Pedal
-     * Toggle Keys
-     * Sostenuto Mode
-     * Ignore NoteOff
-     *
-     */
-
-    // print them out for now
-    for (auto mi : midiMessages)
-    {
-        auto message = mi.getMessage();
-
-        mi.samplePosition;
-        mi.data;
-        DBG (printMidi (message, "kmap"));
-    }
+//
+//    /**
+//     *
+//     * MIDI Processing Happens here
+//     * todo: remove all this, since it will be in MidiFilter now
+//     *
+//     */
+//    juce::MidiBuffer saveMidi (midiMessages);
+//    midiMessages.clear();
+//
+//    for (auto m : saveMidi) {
+//        auto msg = m.getMessage();
+//        if (state.params.keyboard_state.keyStates.test(msg.getNoteNumber()))
+//            midiMessages.addEvent (msg, m.samplePosition);
+//
+//    }
+//
+//    // this could surely be optimized, though i'm not sure how important that is ./dlt
+//    // i'm also not 100% this properly retain the samplePosition, but again, it's not clear how important
+//    // that is when noteOn and noteOff are inverted... might be important for other MIDI processing, however
+//    if (invertNoteOnNoteOff)
+//    {
+//        for (auto mi : saveMidi)
+//        {
+//            auto message = mi.getMessage();
+//            if (message.isNoteOn() || message.isNoteOff())
+//                midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
+//            else
+//                midiMessages.addEvent (message, mi.samplePosition);
+//        }
+//    }
+//
+//
+//
+//    // print them out for now
+//    for (auto mi : midiMessages)
+//    {
+//        auto message = mi.getMessage();
+//
+//        mi.samplePosition;
+//        mi.data;
+//        DBG (printMidi (message, "kmap"));
+//    }
 }
 
 // turns noteOn messages into noteOff messages, and vice versa
 // there is surely a more efficient way to do this...
-juce::MidiMessage KeymapProcessor::swapNoteOnNoteOff (juce::MidiMessage inmsg)
-{
-    if (inmsg.isNoteOff())
-    {
-        auto newmsg = juce::MidiMessage::noteOn (inmsg.getChannel(), inmsg.getNoteNumber(), inmsg.getVelocity());
-        newmsg.addToTimeStamp (inmsg.getTimeStamp());
-        return newmsg;
-    }
-    else if (inmsg.isNoteOn())
-    {
-        auto newmsg = juce::MidiMessage::noteOff (inmsg.getChannel(), inmsg.getNoteNumber(), inmsg.getVelocity());
-        newmsg.addToTimeStamp (inmsg.getTimeStamp());
-        return newmsg;
-    }
-
-    return inmsg;
-}
+//juce::MidiMessage KeymapProcessor::swapNoteOnNoteOff (juce::MidiMessage inmsg)
+//{
+//    if (inmsg.isNoteOff())
+//    {
+//        auto newmsg = juce::MidiMessage::noteOn (inmsg.getChannel(), inmsg.getNoteNumber(), inmsg.getVelocity());
+//        newmsg.addToTimeStamp (inmsg.getTimeStamp());
+//        return newmsg;
+//    }
+//    else if (inmsg.isNoteOn())
+//    {
+//        auto newmsg = juce::MidiMessage::noteOff (inmsg.getChannel(), inmsg.getNoteNumber(), inmsg.getVelocity());
+//        newmsg.addToTimeStamp (inmsg.getTimeStamp());
+//        return newmsg;
+//    }
+//
+//    return inmsg;
+//}
 
 #include "array_to_string.h"
 template<typename Serializer>

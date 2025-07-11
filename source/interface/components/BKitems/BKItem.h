@@ -666,9 +666,9 @@ public:
 
         juce::Path stopSign;
 
-        const int numSides = 6; // just to differentiate from reset for now...
+        const float numSides = 5;
         const float angleStep = juce::MathConstants<float>::twoPi / numSides;
-        const float rotation = juce::MathConstants<float>::pi / 8.0f; // 22.5 degrees
+        const float rotation = (juce::MathConstants<float>::pi / numSides) * 3. + juce::MathConstants<float>::pi / 2.;
 
         for (int i = 0; i < numSides; ++i)
         {
@@ -684,8 +684,8 @@ public:
 
         stopSign.closeSubPath();
 
-        // Red fill
-        g.setColour(juce::Colours::yellow); // just to differentiate from reset for now
+        // fill
+        g.setColour(juce::Colours::steelblue); // just to differentiate from reset for now
         g.fillPath(stopSign);
 
         // White border

@@ -77,7 +77,6 @@ class Paths {
       return arr;
     }
 
-
     // Returns the paths for a synchronic preparation window
     static juce::Array<juce::Path> synchronicPaths()
     {

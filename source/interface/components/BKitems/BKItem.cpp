@@ -56,7 +56,6 @@ namespace
 
 BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem")
 {
-
     image_component_ = std::make_shared<OpenGlImageComponent>();
     image_component_->setComponent(this);
     image_component_->setAlwaysOnTop(false);
@@ -67,8 +66,6 @@ BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem")
     layer_2_ = paths.getUnchecked(1);
     if (paths.size() > 2)
         layer_3_ = paths.getUnchecked(2);
-
-
 }
 
 

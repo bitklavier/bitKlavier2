@@ -56,7 +56,7 @@ enum CommandIDs {
     nostalgic = 0x0614,
     keymap = 0x0615,
     resonance = 0x0616,
-    synchronic   = 0x0617,
+    synchronic = 0x0617,
     blendronic = 0x0618,
     tempo = 0x0619,
     tuning = 0x0620,

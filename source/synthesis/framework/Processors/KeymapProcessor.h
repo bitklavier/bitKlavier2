@@ -65,7 +65,7 @@ public:
 
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
 
-    juce::MidiMessage swapNoteOnNoteOff (juce::MidiMessage inmsg);
+//    juce::MidiMessage swapNoteOnNoteOff (juce::MidiMessage inmsg);
 
     bool acceptsMidi() const override
     {
@@ -85,14 +85,14 @@ public:
     }
 
     // user settings
-    void setInvertNoteOnNoteOff(bool invert) { invertNoteOnNoteOff = invert; }
+//    void setInvertNoteOnNoteOff(bool invert) { invertNoteOnNoteOff = invert; }
 
     std::unique_ptr<MidiManager> _midi;
 private:
     juce::MidiKeyboardState keyboard_state;
 
     // user settings
-    bool invertNoteOnNoteOff = false;
+//    bool invertNoteOnNoteOff = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (KeymapProcessor)
 };

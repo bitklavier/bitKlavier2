@@ -20,12 +20,12 @@ public:
     // Destructor method
     ~MidiFilterPreparation();
 
-    // Static function that returns a pointer to a TuningPreparation object
+    // Static function that returns a pointer to a MidiFilterPreparation object
     static std::unique_ptr<PreparationSection> create(const juce::ValueTree& v, SynthGuiInterface* interface){
         return std::make_unique<MidiFilterPreparation> (v, interface->getGui()->open_gl_, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::nodeID)), interface);
     }
 
-    // Public function definitions for the TuningPreparation class, which override functions
+    // Public function definitions for the MidiFilterPreparation class, which override functions
     // in the PreparationSection base class
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
