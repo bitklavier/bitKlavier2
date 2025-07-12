@@ -182,7 +182,7 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.adaptiveParams,
             tuningState.springTuningParams);
 
-        tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams);
+        tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
     }
 
     /**

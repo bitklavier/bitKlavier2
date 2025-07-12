@@ -16,7 +16,7 @@
 #include "SpringTuning.h"
 #include "SpringTuningUtilities.h"
 
-SpringTuning::SpringTuning(SpringTuningParams &params) : sparams(params)
+SpringTuning::SpringTuning(SpringTuningParams &params, std::array<float, 12> &circularTuningCustom) : sparams(params), customTuning(circularTuningCustom)
 {
     particleArray.ensureStorageAllocated(128);
     tetherParticleArray.ensureStorageAllocated(128);
@@ -121,8 +121,19 @@ void SpringTuning::intervalStiffnessChanged()
 
 void SpringTuning::intervalScaleChanged()
 {
-    auto newtuningv = getOffsetsFromTuningSystem(sparams.scaleId->get());
-    copyStdArrayIntoJuceArray(newtuningv, intervalTuning);
+    if(sparams.scaleId->get() == TuningSystem::Custom)
+    {
+        std::array<float, 12> newtuningv;
+        int i=0;
+        for (auto offs : customTuning) newtuningv[i++] = offs * .01;
+        copyStdArrayIntoJuceArray(newtuningv, intervalTuning);
+    }
+    else
+    {
+        auto newtuningv = getOffsetsFromTuningSystem(sparams.scaleId->get());
+        copyStdArrayIntoJuceArray(newtuningv, intervalTuning);
+    }
+
 }
 
 void SpringTuning::intervalFundamentalChanged()

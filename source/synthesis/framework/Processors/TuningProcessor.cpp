@@ -387,6 +387,12 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
     paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
 }
 
+/**
+ * given an interval in midinote vals, this will return a multiplier that can be used to multiply frequencies to get that interval
+ *
+ * @param interval (in midi notes vals)
+ * @return frequency multiplier (float)
+ */
 float TuningState::intervalToRatio(float interval) const {
     return mtof(interval + 60.,  getGlobalTuningReference()) / mtof(60., getGlobalTuningReference());
 }
