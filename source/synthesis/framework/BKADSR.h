@@ -388,6 +388,9 @@ private:
     /**
      * optimized version of powerScale, using simple lookup table and linear interpolation
      *
+     * this should be significantly less expensive than the powerScale above,
+     *      especially with such a small lookup table that can be cached
+     *
      * @param value = [0, 1] linear input
      * @param power = exponent coefficient [0 => linear, generally between +/- 2-10 for useful curves]
      * @return output = [0, 1] curved output
