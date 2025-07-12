@@ -83,7 +83,7 @@ public:
     double getTetherWeightGlobal();
     double getTetherWeightSecondaryGlobal();
     bool getSpringMode(int which);
-    double getFrequency(int index);
+    double getFrequency(int index, float globalRefA4);
     PitchClass getTetherFundamental();
 
     juce::Array<Particle*> getParticles(void);

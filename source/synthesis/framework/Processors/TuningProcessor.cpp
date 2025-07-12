@@ -123,7 +123,7 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
 {
     if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        return static_cast<int>(ftom(lastAdaptiveTarget, getGlobalTuningReference()));
+        return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()));
     }
 
     //first check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
@@ -282,11 +282,11 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
 
 /**
  * getTargetFrequency() is the primary function for synthesizers to handle tuning
- *      should include static and dynamic tunings, and account for semitone width changes
- *      is called every block
- *      return fractional MIDI value, NOT cents
  *
- *      called by BKSynth every block
+ *      - called by Sample.h:
+ *          -- in KSamplerVoice::startNote() for all notes
+ *          -- and every block for spring tuning and regular static tuning
+ *              - but NOT for adaptive tuning, for which it creates weird artifacts if called every block
  *
  * @param currentlyPlayingNote
  * @param currentTransposition
@@ -296,37 +296,56 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
 double TuningState::getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
 {
     /**
-     * todo: need to be able to get A4frequency from gallery preferences
+     * todo: need to be able to get A4frequency from gallery/app preferences
+     *          all the tuning systems below are handling it properly now, so once getGlobalTuningReference
+     *          gets its value from the preferences settings, should be good to go
      */
 
     /**
-     * todo: Spring and Adaptive are not handling transpositions properly
+     * todo: Spring and Adaptive are not handling Direct transpositions properly
      */
+
 
     /*
      * Spring Tuning, if active
      */
     if(getTuningType() == TuningType::Spring_Tuning)
     {
-        //DBG("springTuner->getFrequency = " + juce::String(currentlyPlayingNote) + " " + juce::String(springTuner->getFrequency(currentlyPlayingNote)));
-        lastAdaptiveTarget = springTuner->getFrequency(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
-        return lastAdaptiveTarget;
+        lastFrequencyTarget = springTuner->getFrequency(currentlyPlayingNote, getGlobalTuningReference());
+        /**
+        * todo: apply getOverallOffset() here
+        */
     }
 
     /*
      * or Adaptive Tunings, if active
      */
-    if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
+    else if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        lastAdaptiveTarget = adaptiveCalculate(currentlyPlayingNote) + offSet->getCurrentValue() * .01;
-        return lastAdaptiveTarget;
+        lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote); // don't need to do A440 adjustment here, since it's done internally
+        /**
+        * todo: apply getOverallOffset() here?
+        */
     }
 
     /*
      * or the regular Static Tuning, if we get this far
      */
-    return getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions); // offset is handled internally here
+    else if(getTuningType() == TuningType::Static)
+    {
+        lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions); // offset is handled internally here, as is A440 adjustment
+    }
 
+
+    /**
+     * todo: save last frequency for all of these with currentTransposition == 0, in a std::map indexed by currentlyPlayingNote
+     *          this map can then be used for the spiral view.
+     *          that's the hope, anyhow
+     *
+     * if (fabs(currentTransposition) < 0.01) currentlySoundNotes[currentlyPlayingNote] = lastFrequencyTarget
+     */
+
+    return lastFrequencyTarget;
 }
 
 template <typename Serializer>

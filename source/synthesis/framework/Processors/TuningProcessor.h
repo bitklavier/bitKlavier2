@@ -54,7 +54,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::array<float, 12> circularTuningOffset = { 0.f };
 
     int oldFundamental = 0;
-    float A4frequency = 440.;       // set this in gallery preferences
+    float A4frequency = 440.;       // set this in gallery or app preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
     double lastMidiNote = 69.;      // pitch of last frequency returned
@@ -156,10 +156,10 @@ struct TuningState : bitklavier::StateChangeableParameter
      * Adaptive vars
      */
     int adaptiveFundamentalNote = 60;
-    float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote);
+    float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     int adaptiveHistoryCounter = 0;
     float clusterTimeMS = 0.;
-    double lastAdaptiveTarget = 440.;
+    double lastFrequencyTarget = 440.;
 
     std::atomic<bool> setFromAudioThread;
 };

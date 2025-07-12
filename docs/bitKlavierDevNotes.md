@@ -6,7 +6,7 @@
 - [ ] Blendrónic audio in
 - [ ] Piano Switch prep!
 - [ ] Blurry fonts ;--}
-- [ ] global preferences, like A440
+- [ ] opening multiple sample libs, assigning to individual preps!
 
 ## Quick Bug/Feature Notes
 - [ ] Keymap parameter targeting: 

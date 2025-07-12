@@ -605,22 +605,19 @@ void SpringTuning::removeSpringsByNote(int note)
     tetherSpringArray[note]->setEnabled(false);
 }
 
-double SpringTuning::getFrequency(int note)
+double SpringTuning::getFrequency(int note, float globalRefA4)
 {
     auto particles = getParticles();
     double x = particles[note]->getX();
     int octave = particles[note]->getOctave();
-    double midi = mtof(x * .01, 440.);
-    /**
-     * todo: need to get globalTuningReference in here
-     */
+    double freq = mtof(x * .01, globalRefA4);
 
 //    DBG("SpringTuning::getFrequency for " + juce::String(note) +
 //        " x = " + juce::String(x) +
 //        " octave = " + juce::String(octave) +
 //        " output frequency = " + juce::String(midi));
 
-    return midi;
+    return freq;
 }
 
 void SpringTuning::print()
