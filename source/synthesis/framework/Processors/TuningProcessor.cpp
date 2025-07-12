@@ -174,7 +174,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
      *
      * this should be the same behavior we had in the original bK, with "use Tuning" on transposition sliders
      *
-     * all this becomes quite a bit more complicated when semitone width becomes a parameter and is not necessary 100 cents
+     * all this becomes quite a bit more complicated when semitone width becomes a parameter and is not necessarily 100 cents
      *      and especially so with transpositions (fro Direct, for instance), that might or might not "useTuning"
      *      all of the combination cases are handled separately below, mostly to make it all clearer to follow and debug
      *      (i had a single set of code that handled it all with out the separate cases, but it got very convoluted!)
@@ -285,17 +285,19 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      *          gets its value from the preferences settings, should be good to go
      */
 
-    /**
-     * todo: Spring and Adaptive are not handling Direct transpositions properly
-     */
-
-
     /*
      * Spring Tuning, if active
      */
     if(getTuningType() == TuningType::Spring_Tuning)
     {
         lastFrequencyTarget = springTuner->getFrequency(currentlyPlayingNote, getGlobalTuningReference()) * intervalToRatio(getOverallOffset());
+
+        /*
+         * handle transpositions
+         *      - note that for spring tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is use
+         */
+        if (fabs(currentTransposition) > 0.01)
+            lastFrequencyTarget *= intervalToRatio(currentTransposition);
     }
 
     /*
@@ -304,6 +306,13 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     else if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
         lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote) * intervalToRatio(getOverallOffset()); // don't need to do A440 adjustment here, since it's done internally
+
+        /*
+         * handle transpositions
+         *      - note that for adaptive tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is use
+         */
+        if (fabs(currentTransposition) > 0.01)
+            lastFrequencyTarget *= intervalToRatio(currentTransposition);
     }
 
     /*
@@ -311,7 +320,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      */
     else if(getTuningType() == TuningType::Static)
     {
-        lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions); // offset is handled internally here, as is A440 adjustment
+        lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions); // offset is handled internally here, as is A440 adjustment, and as are transpositions
     }
 
 
