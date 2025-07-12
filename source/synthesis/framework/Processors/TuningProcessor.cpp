@@ -359,10 +359,19 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
      */
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
 
+    /**
+     * todo: two questions:
+     *          1. i don't think we need to serialize the circularTuning, since that is always updated by the built-in arrays, that are selected by TuningSystem params
+     *          2. but, we DO need to serialize circularTuning_custom, since those will be values set by the user that need to be saved with the gallyer
+     *
+     *          does that all sound correct?
+     *          these serializers are for saving/loading non-chowdsp params, is that right?
+     */
+
     /*
      * then serialize the more complex params
      */
-    Serializer::template addChildElement<12> (ser, "circularTuning", paramHolder.tuningState.circularTuningOffset, arrayToString);
+    Serializer::template addChildElement<12> (ser, "circularTuning_custom", paramHolder.tuningState.circularTuningOffset_custom, arrayToString);
     Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex);
 
     return ser;
@@ -372,11 +381,10 @@ template <typename Serializer>
 void TuningParams::deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder)
 {
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
-    auto myStr = deserial->getStringAttribute ("circularTuning");
-    paramHolder.tuningState.circularTuningOffset = parseFloatStringToArrayCircular<12> (myStr.toStdString());
+    auto myStr = deserial->getStringAttribute ("circularTuning_custom");
+    paramHolder.tuningState.circularTuningOffset_custom = parseFloatStringToArrayCircular<12> (myStr.toStdString());
     myStr = deserial->getStringAttribute ("absoluteTuning");
     paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
-    //paramHolder.tuningState.fundamental_ = paramHolder.tuningState.fundamental->getIndex();
 }
 
 float TuningState::intervalToRatio(float interval) const {
@@ -467,16 +475,10 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
 
     std::array<float, 12> intervalScale;
     if(getAdaptiveIntervalScale() == Custom) {
-
-        DBG("TuningState::adaptiveCalculateRatio ==> need to implement Custom state!");
-        /**
-         * todo: figure custom scales out
-         */
-        //intervalScale = tuning->prep->getCustomScale();
+        int i=0;
+        for (auto offs : circularTuningOffset_custom) intervalScale[i++] = offs * .01;
     }
-    else {
-        intervalScale = getOffsetsFromTuningSystem(getAdaptiveIntervalScale());
-    }
+    else intervalScale = getOffsetsFromTuningSystem(getAdaptiveIntervalScale());
 
     if(!getAdaptiveInversional() || tempnote >= adaptiveFundamentalNote)
     {
