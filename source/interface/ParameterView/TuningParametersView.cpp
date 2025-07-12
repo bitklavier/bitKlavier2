@@ -69,7 +69,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
             setOffsetsFromTuningSystem(
                 params.tuningState.tuningSystem->get(),
                 params.tuningState.fundamental->getIndex(),
-                this->params.tuningState.circularTuningOffset);
+                this->params.tuningState.circularTuningOffset,
+                this->params.tuningState.circularTuningOffset_custom);
 
             //params.tuningState.setFromAudioThread = false;
             circular_keyboard->redoImage();

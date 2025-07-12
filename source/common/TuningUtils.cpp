@@ -210,6 +210,35 @@ void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::ar
     }
 }
 
+void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<float, 12>& circularTuningVec, std::array<float, 12>& customTuningVec)
+{
+    //if (!params.tuningState.setFromAudioThread) { // it's not clear whether this is necessary; see bitKlavierDevNotes
+
+    auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
+        [t](const auto& pair) {
+            return pair.first == t;
+        });
+
+    if (it != tuningMap.end()) { // built-in fixed tunings
+        const auto& tuning = it->second;
+        const auto tuningArray = rotateValuesByFundamental(tuning, newFund);
+        int index  = 0;
+        for (const auto val :tuningArray) {
+            circularTuningVec[index] = val * 100;
+            index++;
+        }
+    }
+    else { // custom tuning
+        const auto tuning = customTuningVec;
+        const auto tuningArray = rotateValuesByFundamental(tuning, newFund);
+        int index  = 0;
+        for (const auto val :tuningArray) {
+            circularTuningVec[index] = val;
+            index++;
+        }
+    }
+}
+
 std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental)
 {
     int offset;
@@ -227,6 +256,11 @@ std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int
     return new_vals;
 }
 
+/**
+ * todo: custom tunings?
+ * @param ts
+ * @return
+ */
 std::array<float, 12> getOffsetsFromTuningSystem (TuningSystem ts)
 {
     auto it = std::find_if(tuningMap.begin(), tuningMap.end(),

@@ -345,8 +345,12 @@ void SpringTuning::addNote(int note)
     }
 
     addSpringsByNote(note);
-
     if(useLowestNoteForFundamental || useHighestNoteForFundamental || useLastNoteForFundamental || useAutomaticFundamental) retuneAllActiveSprings();
+
+    /*
+     * update this here for the UI
+     */
+    sparams.tCurrentSpringTuningFundamental->setParameterValue(intervalFundamentalActive);
 }
 
 void SpringTuning::removeNote(int note)
@@ -447,7 +451,7 @@ void SpringTuning::findFundamental()
         }
     }
 
-    sparams.tCurrentSpringTuningFundamental->setParameterValue(intervalFundamentalActive);
+//    sparams.tCurrentSpringTuningFundamental->setParameterValue(intervalFundamentalActive);
 }
 
 void SpringTuning::addSpring(Spring* spring)

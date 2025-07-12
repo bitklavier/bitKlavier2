@@ -19,6 +19,9 @@ void TuningState::setCircularKeyOffset (int midiNoteNumber, float val)
 {
     if (midiNoteNumber >= 0 && midiNoteNumber < 12)
         circularTuningOffset[midiNoteNumber] = val;
+
+    if (tuningSystem->get() == TuningSystem::Custom)
+        circularTuningOffset_custom = circularTuningOffset;
 }
 
 void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
@@ -295,6 +298,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         /*
          * handle transpositions
          *      - note that for spring tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is use
+         *          - could be a project for the future to figure out how to incorporate that...
          */
         if (fabs(currentTransposition) > 0.01)
             lastFrequencyTarget *= intervalToRatio(currentTransposition);
@@ -305,7 +309,8 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      */
     else if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote) * intervalToRatio(getOverallOffset()); // don't need to do A440 adjustment here, since it's done internally
+        // don't need to do A440 adjustment here, since it's done internally
+        lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote) * intervalToRatio(getOverallOffset());
 
         /*
          * handle transpositions
@@ -316,11 +321,12 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     }
 
     /*
-     * or the regular Static Tuning, if we get this far
+     * or the regular Static Tuning
      */
     else if(getTuningType() == TuningType::Static)
     {
-        lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions); // offset is handled internally here, as is A440 adjustment, and as are transpositions
+        // offset is handled internally here, as is A440 adjustment, and as are transpositions
+        lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
 
@@ -330,7 +336,17 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      *          that's the hope, anyhow
      *
      * if (fabs(currentTransposition) < 0.01) currentlySoundNotes[currentlyPlayingNote] = lastFrequencyTarget
+     *  or it could just show ALL active frequencies?
      */
+
+    /*
+     * the problem with trying to updateLastFrequency here (for UI display) is that getTargetFrequency is called by
+     * all the synths (so with Direct, resonance as well as normal) as well as all attached preps
+     * and for ALL sounding pitches, so you get fluctuations that we don't want to see
+     * just want to see the frequency for the last played note
+     */
+//    DBG("currentTransposition = " + juce::String(currentTransposition));
+//    if (fabs(currentTransposition) < 0.01) updateLastFrequency(lastFrequencyTarget);
 
     return lastFrequencyTarget;
 }

@@ -95,6 +95,7 @@ std::array<float, 12> getOffsetsFromTuningSystem (TuningSystem ts);
 
 void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_);
 void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<float, 12>& circularTuningVec);
+void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<float, 12>& circularTuningVec, std::array<float, 12>& customTuningVec);
 
 static std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental);
 void copyStdArrayIntoJuceArray(const std::array<float, 12>& stdArr, juce::Array<float>& juceArray);

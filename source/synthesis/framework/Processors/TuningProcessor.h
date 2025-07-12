@@ -52,6 +52,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     juce::MidiKeyboardState keyboardState;
     std::array<float, 128> absoluteTuningOffset = { 0.f };
     std::array<float, 12> circularTuningOffset = { 0.f };
+    std::array<float, 12> circularTuningOffset_custom = { 0.f };
 
     int oldFundamental = 0;
     float A4frequency = 440.;       // set this in gallery or app preferences
