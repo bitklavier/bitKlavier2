@@ -15,12 +15,14 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     addSlider(clusterThreshold_Slider.get());
     clusterThreshold_Slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     clusterThreshold_Slider->setPopupPlacement(juce::BubbleComponent::below);
+    clusterThreshold_Slider->setShowPopupOnHover(true);
     clusterThreshold_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveClusterThresh, listeners, *clusterThreshold_Slider, nullptr);
 
     history_Slider = std::make_unique<SynthSlider>(params.tAdaptiveHistory->paramID);
     addSlider(history_Slider.get());
     history_Slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     history_Slider->setPopupPlacement(juce::BubbleComponent::below);
+    history_Slider->setShowPopupOnHover(true);
     history_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveHistory, listeners, *history_Slider, nullptr);
 
     if (auto* tuningParams = dynamic_cast<AdaptiveTuningParams*>(&params)) {

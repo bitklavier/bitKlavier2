@@ -20,6 +20,7 @@ SpringTuningSection::SpringTuningSection (
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
         addSlider(slider.get());
         slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        slider->setShowPopupOnHover(true);
         slider->setName(param_->name); // will this break the mods?
 
         /*

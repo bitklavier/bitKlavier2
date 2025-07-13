@@ -13,23 +13,23 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     auto& listeners = pluginState.getParameterListeners();
     for ( auto &param_ : *params.getFloatParams())
     {
-        /**
-         * todo: i think there is only one float param handled here, so might be good to simplify and remove this loop
-         */
         if (param_->getParameterID() == "lastNote") continue; // handle this separately
         auto slider = std::make_unique<SynthSlider>(param_->paramID);
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
         addSlider(slider.get());
         slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        slider->setShowPopupOnHover(true);
         floatAttachments.emplace_back(std::move(attachment));
         _sliders.emplace_back(std::move(slider));
     }
 
     keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(keyboard.get());
+    keyboard->setName("absolute");
 
     circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(circular_keyboard.get());
+    circular_keyboard->setName("circular");
 
     semitoneSection = std::make_unique<SemitoneWidthSection>(name, params.tuningState.semitoneWidthParams, listeners, *this);
     addSubSection(semitoneSection.get());
@@ -60,6 +60,27 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         addAndMakeVisible(tuningtype_combo_box.get());
         addOpenGlComponent(tuningtype_combo_box->getImageComponent());
     }
+
+    tuningCallbacks += {listeners.addParameterListener(
+        params.tuningState.tuningType,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            if(params.tuningState.tuningType->get() == TuningType::Static)
+                showStaticTuning(true);
+            else
+                showStaticTuning(false);
+
+            if(params.tuningState.tuningType->get() == TuningType::Adaptive || params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored)
+                showAdaptiveTuning(true);
+            else
+                showAdaptiveTuning(false);
+
+            if(params.tuningState.tuningType->get() == TuningType::Spring_Tuning)
+                showSpringTuning(true);
+            else
+                showSpringTuning(false);
+        })
+    };
 
     tuningCallbacks += {listeners.addParameterListener(
         params.tuningState.tuningSystem,
@@ -144,7 +165,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.tCurrentSpringTuningFundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("updating spring tuning current fundamental display");
             springTuningSection->currentFundamental->setText ("Current Fundamental = " + this->params.tuningState.springTuningParams.tCurrentSpringTuningFundamental->getCurrentValueAsText());
         })
     };
@@ -155,7 +175,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.scaleId,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("intervalScale (scaleId) changed by user");
             params.tuningState.springTuner->intervalScaleChanged();
         })
     };
@@ -163,7 +182,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.intervalFundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("intervalFundamental changed by user");
             params.tuningState.springTuner->intervalFundamentalChanged();
         })
     };
@@ -171,7 +189,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.scaleId_tether,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("scaleId_tether (scaleId) changed by user");
             params.tuningState.springTuner->tetherScaleChanged();
         })
     };
@@ -179,7 +196,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.tetherFundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("tetherFundamental changed by user");
             params.tuningState.springTuner->tetherFundamentalChanged();
         })
     };
@@ -187,7 +203,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.rate,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("rate changed by user");
             params.tuningState.springTuner->rateChanged();
         })
     };
@@ -195,7 +210,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.drag,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("drag changed by user");
             params.tuningState.springTuner->dragChanged();
         })
     };
@@ -203,7 +217,6 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.tetherStiffness,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("tetherStiffness changed by user");
             params.tuningState.springTuner->tetherStiffnessChanged();
         })
     };
@@ -211,12 +224,35 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     tuningCallbacks += { listeners.addParameterListener (param.tuningState.springTuningParams.intervalStiffness,
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
-            DBG("intervalStiffness changed by user");
             params.tuningState.springTuner->intervalStiffnessChanged();
         })
     };
 
     circular_keyboard->addMyListener(this);
+}
+
+
+void TuningParametersView::showStaticTuning(bool show)
+{
+    keyboard->setVisible(show);
+    circular_keyboard->setVisible(show);
+//    semitoneSection->setSectionVisible(show);
+    semitoneSection->setVisible(show);
+    for (auto &ts_ : _sliders)
+    {
+        ts_->setVisible(show);
+    }
+    semitoneSection->repaintBackground();
+}
+
+void TuningParametersView::showAdaptiveTuning(bool show)
+{
+    adaptiveSection->setVisible(show);
+}
+
+void TuningParametersView::showSpringTuning(bool show)
+{
+    springTuningSection->setVisible(show);
 }
 
 void TuningParametersView::resized()

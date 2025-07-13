@@ -23,6 +23,8 @@ public:
     virtual ~SemitoneWidthSection();
 
     void paintBackground(juce::Graphics& g) override;
+
+    void setSectionVisible(bool show);
     void resized() override;
 
 private:

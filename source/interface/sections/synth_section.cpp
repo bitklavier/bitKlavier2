@@ -943,7 +943,6 @@ void SynthSection::setLabelFont(juce::Graphics &g) {
     g.setFont(getLabelFont());
 }
 
-
 void SynthSection::drawLabelBackground(juce::Graphics &g, juce::Rectangle<int> bounds, bool text_component) {
     int background_rounding = findValue(Skin::kLabelBackgroundRounding);
     g.setColour(findColour(Skin::kLabelBackground, true));

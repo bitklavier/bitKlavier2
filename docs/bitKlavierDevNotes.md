@@ -42,6 +42,9 @@
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
 
+- [ ] struggling with the UI drawing
+  - in Tuning, trying to setVisible to false and many things still lingering; spent a good bit of time trying to find solutions to no avail
+  - i did end up in FullInterface.cpp, and tried `open_gl_context_.setComponentPaintingEnabled (false);` to true and commenting out the paintBackground stuff in SemitoneWidthSection, and MANY things looked different, some things looked better, and the hiding/visibility issue went away, but i gather there are other complications?
 - [ ] for the serializer/deserializers in TuningProcessor.cpp, take a look at my todo questions in the .cpp file
   - i think we don't need to serialize the circularTuningOffset arrays, but we do need to serialize the circularTuningOffset_custom array, yes?
 - [ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)

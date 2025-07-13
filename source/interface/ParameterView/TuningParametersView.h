@@ -35,6 +35,10 @@ public:
     }
 
     void keyboardSliderChanged(juce::String name) override;
+
+    void showStaticTuning(bool show);
+    void showAdaptiveTuning(bool show);
+    void showSpringTuning(bool show);
     void resized() override;
 
     std::vector<std::unique_ptr<SynthSlider>> _sliders;

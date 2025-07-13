@@ -16,6 +16,7 @@ SemitoneWidthSection::SemitoneWidthSection (
     addSlider(widthSlider_.get());
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
+    widthSlider_->setShowPopupOnHover(true);
     widthSliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.semitoneWidthSliderParam, listeners, *widthSlider_, nullptr);
 
     fundamentalComboBox = std::make_unique<OpenGLComboBox>(params.reffundamental->paramID.toStdString());
@@ -37,13 +38,21 @@ SemitoneWidthSection::SemitoneWidthSection (
 SemitoneWidthSection::~SemitoneWidthSection() { }
 
 void SemitoneWidthSection::paintBackground(juce::Graphics& g) {
+
     setLabelFont(g);
     drawLabelForComponent(g, TRANS("Cents"), widthSlider_.get());
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
-
     sectionBorder.paint(g);
+}
+
+void SemitoneWidthSection::setSectionVisible(bool show)
+{
+    widthSlider_->setVisible(show);
+    fundamentalComboBox->setVisible(show);
+    octaveComboBox->setVisible(show);
+    sectionBorder.setVisible(show);
 }
 
 void SemitoneWidthSection::resized() {
