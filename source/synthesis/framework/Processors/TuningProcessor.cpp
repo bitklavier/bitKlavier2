@@ -102,18 +102,25 @@ double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
  * BKSynth will use this to find the closest sample for a particular note
  *      need something like this to find the best sample for this midiNoteNumber
  *      it may be very far from the original midi key played because of the semitone width variable
+ *
+ * todo: it's not clear to me that this actually gets the closest key if the
+ *          global tuning reference is something far from 440. since we generally
+ *          use that for small changes (A442, for instance), this is not an issue
+ *          that's likely to come up, so ignore for now...
+ *
  * @param noteNum
  * @param transp
  * @return
  */
 int TuningState::getClosestKey(int noteNum, float transp, bool tuneTranspositions)
 {
-    if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
+    // adaptive/spring tunings ignore semitone width...
+    if(getTuningType() != TuningType::Static)
     {
-        return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()));
+        return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()) + transp);
     }
 
-    //first check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
+    // first check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
     if (getSemitoneWidthOffsetForMidiNote(noteNum) == 0)
     {
         return (noteNum + transp);
@@ -138,6 +145,12 @@ double TuningState::getOverallOffset() { return offSet->getCurrentValue() * 0.01
 
 /**
  * update the last frequency and the last interval, for use in the UI
+ *      - this is called by the DirectProcessor::processBlock, and gets the last frequency from the synth
+ *      - so this is different than the spiralNotes update, mostly because we just want something simple
+ *              here: the last note played by the synth, which is harder to see here in TuningState
+ *              with getTargetFrequency getting called all the time be any attached prep, or even the
+ *              multiple synths within DirectProcessor
+ *
  * @param lastFreq
  */
 void TuningState::updateLastFrequency(double lastFreq)
@@ -300,7 +313,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
          *      - note that for spring tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is used
          *          - could be a project for the future to figure out how to incorporate that...
          */
-        if (currentTransposition == 0)
+        if (currentTransposition != 0)
             lastFrequencyTarget *= intervalToRatio(currentTransposition);
     }
 
@@ -316,7 +329,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
          * handle transpositions
          *      - note that for adaptive tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is used
          */
-        if (currentTransposition == 0)
+        if (currentTransposition != 0)
             lastFrequencyTarget *= intervalToRatio(currentTransposition);
     }
 
@@ -332,7 +345,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
     /**
      * spiralNotes will hold the lastFrequencyTarget for all currently playing non-transposed notes
      *      - spiralNotes is initialized to all -1, indicating that all notes are inactive
-     *      - in keyPressed, spiralNotes[noteNumber] is set to the lastFrequencyTarget
+     *      - in keyPressed, spiralNotes[noteNumber] is set to the lastFrequencyTarget, also indicating it is an active note
      *      - in keyReleased, spiralNotes[noteNumber] is set to -1, so that it is considered inactive
      *      - here, for untransposed notes that are active, the spiralNote value is updated
      *      - in the drawSpiral function, all the active spiralNotes will be drawn
@@ -460,7 +473,7 @@ void TuningState::keyReleased(int noteNumber)
     }
 
     /*
-     * set this note to -1 in spiralNotes, indicating it's inactive
+     * set this note to -1 in spiralNotes, indicating it is inactive
      */
     spiralNotes[noteNumber].store(-1.);
 }
