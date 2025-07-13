@@ -24,6 +24,13 @@
 #include <chowdsp_sources/chowdsp_sources.h>
 
 /**
+ * todo: maybe someday..
+ *         - there is a LOT of mtof/ftom converting go on throughout here and in BKSynth and Sample.h
+ *         - it might be fine, and the best way for it to be
+ *         - but it might also have a cumulative performance cost, and have readability consequences
+ */
+
+/**
  * TuningState is the primary struct that is shared around to get/set tuning information
  */
 //class SpringTuning;

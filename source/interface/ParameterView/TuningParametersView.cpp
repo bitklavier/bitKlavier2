@@ -120,7 +120,10 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         chowdsp::ParameterListenerThread::MessageThread,
         [this] {
             lastNoteDisplay->setText ("Last Pitch = " + this->params.tuningState.lastNote->getCurrentValueAsText());
-            lastFrequencyDisplay->setText ("Last Frequency = " + juce::String(mtof(this->params.tuningState.lastNote->getCurrentValue()),2));
+            lastFrequencyDisplay->setText ("Last Frequency = " + juce::String(mtof(
+                                   this->params.tuningState.lastNote->getCurrentValue())
+                                   * this->params.tuningState.getGlobalTuningReference() / 440.,
+                                               2));
             lastIntervalDisplay->setText ("Last Interval = " + juce::String(this->params.tuningState.lastIntervalCents, 2));
         })
     };
