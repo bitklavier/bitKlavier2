@@ -67,9 +67,9 @@ void TuningState::setFundamental (int fund)
 }
 
 /**
-     * helper function for the semitone width fundamental UI elements
-     * @return the fundamental in midinote number value, given the octave and pitchclass name (so C4 will return 60)
-     */
+ * helper function for the semitone width fundamental UI elements
+ * @return the fundamental in midinote number value, given the octave and pitchclass name (so C4 will return 60)
+ */
 int TuningState::getSemitoneWidthFundamental()
 {
     auto fund = semitoneWidthParams.reffundamental.get()->getIndex();
@@ -83,13 +83,13 @@ double TuningState::getSemitoneWidth()
 }
 
 /**
-     *
-     * @param midiNoteNumber
-     * @return new transposition to new midiNoteNumber based on semitone width setting (fractional midi value)
-     * if semitone width is 100, then output = 0
-     * otherwise the output will be transposed by the return value
-     * for example: if the semitone width = 50, the semitone fundamental = 60, and midiNoteNumber = 61, the output will be -0.5
-     */
+ *
+ * @param midiNoteNumber
+ * @return new transposition to new midiNoteNumber based on semitone width setting (fractional midi value)
+ * if semitone width is 100, then output = 0
+ * otherwise the output will be transposed by the return value
+ * for example: if the semitone width = 50, the semitone fundamental = 60, and midiNoteNumber = 61, the output will be -0.5
+ */
 double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
 {
     double offset;
@@ -99,13 +99,13 @@ double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
 }
 
 /**
-     * BKSynth will use this to find the closest sample for a particular note
-     *      need something like this to find the best sample for this midiNoteNumber
-     *      it may be very far from the original midi key played because of the semitone width variable
-     * @param noteNum
-     * @param transp
-     * @return
-     */
+ * BKSynth will use this to find the closest sample for a particular note
+ *      need something like this to find the best sample for this midiNoteNumber
+ *      it may be very far from the original midi key played because of the semitone width variable
+ * @param noteNum
+ * @param transp
+ * @return
+ */
 int TuningState::getClosestKey(int noteNum, float transp, bool tuneTranspositions)
 {
     if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
@@ -131,15 +131,15 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
 }
 
 /**
-     * Get the tuning offset value, from "offset" slider
-     * @return offset in fractional Midi note values
-     */
+ * Get the tuning offset value, from "offset" slider
+ * @return offset in fractional Midi note values
+ */
 double TuningState::getOverallOffset() { return offSet->getCurrentValue() * 0.01;}
 
 /**
-     * update the last frequency and the last interval, for use in the UI
-     * @param lastFreq
-     */
+ * update the last frequency and the last interval, for use in the UI
+ * @param lastFreq
+ */
 void TuningState::updateLastFrequency(double lastFreq)
 {
     if (lastFreq != lastFrequencyHz) {
@@ -297,10 +297,10 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
 
         /*
          * handle transpositions
-         *      - note that for spring tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is use
+         *      - note that for spring tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is used
          *          - could be a project for the future to figure out how to incorporate that...
          */
-        if (fabs(currentTransposition) > 0.01)
+        if (currentTransposition == 0)
             lastFrequencyTarget *= intervalToRatio(currentTransposition);
     }
 
@@ -314,9 +314,9 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
 
         /*
          * handle transpositions
-         *      - note that for adaptive tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is use
+         *      - note that for adaptive tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is used
          */
-        if (fabs(currentTransposition) > 0.01)
+        if (currentTransposition == 0)
             lastFrequencyTarget *= intervalToRatio(currentTransposition);
     }
 
@@ -336,13 +336,12 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      *      - in keyReleased, spiralNotes[noteNumber] is set to -1, so that it is considered inactive
      *      - here, for untransposed notes that are active, the spiralNote value is updated
      *      - in the drawSpiral function, all the active spiralNotes will be drawn
-     *      - we use a std::array<std::atomic<float>, 128> for thread safty, and index it by midinote number
+     *      - we use a std::array<std::atomic<float>, 128> for thread safety, and index it by midinote number
      */
-     if (fabs(currentTransposition) < 0.01 && spiralNotes[currentlyPlayingNote].load() > 0)
+     if (currentTransposition == 0 && spiralNotes[currentlyPlayingNote].load() > 0)
              spiralNotes[currentlyPlayingNote].store(lastFrequencyTarget);
 
      //printSpiralNotes();
-
      return lastFrequencyTarget;
 }
 
@@ -384,7 +383,6 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 
 /**
  * given an interval in midinote vals, this will return a multiplier that can be used to multiply frequencies to get that interval
- *
  * @param interval (in midinotes, float, so 4 is a M3rd)
  * @return frequency multiplier (float)
  */
