@@ -329,26 +329,21 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
-
     /**
-     * todo: save last frequency for all of these with currentTransposition == 0, in a std::map indexed by currentlyPlayingNote
-     *          this map can then be used for the spiral view.
-     *          that's the hope, anyhow
-     *
-     * if (fabs(currentTransposition) < 0.01) currentlySoundNotes[currentlyPlayingNote] = lastFrequencyTarget
-     *  or it could just show ALL active frequencies?
+     * spiralNotes will hold the lastFrequencyTarget for all currently playing non-transposed notes
+     *      - spiralNotes is initialized to all -1, indicating that all notes are inactive
+     *      - in keyPressed, spiralNotes[noteNumber] is set to the lastFrequencyTarget
+     *      - in keyReleased, spiralNotes[noteNumber] is set to -1, so that it is considered inactive
+     *      - here, for untransposed notes that are active, the spiralNote value is updated
+     *      - in the drawSpiral function, all the active spiralNotes will be drawn
+     *      - we use a std::array<std::atomic<float>, 128> for thread safty, and index it by midinote number
      */
+     if (fabs(currentTransposition) < 0.01 && spiralNotes[currentlyPlayingNote].load() > 0)
+             spiralNotes[currentlyPlayingNote].store(lastFrequencyTarget);
 
-    /*
-     * the problem with trying to updateLastFrequency here (for UI display) is that getTargetFrequency is called by
-     * all the synths (so with Direct, resonance as well as normal) as well as all attached preps
-     * and for ALL sounding pitches, so you get fluctuations that we don't want to see
-     * just want to see the frequency for the last played note
-     */
-//    DBG("currentTransposition = " + juce::String(currentTransposition));
-//    if (fabs(currentTransposition) < 0.01) updateLastFrequency(lastFrequencyTarget);
+     //printSpiralNotes();
 
-    return lastFrequencyTarget;
+     return lastFrequencyTarget;
 }
 
 template <typename Serializer>
@@ -390,7 +385,7 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 /**
  * given an interval in midinote vals, this will return a multiplier that can be used to multiply frequencies to get that interval
  *
- * @param interval (in midi notes vals)
+ * @param interval (in midinotes, float, so 4 is a M3rd)
  * @return frequency multiplier (float)
  */
 float TuningState::intervalToRatio(float interval) const {
@@ -449,6 +444,11 @@ void TuningState::keyPressed(int noteNumber)
      */
     clusterTimeMS = 0;
 
+    /*
+     * add the current note to the spiral, using for atomic assignment
+     */
+    spiralNotes[noteNumber].store(lastFrequencyTarget);
+
 }
 
 void TuningState::keyReleased(int noteNumber)
@@ -460,6 +460,11 @@ void TuningState::keyReleased(int noteNumber)
     if (type == Spring_Tuning) {
         springTuner->removeNote(noteNumber);
     }
+
+    /*
+     * set this note to -1 in spiralNotes, indicating it's inactive
+     */
+    spiralNotes[noteNumber].store(-1.);
 }
 
 /**
@@ -521,6 +526,24 @@ void TuningState::adaptiveReset()
     adaptiveHistoryCounter = 0;
 }
 
+void TuningState::initializeSpiralNotes()
+{
+    std::fill(spiralNotes.begin(), spiralNotes.end(), -1.0f);
+}
+
+void TuningState::printSpiralNotes()
+{
+    for (int i=0; i < spiralNotes.size(); i++)
+    {
+        auto currentFreq = spiralNotes[i].load();
+        if(currentFreq > 0)
+        {
+            DBG("Spiral Note " + juce::String(i) + " = " + juce::String(currentFreq));
+        }
+
+    }
+}
+
 
 // ********************************************************************************************************************* //
 // ************************************************* Tuning Processor ************************************************** //
@@ -529,6 +552,9 @@ void TuningState::adaptiveReset()
 
 TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
 {
+
+    state.params.tuningState.initializeSpiralNotes();
+
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>

@@ -622,9 +622,11 @@ void SpringTuning::removeSpringsByNote(int note)
 
 double SpringTuning::getFrequency(int note, float globalRefA4)
 {
+    const juce::ScopedLock sl (lock);
+
     auto particles = getParticles();
     double x = particles[note]->getX();
-    int octave = particles[note]->getOctave();
+//    int octave = particles[note]->getOctave();
     double freq = mtof(x * .01, globalRefA4);
 
 //    DBG("SpringTuning::getFrequency for " + juce::String(note) +

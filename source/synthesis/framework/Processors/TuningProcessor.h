@@ -60,6 +60,9 @@ struct TuningState : bitklavier::StateChangeableParameter
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
     double lastMidiNote = 69.;      // pitch of last frequency returned
 
+    void initializeSpiralNotes();
+    void printSpiralNotes();
+
     // ****************************************** PARAMETERS ***************************************** //
 
     /*
@@ -130,6 +133,9 @@ struct TuningState : bitklavier::StateChangeableParameter
     SemitoneWidthParams semitoneWidthParams;
     SpringTuningParams springTuningParams;
     std::unique_ptr<SpringTuning> springTuner;
+
+
+    std::array<std::atomic<float>, 128> spiralNotes; // store all the currently sounding frequencies here, by note, for the spiral display
 
     // ****************************************** OTHER VARS ***************************************** //
 
