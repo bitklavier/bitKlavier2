@@ -12,7 +12,7 @@
 class ConstructionSite;
 class ModulationLineView;
 class OpenGlLine;
-class ModulationLine : public juce::Component {
+class ModulationLine : public juce::Component, juce::ValueTree::Listener {
 public:
     ModulationLine(ConstructionSite *site, ModulationLineView* lineView,const juce::ValueTree& );
 

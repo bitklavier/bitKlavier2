@@ -152,20 +152,11 @@ void ModulationLineView::deleteObject(ModulationLine *at) {
 
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
-
-
         at->setVisible(false);
         site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
-            //can't use destroy component since lineveiw renders the lines directy from the array as opposed to adding them
-                // to the open_gl_components vector... why?
-                    // idk maybe try to make it instantiate using addopenglcomponent and find out.. for now
-                        // i'll kep neing laxy --davis --4/25/25
             at->line->destroy(this->site.open_gl);
-          //DBG("delete Line");
-
         },true);
     }
-    //DBG("delete line object");
     juce::ScopedLock lock(open_gl_lock);
     delete at;
 }

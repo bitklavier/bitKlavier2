@@ -365,7 +365,9 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
         }
     }
     if (index == -1) jassertfalse;
-
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->getGui()->mod_popup->reset();
+    interface->getGui()->prep_popup->reset();
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 

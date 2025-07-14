@@ -5,8 +5,9 @@
 #include "PreparationSection.h"
 #include "synth_gui_interface.h"
 
-#include "FullInterface.h"
 #include "ConstructionSite.h"
+#include "FullInterface.h"
+#include "ModulationPreparation.h"
 #include "synth_base.h"
 
 PreparationSection::PreparationSection(juce::String name, const juce::ValueTree& v, OpenGlWrapper &open_gl,
@@ -257,11 +258,10 @@ PreparationSection::~PreparationSection() {
 BKPort *PreparationSection::createNewObject(const juce::ValueTree &v) {
     return new BKPort(v);
 }
-
+#include"FullInterface.h"
 void PreparationSection::deleteObject(BKPort *at) {
     if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
         SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-
         //this might cause bugs when adding deletion of a prepartion and dynamic port adding and delting
         at->setVisible(false);
         _parent->getOpenGlWrapper()->context.executeOnGLThread([this, &at](juce::OpenGLContext &openGLContext) {

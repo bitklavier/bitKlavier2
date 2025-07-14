@@ -116,6 +116,11 @@ Before tracing, let's think about everything we had to do to create the preparat
    ```c++
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
    ```
+   - If any preparations have open popups, we close them with this code
+   ```c++
+    interface->getGui()->mod_popup->reset();
+    interface->getGui()->prep_popup->reset();
+    ```
    - Finally, we delete any cables attached to our preparation with the following code
     ```c++
     cableView.deleteConnectionsWithId(wrapper->node_id);
@@ -230,15 +235,83 @@ Let's say you have a direct preparation. That direct preparation has a resonance
 
 Let's take a deeper look at how this is being implemented. Creating the Modulation Preparation is easy - it's the same as any other preparation. The creation process is explained in the [Preparation Creation Function Call Trace](#preparation-creation-function-call-trace).
 
-## Creating a Modulation Connection
-Creating a Modulation Connection is similar to creating a Cable connection.
+## Creating a Modulation Connection Between Preparations (MODCONNECTION)
+Creating a Modulation Connection is similar to creating a Cable connection. It's actually a bit simpler since you only draw the ModulationLine after connecting the preparations (whereas the Cable is drawn before you connect it to anything). It's also a bit simpler because you don't actually hook anything up to the AudioProcessorGraph until you start modulating parameters.
 1. Once you drop the Modulation onto the Direct, JUCE recognizes the mouse up and after going through a chain of listeners, PreparationSection's itemDropped() function gets called
 2. PreparationSection's itemDropped() likewise goes through its listeners and since we've dropped a Modulation, it calls ModulationLineView's modulationDropped() function 
 3. ModulationLineView's modulationDropped() figures out some stuff and adds the MODCONNECTION value tree to the CONNECTIONS value tree
 4. valueTreeChildAdded() is listening (as we remember from adding preparations!) and calls createNewObject()
-6. ModulationLineView's createNewObject() simply creates a new ModulationLine
-7. The ModulationLine's constructor takes care of drawing the line between the preparations
-8. Next, valueTreeChildAdded() calls CableView's newObjectAdded() function, which adds the connection to the AudioProcessorGraph
+5. ModulationLineView's createNewObject() simply creates a new ModulationLine
+6. The ModulationLine's constructor takes care of drawing the line between the preparations
+7. Next, valueTreeChildAdded() calls ModulationLineView's newObjectAdded() function, which only does something if you're loading a preset (it adds the parameter modulation connections)
+
+## Deleting a Modulation Connection Between Preparations (MODCONNECTION)
+Currently, there are two ways to delete a ModulationLine: 1) press 'CMD + z' immediately after making the connection, or 2) delete one of the preparations it's connected to.
+
+When you draw a ModulationLine then press 'CMD + z', here's what happens...
+1. When we press 'CMD + z', [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp), which is implemented by JUCE and takes care of removing our connection from the ValueTree.
+2. When our connection is removed from the ValueTree, the [valueTreeChildRemoved()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening...
+3. It calls [deleteObject()](../source/interface/sections/ModulationLineView.cpp) which has been implemented by our ModulationLineView object.
+    - deleteObject() simply deletes the OpenGL components of our ModulationLine
+4. The last thing we need to do to ensure undo functionality is begin a new undo transaction to the ModulationLineView's [modulationDropped()](../source/interface/sections/ModulationLineView.cpp) function right before the MODCONNECTION value tree is added to the CONNECTIONS value tree
+
+When we delete a ModulationLine by deleting a preparation that it's attached to, we follow all of the same steps outlined earlier in [Preparation Deletion Function Call Trace](#preparation-deletion-function-call-trace). In step 4, we call
+```c++
+    modulationLineView.deleteConnectionsWithId(wrapper->node_id);
+```
+from the ConstructionSite's removeModule() function. ModulationLineView's deleteConnectionsWithId() function simply goes through the list of modulation connections and deletes any ModulationLines whose source or destination preparations match the preparation that is being deleted.
+```c++
+void ModulationLineView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id)
+{
+    for (auto connection : objects){
+        if (connection->src_id == delete_id || connection->dest_id == delete_id){
+            parent.removeChild (connection->state, &undoManager);
+        }
+    }
+}
+```
+Note that we're using CachedValues to get the ModulationLine's `src_id` and `dest_id`. The referTo() functions live in the ModulationLine constructor.
+
+## Creating a RampModulator (or StateModulator)
+When you right-click in the ModulationModuleSection, you have the option to create a RampModulator or a StateModulator. In our example, we select a RampModulator. Here's everything that goes into creating our RampModulator:
+1. ModulationModuleSection's handlePopupResult() adds a modulationproc value tree to the PREPARATION value tree for the Modulation Preparation.
+2. When this processor gets added to the PREPARATION ValueTree, the [valueTreeChildAdded()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening... this function sees that we're adding a preparation to the ValueTree so it calls createNewObject() which has been implemented by our ModulationList object.
+
+    - This function creates a ModulatorBase (specifically a RampModulator ModulatorBase) and passes it as an argument to the ModulationProcessor's addModulator() function. This ModulationProcessor was created when we created our ModulationPreparation (see step 4 in the [Preparation Creation Function Call Trace](#preparation-creation-function-call-trace)). 
+3. ModulationProcessor's addModulator() function sets the ModulatorBase's parent and adds the ModulatorBase to the `modulators_` vector.
+4. After calling createNewObject(), the ValueTreeObject list calls newObjectAdded(), which calls the ModulationModuleSection's modulatorAdded() function.
+
+    - Here, we create a ModulationSection - the GUI component for our RampModulator
+    - Then we call [addSubSection()](../source/interface/sections/synth_section.cpp), which lives in SynthSection (we can access this because ModulationModuleSection inherits from ModulesInterface, which creates a ModulesContainer that inherits from SynthSection). It adds a pointer to our ModuleSection to `sub_sections_` (the vector of SynthSection pointers) that [renderOpenGlComponents()](../source/interface/sections/synth_section.cpp) draws
+
+## Deleting a RampModulator (or StateModulator)
+Currently, there are two ways to delete a a ModulatorBase: 1) press 'CMD + z' immediately after creating it, or 2) click the 'X' in the top right corner of the ModuleSection for the modulator.
+
+1a) Deleting with Undo:
+
+- When we press 'CMD + z', [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp), which is implemented by JUCE and takes care of removing our connection from the ValueTree.
+
+1b) Deleting with 'X' button:
+
+- After calling a sequence of listeners, ModulationSection's butttonClicked() function gets called. This makes the ModulationSection invisible then removes the modulationproc from the ValueTree
+2. When our modulationproc is removed from the ValueTree, the [valueTreeChildRemoved()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening... and calls ModulationList's deleteObject() function, which calls the ModulationProcessor's removeModulator() function.
+3. removeModulator() sets info relevant to the ModulatorBase to null so that deallocation doesn't happen on the audio thread.
+4. Next, deleteObject() calls ModulationModuleSection's removeModulator(), which removes our ModulationSection from `modulation_sections_` and removes it from the GUI interface (while on the OpenGL thread of course).
+
+## Creating Modulation Connections to Parameters (ModulationConnection)
+When we want to modulate a parameter, we drag the ModulationButton from the ramp modulator onto one of our Direct parameters. When we drag the ModulationButton and hover over a Direct parameter, two components will appear: an outline around the Direct parameter knob and a small knob below it. Once we release it on top of a parameter, we can change the amount that the modulation will affect the parameter using the small knob. changes are reflected in the outline around the Direct knob. Here's how this is working in the background...
+
+1. Once you start dragging the ModulationButton, the ModulationButton's mouseDrag() function calls the ModulationManager's modulationDragged() function.
+
+    - This function gets whatever component is beneath the mouse and passes it as an argument to modulationDraggedToComponent() (also within the ModulationManager).
+2. modulationDraggedToComponent() uses conditionals to figure out whether it's a ramp or state modulator and after maintaining/changing some relevant variables, it calls connectModulation() with the source_name (ModulationButton) and destination (the Direct parameter to be modulated) as arguments.
+3. ModulationManager's connectModulation() calls SynthGuiInterface's connectModulation(), which calls SynthBase's connectModulation().
+
+   - SynthBase has three connectModulation() functions. This one takes strings as arguments and checks if we already have a connection to the component we're hovering over. If not, we call the connectModulation() function that takes a ModulationConnection as an argument.
+4. 
+
+## Deleting Modulation Connections to Parameters (ModulationConnection)
+
 
 # Undoing Preparation Dragging
 Here's what happens when you drag and undo:
