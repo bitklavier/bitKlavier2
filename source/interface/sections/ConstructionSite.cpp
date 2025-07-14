@@ -348,6 +348,10 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     // s->setCentrePosition(s->x, s->y);
     s->setSize(s->width, s->height);
 
+    /**
+     * todo: this stuff should be moved outside of the GUI to the back end
+     * should be getting added to the PreparationList, and a few other things that will have happen around it!
+     */
 
     s->addSoundSet(&interface->sampleLoadManager->samplerSoundset);
     if (!interface->sampleLoadManager->samplerSoundset.empty()) {
@@ -372,7 +376,6 @@ void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool anim
     SynthSection::renderOpenGlComponents(open_gl, animate);
 
 }
-
 
 void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     // find preparation section with the same id as the one we're removing

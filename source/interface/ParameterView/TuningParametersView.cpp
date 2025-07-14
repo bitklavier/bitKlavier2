@@ -61,6 +61,9 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         addOpenGlComponent(tuningtype_combo_box->getImageComponent());
     }
 
+    /*
+     * display relevant subsets of the UI depending on selected TuningType
+     */
     tuningCallbacks += {listeners.addParameterListener(
         params.tuningState.tuningType,
         chowdsp::ParameterListenerThread::MessageThread,
@@ -79,6 +82,13 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
                 showSpringTuning(true);
             else
                 showSpringTuning(false);
+
+            /*
+             * important call to get the backgrounds to redraw properly!
+             */
+            auto interface = findParentComponentOfClass<SynthGuiInterface>();
+            interface->getGui()->prep_popup->repaintPrepBackground();
+
         })
     };
 
@@ -236,13 +246,13 @@ void TuningParametersView::showStaticTuning(bool show)
 {
     keyboard->setVisible(show);
     circular_keyboard->setVisible(show);
-//    semitoneSection->setSectionVisible(show);
     semitoneSection->setVisible(show);
+
+    // this will show/hide the offset knob, which is the only thing in _sliders
     for (auto &ts_ : _sliders)
     {
         ts_->setVisible(show);
     }
-    semitoneSection->repaintBackground();
 }
 
 void TuningParametersView::showAdaptiveTuning(bool show)

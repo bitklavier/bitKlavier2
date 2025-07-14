@@ -160,6 +160,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     envelopeSectionBorder.setText("Envelope");
     envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
     addAndMakeVisible(envelopeSectionBorder);
+//    setLookAndFeel(DefaultLookAndFeel::instance());
 }
 
 EnvelopeSection::~EnvelopeSection() { }
@@ -191,7 +192,7 @@ void EnvelopeSection::resized() {
 
     juce::Rectangle<int> knobs_area = area.removeFromTop(getKnobSectionHeight());
     placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
-
+    DBG(" env section knob area" + juce::String(knobs_area.getWidth()) + " " + juce::String(knobs_area.getHeight()));
 //    int knob_section_height = getKnobSectionHeight();
 //    //int knob_y = getHeight() - knob_section_height;
 //    int knob_y = area.getHeight() - knob_section_height;

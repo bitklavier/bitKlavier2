@@ -60,6 +60,9 @@ void OpenGlImageComponent::redrawImage(bool force, bool clear) {
    float gl_height = bitklavier::utils::nextPowerOfTwo(height);
    float width_ratio = gl_width / width;
    float height_ratio = gl_height / height;
+   /**
+    * todo: see if we can fix this resizing
+    */
 //
 //    float right = -1.0f + 2.0f * width_ratio;
 //    float bottom = 1.0f - 2.0f * height_ratio;

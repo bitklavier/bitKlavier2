@@ -29,7 +29,10 @@ public:
         paintBorder(g);
         paintKnobShadows(g);
         for (auto& slider : _sliders) {
-            drawLabelForComponent(g, slider->getName(), slider.get());
+            if(slider->isVisible())
+            {
+                drawLabelForComponent(g, slider->getName(), slider.get());
+            }
         }
         paintChildrenBackgrounds(g);
     }

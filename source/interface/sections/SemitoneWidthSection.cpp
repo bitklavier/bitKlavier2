@@ -47,14 +47,6 @@ void SemitoneWidthSection::paintBackground(juce::Graphics& g) {
     sectionBorder.paint(g);
 }
 
-void SemitoneWidthSection::setSectionVisible(bool show)
-{
-    widthSlider_->setVisible(show);
-    fundamentalComboBox->setVisible(show);
-    octaveComboBox->setVisible(show);
-    sectionBorder.setVisible(show);
-}
-
 void SemitoneWidthSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());

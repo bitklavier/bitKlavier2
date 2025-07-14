@@ -76,6 +76,7 @@ public:
 
     void paintBackground (juce::Graphics& g) override
     {
+        setLabelFont(g);
         SynthSection::paintContainer (g);
         paintHeadingText (g);
         paintBorder (g);

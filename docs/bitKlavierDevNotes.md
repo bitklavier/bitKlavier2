@@ -1,11 +1,16 @@
 # Notes about how to do stuff in the bK codebase
 ## Priorities before Davis leaves
+- [ ] Piano Switch prep: Davis works on this next
+  - all pianos in graph together, bypass notes for inactive pianos
+    - getBypassParameter in https://docs.juce.com/master/classAudioProcessorGraph.html
+  - will need to be able to gracefully handle preps that need to finish their thing (Nostalgic holdover, noteOns that are still active, etc...)
+    - as well as how mods are handled at that moment
 - [ ] finish mods for Direct and Tuning:
   - working, saving/loading, Dan mostly understanding the code
-- [ ] Blendrónic audio in
-- [ ] Piano Switch prep!
-- [ ] Blurry fonts ;--}
+- [ ] Blendrónic audio in: Dan will try this after Wisconsin
+- [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
 - [ ] opening multiple sample libs, assigning to individual preps!
+  - ConstructionSite::moduleAdded, should be doable there.
 
 ## Quick Bug/Feature Notes
 - [ ] Keymap parameter targeting: 
@@ -163,4 +168,6 @@ Typing as I do MidiFilter...
 - icon svg layers in assets/midifilter, with further info in BinaryData.h; BinaryData.h says it is autowritten -- how?
   - need to add a path() call in `paths.h`
   - some drawing stuff happens in `BKItem.h`
+- preparation icon size is set in `ConstructionSite::perform`?
+  - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 
