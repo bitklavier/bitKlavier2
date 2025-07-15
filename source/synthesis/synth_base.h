@@ -27,11 +27,14 @@
 #include "ModulationConnection.h"
 #include "circular_queue.h"
 #include "ModulatorBase.h"
-#include "PreparationList.h"
+#include "../common/ObjectLists/PreparationList.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
 class PreparationList;
+namespace bitklavier {
+  class ConnectionList;
+}
 #include "PluginScannerSubprocess.h"
 class SynthBase :  public juce::ValueTree::Listener {
   public:
@@ -116,7 +119,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     void connectStateModulation(bitklavier::StateConnection* connection);
     SimpleFactory<ModulatorBase> modulator_factory;
     ///modulation functionality
-
+  void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
     std::vector<bitklavier::ModulationConnection*> getSourceConnections(const std::string& sourceId) const;
     std::vector<bitklavier::StateConnection*> getSourceStateConnections(const std::string& sourceId) const;
     std::vector<bitklavier::ModulationConnection*> getDestinationConnections(const std::string& destinationId) const;
@@ -158,10 +161,13 @@ protected:
     juce::File active_file_;
 
     bool expired_;
-//make sure this is desytroyed before the soundengine
+  //order matters here to ensure preparationLists are destroyed before connectionLists
+  std::vector<std::unique_ptr<bitklavier::ConnectionList>> connectionLists;
   std::vector<std::unique_ptr<PreparationList>> preparationLists;
+
 public:
   PreparationList* getActivePreparationList() ;
+  bitklavier::ConnectionList* getActiveConnectionList() ;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)
 };

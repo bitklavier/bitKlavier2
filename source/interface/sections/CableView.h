@@ -11,54 +11,14 @@
 #include "Cable.h"
 #include "PreparationSection.h"
 
-namespace bitklavier {
-    class Connection {
-    public:
-        Connection(const juce::ValueTree &v) : state(v) {
-            connection.source = {
-                juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::src)),
-                v.getProperty(IDs::srcIdx)
-            };
-            connection.destination = {
-                juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::dest)),
-                v.getProperty(IDs::destIdx)
-            };
-            src_id.referTo(state, IDs::src, nullptr);
-            dest_id.referTo(state, IDs::dest, nullptr);
-        }
-
-        juce::AudioProcessorGraph::Connection connection;
-        juce::ValueTree state;
-        juce::CachedValue<juce::AudioProcessorGraph::NodeID> src_id;
-        juce::CachedValue<juce::AudioProcessorGraph::NodeID> dest_id;
-    };
-    class ConnectionList : public tracktion::engine::ValueTreeObjectList<bitklavier::Connection> {
-        class Listener {
-        public:
-            virtual ~Listener() {}
-            virtual void moduleListChanged() = 0;
-            virtual void moduleAdded(Connection*) = 0;
-            virtual void removeModule(Connection*) = 0;
-        };
-        void addListener (Listener* l) { listeners_.push_back (l); }
-
-        void removeListener (Listener* l) {listeners_.erase(
-                    std::remove(listeners_.begin(), listeners_.end(), l),
-                    listeners_.end());
-        }
-
-    };
-}
-
-
-
+#include "ObjectLists/ConnectionsList.h"
 
 class CableView :
         public PreparationSection::Listener,
         public SynthSection,
-        public tracktion::engine::ValueTreeObjectList<Cable> {
+        public bitklavier::ConnectionList::Listener {
 public:
-    explicit CableView(ConstructionSite &site, juce::UndoManager &um);
+    explicit CableView(ConstructionSite &site, juce::UndoManager &um,SynthGuiData *data);
 
     ~CableView() override;
 
@@ -75,11 +35,6 @@ public:
     void mouseDrag(const juce::MouseEvent &e) override;
 
     void mouseUp(const juce::MouseEvent &e) override;
-
-    //    auto* getConnectionHelper() { return connectionHelper.get(); }
-    //    auto* getPortLocationHelper() { return portLocationHelper.get(); }
-    ////    void processorBeingAdded (BaseProcessor* newProc);
-    //    void processorBeingRemoved (const BaseProcessor* proc);
 
     bool cableBeingDragged() const;
 
@@ -115,38 +70,39 @@ public:
 
     void endDraggingConnector(const juce::MouseEvent &e) override;
 
+     void connectionAdded(bitklavier::Connection *) override;
+    void removeConnection(bitklavier::Connection *) override;
+    void connectionListChanged() override;
 
-    /////VALUe Tree objectlist overrides
-    Cable *createNewObject(const juce::ValueTree &v) override;
-
-    void deleteObject(Cable *at) override;
 
 
     void reset() override;
 
-    void newObjectAdded(Cable *) override;
 
-    void objectRemoved(Cable *) override { resized(); } //resized(); }
-    void objectOrderChanged() override { resized(); } //resized(); }
-    // void valueTreeParentChanged (juce::ValueTree&) override;
-    void valueTreeRedirected(juce::ValueTree &) override;
+    void setActivePiano() {
+        DBG("setPIano CableView");
+        connection_list->deleteAllGui();
+        connection_list->removeListener(this);
 
-    void valueTreePropertyChanged(juce::ValueTree &v, const juce::Identifier &i) override {
-        tracktion::engine::ValueTreeObjectList<Cable>::valueTreePropertyChanged(v, i);
+        auto interface = findParentComponentOfClass<SynthGuiInterface>();
+        connection_list = interface->getSynth()->getActiveConnectionList();
+        connections_vt = connection_list->getValueTree();
+        connection_list->addListener(this);
+        connection_list->rebuildAllGui();
     }
 
-    bool isSuitableType(const juce::ValueTree &v) const override {
-        return v.hasType(IDs::CONNECTION);
-    }
+    void renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) override;
 
-    void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
 
 private:
+    juce::CriticalSection open_gl_critical_section_;
+    bitklavier::ConnectionList* connection_list;
     //    void timerCallback() override;
-
+    juce::Array<Cable*> objects;
     ConstructionSite &site;
     juce::UndoManager &undoManager;
 
+    juce::ValueTree connections_vt;
 
     float scaleFactor = 1.0f;
     bool isDraggingCable = false;

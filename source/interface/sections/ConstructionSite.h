@@ -7,7 +7,7 @@
 #include "CableView.h"
 #include "ModulationLineView.h"
 #include "PluginWindow.h"
-#include "PreparationList.h"
+#include "../../common/ObjectLists/PreparationList.h"
 #include "PreparationSelector.h"
 #include "common.h"
 #include "templates/Factory.h"

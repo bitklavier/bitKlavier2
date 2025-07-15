@@ -7,7 +7,7 @@
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 #include "ResetProcessor.h"
-#include "UserPreferences.h"
+#include "../UserPreferences.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : tracktion::engine::ValueTreeObjectList<
     PluginInstanceWrapper>(v), synth(parent) {
@@ -84,6 +84,8 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
 void PreparationList::deleteObject(PluginInstanceWrapper *at) {
     for (auto listener: listeners_)
         listener->removeModule(at);
+    // find and delete cables and modulation lines associated with this preparation section
+    synth.deleteConnectionsWithId(at->node_id);
     synth.removeProcessor(at->node_id);
     delete at;
 }

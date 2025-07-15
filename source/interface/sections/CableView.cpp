@@ -8,18 +8,20 @@
 #include "sound_engine.h"
 
 
-CableView::CableView (ConstructionSite &site, juce::UndoManager& um)
-    : site(site), tracktion::engine::ValueTreeObjectList<Cable>(site.getState().getChildWithName(IDs::CONNECTIONS)),
+CableView::CableView (ConstructionSite &site, juce::UndoManager& um, SynthGuiData* data)
+    : site(site),
     /*pathTask (*this),*/ SynthSection("cableView"),
-    undoManager (um)
+    undoManager (um),
+connection_list(data->synth->getActiveConnectionList())
 {
     setInterceptsMouseClicks (false,false);
     //startTimerHz (36);
     setAlwaysOnTop(true);
+    connection_list->addListener(this);
 }
 
 CableView::~CableView() {
-    freeObjects();
+
 }
 
 
@@ -94,7 +96,7 @@ void CableView::reset()
     //if (_parent->getSynth()->getCriticalSection().tryEnter())
     //{
        //safe to do on message thread because we have locked processing if this is called
-        parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
+        //parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
         //_parent->getSynth()->getCriticalSection().exit();
     //}
     //else
@@ -213,55 +215,53 @@ void CableView::endDraggingConnector (const juce::MouseEvent& e)
         _connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(connection.destination.nodeID), nullptr);
         _connection.setProperty(IDs::destIdx, connection.destination.channelIndex, nullptr);
         undoManager.beginNewTransaction();
-        parent.appendChild(_connection, &undoManager);
+        connection_list->appendChild(_connection, &undoManager);
         // parent.appendChild(_connection, nullptr);
 
     }
 }
 
 
-void CableView::valueTreeRedirected (juce::ValueTree&)
-{
-    SynthGuiInterface* interface = findParentComponentOfClass<SynthGuiInterface>();
 
-    deleteAllObjects();
-    rebuildObjects();
-    for(auto object : objects)
-    {
-        newObjectAdded(object);
-    }
+
+
+void CableView::connectionListChanged() {
     updateComponents();
     resized();
-} // may need to add handling if this is hit
-
-void CableView::newObjectAdded(Cable *c) {
-    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    // _parent-> tryEnqueueProcessorInitQueue([this,c]
-    //                                                    {
-                                                           // SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-                                                           _parent->getSynth()->addConnection(c->connection);
-                                                       //     //changelistener callback is causing timing errors here.
-                                                       //
-                                                       //     //last_proc.reset();
-                                                       // });
-
 }
-void CableView::deleteObject(Cable *at)  {
+
+void CableView::removeConnection(bitklavier::Connection *c) {
+    DBG("remove cable");
+   Cable* at;
+    int index = 0;
+   for (auto obj : objects)
+   {
+        if (obj->state == c->state) {
+            at = obj;
+        }
+       index++;
+   }
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
 
     _parent->getSynth()->removeConnection(at->connection);
 
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
-
         at->setVisible(false);
         site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
             this->destroyOpenGlComponent(*(at->getImageComponent()), *this->open_gl);
         },true);
-    }else
-        delete at;
+    }
+    {
+        juce::ScopedLock lock(open_gl_critical_section_);
+       objects.remove(index);
+    }
+
+    delete at;
+        DBG("cable remove");
 
 }
+
 
 
 void CableView::updateCablePositions()
@@ -272,29 +272,37 @@ void CableView::updateCablePositions()
         cable->updateEndPoint();
     }
 }
+void CableView::connectionAdded(bitklavier::Connection *c) {
 
-Cable* CableView::createNewObject(const juce::ValueTree &v) {
-    // undoManager.beginNewTransaction();
-    auto* comp = new Cable(&site, *this);
-    addChildComponent(comp, 0);
-
-    addOpenGlComponent(comp->getImageComponent(), true, false);
-    site.open_gl.context.executeOnGLThread([this,comp](juce::OpenGLContext& context) {
-        comp->getImageComponent()->init(site.open_gl);
-        juce::MessageManager::callAsync(
-                [safeComp = juce::Component::SafePointer<Cable>(comp)] {
-                    if (auto *_comp = safeComp.getComponent()) {
-                        _comp->setVisible(true);
-                        _comp->getImageComponent()->setVisible(true);
-                        _comp->resized();
-                    }
-                });
-    },true);
-    // addAndMakeVisible (comp);
-    comp->setValueTree(v);
-    return comp;
+        // undoManager.beginNewTransaction();
+        DBG("add cable");
+        auto* comp = new Cable(&site, *this);
+        addChildComponent(comp, 0);
+    {
+        juce::ScopedLock lock(open_gl_critical_section_);
+            addOpenGlComponent(comp->getImageComponent(), true, false);
+    }
+            site.open_gl.context.executeOnGLThread([this,comp](juce::OpenGLContext& context) {
+            comp->getImageComponent()->init(site.open_gl);
+            juce::MessageManager::callAsync(
+                    [safeComp = juce::Component::SafePointer<Cable>(comp)] {
+                        if (auto *_comp = safeComp.getComponent()) {
+                            _comp->setVisible(true);
+                            _comp->getImageComponent()->setVisible(true);
+                            _comp->resized();
+                        }
+                    });
+        },true);
+        // addAndMakeVisible (comp);
+        comp->setValueTree(c->state);
+    objects.add(comp);
+        DBG("cable added");
 
 }
+
+
+
+
 
 
 
@@ -352,15 +360,11 @@ void CableView::dragConnector(const juce::MouseEvent& e)
                 draggingConnector->dragEnd (pos);
         }
 }
-
-void CableView::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id)
-{
-    for (auto connection : objects){
-        if (connection->src_id == delete_id || connection->dest_id == delete_id){
-            parent.removeChild (connection->state, &undoManager);
-        }
-    }
+void CableView::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
+    juce::ScopedLock lock(open_gl_critical_section_);
+    SynthSection::renderOpenGlComponents(open_gl, animate);
 }
+
 
 
 void CableView::_update()

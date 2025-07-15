@@ -17,7 +17,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                         prep_list(data->synth->getActivePreparationList()),
                                                          undo(um),
                                                          open_gl(open_gl),
-                                                         cableView(*this, um),
+                                                         cableView(*this, um,data),
                                                          modulationLineView(*this, um),
                                                          preparationSelector(*this), parent(v),
                                                         commandManager (_manager)
@@ -371,8 +371,7 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 
-    // find and delete cables and modulation lines associated with this preparation section
-    cableView.deleteConnectionsWithId(wrapper->node_id);
+
     modulationLineView.deleteConnectionsWithId(wrapper->node_id);
 
     //cleanup opengl
@@ -385,7 +384,7 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     plugin_components[index]->destroyOpenGlComponents (open_gl);
     //delete heap memory
     plugin_components.erase(plugin_components.begin()+index);
-DBG("moduleRemoved");
+DBG("moduleRemoved construction site");
 }
 
 ConstructionSite::~ConstructionSite(void) {
@@ -643,4 +642,6 @@ void ConstructionSite::setActivePiano() {
     parent = prep_list->getValueTree().getParent();
     prep_list->addListener(this);
     prep_list->rebuildAllGui();
+
+    cableView.setActivePiano();
 }

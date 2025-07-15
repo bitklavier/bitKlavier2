@@ -24,7 +24,7 @@
 #include "Identifiers.h"
 #include "ModulationProcessor.h"
 #include "PluginBase.h"
-#include "PreparationList.h"
+#include "../common/ObjectLists/PreparationList.h"
 #include "RampModulator.h"
 #include "StateModulator.h"
 #include "Synthesiser/Sample.h"
@@ -32,6 +32,7 @@
 #include "load_save.h"
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "valuetree_utils/VariantConverters.h"
+#include "ObjectLists/ConnectionsList.h"
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager)
 {
     self_reference_ = std::make_shared<SynthBase*>();
@@ -66,8 +67,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
     preparationLists.emplace_back( std::make_unique<PreparationList> (*this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS)));
-
-    engine_ = std::make_unique<bitklavier::SoundEngine>();
+connectionLists.emplace_back(std::make_unique<bitklavier::ConnectionList>( *this,tree.getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS)));
+        engine_ = std::make_unique<bitklavier::SoundEngine>();
 }
 
 SynthBase::~SynthBase()
@@ -80,6 +81,7 @@ void SynthBase::valueTreeChildAdded(juce::ValueTree& parentTree,
 
         DBG("added piano");
         preparationLists.emplace_back(std::make_unique<PreparationList> (*this, childWhichHasBeenAdded.getOrCreateChildWithName(IDs::PREPARATIONS,nullptr)));
+        connectionLists.emplace_back(std::make_unique<bitklavier::ConnectionList>(*this, childWhichHasBeenAdded.getOrCreateChildWithName(IDs::CONNECTIONS,nullptr)));
         if (getGuiInterface()) {
             getGuiInterface()->setActivePiano(childWhichHasBeenAdded);
         }
@@ -88,6 +90,15 @@ void SynthBase::valueTreeChildAdded(juce::ValueTree& parentTree,
         }
 
 
+    }
+}
+void SynthBase::deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id) {
+    auto* connectionList = getActiveConnectionList();
+    for (int i = 0; i < connectionList->size(); ++i) {
+        auto connection = connectionList->at(i);
+        if (connection->src_id == delete_id || connection->dest_id == delete_id){
+            connectionList->removeChild (connection->state, &getUndoManager());
+        }
     }
 }
 void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
@@ -106,6 +117,14 @@ PreparationList* SynthBase::getActivePreparationList() {
     for (auto &preparation : preparationLists) {
         if (preparation->getValueTree().getParent().getProperty(IDs::isActive))
             return preparation.get();
+    }
+}
+
+bitklavier::ConnectionList* SynthBase::getActiveConnectionList() {
+
+    for (auto &connection : connectionLists) {
+        if (connection->getValueTree().getParent().getProperty(IDs::isActive))
+            return connection.get();
     }
 }
 void SynthBase::setActivePiano(const juce::ValueTree& v)

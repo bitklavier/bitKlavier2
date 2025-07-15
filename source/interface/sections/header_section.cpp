@@ -71,9 +71,7 @@ void LogoSection::buttonClicked(juce::Button *clicked_button) {
 HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_section"), tab_offset_(0),
                                                            body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
                                                            gallery(gal) {
-    //logo_section_ = std::make_unique<LogoSection>();
-    //addSubSection(logo_section_.get());
-    //logo_section_->addListener(this);
+
     jassert(gal.hasType(IDs::GALLERY));
     addOpenGlComponent(body_);
     logo_section_ = std::make_unique<LogoSection>();
@@ -87,7 +85,6 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     sampleSelector->addListener(this);
     sampleSelector->setTriggeredOnMouseDown(true);
     sampleSelector->setShape(juce::Path(), true, true, true);
-    //    sampleSelector->triggerClick();
     currentSampleType = 0;
     sampleSelectText = std::make_shared<PlainTextComponent>("Sample Select Text", "---");
     addOpenGlComponent(sampleSelectText);
@@ -101,23 +98,6 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     pianoSelector->setTriggeredOnMouseDown(true);
     pianoSelector->setShape(juce::Path(), true, true, true);
     currentPianoIndex = 0;
-    //parent->sampleLoadManager->loadSamples(selection, true);
-    // sampleSelectText->setText(string_constants::cBKSampleLoadTypes[currentSampleType]);
-
-    // saveButton = std::make_unique<OpenGlTextButton>("header_save");
-    // addOpenGlComponent(saveButton->getGlComponent());
-    // addAndMakeVisible(saveButton.get());
-    // saveButton->setButtonText("save");
-    // saveButton->setLookAndFeel(TextLookAndFeel::instance());
-    // saveButton->addListener(this);
-    //
-    // loadButton = std::make_unique<OpenGlTextButton>("header_load");
-    // addOpenGlComponent(loadButton->getGlComponent());
-    // addAndMakeVisible(loadButton.get());
-    //
-    // loadButton->setButtonText("load");
-    // loadButton->setLookAndFeel(TextLookAndFeel::instance());
-    // loadButton->addListener(this);
 
     addPianoButton = std::make_unique<OpenGlTextButton>("header_add_piano");
     addOpenGlComponent(addPianoButton->getGlComponent());
