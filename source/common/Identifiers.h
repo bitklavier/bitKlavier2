@@ -78,6 +78,7 @@ namespace IDs
     DECLARE_ID(x_y)
     DECLARE_ID(PARAM_DEFAULT)
     DECLARE_ID(RESETCONNECTION)
+    DECLARE_ID(isActive)
 }
 
 #undef DECLARE_ID

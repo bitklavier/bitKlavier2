@@ -210,6 +210,13 @@ public:
                                      const juce::String& error,
                                      const juce::ValueTree &v);
     void setValueTree(const juce::ValueTree& v);
+    const juce::ValueTree& getValueTree() const {
+        return parent;
+    }
+
+    void deleteAllGui();
+    void rebuildAllGui();
+
 private:
     std::unique_ptr<juce::AudioPluginInstance> temporary_instance;
     PreparationFactory prepFactory;

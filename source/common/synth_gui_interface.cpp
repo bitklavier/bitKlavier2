@@ -319,7 +319,16 @@ void SynthGuiInterface::openSaveDialog() {
             }
         });
 }
+#include "ConstructionSite.h"
+void SynthGuiInterface::setActivePiano(const juce::ValueTree &v) {
+    synth_->setActivePiano(v);
+    gui_->main_->constructionSite_->setActivePiano();
 
+}
+
+void SynthGuiInterface::addPiano(const juce::String & piano_name) {
+
+}
 //probably dont need to do this. i think we can just do this from the modulationmodulesection
 
 const juce::CriticalSection &SynthGuiInterface::getCriticalSection() {

@@ -55,6 +55,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     piano.appendChild (preparations, nullptr);
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
+    piano.setProperty(IDs::isActive, 1, nullptr);
+    piano.setProperty(IDs::name, "default", nullptr);
     tree.appendChild (piano, nullptr);
     tree.addListener (this);
 
@@ -63,7 +65,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     modulator_factory.registerType<StateModulatorProcessor, juce::ValueTree> ("state");
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
-    preparationList = std::make_unique<PreparationList> (*this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS));
+    preparationLists.emplace_back( std::make_unique<PreparationList> (*this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS)));
 
     engine_ = std::make_unique<bitklavier::SoundEngine>();
 }
@@ -72,26 +74,48 @@ SynthBase::~SynthBase()
 {
     tree.removeListener (this);
 }
-//void SynthBase::pitchWheelMidiChanged(float value) {
-//  ValueChangedCallback* callback = new ValueChangedCallback(self_reference_, "pitch_wheel", value);
-//  callback->post();
-//}
-//
-//void SynthBase::modWheelMidiChanged(float value) {
-//  ValueChangedCallback* callback = new ValueChangedCallback(self_reference_, "mod_wheel", value);
-//  callback->post();
-//}
-//
-//
-//
-//void SynthBase::presetChangedThroughMidi(juce::File preset) {
-//  SynthGuiInterface* gui_interface = getGuiInterface();
-//  if (gui_interface) {
-//    gui_interface->updateFullGui();
-//    gui_interface->notifyFresh();
-//  }
-//}
+void SynthBase::valueTreeChildAdded(juce::ValueTree& parentTree,
+                                          juce::ValueTree& childWhichHasBeenAdded) {
+    if (childWhichHasBeenAdded.hasType(IDs::PIANO)) {
 
+        DBG("added piano");
+        preparationLists.emplace_back(std::make_unique<PreparationList> (*this, childWhichHasBeenAdded.getOrCreateChildWithName(IDs::PREPARATIONS,nullptr)));
+        if (getGuiInterface()) {
+            getGuiInterface()->setActivePiano(childWhichHasBeenAdded);
+        }
+        else {
+            setActivePiano(childWhichHasBeenAdded);
+        }
+
+
+    }
+}
+void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
+                                               const juce::Identifier& property) {
+    if(property == IDs::isActive && treeWhosePropertyHasChanged.hasType(IDs::PIANO)&& static_cast<int>(treeWhosePropertyHasChanged.getProperty (IDs::isActive))== 1) {
+        if (getGuiInterface()) {
+            getGuiInterface()->setActivePiano(treeWhosePropertyHasChanged );
+        }
+        else {
+            setActivePiano(treeWhosePropertyHasChanged);
+        }
+    }
+}
+PreparationList* SynthBase::getActivePreparationList() {
+
+    for (auto &preparation : preparationLists) {
+        if (preparation->getValueTree().getParent().getProperty(IDs::isActive))
+            return preparation.get();
+    }
+}
+void SynthBase::setActivePiano(const juce::ValueTree& v)
+{
+    DBG("setActivePiano");
+    // tree.removeListener (this);
+    // tree.setProperty (IDs::isActive, 0, nullptr);
+    // tree = v;
+    // tree.addListener (this);
+}
 void SynthBase::addTuningConnection (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
 {
     auto* sourceNode = getNodeForId (src);

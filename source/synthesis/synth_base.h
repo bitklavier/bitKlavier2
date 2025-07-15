@@ -129,7 +129,11 @@ class SynthBase :  public juce::ValueTree::Listener {
     int getNumModulations(const std::string& destination);
     virtual SynthGuiInterface* getGuiInterface() = 0;
     bool isSourceConnected(const std::string& source);
-
+    void setActivePiano(const juce::ValueTree& v);
+  void valueTreeChildAdded (juce::ValueTree& parentTree,
+                                          juce::ValueTree& childWhichHasBeenAdded);
+ void valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
+                                               const juce::Identifier& property);
 protected:
 //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
@@ -155,8 +159,10 @@ protected:
 
     bool expired_;
 //make sure this is desytroyed before the soundengine
+  std::vector<std::unique_ptr<PreparationList>> preparationLists;
 public:
-  std::unique_ptr<PreparationList> preparationList;
+  PreparationList* getActivePreparationList() ;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)
 };
 
