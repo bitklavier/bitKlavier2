@@ -13,7 +13,9 @@
 #include "SemitoneWidthSection.h"
 #include "AdaptiveTuningSection.h"
 #include "SpringTuningSection.h"
+#include "SectionBorderWrap.h"
 
+class SectionBorderWrap;
 class AdaptiveTuningSection;
 class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener
 {
@@ -29,9 +31,10 @@ public:
         for (auto& slider : _sliders) {
             if(slider->isVisible())
                 drawLabelForComponent(g, slider->getName(), slider.get());
+//            if(offsetKnobBorder.isVisible())
+//                offsetKnobBorder.paint(g);
         }
         paintChildrenBackgrounds(g);
-        offsetKnobBorder.paint(g);
     }
 
     void keyboardSliderChanged(juce::String name) override;
@@ -39,6 +42,7 @@ public:
     void showStaticTuning(bool show);
     void showAdaptiveTuning(bool show);
     void showSpringTuning(bool show);
+    void showCurrentTuningType();
     void resized() override;
 
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
@@ -61,7 +65,7 @@ public:
     std::shared_ptr<PlainTextComponent> lastIntervalDisplay;
     std::shared_ptr<PlainTextComponent> lastFrequencyDisplay;
 
-    juce::GroupComponent offsetKnobBorder;
+    std::unique_ptr<SectionBorderWrap> offsetKnobBorder;
 
     TuningParams& params;
 

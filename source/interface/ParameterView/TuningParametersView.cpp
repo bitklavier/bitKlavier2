@@ -10,12 +10,15 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     setLookAndFeel(DefaultLookAndFeel::instance());
     setComponentID(name);
 
-    offsetKnobBorder.setName("offsetknobborder");
-    offsetKnobBorder.setText("Offset");
-    offsetKnobBorder.setTextLabelPosition(juce::Justification::centred);
-    addAndMakeVisible(offsetKnobBorder);
-
     auto& listeners = pluginState.getParameterListeners();
+
+    offsetKnobBorder = std::make_unique<SectionBorderWrap>(name, params.tuningState.semitoneWidthParams, listeners, *this);
+
+    offsetKnobBorder->sectionBorder.setName("offsetknobborder");
+    offsetKnobBorder->sectionBorder.setText("Offset");
+    offsetKnobBorder->sectionBorder.setTextLabelPosition(juce::Justification::centred);
+    addSubSection(offsetKnobBorder.get());
+
     for ( auto &param_ : *params.getFloatParams())
     {
         if (param_->getParameterID() == "lastNote") continue; // handle this separately
@@ -30,7 +33,13 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     /**
      * todo: there is only one knob, so reduce the above, no need for the loop
      */
-    _sliders[0]->setName("cents");
+
+    /**
+     * todo: is resetting the name going to cause a problem with mods?
+     *          it seems to be the only way to get the text under the knob
+     *          to display what we need
+     */
+     _sliders[0]->setName("cents");
 
     keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(keyboard.get());
@@ -77,21 +86,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         params.tuningState.tuningType,
         chowdsp::ParameterListenerThread::MessageThread,
         [this]() {
-            if(params.tuningState.tuningType->get() == TuningType::Static)
-                showStaticTuning(true);
-            else
-                showStaticTuning(false);
-
-            if(params.tuningState.tuningType->get() == TuningType::Adaptive || params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored)
-                showAdaptiveTuning(true);
-            else
-                showAdaptiveTuning(false);
-
-            if(params.tuningState.tuningType->get() == TuningType::Spring_Tuning)
-                showSpringTuning(true);
-            else
-                showSpringTuning(false);
-
+             showCurrentTuningType();
             /*
              * important call to get the backgrounds to redraw properly!
              */
@@ -248,6 +243,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     };
 
     circular_keyboard->addMyListener(this);
+    showCurrentTuningType();
 }
 
 
@@ -256,11 +252,13 @@ void TuningParametersView::showStaticTuning(bool show)
     keyboard->setVisible(show);
     circular_keyboard->setVisible(show);
     semitoneSection->setVisible(show);
+    offsetKnobBorder->setVisible(show);
 
     // this will show/hide the offset knob, which is the only thing in _sliders
     for (auto &ts_ : _sliders)
     {
         ts_->setVisible(show);
+//        offsetKnobBorder.setVisible(show);
     }
 }
 
@@ -272,6 +270,30 @@ void TuningParametersView::showAdaptiveTuning(bool show)
 void TuningParametersView::showSpringTuning(bool show)
 {
     springTuningSection->setVisible(show);
+}
+
+void TuningParametersView::showCurrentTuningType()
+{
+    if(params.tuningState.tuningType->get() == TuningType::Static)
+        showStaticTuning(true);
+    else
+        showStaticTuning(false);
+
+    if(params.tuningState.tuningType->get() == TuningType::Adaptive || params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored)
+        showAdaptiveTuning(true);
+    else
+        showAdaptiveTuning(false);
+
+    if(params.tuningState.tuningType->get() == TuningType::Spring_Tuning)
+        showSpringTuning(true);
+    else
+        showSpringTuning(false);
+
+//    /*
+//             * important call to get the backgrounds to redraw properly!
+//             */
+//    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+//    interface->getGui()->prep_popup->repaintPrepBackground();
 }
 
 void TuningParametersView::resized()
@@ -324,7 +346,7 @@ void TuningParametersView::resized()
     semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
 
     juce::Rectangle offsetKnobBox = offsetAndSemitoneBox.removeFromLeft(knobsectionheight + 30);
-    offsetKnobBorder.setBounds(offsetKnobBox);
+    offsetKnobBorder->setBounds(offsetKnobBox);
     offsetKnobBox.reduce(largepadding, largepadding);
     _sliders[0]->setBounds(offsetKnobBox);
 
