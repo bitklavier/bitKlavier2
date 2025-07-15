@@ -4,14 +4,12 @@
 
 #ifndef BITKLAVIER2_TUNINGPARAMETERSVIEW_H
 #define BITKLAVIER2_TUNINGPARAMETERSVIEW_H
-//#include "envelope_section.h"
-//#include "TransposeParams.h"
+
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "open_gl_combo_box.h"
 #include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "TuningProcessor.h"
-//#include "tuning_systems.h"
 #include "SemitoneWidthSection.h"
 #include "AdaptiveTuningSection.h"
 #include "SpringTuningSection.h"
@@ -30,11 +28,10 @@ public:
         paintKnobShadows(g);
         for (auto& slider : _sliders) {
             if(slider->isVisible())
-            {
                 drawLabelForComponent(g, slider->getName(), slider.get());
-            }
         }
         paintChildrenBackgrounds(g);
+        offsetKnobBorder.paint(g);
     }
 
     void keyboardSliderChanged(juce::String name) override;
@@ -63,6 +60,8 @@ public:
     std::shared_ptr<PlainTextComponent> lastNoteDisplay;
     std::shared_ptr<PlainTextComponent> lastIntervalDisplay;
     std::shared_ptr<PlainTextComponent> lastFrequencyDisplay;
+
+    juce::GroupComponent offsetKnobBorder;
 
     TuningParams& params;
 

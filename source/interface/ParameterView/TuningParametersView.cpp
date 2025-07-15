@@ -10,6 +10,11 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     setLookAndFeel(DefaultLookAndFeel::instance());
     setComponentID(name);
 
+    offsetKnobBorder.setName("offsetknobborder");
+    offsetKnobBorder.setText("Offset");
+    offsetKnobBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(offsetKnobBorder);
+
     auto& listeners = pluginState.getParameterListeners();
     for ( auto &param_ : *params.getFloatParams())
     {
@@ -22,6 +27,10 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         floatAttachments.emplace_back(std::move(attachment));
         _sliders.emplace_back(std::move(slider));
     }
+    /**
+     * todo: there is only one knob, so reduce the above, no need for the loop
+     */
+    _sliders[0]->setName("cents");
 
     keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(keyboard.get());
@@ -132,17 +141,17 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     lastNoteDisplay = std::make_shared<PlainTextComponent>("lastpitch", "Last Pitch = 69.00");
     addOpenGlComponent(lastNoteDisplay);
     lastNoteDisplay->setTextSize (12.0f);
-    lastNoteDisplay->setJustification(juce::Justification::left);
+    lastNoteDisplay->setJustification(juce::Justification::centred);
 
     lastFrequencyDisplay = std::make_shared<PlainTextComponent>("lastfrequency", "Last Frequency = 440");
     addOpenGlComponent(lastFrequencyDisplay);
     lastFrequencyDisplay->setTextSize (12.0f);
-    lastFrequencyDisplay->setJustification(juce::Justification::left);
+    lastFrequencyDisplay->setJustification(juce::Justification::centred);
 
     lastIntervalDisplay = std::make_shared<PlainTextComponent>("lastinterval", "Last Interval = 0.00");
     addOpenGlComponent(lastIntervalDisplay);
     lastIntervalDisplay->setTextSize (12.0f);
-    lastIntervalDisplay->setJustification(juce::Justification::left);
+    lastIntervalDisplay->setJustification(juce::Justification::centred);
 
     /*
      * this will hear changes to tuningState.lastNote, which are triggered by the last tuned note in the synth (through synthState, called in DirectProcessor, etc...)
@@ -267,33 +276,93 @@ void TuningParametersView::showSpringTuning(bool show)
 
 void TuningParametersView::resized()
 {
+    juce::Rectangle<int> area (getLocalBounds());
+
+    int smallpadding = findValue(Skin::kPadding);
+    int largepadding = findValue(Skin::kLargePadding);
+    int comboboxheight = findValue(Skin::kComboMenuHeight);
+    int knobsectionheight = findValue(Skin::kKnobSectionHeight);
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+    int title_width = getTitleWidth();
+    int circularKeyboardTargetHeight = 120;
+    int circularKeyboardTargetWidth = 350;
+    int semitoneBoxTargetHeight = 81; // scale these...
+    int semitoneBoxTargetWidth = 176;
+
+    area.removeFromLeft(title_width);
+    juce::Rectangle leftHalf = area.removeFromLeft(area.getWidth() * 0.5);
+    leftHalf.reduce(largepadding, largepadding);
+    juce::Rectangle areaSpring = leftHalf;
+    juce::Rectangle areaAdaptive = leftHalf;
+
+    juce::Rectangle lastValsDisplay = leftHalf.removeFromBottom(labelsectionheight);
+    lastNoteDisplay->setBounds(lastValsDisplay.removeFromLeft(lastValsDisplay.getWidth() / 3.));
+    lastFrequencyDisplay->setBounds(lastValsDisplay.removeFromLeft(lastValsDisplay.getWidth() / 2.));
+    lastIntervalDisplay->setBounds(lastValsDisplay);
+
+    juce::Rectangle topMenuBox = leftHalf.removeFromTop(comboboxheight);
+    int menuWidthFactor = leftHalf.getWidth() / 7.;
+    tuningtype_combo_box->setBounds(topMenuBox.removeFromLeft(menuWidthFactor * 2.));
+    tuning_combo_box->setBounds(topMenuBox.removeFromLeft(menuWidthFactor * 3.));
+    fundamental_combo_box->setBounds((topMenuBox));
+
+    leftHalf.removeFromTop(largepadding);
+
+    juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(circularKeyboardTargetHeight);
+    if (circularKeyboardBox.getWidth() > circularKeyboardTargetWidth)
+        circularKeyboardBox.reduce((circularKeyboardBox.getWidth() - circularKeyboardTargetWidth) / 2., 0);
+    circular_keyboard->setBounds(circularKeyboardBox);
+
+    leftHalf.removeFromTop(largepadding);
+
+    juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(circularKeyboardTargetHeight);
+    keyboard->setBounds(absoluteKeyboardBox);
+
+    leftHalf.removeFromTop(largepadding);
+
+    juce::Rectangle offsetAndSemitoneBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
+    semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
+
+    juce::Rectangle offsetKnobBox = offsetAndSemitoneBox.removeFromLeft(knobsectionheight + 30);
+    offsetKnobBorder.setBounds(offsetKnobBox);
+    offsetKnobBox.reduce(largepadding, largepadding);
+    _sliders[0]->setBounds(offsetKnobBox);
+
+    areaAdaptive.removeFromTop(comboboxheight + largepadding * 2);
+    areaSpring.removeFromTop(comboboxheight + largepadding * 2);
+    adaptiveSection->setBounds(areaAdaptive.removeFromTop(200));
+    springTuningSection->setBounds(areaSpring.removeFromTop(300));
+
+
+
     int knob_section_height = getKnobSectionHeight();
     int knob_y = getHeight() - knob_section_height;
 
     int widget_margin = findValue(Skin::kWidgetMargin);
-    int title_width = getTitleWidth();
+
     int area_width = getWidth() - 2 * title_width;
     int envelope_height = knob_y - widget_margin;
-    tuningtype_combo_box->setBounds(10,10, 100, 25);
-    tuning_combo_box->setBounds(115,10,100, 25);
-    fundamental_combo_box->setBounds(225, 10, 50,25);
-    keyboard->setBounds(50, 200, 500, 100);
-    circular_keyboard->setBounds(50, 50, 500, 100);
+//    tuningtype_combo_box->setBounds(10,10, 100, 25);
+//    tuning_combo_box->setBounds(115,10,100, 25);
+//    fundamental_combo_box->setBounds(225, 10, 50,25);
+//    keyboard->setBounds(50, 200, 500, 100);
+//    circular_keyboard->setBounds(50, 50, 500, 100);
 
     //semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 50, getKnobSectionHeight() + 50 + getTextComponentHeight() * 2);
-    semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 105, getKnobSectionHeight() + 10);
-    adaptiveSection->setBounds(circular_keyboard->getRight() + 20, circular_keyboard->getY(), 500, 200);
+//    semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 105, getKnobSectionHeight() + 10);
+//    DBG("semintone section h/w " + juce::String(getKnobSectionHeight() + 105) + " " + juce::String(getKnobSectionHeight() + 10));
+//    adaptiveSection->setBounds(circular_keyboard->getRight() + 20, circular_keyboard->getY(), 500, 200);
 
-    juce::Rectangle<int> outputKnobsArea = {50, semitoneSection->getBottom() + knob_section_height, 100, 100};
-        //bounds.removeFromTop(knob_section_height);
-    placeKnobsInArea(outputKnobsArea, _sliders, true);
+//    juce::Rectangle<int> outputKnobsArea = {50, semitoneSection->getBottom() + knob_section_height, 100, 100};
+//        //bounds.removeFromTop(knob_section_height);
+//    placeKnobsInArea(outputKnobsArea, _sliders, true);
 
     juce::Rectangle<int> springTuningBox = {adaptiveSection->getX(), adaptiveSection->getBottom() + 20, 500, 300};
-    springTuningSection->setBounds(springTuningBox);
+//    springTuningSection->setBounds(springTuningBox);
 
-    lastNoteDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY(), 100, 30);
-    lastFrequencyDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 30, 100, 30);
-    lastIntervalDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 60, 100, 30);
+//    lastNoteDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY(), 100, 30);
+//    lastFrequencyDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 30, 100, 30);
+//    lastIntervalDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 60, 100, 30);
 
     SynthSection::resized();
 }
