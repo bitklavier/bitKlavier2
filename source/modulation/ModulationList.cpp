@@ -26,13 +26,17 @@ ModulationList::~ModulationList()
 void ModulationList::deleteObject(ModulatorBase * base)
 {
     //this will call delete in the modulationprocessor
-
+    // base->state.getProperty(IDs::)
     parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
             [this, base] {
                 if (base->parent_ != nullptr) {
 
                     base->parent_->removeModulator(base);
                     base->parent_->callOnMainThread ([this, base] {
+                        for (auto vt : base->connections_)
+                        {
+                            vt.getParent().removeChild (vt,nullptr);
+                        }
                         for (auto listener: listeners_)
                         {
                             listener->removeModulator(base);
@@ -42,9 +46,6 @@ void ModulationList::deleteObject(ModulatorBase * base)
                     });
                     // delete base;
                 }
-
-                //this is not ideal or safe.
-                // TODO: make this not delete on the audio thread
 
             });
 

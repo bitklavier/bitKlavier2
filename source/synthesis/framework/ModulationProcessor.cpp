@@ -88,6 +88,7 @@ void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
         tmp_buffers[index] = {};
         mod_routing[index] = {};
     }
+
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnection* connection){
@@ -99,6 +100,7 @@ void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnecti
     size_t index = std::distance(modulators_.begin(), it);
 
     mod_routing[index].mod_connections.push_back(connection);
+    modulators_[index]->connections_.push_back(connection->state);
 
 }
 
@@ -107,9 +109,19 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
     all_modulation_connections_.erase(end, all_modulation_connections_.end());
 
     auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
-    size_t index = std::distance(modulators_.begin(), it);
-    auto it_ = std::remove(mod_routing[index].mod_connections.begin(), mod_routing[index].mod_connections.end(), connection);
-    mod_routing[index].mod_connections.erase(it_, mod_routing[index].mod_connections.end());
+
+    if (it != modulators_.end())
+    {
+        size_t index = std::distance(modulators_.begin(), it);
+        if (mod_routing[index].mod_connections.size() != 0)
+        {
+            auto it_ = std::remove(mod_routing[index].mod_connections.begin(), mod_routing[index].mod_connections.end(), connection);
+            mod_routing[index].mod_connections.erase(it_, mod_routing[index].mod_connections.end());
+        }
+    }
+
+
+
 
 }
 void bitklavier::ModulationProcessor::addModulationConnection(StateConnection* connection){

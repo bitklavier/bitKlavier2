@@ -90,6 +90,7 @@ public:
     // /** Calls an action on the main thread via chowdsp::DeferredAction */
     // template <typename Callable>
     // virtual void callOnMainThread (Callable&& func, bool couldBeAudioThread = false) = 0;
+    std::vector<juce::ValueTree> connections_;
 };
 
 

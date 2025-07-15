@@ -307,10 +307,32 @@ When we want to modulate a parameter, we drag the ModulationButton from the ramp
 2. modulationDraggedToComponent() uses conditionals to figure out whether it's a ramp or state modulator and after maintaining/changing some relevant variables, it calls connectModulation() with the source_name (ModulationButton) and destination (the Direct parameter to be modulated) as arguments.
 3. ModulationManager's connectModulation() calls SynthGuiInterface's connectModulation(), which calls SynthBase's connectModulation().
 
-   - SynthBase has three connectModulation() functions. This one takes strings as arguments and checks if we already have a connection to the component we're hovering over. If not, we call the connectModulation() function that takes a ModulationConnection as an argument.
-4. 
+   - SynthBase has three connectModulation() functions. This one takes strings as arguments and checks if we already have a connection to the component we're hovering over. If not, we create a connection using the source and destination strings and use it to call the connectModulation() function that takes a ModulationConnection as an argument.
+4. In this other connectModulation() function, we do most of the heavy lifting.
+
+   - We get the value trees for the modulation preparation (the source of our modulation connection) and the direct preparation (the destination of our modulation connection) and use these to get their respective nodes from the audio processor graph
+   - Then we populate the ModulationConnection that we passed into the function with the backend information (processor and bus stuff)
+   - If everything is good and well, add the ModulationConnection to `mod_connections_` and add its value tree (ModulationConnection) as a child of the MODCONNECTION value tree
+   - After that, we make sure the ramp modulator's processor is hooked up correctly with a call to the ModulationProcessor's addModulationConnection() function
+   - Finally, we connect the modulation processor to the preparation parameter in the audio processor graph
+5. Once a connection is made, the ModulationManager's modulationDraggedToComponent() function draws the modulation knob and outline.
 
 ## Deleting Modulation Connections to Parameters (ModulationConnection)
+There are a couple ways for a ModulationConnection to be deleted: 1) Right-click on the wheel and select 'Remove', 2) Press 'CMD-z' after creating it, and 3) deleting the entire modulation preparation. Here's how all of these options work.
+
+**Deleting with right-click > Remove:**
+1. When you select 'Remove' from the popup menu, a listener calls the ModulationManager's disconnectModulation() function, which calls removeModulation with the ModulationConnection's source and destination names
+2. This does some stuff then calls SynthGuiInterface's disconnectModulation(), which just calls SynthBase's disconnectModulation(), which calls a different disconnectModulation() in SynthBase. This one takes a connection as an argument and removes it from `mod_connections_`. Then it removes the connection from the ModulationProcessor and AudioProcessorGraph before removing the connection's value tree from MODCONNECTION.
+3. Going back to the ModulationManager's removeModulation() function... after it calls disconnectModulation(), it calls its own modulationsChanged() function which takes care of removing the GUI components.
+
+1b) Deleting with 'CMD + z':
+
+1. When we press 'CMD + z', [SynthGuiInterface::perform()](../source/common/synth_gui_interface.cpp) will simply call [UndoManager::undo()](../JUCE/modules/juce_data_structures/undomanager/juce_UndoManager.cpp), which is implemented by JUCE and takes care of removing our connection from the ValueTree.
+2. Once the ModulationConnection is removed from the value tree, SynthBase is listening and its valueTreeChildRemoved() function gets called. This function calls disconnectModulation() and passes the value tree that got removed.
+3. This disconnectModulation() gets the connection associated with the value tree and calls the other disconnectModulation() function. This one takes a connection as an argument and removes it from `mod_connections_`. Then it removes the connection from the ModulationProcessor and AudioProcessorGraph before removing the connection's value tree from MODCONNECTION.
+4. Once this all completes successfully, valueTreeChildRemoved() calls SynthGuiInterface's notifyModulationsChanged() to remove the GUI components.
+
+1c) Deleting with deletion of the modulation preparation:
 
 
 # Undoing Preparation Dragging

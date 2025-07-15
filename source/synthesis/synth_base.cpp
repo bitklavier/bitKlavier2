@@ -357,14 +357,14 @@ bool SynthBase::isSourceConnected (const std::string& source)
 
 void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 {
-    std::string uuid;
+    std::string src_uuid;
     std::string dst_uuid;
     std::string src_modulator_uuid_and_name;
     std::string dst_param;
     std::stringstream src_stream (connection->source_name);
     std::stringstream dst_stream (connection->destination_name);
-//get src info
-    std::getline (src_stream, uuid, '_');
+    //get src info
+    std::getline (src_stream, src_uuid, '_');
     std::getline (src_stream, src_modulator_uuid_and_name, '_');
     //get dest info
     std::getline (dst_stream, dst_uuid, '_');
@@ -376,15 +376,10 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     DBG (src_modulator_uuid_and_name);
 
     //get actual value tree representations from string uuids
-
-    auto mod_src = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
-
+    auto mod_src = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (src_uuid));
     auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
-
     auto mod_connections = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS);
-
     auto mod_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
-
 
    //get backend audio graph representation from value tree
     auto source_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
@@ -392,11 +387,6 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     auto parameter_tree = mod_dst.getChildWithProperty (IDs::parameter, juce::String (dst_param));
     jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
-
-
-
-
-
 
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
@@ -417,7 +407,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index);
 
 
-//do the final backend adding
+    //do the final backend adding
     if (!parameter_tree.isValid() || !mod_src.isValid())
     {
         connection->destination_name = "";
