@@ -265,6 +265,142 @@ void TuningParametersView::showCurrentTuningType()
         showSpringTuning(false);
 }
 
+/**
+ * listen to old school bK circular keyboard slider for user changes to tuning
+ *      - when the user changes a value on that keyboard, we automatically switch to 'custom' tuning
+ */
+void TuningParametersView::keyboardSliderChanged(juce::String name)
+{
+    if (name == "circular")
+        params.tuningState.tuningSystem->setParameterValue(TuningSystem::Custom);
+}
+
+/**
+ * todo: i'm not sure if this is the best way to get the spiralView to redraw, with drawSpiral() called in paintBackground()
+ *          - but it does seem to work!
+ */
+void TuningParametersView::timerCallback(void)
+{
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->getGui()->prep_popup->repaintPrepBackground();
+}
+
+/**
+ * function for drawing all the currently active notes, with intervals between them
+ * @param spiralBox
+ *
+ * todo: rewrite this as an OpenGL shader?
+ */
+void TuningParametersView::drawSpiral(juce::Graphics& g)
+{
+    DBG("drawSpiral");
+
+    float midi, scalex, posx, radians, cx, cy;
+    float centerx = spiralBox.getWidth() * 0.5f + spiralBox.getX();
+    float centery = spiralBox.getCentreY();
+
+    float radius_scale = 0.25;
+    float radius = juce::jmin(spiralBox.getHeight() * radius_scale, spiralBox.getWidth() * radius_scale);
+    float dimc_scale = 0.05;
+    float dimc = juce::jmin(spiralBox.getHeight() * dimc_scale, spiralBox.getWidth() * dimc_scale);
+
+    float midiScale;
+
+    std::vector<float> currentFreqs;
+
+    /**
+     * draw default/anchor/tether locations (ET by default)
+     * todo: for spring tuning, update to draw locations of anchor springs
+     *          - also possibly scale thickness of "springs" from spring settings
+     */
+    for (int midi = 20; midi < 109; midi++)
+    {
+        midiScale = midi / 60.;
+        scalex = ((midi - 60.0f) / 12.0f);
+        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
+        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+        g.setColour (juce::Colours::dimgrey);
+        g.setOpacity(0.25);
+        g.fillEllipse(cx, cy, dimc, dimc);
+    }
+
+    /**
+     * draw sounding notes
+     */
+    auto& allnotes = params.tuningState.spiralNotes;
+    for (auto& p : allnotes)
+    {
+        if (p.load() < 0) continue;
+
+        midi = ftom(p.load(), params.tuningState.getGlobalTuningReference());
+        currentFreqs.emplace_back(midi); // keep track of all the current notes, for drawing lines between
+
+        midiScale = midi / 60.;
+        scalex = ((midi - 60.0f) / 12.0f);
+        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
+        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+
+        float hue = fmod(midi, 12.) / 12.;
+        juce::Colour colour (hue, 0.5f, 0.5f, 0.9f);
+        g.setColour (colour);
+        g.setOpacity(0.75);
+        g.fillEllipse(cx, cy, dimc, dimc);
+
+        int cents = (midi - round(midi)) * 100.0; // might need to update to show actual offset from anchor locations
+        g.setColour(juce::Colours::white);
+        g.setFont(14.0f);
+        g.drawText(juce::String(round(cents)), cx-dimc*0.25, cy+dimc*0.25, dimc * 1.5, dimc * 0.5, juce::Justification::centred);
+    }
+
+    /**
+     * draw lines between notes
+     */
+    if(currentFreqs.size() < 2) return;
+    for (int startFreqIndex = 0; startFreqIndex < currentFreqs.size() - 1; startFreqIndex++)
+    {
+        for (int endFreqIndex = startFreqIndex + 1; endFreqIndex < currentFreqs.size(); endFreqIndex++)
+        {
+            //draw line between startFreq and endFreq
+
+            // coordinates for first freq
+            midi = currentFreqs[startFreqIndex];
+            scalex = ((midi - 60.0f) / 12.0f);
+            midiScale = midi / 60.;
+            radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+            float cxa = centerx + cosf(radians) * radius * midiScale;
+            float cya = centery + sinf(radians) * radius * midiScale;
+
+            // save for later
+            float midiSave = midi;
+
+            // coordinates for second freq
+            midi = currentFreqs[endFreqIndex];
+            scalex = ((midi - 60.0f) / 12.0f);
+            midiScale = midi / 60.;
+            radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+            float cxb = centerx + cosf(radians) * radius * midiScale;
+            float cyb = centery + sinf(radians) * radius * midiScale;
+
+            float hue = fmod((midi + midiSave)/2., 12.) / 12.;
+            juce::Colour colour (hue, 0.5f, 0.5f, 0.25f);
+            g.setColour(colour);
+            g.drawLine(cxa, cya, cxb, cyb, 5);
+
+            int h = 10, w = 35;
+            int midX = (cxa + cxb) / 2.0; //+ xoff;
+            int midY = (cya + cyb) / 2.0; //+ yoff;
+
+            g.setColour(juce::Colours::ghostwhite);
+            g.setFont(12.0f);
+            g.setOpacity(0.7);
+            g.drawText(juce::String((int)round(100.*(midi - midiSave))), midX-dimc*0.25, midY, w, h, juce::Justification::topLeft);
+
+        }
+    }
+}
+
 void TuningParametersView::resized()
 {
     juce::Rectangle<int> area (getLocalBounds());
@@ -324,92 +460,4 @@ void TuningParametersView::resized()
     springTuningSection->setBounds(areaSpring.removeFromTop(300));
 
     SynthSection::resized();
-}
-
-/**
- * listen to old school bK circular keyboard slider for user changes to tuning
- *      - when the user changes a value on that keyboard, we automatically switch to 'custom' tuning
- */
-void TuningParametersView::keyboardSliderChanged(juce::String name)
-{
-
-    if (name == "circular")
-        params.tuningState.tuningSystem->setParameterValue(TuningSystem::Custom);
-}
-
-/**
- * todo: i'm not sure if this is the best way to get the spiralView to redraw, with drawSpiral() called in paintBackground()
- *          - but it does seem to work!
- */
-void TuningParametersView::timerCallback(void)
-{
-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    interface->getGui()->prep_popup->repaintPrepBackground();
-}
-
-/**
- * function for drawing all the currently active notes, with intervals between them
- * @param spiralBox
- *
- * todo: rewrite this as an OpenGL shader?
- */
-void TuningParametersView::drawSpiral(juce::Graphics& g)
-{
-    DBG("drawSpiral");
-
-    float midi, scalex, posx, radians, cx, cy;
-    float centerx = spiralBox.getWidth() * 0.5f + spiralBox.getX();
-    float centery = spiralBox.getCentreY();
-
-    float radius_scale = 0.25;
-    float radius = juce::jmin(spiralBox.getHeight() * radius_scale, spiralBox.getWidth() * radius_scale);
-    float dimc_scale = 0.05;
-    float dimc = juce::jmin(spiralBox.getHeight() * dimc_scale, spiralBox.getWidth() * dimc_scale);
-
-    float midiScale;
-
-    /**
-     * draw default/anchor/tether locations (ET by default)
-     * todo: for spring tuning, update to draw locations of anchor springs
-     */
-    for (int midi = 20; midi < 109; midi++)
-    {
-        midiScale = midi / 60.;
-        scalex = ((midi - 60.0f) / 12.0f);
-        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
-        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
-        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
-        g.setColour (juce::Colours::dimgrey);
-        g.setOpacity(0.25);
-        g.fillEllipse(cx, cy, dimc, dimc);
-    }
-
-    /**
-     * draw sounding notes
-     */
-    auto& allnotes = params.tuningState.spiralNotes;
-    for (auto& p : allnotes)
-    {
-        if (p.load() < 0) continue;
-
-        midi = ftom(p.load(), params.tuningState.getGlobalTuningReference());
-        //        DBG("***SPIRAL*** " + juce::String(midi));
-        midiScale = midi / 60.;
-        scalex = ((midi - 60.0f) / 12.0f);
-        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
-        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
-        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
-
-        float hue = fmod(midi, 12.) / 12.;
-        juce::Colour colour (hue, 0.5f, 0.5f, 0.9f);
-        g.setColour (colour);
-        g.setOpacity(0.75);
-        g.fillEllipse(cx, cy, dimc, dimc);
-
-        int cents = (midi - round(midi)) * 100.0; // might need to update to show actual offset from anchor locations
-        g.setColour(juce::Colours::white);
-        g.setFont(14.0f);
-        g.drawText(juce::String(round(cents)), cx-dimc*0.25, cy+dimc*0.25, dimc * 1.5, dimc * 0.5, juce::Justification::centred);
-    }
-
 }
