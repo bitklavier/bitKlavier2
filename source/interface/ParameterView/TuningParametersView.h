@@ -16,10 +16,11 @@
 #include "synth_slider.h"
 
 class AdaptiveTuningSection;
-class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener
+class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener, juce::Timer
 {
 public:
     TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param, juce::String name, OpenGlWrapper *open_gl);
+    ~TuningParametersView(){ stopTimer(); }
 
     void paintBackground(juce::Graphics& g) override
     {
@@ -28,6 +29,8 @@ public:
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
+
+        drawSpiral(g);
     }
 
     void keyboardSliderChanged(juce::String name) override;
@@ -36,6 +39,10 @@ public:
     void showAdaptiveTuning(bool show);
     void showSpringTuning(bool show);
     void showCurrentTuningType();
+
+    void timerCallback(void) override;
+    void drawSpiral(juce::Graphics& g);
+
     void resized() override;
 
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
@@ -58,6 +65,8 @@ public:
     std::shared_ptr<PlainTextComponent> lastNoteDisplay;
     std::shared_ptr<PlainTextComponent> lastIntervalDisplay;
     std::shared_ptr<PlainTextComponent> lastFrequencyDisplay;
+
+    juce::Rectangle<int> spiralBox;
 
     TuningParams& params;
 

@@ -34,7 +34,6 @@
 /**
  * TuningState is the primary struct that is shared around to get/set tuning information
  */
-//class SpringTuning;
 struct TuningState : bitklavier::StateChangeableParameter
 {
     void setKeyOffset (int midiNoteNumber, float val);
@@ -145,7 +144,6 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     float getGlobalTuningReference() const { return A4frequency; };
     TuningType getTuningType() const { return tuningType->get(); }
-    //std::array<float, 12> getTuningSystem(TuningSystem which) const { return tuningMap[TuningSystem(which)].second; } // broken, see getOffsetsFromTuningSystem()
 
     inline const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
     inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }

@@ -4,7 +4,11 @@
 
 #include "TuningParametersView.h"
 
-TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param, juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
+TuningParametersView::TuningParametersView(
+    chowdsp::PluginState& pluginState,
+    TuningParams& param,
+    juce::String name,
+    OpenGlWrapper *open_gl) : SynthSection(""), params(param)
 {
     setName("tuning");
     setLookAndFeel(DefaultLookAndFeel::instance());
@@ -220,8 +224,8 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
     circular_keyboard->addMyListener(this);
 
     showCurrentTuningType();
+    startTimer(50);
 }
-
 
 void TuningParametersView::showStaticTuning(bool show)
 {
@@ -278,6 +282,7 @@ void TuningParametersView::resized()
 
     area.removeFromLeft(title_width);
     juce::Rectangle leftHalf = area.removeFromLeft(area.getWidth() * 0.5);
+    spiralBox = area;
     leftHalf.reduce(largepadding, largepadding);
     juce::Rectangle areaSpring = leftHalf;
     juce::Rectangle areaAdaptive = leftHalf;
@@ -325,8 +330,86 @@ void TuningParametersView::resized()
  * listen to old school bK circular keyboard slider for user changes to tuning
  *      - when the user changes a value on that keyboard, we automatically switch to 'custom' tuning
  */
-void TuningParametersView::keyboardSliderChanged(juce::String name) {
+void TuningParametersView::keyboardSliderChanged(juce::String name)
+{
 
     if (name == "circular")
         params.tuningState.tuningSystem->setParameterValue(TuningSystem::Custom);
+}
+
+/**
+ * todo: i'm not sure if this is the best way to get the spiralView to redraw, with drawSpiral() called in paintBackground()
+ *          - but it does seem to work!
+ */
+void TuningParametersView::timerCallback(void)
+{
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->getGui()->prep_popup->repaintPrepBackground();
+}
+
+/**
+ * function for drawing all the currently active notes, with intervals between them
+ * @param spiralBox
+ *
+ * todo: rewrite this as an OpenGL shader?
+ */
+void TuningParametersView::drawSpiral(juce::Graphics& g)
+{
+    DBG("drawSpiral");
+
+    float midi, scalex, posx, radians, cx, cy;
+    float centerx = spiralBox.getWidth() * 0.5f + spiralBox.getX();
+    float centery = spiralBox.getCentreY();
+
+    float radius_scale = 0.25;
+    float radius = juce::jmin(spiralBox.getHeight() * radius_scale, spiralBox.getWidth() * radius_scale);
+    float dimc_scale = 0.05;
+    float dimc = juce::jmin(spiralBox.getHeight() * dimc_scale, spiralBox.getWidth() * dimc_scale);
+
+    float midiScale;
+
+    /**
+     * draw default/anchor/tether locations (ET by default)
+     * todo: for spring tuning, update to draw locations of anchor springs
+     */
+    for (int midi = 20; midi < 109; midi++)
+    {
+        midiScale = midi / 60.;
+        scalex = ((midi - 60.0f) / 12.0f);
+        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
+        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+        g.setColour (juce::Colours::dimgrey);
+        g.setOpacity(0.25);
+        g.fillEllipse(cx, cy, dimc, dimc);
+    }
+
+    /**
+     * draw sounding notes
+     */
+    auto& allnotes = params.tuningState.spiralNotes;
+    for (auto& p : allnotes)
+    {
+        if (p.load() < 0) continue;
+
+        midi = ftom(p.load(), params.tuningState.getGlobalTuningReference());
+        //        DBG("***SPIRAL*** " + juce::String(midi));
+        midiScale = midi / 60.;
+        scalex = ((midi - 60.0f) / 12.0f);
+        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
+        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+
+        float hue = fmod(midi, 12.) / 12.;
+        juce::Colour colour (hue, 0.5f, 0.5f, 0.9f);
+        g.setColour (colour);
+        g.setOpacity(0.75);
+        g.fillEllipse(cx, cy, dimc, dimc);
+
+        int cents = (midi - round(midi)) * 100.0; // might need to update to show actual offset from anchor locations
+        g.setColour(juce::Colours::white);
+        g.setFont(14.0f);
+        g.drawText(juce::String(round(cents)), cx-dimc*0.25, cy+dimc*0.25, dimc * 1.5, dimc * 0.5, juce::Justification::centred);
+    }
+
 }

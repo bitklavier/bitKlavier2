@@ -353,7 +353,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      if (currentTransposition == 0 && spiralNotes[currentlyPlayingNote].load() > 0)
              spiralNotes[currentlyPlayingNote].store(lastFrequencyTarget);
 
-     //printSpiralNotes();
+//     printSpiralNotes();
      return lastFrequencyTarget;
 }
 
