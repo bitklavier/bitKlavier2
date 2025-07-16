@@ -189,7 +189,7 @@ void SpringTuningSection::resized() {
     area.removeFromTop(smallpadding);
 
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
-    placeKnobsInArea(knobsBox, _sliders, true);
+    placeKnobsInArea(knobsBox, _sliders, false);
 
     area.removeFromTop(largepadding);
 

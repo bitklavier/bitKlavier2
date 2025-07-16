@@ -35,10 +35,12 @@ public:
 
     void paintBackground(juce::Graphics& g) override
     {
+        setLabelFont(g);
+        drawLabelForComponent(g, TRANS("cents"), offsetKnob.get());
+
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
-//        drawLabelForComponent(g, offsetKnob->getName(), offsetKnob.get());
-        drawLabelForComponent(g, TRANS("cents"), offsetKnob.get());
+
         sectionBorder.paint(g);
     }
 

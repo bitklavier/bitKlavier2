@@ -46,7 +46,6 @@ void TuningState::processStateChanges()
         else if (val1 != nullVar)
         {
             circularTuningOffset = parseFloatStringToArrayCircular<12> (val1.toString().toStdString());
-            // absoluteTuningOffset = std::array<float,128>(val1.toString().toStdString());
         }
     }
 }
@@ -530,8 +529,6 @@ float TuningState::adaptiveCalculate(int midiNoteNumber)
 
 void TuningState::adaptiveReset()
 {
-    DBG("adaptiveReset() called");
-    //adaptiveFundamentalNote = getFundamental();
     updateAdaptiveFundamentalValue(getFundamental());
     adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     adaptiveHistoryCounter = 0;
@@ -551,7 +548,6 @@ void TuningState::printSpiralNotes()
         {
             DBG("Spiral Note " + juce::String(i) + " = " + juce::String(currentFreq));
         }
-
     }
 }
 
@@ -596,12 +592,10 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
 
     if (m.isNoteOn())
     {
-        DBG("Tuning Processor Note On " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
         noteOn (channel, m.getNoteNumber(), m.getVelocity());
     }
     else if (m.isNoteOff())
     {
-        DBG("Tuning Processor Note Off " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
         noteOff (channel, m.getNoteNumber(), m.getVelocity());
     }
 }
@@ -609,6 +603,12 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
 
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    /*
+     * update state modulated components:
+     *      - the circular and absolute tuning arrays in this case
+     */
+    state.params.tuningState.processStateChanges();
+
     /*
      * increment timer for tuningType tuning cluster measurements.
      *      - will get reset elsewhere

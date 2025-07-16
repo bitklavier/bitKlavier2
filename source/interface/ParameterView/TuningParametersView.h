@@ -15,7 +15,6 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 
-class SectionBorderWrap;
 class AdaptiveTuningSection;
 class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener
 {
@@ -28,12 +27,6 @@ public:
         paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
-        for (auto& slider : _sliders) {
-            if(slider->isVisible())
-                drawLabelForComponent(g, slider->getName(), slider.get());
-//            if(offsetKnobBorder.isVisible())
-//                offsetKnobBorder.paint(g);
-        }
         paintChildrenBackgrounds(g);
     }
 
@@ -53,7 +46,7 @@ public:
     std::unique_ptr<chowdsp::ComboBoxAttachment> fundamental_attachment;
     std::unique_ptr<OpenGLComboBox> tuningtype_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> tuningtype_attachment;
-    std::unique_ptr<OpenGLAbsoluteKeyboardSlider> keyboard;
+    std::unique_ptr<OpenGLAbsoluteKeyboardSlider> absolutekeyboard;
     std::unique_ptr<OpenGLCircularKeyboardSlider> circular_keyboard;
     chowdsp::ScopedCallbackList tuningCallbacks;
 
@@ -65,8 +58,6 @@ public:
     std::shared_ptr<PlainTextComponent> lastNoteDisplay;
     std::shared_ptr<PlainTextComponent> lastIntervalDisplay;
     std::shared_ptr<PlainTextComponent> lastFrequencyDisplay;
-
-//    std::unique_ptr<SectionBorderWrap> offsetKnobBorder;
 
     TuningParams& params;
 

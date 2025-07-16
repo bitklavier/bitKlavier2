@@ -12,38 +12,9 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
 
     auto& listeners = pluginState.getParameterListeners();
 
-//    offsetKnobBorder = std::make_unique<SectionBorderWrap>(name, params.tuningState.semitoneWidthParams, listeners, *this);
-//
-//    offsetKnobBorder->sectionBorder.setName("offsetknobborder");
-//    offsetKnobBorder->sectionBorder.setText("Offset");
-//    offsetKnobBorder->sectionBorder.setTextLabelPosition(juce::Justification::centred);
-//    addSubSection(offsetKnobBorder.get());
-
-//    for ( auto &param_ : *params.getFloatParams())
-//    {
-//        if (param_->getParameterID() == "lastNote") continue; // handle this separately
-//        auto slider = std::make_unique<SynthSlider>(param_->paramID);
-//        auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
-//        addSlider(slider.get());
-//        slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-//        slider->setShowPopupOnHover(true);
-//        floatAttachments.emplace_back(std::move(attachment));
-//        _sliders.emplace_back(std::move(slider));
-//    }
-    /**
-     * todo: there is only one knob, so reduce the above, no need for the loop
-     */
-
-    /**
-     * todo: is resetting the name going to cause a problem with mods?
-     *          it seems to be the only way to get the text under the knob
-     *          to display what we need
-     */
-//     _sliders[0]->setName("cents");
-
-    keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
-    addStateModulatedComponent(keyboard.get());
-    keyboard->setName("absolute");
+    absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
+    addStateModulatedComponent(absolutekeyboard.get());
+    absolutekeyboard->setName("absolute");
 
     circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(circular_keyboard.get());
@@ -245,24 +216,21 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
         })
     };
 
+    // to listen for user changes to circular tuning, which will trigger change to 'custom' tuning system
     circular_keyboard->addMyListener(this);
+
     showCurrentTuningType();
 }
 
 
 void TuningParametersView::showStaticTuning(bool show)
 {
-    keyboard->setVisible(show);
+    tuning_combo_box->setVisible(show);
+    fundamental_combo_box->setVisible(show);
+    absolutekeyboard->setVisible(show);
     circular_keyboard->setVisible(show);
     semitoneSection->setVisible(show);
     offsetKnobSection->setVisible(show);
-
-    // this will show/hide the offset knob, which is the only thing in _sliders
-//    for (auto &ts_ : _sliders)
-//    {
-//        ts_->setVisible(show);
-////        offsetKnobBorder.setVisible(show);
-//    }
 }
 
 void TuningParametersView::showAdaptiveTuning(bool show)
@@ -291,12 +259,6 @@ void TuningParametersView::showCurrentTuningType()
         showSpringTuning(true);
     else
         showSpringTuning(false);
-
-//    /*
-//             * important call to get the backgrounds to redraw properly!
-//             */
-//    auto interface = findParentComponentOfClass<SynthGuiInterface>();
-//    interface->getGui()->prep_popup->repaintPrepBackground();
 }
 
 void TuningParametersView::resized()
@@ -320,7 +282,7 @@ void TuningParametersView::resized()
     juce::Rectangle areaSpring = leftHalf;
     juce::Rectangle areaAdaptive = leftHalf;
 
-    juce::Rectangle lastValsDisplay = leftHalf.removeFromBottom(labelsectionheight);
+    juce::Rectangle lastValsDisplay = leftHalf.removeFromBottom(labelsectionheight + smallpadding);
     lastNoteDisplay->setBounds(lastValsDisplay.removeFromLeft(lastValsDisplay.getWidth() / 3.));
     lastFrequencyDisplay->setBounds(lastValsDisplay.removeFromLeft(lastValsDisplay.getWidth() / 2.));
     lastIntervalDisplay->setBounds(lastValsDisplay);
@@ -331,7 +293,7 @@ void TuningParametersView::resized()
     tuning_combo_box->setBounds(topMenuBox.removeFromLeft(menuWidthFactor * 3.));
     fundamental_combo_box->setBounds((topMenuBox));
 
-    leftHalf.removeFromTop(largepadding);
+    leftHalf.removeFromTop(largepadding * 2);
 
     juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(circularKeyboardTargetHeight);
     if (circularKeyboardBox.getWidth() > circularKeyboardTargetWidth)
@@ -341,7 +303,7 @@ void TuningParametersView::resized()
     leftHalf.removeFromTop(largepadding);
 
     juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(circularKeyboardTargetHeight);
-    keyboard->setBounds(absoluteKeyboardBox);
+    absolutekeyboard->setBounds(absoluteKeyboardBox);
 
     leftHalf.removeFromTop(largepadding);
 
@@ -349,50 +311,20 @@ void TuningParametersView::resized()
     semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
 
     juce::Rectangle offsetKnobBox = offsetAndSemitoneBox.removeFromLeft(knobsectionheight + 30);
-//    offsetKnobBorder->setBounds(offsetKnobBox);
     offsetKnobSection->setBounds(offsetKnobBox);
-//    offsetKnobBox.reduce(largepadding, largepadding);
-//    _sliders[0]->setBounds(offsetKnobBox);
 
     areaAdaptive.removeFromTop(comboboxheight + largepadding * 2);
     areaSpring.removeFromTop(comboboxheight + largepadding * 2);
     adaptiveSection->setBounds(areaAdaptive.removeFromTop(200));
     springTuningSection->setBounds(areaSpring.removeFromTop(300));
 
-
-
-    int knob_section_height = getKnobSectionHeight();
-    int knob_y = getHeight() - knob_section_height;
-
-    int widget_margin = findValue(Skin::kWidgetMargin);
-
-    int area_width = getWidth() - 2 * title_width;
-    int envelope_height = knob_y - widget_margin;
-//    tuningtype_combo_box->setBounds(10,10, 100, 25);
-//    tuning_combo_box->setBounds(115,10,100, 25);
-//    fundamental_combo_box->setBounds(225, 10, 50,25);
-//    keyboard->setBounds(50, 200, 500, 100);
-//    circular_keyboard->setBounds(50, 50, 500, 100);
-
-    //semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 50, getKnobSectionHeight() + 50 + getTextComponentHeight() * 2);
-//    semitoneSection->setBounds(50, 350, getKnobSectionHeight() + 105, getKnobSectionHeight() + 10);
-//    DBG("semintone section h/w " + juce::String(getKnobSectionHeight() + 105) + " " + juce::String(getKnobSectionHeight() + 10));
-//    adaptiveSection->setBounds(circular_keyboard->getRight() + 20, circular_keyboard->getY(), 500, 200);
-
-//    juce::Rectangle<int> outputKnobsArea = {50, semitoneSection->getBottom() + knob_section_height, 100, 100};
-//        //bounds.removeFromTop(knob_section_height);
-//    placeKnobsInArea(outputKnobsArea, _sliders, true);
-
-    juce::Rectangle<int> springTuningBox = {adaptiveSection->getX(), adaptiveSection->getBottom() + 20, 500, 300};
-//    springTuningSection->setBounds(springTuningBox);
-
-//    lastNoteDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY(), 100, 30);
-//    lastFrequencyDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 30, 100, 30);
-//    lastIntervalDisplay->setBounds(semitoneSection->getRight() + 50, semitoneSection->getY() + 60, 100, 30);
-
     SynthSection::resized();
 }
 
+/**
+ * listen to old school bK circular keyboard slider for user changes to tuning
+ *      - when the user changes a value on that keyboard, we automatically switch to 'custom' tuning
+ */
 void TuningParametersView::keyboardSliderChanged(juce::String name) {
 
     if (name == "circular")
