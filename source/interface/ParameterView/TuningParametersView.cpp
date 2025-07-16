@@ -245,6 +245,7 @@ void TuningParametersView::showAdaptiveTuning(bool show)
 void TuningParametersView::showSpringTuning(bool show)
 {
     springTuningSection->setVisible(show);
+    params.tuningState.springTuner->setRate(params.tuningState.springTuningParams.rate->getCurrentValue(), show);
 }
 
 void TuningParametersView::showCurrentTuningType()

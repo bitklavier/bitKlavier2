@@ -72,13 +72,6 @@ SpringTuning::SpringTuning(SpringTuningParams &params, std::array<float, 12> &ci
     tetherFundamentalChanged();
     tetherStiffnessChanged();
     intervalStiffnessChanged();
-
-    /**
-     * todo: remove true here; this starts the Timer on construction, which we don't want ultimately
-     *          should only be on when spring tuning is the selected tuning
-     */
-    setRate(sparams.rate->getCurrentValue(), true);
-
 }
 
 SpringTuning::~SpringTuning()
