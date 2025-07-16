@@ -47,10 +47,6 @@
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
 
-- [ ] struggling with the UI drawing
-  - in Tuning, trying to setVisible to false and many things still lingering; spent a good bit of time trying to find solutions to no avail
-  - i did end up in FullInterface.cpp, and tried `open_gl_context_.setComponentPaintingEnabled (false);` to true and commenting out the paintBackground stuff in SemitoneWidthSection, and MANY things looked different, some things looked better, and the hiding/visibility issue went away, but i gather there are other complications?
-  - interesting: when i do this change, the border around Semitone Width is no longer blurry.
 - [ ] for the serializer/deserializers in TuningProcessor.cpp, take a look at my todo questions in the .cpp file
   - i think we don't need to serialize the circularTuningOffset arrays, but we do need to serialize the circularTuningOffset_custom array, yes?
 - [ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
@@ -58,10 +54,15 @@ and hopefully with answers included here for the record!
 - [ ] check on Mods with Direct; are they working for all params? do they save?
   - need to be tested and fixed
   - let's prioritize this, for Direct and Tuning
-- [ ] i’m not clear when we need to create and run processStateChanges for params
+- [x] i’m not clear when we need to create and run processStateChanges for params
   - this for ui sections, where we don't do audio-rate mods, just param-state mods, and want to change the whole thing
     - for instance, the transposition slider: we're going to change all those values at once, and try to change them individually continuously
     - the mod stuff is complicated and needs a full section in this doc!
+- [x] struggling with the UI drawing
+  - in Tuning, trying to setVisible to false and many things still lingering; spent a good bit of time trying to find solutions to no avail
+  - solution in tuningType combo menu lambda callback:
+    - `auto interface = findParentComponentOfClass<SynthGuiInterface>();`
+    - `interface->getGui()->prep_popup->repaintPrepBackground();`
 - [x] what’s up with the `initializer_lists` in TuningProcessor.h, like `chowdsp::EnumChoiceParameter<PitchClass>`? 
   - these looks strange but the `initializer_lists` provide substitution patterns for text
     - `{ '_', ' ' }, { '1', '/' }` means _ will be replaced by a space, and 1 will replaced by a /
