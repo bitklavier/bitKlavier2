@@ -17,6 +17,7 @@
 #include "SemitoneWidthParams.h"
 #include "AdaptiveTuningParams.h"
 #include "SpringTuningParams.h"
+#include "OffsetKnobParam.h"
 #include "SpringTuning/SpringTuning.h"
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
@@ -111,18 +112,18 @@ struct TuningState : bitklavier::StateChangeableParameter
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
-    /**
-     * offset of tuning system (cents)
-     */
-    chowdsp::FloatParameter::Ptr offSet {
-        juce::ParameterID { "offSet", 100 },
-        "Offset",
-        chowdsp::ParamUtils::createNormalisableRange (-100.0f, 100.0f, 0.0f),
-        0.0f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal,
-        true
-    };
+//    /**
+//     * offset of tuning system (cents)
+//     */
+//    chowdsp::FloatParameter::Ptr offSet {
+//        juce::ParameterID { "offSet", 100 },
+//        "Offset",
+//        chowdsp::ParamUtils::createNormalisableRange (-100.0f, 100.0f, 0.0f),
+//        0.0f,
+//        &chowdsp::ParamUtils::floatValToString,
+//        &chowdsp::ParamUtils::stringToFloatVal,
+//        true
+//    };
 
     /**
      * for keeping track of the tuning of the last note played
@@ -139,6 +140,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     AdaptiveTuningParams adaptiveParams;
     SemitoneWidthParams semitoneWidthParams;
     SpringTuningParams springTuningParams;
+    OffsetKnobParam offsetKnobParam;
     std::unique_ptr<SpringTuning> springTuner;
 
 
@@ -190,10 +192,11 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.fundamental,
             tuningState.tuningType,
             tuningState.semitoneWidthParams,
-            tuningState.offSet,
+//            tuningState.offSet,
             tuningState.lastNote,
             tuningState.adaptiveParams,
-            tuningState.springTuningParams);
+            tuningState.springTuningParams,
+            tuningState.offsetKnobParam);
 
         tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
     }

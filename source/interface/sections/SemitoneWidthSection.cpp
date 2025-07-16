@@ -40,7 +40,7 @@ SemitoneWidthSection::~SemitoneWidthSection() { }
 void SemitoneWidthSection::paintBackground(juce::Graphics& g) {
 
     setLabelFont(g);
-    drawLabelForComponent(g, TRANS("Cents"), widthSlider_.get());
+    drawLabelForComponent(g, TRANS("cents"), widthSlider_.get());
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);

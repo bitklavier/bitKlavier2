@@ -12,24 +12,24 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
 
     auto& listeners = pluginState.getParameterListeners();
 
-    offsetKnobBorder = std::make_unique<SectionBorderWrap>(name, params.tuningState.semitoneWidthParams, listeners, *this);
+//    offsetKnobBorder = std::make_unique<SectionBorderWrap>(name, params.tuningState.semitoneWidthParams, listeners, *this);
+//
+//    offsetKnobBorder->sectionBorder.setName("offsetknobborder");
+//    offsetKnobBorder->sectionBorder.setText("Offset");
+//    offsetKnobBorder->sectionBorder.setTextLabelPosition(juce::Justification::centred);
+//    addSubSection(offsetKnobBorder.get());
 
-    offsetKnobBorder->sectionBorder.setName("offsetknobborder");
-    offsetKnobBorder->sectionBorder.setText("Offset");
-    offsetKnobBorder->sectionBorder.setTextLabelPosition(juce::Justification::centred);
-    addSubSection(offsetKnobBorder.get());
-
-    for ( auto &param_ : *params.getFloatParams())
-    {
-        if (param_->getParameterID() == "lastNote") continue; // handle this separately
-        auto slider = std::make_unique<SynthSlider>(param_->paramID);
-        auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
-        addSlider(slider.get());
-        slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-        slider->setShowPopupOnHover(true);
-        floatAttachments.emplace_back(std::move(attachment));
-        _sliders.emplace_back(std::move(slider));
-    }
+//    for ( auto &param_ : *params.getFloatParams())
+//    {
+//        if (param_->getParameterID() == "lastNote") continue; // handle this separately
+//        auto slider = std::make_unique<SynthSlider>(param_->paramID);
+//        auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
+//        addSlider(slider.get());
+//        slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+//        slider->setShowPopupOnHover(true);
+//        floatAttachments.emplace_back(std::move(attachment));
+//        _sliders.emplace_back(std::move(slider));
+//    }
     /**
      * todo: there is only one knob, so reduce the above, no need for the loop
      */
@@ -39,7 +39,7 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
      *          it seems to be the only way to get the text under the knob
      *          to display what we need
      */
-     _sliders[0]->setName("cents");
+//     _sliders[0]->setName("cents");
 
     keyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(keyboard.get());
@@ -57,6 +57,9 @@ TuningParametersView::TuningParametersView(chowdsp::PluginState& pluginState, Tu
 
     springTuningSection = std::make_unique<SpringTuningSection>(name, params.tuningState.springTuningParams, listeners, *this);
     addSubSection(springTuningSection.get());
+
+    offsetKnobSection = std::make_unique<OffsetKnobSection>(name, params.tuningState.offsetKnobParam, listeners, *this);
+    addSubSection(offsetKnobSection.get());
 
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
@@ -252,14 +255,14 @@ void TuningParametersView::showStaticTuning(bool show)
     keyboard->setVisible(show);
     circular_keyboard->setVisible(show);
     semitoneSection->setVisible(show);
-    offsetKnobBorder->setVisible(show);
+    offsetKnobSection->setVisible(show);
 
     // this will show/hide the offset knob, which is the only thing in _sliders
-    for (auto &ts_ : _sliders)
-    {
-        ts_->setVisible(show);
-//        offsetKnobBorder.setVisible(show);
-    }
+//    for (auto &ts_ : _sliders)
+//    {
+//        ts_->setVisible(show);
+////        offsetKnobBorder.setVisible(show);
+//    }
 }
 
 void TuningParametersView::showAdaptiveTuning(bool show)
@@ -346,9 +349,10 @@ void TuningParametersView::resized()
     semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
 
     juce::Rectangle offsetKnobBox = offsetAndSemitoneBox.removeFromLeft(knobsectionheight + 30);
-    offsetKnobBorder->setBounds(offsetKnobBox);
-    offsetKnobBox.reduce(largepadding, largepadding);
-    _sliders[0]->setBounds(offsetKnobBox);
+//    offsetKnobBorder->setBounds(offsetKnobBox);
+    offsetKnobSection->setBounds(offsetKnobBox);
+//    offsetKnobBox.reduce(largepadding, largepadding);
+//    _sliders[0]->setBounds(offsetKnobBox);
 
     areaAdaptive.removeFromTop(comboboxheight + largepadding * 2);
     areaSpring.removeFromTop(comboboxheight + largepadding * 2);

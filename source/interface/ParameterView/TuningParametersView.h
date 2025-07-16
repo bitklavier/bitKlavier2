@@ -5,15 +5,15 @@
 #ifndef BITKLAVIER2_TUNINGPARAMETERSVIEW_H
 #define BITKLAVIER2_TUNINGPARAMETERSVIEW_H
 
+#include "AdaptiveTuningSection.h"
+#include "OffsetKnobSection.h"
+#include "OpenGL_AbsoluteKeyboardSlider.h"
+#include "SemitoneWidthSection.h"
+#include "SpringTuningSection.h"
+#include "TuningProcessor.h"
+#include "open_gl_combo_box.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-#include "open_gl_combo_box.h"
-#include "OpenGL_AbsoluteKeyboardSlider.h"
-#include "TuningProcessor.h"
-#include "SemitoneWidthSection.h"
-#include "AdaptiveTuningSection.h"
-#include "SpringTuningSection.h"
-#include "SectionBorderWrap.h"
 
 class SectionBorderWrap;
 class AdaptiveTuningSection;
@@ -60,12 +60,13 @@ public:
     std::unique_ptr<SemitoneWidthSection> semitoneSection;
     std::unique_ptr<AdaptiveTuningSection> adaptiveSection;
     std::unique_ptr<SpringTuningSection> springTuningSection;
+    std::unique_ptr<OffsetKnobSection> offsetKnobSection;
 
     std::shared_ptr<PlainTextComponent> lastNoteDisplay;
     std::shared_ptr<PlainTextComponent> lastIntervalDisplay;
     std::shared_ptr<PlainTextComponent> lastFrequencyDisplay;
 
-    std::unique_ptr<SectionBorderWrap> offsetKnobBorder;
+//    std::unique_ptr<SectionBorderWrap> offsetKnobBorder;
 
     TuningParams& params;
 
