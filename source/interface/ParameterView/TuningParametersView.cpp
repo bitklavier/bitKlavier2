@@ -293,7 +293,7 @@ void TuningParametersView::timerCallback(void)
  */
 void TuningParametersView::drawSpiral(juce::Graphics& g)
 {
-    float midi, scalex, radians, cx, cy;
+    float midi, scalex,radians, cx, cy;
     float centerx = spiralBox.getWidth() * 0.5f + spiralBox.getX();
     float centery = spiralBox.getCentreY();
 
@@ -354,6 +354,7 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
 
     /**
      * draw lines between notes
+     * todo: could optimize this a bit, since we are recalculating center points and so on....
      */
     if(currentFreqs.size() < 2) return;
     for (int startFreqIndex = 0; startFreqIndex < currentFreqs.size() - 1; startFreqIndex++)
