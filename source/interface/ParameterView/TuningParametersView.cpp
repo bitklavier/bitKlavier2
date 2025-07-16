@@ -293,9 +293,7 @@ void TuningParametersView::timerCallback(void)
  */
 void TuningParametersView::drawSpiral(juce::Graphics& g)
 {
-    DBG("drawSpiral");
-
-    float midi, scalex, posx, radians, cx, cy;
+    float midi, scalex, radians, cx, cy;
     float centerx = spiralBox.getWidth() * 0.5f + spiralBox.getX();
     float centery = spiralBox.getCentreY();
 
