@@ -3,7 +3,7 @@
 //
 
 #include "TuningParametersView.h"
-
+#include "SpringTuning/SpringTuning.h"
 TuningParametersView::TuningParametersView(
     chowdsp::PluginState& pluginState,
     TuningParams& param,

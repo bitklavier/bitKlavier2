@@ -181,8 +181,7 @@ void SpringTuning::tetherFundamentalChanged()
 {
     updateTetherTuning();
 }
-
-inline void SpringTuning::setRate(double r, bool start)
+void SpringTuning::setRate(double r, bool start)
 {
     if (start) {
         startTimer(1000 / sparams.rate->getCurrentValue());

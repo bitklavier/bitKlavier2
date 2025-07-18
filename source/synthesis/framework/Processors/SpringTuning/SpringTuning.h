@@ -64,7 +64,7 @@ public:
     void tetherScaleChanged();
     void tetherFundamentalChanged();
 
-    inline void setRate(double r, bool start = true);
+    void setRate(double r, bool start = true);
     inline void setActive(bool status);
 
     void simulate();
