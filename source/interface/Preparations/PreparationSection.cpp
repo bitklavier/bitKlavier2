@@ -183,6 +183,10 @@ void PreparationSection::setPortInfo() {
 
 void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
+    //todo investigate need for this only in release build
+    if(e.getNumberOfClicks() == 2) {
+        mouseDoubleClick(e);
+    }
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {

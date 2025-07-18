@@ -132,7 +132,7 @@ SpringTuningSection::SpringTuningSection (
     addAndMakeVisible(sectionBorder);
 }
 
-SpringTuningSection::~SpringTuningSection() { }
+SpringTuningSection::~SpringTuningSection() {}
 
 void SpringTuningSection::paintBackground(juce::Graphics& g) {
 

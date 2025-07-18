@@ -25,6 +25,7 @@
 #include "FullInterface.h"
 #include "modulation_manager.h"
 #include "PreparationSection.h"
+#include "TuningParametersView.h"
 
 namespace {
     template<class Comparator>
@@ -1146,22 +1147,41 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
     resized();
     repaintPrepBackground();
 }
+
+void PreparationPopup::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
+    juce::ScopedLock lock(mylock);
+    SynthSection::renderOpenGlComponents(open_gl,animate);
+}
+
 void PreparationPopup::reset() {
-    setVisible(false);
+
     auto* parent = findParentComponentOfClass<SynthGuiInterface>();
     all_synth_buttons_.clear();
     all_sliders_.clear();
     all_modulation_buttons_.clear();
     all_state_modulated_components.clear();
-    if (prep_view.get() != nullptr) {
+    if (prep_view != nullptr) {
+        /* needed to solve weird button drawn crash*/
+        if (auto *a = dynamic_cast<TuningParametersView*>(prep_view.get())) {
+            a->springTuningSection->setVisible(true);
+            a->adaptiveSection->setVisible(true);
+            resized();
+            repaintPrepBackground();
+        }
+
+
+
         prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
+        juce::ScopedLock lock(mylock);
         removeSubSection(prep_view.get());
         //do not use ->reset that is a synthsection function. i want to reset the actual ptr
         prep_view.reset();
+        setVisible(false);
+
     }
 
     parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
-    repaintPrepBackground();
+    // repaintPrepBackground();
 }
 
 void PreparationPopup::buttonClicked(juce::Button *clicked_button)
