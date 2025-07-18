@@ -92,9 +92,12 @@ BKItem (bitklavier::BKPreparationType type);
         prep_color_ = col;
     }
     bool hitTest(int x, int y) override {
-        layer_1_.contains(x, y);
+       return layer_1_.contains(x, y);
     }
-//
+    void mouseDown(const juce::MouseEvent &event) override;
+    void mouseDrag(const juce::MouseEvent &event) override;
+    void mouseUp(const juce::MouseEvent &event) override;
+    void mouseDoubleClick(const juce::MouseEvent &event) override;
         float size_ratio;
 
     juce::Path layer_1_;

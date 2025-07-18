@@ -25,6 +25,7 @@
 #include "FullInterface.h"
 #include "modulation_manager.h"
 #include "PreparationSection.h"
+#include "TuningParametersView.h"
 
 namespace {
     template<class Comparator>
@@ -1143,7 +1144,10 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
 
     prep_view->setSkinValues(default_skin,false);
     prep_view->setAlwaysOnTop(true);
+
     resized();
+    repaintPrepBackground();
+
     repaintPrepBackground();
 }
 void PreparationPopup::reset() {
@@ -1154,7 +1158,9 @@ void PreparationPopup::reset() {
     all_modulation_buttons_.clear();
     all_state_modulated_components.clear();
     if (prep_view.get() != nullptr) {
+
         prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
+
         removeSubSection(prep_view.get());
         //do not use ->reset that is a synthsection function. i want to reset the actual ptr
         prep_view.reset();

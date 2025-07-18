@@ -3,7 +3,7 @@
 //
 
 #include "TuningParametersView.h"
-
+#include "SpringTuning/SpringTuning.h"
 TuningParametersView::TuningParametersView(
     chowdsp::PluginState& pluginState,
     TuningParams& param,
@@ -224,6 +224,8 @@ TuningParametersView::TuningParametersView(
     circular_keyboard->addMyListener(this);
 
     showCurrentTuningType();
+    // springTuningSection->setVisible(false);
+    // adaptiveSection->setVisible(false);
     startTimer(50);
 }
 

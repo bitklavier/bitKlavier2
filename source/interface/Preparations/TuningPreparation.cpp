@@ -35,8 +35,11 @@ TuningPreparation::TuningPreparation( juce::ValueTree v, OpenGlWrapper& open_gl,
 std::unique_ptr<SynthSection> TuningPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
-        if (auto* proc = dynamic_cast<TuningProcessor*> (getProcessor()))
-            return std::make_unique<TuningParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+        if (auto* proc = dynamic_cast<TuningProcessor*> (getProcessor())) {
+            auto ptr = std::make_unique<TuningParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+            // ptr->showCurrentTuningType();
+            return std::move(ptr);
+        }
 
     return nullptr;
 }

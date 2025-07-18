@@ -20,7 +20,7 @@ class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listen
 {
 public:
     TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param, juce::String name, OpenGlWrapper *open_gl);
-    ~TuningParametersView(){ stopTimer(); }
+    ~TuningParametersView(){ stopTimer();}
 
     void paintBackground(juce::Graphics& g) override
     {

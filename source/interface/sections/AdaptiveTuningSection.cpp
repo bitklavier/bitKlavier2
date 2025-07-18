@@ -51,13 +51,13 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     useInversionOfIntervalScale_Toggle = std::make_unique<SynthButton>(params.tAdaptiveInversional->paramID);
     useInversionOfIntervalScale_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(params.tAdaptiveInversional,listeners,*useInversionOfIntervalScale_Toggle,nullptr);
     useInversionOfIntervalScale_Toggle->setComponentID(params.tAdaptiveInversional->paramID);
-    addSynthButton(useInversionOfIntervalScale_Toggle.get(), true);
+    // addSynthButton(useInversionOfIntervalScale_Toggle.get(), true);
     useInversionOfIntervalScale_Toggle->setText("invert?");
 
     resetButton = std::make_unique<SynthButton>("reset");
     resetButton_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.tReset,listeners,*resetButton,nullptr);
     resetButton->setComponentID("reset");
-    addSynthButton(resetButton.get(), true);
+    // addSynthButton(resetButton.get(), true);
     resetButton->setText("reset!");
     resetButton->setToggleable(true); // this one is just to trigger a reset to the adaptive system
 

@@ -62,37 +62,14 @@ SpringTuningSection::SpringTuningSection (
     for ( auto &param_ : *params.getBoolParams())
     {
         if(param_->paramID.startsWith("useLocalOrFundamental_")){
-            auto button = std::make_unique<SynthButton>(param_->paramID);
+            auto button = std::make_unique<OpenGlToggleButton>(param_->paramID);
 //            SynthButton* currentButtonPtr = button.get(); // for use in the onStateChange lambda below
             auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_,listeners, *button, nullptr);
             button->setComponentID(param_->paramID);
-            addSynthButton(button.get(), true);
-            button->setButtonText("F");
-            button->setHelpText("use the Current Fundamental to determine default interval spring lengths?");
-
-            /*
-             * this all seems to work as expected, but the setButtonText never actually does its thing
-             */
-//            // Attach the lambda, capturing the raw pointer to the current button
-//            button->onClick = [currentButtonPtr]()
-//            {
-//                // Now, currentState refers to the state of THIS specific button
-//                // For a ToggleButton, getToggleState() is more relevant for 'on'/'off' status
-//                bool isToggledOn = currentButtonPtr->getToggleState();
-//                juce::Logger::writeToLog("Button " + currentButtonPtr->getComponentID() + " is toggled: " + juce::String((int)isToggledOn));
-//
-//                // Change text based on toggle state
-//                if (isToggledOn)
-//                {
-//                    DBG("setting button text to On");
-//                    currentButtonPtr->setButtonText("On");
-//                }
-//                else
-//                {
-//                    DBG("setting button text to Off");
-//                    currentButtonPtr->setButtonText("Off");
-//                }
-//            };
+            // addOpenGlComponent(button->getGlComponent());
+            addToggleButton(button.get(), true);
+            // button->setButtonText("F");
+            // button->setHelpText("use the Current Fundamental to determine default interval spring lengths?");
 
             useLocalOrFundamentalToggles_sliderAttachments.emplace_back(std::move(button_ToggleAttachment));
             useLocalOrFundamentalToggles.emplace_back(std::move(button));
@@ -136,22 +113,22 @@ SpringTuningSection::~SpringTuningSection() { }
 
 void SpringTuningSection::paintBackground(juce::Graphics& g) {
 
-    setLabelFont(g);
-
-    for (auto& slider : _sliders)
-    {
-        drawLabelForComponent (g, slider->getName(), slider.get());
-    }
-
-    for (auto& slider : intervalWeightSliders)
-    {
-        drawLabelForComponent (g, slider->getName(), slider.get());
-    }
-
-    paintKnobShadows(g);
-    paintChildrenBackgrounds(g);
-
-    sectionBorder.paint(g);
+    // setLabelFont(g);
+    //
+    // for (auto& slider : _sliders)
+    // {
+    //     drawLabelForComponent (g, slider->getName(), slider.get());
+    // }
+    //
+    // for (auto& slider : intervalWeightSliders)
+    // {
+    //     drawLabelForComponent (g, slider->getName(), slider.get());
+    // }
+    //
+    // paintKnobShadows(g);
+    // paintChildrenBackgrounds(g);
+    //
+    // sectionBorder.paint(g);
 }
 
 void SpringTuningSection::resized() {
