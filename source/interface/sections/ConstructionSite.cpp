@@ -18,7 +18,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                          undo(um),
                                                          open_gl(open_gl),
                                                          cableView(*this, um,data),
-                                                         modulationLineView(*this, um),
+                                                         modulationLineView(*this, um,data),
                                                          preparationSelector(*this), parent(v),
                                                         commandManager (_manager)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
@@ -372,7 +372,6 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 
 
-    modulationLineView.deleteConnectionsWithId(wrapper->node_id);
 
     //cleanup opengl
     {
@@ -644,4 +643,5 @@ void ConstructionSite::setActivePiano() {
     prep_list->rebuildAllGui();
 
     cableView.setActivePiano();
+    modulationLineView.setActivePiano();
 }

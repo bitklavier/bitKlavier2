@@ -22,8 +22,6 @@
 #include <set>
 #include <string>
 #include "midi_manager.h"
-#include <set>
-#include <string>
 #include "ModulationConnection.h"
 #include "circular_queue.h"
 #include "ModulatorBase.h"
@@ -34,6 +32,7 @@ class BKSamplerSound;
 class PreparationList;
 namespace bitklavier {
   class ConnectionList;
+  class ModConnectionList;
 }
 #include "PluginScannerSubprocess.h"
 class SynthBase :  public juce::ValueTree::Listener {
@@ -164,11 +163,13 @@ protected:
   //order matters here to ensure preparationLists are destroyed before connectionLists
   std::vector<std::unique_ptr<bitklavier::ConnectionList>> connectionLists;
   std::vector<std::unique_ptr<PreparationList>> preparationLists;
+  std::vector<std::unique_ptr<bitklavier::ModConnectionList>> mod_connection_lists_;
 
 public:
   PreparationList* getActivePreparationList() ;
   bitklavier::ConnectionList* getActiveConnectionList() ;
-
+  bitklavier::ModConnectionList* getActiveModConnectionList() ;
+  juce::ValueTree activePiano;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)
 };
 

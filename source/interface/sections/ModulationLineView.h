@@ -6,13 +6,14 @@
 #define BITKLAVIER2_MODULATIONLINEVIEW_H
 #include "PreparationSection.h"
 #include "ModulationLine.h"
+#include "ObjectLists/ModConnectionsList.h"
 class ConstructionSite;
 class ModulationLineView : public PreparationSection::Listener,
-                            public SynthSection,
-                           public tracktion::engine::ValueTreeObjectList<ModulationLine>
+                            public SynthSection, public bitklavier::ModConnectionList::Listener
+
 {
 public:
-    explicit ModulationLineView(ConstructionSite &site, juce::UndoManager& um);
+    explicit ModulationLineView(ConstructionSite &site, juce::UndoManager& um,SynthGuiData* data);
     ~ModulationLineView();
     ConstructionSite &site;
 
@@ -40,33 +41,19 @@ public:
     void modulationDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void resetDropped(const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) override;
-
+    void modConnectionAdded(bitklavier::ModConnection *) override;
+    void modConnectionListChanged() override;
+    void removeModConnection(bitklavier::ModConnection *) override;
 
     void _update() override;
 
     juce::UndoManager& undoManager;
-    void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
-
-
-
-    ///valutreeobectlist:
-    ModulationLine* createNewObject(const juce::ValueTree& v) override;
-    void deleteObject (ModulationLine* at) override;
-
-
-    void newObjectAdded (ModulationLine*) override;
-    void objectRemoved (ModulationLine*) override     { resized();}//resized(); }
-    void objectOrderChanged() override              {resized(); }//resized(); }
-    // void valueTreeParentChanged (juce::ValueTree&) override;
-    void valueTreeRedirected (juce::ValueTree&) override ;
-    void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override {
-        tracktion::engine::ValueTreeObjectList<ModulationLine>::valueTreePropertyChanged(v, i);
-    }
-    bool isSuitableType (const juce::ValueTree& v) const override
-    {
-        return v.hasType (IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION) || v.hasType(IDs::RESETCONNECTION);
-    }
+    // void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
+    void setActivePiano();
+    juce::Array<ModulationLine*> objects;
+    bitklavier::ModConnectionList* connection_list;
     juce::CriticalSection open_gl_lock;
+    juce::ValueTree mod_connections_vt;
 };
 
 #endif //BITKLAVIER2_MODULATIONLINEVIEW_H

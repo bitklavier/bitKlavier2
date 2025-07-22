@@ -6,7 +6,11 @@
 #include "chowdsp_listeners/chowdsp_listeners.h"
 
 namespace bitklavier {
-    void ConnectionList::deleteObject(Connection *) {
+    void ConnectionList::deleteObject(Connection *c) {
+        synth.removeConnection(c->connection);
+        for (auto listener: listeners_) {
+            listener->removeConnection(c);
+        }
     }
 
     void ConnectionList::newObjectAdded(Connection *c) {

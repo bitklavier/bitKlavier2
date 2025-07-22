@@ -192,6 +192,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else if (clicked_button == addPianoButton.get()) {
         // auto interface = findParentComponentOfClass<SynthGuiInterface>();
         // interface->addPiano(
+        // create new piano with active parameter true or 1
         juce::ValueTree piano{IDs::PIANO};
         piano.setProperty(IDs::isActive, true, nullptr);
         piano.setProperty(IDs::name, "new piano", nullptr);
@@ -202,6 +203,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         piano.appendChild(preparations, nullptr);
         piano.appendChild(connections, nullptr);
         piano.appendChild(modconnections, nullptr);
+        //set all current pianos to be inactive or isActive parameter 0
         for (auto vt: gallery) {
             if (vt.hasType(IDs::PIANO)) {
                 vt.setProperty(IDs::isActive, 0, nullptr);

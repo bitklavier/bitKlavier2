@@ -238,12 +238,11 @@ void CableView::removeConnection(bitklavier::Connection *c) {
    {
         if (obj->state == c->state) {
             at = obj;
+            break;
         }
        index++;
    }
-    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
 
-    _parent->getSynth()->removeConnection(at->connection);
 
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {

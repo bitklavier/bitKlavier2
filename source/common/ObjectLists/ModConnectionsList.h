@@ -2,16 +2,16 @@
 // Created by Davis Polito on 7/15/25.
 //
 
-#ifndef CONNECTIONSLIST_H
-#define CONNECTIONSLIST_H
+#ifndef ModConnectionSLIST_H
+#define ModConnectionSLIST_H
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Identifiers.h"
 #include "tracktion_ValueTreeUtilities.h"
 #include "synth_base.h"
 namespace bitklavier {
-    class Connection {
+    class ModConnection {
     public:
-        Connection(const juce::ValueTree &v) : state(v) {
+        ModConnection(const juce::ValueTree &v) : state(v) {
             connection.source = {
                 juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::src)),
                 v.getProperty(IDs::srcIdx)
@@ -29,22 +29,22 @@ namespace bitklavier {
         juce::CachedValue<juce::AudioProcessorGraph::NodeID> src_id;
         juce::CachedValue<juce::AudioProcessorGraph::NodeID> dest_id;
     };
-    class ConnectionList : public tracktion::engine::ValueTreeObjectList<Connection> {
+    class ModConnectionList : public tracktion::engine::ValueTreeObjectList<ModConnection> {
     public:
-        ConnectionList(SynthBase& parent, const juce::ValueTree& v) : ValueTreeObjectList(v),synth(parent) {
-            jassert(v.hasType(IDs::CONNECTIONS) || v.hasType(IDs::MODCONNECTIONS));
+        ModConnectionList(SynthBase& parent, const juce::ValueTree& v) : ValueTreeObjectList(v),synth(parent) {
+        jassert(v.hasType(IDs::MODCONNECTIONS));
         }
-        ~ConnectionList() {freeObjects();}
+        ~ModConnectionList() {freeObjects();}
         class Listener {
         public:
             virtual ~Listener() {}
-            virtual void connectionListChanged() = 0;
-            virtual void connectionAdded(Connection*) = 0;
-            virtual void removeConnection(Connection*) = 0;
+            virtual void modConnectionListChanged() = 0;
+            virtual void modConnectionAdded(ModConnection*) = 0;
+            virtual void removeModConnection(ModConnection*) = 0;
         };
         bool isSuitableType (const juce::ValueTree& v) const override
         {
-            return v.hasType (IDs::CONNECTION) || v.hasType(IDs::MODCONNECTION);
+            return v.hasType(IDs::RESETCONNECTION) || v.hasType(IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION);
         }
         void addListener (Listener* l) { listeners_.push_back (l); }
 
@@ -52,10 +52,10 @@ namespace bitklavier {
                     std::remove(listeners_.begin(), listeners_.end(), l),
                     listeners_.end());
         }
-        Connection* createNewObject(const juce::ValueTree&) override;
-        void deleteObject (Connection*) override;
-        void newObjectAdded (Connection*) override;
-        void objectRemoved (Connection*) override {};     //resized(); }
+        ModConnection* createNewObject(const juce::ValueTree&) override;
+        void deleteObject (ModConnection*) override;
+        void newObjectAdded (ModConnection*) override;
+        void objectRemoved (ModConnection*) override {};     //resized(); }
         void objectOrderChanged() override              { }//resized(); }
         void valueTreeParentChanged (juce::ValueTree&) override;
         void valueTreeRedirected (juce::ValueTree&) override ;
@@ -64,12 +64,12 @@ namespace bitklavier {
         void deleteAllGui() {
             for (auto obj: objects)
                 for (auto listener: listeners_)
-                    listener->removeConnection(obj) ;
+                    listener->removeModConnection(obj) ;
         }
         void rebuildAllGui() {
             for (auto obj: objects)
                 for (auto listener: listeners_)
-                    listener->connectionAdded(obj);
+                    listener->modConnectionAdded(obj);
         }
         const juce::ValueTree& getValueTree() const {
             return parent;
@@ -84,4 +84,4 @@ namespace bitklavier {
 
 
 
-#endif //CONNECTIONSLIST_H
+#endif //ModConnectionSLIST_H
