@@ -47,6 +47,16 @@ void SemitoneWidthSection::paintBackground(juce::Graphics& g) {
     sectionBorder.paint(g);
 }
 
+void SemitoneWidthSection::setAlpha(float newAlpha)
+{
+    widthSlider_->setAlpha(newAlpha);
+    widthSlider_->redoImage();
+    fundamentalComboBox->setAlpha(newAlpha);
+    fundamentalComboBox->redoImage();
+    octaveComboBox->setAlpha(newAlpha);
+    octaveComboBox->redoImage();
+}
+
 void SemitoneWidthSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());

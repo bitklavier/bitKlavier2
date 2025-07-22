@@ -22,6 +22,7 @@ public:
 
     virtual ~SemitoneWidthSection();
 
+    void setAlpha(float newAlpha);
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
 

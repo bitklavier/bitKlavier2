@@ -70,7 +70,6 @@ TuningParametersView::TuningParametersView(
              */
             auto interface = findParentComponentOfClass<SynthGuiInterface>();
             interface->getGui()->prep_popup->repaintPrepBackground();
-
         })
     };
 
@@ -234,6 +233,7 @@ void TuningParametersView::showStaticTuning(bool show)
      * opening or closing the Tuning prep popup. we haven't been able to figure them
      * out so far; are maybe in the button code, perhaps in render somewhere.
      * workaround for now is to show all the components, and change their alpha instead
+     * part of the fix was also in PreparationPopup::reset()
      */
 //    tuning_combo_box->setVisible(show);
 //    fundamental_combo_box->setVisible(show);
@@ -241,44 +241,54 @@ void TuningParametersView::showStaticTuning(bool show)
 //    circular_keyboard->setVisible(show);
 //    semitoneSection->setVisible(show);
 //    offsetKnobSection->setVisible(show);
-    if(show)
-    {
-        tuning_combo_box->setAlpha(1.);
-        fundamental_combo_box->setAlpha(1.);
-        absolutekeyboard->setAlpha(1.);
-        circular_keyboard->setAlpha(1.);
-        semitoneSection->setAlpha(1.);
-        offsetKnobSection->setAlpha(1.);
-    }
-    else
-    {
-        tuning_combo_box->setAlpha(0.25);
-        fundamental_combo_box->setAlpha(0.25);
-        absolutekeyboard->setAlpha(0.25);
-        circular_keyboard->setAlpha(0.25);
-        semitoneSection->setAlpha(0.25);
-        offsetKnobSection->setAlpha(0.25);
-    }
+
+    /**
+     * the "setAlpha" approach is also a bit of a pain for subsections, leave for later
+     */
+//    if(show)
+//    {
+//        tuning_combo_box->setAlpha(1.);
+//        fundamental_combo_box->setAlpha(1.);
+//        absolutekeyboard->setAlpha(1.);
+//        circular_keyboard->setAlpha(1.);
+//        semitoneSection->setAlpha(1.);
+//        offsetKnobSection->setAlpha(1.);
+//    }
+//    else
+//    {
+//        tuning_combo_box->setAlpha(0.25);
+//        fundamental_combo_box->setAlpha(0.25);
+//        absolutekeyboard->setAlpha(0.25);
+//        circular_keyboard->setAlpha(0.25);
+//        semitoneSection->setAlpha(0.25);
+//        offsetKnobSection->setAlpha(0.25);
+//    }
+//
+//    tuning_combo_box->redoImage();
+//    fundamental_combo_box->redoImage();
+//    absolutekeyboard->redoImage();
+//    circular_keyboard->redoImage();
+//    offsetKnobSection->redoImage();
 }
 
 void TuningParametersView::showAdaptiveTuning(bool show)
 {
 //    adaptiveSection->setVisible(show);
-    if(show) adaptiveSection->setAlpha(1.);
-    else adaptiveSection->setAlpha(0.25);
+//    if(show) adaptiveSection->setAlpha(1.);
+//    else adaptiveSection->setAlpha(0.25);
 }
 
 void TuningParametersView::showSpringTuning(bool show)
 {
-    if(show)
-    {
-//        springTuningSection->setVisible (show);
-        springTuningSection->setAlpha(1.);
-    }
-    else
-    {
-        springTuningSection->setAlpha(0.25);
-    }
+//    if(show)
+//    {
+////        springTuningSection->setVisible (show);
+//        springTuningSection->setAlpha(1.);
+//    }
+//    else
+//    {
+//        springTuningSection->setAlpha(0.25);
+//    }
 
     params.tuningState.springTuner->setRate (params.tuningState.springTuningParams.rate->getCurrentValue(), show);
 }

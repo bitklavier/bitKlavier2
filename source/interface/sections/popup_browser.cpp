@@ -1160,16 +1160,15 @@ void PreparationPopup::reset() {
     all_sliders_.clear();
     all_modulation_buttons_.clear();
     all_state_modulated_components.clear();
-    if (prep_view != nullptr) {
+    if (prep_view != nullptr)
+    {
         /* needed to solve weird button drawn crash*/
-        if (auto *a = dynamic_cast<TuningParametersView*>(prep_view.get())) {
-            a->springTuningSection->setVisible(true);
-            a->adaptiveSection->setVisible(true);
-            resized();
-            repaintPrepBackground();
-        }
-
-
+//        if (auto *a = dynamic_cast<TuningParametersView*>(prep_view.get())) {
+//            a->springTuningSection->setVisible(true);
+//            a->adaptiveSection->setVisible(true);
+//            resized();
+//            repaintPrepBackground();
+//        }
 
         prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
         juce::ScopedLock lock(mylock);
@@ -1177,9 +1176,7 @@ void PreparationPopup::reset() {
         //do not use ->reset that is a synthsection function. i want to reset the actual ptr
         prep_view.reset();
         setVisible(false);
-
     }
-
     parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
     // repaintPrepBackground();
 }
