@@ -173,3 +173,6 @@ Typing as I do MidiFilter...
 - preparation icon size is set in `ConstructionSite::perform`?
   - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 
+---------
+## New Pianos and Switching
+- start in 
