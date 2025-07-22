@@ -9,59 +9,68 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"
-class ModulatorBase;
+#include "PreparationStateImpl.h"
+#include "PluginBase.h"
 
-namespace bitklavier {
-    class ModulationConnection;
-    class StateConnection;
+struct PianoSwitchParams : chowdsp::ParamHolder
+{
+    // Adds the appropriate parameters to the Tuning Processor
+    PianoSwitchParams() : chowdsp::ParamHolder ("pianoswitch")
+    {
+        add (mftoggle);
+    }
 
-    class PianoSwitchProcessor : public juce::AudioProcessor {
-    public:
-        PianoSwitchProcessor(const juce::ValueTree& vt,SynthBase& parent) :
-              juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
-                      .withOutput("disabled",juce::AudioChannelSet::mono(),false)
-                      .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-                      .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-                      ), state(vt)
-        {
-            createUuidProperty(state);
-        }
-
-        static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v) {
-            return std::make_unique<PianoSwitchProcessor>(v,parent);
-        }
-
-        bool acceptsMidi() const override {return true;}
-        bool producesMidi() const override { return false; }
-        bool isMidiEffect() const override { return false; }
-        const juce::String getName() const override { return "pianoswitch"; }
-
-        void prepareToPlay(double sampleRate, int samplesPerBlock) override {
-            setRateAndBufferSizeDetails(sampleRate,samplesPerBlock);
-        }
-
-        void releaseResources() override {}
-        double getTailLengthSeconds() const override {}
-        void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
-
-        juce::AudioProcessorEditor * createEditor() override { return  nullptr; }
-        int getNumPrograms() override { return 1; }
-        int getCurrentProgram() override { return 1; }
-        void setCurrentProgram(int index) override {}
-        void changeProgramName(int index, const juce::String &newName) override {}
-        void getStateInformation(juce::MemoryBlock &destData) override {}
-        void setStateInformation(const void *data, int sizeInBytes) override {}
-        bool hasEditor() const override { return true; }
-        const juce::String getProgramName(int index) override { return ""; }
-
-        void removeModulator(ModulatorBase*);
-
-        juce::ValueTree state;
-
-    private :
-
+    /**
+     * todo: replace with param that tracks piano selection
+     */
+    chowdsp::BoolParameter::Ptr mftoggle {
+        juce::ParameterID { "mftoggle", 100},
+        "some toggle",
+        false
     };
+};
 
-} // bitklavier
+struct PianoSwitchNonParameterState : chowdsp::NonParamState
+{
+    PianoSwitchNonParameterState()
+    {
+    }
+};
+
+class PianoSwitchProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<PianoSwitchParams, PianoSwitchNonParameterState>>
+{
+public:
+    PianoSwitchProcessor (const juce::ValueTree& v, SynthBase& parent);
+    static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent, const juce::ValueTree& v);
+
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override {}
+    void releaseResources() override {}
+    void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
+    void processAudioBlock (juce::AudioBuffer<float>& buffer) override  {};
+
+    bool acceptsMidi() const override {return true;}
+    bool producesMidi() const override { return false; }
+    bool isMidiEffect() const override { return false; }
+    bool hasEditor() const override { return false; }
+
+    juce::AudioProcessorEditor * createEditor() override { return nullptr; }
+    juce::AudioProcessor::BusesProperties pianoSwitchBusLayout() { return BusesProperties(); }
+
+    const juce::String getName() const override { return "pianoswitch"; }
+    double getTailLengthSeconds() const override {}
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 1; }
+    const juce::String getProgramName(int index) override { return ""; }
+
+    void setCurrentProgram(int index) override {}
+    void changeProgramName(int index, const juce::String &newName) override {}
+    void getStateInformation(juce::MemoryBlock &destData) override {}
+    void setStateInformation(const void *data, int sizeInBytes) override {}
+
+
+private :
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PianoSwitchProcessor)
+
+};
 
 #endif //BITKLAVIER0_PIANOSWITCHPROCESSOR_H

@@ -694,4 +694,33 @@ public:
     }
 };
 
+class PianoSwitchItem : public BKItem
+{
+public:
+    PianoSwitchItem() : BKItem(bitklavier::BKPreparationType::PreparationTypePianoMap)
+    {
+
+    }
+
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        juce::Path pianoQuad = Paths::createCustomQuadrilateral(
+            0.0f,
+            0.0f,
+            bounds.getWidth(),
+            bounds.getWidth() * 0.5,
+            bounds.getHeight());
+
+        // fill
+        g.setColour(juce::Colours::orange); // just to differentiate from reset for now
+        g.fillPath(pianoQuad);
+
+        // White border
+        g.setColour(juce::Colours::white);
+        g.strokePath(pianoQuad, juce::PathStrokeType(6.0f));
+    }
+};
+
 #endif //BITKLAVIER2_BKITEM_H

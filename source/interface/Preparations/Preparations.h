@@ -17,5 +17,6 @@
 #include "Preparations/ModulationPreparation.h"
 #include "Preparations/PluginPreparation.h"
 #include "Preparations/MidiFilterPreparation.h"
+#include "Preparations/PianoSwitchPreparation.h"
 
 #endif //BITKLAVIER2_PREPARATIONS_H

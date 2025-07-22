@@ -9,6 +9,7 @@
 #include "ResetProcessor.h"
 #include "UserPreferences.h"
 #include "MidiFilterProcessor.h"
+#include "PianoSwitchProcessor.h"
 PreparationList::PreparationList (SynthBase& parent, const juce::ValueTree& v) : tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper> (v), synth (parent)
 {
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
@@ -17,6 +18,7 @@ PreparationList::PreparationList (SynthBase& parent, const juce::ValueTree& v) :
     prepFactory.Register (bitklavier::BKPreparationType::PreparationTypeTuning, TuningProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,bitklavier::ResetProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter,MidiFilterProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap,PianoSwitchProcessor::create);
 
 }
 

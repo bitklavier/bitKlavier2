@@ -208,10 +208,6 @@ void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetail
         for (auto listener: listeners_)
             listener->resetDropped(dropped_tree, state);
     }
-
-    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeMidiFilter)
-        for (auto listener: listeners_)
-            listener->midifilterDropped(dropped_tree, state);
 }
 
 void PreparationSection::resized() {

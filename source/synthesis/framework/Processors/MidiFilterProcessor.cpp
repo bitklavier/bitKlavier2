@@ -4,8 +4,9 @@
 
 #include "MidiFilterProcessor.h"
 
-MidiFilterProcessor::MidiFilterProcessor (const juce::ValueTree& v, SynthBase& parent) : PluginBase (parent, v, nullptr, midiFilterBusLayout())
-//MidiFilterProcessor::MidiFilterProcessor (const juce::ValueTree& v, SynthBase& parent) : juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false))
+MidiFilterProcessor::MidiFilterProcessor (
+    const juce::ValueTree& v, SynthBase& parent) :
+             PluginBase (parent, v, nullptr, midiFilterBusLayout())
 {
 
 }

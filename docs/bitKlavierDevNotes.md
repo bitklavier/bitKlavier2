@@ -154,6 +154,7 @@ and hopefully with answers included here for the record!
 Typing as I do MidiFilter...
 - create MidiFilterProcessor class, with params
 - create the MidiFilterParametersView class
+-   - might not always need this: see Reset, for instance
 - create the MidiFilterPreparation class
 - add to `BKPreparationTypes` in common.h
 - create class MidiFilterItem in BKItem.h
