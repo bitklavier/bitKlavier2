@@ -28,6 +28,11 @@ PianoSwitchPreparation::PianoSwitchPreparation(
         },false);
 
     addAndMakeVisible (item.get());
+
+    availablePianosMenu = std::make_unique<OpenGLComboBox>("pianos");
+//    availablePianosMenu_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *availablePianosMenu, nullptr);
+    addAndMakeVisible(availablePianosMenu.get());
+    addOpenGlComponent(availablePianosMenu->getImageComponent());
 }
 
 std::unique_ptr<SynthSection> PianoSwitchPreparation::getPrepPopup()
@@ -45,5 +50,10 @@ std::unique_ptr<SynthSection> PianoSwitchPreparation::getPrepPopup()
 void PianoSwitchPreparation::resized()
 {
     PreparationSection::resized();
+
+    juce::Rectangle<int> area (getLocalBounds());
+    int comboboxheight = findValue(Skin::kComboMenuHeight);
+    availablePianosMenu->setBounds(area.removeFromBottom(comboboxheight));
+
 }
 

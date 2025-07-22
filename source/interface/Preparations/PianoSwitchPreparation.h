@@ -26,7 +26,12 @@ public:
             interface
             );
     }
+    std::unique_ptr<OpenGLComboBox> availablePianosMenu;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> availablePianosMenu_attachment;
 
+    /**
+     * todo: need to get this to not crash when double-clicked
+     */
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
 };
