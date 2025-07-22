@@ -319,7 +319,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr intervalWeight_9 { // major 6
         juce::ParameterID { "intervalWeight_9", 100 },
-        "M2",
+        "M6",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
