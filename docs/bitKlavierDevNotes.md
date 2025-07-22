@@ -175,4 +175,6 @@ Typing as I do MidiFilter...
 
 ---------
 ## New Pianos and Switching
-- start in 
+- start in `HeaderSection` where the buttons on top of the UI (not the app menus) are handled
+- trace that through, look at where pianos are made `active` and so on, and the various ValueTrees are created
+- 
