@@ -21,23 +21,24 @@
 #include "sound_engine.h"
 #include "startup.h"
 
+#include "../common/ObjectLists/PreparationList.h"
 #include "Identifiers.h"
 #include "ModulationProcessor.h"
+#include "ObjectLists/ConnectionsList.h"
+#include "ObjectLists/ModConnectionsList.h"
 #include "PluginBase.h"
-#include "PreparationList.h"
 #include "RampModulator.h"
 #include "StateModulator.h"
 #include "Synthesiser/Sample.h"
 #include "TuningProcessor.h"
-#include "load_save.h"
 #include "chowdsp_sources/chowdsp_sources.h"
+#include "load_save.h"
 #include "valuetree_utils/VariantConverters.h"
+
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager)
 {
     self_reference_ = std::make_shared<SynthBase*>();
     *self_reference_ = this;
-
-
 
     keyboard_state_ = std::make_unique<juce::MidiKeyboardState>();
     juce::ValueTree v;
@@ -55,6 +56,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     piano.appendChild (preparations, nullptr);
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
+    piano.setProperty (IDs::isActive, 1, nullptr);
+    piano.setProperty (IDs::name, "default", nullptr);
     tree.appendChild (piano, nullptr);
     tree.addListener (this);
 
@@ -63,8 +66,15 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     modulator_factory.registerType<StateModulatorProcessor, juce::ValueTree> ("state");
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
-    preparationList = std::make_unique<PreparationList> (*this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS));
-
+    preparationLists.emplace_back (
+        std::make_unique<PreparationList> (
+            *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS)));
+    connectionLists.emplace_back (
+        std::make_unique<bitklavier::ConnectionList> (
+            *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::CONNECTIONS)));
+    mod_connection_lists_.emplace_back (
+        std::make_unique<bitklavier::ModConnectionList> (
+            *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
     engine_ = std::make_unique<bitklavier::SoundEngine>();
 }
 
@@ -72,57 +82,169 @@ SynthBase::~SynthBase()
 {
     tree.removeListener (this);
 }
-//void SynthBase::pitchWheelMidiChanged(float value) {
-//  ValueChangedCallback* callback = new ValueChangedCallback(self_reference_, "pitch_wheel", value);
-//  callback->post();
-//}
-//
-//void SynthBase::modWheelMidiChanged(float value) {
-//  ValueChangedCallback* callback = new ValueChangedCallback(self_reference_, "mod_wheel", value);
-//  callback->post();
-//}
-//
-//
-//
-//void SynthBase::presetChangedThroughMidi(juce::File preset) {
-//  SynthGuiInterface* gui_interface = getGuiInterface();
-//  if (gui_interface) {
-//    gui_interface->updateFullGui();
-//    gui_interface->notifyFresh();
-//  }
-//}
+
+void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
+    juce::ValueTree& childWhichHasBeenAdded)
+{
+    if (childWhichHasBeenAdded.hasType (IDs::PIANO))
+    {
+        DBG ("added piano");
+        preparationLists.emplace_back (
+            std::make_unique<PreparationList> (
+                *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr)));
+        connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (
+            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
+        mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
+            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr)));
+        if (getGuiInterface())
+        {
+            getGuiInterface()->setActivePiano (childWhichHasBeenAdded);
+        }
+        else
+        {
+            setActivePiano (childWhichHasBeenAdded);
+        }
+    }
+}
+
+void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delete_id)
+{
+    DBG ("delete connectionswithid");
+
+    //cable connections i.e. audio/midi
+    auto* connectionList = getActiveConnectionList();
+    auto size = connectionList->size();
+    auto vt = connectionList->getValueTree();
+    for (int i = 0; i < size;)
+    {
+        auto connection = vt.getChild (i);
+        if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
+        {
+            DBG ("remove connection");
+            connectionList->removeChild (connection, &getUndoManager());
+        }
+        else
+        {
+            i++;
+        }
+    }
+    //modulation connections, i.e. tuning, mod, reset
+    auto* modConnectionList = getActiveModConnectionList();
+    auto size_ = modConnectionList->size();
+    auto vt_ = modConnectionList->getValueTree();
+    for (int i = 0; i < size;)
+    {
+        auto connection = vt_.getChild (i);
+        if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
+        {
+            DBG ("remove mod connection");
+            modConnectionList->removeChild (connection, &getUndoManager());
+        }
+        else
+        {
+            i++;
+        }
+    }
+}
+
+void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
+    const juce::Identifier& property)
+{
+    if (property == IDs::isActive && treeWhosePropertyHasChanged.hasType (IDs::PIANO) && static_cast<int> (treeWhosePropertyHasChanged.getProperty (IDs::isActive)) == 1)
+    {
+        if (getGuiInterface())
+        {
+            getGuiInterface()->setActivePiano (treeWhosePropertyHasChanged);
+        }
+        else
+        {
+            setActivePiano (treeWhosePropertyHasChanged);
+        }
+    }
+}
+
+PreparationList* SynthBase::getActivePreparationList()
+{
+    for (auto& preparation : preparationLists)
+    {
+        if (preparation->getValueTree().getParent().getProperty (IDs::isActive))
+            return preparation.get();
+    }
+    jassertfalse;
+    return nullptr;
+}
+
+bitklavier::ConnectionList* SynthBase::getActiveConnectionList()
+{
+    for (auto& connection : connectionLists)
+    {
+        if (connection->getValueTree().getParent().getProperty (IDs::isActive))
+            return connection.get();
+    }
+    jassertfalse;
+    return nullptr;
+}
+
+bitklavier::ModConnectionList* SynthBase::getActiveModConnectionList()
+{
+    for (auto& connection : mod_connection_lists_)
+    {
+        if (connection->getValueTree().getParent().getProperty (IDs::isActive))
+            return connection.get();
+    }
+    jassertfalse;
+    return nullptr;
+}
+
+void SynthBase::setActivePiano (const juce::ValueTree& v)
+{
+    DBG ("setActivePiano");
+    activePiano = v;
+    processorInitQueue.try_enqueue ([this] {
+        engine_->setActivePiano (activePiano);
+    });
+    // tree.removeListener (this);
+    // tree.setProperty (IDs::isActive, 0, nullptr);
+    // tree = v;
+    // tree.addListener (this);
+}
 
 void SynthBase::addTuningConnection (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
 {
     auto* sourceNode = getNodeForId (src);
     auto* destNode = getNodeForId (dest);
-    dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor())->setTuning(dynamic_cast<TuningProcessor*> (sourceNode->getProcessor()));
-    addModulationConnection(src,dest);
-
+    dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor())->setTuning (dynamic_cast<TuningProcessor*> (sourceNode->getProcessor()));
+    addModulationConnection (src, dest);
 }
+
 void SynthBase::connectTuning (const juce::ValueTree& v)
 {
     auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src));
     auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest));
     addTuningConnection (srcid, dstid);
 }
+
 void SynthBase::setMpeEnabled (bool enabled)
 {
     midi_manager_->setMpeEnabled (enabled);
 }
 
-juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor (std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id)
+juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor (std::unique_ptr<juce::AudioProcessor> processor,
+    juce::AudioProcessorGraph::NodeID id)
 {
     return engine_->addNode (std::move (processor), id);
 }
+
 juce::AudioProcessorGraph::Node::Ptr SynthBase::removeProcessor (juce::AudioProcessorGraph::NodeID id)
 {
     return engine_->removeNode (id);
 }
+
 bool SynthBase::isConnected (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
 {
     engine_->isConnected (src, dest);
 }
+
 juce::AudioProcessorGraph::Node* SynthBase::getNodeForId (juce::AudioProcessorGraph::NodeID id)
 {
     return engine_->getNodeForId (id);
@@ -132,10 +254,12 @@ void SynthBase::addConnection (juce::AudioProcessorGraph::Connection& connect)
 {
     engine_->addConnection (connect);
 }
+
 void SynthBase::removeConnection (const juce::AudioProcessorGraph::Connection& connect)
 {
     engine_->removeConnection (connect);
 }
+
 bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
 {
     pauseProcessing (true);
@@ -192,7 +316,8 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
     return true;
 }
 
-void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer) //, int channels, int samples, int offset, int start_sample = 0, int end_sample = 0)
+void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
+//, int channels, int samples, int offset, int start_sample = 0, int end_sample = 0)
 {
     if (expired_)
         return;
@@ -204,18 +329,21 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
 
     //melatonin::printSparkline(audio_buffer);
 }
-void SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source, juce::AudioProcessorGraph::NodeID dest)
+
+void SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
+    juce::AudioProcessorGraph::NodeID dest)
 {
     auto* sourceNode = getNodeForId (source);
     auto* destNode = getNodeForId (dest);
-    destNode->getProcessor()->getBus(true, 1)->enable(true); //should always be modulation bus
-    sourceNode->getProcessor()->getBus(false, 1)->enable(true); //should always be modulation bus
-    auto dest_index = destNode->getProcessor()->getChannelIndexInProcessBlockBuffer(true, 1, 0);
-    auto source_index = sourceNode->getProcessor()->getChannelIndexInProcessBlockBuffer(false, 1, 0);
+    destNode->getProcessor()->getBus (true, 1)->enable (true); //should always be modulation bus
+    sourceNode->getProcessor()->getBus (false, 1)->enable (true); //should always be modulation bus
+    auto dest_index = destNode->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, 0);
+    auto source_index = sourceNode->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0);
 
     juce::AudioProcessorGraph::Connection connection { { source, source_index }, { dest, dest_index } };
     engine_->addConnection (connection);
 }
+
 void SynthBase::writeAudio (juce::AudioSampleBuffer* buffer, int channels, int samples, int offset)
 {
     //const float* engine_output = (const float*)engine_->output(0)->buffer;
@@ -240,14 +368,17 @@ juce::AudioProcessorGraph::Node::Ptr SynthBase::addPlugin (std::unique_ptr<juce:
     PluginDescriptionAndPreference::UseARA useARA)
 {
 }
+
 int SynthBase::getSampleRate()
 {
     return engine_->getSampleRate();
 }
+
 int SynthBase::getBufferSize()
 {
     return engine_->getBufferSize();
 }
+
 bool SynthBase::isMidiMapped (const std::string& name)
 {
     return midi_manager_->isMidiMapped (name);
@@ -274,7 +405,9 @@ std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (
     }
     return connections;
 }
-std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnections (const std::string& destination) const
+
+std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnections (
+    const std::string& destination) const
 {
     std::vector<bitklavier::StateConnection*> connections;
     for (auto& connection : state_connections_)
@@ -295,7 +428,9 @@ std::vector<bitklavier::ModulationConnection*> SynthBase::getSourceConnections (
     }
     return connections;
 }
-std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnections (const std::string& destination) const
+
+std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnections (
+    const std::string& destination) const
 {
     std::vector<bitklavier::ModulationConnection*> connections;
     for (auto& connection : mod_connections_)
@@ -306,7 +441,8 @@ std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnecti
     return connections;
 }
 
-bitklavier::ModulationConnection* SynthBase::getConnection (const std::string& source, const std::string& destination) const
+bitklavier::ModulationConnection* SynthBase::getConnection (const std::string& source,
+    const std::string& destination) const
 {
     for (auto& connection : mod_connections_)
     {
@@ -315,7 +451,9 @@ bitklavier::ModulationConnection* SynthBase::getConnection (const std::string& s
     }
     return nullptr;
 }
-bitklavier::StateConnection* SynthBase::getStateConnection (const std::string& source, const std::string& destination) const
+
+bitklavier::StateConnection* SynthBase::getStateConnection (const std::string& source,
+    const std::string& destination) const
 {
     for (auto& connection : state_connections_)
     {
@@ -340,6 +478,7 @@ bitklavier::ModulationConnectionBank& SynthBase::getModulationBank()
 {
     return engine_->getModulationBank();
 }
+
 bitklavier::StateConnectionBank& SynthBase::getStateBank()
 {
     return engine_->getStateBank();
@@ -383,11 +522,14 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     std::string dst_param;
     std::getline (dst_stream, dst_param, '_');
-    auto source_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
-    auto dest_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
+    auto source_node = engine_->getNodeForId (
+        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
+    auto dest_node = engine_->getNodeForId (
+        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
 
     auto parameter_tree = mod_dst.getChildWithProperty (IDs::parameter, juce::String (dst_param));
-    jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
+    jassert (parameter_tree.isValid());
+    //if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
     auto param_index = parameter_tree.getProperty (IDs::channel, -1);
     connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
     //determine where this would actually output in the modulationprocessor
@@ -418,37 +560,39 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
         mod_connection.appendChild (connection->state, nullptr);
         // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-            engine_->addConnection (connection->connection_);
+        engine_->addConnection (connection->connection_);
         // });
     }
 }
 
-bool SynthBase::connectReset(const juce::ValueTree& v) {
-
-    auto sourceId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::src,-1));
-    auto destId =juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar( v.getProperty(IDs::dest,-1));
+bool SynthBase::connectReset (const juce::ValueTree& v)
+{
+    auto sourceId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src, -1));
+    auto destId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest, -1));
     auto source_index = engine_->getNodeForId (sourceId)->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 2, 0); //2 is reset
-    auto dest_index = engine_->getNodeForId (destId)->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 2, 0); //1 is mod
+    auto dest_index = engine_->getNodeForId (destId)->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 2, 0);
+    //1 is mod
 
+    juce::AudioProcessorGraph::Connection connection_ = { { sourceId, source_index }, { destId, dest_index } };
 
-    juce::AudioProcessorGraph::Connection connection_ = { { sourceId, source_index}, { destId, dest_index } };
-
-     auto b =   engine_->addConnection (connection_);
-    if(b)
-        DBG("Connected");
+    auto b = engine_->addConnection (connection_);
+    if (b)
+        DBG ("Connected");
     else
-        DBG("not connected");
-
+        DBG ("not connected");
 }
+
 bool SynthBase::connectModulation (const juce::ValueTree& v)
 {
     if (v.getProperty (IDs::isState))
     {
-        bitklavier::StateConnection* connection = getStateConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
+        bitklavier::StateConnection* connection = getStateConnection (v.getProperty (IDs::src).toString().toStdString(),
+            v.getProperty (IDs::dest).toString().toStdString());
         bool create = connection == nullptr;
         if (create)
         {
-            connection = getStateBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
+            connection = getStateBank().createConnection (v.getProperty (IDs::src).toString().toStdString(),
+                v.getProperty (IDs::dest).toString().toStdString());
             connection->state = v;
         }
         if (connection)
@@ -456,11 +600,13 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
         return create;
     }
 
-    bitklavier::ModulationConnection* connection = getConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
+    bitklavier::ModulationConnection* connection = getConnection (v.getProperty (IDs::src).toString().toStdString(),
+        v.getProperty (IDs::dest).toString().toStdString());
     bool create = connection == nullptr;
     if (create)
     {
-        connection = getModulationBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
+        connection = getModulationBank().createConnection (v.getProperty (IDs::src).toString().toStdString(),
+            v.getProperty (IDs::dest).toString().toStdString());
         connection->state = v;
     }
     if (connection)
@@ -505,12 +651,12 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
     state_connections_.remove (connection);
     engine_->removeConnection (connection->connection_);
     getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection (connection);
     });
     connection->state.getParent().removeChild (connection->state, nullptr);
 }
+
 void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connection)
 {
     if (mod_connections_.count (connection) == 0)
@@ -526,6 +672,7 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
     });
     connection->state.getParent().removeChild (connection->state, nullptr);
 }
+
 void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
 {
     std::stringstream ss (connection->source_name);
@@ -554,8 +701,10 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
 
     std::string dst_param;
     std::getline (dst_stream, dst_param, '_');
-    auto source_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
-    auto dest_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
+    auto source_node = engine_->getNodeForId (
+        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
+    auto dest_node = engine_->getNodeForId (
+        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
 
     //    auto parameter_tree = mod_dst.getChildWithProperty(IDs::parameter,juce::String(dst_param));
     //    auto param_index = parameter_tree.getProperty(IDs::channel,-1);
@@ -579,9 +728,10 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
     state_connection.appendChild (connection->state, nullptr);
     // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        engine_->addConnection (connection->connection_);
+    engine_->addConnection (connection->connection_);
     // });
 }
+
 bool SynthBase::connectStateModulation (const std::string& source, const std::string& destination)
 {
     bitklavier::StateConnection* connection = getStateConnection (source, destination);

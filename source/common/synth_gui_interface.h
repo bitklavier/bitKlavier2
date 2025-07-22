@@ -121,6 +121,9 @@ public:
     bool isConnected(juce::AudioProcessorGraph::Connection &connection);
     bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID);
     void synchronizeValueTree();
+
+    void setActivePiano(const juce::ValueTree&);
+    void addPiano(const juce::String&);
     FullInterface* getGui() { return gui_.get(); }
     OpenGlWrapper* getOpenGlWrapper();
     juce::File getActiveFile();

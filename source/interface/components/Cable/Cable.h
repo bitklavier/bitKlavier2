@@ -23,6 +23,7 @@ namespace CableConstants
     constexpr float floorDB = -60.0f;
 } // namespace CableConstants
 class ConstructionSite;
+
 class Cable : public juce::Component {
 public:
     Cable(ConstructionSite* site, CableView& cableView);

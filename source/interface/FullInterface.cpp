@@ -47,7 +47,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     modulation_manager->hideUnusedHoverModulations();
     modulation_manager->toFront (false);
 
-    header_ = std::make_unique<HeaderSection>();
+    header_ = std::make_unique<HeaderSection>(synth_data->tree);
     addSubSection (header_.get());
     header_->addListener (this);
 

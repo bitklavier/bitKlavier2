@@ -14,11 +14,11 @@
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data, juce::ApplicationCommandManager &_manager)
                                                         : SynthSection("Construction Site"),
-                                                        prep_list(*data->synth->preparationList.get()),
+                                                        prep_list(data->synth->getActivePreparationList()),
                                                          undo(um),
                                                          open_gl(open_gl),
-                                                         cableView(*this, um),
-                                                         modulationLineView(*this, um),
+                                                         cableView(*this, um,data),
+                                                         modulationLineView(*this, um,data),
                                                          preparationSelector(*this), parent(v),
                                                         commandManager (_manager)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
@@ -38,8 +38,9 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     cableView.setAlwaysOnTop(true);
     addSubSection(&modulationLineView);
     modulationLineView.setAlwaysOnTop(false);
-    prep_list.addListener(this);
-    // prep_list.addChangeListener(this);
+    prep_list->addListener(this);
+
+    // prep_list->addChangeListener(this);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
@@ -137,7 +138,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::height, 125, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
                 //t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case nostalgic:
@@ -150,7 +151,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
                 // t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
                 //
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->>appendChild(t,  &undo);
                 return true;
             }
             case keymap:
@@ -163,7 +164,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case resonance:
@@ -175,7 +176,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 132, nullptr);
                 // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case synchronic:
@@ -187,7 +188,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 132, nullptr);
                 // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case blendronic:
@@ -199,7 +200,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 132, nullptr);
                 // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case tempo:
@@ -211,7 +212,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 260, nullptr);
                 // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case tuning:
@@ -226,7 +227,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case midifilter:
@@ -267,7 +268,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case resetMod: {
@@ -281,7 +282,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case deletion:
@@ -292,7 +293,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 lasso.deselectAll();
                 for (auto prep : lassoCopy)
                 {
-                    prep_list.removeChild(prep->state, &undo);
+                    prep_list->removeChild(prep->state, &undo);
                 }
 
                 return true;
@@ -309,8 +310,9 @@ void ConstructionSite::reset() {
         return;
         if (_parent->getSynth() != nullptr) {
             _parent->getSynth()->getEngine()->resetEngine();
-            prep_list.setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
-                IDs::PREPARATIONS));
+            prep_list->setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
+            IDs::PREPARATIONS));
+            // setActivePiano();
         }
 
         cableView.reset();
@@ -410,9 +412,7 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 
-    // find and delete cables and modulation lines associated with this preparation section
-    cableView.deleteConnectionsWithId(wrapper->node_id);
-    modulationLineView.deleteConnectionsWithId(wrapper->node_id);
+
 
     //cleanup opengl
     {
@@ -424,7 +424,7 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     plugin_components[index]->destroyOpenGlComponents (open_gl);
     //delete heap memory
     plugin_components.erase(plugin_components.begin()+index);
-DBG("moduleRemoved");
+DBG("moduleRemoved construction site");
 }
 
 ConstructionSite::~ConstructionSite(void) {
@@ -552,8 +552,8 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::height, 260, nullptr);
         // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
         // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        // prep_list.appendChild(t,  interface->getUndoManager());
-        prep_list.appendChild(t,  &undo);
+        // prep_list->appendChild(t,  interface->getUndoManager());
+        prep_list->appendChild(t,  &undo);
     } else {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::PREPARATION);
@@ -566,7 +566,7 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         auto desc = _parent->userPreferences->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
         t.addChild(plugin,-1, &undo);
-        prep_list.addPlugin(desc.pluginDescription,t);
+        prep_list->addPlugin(desc.pluginDescription,t);
 
     }
 
@@ -652,7 +652,7 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
 
 void ConstructionSite::updateComponents() {
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-    for (int i = prep_list.size(); --i >= 0;) {
+    for (int i = prep_list->size(); --i >= 0;) {
         //            if (parent->getSynth()->getNodeForId(objects.getUnchecked(i)->pluginID) == nullptr) {
         //                parent.removeChild(objects.getUnchecked(i)->parent, nullptr);
         //            }
@@ -671,4 +671,18 @@ void ConstructionSite::updateComponents() {
     //                comp->update();
     //            }
     //        }
+}
+void ConstructionSite::setActivePiano() {
+    prep_list->deleteAllGui();
+    prep_list->removeListener(this);
+
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    prep_list= interface->getSynth()->getActivePreparationList();
+    parent = prep_list->getValueTree().getParent();
+    prep_list->addListener(this);
+    prep_list->rebuildAllGui();
+
+    cableView.setActivePiano();
+    modulationLineView.setActivePiano();
 }
