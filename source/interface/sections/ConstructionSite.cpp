@@ -113,7 +113,7 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
                 break;
             case resetMod:
                 info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);
-                info.addDefaultKeypress('q', juce::ModifierKeys::noModifiers);
+                info.addDefaultKeypress('\\', juce::ModifierKeys::noModifiers);
                 break;
             case midifilter:
                 info.setInfo("Midifilter", "Create Midifilter Preparation", "Edit", 0);

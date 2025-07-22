@@ -3,32 +3,16 @@
 //
 
 #include "PianoSwitchProcessor.h"
+#include "ModulatorBase.h"
 
-PianoSwitchProcessor::PianoSwitchProcessor (
-    const juce::ValueTree& v, SynthBase& parent) :
-                         PluginBase (
-                             parent,
-                             v,
-                             nullptr,
-                             pianoSwitchBusLayout())
+void bitklavier::PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-
-}
-
-std::unique_ptr<juce::AudioProcessor> PianoSwitchProcessor::create (SynthBase& parent, const juce::ValueTree& v)
-{
-    return std::make_unique<PianoSwitchProcessor> (v, parent);
-}
-
-void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-{
-    juce::MidiBuffer saveMidi (midiMessages);
-    midiMessages.clear();
-
-    for (auto mi : saveMidi)
+    buffer.clear();
+    for (auto msg : midiMessages)
     {
-        auto message = mi.getMessage();
-        DBG("PianoSwitchProcessor::processBlock received midi msg " + juce::String(message.getNoteNumber()));
+        if (msg.getMessage().isNoteOn())
+        {
+            DBG("PianoSwitchProcessor::processBlock received noteOn " + juce::String(msg.getMessage().getNoteNumber()));
+        }
     }
 }
-
