@@ -373,8 +373,6 @@ void SynthSection::initOpenGlComponents(OpenGlWrapper &open_gl) {
         if (background_)
             background_->init(open_gl);
     }
-
-
 }
 
 void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {

@@ -229,23 +229,58 @@ TuningParametersView::TuningParametersView(
 
 void TuningParametersView::showStaticTuning(bool show)
 {
-    tuning_combo_box->setVisible(show);
-    fundamental_combo_box->setVisible(show);
-    absolutekeyboard->setVisible(show);
-    circular_keyboard->setVisible(show);
-    semitoneSection->setVisible(show);
-    offsetKnobSection->setVisible(show);
+    /**
+     * the "setVisible" approach here has run into some openGL asserts, either on
+     * opening or closing the Tuning prep popup. we haven't been able to figure them
+     * out so far; are maybe in the button code, perhaps in render somewhere.
+     * workaround for now is to show all the components, and change their alpha instead
+     */
+//    tuning_combo_box->setVisible(show);
+//    fundamental_combo_box->setVisible(show);
+//    absolutekeyboard->setVisible(show);
+//    circular_keyboard->setVisible(show);
+//    semitoneSection->setVisible(show);
+//    offsetKnobSection->setVisible(show);
+    if(show)
+    {
+        tuning_combo_box->setAlpha(1.);
+        fundamental_combo_box->setAlpha(1.);
+        absolutekeyboard->setAlpha(1.);
+        circular_keyboard->setAlpha(1.);
+        semitoneSection->setAlpha(1.);
+        offsetKnobSection->setAlpha(1.);
+    }
+    else
+    {
+        tuning_combo_box->setAlpha(0.25);
+        fundamental_combo_box->setAlpha(0.25);
+        absolutekeyboard->setAlpha(0.25);
+        circular_keyboard->setAlpha(0.25);
+        semitoneSection->setAlpha(0.25);
+        offsetKnobSection->setAlpha(0.25);
+    }
 }
 
 void TuningParametersView::showAdaptiveTuning(bool show)
 {
-    adaptiveSection->setVisible(show);
+//    adaptiveSection->setVisible(show);
+    if(show) adaptiveSection->setAlpha(1.);
+    else adaptiveSection->setAlpha(0.25);
 }
 
 void TuningParametersView::showSpringTuning(bool show)
 {
-    springTuningSection->setVisible(show);
-    params.tuningState.springTuner->setRate(params.tuningState.springTuningParams.rate->getCurrentValue(), show);
+    if(show)
+    {
+//        springTuningSection->setVisible (show);
+        springTuningSection->setAlpha(1.);
+    }
+    else
+    {
+        springTuningSection->setAlpha(0.25);
+    }
+
+    params.tuningState.springTuner->setRate (params.tuningState.springTuningParams.rate->getCurrentValue(), show);
 }
 
 void TuningParametersView::showCurrentTuningType()
@@ -420,10 +455,11 @@ void TuningParametersView::resized()
     juce::Rectangle leftHalf = area.removeFromLeft(area.getWidth() * 0.5);
     spiralBox = area;
     leftHalf.reduce(largepadding, largepadding);
-    juce::Rectangle areaSpring = leftHalf;
-    juce::Rectangle areaAdaptive = leftHalf;
+//    juce::Rectangle areaSpring = leftHalf;
+//    juce::Rectangle areaAdaptive = leftHalf;
 
-    juce::Rectangle lastValsDisplay = leftHalf.removeFromBottom(labelsectionheight + smallpadding);
+    area.reduce(largepadding, largepadding);
+    juce::Rectangle lastValsDisplay = area.removeFromBottom(labelsectionheight + smallpadding);
     lastNoteDisplay->setBounds(lastValsDisplay.removeFromLeft(lastValsDisplay.getWidth() / 3.));
     lastFrequencyDisplay->setBounds(lastValsDisplay.removeFromLeft(lastValsDisplay.getWidth() / 2.));
     lastIntervalDisplay->setBounds(lastValsDisplay);
@@ -434,30 +470,37 @@ void TuningParametersView::resized()
     tuning_combo_box->setBounds(topMenuBox.removeFromLeft(menuWidthFactor * 3.));
     fundamental_combo_box->setBounds((topMenuBox));
 
-    leftHalf.removeFromTop(largepadding * 2);
-
-    juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(circularKeyboardTargetHeight);
-    if (circularKeyboardBox.getWidth() > circularKeyboardTargetWidth)
-        circularKeyboardBox.reduce((circularKeyboardBox.getWidth() - circularKeyboardTargetWidth) / 2., 0);
-    circular_keyboard->setBounds(circularKeyboardBox);
-
     leftHalf.removeFromTop(largepadding);
 
-    juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(circularKeyboardTargetHeight);
+    juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
+    semitoneSection->setBounds(circularKeyboardBox.removeFromRight(semitoneBoxTargetWidth));
+    offsetKnobSection->setBounds(circularKeyboardBox.removeFromLeft(knobsectionheight + 30));
+    circular_keyboard->setBounds(circularKeyboardBox);
+//    if (circularKeyboardBox.getWidth() > circularKeyboardTargetWidth)
+//        circularKeyboardBox.reduce((circularKeyboardBox.getWidth() - circularKeyboardTargetWidth) / 2., 0);
+//    circular_keyboard->setBounds(circularKeyboardBox);
+
+    leftHalf.removeFromTop(smallpadding);
+
+    juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
     absolutekeyboard->setBounds(absoluteKeyboardBox);
 
     leftHalf.removeFromTop(largepadding);
 
-    juce::Rectangle offsetAndSemitoneBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
-    semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
+//    juce::Rectangle offsetAndSemitoneBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
+//    semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
+//
+//    juce::Rectangle offsetKnobBox = offsetAndSemitoneBox.removeFromLeft(knobsectionheight + 30);
+//    offsetKnobSection->setBounds(offsetKnobBox);
 
-    juce::Rectangle offsetKnobBox = offsetAndSemitoneBox.removeFromLeft(knobsectionheight + 30);
-    offsetKnobSection->setBounds(offsetKnobBox);
+//    areaAdaptive.removeFromTop(comboboxheight + largepadding * 2);
+//    areaSpring.removeFromTop(comboboxheight + largepadding * 2);
+//    adaptiveSection->setBounds(areaAdaptive.removeFromTop(200));
+//    springTuningSection->setBounds(areaSpring.removeFromTop(300));
 
-    areaAdaptive.removeFromTop(comboboxheight + largepadding * 2);
-    areaSpring.removeFromTop(comboboxheight + largepadding * 2);
-    adaptiveSection->setBounds(areaAdaptive.removeFromTop(200));
-    springTuningSection->setBounds(areaSpring.removeFromTop(300));
+    adaptiveSection->setBounds(leftHalf.removeFromTop(165));
+    leftHalf.removeFromTop(smallpadding);
+    springTuningSection->setBounds(leftHalf.removeFromTop(300));
 
     SynthSection::resized();
 }

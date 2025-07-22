@@ -188,17 +188,17 @@ void SpringTuningSection::resized() {
 
     area.removeFromTop(smallpadding);
 
-    juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
+    juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight);
     placeKnobsInArea(knobsBox, _sliders, false);
 
-    area.removeFromTop(largepadding);
+    area.removeFromTop(smallpadding);
 
     juce::Rectangle<int> intervalknobsBox = area.removeFromTop(knobsectionheight);
     placeKnobsInArea(intervalknobsBox, intervalWeightSliders);
     juce::Rectangle<int> fundamentalToggles = area.removeFromTop(comboboxheight);
     placeButtonsInArea(fundamentalToggles, useLocalOrFundamentalToggles);
 
-    area.removeFromTop(largepadding);
+    area.removeFromTop(smallpadding);
 
     currentFundamental->setBounds(area.removeFromTop(labelsectionheight));
 

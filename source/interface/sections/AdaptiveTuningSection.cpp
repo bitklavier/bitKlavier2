@@ -124,9 +124,9 @@ void AdaptiveTuningSection::resized() {
     adaptiveAnchorScale_ComboBox->setBounds(comboBoxArea.removeFromLeft(comboBoxArea.getWidth() * 0.5));
     adaptiveAnchorFundamental_ComboBox->setBounds(comboBoxArea);
 
-    area.removeFromTop(smallpadding);
+//    area.removeFromTop(smallpadding);
 
-    juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight + largepadding);
+    juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight * 0.85);
     clusterThreshold_Slider->setBounds(knobsBox.removeFromLeft(knobsBox.getWidth() * 0.5));
     history_Slider->setBounds(knobsBox);
 
