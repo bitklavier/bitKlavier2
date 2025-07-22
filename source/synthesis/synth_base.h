@@ -22,16 +22,18 @@
 #include <set>
 #include <string>
 #include "midi_manager.h"
-#include <set>
-#include <string>
 #include "ModulationConnection.h"
 #include "circular_queue.h"
 #include "ModulatorBase.h"
-#include "PreparationList.h"
+#include "../common/ObjectLists/PreparationList.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
 class PreparationList;
+namespace bitklavier {
+  class ConnectionList;
+  class ModConnectionList;
+}
 #include "PluginScannerSubprocess.h"
 class SynthBase :  public juce::ValueTree::Listener {
   public:
@@ -116,7 +118,7 @@ class SynthBase :  public juce::ValueTree::Listener {
     void connectStateModulation(bitklavier::StateConnection* connection);
     SimpleFactory<ModulatorBase> modulator_factory;
     ///modulation functionality
-
+  void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
     std::vector<bitklavier::ModulationConnection*> getSourceConnections(const std::string& sourceId) const;
     std::vector<bitklavier::StateConnection*> getSourceStateConnections(const std::string& sourceId) const;
     std::vector<bitklavier::ModulationConnection*> getDestinationConnections(const std::string& destinationId) const;
@@ -129,7 +131,11 @@ class SynthBase :  public juce::ValueTree::Listener {
     int getNumModulations(const std::string& destination);
     virtual SynthGuiInterface* getGuiInterface() = 0;
     bool isSourceConnected(const std::string& source);
-
+    void setActivePiano(const juce::ValueTree& v);
+  void valueTreeChildAdded (juce::ValueTree& parentTree,
+                                          juce::ValueTree& childWhichHasBeenAdded);
+ void valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
+                                               const juce::Identifier& property);
 protected:
 //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
@@ -154,9 +160,16 @@ protected:
     juce::File active_file_;
 
     bool expired_;
-//make sure this is desytroyed before the soundengine
+  //order matters here to ensure preparationLists are destroyed before connectionLists
+  std::vector<std::unique_ptr<bitklavier::ConnectionList>> connectionLists;
+  std::vector<std::unique_ptr<PreparationList>> preparationLists;
+  std::vector<std::unique_ptr<bitklavier::ModConnectionList>> mod_connection_lists_;
+
 public:
-  std::unique_ptr<PreparationList> preparationList;
+  PreparationList* getActivePreparationList() ;
+  bitklavier::ConnectionList* getActiveConnectionList() ;
+  bitklavier::ModConnectionList* getActiveModConnectionList() ;
+  juce::ValueTree activePiano;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)
 };
 

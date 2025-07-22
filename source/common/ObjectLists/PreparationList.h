@@ -118,9 +118,9 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InternalPlugin)
 };
 #include <tracktion_ValueTreeUtilities.h>
-#include "Identifiers.h"
+#include "../Identifiers.h"
 #include "synth_base.h"
-#include "templates/Factory.h"
+#include "../templates/Factory.h"
 class PluginInstanceWrapper  {
     public:
     PluginInstanceWrapper (juce::AudioProcessor* proc,const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc),node_id(nodeID) {
@@ -210,6 +210,13 @@ public:
                                      const juce::String& error,
                                      const juce::ValueTree &v);
     void setValueTree(const juce::ValueTree& v);
+    const juce::ValueTree& getValueTree() const {
+        return parent;
+    }
+
+    void deleteAllGui();
+    void rebuildAllGui();
+
 private:
     std::unique_ptr<juce::AudioPluginInstance> temporary_instance;
     PreparationFactory prepFactory;

@@ -7,7 +7,7 @@
 #include "CableView.h"
 #include "ModulationLineView.h"
 #include "PluginWindow.h"
-#include "PreparationList.h"
+#include "../../common/ObjectLists/PreparationList.h"
 #include "PreparationSelector.h"
 #include "common.h"
 #include "templates/Factory.h"
@@ -78,6 +78,8 @@ public:
     {
         return parent;
     }
+    void setActivePiano();
+
     void copyValueTree (const juce::ValueTree& vt)
     {
         parent.copyPropertiesFrom (vt, nullptr);
@@ -114,7 +116,7 @@ public:
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
 
 private:
-    PreparationList& prep_list;
+    PreparationList* prep_list;
     juce::ApplicationCommandManager& commandManager;
     void moduleListChanged() {}
     void moduleAdded (PluginInstanceWrapper* newModule) override;
