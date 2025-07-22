@@ -203,6 +203,7 @@ void SynthBase::setActivePiano (const juce::ValueTree& v)
     processorInitQueue.try_enqueue ([this] {
         engine_->setActivePiano (activePiano);
     });
+
     // tree.removeListener (this);
     // tree.setProperty (IDs::isActive, 0, nullptr);
     // tree = v;

@@ -121,6 +121,7 @@ private:
 #include "../Identifiers.h"
 #include "synth_base.h"
 #include "../templates/Factory.h"
+class KeymapProcessor;
 class PluginInstanceWrapper  {
     public:
     PluginInstanceWrapper (juce::AudioProcessor* proc,const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc),node_id(nodeID) {
@@ -130,6 +131,7 @@ class PluginInstanceWrapper  {
     juce::AudioProcessor* proc;
     juce::AudioProcessorGraph::NodeID node_id;
     juce::ValueTree state;
+    // KeymapProcessor* keymap_processor;
 
 };
 typedef Loki::Factory<std::unique_ptr<juce::AudioProcessor>, int,SynthBase& ,const juce::ValueTree&  > PreparationFactory;

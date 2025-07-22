@@ -68,6 +68,7 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
         gui_ = std::make_unique<FullInterface>(&synth_data, commandManager);
         // for registering hotkeys etc.
         commandManager.registerAllCommandsForTarget(this);
+        gallery = synth_data.tree;
     }
 
     sampleLoadManager->preferences = userPreferences;
@@ -324,6 +325,10 @@ void SynthGuiInterface::setActivePiano(const juce::ValueTree &v) {
     synth_->setActivePiano(v);
     gui_->main_->constructionSite_->setActivePiano();
 
+}
+void SynthGuiInterface::allNotesOff() {
+
+    synth_->getEngine()->allNotesOff();
 }
 
 void SynthGuiInterface::addPiano(const juce::String & piano_name) {

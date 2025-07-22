@@ -236,7 +236,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case modulation:

@@ -117,6 +117,7 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     // always top of the chain as an instrument source; doesn't take audio in
@@ -152,7 +153,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         hammerSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
             state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
+        // DBG("processblockhammersytnh
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 

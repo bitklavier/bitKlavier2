@@ -77,6 +77,9 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     _midi->removeNextBlockOfMessages (midiMessages, num_samples);
     _midi->replaceKeyboardMessages (midiMessages, num_samples);
 }
+void KeymapProcessor::allNotesOff() {
+    _midi->allNotesOff();
+}
 
 template<typename Serializer>
 typename Serializer::SerializedType KeymapParams::serialize(const KeymapParams &paramHolder) {

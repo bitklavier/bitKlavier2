@@ -154,6 +154,7 @@ namespace bitklavier
         {
             processorGraph->addChangeListener (listener);
         }
+        void allNotesOff();
 
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);
