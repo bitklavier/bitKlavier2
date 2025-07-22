@@ -79,6 +79,9 @@ namespace IDs
     DECLARE_ID (RESETCONNECTION)
     DECLARE_ID (isActive)
     DECLARE_ID (MIDIFILTERCONNECTION)
+    DECLARE_ID (selectedPianoIndex)
+    DECLARE_ID (selectedPianoName)
+
 }
 
 #undef DECLARE_ID

@@ -236,7 +236,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         juce::Point<int> position(pianoSelector->getX(), pianoSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            pianoSelectText->setText(getAllPianoNames()[selection]);
+            pianoSelectText->setText(names[selection]);
             for (auto vt: gallery) {
                 if (vt.hasType(IDs::PIANO)) {
                     vt.setProperty(IDs::isActive, 0, nullptr);

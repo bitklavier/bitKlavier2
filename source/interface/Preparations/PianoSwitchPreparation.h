@@ -26,14 +26,19 @@ public:
             interface
             );
     }
-    std::unique_ptr<OpenGLComboBox> availablePianosMenu;
-    std::unique_ptr<chowdsp::ComboBoxAttachment> availablePianosMenu_attachment;
+//    std::unique_ptr<OpenGLComboBox> availablePianosMenu;
+//    std::unique_ptr<chowdsp::ComboBoxAttachment> availablePianosMenu_attachment;
 
     /**
      * todo: need to get this to not crash when double-clicked
      */
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
+
+    void buttonClicked(juce::Button *clicked_button) override;
+    int currentPianoIndex;
+    std::shared_ptr<PlainTextComponent> pianoSelectText;
+    std::unique_ptr<juce::ShapeButton> pianoSelector ;
 };
 
 #endif //BITKLAVIER0_PIANOSWITCHPREPARATION_H

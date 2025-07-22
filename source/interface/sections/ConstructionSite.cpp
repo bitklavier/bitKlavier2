@@ -532,7 +532,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     mouse = e.position;
 
     // // This must happen before the right-click menu or the menu will close
-    grabKeyboardFocus();
+    //grabKeyboardFocus();
 
     if (e.mods.isPopupMenu()) {
         _parent = findParentComponentOfClass<SynthGuiInterface>();

@@ -325,6 +325,16 @@ void SynthGuiInterface::setActivePiano(const juce::ValueTree &v) {
     synth_->setActivePiano(v);
     gui_->main_->constructionSite_->setActivePiano();
 
+
+}
+std::vector<std::string> SynthGuiInterface::getAllPianoNames() {
+    std::vector<std::string> names;
+    for (const auto &vt: gallery) {
+        if (vt.hasType(IDs::PIANO)) {
+            names.push_back(vt.getProperty(IDs::name).toString().toStdString());
+        }
+    }
+    return names;
 }
 void SynthGuiInterface::allNotesOff() {
 
