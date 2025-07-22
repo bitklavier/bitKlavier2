@@ -16,6 +16,8 @@
 
 #include "sound_engine.h"
 #include <juce_audio_processors/juce_audio_processors.h>
+
+#include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 
 namespace bitklavier {
@@ -50,8 +52,6 @@ namespace bitklavier {
 
     Node::Ptr SoundEngine::addNode(std::unique_ptr<bitklavier::ModulationProcessor> modProcessor,
                                    juce::AudioProcessorGraph::NodeID id) {
-
-
     }
     void SoundEngine::setActivePiano(const juce::ValueTree &v) {
         auto nodes = processorGraph->getNodes();
@@ -67,6 +67,15 @@ namespace bitklavier {
             }
         }
     }
+    void SoundEngine::allNotesOff() {
+        auto nodes = processorGraph->getNodes();
+        for (auto node : nodes) {
+            if (auto* a = dynamic_cast<KeymapProcessor*>(node->getProcessor()))
+                { a->allNotesOff();}
+
+        }
+    }
+
 
 
 } // namespace bitklavier

@@ -190,7 +190,7 @@ void HeaderSection::reset() {
 void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == exit_temporary_button_.get()) {
     } else if (clicked_button == addPianoButton.get()) {
-        // auto interface = findParentComponentOfClass<SynthGuiInterface>();
+        auto interface = findParentComponentOfClass<SynthGuiInterface>();
         // interface->addPiano(
         // create new piano with active parameter true or 1
         juce::ValueTree piano{IDs::PIANO};
@@ -209,8 +209,10 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 vt.setProperty(IDs::isActive, 0, nullptr);
             }
         }
+
         gallery.appendChild(piano, nullptr);
         pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
+        interface->allNotesOff();
         resized();
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
@@ -245,7 +247,8 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                     vt.setProperty(IDs::isActive, 1, nullptr);
                 }
             }
-
+            auto interface = findParentComponentOfClass<SynthGuiInterface>();
+            interface->allNotesOff();
             resized();
         });
     } else if (clicked_button == loadButton.get()) {

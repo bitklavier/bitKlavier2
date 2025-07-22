@@ -121,7 +121,7 @@ public:
     bool isConnected(juce::AudioProcessorGraph::Connection &connection);
     bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID);
     void synchronizeValueTree();
-
+    void allNotesOff();
     void setActivePiano(const juce::ValueTree&);
     void addPiano(const juce::String&);
     FullInterface* getGui() { return gui_.get(); }
@@ -135,6 +135,7 @@ public:
     std::unique_ptr<PluginListWindow> pluginListWindow;
    juce::ScopedMessageBox messageBox;
     juce::ApplicationCommandManager commandManager;
+    juce::ValueTree gallery;
 
   protected:
     std::atomic<bool> loading;

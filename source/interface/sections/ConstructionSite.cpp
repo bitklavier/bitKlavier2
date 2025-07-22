@@ -123,7 +123,7 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
                 info.addDefaultKeypress('f', juce::ModifierKeys::noModifiers);
                 break;
             case pianoswitch:
-                info.setInfo("Pianoswitch", "Create PianoSwitch Preparation", "Edit", 0);
+                info.setInfo("Pianoswitch", "Create Pianoswitch Preparation", "Edit", 0);
                 info.addDefaultKeypress('p', juce::ModifierKeys::noModifiers);
                 break;
         }
@@ -240,7 +240,9 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
-                prep_list.appendChild(t,  &undo);
+                // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case pianoswitch:
@@ -249,11 +251,11 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypePianoMap, nullptr);
                 t.setProperty(IDs::width, 150, nullptr);
-                t.setProperty(IDs::height, 150, nullptr);
+                t.setProperty(IDs::height, 120, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case modulation:

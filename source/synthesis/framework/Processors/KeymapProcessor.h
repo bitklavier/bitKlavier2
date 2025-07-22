@@ -64,7 +64,7 @@ public:
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
     juce::AudioProcessor::BusesProperties  keymapBusLayout() { return BusesProperties();}
     bool setMidiDevice(juce::AudioDeviceManager& deviceManager, juce::String identifier) { deviceManager.addMidiInputDeviceCallback(identifier, static_cast<juce::MidiInputCallback*>(_midi.get()));}
-
+    void allNotesOff();
     std::unique_ptr<MidiManager> _midi;
 
 private:

@@ -7,6 +7,8 @@
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 #include "ResetProcessor.h"
+#include "MidiFilterProcessor.h"
+#include "PianoSwitchProcessor.h"
 #include "../UserPreferences.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : tracktion::engine::ValueTreeObjectList<
@@ -17,6 +19,8 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
                          bitklavier::ModulationProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning, TuningProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset, bitklavier::ResetProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchProcessor::create);
 }
 
 PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v) {
