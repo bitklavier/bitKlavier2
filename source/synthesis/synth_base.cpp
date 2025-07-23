@@ -243,9 +243,9 @@ void SynthBase::setMpeEnabled (bool enabled)
 
 juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor (std::unique_ptr<juce::AudioProcessor> processor,
     juce::AudioProcessorGraph::NodeID id) {
-    if ( auto * pianoSwitch = dynamic_cast<PianoSwitchProcessor*>(processor.get())) {
-
-    }
+    // if ( auto * pianoSwitch = dynamic_cast<PianoSwitchProcessor*>(processor.get())) {
+    //
+    // }
     return engine_->addNode (std::move (processor), id);
 }
 
@@ -314,6 +314,9 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
         this->engine_->getStateBank().reset();
         gui_interface->updateFullGui();
     }
+    preparationLists.clear();
+    mod_connection_lists_.clear();
+    connectionLists.clear();
     if (!loadFromValueTree (parsed_value_tree))
     {
         error = "Error Initializing juce::ValueTree";

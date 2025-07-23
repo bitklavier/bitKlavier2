@@ -13,6 +13,7 @@
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : tracktion::engine::ValueTreeObjectList<
     PluginInstanceWrapper>(v), synth(parent) {
+    jassert(v.hasType(IDs::PREPARATIONS));
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,
@@ -21,9 +22,14 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset, bitklavier::ResetProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchProcessor::create);
+    rebuildObjects();
+    for (auto object: objects) {
+        PreparationList::newObjectAdded(object);
+    }
 }
 
 PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v) {
+
     juce::AudioProcessor *rawPtr;
     juce::AudioProcessorGraph::Node::Ptr node_ptr;
     juce::ValueTree state = v;
@@ -34,7 +40,8 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
         processor->prepareToPlay(synth.getSampleRate(), synth.getBufferSize());
         //looking at ProcessorGraph i actually don't think their is any need to try to wrap this in thread safety because
         //the graph rebuild is inherently gonna trigger some async blocking
-
+        DBG("add to " + v.getParent().getParent().getProperty(IDs::name).toString());
+        DBG("create new object with uuid" + state.getProperty(IDs::uuid).toString());
         node_ptr = synth.addProcessor(std::move(processor),
                                       juce::AudioProcessorGraph::NodeID(
                                           juce::Uuid(state.getProperty(IDs::uuid).toString()).getTimeLow()));
@@ -82,6 +89,7 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
         node_ptr->properties.set("type", v.getProperty(IDs::type));
         //sendChangeMessage();
     }
+
     return new PluginInstanceWrapper(rawPtr, state, node_ptr->nodeID);
 }
 

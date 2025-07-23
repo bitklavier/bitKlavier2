@@ -33,6 +33,10 @@ namespace bitklavier {
     public:
         ConnectionList(SynthBase& parent, const juce::ValueTree& v) : ValueTreeObjectList(v),synth(parent) {
             jassert(v.hasType(IDs::CONNECTIONS) || v.hasType(IDs::MODCONNECTIONS));
+            rebuildObjects();
+            for (auto object: objects) {
+                ConnectionList::newObjectAdded(object);
+            }
         }
         ~ConnectionList() {freeObjects();}
         class Listener {

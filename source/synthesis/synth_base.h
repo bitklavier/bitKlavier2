@@ -226,6 +226,7 @@ protected:
     std::vector<std::unique_ptr<bitklavier::ModConnectionList> > mod_connection_lists_;
     std::vector<std::unique_ptr<PreparationList> > preparationLists;
 
+
 public:
     PreparationList *getActivePreparationList();
 

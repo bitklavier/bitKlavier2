@@ -311,9 +311,9 @@ void ConstructionSite::reset() {
     if (_parent == nullptr)
         return;
         if (_parent->getSynth() != nullptr) {
-            _parent->getSynth()->getEngine()->resetEngine();
-            prep_list->setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
-            IDs::PREPARATIONS));
+            // _parent->getSynth()->getEngine()->resetEngine();
+            // prep_list->setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
+            // IDs::PREPARATIONS));
             // setActivePiano();
         }
 
