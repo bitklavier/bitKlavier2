@@ -220,11 +220,6 @@ protected:
 
     bool expired_;
 
-    //ensure prep list is deleted before mod connection and connection
-
-    std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;
-    std::vector<std::unique_ptr<bitklavier::ModConnectionList> > mod_connection_lists_;
-    std::vector<std::unique_ptr<PreparationList> > preparationLists;
 
 
 public:
@@ -237,6 +232,12 @@ public:
     juce::ValueTree activePiano;
 
     SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
+    //ensure prep list is deleted before mod connection and connection
+
+    std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;
+    std::vector<std::unique_ptr<bitklavier::ModConnectionList> > mod_connection_lists_;
+    std::vector<std::unique_ptr<PreparationList> > preparationLists;
+
 private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)

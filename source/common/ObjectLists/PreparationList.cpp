@@ -187,18 +187,23 @@ void PreparationList::setValueTree(const juce::ValueTree &v) {
 void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrapper *dst) {
     jassert(dynamic_cast<PianoSwitchProcessor*>(dst->proc)==nullptr);
     if(dynamic_cast<KeymapProcessor*>(dst->proc))
-            return;
-    for (auto piano_switch : pianoSwitchProcessors) {
-        synth.addModulationConnection(piano_switch->node_id, dst->node_id);
+        return;
+    for (auto& piano_switch_array : synth.preparationLists) {
+        for (auto piano_switch : *piano_switch_array) {
+
+            synth.addModulationConnection(piano_switch->node_id, dst->node_id);
+        }
     }
 
 }
 
 void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapper *piano_switch) {
     jassert(dynamic_cast<PianoSwitchProcessor*>(piano_switch->proc));
-    for (auto processor : objects) {
-        if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr)
-            synth.addModulationConnection(piano_switch->node_id,processor->node_id);
+    for (auto& piano_switch_array : synth.preparationLists) {
+        for (auto processor : piano_switch_array->objects) {
+            if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr)
+                synth.addModulationConnection(piano_switch->node_id,processor->node_id);
+        }
     }
 }
 
