@@ -70,6 +70,8 @@ void KeymapProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    DBG(v.getParent().getParent().getProperty(IDs::name).toString() + "pianoswitch");
+
     midiMessages.clear();
     int num_samples = buffer.getNumSamples();
 
@@ -81,35 +83,16 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         if(state.params.keyboard_state.keyStates.test(message.getMessage().getNoteNumber()))
             midiMessages.addEvent(message.getMessage(),message.samplePosition);
     }
-    /**
-     *
-     * MIDI Processing Happens here
-     *
-     */
 
-
-
-    /**
-     * others to do from the original KeyMap
-     *
-     * Trigger All Notes Off
-     * Ignore Sustain Pedal
-     * Use as Sustain Pedal
-     * Toggle Keys
-     * Sostenuto Mode
-     * Ignore NoteOff
-     *
-     */
-
-    // print them out for now
-    for (auto mi : midiMessages)
-    {
-        auto message = mi.getMessage();
-
-        mi.samplePosition;
-        mi.data;
-        DBG (printMidi (message, "kmap"));
-    }
+//    // print them out for now
+//    for (auto mi : midiMessages)
+//    {
+//        auto message = mi.getMessage();
+//
+//        mi.samplePosition;
+//        mi.data;
+//        DBG (printMidi (message, "kmap"));
+//    }
 
     // DBG("keymap");
 }

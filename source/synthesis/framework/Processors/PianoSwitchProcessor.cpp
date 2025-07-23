@@ -15,6 +15,7 @@ std::unique_ptr<juce::AudioProcessor> PianoSwitchProcessor::create(SynthBase &pa
 
 void PianoSwitchProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) {
     buffer.clear();
+    DBG(v.getParent().getParent().getProperty(IDs::name).toString() + "pianoswitch");
     for (auto msg: midiMessages) {
         if (msg.getMessage().isNoteOn()) {
             DBG("PianoSwitchProcessor::processBlock received noteOn " + juce::String(msg.getMessage().getNoteNumber()));

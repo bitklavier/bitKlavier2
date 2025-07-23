@@ -213,6 +213,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             else
             {
                 noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
+                activeNotes[m.getNoteNumber()] = true;
             }
         }
         else if (m.isNoteOff())
@@ -227,7 +228,10 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             }
             else
             {
-                noteOn (channel, m.getNoteNumber(), m.getVelocity());
+                if(activeNotes[m.getNoteNumber()]) {
+                    noteOn (channel, m.getNoteNumber(), m.getVelocity());
+                    activeNotes[m.getNoteNumber()] = false;
+                }
             }
         }
         else if (m.isAllNotesOff() || m.isAllSoundOff())
