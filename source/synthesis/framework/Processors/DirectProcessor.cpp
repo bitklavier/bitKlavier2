@@ -126,7 +126,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      *      callbacks, no UI stuff, etc, just updating params needed in the audio block here
      *      if we want to do other stuff for the same callback, we should have a second MessageThread callback
      */
-    DBG(v.getParent().getParent().getProperty(IDs::name).toString() + "direct");
+    DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     // always top of the chain as an instrument source; doesn't take audio in

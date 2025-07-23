@@ -118,14 +118,14 @@ namespace bitklavier
 
         Node::Ptr addNode (std::unique_ptr<ModulationProcessor> modProcessor, juce::AudioProcessorGraph::NodeID id);
 
-        void setActivePiano(const juce::ValueTree &v);
+        void setActivePiano (const juce::ValueTree& v);
 
         ModulationConnectionBank& getModulationBank() { return modulation_bank_; }
         StateConnectionBank& getStateBank() { return state_bank_; }
 
         void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
         {
-            DBG("------------------BEGIN BLOCK-------------------");
+            DBG ("------------------BEGIN BLOCK-------------------");
             processorGraph->processBlock (audio_buffer, midi_buffer);
         }
 
@@ -141,7 +141,7 @@ namespace bitklavier
 
         bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
-           return processorGraph->addConnection (connection);
+            return processorGraph->addConnection (connection);
         }
 
         void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
