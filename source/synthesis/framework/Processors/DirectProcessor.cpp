@@ -42,9 +42,9 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         v.appendChild (modChan, nullptr);
         mod++;
     }
-    v.appendChild(state.params.transpose.paramDefault,nullptr);
+    v.appendChild (state.params.transpose.paramDefault, nullptr);
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
-        // not needed for audio-rate modulatable params
+    // not needed for audio-rate modulatable params
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
 }
@@ -90,13 +90,13 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
     juce::Array<float> transps;
     auto paramVals = state.params.transpose.getFloatParams();
-    int i =0;
+    int i = 0;
     for (auto const& tp : *paramVals)
     {
         /**
          * todo for Davis: it's supposed to be the commented out line, but something need to get updated.
          */
-//        if (tp->getCurrentValue() != 0. && state.params.transpose.numActiveSliders->getCurrentValue() > i)
+        //        if (tp->getCurrentValue() != 0. && state.params.transpose.numActiveSliders->getCurrentValue() > i)
         if (tp->getCurrentValue() != 0. && state.params.transpose.numActive > i)
             transps.addIfNotAlreadyThere (tp->getCurrentValue());
         i++;
@@ -117,7 +117,15 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    // DBG("direct");
+    /*
+     * this updates all the AudioThread callbacks we might have in place
+     * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
+     *  they are all on the MessageThread, but if we wanted to have them synced to the block
+     *      we would put them on the AudioThread and they would be heard here
+     *  if we put them on the AudioThread, it would be important to have minimal actions in those
+     *      callbacks, no UI stuff, etc, just updating params needed in the audio block here
+     *      if we want to do other stuff for the same callback, we should have a second MessageThread callback
+     */
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     // always top of the chain as an instrument source; doesn't take audio in
@@ -140,6 +148,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (mainSynth->hasSamples())
     {
+        mainSynth->setBypassed (false);
         mainSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         mainSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -150,6 +159,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (hammerSynth->hasSamples())
     {
+        hammerSynth->setBypassed (false);
+
         hammerSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
             state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
@@ -159,6 +170,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (releaseResonanceSynth->hasSamples())
     {
+        releaseResonanceSynth->setBypassed (false);
         releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         releaseResonanceSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -169,12 +181,13 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (pedalSynth->hasSamples())
     {
+        pedalSynth->setBypassed (false);
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude(state.params.outputGain->getCurrentValue());
-    buffer.applyGain(outputgainmult);
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain (outputgainmult);
 
     // level meter update stuff
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
@@ -189,9 +202,86 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // get last synthesizer state and update things accordingly
     lastSynthState = mainSynth->getSynthesizerState();
     state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
-    if (tuning != nullptr) tuning->getState().params.tuningState.updateLastFrequency(lastSynthState.lastPitch);
-
+    if (tuning != nullptr)
+        tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
 }
-void DirectProcessor::processBlockBypassed(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) {
-    DBG("is bypassed");
+
+/**
+ * DirectProcessor::processBlockBypassed is called when this Direct prep is NOT in the active,
+ *      visible Piano, but is in the overall graph for the complete Gallery.
+ *
+ * Usually, it should do nothing, but it may need to do some closing actions after a PianoSwitch
+ *  for instance, if the player is holding some notes down with the left hand, and then executes a PianoSwitch
+ *      with the right hand, and then releases the left hand notes after the switch, we need to sustain
+ *      those notes through the switch, and then turn them off afterwards. We also should play the
+ *      hammer/resonance samples.
+ *  there will be more complicated things to handle here in Nostalgic, Synchronic, etc...
+ *
+ * @param buffer
+ * @param midiMessages
+ */
+void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    buffer.clear();
+
+    state.getParameterListeners().callAudioThreadBroadcasters();
+    state.params.transpose.processStateChanges();
+    state.params.velocityMinMax.processStateChanges();
+
+    juce::Array<float> updatedTransps = getMidiNoteTranspositions();
+    bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
+
+    if (mainSynth->hasSamples())
+    {
+        mainSynth->setBypassed (true);
+        mainSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        mainSynth->updateVelocityMinMax (
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
+        mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (hammerSynth->hasSamples())
+    {
+        hammerSynth->setBypassed (true);
+        hammerSynth->updateVelocityMinMax (
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+        // DBG("processblockhammersytnh
+        hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (releaseResonanceSynth->hasSamples())
+    {
+        releaseResonanceSynth->setBypassed (true);
+        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        releaseResonanceSynth->updateVelocityMinMax (
+            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
+            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
+
+        releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (pedalSynth->hasSamples())
+    {
+        pedalSynth->setBypassed (true);
+        pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    // final output gain stage, from rightmost slider in DirectParametersView
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain (outputgainmult);
+
+    /*
+     * all of the below is for the UI, and since this prep won't be visible when bypassed, we can leave it out
+     */
+    //    // level meter update stuff
+    //    std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
+    //    std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
+    //
+    //    // get last synthesizer state and update things accordingly
+    //    lastSynthState = mainSynth->getSynthesizerState();
+    //    state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
+    //    if (tuning != nullptr) tuning->getState().params.tuningState.updateLastFrequency(lastSynthState.lastPitch);
 }

@@ -30,10 +30,7 @@ namespace bitklavier {
         processorGraph->enableAllBuses();
     }
 
-    SoundEngine::~SoundEngine() {
-
-    }
-
+    SoundEngine::~SoundEngine() {}
 
     void SoundEngine::setOversamplingAmount(int oversampling_amount, int sample_rate) {
         static constexpr int kBaseSampleRate = 44100;
@@ -50,15 +47,24 @@ namespace bitklavier {
         last_sample_rate_ = sample_rate;
     }
 
-    Node::Ptr SoundEngine::addNode(std::unique_ptr<bitklavier::ModulationProcessor> modProcessor,
-                                   juce::AudioProcessorGraph::NodeID id) {
-    }
+//    Node::Ptr SoundEngine::addNode(std::unique_ptr<bitklavier::ModulationProcessor> modProcessor,
+//                                   juce::AudioProcessorGraph::NodeID id) {
+//    }
+
     void SoundEngine::setActivePiano(const juce::ValueTree &v) {
         DBG("setActivePianoSOundEngien");
         jassert(v.hasType(IDs::PIANO));
         auto nodes = processorGraph->getNodes();
         //skip input output nodes
         const auto & curr_piano = v.getChildWithName(IDs::PREPARATIONS);
+
+        /**
+         * start with the 4th node.
+         *  - the first three are initialized in initialiseGraph() in sound_engine.h
+         *      - node 0: audio output to DAW
+         *      - nodes 1-2: MIDI in and out from/to DAW
+         *      - eventually we will want a 4th, to take audio in from DAW
+         */
         for (int i = 3; i < nodes.size(); i++){
             auto node = nodes[i];
             auto tree = curr_piano.getChildWithProperty(IDs::nodeID,
@@ -70,6 +76,7 @@ namespace bitklavier {
             }
         }
     }
+
     void SoundEngine::allNotesOff() {
         auto nodes = processorGraph->getNodes();
         for (auto node : nodes) {

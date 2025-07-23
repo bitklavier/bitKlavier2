@@ -306,6 +306,9 @@ class BKSynthesiser
                     synthGain.setParameterValue(g);
                 }
 
+                void setBypassed(bool by) { bypassed = by;}
+                bool isBypassed() { return bypassed; }
+
                 /**
                  * todo
                  * remove full array copy from this
@@ -454,6 +457,7 @@ private:
                 juce::Array<float> midiNoteTranspositions = { 0.}; // needs to be set via UI, for additional transpositions
                 bool tuneTranspositions = false;
                 juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
+                std::array<bool, 128> activeNotes; // replace with std::bitset
 
                 //set by owning processor state.params.velocityMinMax
                 float velocityMin = 0.;
@@ -464,9 +468,13 @@ private:
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
 
-                chowdsp::GainDBParameter& synthGain; //global gain for this synth
+                //global gain for this synth
+                chowdsp::GainDBParameter& synthGain;
 
                 BKSynthesizerState lastSynthState;
+
+                // will be true if this synth is not in the active Piano, but is in the Gallery otherwise, so part of the AudioGraph
+                bool bypassed = false;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

@@ -14,27 +14,12 @@
 
 struct PianoSwitchParams : chowdsp::ParamHolder
 {
-    // Adds the appropriate parameters to the Tuning Processor
-    PianoSwitchParams() : chowdsp::ParamHolder ("pianoswitch")
-    {
-        add (mftoggle);
-    }
-
-    /**
-     * todo: replace with param that tracks piano selection
-     */
-    chowdsp::BoolParameter::Ptr mftoggle {
-        juce::ParameterID { "mftoggle", 100},
-        "some toggle",
-        false
-    };
+    PianoSwitchParams() : chowdsp::ParamHolder ("pianoswitch"){}
 };
 
 struct PianoSwitchNonParameterState : chowdsp::NonParamState
 {
-    PianoSwitchNonParameterState()
-    {
-    }
+    PianoSwitchNonParameterState(){}
 };
 
 class PianoSwitchProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<PianoSwitchParams, PianoSwitchNonParameterState>>
@@ -74,7 +59,6 @@ public:
 private :
     SynthBase& synth_base_;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PianoSwitchProcessor)
-
 };
 
 #endif //BITKLAVIER0_PIANOSWITCHPROCESSOR_H
