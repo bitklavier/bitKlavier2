@@ -166,7 +166,7 @@ void BKSynthesiser::processNextBlock (juce::AudioBuffer<floatType>& outputAudio,
 
         if (targetChannels > 0)
             renderVoices (outputAudio, startSample, samplesToNextMidiMessage);
-        DBG("handlemidievnet");
+
         handleMidiEvent (metadata.getMessage());
         startSample += samplesToNextMidiMessage;
         numSamples  -= samplesToNextMidiMessage;

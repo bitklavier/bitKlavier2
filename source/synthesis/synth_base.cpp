@@ -202,7 +202,7 @@ bitklavier::ModConnectionList* SynthBase::getActiveModConnectionList()
 
 void SynthBase::setActivePiano (const juce::ValueTree& v, SwitchTriggerThread thread)
 {
-    DBG ("setActivePiano");
+    //DBG ("setActivePiano");
     activePiano = v;
     switch_trigger_thread = thread;
     if(thread == SwitchTriggerThread::MessageThread) {
@@ -529,10 +529,10 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     std::getline (ss, src_modulator_uuid_and_name, '_');
     auto pos = src_modulator_uuid_and_name.find_first_of ("-");
     std::string juse_uuid = src_modulator_uuid_and_name.substr (pos + 1, src_modulator_uuid_and_name.size());
-    DBG (juse_uuid);
+    //DBG (juse_uuid);
     //   auto it = std::find_if(src_modulator_uuid_and_name.begin(),src_modulator_uuid_and_name.end(),::isdigit);
     //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
-    DBG (src_modulator_uuid_and_name);
+    //DBG (src_modulator_uuid_and_name);
 
     auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
 
@@ -563,7 +563,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     connection->parent_processor->addModulationConnection (connection);
 
     //    connection->parent_processor->modulation_connections_.push_back(connection);
-    DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
+    //DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0); //1 is mod
     auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index);
     //this is safe since we know that every source will be a modulationprocessor
@@ -708,10 +708,10 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     std::getline (ss, src_modulator_uuid_and_name, '_');
     auto pos = src_modulator_uuid_and_name.find_first_of ("-");
     std::string juse_uuid = src_modulator_uuid_and_name.substr (pos + 1, src_modulator_uuid_and_name.size());
-    DBG (juse_uuid);
+    //DBG (juse_uuid);
     //   auto it = std::find_if(src_modulator_uuid_and_name.begin(),src_modulator_uuid_and_name.end(),::isdigit);
     //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
-    DBG (src_modulator_uuid_and_name);
+    //DBG (src_modulator_uuid_and_name);
 
     auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
 
@@ -740,7 +740,7 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     connection->parent_processor->addModulationConnection (connection);
 
     //    connection->parent_processor->modulation_connections_.push_back(connection);
-    DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
+    //DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0); //1 is mod
     //    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer(true,1,param_index);
     //this is safe since we know that every source will be a modulationprocessor
