@@ -119,7 +119,7 @@ public:
 
     bool isConnected(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
 
-    void addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
+    bool addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
 
     bool connectStateModulation(const std::string &source, const std::string &destination);
 
@@ -232,6 +232,7 @@ public:
     juce::ValueTree activePiano;
 
     SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
+    int sample_index_of_switch;
     //ensure prep list is deleted before mod connection and connection
 
     std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;

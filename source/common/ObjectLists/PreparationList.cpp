@@ -190,7 +190,9 @@ void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrap
         return;
     for (auto& piano_switch_array : synth.preparationLists) {
         for (auto piano_switch : piano_switch_array->pianoSwitchProcessors) {
-            synth.addModulationConnection(piano_switch->node_id, dst->node_id);
+            // synth.addModulationConnection(piano_switch->node_id, dst->node_id);
+            if(!synth.addModulationConnection(piano_switch->node_id,dst->node_id))
+                jassertfalse;
         }
     }
 
@@ -201,7 +203,11 @@ void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapp
     for (auto& piano_switch_array : synth.preparationLists) {
         for (auto processor : piano_switch_array->objects) {
             if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr)
-                synth.addModulationConnection(piano_switch->node_id,processor->node_id);
+                if(!synth.addModulationConnection(piano_switch->node_id,processor->node_id))
+                    jassertfalse;
+            else
+                DBG(juce::String("did not prepend") + juce::String(processor->state.getProperty(IDs::type)));
+
         }
     }
 }

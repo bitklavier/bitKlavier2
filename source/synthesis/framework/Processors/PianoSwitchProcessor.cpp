@@ -23,12 +23,14 @@ void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 
     for (auto msg : midiMessages)
     {
-        if (msg.getMessage().isNoteOn())
+
+        if (msg.getMessage().isNoteOn()  && std::abs(synth_base_.sample_index_of_switch - msg.samplePosition) >= 10)
         {
             DBG ("PianoSwitchProcessor::processBlock received noteOn " + juce::String (msg.getMessage().getNoteNumber()));
             if (roundToInt (v.getProperty (IDs::selectedPianoIndex)) != -1)
             {
                 int index = v.getProperty (IDs::selectedPianoIndex);
+                synth_base_.sample_index_of_switch = msg.samplePosition;
                 synth_base_.setActivePiano (synth_base_.getValueTree().getChild (v.getProperty (IDs::selectedPianoIndex)),
                     SwitchTriggerThread::AudioThread);
                 synth_base_.callOnMainThread ([=]() {
@@ -42,6 +44,8 @@ void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
                     synth_base_.getValueTree().getChild (v.getProperty (IDs::selectedPianoIndex)).setProperty (IDs::isActive, 1, nullptr);
                 });
             }
+            break;
         }
     }
+
 }

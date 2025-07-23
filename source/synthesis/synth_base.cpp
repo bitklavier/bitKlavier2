@@ -344,14 +344,14 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
         action();
 
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
-
+    sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }
 
 //modulation connections are used for both audio rate modulations and to order tuning/modulation/reset/and piano change
 //preparations to occur before all other preparations they are connected to
 // NOTE: piano change connections must be ensure to occur before all other preparations
-void SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
+bool SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
     juce::AudioProcessorGraph::NodeID dest)
 {
     auto* sourceNode = getNodeForId (source);
@@ -362,7 +362,7 @@ void SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID sourc
     auto source_index = sourceNode->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0);
 
     juce::AudioProcessorGraph::Connection connection { { source, source_index }, { dest, dest_index } };
-    engine_->addConnection (connection);
+   return engine_->addConnection (connection);
 }
 
 void SynthBase::writeAudio (juce::AudioSampleBuffer* buffer, int channels, int samples, int offset)
