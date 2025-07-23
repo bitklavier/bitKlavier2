@@ -54,7 +54,11 @@ public:
     bool hasEditor() const override { return false; }
 
     juce::AudioProcessorEditor * createEditor() override { return nullptr; }
-    juce::AudioProcessor::BusesProperties pianoSwitchBusLayout() { return BusesProperties(); }
+    //uses modulation bus for ordering
+    juce::AudioProcessor::BusesProperties pianoSwitchBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
+        .withOutput("disabled",juce::AudioChannelSet::mono(),false)
+        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
+        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true); }
 
     const juce::String getName() const override { return "pianoswitch"; }
     double getTailLengthSeconds() const override {}

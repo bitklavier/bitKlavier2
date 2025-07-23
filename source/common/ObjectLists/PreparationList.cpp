@@ -91,6 +91,7 @@ void PreparationList::deleteObject(PluginInstanceWrapper *at) {
     // find and delete cables and modulation lines associated with this preparation section
     synth.deleteConnectionsWithId(at->node_id);
     synth.removeProcessor(at->node_id);
+    pianoSwitchProcessors.erase(std::remove(pianoSwitchProcessors.begin(), pianoSwitchProcessors.end(), at), pianoSwitchProcessors.end());
     delete at;
 }
 
@@ -103,6 +104,12 @@ void PreparationList::valueTreeRedirected(juce::ValueTree &) {
 }
 
 void PreparationList::newObjectAdded(PluginInstanceWrapper *instance_wrapper) {
+    if (auto *piano_switch = dynamic_cast<PianoSwitchProcessor*>(instance_wrapper->proc)) {
+        pianoSwitchProcessors.push_back(instance_wrapper);
+        prependPianoChangeProcessorToAll(instance_wrapper);
+    } else {
+        prependAllPianoChangeProcessorsTo(instance_wrapper);
+    }
     for (auto listener: listeners_)
         listener->moduleAdded(instance_wrapper);
 }
@@ -168,3 +175,22 @@ void PreparationList::addPluginCallback(std::unique_ptr<juce::AudioPluginInstanc
 void PreparationList::setValueTree(const juce::ValueTree &v) {
     parent = v;
 }
+
+void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrapper *dst) {
+    jassert(dynamic_cast<PianoSwitchProcessor*>(dst->proc)==nullptr);
+    if(dynamic_cast<KeymapProcessor*>(dst->proc))
+            return;
+    for (auto piano_switch : pianoSwitchProcessors) {
+        synth.addModulationConnection(piano_switch->node_id, dst->node_id);
+    }
+
+}
+
+void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapper *piano_switch) {
+    jassert(dynamic_cast<PianoSwitchProcessor*>(piano_switch->proc));
+    for (auto processor : objects) {
+        if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr)
+            synth.addModulationConnection(piano_switch->node_id,processor->node_id);
+    }
+}
+

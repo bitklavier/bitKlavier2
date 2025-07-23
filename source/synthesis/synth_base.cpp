@@ -33,6 +33,7 @@
 #include "TuningProcessor.h"
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "load_save.h"
+#include "PianoSwitchProcessor.h"
 #include "valuetree_utils/VariantConverters.h"
 
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager)
@@ -231,8 +232,10 @@ void SynthBase::setMpeEnabled (bool enabled)
 }
 
 juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor (std::unique_ptr<juce::AudioProcessor> processor,
-    juce::AudioProcessorGraph::NodeID id)
-{
+    juce::AudioProcessorGraph::NodeID id) {
+    if ( auto * pianoSwitch = dynamic_cast<PianoSwitchProcessor*>(processor.get())) {
+
+    }
     return engine_->addNode (std::move (processor), id);
 }
 
@@ -331,6 +334,9 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
     //melatonin::printSparkline(audio_buffer);
 }
 
+//modulation connections are used for both audio rate modulations and to order tuning/modulation/reset/and piano change
+//preparations to occur before all other preparations they are connected to
+// NOTE: piano change connections must be ensure to occur before all other preparations
 void SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
     juce::AudioProcessorGraph::NodeID dest)
 {

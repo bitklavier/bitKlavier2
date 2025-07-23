@@ -228,6 +228,7 @@ force_inline bool MidiManager::isMpeChannelMasterUpperZone(int channel) {
   return mpe_enabled_ && mpe_zone_layout_.getUpperZone().isActive() && upperMasterChannel() == channel;
 }
 
+//unused
 void MidiManager::processMidiMessage(const juce::MidiMessage& midi_message, int sample_position) {
   if (midi_message.isController())
     readMpeMessage(midi_message);
@@ -318,10 +319,17 @@ void MidiManager::processMidiMessage(const juce::MidiMessage& midi_message, int 
   }
 }
 
+
+
+
+
+
 void MidiManager::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage &midi_message) {
   midi_collector_.addMessageToQueue(midi_message);
 }
 
+//be sure that this would be filled with the correct start and numsamples
+//for an internal block size different from the external block size
 void MidiManager::replaceKeyboardMessages(juce::MidiBuffer& buffer, int num_samples) {
   keyboard_state_->processNextMidiBuffer(buffer, 0, num_samples, true);
 }
