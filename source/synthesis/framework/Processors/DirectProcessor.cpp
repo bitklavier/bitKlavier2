@@ -218,6 +218,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
  *      hammer/resonance samples.
  *  there will be more complicated things to handle here in Nostalgic, Synchronic, etc...
  *
+ *  todo: some optimization, so that idle processors in inactive Pianos aren't doing a bunch of processBlock work
+ *
  * @param buffer
  * @param midiMessages
  */
@@ -276,15 +278,4 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain (outputgainmult);
 
-    /*
-     * all of the below is for the UI, and since this prep won't be visible when bypassed, we can leave it out
-     */
-    //    // level meter update stuff
-    //    std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
-    //    std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
-    //
-    //    // get last synthesizer state and update things accordingly
-    //    lastSynthState = mainSynth->getSynthesizerState();
-    //    state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
-    //    if (tuning != nullptr) tuning->getState().params.tuningState.updateLastFrequency(lastSynthState.lastPitch);
 }
