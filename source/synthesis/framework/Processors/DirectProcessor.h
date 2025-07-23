@@ -159,6 +159,7 @@ public:
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
     {

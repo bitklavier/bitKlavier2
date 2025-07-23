@@ -98,9 +98,11 @@ class SynthBase :  public juce::ValueTree::Listener {
   bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID) ;
     juce::ValueTree& getValueTree();
     juce::UndoManager& getUndoManager();
+
     static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
     using AudioThreadAction = juce::dsp::FixedSizeFunction<actionSize, void()>;
     moodycamel::ReaderWriterQueue<AudioThreadAction> processorInitQueue { 10 };
+
     bool saveToFile(juce::File preset);
     bool saveToActiveFile();
     void clearActiveFile() { active_file_ = juce::File(); }

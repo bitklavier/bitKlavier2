@@ -12,6 +12,8 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
     // init hash of currently playing notes
     for (int i = 0; i<=128; i++)
         playingVoicesByNote.insert(0, {  });
+
+    activeNotes.fill(false);
 }
 
 BKSynthesiser::~BKSynthesiser()
@@ -184,7 +186,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
 {
     const int channel = m.getChannel();
 
-    /**
+    /*
      * regarding keyReleaseSynths:
      * in most cases, this operates as expected
      *
@@ -193,48 +195,115 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
      * note that this is separate from the "invert noteOn/Off" modality in KeyMap, which could effectively
      * reverse this already reversed behaviour!
      */
-    if (m.isNoteOn())
+
+    if(!bypassed)
     {
-        DBG("BKSynthesizer Note On " + juce::String(m.getNoteNumber()) + " " + juce::String(m.getVelocity()));
-        if(pedalSynth) return;
-        if (!keyReleaseSynth)
-            noteOn (channel, m.getNoteNumber(), m.getVelocity());
-        else
-            noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
-    }
-    else if (m.isNoteOff())
+        if (m.isNoteOn())
+        {
+            DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+
+            if (pedalSynth)
+                return;
+
+            if (!keyReleaseSynth)
+            {
+                noteOn (channel, m.getNoteNumber(), m.getVelocity());
+                activeNotes[m.getNoteNumber()] = true;
+            }
+            else
+            {
+                noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
+            }
+        }
+        else if (m.isNoteOff())
+        {
+            if (pedalSynth)
+                return;
+
+            if (!keyReleaseSynth)
+            {
+                noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
+                activeNotes[m.getNoteNumber()] = false;
+            }
+            else
+            {
+                noteOn (channel, m.getNoteNumber(), m.getVelocity());
+            }
+        }
+        else if (m.isAllNotesOff() || m.isAllSoundOff())
+        {
+            allNotesOff (channel, true);
+        }
+        else if (m.isPitchWheel())
+        {
+            const int wheelPos = m.getPitchWheelValue();
+            lastPitchWheelValues[channel - 1] = wheelPos;
+            handlePitchWheel (channel, wheelPos);
+        }
+        else if (m.isAftertouch())
+        {
+            handleAftertouch (channel, m.getNoteNumber(), m.getAfterTouchValue());
+        }
+        else if (m.isChannelPressure())
+        {
+            handleChannelPressure (channel, m.getChannelPressureValue());
+        }
+        else if (m.isController())
+        {
+            handleController (channel, m.getControllerNumber(), m.getControllerValue());
+        }
+        else if (m.isProgramChange())
+        {
+            handleProgramChange (channel, m.getProgramChangeNumber());
+        }
+    } else // bypassed!
     {
-        if(pedalSynth) return;
-        if (keyReleaseSynth)
-            noteOn (channel, m.getNoteNumber(), m.getVelocity());
-        else
-            noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
-    }
-    else if (m.isAllNotesOff() || m.isAllSoundOff())
-    {
-        allNotesOff (channel, true);
-    }
-    else if (m.isPitchWheel())
-    {
-        const int wheelPos = m.getPitchWheelValue();
-        lastPitchWheelValues [channel - 1] = wheelPos;
-        handlePitchWheel (channel, wheelPos);
-    }
-    else if (m.isAftertouch())
-    {
-        handleAftertouch (channel, m.getNoteNumber(), m.getAfterTouchValue());
-    }
-    else if (m.isChannelPressure())
-    {
-        handleChannelPressure (channel, m.getChannelPressureValue());
-    }
-    else if (m.isController())
-    {
-        handleController (channel, m.getControllerNumber(), m.getControllerValue());
-    }
-    else if (m.isProgramChange())
-    {
-        handleProgramChange (channel, m.getProgramChangeNumber());
+        /*
+         * if this synth is bypassed, we are aiming to clean up its activity, let it ring down, and then be silent
+         * basically:
+         *      - noteOns should be ignored so we don't activate new sounds
+         *      - noteOffs should do their thing, but only for currently sounding noteOns in this synth
+         *          we don't want hammers playing for every noteOff, for instance, only for already sounding noteOns
+         *
+         * so we need to keep track of currently active notes and only activate noteOffs for those: activeNotes array of bools
+         */
+
+        if (m.isNoteOn())
+        {
+            DBG ("BKSynthesizer Note On (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+
+            if (pedalSynth)
+                return;
+
+            if (keyReleaseSynth && activeNotes[m.getNoteNumber()])
+            {
+                noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
+                activeNotes[m.getNoteNumber()] = false;
+            }
+        }
+        else if (m.isNoteOff())
+        {
+            DBG ("BKSynthesizer Note Off (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+
+            if (pedalSynth)
+                return;
+
+            if (!keyReleaseSynth)
+            {
+                if (activeNotes[m.getNoteNumber()]) {
+                    noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
+                    activeNotes[m.getNoteNumber()] = false;
+                }
+            }
+            else // for keyReleaseSynths (hammers, resonance)
+            {
+                if (activeNotes[m.getNoteNumber()])
+                {
+                    noteOn (channel, m.getNoteNumber(), m.getVelocity());
+                    activeNotes[m.getNoteNumber()] = false;
+                }
+            }
+        }
     }
 }
 
@@ -394,6 +463,7 @@ void BKSynthesiser::allNotesOff (const int midiChannel, const bool allowTailOff)
             voice->stopNote (1.0f, allowTailOff);
 
     sustainPedalsDown.clear();
+    activeNotes.fill(false);
 }
 
 void BKSynthesiser::handlePitchWheel (const int midiChannel, const int wheelValue)

@@ -175,7 +175,7 @@ Typing as I do MidiFilter...
   - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 
 ---------
-## New Pianos and Switching
+## Audio Graph, New Pianos and Switching
+- look at `sound_engine` to see how the graph is setup
 - start in `HeaderSection` where the buttons on top of the UI (not the app menus) are handled
 - trace that through, look at where pianos are made `active` and so on, and the various ValueTrees are created
-- 

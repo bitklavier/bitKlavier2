@@ -71,6 +71,7 @@ namespace bitklavier
             processorGraph->addConnection ({ { midiInputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex },
                 { midiOutputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
         }
+
         void initialiseGraph()
         {
             processorGraph->clear();
@@ -121,30 +122,37 @@ namespace bitklavier
 
         ModulationConnectionBank& getModulationBank() { return modulation_bank_; }
         StateConnectionBank& getStateBank() { return state_bank_; }
+
         void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
         {
             processorGraph->processBlock (audio_buffer, midi_buffer);
         }
+
         void setInputsOutputs (int newNumIns, int newNumOuts)
         {
             processorGraph->setPlayConfigDetails (newNumIns, newNumOuts, curr_sample_rate, buffer_size);
         }
+
         juce::AudioProcessorGraph::Node* getNodeForId (juce::AudioProcessorGraph::NodeID id)
         {
             return processorGraph->getNodeForId (id);
         }
+
         bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
            return processorGraph->addConnection (connection);
         }
+
         void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
         {
             processorGraph->removeConnection (connection);
         }
+
         bool isConnected (juce::AudioProcessorGraph::Connection& connection)
         {
             return processorGraph->isConnected (connection);
         }
+
         bool isConnected (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
         {
             return processorGraph->isConnected (src, dest);
@@ -154,6 +162,7 @@ namespace bitklavier
         {
             processorGraph->addChangeListener (listener);
         }
+
         void allNotesOff();
 
     private:

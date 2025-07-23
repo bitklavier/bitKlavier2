@@ -30,8 +30,15 @@
 */
 
 /**
- * todo: rewrite ALL the spring code to remove JUCE dependencies
+ * todo: rewrite ALL the spring code to remove JUCE dependencies (other than the timer)
+ *  so, no juce::Arrays, etc...
  *  would be nice for it to be more modular, and might have other benefits as well
+ */
+
+/**
+ * todo: have this run on its own thread, so that its timer is independent from the UI
+ *       - would also be nice to find a way for it to work properly if rendering in non-real-time
+ *       - could possibly have it simply count samples in the processBlock and run simulate() on its own thread
  */
 
 #pragma once
