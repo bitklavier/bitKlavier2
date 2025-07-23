@@ -54,11 +54,14 @@ namespace bitklavier {
                                    juce::AudioProcessorGraph::NodeID id) {
     }
     void SoundEngine::setActivePiano(const juce::ValueTree &v) {
+        DBG("setActivePianoSOundEngien");
+        jassert(v.hasType(IDs::PIANO));
         auto nodes = processorGraph->getNodes();
         //skip input output nodes
+        const auto & curr_piano = v.getChildWithName(IDs::PREPARATIONS);
         for (int i = 3; i < nodes.size(); i++){
             auto node = nodes[i];
-            auto tree = v.getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::nodeID,
+            auto tree = curr_piano.getChildWithProperty(IDs::nodeID,
                 juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(node->nodeID));
             if (tree.isValid()) {
                 node->setBypassed(false);

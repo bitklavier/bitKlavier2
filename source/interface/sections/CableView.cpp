@@ -234,8 +234,11 @@ void CableView::removeConnection(bitklavier::Connection *c) {
     DBG("remove cable");
    Cable* at;
     int index = 0;
+    if (objects.isEmpty())
+        return;
    for (auto obj : objects)
    {
+
         if (obj->state == c->state) {
             at = obj;
             break;

@@ -76,7 +76,7 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     //MidiBuffer midi_messages;
     _midi->removeNextBlockOfMessages (midiMessages, num_samples);
     _midi->replaceKeyboardMessages (midiMessages, num_samples);
-    DBG("keymap");
+    // DBG("keymap");
 }
 void KeymapProcessor::allNotesOff() {
     _midi->allNotesOff();

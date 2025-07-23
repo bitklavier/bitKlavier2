@@ -35,10 +35,12 @@ PianoSwitchPreparation::PianoSwitchPreparation(
     addAndMakeVisible(pianoSelector.get());
     pianoSelector->setAlwaysOnTop(true);
     pianoSelectText->setAlwaysOnTop(true);
+    if (v.getProperty(IDs::selectedPianoName) != "")
+        pianoSelectText->setText(v.getProperty(IDs::selectedPianoName));
     pianoSelector->addListener(this);
     pianoSelector->setTriggeredOnMouseDown(true);
     pianoSelector->setShape(juce::Path(), true, true, true);
-    currentPianoIndex = 0;
+    currentPianoIndex = v.getProperty(IDs::selectedPianoIndex);
     ///availablePianosMenu = std::make_unique<OpenGLComboBox>("pianos");
 //    availablePianosMenu_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *availablePianosMenu, nullptr);
     //addAndMakeVisible(availablePianosMenu.get());
@@ -94,9 +96,10 @@ void PianoSwitchPreparation::resized()
     juce::Colour body_text = findColour(Skin::kBodyText, true);
     pianoSelectText->setColor(body_text);
     float label_text_height = findValue(Skin::kLabelHeight);
-    pianoSelectText->setTextSize(label_text_height);
+    pianoSelectText->setTextSize(2*label_text_height);
     juce::Rectangle<int> area (getLocalBounds());
     int comboboxheight = findValue(Skin::kComboMenuHeight);
+    auto newarea = area.removeFromBottom(2*comboboxheight);
     pianoSelector->setBounds(area.removeFromBottom(comboboxheight));
     pianoSelectText->setBounds(pianoSelector->getBounds());
 

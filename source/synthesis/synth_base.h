@@ -37,7 +37,12 @@ namespace bitklavier {
 }
 
 #include "PluginScannerSubprocess.h"
-
+enum class SwitchTriggerThread
+{
+    MessageThread,
+    AudioThread,
+};
+class UserPreferencesWrapper;
 class SynthBase : public juce::ValueTree::Listener {
 public:
     static constexpr float kOutputWindowMinNote = 16.0f;
@@ -158,7 +163,7 @@ public:
 
     bool isSourceConnected(const std::string &source);
 
-    void setActivePiano(const juce::ValueTree &v);
+    void setActivePiano(const juce::ValueTree &v, SwitchTriggerThread );
 
     void valueTreeChildAdded(juce::ValueTree &parentTree,
                              juce::ValueTree &childWhichHasBeenAdded);
@@ -176,8 +181,14 @@ public:
     SimpleFactory<ModulatorBase> modulator_factory;
     bitklavier::CircularQueue<bitklavier::ModulationConnection *> mod_connections_;
     bitklavier::CircularQueue<bitklavier::StateConnection *> state_connections_;
-
+    /** Calls an action on the main thread via chowdsp::DeferredAction */
+    template <typename Callable>
+    void callOnMainThread (Callable&& func, bool couldBeAudioThread = false)
+    {
+        mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
+    }
 protected:
+    chowdsp::DeferredAction mainThreadAction;
     //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
     juce::UndoManager um;
@@ -208,10 +219,12 @@ protected:
     juce::File active_file_;
 
     bool expired_;
-    //order matters here to ensure preparationLists are destroyed before connectionLists
+
+    //ensure prep list is deleted before mod connection and connection
+
     std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;
-    std::vector<std::unique_ptr<PreparationList> > preparationLists;
     std::vector<std::unique_ptr<bitklavier::ModConnectionList> > mod_connection_lists_;
+    std::vector<std::unique_ptr<PreparationList> > preparationLists;
 
 public:
     PreparationList *getActivePreparationList();
@@ -222,6 +235,7 @@ public:
 
     juce::ValueTree activePiano;
 
+    SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
 private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)

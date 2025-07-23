@@ -322,10 +322,10 @@ void SynthGuiInterface::openSaveDialog() {
 }
 #include "ConstructionSite.h"
 void SynthGuiInterface::setActivePiano(const juce::ValueTree &v) {
-    synth_->setActivePiano(v);
+    JUCE_ASSERT_MESSAGE_THREAD
+    if (synth_->switch_trigger_thread == SwitchTriggerThread::MessageThread)
+        synth_->setActivePiano(v,synth_->switch_trigger_thread);
     gui_->main_->constructionSite_->setActivePiano();
-
-
 }
 std::vector<std::string> SynthGuiInterface::getAllPianoNames() {
     std::vector<std::string> names;
@@ -339,6 +339,9 @@ std::vector<std::string> SynthGuiInterface::getAllPianoNames() {
 void SynthGuiInterface::allNotesOff() {
 
     synth_->getEngine()->allNotesOff();
+}
+void SynthGuiInterface::setPianoSwitchTriggerThreadMessage() {
+    synth_->switch_trigger_thread = SwitchTriggerThread::MessageThread;
 }
 
 void SynthGuiInterface::addPiano(const juce::String & piano_name) {

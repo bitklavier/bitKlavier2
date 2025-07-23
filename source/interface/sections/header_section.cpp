@@ -203,6 +203,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         piano.appendChild(preparations, nullptr);
         piano.appendChild(connections, nullptr);
         piano.appendChild(modconnections, nullptr);
+        interface->setPianoSwitchTriggerThreadMessage();
         //set all current pianos to be inactive or isActive parameter 0
         for (auto vt: gallery) {
             if (vt.hasType(IDs::PIANO)) {
@@ -237,6 +238,10 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         juce::Point<int> position(pianoSelector->getX(), pianoSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
             pianoSelectText->setText(names[selection]);
+
+            auto interface = findParentComponentOfClass<SynthGuiInterface>();
+            interface->setPianoSwitchTriggerThreadMessage();
+            interface->allNotesOff();
             for (auto vt: gallery) {
                 if (vt.hasType(IDs::PIANO)) {
                     vt.setProperty(IDs::isActive, 0, nullptr);
@@ -245,10 +250,11 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             for (auto vt: gallery) {
                 if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::name) == pianoSelectText->getText()) {
                     vt.setProperty(IDs::isActive, 1, nullptr);
+                    break;
                 }
             }
-            auto interface = findParentComponentOfClass<SynthGuiInterface>();
-            interface->allNotesOff();
+
+
             resized();
         });
     } else if (clicked_button == loadButton.get()) {

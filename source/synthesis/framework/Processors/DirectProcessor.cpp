@@ -117,7 +117,7 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    DBG("direct");
+    // DBG("direct");
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     // always top of the chain as an instrument source; doesn't take audio in
@@ -191,4 +191,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
     if (tuning != nullptr) tuning->getState().params.tuningState.updateLastFrequency(lastSynthState.lastPitch);
 
+}
+void DirectProcessor::processBlockBypassed(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) {
+    DBG("is bypassed");
 }

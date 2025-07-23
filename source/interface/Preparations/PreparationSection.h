@@ -92,10 +92,14 @@ public:
 
     std::vector<Listener *> listeners_;
 
-
+    //TODO: move this to the backend processor
+    //TODO: add a listener that actually waits for this to happen a triggers it on
+    // the audio thread
     virtual void
     addSoundSet(std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> *s) {}
-
+    //TODO: move this to the backend processor
+    //TODO: add a listener that actually waits for this to happen a triggers it on
+    // the audio thread
     virtual void addSoundSet(
             juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *s,
             juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *h,
