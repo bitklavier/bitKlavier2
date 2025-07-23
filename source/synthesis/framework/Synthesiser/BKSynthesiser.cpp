@@ -126,11 +126,12 @@ void BKSynthesiser::processNextBlock (juce::AudioBuffer<floatType>& outputAudio,
 
     /*
      * if we are in a bypassed state, and have already handled all vestigial midinotes,
-     * just render any remaining voices and skip the rest
+     * just render any remaining active voices and skip the rest
      */
     if(bypassed && activeNotes == 0)
     {
-        renderVoices (outputAudio, startSample, numSamples);
+        if (targetChannels > 0 && someVoicesActive)
+            renderVoices (outputAudio, startSample, numSamples);
         return;
     }
 
@@ -189,7 +190,10 @@ void BKSynthesiser::renderNextBlock (juce::AudioBuffer<float>& outputAudio, cons
 void BKSynthesiser::renderVoices (juce::AudioBuffer<float>& buffer, int startSample, int numSamples)
 {
     for (auto* voice : voices)
+    {
         voice->renderNextBlock (buffer, startSample, numSamples);
+        if (voice->isVoiceActive() ) someVoicesActive = true;
+    }
 }
 
 void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)

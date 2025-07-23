@@ -476,6 +476,9 @@ private:
                 // will be true if this synth is not in the active Piano, but is in the Gallery otherwise, so part of the AudioGraph
                 bool bypassed = false;
 
+                // becomes false when there are no voices active
+                bool someVoicesActive = true;
+
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };
 
