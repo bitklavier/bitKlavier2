@@ -80,7 +80,7 @@ public:
 
 
     void setActivePiano() {
-        DBG("setPIano CableView");
+//        DBG("setPIano CableView");
         connection_list->deleteAllGui();
         connection_list->removeListener(this);
 

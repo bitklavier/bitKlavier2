@@ -223,6 +223,8 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
  */
 void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct bypassed");
+
     buffer.clear();
 
     state.getParameterListeners().callAudioThreadBroadcasters();
