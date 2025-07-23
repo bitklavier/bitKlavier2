@@ -13,7 +13,6 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
     for (int i = 0; i<=128; i++)
         playingVoicesByNote.insert(0, {  });
 
-    //activeNotes.fill(false);
     activeNotes.reset();
 }
 
@@ -125,6 +124,16 @@ void BKSynthesiser::processNextBlock (juce::AudioBuffer<floatType>& outputAudio,
 
     const juce::ScopedLock sl (lock);
 
+    /*
+     * if we are in a bypassed state, and have already handled all vestigial midinotes,
+     * just render any remaining voices and skip the rest
+     */
+    if(bypassed && activeNotes == 0)
+    {
+        renderVoices (outputAudio, startSample, numSamples);
+        return;
+    }
+
     for (; numSamples > 0; ++midiIterator)
     {
         if (midiIterator == midiData.cend())
@@ -209,13 +218,11 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             if (!keyReleaseSynth)
             {
                 noteOn (channel, m.getNoteNumber(), m.getVelocity());
-                //activeNotes[m.getNoteNumber()] = true;
                 activeNotes.set(m.getNoteNumber());
             }
             else
             {
                 noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
-                //activeNotes[m.getNoteNumber()] = true;
                 activeNotes.set(m.getNoteNumber());
             }
         }
@@ -227,15 +234,12 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             if (!keyReleaseSynth)
             {
                 noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
-                //activeNotes[m.getNoteNumber()] = false;
                 activeNotes.reset(m.getNoteNumber());
             }
             else
             {
-                //if(activeNotes[m.getNoteNumber()]) {
                 if(activeNotes.test(m.getNoteNumber())) {
                     noteOn (channel, m.getNoteNumber(), m.getVelocity());
-                    //activeNotes[m.getNoteNumber()] = false;
                     activeNotes.reset(m.getNoteNumber());
                 }
             }
@@ -285,11 +289,9 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             if (pedalSynth)
                 return;
 
-            //if (keyReleaseSynth && activeNotes[m.getNoteNumber()])
             if(keyReleaseSynth && activeNotes.test(m.getNoteNumber()))
             {
                 noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
-                //activeNotes[m.getNoteNumber()] = false;
                 activeNotes.reset(m.getNoteNumber());
             }
         }
@@ -302,20 +304,16 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
 
             if (!keyReleaseSynth)
             {
-                //if (activeNotes[m.getNoteNumber()]) {
                 if(activeNotes.test(m.getNoteNumber())) {
                     noteOff (channel, m.getNoteNumber(), m.getVelocity(), true);
-                    //activeNotes[m.getNoteNumber()] = false;
                     activeNotes.reset(m.getNoteNumber());
                 }
             }
             else // for keyReleaseSynths (hammers, resonance)
             {
-                //if (activeNotes[m.getNoteNumber()])
                 if(activeNotes.test(m.getNoteNumber()))
                 {
                     noteOn (channel, m.getNoteNumber(), m.getVelocity());
-                    //activeNotes[m.getNoteNumber()] = false;
                     activeNotes.reset(m.getNoteNumber());
                 }
             }
@@ -479,7 +477,6 @@ void BKSynthesiser::allNotesOff (const int midiChannel, const bool allowTailOff)
             voice->stopNote (1.0f, allowTailOff);
 
     sustainPedalsDown.clear();
-    //activeNotes.fill(false);
     activeNotes.reset();
 }
 
