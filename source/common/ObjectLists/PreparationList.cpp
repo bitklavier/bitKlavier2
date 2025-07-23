@@ -189,8 +189,7 @@ void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrap
     if(dynamic_cast<KeymapProcessor*>(dst->proc))
         return;
     for (auto& piano_switch_array : synth.preparationLists) {
-        for (auto piano_switch : *piano_switch_array) {
-
+        for (auto piano_switch : piano_switch_array->pianoSwitchProcessors) {
             synth.addModulationConnection(piano_switch->node_id, dst->node_id);
         }
     }
