@@ -317,6 +317,7 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
+    engine_->resetEngine();
     if (!loadFromValueTree (parsed_value_tree))
     {
         error = "Error Initializing juce::ValueTree";

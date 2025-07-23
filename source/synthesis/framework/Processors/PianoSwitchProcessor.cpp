@@ -15,11 +15,12 @@ std::unique_ptr<juce::AudioProcessor> PianoSwitchProcessor::create(SynthBase &pa
 
 void PianoSwitchProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) {
     buffer.clear();
+    DBG(v.getParent().getParent().getProperty(IDs::name).toString() + "switch");
+
     for (auto msg: midiMessages) {
         if (msg.getMessage().isNoteOn()) {
             DBG("PianoSwitchProcessor::processBlock received noteOn " + juce::String(msg.getMessage().getNoteNumber()));
-            if (v.getProperty(IDs::selectedPianoIndex).isInt() &&
-                v.getProperty(IDs::selectedPianoIndex).isInt() != -1) {
+            if (roundToInt(v.getProperty(IDs::selectedPianoIndex)) != -1) {
                 int index = v.getProperty(IDs::selectedPianoIndex);
                 synth_base_.setActivePiano(synth_base_.getValueTree().getChild(v.getProperty(IDs::selectedPianoIndex)),
                                            SwitchTriggerThread::AudioThread);

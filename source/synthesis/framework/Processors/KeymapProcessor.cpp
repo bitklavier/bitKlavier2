@@ -70,6 +70,8 @@ void KeymapProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    DBG(v.getParent().getParent().getProperty(IDs::name).toString() + "kmap");
+
     midiMessages.clear();
     int num_samples = buffer.getNumSamples();
 
