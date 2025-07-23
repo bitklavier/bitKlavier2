@@ -30,167 +30,233 @@ class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
 class PreparationList;
+
 namespace bitklavier {
-  class ConnectionList;
-  class ModConnectionList;
+    class ConnectionList;
+    class ModConnectionList;
 }
+
 #include "PluginScannerSubprocess.h"
-class SynthBase :  public juce::ValueTree::Listener {
-  public:
+enum class SwitchTriggerThread
+{
+    MessageThread,
+    AudioThread,
+};
+class UserPreferencesWrapper;
+class SynthBase : public juce::ValueTree::Listener {
+public:
     static constexpr float kOutputWindowMinNote = 16.0f;
     static constexpr float kOutputWindowMaxNote = 128.0f;
 
-    SynthBase(juce::AudioDeviceManager* ={});
+    SynthBase(juce::AudioDeviceManager * = {});
+
     virtual ~SynthBase();
 
 
 
-   bool loadFromFile(juce::File preset, std::string& error) ;
+    bitklavier::SoundEngine *getEngine() { return engine_.get(); }
+    juce::MidiKeyboardState *getKeyboardState() { return keyboard_state_.get(); }
 
-
-
-
-//    int getSampleRate();
-//    void initEngine();
-
-
-    void setMpeEnabled(bool enabled);
-
-//    virtual void setValueNotifyHost(const std::string& name, float value) { }
-
-    bool isMidiMapped(const std::string& name);
-
-    bitklavier::SoundEngine* getEngine() { return engine_.get(); }
-    juce::MidiKeyboardState* getKeyboardState() { return keyboard_state_.get(); }
     int getSampleRate();
+
     int getBufferSize();
-    void notifyOversamplingChanged();
-    void checkOversampling();
-    virtual const juce::CriticalSection& getCriticalSection() = 0;
+
+
+    virtual const juce::CriticalSection &getCriticalSection() = 0;
+
     virtual void pauseProcessing(bool pause) = 0;
-    bitklavier::ModulationConnectionBank& getModulationBank();
-    bitklavier::StateConnectionBank& getStateBank();
 
-    struct ValueChangedCallback : public juce::CallbackMessage {
-      ValueChangedCallback(std::shared_ptr<SynthBase*> listener, std::string name, float val) :
-          listener(listener), control_name(std::move(name)), value(val) { }
+    bitklavier::ModulationConnectionBank &getModulationBank();
 
-      void messageCallback() override;
+    bitklavier::StateConnectionBank &getStateBank();
 
-      std::weak_ptr<SynthBase*> listener;
-      std::string control_name;
-      float value;
-    };
-    juce::AudioDeviceManager* manager;
-    std::shared_ptr<UserPreferencesWrapper> user_prefs;
-    juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor, juce::AudioProcessorGraph::NodeID id ={});
-    //use this functino myra
-    juce::AudioProcessorGraph::Node::Ptr removeProcessor( juce::AudioProcessorGraph::NodeID id ) ;
-  juce::AudioProcessorGraph::Node::Ptr addPlugin(std::unique_ptr<juce::AudioPluginInstance> instance,
-                                   const juce::String& error,
-                                   juce::Point<double> pos,
-                                   PluginDescriptionAndPreference::UseARA useARA);
-    juce::AudioProcessorGraph::Node * getNodeForId(juce::AudioProcessorGraph::NodeID id);
-    void addConnection(juce::AudioProcessorGraph::Connection& connect);
-    void removeConnection(const juce::AudioProcessorGraph::Connection& connect);
-    void addTuningConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
-    void connectTuning(const juce::ValueTree& v);
-  bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID) ;
-    juce::ValueTree& getValueTree();
-    juce::UndoManager& getUndoManager();
 
-    static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
-    using AudioThreadAction = juce::dsp::FixedSizeFunction<actionSize, void()>;
-    moodycamel::ReaderWriterQueue<AudioThreadAction> processorInitQueue { 10 };
-
+    bool loadFromFile(juce::File preset, std::string &error);
+    //unused but could be useful for future mpe and or midi mapping functionality
+    void setMpeEnabled(bool enabled);
+    bool isMidiMapped(const std::string &name);
+    //unused but should be used to allow users to save to the most recently selected file
     bool saveToFile(juce::File preset);
     bool saveToActiveFile();
+
     void clearActiveFile() { active_file_ = juce::File(); }
     juce::File getActiveFile() { return active_file_; }
-    void addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
-    bool connectStateModulation(const std::string& source,const std::string& destination);
-    bool connectModulation(const std::string& source,const std::string& destination);
-    bool connectModulation(const juce::ValueTree& v);
-    bool connectReset(const juce::ValueTree& v);
-    void disconnectModulation(const std::string& source, const std::string& destination);
-    void disconnectStateModulation(const std::string& source, const std::string& destination);
-    void connectModulation(bitklavier::ModulationConnection* connection);
-    void disconnectModulation(bitklavier::ModulationConnection* connection);
-    void disconnectModulation(bitklavier::StateConnection* connection);
-    void connectStateModulation(bitklavier::StateConnection* connection);
-    SimpleFactory<ModulatorBase> modulator_factory;
-    ///modulation functionality
-  void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
-    std::vector<bitklavier::ModulationConnection*> getSourceConnections(const std::string& sourceId) const;
-    std::vector<bitklavier::StateConnection*> getSourceStateConnections(const std::string& sourceId) const;
-    std::vector<bitklavier::ModulationConnection*> getDestinationConnections(const std::string& destinationId) const;
-    std::vector<bitklavier::StateConnection*> getDestinationStateConnections(const std::string& destinationId) const;
-    bitklavier::ModulationConnection* getConnection(const std::string& source, const std::string& destination) const;
-    bitklavier::StateConnection* getStateConnection(const std::string& source, const std::string& destination) const;
 
-    bitklavier::CircularQueue<bitklavier::ModulationConnection*> mod_connections_;
-    bitklavier::CircularQueue<bitklavier::StateConnection*> state_connections_;
-    int getNumModulations(const std::string& destination);
-    virtual SynthGuiInterface* getGuiInterface() = 0;
-    bool isSourceConnected(const std::string& source);
-    void setActivePiano(const juce::ValueTree& v);
-  void valueTreeChildAdded (juce::ValueTree& parentTree,
-                                          juce::ValueTree& childWhichHasBeenAdded);
- void valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
-                                               const juce::Identifier& property);
+    juce::ValueTree &getValueTree();
+
+    juce::UndoManager &getUndoManager();
+
+
+
+    //processor adding functions
+    juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor,
+                                                      juce::AudioProcessorGraph::NodeID id = {});
+
+
+    juce::AudioProcessorGraph::Node::Ptr removeProcessor(juce::AudioProcessorGraph::NodeID id);
+
+    juce::AudioProcessorGraph::Node::Ptr addPlugin(std::unique_ptr<juce::AudioPluginInstance> instance,
+                                                   const juce::String &error,
+                                                   juce::Point<double> pos,
+                                                   PluginDescriptionAndPreference::UseARA useARA);
+
+    juce::AudioProcessorGraph::Node *getNodeForId(juce::AudioProcessorGraph::NodeID id);
+
+
+
+
+
+
+
+    //all connection code
+    void addConnection(juce::AudioProcessorGraph::Connection &connect);
+
+    void removeConnection(const juce::AudioProcessorGraph::Connection &connect);
+
+    void addTuningConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
+
+    void connectTuning(const juce::ValueTree &v);
+
+    bool isConnected(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
+
+    void addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
+
+    bool connectStateModulation(const std::string &source, const std::string &destination);
+
+    bool connectModulation(const std::string &source, const std::string &destination);
+
+    bool connectModulation(const juce::ValueTree &v);
+
+    bool connectReset(const juce::ValueTree &v);
+
+    void disconnectModulation(const std::string &source, const std::string &destination);
+
+    void disconnectStateModulation(const std::string &source, const std::string &destination);
+
+    void connectModulation(bitklavier::ModulationConnection *connection);
+
+    void disconnectModulation(bitklavier::ModulationConnection *connection);
+
+    void disconnectModulation(bitklavier::StateConnection *connection);
+
+    void connectStateModulation(bitklavier::StateConnection *connection);
+
+
+    ///modulation functionality
+    void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
+
+    std::vector<bitklavier::ModulationConnection *> getSourceConnections(const std::string &sourceId) const;
+
+    std::vector<bitklavier::StateConnection *> getSourceStateConnections(const std::string &sourceId) const;
+
+    std::vector<bitklavier::ModulationConnection *> getDestinationConnections(const std::string &destinationId) const;
+
+    std::vector<bitklavier::StateConnection *> getDestinationStateConnections(const std::string &destinationId) const;
+
+    bitklavier::ModulationConnection *getConnection(const std::string &source, const std::string &destination) const;
+
+    bitklavier::StateConnection *getStateConnection(const std::string &source, const std::string &destination) const;
+
+    int getNumModulations(const std::string &destination);
+
+    virtual SynthGuiInterface *getGuiInterface() = 0;
+
+    bool isSourceConnected(const std::string &source);
+
+    void setActivePiano(const juce::ValueTree &v, SwitchTriggerThread );
+
+    void valueTreeChildAdded(juce::ValueTree &parentTree,
+                             juce::ValueTree &childWhichHasBeenAdded);
+
+    void valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged,
+                                  const juce::Identifier &property);
+
+    //single consumer single produce queue (thread safe / non blocking)
+    static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
+    using AudioThreadAction = juce::dsp::FixedSizeFunction<actionSize, void()>;
+    moodycamel::ReaderWriterQueue<AudioThreadAction> processorInitQueue{10};
+
+    juce::AudioDeviceManager *manager;
+    std::shared_ptr<UserPreferencesWrapper> user_prefs;
+    SimpleFactory<ModulatorBase> modulator_factory;
+    bitklavier::CircularQueue<bitklavier::ModulationConnection *> mod_connections_;
+    bitklavier::CircularQueue<bitklavier::StateConnection *> state_connections_;
+    /** Calls an action on the main thread via chowdsp::DeferredAction */
+    template <typename Callable>
+    void callOnMainThread (Callable&& func, bool couldBeAudioThread = false)
+    {
+        mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
+    }
 protected:
-//    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
+    chowdsp::DeferredAction mainThreadAction;
+    //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;
     juce::UndoManager um;
-    bool loadFromValueTree(const juce::ValueTree& state);
+
+    bool loadFromValueTree(const juce::ValueTree &state);
 
 
-    void processAudio(juce::AudioSampleBuffer* buffer, int channels, int samples, int offset);
-    void processAudioAndMidi(juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer); // , int channels, int samples, int offset, int start_sample = 0, int end_sample = 0);
-    void processAudioWithInput(juce::AudioSampleBuffer* buffer, const float* input_buffer,
+    void processAudio(juce::AudioSampleBuffer *buffer, int channels, int samples, int offset);
+
+    void processAudioAndMidi(juce::AudioBuffer<float> &audio_buffer, juce::MidiBuffer &midi_buffer);
+
+    // , int channels, int samples, int offset, int start_sample = 0, int end_sample = 0);
+    void processAudioWithInput(juce::AudioSampleBuffer *buffer, const float *input_buffer,
                                int channels, int samples, int offset);
-    void writeAudio(juce::AudioSampleBuffer* buffer, int channels, int samples, int offset);
-    void processMidi(juce::MidiBuffer& buffer, int start_sample = 0, int end_sample = 0);
-    void processKeyboardEvents(juce::MidiBuffer& buffer, int num_samples);
+
+    void writeAudio(juce::AudioSampleBuffer *buffer, int channels, int samples, int offset);
+
+    void processMidi(juce::MidiBuffer &buffer, int start_sample = 0, int end_sample = 0);
+
+    void processKeyboardEvents(juce::MidiBuffer &buffer, int num_samples);
 
     std::unique_ptr<bitklavier::SoundEngine> engine_;
     std::unique_ptr<MidiManager> midi_manager_;
     std::unique_ptr<juce::MidiKeyboardState> keyboard_state_;
 
-    std::shared_ptr<SynthBase*> self_reference_;
+    std::shared_ptr<SynthBase *> self_reference_;
 
     juce::File active_file_;
 
     bool expired_;
-  //order matters here to ensure preparationLists are destroyed before connectionLists
-  std::vector<std::unique_ptr<bitklavier::ConnectionList>> connectionLists;
-  std::vector<std::unique_ptr<PreparationList>> preparationLists;
-  std::vector<std::unique_ptr<bitklavier::ModConnectionList>> mod_connection_lists_;
+
+    //ensure prep list is deleted before mod connection and connection
+
+    std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;
+    std::vector<std::unique_ptr<bitklavier::ModConnectionList> > mod_connection_lists_;
+    std::vector<std::unique_ptr<PreparationList> > preparationLists;
 
 public:
-  PreparationList* getActivePreparationList() ;
-  bitklavier::ConnectionList* getActiveConnectionList() ;
-  bitklavier::ModConnectionList* getActiveModConnectionList() ;
-  juce::ValueTree activePiano;
+    PreparationList *getActivePreparationList();
+
+    bitklavier::ConnectionList *getActiveConnectionList();
+
+    bitklavier::ModConnectionList *getActiveModConnectionList();
+
+    juce::ValueTree activePiano;
+
+    SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
+private:
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthBase)
 };
 
 class HeadlessSynth : public SynthBase {
-  public:
-    virtual const juce::CriticalSection& getCriticalSection() override {
-      return critical_section_;
+public:
+    virtual const juce::CriticalSection &getCriticalSection() override {
+        return critical_section_;
     }
 
     virtual void pauseProcessing(bool pause) override {
-      if (pause)
-        critical_section_.enter();
-      else
-        critical_section_.exit();
+        if (pause)
+            critical_section_.enter();
+        else
+            critical_section_.exit();
     }
 
-  protected:
-    virtual SynthGuiInterface* getGuiInterface() override { return nullptr; }
+protected:
+    virtual SynthGuiInterface *getGuiInterface() override { return nullptr; }
 
-  private:
+private:
     juce::CriticalSection critical_section_;
 };

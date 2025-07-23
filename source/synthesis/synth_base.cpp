@@ -33,6 +33,7 @@
 #include "TuningProcessor.h"
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "load_save.h"
+#include "PianoSwitchProcessor.h"
 #include "valuetree_utils/VariantConverters.h"
 
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager)
@@ -83,35 +84,14 @@ SynthBase::~SynthBase()
     tree.removeListener (this);
 }
 
-void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
-    juce::ValueTree& childWhichHasBeenAdded)
-{
-    if (childWhichHasBeenAdded.hasType (IDs::PIANO))
-    {
-        DBG ("added piano");
-        preparationLists.emplace_back (
-            std::make_unique<PreparationList> (
-                *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr)));
-        connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (
-            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
-        mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
-            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr)));
-        if (getGuiInterface())
-        {
-            getGuiInterface()->setActivePiano (childWhichHasBeenAdded);
-        }
-        else
-        {
-            setActivePiano (childWhichHasBeenAdded);
-        }
-    }
-}
+
 
 void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delete_id)
 {
     DBG ("delete connectionswithid");
 
     //cable connections i.e. audio/midi
+    // if (connectionLists?
     auto* connectionList = getActiveConnectionList();
     auto size = connectionList->size();
     auto vt = connectionList->getValueTree();
@@ -130,23 +110,47 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
     }
     //modulation connections, i.e. tuning, mod, reset
     auto* modConnectionList = getActiveModConnectionList();
-    auto size_ = modConnectionList->size();
-    auto vt_ = modConnectionList->getValueTree();
-    for (int i = 0; i < size;)
+    // if(modConnectionList) {
+        auto size_ = modConnectionList->size();
+        auto vt_ = modConnectionList->getValueTree();
+        for (int i = 0; i < size;)
+        {
+            auto connection = vt_.getChild (i);
+            if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
+            {
+                DBG ("remove mod connection");
+                modConnectionList->removeChild (connection, &getUndoManager());
+            }
+            else
+            {
+                i++;
+            }
+        }
+    // }
+}
+void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
+    juce::ValueTree& childWhichHasBeenAdded)
+{
+    if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
-        auto connection = vt_.getChild (i);
-        if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
+        DBG ("added piano");
+        preparationLists.emplace_back (
+            std::make_unique<PreparationList> (
+                *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr)));
+        connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (
+            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
+        mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
+            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr)));
+        if (getGuiInterface())
         {
-            DBG ("remove mod connection");
-            modConnectionList->removeChild (connection, &getUndoManager());
+            getGuiInterface()->setActivePiano (childWhichHasBeenAdded);
         }
-        else
-        {
-            i++;
-        }
+        // else
+        // {
+        //     setActivePiano (childWhichHasBeenAdded,SwitchTriggerThread::MessageThread);
+        // }
     }
 }
-
 void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
     const juce::Identifier& property)
 {
@@ -156,10 +160,10 @@ void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasC
         {
             getGuiInterface()->setActivePiano (treeWhosePropertyHasChanged);
         }
-        else
-        {
-            setActivePiano (treeWhosePropertyHasChanged);
-        }
+        // else
+        // {
+        //     setActivePiano (treeWhosePropertyHasChanged);
+        // }
     }
 }
 
@@ -196,13 +200,20 @@ bitklavier::ModConnectionList* SynthBase::getActiveModConnectionList()
     return nullptr;
 }
 
-void SynthBase::setActivePiano (const juce::ValueTree& v)
+void SynthBase::setActivePiano (const juce::ValueTree& v, SwitchTriggerThread thread)
 {
     DBG ("setActivePiano");
     activePiano = v;
-    processorInitQueue.try_enqueue ([this] {
-        engine_->setActivePiano (activePiano);
-    });
+    switch_trigger_thread = thread;
+    if(thread == SwitchTriggerThread::MessageThread) {
+        processorInitQueue.try_enqueue ([this] {
+       engine_->setActivePiano (activePiano);});
+    }
+    else {
+        engine_->setActivePiano(activePiano);
+    }
+
+
 
     // tree.removeListener (this);
     // tree.setProperty (IDs::isActive, 0, nullptr);
@@ -231,8 +242,10 @@ void SynthBase::setMpeEnabled (bool enabled)
 }
 
 juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor (std::unique_ptr<juce::AudioProcessor> processor,
-    juce::AudioProcessorGraph::NodeID id)
-{
+    juce::AudioProcessorGraph::NodeID id) {
+    if ( auto * pianoSwitch = dynamic_cast<PianoSwitchProcessor*>(processor.get())) {
+
+    }
     return engine_->addNode (std::move (processor), id);
 }
 
@@ -331,6 +344,9 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
     //melatonin::printSparkline(audio_buffer);
 }
 
+//modulation connections are used for both audio rate modulations and to order tuning/modulation/reset/and piano change
+//preparations to occur before all other preparations they are connected to
+// NOTE: piano change connections must be ensure to occur before all other preparations
 void SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
     juce::AudioProcessorGraph::NodeID dest)
 {

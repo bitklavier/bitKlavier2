@@ -220,6 +220,9 @@ public:
     void rebuildAllGui();
 
 private:
+    void prependAllPianoChangeProcessorsTo(const PluginInstanceWrapper*);
+    void prependPianoChangeProcessorToAll(const PluginInstanceWrapper*);
+    std::vector<PluginInstanceWrapper*> pianoSwitchProcessors;
     std::unique_ptr<juce::AudioPluginInstance> temporary_instance;
     PreparationFactory prepFactory;
     std::vector<Listener*> listeners_;

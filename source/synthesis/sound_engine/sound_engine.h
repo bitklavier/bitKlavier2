@@ -125,6 +125,7 @@ namespace bitklavier
 
         void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
         {
+            // DBG("------------------BEGIN BLOCK-------------------");
             processorGraph->processBlock (audio_buffer, midi_buffer);
         }
 

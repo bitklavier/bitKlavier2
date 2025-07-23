@@ -28,16 +28,22 @@ PianoSwitchPreparation::PianoSwitchPreparation(
         },false);
 
     addAndMakeVisible (item.get());
-
     pianoSelectText = std::make_shared<PlainTextComponent>("Piano", "---");
     addOpenGlComponent(pianoSelectText);
-
-    pianoSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    pianoSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
+        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
     addAndMakeVisible(pianoSelector.get());
+    pianoSelector->setAlwaysOnTop(true);
+    pianoSelectText->setAlwaysOnTop(true);
 
     pianoSelector->addListener(this);
     pianoSelector->setTriggeredOnMouseDown(true);
     pianoSelector->setShape(juce::Path(), true, true, true);
+    //currentPianoIndex = v.getProperty(IDs::selectedPianoIndex);
+    ///availablePianosMenu = std::make_unique<OpenGLComboBox>("pianos");
+//    availablePianosMenu_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *availablePianosMenu, nullptr);
+    //addAndMakeVisible(availablePianosMenu.get());
+    //addOpenGlComponent(availablePianosMenu->getImageComponent());
 
     /**
      * since the only thing we need to save with the PianoSwitch is the target piano to switch to,
@@ -46,8 +52,9 @@ PianoSwitchPreparation::PianoSwitchPreparation(
      *  of doing it with a chowdsp param.
      */
     currentPianoIndex = state.getProperty(IDs::selectedPianoIndex);
-    auto names = interface->getAllPianoNames();
-    pianoSelectText->setText(names[currentPianoIndex]);
+    if (v.getProperty(IDs::selectedPianoName) != "")
+        pianoSelectText->setText(v.getProperty(IDs::selectedPianoName));
+
 }
 
 std::unique_ptr<SynthSection> PianoSwitchPreparation::getPrepPopup()

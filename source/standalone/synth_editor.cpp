@@ -104,7 +104,18 @@ void SynthEditor::prepareToPlay(int buffer_size, double sample_rate) {
   engine_->prepareToPlay(sample_rate, buffer_size);
   midi_manager_->setSampleRate(sample_rate);
 }
-
+/*commented out the code to create an internal buffer size
+// would need to update our code internally to pass buffers properly sized
+// may not be feasible since we use a basic processblock that and our midi-receivers i.e.
+* keymap processor gets its midi directly from a midi queue.
+* we would probably have to edit keymapprocessor to ensure it only sends midi up to the internal block size
+* i.e. if the daw gives us a 256 block but our internal block is locked to 128
+* we would need to store all midi messages that occured on after sample 128
+* and then process it in the "second" pass
+* we do not hold a global midi_manager in bitklavier
+* each keymap processor holds a midi manager and passes its midi along.
+* see MidiManager::replaceKeyboardMessages in midi_manager.h
+*/
 void SynthEditor::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer) {
   juce::ScopedLock lock(getCriticalSection());
 
