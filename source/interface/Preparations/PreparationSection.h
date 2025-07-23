@@ -188,19 +188,9 @@ public:
     }
 
     void itemDropped(const SourceDetails &dragSourceDetails) override;
-
-
-    void itemDragMove(const SourceDetails &dragSourceDetails) {
-
-    }
-
-    void itemDragEnter(const SourceDetails &dragSourceDetails) {
-    }
-
-    void itemDragExit(const SourceDetails &dragSourceDetails) {
-
-    }
-
+    void itemDragMove(const SourceDetails &dragSourceDetails) {}
+    void itemDragEnter(const SourceDetails &dragSourceDetails) {}
+    void itemDragExit(const SourceDetails &dragSourceDetails) {}
 
     juce::Point<float> getPinPos(int index, bool isInput) const {
         for (auto *port: objects)
@@ -211,14 +201,10 @@ public:
     }
 
     void setPortInfo();
-
     virtual std::unique_ptr<SynthSection> getPrepPopup() {}
 
     void setNodeInfo();
     juce::AudioProcessor* getProcessor() const;
-
-
-
     juce::CachedValue<juce::Uuid> uuid;
 
     // Public member variables for a PreparationSection object
@@ -234,9 +220,8 @@ public:
     juce::UndoManager& undo;
 
 protected:
-
-
     int portSize = 16;
+
 private:
     juce::Point<int> pointBeforDrag; // e.getEventRelativeTo (componentToDrag).getMouseDownPosition();
     bool isSelected = true;

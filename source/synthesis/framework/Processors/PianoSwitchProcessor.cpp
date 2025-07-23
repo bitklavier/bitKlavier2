@@ -24,12 +24,7 @@ void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         if (msg.getMessage().isNoteOn())
         {
             DBG("PianoSwitchProcessor::processBlock received noteOn " + juce::String(msg.getMessage().getNoteNumber()));
+            DBG(v.getProperty(IDs::selectedPianoIndex).toString() + " " + v.getProperty(IDs::selectedPianoName).toString());
         }
     }
-    DBG(v.getProperty(IDs::selectedPianoName).toString());
-
-//    if(v.getProperty(IDs::selectedPianoName).isString())
-//    {
-//    }
-
 }
