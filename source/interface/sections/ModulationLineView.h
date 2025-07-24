@@ -51,6 +51,7 @@ public:
     juce::UndoManager& undoManager;
     // void deleteConnectionsWithId(juce::AudioProcessorGraph::NodeID delete_id);
     void setActivePiano();
+    void removeAllGuiListeners();
     juce::Array<ModulationLine*> objects;
     bitklavier::ModConnectionList* connection_list;
     juce::CriticalSection open_gl_lock;

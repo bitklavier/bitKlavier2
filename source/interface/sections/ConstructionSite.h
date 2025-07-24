@@ -114,7 +114,7 @@ public:
     void createWindow (juce::AudioProcessorGraph::Node* node, PluginWindow::Type type);
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
-
+    void removeAllGuiListeners();
 private:
     PreparationList* prep_list;
     juce::ApplicationCommandManager& commandManager;
