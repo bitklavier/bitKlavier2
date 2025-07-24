@@ -218,53 +218,30 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
  *      hammer/resonance samples.
  *  there will be more complicated things to handle here in Nostalgic, Synchronic, etc...
  *
- *  todo: some optimization, so that idle processors in inactive Pianos aren't doing a bunch of processBlock work
- *
  * @param buffer
  * @param midiMessages
  */
 void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct bypassed");
-
     buffer.clear();
-
     state.getParameterListeners().callAudioThreadBroadcasters();
-    state.params.transpose.processStateChanges();
-    state.params.velocityMinMax.processStateChanges();
-
-    juce::Array<float> updatedTransps = getMidiNoteTranspositions();
-    bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples())
     {
         mainSynth->setBypassed (true);
-        mainSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        mainSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (hammerSynth->hasSamples())
     {
         hammerSynth->setBypassed (true);
-        hammerSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-        // DBG("processblockhammersytnh
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->setBypassed (true);
-        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        releaseResonanceSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -274,8 +251,6 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-    // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain (outputgainmult);
-
 }

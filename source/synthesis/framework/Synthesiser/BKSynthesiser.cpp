@@ -189,6 +189,7 @@ void BKSynthesiser::renderNextBlock (juce::AudioBuffer<float>& outputAudio, cons
 
 void BKSynthesiser::renderVoices (juce::AudioBuffer<float>& buffer, int startSample, int numSamples)
 {
+    someVoicesActive = false;
     for (auto* voice : voices)
     {
         voice->renderNextBlock (buffer, startSample, numSamples);
