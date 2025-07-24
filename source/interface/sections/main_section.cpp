@@ -23,6 +23,11 @@ MainSection::~MainSection()
 {
 
 }
+
+void MainSection::removeAllGuiListeners()
+{
+   constructionSite_->removeAllGuiListeners();
+}
 void MainSection::paintBackground(juce::Graphics& g)
 {
     paintContainer(g);

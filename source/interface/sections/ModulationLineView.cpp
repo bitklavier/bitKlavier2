@@ -27,6 +27,17 @@ void ModulationLineView::reset()
     SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
 
     // parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::MODCONNECTIONS);
+//    if(connection_list)
+//    {
+//        connection_list->removeListener(this);
+//    }
+//    connection_list = nullptr;
+}
+void ModulationLineView::removeAllGuiListeners()
+{
+    if(connection_list)
+        connection_list->removeListener(this);
+    connection_list = nullptr;
 }
 
 ModulationLineView::~ModulationLineView()

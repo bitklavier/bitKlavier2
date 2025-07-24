@@ -126,7 +126,7 @@ public:
     void setActivePiano(const juce::ValueTree&);
     void addPiano(const juce::String&);
     void setPianoSwitchTriggerThreadMessage();
-
+    void removeAllGuiListeners();
     std::vector<std::string> getAllPianoNames();
     FullInterface* getGui() { return gui_.get(); }
     OpenGlWrapper* getOpenGlWrapper();

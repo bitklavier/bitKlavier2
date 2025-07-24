@@ -184,6 +184,7 @@ void PreparationList::setValueTree(const juce::ValueTree &v) {
     parent = v;
 }
 
+//this gets called on creation for any preparation that is not a pianoswitch
 void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrapper *dst) {
     jassert(dynamic_cast<PianoSwitchProcessor*>(dst->proc)==nullptr);
     if(dynamic_cast<KeymapProcessor*>(dst->proc))
@@ -198,6 +199,7 @@ void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrap
 
 }
 
+//this gets called on creation for a piano swithc
 void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapper *piano_switch) {
     jassert(dynamic_cast<PianoSwitchProcessor*>(piano_switch->proc));
     for (auto& piano_switch_array : synth.preparationLists) {

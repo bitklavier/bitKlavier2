@@ -349,7 +349,13 @@ void SynthGuiInterface::allNotesOff() {
 void SynthGuiInterface::setPianoSwitchTriggerThreadMessage() {
     synth_->switch_trigger_thread = SwitchTriggerThread::MessageThread;
 }
+void SynthGuiInterface::removeAllGuiListeners()
+{
+    if (gui_ == nullptr)
+        return;
 
+    gui_->removeAllGuiListeners();
+}
 void SynthGuiInterface::addPiano(const juce::String & piano_name) {
 
 }
