@@ -675,8 +675,11 @@ void ConstructionSite::updateComponents() {
     //        }
 }
 void ConstructionSite::setActivePiano() {
-    prep_list->deleteAllGui();
-    prep_list->removeListener(this);
+    if(prep_list != nullptr)
+    {
+        prep_list->deleteAllGui();
+        prep_list->removeListener (this);
+    }
 
 
     auto interface = findParentComponentOfClass<SynthGuiInterface>();

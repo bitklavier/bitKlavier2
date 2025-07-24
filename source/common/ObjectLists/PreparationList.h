@@ -139,6 +139,7 @@ class PreparationList : public tracktion::engine::ValueTreeObjectList<PluginInst
 public:
     PreparationList(SynthBase& parent, const juce::ValueTree & v);
     ~PreparationList() {
+        deleteAllGui();
         freeObjects();
     }
 

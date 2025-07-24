@@ -141,9 +141,12 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
             *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
         mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
             *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr)));
-        if (getGuiInterface())
+        if (childWhichHasBeenAdded.getProperty(IDs::isActive))
         {
-            getGuiInterface()->setActivePiano (childWhichHasBeenAdded);
+            if (getGuiInterface())
+            {
+                getGuiInterface()->setActivePiano (childWhichHasBeenAdded);
+            }
         }
         // else
         // {
@@ -317,6 +320,7 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
+
     engine_->resetEngine();
     if (!loadFromValueTree (parsed_value_tree))
     {

@@ -38,7 +38,8 @@ namespace bitklavier {
                 ModConnectionList::newObjectAdded(object);
             }
         }
-        ~ModConnectionList() {freeObjects();}
+        ~ModConnectionList() {deleteAllGui();
+            freeObjects();}
         class Listener {
         public:
             virtual ~Listener() {}

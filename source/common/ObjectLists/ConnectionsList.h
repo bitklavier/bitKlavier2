@@ -38,7 +38,9 @@ namespace bitklavier {
                 ConnectionList::newObjectAdded(object);
             }
         }
-        ~ConnectionList() {freeObjects();}
+        ~ConnectionList() {
+            deleteAllGui();
+            freeObjects();}
         class Listener {
         public:
             virtual ~Listener() {}

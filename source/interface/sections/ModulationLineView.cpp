@@ -199,9 +199,12 @@ void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
 
 void ModulationLineView::setActivePiano()
 {
-//    DBG ("setPIano CableView");
-    connection_list->deleteAllGui();
-    connection_list->removeListener (this);
+    //    DBG ("setPIano CableView");
+    if (connection_list != nullptr)
+    {
+        connection_list->deleteAllGui();
+        connection_list->removeListener (this);
+    }
 
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     connection_list = interface->getSynth()->getActiveModConnectionList();
