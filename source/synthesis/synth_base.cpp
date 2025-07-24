@@ -326,16 +326,16 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
         return false;
     }
     SynthGuiInterface* gui_interface = getGuiInterface();
-    if (gui_interface)
-    {
-        this->mod_connections_.clear();
-        this->state_connections_.clear();
-        this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
-        this->state_connections_.reserve (bitklavier::kMaxStateConnections);
-        this->engine_->getModulationBank().reset();
-        this->engine_->getStateBank().reset();
-        gui_interface->updateFullGui();
-    }
+    // if (gui_interface)
+    // {
+    //     gui_interface->updateFullGui();
+    // }
+    this->mod_connections_.clear();
+    this->state_connections_.clear();
+    this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
+    this->state_connections_.reserve (bitklavier::kMaxStateConnections);
+    this->engine_->getModulationBank().reset();
+    this->engine_->getStateBank().reset();
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
