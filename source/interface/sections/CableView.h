@@ -93,7 +93,7 @@ public:
     }
 
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
-
+    void removeAllGuiListeners();
 private:
     juce::CriticalSection open_gl_critical_section_;
     bitklavier::ConnectionList* connection_list;
@@ -137,6 +137,7 @@ private:
     //
     //        CableView& cableView;
     //    } pathTask;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CableView)
 };

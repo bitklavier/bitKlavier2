@@ -73,6 +73,7 @@ void ModulationModuleSection::removeModulator (ModulatorBase* base)
     }
     if (index == -1) jassertfalse;
 
+    //
 
     //cleanup opengl
     {

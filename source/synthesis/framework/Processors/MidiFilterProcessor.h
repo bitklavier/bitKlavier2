@@ -61,7 +61,10 @@ public:
     bool hasEditor() const override { return false; }
 
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-    juce::AudioProcessor::BusesProperties midiFilterBusLayout() { return BusesProperties(); }
+    juce::AudioProcessor::BusesProperties midiFilterBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
+            .withOutput("disabled",juce::AudioChannelSet::mono(),false)
+            .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),false)
+            .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true); }
 
     const juce::String getName() const override { return "midifilter"; }
     double getTailLengthSeconds() const override {}

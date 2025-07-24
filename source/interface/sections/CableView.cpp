@@ -103,6 +103,12 @@ void CableView::reset()
     //{
      //   jassertfalse; // The MESSAGE thread was NOT holding the lock
     //}
+
+//    if(connection_list)
+//    {
+//        connection_list->removeListener(this);
+//    }
+//    connection_list = nullptr;
 }
 void CableView::resized()
 {
@@ -374,4 +380,9 @@ void CableView::_update()
     updateComponents();
 }
 
+void CableView::removeAllGuiListeners() {
+    if(connection_list)
+        connection_list->removeListener(this);
+    connection_list = nullptr;
+}
 
