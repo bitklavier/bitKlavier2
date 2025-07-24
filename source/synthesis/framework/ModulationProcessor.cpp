@@ -76,7 +76,6 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
     }
     mod_routing[index] = {}; // default construct routing entry
 }
-
 void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
 
     auto it  = std::find(modulators_.begin(), modulators_.end(), mod);
