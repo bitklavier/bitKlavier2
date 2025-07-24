@@ -290,8 +290,12 @@ void SynthGuiInterface::openSaveDialog() {
         juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles |
         juce::FileBrowserComponent::canSelectDirectories,
         [this](const juce::FileChooser &chooser) {
-            getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::PREPARATIONS).setProperty(
-                "sync", 1, nullptr);
+
+            getSynth()->getValueTree()
+                .getChildWithName(IDs::PIANO)
+                .getChildWithName(IDs::PREPARATIONS)
+                .setProperty("sync", 1, nullptr);
+
             juce::String mystr = (getSynth()->getValueTree().toXmlString());
             auto xml = getSynth()->getValueTree().createXml();
             juce::XmlElement xml_ = *xml;
