@@ -125,7 +125,7 @@ public:
     juce::Array<int> allKeysWithSamples; // array that keeps track of which keys have samples, for building start/end ranges in keymap
     juce::BigInteger getMidiRange (juce::String pitchName);
     void clearAllSamples();
-    juce::ValueTree t {IDs::GLOBALPIANOSAMPLES};
+    juce::ValueTree t;
 };
 
 /* SampleLoadJob is setup to load the standard bK sample setup, with main, hammer (rel), release resonance Harm, and pedal samples

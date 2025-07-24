@@ -39,7 +39,11 @@ public:
         for (auto& param_ : *params.getFloatParams())
         {
             if ( // make group of params to display together
-                param_->paramID == "Main" || param_->paramID == "Hammers" || param_->paramID == "Resonance" || param_->paramID == "Pedal" || param_->paramID == "Send")
+                param_->paramID == "Main" ||
+                param_->paramID == "Hammers" ||
+                param_->paramID == "Resonance" ||
+                param_->paramID == "Pedal" ||
+                param_->paramID == "Send")
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID);
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
@@ -50,9 +54,10 @@ public:
             }
         }
 
-        envSection = std::make_unique<EnvelopeSection> ("ENV", "ENV", params.env, listeners, *this);
-        transpositionSlider = std::make_unique<TranspositionSliderSection> (&params.transpose, listeners, name.toStdString());
-        velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider> (&params.velocityMinMax, listeners);
+        // create the more complex UI elements
+        envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
+        transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
+        velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
         // we add subsections for the elements that have been defined as sections
         addSubSection (envSection.get());
@@ -64,13 +69,14 @@ public:
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
-        levelMeter = std::make_unique<PeakMeterSection> (name, params.outputGain, listeners, &params.outputLevels);
-        addSubSection (levelMeter.get());
-        setSkinOverride (Skin::kDirect);
+        levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        addSubSection(levelMeter.get());
+        setSkinOverride(Skin::kDirect);
     }
 
     void paintBackground (juce::Graphics& g) override
     {
+        setLabelFont(g);
         SynthSection::paintContainer (g);
         paintHeadingText (g);
         paintBorder (g);

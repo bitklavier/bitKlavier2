@@ -23,12 +23,13 @@ public:
 //    void notifyFresh();
 //    juce::ValueTree v;
     void addListener(Listener* listener) { listeners_.push_back(listener); }
+    std::unique_ptr<ConstructionSite> constructionSite_;
 private:
 
     juce::UndoManager &um;
     juce::ApplicationCommandManager& commandManager;
     juce::Viewport constructionPort;
-    std::unique_ptr<ConstructionSite> constructionSite_;
+
     std::vector<Listener*> listeners_;
 
 };

@@ -9,18 +9,20 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include "SemiToneWidthParams.h"
 #include "open_gl_combo_box.h"
+#include "synth_slider.h"
 
-class SemiToneWidthSection : public SynthSection
+class SemitoneWidthSection : public SynthSection
 {
 public:
-    SemiToneWidthSection(
+    SemitoneWidthSection (
         juce::String name,
         SemitoneWidthParams &params,
         chowdsp::ParameterListeners &listeners,
         SynthSection &parent);
 
-    virtual ~SemiToneWidthSection();
+    virtual ~SemitoneWidthSection();
 
+    void setAlpha(float newAlpha);
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
 
@@ -29,7 +31,7 @@ private:
     std::unique_ptr<chowdsp::SliderAttachment> widthSliderAttachment;
     std::unique_ptr<OpenGLComboBox> fundamentalComboBox;
     std::unique_ptr<chowdsp::ComboBoxAttachment> fundamentalComboBoxAttachment;
-    std::unique_ptr<OpenGLComboBox> octaveComboBox; // which octave the fundamental is in; this sets which pitch on the keyboard anchors the tuning
+    std::unique_ptr<OpenGLComboBox> octaveComboBox;
     std::unique_ptr<chowdsp::ComboBoxAttachment> octaveComboBoxAttachment;
 
     juce::GroupComponent sectionBorder;

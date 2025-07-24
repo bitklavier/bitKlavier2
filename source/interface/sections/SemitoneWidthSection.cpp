@@ -3,9 +3,8 @@
 //
 
 #include "SemitoneWidthSection.h"
-#include "synth_slider.h"
 
-SemiToneWidthSection::SemiToneWidthSection (
+SemitoneWidthSection::SemitoneWidthSection (
     juce::String name,
     SemitoneWidthParams &params,
     chowdsp::ParameterListeners &listeners,
@@ -13,10 +12,11 @@ SemiToneWidthSection::SemiToneWidthSection (
 {
     setComponentID(parent.getComponentID());
 
-    widthSlider_ = std::make_unique<SynthSlider>("width");
+    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->paramID);
     addSlider(widthSlider_.get());
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
+    widthSlider_->setShowPopupOnHover(true);
     widthSliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.semitoneWidthSliderParam, listeners, *widthSlider_, nullptr);
 
     fundamentalComboBox = std::make_unique<OpenGLComboBox>(params.reffundamental->paramID.toStdString());
@@ -35,19 +35,29 @@ SemiToneWidthSection::SemiToneWidthSection (
     addAndMakeVisible(sectionBorder);
 }
 
-SemiToneWidthSection::~SemiToneWidthSection() { }
+SemitoneWidthSection::~SemitoneWidthSection() { }
 
-void SemiToneWidthSection::paintBackground(juce::Graphics& g) {
+void SemitoneWidthSection::paintBackground(juce::Graphics& g) {
+
     setLabelFont(g);
-    drawLabelForComponent(g, TRANS("Cents"), widthSlider_.get());
+    drawLabelForComponent(g, TRANS("cents"), widthSlider_.get());
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
-
     sectionBorder.paint(g);
 }
 
-void SemiToneWidthSection::resized() {
+void SemitoneWidthSection::setAlpha(float newAlpha)
+{
+    widthSlider_->setAlpha(newAlpha);
+    widthSlider_->redoImage();
+    fundamentalComboBox->setAlpha(newAlpha);
+    fundamentalComboBox->redoImage();
+    octaveComboBox->setAlpha(newAlpha);
+    octaveComboBox->redoImage();
+}
+
+void SemitoneWidthSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());
     sectionBorder.setBounds(area);

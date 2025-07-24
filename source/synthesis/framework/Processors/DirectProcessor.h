@@ -73,7 +73,7 @@ struct DirectParams : chowdsp::ParamHolder
         juce::ParameterID { "Hammers", 100 },
         "Hammer",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        -6.0f,
+        -24.0f,
         true
     };
 
@@ -159,6 +159,7 @@ public:
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
     {
@@ -220,6 +221,7 @@ public:
     void valueTreeParentChanged (juce::ValueTree&) {}
     void valueTreeRedirected (juce::ValueTree&) {}
 
+    bool getTranspositionUsesTuning() { return state.params.transpose.transpositionUsesTuning->get();}
 
 
 private:

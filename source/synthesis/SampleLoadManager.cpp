@@ -27,7 +27,7 @@ SampleLoadManager::SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> pr
             allPitches.add (noteOctave);
         }
     }
-    synth->getValueTree().addChild(t,1,nullptr);
+    t = synth->getValueTree();
 
 }
 
@@ -49,12 +49,12 @@ void SampleLoadManager::handleAsyncUpdate()
         return;
     DBG ("samples loaded, tell the audio thread its okay to change the move soundsets");
     DBG ("samplerSoundset size = " + juce::String (samplerSoundset[globalSoundset_name].size()));
-    synthGui->tryEnqueueProcessorInitQueue([this] {
+    // synthGui->tryEnqueueProcessorInitQueue([this] {
         t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
         t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
         t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);
         t.setProperty(IDs::pedalSampleSet,globalPedalsSoundset_name ,nullptr);
-    });
+    // });
 }
 
 // sort array of sample files into arrays of velocities by pitch

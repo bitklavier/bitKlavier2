@@ -155,7 +155,7 @@ namespace bitklavier {
             if (auto *envParams = dynamic_cast<EnvParams*>(&params))
 //            if(params.getName() == "ENV")
 
-                return std::make_unique<EnvelopeSection>("ENV", "ENV",*envParams,listeners, parent);//std::make_unique<BooleanParameterComponent>(*boolParam, listeners);
+                return std::make_unique<EnvelopeSection>(*envParams,listeners, parent);//std::make_unique<BooleanParameterComponent>(*boolParam, listeners);
             //
             //            if (auto *choiceParam = dynamic_cast<chowdsp::ChoiceParameter *> (&parameter))
             //                return std::make_unique<ChoiceParameterComponent>(*choiceParam, listeners);

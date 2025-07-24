@@ -14,7 +14,6 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
     SemitoneWidthParams() : chowdsp::ParamHolder("SEMITONEWIDTH")
     {
         add(semitoneWidthSliderParam, reffundamental, octave);
-        //add(semitoneWidthSliderParam, reffundamental);
     }
 
     chowdsp::FloatParameter::Ptr semitoneWidthSliderParam {
@@ -26,16 +25,13 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    chowdsp::EnumChoiceParameter<Fundamental>::Ptr reffundamental {
+    chowdsp::EnumChoiceParameter<PitchClass>::Ptr reffundamental {
         juce::ParameterID { "reffundamental", 100 },
         "RefFundamental",
-        Fundamental::C,
+        PitchClass::C,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
-    /**
-     * need to figure out how to make this one hold a set of integers, 0 to 8
-     */
     chowdsp::EnumChoiceParameter<Octave>::Ptr octave {
         juce::ParameterID{"octave", 100},
         "Octave",

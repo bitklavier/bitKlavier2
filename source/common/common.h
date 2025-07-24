@@ -97,6 +97,7 @@ namespace bitklavier {
         PreparationTypeTempo,
         PreparationTypeKeymap,
         PreparationTypeModulation,
+        PreparationTypeMidiFilter,
         PreparationTypePianoMap,
         PreparationTypeReset,
         PreparationTypePiano,

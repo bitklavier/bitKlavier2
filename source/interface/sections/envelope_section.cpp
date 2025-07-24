@@ -68,7 +68,7 @@ void DragMagnifyingGlass::mouseDoubleClick(const juce::MouseEvent& e) {
   OpenGlShapeButton::mouseDoubleClick(e);
 }
 
-EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection(name) {
+EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection("") {
 
     setComponentID(parent.getComponentID());
 
@@ -126,9 +126,9 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
     sustain_->setPopupPlacement(juce::BubbleComponent::below);
     sustain_->setValue(params.sustainParam->getDefaultValue());
 
-    envelope_ = std::make_shared<EnvelopeEditor>(value_prepend);
+    envelope_ = std::make_shared<EnvelopeEditor>("");
     addOpenGlComponent(envelope_);
-    envelope_->setName(value_prepend);
+    //envelope_->setName(value_prepend);
     envelope_->setDelaySlider(delay_.get());
     envelope_->setAttackSlider(attack_.get());
     envelope_->setAttackPowerSlider(attack_power_.get());
@@ -142,7 +142,7 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
 
     drag_magnifying_glass_ = std::make_unique<DragMagnifyingGlass>();
     drag_magnifying_glass_->addListener(this);
-    drag_magnifying_glass_->setName(value_prepend + "_magnify");
+    //drag_magnifying_glass_->setName(value_prepend + "_magnify");
     addAndMakeVisible(drag_magnifying_glass_.get());
     addOpenGlComponent(drag_magnifying_glass_->getGlComponent());
 
@@ -160,6 +160,7 @@ EnvelopeSection::EnvelopeSection(juce::String name, std::string value_prepend, E
     envelopeSectionBorder.setText("Envelope");
     envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
     addAndMakeVisible(envelopeSectionBorder);
+//    setLookAndFeel(DefaultLookAndFeel::instance());
 }
 
 EnvelopeSection::~EnvelopeSection() { }
@@ -191,7 +192,7 @@ void EnvelopeSection::resized() {
 
     juce::Rectangle<int> knobs_area = area.removeFromTop(getKnobSectionHeight());
     placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
-
+    DBG(" env section knob area" + juce::String(knobs_area.getWidth()) + " " + juce::String(knobs_area.getHeight()));
 //    int knob_section_height = getKnobSectionHeight();
 //    //int knob_y = getHeight() - knob_section_height;
 //    int knob_y = area.getHeight() - knob_section_height;

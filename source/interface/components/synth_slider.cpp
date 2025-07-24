@@ -45,6 +45,21 @@ void OpenGlSliderQuad::paintBackground(juce::Graphics& g) {
   slider_->redoImage(false);
 }
 
+//void OpenGlSlider::setVisible(bool show)
+//{
+//    DBG("synth_slider setVisible called");
+//    juce::Slider::setVisible(show);
+//
+//
+////            juce::Slider::repaint();
+////            slider_quad_->setVisible(show);
+////            image_component_->setVisible(show);
+////            setDrawWhenNotVisible(false);
+////            redoImage(true);
+////            repaint();
+//
+//}
+
 int OpenGlSlider::getLinearSliderWidth() {
   int total_width = isHorizontal() ? getHeight() : getWidth();
   int extra = total_width % 2;
@@ -159,7 +174,6 @@ void OpenGlSlider:: redoImage(bool skip_image) {
 void OpenGlSlider::setColors() {
   if (getWidth() <= 0)
     return;
-
   thumb_color_ = getThumbColor();
   selected_color_ = getSelectedColor();
   unselected_color_ = getUnselectedColor();
@@ -201,16 +215,8 @@ SynthSlider::SynthSlider(juce::String name) : OpenGlSlider(name), show_popup_on_
 
     setWantsKeyboardFocus(true);
     setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-
-
-
     setRotaryParameters(2.0f * bitklavier::kPi - kRotaryAngle, 2.0f * bitklavier::kPi + kRotaryAngle, true);
-
-
-
-
     setDefaultRange();
-
     setVelocityBasedMode(false);
     setVelocityModeParameters(1.0, 0, 0.0, false, juce::ModifierKeys::ctrlAltCommandModifiers);
 }
@@ -277,11 +283,6 @@ PopupItems SynthSlider::createPopupMenu() {
 
   options.addItem(kManualEntry, "Enter juce::Value");
 
-
-
-
-
-
   return options;
 }
 
@@ -315,12 +316,10 @@ void SynthSlider::mouseDown(const juce::MouseEvent& e) {
   }
 }
 
-void SynthSlider::mouseDrag(const juce::MouseEvent& e) {
-
-  
+void SynthSlider::mouseDrag(const juce::MouseEvent& e)
+{
   float multiply = 1.0f;
 
-    
   sensitive_mode_ = e.mods.isCommandDown();
   if (sensitive_mode_)
     multiply *= kSlowDragMultiplier;

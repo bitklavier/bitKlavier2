@@ -14,11 +14,11 @@
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data, juce::ApplicationCommandManager &_manager)
                                                         : SynthSection("Construction Site"),
-                                                        prep_list(*data->synth->preparationList.get()),
+                                                        prep_list(data->synth->getActivePreparationList()),
                                                          undo(um),
                                                          open_gl(open_gl),
-                                                         cableView(*this, um),
-                                                         modulationLineView(*this, um),
+                                                         cableView(*this, um,data),
+                                                         modulationLineView(*this, um,data),
                                                          preparationSelector(*this), parent(v),
                                                         commandManager (_manager)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
@@ -38,14 +38,17 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     cableView.setAlwaysOnTop(true);
     addSubSection(&modulationLineView);
     modulationLineView.setAlwaysOnTop(false);
-    prep_list.addListener(this);
-    // prep_list.addChangeListener(this);
+    prep_list->addListener(this);
+
+    // prep_list->addChangeListener(this);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,ResetPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchPreparation::create);
 
 }
 
@@ -55,63 +58,73 @@ enum CommandIDs {
     nostalgic = 0x0614,
     keymap = 0x0615,
     resonance = 0x0616,
-    synchronic   = 0x0617,
+    synchronic = 0x0617,
     blendronic = 0x0618,
     tempo = 0x0619,
     tuning = 0x0620,
     modulation = 0x0621,
     deletion = 0x0622,
-    resetMod = 0x0623
+    resetMod = 0x0623,
+    midifilter = 0x0624,
+    pianoswitch = 0x0625
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
-    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion,resetMod});
+    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion, resetMod, midifilter, pianoswitch});
 }
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
         switch (id) {
             case direct:
                 info.setInfo("Direct", "Create Direct Preparation", "Edit", 0);
                 info.addDefaultKeypress('d', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case nostalgic:
                 info.setInfo("Nostalgic", "Create Nostalgic Preparation", "Edit", 0);
-            info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
-            break;
+                info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
+                break;
             case keymap:
                 info.setInfo("Keymap", "Create Keymap Preparation", "Edit", 0);
                 info.addDefaultKeypress('k', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case resonance:
                 info.setInfo("Resonance", "Create Resonance Preparation", "Edit", 0);
                 info.addDefaultKeypress('r', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case synchronic:
                 info.setInfo("Synchronic", "Create Synchronic Preparation", "Edit", 0);
                 info.addDefaultKeypress('s', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case blendronic:
                 info.setInfo("Blendronic", "Create Blendronic Preparation", "Edit", 0);
                 info.addDefaultKeypress('b', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case tempo:
                 info.setInfo("Tempo", "Create Tempo Preparation", "Edit", 0);
                 info.addDefaultKeypress('m', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case tuning:
                 info.setInfo("Tuning", "Create Tuning Preparation", "Edit", 0);
                 info.addDefaultKeypress('t', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case modulation:
                 info.setInfo("Modulation", "Create Modulation", "Edit", 0);
                 info.addDefaultKeypress('c', juce::ModifierKeys::noModifiers);
-            break;
+                break;
             case deletion:
                 info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
                 info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
                 break;
             case resetMod:
                 info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);
-                info.addDefaultKeypress('q', juce::ModifierKeys::noModifiers);
+                info.addDefaultKeypress('\\', juce::ModifierKeys::noModifiers);
+                break;
+            case midifilter:
+                info.setInfo("Midifilter", "Create Midifilter Preparation", "Edit", 0);
+                info.addDefaultKeypress('f', juce::ModifierKeys::noModifiers);
+                break;
+            case pianoswitch:
+                info.setInfo("Pianoswitch", "Create Pianoswitch Preparation", "Edit", 0);
+                info.addDefaultKeypress('p', juce::ModifierKeys::noModifiers);
                 break;
         }
     }
@@ -125,7 +138,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::height, 125, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
                 //t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case nostalgic:
@@ -138,7 +151,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
                 // t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
                 //
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->>appendChild(t,  &undo);
                 return true;
             }
             case keymap:
@@ -151,7 +164,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case resonance:
@@ -163,7 +176,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 132, nullptr);
                 // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case synchronic:
@@ -175,7 +188,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 132, nullptr);
                 // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case blendronic:
@@ -187,7 +200,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 132, nullptr);
                 // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case tempo:
@@ -199,7 +212,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::height, 260, nullptr);
                 // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-                // prep_list.appendChild(t,  &undo);
+                // prep_list->appendChild(t,  &undo);
                 return true;
             }
             case tuning:
@@ -214,7 +227,35 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
+                return true;
+            }
+            case midifilter:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiFilter, nullptr);
+                t.setProperty(IDs::width, 125, nullptr);
+                t.setProperty(IDs::height, 245, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                                             juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+                prep_list->appendChild(t,  &undo);
+                return true;
+            }
+            case pianoswitch:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypePianoMap, nullptr);
+                t.setProperty(IDs::width, 150, nullptr);
+                t.setProperty(IDs::height, 120, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                                             juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case modulation:
@@ -229,7 +270,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case resetMod: {
@@ -243,7 +284,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
-                prep_list.appendChild(t,  &undo);
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case deletion:
@@ -254,7 +295,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 lasso.deselectAll();
                 for (auto prep : lassoCopy)
                 {
-                    prep_list.removeChild(prep->state, &undo);
+                    prep_list->removeChild(prep->state, &undo);
                 }
 
                 return true;
@@ -270,9 +311,10 @@ void ConstructionSite::reset() {
     if (_parent == nullptr)
         return;
         if (_parent->getSynth() != nullptr) {
-            _parent->getSynth()->getEngine()->resetEngine();
-            prep_list.setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
-                IDs::PREPARATIONS));
+            // _parent->getSynth()->getEngine()->resetEngine();
+            // prep_list->setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
+            // IDs::PREPARATIONS));
+            // setActivePiano();
         }
 
         cableView.reset();
@@ -327,6 +369,10 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     // s->setCentrePosition(s->x, s->y);
     s->setSize(s->width, s->height);
 
+    /**
+     * todo: this stuff should be moved outside of the GUI to the back end
+     * should be getting added to the PreparationList, and a few other things that will have happen around it!
+     */
 
     s->addSoundSet(&interface->sampleLoadManager->samplerSoundset);
     if (!interface->sampleLoadManager->samplerSoundset.empty()) {
@@ -352,7 +398,6 @@ void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool anim
 
 }
 
-
 void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     // find preparation section with the same id as the one we're removing
     int index = -1;
@@ -371,9 +416,7 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 
-    // find and delete cables and modulation lines associated with this preparation section
-    cableView.deleteConnectionsWithId(wrapper->node_id);
-    modulationLineView.deleteConnectionsWithId(wrapper->node_id);
+
 
     //cleanup opengl
     {
@@ -385,7 +428,7 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     plugin_components[index]->destroyOpenGlComponents (open_gl);
     //delete heap memory
     plugin_components.erase(plugin_components.begin()+index);
-DBG("moduleRemoved");
+DBG("moduleRemoved construction site");
 }
 
 ConstructionSite::~ConstructionSite(void) {
@@ -491,7 +534,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     mouse = e.position;
 
     // // This must happen before the right-click menu or the menu will close
-    grabKeyboardFocus();
+    //grabKeyboardFocus();
 
     if (e.mods.isPopupMenu()) {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -513,8 +556,8 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::height, 260, nullptr);
         // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
         // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        // prep_list.appendChild(t,  interface->getUndoManager());
-        prep_list.appendChild(t,  &undo);
+        // prep_list->appendChild(t,  interface->getUndoManager());
+        prep_list->appendChild(t,  &undo);
     } else {
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::PREPARATION);
@@ -527,7 +570,7 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         auto desc = _parent->userPreferences->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
         t.addChild(plugin,-1, &undo);
-        prep_list.addPlugin(desc.pluginDescription,t);
+        prep_list->addPlugin(desc.pluginDescription,t);
 
     }
 
@@ -613,7 +656,7 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
 
 void ConstructionSite::updateComponents() {
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-    for (int i = prep_list.size(); --i >= 0;) {
+    for (int i = prep_list->size(); --i >= 0;) {
         //            if (parent->getSynth()->getNodeForId(objects.getUnchecked(i)->pluginID) == nullptr) {
         //                parent.removeChild(objects.getUnchecked(i)->parent, nullptr);
         //            }
@@ -632,4 +675,21 @@ void ConstructionSite::updateComponents() {
     //                comp->update();
     //            }
     //        }
+}
+void ConstructionSite::setActivePiano() {
+    if(prep_list != nullptr)
+    {
+        prep_list->deleteAllGui();
+        prep_list->removeListener (this);
+    }
+
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    prep_list= interface->getSynth()->getActivePreparationList();
+    parent = prep_list->getValueTree().getParent();
+    prep_list->addListener(this);
+    prep_list->rebuildAllGui();
+
+    cableView.setActivePiano();
+    modulationLineView.setActivePiano();
 }

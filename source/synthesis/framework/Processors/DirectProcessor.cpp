@@ -42,7 +42,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         v.appendChild (modChan, nullptr);
         mod++;
     }
-    v.appendChild(state.params.transpose.paramDefault,nullptr);
+    v.appendChild (state.params.transpose.paramDefault, nullptr);
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
@@ -86,91 +86,23 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
  *
  * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
-
-/*
- * Tuning approaches:
- *
- * can integrate semitonewidth at this stage, which is only active for static tunings
- * in fact, could differentiate between static and dynamic tunings (spring being the only one that needs to update at the block)
- *      and for static tunings, handle everything here before noteOn, and only do the block updates for dynamic tunings?
- * spring tuning would still need to handle transpositions, and actually we *could* assign an initial tuning here for them as well
- *      so perhaps ALL tunings could be setup here, and we only worry about updating them within Sample for dynamic (spring) tuning?
- *      in which case semitonewidth *could* be active, setting the initial "transposition" for every note,
- *          which would then be at work in BKsynth when the spring tuning is updated?
- * i think we want t0 to always "useTuning" no? otherwise, we'd need to have that checked in the UI for tuning to work at all!
- *      or always "useTuning" when there is only one value in there? or always "useTuning" for a transposition value of 0?
- *
- * soooo.... handle all the tuning here, and then including a "dynamic" flag as true for spring tuning, and only those would update in Sample.h in the block
- *      and always "useTuning" for t0?
- *      or always "useTuning" if there is only one value in transpositions?
- *      or always "useTuning" for a transposition value of 0?
- *      sooo.... in the old bK, the transpositions values are all initially relative to the attached Tuning!
- *          for example, if there is only one value in the transposition slider, -2, and tuning is Partial-C:
- *              with useTuning = false, playing a C will result in an ET Bb
- *              with useTuning = true,  playing a C will result in a 7th-partial of C
- *              with useTuning = false, playing a Bb will result in an Ab whole-step down (-2) from a Partial-C Bb! (basically have transposed to Partial-Bb?)
- *                  so our reference pitch is the Partial-C Bb, as set in Tuning
- *              with useTuning = true,  playing a Bb will result in an Ab tuned to the 13th-partial of C
- *                  so our pitch gets further filtered to fit in the Partial-C from Tuning; Ab being the 13th in that system
- *          so i think this means that with transp = 0, the behavior is the same regardless of whether useTuning is true or false, which is what we want
- *              and it doesn't matter where it is in the list of transpositions
- *
- * could we remove the useTuning dependency from tuning->getTargetFrequency? and handle that all right here?
- *
- * so, looking at the bK code:
- *      first, we call getOffset on every transposition, and determine whether we useTransp at this stage:
- *
-     * if (prep->dTranspUsesTuning.value) // use the Tuning setting
-     *      offset = t + tuner->getOffset(round(t) + noteNumber, false); // t is the transposition value
-     * else  // or set it absolutely, tuning only the note that is played (default, and original behavior)
-     *      offset = t + tuner->getOffset(noteNumber, false);
- *
- * then, inside getOffset we do the semitoneSize, circular, absolute, fundamentaloffset adjustments
- */
 juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
-    if (tuning != nullptr)
-    {
-        // use these to adjust transpositions, if useTuning is true
-        tuning->getState().params.semitoneWidthParams.reffundamental->getCurrentValueAsText();
-        tuning->getState().params.semitoneWidthParams.octave->getCurrentValueAsText();
-        tuning->getState().params.semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
-        state.params.transpose.transpositionUsesTuning->get();
-        // make helper functions for the above, including one that cooks the reff and octave down to a midinotenumber for the fund
-    }
-
-    /*
-     * in tuner->getOffset(), we have
-     * newTransp =.01 * (midiNoteNumber - tuning->prep->getNToneRoot()) * (tuning->prep->getNToneSemitoneWidth() - 100); // this is an offset to midiNoteNumber
-     *
-    // and then this gets filtered through current circularTuning, and further adjusted by absoluteTuning, for nearest key
-    /* int midiNoteNumberTemp = round(midiNoteNumber + newTransp);
-     * newTransp += (currentTuning[(midiNoteNumberTemp - tuning->prep->getFundamental()) % currentTuning.size()]
-     *           + tuning->prep->getAbsoluteOffsets().getUnchecked(midiNoteNumber)
-     *           + tuning->prep->getFundamentalOffset());
-     *
-     * this is preceded by:
-     * if (prep->dTranspUsesTuning.value) // use the Tuning setting
-     *      offset = t + tuner->getOffset(round(t) + noteNumber, false);
-     * else  // or set it absolutely, tuning only the note that is played (default, and original behavior)
-     *      offset = t + tuner->getOffset(noteNumber, false);
-     */
-
     juce::Array<float> transps;
-    //    std::vector<float> testarr;
-    //    if (std::find(testarr.begin(), testarr.end(), target) != testarr.end()) // finds whether target is in testarr
-
     auto paramVals = state.params.transpose.getFloatParams();
+    int i = 0;
     for (auto const& tp : *paramVals)
     {
-        if (tp->getCurrentValue() != 0.)
+        /**
+         * todo for Davis: it's supposed to be the commented out line, but something need to get updated.
+         */
+        //        if (tp->getCurrentValue() != 0. && state.params.transpose.numActiveSliders->getCurrentValue() > i)
+        if (tp->getCurrentValue() != 0. && state.params.transpose.numActive > i)
             transps.addIfNotAlreadyThere (tp->getCurrentValue());
+        i++;
     }
 
     // make sure that the first slider is always represented
-    /*
-     * and shouldn't this one always "useTuning"? only if it is 0.
-     */
     transps.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
 
     return transps;
@@ -185,6 +117,16 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    /*
+     * this updates all the AudioThread callbacks we might have in place
+     * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
+     *  they are all on the MessageThread, but if we wanted to have them synced to the block
+     *      we would put them on the AudioThread and they would be heard here
+     *  if we put them on the AudioThread, it would be important to have minimal actions in those
+     *      callbacks, no UI stuff, etc, just updating params needed in the audio block here
+     *      if we want to do other stuff for the same callback, we should have a second MessageThread callback
+     */
+    //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     // always top of the chain as an instrument source; doesn't take audio in
@@ -207,6 +149,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (mainSynth->hasSamples())
     {
+        mainSynth->setBypassed (false);
         mainSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         mainSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -217,15 +160,18 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (hammerSynth->hasSamples())
     {
+        hammerSynth->setBypassed (false);
+
         hammerSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
             state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
+        // DBG("processblockhammersytnh
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (releaseResonanceSynth->hasSamples())
     {
+        releaseResonanceSynth->setBypassed (false);
         releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         releaseResonanceSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
@@ -236,6 +182,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     if (pedalSynth->hasSamples())
     {
+        pedalSynth->setBypassed (false);
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -247,7 +194,63 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
 
+    /**
+     * Q: is all this thread-safe?
+     *      - outputLevels above is std::atomic
+     *      - the stuff below is not, but uses chowdsp params, so maybe that's ok?
+     *          the answer is: yes! chowdsp handles the threading for us!
+     */
     // get last synthesizer state and update things accordingly
     lastSynthState = mainSynth->getSynthesizerState();
     state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
+    if (tuning != nullptr)
+        tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
+}
+
+/**
+ * DirectProcessor::processBlockBypassed is called when this Direct prep is NOT in the active,
+ *      visible Piano, but is in the overall graph for the complete Gallery.
+ *
+ * Usually, it should do nothing, but it may need to do some closing actions after a PianoSwitch
+ *  for instance, if the player is holding some notes down with the left hand, and then executes a PianoSwitch
+ *      with the right hand, and then releases the left hand notes after the switch, we need to sustain
+ *      those notes through the switch, and then turn them off afterwards. We also should play the
+ *      hammer/resonance samples.
+ *  there will be more complicated things to handle here in Nostalgic, Synchronic, etc...
+ *
+ * @param buffer
+ * @param midiMessages
+ */
+void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct bypassed");
+    buffer.clear();
+    state.getParameterListeners().callAudioThreadBroadcasters();
+
+    if (mainSynth->hasSamples())
+    {
+        mainSynth->setBypassed (true);
+        mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (hammerSynth->hasSamples())
+    {
+        hammerSynth->setBypassed (true);
+        hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (releaseResonanceSynth->hasSamples())
+    {
+        releaseResonanceSynth->setBypassed (true);
+        releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    if (pedalSynth->hasSamples())
+    {
+        pedalSynth->setBypassed (true);
+        pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    }
+
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain (outputgainmult);
 }

@@ -22,8 +22,6 @@
 
 #pragma once
 
-
-
 #include "synth_button.h"
 #include "look_and_feel/fonts.h"
 #include "paths.h"
@@ -266,6 +264,8 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthSlider>>& knobs, bool center);
     void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<juce::Component*> knobs);
     void placeKnobsInArea(juce::Rectangle<int> area,  std::vector<juce::Component*> knobs, bool center);
+
+    void placeButtonsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthButton>> &knobs);
 
     void lockCriticalSection();
     void unlockCriticalSection();

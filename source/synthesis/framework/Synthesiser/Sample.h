@@ -22,6 +22,11 @@
 #include "BKADSR.h"
 #include "TuningProcessor.h"
 
+/**
+ * todo: cleanup Sample.h!
+ * @tparam T
+ */
+
 //==============================================================================
 // Represents the constant parts of an audio sample: its name, sample rate,
 // length, and the audio sample data itself.
@@ -211,8 +216,6 @@ template<typename T>
 class BKSamplerSound :  public juce::SynthesiserSound
 {
 public:
-
-
     BKSamplerSound( const juce::String& soundName,
                     std::shared_ptr<Sample<T>> samp,
                     const juce::BigInteger& midiNotes,
@@ -318,7 +321,7 @@ public:
 
     void setEnvelopeParameters (BKADSR::Parameters parametersToUse)    { params = parametersToUse; }
     /** The class is reference-counted, so this is a handy pointer class for it. */
-    typedef juce::ReferenceCountedObjectPtr<BKSamplerSound<T>> Ptr;
+    //typedef juce::ReferenceCountedObjectPtr<BKSamplerSound<T>> Ptr;
 
     float dBFSLevel; // dBFS value of this velocity layer
     float dBFSBelow; // dBFS value of velocity layer below this layer
@@ -584,11 +587,14 @@ public:
         currentTransposition = transposition;
         tuneTranspositions = tune_transpositions;
 
-        // this will adjust the loudness of this layer according to velocity, based on the
-        //      dB difference between this layer and the layer below
+        /* this will adjust the loudness of this layer according to velocity, based on the
+         *  - dB difference between this layer and the layer below
+         */
         level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity) * voiceGain); // need gain setting for each synth
 
-        // set the sample increment, based on the target frequency for this note
+        /* set the sample increment, based on the target frequency for this note
+         *  - we will update this every block for spring and regular tunings, but not for tuningType tunings
+         */
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
@@ -615,11 +621,7 @@ public:
         // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
 
-        /*
-         * change this so it just converts the offset to a target frequency
-         * the offset should have been determined at the top, the processor block where the transps are created, and passed to the synth and then to hear
-         * should not be doing any handling of tuneTranspositions state down here!
-         */
+
     }
 
     virtual void stopNote (float velocity, bool allowTailOff)
@@ -681,7 +683,18 @@ private:
         jassert(samplerSound->getSample() != nullptr);
         //updateParams(); // NB: important line (except this function doesn't do anything right now!)
 
-        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+        /*
+         * don't change tuning after noteOn for adaptive tunings
+         * do need to for spring, and probably for regular notes it might be handy
+         */
+        if(tuning != nullptr && tuningAttached) {
+            if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring_Tuning)) {
+                sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+            }
+            // skip for adaptive tunings
+        }
+        // otherwise just return ET
+        else sampleIncrement.setTargetValue (mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());

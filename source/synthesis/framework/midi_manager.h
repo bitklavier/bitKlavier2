@@ -177,7 +177,9 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     };
     juce::MidiMessageCollector midi_collector_;
     juce::AudioDeviceManager *manager;
-
+    void allNotesOff() {
+        keyboard_state_->allNotesOff(0);
+    }
   protected:
     void readMpeMessage(const juce::MidiMessage& message);
 

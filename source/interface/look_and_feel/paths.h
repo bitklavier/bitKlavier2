@@ -77,7 +77,6 @@ class Paths {
       return arr;
     }
 
-
     // Returns the paths for a synchronic preparation window
     static juce::Array<juce::Path> synchronicPaths()
     {
@@ -99,7 +98,7 @@ class Paths {
 
         return arr;
     }
-  // Returns the paths for a blendronic preparation window
+  // Returns the paths for a vst preparation window
   static juce::Array<juce::Path> vstPaths()
     {
       juce::Array<juce::Path> arr;
@@ -109,6 +108,21 @@ class Paths {
       arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
 
       return arr;
+    }
+
+    /**
+     * todo replace vst icon stuff here
+     * @return
+     */
+    static juce::Array<juce::Path> midiFilterPaths()
+    {
+        juce::Array<juce::Path> arr;
+        arr.add(fromSvgData((const void*)BinaryData::Layer_1_vst_svg,BinaryData::Layer_1_vst_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_2_vst_svg,BinaryData::Layer_2_vst_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_3_vst_svg,BinaryData::Layer_3_vst_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
+
+        return arr;
     }
 
     // Returns the paths for a resonance preparation window
@@ -973,5 +987,41 @@ class Paths {
       path.addLineSegment(juce::Line<float>(1.0f, 0.2f, 1.0f, 0.2f), 0.1f);
       return path;
     }
+
+    static juce::Path createCustomQuadrilateral(float x, float y, float bottomWidth, float topWidth, float height)
+    {
+        juce::Path p;
+
+        // Point 1: Bottom-left corner
+        juce::Point<float> p1(x, y + height);
+
+        // Point 2: Bottom-right corner
+        juce::Point<float> p2(x + bottomWidth, y + height);
+
+        // Point 3: Top-right corner (angled)
+        // The top is horizontal, so its y-coordinate is 'y'.
+        juce::Point<float> p3(x + topWidth, y);
+
+        // Point 4: Top-left corner
+        juce::Point<float> p4(x, y);
+
+        // Start a new subpath at the bottom-left corner
+        p.startNewSubPath(p1);
+
+        // Draw to the bottom-right corner (horizontal bottom)
+        p.lineTo(p2);
+
+        // Draw to the top-right corner (angled right side)
+        p.lineTo(p3);
+
+        // Draw to the top-left corner (horizontal top)
+        p.lineTo(p4);
+
+        // Close the subpath, which will draw the vertical left side
+        p.closeSubPath();
+
+        return p;
+    }
+
 };
 

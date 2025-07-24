@@ -15,6 +15,7 @@
  */
 
 #pragma once
+// #include "synth_base.h"
 
 
 class SynthBase;
@@ -121,6 +122,12 @@ public:
     bool isConnected(juce::AudioProcessorGraph::Connection &connection);
     bool isConnected(juce::AudioProcessorGraph::NodeID,juce::AudioProcessorGraph::NodeID);
     void synchronizeValueTree();
+    void allNotesOff();
+    void setActivePiano(const juce::ValueTree&);
+    void addPiano(const juce::String&);
+    void setPianoSwitchTriggerThreadMessage();
+
+    std::vector<std::string> getAllPianoNames();
     FullInterface* getGui() { return gui_.get(); }
     OpenGlWrapper* getOpenGlWrapper();
     juce::File getActiveFile();
@@ -132,6 +139,7 @@ public:
     std::unique_ptr<PluginListWindow> pluginListWindow;
    juce::ScopedMessageBox messageBox;
     juce::ApplicationCommandManager commandManager;
+    juce::ValueTree gallery;
 
   protected:
     std::atomic<bool> loading;

@@ -324,6 +324,7 @@
 
 
 
+
   } // namespace bitklavier::utils
 
 // namespace vital
@@ -389,6 +390,11 @@ static inline int noteNameToRoot(juce::String name)
     return root;
 }
 
+/**
+ * Midi to Frequency convertor
+ * @param f
+ * @return freq (Hertz)
+ */
 static double mtof( double f )
 {
     if( f <= -1500 ) return (0);
@@ -398,7 +404,12 @@ static double mtof( double f )
     else return ( pow(2, (f - 69) / 12.0) * 440.0 );
 }
 
-
+/**
+ * Midi to Frequency convertor
+ * @param f
+ * @param a = concert pitch
+ * @return freq (Hertz)
+ */
 static double mtof( double f, double a ) // a = frequency of A4
 {
     if( f <= -1500 ) return (0);
@@ -406,6 +417,44 @@ static double mtof( double f, double a ) // a = frequency of A4
     // else return (8.17579891564 * exp(.0577622650 * f));
     // TODO: optimize
     else return ( pow(2, (f - 69) / 12.0) * a );
+}
+/* better than...
+ *
+ * float mtof(const float midiNote) // converts midiPitch to frequency in Hz
+{
+    return concertPitchHz * std::pow(2.0f, ((midiNote - 69.0f) / 12.0f));
+};
+ *  ?
+ */
+
+/**
+ * Frequency to Midi convertory
+ * @param inputFreq
+ * @param concertPitchHz
+ * @return
+ */
+//static double ftom(const double inputFreq, double concertPitchHz)
+//{
+//    return 12.0f * log2(inputFreq / concertPitchHz) + 69.0f;
+//};
+
+//-----------------------------------------------------------------------------
+// name: ftom()
+// desc: freq to midi
+//-----------------------------------------------------------------------------
+#define LOGTWO 0.69314718055994528623
+//#define LOGTEN 2.302585092994
+//static double ftom(const double f )
+//{
+//    // return (f > 0 ? 17.3123405046 * log(.12231220585 * f) : -1500);
+//    // TODO: optimize
+//    return (f > 0 ? (log(f / 440.0) / LOGTWO) * 12.0 + 69. : -1500);
+//}
+
+static double ftom(const double f, double a440 )
+{
+    // TODO: optimize
+    return (f > 0 ? (log(f / a440) / LOGTWO) * 12.0 + 69. : -1500);
 }
 
 /**
@@ -417,16 +466,17 @@ static double mtof( double f, double a ) // a = frequency of A4
 struct BKSynthesizerState
 {
     int lastVelocity;
+    double lastPitch;
+    std::map<int, float> currentNotesFrequencies; //notenumber, frequency
 };
 
 /*
- * sharp/flat mappings use subsitutions in std::initializer_list
- * as part of the param defintion (reffundamental, for instance)
+ * sharp/flat mappings use substitutions in std::initializer_list
+ * as part of the param definition (reffundamental, for instance)
  */
-
-enum Fundamental : uint32_t {
+enum class PitchClass : uint32_t {
     C = 1 << 0,
-    C41D5 = 1 << 1, // 4 => #, 1=>/, 5 => b, so C41D5 becomes "C#/Db"
+    C41D5 = 1 << 1, // substitutions: 4 => #, 1=>/, 5 => b, so C41D5 becomes "C#/Db"
     D = 1 << 2,
     D41E5 = 1 << 3,
     E = 1 << 4,
@@ -437,16 +487,47 @@ enum Fundamental : uint32_t {
     A = 1 << 9,
     A41B5 = 1 << 10,
     B = 1 << 11,
-    none = 0
+    PitchClassNil
+};
+
+enum class Fundamental : uint32_t {
+    C = 1 << 0,
+    C41D5 = 1 << 1, // substitutions: 4 => #, 1=>/, 5 => b, so C41D5 becomes "C#/Db"
+    D = 1 << 2,
+    D41E5 = 1 << 3,
+    E = 1 << 4,
+    F = 1 << 5,
+    F41G5 = 1 << 6,
+    G = 1 << 7,
+    G41A5 = 1 << 8,
+    A = 1 << 9,
+    A41B5 = 1 << 10,
+    B = 1 << 11,
+    none = 1 << 12,
+    lowest = 1 << 13,
+    highest = 1 << 14,
+    last = 1 << 15,
+    automatic = 1 << 16,
+    FundamentalNil
 };
 
 enum Octave : uint32_t {
-    _1 = 1 << 0, //tricked this enum into displaying integers (_ => space)
-    _2 = 1 << 1,
-    _3 = 1 << 2,
-    _4 = 1 << 3,
-    _5 = 1 << 4,
-    _6 = 1 << 5,
-    _7 = 1 << 6,
-    _8 = 1 << 7,
+    _0 = 1 << 0, // tricked this enum into displaying integers (_ => space)
+    _1 = 1 << 1,
+    _2 = 1 << 2,
+    _3 = 1 << 3,
+    _4 = 1 << 4,
+    _5 = 1 << 5,
+    _6 = 1 << 6,
+    _7 = 1 << 7,
+    _8 = 1 << 8,
 };
+
+enum TuningType {
+    Static = 1 << 0,
+    Adaptive = 1 << 1,
+    Adaptive_Anchored = 1 << 2,
+    Spring_Tuning = 1 << 3,
+};
+
+

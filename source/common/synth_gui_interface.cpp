@@ -68,6 +68,7 @@ SynthGuiInterface::SynthGuiInterface(SynthBase *synth, bool use_gui) : synth_(sy
         gui_ = std::make_unique<FullInterface>(&synth_data, commandManager);
         // for registering hotkeys etc.
         commandManager.registerAllCommandsForTarget(this);
+        gallery = synth_data.tree;
     }
 
     sampleLoadManager->preferences = userPreferences;
@@ -319,7 +320,33 @@ void SynthGuiInterface::openSaveDialog() {
             }
         });
 }
+#include "ConstructionSite.h"
+void SynthGuiInterface::setActivePiano(const juce::ValueTree &v) {
+    JUCE_ASSERT_MESSAGE_THREAD
+    if (synth_->switch_trigger_thread == SwitchTriggerThread::MessageThread)
+        synth_->setActivePiano(v,synth_->switch_trigger_thread);
+    gui_->main_->constructionSite_->setActivePiano();
+}
+std::vector<std::string> SynthGuiInterface::getAllPianoNames() {
+    std::vector<std::string> names;
+    for (const auto &vt: gallery) {
+        if (vt.hasType(IDs::PIANO)) {
+            names.push_back(vt.getProperty(IDs::name).toString().toStdString());
+        }
+    }
+    return names;
+}
+void SynthGuiInterface::allNotesOff() {
 
+    synth_->getEngine()->allNotesOff();
+}
+void SynthGuiInterface::setPianoSwitchTriggerThreadMessage() {
+    synth_->switch_trigger_thread = SwitchTriggerThread::MessageThread;
+}
+
+void SynthGuiInterface::addPiano(const juce::String & piano_name) {
+
+}
 //probably dont need to do this. i think we can just do this from the modulationmodulesection
 
 const juce::CriticalSection &SynthGuiInterface::getCriticalSection() {
@@ -387,6 +414,8 @@ PopupItems SynthGuiInterface::getPluginPopupItems() {
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiFilter,"MidiFilter");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypePianoMap,"PianoSwitch");
 
     auto pluginDescriptions = userPreferences->userPreferences->knownPluginList.getTypes();
 

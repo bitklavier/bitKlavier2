@@ -373,8 +373,6 @@ void SynthSection::initOpenGlComponents(OpenGlWrapper &open_gl) {
         if (background_)
             background_->init(open_gl);
     }
-
-
 }
 
 void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
@@ -751,7 +749,27 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::
 
     int y = area.getY();
     //int height = area.getHeight() - widget_margin;
-    int height = std::min<int>(area.getHeight(), component_width) - widget_margin;
+    int height = area.getHeight() - widget_margin;//std::min<int>(area.getHeight(), component_width) - widget_margin;
+    float x = area.getX() + widget_margin;
+    for (const auto &knob: knobs) {
+
+        int left = std::round(x);
+        int right = std::round(x + component_width);
+        //DBG("knob " + juce::String(left));
+        if (knob)
+            knob->setBounds(left, y, right - left, height);
+        x += component_width + widget_margin;
+    }
+}
+
+void SynthSection::placeButtonsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<SynthButton>> &knobs) {
+    int widget_margin = findValue(Skin::kWidgetMargin);
+    //kKnobSectionHeight
+    float component_width = (area.getWidth() - (knobs.size() + 1) * widget_margin) / (1.0f * knobs.size());
+
+    int y = area.getY();
+    //int height = area.getHeight() - widget_margin;
+    int height = area.getHeight() - widget_margin;//std::min<int>(area.getHeight(), component_width) - widget_margin;
     float x = area.getX() + widget_margin;
     for (const auto &knob: knobs) {
 
@@ -922,7 +940,6 @@ void SynthSection::setLabelFont(juce::Graphics &g) {
     g.setColour(findColour(Skin::kBodyText, true));
     g.setFont(getLabelFont());
 }
-
 
 void SynthSection::drawLabelBackground(juce::Graphics &g, juce::Rectangle<int> bounds, bool text_component) {
     int background_rounding = findValue(Skin::kLabelBackgroundRounding);

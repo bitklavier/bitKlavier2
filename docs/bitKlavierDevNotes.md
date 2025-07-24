@@ -1,32 +1,94 @@
 # Notes about how to do stuff in the bK codebase
+## Priorities before Davis leaves
+- [ ] Piano Switch prep: Davis works on this next
+  - all pianos in graph together, bypass notes for inactive pianos
+    - getBypassParameter in https://docs.juce.com/master/classAudioProcessorGraph.html
+  - will need to be able to gracefully handle preps that need to finish their thing (Nostalgic holdover, noteOns that are still active, etc...)
+    - as well as how mods are handled at that moment
+- [ ] finish mods for Direct and Tuning:
+  - working, saving/loading, Dan mostly understanding the code
+- [ ] Blendrónic audio in: Dan will try this after Wisconsin
+- [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
+- [ ] opening multiple sample libs, assigning to individual preps!
+  - ConstructionSite::moduleAdded, should be doable there.
 
+## Quick Bug/Feature Notes
+- [ ] Keymap parameter targeting: 
+  - requires a big new solution!
+  - a new preparation: the Target Prep, or actually a MidiFilter prep
+  - Keymap => Preparation, we get the default behavior, as always
+  - Keymap => MidiFilter => Preparation (let's say Synchronic for this example)
+  - in Target, we have 
+    - all non-default behaviors (Pattern Sync, Beat Sync, etc...) that were in the old Keymap 
+    - along with the NoteOn/Off/Both options for each that were in the old Synchronic
+    - for every behavior that is checked on, we repack the MIDI messages with a new channel, assigned to that behavior, and filter according to the NoteOn/Off/Both settings
+      - so, if Pattern Sync is checked on, with Note-Off as the mode, the MIDI messages will be unpacked, NoteOn messages discarded, and the NoteOn messages reassigned to channel 2 (for Pattern Sync, 3 for Beat Sync, etc..), and the messages are repacked and sent out
+      - if there are multiple behaviors checked on, then there will be multiple MIDI messages for each original MIDI message, one on each behavior channel
+  - this is essentially a new class of MIDI filter prep, which could be useful going forward
+    - all/some of the filtering in the old Keymap might now be here (invert noteOn/Off, for example)
+      - but for now, let's just focus on the Target functionality
+    - MidiFilter.... Filter (F). We're using V for VST for audio plugin and F is available
+- [ ] control-click menu is completely unmanageable right now with all the plugins there...
+- [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
+- [ ] we'll need to be able to override the default ranges of params, when a user types in a value outside the default range. 
+  - should be able to create a public function in chowdsp_ParameterTypes that accesses `const juce::NormalisableRange<float>& valueRange`. should able to make that not a `const` where it is privately declared there
+  - for changes to chowdsp, need to add/commit to that submodule branch, and then push. supdate first. we have our own fork of chowdsp, also used by electrosynth
+- [ ] weird dialog boxes when control-clicking on knobs
+- [ ] for the transposition slider, if 0 isn't the first element we don't get it at all. so [0 4] works but [4 0] does not
+- [ ] maybe we should allow drag/drop to make audio connections between preps as well
+- [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
+- [ ] i believe pitchbend is not yet implemented
+- [ ] MTS still needs to be implemented for Tuning, as does Scala
+- [ ] Spring and Adaptive tuning don't handle Transpositions properly
+- [ ] dragging preps around the construction site is a little frustrating; sometimes they move, sometimes they just pop back where they were
+- [ ] in general, the preps seem BIG. is scaling them going to be straightforward? might even want a user option to zoom in and out to various percentages for the construction site
+- [ ] would like the Audio Buffer Size to default to 128, not 512
 ---------
 ## Questions for Davis (or things to check on with him)
 and hopefully with answers included here for the record!
--[ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
+
+- [ ] for the serializer/deserializers in TuningProcessor.cpp, take a look at my todo questions in the .cpp file
+  - i think we don't need to serialize the circularTuningOffset arrays, but we do need to serialize the circularTuningOffset_custom array, yes?
+- [ ] check on saving/loading galleries and Direct, not working well right now (drawing funny, Direct preps not loading)
   - Myra is working on. but Direct saves now, except Transpositions, so check that
--[ ] check on Mods with Direct; are they working for all params? do they save?
+- [ ] check on Mods with Direct; are they working for all params? do they save?
   - need to be tested and fixed
--[ ] i’m not clear when we need to create and run processStateChanges for params
+  - let's prioritize this, for Direct and Tuning
+- [x] i’m not clear when we need to create and run processStateChanges for params
   - this for ui sections, where we don't do audio-rate mods, just param-state mods, and want to change the whole thing
     - for instance, the transposition slider: we're going to change all those values at once, and try to change them individually continuously
     - the mod stuff is complicated and needs a full section in this doc!
--[ ] and what about the serializer/deserializers, like in TuningProcessor.h? do i need to add SemitoneWidthParams to them? 
-  - these are used for more complex parameters, like the arrays of tuning values in circular and absolute tuning
-- [ ] what’s up with the `initializer_lists` in TuningProcessor.h, like `chowdsp::EnumChoiceParameter<Fundamental>`? 
+- [x] struggling with the UI drawing
+  - in Tuning, trying to setVisible to false and many things still lingering; spent a good bit of time trying to find solutions to no avail
+  - solution in tuningType combo menu lambda callback:
+    - `auto interface = findParentComponentOfClass<SynthGuiInterface>();`
+    - `interface->getGui()->prep_popup->repaintPrepBackground();`
+- [x] what’s up with the `initializer_lists` in TuningProcessor.h, like `chowdsp::EnumChoiceParameter<PitchClass>`? 
   - these looks strange but the `initializer_lists` provide substitution patterns for text
     - `{ '_', ' ' }, { '1', '/' }` means _ will be replaced by a space, and 1 will replaced by a /
-    - so, then in the `Fundamental` enum, 
+    - so, then in the `PitchClass` enum, 
       - 4 => #
       - 1 =>/
       - 5 => b
       - so `C41D5` becomes "C#/Db"
     - this is all because certain characters are not allowed in enums
--[ ] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK?
+- [x] how is BinaryData.h autogenerated, as it says in its comments? i'm assuming we can export the svg layers from Illustrator
+  - so there is a `juce_binarydata_Assets… BinaryData.h` that is different from some of the other BinaryDat.h files that seem to be around.
+  - anyhow, yes that stuff should be autogenerated by the assets/svg files when CMAKE does its thing (CMAKE replaces all the Projucer functions where this sort of thing used to happen)
+- [x] for UI constants, do you think we should be working with the Tytel skins.h stuff, or the BKGraphicsConstants from the old bK?
   - see the section below about Default Color and Graphics Constants
-- [ ] currently getting tuning info into BKSynthezier from TuningState, with getTargetFrequency(), but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
-- [x] I need some help understanding how the tuningComboBoxCallbacks work in TuningParametersView.h. In particular how the static tuning systems get updated on the back end after the user makes a choice.
-
+- [x] currently getting tuning info into BKSynthezier from TuningState, with getTargetFrequency(), but not sure how to get other param info into it; for instance, the SemitoneWidthParam. or should we be handling this differently, especially since there will be a LOT in Tuning
+- [x] I need some help understanding how the tuningCallbacks work in TuningParametersView.h. In particular how the static tuning systems get updated on the back end after the user makes a choice.
+- [x] how to think about copy constructors and parameters: `void SpringTuning::copy(SpringTuning* st)` for instance. these require that the parameters be set internally, which feels off.
+  - shouldn't need them, using valueTrees instead
+- [x] check out `lastSynthState` in DirectProcessor and whether it's thread-safe
+- need to extend this with std::map of currently play notes/tunings, for spiralview
+- [x] for DP: tell me more about `params.tuningState.setFromAudioThread` and why it might be important. In TuningParametersView.cpp
+  - this was a conditional that Davis was working with, concerned that there may be parameters that are updated on the audio thread for some reason that would then trigger this callback
+    - however, it's not being set anywhere at the moment, so it may not be necessary in the end
+- [x] will creating global preferences, probably under Options menu with new window, be straightforward?
+  - need A440, for instance.
+  - and will save? will app, or with gallery?
 ---------
 ## Default Colors and Graphics Constants
 - in `assets/default.bitklavierskin` we have all the values
@@ -36,6 +98,7 @@ and hopefully with answers included here for the record!
 - the ValueIDs for these are in enums in `skin.h`, which are in the same order the names are held in string arrays in `skin.cpp`
   - so, if you want to add new values, they need to be in the same placement/order in both `skin.cpp` and `skin.h`
 - `synth_section.cpp` then has helper functions to get some of these vals (`SynthSection::getKnobSectionHeight()` for instance)
+- can add to all these as needed!
 
 ---------
 ## Modulatable Parameters
@@ -58,6 +121,7 @@ and hopefully with answers included here for the record!
     - `chowdsp::GainDBParameter::Ptr gainParam` for instance 
   - for a more complex set of parameters requiring a more complex UI element, you might need to create a `ParamHolder`
     - see `TransposeParams` for instance 
+  - see the section here about Modulatable parameters; last argument for the parameter definition should probably be `true` if this parameter is to be available to mod.
   - Call `add` and include your new param with the others 
     - first line in the DirectParams struct, for instance 
   - Note that in the UI elements that are OpenGL wrappers around legacy bitKlavier components (like the transposition slider, and the velocityMinMax slider) you'll need to create a `void processStateChanges() override` function and call it with every block
@@ -84,3 +148,34 @@ and hopefully with answers included here for the record!
 
   
 - then, in `DirectParametersView::resized()` you need to actually place the UI elements in the window
+
+---------
+## Creating a New Preparation
+Typing as I do MidiFilter...
+- create MidiFilterProcessor class, with params
+- create the MidiFilterParametersView class
+  - might not always need this: see Reset, for instance
+- create the MidiFilterPreparation class
+- add to `BKPreparationTypes` in common.h
+- create class MidiFilterItem in BKItem.h
+- in BKItem.cpp, add path for preparation in `getPathForPreparation (bitklavier::BKPreparationType type)`
+- add to menu in synth_gui_interface.cpp `SynthGuiInterface::getPluginPopupItems()`
+- `nodeFactory.Register` it in ConstructionSite.cpp.
+  - and to `CommandIDs` here
+  - also add a switch case in `perform()` here
+  - also `ConstructionSite::getAllCommands` and `getCommandInfo`
+- register in the constructor for `PreparationList.cpp`
+  - `prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter,MidiFilterProcessor::create);`
+- might need to add it to `PreparationSection::itemDropped`
+  - requires creating `midifilterDropped()` funcs in various places
+- icon svg layers in assets/midifilter, with further info in BinaryData.h; BinaryData.h says it is autowritten -- how?
+  - need to add a path() call in `paths.h`
+  - some drawing stuff happens in `BKItem.h`
+- preparation icon size is set in `ConstructionSite::perform`?
+  - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
+
+---------
+## Audio Graph, New Pianos and Switching
+- look at `sound_engine` to see how the graph is setup
+- start in `HeaderSection` where the buttons on top of the UI (not the app menus) are handled
+- trace that through, look at where pianos are made `active` and so on, and the various ValueTrees are created

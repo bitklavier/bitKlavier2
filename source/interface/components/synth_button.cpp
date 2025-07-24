@@ -147,6 +147,8 @@ void OpenGlButtonComponent::renderTextButton(OpenGlWrapper& open_gl, bool animat
   }
   text_.setColor(active_color);
   text_.render(open_gl, animate);
+  GLenum gl = juce::gl::glGetError();
+  _ASSERT(gl == juce::gl::GL_NO_ERROR);
 }
 
 void OpenGlButtonComponent::renderPowerButton(OpenGlWrapper& open_gl, bool animate) {

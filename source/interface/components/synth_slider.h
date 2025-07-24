@@ -273,6 +273,7 @@ class OpenGlSlider : public juce::Slider {
 
     void setAlpha(float alpha, bool reset = false) { slider_quad_->setAlpha(alpha, reset); }
     void setDrawWhenNotVisible(bool draw) { slider_quad_->setDrawWhenNotVisible(draw); }
+//    void setVisible(bool show) override;
 
     SynthSection* getSectionParent() { return parent_; }
 
