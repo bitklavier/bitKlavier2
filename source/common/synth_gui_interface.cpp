@@ -291,7 +291,7 @@ void SynthGuiInterface::openSaveDialog() {
         juce::FileBrowserComponent::canSelectDirectories,
         [this](const juce::FileChooser &chooser) {
             getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::PREPARATIONS).setProperty(
-                "sync", 1, nullptr);
+                IDs::sync, 1, nullptr);
             juce::String mystr = (getSynth()->getValueTree().toXmlString());
             auto xml = getSynth()->getValueTree().createXml();
             juce::XmlElement xml_ = *xml;
@@ -326,6 +326,7 @@ void SynthGuiInterface::setActivePiano(const juce::ValueTree &v) {
     if (synth_->switch_trigger_thread == SwitchTriggerThread::MessageThread)
         synth_->setActivePiano(v,synth_->switch_trigger_thread);
     gui_->main_->constructionSite_->setActivePiano();
+
 }
 std::vector<std::string> SynthGuiInterface::getAllPianoNames() {
     std::vector<std::string> names;

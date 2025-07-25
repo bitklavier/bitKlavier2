@@ -186,7 +186,7 @@ namespace bitklavier {
               v(v_)
     {
 
-                  if(v.getChild(0).isValid())
+                  if(v.isValid())
                     chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(v.createXml(),state);
         createUuidProperty(v);
     }
@@ -287,6 +287,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginBase<Processor>::creat
 //        xml.writeTo (out, juce::XmlElement::TextFormat().singleLine());
 //        out.writeByte (0);
 //    }
+
         state.serialize (data);
     }
 

@@ -81,6 +81,7 @@ namespace IDs
     DECLARE_ID (MIDIFILTERCONNECTION)
     DECLARE_ID (selectedPianoIndex)
     DECLARE_ID (selectedPianoName)
+    DECLARE_ID (sync);
 
 }
 
