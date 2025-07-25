@@ -272,6 +272,10 @@ void FullInterface::reset()
     mod_popup->reset();
 }
 
+void FullInterface::removeAllGuiListeners() {
+    main_->removeAllGuiListeners();
+}
+
 void FullInterface::popupDisplay (juce::Component* source, const std::string& text, juce::BubbleComponent::BubblePlacement placement, bool primary)
 {
     PopupDisplay* display = primary ? popup_display_1_.get() : popup_display_2_.get();

@@ -24,6 +24,7 @@ public:
 //    juce::ValueTree v;
     void addListener(Listener* listener) { listeners_.push_back(listener); }
     std::unique_ptr<ConstructionSite> constructionSite_;
+    void removeAllGuiListeners();
 private:
 
     juce::UndoManager &um;

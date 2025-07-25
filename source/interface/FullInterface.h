@@ -60,7 +60,7 @@ public :
     void resized() override;
     void animate(bool animate) override;
     void reset() override;
-
+    void removeAllGuiListeners();
     void newOpenGLContextCreated() override;
     void renderOpenGL() override;
     void openGLContextClosing() override;

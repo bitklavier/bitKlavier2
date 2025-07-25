@@ -128,7 +128,7 @@ public:
     bool connectModulation(const juce::ValueTree &v);
 
     bool connectReset(const juce::ValueTree &v);
-
+    bool disconnectModulation(const juce::ValueTree& v);
     void disconnectModulation(const std::string &source, const std::string &destination);
 
     void disconnectStateModulation(const std::string &source, const std::string &destination);
@@ -170,6 +170,7 @@ public:
 
     void valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged,
                                   const juce::Identifier &property);
+    void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
 
     //single consumer single produce queue (thread safe / non blocking)
     static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })

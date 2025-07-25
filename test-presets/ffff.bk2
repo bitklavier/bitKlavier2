@@ -4,9 +4,13 @@
          pedalSampleSet="/defaultPedals">
   <PIANO isActive="1" name="default">
     <PREPARATIONS>
-      <PREPARATION type="0" width="245" height="125" x_y="409, 198" uuid="d70994c71f5947d8b79c19a4d8f9916f"
-                   nodeID="3607729351" numIns="1" numOuts="2" t0="0.06999921798706055"
-                   t1="2.440000534057617" t2="1.449999332427979">
+      <PREPARATION Main="0.000" Hammers="-24.000" Resonance="6.000" Pedal="-6.000"
+                   Send="0.000" OutputGain="0.000" decay="0.000" sustain="1.000"
+                   release="50.000" attack="1.000" attackpower="0.000" hold="0.000"
+                   delay="0.000" decaypower="0.000" releasepower="0.000" t0="1.0"
+                   t1="2.0" t2="1.0" t3="0.000" t4="0.000" t5="0.000" t6="0.000"
+                   t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" numActiveSliders="3.000"
+                   UseTuning="0" velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
         <MODULATABLE_PARAM parameter="OutputGain" channel="0"/>
         <MODULATABLE_PARAM parameter="attack" channel="1"/>
         <MODULATABLE_PARAM parameter="Resonance" channel="2"/>
@@ -17,38 +21,29 @@
         <MODULATABLE_PARAM parameter="sustain" channel="7"/>
         <MODULATABLE_PARAM parameter="Hammers" channel="8"/>
         <MODULATABLE_PARAM parameter="Main" channel="9"/>
-        <PARAM_DEFAULT t0="0.06999921798706055" t1="2.440000534057617" t2="1.449999332427979"/>
-        <PORT nodeID="3607729351" chIdx="4096" isIn="1"/>
-        <PORT nodeID="3607729351" chIdx="0" isIn="0"/>
-        <PORT nodeID="3607729351" chIdx="1" isIn="0"/>
-        <direct Main="0.000" Hammers="-24.000" Resonance="6.000" Pedal="-6.000"
-                Send="0.000" OutputGain="0.000" decay="0.000" sustain="1.000"
-                release="50.000" attack="1.000" attackpower="0.000" hold="0.000"
-                delay="0.000" decaypower="0.000" releasepower="0.000" t0="-7.650"
-                t1="8.000" t2="9.000" t3="0.000" t4="0.000" t5="0.000" t6="0.000"
-                t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" numActiveSliders="3.000"
-                UseTuning="0" velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000"/>
+        <PARAM_DEFAULT t0="1.0" t1="2.0" t2="1.0"/>
+        <PORT nodeID="2823611930" chIdx="4096" isIn="1"/>
+        <PORT nodeID="2823611930" chIdx="0" isIn="0"/>
+        <PORT nodeID="2823611930" chIdx="1" isIn="0"/>
       </PREPARATION>
-      <PREPARATION type="8" width="100" height="100" x_y="986, 225" uuid="6889efdffcdf4d79a07671020b2dabcc"
-                   nodeID="1753870303" numIns="1">
-        <PORT nodeID="1753870303" chIdx="4096" isIn="1"/>
-        <modulationproc type="state" isState="1" uuid="513bebb4c8494db5aeeae2c8c2724df5"/>
-      </PREPARATION>
-      <PREPARATION type="7" width="185" height="105" x_y="445, 506" uuid="d37de1350c144a25be19a7f1864684f0"
-                   nodeID="3548242229" numOuts="1">
-        <PORT nodeID="3548242229" chIdx="4096" isIn="0"/>
+      <PREPARATION keyOn="60">
+        <PORT nodeID="2583346852" chIdx="4096" isIn="0"/>
         <midiInput midiDeviceId="-1212560204"/>
-        <keymap keyOn="60"/>
+      </PREPARATION>
+      <PREPARATION type="8" width="100" height="100" x_y="915, 197" uuid="d76c0b2a62984b62b2ccd5be22e54896"
+                   nodeID="3614182186" numIns="1">
+        <PORT nodeID="3614182186" chIdx="4096" isIn="1"/>
+        <modulationproc type="state" isState="1" uuid="8c402919be9e4ae084b471e99768d76d"/>
       </PREPARATION>
     </PREPARATIONS>
     <CONNECTIONS>
-      <CONNECTION isMod="0" src="3548242229" srcIdx="4096" dest="1753870303" destIdx="4096"/>
+      <CONNECTION isMod="0" src="2583346852" srcIdx="4096" dest="3614182186" destIdx="4096"/>
     </CONNECTIONS>
     <MODCONNECTIONS>
-      <MODCONNECTION isMod="1" src="1753870303" dest="3607729351">
-        <ModulationConnection uuid="f4936636e3ff42199dceb79da4b9cfc4" isState="1" src="6889efdffcdf4d79a07671020b2dabcc_state-513bebb4c8494db5aeeae2c8c2724df5_mod"
-                              dest="d70994c71f5947d8b79c19a4d8f9916f_transpose" t0="-7.650000095367432"
-                              t1="8.0" t2="9.0"/>
+      <MODCONNECTION isMod="1" src="3614182186" dest="2823611930">
+        <ModulationConnection uuid="ccce51e844844bb5a5f646c60f8eb353" isState="1" src="d76c0b2a62984b62b2ccd5be22e54896_state-8c402919be9e4ae084b471e99768d76d_mod"
+                              dest="a84ce61accc94c12a00b3e42091fc2fe_transpose" t0="-4.71999979019165"
+                              t1="9.0" t2="8.0"/>
       </MODCONNECTION>
     </MODCONNECTIONS>
   </PIANO>

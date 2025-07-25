@@ -1437,15 +1437,15 @@ void ModulationManager::modulationDragged(const juce::MouseEvent& e) {
   
   mouse_drag_position_ = getLocalPoint(current_source_, e.getPosition());
   juce::Component* component = getComponentAt(mouse_drag_position_.x, mouse_drag_position_.y);
-  ModulationAmountKnob* hover_knob = nullptr;
-  for (int i = 0; i < bitklavier::kMaxModulationConnections; ++i) {
-    if (modulation_amount_sliders_[i].get() == component)
-      hover_knob = modulation_amount_sliders_[i].get();
-    else if (modulation_hover_sliders_[i].get() == component)
-      hover_knob = modulation_hover_sliders_[i].get();
-    else if (selected_modulation_sliders_[i].get() == component)
-      hover_knob = selected_modulation_sliders_[i].get();
-  }
+  // ModulationAmountKnob* hover_knob = nullptr;
+  // for (int i = 0; i < bitklavier::kMaxModulationConnections; ++i) {
+  //   if (modulation_amount_sliders_[i].get() == component)
+  //     hover_knob = modulation_amount_sliders_[i].get();
+  //   else if (modulation_hover_sliders_[i].get() == component)
+  //     hover_knob = modulation_hover_sliders_[i].get();
+  //   else if (selected_modulation_sliders_[i].get() == component)
+  //     hover_knob = selected_modulation_sliders_[i].get();
+  // }
 //    ModulationIndicator* hover_indicator = nullptr;
 //    for (int i = 0; i < bitklavier::kMaxModulationConnections; ++i) {
 //        if (modulation_indicators_[i].get() == component)
@@ -1456,21 +1456,23 @@ void ModulationManager::modulationDragged(const juce::MouseEvent& e) {
 //            hover_knob = selected_modulation_sliders_[i].get();
 //    }
 
-  if (hover_knob && hover_knob->isCurrentModulator())
-    return;
+  // if (hover_knob && hover_knob->isCurrentModulator())
+  //   return;
 
   bool bipolar = e.mods.isAnyModifierKeyDown();
-  if (temporarily_set_destination_ && temporarily_set_destination_ != component)
+    // if you've set the destination on one parameter that isn't the current one
+    // (if you dragged quickly between two parameters) clear the temporary mod
+    // before connecting
+  if (temporarily_set_destination_  && temporarily_set_destination_ != component)
     clearTemporaryModulation();
   if (temporarily_set_hover_slider_ && temporarily_set_hover_slider_ != component)
     clearTemporaryHoverModulation();
-
   else if (temporarily_set_synth_slider_ && temporarily_set_bipolar_ != bipolar)
     setTemporaryModulationBipolar(component, bipolar);
 
-  if (hover_knob)
-    return;// modulationDraggedToHoverSlider(hover_knob);
-  else
+  // if (hover_knob)
+  //   return;// modulationDraggedToHoverSlider(hover_knob);
+  // else
     modulationDraggedToComponent(component, bipolar);
 }
 

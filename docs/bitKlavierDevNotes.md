@@ -179,3 +179,10 @@ Typing as I do MidiFilter...
 - look at `sound_engine` to see how the graph is setup
 - start in `HeaderSection` where the buttons on top of the UI (not the app menus) are handled
 - trace that through, look at where pianos are made `active` and so on, and the various ValueTrees are created
+
+--------
+## Debugger Notes
+- using LLDB
+- needed to create `~/.lldbinit` with `settings set target.load-cwd-lldbinit true` so that the debugger can provide more useful info about the ValueTrees
+  - using melatonin sparklines and also juce_lldb_xcode.py
+  - can see this in the `.lldbinit` file in the CLion project, `~/Code/bitklavier2/.lldbinit`

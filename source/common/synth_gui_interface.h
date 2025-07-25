@@ -15,8 +15,6 @@
  */
 
 #pragma once
-// #include "synth_base.h"
-
 
 class SynthBase;
 #if HEADLESS
@@ -25,9 +23,6 @@ class FullInterface { };
 class juce::AudioDeviceManager { };
 
 #endif
-
-//#include "synth_base.h"
-
 #include "ApplicationCommandHandler.h"
 #include "valuetree_utils/VariantConverters.h"
 #include <juce_data_structures/juce_data_structures.h>
@@ -39,18 +34,21 @@ class UserPreferencesWrapper;
 class FullInterface;
 struct OpenGlWrapper;
 class ModulatorBase;
+
 struct SynthGuiData {
   SynthGuiData(SynthBase* synth_base);
   juce::ValueTree& tree;
   juce::UndoManager& um;
   SynthBase* synth;
 };
+
 namespace bitklavier
 {
     class ModulationProcessor;
-class ModulationConnection;
-class StateConnection;
+    class ModulationConnection;
+    class StateConnection;
 }
+
 class PopupItems;
 class
 SynthGuiInterface :  public juce::ApplicationCommandTarget {
@@ -90,7 +88,6 @@ public:
 
     bool perform(const InvocationInfo &info) override;
 
-
     ApplicationCommandTarget* getNextCommandTarget() override {return nullptr;}
 
     virtual juce::AudioDeviceManager* getAudioDeviceManager() { return nullptr; }
@@ -126,7 +123,7 @@ public:
     void setActivePiano(const juce::ValueTree&);
     void addPiano(const juce::String&);
     void setPianoSwitchTriggerThreadMessage();
-
+    void removeAllGuiListeners();
     std::vector<std::string> getAllPianoNames();
     FullInterface* getGui() { return gui_.get(); }
     OpenGlWrapper* getOpenGlWrapper();
@@ -143,7 +140,6 @@ public:
 
   protected:
     std::atomic<bool> loading;
-
     std::unique_ptr<juce::FileChooser> filechooser;
     SynthBase* synth_;
     std::unique_ptr<FullInterface> gui_;
