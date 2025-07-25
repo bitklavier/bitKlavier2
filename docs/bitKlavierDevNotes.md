@@ -28,6 +28,14 @@
     - all/some of the filtering in the old Keymap might now be here (invert noteOn/Off, for example)
       - but for now, let's just focus on the Target functionality
     - MidiFilter.... Filter (F). We're using V for VST for audio plugin and F is available
+  - ACTUALLY, let's have:
+    - MidiTarget: which does the targeting by MIDI channel described above, and can only be connected to a particular prep type
+      - prep type can be determined at connection, and the color of MidiTarget set along with the available targets in that prep
+      - Target icon!
+    - MidiFilter: for doing the normal midi filter stuff (invert NoteOn, toggle keys, ignore noteOff etc...)
+      - can be connected to any prep type, and multiples
+    - MidiHarmonize: the big harmonizer from the old Keymap
+- [ ] in Keymap, include: key selection, velocity min/max, velocity curving
 - [ ] control-click menu is completely unmanageable right now with all the plugins there...
 - [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
 - [ ] we'll need to be able to override the default ranges of params, when a user types in a value outside the default range. 

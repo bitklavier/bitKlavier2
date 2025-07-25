@@ -15,6 +15,9 @@ public:
         image_component_->setComponent(this);
         setComponentID("absoluteTuning");
     }
+    /**
+     * todo: update all this isModulation/isModulated stuff to match what is in OpenGL_TranspositionSlider and elsewhere
+     */
 
     OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state){
 
@@ -100,10 +103,12 @@ public:
         image_component_->setComponent(this);
         setComponentID("circularTuning");
     }
-    OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state){
-        isModulation_ = true;
 
+    OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state)
+    {
+        isModulation_ = true;
     }
+
     ~OpenGLCircularKeyboardSlider() {}
 
     virtual void resized() override {

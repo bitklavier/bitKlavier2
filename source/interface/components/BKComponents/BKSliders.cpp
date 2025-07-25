@@ -340,7 +340,7 @@ double BKSubSlider::getValueFromText(const juce::String & text )
 // **************************************************  BKMultiSlider ************************************************** //
 // ******************************************************************************************************************** //
 
-BKMultiSlider::BKMultiSlider()
+BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulatedComponent(stateDefault)
 {
     // initialize stuff
     passiveSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colour::greyLevel (0.8f).contrasting().withAlpha (0.13f));
@@ -425,10 +425,7 @@ BKMultiSlider::BKMultiSlider()
 
 }
 
-BKMultiSlider::~BKMultiSlider()
-{
-
-}
+BKMultiSlider::~BKMultiSlider() {}
 
 // initialize the slider; it should have no less than numDefaultSliders, all set to sliderDefault value
 void BKMultiSlider::initializeSliderVals(int howmany)
@@ -1316,8 +1313,9 @@ BKStackedSlider::BKStackedSlider(
     double defmin,
     double defmax,
     double def,
-
-    double increment, int numActiveSliders, const juce::ValueTree& stateDefault): StateModulatedComponent(stateDefault),
+    double increment,
+    int numActiveSliders,
+    const juce::ValueTree& stateDefault) : StateModulatedComponent(stateDefault),
            sliderName(sliderName),
            sliderMin(min),
            sliderMax(max),

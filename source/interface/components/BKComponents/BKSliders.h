@@ -72,7 +72,7 @@ private:
 */
 
 class BKMultiSlider :
-    public juce::Component,
+    public StateModulatedComponent,
     public juce::Slider::Listener,
     public juce::TextEditor::Listener,
     public juce::ImageButton::Listener
@@ -83,7 +83,7 @@ public:
     // *** Public Instance Methods *** //
 
     // constructor
-    BKMultiSlider();
+    BKMultiSlider(const juce::ValueTree& defaultState={});
     ~BKMultiSlider();
 
     // when the client sends an array of only the active slider values, this will construct the complete array
@@ -136,7 +136,7 @@ public:
     void removeMyListener(Listener* listener)  { listeners.remove(listener);   }
 
 
-private:
+//private:
 
     // *** Private Instance Methods *** //
 
@@ -295,7 +295,16 @@ class BKStackedSlider : public StateModulatedComponent, // needed for this to be
                         public juce::TextEditor::Listener
 {
 public:
-    BKStackedSlider (juce::String sliderName, double min, double max, double defmin, double defmax, double def, double increment, int numActiveSliders, const juce::ValueTree& defaultState={});
+    BKStackedSlider (
+        juce::String sliderName,
+        double min,
+        double max,
+        double defmin,
+        double defmax,
+        double def,
+        double increment,
+        int numActiveSliders,
+        const juce::ValueTree& defaultState={});
 
     ~BKStackedSlider()
     {

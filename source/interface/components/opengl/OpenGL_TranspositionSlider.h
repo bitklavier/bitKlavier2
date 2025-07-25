@@ -11,10 +11,10 @@
 #include "valuetree_utils/VariantConverters.h"
 #include "juce_data_structures/juce_data_structures.h"
 
-class OpenGL_TranspositionSlider : public OpenGlAutoImageComponent<BKStackedSlider>, BKStackedSlider::Listener {
+class OpenGL_TranspositionSlider : public OpenGlAutoImageComponent<BKStackedSlider>, BKStackedSlider::Listener
+{
 public:
-    OpenGL_TranspositionSlider (TransposeParams *_params,
-                              chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKStackedSlider>(
+    OpenGL_TranspositionSlider (TransposeParams *_params, chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKStackedSlider>(
                                                                             "Transpositions", // slider name
                                                                             -12, // min
                                                                             12, // max
@@ -23,12 +23,14 @@ public:
                                                                             0, // default val
                                                                             0.01,
                                                                             _params->numActive, _params->paramDefault), // increment
-                                                                        params(_params) {
+                                                                        params(_params)
+    {
         isModulated = true;
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         addMyListener(this);
+
         int i = 0;
         for (auto slider: dataSliders) {
             if ((*params->getFloatParams())[i].get()->paramID == "numActiveSliders") continue;
@@ -39,8 +41,7 @@ public:
             // (*params->getFloatParams())[i++].get()->getCurrentValue() > 0.f;
             attachmentVec.emplace_back(std::move(ptr));
         }
-        // juce::Array<float> sliderVals = getAllActiveValues();
-        // setTo(sliderVals, juce::sendNotification);
+
         // add slider callbacks to allow the UI to update the number of sliders whenever a modulation changes it
         sliderChangedCallback += {listeners.addParameterListener(params->numActiveSliders, chowdsp::ParameterListenerThread::MessageThread,
             [this] {
@@ -66,28 +67,12 @@ public:
                                     getName(),
                                     getAllActiveValues());
                             }
-                                                }
-                                               redoImage();
-                       //   if (!this->isEditing and j > this->params->numActive - 1) return;
-                       //      juce::Array<float> sliderVals = getAllActiveValues();
-                       //      if (this->params->numActive < j) {
-                       //          this->params->numActive = j +1;
-                       //      }
-                       //      if (sliderVals.size() >= j+1) {
-                       //          sliderVals.set(j,dataSliders[j]->getValue());
-                       //          sliderVals.removeRange(j+1,sliderVals.size());
-                       //          setTo(sliderVals, juce::sendNotification);
-                       //      }else {
-                       //          sliderVals.set(j,dataSliders[j]->getValue());
-                       //          setTo(sliderVals, juce::sendNotification);
-                       //      }
-                       //      // this->listeners.call(&BKStackedSlider::Listener::BKStackedSliderValueChanged,
-                       //      //     getName(),
-                       //      //     getAllActiveValues());
-                       //  // }
-                       //
-                       // redoImage();
-                    })};
+                        }
+                        redoImage();
+                    }
+                )
+            };
+
             j++;
         }
     }
@@ -132,8 +117,7 @@ public:
         redoImage();
     }
 
-    OpenGL_TranspositionSlider*clone() {
-
+    OpenGL_TranspositionSlider* clone() {
         return new OpenGL_TranspositionSlider();
     }
 
