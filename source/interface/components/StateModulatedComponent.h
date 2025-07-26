@@ -41,8 +41,13 @@ struct StateModulatedComponent : juce::Component
     virtual std::shared_ptr<OpenGlImageComponent> getImageComponent() {}
     std::vector<Listener*> listeners_;
     bool hovering_ = false;
+
+    // for components that are used to edit state modulation values
     bool isModulation_ = false;
-    bool isModulated  = false;
+
+    // for the actual components the user uses, that might be modulated
+    bool isModulated_ = false;
+
     virtual StateModulatedComponent* clone() = 0;
     //should be replaced by valuetree wrapper or something along those lines
     virtual void syncToValueTree() = 0;

@@ -18,7 +18,7 @@ public:
     OpenGL_MultiSlider(MultiSliderState *sliderstate, chowdsp::ParameterListeners &listeners) :
             OpenGlAutoImageComponent<BKMultiSlider>(sliderstate->paramDefault), params(sliderstate)
     {
-        isModulated = true;
+        isModulated_ = true;
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);

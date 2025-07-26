@@ -16,7 +16,7 @@ public:
         setComponentID("absoluteTuning");
     }
     /**
-     * todo: update all this isModulation/isModulated stuff to match what is in OpenGL_TranspositionSlider and elsewhere
+     * todo: update all this isModulation/isModulated_ stuff to match what is in OpenGL_TranspositionSlider and elsewhere
      */
 
     OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state){

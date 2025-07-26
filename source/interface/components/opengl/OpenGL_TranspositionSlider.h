@@ -25,7 +25,7 @@ public:
                                                                             _params->numActive, _params->paramDefault), // increment
                                                                         params(_params)
     {
-        isModulated = true;
+        isModulated_ = true;
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
@@ -63,7 +63,8 @@ public:
                                                     sliderVals.add(dataSliders[j]->getValue());
                                                     setTo(sliderVals, juce::sendNotification);
                             if (isModulation_) {
-                                this->listeners.call(&BKStackedSlider::Listener::BKStackedSliderValueChanged,
+                                this->listeners.call(
+                                    &BKStackedSlider::Listener::BKStackedSliderValueChanged,
                                     getName(),
                                     getAllActiveValues());
                             }
@@ -75,6 +76,8 @@ public:
 
             j++;
         }
+
+
     }
 
     virtual void resized() override {
@@ -84,6 +87,11 @@ public:
 
     virtual void mouseDrag(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent<BKStackedSlider>::mouseDrag(e);
+        redoImage();
+    }
+
+    virtual void mouseMove(const juce::MouseEvent &e) override {
+        OpenGlAutoImageComponent<BKStackedSlider>::mouseMove(e);
         redoImage();
     }
 
@@ -130,9 +138,19 @@ public:
         }
     }
 
+    /*
+     * this is called whenever the transposition slider "isModulated_" is edited by the user
+     * OR when the modulation transposition slider "isModulation_" is edited by the user
+     * this is NOT called when an actual state modulation is executed
+     */
     void BKStackedSliderValueChanged(juce::String name, juce::Array<float> val) override {
         if (isModulation_) {
-
+            /*
+             * the modulation editor case: we are editing the modulator version of the stacked slider
+             * we blank out all the transp values above the last one we have (in case there were ones there previously)
+             * and then set the value for the ones we do have
+             * so, if we have 4 transpositions, we blank out 4 and above and then set 0 through 3
+             */
             for (int i = val.size(); i < 11; i++) {
                 auto str = "t" + juce::String(i);
                 modulationState.removeProperty(str, nullptr);
@@ -141,7 +159,16 @@ public:
                 auto str = "t" + juce::String(i);
                 modulationState.setProperty(str, val[i], nullptr);
             }
-        } else if (isModulated) {
+        } else if (isModulated_) {
+            /*
+             * the normal case: the transposition slider being used by the user
+             * we do a similar thing as before, blanking out any pre-existing ones above our last one
+             * and then setting the ones we do have.
+             * again, if we have 4 transpositions, we blank out all those above that and then set our 4
+             *
+             * 'isModulated_' is a bit of a misnomer, in that this applies to ANY transposition slider,
+             * regardless of whether it has a modulator attached
+             */
             for (int i = val.size(); i < 11; i++) {
                 auto str = "t" + juce::String(i);
                 defaultState.removeProperty(str, nullptr);

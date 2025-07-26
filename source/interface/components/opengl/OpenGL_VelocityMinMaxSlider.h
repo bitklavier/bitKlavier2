@@ -142,7 +142,7 @@ public:
         if (isModulation_) {
             modulationState.setProperty("velocitymin", min, nullptr);
             modulationState.setProperty("velocitymax", max, nullptr);
-        } else if (isModulated) {
+        } else if (isModulated_) {
             defaultState.setProperty("velocitymin", min, nullptr);
             defaultState.setProperty("velocitymax", max, nullptr);
         }
