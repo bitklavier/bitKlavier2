@@ -98,6 +98,9 @@ struct TransposeParams : chowdsp::ParamHolder
      * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
      *      so these are ones like Transpose, where they all change at once
      */
+    /**
+     * todo: is numActive actually being used? seems to be replaced by numActiveSliders?
+     */
     std::atomic<int> numActive = 1;
     void processStateChanges() override
     {

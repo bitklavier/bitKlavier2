@@ -187,6 +187,10 @@ Typing as I do MidiFilter...
 - look at `sound_engine` to see how the graph is setup
 - start in `HeaderSection` where the buttons on top of the UI (not the app menus) are handled
 - trace that through, look at where pianos are made `active` and so on, and the various ValueTrees are created
+- every Preparation that is in the Gallery is in the Graph. The activePiano defines which preparations are visible, and which ones are not bypassed in the graph
+- preparations that are bypassed have their processBlockBypassed called every block, to allow for transitions from Piano to Piano
+  - that does mean that processBlockBypassed() should have a minimal amount going on, so we don't have a lot of overhead from inactive pianos
+- 
 
 --------
 ## Debugger Notes

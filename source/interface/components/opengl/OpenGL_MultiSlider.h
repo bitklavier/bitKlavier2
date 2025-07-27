@@ -9,7 +9,6 @@
 #include "MultiSliderState.h"
 #include "open_gl_component.h"
 #include "synth_slider.h"
-#include "valuetree_utils/VariantConverters.h"
 #include "juce_data_structures/juce_data_structures.h"
 
 class OpenGL_MultiSlider: public OpenGlAutoImageComponent<BKMultiSlider>, BKMultiSlider::Listener
@@ -73,10 +72,60 @@ public:
     void multiSliderValueChanged(juce::String name, int whichSlider, juce::Array<float> values) override
     {
         DBG("multiSliderValueChanged");
+        //seems to not ever be called
     }
+
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
-        DBG("multiSliderAllValuesChanged");
+        /**
+         * todo: allow for multiple values in each slider, for transpositions
+         * todo: figure out how to deal with hard cap in the std::arrays for the params
+         * todo: figure out the isModulation_/isModulated_ part
+         */
+
+        /*
+         * this takes the arrays of values and states (whether a particular slider is active or not) from BKMultSlider
+         * and maps them to the params sliderVals and activeSliders, whose values should mirror what we see in the UI
+         * so, if the user has set sliders 0, 1, and 3 to values, and left slider 2 inactive, then
+         *  sliderVals = {val, val, 0, val, 0....}
+         *  activeSilders = {true, true, false, true, false, false....}
+         */
+        /**
+         * todo: yeah, don't need this. on the back end, we need the original values array. don't even need the states array, except for storage
+         */
+        if (isModulated_)
+        {
+            int stateCtr = 0;
+            int valueCounter = 0;
+            for (auto bval : states)
+            {
+                if (bval)
+                {
+                    params->sliderVals[stateCtr].store (values[valueCounter++][0]); // 1d for now....
+                    params->activeSliders[stateCtr].store (true);
+                }
+                else
+                {
+                    params->sliderVals[stateCtr].store (0.);
+                    params->activeSliders[stateCtr].store (false);
+                }
+                stateCtr++;
+            }
+
+            params->numActiveSliders.store (states.size());
+
+            /*
+             * write string representations of these arrays to default state for this property?
+             */
+            // defaultState.setProperty(str, val[i], nullptr);
+        }
+        else if (isModulation_)
+        {
+            /*
+             * write string representations to modulationState.setProperty for reach fo these arrays?
+             */
+            //modulationState.setProperty(str, val[i], nullptr);
+        }
     }
 
 //    void addSlider(juce::NotificationType newnotify) override {
@@ -88,7 +137,7 @@ public:
 ////        }
 //    }
 
-//    void BKMultiSliderValueChanged(juce::String name, juce::Array<float> val) override {
+//    void multiSliderValueChanged(juce::String name, juce::Array<float> val) override {
 //        if (isModulation_) {
 ////            for (int i = val.size(); i < 11; i++) {
 ////                auto str = "t" + juce::String(i);
@@ -98,7 +147,7 @@ public:
 ////                auto str = "t" + juce::String(i);
 ////                modulationState.setProperty(str, val[i], nullptr);
 ////            }
-//        } else if (isModulated) {
+//        } else if (isModulated_) {
 ////            for (int i = val.size(); i < 11; i++) {
 ////                auto str = "t" + juce::String(i);
 ////                defaultState.removeProperty(str, nullptr);

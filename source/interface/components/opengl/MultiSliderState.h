@@ -11,22 +11,9 @@
 
 struct MultiSliderState : bitklavier::StateChangeableParameter
 {
-    std::array<float, MAXMULTISLIDERLENGTH> sliderVals = {1.f};
-
-    /*
-     * how many sliders is the user actually working with (int)
-     *      - there will always be at least 1
-     *      - and 12 displayed
-     *      - but the user might be using any number 1 up to MAXMULTISLIDERLENGTH
-     */
-    chowdsp::FloatParameter::Ptr numSlidersActual {
-        juce::ParameterID { "numSlidersActual", 100 },
-        "numSlidersActual",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
-        1.0f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
-    };
+    std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> sliderVals = {1.f};
+    std::array<std::atomic<bool>, MAXMULTISLIDERLENGTH> activeSliders = {true};
+    std::atomic<int> numActiveSliders = 1;
 };
 
 #endif //BITKLAVIER0_MULTISLIDERSTATE_H

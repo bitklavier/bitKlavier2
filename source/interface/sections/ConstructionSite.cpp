@@ -42,6 +42,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
 
     // prep_list->addChangeListener(this);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
@@ -72,62 +73,64 @@ enum CommandIDs {
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
     commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion, resetMod, midifilter, pianoswitch});
 }
-void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) {
-        switch (id) {
-            case direct:
-                info.setInfo("Direct", "Create Direct Preparation", "Edit", 0);
-                info.addDefaultKeypress('d', juce::ModifierKeys::noModifiers);
-                break;
-            case nostalgic:
-                info.setInfo("Nostalgic", "Create Nostalgic Preparation", "Edit", 0);
-                info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
-                break;
-            case keymap:
-                info.setInfo("Keymap", "Create Keymap Preparation", "Edit", 0);
-                info.addDefaultKeypress('k', juce::ModifierKeys::noModifiers);
-                break;
-            case resonance:
-                info.setInfo("Resonance", "Create Resonance Preparation", "Edit", 0);
-                info.addDefaultKeypress('r', juce::ModifierKeys::noModifiers);
-                break;
-            case synchronic:
-                info.setInfo("Synchronic", "Create Synchronic Preparation", "Edit", 0);
-                info.addDefaultKeypress('s', juce::ModifierKeys::noModifiers);
-                break;
-            case blendronic:
-                info.setInfo("Blendronic", "Create Blendronic Preparation", "Edit", 0);
-                info.addDefaultKeypress('b', juce::ModifierKeys::noModifiers);
-                break;
-            case tempo:
-                info.setInfo("Tempo", "Create Tempo Preparation", "Edit", 0);
-                info.addDefaultKeypress('m', juce::ModifierKeys::noModifiers);
-                break;
-            case tuning:
-                info.setInfo("Tuning", "Create Tuning Preparation", "Edit", 0);
-                info.addDefaultKeypress('t', juce::ModifierKeys::noModifiers);
-                break;
-            case modulation:
-                info.setInfo("Modulation", "Create Modulation", "Edit", 0);
-                info.addDefaultKeypress('c', juce::ModifierKeys::noModifiers);
-                break;
-            case deletion:
-                info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
-                info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
-                break;
-            case resetMod:
-                info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);
-                info.addDefaultKeypress('\\', juce::ModifierKeys::noModifiers);
-                break;
-            case midifilter:
-                info.setInfo("Midifilter", "Create Midifilter Preparation", "Edit", 0);
-                info.addDefaultKeypress('f', juce::ModifierKeys::noModifiers);
-                break;
-            case pianoswitch:
-                info.setInfo("Pianoswitch", "Create Pianoswitch Preparation", "Edit", 0);
-                info.addDefaultKeypress('p', juce::ModifierKeys::noModifiers);
-                break;
-        }
+void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
+{
+    switch (id) {
+        case direct:
+            info.setInfo("Direct", "Create Direct Preparation", "Edit", 0);
+            info.addDefaultKeypress('d', juce::ModifierKeys::noModifiers);
+            break;
+        case nostalgic:
+            info.setInfo("Nostalgic", "Create Nostalgic Preparation", "Edit", 0);
+            info.addDefaultKeypress('n', juce::ModifierKeys::noModifiers);
+            break;
+        case keymap:
+            info.setInfo("Keymap", "Create Keymap Preparation", "Edit", 0);
+            info.addDefaultKeypress('k', juce::ModifierKeys::noModifiers);
+            break;
+        case resonance:
+            info.setInfo("Resonance", "Create Resonance Preparation", "Edit", 0);
+            info.addDefaultKeypress('r', juce::ModifierKeys::noModifiers);
+            break;
+        case synchronic:
+            info.setInfo("Synchronic", "Create Synchronic Preparation", "Edit", 0);
+            info.addDefaultKeypress('s', juce::ModifierKeys::noModifiers);
+            break;
+        case blendronic:
+            info.setInfo("Blendronic", "Create Blendronic Preparation", "Edit", 0);
+            info.addDefaultKeypress('b', juce::ModifierKeys::noModifiers);
+            break;
+        case tempo:
+            info.setInfo("Tempo", "Create Tempo Preparation", "Edit", 0);
+            info.addDefaultKeypress('m', juce::ModifierKeys::noModifiers);
+            break;
+        case tuning:
+            info.setInfo("Tuning", "Create Tuning Preparation", "Edit", 0);
+            info.addDefaultKeypress('t', juce::ModifierKeys::noModifiers);
+            break;
+        case modulation:
+            info.setInfo("Modulation", "Create Modulation", "Edit", 0);
+            info.addDefaultKeypress('c', juce::ModifierKeys::noModifiers);
+            break;
+        case deletion:
+            info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
+            info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
+            break;
+        case resetMod:
+            info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);
+            info.addDefaultKeypress('\\', juce::ModifierKeys::noModifiers);
+            break;
+        case midifilter:
+            info.setInfo("Midifilter", "Create Midifilter Preparation", "Edit", 0);
+            info.addDefaultKeypress('f', juce::ModifierKeys::noModifiers);
+            break;
+        case pianoswitch:
+            info.setInfo("Pianoswitch", "Create Pianoswitch Preparation", "Edit", 0);
+            info.addDefaultKeypress('p', juce::ModifierKeys::noModifiers);
+            break;
     }
+}
+
 bool ConstructionSite::perform(const InvocationInfo &info) {
         switch (info.commandID) {
             case direct:
@@ -157,7 +160,6 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             case keymap:
             {
                 juce::ValueTree t(IDs::PREPARATION);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
                 t.setProperty(IDs::width, 185, nullptr);
                 t.setProperty(IDs::height, 105, nullptr);
@@ -193,14 +195,14 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case blendronic:
             {
-                // juce::ValueTree t(IDs::PREPARATION);
-                //
-                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
-                // t.setProperty(IDs::width, 260, nullptr);
-                // t.setProperty(IDs::height, 132, nullptr);
-                // t.setProperty(IDs::x, lastX - 260 / 2, nullptr);
-                // t.setProperty(IDs::y, lastY - 132 / 2, nullptr);
-                // prep_list->appendChild(t,  &undo);
+                 juce::ValueTree t(IDs::PREPARATION);
+                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
+                 t.setProperty(IDs::width, 245, nullptr);
+                 t.setProperty(IDs::height, 125, nullptr);
+                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+                 //t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+                 prep_list->appendChild(t,  &undo);
+
                 return true;
             }
             case tempo:

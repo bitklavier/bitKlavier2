@@ -148,13 +148,13 @@ class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
 {
 public:
     DirectProcessor (SynthBase& parent, const juce::ValueTree& v);
-    ~DirectProcessor()
-    {
-    }
+    ~DirectProcessor() {}
+
     static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
     {
         return std::make_unique<DirectProcessor> (parent, v);
     }
+
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
@@ -215,13 +215,16 @@ public:
             &(*ptrToSamples)[d]);
     }
 
-    void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) {}
-    void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) {}
-    void valueTreeChildOrderChanged (juce::ValueTree&, int, int) {}
-    void valueTreeParentChanged (juce::ValueTree&) {}
-    void valueTreeRedirected (juce::ValueTree&) {}
+    /**
+     * todo: do we need these?
+     */
+//    void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) {}
+//    void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) {}
+//    void valueTreeChildOrderChanged (juce::ValueTree&, int, int) {}
+//    void valueTreeParentChanged (juce::ValueTree&) {}
+//    void valueTreeRedirected (juce::ValueTree&) {}
 
-    bool getTranspositionUsesTuning() { return state.params.transpose.transpositionUsesTuning->get();}
+//    bool getTranspositionUsesTuning() { return state.params.transpose.transpositionUsesTuning->get();}
 
 
 private:

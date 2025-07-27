@@ -37,8 +37,8 @@ public:
         shadowColourId                  = 0x1005008
     };
     KeyboardOffsetComponent(TuningState&state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o),state(state),isCircular(isCircular) {
-           setColour(whiteNoteColourId, juce::Colours::white);
-            setColour(blackNoteColourId, juce::Colours::black);
+        setColour(whiteNoteColourId, juce::Colours::white);
+        setColour(blackNoteColourId, juce::Colours::black);
         setColour(keySeparatorLineColourId, juce::Colours::grey);
         setColour(mouseOverKeyOverlayColourId, juce::Colours::white.withAlpha(0.5f));
         setColour(keyDownOverlayColourId, juce::Colours::white.withAlpha(0.5f));

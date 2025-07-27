@@ -46,6 +46,9 @@ public:
 
                 ++key;
             }
+            /**
+             * todo: shouldn't these use IDs::absoluteTuning?
+             */
             modulationState.setProperty("absoluteTuning", s, nullptr);
         }
     }

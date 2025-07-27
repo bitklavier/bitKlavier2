@@ -4,7 +4,10 @@
 
 #include "BlendronicProcessor.h"
 
-BlendronicProcessor::BlendronicProcessor() = default;
+BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, blendronicBusLayout())
+{
+
+}
 
 void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -13,6 +16,7 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     gain.prepare (spec);
     gain.setRampDurationSeconds (0.05);
 }
+
 
 template <typename Serializer>
 typename Serializer::SerializedType BlendronicParams::serialize (const BlendronicParams& paramHolder)
@@ -25,7 +29,11 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
     /**
      * todo: make these using blendronicState.beatLengthsActual, rather than MAXMULTISLIDERLENGTH, so we don't write so much to the xml
      */
-    Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
+
+    /*
+     * then serialize the more complex params
+     */
+//    Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
 
     return ser;
 }
@@ -36,11 +44,16 @@ void BlendronicParams::deserialize (typename Serializer::DeserializedType deseri
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
 
     auto myStr = deserial->getStringAttribute ("blendronic_beatLengths");
-    paramHolder.beatLengths.sliderVals = parseFloatStringToArrayCircular<MAXMULTISLIDERLENGTH> (myStr.toStdString());
+//    paramHolder.beatLengths.sliderVals = parseFloatStringToArrayCircular<MAXMULTISLIDERLENGTH> (myStr.toStdString());
 }
 
 
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+
+}
+
+void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 
 }

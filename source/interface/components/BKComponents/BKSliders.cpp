@@ -410,8 +410,11 @@ BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulat
     addAndMakeVisible(*editValsTextField);
 
     // for rotating the slider values
-    rotateButton = std::make_unique<OpenGlShapeButton>("ROTATE");
-    rotateButton->setShape(Paths::rotate_arrow_path());
+    rotateButton = std::make_unique<juce::ImageButton>("ROTATE");
+    rotateButton->setImages(false, true, true,
+        juce::ImageCache::getFromMemory(BinaryData::rotate_arrow_png, BinaryData::rotate_arrow_pngSize), 0.8f, juce::Colours::transparentBlack,
+        juce::Image(), 1.0f, juce::Colours::transparentBlack,
+        juce::Image(), 0.6, juce::Colours::transparentBlack);
     rotateButton->setVisible(true);
     rotateButton->setTooltip("Rotate values");
     rotateButton->addListener(this);

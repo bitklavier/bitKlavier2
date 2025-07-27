@@ -279,8 +279,8 @@ public:
     std::unique_ptr<BKSubSlider> displaySlider;
     std::unique_ptr<BKSubSlider> bigInvisibleSlider;
     std::unique_ptr<juce::TextEditor> editValsTextField;
-//    std::unique_ptr<juce::ImageButton> rotateButton;
-    std::unique_ptr<OpenGlShapeButton> rotateButton;
+    std::unique_ptr<juce::ImageButton> rotateButton;
+//    std::unique_ptr<OpenGlShapeButton> rotateButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKMultiSlider)
 };

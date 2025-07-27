@@ -43,8 +43,10 @@ public:
         }
 
         // add slider callbacks to allow the UI to update the number of sliders whenever a modulation changes it
-        sliderChangedCallback += {listeners.addParameterListener(params->numActiveSliders, chowdsp::ParameterListenerThread::MessageThread,
-            [this] {
+        sliderChangedCallback += { listeners.addParameterListener(params->numActiveSliders, chowdsp::ParameterListenerThread::MessageThread,
+            [this]
+            {
+                DBG("sliderChangedCallback for params->numActiveSliders");
                 auto sliderVals   = getAllActiveValues();
                 sliderVals.removeRange(params->numActiveSliders->getCurrentValue(),sliderVals.size());
                 setTo(sliderVals, juce::sendNotification);
@@ -56,12 +58,14 @@ public:
             if ((*params->getFloatParams())[j].get()->paramID == "numActiveSliders") continue;
             sliderChangedCallback +={ listeners.addParameterListener(
                 param,
-                chowdsp::ParameterListenerThread::MessageThread,
-                    [this,j]() {
-                        if ( j > this->params->numActive - 1) {
-                                                    juce::Array<float> sliderVals = getAllActiveValues();
-                                                    sliderVals.add(dataSliders[j]->getValue());
-                                                    setTo(sliderVals, juce::sendNotification);
+                chowdsp::ParameterListenerThread::MessageThread,[this,j]()
+                    {
+                        DBG("sliderChangedCallback for param " + juce::String(j) + " numActiveSliders = " + juce::String(params->numActiveSliders->getCurrentValue()));
+                        if ( j > this->params->numActive - 1)
+                        {
+                            juce::Array<float> sliderVals = getAllActiveValues();
+                            sliderVals.add(dataSliders[j]->getValue());
+                            setTo(sliderVals, juce::sendNotification);
                             if (isModulation_) {
                                 this->listeners.call(
                                     &BKStackedSlider::Listener::BKStackedSliderValueChanged,
@@ -76,8 +80,6 @@ public:
 
             j++;
         }
-
-
     }
 
     virtual void resized() override {
@@ -177,7 +179,8 @@ public:
                 auto str = "t" + juce::String(i);
                 defaultState.setProperty(str, val[i], nullptr);
             }
-            this->params->numActive = val.size();
+            params->numActive = val.size();
+            params->numActiveSliders->setParameterValue(params->numActive);
         }
     }
 

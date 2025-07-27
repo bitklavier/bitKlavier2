@@ -51,6 +51,9 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
+    /**
+     * todo: is this needed? velocitymin and max are handled above, no?
+     */
     void processStateChanges() override
     {
         auto float_params = getFloatParams();

@@ -20,7 +20,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         pedalSynth->addVoice (new BKSamplerVoice());
     }
 
-    /**
+    /*
      * these synths play their stuff on noteOff rather than noteOn
      */
     hammerSynth->isKeyReleaseSynth (true);
@@ -194,7 +194,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
 
-    /**
+    /*
      * Q: is all this thread-safe?
      *      - outputLevels above is std::atomic
      *      - the stuff below is not, but uses chowdsp params, so maybe that's ok?
