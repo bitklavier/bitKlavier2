@@ -97,7 +97,8 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
          * todo for Davis: it's supposed to be the commented out line, but something need to get updated.
          */
         //        if (tp->getCurrentValue() != 0. && state.params.transpose.numActiveSliders->getCurrentValue() > i)
-        if (tp->getCurrentValue() != 0. && state.params.transpose.numActive > i)
+//        if (tp->getCurrentValue() != 0. && state.params.transpose.numActive > i)
+        if (tp->getCurrentValue() != 0. && state.params.transpose.numActiveSliders->getCurrentValue() > i)
             transps.addIfNotAlreadyThere (tp->getCurrentValue());
         i++;
     }

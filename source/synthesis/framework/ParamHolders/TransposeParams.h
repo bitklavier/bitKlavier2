@@ -102,7 +102,7 @@ struct TransposeParams : chowdsp::ParamHolder
      * todo: is numActive actually being used? seems to be replaced by numActiveSliders?
      *          well this breaks if we don't update it here, though maybe it is still replaceable?
      */
-    std::atomic<int> numActive = 1;
+//    std::atomic<int> numActive = 1;
     void processStateChanges() override
     {
         auto float_params = getFloatParams();
@@ -125,7 +125,7 @@ struct TransposeParams : chowdsp::ParamHolder
                 float_param.get()->setParameterValue(val);
             }
 
-            numActive.store(i);
+//            numActive.store(i);
             numActiveSliders->setParameterValue(i);
 
 //            /*

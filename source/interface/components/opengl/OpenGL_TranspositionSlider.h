@@ -22,7 +22,9 @@ public:
                                                                             12, // default max
                                                                             0, // default val
                                                                             0.01,
-                                                                            _params->numActive, _params->paramDefault), // increment
+//                                                                            _params->numActive,
+                                                                _params->numActiveSliders->getCurrentValue(),
+                                                                    _params->paramDefault), // increment
                                                                         params(_params)
     {
         isModulated_ = true;
@@ -197,8 +199,9 @@ public:
                 auto str = "t" + juce::String(i);
                 defaultState.setProperty(str, val[i], nullptr);
             }
-            params->numActive.store(val.size());
-            params->numActiveSliders->setParameterValue(params->numActive);
+//            params->numActive.store(val.size());
+//            params->numActiveSliders->setParameterValue(params->numActive);
+            params->numActiveSliders->setParameterValue(val.size());
         }
     }
 
