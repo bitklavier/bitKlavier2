@@ -1,13 +1,19 @@
 # Notes about how to do stuff in the bK codebase
 ## Priorities before Davis leaves
-- [ ] Piano Switch prep: Davis works on this next
-  - all pianos in graph together, bypass notes for inactive pianos
-    - getBypassParameter in https://docs.juce.com/master/classAudioProcessorGraph.html
-  - will need to be able to gracefully handle preps that need to finish their thing (Nostalgic holdover, noteOns that are still active, etc...)
-    - as well as how mods are handled at that moment
-- [ ] finish mods for Direct and Tuning:
-  - working, saving/loading, Dan mostly understanding the code
-- [ ] Blendrónic audio in: Dan will try this after Wisconsin
+- [ ] Mods!
+  - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
+  - for Transposition Slider: if you try to add a 2nd transposition -> boom.
+    - ok, i fixed that, at least i think so; added an `isModulated_` check in `addSlider` in OpenGL_TranspositionSlider.h, should check to make sure that is right, and if we need the nullptr check
+  - with TranspositionSlider, if I add a 2nd slider and activate the mod, two things happen:
+    - both sliders appear, but only one of them works
+    - the original slider before the mod is still there
+  - saved `transpositionModSavetest` gallery and it crashes on load
+  - hit an assert all the time when just dragging a ramp mod across the tuning UI
+  - if i add a Reset to a Direct => boom. 
+  - trying to access the modulation transposition slider can be really frustrating; it disappears as soon as you move over it, most of the time!
+  - in general, I need to understand how this works; 
+    - in trying to implement the MultiSlider for Blendronic/Synchronic, i got completely lost!
+- [ ] Blendrónic audio in: Dan working on this
 - [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
 - [ ] opening multiple sample libs, assigning to individual preps!
   - ConstructionSite::moduleAdded, should be doable there.

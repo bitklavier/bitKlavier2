@@ -46,9 +46,21 @@ public:
         sliderChangedCallback += { listeners.addParameterListener(params->numActiveSliders, chowdsp::ParameterListenerThread::MessageThread,
             [this]
             {
-                DBG("sliderChangedCallback for params->numActiveSliders");
                 auto sliderVals   = getAllActiveValues();
-                sliderVals.removeRange(params->numActiveSliders->getCurrentValue(),sliderVals.size());
+                auto activeSliders_ = params->numActiveSliders->getCurrentValue();
+
+                if(activeSliders_ < sliderVals.size())
+                {
+                    sliderVals.removeRange (activeSliders_, sliderVals.size());
+                }
+                else if (sliderVals.size() < activeSliders_)
+                {
+                    sliderVals.clearQuick();
+                    for (int k = 0; k < activeSliders_; k++)
+                    {
+                        sliderVals.add(dataSliders[k]->getValue());
+                    }
+                }
                 setTo(sliderVals, juce::sendNotification);
                 redoImage();
             })};
@@ -60,8 +72,8 @@ public:
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,[this,j]()
                     {
-                        DBG("sliderChangedCallback for param " + juce::String(j) + " numActiveSliders = " + juce::String(params->numActiveSliders->getCurrentValue()));
-                        if ( j > this->params->numActive - 1)
+//                      if ( j > this->params->numActive - 1)
+                        if ( j > params->numActiveSliders->getCurrentValue() - 1)
                         {
                             juce::Array<float> sliderVals = getAllActiveValues();
                             sliderVals.add(dataSliders[j]->getValue());
@@ -131,14 +143,20 @@ public:
         return new OpenGL_TranspositionSlider();
     }
 
-    void addSlider(juce::NotificationType newnotify) override {
-        BKStackedSlider::addSlider(newnotify);
-        if (params != nullptr) // has no params if its a cloned component
-        {
-            params->numActive = (params->numActive + 1) % 12;
-            params->numActiveSliders->setParameterValue(params->numActive);
-        }
-    }
+//    void addSlider(juce::NotificationType newnotify) override {
+//        BKStackedSlider::addSlider(newnotify);
+//        if (params != nullptr && isModulated_) // has no params if its a cloned component
+//        {
+//            /**
+//             * todo: do we need both numActive and numActiveSliders???
+//             */
+//             /**
+//              * actually, i don't think we need any of this, since it happens in BKStackedSliderValueChanged, which gets notified by BKStackedSlider::addSlider?
+//              */
+////            params->numActive.store((params->numActive + 1) % 12);
+////            params->numActiveSliders->setParameterValue(params->numActive);
+//        }
+//    }
 
     /*
      * this is called whenever the transposition slider "isModulated_" is edited by the user
@@ -179,7 +197,7 @@ public:
                 auto str = "t" + juce::String(i);
                 defaultState.setProperty(str, val[i], nullptr);
             }
-            params->numActive = val.size();
+            params->numActive.store(val.size());
             params->numActiveSliders->setParameterValue(params->numActive);
         }
     }
@@ -214,6 +232,10 @@ public:
     TransposeParams *params;
 
 private :
+    /**
+     * we use this constructor to create a generic clone for the mods
+     * so "isModulation" is set to true here.
+     */
     OpenGL_TranspositionSlider() : OpenGlAutoImageComponent<BKStackedSlider>(
         "Transpositions", // slider name
         -12, // min

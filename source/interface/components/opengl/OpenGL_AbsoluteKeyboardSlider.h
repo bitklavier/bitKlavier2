@@ -91,7 +91,7 @@ public:
     }
 
     void syncToValueTree() override {
-        modulationState = juce::ValueTree(IDs::absoluteTuning);
+//        modulationState = juce::ValueTree(IDs::absoluteTuning);
     }
 
     TuningState mod_key_state;

@@ -52,7 +52,8 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
     };
 
     /**
-     * todo: is this needed? velocitymin and max are handled above, no?
+     * this is called every block, but doesn't do anything unless there is a "changeState"
+     * in "stateChanges" to take care of, initiated by a state change modulation triggered by the user
      */
     void processStateChanges() override
     {

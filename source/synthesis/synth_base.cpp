@@ -571,6 +571,9 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     auto parameter_tree = mod_dst.getChildWithProperty (IDs::parameter, juce::String (dst_param));
     jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
+    /**
+     * todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
+     */
 
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same

@@ -89,7 +89,7 @@ struct TransposeParams : chowdsp::ParamHolder
      * that are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
      *
      * so.... if you want a collection of params (like TranspParams or velocityMinMaxParams) to be
-     * state modulatable, they ahve to be in here, and this needs to be called
+     * state modulatable, they have to be in here, and this needs to be called
      *
      * gets run whenever a state change gets run on the back end
      * modulation that changes state will be triggered here
@@ -100,33 +100,43 @@ struct TransposeParams : chowdsp::ParamHolder
      */
     /**
      * todo: is numActive actually being used? seems to be replaced by numActiveSliders?
+     *          well this breaks if we don't update it here, though maybe it is still replaceable?
      */
     std::atomic<int> numActive = 1;
     void processStateChanges() override
     {
         auto float_params = getFloatParams();
         int i = numActiveSliders->getCurrentValue();
+
         for(auto [index, change] : stateChanges.changeState)
         {
-
+            //DBG("TransposeParams processStateChanges");
             static juce::var nullVar;
 
-            for (i = 0; i< 11; i++)
+            for (i = 0; i < 12; i++)
             {
                 auto str = "t" + juce::String(i);
                 auto val = change.getProperty(str);
 
-                if (val == nullVar)
-                    break;
-                // numActive = i +1;
+                if (val == nullVar) break;
 
+                //DBG("updating transposition " + str + " to " + val.toString());
                 auto& float_param = float_params->at(i);
                 float_param.get()->setParameterValue(val);
-                //float_params[i].data()->get()->setParameterValue(val);
             }
 
+            numActive.store(i);
+            numActiveSliders->setParameterValue(i);
+
+//            /*
+//             * let's check the updated values
+//             */
+//            for (int i=0; i<float_params->size(); i++)
+//            {
+//                auto& float_param = float_params->at(i);
+//                DBG("update transp param " + float_param->getParameterID() + " = " + float_param->getCurrentValueAsText());
+//            }
         }
-        numActiveSliders->setParameterValue(i);
         stateChanges.changeState.clear();
     }
 };
