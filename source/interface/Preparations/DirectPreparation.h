@@ -5,6 +5,7 @@
 #ifndef BITKLAVIER2_DIRECTPREPARATION_H
 #define BITKLAVIER2_DIRECTPREPARATION_H
 
+#pragma once
 #include "DirectProcessor.h"
 #include "FullInterface.h"
 #include "PreparationSection.h"

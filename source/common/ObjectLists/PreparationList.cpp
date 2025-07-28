@@ -4,6 +4,7 @@
 
 #include "PreparationList.h"
 #include "DirectProcessor.h"
+#include "BlendronicProcessor.h"
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 #include "ResetProcessor.h"
@@ -15,9 +16,9 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     PluginInstanceWrapper>(v), synth(parent) {
     jassert(v.hasType(IDs::PREPARATIONS));
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,
-                         bitklavier::ModulationProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,bitklavier::ModulationProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning, TuningProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset, bitklavier::ResetProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterProcessor::create);

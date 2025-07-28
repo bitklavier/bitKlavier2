@@ -13,8 +13,11 @@ public:
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
-        setComponentID("absoluteTuning");
+        setComponentID(IDs::absoluteTuning.toString());
     }
+    /**
+     * todo: update all this isModulation/isModulated_ stuff to match what is in OpenGL_TranspositionSlider and elsewhere
+     */
 
     OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state){
 
@@ -29,21 +32,31 @@ public:
         redoImage();
     }
 
+    /*
+     * called whenever the user drags on a key in the absoluteKeyboard and sets its offset
+     * we create a string representation of the new offsets and save it to the appropriate
+     * valueTree: modulationState if the user is editing the modulation, or defaultState
+     * is editing the actual absoluteKeyboard tuning slider
+     */
     void mouseDrag(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseDrag(e);
         redoImage();
-        if (isModulation_) {
-            //        keyboardValsTextField->setText(offsetArrayToString3(keyboard->getValues(), midRange), dontSendNotification);
-            juce::String s = "";
-            int key = 0;
-            for (auto offset : keyboardState->absoluteTuningOffset)
-            {
 
-                if (offset != 0.f)  s += juce::String(key) + ":" + juce::String((offset)) + " ";
+        juce::String s = "";
+        int key = 0;
+        for (auto offset : keyboardState->absoluteTuningOffset)
+        {
+            if (offset != 0.f)  s += juce::String(key) + ":" + juce::String((offset)) + " ";
+            ++key;
+        }
 
-                ++key;
-            }
-            modulationState.setProperty("absoluteTuning", s, nullptr);
+        if (isModulation_)
+        {
+            modulationState.setProperty(IDs::absoluteTuning, s, nullptr);
+        }
+        else if (isModulated_)
+        {
+            defaultState.setProperty(IDs::absoluteTuning, s, nullptr);
         }
     }
 
@@ -61,7 +74,7 @@ public:
         OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
         redoImage();
         if (isModulation_) {
-            modulationState.setProperty("absoluteTuning", keyboardValsTextField->getText(), nullptr);
+            modulationState.setProperty(IDs::absoluteTuning, keyboardValsTextField->getText(), nullptr);
         }
     }
 
@@ -84,8 +97,13 @@ public:
         return new OpenGLAbsoluteKeyboardSlider();
     }
 
+    /**
+     * syncToValueTree() is called in ModulationManager::modulationClicked and
+     * is used to set the mod view of the parameter to the current values in the main view of the parameter
+     * see the comparable one in OpenGL_TranspositionSlider.h
+     */
     void syncToValueTree() override {
-        modulationState = juce::ValueTree(IDs::absoluteTuning);
+//        modulationState = juce::ValueTree(IDs::absoluteTuning);
     }
 
     TuningState mod_key_state;
@@ -93,17 +111,20 @@ public:
 
 class OpenGLCircularKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
+
     OpenGLCircularKeyboardSlider(TuningState& keystate)
         : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, true) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
-        setComponentID("circularTuning");
+        setComponentID(IDs::circularTuning.toString());
     }
-    OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state){
-        isModulation_ = true;
 
+    OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state)
+    {
+        isModulation_ = true;
     }
+
     ~OpenGLCircularKeyboardSlider() {}
 
     virtual void resized() override {
@@ -112,16 +133,25 @@ public:
         redoImage();
     }
 
+    /**
+     * see mouseDrag for absoluteKeyboardSlider above
+     */
     void mouseDrag(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseDrag(e);
         redoImage();
-        if (isModulation_) {
-            juce::String s = "";
 
-            for (auto offset : keyboardState->circularTuningOffset) {
-                s += juce::String((offset)) + " ";
-            }
-            modulationState.setProperty("circularTuning", s, nullptr);
+        juce::String s = "";
+        for (auto offset : keyboardState->circularTuningOffset) {
+            s += juce::String((offset)) + " ";
+        }
+
+        if (isModulation_)
+        {
+            modulationState.setProperty(IDs::circularTuning, s, nullptr);
+        }
+        else if (isModulated_)
+        {
+            defaultState.setProperty(IDs::circularTuning, s, nullptr);
         }
     }
 
@@ -139,7 +169,7 @@ public:
         OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
         redoImage();
         if (isModulation_) {
-            modulationState.setProperty("circularTuning", keyboardValsTextField->getText(), nullptr);
+            modulationState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
         }
     }
 
@@ -162,7 +192,15 @@ public:
         return new OpenGLCircularKeyboardSlider();
     }
 
-    void syncToValueTree() override {}
+    /**
+     * syncToValueTree() is called in ModulationManager::modulationClicked and
+     * is used to set the mod view of the parameter to the current values in the main view of the parameter
+     * see the comparable one in OpenGL_TranspositionSlider.h
+     */
+    void syncToValueTree() override
+    {
+
+    }
 
     TuningState mod_key_state;
 

@@ -325,22 +325,22 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
         error = "Error converting XML to juce::ValueTree";
         return false;
     }
-    SynthGuiInterface* gui_interface = getGuiInterface();
-    if (gui_interface)
-    {
-        this->mod_connections_.clear();
-        this->state_connections_.clear();
-        this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
-        this->state_connections_.reserve (bitklavier::kMaxStateConnections);
-        this->engine_->getModulationBank().reset();
-        this->engine_->getStateBank().reset();
-        gui_interface->updateFullGui();
-    }
 
+    this->mod_connections_.clear();
+    this->state_connections_.clear();
+    this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
+    this->state_connections_.reserve (bitklavier::kMaxStateConnections);
+    this->engine_->getModulationBank().reset();
+    this->engine_->getStateBank().reset();
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
-    gui_interface->removeAllGuiListeners();
+    SynthGuiInterface* gui_interface = getGuiInterface();
+    if (gui_interface)
+    {
+
+        gui_interface->removeAllGuiListeners();
+    }
     engine_->resetEngine();
     if (!loadFromValueTree (parsed_value_tree))
     {
@@ -571,6 +571,9 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     auto parameter_tree = mod_dst.getChildWithProperty (IDs::parameter, juce::String (dst_param));
     jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
+    /**
+     * todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
+     */
 
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same

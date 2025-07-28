@@ -48,6 +48,7 @@ void TuningState::processStateChanges()
             circularTuningOffset = parseFloatStringToArrayCircular<12> (val1.toString().toStdString());
         }
     }
+    stateChanges.changeState.clear();
 }
 
 void TuningState::setFundamental (int fund)

@@ -11,7 +11,7 @@
 struct LFOParams : public chowdsp::ParamHolder {
     LFOParams() : chowdsp::ParamHolder("lfo")
     {
-        add(time);
+        add(freq);
     }
 
     chowdsp::FreqHzParameter::Ptr freq

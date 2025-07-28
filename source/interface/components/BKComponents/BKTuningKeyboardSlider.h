@@ -37,8 +37,8 @@ public:
         shadowColourId                  = 0x1005008
     };
     KeyboardOffsetComponent(TuningState&state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o),state(state),isCircular(isCircular) {
-           setColour(whiteNoteColourId, juce::Colours::white);
-            setColour(blackNoteColourId, juce::Colours::black);
+        setColour(whiteNoteColourId, juce::Colours::white);
+        setColour(blackNoteColourId, juce::Colours::black);
         setColour(keySeparatorLineColourId, juce::Colours::grey);
         setColour(mouseOverKeyOverlayColourId, juce::Colours::white.withAlpha(0.5f));
         setColour(keyDownOverlayColourId, juce::Colours::white.withAlpha(0.5f));
@@ -139,10 +139,6 @@ public:
         //keyboard->setMinMidMaxValues(min, mid, max);
     }
 
-
-
-
-
     void setOctaveForMiddleC(int octave) { keyboard->setOctaveForMiddleC(octave);};
 
     inline void setDimensionRatio(float r) { ratio = r; }
@@ -162,9 +158,7 @@ public:
     BKTuningKeyboardSlider* clone() {
         return new BKTuningKeyboardSlider(new TuningState(),false,false);
     }
-    void syncToValueTree() override {
-
-    }
+    void syncToValueTree() override {}
 
     void handleNoteOn(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity) override{}
     void handleNoteOff(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity) override{}
@@ -183,19 +177,13 @@ public:
     void mouseDoubleClick(const juce::MouseEvent& e) override;
     std::unique_ptr<juce::TextEditor> keyboardValsTextField;
     TuningState* keyboardState;
+
 private:
 
     juce::String sliderName;
     juce::Label showName;
     bool isCircular;
-
     bool needsOctaveSlider;
-#if JUCE_IOS
-    Slider octaveSlider;
-    void sliderValueChanged     (Slider* slider)                override;
-    BKButtonAndMenuLAF laf;
-#endif
-
     float ratio;
 
     juce::TextEditor keyboardValueTF;
@@ -206,18 +194,12 @@ private:
     int keyboardSize, minKey, maxKey;
     int lastKeyPressed;
 
-
     int displayResolution; // how many decimal points
-
 
     void setActiveValsFromString(juce::String s);
     void setActiveValsFromStringWithFundamentalOffset(juce::String s);
 
-
-
-
     bool focusLostByEscapeKey;
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKTuningKeyboardSlider)
 };

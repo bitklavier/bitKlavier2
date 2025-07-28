@@ -13,6 +13,8 @@ struct TransposeParams : chowdsp::ParamHolder
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
     {
         add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11, numActiveSliders, transpositionUsesTuning);
+        std::vector<int*> myvec;
+
     }
 
     chowdsp::SemitonesParameter::Ptr t0{juce::ParameterID{"t0", 100},
@@ -87,7 +89,7 @@ struct TransposeParams : chowdsp::ParamHolder
      * that are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
      *
      * so.... if you want a collection of params (like TranspParams or velocityMinMaxParams) to be
-     * state modulatable, they ahve to be in here, and this needs to be called
+     * state modulatable, they have to be in here, and this needs to be called
      *
      * gets run whenever a state change gets run on the back end
      * modulation that changes state will be triggered here
@@ -95,33 +97,33 @@ struct TransposeParams : chowdsp::ParamHolder
      *
      * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
      *      so these are ones like Transpose, where they all change at once
+     *
+     * in this specific case, if there is a changeState in stateChanges (which will only happen when
+     * a mod is triggered) we read through the valueTree and update all the modded transpositions (t0, t1, etc...)
      */
-    std::atomic<int> numActive = 1;
     void processStateChanges() override
     {
         auto float_params = getFloatParams();
+
         int i = numActiveSliders->getCurrentValue();
         for(auto [index, change] : stateChanges.changeState)
         {
-
+            //DBG("TransposeParams processStateChanges");
             static juce::var nullVar;
 
-            for (i = 0; i< 11; i++)
+            for (i = 0; i < 12; i++)
             {
                 auto str = "t" + juce::String(i);
                 auto val = change.getProperty(str);
 
-                if (val == nullVar)
-                    break;
-                // numActive = i +1;
+                if (val == nullVar) break;
 
+                //DBG("updating transposition " + str + " to " + val.toString());
                 auto& float_param = float_params->at(i);
                 float_param.get()->setParameterValue(val);
-                //float_params[i].data()->get()->setParameterValue(val);
             }
-
+            numActiveSliders->setParameterValue(i);
         }
-        numActiveSliders->setParameterValue(i);
         stateChanges.changeState.clear();
     }
 };

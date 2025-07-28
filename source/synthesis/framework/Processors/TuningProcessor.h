@@ -165,9 +165,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::atomic<bool> setFromAudioThread;
 };
 
-/**
- * todo: not totally clear to me we need this wrapper around TuningState
- */
 struct TuningParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Tuning Processor
@@ -177,7 +174,6 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.fundamental,
             tuningState.tuningType,
             tuningState.semitoneWidthParams,
-//            tuningState.offSet,
             tuningState.lastNote,
             tuningState.adaptiveParams,
             tuningState.springTuningParams,

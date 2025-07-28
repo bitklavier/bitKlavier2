@@ -51,6 +51,10 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
+    /**
+     * this is called every block, but doesn't do anything unless there is a "changeState"
+     * in "stateChanges" to take care of, initiated by a state change modulation triggered by the user
+     */
     void processStateChanges() override
     {
         auto float_params = getFloatParams();

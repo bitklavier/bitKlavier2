@@ -36,6 +36,11 @@ class Paths {
       return drawable->getOutlineAsPath();
     }
 
+    static juce::Path rotate_arrow_path()
+    {
+        return Paths::fromPngData(BinaryData::rotate_arrow_png, BinaryData::rotate_arrow_pngSize);
+    }
+
     // Returns the paths for a keymap preparation window
     static juce::Array<juce::Path> keymapPaths()
     {
@@ -1022,6 +1027,5 @@ class Paths {
 
         return p;
     }
-
 };
 

@@ -7,119 +7,203 @@
 
 #pragma once
 
+#include "PluginBase.h"
+#include "Identifiers.h"
+#include "array_to_string.h"
+#include "MultiSliderState.h"
+#include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
+#include <chowdsp_serialization/chowdsp_serialization.h>
+#include <chowdsp_sources/chowdsp_sources.h>
 
-// TODO change params
+//struct BlendronicState : bitklavier::StateChangeableParameter
+//{
+//    /*
+//     * Multisliders for:
+//     *      - beat lengths          [0, 8]      => FloatParam multipliers of beat length set by Tempo
+//     *      - delay lengths         [0, 8]      => FloatParam multipliers of beat length set by Tempo
+//     *      - smoothing             [0, 500]    => ms TimeMsParameter
+//     *      - feedback coefficients [0, 1]      => FloatParam
+//     *
+//     * - max these at MAXMULTISLIDERLENGTH vals for now (will need to be higher for Synchronic multisliders)
+//     * - de/serialize these
+//     * - keep track of their actual sizes using params as well, set indirectly by the user
+//     */
+//
+//    MultiSliderState beatLengths;
+//    MultiSliderState delayLengths;
+//    MultiSliderState smoothingTimes;
+//    MultiSliderState feedbackCoeffs;
+//
+//};
 
 struct BlendronicParams : chowdsp::ParamHolder
 {
+    // gain slider params, for all gain-type knobs
+    float rangeStart = -60.0f;
+    float rangeEnd = 6.0f;
+    float skewFactor = 2.0f;
 
     // Adds the appropriate parameters to the Blendronic Processor
-    BlendronicParams()
+    BlendronicParams() : chowdsp::ParamHolder ("blendronic")
     {
-        add (gainParam, hammerParam, velocityParam, resonanceParam, attackParam,
-             decayParam, sustainParam, releaseParam);
+        add (
+//            beatLengths_numSlidersActual,
+//            delayLengths_numSlidersActual,
+//            smoothingTimes_numSlidersActual,
+//            feedbackCoeffs_numSlidersActual,
+            outputGain,
+            inputGain,
+            outputSend);
     }
 
-    // juce::Gain param
-    chowdsp::GainDBParameter::Ptr gainParam {
-            juce::ParameterID { "gain", 100 },
-            "Gain",
-            juce::NormalisableRange { -30.0f, 0.0f },
-            -24.0f
+     /*
+      * Multisliders for:
+      *      - beat lengths          [0, 8]      => FloatParam multipliers of beat length set by Tempo
+      *      - delay lengths         [0, 8]      => FloatParam multipliers of beat length set by Tempo
+      *      - smoothing             [0, 500]    => ms TimeMsParameter
+      *      - feedback coefficients [0, 1]      => FloatParam
+      *
+      * - max these at MAXMULTISLIDERLENGTH vals for now (will need to be higher for Synchronic multisliders)
+      * - de/serialize these
+      * - keep track of their actual sizes using params as well, set indirectly by the user
+      */
+     MultiSliderState beatLengths;
+     MultiSliderState delayLengths;
+     MultiSliderState smoothingTimes;
+     MultiSliderState feedbackCoeffs;
+
+     /*
+     * how many sliders is the user actually working with (int)
+     *      - there will always be at least 1
+     *      - and 12 displayed
+     *      - but the user might be using any number 1 up to MAXMULTISLIDERLENGTH
+     */
+//     chowdsp::FloatParameter::Ptr beatLengths_numSlidersActual {
+//         juce::ParameterID { "beatLengths_numSlidersActual", 100 },
+//         "beatLengths_numSlidersActual",
+//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
+//         1.0f,
+//         &chowdsp::ParamUtils::floatValToString,
+//         &chowdsp::ParamUtils::stringToFloatVal
+//     };
+//
+//     chowdsp::FloatParameter::Ptr delayLengths_numSlidersActual {
+//         juce::ParameterID { "delayLengths_numSlidersActual", 100 },
+//         "delayLengths_numSlidersActual",
+//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
+//         1.0f,
+//         &chowdsp::ParamUtils::floatValToString,
+//         &chowdsp::ParamUtils::stringToFloatVal
+//     };
+//
+//     chowdsp::FloatParameter::Ptr smoothingTimes_numSlidersActual {
+//         juce::ParameterID { "smoothingTimes_numSlidersActual", 100 },
+//         "smoothingTimes_numSlidersActual",
+//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
+//         1.0f,
+//         &chowdsp::ParamUtils::floatValToString,
+//         &chowdsp::ParamUtils::stringToFloatVal
+//     };
+//
+//     chowdsp::FloatParameter::Ptr feedbackCoeffs_numSlidersActual {
+//         juce::ParameterID { "feedbackCoeffs_numSlidersActual", 100 },
+//         "feedbackCoeffs_numSlidersActual",
+//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
+//         1.0f,
+//         &chowdsp::ParamUtils::floatValToString,
+//         &chowdsp::ParamUtils::stringToFloatVal
+//     };
+
+     // To adjust the gain of signals coming in to blendronic
+     chowdsp::GainDBParameter::Ptr inputGain {
+         juce::ParameterID { "InputGain", 100 },
+         "Input Gain",
+         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+         0.0f,
+         true
+     };
+
+    // Gain for output send (for other blendronics, VSTs, etc...)
+    chowdsp::GainDBParameter::Ptr outputSend {
+        juce::ParameterID { "Send", 100 },
+        "Send",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
     };
 
-    // Hammer param
-    chowdsp::GainDBParameter::Ptr hammerParam {
-            juce::ParameterID { "hammer", 100 },
-            "Hammer",
-            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-            -24.0f
+    // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
+    chowdsp::GainDBParameter::Ptr outputGain {
+        juce::ParameterID { "OutputGain", 100 },
+        "Output Gain",
+        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
     };
 
-    // Velocity param
-    chowdsp::FloatParameter::Ptr velocityParam {
-            juce::ParameterID { "Velocity", 100 },
-            "Velocity",
-            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f), // FIX
-            1000.0f,
-            &chowdsp::ParamUtils::floatValToString,
-            &chowdsp::ParamUtils::stringToFloatVal
-    };
+    /*
+     * serializers are used for more complex params
+     *      - here we need arrays and indexed arrays for circular and absolute tunings, for instance
+     */
+    /* Custom serializer */
+    template <typename Serializer>
+    static typename Serializer::SerializedType serialize (const BlendronicParams& paramHolder);
 
-    // Resonance param
-    chowdsp::GainDBParameter::Ptr resonanceParam {
-            juce::ParameterID { "resonance", 100 },
-            "Resonance",
-            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-            -24.0f
-    };
+    /* Custom deserializer */
+    template <typename Serializer>
+    static void deserialize (typename Serializer::DeserializedType deserial, BlendronicParams& paramHolder);
 
-    // Attack param
-    chowdsp::TimeMsParameter::Ptr attackParam {
-            juce::ParameterID { "attack", 100 },
-            "attack",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f),
-            3.5f,
-    };
-
-    // Decay param
-    chowdsp::TimeMsParameter::Ptr decayParam {
-            juce::ParameterID { "decay", 100 },
-            "Decay",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f), // FIX
-            3.5f,
-    };
-
-    // Sustain param
-    chowdsp::FloatParameter::Ptr sustainParam {
-            juce::ParameterID { "sustain", 100 },
-            "Sustain",
-            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f),
-            1000.0f,
-            &chowdsp::ParamUtils::floatValToString,
-            &chowdsp::ParamUtils::stringToFloatVal
-    };
-
-    // Release param
-    chowdsp::TimeMsParameter::Ptr releaseParam {
-            juce::ParameterID { "release", 100 },
-            "Release",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f), // FIX
-            3.5f,
-    };
-
+    /** for storing outputLevels of this preparation for display
+     *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
+     *      we simply update this in the processBlock() call
+     *      and then the level meter will update its values during the OpenGL cycle
+     */
+    std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
 };
 
 struct BlendronicNonParameterState : chowdsp::NonParamState
 {
     BlendronicNonParameterState()
     {
-        addStateValues ({ &prepPoint });
     }
-
-    chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
-class BlendronicProcessor : public chowdsp::PluginBase<chowdsp::PluginStateImpl<BlendronicParams,BlendronicNonParameterState>>
+class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<BlendronicParams, BlendronicNonParameterState>>
+//class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<BlendronicParams, BlendronicNonParameterState>>,
+//                            public juce::ValueTree::Listener
 {
 public:
-    BlendronicProcessor();
+    BlendronicProcessor (SynthBase& parent, const juce::ValueTree& v);
+
+    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
+    {
+        return std::make_unique<BlendronicProcessor> (parent, v);
+    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
-
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
 
+    juce::AudioProcessor::BusesProperties blendronicBusLayout()
+    {
+        return BusesProperties()
+            .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+            .withInput ("Input", juce::AudioChannelSet::stereo(), true)
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (9), true);
+    }
+    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override { return true; }
 
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
 private:
+
     //chowdsp::experimental::Blendronicillator<float> oscillator;
     chowdsp::Gain<float> gain;
 

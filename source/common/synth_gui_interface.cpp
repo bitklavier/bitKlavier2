@@ -70,22 +70,20 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         SynthGuiData synth_data (synth_);
         gui_ = std::make_unique<FullInterface> (&synth_data, commandManager);
         // for registering hotkeys etc.
-        commandManager.registerAllCommandsForTarget (this);
+        commandManager.registerAllCommandsForTarget(this);
         gallery = synth_data.tree;
     }
 
     sampleLoadManager->preferences = userPreferences;
-    sampleLoadManager->loadSamples (0, true);
+    sampleLoadManager->loadSamples(0,true);
     synth_->user_prefs = userPreferences;
 
     //sampleLoadManager->loadSamples(0, true);
 }
 
-bool SynthGuiInterface::perform (const InvocationInfo& info)
-{
+bool SynthGuiInterface::perform(const InvocationInfo & info) {
     {
-        switch (info.commandID)
-        {
+        switch (info.commandID) {
             case undo:
             {
                 getUndoManager()->undo();
@@ -94,7 +92,7 @@ bool SynthGuiInterface::perform (const InvocationInfo& info)
             }
             case redo:
             {
-                juce::AlertWindow::showMessageBoxAsync (juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
                 return true;
             }
             case CommandIDs::showPluginListEditor:
@@ -112,117 +110,98 @@ bool SynthGuiInterface::perform (const InvocationInfo& info)
     }
 }
 
-SynthGuiInterface::~SynthGuiInterface()
-{
-    removeAllGuiListeners();
+SynthGuiInterface::~SynthGuiInterface() {
 }
 
-void SynthGuiInterface::updateFullGui()
-{
+
+void SynthGuiInterface::updateFullGui() {
     if (gui_ == nullptr)
         return;
 
     gui_->reset();
 }
 
-OpenGlWrapper* SynthGuiInterface::getOpenGlWrapper()
-{
+OpenGlWrapper *SynthGuiInterface::getOpenGlWrapper() {
     return &gui_->open_gl_;
 }
 
-void SynthGuiInterface::updateGuiControl (const std::string& name, float value)
-{
+void SynthGuiInterface::updateGuiControl(const std::string &name, float value) {
     if (gui_ == nullptr)
         return;
 
     //  gui_->setValue(name, value, NotificationType::dontSendNotification);
 }
 
-void SynthGuiInterface::notifyModulationsChanged()
-{
+void SynthGuiInterface::notifyModulationsChanged() {
     gui_->modulationChanged();
 }
 
-void SynthGuiInterface::connectStateModulation (std::string source, std::string destination)
-{
-    bool created = synth_->connectStateModulation (source, destination);
+void SynthGuiInterface::connectStateModulation(std::string source, std::string destination) {
+    bool created = synth_->connectStateModulation(source, destination);
     //  if (created)
     //    initModulationValues(source, destination);
     notifyModulationsChanged();
 }
 
-void SynthGuiInterface::connectModulation (std::string source, std::string destination)
-{
-    bool created = synth_->connectModulation (source, destination);
+void SynthGuiInterface::connectModulation(std::string source, std::string destination) {
+    bool created = synth_->connectModulation(source, destination);
     // if (created)
     //   initModulationValues(source, destination);
     notifyModulationsChanged();
 }
 
-void SynthGuiInterface::disconnectModulation (std::string source, std::string destination)
-{
-    synth_->disconnectModulation (source, destination);
+void SynthGuiInterface::disconnectModulation(std::string source, std::string destination) {
+    synth_->disconnectModulation(source, destination);
     notifyModulationsChanged();
 }
 
-void SynthGuiInterface::disconnectStateModulation (std::string source, std::string destination)
-{
-    synth_->disconnectStateModulation (source, destination);
+void SynthGuiInterface::disconnectStateModulation(std::string source, std::string destination) {
+    synth_->disconnectStateModulation(source, destination);
     notifyModulationsChanged();
 }
 
-void SynthGuiInterface::disconnectModulation (bitklavier::ModulationConnection* connection)
-{
+void SynthGuiInterface::disconnectModulation(bitklavier::ModulationConnection *connection) {
     // synth_->disconnectModulation(connection);
     notifyModulationsChanged();
 }
 
-void SynthGuiInterface::disconnectModulation (bitklavier::StateConnection* connection)
-{
+void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection *connection) {
     // synth_->disconnectModulation(connection);
     notifyModulationsChanged();
 }
 
-bool SynthGuiInterface::loadFromFile (juce::File preset, std::string& error)
-{
-    return getSynth()->loadFromFile (preset, error);
+bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
+    return getSynth()->loadFromFile(preset, error);
     //sampleLoadManager->loadSamples()
 }
 
-juce::UndoManager* SynthGuiInterface::getUndoManager()
-{
+juce::UndoManager *SynthGuiInterface::getUndoManager() {
     return &getSynth()->getUndoManager();
 }
-void SynthGuiInterface::tryEnqueueProcessorInitQueue (juce::FixedSizeFunction<64, void()> callback)
-{
-    if (loading)
-    {
+void SynthGuiInterface::tryEnqueueProcessorInitQueue(juce::FixedSizeFunction<64, void()> callback) {
+    if (loading) {
         callback();
     }
-    else
-    {
-        synth_->processorInitQueue.try_enqueue (std::move (callback));
+    else {
+        synth_->processorInitQueue.try_enqueue(std::move(callback));
     }
 }
 
-void SynthGuiInterface::setFocus()
-{
+void SynthGuiInterface::setFocus() {
     if (gui_ == nullptr)
         return;
 
     gui_->setFocus();
 }
 
-void SynthGuiInterface::notifyChange()
-{
+void SynthGuiInterface::notifyChange() {
     if (gui_ == nullptr)
         return;
 
     gui_->notifyChange();
 }
 
-void SynthGuiInterface::notifyFresh()
-{
+void SynthGuiInterface::notifyFresh() {
     if (gui_ == nullptr)
         return;
 
@@ -458,12 +437,13 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
 {
     PopupItems popup;
 
-    popup.addItem (bitklavier::BKPreparationType::PreparationTypeDirect, "Direct");
-    popup.addItem (bitklavier::BKPreparationType::PreparationTypeKeymap, "Keymap");
-    popup.addItem (bitklavier::BKPreparationType::PreparationTypeTuning, "Tuning");
-    popup.addItem (bitklavier::BKPreparationType::PreparationTypeModulation, "Modulation");
-    popup.addItem (bitklavier::BKPreparationType::PreparationTypeMidiFilter, "MidiFilter");
-    popup.addItem (bitklavier::BKPreparationType::PreparationTypePianoMap, "PianoSwitch");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeBlendronic,"Blendronic");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiFilter,"MidiFilter");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypePianoMap,"PianoSwitch");
 
     auto pluginDescriptions = userPreferences->userPreferences->knownPluginList.getTypes();
 

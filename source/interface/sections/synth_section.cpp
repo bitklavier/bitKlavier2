@@ -543,6 +543,7 @@ void SynthSection::addStateModulatedComponent(StateModulatedComponent *component
         addChildComponent(component);
     addOpenGlComponent(component->getImageComponent());
 }
+
 void SynthSection::addSlider(SynthSlider *slider, bool show, bool listen) {
     slider->setComponentID(this->getComponentID().toStdString() + "_" + slider->getComponentID().toStdString());
     slider_lookup_[slider->getComponentID().toStdString()] = slider;
@@ -566,7 +567,6 @@ void SynthSection::addModulationButton(std::shared_ptr<ModulationButton> button,
     if (show)
         addOpenGlComponent(std::static_pointer_cast<OpenGlImageComponent>(button));
 }
-
 
 void SynthSection::addSubSection(SynthSection *sub_section, bool show) {
     sub_section->setParent(this);

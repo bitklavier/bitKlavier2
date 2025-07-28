@@ -76,6 +76,1235 @@ juce::Array<float> BKstringToFloatArray(juce::String s)
     return arr;
 }
 
+juce::String arrayActiveFloatArrayToString(juce::Array<juce::Array<float>> afarr, juce::Array<bool> act)
+{
+    juce::String s = "";
+
+    int boolCtr = 0;
+
+    for (auto arr : afarr)
+    {
+        if (arr.size() > 1)
+        {
+            s += "[";
+            for (auto f : arr)
+            {
+                s += juce::String(f) + " ";
+            }
+            s += "] ";
+        }
+        else
+        {
+            if (act[boolCtr]) {
+                s += juce::String(arr[0]) + " ";
+            }
+            else
+            {
+                s +=  "/ ";
+            }
+        }
+
+        boolCtr++;
+    }
+    return s;
+}
+
+juce::Array<float> stringToFloatArray(juce::String s)
+{
+    juce::Array<float> arr = juce::Array<float>();
+
+    juce::String temp = "";
+    bool inNumber = false;
+
+    juce::String::CharPointerType c = s.getCharPointer();
+
+    juce::juce_wchar prd = '.';
+    juce::juce_wchar dash = '-';
+    juce::juce_wchar slash = '/'; // blank: put a zero in
+
+    int prdCnt = 0;
+
+    // DEBUG
+    for (int i = 0; i < (s.length()+1); i++)
+    {
+        juce::juce_wchar c1 = c.getAndAdvance();
+
+        bool isPrd = !juce::CharacterFunctions::compare(c1, prd);
+        bool isDash = !juce::CharacterFunctions::compare(c1, dash);
+        bool isSlash = !juce::CharacterFunctions::compare(c1, slash);
+
+        if (isPrd) prdCnt += 1;
+
+        bool isNumChar = juce::CharacterFunctions::isDigit(c1) || isPrd || isDash;
+
+        if (!isNumChar)
+        {
+            if (inNumber)
+            {
+                arr.add(temp.getFloatValue());
+                temp = "";
+            }
+
+            // slash indicates a zero slot
+            if (isSlash) {
+                arr.add(0.);
+                temp = "";
+            }
+
+            inNumber = false;
+            continue;
+        }
+        else
+        {
+            inNumber = true;
+
+            temp += c1;
+        }
+    }
+
+    return arr;
+}
+
+juce::Array<juce::Array<float>> stringToArrayFloatArray(juce::String s)
+{
+    juce::Array<juce::Array<float>> afarr;
+
+    juce::String rest = s;
+
+    // "4"
+    while (rest.length())
+    {
+        juce::String sub = rest.upToFirstOccurrenceOf("[", false, true);
+
+        juce::Array<float> ind = stringToFloatArray(sub);
+
+        for (auto f : ind)
+        {
+            juce::Array<float> arr; arr.add(f);
+            afarr.add(arr);
+        }
+
+        if (sub == rest) break; // no [ in s
+
+        rest = rest.substring(sub.length()+1);
+
+        sub = rest.upToFirstOccurrenceOf("]", false, true);
+
+        if (sub != rest)
+        {
+            juce::Array<float> group = stringToFloatArray(sub);
+
+            afarr.add(group);
+        }
+
+        rest = rest.substring(sub.length()+1);
+    }
+
+    return afarr;
+}
+
+// reads through string: single whitespaces = true, slashes = false
+// assume whitespaces follow values that we want, so all single whitespaces
+// set to true, and otherwise set slashes to false
+// need to ignore []
+juce::Array<bool> slashToFalse(juce::String s)
+{
+    juce::Array<bool> arr = juce::Array<bool>();
+    s.append(" ", 1); // to get the last value
+
+    juce::String::CharPointerType c = s.getCharPointer();
+    juce::juce_wchar slash = '/'; // blank: put a zero in
+    juce::juce_wchar leftbracket = '[';
+    juce::juce_wchar rightbracket = ']';
+
+    bool precedingIsSpace = true;
+    bool precedingIsSlash = false;
+    bool inBracket = false;
+
+    for (int i = 0; i < (s.length() + 1); i++)
+    {
+        juce::juce_wchar c1 = c.getAndAdvance();
+
+        if (!juce::CharacterFunctions::compare(c1, leftbracket))
+            inBracket = true;
+
+        if (!inBracket) {
+            if (!juce::CharacterFunctions::compare(c1, slash)) {
+                arr.add(false);
+                precedingIsSlash = true;
+            }
+            else if(juce::CharacterFunctions::isWhitespace(c1)) {
+                if (!precedingIsSlash && !precedingIsSpace) arr.add(true);
+                precedingIsSpace = true;
+            }
+            else {
+                precedingIsSpace = false;
+                precedingIsSlash = false;
+            }
+        }
+        else if (!juce::CharacterFunctions::compare(c1, rightbracket))
+        {
+            inBracket = false;
+            precedingIsSpace = false;
+            precedingIsSlash = false;
+        }
+    }
+
+    return arr;
+}
+
+// ******************************************************************************************************************** //
+// **************************************************  BKSubSlider **************************************************** //
+// ******************************************************************************************************************** //
+
+//used in BKMultSlider
+
+BKSubSlider::BKSubSlider (SliderStyle sstyle, double min, double max, double def, double increment, int width, int height):
+                                                                                                                             sliderMin(min),
+                                                                                                                             sliderMax(max),
+                                                                                                                             sliderDefault(def),
+                                                                                                                             sliderIncrement(increment),
+                                                                                                                             sliderWidth(width),
+                                                                                                                             sliderHeight(height)
+{
+
+    setSliderStyle(sstyle);
+    active = true;
+
+    if(sstyle == LinearVertical || sstyle == LinearBarVertical) sliderIsVertical = true;
+    else sliderIsVertical = false;
+
+    if(sstyle == LinearBarVertical || sstyle == LinearBar) sliderIsBar = true;
+    else sliderIsBar = false;
+
+    if(!sliderIsBar)
+    {
+        if(sliderIsVertical) setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, false, 50, 20);
+        else setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxLeft, false, 50, 20);
+    }
+    else
+    {
+        if(sliderIsVertical) setTextBoxStyle (Slider::NoTextBox, false, 0, 0);
+    }
+
+    setRange(sliderMin, sliderMax, sliderIncrement);
+    setValue(sliderDefault, juce::dontSendNotification);
+    setSkewFromMidpoint(true);
+}
+
+BKSubSlider::~BKSubSlider()
+{
+
+}
+
+void BKSubSlider::setMinMaxDefaultInc(std::vector<float> newvals)
+{
+    sliderMin = newvals[0];
+    sliderMax = newvals[1];
+    sliderDefault = newvals[2];
+    sliderIncrement = newvals[3];
+    setRange(sliderMin, sliderMax, sliderIncrement);
+    if(skewFromMidpoint) setSkewFactorFromMidPoint(sliderDefault);
+    else setSkewFactor (1., false);
+    setValue(sliderDefault, juce::dontSendNotification);
+}
+
+void BKSubSlider::setSkewFromMidpoint(bool sfm)
+{
+    skewFromMidpoint = sfm;
+
+    if(skewFromMidpoint) setSkewFactorFromMidPoint(sliderDefault);
+    else setSkewFactor (1., false);
+}
+
+double BKSubSlider::getValueFromText(const juce::String & text )
+{
+    double newval = text.getDoubleValue();
+
+    if(newval > getMaximum()) {
+        sliderMax = newval;
+        setRange(getMinimum(), newval, sliderIncrement);
+    }
+
+    if(newval < getMinimum()) {
+        sliderMin = newval;
+        setRange(newval, getMaximum(), sliderIncrement);
+    }
+
+    return newval;
+}
+
+
+
+// ******************************************************************************************************************** //
+// **************************************************  BKMultiSlider ************************************************** //
+// ******************************************************************************************************************** //
+
+BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulatedComponent(stateDefault)
+{
+    // initialize stuff
+    passiveSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colour::greyLevel (0.8f).contrasting().withAlpha (0.13f));
+    highlightedSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::red.withSaturation(1.));
+    activeSliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.75));
+    displaySliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::red.withMultipliedAlpha(0.5));
+    lastHighlightedSlider = 0;
+
+    sliderMin = sliderMinDefault = -1.;
+    sliderMax = sliderMaxDefault = 1.;
+    sliderIncrement = 0.01;
+    sliderDefault = 0.;
+    numDefaultSliders = 12;
+    allowSubSliders = false;
+    subSliderName = "add subslider";
+    sliderWidth = 20;
+    sliderHeight = 60;
+    displaySliderWidth = 80;
+    clickedHeight = 0.;
+    subsliderStyle = juce::Slider::LinearBarVertical;
+
+    // the bigInvisibleSlider sits on top of the individual sliders
+    // it's used to set the values of the slider that the mouse is nearest
+    bigInvisibleSlider = std::make_unique<BKSubSlider>(juce::Slider::LinearBarVertical,
+        sliderMin,
+        sliderMax,
+        sliderDefault,
+        sliderIncrement,
+        20,
+        sliderHeight);
+
+    // this displays the current value of whatever slider the mouse is nearest
+    // is placed to the left of the array of sliders
+    displaySlider = std::make_unique<BKSubSlider>(juce::Slider::LinearBarVertical,
+        sliderMin,
+        sliderMax,
+        sliderDefault,
+        sliderIncrement,
+        displaySliderWidth,
+        sliderHeight);
+
+    bigInvisibleSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, 0,0);
+    bigInvisibleSlider->setAlpha(0.0);
+    bigInvisibleSlider->addMouseListener(this, true);
+    bigInvisibleSlider->setName("BIG");
+    bigInvisibleSlider->addListener(this);
+    bigInvisibleSlider->setLookAndFeel(&activeSliderLookAndFeel);
+    addAndMakeVisible(*bigInvisibleSlider);
+
+    displaySlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 0,0);
+    displaySlider->addMouseListener(this, true);
+    displaySlider->setName("DISPLAY");
+    displaySlider->addListener(this);
+    displaySlider->setInterceptsMouseClicks(false, false);
+    displaySlider->setLookAndFeel(&displaySliderLookAndFeel);
+    addAndMakeVisible(*displaySlider);
+
+    showName.setInterceptsMouseClicks(false, true);
+    addAndMakeVisible(showName);
+
+    // for editing the slider values by text
+    editValsTextField = std::make_unique<juce::TextEditor>();
+    editValsTextField->setMultiLine(true);
+    editValsTextField->setName("PARAMTXTEDIT");
+    editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    editValsTextField->addListener(this);
+    addAndMakeVisible(*editValsTextField);
+
+    // for rotating the slider values
+    rotateButton = std::make_unique<juce::ImageButton>("ROTATE");
+    rotateButton->setImages(false, true, true,
+        juce::ImageCache::getFromMemory(BinaryData::rotate_arrow_png, BinaryData::rotate_arrow_pngSize), 0.8f, juce::Colours::transparentBlack,
+        juce::Image(), 1.0f, juce::Colours::transparentBlack,
+        juce::Image(), 0.6, juce::Colours::transparentBlack);
+    rotateButton->setVisible(true);
+    rotateButton->setTooltip("Rotate values");
+    rotateButton->addListener(this);
+    addAndMakeVisible(*rotateButton);
+
+    //create the default sliders, with one active
+    initializeSliderVals(numDefaultSliders);
+
+    // draw them! ready to go....
+    drawSliders(juce::dontSendNotification);
+
+}
+
+BKMultiSlider::~BKMultiSlider() {}
+
+// initialize the slider; it should have no less than numDefaultSliders, all set to sliderDefault value
+void BKMultiSlider::initializeSliderVals(int howmany)
+{
+    if (howmany < numDefaultSliders) howmany = numDefaultSliders;
+
+    // slider values
+    allSliderVals.clear();
+    allSliderVals.ensureStorageAllocated(howmany);
+    for (int i = 0; i < howmany; i++)
+        allSliderVals.insert(i, {sliderDefault});
+
+    // slider states (whether they are active or not (passive))
+    whichSlidersActive.clearQuick();
+    whichSlidersActive.ensureStorageAllocated(howmany);
+    whichSlidersActive.set(0, true);
+    for (int i = 1; i < howmany; i++)
+        whichSlidersActive.set(i, false);
+
+}
+
+
+void BKMultiSlider::updateSliderVal(int which, int whichSub, float val)
+{
+    if (which < allSliderVals.size() && which >= 0)
+    {
+        juce::Array<float> stemp = allSliderVals.getUnchecked(which);
+        stemp.set(whichSub, val);
+        allSliderVals.set(which, stemp);
+        whichSlidersActive.set(which, true);
+    }
+}
+
+
+void BKMultiSlider::printSliderVals()
+{
+    for (int i = 0; i < allSliderVals.size(); i++)
+    {
+        for (int j = 0; j < allSliderVals[i].size(); j++)
+        {
+            DBG("slider # " + juce::String(i) + " subslider # " + juce::String(j) +  " = " + juce::String(allSliderVals[i][j]) + " isActive = " + juce::String((int)whichSlidersActive[i]));
+        }
+    }
+}
+
+
+inline void BKMultiSlider::dismissTextEditor(bool setValue)
+{
+    if (setValue)   textEditorReturnKeyPressed(*editValsTextField);
+    else            textEditorEscapeKeyPressed(*editValsTextField);
+}
+
+
+void BKMultiSlider::drawSliders(juce::NotificationType newnotify)
+{
+
+    sliders.clearQuick(true);
+
+    // rebuild display slider array
+    for(int i = 0; i < allSliderVals.size(); i++)
+    {
+        if(i >= sliders.size()) addSlider(-1, false, newnotify);
+
+        for(int j = 0; j < allSliderVals[i].size(); j++)
+        {
+
+            if(j >= sliders[i]->size()) addSubSlider(i, false, newnotify);
+
+            BKSubSlider* refSlider = sliders[i]->operator[](j);
+            if(refSlider != nullptr)
+            {
+                if(refSlider->getMaximum() < allSliderVals[i][j]) refSlider->setRange(sliderMin, allSliderVals[i][j], sliderIncrement);
+                if(refSlider->getMinimum() > allSliderVals[i][j]) refSlider->setRange(allSliderVals[i][j], sliderMax, sliderIncrement);
+
+                if (whichSlidersActive[i]) {
+                    refSlider->setValue(allSliderVals[i][j], newnotify);
+                    refSlider->setLookAndFeel(&activeSliderLookAndFeel);
+                }
+                else {
+                    refSlider->setLookAndFeel(&passiveSliderLookAndFeel);
+                }
+
+                refSlider->setSkewFromMidpoint(skewFromMidpoint);
+
+            }
+        }
+    }
+
+    resetRanges();
+    resized();
+    displaySlider->setValue(allSliderVals[0][0]);
+}
+
+
+void  BKMultiSlider::setTo(juce::Array<juce::Array<float>> newvals, juce::Array<bool> newactives, juce::NotificationType newnotify)
+{
+    initializeSliderVals(newvals.size());
+
+    for (int i = 0; i < newvals.size() && i < newactives.size(); i++)
+    {
+        allSliderVals.set(i, newvals[i]);
+
+        if(newactives[i]) whichSlidersActive.set(i, true);
+        else whichSlidersActive.set(i, false);
+    }
+
+    drawSliders(newnotify);
+}
+
+// when the client sends an array of only the active slider values, this will construct the complete array
+// of slider values, including inactive sliders, and then call setTo
+void BKMultiSlider::setToOnlyActive(juce::Array<juce::Array<float>> newActiveVals, juce::Array<bool> newactives, juce::NotificationType newnotify)
+{
+    juce::Array<juce::Array<float>> allvals;
+    int inc = 0;
+
+    for (int i = 0; i < newactives.size() && inc < newActiveVals.size(); i++)
+    {
+        if (newactives[i]) allvals.set(i, newActiveVals[inc++]);
+        else allvals.set(i, {0});
+    }
+
+    setTo(allvals, newactives, newnotify);
+}
+
+
+void BKMultiSlider::setToOnlyActive(juce::Array<float> newActiveVals, juce::Array<bool> newactives, juce::NotificationType newnotify)
+{
+    juce::Array<juce::Array<float>> allvals;
+    for (int i = 0; i < newActiveVals.size(); i++)
+    {
+        allvals.set(i, {newActiveVals.getUnchecked(i)});
+    }
+
+    setToOnlyActive(allvals, newactives, newnotify);
+}
+
+void BKMultiSlider::setMinMaxDefaultInc(std::vector<float> newvals)
+{
+    sliderMin = sliderMinDefault = newvals[0];
+    sliderMax = sliderMaxDefault = newvals[1];
+    sliderDefault = newvals[2];
+    sliderIncrement = newvals[3];
+
+    for(int i = 0; i < sliders.size(); i++)
+    {
+        for(int j = 0; j < sliders[i]->size(); j++)
+        {
+            BKSubSlider* refSlider = sliders[i]->operator[](j);
+            if(refSlider != nullptr)
+            {
+                refSlider->setMinMaxDefaultInc(newvals);
+                refSlider->setSkewFromMidpoint(skewFromMidpoint);
+            }
+        }
+    }
+
+    displaySlider->setMinMaxDefaultInc(newvals);
+    bigInvisibleSlider->setMinMaxDefaultInc(newvals);
+    displaySlider->setSkewFromMidpoint(skewFromMidpoint);
+    bigInvisibleSlider->setSkewFromMidpoint(skewFromMidpoint);
+}
+
+void BKMultiSlider::setSkewFromMidpoint(bool sfm)
+{
+    skewFromMidpoint = sfm;
+
+    for(int i = 0; i < sliders.size(); i++)
+    {
+        for(int j = 0; j < sliders[i]->size(); j++)
+        {
+            BKSubSlider* refSlider = sliders[i]->operator[](j);
+            if(refSlider != nullptr)
+            {
+                refSlider->setSkewFromMidpoint(skewFromMidpoint);
+            }
+        }
+    }
+
+    displaySlider->setSkewFromMidpoint(skewFromMidpoint);
+    bigInvisibleSlider->setSkewFromMidpoint(skewFromMidpoint);
+}
+
+
+void BKMultiSlider::addSlider(int where, bool active, juce::NotificationType newnotify)
+{
+    BKSubSlider* newslider;
+
+    newslider      = new BKSubSlider(subsliderStyle,
+        sliderMin,
+        sliderMax,
+        sliderDefault,
+        sliderIncrement,
+        sliderWidth,
+        sliderHeight);
+
+    newslider->setRange(sliderMin, sliderMax, sliderIncrement);
+    newslider->setValue(sliderDefault, juce::dontSendNotification);
+    newslider->addListener(this);
+
+    if(where < 0)
+    {
+        sliders.add(new juce::OwnedArray<BKSubSlider>);
+        sliders.getLast()->add(newslider);
+    }
+    else
+    {
+        sliders.insert(where, new juce::OwnedArray<BKSubSlider>);
+        sliders[where]->add(newslider);
+    }
+
+    addAndMakeVisible(newslider);
+
+    if(active)
+        newslider->setLookAndFeel(&activeSliderLookAndFeel);
+    else
+        newslider->setLookAndFeel(&passiveSliderLookAndFeel);
+
+    if(newnotify == juce::sendNotification)
+    {
+        listeners.call(&BKMultiSlider::Listener::multiSliderAllValuesChanged,
+            getName(),
+            getAllActiveValues(),
+            whichSlidersActive);
+    }
+
+}
+
+void  BKMultiSlider::addActiveSubSlider(int which, juce::NotificationType newnotify)
+{
+
+    if (which < allSliderVals.size() && which >= 0)
+    {
+        // get current array of values for this slider
+        juce::Array<float> stemp = allSliderVals.getUnchecked(which);
+
+        // find slot for next one
+        int whichSub = stemp.size();
+
+        // calculate the value to set it at, based on where clicked
+        float newval = bigInvisibleSlider->proportionOfLengthToValue( 1. - (clickedHeight / this->getHeight()));
+
+        // update the state arrays
+        stemp.set(whichSub, newval);
+        allSliderVals.set(which, stemp);
+        whichSlidersActive.set(which, true);
+
+        // make the subSlider
+        addSubSlider(which, true, newnotify);
+    }
+
+}
+
+void BKMultiSlider::addSubSlider(int where, bool active, juce::NotificationType newnotify)
+{
+    BKSubSlider* newslider;
+
+    newslider = new BKSubSlider(subsliderStyle,
+        sliderMin,
+        sliderMax,
+        sliderDefault,
+        sliderIncrement,
+        sliderWidth,
+        sliderHeight);
+
+    newslider->setRange(sliderMin, sliderMax, sliderIncrement);
+    newslider->setValue(newslider->proportionOfLengthToValue( 1. - (clickedHeight / this->getHeight())), juce::dontSendNotification);
+    newslider->addListener(this);
+
+    juce::OwnedArray<BKSubSlider> *newsliderArray = sliders[where];
+    newsliderArray->add(newslider);
+    sliders.set(where, newsliderArray);
+
+    addAndMakeVisible(newslider);
+
+    if(active)
+        newslider->setLookAndFeel(&activeSliderLookAndFeel);
+    else
+        newslider->setLookAndFeel(&passiveSliderLookAndFeel);
+
+    if(newnotify == juce::sendNotification)
+    {
+        listeners.call(&BKMultiSlider::Listener::multiSliderAllValuesChanged,
+            getName(),
+            getAllActiveValues(),
+            whichSlidersActive);
+    }
+}
+
+void BKMultiSlider::deactivateSlider(int where, juce::NotificationType notify)
+{
+    if (where > 0 && where < whichSlidersActive.size())
+    {
+        whichSlidersActive.set(where, false);
+        drawSliders(notify);
+    }
+}
+
+
+void BKMultiSlider::deactivateAll(juce::NotificationType notify)
+{
+    for(int i = 0; i < sliders.size(); i++ )
+    {
+        deactivateSlider(i, notify);
+    }
+}
+
+
+void BKMultiSlider::deactivateAllAfter(int where, juce::NotificationType notify)
+{
+    for(int i = where+1; i < sliders.size(); i++ )
+    {
+        deactivateSlider(i, notify);
+    }
+}
+
+
+void BKMultiSlider::deactivateAllBefore(int where, juce::NotificationType notify)
+{
+    if (where > sliders.size()) where = sliders.size();
+    for(int i = 0; i < where; i++ )
+    {
+        deactivateSlider(i, notify);
+    }
+}
+
+
+// mouseDrag: updates the values of all sliders that the user drags over
+void BKMultiSlider::mouseDrag(const juce::MouseEvent& e)
+{
+    if(e.eventComponent == bigInvisibleSlider.get())
+    {
+        int which = whichSlider(e);
+        if(e.mods.isShiftDown()) updateSliderVal(which, currentSubSlider, round(currentInvisibleSliderValue));
+        else updateSliderVal(which, currentSubSlider, currentInvisibleSliderValue);
+
+        if(which >= 0) {
+
+            BKSubSlider* currentSlider = sliders[which]->operator[](currentSubSlider);
+            if (currentSlider != nullptr)
+            {
+                if(e.mods.isShiftDown())
+                {
+                    currentSlider->setValue(round(currentInvisibleSliderValue));
+                    displaySlider->setValue(round(currentInvisibleSliderValue));
+                }
+                else
+                {
+                    currentSlider->setValue(currentInvisibleSliderValue);
+                    displaySlider->setValue(currentInvisibleSliderValue);
+                }
+
+                if(whichSlidersActive[which]){
+                    currentSlider->setLookAndFeel(&activeSliderLookAndFeel);
+                    listeners.call(&BKMultiSlider::Listener::multiSliderAllValuesChanged,
+                        getName(),
+                        getAllActiveValues(),
+                        whichSlidersActive);
+                }
+                else
+                {
+                    listeners.call(&BKMultiSlider::Listener::multiSliderValueChanged,
+                        getName(),
+                        whichActiveSlider(which),
+                        getOneSliderBank(which));
+                }
+            }
+        }
+    }
+}
+
+
+// mouseMove: updates the displaySlider to show the value of the slider that the pointer is nearest
+void BKMultiSlider::mouseMove(const juce::MouseEvent& e)
+{
+    if(e.eventComponent == bigInvisibleSlider.get())
+    {
+        int which = whichSlider(e);
+        int whichSub = whichSubSlider(which, e);
+
+        if (which < allSliderVals.size() && which >= 0)
+        {
+            if (whichSub < allSliderVals[which].size() && whichSub >= 0)
+            {
+                if (whichSlidersActive[which]) displaySlider->setValue(allSliderVals[which][whichSub]);
+            }
+        }
+    }
+}
+
+
+// mouseDoubleClick: opens text window for editing slider values directly
+void BKMultiSlider::mouseDoubleClick (const juce::MouseEvent &e)
+{
+    int which = whichSlider(e);
+    int whichSave = which;
+
+    //account for subsliders
+    which += whichSubSlider(which, e);
+    for (int i=0; i<whichSave; i++)
+    {
+        if(sliders[i]->size() > 0)
+        {
+            which += (sliders[i]->size() - 1);
+        }
+    }
+
+    //highlight number for current slider
+    juce::StringArray tokens;
+    tokens.addTokens(arrayActiveFloatArrayToString(allSliderVals, whichSlidersActive), false); //arrayFloatArrayToString
+
+    int startPoint = 0;
+    int endPoint;
+
+    //need to skip brackets
+    int numBrackets = 0;
+    for(int i=0; i<=which + numBrackets; i++)
+    {
+        if(tokens[i] == "[" || tokens[i] == "]") numBrackets++;
+    }
+
+    for(int i=0; i < which + numBrackets; i++) {
+        if(tokens[i] == "[") startPoint += 1;
+        else if(tokens[i] == "]") startPoint += 2;
+        else startPoint += tokens[i].length() + 1;
+    }
+    endPoint = startPoint + tokens[which + numBrackets].length();
+
+    editValsTextField->setVisible(true);
+    editValsTextField->toFront(true);
+    editValsTextField->setText(arrayActiveFloatArrayToString(allSliderVals, whichSlidersActive));
+    editValsTextField->setWantsKeyboardFocus(true);
+    editValsTextField->grabKeyboardFocus();
+
+    juce::Range<int> highlightRange(startPoint, endPoint);
+    editValsTextField->setHighlightedRegion(highlightRange);
+
+    focusLostByEscapeKey = false;
+}
+
+
+// mouseDown: determines which subslider the mouseDown is nearest
+//            checks to see if ctrl is down, for contextual menu
+void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
+{
+    if (event.mouseWasClicked())
+    {
+        currentSubSlider = whichSubSlider(whichSlider(event));
+        clickedHeight = event.y;
+
+        if(event.mods.isCtrlDown())
+        {
+            showModifyPopupMenu(whichSlider(event));
+        }
+    }
+}
+
+
+// mouseUp: on shift-click, slider will be set to default value
+void BKMultiSlider::mouseUp (const juce::MouseEvent &event)
+{
+    if(event.mouseWasClicked())
+    {
+        if(event.mods.isShiftDown())
+        {
+            int which = whichSlider(event);
+
+            if(which >= 0) {
+
+                if (sliders[which]->size() == 0) addSubSlider(which, false, juce::sendNotification);
+
+                updateSliderVal(which, currentSubSlider, sliderDefault);
+
+                BKSubSlider* currentSlider = sliders[which]->operator[](0);
+                if (currentSlider != nullptr)
+                {
+                    currentSlider->setValue(sliderDefault); //again, need to identify which subslider to get
+                }
+
+                displaySlider->setValue(sliderDefault);
+
+                listeners.call(&BKMultiSlider::Listener::multiSliderValueChanged,
+                    getName(),
+                    whichActiveSlider(which),
+                    getOneSliderBank(which));
+            }
+        }
+    }
+}
+
+
+int BKMultiSlider::whichSlider (const juce::MouseEvent &e)
+{
+    int x = e.x;
+
+    BKSubSlider* refSlider = sliders[0]->operator[](0);
+    if (refSlider != nullptr)
+    {
+        int which = (x / refSlider->getWidth());
+        if (which >= 0 && which < sliders.size()) return which;
+    }
+
+    return -1;
+}
+
+
+int BKMultiSlider::whichSubSlider (int which)
+{
+    if(which < 0) return 0;
+
+    int whichSub = 0;
+    float refDistance;
+
+    BKSubSlider* refSlider = sliders[which]->operator[](0);
+    if(refSlider != nullptr)
+    {
+        refDistance = fabs(refSlider->getValue() - currentInvisibleSliderValue);
+    }
+
+    for(int i = 0; i < sliders[which]->size(); i++)
+    {
+        BKSubSlider* currentSlider = sliders[which]->operator[](i);
+        if(currentSlider != nullptr) {
+            float tempDistance = fabs(currentSlider->getValue() - currentInvisibleSliderValue);
+            if(tempDistance < refDistance)
+            {
+                whichSub = i;
+                refDistance = tempDistance;
+            }
+        }
+    }
+
+    return whichSub;
+}
+
+
+int BKMultiSlider::whichSubSlider (int which, const juce::MouseEvent &e)
+{
+    if(which < 0) return 0;
+
+    int whichSub = 0;
+    float refDistance;
+
+    BKSubSlider* refSlider = sliders[which]->operator[](0);
+    if(refSlider != nullptr)
+    {
+        refDistance = fabs(refSlider->getPositionOfValue(refSlider->getValue()) - e.y);
+    }
+
+    for(int i = 0; i < sliders[which]->size(); i++)
+    {
+        BKSubSlider* currentSlider = sliders[which]->operator[](i);
+        if(currentSlider != nullptr) {
+            float tempDistance = fabs(currentSlider->getPositionOfValue(currentSlider->getValue()) - e.y);
+            if(tempDistance < refDistance)
+            {
+                whichSub = i;
+                refDistance = tempDistance;
+            }
+        }
+    }
+
+    return whichSub;
+}
+
+// given a slider location 'which', how many active sliders
+// are there up to and including 'which'
+int BKMultiSlider::whichActiveSlider (int which)
+{
+    int counter = 0;
+    if(which > whichSlidersActive.size()) which = whichSlidersActive.size();
+
+    for(int i = 0; i < which; i++)
+    {
+        if(whichSlidersActive[which]) counter++;
+    }
+
+    return counter;
+}
+
+
+void BKMultiSlider::resetRanges()
+{
+    double sliderMinTemp = sliderMinDefault;
+    double sliderMaxTemp = sliderMaxDefault;
+
+    for (int i = 0; i < sliders.size(); i++)
+    {
+        for (int j = 0; j < sliders[i]->size(); j++)
+        {
+            BKSubSlider* currentSlider = sliders[i]->operator[](j);
+            if (currentSlider != nullptr)
+            {
+                if (currentSlider->getValue() > sliderMaxTemp) sliderMaxTemp = currentSlider->getValue();
+                if (currentSlider->getValue() < sliderMinTemp) sliderMinTemp = currentSlider->getValue();
+            }
+        }
+    }
+
+    if ((sliderMax != sliderMaxTemp) || sliderMin != sliderMinTemp)
+    {
+        sliderMax = sliderMaxTemp;
+        sliderMin = sliderMinTemp;
+
+        for (int i = 0; i < sliders.size(); i++)
+        {
+            for (int j = 0; j < sliders[i]->size(); j++)
+            {
+                BKSubSlider* currentSlider = sliders[i]->operator[](j);
+                if (currentSlider != nullptr)
+                {
+                    currentSlider->setRange(sliderMin, sliderMax, sliderIncrement);
+                }
+            }
+        }
+
+        bigInvisibleSlider->setRange(sliderMin, sliderMax, sliderIncrement);
+        displaySlider->setRange(sliderMin, sliderMax, sliderIncrement);
+    }
+}
+
+
+void BKMultiSlider::resized()
+{
+
+    juce::Rectangle<float> area (getLocalBounds().toFloat());
+    juce::Rectangle<float> bounds = area;
+
+    displaySlider->setBounds(area.removeFromLeft(displaySliderWidth).toNearestInt());
+    editValsTextField->setBounds(area.toNearestInt());
+    editValsTextField->setVisible(false);
+
+    juce::Rectangle<float> nameSlab (area);
+    nameSlab.removeFromTop(gYSpacing / 2.).removeFromRight(gXSpacing);
+    showName.setBounds(nameSlab.toNearestInt());
+    showName.setJustificationType(juce::Justification::topRight);
+
+    bigInvisibleSlider->setBounds(area.toNearestInt());
+
+    sliderWidth = (float)area.getWidth() / sliders.size();
+
+    for (int i = 0; i < sliders.size(); i++)
+    {
+        juce::Rectangle<float> sliderArea (area.removeFromLeft(sliderWidth));
+        for(int j = 0; j < sliders[i]->size(); j++)
+        {
+            BKSubSlider* currentSlider = sliders[i]->operator[](j);
+            if(currentSlider != nullptr)
+            {
+                currentSlider->setBounds(sliderArea.toNearestInt());
+            }
+        }
+    }
+
+    juce::Rectangle<float> rotateButtonBounds (bounds.getBottomLeft(), bounds.getBottomLeft().translated(displaySliderWidth*0.2, -displaySliderWidth*0.2));
+    rotateButton->setBounds(rotateButtonBounds.toNearestInt());
+
+    bigInvisibleSlider->toFront(false);
+}
+
+
+void BKMultiSlider::sliderValueChanged (juce::Slider *slider)
+{
+    if (slider->getName() == "BIG")
+    {
+        currentInvisibleSliderValue = slider->getValue();
+    }
+}
+
+
+void BKMultiSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
+{
+    if(textEditor.getName() == editValsTextField->getName())
+    {
+        editValsTextField->setVisible(false);
+        editValsTextField->toBack();
+
+        juce::String ins = textEditor.getText();
+        setTo(stringToArrayFloatArray(ins), slashToFalse(ins), juce::sendNotification);
+
+        listeners.call(&BKMultiSlider::Listener::multiSliderAllValuesChanged,
+            getName(),
+            getAllActiveValues(),
+            whichSlidersActive);
+    }
+}
+
+
+void BKMultiSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
+{
+    if(textEditor.getName() == editValsTextField->getName())
+    {
+        focusLostByEscapeKey = true;
+        editValsTextField->setVisible(false);
+        editValsTextField->toBack();
+        unfocusAllComponents();
+    }
+}
+
+
+void BKMultiSlider::textEditorTextChanged(juce::TextEditor& tf)
+{
+}
+
+
+void BKMultiSlider::textEditorFocusLost(juce::TextEditor& textEditor)
+{
+    if(textEditor.getName() == editValsTextField->getName())
+    {
+        editValsTextField->setVisible(false);
+        editValsTextField->toBack();
+
+        if(!focusLostByEscapeKey)
+        {
+            juce::String ins = textEditor.getText();
+            setTo(stringToArrayFloatArray(ins), slashToFalse(ins), juce::sendNotification);
+
+            listeners.call(&BKMultiSlider::Listener::multiSliderAllValuesChanged,
+                getName(),
+                getAllActiveValues(),
+                whichSlidersActive);
+        }
+    }
+}
+
+
+void BKMultiSlider::buttonClicked(juce::Button* button)
+{
+    if (button->getName() == "ROTATE")
+    {
+        juce::Array<juce::Array<float>> values = getAllActiveValues();
+        juce::Array<float> swap = values.getLast();
+        values.insert(0, swap);
+        values.removeLast();
+        setToOnlyActive(values, whichSlidersActive, juce::sendNotification);
+    }
+}
+
+
+juce::Array<juce::Array<float>> BKMultiSlider::getAllActiveValues()
+{
+    juce::Array<juce::Array<float>> allvals;
+
+    for (int i = 0; (i < whichSlidersActive.size()) && (i < allSliderVals.size()); i++)
+    {
+        if (whichSlidersActive[i]) allvals.add(allSliderVals.getUnchecked(i));
+    }
+
+    return allvals;
+}
+
+
+juce::Array<float> BKMultiSlider::getOneSliderBank(int which)
+{
+    if (which < allSliderVals.size() && which >= 0)
+    {
+        return allSliderVals[which];
+    }
+
+    return {0};
+}
+
+
+void BKMultiSlider::showModifyPopupMenu(int which)
+{
+    juce::PopupMenu m;
+    m.addItem (1, juce::translate ("deactivate slider"), true, false);
+    m.addItem (2, juce::translate ("deactivate all after this"), true, false);
+    m.addItem (3, juce::translate ("deactivate all before this"), true, false);
+    if(allowSubSliders) m.addItem (4, translate (subSliderName), true, false);
+    m.addSeparator();
+
+    m.showMenuAsync (juce::PopupMenu::Options(),
+        juce::ModalCallbackFunction::forComponent (sliderModifyMenuCallback, this, which));
+}
+
+
+void BKMultiSlider::sliderModifyMenuCallback (const int result, BKMultiSlider* ms, int which)
+{
+    if (ms == nullptr)
+    {
+        juce::PopupMenu::dismissAllActiveMenus();
+        return;
+    }
+
+    switch (result)
+    {
+        case 1: ms->deactivateSlider(which, juce::sendNotification);
+            break;
+
+        case 2: ms->deactivateAllAfter(which, juce::sendNotification);
+            break;
+
+        case 3: ms->deactivateAllBefore(which, juce::sendNotification);
+            break;
+
+        case 4: ms->addActiveSubSlider(which, juce::sendNotification);
+            //ms->addSubSlider(which, true, sendNotification);
+            ms->resized();
+            break;
+
+        default:  break;
+    }
+}
+
+
+// find activeSliderNum, highlight it as current, dehighlight all the others...
+void BKMultiSlider::setCurrentSlider(int activeSliderNum)
+{
+    // dim all inactive sliders
+    for (int i = 1; i < allSliderVals.size(); i++)
+    {
+        for(int j = 0; j < sliders[i]->size(); j++)
+        {
+            if (!whichSlidersActive[i]) sliders[i]->operator[](j)->setLookAndFeel(&passiveSliderLookAndFeel);
+        }
+    }
+
+    if (lastHighlightedSlider < sliders.size())
+    {
+        deHighlight(lastHighlightedSlider);
+    }
+
+    int sliderNum = getActiveSlider(activeSliderNum);
+    highlight(sliderNum);
+    displaySlider->setValue(sliders[sliderNum]->operator[](0)->getValue());
+
+    lastHighlightedSlider = sliderNum;
+}
+
+
+int BKMultiSlider::getActiveSlider(int sliderNum)
+{
+    int sliderCount = 0;
+
+    for (int i = 0; i < whichSlidersActive.size(); i++)
+    {
+        if (whichSlidersActive[i]) {
+            if (sliderCount == sliderNum) return i;
+            sliderCount++;
+        }
+    }
+    return 0;
+}
+
+
+void BKMultiSlider::highlight(int activeSliderNum)
+{
+    //need to count through depth, but for now just the first one...
+    for(int i = 0; i < sliders[activeSliderNum]->size(); i++)
+    {
+        sliders[activeSliderNum]->operator[](i)->setLookAndFeel(&highlightedSliderLookAndFeel);
+    }
+}
+
+
+void BKMultiSlider::deHighlight(int sliderNum)
+{
+    for(int i = 0; i < sliders[sliderNum]->size(); i++)
+    {
+        sliders[sliderNum]->operator[](i)->setLookAndFeel(&activeSliderLookAndFeel);
+    }
+
+}
+
+void BKMultiSlider::deHighlightCurrentSlider()
+{
+    for(int i = 0; i < sliders[lastHighlightedSlider]->size(); i++)
+    {
+        sliders[lastHighlightedSlider]->operator[](i)->setLookAndFeel(&activeSliderLookAndFeel);
+    }
+
+}
+
+
+
 // ******************************************************************************************************************** //
 // *************************************************  BKStackedSlider ************************************************* //
 // ******************************************************************************************************************** //
@@ -87,8 +1316,9 @@ BKStackedSlider::BKStackedSlider(
     double defmin,
     double defmax,
     double def,
-
-    double increment, int numActiveSliders, const juce::ValueTree& stateDefault): StateModulatedComponent(stateDefault),
+    double increment,
+    int numActiveSliders,
+    const juce::ValueTree& stateDefault) : StateModulatedComponent(stateDefault),
            sliderName(sliderName),
            sliderMin(min),
            sliderMax(max),
@@ -212,6 +1442,7 @@ void BKStackedSlider::setTo(juce::Array<float> newvals, juce::NotificationType n
 
     int slidersToActivate = newvals.size();
     if(slidersToActivate > numSliders) slidersToActivate = numSliders;
+    DBG("BKStackedSlider::setTo slidersToActivate = " + juce::String(slidersToActivate));
     if(slidersToActivate <= 0)
     {
         slidersToActivate = 1;
@@ -322,16 +1553,7 @@ void BKStackedSlider::mouseUp(const juce::MouseEvent& e)
 
 void BKStackedSlider::mouseMove(const juce::MouseEvent& e)
 {
-    //topSlider->setValue(topSlider->proportionOfLengthToValue((double)e.x / getWidth()), dontSendNotification);
-//    topSlider->setValue(dataSliders.getUnchecked(whichSlider(e))->getValue());
-//
-//    for(int i=0; i<dataSliders.size(); i++)
-//    {
-//        if(dataSliders.getUnchecked(whichSlider(e)) == dataSliders.getUnchecked(i))
-//            dataSliders.getUnchecked(i)->setTextBoxStyle(juce::Slider::TextBoxLeft, false, 50, 50);
-//        else
-//            dataSliders.getUnchecked(i)->setTextBoxStyle(juce::Slider::NoTextBox, false, 50, 50);
-//    }
+    topSlider->setValue(dataSliders.getUnchecked(whichSlider(e))->getValue());
 }
 
 
@@ -549,6 +1771,8 @@ void BKStackedSlider::resized ()
     area.reduce(4, 0);
 
     topSlider->setBounds(area);
+    topSlider->setValue(dataSliders.getFirst()->getValue(), juce::dontSendNotification);
+
     editValsTextField->setBounds(area);
     editValsTextField->setVisible(false);
 
