@@ -27,10 +27,11 @@ public:
                                                                     _params->paramDefault), // increment
                                                                         params(_params)
     {
-        isModulated_ = true;
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+
+        isModulated_ = true;
         addMyListener(this);
 
         int i = 0;
@@ -170,7 +171,7 @@ public:
 
     /**
      * syncToValueTree() is called in ModulationManager::modulationClicked and
-     * is used to set the mod view of the parameter to the current values in the main view of the parameter
+     * is used to set the mod view of the parameter to the most recent mod values
      */
     void syncToValueTree() override {
         juce::Array<float> vals;
@@ -215,6 +216,7 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+
         isModulation_ = true;
         addMyListener(this);
     }

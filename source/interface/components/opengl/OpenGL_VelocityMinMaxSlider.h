@@ -28,6 +28,9 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
+        isModulated_ = true;
+        addMyListener(this);
+
         /**
          * these SliderAttachments contain the listeners for each slider, and so will be notified when the slider is manipulated
          * the attachmentVec is just a place to put them, since some objects have might have many or variable number of them.
@@ -46,6 +49,9 @@ public:
                                                                         listeners,
                                                                         maxSlider, nullptr);
         attachmentVec.emplace_back(std::move(maxsliderptr));
+
+        minValueTF.setText(juce::String(minSlider.getValue()),juce::dontSendNotification);
+        maxValueTF.setText(juce::String(maxSlider.getValue()),juce::dontSendNotification);
 
         /**
          * this list of callbacks is handled by the chowdsp system.
@@ -140,27 +146,38 @@ public:
 
     void BKRangeSliderValueChanged(juce::String name, double min, double max) override {
         if (isModulation_) {
+            DBG("updating modulationState in BKRangeSliderValueChanged");
             modulationState.setProperty("velocitymin", min, nullptr);
             modulationState.setProperty("velocitymax", max, nullptr);
         } else if (isModulated_) {
+            DBG("updating defaultState in BKRangeSliderValueChanged");
             defaultState.setProperty("velocitymin", min, nullptr);
             defaultState.setProperty("velocitymax", max, nullptr);
         }
 
     }
 
-    void mouseExit(const juce::MouseEvent &e) override {
+    void mouseExit(const juce::MouseEvent &e) override
+    {
         //call hoverEnded for listeners like the modulation manager
         for (auto *listener: listeners_)
             listener->hoverEnded(this);
         hovering_ = false;
     }
 
-    void syncToValueTree() override {
+    /**
+     * syncToValueTree() is called in ModulationManager::modulationClicked and
+     * is used to set the mod view of the parameter to the most recent mod values
+     *
+     * todo: have this update to the current actual slider values if mod values haven't been created yet
+     *          tried, but ran into some difficulties, leaving for now
+     */
+    void syncToValueTree() override
+    {
         auto minval = modulationState.getProperty("velocitymin");
-        auto maxval = modulationState.getProperty("velocitymax");
-
         setMinValue(minval, juce::sendNotification);
+
+        auto maxval = modulationState.getProperty("velocitymax");
         setMaxValue(maxval, juce::sendNotification);
     }
 
@@ -179,6 +196,7 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+
         isModulation_ = true;
         addMyListener(this);
     }

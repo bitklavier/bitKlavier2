@@ -97,6 +97,9 @@ struct TransposeParams : chowdsp::ParamHolder
      *
      * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
      *      so these are ones like Transpose, where they all change at once
+     *
+     * in this specific case, if there is a changeState in stateChanges (which will only happen when
+     * a mod is triggered) we read through the valueTree and update all the modded transpositions (t0, t1, etc...)
      */
     void processStateChanges() override
     {
