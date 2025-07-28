@@ -23,7 +23,6 @@
 #include "synth_slider.h"
 #include "text_look_and_feel.h"
 #include "ModulationConnection.h"
-#include "../../../../../../../Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/AppKit.framework/Versions/C/Headers/NSTextSelectionNavigation.h"
 
 ModulationMeter::ModulationMeter(
                                  const SynthSlider* slider, OpenGlMultiQuad* quads, int index) :
