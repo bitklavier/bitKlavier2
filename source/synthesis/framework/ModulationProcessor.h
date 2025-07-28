@@ -7,6 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"
+class ModulationList;
 class ModulatorBase;
 
 namespace bitklavier {
@@ -17,18 +18,9 @@ class StateConnection;
     };
     class ModulationProcessor : public juce::AudioProcessor {
     public:
-        ModulationProcessor(const juce::ValueTree& vt,SynthBase& parent) :
-        juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
-        .withOutput("disabled",juce::AudioChannelSet::mono(),false)
-        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-        .withInput("Reset",juce::AudioChannelSet::discreteChannels(1),true)), state(vt)
-        {
-            createUuidProperty(state);
-        }
-        static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v) {
-            return std::make_unique<ModulationProcessor>(v,parent);
-        }
+        ModulationProcessor(const juce::ValueTree& vt,SynthBase& parent);
+
+        static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v);
         bool acceptsMidi() const override {
             return true;
         }
@@ -133,12 +125,14 @@ int sampleRate_ = 0;
         {
             mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
         }
+        std::unique_ptr<ModulationList >mod_list;
     private :
         //could create new bus may need to happen on audio threafd?
         int createNewModIndex();
         chowdsp::DeferredAction mainThreadAction;
 
     };
+
 
 } // bitklavier
 

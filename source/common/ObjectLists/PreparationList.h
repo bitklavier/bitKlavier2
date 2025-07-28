@@ -210,7 +210,14 @@ public:
                 auto xml = juce::parseXML(data.toString());
                 if (xml != nullptr) {
                     //read the current state of the paramholder
-                    obj->state.copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
+                    auto vt = juce::ValueTree::fromXml(*xml);
+                    for (int i = 0; i < vt.getNumProperties(); ++i)
+                    {
+                        juce::Identifier propName = vt.getPropertyName(i);
+                        juce::var value = vt.getProperty(propName);
+
+                        obj->state.setProperty(propName, value, nullptr); // Overwrite or add
+                    }
                     //update any params that have been modulated to their "default" state
                     //i.e. the state set by moving the knobs in the preparation view
                     //not what they may have been modulated to

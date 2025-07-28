@@ -944,6 +944,7 @@ void 	ModulationManager::componentAdded()
         slider_model_lookup_.clear();
         state_model_lookup_.clear();
         modulation_callout_buttons_.clear();
+        meter_lookup_.clear();
 
 
         //count things up

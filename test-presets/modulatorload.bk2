@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <PREPARATION keyOn="">
+        <PORT nodeID="1493623180" chIdx="4096" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="8" width="100" height="100" x_y="916, 192" uuid="26c388b17e03412d8ac098cdb98825fa"
+                   nodeID="650348721" numIns="1">
+        <PORT nodeID="650348721" chIdx="4096" isIn="1"/>
+        <modulationproc type="state" isState="1" uuid="74889a97564640138e4ae3461575094e"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

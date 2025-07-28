@@ -60,6 +60,7 @@ public:
                 std::remove(listeners_.begin(), listeners_.end(), l),
                 listeners_.end());
     }
+     bool isInit = true;
 private:
     std::vector<Listener*> listeners_;
 

@@ -16,8 +16,8 @@
 // the base class members and private ModulationPreparation member proc with an initialization list.
 ModulationPreparation::ModulationPreparation ( juce::ValueTree v, OpenGlWrapper &open_gl, juce::AudioProcessorGraph::NodeID no,  SynthGuiInterface* interface) :
         PreparationSection(juce::String("Modulation"), v, open_gl,no, *interface->getUndoManager()),
-        undo (*interface->getUndoManager()),
-        mod_list(v,interface->getSynth(),dynamic_cast<bitklavier::ModulationProcessor*>(interface->getSynth()->getNodeForId(no)->getProcessor()))
+        undo (*interface->getUndoManager())
+
 {
 
     item = std::make_unique<ModulationItem> (); // Initializes member variable `item` of PreparationSection class
@@ -37,7 +37,7 @@ std::unique_ptr<SynthSection> ModulationPreparation::getPrepPopup()
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
         if (auto *proc = dynamic_cast<bitklavier::ModulationProcessor*>(getProcessor()))
             return std::make_unique<ModulationModuleSection>(
-            &mod_list,
+           proc->mod_list.get(),
                                                       state,
                                                       findParentComponentOfClass<SynthGuiInterface>()->getGui()->modulation_manager.get(),
                                                       undo);

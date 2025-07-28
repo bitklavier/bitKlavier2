@@ -114,6 +114,7 @@ bool SynthGuiInterface::perform (const InvocationInfo& info)
 
 SynthGuiInterface::~SynthGuiInterface()
 {
+    removeAllGuiListeners();
 }
 
 void SynthGuiInterface::updateFullGui()

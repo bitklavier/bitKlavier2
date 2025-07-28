@@ -16,6 +16,7 @@ ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier:
     {
         newObjectAdded (object);
     }
+    isInit = false;
 }
 
 ModulationList::~ModulationList()
@@ -27,7 +28,12 @@ void ModulationList::deleteObject(ModulatorBase * base)
 {
     //this will call delete in the modulationprocessor
     // base->state.getProperty(IDs::)
-    parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
+    for (auto listener: listeners_)
+    {
+        listener->removeModulator(base);
+    }
+    if (parent_->getGuiInterface()) {
+        parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
             [this, base] {
                 if (base->parent_ != nullptr) {
 
@@ -37,10 +43,10 @@ void ModulationList::deleteObject(ModulatorBase * base)
                         {
                             vt.getParent().removeChild (vt,nullptr);
                         }
-                        for (auto listener: listeners_)
-                        {
-                            listener->removeModulator(base);
-                        }
+                        // for (auto listener: listeners_)
+                        // {
+                        //     listener->removeModulator(base);
+                        // }
                         delete base;
 
                     });
@@ -48,6 +54,9 @@ void ModulationList::deleteObject(ModulatorBase * base)
                 }
 
             });
+    }
+
+
 
 }
 ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
@@ -56,11 +65,15 @@ ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
 
     try {
         auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),args);
-
-        parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
-                [this, proc] {
-                    this->proc_->addModulator(proc);
-                });
+        if (!isInit) {
+            parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
+                    [this, proc] {
+                        this->proc_->addModulator(proc);
+                    });
+        }
+        else {
+            this->proc_->addModulator(proc);
+        }
         return proc;
     } catch (const std::bad_any_cast& e) {
         std::cerr << "Error during object creation: " << e.what() << std::endl;

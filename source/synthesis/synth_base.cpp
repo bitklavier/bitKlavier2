@@ -336,11 +336,11 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
         this->engine_->getStateBank().reset();
         gui_interface->updateFullGui();
     }
-    gui_interface->removeAllGuiListeners();
+
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
-
+    gui_interface->removeAllGuiListeners();
     engine_->resetEngine();
     if (!loadFromValueTree (parsed_value_tree))
     {

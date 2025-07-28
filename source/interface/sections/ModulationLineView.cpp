@@ -186,6 +186,8 @@ void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
         }
         index++;
     }
+    if(at == nullptr)
+        return;
     DBG ("index " + juce::String (index));
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
