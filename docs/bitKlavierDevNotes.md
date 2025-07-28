@@ -2,11 +2,6 @@
 ## Priorities before Davis leaves
 - [ ] Mods!
   - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
-  - for Transposition Slider: if you try to add a 2nd transposition -> boom.
-    - ok, i fixed that, at least i think so; added an `isModulated_` check in `addSlider` in OpenGL_TranspositionSlider.h, should check to make sure that is right, and if we need the nullptr check
-  - with TranspositionSlider, if I add a 2nd slider and activate the mod, two things happen:
-    - both sliders appear, but only one of them works
-    - the original slider before the mod is still there
   - saved `transpositionModSavetest` gallery and it crashes on load
   - hit an assert all the time when just dragging a ramp mod across the tuning UI
   - if i add a Reset to a Direct => boom. 
@@ -123,9 +118,15 @@ and hopefully with answers included here for the record!
 - all of these need to get added to a parameter vector of `ParamPtrVariant` (like this in DirectProcessor.h: `std::unordered_map<std::string, ParamPtrVariant> modulatableParams;`)
 - and then these are assigned to modulation audio channels: see DirectProcessor constructor, the `modChan.setProperty` calls
 
-## State Change Parameters
+## State Change Modulation Parameters
 - as opposed to Modulatable parameters; these are not changed continuously at the audio rate, the way Modulatable Parameters are, but rather are changed together, all at once
 - see the `parent.getStateBank().addParam` call in the DirectProcessor constructor
+- there are a number of stages required to make this all work:
+  - a mod UI version of the element we want to do the stage change for must be created (so, the Transposition slider, for instance)
+  - the no-argument constructor for `OpenGL_TranspositionSlider()` for example, set `isModulation_` to true, so it will all the alternative transposition slider to set modulation target values
+  - it will have all the same callbacks as the regular slider, so in `OpenGL_TranspositionSlider` the `BKStackedSliderValueChanged` callback will have two different roles, one if it is for setting the modulation values, and the other for the normal usage where the actual values of the slider are being set (called `isModulated_`, since it could be a target and is not the `isModulation_`)
+  - when the modulation is triggered, the parameters will be changed in `processStateChanges()` (see TransposeParams.h, for instance)
+  - those changes need to be reflected in the UI, so we add callbacks in the UI element (back in `OpenGL_TranspositionSlider`, for instance, where there are listeneres for each of the transposition parameters t0, t1, etc..., and change to any of them will cause the UI for the slider to reset itself)
 
 ---------
 ## Adding a Parameter to a Preparation (Direct, for example)

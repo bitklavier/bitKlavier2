@@ -44,29 +44,11 @@ public:
             attachmentVec.emplace_back(std::move(ptr));
         }
 
-        // add slider callbacks to allow the UI to update the number of sliders whenever a modulation changes it
-        sliderChangedCallback += { listeners.addParameterListener(params->numActiveSliders, chowdsp::ParameterListenerThread::MessageThread,
-            [this]
-            {
-                auto sliderVals   = getAllActiveValues();
-                auto activeSliders_ = params->numActiveSliders->getCurrentValue();
-
-                if(activeSliders_ < sliderVals.size())
-                {
-                    sliderVals.removeRange (activeSliders_, sliderVals.size());
-                }
-                else if (sliderVals.size() < activeSliders_)
-                {
-                    sliderVals.clearQuick();
-                    for (int k = 0; k < activeSliders_; k++)
-                    {
-                        sliderVals.add(dataSliders[k]->getValue());
-                    }
-                }
-                setTo(sliderVals, juce::sendNotification);
-                redoImage();
-            })};
-
+        /**
+         * these callbacks are for each of the 12 transposition values in the slider
+         * they will be called when a modulation is triggered, changing any/all of the transp values
+         * so that the UI can update accordingly.
+         */
         int j = 0;
         for (auto& param :*params->getFloatParams()) {
             if ((*params->getFloatParams())[j].get()->paramID == "numActiveSliders") continue;
@@ -74,24 +56,19 @@ public:
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,[this,j]()
                     {
-//                      if ( j > this->params->numActive - 1)
-                        if ( j > params->numActiveSliders->getCurrentValue() - 1)
+                        auto sliderVals= getAllActiveValues();
+                        auto activeSliders_ = params->numActiveSliders->getCurrentValue();
+
+                        sliderVals.clearQuick();
+                        for (int k = 0; k < activeSliders_; k++)
                         {
-                            juce::Array<float> sliderVals = getAllActiveValues();
-                            sliderVals.add(dataSliders[j]->getValue());
-                            setTo(sliderVals, juce::sendNotification);
-                            if (isModulation_) {
-                                this->listeners.call(
-                                    &BKStackedSlider::Listener::BKStackedSliderValueChanged,
-                                    getName(),
-                                    getAllActiveValues());
-                            }
+                            sliderVals.add(dataSliders[k]->getValue());
                         }
+                        setTo(sliderVals, juce::sendNotification);
                         redoImage();
                     }
                 )
             };
-
             j++;
         }
     }
@@ -145,21 +122,6 @@ public:
         return new OpenGL_TranspositionSlider();
     }
 
-//    void addSlider(juce::NotificationType newnotify) override {
-//        BKStackedSlider::addSlider(newnotify);
-//        if (params != nullptr && isModulated_) // has no params if its a cloned component
-//        {
-//            /**
-//             * todo: do we need both numActive and numActiveSliders???
-//             */
-//             /**
-//              * actually, i don't think we need any of this, since it happens in BKStackedSliderValueChanged, which gets notified by BKStackedSlider::addSlider?
-//              */
-////            params->numActive.store((params->numActive + 1) % 12);
-////            params->numActiveSliders->setParameterValue(params->numActive);
-//        }
-//    }
-
     /*
      * this is called whenever the transposition slider "isModulated_" is edited by the user
      * OR when the modulation transposition slider "isModulation_" is edited by the user
@@ -199,8 +161,7 @@ public:
                 auto str = "t" + juce::String(i);
                 defaultState.setProperty(str, val[i], nullptr);
             }
-//            params->numActive.store(val.size());
-//            params->numActiveSliders->setParameterValue(params->numActive);
+
             params->numActiveSliders->setParameterValue(val.size());
         }
     }
@@ -237,7 +198,8 @@ public:
 private :
     /**
      * we use this constructor to create a generic clone for the mods
-     * so "isModulation" is set to true here.
+     * so "isModulation" is set to true here,
+     * as this will be used to set the modulation target values
      */
     OpenGL_TranspositionSlider() : OpenGlAutoImageComponent<BKStackedSlider>(
         "Transpositions", // slider name
