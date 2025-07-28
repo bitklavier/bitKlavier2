@@ -76,6 +76,7 @@ namespace bitklavier
     template <typename ParameterState, typename NonParameterState, typename Serializer>
     void PreparationStateImpl<ParameterState, NonParameterState, Serializer>::serialize (juce::MemoryBlock& data) const
     {
+
         chowdsp::Serialization::serialize<Serializer> (*this, data);
     }
 
@@ -130,8 +131,8 @@ namespace bitklavier
         };
 
         //Serializer::template deserialize<Serializer, chowdsp::NonParamState> (Serializer::getChildElement (serial, "nonparam"), object.nonParams);
-        if ( Serializer::getChildElement (serial, object.params.getName()))
-            Serializer::template deserialize<Serializer, ParameterState> (Serializer::getChildElement (serial, object.params.getName()), object.params);
+        // if ( Serializer::getChildElement (serial, object.params.getName()))
+            Serializer::template deserialize<Serializer, ParameterState> (serial, object.params);
     }
 
     template <typename ParameterState, typename NonParameterState, typename Serializer>

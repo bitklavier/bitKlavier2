@@ -23,7 +23,6 @@ void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 
     for (auto msg : midiMessages)
     {
-
         if (msg.getMessage().isNoteOn()  && std::abs(synth_base_.sample_index_of_switch - msg.samplePosition) >= 10)
         {
             //DBG ("PianoSwitchProcessor::processBlock received noteOn " + juce::String (msg.getMessage().getNoteNumber()));

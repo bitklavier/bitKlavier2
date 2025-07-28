@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <PREPARATION Main="0.000" Hammers="-24.000" Resonance="6.000" Pedal="-6.000"
+                   Send="0.000" OutputGain="0.000" decay="0.000" sustain="1.000"
+                   release="50.000" attack="1.000" attackpower="0.000" hold="0.000"
+                   delay="0.000" decaypower="0.000" releasepower="0.000" t0="1.0"
+                   t1="2.0" t2="1.0" t3="0.000" t4="0.000" t5="0.000" t6="0.000"
+                   t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" numActiveSliders="3.000"
+                   UseTuning="0" velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
+        <MODULATABLE_PARAM parameter="OutputGain" channel="0"/>
+        <MODULATABLE_PARAM parameter="attack" channel="1"/>
+        <MODULATABLE_PARAM parameter="Resonance" channel="2"/>
+        <MODULATABLE_PARAM parameter="Send" channel="3"/>
+        <MODULATABLE_PARAM parameter="release" channel="4"/>
+        <MODULATABLE_PARAM parameter="decay" channel="5"/>
+        <MODULATABLE_PARAM parameter="Pedal" channel="6"/>
+        <MODULATABLE_PARAM parameter="sustain" channel="7"/>
+        <MODULATABLE_PARAM parameter="Hammers" channel="8"/>
+        <MODULATABLE_PARAM parameter="Main" channel="9"/>
+        <PARAM_DEFAULT t0="1.0" t1="2.0" t2="1.0"/>
+        <PORT nodeID="2823611930" chIdx="4096" isIn="1"/>
+        <PORT nodeID="2823611930" chIdx="0" isIn="0"/>
+        <PORT nodeID="2823611930" chIdx="1" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION keyOn="60">
+        <PORT nodeID="2583346852" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="-1212560204"/>
+      </PREPARATION>
+      <PREPARATION type="8" width="100" height="100" x_y="915, 197" uuid="d76c0b2a62984b62b2ccd5be22e54896"
+                   nodeID="3614182186" numIns="1">
+        <PORT nodeID="3614182186" chIdx="4096" isIn="1"/>
+        <modulationproc type="state" isState="1" uuid="8c402919be9e4ae084b471e99768d76d"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS>
+      <CONNECTION isMod="0" src="2583346852" srcIdx="4096" dest="3614182186" destIdx="4096"/>
+    </CONNECTIONS>
+    <MODCONNECTIONS>
+      <MODCONNECTION isMod="1" src="3614182186" dest="2823611930">
+        <ModulationConnection uuid="ccce51e844844bb5a5f646c60f8eb353" isState="1" src="d76c0b2a62984b62b2ccd5be22e54896_state-8c402919be9e4ae084b471e99768d76d_mod"
+                              dest="a84ce61accc94c12a00b3e42091fc2fe_transpose" t0="-4.71999979019165"
+                              t1="9.0" t2="8.0"/>
+      </MODCONNECTION>
+    </MODCONNECTIONS>
+  </PIANO>
+</GALLERY>

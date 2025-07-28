@@ -131,6 +131,21 @@ class PluginInstanceWrapper  {
     juce::AudioProcessor* proc;
     juce::AudioProcessorGraph::NodeID node_id;
     juce::ValueTree state;
+    void returnModulatedParamsToDefault() {
+        for (auto param_default: state) {
+            if (param_default.hasType(IDs::PARAM_DEFAULT)) {
+                // Iterate over properties
+                for (int i = 0; i < param_default.getNumProperties(); ++i)
+                {
+                    juce::Identifier propName = param_default.getPropertyName(i);
+                    juce::var value = param_default.getProperty(propName);
+
+                    state.setProperty(propName,value,nullptr);
+
+                }
+            }
+        }
+    }
     // KeymapProcessor* keymap_processor;
 
 };
@@ -186,7 +201,7 @@ public:
     void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override
     {
         tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper>::valueTreePropertyChanged (v, i);
-        if(v.getProperty("sync",0))
+        if(v.getProperty(IDs::sync,0))
         {
             for(auto obj : objects)
             {
@@ -194,7 +209,12 @@ public:
                 obj->proc->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
                 if (xml != nullptr) {
-                    obj->state.getOrCreateChildWithName(xml->getNamespace(),nullptr).copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);;
+                    //read the current state of the paramholder
+                    obj->state.copyPropertiesFrom(juce::ValueTree::fromXml(*xml),nullptr);
+                    //update any params that have been modulated to their "default" state
+                    //i.e. the state set by moving the knobs in the preparation view
+                    //not what they may have been modulated to
+                    obj->returnModulatedParamsToDefault();
                 }
                 else if ( obj->state.getChildWithName(IDs::PLUGIN).isValid() ) {
 
@@ -204,7 +224,7 @@ public:
                 }
 
             }
-            v.removeProperty("sync", nullptr);
+            v.removeProperty(IDs::sync, nullptr);
         }
     }
     void addPlugin (const juce::PluginDescription& desc, const juce::ValueTree& v);
