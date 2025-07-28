@@ -90,6 +90,7 @@ public:
     }
 
     void mouseDown(const juce::MouseEvent &e) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKStackedSlider>::mouseDown(e);
         redoImage();
     }
@@ -117,6 +118,7 @@ public:
     void mouseUp(const juce::MouseEvent &event) override {
         OpenGlAutoImageComponent<BKStackedSlider>::mouseUp(event);
         redoImage();
+        mouseInteraction = false;
     }
 
     OpenGL_TranspositionSlider* clone() {
@@ -129,6 +131,10 @@ public:
      * this is NOT called when an actual state modulation is executed
      */
     void BKStackedSliderValueChanged(juce::String name, juce::Array<float> val) override {
+
+        if (!mouseInteraction)
+            return;
+
         if (isModulation_) {
             /*
              * the modulation editor case: we are editing the modulator version of the stacked slider
@@ -221,6 +227,7 @@ private :
         addMyListener(this);
     }
 
+    bool mouseInteraction = false;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
