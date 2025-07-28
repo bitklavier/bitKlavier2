@@ -175,7 +175,7 @@ void ModulationLineView::modConnectionAdded (bitklavier::ModConnection* c)
 void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
 {
     DBG ("removemodconnection");
-    ModulationLine* at;
+    ModulationLine* at = nullptr;
     int index = 0;
     for (auto obj : objects)
     {
@@ -186,6 +186,8 @@ void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
         }
         index++;
     }
+    if(at == nullptr)
+        return;
     DBG ("index " + juce::String (index));
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {

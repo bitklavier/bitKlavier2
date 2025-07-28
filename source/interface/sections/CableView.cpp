@@ -238,7 +238,7 @@ void CableView::connectionListChanged() {
 
 void CableView::removeConnection(bitklavier::Connection *c) {
     DBG("remove cable");
-   Cable* at;
+   Cable* at = nullptr;
     int index = 0;
     if (objects.isEmpty())
         return;
@@ -251,6 +251,8 @@ void CableView::removeConnection(bitklavier::Connection *c) {
         }
        index++;
    }
+   if(at == nullptr)
+       return;
 
 
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))

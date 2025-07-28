@@ -47,6 +47,7 @@ public:
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID);
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                slider->addAttachment(attachment.get());
                 addSlider (slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
                 floatAttachments.emplace_back (std::move (attachment));
