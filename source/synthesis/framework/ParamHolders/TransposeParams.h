@@ -98,16 +98,11 @@ struct TransposeParams : chowdsp::ParamHolder
      * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
      *      so these are ones like Transpose, where they all change at once
      */
-    /**
-     * todo: is numActive actually being used? seems to be replaced by numActiveSliders?
-     *          well this breaks if we don't update it here, though maybe it is still replaceable?
-     */
-//    std::atomic<int> numActive = 1;
     void processStateChanges() override
     {
         auto float_params = getFloatParams();
-        int i = numActiveSliders->getCurrentValue();
 
+        int i = numActiveSliders->getCurrentValue();
         for(auto [index, change] : stateChanges.changeState)
         {
             //DBG("TransposeParams processStateChanges");
@@ -124,18 +119,7 @@ struct TransposeParams : chowdsp::ParamHolder
                 auto& float_param = float_params->at(i);
                 float_param.get()->setParameterValue(val);
             }
-
-//            numActive.store(i);
             numActiveSliders->setParameterValue(i);
-
-//            /*
-//             * let's check the updated values
-//             */
-//            for (int i=0; i<float_params->size(); i++)
-//            {
-//                auto& float_param = float_params->at(i);
-//                DBG("update transp param " + float_param->getParameterID() + " = " + float_param->getCurrentValueAsText());
-//            }
         }
         stateChanges.changeState.clear();
     }

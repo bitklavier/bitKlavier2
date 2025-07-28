@@ -1,13 +1,36 @@
 # Notes about how to do stuff in the bK codebase
 ## Priorities before Davis leaves
 - [ ] Mods!
-  - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
-  - saved `transpositionModSavetest` gallery and it crashes on load
-  - hit an assert all the time when just dragging a ramp mod across the tuning UI
-  - if i add a Reset to a Direct => boom. 
-  - trying to access the modulation transposition slider can be really frustrating; it disappears as soon as you move over it, most of the time!
-  - in general, I need to understand how this works; 
-    - in trying to implement the MultiSlider for Blendronic/Synchronic, i got completely lost!
+  - some bugs and crashes:
+    - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
+      - should be fixed now; was missing a `stateChanges.changeState.clear();` in `TuningState::processStateChanges()`
+    - saved `transpositionModSavetest` gallery and it crashes on load
+      - hopefully fixed after merging with Davis's recent push to main
+    - hit an assert all the time when just dragging a ramp mod across the tuning UI
+      - that's because the params are not setup properly for mods yet.
+      - look at the `for (auto [key, param] : state.params.modulatableParams)` in `DirectProcessor` constructor
+    - if i add a Reset to a Direct => boom. 
+      - Reset should only be connected to a Mod prep
+      - we need to set it up so it won't crash if someone tries to connect it to any other kind of prep and just ignore it
+    - trying to access the modulation transposition slider can be really frustrating; it disappears as soon as you move over it, most of the time!
+      - yeah, all this needs work
+  - some questions:
+    - why is `stateChanges.changeState` a std::pair? is one of the VTs "defaultState" and the other "modulationState"?
+      - no, one of the items in the pair is for a sample location for when we might want to do sample-accurate timing; not used currently
+    - explain to me how `ResetProcessor::processBlock` works.
+    - also, can we look at ramp mods? i have some notes below about what needs to be done to make a parameter modulatable, but don't really understand it
+      - ramp mods not actually doing anything yet. that will happen in `RampModulatorProcessor::getNextAudioBlock`
+    - how does the serializer relate to all this? 
+      - let's look at the ones in TuningProcessor.cpp
+      - so, the serializer is called when we save/load. when we are making changes while using the app, we are NOT updating the main VT. we only need to do that on save and then load. so the default serializer will serialize all the regular chowdsp_params, and then we add to it for our more complex params (like absolutetuning array, the transposition slider, etc...)
+    - and let's also look at `TuningState::processStateChanges()`
+      - so, yes, these are stored as strings
+      - these are created in `OpenGLAbsoluteKeyboardSlider:mouseDrag`
+        - this mouseDrag function is not complete yet, with the `isModulated_` needing to be completed
+    - and think about how this might work for the MultiSlider.
+    - in general, I need to understand how this works; 
+      - in trying to implement the MultiSlider for Blendronic/Synchronic, i got completely lost!
+      - might make sense to look through my notes below to see if they are accurate, what they are missing, etc...
 - [ ] Blendrónic audio in: Dan working on this
 - [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
 - [ ] opening multiple sample libs, assigning to individual preps!
@@ -120,11 +143,13 @@ and hopefully with answers included here for the record!
 
 ## State Change Modulation Parameters
 - as opposed to Modulatable parameters; these are not changed continuously at the audio rate, the way Modulatable Parameters are, but rather are changed together, all at once
-- see the `parent.getStateBank().addParam` call in the DirectProcessor constructor
 - there are a number of stages required to make this all work:
-  - a mod UI version of the element we want to do the stage change for must be created (so, the Transposition slider, for instance)
-  - the no-argument constructor for `OpenGL_TranspositionSlider()` for example, set `isModulation_` to true, so it will all the alternative transposition slider to set modulation target values
-  - it will have all the same callbacks as the regular slider, so in `OpenGL_TranspositionSlider` the `BKStackedSliderValueChanged` callback will have two different roles, one if it is for setting the modulation values, and the other for the normal usage where the actual values of the slider are being set (called `isModulated_`, since it could be a target and is not the `isModulation_`)
+  - add a param to the StateBank for the elements you want to be state-modulatable
+    - see the `parent.getStateBank().addParam` call in the DirectProcessor constructor
+    - this is where we store value trees for defaultState and modulationState, for creating and moving to the modulation target values, or resetting to the original default values
+  - a mod UI version of the element we want to do the stage change for must be created ("cloned") (so, the Transposition slider, for instance)
+    - the no-argument constructor for `OpenGL_TranspositionSlider()` for example, set `isModulation_` to true, so it will all the alternative transposition slider to set modulation target values
+    - it will have all the same callbacks as the regular slider, so in `OpenGL_TranspositionSlider` the `BKStackedSliderValueChanged` callback will have two different roles, one if it is for setting the modulation values, and the other for the normal usage where the actual values of the slider are being set (called `isModulated_`, since it could be a target and is not the `isModulation_`)
   - when the modulation is triggered, the parameters will be changed in `processStateChanges()` (see TransposeParams.h, for instance)
   - those changes need to be reflected in the UI, so we add callbacks in the UI element (back in `OpenGL_TranspositionSlider`, for instance, where there are listeneres for each of the transposition parameters t0, t1, etc..., and change to any of them will cause the UI for the slider to reset itself)
 

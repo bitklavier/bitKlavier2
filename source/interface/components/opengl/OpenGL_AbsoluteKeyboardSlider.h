@@ -13,7 +13,7 @@ public:
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
-        setComponentID("absoluteTuning");
+        setComponentID(IDs::absoluteTuning.toString());
     }
     /**
      * todo: update all this isModulation/isModulated_ stuff to match what is in OpenGL_TranspositionSlider and elsewhere
@@ -46,10 +46,12 @@ public:
 
                 ++key;
             }
-            /**
-             * todo: shouldn't these use IDs::absoluteTuning?
-             */
-            modulationState.setProperty("absoluteTuning", s, nullptr);
+
+            modulationState.setProperty(IDs::absoluteTuning, s, nullptr);
+        }
+        else if (isModulated_)
+        {
+
         }
     }
 
@@ -67,7 +69,7 @@ public:
         OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
         redoImage();
         if (isModulation_) {
-            modulationState.setProperty("absoluteTuning", keyboardValsTextField->getText(), nullptr);
+            modulationState.setProperty(IDs::absoluteTuning, keyboardValsTextField->getText(), nullptr);
         }
     }
 
@@ -90,6 +92,11 @@ public:
         return new OpenGLAbsoluteKeyboardSlider();
     }
 
+    /**
+     * syncToValueTree() is called in ModulationManager::modulationClicked and
+     * is used to set the mod view of the parameter to the current values in the main view of the parameter
+     * see the comparable one in OpenGL_TranspositionSlider.h
+     */
     void syncToValueTree() override {
 //        modulationState = juce::ValueTree(IDs::absoluteTuning);
     }
@@ -99,12 +106,13 @@ public:
 
 class OpenGLCircularKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
+
     OpenGLCircularKeyboardSlider(TuningState& keystate)
         : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, true) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
-        setComponentID("circularTuning");
+        setComponentID(IDs::circularTuning.toString());
     }
 
     OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state)
@@ -129,7 +137,7 @@ public:
             for (auto offset : keyboardState->circularTuningOffset) {
                 s += juce::String((offset)) + " ";
             }
-            modulationState.setProperty("circularTuning", s, nullptr);
+            modulationState.setProperty(IDs::circularTuning, s, nullptr);
         }
     }
 
@@ -147,7 +155,7 @@ public:
         OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
         redoImage();
         if (isModulation_) {
-            modulationState.setProperty("circularTuning", keyboardValsTextField->getText(), nullptr);
+            modulationState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
         }
     }
 

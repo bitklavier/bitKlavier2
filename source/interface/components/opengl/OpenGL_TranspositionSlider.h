@@ -168,8 +168,9 @@ public:
 
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
 
-    /*
-     * needed for the param-state modulation
+    /**
+     * syncToValueTree() is called in ModulationManager::modulationClicked and
+     * is used to set the mod view of the parameter to the current values in the main view of the parameter
      */
     void syncToValueTree() override {
         juce::Array<float> vals;
