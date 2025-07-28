@@ -588,6 +588,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
 
     DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
+    jassert(connection->modulation_output_bus_index != -1);
     //determine channel modulatable param reads moudlation from
     auto param_index = parameter_tree.getProperty (IDs::channel, -1);
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0); //1 is mod
@@ -651,6 +652,7 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
         {
             connection = getStateBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
             connection->state = v;
+            connection->setChange(v);
         }
         if (connection)
             connectStateModulation (connection);
@@ -783,6 +785,7 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     connection->processor = connection->parent_processor->getModulatorBase (juse_uuid);
     connection->processor->addListener (connection);
     connection->parent_processor->addModulationConnection (connection);
+//    jassert(connection->modulation_output_bus_index != -1);
 
     //    connection->parent_processor->modulation_connections_.push_back(connection);
     //DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));

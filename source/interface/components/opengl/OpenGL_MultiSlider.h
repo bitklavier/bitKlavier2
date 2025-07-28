@@ -15,7 +15,7 @@ class OpenGL_MultiSlider: public OpenGlAutoImageComponent<BKMultiSlider>, BKMult
 {
 public:
     OpenGL_MultiSlider(MultiSliderState *sliderstate, chowdsp::ParameterListeners &listeners) :
-            OpenGlAutoImageComponent<BKMultiSlider>(sliderstate->paramDefault), params(sliderstate)
+            OpenGlAutoImageComponent<BKMultiSlider>(sliderstate->stateChanges.defaultState), params(sliderstate)
     {
         isModulated_ = true;
         image_component_ = std::make_shared<OpenGlImageComponent>();
