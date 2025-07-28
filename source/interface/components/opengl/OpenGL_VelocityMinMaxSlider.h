@@ -146,19 +146,22 @@ public:
         return new OpenGL_VelocityMinMaxSlider();
     }
 
-    void BKRangeSliderValueChanged(juce::String name, double min, double max) override {
+    void BKRangeSliderValueChanged(juce::String name, double min, double max) override
+    {
         if (!mouseInteraction)
             return;
+
         if (isModulation_) {
             DBG("updating modulationState in BKRangeSliderValueChanged");
             modulationState.setProperty("velocitymin", min, nullptr);
             modulationState.setProperty("velocitymax", max, nullptr);
-        } else if (isModulated_) {
+        }
+
+        else if (isModulated_) {
             DBG("updating defaultState in BKRangeSliderValueChanged");
             defaultState.setProperty("velocitymin", min, nullptr);
             defaultState.setProperty("velocitymax", max, nullptr);
         }
-
     }
 
     void mouseExit(const juce::MouseEvent &e) override
