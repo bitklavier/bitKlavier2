@@ -34,10 +34,14 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
      *      this is on a separate bus from the regular audio graph that carries audio between preparations
      */
     int mod = 0;
-    for (auto [key, param] : state.params.modulatableParams)
+    for (auto param: state.params.modulatableParams)
     {
         juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
-        modChan.setProperty (IDs::parameter, juce::String (key), nullptr);
+        juce::String name = std::visit([](auto* p) -> juce::String
+    {
+        return p->paramID; // Works if all types have getParamID()
+    }, param);
+        modChan.setProperty (IDs::parameter, name, nullptr);
         modChan.setProperty (IDs::channel, mod, nullptr);
         v.appendChild (modChan, nullptr);
         mod++;
@@ -130,6 +134,13 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
     state.getParameterListeners().callAudioThreadBroadcasters();
 
+   const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
+
+    int numInputChannels = modBus.getNumChannels();
+    for (int channel = 0; channel < numInputChannels; ++channel) {
+       const float* in = modBus.getReadPointer(channel);
+        state.params.modulatableParams[channel]
+    }
     // always top of the chain as an instrument source; doesn't take audio in
     buffer.clear();
 

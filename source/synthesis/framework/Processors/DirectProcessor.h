@@ -27,8 +27,8 @@ struct DirectParams : chowdsp::ParamHolder
     float skewFactor = 2.0f;
 
     using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::unordered_map<std::string, ParamPtrVariant> modulatableParams;
-
+    // std::unordered_map<std::string, ParamPtrVariant> modulatableParams;
+    std::vector<ParamPtrVariant> modulatableParams;
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
@@ -47,15 +47,15 @@ struct DirectParams : chowdsp::ParamHolder
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.insert ({ sliderParam->paramID.toStdString(), sliderParam });
+                    modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.insert ({ sliderParam->paramID.toStdString(), sliderParam });
+                    modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.insert ({ sliderParam->paramID.toStdString(), sliderParam });
+                         modulatableParams.push_back ( sliderParam);
         });
     }
 
