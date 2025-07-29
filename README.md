@@ -160,4 +160,5 @@ The backend of a modulation is different depending on the type of modulation it 
                 is useful to store it in a valuetree to make it easy to pass to other
                 processors so they know which channel to map a modulation to when it comes in
             - 
-        
+# list of resources for real time programming 
+https://forum.juce.com/t/lock-free-real-time-stuffs-for-dummies/58870/13

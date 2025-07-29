@@ -67,7 +67,7 @@ public:
     ~PreparationPopup();
 
     void reset() override;
-
+    void moved() override;
     void paintBackground(juce::Graphics& g) override {}
 
     void paintBackgroundShadow(juce::Graphics& g) override {}

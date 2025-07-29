@@ -121,7 +121,7 @@ class ModulationAmountKnob : public SynthSlider {
     }
 
     void addModulationAmountListener(Listener* listener) { listeners_.push_back(listener); }
-
+    void setDestinationSlider(SynthSlider* dest);
   private:
     void toggleBypass();
 
@@ -142,6 +142,7 @@ class ModulationAmountKnob : public SynthSlider {
     bool draw_background_;
 
     juce::ValueTree state;
+    SynthSlider *destination = nullptr;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationAmountKnob)
 };
 
@@ -184,6 +185,7 @@ public:
     void addModulationIndicatorListener(Listener* listener) { listeners_.push_back(listener); }
     void setSource(const std::string& name);
     void setDestination(const std::string& name);
+
     void setCurrentModulator(bool current);
     void mouseDown(const juce::MouseEvent&) override;
     void positionModulationIndicators();

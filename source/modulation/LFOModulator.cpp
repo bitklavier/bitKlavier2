@@ -22,7 +22,7 @@ void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,j
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
             float* channelData = buffer.getWritePointer(channel);
-            channelData[sample] = (1.0f + 0.5f*lfoValue); // Example: modulate gain
+            channelData[sample] = (1.0f + 0.5f*lfoValue);
         }
     }
 

@@ -155,11 +155,11 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 //      current_value_ += poly_total_->trigger_value;
 //  }
   current_value_ = destination_->getLiveModulation();
-  DBG("live mod"+ juce::String(current_value_));
+  // DBG("live mod"+ juce::String(current_value_));
   // float range = destination_->getMaximum() - destination_->getMinimum();
   // float value = (current_value_ - destination_->getMinimum()) * (1.0f / range);
   // mod_percent_ = bitklavier::utils::clamp(value, 0.0f, 1.0f);
-  DBG("destination_" + juce::String(destination_->getValue()));
+  // DBG("destination_" + juce::String(destination_->getValue()));
   // float knob_percent = (destination_->getValue() - destination_->getMinimum()) / range;
   mod_percent_ = destination_->valueToProportionOfLength(current_value_);
   float knob_percent = destination_->valueToProportionOfLength(destination_->getValue());
@@ -179,7 +179,7 @@ void ModulationMeter::updateDrawing(bool use_poly) {
       max_percent = bitklavier::utils::interpolate(-angle, angle, max_percent);
     }
   }
-  DBG(juce::String(min_percent) + "," + juce::String(max_percent) );
+  // DBG(juce::String(min_percent) + "," + juce::String(max_percent) );
   quads_->setShaderValue(index_, min_percent, 0);
   quads_->setShaderValue(index_, max_percent, 1);
   quads_->setShaderValue(index_, min_percent, 2);
