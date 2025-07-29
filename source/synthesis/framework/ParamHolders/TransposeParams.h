@@ -85,18 +85,13 @@ struct TransposeParams : chowdsp::ParamHolder
         }};
 
     /*
-     * processStateChanges() is used to handle state change modifications
-     * that are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
+     * processStateChanges() is used to handle state change modifications, including resets. should be called every block
      *
-     * so.... if you want a collection of params (like TranspParams or velocityMinMaxParams) to be
-     * state modulatable, they have to be in here, and this needs to be called
+     * state changes are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
+     * examples: TranspParams or velocityMinMaxParams
      *
-     * gets run whenever a state change gets run on the back end
-     * modulation that changes state will be triggered here
-     * called in process block (DirectProcessor)
-     *
-     * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
-     *      so these are ones like Transpose, where they all change at once
+     * 'stateChanges.change' state will have size() != 0 after a mod or reset is triggered. each change
+     * is handled here, and then it is cleared until another mod or reset is triggered
      *
      * in this specific case, if there is a changeState in stateChanges (which will only happen when
      * a mod is triggered) we read through the valueTree and update all the modded transpositions (t0, t1, etc...)
