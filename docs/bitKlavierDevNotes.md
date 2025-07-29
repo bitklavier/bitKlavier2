@@ -5,6 +5,7 @@
     - with Reset: if you try to Reset to a defaultState immediately after loading a gallery, it won't work. 
       - Try ResetTest.bk2
       - if you move the velocity min and max sliders before the mod, the reset will work, but it won't if you don't touch them after loading the gallery
+    - also with Reset and the Transposition slider: resetting to slider values of 0 won't work for some reason.
     - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
       - should be fixed now; was missing a `stateChanges.changeState.clear();` in `TuningState::processStateChanges()`
     - saved `transpositionModSavetest` gallery and it crashes on load

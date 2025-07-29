@@ -112,20 +112,16 @@ void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
         tmp_buffers[index] = {};
         mod_routing[index] = {};
     }
-
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnection* connection){
     all_modulation_connections_.push_back(connection);
-
-
 
     auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
     size_t index = std::distance(modulators_.begin(), it);
 
     mod_routing[index].mod_connections.push_back(connection);
     modulators_[index]->connections_.push_back(connection->state);
-
 }
 
 void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConnection* connection){
@@ -143,11 +139,8 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
             mod_routing[index].mod_connections.erase(it_, mod_routing[index].mod_connections.end());
         }
     }
-
-
-
-
 }
+
 void bitklavier::ModulationProcessor::addModulationConnection(StateConnection* connection){
     all_state_connections_.push_back(connection);
 

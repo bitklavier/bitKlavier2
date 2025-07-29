@@ -108,7 +108,6 @@ struct TransposeParams : chowdsp::ParamHolder
         int i = numActiveSliders->getCurrentValue();
         for(auto [index, change] : stateChanges.changeState)
         {
-            //DBG("TransposeParams processStateChanges");
             static juce::var nullVar;
 
             for (i = 0; i < 12; i++)
@@ -116,9 +115,9 @@ struct TransposeParams : chowdsp::ParamHolder
                 auto str = "t" + juce::String(i);
                 auto val = change.getProperty(str);
 
-                if (val == nullVar) break;
+                // need to make sure we don't ignore values of 0.!
+                if (val == nullVar && !val.equalsWithSameType(0.)) break;
 
-                DBG("updating transposition " + str + " to " + val.toString());
                 auto& float_param = float_params->at(i);
                 float_param.get()->setParameterValue(val);
             }

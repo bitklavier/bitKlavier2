@@ -174,6 +174,7 @@ public:
             }
             for (int i = 0; i < val.size(); i++) {
                 auto str = "t" + juce::String(i);
+                DBG("setting defaultState for " + str + " to " + juce::String(val[i]));
                 defaultState.setProperty(str, val[i], nullptr);
             }
 
