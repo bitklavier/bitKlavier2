@@ -686,6 +686,7 @@ void ConstructionSite::updateComponents() {
     //            }
     //        }
 }
+
 void ConstructionSite::setActivePiano() {
     if(prep_list != nullptr)
     {
@@ -693,19 +694,16 @@ void ConstructionSite::setActivePiano() {
         prep_list->removeListener (this);
     }
 
-
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     prep_list= interface->getSynth()->getActivePreparationList();
     parent = prep_list->getValueTree().getParent();
     prep_list->addListener(this);
-//    {
-//        juce::ScopedLock lock (open_gl_critical_section_);
-            prep_list->rebuildAllGui();
-//    }
+    prep_list->rebuildAllGui();
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
 }
+
 void ConstructionSite::removeAllGuiListeners()
 {
     if(prep_list)

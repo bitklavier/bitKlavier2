@@ -20,6 +20,7 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
      *      - and 12 displayed (handled internally by BKSliders::BKMultiSlider)
      *      - but the user might be using any number 1 up to MAXMULTISLIDERLENGTH
      *      - and some might be inactive
+     *      not sure we need this just yet
      */
     std::atomic<int> numActiveSliders = 1;
 };
