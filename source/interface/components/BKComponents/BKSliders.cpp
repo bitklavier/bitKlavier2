@@ -1442,7 +1442,6 @@ void BKStackedSlider::setTo(juce::Array<float> newvals, juce::NotificationType n
 
     int slidersToActivate = newvals.size();
     if(slidersToActivate > numSliders) slidersToActivate = numSliders;
-    DBG("BKStackedSlider::setTo slidersToActivate = " + juce::String(slidersToActivate));
     if(slidersToActivate <= 0)
     {
         slidersToActivate = 1;
