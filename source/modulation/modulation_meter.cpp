@@ -25,7 +25,7 @@
 #include "ModulationConnection.h"
 
 ModulationMeter::ModulationMeter(
-                                 const SynthSlider* slider, OpenGlMultiQuad* quads, int index) :
+SynthSlider* slider, OpenGlMultiQuad* quads, int index) :
          destination_(slider),
         quads_(quads), index_(index), current_value_(0.0), mod_percent_(0.0) {
 
@@ -154,13 +154,15 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 //    if (poly_total_ && use_poly)
 //      current_value_ += poly_total_->trigger_value;
 //  }
-  // DBG(current_value_);
   current_value_ = destination_->getLiveModulation();
-  float range = destination_->getMaximum() - destination_->getMinimum();
-  float value = (current_value_ - destination_->getMinimum()) * (1.0f / range);
-  mod_percent_ = bitklavier::utils::clamp(value, 0.0f, 1.0f);
-  float knob_percent = (destination_->getValue() - destination_->getMinimum()) / range;
-
+  DBG("live mod"+ juce::String(current_value_));
+  // float range = destination_->getMaximum() - destination_->getMinimum();
+  // float value = (current_value_ - destination_->getMinimum()) * (1.0f / range);
+  // mod_percent_ = bitklavier::utils::clamp(value, 0.0f, 1.0f);
+  DBG("destination_" + juce::String(destination_->getValue()));
+  // float knob_percent = (destination_->getValue() - destination_->getMinimum()) / range;
+  mod_percent_ = destination_->valueToProportionOfLength(current_value_);
+  float knob_percent = destination_->valueToProportionOfLength(destination_->getValue());
   float min_percent = bitklavier::utils::min(mod_percent_, knob_percent);
   float max_percent = bitklavier::utils::max(mod_percent_, knob_percent);
 
@@ -177,7 +179,7 @@ void ModulationMeter::updateDrawing(bool use_poly) {
       max_percent = bitklavier::utils::interpolate(-angle, angle, max_percent);
     }
   }
-
+  DBG(juce::String(min_percent) + "," + juce::String(max_percent) );
   quads_->setShaderValue(index_, min_percent, 0);
   quads_->setShaderValue(index_, max_percent, 1);
   quads_->setShaderValue(index_, min_percent, 2);

@@ -349,8 +349,9 @@ void FullInterface::renderOpenGL()
     juce::ScopedLock lock (open_gl_critical_section_);
     open_gl_.display_scale = display_scale_;
     background_.render (open_gl_);
-    modulation_manager->renderMeters(open_gl_,animate_);
+
     renderOpenGlComponents (open_gl_, animate_);
+    modulation_manager->renderMeters(open_gl_,animate_);
 }
 
 void FullInterface::openGLContextClosing()

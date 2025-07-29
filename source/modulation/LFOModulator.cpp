@@ -13,6 +13,8 @@ LFOModulatorProcessor::LFOModulatorProcessor(juce::ValueTree& vt) : ModulatorSta
 }
 
 void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,juce::MidiBuffer& midiMessages) {
+    setFrequency(_state.params.freq->getCurrentValue());
+    // DBG(buffer.getNumSamples());
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
         float lfoValue = getNextSample(); // Ranges -depth to +depth
@@ -20,7 +22,7 @@ void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,j
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
             float* channelData = buffer.getWritePointer(channel);
-            channelData[sample] *= (1.0f + lfoValue); // Example: modulate gain
+            channelData[sample] = (1.0f + 0.5f*lfoValue); // Example: modulate gain
         }
     }
 

@@ -18,8 +18,8 @@ struct LFOParams : public chowdsp::ParamHolder {
             {
         juce::ParameterID{"lfofreq",100},
         "Freq",
-        juce::NormalisableRange{0.f,30.f,.01f},
-        15.f
+        juce::NormalisableRange{0.001f,10.f,.001f},
+        0.001f
             };
 };
 class LFOModulatorProcessor : public ModulatorStateBase<bitklavier::PreparationStateImpl<LFOParams>> {
