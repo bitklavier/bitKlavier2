@@ -76,48 +76,6 @@ struct BlendronicParams : chowdsp::ParamHolder
      MultiSliderState smoothingTimes;
      MultiSliderState feedbackCoeffs;
 
-     /*
-     * how many sliders is the user actually working with (int)
-     *      - there will always be at least 1
-     *      - and 12 displayed
-     *      - but the user might be using any number 1 up to MAXMULTISLIDERLENGTH
-     */
-//     chowdsp::FloatParameter::Ptr beatLengths_numSlidersActual {
-//         juce::ParameterID { "beatLengths_numSlidersActual", 100 },
-//         "beatLengths_numSlidersActual",
-//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
-//         1.0f,
-//         &chowdsp::ParamUtils::floatValToString,
-//         &chowdsp::ParamUtils::stringToFloatVal
-//     };
-//
-//     chowdsp::FloatParameter::Ptr delayLengths_numSlidersActual {
-//         juce::ParameterID { "delayLengths_numSlidersActual", 100 },
-//         "delayLengths_numSlidersActual",
-//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
-//         1.0f,
-//         &chowdsp::ParamUtils::floatValToString,
-//         &chowdsp::ParamUtils::stringToFloatVal
-//     };
-//
-//     chowdsp::FloatParameter::Ptr smoothingTimes_numSlidersActual {
-//         juce::ParameterID { "smoothingTimes_numSlidersActual", 100 },
-//         "smoothingTimes_numSlidersActual",
-//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
-//         1.0f,
-//         &chowdsp::ParamUtils::floatValToString,
-//         &chowdsp::ParamUtils::stringToFloatVal
-//     };
-//
-//     chowdsp::FloatParameter::Ptr feedbackCoeffs_numSlidersActual {
-//         juce::ParameterID { "feedbackCoeffs_numSlidersActual", 100 },
-//         "feedbackCoeffs_numSlidersActual",
-//         chowdsp::ParamUtils::createNormalisableRange (1.0f, static_cast<float>(MAXMULTISLIDERLENGTH), 64.0f),
-//         1.0f,
-//         &chowdsp::ParamUtils::floatValToString,
-//         &chowdsp::ParamUtils::stringToFloatVal
-//     };
-
      // To adjust the gain of signals coming in to blendronic
      chowdsp::GainDBParameter::Ptr inputGain {
          juce::ParameterID { "InputGain", 100 },

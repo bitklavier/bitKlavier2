@@ -5,7 +5,7 @@
     - with Reset: if you try to Reset to a defaultState immediately after loading a gallery, it won't work. 
       - Try ResetTest.bk2
       - if you move the velocity min and max sliders before the mod, the reset will work, but it won't if you don't touch them after loading the gallery
-    - also with Reset and the Transposition slider: resetting to slider values of 0 won't work for some reason.
+    - also with Reset: in the VT viewer, why do we see several versions of Direct when there is only one?
     - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
       - should be fixed now; was missing a `stateChanges.changeState.clear();` in `TuningState::processStateChanges()`
     - saved `transpositionModSavetest` gallery and it crashes on load
@@ -167,6 +167,7 @@ and hopefully with answers included here for the record!
   - for a more complex set of parameters requiring a more complex UI element, you might need to create a `ParamHolder`
     - see `TransposeParams` for instance 
   - see the section here about Modulatable parameters; last argument for the parameter definition should probably be `true` if this parameter is to be available to mod.
+  - in the DirectProcessor constructor, you may need to `parent.getStateBank().addParam` and `v.appendChild (state.params.velocityMinMax.stateChanges.defaultState, nullptr)`
   - Call `add` and include your new param with the others 
     - first line in the DirectParams struct, for instance 
   - Note that in the UI elements that are OpenGL wrappers around legacy bitKlavier components (like the transposition slider, and the velocityMinMax slider) you'll need to create a `void processStateChanges() override` function and call it with every block

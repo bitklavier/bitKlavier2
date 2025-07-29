@@ -114,7 +114,12 @@ class OpenGlShapeButton : public juce::ToggleButton {
       juce::ToggleButton::mouseDown(e);
       gl_component_->setDown(true);
     }
-    
+
+    /**
+     * todo: got crash here after clicked close-x on modulation right-side pop-up [dt]
+     * looks like gl_component_ did not exist when it got here,
+     * can do checks for nullptr before this call, but not sure if that's the correct fix
+     */
     void mouseUp(const juce::MouseEvent& e) override {
       juce::ToggleButton::mouseUp(e);
       gl_component_->setDown(false);
