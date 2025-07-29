@@ -120,7 +120,7 @@ void ModulationModuleSection::handlePopupResult(int result) {
     {
         juce::ValueTree t(IDs::modulationproc);
         t.setProperty(IDs::type, "lfo", nullptr);
-        t.setProperty(IDs::isState, true, nullptr);
+        t.setProperty(IDs::isState, false, nullptr);
         undo.beginNewTransaction();
         parent.appendChild(t,&undo);
     }

@@ -20,7 +20,7 @@ public:
                                                                               0.f, // default min
                                                                               128.f, // default max
                                                                               1 ,//increment
-                                                                             _params->paramDefault
+                                                                             _params->stateChanges.defaultState
                                                                           ),
                                                                           params(_params)
     {
@@ -111,6 +111,7 @@ public:
     }
 
     void mouseDown(const juce::MouseEvent &e) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKRangeSlider>::mouseDown(e);
         redoImage();
     }
@@ -138,6 +139,7 @@ public:
     void mouseUp(const juce::MouseEvent &event) override {
         OpenGlAutoImageComponent<BKRangeSlider>::mouseUp(event);
         redoImage();
+        mouseInteraction = false;
     }
 
     OpenGL_VelocityMinMaxSlider *clone() {
@@ -145,6 +147,8 @@ public:
     }
 
     void BKRangeSliderValueChanged(juce::String name, double min, double max) override {
+        if (!mouseInteraction)
+            return;
         if (isModulation_) {
             DBG("updating modulationState in BKRangeSliderValueChanged");
             modulationState.setProperty("velocitymin", min, nullptr);
@@ -200,7 +204,7 @@ private :
         isModulation_ = true;
         addMyListener(this);
     }
-
+    bool mouseInteraction = false;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 

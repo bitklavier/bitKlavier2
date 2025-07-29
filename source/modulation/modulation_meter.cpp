@@ -154,7 +154,7 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 //    if (poly_total_ && use_poly)
 //      current_value_ += poly_total_->trigger_value;
 //  }
-  DBG(current_value_);
+  // DBG(current_value_);
   current_value_ = destination_->getLiveModulation();
   float range = destination_->getMaximum() - destination_->getMinimum();
   float value = (current_value_ - destination_->getMinimum()) * (1.0f / range);

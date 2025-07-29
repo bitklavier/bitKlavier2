@@ -46,7 +46,8 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         v.appendChild (modChan, nullptr);
         mod++;
     }
-    v.appendChild (state.params.transpose.paramDefault, nullptr);
+    v.appendChild (state.params.transpose.stateChanges.defaultState, nullptr);
+    v.appendChild (state.params.velocityMinMax.stateChanges.defaultState, nullptr);
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
@@ -139,7 +140,11 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     int numInputChannels = modBus.getNumChannels();
     for (int channel = 0; channel < numInputChannels; ++channel) {
        const float* in = modBus.getReadPointer(channel);
-        state.params.modulatableParams[channel]
+        std::visit([in](auto* p)->void
+    {
+        p->applyMonophonicModulation(*in);
+    },  state.params.modulatableParams[channel]);
+
     }
     // always top of the chain as an instrument source; doesn't take audio in
     buffer.clear();

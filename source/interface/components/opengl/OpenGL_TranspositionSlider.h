@@ -24,7 +24,7 @@ public:
                                                                             0.01,
 //                                                                            _params->numActive,
                                                                 _params->numActiveSliders->getCurrentValue(),
-                                                                    _params->paramDefault), // increment
+                                                                    _params->stateChanges.defaultState), // increment
                                                                         params(_params)
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();

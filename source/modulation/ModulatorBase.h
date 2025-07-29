@@ -64,6 +64,7 @@ public:
     juce::ValueTree state;
     struct Listener {
         virtual void modulationTriggered() = 0;
+        virtual void resetTriggered() = 0;
 
     };
     virtual void triggerModulation()
@@ -73,6 +74,15 @@ public:
             list->modulationTriggered();
         }
     }
+
+    virtual void triggerReset()
+    {
+        for (auto list: listeners_)
+        {
+            list->resetTriggered();
+        }
+    }
+
     std::vector<Listener*> listeners_;
     void addListener(ModulatorBase::Listener* listener) {
         listeners_.push_back(listener);
@@ -84,7 +94,7 @@ public:
     virtual void releaseResources() {}
     virtual SynthSection* createEditor() = 0;
     bitklavier::ModulationProcessor* parent_;
-    static constexpr ModulatorType type = ModulatorType::NONE;
+    static constexpr ModulatorType type = ModulatorType::AUDIO;
 //    std::vector<bitklavier::ModulationConnection*> connections;
     bool trigger = false;
     // /** Calls an action on the main thread via chowdsp::DeferredAction */

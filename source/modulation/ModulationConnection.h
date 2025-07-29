@@ -200,12 +200,19 @@ struct StateConnection : public ModulatorBase::Listener{
 
         void modulationTriggered() //listener funciton
         {
-            changeBuffer->changeState.push_back(std::pair<int,juce::ValueTree>(0,change));
+            changeBuffer->changeState.emplace_back(0,change);
         }
+
+        void resetTriggered()
+        {
+            changeBuffer->changeState.emplace_back(0,changeBuffer->defaultState);
+        }
+
         void reset() {
             source_name = "";
             destination_name = "";
         }
+
         std::string source_name;
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
         // if i'll be using this for that or not

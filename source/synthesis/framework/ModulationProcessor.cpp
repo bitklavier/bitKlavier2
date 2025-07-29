@@ -29,8 +29,17 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
     auto sample = buffer.getSample(0,0);
     auto sample1 = buffer.getSample(1,0);
     auto channel   = getChannelIndexInProcessBlockBuffer(true, 1, 0);
-    if (        reset_in.getSample(0,0))
-        DBG(reset_in.getSample(0,0));
+
+    if (reset_in.getSample(0,0))
+    {
+        if (reset_in.getSample(0,0) == 1)
+        {
+            DBG("ModulationProcessor::processBlock received reset " + juce::String(reset_in.getSample(0,0)));
+            for (auto mod : modulators_)
+                mod->triggerReset();
+        }
+    }
+
 
     buffer.clear();
 
@@ -41,13 +50,11 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         {
             for (auto mod : modulators_)
                 mod->triggerModulation();
-
         }
-
     }
+
     for (int i = 0; i <modulators_.size();i++)
     {
-
         if (modulators_[i] == nullptr)
             continue;
         //process the modulation into a scratch buffer.
