@@ -116,6 +116,14 @@ void ModulationModuleSection::handlePopupResult(int result) {
         undo.beginNewTransaction();
         parent.appendChild(t,&undo);
     }
+    else if (result == 3)
+    {
+        juce::ValueTree t(IDs::modulationproc);
+        t.setProperty(IDs::type, "lfo", nullptr);
+        t.setProperty(IDs::isState, false, nullptr);
+        undo.beginNewTransaction();
+        parent.appendChild(t,&undo);
+    }
 }
 
 
@@ -156,6 +164,7 @@ PopupItems ModulationModuleSection::createPopupMenu()
     PopupItems options;
     options.addItem(1, "add ramp" );
     options.addItem(2, "add state");
+    options.addItem(3, "add lfo");
     return options;
 }
 

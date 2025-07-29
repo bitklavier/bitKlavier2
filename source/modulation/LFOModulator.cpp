@@ -12,10 +12,18 @@ LFOModulatorProcessor::LFOModulatorProcessor(juce::ValueTree& vt) : ModulatorSta
     createUuidProperty(vt);
 }
 
-void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& bufferToFill,juce::MidiBuffer& midiMessages) {
-    for (int i = 0; i < bufferToFill.getNumSamples(); i++)
+void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,juce::MidiBuffer& midiMessages) {
+    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
-        bufferToFill.setSample(0, i,1.f);
+        float lfoValue = getNextSample(); // Ranges -depth to +depth
+
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            float* channelData = buffer.getWritePointer(channel);
+            channelData[sample] *= (1.0f + lfoValue); // Example: modulate gain
+        }
     }
+
+
 
 }

@@ -30,6 +30,7 @@
 #include "ObjectLists/ModConnectionsList.h"
 #include "PluginBase.h"
 #include "RampModulator.h"
+#include "LFOModulator.h"
 #include "StateModulator.h"
 #include "Synthesiser/Sample.h"
 #include "TuningProcessor.h"
@@ -66,6 +67,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
 
     //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
     modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree> ("ramp");
+    modulator_factory.registerType<LFOModulatorProcessor, juce::ValueTree> ("lfo");
     modulator_factory.registerType<StateModulatorProcessor, juce::ValueTree> ("state");
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
