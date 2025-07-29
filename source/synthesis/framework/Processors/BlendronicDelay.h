@@ -48,9 +48,9 @@ public:
     float nextOutLeft();
     float nextOutRight();
     void addSample(float input, int offset, int channel);
-    void addSamples(float* input, int numSamples, int offset, int channel);
-    void tick(float input, float* outputs, float outGain, bool stereo = true);
-    void scalePrevious(float coefficient, int offset, int channel);
+//    void addSamples(float* input, int numSamples, int offset, int channel);
+//    void tick(float input, float* outputs, float outGain, bool stereo = true);
+    void tick(float* inL, float* inR);
     void clear();
     void reset();
 
@@ -140,8 +140,8 @@ public:
     inline const float getDelayLength() const noexcept { return dDelayLength; }
     inline const float getSmoothValue() const noexcept { return dSmooth->getValue(); }
     inline const float getSmoothRate() const noexcept { return dSmoothRate; }
-    inline const bool getInputState() const noexcept { return dInputOpen; }
-    inline const bool getOutputState() const noexcept { return dOutputOpen; }
+//    inline const bool getInputState() const noexcept { return dInputOpen; }
+//    inline const bool getOutputState() const noexcept { return dOutputOpen; }
     inline const bool getShouldDuck() const noexcept { return shouldDuck; }
     inline const juce::AudioBuffer<float>* getDelayBuffer() const noexcept { return delayLinear->getBuffer(); }
     inline const int getInPoint() const noexcept { return delayLinear->getInPoint(); }
@@ -149,8 +149,8 @@ public:
     inline const float getSample(int c, int i) const noexcept { return delayLinear->getSample(c, i); }
 
     //mutators
-    void addSample(float sampleToAdd, int offset, int channel); //adds input sample into the delay line (first converted to float)
-    void addSamples(float* samplesToAdd, int numSamples, int offset, int channel);
+//    void addSample(float sampleToAdd, int offset, int channel); //adds input sample into the delay line (first converted to float)
+//    void addSamples(float* samplesToAdd, int numSamples, int offset, int channel);
 
     inline void setBufferSize(int bufferSize)
     {
@@ -179,14 +179,15 @@ public:
     }
 
     inline void setFeedback(float fb) { delayLinear->setFeedback(fb); }
-    inline const void setInputState(bool inputState) { dInputOpen = inputState; }
-    inline const void toggleInput() { dInputOpen = !dInputOpen; }
-    inline const void setOutputState(bool outputState) { dOutputOpen = outputState; }
-    inline const void toggleOutput() { dOutputOpen = !dOutputOpen; }
+//    inline const void setInputState(bool inputState) { dInputOpen = inputState; }
+//    inline const void toggleInput() { dInputOpen = !dInputOpen; }
+//    inline const void setOutputState(bool outputState) { dOutputOpen = outputState; }
+//    inline const void toggleOutput() { dOutputOpen = !dOutputOpen; }
 
     void tick(float* outputs, float outGain);
+    void tick(float* inL, float* inR);
 
-    void duckAndClear();
+//    void duckAndClear();
 
     inline void setSampleRate(double sr) { sampleRate = sr; delayLinear->setSampleRate(sr); dSmooth->setSampleRate(sr); }
     inline double getSampleRate() { return sampleRate; }
@@ -201,8 +202,8 @@ private:
     float dDelayLength;
     float dSmoothValue;
     float dSmoothRate;
-    bool dInputOpen;
-    bool dOutputOpen;
+//    bool dInputOpen;
+//    bool dOutputOpen;
     bool shouldDuck;
 
     double sampleRate;

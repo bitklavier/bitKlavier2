@@ -114,51 +114,43 @@ void BlendronicProcessor::updateDelayParameters()
     delay->setFeedback(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load());
 }
 
-void BlendronicProcessor::tick(float* outputs)
+void BlendronicProcessor::tick(float* inL, float* inR)
 {
-//    BlendronicPreparation::Ptr prep = blendronic->prep;
-//    TempoPreparation::Ptr tempoPrep = tempo->getTempo()->prep;
-//
-//    if (tempoPrep->getSubdivisions() * tempoPrep->getTempo() == 0) return;
-
-    /**
-     * todo: put these pulseLength updates in another function called on the block?
-     */
-//    pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
-//    pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
-    pulseLength = (60.0 / (_subdivisions * _tempo));
-    pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
 //    if (pulseLength != prevPulseLength) numSamplesBeat = prep->bBeats.value[beatIndex] * pulseLength * getSampleRate();
     if (pulseLength != prevPulseLength) numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load() * pulseLength * getSampleRate();
 
     // Check for beat change
     if (sampleTimer >= numSamplesBeat)
     {
-        // Clear if we need to
-        if (clearDelayOnNextBeat)
-        {
-            delay->clear();
-            /**
-             * todo: for display
-             */
-//            for (auto channel : audio)
-//                channel->clear();
-            clearDelayOnNextBeat = false;
-        }
+        /*
+         * everything in here only happens every beat, so not very often, so we don't need to overly optimize
+         */
+
+//        // Clear if we need to
+//        /**
+//         * todo: is setClearDelayOnNextBeat actually used?
+//         */
+//        if (clearDelayOnNextBeat)
+//        {
+//            delay->clear();
+//            /**
+//             * todo: for display
+//             */
+////            for (auto channel : audio)
+////                channel->clear();
+//            clearDelayOnNextBeat = false;
+//        }
 
         float beatPatternLength = 0.0;
-//        for (auto b : prep->bBeats.value) beatPatternLength += b * pulseLength * getSampleRate();
         for (int i=0; i<state.params.beatLengths.sliderVals.size(); i++) {
             beatPatternLength += state.params.beatLengths.sliderVals[i].load() * pulseLength * getSampleRate();
         }
 
-//        if (numBeatPositions != (int)((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * prep->bBeats.value.size()) - 1)
         if (numBeatPositions != (int)((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals.size()) - 1)
         {
             beatPositionsInBuffer.clear();
             beatPositionsIndex = -1;
             pulseOffset = delay->getInPoint();
-//            numBeatPositions = ((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * prep->bBeats.value.size()) - 1;
             numBeatPositions = ((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals.size()) - 1;
         }
 
@@ -168,29 +160,21 @@ void BlendronicProcessor::tick(float* outputs)
 
         // Step sequenced params
         beatIndex++;
-//        if (beatIndex >= prep->bBeats.value.size()) beatIndex = 0;
         if (beatIndex >= state.params.beatLengths.sliderVals.size()) beatIndex = 0;
-
         delayIndex++;
-//        if (delayIndex >= prep->bDelayLengths.value.size()) delayIndex = 0;
         if (delayIndex >= state.params.delayLengths.sliderVals.size()) delayIndex = 0;
-
         smoothIndex++;
-//        if (smoothIndex >= prep->bSmoothLengths.value.size()) smoothIndex = 0;
         if (smoothIndex >= state.params.smoothingTimes.sliderVals.size()) smoothIndex = 0;
-
         feedbackIndex++;
-//        if (feedbackIndex >= prep->bFeedbackCoefficients.value.size()) feedbackIndex = 0;
         if (feedbackIndex >= state.params.feedbackCoeffs.sliderVals.size()) feedbackIndex = 0;
 
-
         // Update numSamplesBeat for the new beat and reset sampleTimer
-//        numSamplesBeat = prep->bBeats.value[beatIndex] * pulseLength * getSampleRate();
         numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load() * pulseLength * getSampleRate();
         sampleTimer = 0;
 
         updateDelayParameters();
     }
+
     sampleTimer++;
 
     if (pulseLength != prevPulseLength)
@@ -200,31 +184,47 @@ void BlendronicProcessor::tick(float* outputs)
         resetPhase = true;
         prevPulseLength = pulseLength;
     }
-    //prevPulseLength = pulseLength;
 
     // Tick the delay
-//    delay->tick(outputs, juce::Decibels::decibelsToGain(prep->outGain.value));
-    delay->tick(outputs, 1.);
-
-    float dlr = 0.0f;
-    if (pulseLength != INFINITY) dlr = delay->getDelayLength() / (pulseLength * getSampleRate());
-
-
-    int i = delay->getInPoint() - 1;
-    if (i < 0) i = delay->getDelayBuffer()->getNumSamples() - 1;
+    delay->tick(inL, inR);
 
     /**
      * todo: for display
      */
+//    float dlr = 0.0f;
+//    if (pulseLength != INFINITY) dlr = delay->getDelayLength() / (pulseLength * getSampleRate());
+//
+//    int i = delay->getInPoint() - 1;
+//    if (i < 0) i = delay->getDelayBuffer()->getNumSamples() - 1;
 //    for (auto channel : audio)
 //        channel->pushSample (delay->getSample(0, i));
 //    smoothing->pushSample(dlr);
 }
 
-
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    int numSamples = buffer.getNumSamples();
 
+    auto outL = buffer.getWritePointer(0, 0);
+    if (outL == nullptr)
+        return;
+
+    auto outR = buffer.getWritePointer(1, 0);
+    if (outR == nullptr)
+        return;
+
+    /**
+     * todo: need to get all the tempo and general settings into here
+     */
+    //    pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
+    //    pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
+    pulseLength = (60.0 / (_subdivisions * _tempo));
+    pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
+
+    while (--numSamples >= 0)
+    {
+        tick(outL++, outR++);
+    }
 }
 
 void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

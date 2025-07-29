@@ -27,19 +27,16 @@ BlendronicDelay::BlendronicDelay(float delayLength, float smoothValue, float smo
                                                                                                                                          dDelayLength(delayLength),
                                                                                                                                          dSmoothValue(smoothValue),
                                                                                                                                          dSmoothRate(smoothRate),
-                                                                                                                                         dInputOpen(true),
-                                                                                                                                         dOutputOpen(true),
                                                                                                                                          sampleRate(sr)
 {
-//    delayLinear =  new BKDelayL(dDelayLength, dBufferSize, dDelayGain, sampleRate);
     delayLinear = std::make_unique<BKDelayL>(dDelayLength, dBufferSize, dDelayGain, sampleRate);
-//    dSmooth = new BKEnvelope(dSmoothValue, dDelayLength, sampleRate);
     dSmooth = std::make_unique<BKEnvelope>(dSmoothValue, dDelayLength, sampleRate);
     dSmooth->setRate(dSmoothRate);
-//    dEnv = new BKEnvelope(1.0f, 1.0f, sampleRate);
     dEnv = std::make_unique<BKEnvelope>(1.0f, 1.0f, sampleRate);
     dEnv->setTime(5.0f);
-    shouldDuck = false;
+
+//    shouldDuck = false;
+
     DBG("Create bdelay");
 }
 
@@ -48,41 +45,27 @@ BlendronicDelay::~BlendronicDelay()
     DBG("Destroy bdelay");
 }
 
-void BlendronicDelay::addSample(float sampleToAdd, int offset, int channel)
-{
-    if (dInputOpen) delayLinear->addSample(sampleToAdd, offset, channel);
-}
+//void BlendronicDelay::addSample(float sampleToAdd, int offset, int channel)
+//{
+//    delayLinear->addSample(sampleToAdd, offset, channel);
+//}
 
-void BlendronicDelay::addSamples(float* samplesToAdd, int numSamples, int offset, int channel)
+void BlendronicDelay::tick(float* inL, float* inR)
 {
-    if (dInputOpen) delayLinear->addSamples(samplesToAdd, numSamples, offset, channel);
-}
+    /**
+     * todo: check to see if we still need this dEnv stuff
+     * todo: confirm we don't need 'shouldDuck'
+     * todo: deal with dOutputOpen, dInputOpen...
+     */
 
-void BlendronicDelay::tick(float* outputs, float outGain)
-{
-    float dummyOut[2];
     setDelayLength(dSmooth->tick());
     float env = dEnv->tick();
-    if (shouldDuck && env == 0.0f)
-    {
-        clear();
-        setEnvelopeTarget(1.0f);
-        shouldDuck = false;
-    }
-    if (dOutputOpen)
-    {
-        delayLinear->tick(0, outputs, outGain, true);
-        outputs[0] *= env;
-        outputs[1] *= env;
-    }
-    else delayLinear->tick(0, dummyOut, outGain, true);
+
+    delayLinear->tick(inL, inR);
+    *inL *= env;
+    *inR *= env;
 }
 
-void BlendronicDelay::duckAndClear()
-{
-    shouldDuck = true;
-    setEnvelopeTarget(0.0f);
-}
 
 /*
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,16 +141,20 @@ void BKDelayL::setBufferSize(int size)
     loading = false;
 }
 
+/**
+ * todo: combine these into one function with channel arg
+ * @return
+ */
 float BKDelayL::nextOutLeft()
 {
-    if (doNextOutLeft)
+//    if (doNextOutLeft)
     {
         nextOutput = inputs.getSample(0, outPoint) * omAlpha;
         if (outPoint + 1 < inputs.getNumSamples())
             nextOutput += inputs.getSample(0, outPoint + 1) * alpha;
         else
             nextOutput += inputs.getSample(0, 0) * alpha;
-        doNextOutLeft = false;
+//        doNextOutLeft = false;
     }
 
     return nextOutput;
@@ -175,14 +162,14 @@ float BKDelayL::nextOutLeft()
 
 float BKDelayL::nextOutRight()
 {
-    if (doNextOutRight)
+//    if (doNextOutRight)
     {
         nextOutput = inputs.getSample(1, outPoint) * omAlpha;
         if (outPoint + 1 < inputs.getNumSamples())
             nextOutput += inputs.getSample(1, outPoint + 1) * alpha;
         else
             nextOutput += inputs.getSample(1, 0) * alpha;
-        doNextOutRight = false;
+//        doNextOutRight = false;
     }
 
     return nextOutput;
@@ -194,54 +181,36 @@ void BKDelayL::addSample(float input, int offset, int channel)
     inputs.addSample(channel, (inPoint + offset) % inputs.getNumSamples(), input);
 }
 
-void BKDelayL::addSamples(float* input, int numSamples, int offset, int channel)
+void BKDelayL::tick(float* inL, float* inR)
 {
-    //    inputs.addFrom(channel, (inPoint + offset) % inputs.getNumSamples(), input, numSamples);
-    for (int i = 0; i < numSamples; ++i)
-        inputs.addSample(channel, (inPoint + offset + i) % inputs.getNumSamples(), input[i]);
-}
+    /**
+     * todo: check on 'loading' and if we need it
+     */
+//    if (loading) return;
 
-//redo so it has channel argument, like addSample, also bool which indicates whether to increment inPoint
-//or, have it take float* input
-void BKDelayL::tick(float input, float* outputs, float outGain, bool stereo)
-{
-    if (loading) return;
     if (inPoint >= inputs.getNumSamples()) inPoint = 0;
-    inputs.addSample(0, inPoint, input * gain);
-    if (stereo) inputs.addSample(1, inPoint, input * gain);
+    inputs.addSample(0, inPoint, *inL);
+    inputs.addSample(1, inPoint, *inR);
 
+    /**
+     * todo: is this doNext stuff for freezing? omit for now...
+     */
     lastFrameLeft = nextOutLeft();
-    doNextOutLeft = true;
-    if (stereo)
-    {
-        lastFrameRight = nextOutRight();
-        doNextOutRight = true;
-    }
+//    doNextOutLeft = true;
+    lastFrameRight = nextOutRight();
+//    doNextOutRight = true;
 
     if (++outPoint >= inputs.getNumSamples()) outPoint = 0;
 
     //feedback
     inputs.addSample(0, inPoint, lastFrameLeft * feedback);
-    if (stereo) inputs.addSample(1, inPoint, lastFrameRight * feedback);
+    inputs.addSample(1, inPoint, lastFrameRight * feedback);
 
     inPoint++;
-    if (inPoint == inputs.getNumSamples()) inPoint = 0;
+//    if (inPoint == inputs.getNumSamples()) inPoint = 0;
 
-    if (stereo)
-    {
-        outputs[0] = lastFrameLeft * outGain;
-        outputs[1] = lastFrameRight * outGain;
-    }
-    else
-    {
-        outputs[0] = lastFrameLeft * outGain;
-    }
-}
-
-void BKDelayL::scalePrevious(float coefficient, int offset, int channel)
-{
-    if (loading) return;
-    inputs.setSample(channel, (inPoint + offset) % inputs.getNumSamples(), inputs.getSample(channel, (inPoint + offset) % inputs.getNumSamples()) * coefficient);
+    *inL = lastFrameLeft;
+    *inR = lastFrameRight;
 }
 
 void BKDelayL::clear()
@@ -260,8 +229,8 @@ void BKDelayL::reset()
     alpha = outPointer - outPoint; //fractional part
     omAlpha = (float)1.0 - alpha;
     if (outPoint == inputs.getNumSamples()) outPoint = 0;
-    doNextOutLeft = true;
-    doNextOutRight = true;
+//    doNextOutLeft = true;
+//    doNextOutRight = true;
 }
 
 /*
