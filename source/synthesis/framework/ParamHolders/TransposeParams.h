@@ -12,9 +12,9 @@ struct TransposeParams : chowdsp::ParamHolder
 {
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
     {
-        add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11, numActiveSliders, transpositionUsesTuning);
-        std::vector<int*> myvec;
-
+        add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,
+            numActiveSliders,
+            transpositionUsesTuning);
     }
 
     chowdsp::SemitonesParameter::Ptr t0{juce::ParameterID{"t0", 100},
@@ -85,18 +85,13 @@ struct TransposeParams : chowdsp::ParamHolder
         }};
 
     /*
-     * processStateChanges() is used to handle state change modifications
-     * that are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
+     * processStateChanges() is used to handle state change modifications, including resets. should be called every block
      *
-     * so.... if you want a collection of params (like TranspParams or velocityMinMaxParams) to be
-     * state modulatable, they have to be in here, and this needs to be called
+     * state changes are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
+     * examples: TranspParams or velocityMinMaxParams
      *
-     * gets run whenever a state change gets run on the back end
-     * modulation that changes state will be triggered here
-     * called in process block (DirectProcessor)
-     *
-     * required for parameters that are state modulated (as opposed to ramp/continuously modulated)
-     *      so these are ones like Transpose, where they all change at once
+     * 'stateChanges.change' state will have size() != 0 after a mod or reset is triggered. each change
+     * is handled here, and then it is cleared until another mod or reset is triggered
      *
      * in this specific case, if there is a changeState in stateChanges (which will only happen when
      * a mod is triggered) we read through the valueTree and update all the modded transpositions (t0, t1, etc...)
@@ -108,7 +103,6 @@ struct TransposeParams : chowdsp::ParamHolder
         int i = numActiveSliders->getCurrentValue();
         for(auto [index, change] : stateChanges.changeState)
         {
-            //DBG("TransposeParams processStateChanges");
             static juce::var nullVar;
 
             for (i = 0; i < 12; i++)
@@ -116,9 +110,9 @@ struct TransposeParams : chowdsp::ParamHolder
                 auto str = "t" + juce::String(i);
                 auto val = change.getProperty(str);
 
-                if (val == nullVar) break;
+                // need to make sure we don't ignore values of 0.!
+                if (val == nullVar && !val.equalsWithSameType(0.)) break;
 
-                //DBG("updating transposition " + str + " to " + val.toString());
                 auto& float_param = float_params->at(i);
                 float_param.get()->setParameterValue(val);
             }

@@ -364,7 +364,10 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
 void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     auto * interface = findParentComponentOfClass<SynthGuiInterface>();
     auto s = nodeFactory.CreateObject(wrapper->state.getProperty(IDs::type), wrapper->state,interface );
-    addSubSection(s.get());
+    {
+        juce::ScopedLock lock(open_gl_critical_section_);
+        addSubSection (s.get());
+    }
     Skin default_skin;
     s->setSkinValues(default_skin, false);
     s->setDefaultColor();
@@ -392,7 +395,10 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->addListener(&modulationLineView);
     s->addListener(this);
     s->setNodeInfo();
-    plugin_components.push_back(std::move(s));
+    {
+        juce::ScopedLock lock (open_gl_critical_section_);
+        plugin_components.push_back (std::move (s));
+    }
 }
 
 void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate)
@@ -692,7 +698,10 @@ void ConstructionSite::setActivePiano() {
     prep_list= interface->getSynth()->getActivePreparationList();
     parent = prep_list->getValueTree().getParent();
     prep_list->addListener(this);
-    prep_list->rebuildAllGui();
+//    {
+//        juce::ScopedLock lock (open_gl_critical_section_);
+            prep_list->rebuildAllGui();
+//    }
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
