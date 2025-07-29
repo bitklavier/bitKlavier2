@@ -33,21 +33,26 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
      *      modulations like this come on an audio channel
      *      this is on a separate bus from the regular audio graph that carries audio between preparations
      */
-    int mod = 0;
-    for (auto param: state.params.modulatableParams)
-    {
-        juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
-        juce::String name = std::visit([](auto* p) -> juce::String
-    {
-        return p->paramID; // Works if all types have getParamID()
-    }, param);
-        modChan.setProperty (IDs::parameter, name, nullptr);
-        modChan.setProperty (IDs::channel, mod, nullptr);
-        v.appendChild (modChan, nullptr);
-        mod++;
+    auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
+    if (!mod_params.isValid()) {
+        int mod = 0;
+        mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS,nullptr);
+        for (auto param: state.params.modulatableParams)
+        {
+            juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
+            juce::String name = std::visit([](auto* p) -> juce::String
+        {
+            return p->paramID; // Works if all types have getParamID()
+        }, param);
+            modChan.setProperty (IDs::parameter, name, nullptr);
+            modChan.setProperty (IDs::channel, mod, nullptr);
+            mod_params.appendChild (modChan, nullptr);
+            mod++;
+        }
     }
-    v.appendChild (state.params.transpose.stateChanges.defaultState, nullptr);
-    v.appendChild (state.params.velocityMinMax.stateChanges.defaultState, nullptr);
+
+    state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
