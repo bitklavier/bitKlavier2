@@ -96,23 +96,31 @@ public:
     }
 
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKStackedSlider>::textEditorReturnKeyPressed(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void textEditorFocusLost(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKStackedSlider>::textEditorFocusLost(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void textEditorEscapeKeyPressed(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKStackedSlider>::textEditorEscapeKeyPressed(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void textEditorTextChanged(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKStackedSlider>::textEditorTextChanged(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void mouseUp(const juce::MouseEvent &event) override {
@@ -142,7 +150,7 @@ public:
              * and then set the value for the ones we do have
              * so, if we have 4 transpositions, we blank out 4 and above and then set 0 through 3
              */
-            for (int i = val.size(); i < 11; i++) {
+            for (int i = val.size(); i < 12; i++) {
                 auto str = "t" + juce::String(i);
                 modulationState.removeProperty(str, nullptr);
             }
@@ -160,7 +168,7 @@ public:
              * 'isModulated_' is a bit of a misnomer, in that this applies to ANY transposition slider,
              * regardless of whether it has a modulator attached
              */
-            for (int i = val.size(); i < 11; i++) {
+            for (int i = val.size(); i < 12; i++) {
                 auto str = "t" + juce::String(i);
                 defaultState.removeProperty(str, nullptr);
             }
@@ -182,7 +190,7 @@ public:
     void syncToValueTree() override {
         juce::Array<float> vals;
         static juce::var nullVar;
-        for (int i = 0; i < 11; i++) {
+        for (int i = 0; i < 12; i++) {
             auto str = "t" + juce::String(i);
             auto val = modulationState.getProperty(str);
             if (val == nullVar)

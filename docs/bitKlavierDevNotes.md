@@ -34,6 +34,7 @@
     - in general, I need to understand how this works; 
       - in trying to implement the MultiSlider for Blendronic/Synchronic, i got completely lost!
       - might make sense to look through my notes below to see if they are accurate, what they are missing, etc...
+- [ ] what is `isBusesLayoutSupported`? in DirectProcessor, it just returns true.
 - [ ] Blendrónic audio in: Dan working on this
 - [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
 - [ ] opening multiple sample libs, assigning to individual preps!

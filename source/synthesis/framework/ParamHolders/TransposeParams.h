@@ -13,7 +13,7 @@ struct TransposeParams : chowdsp::ParamHolder
     TransposeParams() : chowdsp::ParamHolder("TRANSPOSE")
     {
         add(t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11, numActiveSliders, transpositionUsesTuning);
-        std::vector<int*> myvec;
+//        std::vector<int*> myvec;
 
     }
 
@@ -118,7 +118,7 @@ struct TransposeParams : chowdsp::ParamHolder
 
                 if (val == nullVar) break;
 
-                //DBG("updating transposition " + str + " to " + val.toString());
+                DBG("updating transposition " + str + " to " + val.toString());
                 auto& float_param = float_params->at(i);
                 float_param.get()->setParameterValue(val);
             }

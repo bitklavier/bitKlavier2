@@ -148,6 +148,9 @@ public:
 
     void BKRangeSliderValueChanged(juce::String name, double min, double max) override
     {
+        /*
+         * we don't want these to be called when a modulation or reset is triggered
+         */
         if (!mouseInteraction)
             return;
 
