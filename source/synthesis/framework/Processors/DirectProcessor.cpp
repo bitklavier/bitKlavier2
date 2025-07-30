@@ -231,6 +231,16 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
     if (tuning != nullptr)
         tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
+
+
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+
+    /**
+     * todo add gain as last arg to these:
+     */
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples());
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
+
 }
 
 /**
@@ -279,4 +289,8 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
 
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain (outputgainmult);
+
+    /**
+     * todo: include send buffer copy stuff here?
+     */
 }

@@ -34,7 +34,7 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
      * todo: set this constructor params from default params
      */
     delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, getSampleRate());
-
+    bufferDebugger = new BufferDebugger();
 }
 
 void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -199,6 +199,10 @@ void BlendronicProcessor::tick(float* inL, float* inR)
 
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+
+    bufferDebugger->capture("L", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
+    bufferDebugger->capture("R", buffer.getReadPointer(1), buffer.getNumSamples(), -1.f, 1.f);
+
     int numSamples = buffer.getNumSamples();
 
     auto outL = buffer.getWritePointer(0, 0);

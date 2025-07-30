@@ -138,14 +138,15 @@ void PreparationSection::setPortInfo() {
                     numIns = numIns + 1;
                 }
 
-                //check if main audio output bus is enabled
-                if (processor->getBus(false, 0) != nullptr && getProcessor()->getBus(false, 0)->isEnabled()) {
-                    for (int i = 0; i < processor->getTotalNumOutputChannels(); ++i) {
+                //check if send audio output bus is enabled
+                if (processor->getBus(false, 2) != nullptr && getProcessor()->getBus(false, 2)->isEnabled()) {
+                    for (int i = 0; i < processor->getBus(false,2)->getNumberOfChannels(); ++i) {
+                        auto chIdx = processor->getBus(false,2)->getChannelIndexInProcessBlockBuffer(i);
                         juce::ValueTree v{IDs::PORT};
                         v.setProperty(IDs::nodeID,
                                       juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
                                       nullptr);
-                        v.setProperty(IDs::chIdx, i, nullptr);
+                        v.setProperty(IDs::chIdx, chIdx, nullptr);
                         v.setProperty(IDs::isIn, false, nullptr);
                         bool add = true;
                         for (auto vt: state) {
@@ -224,7 +225,10 @@ void PreparationSection::resized() {
     if (auto *processor = getProcessor()) {
         for (auto *port: objects) {
             const bool isInput = port->isInput;
+
             auto channelIndex = port->pin.channelIndex;
+            if (!isInput)
+                channelIndex -= 2; //safely assume all outputs have stereo main output and only draw send ports
             int busIdx = 0;
             processor->getOffsetInBusBufferForAbsoluteChannelIndex(isInput, channelIndex, busIdx);
 

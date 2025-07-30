@@ -44,7 +44,7 @@
 #include <chowdsp_sources/chowdsp_sources.h>
 #include "BlendronicDelay.h"
 #include "utils.h"
-
+#include "buffer_debugger.h"
 //struct BlendronicState : bitklavier::StateChangeableParameter
 //{
 //    /*
@@ -177,9 +177,11 @@ public:
     juce::AudioProcessor::BusesProperties blendronicBusLayout()
     {
         return BusesProperties()
-            .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+            .withOutput("Output", juce::AudioChannelSet::stereo(), true)
             .withInput ("Input", juce::AudioChannelSet::stereo(), true)
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (9), true);
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (9), true)
+            .withOutput("Modulation", juce::AudioChannelSet::mono(),false)
+            .withOutput("Send",juce::AudioChannelSet::stereo(),true);
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override { return true; }
 
@@ -259,6 +261,7 @@ private:
 
     chowdsp::Gain<float> gain;
 
+    juce::ScopedPointer<BufferDebugger> bufferDebugger;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BlendronicProcessor)
 };
 
