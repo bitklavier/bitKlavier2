@@ -214,7 +214,7 @@ private:
 
     std::unique_ptr<BlendronicDelay> delay;
     void updateDelayParameters();
-//    void tick(float* outputs);
+    void clearNextDelayBlock(int numSamples);
     void tick(float* inL, float* inR);
 
     juce::Array<juce::Array<float>> velocities;

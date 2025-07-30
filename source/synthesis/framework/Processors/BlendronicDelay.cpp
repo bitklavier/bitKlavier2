@@ -28,6 +28,12 @@ BlendronicDelay::~BlendronicDelay()
     DBG("Destroy bdelay");
 }
 
+void BlendronicDelay::scalePrevious(float coefficient, int offset, int channel)
+{
+//    if (loading) return;
+    delayLinear->scalePrevious(coefficient, offset, channel);
+}
+
 void BlendronicDelay::tick(float* inL, float* inR)
 {
     /**
@@ -153,10 +159,18 @@ float BKDelayL::nextOutRight()
     return nextOutput;
 }
 
+
+
 //allows addition of samples without incrementing delay position value
 void BKDelayL::addSample(float input, int offset, int channel)
 {
     inputs.addSample(channel, (inPoint + offset) % inputs.getNumSamples(), input);
+}
+
+void BKDelayL::scalePrevious(float coefficient, int offset, int channel)
+{
+    //    if (loading) return;
+    inputs.setSample(channel, (inPoint + offset) % inputs.getNumSamples(), inputs.getSample(channel, (inPoint + offset) % inputs.getNumSamples()) * coefficient);
 }
 
 void BKDelayL::tick(float* inL, float* inR)

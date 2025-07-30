@@ -203,6 +203,15 @@ void BlendronicProcessor::tick(float* inL, float* inR)
 //    smoothing->pushSample(dlr);
 }
 
+void BlendronicProcessor::clearNextDelayBlock(int numSamples)
+{
+    for (int i = 0; i < numSamples; i++)
+    {
+        delay->scalePrevious(0, i, 0);
+        delay->scalePrevious(0, i, 1);
+    }
+}
+
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 
@@ -211,6 +220,8 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      */
     bufferDebugger->capture("L", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
     bufferDebugger->capture("R", buffer.getReadPointer(1), buffer.getNumSamples(), -1.f, 1.f);
+
+    clearNextDelayBlock(buffer.getNumSamples());
 
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
