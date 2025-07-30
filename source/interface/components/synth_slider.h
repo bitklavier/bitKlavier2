@@ -492,8 +492,9 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
 //    {
 //        attachment = (param, pluginState, *this);
 //    }
+  chowdsp::SliderAttachment* attachment = nullptr;
   protected:
-    chowdsp::SliderAttachment* attachment = nullptr;
+
     PopupItems createPopupMenu();
     void setRotaryTextEntryBounds();
     void setLinearTextEntryBounds();

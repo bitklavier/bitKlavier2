@@ -74,7 +74,7 @@ public :
 
     float getNextSample()
     {
-        float sample = std::sin(phase) * depth;
+        float sample = std::sin(phase);
         phase += phaseIncrement;
 
         if (phase > juce::MathConstants<float>::twoPi)

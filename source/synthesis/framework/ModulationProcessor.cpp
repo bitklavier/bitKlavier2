@@ -64,7 +64,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         {
             for (auto connection : mod_routing[i].mod_connections)
             {
-                buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getCurrentBaseValue());
+                buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getScaling());
             }
         }
 

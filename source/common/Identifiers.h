@@ -84,6 +84,9 @@ namespace IDs
     DECLARE_ID (selectedPianoName)
     DECLARE_ID (sync);
 
+    DECLARE_ID(start);
+    DECLARE_ID(end);
+    DECLARE_ID(skew);
 }
 
 #undef DECLARE_ID

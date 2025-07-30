@@ -110,7 +110,7 @@ void OpenGlSlider:: redoImage(bool skip_image) {
 
   if (isModulationKnob()) {
     slider_quad_->setActive(true);
-    float t = getValue();
+    float t = valueToProportionOfLength(getValue());
     slider_quad_->setThumbColor(thumb_color_);
 
     if (t > 0.0f) {

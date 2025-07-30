@@ -155,7 +155,7 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 //      current_value_ += poly_total_->trigger_value;
 //  }
   current_value_ = destination_->getLiveModulation();
-  // DBG("live mod"+ juce::String(current_value_));
+  DBG("live mod"+ juce::String(current_value_));
   // float range = destination_->getMaximum() - destination_->getMinimum();
   // float value = (current_value_ - destination_->getMinimum()) * (1.0f / range);
   // mod_percent_ = bitklavier::utils::clamp(value, 0.0f, 1.0f);
