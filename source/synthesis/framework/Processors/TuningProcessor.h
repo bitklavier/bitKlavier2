@@ -193,8 +193,8 @@ struct TuningParams : chowdsp::ParamHolder
     TuningState tuningState;
 
     /*
-     * serializers are used for more complex params
-     *      - here we need arrays and indexed arrays for circular and absolute tunings, for instance
+     * serializers are used for more complex params; called only on save and load
+     * - here we need arrays and indexed arrays for circular and absolute tunings, for instance
      */
     /* Custom serializer */
     template <typename Serializer>
@@ -235,10 +235,10 @@ public:
 
     juce::AudioProcessor::BusesProperties tuningBusLayout() {
         return BusesProperties()
-            .withOutput ("Output1", juce::AudioChannelSet::stereo(), false)
-            .withInput ("input", juce::AudioChannelSet::stereo(), false)
-        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true);
+                .withOutput("Output", juce::AudioChannelSet::stereo(), false)
+                .withInput ("Input", juce::AudioChannelSet::stereo(), false)
+                .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
+                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true);
     }
 
 private:

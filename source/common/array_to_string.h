@@ -46,6 +46,17 @@ std::array<float, N> parseFloatStringToArrayCircular(const std::string& input){
 }
 
 juce::String getOnKeyString(const std::bitset<128>& bits);
-juce::String arrayToString(const std::array<float, 12>& array);
-juce::String arrayToStringWithIndex(const std::array<float, 128>& array);
+
+//juce::String arrayToString(const std::array<float, 12>& array);
+template <size_t Size>
+juce::String arrayToString(const std::array<float, Size>& array);
+//template <size_t Size> // <--- Templated for any size
+//juce::String arrayToString(const std::array<std::atomic<float>, Size>& array); // <--- Takes std::atomic<float> array
+
+//juce::String arrayToStringWithIndex(const std::array<float, 128>& array);
+template <size_t Size>
+juce::String arrayToStringWithIndex(const std::array<float, Size>& array);
+//template <size_t Size> // <--- Templated for any size
+//juce::String arrayToStringWithIndex(const std::array<std::atomic<float>, Size>& array) // <--- Takes std::atomic<float> array
+
 #endif //ARRAY_TO_STRING_H

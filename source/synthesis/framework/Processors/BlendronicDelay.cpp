@@ -57,18 +57,18 @@ void BlendronicDelay::tick(float* inL, float* inR)
 ////////////////////////////////////////////////////////////////////////////////
 */
 BKDelayL::BKDelayL() :
-                       inPoint(0),
-                       outPoint(0),
-                       bufferSize(44100.),
-                       length(0.0),
-                       gain(1.0),
-                       lastFrameLeft(0),
-                       lastFrameRight(0),
-                       feedback(0.9),
-                       doNextOutLeft(false),
-                       doNextOutRight(false),
-                       loading(false),
-                       sampleRate(44100.)
+       inPoint(0),
+       outPoint(0),
+       bufferSize(44100.),
+       length(0.0),
+       gain(1.0),
+       lastFrameLeft(0),
+       lastFrameRight(0),
+       feedback(0.9),
+       doNextOutLeft(false),
+       doNextOutRight(false),
+       loading(false),
+       sampleRate(44100.)
 {
     inputs = juce::AudioBuffer<float>(2, bufferSize);
     inputs.clear();
@@ -159,14 +159,13 @@ float BKDelayL::nextOutRight()
     return nextOutput;
 }
 
-
-
 //allows addition of samples without incrementing delay position value
 void BKDelayL::addSample(float input, int offset, int channel)
 {
     inputs.addSample(channel, (inPoint + offset) % inputs.getNumSamples(), input);
 }
 
+// used for clearing the oldest part of the buffer so that it doesn't linger
 void BKDelayL::scalePrevious(float coefficient, int offset, int channel)
 {
     //    if (loading) return;
@@ -181,11 +180,6 @@ void BKDelayL::tick(float* inL, float* inR)
 //    if (loading) return;
 
     if (inPoint >= inputs.getNumSamples()) inPoint = 0;
-    /*
-     * combining the following call with the one below, should be ok...
-     */
-//    inputs.addSample(0, inPoint, *inL);
-//    inputs.addSample(1, inPoint, *inR);
 
     /**
      * todo: is this doNext stuff for freezing? omit for now...
@@ -197,20 +191,11 @@ void BKDelayL::tick(float* inL, float* inR)
 
     if (++outPoint >= inputs.getNumSamples()) outPoint = 0;
 
-    //feedback
-    /**
-     * addSample adds it to the existing sample at this location (inPoint)
-     * todo: could just call this once here:
-     *  inputs.addSample(0, inPoint, *inL + lastFrameLeft * feedback);
-     * and not call it earlier as we do above
-     */
-//    inputs.addSample(0, inPoint, lastFrameLeft * feedback);
-//    inputs.addSample(1, inPoint, lastFrameRight * feedback);
+    //add the current sample and feedback the last output as well
     inputs.addSample(0, inPoint, *inL + lastFrameLeft * feedback);
     inputs.addSample(1, inPoint, *inR + lastFrameRight * feedback);
 
     inPoint++;
-//    if (inPoint == inputs.getNumSamples()) inPoint = 0;
 
     *inL = lastFrameLeft;
     *inR = lastFrameRight;

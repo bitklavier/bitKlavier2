@@ -45,26 +45,6 @@
 #include "BlendronicDelay.h"
 #include "utils.h"
 #include "buffer_debugger.h"
-//struct BlendronicState : bitklavier::StateChangeableParameter
-//{
-//    /*
-//     * Multisliders for:
-//     *      - beat lengths          [0, 8]      => FloatParam multipliers of beat length set by Tempo
-//     *      - delay lengths         [0, 8]      => FloatParam multipliers of beat length set by Tempo
-//     *      - smoothing             [0, 500]    => ms TimeMsParameter
-//     *      - feedback coefficients [0, 1]      => FloatParam
-//     *
-//     * - max these at MAXMULTISLIDERLENGTH vals for now (will need to be higher for Synchronic multisliders)
-//     * - de/serialize these
-//     * - keep track of their actual sizes using params as well, set indirectly by the user
-//     */
-//
-//    MultiSliderState beatLengths;
-//    MultiSliderState delayLengths;
-//    MultiSliderState smoothingTimes;
-//    MultiSliderState feedbackCoeffs;
-//
-//};
 
 struct BlendronicParams : chowdsp::ParamHolder
 {
@@ -77,39 +57,25 @@ struct BlendronicParams : chowdsp::ParamHolder
     BlendronicParams() : chowdsp::ParamHolder ("blendronic")
     {
         add (
-//            beatLengths_numSlidersActual,
-//            delayLengths_numSlidersActual,
-//            smoothingTimes_numSlidersActual,
-//            feedbackCoeffs_numSlidersActual,
             outputGain,
             inputGain,
             outputSend);
     }
 
-     /*
-      * Multisliders for:
-      *      - beat lengths          [0, 8]      => FloatParam multipliers of beat length set by Tempo
-      *      - delay lengths         [0, 8]      => FloatParam multipliers of beat length set by Tempo
-      *      - smoothing             [0, 500]    => ms TimeMsParameter
-      *      - feedback coefficients [0, 1]      => FloatParam
-      *
-      * - max these at MAXMULTISLIDERLENGTH vals for now (will need to be higher for Synchronic multisliders)
-      * - de/serialize these
-      * - keep track of their actual sizes using params as well, set indirectly by the user
-      */
-     MultiSliderState beatLengths;
-     MultiSliderState delayLengths;
-     MultiSliderState smoothingTimes;
-     MultiSliderState feedbackCoeffs;
+    // primary multislider params
+    MultiSliderState beatLengths;
+    MultiSliderState delayLengths;
+    MultiSliderState smoothingTimes;
+    MultiSliderState feedbackCoeffs;
 
-     // To adjust the gain of signals coming in to blendronic
-     chowdsp::GainDBParameter::Ptr inputGain {
+    // To adjust the gain of signals coming in to blendronic
+    chowdsp::GainDBParameter::Ptr inputGain {
          juce::ParameterID { "InputGain", 100 },
          "Input Gain",
          juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
          0.0f,
          true
-     };
+    };
 
     // Gain for output send (for other blendronics, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSend {
@@ -130,8 +96,8 @@ struct BlendronicParams : chowdsp::ParamHolder
     };
 
     /*
-     * serializers are used for more complex params
-     *      - here we need arrays and indexed arrays for circular and absolute tunings, for instance
+     * serializers are used for more complex params, called on save and load
+     *  - here we need these for all the multisliders
      */
     /* Custom serializer */
     template <typename Serializer>
@@ -195,7 +161,7 @@ private:
      * placeholders here for now
      */
     double _tempo = 120.;
-    double _subdivisions = 1.;
+    double _subdivisions = 4.;
     double _periodMultiplier = 1.;
 
     /**

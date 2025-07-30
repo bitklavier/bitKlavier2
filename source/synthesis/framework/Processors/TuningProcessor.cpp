@@ -366,20 +366,11 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
      */
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
 
-    /**
-     * todo: two questions:
-     *          1. i don't think we need to serialize the circularTuning, since that is always updated by the built-in arrays, that are selected by TuningSystem params
-     *          2. but, we DO need to serialize circularTuning_custom, since those will be values set by the user that need to be saved with the gallyer
-     *
-     *          does that all sound correct?
-     *          these serializers are for saving/loading non-chowdsp params, is that right?
-     */
-
     /*
      * then serialize the more complex params
      */
-    Serializer::template addChildElement<12> (ser, "circularTuning_custom", paramHolder.tuningState.circularTuningOffset_custom, arrayToString);
-    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex);
+    Serializer::template addChildElement<12> (ser, "circularTuning_custom", paramHolder.tuningState.circularTuningOffset_custom, arrayToString<12>);
+    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex<128>);
 
     return ser;
 }

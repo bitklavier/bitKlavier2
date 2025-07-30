@@ -48,8 +48,6 @@ public:
     float nextOutLeft();
     float nextOutRight();
     void addSample(float input, int offset, int channel);
-//    void addSamples(float* input, int numSamples, int offset, int channel);
-//    void tick(float input, float* outputs, float outGain, bool stereo = true);
     void scalePrevious(float coefficient, int offset, int channel);
     void tick(float* inL, float* inR);
     void clear();

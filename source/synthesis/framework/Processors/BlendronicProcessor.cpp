@@ -58,9 +58,7 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 //    pulseOffset = 0;
 //    beatPositionsIndex = 0;
 
-//    prevBeat = prep->bBeats.value[0];
     prevBeat = state.params.beatLengths.sliderVals[0].load();
-//    prevDelay = prep->bDelayLengths.value[0];
     prevDelay = state.params.delayLengths.sliderVals[0].load();
 
     delay->setSampleRate(getSampleRate());
@@ -70,13 +68,9 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     smoothIndex = 0;
     feedbackIndex = 0;
 
-//    pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
-//    pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
     pulseLength = (60.0 / (_subdivisions * _tempo));
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
-//    numSamplesBeat = prep->bBeats.value[beatIndex] * getSampleRate() * pulseLength;
     numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load();
-//    numSamplesDelay = prep->bDelayLengths.value[delayIndex] * getSampleRate() * pulseLength;
     numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * getSampleRate() * pulseLength;
 
     if (pulseLength == INFINITY)
@@ -115,7 +109,6 @@ void BlendronicProcessor::updateDelayParameters()
 
 void BlendronicProcessor::tick(float* inL, float* inR)
 {
-
     /**
      * todo: does this ever get called, given the same check later in tick()?
      */
@@ -291,7 +284,7 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
     /*
      * then serialize the more complex params
      */
-    //    Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
+        Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
 
     return ser;
 }
