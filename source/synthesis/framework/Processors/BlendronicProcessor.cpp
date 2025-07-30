@@ -212,7 +212,10 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     bufferDebugger->capture("L", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
     bufferDebugger->capture("R", buffer.getReadPointer(1), buffer.getNumSamples(), -1.f, 1.f);
 
-    int numSamples = buffer.getNumSamples();
+    // apply the input gain multiplier
+    auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
+    buffer.applyGain(0, 0, buffer.getNumSamples(),inputgainmult);
+    buffer.applyGain(1, 0, buffer.getNumSamples(),inputgainmult);
 
     auto outL = buffer.getWritePointer(0, 0);
     if (outL == nullptr)
@@ -222,23 +225,37 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     if (outR == nullptr)
         return;
 
+    // update some params
     //    pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
     //    pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
     pulseLength = (60.0 / (_subdivisions * _tempo));
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
 
+    // apply the delay
+    int numSamples = buffer.getNumSamples();
     while (--numSamples >= 0)
     {
         tick(outL++, outR++);
     }
 
+    // output send
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
+
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain (outputgainmult);
+    buffer.applyGain(0, 0, buffer.getNumSamples(),outputgainmult);
+    buffer.applyGain(1, 0, buffer.getNumSamples(),outputgainmult);
 
     // level meter update stuff
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
+
+    /**
+     * todo: level meter for output send?
+     */
 }
 
 void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
