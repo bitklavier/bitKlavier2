@@ -897,7 +897,7 @@ void ModulationManager::componentAdded() {
         mod_state_components.clear();
     }
     for (auto slider : sliders) {
-        slider.second->addaListener(this);
+        slider.second->addListener(this);
     }
     full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
                                                  for (auto &multiquad: rotary_destinations_) {
@@ -2126,6 +2126,7 @@ void ModulationManager::sliderValueChanged(juce::Slider *slider) {
         for (bitklavier::ModulationConnection *connection: connections) {
             connection->setScalingValue(connection->getCurrentBaseValue(),destination->getValue());
         }
+        changing_hover_modulation_ = false;
         hideModulationAmountOverlay();
     }
     if (amount_knob == nullptr)
