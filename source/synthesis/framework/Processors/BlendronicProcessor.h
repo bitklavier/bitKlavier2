@@ -43,6 +43,7 @@
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 #include "BlendronicDelay.h"
+#include "utils.h"
 
 //struct BlendronicState : bitklavier::StateChangeableParameter
 //{

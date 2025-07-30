@@ -103,7 +103,7 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
     int i = 0;
     for (auto const& tp : *paramVals)
     {
-//        if (tp->getCurrentValue() != 0. && state.params.transpose.numActiveSliders->getCurrentValue() > i)
+//        if (tp->getCurrentValue() != 0. && state.params.transpose.sliderVals_size->getCurrentValue() > i)
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
             transps.addIfNotAlreadyThere (tp->getCurrentValue());
         i++;

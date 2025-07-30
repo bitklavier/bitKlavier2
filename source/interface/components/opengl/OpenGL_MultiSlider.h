@@ -112,7 +112,7 @@ public:
                 stateCtr++;
             }
 
-            params->numActiveSliders.store (states.size());
+            params->sliderVals_size.store (states.size());
 
             /*
              * write string representations of these arrays to default state for this property?
@@ -133,7 +133,7 @@ public:
 ////        if (params != nullptr) // has no params if its a cloned component
 ////        {
 ////            params->numActive = (params->numActive + 1) % 12;
-////            params->numActiveSliders->setParameterValue(params->numActive);
+////            params->sliderVals_size->setParameterValue(params->numActive);
 ////        }
 //    }
 

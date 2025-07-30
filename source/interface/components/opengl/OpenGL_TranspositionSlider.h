@@ -36,7 +36,7 @@ public:
 
         int i = 0;
         for (auto slider: dataSliders) {
-            if ((*params->getFloatParams())[i].get()->paramID == "numActiveSliders") continue;
+            if ((*params->getFloatParams())[i].get()->paramID == "sliderVals_size") continue;
             auto ptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[i++].get(),
                 listeners,
                 *slider,
@@ -52,7 +52,7 @@ public:
          */
         int j = 0;
         for (auto& param :*params->getFloatParams()) {
-            if ((*params->getFloatParams())[j].get()->paramID == "numActiveSliders") continue;
+            if ((*params->getFloatParams())[j].get()->paramID == "sliderVals_size") continue;
             sliderChangedCallback +={ listeners.addParameterListener(
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,[this,j]()

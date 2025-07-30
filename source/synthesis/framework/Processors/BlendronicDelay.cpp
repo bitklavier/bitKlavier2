@@ -4,30 +4,13 @@
 
 #include "BlendronicDelay.h"
 
-//BlendronicDelay::BlendronicDelay(std::unique_ptr<BlendronicDelay> d):
-//                                                            delayLinear(d->getDelay()),
-//                                                            dSmooth(d->getDSmooth()),
-//                                                            dEnv(d->getEnvelope()),
-//                                                            dBufferSize(d->getBufferSize()),
-//                                                            dDelayGain(d->getDelayGain()),
-//                                                            dDelayLength(d->getDelayLength()),
-//                                                            dSmoothValue(d->getSmoothValue()),
-//                                                            dSmoothRate(d->getSmoothRate()),
-//                                                            dInputOpen(d->getInputState()),
-//                                                            dOutputOpen(d->getOutputState()),
-//                                                            shouldDuck(d->getShouldDuck()),
-//                                                            sampleRate(d->getSampleRate())
-//{
-//    DBG("Create bdelay");
-//}
-
 BlendronicDelay::BlendronicDelay(float delayLength, float smoothValue, float smoothRate, int delayBufferSize, double sr) :
-                                                                                                                                         dBufferSize(delayBufferSize),
-                                                                                                                                         dDelayGain(1.0f),
-                                                                                                                                         dDelayLength(delayLength),
-                                                                                                                                         dSmoothValue(smoothValue),
-                                                                                                                                         dSmoothRate(smoothRate),
-                                                                                                                                         sampleRate(sr)
+     dBufferSize(delayBufferSize),
+     dDelayGain(1.0f),
+     dDelayLength(delayLength),
+     dSmoothValue(smoothValue),
+     dSmoothRate(smoothRate),
+     sampleRate(sr)
 {
     delayLinear = std::make_unique<BKDelayL>(dDelayLength, dBufferSize, dDelayGain, sampleRate);
     dSmooth = std::make_unique<BKEnvelope>(dSmoothValue, dDelayLength, sampleRate);
@@ -44,11 +27,6 @@ BlendronicDelay::~BlendronicDelay()
 {
     DBG("Destroy bdelay");
 }
-
-//void BlendronicDelay::addSample(float sampleToAdd, int offset, int channel)
-//{
-//    delayLinear->addSample(sampleToAdd, offset, channel);
-//}
 
 void BlendronicDelay::tick(float* inL, float* inR)
 {
@@ -92,17 +70,17 @@ BKDelayL::BKDelayL() :
 }
 
 BKDelayL::BKDelayL(float delayLength, int bufferSize, float delayGain, double sr) :
-                                                                                     inPoint(0),
-                                                                                     outPoint(0),
-                                                                                     bufferSize(bufferSize),
-                                                                                     length(delayLength),
-                                                                                     gain(delayGain),
-                                                                                     lastFrameLeft(0),
-                                                                                     lastFrameRight(0),
-                                                                                     doNextOutLeft(false),
-                                                                                     doNextOutRight(false),
-                                                                                     loading(false),
-                                                                                     sampleRate(sr)
+     inPoint(0),
+     outPoint(0),
+     bufferSize(bufferSize),
+     length(delayLength),
+     gain(delayGain),
+     lastFrameLeft(0),
+     lastFrameRight(0),
+     doNextOutLeft(false),
+     doNextOutRight(false),
+     loading(false),
+     sampleRate(sr)
 {
     inputs = juce::AudioBuffer<float>(2, bufferSize);
     inputs.clear();
@@ -189,8 +167,11 @@ void BKDelayL::tick(float* inL, float* inR)
 //    if (loading) return;
 
     if (inPoint >= inputs.getNumSamples()) inPoint = 0;
-    inputs.addSample(0, inPoint, *inL);
-    inputs.addSample(1, inPoint, *inR);
+    /*
+     * combining the following call with the one below, should be ok...
+     */
+//    inputs.addSample(0, inPoint, *inL);
+//    inputs.addSample(1, inPoint, *inR);
 
     /**
      * todo: is this doNext stuff for freezing? omit for now...
@@ -203,8 +184,16 @@ void BKDelayL::tick(float* inL, float* inR)
     if (++outPoint >= inputs.getNumSamples()) outPoint = 0;
 
     //feedback
-    inputs.addSample(0, inPoint, lastFrameLeft * feedback);
-    inputs.addSample(1, inPoint, lastFrameRight * feedback);
+    /**
+     * addSample adds it to the existing sample at this location (inPoint)
+     * todo: could just call this once here:
+     *  inputs.addSample(0, inPoint, *inL + lastFrameLeft * feedback);
+     * and not call it earlier as we do above
+     */
+//    inputs.addSample(0, inPoint, lastFrameLeft * feedback);
+//    inputs.addSample(1, inPoint, lastFrameRight * feedback);
+    inputs.addSample(0, inPoint, *inL + lastFrameLeft * feedback);
+    inputs.addSample(1, inPoint, *inR + lastFrameRight * feedback);
 
     inPoint++;
 //    if (inPoint == inputs.getNumSamples()) inPoint = 0;

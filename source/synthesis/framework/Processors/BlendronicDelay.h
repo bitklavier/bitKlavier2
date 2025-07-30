@@ -127,71 +127,34 @@ private:
 class BlendronicDelay
 {
 public:
-//    BlendronicDelay(std::unique_ptr<BlendronicDelay> d);
     BlendronicDelay(float delayLength, float smoothValue, float smoothDuration, int delayBufferSize, double sr);
     ~BlendronicDelay();
 
-    //accessors
-//    inline const std::unique_ptr<BKDelayL> getDelay() const noexcept { return delayLinear; }
-//    inline const std::unique_ptr<BKEnvelope> getDSmooth() const noexcept { return dSmooth; }
-//    inline const std::unique_ptr<BKEnvelope> getEnvelope() const noexcept { return dEnv; }
-    inline const float getBufferSize() const noexcept { return dBufferSize; }
-    inline const float getDelayGain() const noexcept { return dDelayGain; }
-    inline const float getDelayLength() const noexcept { return dDelayLength; }
-    inline const float getSmoothValue() const noexcept { return dSmooth->getValue(); }
-    inline const float getSmoothRate() const noexcept { return dSmoothRate; }
-//    inline const bool getInputState() const noexcept { return dInputOpen; }
-//    inline const bool getOutputState() const noexcept { return dOutputOpen; }
-    inline const bool getShouldDuck() const noexcept { return shouldDuck; }
     inline const juce::AudioBuffer<float>* getDelayBuffer() const noexcept { return delayLinear->getBuffer(); }
     inline const int getInPoint() const noexcept { return delayLinear->getInPoint(); }
-    inline const int getOutPoint() const noexcept { return delayLinear->getOutPoint(); }
-    inline const float getSample(int c, int i) const noexcept { return delayLinear->getSample(c, i); }
 
-    //mutators
-//    void addSample(float sampleToAdd, int offset, int channel); //adds input sample into the delay line (first converted to float)
-//    void addSamples(float* samplesToAdd, int numSamples, int offset, int channel);
-
-    inline void setBufferSize(int bufferSize)
-    {
-        dBufferSize = bufferSize;
-        delayLinear->setBufferSize(dBufferSize);
-    }
-    inline void setDelayGain(float delayGain) { dDelayGain = delayGain; }
     inline void setDelayLength(float delayLength) { dDelayLength = delayLength; delayLinear->setLength(delayLength); }
     inline void setDelayTargetLength(float delayLength) { dSmooth->setTarget(delayLength); }
-    inline void setSmoothValue(float smoothValue)
-    {
-        dSmoothValue = smoothValue;
-        dSmooth->setValue(dSmoothValue);
-    }
-    inline void setEnvelopeTarget(float t) { dEnv->setTarget(t); }
+    inline void setFeedback(float fb) { delayLinear->setFeedback(fb); }
+    inline void setSampleRate(double sr) { sampleRate = sr; delayLinear->setSampleRate(sr); dSmooth->setSampleRate(sr); }
+    inline void clear() { delayLinear->clear(); /*delayLinear->reset();*/ }
 
-    //we want to be able to do this two ways:
-    //set a duration for the delay length changes that will be constant, so at the beginning of
-    //  each beat we will need to calculate a new rate dependent on this duration and the beat length (rate ~ beatLength / duration)
-    //have the rate be constant, regardless of beat length, so we'll use the length of smallest beat (1, as set by Tempo, so the pulseLength)
-    //  so rate ~ pulseLength / duration
+    /*
+     * leave for now, might have this as an available user param as in the old bK
+     */
+//    inline void setBufferSize(int bufferSize)
+//    {
+//        dBufferSize = bufferSize;
+//        delayLinear->setBufferSize(dBufferSize);
+//    }
+
     inline void setSmoothRate(float smoothRate)
     {
         dSmoothRate = smoothRate;
         dSmooth->setRate(smoothRate);
     }
 
-    inline void setFeedback(float fb) { delayLinear->setFeedback(fb); }
-//    inline const void setInputState(bool inputState) { dInputOpen = inputState; }
-//    inline const void toggleInput() { dInputOpen = !dInputOpen; }
-//    inline const void setOutputState(bool outputState) { dOutputOpen = outputState; }
-//    inline const void toggleOutput() { dOutputOpen = !dOutputOpen; }
-
-    void tick(float* outputs, float outGain);
     void tick(float* inL, float* inR);
-
-//    void duckAndClear();
-
-    inline void setSampleRate(double sr) { sampleRate = sr; delayLinear->setSampleRate(sr); dSmooth->setSampleRate(sr); }
-    inline double getSampleRate() { return sampleRate; }
-    inline void clear() { delayLinear->clear(); /*delayLinear->reset();*/ }
 
 private:
     std::unique_ptr<BKDelayL> delayLinear;
