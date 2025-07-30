@@ -24,6 +24,7 @@ public:
     //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
     //  we probably want to merge these in the future, but ok for now
     setLookAndFeel (DefaultLookAndFeel::instance());
+
     setComponentID (name);
 
     // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)

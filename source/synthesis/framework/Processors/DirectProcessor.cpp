@@ -212,13 +212,30 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
+    // send out the right outlets: prefader send
+    /*
+     * all the audio channels are in buffer, so we first identify which channels carry the sendBuffer
+     * we look at directBusLayout() in DirectProcessor.h, and see that 'Send' is the 3rd output, so its busIndex is 2
+     * "getChannelIndexInProcessBlockBuffer" will give us the proper channel in buffer to copy the buffer to for the send
+     * busIndex is different than channel # because each bus might have a number of channels
+     */
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendParam->getCurrentValue());
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
+
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain (outputgainmult);
+    buffer.applyGain(0, 0, buffer.getNumSamples(),outputgainmult);
+    buffer.applyGain(1, 0, buffer.getNumSamples(),outputgainmult);
 
     // level meter update stuff
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
+
+    /**
+     * todo: create an output send level meter?
+     */
 
     /*
      * Q: is all this thread-safe?
@@ -231,16 +248,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
     if (tuning != nullptr)
         tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
-
-
-    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-
-    /**
-     * todo add gain as last arg to these:
-     */
-    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples());
-    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
-
 }
 
 /**

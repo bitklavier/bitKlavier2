@@ -105,6 +105,12 @@ void BlendronicProcessor::updateDelayParameters()
     delay->setDelayTargetLength(numSamplesDelay);
     delay->setSmoothRate(smoothRate); // this is really a rate, not a duration
     delay->setFeedback(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load());
+
+//    DBG("===== BlendronicProcessor::updateDelayParameters =====");
+//    DBG("beat length    = " + juce::String(state.params.beatLengths.sliderVals[beatIndex]));
+//    DBG("delay length   = " + juce::String(state.params.delayLengths.sliderVals[delayIndex]));
+//    DBG("smooth time    = " + juce::String(state.params.smoothingTimes.sliderVals[smoothIndex]));
+//    DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex]));
 }
 
 void BlendronicProcessor::tick(float* inL, float* inR)

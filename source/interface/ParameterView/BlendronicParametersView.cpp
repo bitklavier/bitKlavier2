@@ -39,8 +39,11 @@ void BlendronicParametersView::resized()
 //    beatLengthsSlider->setBounds(beatlengthsArea);
 
     beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    bounds.removeFromTop(bufferSpaceForEach);
     delayLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    bounds.removeFromTop(bufferSpaceForEach);
     smoothingTimesSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    bounds.removeFromTop(bufferSpaceForEach);
     feedbackCoeffsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
 
 //    envSection->setBounds(adsrArea);

@@ -22,8 +22,9 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         addMyListener(this);
-
     }
+
+    //setBackgroundColor(findColour(Skin::kWidgetBackground, true));
 
     virtual void resized() override {
         OpenGlAutoImageComponent<BKMultiSlider>::resized();
