@@ -200,6 +200,9 @@ void BlendronicProcessor::tick(float* inL, float* inR)
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 
+    /*
+     * use these to display buffer info to bufferDebugger
+     */
     bufferDebugger->capture("L", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
     bufferDebugger->capture("R", buffer.getReadPointer(1), buffer.getNumSamples(), -1.f, 1.f);
 

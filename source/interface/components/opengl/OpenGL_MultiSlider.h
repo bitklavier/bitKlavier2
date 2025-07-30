@@ -92,27 +92,43 @@ public:
          */
         /**
          * todo: yeah, don't need this. on the back end, we need the original values array. don't even need the states array, except for storage
+         * might want something like this for modulationState setting and serializer
          */
         if (isModulated_)
         {
-            int stateCtr = 0;
-            int valueCounter = 0;
-            for (auto bval : states)
-            {
-                if (bval)
-                {
-                    params->sliderVals[stateCtr].store (values[valueCounter++][0]); // 1d for now....
-                    params->activeSliders[stateCtr].store (true);
-                }
-                else
-                {
-                    params->sliderVals[stateCtr].store (0.);
-                    params->activeSliders[stateCtr].store (false);
-                }
-                stateCtr++;
-            }
+//            int stateCtr = 0;
+//            int valueCounter = 0;
+//            for (auto bval : states)
+//            {
+//                if (bval)
+//                {
+//                    params->sliderVals[stateCtr].store (values[valueCounter++][0]); // 1d for now....
+//                    params->activeSliders[stateCtr].store (true);
+//                }
+//                else
+//                {
+//                    params->sliderVals[stateCtr].store (0.);
+//                    params->activeSliders[stateCtr].store (false);
+//                }
+//                stateCtr++;
+//            }
 
-            params->sliderVals_size.store (states.size());
+            /*
+             * just copy the direct UI representations to the param arrays; the prep should know how to use them
+             */
+            int valCtr = 0;
+            for (auto sval : values)
+            {
+                params->sliderVals[valCtr].store(values[valCtr++][0]); // 1d for now
+            }
+            params->sliderVals_size.store (values.size()); // how many active slider values do we have
+
+            valCtr = 0;
+            for (auto sval : values)
+            {
+                params->activeSliders[valCtr].store(states[valCtr++]);
+            }
+            params->activeVals_size.store (states.size()); // full array of slider states, including inactive ones (false)
 
             /*
              * write string representations of these arrays to default state for this property?
@@ -163,7 +179,7 @@ public:
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
 
     /*
-     * needed for the param-state modulation
+     * needed for the param-state modulation; is called when state mod popup is opened to set vals there
      */
     void syncToValueTree() override {
 //        juce::Array<float> vals;

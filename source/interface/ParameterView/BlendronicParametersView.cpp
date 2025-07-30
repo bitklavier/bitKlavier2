@@ -35,8 +35,14 @@ void BlendronicParametersView::resized()
 
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);
-    juce::Rectangle<int> beatlengthsArea = bounds.removeFromTop(knob_section_height * 5);
-    beatLengthsSlider->setBounds(beatlengthsArea);
+//    juce::Rectangle<int> beatlengthsArea = bounds.removeFromTop(knob_section_height * 5);
+//    beatLengthsSlider->setBounds(beatlengthsArea);
+
+    beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    delayLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    smoothingTimesSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    feedbackCoeffsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+
 //    envSection->setBounds(adsrArea);
 //
 //    // add the transposition and velocity range sliders below that

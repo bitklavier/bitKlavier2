@@ -48,10 +48,30 @@ public:
 
     beatLengthsSlider = std::make_unique<OpenGL_MultiSlider>(&params.beatLengths, listeners);
     beatLengthsSlider->setComponentID ("beat_lengths");
+    beatLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
+    beatLengthsSlider->setName("Beat Lengths (xTempo)");
     addStateModulatedComponent (beatLengthsSlider.get());
 
-//    beatlengthSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
-//
+    delayLengthsSlider = std::make_unique<OpenGL_MultiSlider>(&params.delayLengths, listeners);
+    delayLengthsSlider->setComponentID ("delay_lengths");
+    delayLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
+    delayLengthsSlider->setName("Delay Lengths (xTempo)");
+    addStateModulatedComponent (delayLengthsSlider.get());
+
+    smoothingTimesSlider = std::make_unique<OpenGL_MultiSlider>(&params.smoothingTimes, listeners);
+    smoothingTimesSlider->setComponentID ("smoothing_times");
+    smoothingTimesSlider->setMinMaxDefaultInc({0., 500, 50., 1.});
+    smoothingTimesSlider->setSkewFromMidpoint(0.1);
+    smoothingTimesSlider->setName("Smooth Times (ms)");
+    addStateModulatedComponent (smoothingTimesSlider.get());
+
+    feedbackCoeffsSlider = std::make_unique<OpenGL_MultiSlider>(&params.feedbackCoeffs, listeners);
+    feedbackCoeffsSlider->setComponentID ("feedback_coefficients");
+    feedbackCoeffsSlider->setMinMaxDefaultInc({0., 1., 0.95, 0.001});
+    feedbackCoeffsSlider->setSkewFromMidpoint(0.1);
+    feedbackCoeffsSlider->setName("Feedback Coefficients (0-1)");
+    addStateModulatedComponent (feedbackCoeffsSlider.get());
+
 //    // create the more complex UI elements
 //    envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
 //    transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
@@ -98,6 +118,9 @@ std::vector<std::unique_ptr<SynthSlider>> _sliders;
 std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
 std::unique_ptr<OpenGL_MultiSlider> beatLengthsSlider;
+std::unique_ptr<OpenGL_MultiSlider> delayLengthsSlider;
+std::unique_ptr<OpenGL_MultiSlider> smoothingTimesSlider;
+std::unique_ptr<OpenGL_MultiSlider> feedbackCoeffsSlider;
 
 // level meter with output gain slider
 std::shared_ptr<PeakMeterSection> levelMeter;
