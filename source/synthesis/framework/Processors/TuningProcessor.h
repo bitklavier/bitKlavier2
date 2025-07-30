@@ -57,7 +57,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     void updateLastFrequency(double lastFreq);
 
     juce::MidiKeyboardState keyboardState;
-    std::array<float, 128> absoluteTuningOffset = { 0.f };
+    std::array<std::atomic<float>, 128> absoluteTuningOffset = { 0.f };
     std::array<float, 12> circularTuningOffset = { 0.f };
     std::array<float, 12> circularTuningOffset_custom = { 0.f };
 

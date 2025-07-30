@@ -284,7 +284,7 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
     /*
      * then serialize the more complex params
      */
-        Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
+//        Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
 
     return ser;
 }

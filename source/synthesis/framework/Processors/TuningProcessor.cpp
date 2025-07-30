@@ -41,7 +41,9 @@ void TuningState::processStateChanges()
         auto val1 = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
-            absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (val.toString().toStdString());
+            parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
+//            absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (val.toString().toStdString());
+
         }
         else if (val1 != nullVar)
         {
@@ -369,8 +371,15 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
     /*
      * then serialize the more complex params
      */
+
     Serializer::template addChildElement<12> (ser, "circularTuning_custom", paramHolder.tuningState.circularTuningOffset_custom, arrayToString<12>);
-    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex<128>);
+
+    std::array<float, 128> tempTuningOffsets;
+    copyAtomicArrayToFloatArray(paramHolder.tuningState.absoluteTuningOffset, tempTuningOffsets);
+//    Serializer::template addChildElement<128> (ser, "absoluteTuning", tempTuningOffsets, arrayToStringWithIndex<128>);
+    Serializer::template addChildElement<128> (ser, "absoluteTuning", tempTuningOffsets, arrayToStringWithIndex<128>);
+
+//    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex<128>);
 
     return ser;
 }
@@ -382,7 +391,8 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
     auto myStr = deserial->getStringAttribute ("circularTuning_custom");
     paramHolder.tuningState.circularTuningOffset_custom = parseFloatStringToArrayCircular<12> (myStr.toStdString());
     myStr = deserial->getStringAttribute ("absoluteTuning");
-    paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
+    parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.tuningState.absoluteTuningOffset);
+//    paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
 }
 
 /**

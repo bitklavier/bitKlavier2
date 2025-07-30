@@ -44,7 +44,7 @@ public:
 
         juce::String s = "";
         int key = 0;
-        for (auto offset : keyboardState->absoluteTuningOffset)
+        for (auto& offset : keyboardState->absoluteTuningOffset)
         {
             if (offset != 0.f)  s += juce::String(key) + ":" + juce::String((offset)) + " ";
             ++key;
