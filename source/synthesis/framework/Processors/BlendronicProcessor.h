@@ -1,6 +1,30 @@
-//
-// Created by Joshua Warner on 6/27/24.
-//
+/*
+==============================================================================
+
+  Blendronic.h
+  Created: 11 Jun 2019 2:00:53pm
+  Author:  Theodore R Trevisan
+
+  The original algorithm for Blendrónic was developed by Dan for the Feedback
+  movement from "neither Anvil nor Pulley," and was subsequently used in
+  Clapping Machine Music Variations, Olagón, and others. A paper describing
+  the original algorithm was presented at the International Computer Music
+  Conference in 2010 (http://www.manyarrowsmusic.com/papers/cmmv.pdf).
+
+  "Clapping Machine Music Variations: A Composition for Acoustic/Laptop Ensemble"
+  Dan Trueman
+  Proceedings for the International Computer Music Conference
+  SUNY Stony Brook, 2010
+
+  The basic idea is that the length of a delay line changes periodically, as
+  set by a sequence of beat lengths; the changes can happen instantaneously,
+  or can take place over a period of time, a "smoothing" time that creates
+  a variety of artifacts, tied to the beat pattern. The smoothing parameters
+  themselves can be sequenced in a pattern, as can a feedback coefficient,
+  which determines how much of the out of the delay line is fed back into it.
+
+==============================================================================
+*/
 
 #ifndef BITKLAVIER2_BLENDRONICPROCESSOR_H
 #define BITKLAVIER2_BLENDRONICPROCESSOR_H
@@ -18,7 +42,9 @@
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-
+#include "BlendronicDelay.h"
+#include "utils.h"
+#include "buffer_debugger.h"
 //struct BlendronicState : bitklavier::StateChangeableParameter
 //{
 //    /*
@@ -151,9 +177,11 @@ public:
     juce::AudioProcessor::BusesProperties blendronicBusLayout()
     {
         return BusesProperties()
-            .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+            .withOutput("Output", juce::AudioChannelSet::stereo(), true)
             .withInput ("Input", juce::AudioChannelSet::stereo(), true)
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (9), true);
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (9), true)
+            .withOutput("Modulation", juce::AudioChannelSet::mono(),false)
+            .withOutput("Send",juce::AudioChannelSet::stereo(),true);
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override { return true; }
 
@@ -162,9 +190,78 @@ public:
 
 private:
 
-    //chowdsp::experimental::Blendronicillator<float> oscillator;
+    /**
+     * todo: Tempo params
+     * placeholders here for now
+     */
+    double _tempo = 120.;
+    double _subdivisions = 1.;
+    double _periodMultiplier = 1.;
+
+    /**
+     * todo: General params
+     * placeholders here for now
+     */
+    double _generalSettingsPeriodMultiplier = 1.;
+
+    /*
+     BlendronicProcessor has the primary function -- tick() -- that handles the delay line.
+     The actual delay class is BlendronicDelay, a delay line with linear interpolation and feedback.
+
+     It connects Keymap, and Tempo preparations together as needed, and gets the Blendrónic
+     params it needs to behave as expected.
+    */
+
+    std::unique_ptr<BlendronicDelay> delay;
+    void updateDelayParameters();
+//    void tick(float* outputs);
+    void tick(float* inL, float* inR);
+
+    juce::Array<juce::Array<float>> velocities;
+    juce::Array<juce::Array<float>> invertVelocities;
+    juce::Array<juce::uint64> holdTimers;
+    juce::Array<int> keysDepressed;   //current keys that are depressed
+
+    bool inSyncCluster, inClearCluster, inOpenCluster, inCloseCluster;
+    bool nextSyncOffIsFirst, nextClearOffIsFirst, nextOpenOffIsFirst, nextCloseOffIsFirst;
+
+    juce::uint64 thresholdSamples;
+    juce::uint64 syncThresholdTimer;
+    juce::uint64 clearThresholdTimer;
+    juce::uint64 openThresholdTimer;
+    juce::uint64 closeThresholdTimer;
+
+    float pulseLength;      // Length in seconds of a pulse (1.0 length beat)
+    float numSamplesBeat;   // Length in samples of the current step in the beat pattern
+    float numSamplesDelay;  // Length in samples of the current step in the delay pattern
+
+    juce::uint64 sampleTimer; // Sample count for timing param sequence steps
+
+    // Index of sequenced param patterns
+    int beatIndex, delayIndex, smoothIndex, feedbackIndex;
+
+    // Values of previous step values for smoothing. Saved separately from param arrays to account for changes to the sequences
+    float prevBeat, prevDelay, prevPulseLength;
+
+    // Flag to clear the delay line on the next beat
+    bool clearDelayOnNextBeat;
+
+    // For access in BlendronicDisplay
+    juce::Array<juce::uint64> beatPositionsInBuffer; // Record of the sample position of beat changes in the delay buffer (used in display)
+    int numBeatPositions; // Number of beat positions in the buffer and to be displayed
+    int beatPositionsIndex; // Index of beat sample positions for adding/removing positions
+    float pulseOffset; // Sample offset of the pulse grid from grid aligned with buffer start (used in display)
+    bool resetPhase;
+
+    /**
+     * todo: for display
+     */
+//    OwnedArray<BlendronicDisplay::ChannelInfo> audio;
+//    std::unique_ptr<BlendronicDisplay::ChannelInfo> smoothing;
+
     chowdsp::Gain<float> gain;
 
+    juce::ScopedPointer<BufferDebugger> bufferDebugger;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BlendronicProcessor)
 };
 

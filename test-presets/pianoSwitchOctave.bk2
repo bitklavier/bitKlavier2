@@ -25,7 +25,7 @@
                 release="50.000" attack="1.000" attackpower="0.000" hold="0.000"
                 delay="0.000" decaypower="0.000" releasepower="0.000" t0="0.000"
                 t1="0.000" t2="0.000" t3="0.000" t4="0.000" t5="0.000" t6="0.000"
-                t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" numActiveSliders="1.000"
+                t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" sliderVals_size="1.000"
                 UseTuning="0" velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000"/>
       </PREPARATION>
       <PREPARATION type="7" width="185" height="105" x_y="148, 701" uuid="9599dd5fb09a49cdb14b21e89a655ced"

@@ -188,9 +188,11 @@ public:
     juce::AudioProcessor::BusesProperties directBusLayout()
     {
         return BusesProperties()
-            .withOutput ("Output1", juce::AudioChannelSet::stereo(), true)
-            .withInput ("input", juce::AudioChannelSet::stereo(), false)
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true);
+            .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
+            .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withOutput("Modulation", juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
+            .withOutput("Send",juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
     bool hasEditor() const override { return false; }

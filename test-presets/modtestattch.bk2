@@ -14,7 +14,7 @@
                    release="50.000" attack="1.000" attackpower="0.000" hold="0.000"
                    delay="0.000" decaypower="0.000" releasepower="0.000" t0="0.0"
                    t1="2.0" t2="3.0" t3="0.000" t4="0.000" t5="0.000" t6="0.000"
-                   t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" numActiveSliders="1.000"
+                   t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" sliderVals_size="1.000"
                    UseTuning="0" velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
         <MODULATABLE_PARAM parameter="OutputGain" channel="0"/>
         <MODULATABLE_PARAM parameter="attack" channel="1"/>
