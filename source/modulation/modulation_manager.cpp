@@ -377,6 +377,8 @@ void ModulationAmountKnob::setDestinationComponent(juce::Component *component, c
 
 void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
     destination = dest;
+    if(destination == nullptr)
+        return;
     this->setRange(0, dest->getNormalisableRange().getRange().getLength(), 0.f);
     DBG(dest->getNormalisableRange().getRange().getLength());
     //this->setNormalisableRange(dest->getNormalisableRange());
@@ -2144,8 +2146,10 @@ void ModulationManager::sliderValueChanged(juce::Slider *slider) {
     bool bipolar = connection->isBipolar();
     bool stereo = connection->isStereo();
     bool bypass = connection->isBypass();
-    connection->setScalingValue(value,amount_knob->destination->getValue());
-
+    if (amount_knob->destination)
+        connection->setScalingValue(value,amount_knob->destination->getValue());
+    else
+        connection->setScalingValue(value,connection->currentDestinationSliderVal);
     DBG(juce::String(value) +"," + juce::String(connection->getScaling()));
     setModulationValues(connection->source_name, connection->destination_name, value, bipolar, stereo, bypass);
     amount_knob->my0to1amt = connection->getScaling();
@@ -2892,7 +2896,7 @@ void ModulationManager::positionModulationAmountSlidersInside(const std::string 
             slider->setDestinationSlider(slider_model_lookup_[name]);
         } else {
             slider->setDestinationComponent(nullptr, name);
-            slider->setDestinationSlider(nullptr);
+            // slider->setDestinationSlider(nullptr);
         }
 
 

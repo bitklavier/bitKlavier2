@@ -99,9 +99,10 @@ class ModulationProcessor;
 
                 modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
             }
-
+            state.setProperty(IDs::sliderval,sliderVal,nullptr);
             scalingValue_.store(modRangeNorm);
-
+            state.setProperty(IDs::mod0to1, scalingValue_.load(),nullptr);
+            currentDestinationSliderVal  = sliderVal;
             setModulationAmount(modVal);
         }
 
@@ -128,7 +129,6 @@ class ModulationProcessor;
         std::string source_name;
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
         // if i'll be using this for that or not
-        juce::ValueTree state;
         int index_in_all_mods;
         int index_in_mapping;
         juce::Uuid uuid;
@@ -140,9 +140,23 @@ class ModulationProcessor;
         ModulationProcessor* parent_processor;
         ModulatorBase* processor;
         int modulation_output_bus_index;
-        juce::ValueTree param_tree;
         float currentDestinationSliderVal;
+        void setParamTree(const juce::ValueTree& v) {
+            param_tree = v;
+
+            currentDestinationSliderVal = param_tree.getProperty(IDs::sliderval);
+        }
+        void setStateValueTree(const juce::ValueTree&v) {
+           state = v;
+            //setScalingValue()
+            scalingValue_ = state.getProperty(IDs::mod0to1);
+        }
+        juce::ValueTree state;
+
     private:
+
+        juce::ValueTree param_tree;
+
         std::atomic<float> scalingValue_;
 //        std::atomic<float>* bipolarOffset;
 

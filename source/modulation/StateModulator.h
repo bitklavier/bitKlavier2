@@ -33,12 +33,13 @@ public :
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;
     void prepareToPlay (int samplesPerBlock, double sampleRate ) override {}
     void releaseResources() override {}
-    SynthSection* createEditor() override
-    {
-        return new SynthSection("state" ,state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
-    }
-    static constexpr ModulatorType type = ModulatorType::STATE;
+    SynthSection* createEditor() override;
 
+    static constexpr ModulatorType type = ModulatorType::STATE;
+    void getStateInformation(juce::MemoryBlock &destData) override {
+    }
+    void setStateInformation (const void *data, int sizeInBytes) override {
+    }
 };
 
 

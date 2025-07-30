@@ -574,7 +574,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     auto dest_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
 
     auto parameter_tree = mod_dst.getChildWithName(IDs::MODULATABLE_PARAMS).getChildWithProperty (IDs::parameter, juce::String (dst_param));
-    connection->param_tree = parameter_tree;
+    connection->setParamTree(parameter_tree);
     jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
     /**
      * todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
@@ -671,7 +671,7 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
     if (create)
     {
         connection = getModulationBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
-        connection->state = v;
+        connection->setStateValueTree(v);
     }
     if (connection)
         connectModulation (connection);

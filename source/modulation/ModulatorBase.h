@@ -4,12 +4,17 @@
 
 #ifndef ELECTROSYNTH_MODULATORBASE_H
 #define ELECTROSYNTH_MODULATORBASE_H
-#include "ParameterView/ParametersView.h"
+// #include "ParameterView/ParametersView.h"
+#include <juce_data_structures/juce_data_structures.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <chowdsp_serialization/chowdsp_serialization.h>
 #include <functional>
 #include <map>
 #include <string>
 #include <iostream>
 #include <any>
+#include "bk_XMLSerializer.h"
+class SynthSection;
 template <class Base>
 class SimpleFactory {
 public:
@@ -101,6 +106,8 @@ public:
     // template <typename Callable>
     // virtual void callOnMainThread (Callable&& func, bool couldBeAudioThread = false) = 0;
     std::vector<juce::ValueTree> connections_;
+    virtual void getStateInformation (juce::MemoryBlock &destData)=0;
+    virtual void setStateInformation (const void *data, int sizeInBytes)=0;
 };
 
 
@@ -113,7 +120,15 @@ public :
 
     {
 
+                  if(tree.isValid())
+                    chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(tree.createXml(),_state);
     }
+    void getStateInformation(juce::MemoryBlock &destData) override {
+    _state.serialize(destData);
+}
+    void setStateInformation (const void *data, int sizeInBytes) override {
+    _state.deserialize (juce::MemoryBlock { data, (size_t) sizeInBytes });
+}
     ~ModulatorStateBase() override{}
     PluginStateType _state;
 };

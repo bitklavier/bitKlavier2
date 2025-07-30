@@ -14,6 +14,8 @@ bitklavier::ModulationProcessor::ModulationProcessor(const juce::ValueTree& vt,S
        .withInput("Reset",juce::AudioChannelSet::discreteChannels(1),true)), state(vt),
 mod_list(std::make_unique<ModulationList>(state,&parent,this))
 {
+
+    // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
 }
 std::unique_ptr<juce::AudioProcessor> bitklavier::ModulationProcessor::create(SynthBase &parent, const juce::ValueTree &v) {
@@ -165,6 +167,7 @@ int bitklavier::ModulationProcessor::createNewModIndex()
 {
 
    getBus(false,1)->setNumberOfChannels(getBus(false,1)->getNumberOfChannels()+1);
+    // state.setProperty(IDs::numModChans, getBus(false,1)->getNumberOfChannels(),nullptr);
    return (getBus(false,1)->getNumberOfChannels()-1)-1; //(old number of channels) -1 to get 0 based
 }
 

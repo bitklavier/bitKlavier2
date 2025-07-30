@@ -89,3 +89,31 @@ void ModulationList::newObjectAdded(ModulatorBase * m) {
         listener->modulatorAdded(m);
     }
 }
+
+void ModulationList:: valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i)
+{
+    if(v.getProperty(IDs::sync,0))
+    {
+        for(auto obj : objects)
+        {
+            juce::MemoryBlock data;
+            obj->getStateInformation(data);
+            auto xml = juce::parseXML(data.toString());
+            if (xml != nullptr) {
+                //read the current state of the paramholder
+                auto vt = juce::ValueTree::fromXml(*xml);
+                for (int i = 0; i < vt.getNumProperties(); ++i)
+                {
+                    juce::Identifier propName = vt.getPropertyName(i);
+                    juce::var value = vt.getProperty(propName);
+
+                    obj->state.setProperty(propName, value, nullptr); // Overwrite or add
+                }
+
+            }
+
+
+        }
+        v.removeProperty(IDs::sync, nullptr);
+    }
+}
