@@ -28,6 +28,7 @@ class ModulationProcessor;
             setDestination(to);
             setSource(from);
 
+
         }
         ~ModulationConnection()
         {
@@ -51,6 +52,7 @@ class ModulationProcessor;
         void setPolarity(bool isBipolar)
         {
             state.setProperty(IDs::isBipolar, isBipolar, nullptr);
+            setBipolar(isBipolar);
         }
         void resetConnection(const std::string& from, const std::string& to) {
             source_name = from;

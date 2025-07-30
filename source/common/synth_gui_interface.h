@@ -105,7 +105,7 @@ public:
     void disconnectModulation(bitklavier::ModulationConnection* connection);
     void disconnectModulation(bitklavier::StateConnection* connection);
     void notifyModulationsChanged();
-
+    void notifyPrepPopupMoved();
     void  addProcessor(std::unique_ptr<juce::AudioPluginInstance> instance );
     void  addModulationNodeConnection(juce::AudioProcessorGraph::NodeID source, juce::AudioProcessorGraph::NodeID destination);
     void setFocus();

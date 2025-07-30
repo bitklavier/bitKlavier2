@@ -59,6 +59,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
             continue;
         //process the modulation into a scratch buffer.
         modulators_[i]->getNextAudioBlock(tmp_buffers[i], midiMessages);
+
         if (modulators_[i]->type == ModulatorType::AUDIO)
         {
             for (auto connection : mod_routing[i].mod_connections)
@@ -70,6 +71,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         //mod_routing[i]
         //output the modulation to the correct output buffers with scaling
     }
+    // melatonin::printSparkline(buffer);
     //melatonin::printSparkline(buffer);
 }
 

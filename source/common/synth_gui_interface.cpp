@@ -21,6 +21,7 @@
 
 #include "PreparationSection.h"
 #include "load_save.h"
+#include "modulation_manager.h"
 #include "sound_engine.h"
 #include "synth_base.h"
 
@@ -135,6 +136,10 @@ void SynthGuiInterface::updateGuiControl(const std::string &name, float value) {
 void SynthGuiInterface::notifyModulationsChanged() {
     gui_->modulationChanged();
 }
+void SynthGuiInterface::notifyPrepPopupMoved() {
+    gui_->modulation_manager->resized();
+}
+
 
 void SynthGuiInterface::connectStateModulation(std::string source, std::string destination) {
     bool created = synth_->connectStateModulation(source, destination);

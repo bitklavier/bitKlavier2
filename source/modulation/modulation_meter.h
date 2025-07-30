@@ -28,7 +28,7 @@ namespace vital {
 class ModulationMeter : public juce::Component {
   public:
     ModulationMeter(
-                    const SynthSlider* slider, OpenGlMultiQuad* quads, int index);
+                    SynthSlider* slider, OpenGlMultiQuad* quads, int index);
     virtual ~ModulationMeter();
 
     void resized() override;
@@ -54,7 +54,7 @@ class ModulationMeter : public juce::Component {
 
     const vital::Output* mono_total_;
     const vital::Output* poly_total_;
-    const SynthSlider* destination_;
+     SynthSlider* destination_;
 
     OpenGlMultiQuad* quads_;
     int index_;

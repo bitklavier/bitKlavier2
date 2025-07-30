@@ -1233,3 +1233,8 @@ std::map<std::string, StateModulatedComponent*> PreparationPopup::getAllStateMod
         return prep_view->getAllStateModulatedComponents();
     return SynthSection::getAllStateModulatedComponents();
 }
+void PreparationPopup::moved() {
+    if(auto *interface = findParentComponentOfClass<SynthGuiInterface>()) {
+        interface->notifyPrepPopupMoved();
+    }
+}

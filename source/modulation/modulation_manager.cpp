@@ -371,6 +371,16 @@ void ModulationAmountKnob::setDestinationComponent(juce::Component* component, c
     setColour(Skin::kRotaryArc, color_component_->findColour(Skin::kRotaryArc, true));
 }
 
+void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
+    destination = dest;
+    this->setRange(0,dest->getNormalisableRange().getRange().getLength(),0.f);
+    DBG(dest->getNormalisableRange().getRange().getLength());
+    //this->setNormalisableRange(dest->getNormalisableRange());
+    this->valueFromTextFunction = dest->valueFromTextFunction;
+    this->textFromValueFunction = dest->textFromValueFunction;
+}
+
+
 juce::Colour ModulationAmountKnob::getInternalColor() {
   if (color_component_)
      return color_component_->findColour(Skin::kRotaryArc, true);
@@ -1528,7 +1538,14 @@ void ModulationManager::clearModulationSource() {
       selected_slider->makeVisible(false);
     for (auto& selected_indicator : selected_modulation_indicators_)
         selected_indicator->makeVisible(false);
+
   }
+    for (auto& hover_slider : modulation_hover_sliders_) {
+        hover_slider->makeVisible(false);
+        hover_slider->redoImage();
+    }
+    for (auto& hover_sliders : modulation_hover_indicators_)
+        hover_sliders->makeVisible(false);
   current_modulator_ = nullptr;
   setModulationAmounts();
 }
@@ -2544,6 +2561,7 @@ void ModulationManager::makeCurrentModulatorAmountsVisible() {
     SynthSlider* destination_slider = slider_model_lookup_[connection->destination_name];
     if (slider_model_lookup_[connection->destination_name] == nullptr)
       return;
+
     juce::Rectangle<int> destination_bounds = getLocalArea(destination_slider, destination_slider->getLocalBounds());
 
     int center_x = destination_bounds.getCentreX();
@@ -2566,6 +2584,7 @@ void ModulationManager::makeCurrentModulatorAmountsVisible() {
       selected_slider->setBounds(right, center_y - width / 2, width, width);
 
     selected_slider->makeVisible(destination_slider->isShowing());
+      selected_slider->setDestinationSlider(destination_slider);
   }
 
   for (auto& selected_slider : selected_modulation_sliders_) {
@@ -2814,10 +2833,10 @@ void ModulationManager::makeModulationsVisible(SynthSlider* destination, bool vi
       hover_slider->redoImage();
     }
     hover_slider->setSource(connection->source_name);
-    hover_slider->setBipolar(false);
-    hover_slider->setStereo(false);
-    hover_slider->setBypass(false);
-//    hover_slider->setBipolar(connection->modulation_processor->isBipolar());
+    // hover_slider->setBipolar(false);
+    // hover_slider->setStereo(false);
+    // hover_slider->setBypass(false);
+    hover_slider->setBipolar(connection->isBipolar());
 //    hover_slider->setStereo(connection->modulation_processor->isStereo());
 //    hover_slider->setBypass(connection->modulation_processor->isBypassed());
   }
@@ -2872,7 +2891,9 @@ void ModulationManager::makeModulationsVisible(SynthSlider* destination, bool vi
       hover_slider->setPopupPlacement(placement);
       hover_slider->setBounds(x, y, hover_slider_width, hover_slider_width);
       hover_slider->makeVisible(visible);
+        hover_slider->setDestinationSlider(destination);
       hover_slider->redoImage();
+
     }
     x += delta_x;
     y += delta_y;
@@ -2906,10 +2927,15 @@ void ModulationManager::positionModulationAmountSlidersInside(const std::string&
     slider->setPopupPlacement(popup_position);
 
     std::string name = connection->destination_name;
-    if (slider_model_lookup_.count(name))
-      slider->setDestinationComponent(slider_model_lookup_[name], name);
-    else
-      slider->setDestinationComponent(nullptr, name);
+    if (slider_model_lookup_.count(name)) {
+        slider->setDestinationComponent(slider_model_lookup_[name], name);
+        slider->setDestinationSlider(slider_model_lookup_[name]);
+    }
+    else {
+        slider->setDestinationComponent(nullptr, name);
+        slider->setDestinationSlider(nullptr);
+    }
+
 
     slider->setMouseClickGrabsKeyboardFocus(true);
     slider->redoImage();
@@ -2931,12 +2957,16 @@ void ModulationManager::positionModulationAmountSlidersCallout(const std::string
     ModulationAmountKnob* slider = modulation_amount_sliders_[index].get();
 
     std::string name = connection->destination_name;
-    if (slider_model_lookup_.count(name))
-      slider->setDestinationComponent(slider_model_lookup_[name], name);
-    else
-      slider->setDestinationComponent(nullptr, name);
+      if (slider_model_lookup_.count(name)) {
+          slider->setDestinationComponent(slider_model_lookup_[name], name);
+          slider->setDestinationSlider(slider_model_lookup_[name]);
+      }
+      else {
+          slider->setDestinationComponent(nullptr, name);
+          slider->setDestinationSlider(nullptr);
+      }
+      slider->setVisible(false);
 
-    slider->setVisible(false);
   }
 
   expand_button->setSliders(amount_controls);

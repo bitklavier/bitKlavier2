@@ -543,6 +543,8 @@ bool SynthBase::isSourceConnected (const std::string& source)
 
 void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 {
+    if(mod_connections_.count (connection) == 1)
+        return;
     std::string src_uuid;
     std::string dst_uuid;
     std::string src_modulator_uuid_and_name;
@@ -571,7 +573,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     auto source_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
     auto dest_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
 
-    auto parameter_tree = mod_dst.getChildWithProperty (IDs::parameter, juce::String (dst_param));
+    auto parameter_tree = mod_dst.getChildWithName(IDs::MODULATABLE_PARAMS).getChildWithProperty (IDs::parameter, juce::String (dst_param));
     jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
     /**
      * todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
@@ -620,7 +622,8 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         });
 
         //this is threadsafe because processorgraph will trigger rebuild on main thead
-            engine_->addConnection (connection->connection_);
+           if(! engine_->addConnection (connection->connection_))
+               jassertfalse;
         // });
     }
 }

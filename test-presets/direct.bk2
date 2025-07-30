@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <PREPARATION type="0" width="245" height="125" x_y="437, 144" uuid="072415f26537430aad4f0e453e400f79"
+                   nodeID="119805426" numIns="1" numOuts="2" Main="0.000" Hammers="-24.000"
+                   Resonance="6.000" Pedal="-6.000" Send="0.000" OutputGain="0.000"
+                   decay="0.000" sustain="1.000" release="50.000" attack="1.000"
+                   attackpower="0.000" hold="0.000" delay="0.000" decaypower="0.000"
+                   releasepower="0.000" t0="0.000" t1="0.000" t2="0.000" t3="0.000"
+                   t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000"
+                   t10="0.000" t11="0.000" numActiveSliders="1.000" UseTuning="0"
+                   velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="Main" channel="0"/>
+          <MODULATABLE_PARAM parameter="Hammers" channel="1"/>
+          <MODULATABLE_PARAM parameter="Resonance" channel="2"/>
+          <MODULATABLE_PARAM parameter="Pedal" channel="3"/>
+          <MODULATABLE_PARAM parameter="Send" channel="4"/>
+          <MODULATABLE_PARAM parameter="OutputGain" channel="5"/>
+          <MODULATABLE_PARAM parameter="decay" channel="6"/>
+          <MODULATABLE_PARAM parameter="sustain" channel="7"/>
+          <MODULATABLE_PARAM parameter="release" channel="8"/>
+          <MODULATABLE_PARAM parameter="attack" channel="9"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="119805426" chIdx="4096" isIn="1"/>
+        <PORT nodeID="119805426" chIdx="0" isIn="0"/>
+        <PORT nodeID="119805426" chIdx="1" isIn="0"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>
