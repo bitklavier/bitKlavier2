@@ -52,6 +52,7 @@ public:
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
+
             }
         }
 
