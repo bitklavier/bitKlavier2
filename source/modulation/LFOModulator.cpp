@@ -3,7 +3,7 @@
 //
 
 #include "LFOModulator.h"
-
+#include "ParameterView/ParametersView.h"
 LFOModulatorProcessor::LFOModulatorProcessor(juce::ValueTree& vt) : ModulatorStateBase<bitklavier::PreparationStateImpl<LFOParams>>(vt)
 
 {
@@ -22,10 +22,15 @@ void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,j
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
             float* channelData = buffer.getWritePointer(channel);
-            channelData[sample] = (1.0f + 0.5f*lfoValue);
+            channelData[sample] = (1.0f + lfoValue)*0.5f;
         }
     }
+    // melatonin::printSparkline(buffer);
 
 
+}
+SynthSection *LFOModulatorProcessor::createEditor() {
+
+        return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
 
 }

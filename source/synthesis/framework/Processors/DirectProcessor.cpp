@@ -44,8 +44,16 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         {
             return p->paramID; // Works if all types have getParamID()
         }, param);
+            const auto& a  = std::visit([](auto* p) -> juce::NormalisableRange<float>
+        {
+            return p->getNormalisableRange(); // Works if all types have getParamID()
+        }, param);
             modChan.setProperty (IDs::parameter, name, nullptr);
             modChan.setProperty (IDs::channel, mod, nullptr);
+            modChan.setProperty(IDs::start, a.start,nullptr);
+            modChan.setProperty(IDs::end, a.end,nullptr);
+            modChan.setProperty(IDs::skew, a.skew,nullptr);
+
             mod_params.appendChild (modChan, nullptr);
             mod++;
         }

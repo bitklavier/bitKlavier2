@@ -35,7 +35,7 @@ class StateConnection;
 
         void prepareToPlay(double sampleRate, int samplesPerBlock) override {
             setRateAndBufferSizeDetails(sampleRate,samplesPerBlock);
-            for(auto buffer : tmp_buffers)
+            for(auto& buffer : tmp_buffers)
             {
                 buffer.setSize(1,samplesPerBlock);
             }

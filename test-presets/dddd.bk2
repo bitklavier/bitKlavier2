@@ -4,8 +4,8 @@
          pedalSampleSet="/defaultPedals">
   <PIANO isActive="1" name="default">
     <PREPARATIONS>
-      <PREPARATION type="0" width="245" height="125" x_y="319, 290" uuid="51f2cadf0c9e478494cc361dd037956a"
-                   nodeID="1374866143" numIns="1" numOuts="2" Main="-12.956" Hammers="-24.000"
+      <PREPARATION type="0" width="245" height="125" x_y="268, 151" uuid="f0efcf7b660a44b4913d794b5f82b649"
+                   nodeID="4042248059" numIns="1" numOuts="2" Main="-17.522" Hammers="-24.000"
                    Resonance="6.000" Pedal="-6.000" Send="0.000" OutputGain="0.000"
                    decay="0.000" sustain="1.000" release="50.000" attack="1.000"
                    attackpower="0.000" hold="0.000" delay="0.000" decaypower="0.000"
@@ -14,8 +14,7 @@
                    t10="0.000" t11="0.000" sliderVals_size="1.000" UseTuning="0"
                    velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
         <MODULATABLE_PARAMS>
-          <MODULATABLE_PARAM parameter="Main" channel="0" start="-60.0" end="6.0" skew="2.0"
-                             sliderval="-12.95596122741699"/>
+          <MODULATABLE_PARAM parameter="Main" channel="0" start="-60.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="Hammers" channel="1" start="-60.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="Resonance" channel="2" start="-60.0" end="30.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="Pedal" channel="3" start="-60.0" end="6.0" skew="2.0"/>
@@ -27,22 +26,23 @@
           <MODULATABLE_PARAM parameter="attack" channel="9" start="0.0" end="10000.0" skew="0.2313782125711441"/>
         </MODULATABLE_PARAMS>
         <PARAM_DEFAULT/>
-        <PORT nodeID="1374866143" chIdx="4096" isIn="1"/>
-        <PORT nodeID="1374866143" chIdx="2" isIn="0"/>
-        <PORT nodeID="1374866143" chIdx="3" isIn="0"/>
+        <PORT nodeID="4042248059" chIdx="4096" isIn="1"/>
+        <PORT nodeID="4042248059" chIdx="2" isIn="0"/>
+        <PORT nodeID="4042248059" chIdx="3" isIn="0"/>
       </PREPARATION>
-      <PREPARATION type="8" width="100" height="100" x_y="846, 261" uuid="a149183b7de441c7b1741e7ab2724534"
-                   nodeID="2705922107" numIns="1">
-        <PORT nodeID="2705922107" chIdx="4096" isIn="1"/>
-        <modulationproc type="lfo" isState="0" uuid="68c709a50d114ab5b469ac856a213529"/>
+      <PREPARATION type="8" width="100" height="100" x_y="971, 179" uuid="85cb55228e77435d8586e6c090d3e3d2"
+                   nodeID="2244695330" numIns="1">
+        <PORT nodeID="2244695330" chIdx="4096" isIn="1"/>
+        <modulationproc type="lfo" isState="0" uuid="b5d4d247379845fb9bdbd03a6faafd8c"
+                        lfofreq="0.416"/>
       </PREPARATION>
     </PREPARATIONS>
     <CONNECTIONS/>
     <MODCONNECTIONS>
-      <MODCONNECTION isMod="1" src="2705922107" dest="1374866143">
-        <ModulationConnection uuid="7225d295732c496196f195b68ee53762" isState="0" dest="51f2cadf0c9e478494cc361dd037956a_Main"
-                              src="a149183b7de441c7b1741e7ab2724534_lfo-68c709a50d114ab5b469ac856a213529_mod"
-                              mod0to1="0.3034017086029053" modAmt="12.40980434417725"/>
+      <MODCONNECTION isMod="1" src="2244695330" dest="4042248059">
+        <ModulationConnection uuid="9d167721994749d0aa648284dbabaa36" isState="0" dest="f0efcf7b660a44b4913d794b5f82b649_Main"
+                              src="85cb55228e77435d8586e6c090d3e3d2_lfo-b5d4d247379845fb9bdbd03a6faafd8c_mod"
+                              sliderval="-17.52245903015137" mod0to1="0.3241804838180542" modAmt="14.23640632629395"/>
       </MODCONNECTION>
     </MODCONNECTIONS>
   </PIANO>

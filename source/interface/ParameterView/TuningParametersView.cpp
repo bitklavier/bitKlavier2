@@ -16,6 +16,10 @@ TuningParametersView::TuningParametersView(
 
     auto& listeners = pluginState.getParameterListeners();
 
+    /**
+     * todo: need to add slider->addAttachment(attachment.get()); to all SynthSliders, so they can display liveModulation
+     */
+
     absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(absolutekeyboard.get());
     absolutekeyboard->setName("absolute");

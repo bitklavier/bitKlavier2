@@ -68,16 +68,42 @@ class ModulationProcessor;
         float getCurrentBaseValue()
         {
 
-                return scalingValue_.load();
+                return state.getProperty(IDs::modAmt,  0.f);
         }
-        void setScalingValue(float val)
+        void setScalingValue(float modVal,float sliderVal)
         {
-                if (isBipolar())
-                    scalingValue_.store(val *0.5f);
-                else
-                    scalingValue_.store(val);
+            float start = static_cast<float>(param_tree.getProperty(IDs::start));
+            float end   = static_cast<float>(param_tree.getProperty(IDs::end));
+            float skew  = static_cast<float>(param_tree.getProperty(IDs::skew));
 
-            setModulationAmount(val);
+            juce::NormalisableRange<float> range(start, end, 0.0f, skew);
+
+            // Convert current slider value to normalized
+            float sliderNorm = range.convertTo0to1(sliderVal);
+
+            float modRangeNorm = 0.0f;
+
+            if (isBipolar())
+            {
+                // Symmetric modulation up and down
+                float plusNorm  = range.convertTo0to1(sliderVal + modVal);
+                float minusNorm = range.convertTo0to1(sliderVal - modVal);
+
+                // Half the total range (from center to one side)
+                modRangeNorm = 0.5f * std::abs(plusNorm - minusNorm);
+            }
+            else
+            {
+                // Unipolar modulation (e.g., 0 to +modVal)
+                float targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
+
+                modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
+            }
+            state.setProperty(IDs::sliderval,sliderVal,nullptr);
+            scalingValue_.store(modRangeNorm);
+            state.setProperty(IDs::mod0to1, scalingValue_.load(),nullptr);
+            currentDestinationSliderVal  = sliderVal;
+            setModulationAmount(modVal);
         }
 
         void setBypass(bool bypass) {}
@@ -97,11 +123,12 @@ class ModulationProcessor;
             source_name = "";
             destination_name = "";
         }
-
+        float getScaling() {
+            return scalingValue_.load();
+        }
         std::string source_name;
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
         // if i'll be using this for that or not
-        juce::ValueTree state;
         int index_in_all_mods;
         int index_in_mapping;
         juce::Uuid uuid;
@@ -113,7 +140,23 @@ class ModulationProcessor;
         ModulationProcessor* parent_processor;
         ModulatorBase* processor;
         int modulation_output_bus_index;
+        float currentDestinationSliderVal;
+        void setParamTree(const juce::ValueTree& v) {
+            param_tree = v;
+
+            currentDestinationSliderVal = param_tree.getProperty(IDs::sliderval);
+        }
+        void setStateValueTree(const juce::ValueTree&v) {
+           state = v;
+            //setScalingValue()
+            scalingValue_ = state.getProperty(IDs::mod0to1);
+        }
+        juce::ValueTree state;
+
     private:
+
+        juce::ValueTree param_tree;
+
         std::atomic<float> scalingValue_;
 //        std::atomic<float>* bipolarOffset;
 

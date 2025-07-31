@@ -110,7 +110,7 @@ void OpenGlSlider:: redoImage(bool skip_image) {
 
   if (isModulationKnob()) {
     slider_quad_->setActive(true);
-    float t = getValue();
+    float t = valueToProportionOfLength(getValue());
     slider_quad_->setThumbColor(thumb_color_);
 
     if (t > 0.0f) {
@@ -413,6 +413,7 @@ void SynthSlider::focusLost(FocusChangeType cause) {
 void SynthSlider::valueChanged() {
   OpenGlSlider::valueChanged();
   notifyGuis();
+
 }
 
 juce::String SynthSlider::getRawTextFromValue(double value) {
@@ -458,7 +459,13 @@ double SynthSlider::getValueFromText(const juce::String& text) {
 //    float t = 0.01f * cleaned.removeCharacters("%").getDoubleValue();
 //    return (getMaximum() - getMinimum()) * t + getMinimum();
 //  }
-  return getValueFromAdjusted(juce::Slider::getValueFromText(text));
+  auto val = juce::Slider::getValueFromText(text);
+  //it may come out of this already clamped
+  //todo add checks for value over current normalisablerange reset range if so
+
+  //  //access param range from attachment code
+  // attachment.setNormalisableRange()
+  return val;
 }
 double SynthSlider::getValueFromAdjusted(double value) {
   //vital::ValueDetails* details = getDisplayDetails();

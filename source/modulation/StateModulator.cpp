@@ -3,7 +3,7 @@
 //
 
 #include "StateModulator.h"
-
+#include "synth_section.h"
 StateModulatorProcessor::StateModulatorProcessor(juce::ValueTree& vt): ModulatorBase(vt)
 
 {
@@ -15,5 +15,10 @@ void StateModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer
     {
         bufferToFill.setSample(0, i,1.f);
     }
+
+}
+SynthSection *StateModulatorProcessor::createEditor() {
+
+        return new SynthSection("state" ,state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
 
 }

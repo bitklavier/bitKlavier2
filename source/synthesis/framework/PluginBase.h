@@ -7,6 +7,7 @@
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 
 #include "Identifiers.h"
+#include "bk_XMLSerializer.h"
 class SynthSection;
 class SynthBase;
 class TuningProcessor;
@@ -26,8 +27,7 @@ namespace bitklavier {
 
             protected:
 
-        TuningProcessor* tuning = nullptr; //getTuningProcessor() const;
-        //virtual std::unique_ptr<SynthSection> createSynthSection() = 0;
+        TuningProcessor* tuning = nullptr;
     };
 
 /**
@@ -178,7 +178,7 @@ namespace bitklavier {
     }
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
-#include "bk_XMLSerializer.h"
+
     template <class State>
     PluginBase<State>::PluginBase (SynthBase& parent,const juce::ValueTree &v_, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
             : InternalProcessor (layout),

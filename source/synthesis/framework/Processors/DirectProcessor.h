@@ -246,6 +246,5 @@ private:
     chowdsp::ScopedCallbackList vtCallbacks;
 
     BKSynthesizerState lastSynthState;
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };

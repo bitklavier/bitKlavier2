@@ -3,7 +3,7 @@
 //
 
 #include "RampModulator.h"
-
+#include "ParameterView/ParametersView.h"
 RampModulatorProcessor::RampModulatorProcessor(juce::ValueTree& vt) : ModulatorStateBase<bitklavier::PreparationStateImpl<RampParams>>(vt)
 
 {
@@ -17,5 +17,11 @@ void RampModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& bufferT
     {
         bufferToFill.setSample(0, i,1.f);
     }
+
+}
+
+SynthSection *RampModulatorProcessor::createEditor() {
+
+        return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
 
 }

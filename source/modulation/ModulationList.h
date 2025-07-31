@@ -29,6 +29,10 @@ public:
     void objectRemoved (ModulatorBase*) override     { }//resized(); }
     void objectOrderChanged() override              { }//resized(); }
     void valueTreeParentChanged (juce::ValueTree&) override{};
+
+    void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
+
+
     void valueTreeRedirected (juce::ValueTree&) override{
         deleteAllObjects();
         rebuildObjects();

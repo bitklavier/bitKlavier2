@@ -229,6 +229,15 @@ public:
                     obj->proc->getStateInformation (m);
                     obj->state.getOrCreateChildWithName("STATE",nullptr).setProperty ("base64",m.toBase64Encoding(),nullptr);
                 }
+                if (obj->state.getChildWithName(IDs::modulationproc).isValid()) {
+                    obj->state.setProperty(IDs::sync,1,nullptr);
+                    for (auto a : obj->state)
+                    {
+                    if (a.hasType(IDs::modulationproc))
+                        a.setProperty(IDs::sync,1,nullptr);
+                    }
+                    // obj->state.getChildWithName(IDs::modulationproc).setProperty(IDs::sync,1,nullptr);
+                }
 
             }
             v.removeProperty(IDs::sync, nullptr);

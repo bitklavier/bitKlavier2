@@ -484,6 +484,8 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
   float getLiveModulation() const {
 
       if (attachment)  return attachment->getParameter()->getCurrentValue();
+
+      return getValue();
     }
 
     std::shared_ptr<OpenGlComponent> getTextEditorComponent() { return text_entry_->getImageComponent(); }
@@ -492,8 +494,9 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
 //    {
 //        attachment = (param, pluginState, *this);
 //    }
+  chowdsp::SliderAttachment* attachment = nullptr;
   protected:
-    chowdsp::SliderAttachment* attachment = nullptr;
+
     PopupItems createPopupMenu();
     void setRotaryTextEntryBounds();
     void setLinearTextEntryBounds();

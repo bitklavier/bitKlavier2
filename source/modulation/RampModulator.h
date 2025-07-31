@@ -34,10 +34,8 @@ public :
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;
     void prepareToPlay (int samplesPerBlock, double sampleRate ) override {}
     void releaseResources() override {}
-    SynthSection* createEditor() override
-    {
-        return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
-    }
+    SynthSection* createEditor() override;
+
     void triggerModulation() override
     {
         trigger = true;
