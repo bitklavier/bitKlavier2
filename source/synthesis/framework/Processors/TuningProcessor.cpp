@@ -21,8 +21,10 @@ void TuningState::setCircularKeyOffset (int midiNoteNumber, float val)
         circularTuningOffset[midiNoteNumber] = val;
 
     if (tuningSystem->get() == TuningSystem::Custom)
-        circularTuningOffset_custom = circularTuningOffset;
+        copyAtomicArrayToAtomicArray(circularTuningOffset, circularTuningOffset_custom);
+//        circularTuningOffset_custom = circularTuningOffset;
 }
+
 
 void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 {
@@ -47,7 +49,8 @@ void TuningState::processStateChanges()
         }
         else if (val1 != nullVar)
         {
-            circularTuningOffset = parseFloatStringToArrayCircular<12> (val1.toString().toStdString());
+            parseFloatStringToAtomicArrayCircular(val1.toString().toStdString(), circularTuningOffset);
+//            circularTuningOffset = parseFloatStringToArrayCircular<12> (val1.toString().toStdString());
         }
     }
     stateChanges.changeState.clear();
@@ -60,11 +63,11 @@ void TuningState::setFundamental (int fund)
     setOldFundamental(fund);
 
     int offset = fund - oldFund;
-    auto vals = circularTuningOffset;
+    auto& vals = circularTuningOffset;
     for (int i = 0; i < 12; i++)
     {
         int index = ((i - offset) + 12) % 12;
-        circularTuningOffset[i] = vals[index];
+        circularTuningOffset[i].store(vals[index]);
     }
 }
 
@@ -372,12 +375,13 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
      * then serialize the more complex params
      */
 
-    Serializer::template addChildElement<12> (ser, "circularTuning_custom", paramHolder.tuningState.circularTuningOffset_custom, arrayToString<12>);
+    std::array<float, 12> tempCircularOffsets;
+    copyAtomicArrayToFloatArray(paramHolder.tuningState.circularTuningOffset_custom, tempCircularOffsets);
+    Serializer::template addChildElement<12> (ser, "circularTuning_custom", tempCircularOffsets, arrayToString<12>);
 
-    std::array<float, 128> tempTuningOffsets;
-    copyAtomicArrayToFloatArray(paramHolder.tuningState.absoluteTuningOffset, tempTuningOffsets);
-//    Serializer::template addChildElement<128> (ser, "absoluteTuning", tempTuningOffsets, arrayToStringWithIndex<128>);
-    Serializer::template addChildElement<128> (ser, "absoluteTuning", tempTuningOffsets, arrayToStringWithIndex<128>);
+    std::array<float, 128> tempAbsoluteOffsets;
+    copyAtomicArrayToFloatArray(paramHolder.tuningState.absoluteTuningOffset, tempAbsoluteOffsets);
+    Serializer::template addChildElement<128> (ser, "absoluteTuning", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
 
 //    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex<128>);
 
@@ -389,7 +393,8 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 {
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
     auto myStr = deserial->getStringAttribute ("circularTuning_custom");
-    paramHolder.tuningState.circularTuningOffset_custom = parseFloatStringToArrayCircular<12> (myStr.toStdString());
+//    paramHolder.tuningState.circularTuningOffset_custom = parseFloatStringToArrayCircular<12> (myStr.toStdString());
+    parseFloatStringToAtomicArrayCircular(myStr.toStdString(), paramHolder.tuningState.circularTuningOffset_custom);
     myStr = deserial->getStringAttribute ("absoluteTuning");
     parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.tuningState.absoluteTuningOffset);
 //    paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
@@ -499,7 +504,7 @@ float TuningState::adaptiveCalculateRatio(const int midiNoteNumber) const
     std::array<float, 12> intervalScale;
     if(getAdaptiveIntervalScale() == Custom) {
         int i=0;
-        for (auto offs : circularTuningOffset_custom) intervalScale[i++] = offs * .01;
+        for (auto& offs : circularTuningOffset_custom) intervalScale[i++] = offs * .01;
     }
     else intervalScale = getOffsetsFromTuningSystem(getAdaptiveIntervalScale());
 

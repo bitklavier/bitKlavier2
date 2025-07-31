@@ -284,6 +284,11 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
     /*
      * then serialize the more complex params
      */
+    /*
+     * first, get size from paramHolder.beatLengths.sliderVals_size
+     * write function that takes sliderVals_size and sliderVals and converts it to a simple array of length sliderVals that can be sent to arrayToString
+     *  - i basically have this already in multiSliderAllValuesChanged in OpenGL_MultiSlider.h
+     */
 //        Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
 
     return ser;

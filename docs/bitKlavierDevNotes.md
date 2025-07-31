@@ -2,14 +2,8 @@
 ## Priorities before Davis leaves
 - [ ] Mods!
   - some bugs and crashes:
-    - with Reset: if you try to Reset to a defaultState immediately after loading a gallery, it won't work. 
-      - Try ResetTest.bk2
-      - if you move the velocity min and max sliders before the mod, the reset will work, but it won't if you don't touch them after loading the gallery
-    - also with Reset: in the VT viewer, why do we see several versions of Direct when there is only one?
     - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
       - should be fixed now; was missing a `stateChanges.changeState.clear();` in `TuningState::processStateChanges()`
-    - saved `transpositionModSavetest` gallery and it crashes on load
-      - hopefully fixed after merging with Davis's recent push to main
     - hit an assert all the time when just dragging a ramp mod across the tuning UI
       - that's because the params are not setup properly for mods yet.
       - look at the `for (auto [key, param] : state.params.modulatableParams)` in `DirectProcessor` constructor
@@ -21,7 +15,6 @@
   - some questions:
     - why is `stateChanges.changeState` a std::pair? is one of the VTs "defaultState" and the other "modulationState"?
       - no, one of the items in the pair is for a sample location for when we might want to do sample-accurate timing; not used currently
-    - explain to me how `ResetProcessor::processBlock` works.
     - also, can we look at ramp mods? i have some notes below about what needs to be done to make a parameter modulatable, but don't really understand it
       - ramp mods not actually doing anything yet. that will happen in `RampModulatorProcessor::getNextAudioBlock`
     - how does the serializer relate to all this? 

@@ -10,6 +10,7 @@
 #include "open_gl_combo_box.h"
 #include "tuning_systems.h"
 #include "chowdsp_parameters/chowdsp_parameters.h"
+#include "array_to_string.h"
 
 const std::vector<Fundamental> fundamentalValues = {
     Fundamental::C,
@@ -94,8 +95,8 @@ Fundamental getFundamentalFromInt(int bitPosition);
 std::array<float, 12> getOffsetsFromTuningSystem (TuningSystem ts);
 
 void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_);
-void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<float, 12>& circularTuningVec);
-void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<float, 12>& circularTuningVec, std::array<float, 12>& customTuningVec);
+void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<std::atomic<float>, 12>& circularTuningVec);
+void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<std::atomic<float>, 12>& circularTuningVec, std::array<std::atomic<float>, 12>& customTuningVec);
 
 static std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental);
 void copyStdArrayIntoJuceArray(const std::array<float, 12>& stdArr, juce::Array<float>& juceArray);

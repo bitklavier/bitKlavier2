@@ -97,9 +97,57 @@ std::array<float, N> parseFloatStringToArrayCircular(const std::string& input){
     return result;
 }
 
-juce::String getOnKeyString(const std::bitset<128>& bits);
+/**
+ * Parses a string containing space-separated float values and stores them into a
+ * pre-existing std::array<std::atomic<float>, N> in a circular fashion.
+ * Values are stored atomically.
+ *
+ * @tparam N The size of the std::array.
+ * @param input The input string (e.g., "1.0 2.5 3.0").
+ * @param outputArray A reference to the std::array<std::atomic<float>, N> to populate.
+ * It should be initialized by the caller (e.g., all zeros).
+ */
+template <std::size_t N>
+void parseFloatStringToAtomicArrayCircular(const std::string& input, std::array<std::atomic<float>, N>& outputArray)
+{
+    std::istringstream iss(input);
+    float value;
+    std::size_t i = 0;
 
-//juce::String arrayToString(const std::array<float, 12>& array);
+    // Read values from the string until the array is full or no more values are available
+    while (i < N && iss >> value)
+    {
+        outputArray[i++].store(value); // Atomically store the value
+    }
+
+    // If fewer floats than N were read, the remaining atomic values will retain
+    // their initial state (e.g., 0.0f if the array was pre-initialized to zeros).
+    // No explicit action needed here to set remaining to zero, as it's the caller's
+    // responsibility to initialize outputArray.
+}
+
+/**
+ * Copies values from one std::array of std::atomic<float> to another std::array of std::atomic<float>.
+ * Each value is atomically loaded from the source and atomically stored into the destination.
+ *
+ * @tparam Size The size of the arrays.
+ * @param sourceArray The std::array<std::atomic<float>, Size> to copy from.
+ * @param destinationArray The std::array<std::atomic<float>, Size> to copy to.
+ */
+template <size_t Size>
+void copyAtomicArrayToAtomicArray(const std::array<std::atomic<float>, Size>& sourceArray,
+    std::array<std::atomic<float>, Size>& destinationArray)
+{
+    for (size_t i = 0; i < Size; ++i)
+    {
+        // Atomically load the value from the source atomic array
+        float value = sourceArray[i].load();
+        // Atomically store the value into the destination atomic array
+        destinationArray[i].store(value);
+    }
+}
+
+juce::String getOnKeyString(const std::bitset<128> &bits);
 
 template <size_t Size>
 juce::String arrayToString(const std::array<float, Size>& array) {
@@ -108,6 +156,32 @@ juce::String arrayToString(const std::array<float, Size>& array) {
     for (auto offset : array) {
         s += juce::String((offset)) + " ";
     }
+    return s;
+}
+
+/**
+ * Converts a std::array of std::atomic<float> values of any size into a single juce::String.
+ * Each float value (obtained atomically) is converted to a string and separated by a space.
+ * This is a direct atomic version of the original arrayToString.
+ *
+ * @tparam Size The size of the std::array.
+ * @param array The std::array<std::atomic<float>, Size> to convert.
+ * @return A juce::String containing the space-separated float values.
+ */
+template <size_t Size>
+juce::String atomicArrayToString(const std::array<std::atomic<float>, Size>& array)
+{
+    juce::String s = ""; // Initialize an empty JUCE String
+
+    // Iterate through each std::atomic<float> value in the array
+    for (const auto& atomicOffset : array)
+    {
+        // Atomically load the float value and convert it to a juce::String,
+        // then append it, followed by a space.
+        s += juce::String(atomicOffset.load()) + " "; // Explicitly call .load()
+    }
+
+    // Return the concatenated string
     return s;
 }
 

@@ -141,7 +141,7 @@ public:
         redoImage();
 
         juce::String s = "";
-        for (auto offset : keyboardState->circularTuningOffset) {
+        for (auto& offset : keyboardState->circularTuningOffset) {
             s += juce::String((offset)) + " ";
         }
 

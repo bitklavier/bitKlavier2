@@ -52,7 +52,7 @@ class Spring;
 class SpringTuning : private juce::HighResolutionTimer
 {
 public:
-    SpringTuning(SpringTuningParams &params, std::array<float, 12> &circularTuningCustom);
+    SpringTuning(SpringTuningParams &params, std::array<std::atomic<float>, 12> &circularTuningCustom);
     ~SpringTuning();
 
     /**
@@ -104,7 +104,7 @@ public:
     void retuneAllActiveSprings(void);
 
     SpringTuningParams &sparams;
-    std::array<float, 12> &customTuning;
+    std::array<std::atomic<float>, 12> &customTuning;
     void print();
 
 

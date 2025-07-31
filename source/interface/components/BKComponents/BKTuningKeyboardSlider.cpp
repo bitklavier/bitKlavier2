@@ -23,7 +23,7 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
     g.setColour (c);
     g.fillRect (area);
 
-    float keyVal = isCircular ? state.circularTuningOffset[midiNoteNumber] : state.absoluteTuningOffset[midiNoteNumber].load();
+    float keyVal = isCircular ? state.circularTuningOffset[midiNoteNumber].load() : state.absoluteTuningOffset[midiNoteNumber].load();
     //if(keyVal != 0.)
     if(keyVal != midRange)
     {
@@ -70,7 +70,7 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
 void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) {
 
     auto c = juce::Colours::transparentWhite;
-    float keyVal = isCircular ? state.circularTuningOffset[midiNoteNumber] : state.absoluteTuningOffset[midiNoteNumber].load();
+    float keyVal = isCircular ? state.circularTuningOffset[midiNoteNumber].load() : state.absoluteTuningOffset[midiNoteNumber].load();
 
 
     if(!juce::approximatelyEqual(keyVal,midRange))
@@ -472,7 +472,8 @@ void BKTuningKeyboardSlider::buttonClicked (juce::Button* b)
     {
 
         if (isCircular) {
-            auto s = arrayToString(keyboardState->circularTuningOffset);
+//            auto s = arrayToString(keyboardState->circularTuningOffset);
+            auto s = atomicArrayToString(keyboardState->circularTuningOffset);
             keyboardValsTextField->setText(s,juce::sendNotificationSync);
         }
         else {

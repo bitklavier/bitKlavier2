@@ -184,7 +184,7 @@ void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_)
     pop_up->addSubMenu("Various",*submenus.getUnchecked(1));
 }
 
-void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<float, 12>& circularTuningVec)
+void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<std::atomic<float>, 12>& circularTuningVec)
 {
     //if (!params.tuningState.setFromAudioThread) { // it's not clear whether this is necessary; see bitKlavierDevNotes
 
@@ -210,7 +210,7 @@ void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::ar
     }
 }
 
-void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<float, 12>& circularTuningVec, std::array<float, 12>& customTuningVec)
+void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<std::atomic<float>, 12>& circularTuningVec, std::array<std::atomic<float>, 12>& customTuningVec)
 {
     //if (!params.tuningState.setFromAudioThread) { // it's not clear whether this is necessary; see bitKlavierDevNotes
 
@@ -229,7 +229,9 @@ void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::ar
         }
     }
     else { // custom tuning
-        const auto tuning = customTuningVec;
+//        const auto tuning = customTuningVec;
+        std::array<float, 12> tuning;
+        copyAtomicArrayToFloatArray(customTuningVec, tuning);
         const auto tuningArray = rotateValuesByFundamental(tuning, newFund);
         int index  = 0;
         for (const auto val :tuningArray) {
