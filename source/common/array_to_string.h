@@ -290,7 +290,10 @@ std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::ato
         }
         stateCtr++;
 
-        if (valueCounter >= outputValSize) return returnArray;
+        if (valueCounter >= outputValSize)
+        {
+            return returnArray;
+        }
     }
 
     return returnArray;

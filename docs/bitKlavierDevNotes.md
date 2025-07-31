@@ -1,8 +1,6 @@
 # Notes about how to do stuff in the bK codebase
 
 ## Quick Bug/Feature Notes
-- [ ] Mods across Piano Changes: will require mod-specific treatment in processBlockBypassed
-  - can leave until later
 - [ ] Keymap parameter targeting: 
   - requires a big new solution!
   - a new preparation: the Target Prep, or actually a MidiFilter prep
@@ -106,6 +104,8 @@ and hopefully with answers included here for the record!
   - `chowdsp::GainDBParameter::Ptr gainParam { juce::ParameterID { "Main", 100 }, "Main", juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false }, 0.0f, true };`
 - all of these need to get added to a parameter vector of `ParamPtrVariant` (like this in DirectProcessor.h: `std::unordered_map<std::string, ParamPtrVariant> modulatableParams;`)
 - and then these are assigned to modulation audio channels: see DirectProcessor constructor, the `modChan.setProperty` calls
+- Mods across Piano Changes: will require mod-specific treatment in processBlockBypassed
+  - can leave until later
 
 ## State Change Modulation Parameters
 - as opposed to Modulatable parameters; these are not changed continuously at the audio rate, the way Modulatable Parameters are, but rather are changed together, all at once
