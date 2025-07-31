@@ -298,6 +298,9 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
      *  - i basically have this already in multiSliderAllValuesChanged in OpenGL_MultiSlider.h
      */
 
+    /**
+     * todo: need to include paramHolder.beatLengths.sliderVals_size in this function to set max size to serialize
+     */
     juce::String testarr = arrayToString(multiSliderArraysToFloatArray(paramHolder.beatLengths.sliderVals, paramHolder.beatLengths.activeSliders));
     DBG("BlendronicParams::serialize " + testarr);
 
