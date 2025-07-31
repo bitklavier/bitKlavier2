@@ -1,40 +1,8 @@
 # Notes about how to do stuff in the bK codebase
-## Priorities before Davis leaves
-- [ ] Mods!
-  - some bugs and crashes:
-    - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
-      - should be fixed now; was missing a `stateChanges.changeState.clear();` in `TuningState::processStateChanges()`
-    - hit an assert all the time when just dragging a ramp mod across the tuning UI
-      - that's because the params are not setup properly for mods yet.
-      - look at the `for (auto [key, param] : state.params.modulatableParams)` in `DirectProcessor` constructor
-    - if i add a Reset to a Direct => boom. 
-      - Reset should only be connected to a Mod prep
-      - we need to set it up so it won't crash if someone tries to connect it to any other kind of prep and just ignore it
-    - trying to access the modulation transposition slider can be really frustrating; it disappears as soon as you move over it, most of the time!
-      - yeah, all this needs work
-  - some questions:
-    - why is `stateChanges.changeState` a std::pair? is one of the VTs "defaultState" and the other "modulationState"?
-      - no, one of the items in the pair is for a sample location for when we might want to do sample-accurate timing; not used currently
-    - also, can we look at ramp mods? i have some notes below about what needs to be done to make a parameter modulatable, but don't really understand it
-      - ramp mods not actually doing anything yet. that will happen in `RampModulatorProcessor::getNextAudioBlock`
-    - how does the serializer relate to all this? 
-      - let's look at the ones in TuningProcessor.cpp
-      - so, the serializer is called when we save/load. when we are making changes while using the app, we are NOT updating the main VT. we only need to do that on save and then load. so the default serializer will serialize all the regular chowdsp_params, and then we add to it for our more complex params (like absolutetuning array, the transposition slider, etc...)
-    - and let's also look at `TuningState::processStateChanges()`
-      - so, yes, these are stored as strings
-      - these are created in `OpenGLAbsoluteKeyboardSlider:mouseDrag`
-        - this mouseDrag function is not complete yet, with the `isModulated_` needing to be completed
-    - and think about how this might work for the MultiSlider.
-    - in general, I need to understand how this works; 
-      - in trying to implement the MultiSlider for Blendronic/Synchronic, i got completely lost!
-      - might make sense to look through my notes below to see if they are accurate, what they are missing, etc...
-- [ ] what is `isBusesLayoutSupported`? in DirectProcessor, it just returns true.
-- [ ] Blendrónic audio in: Dan working on this
-- [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
-- [ ] opening multiple sample libs, assigning to individual preps!
-  - ConstructionSite::moduleAdded, should be doable there.
 
 ## Quick Bug/Feature Notes
+- [ ] Mods across Piano Changes: will require mod-specific treatment in processBlockBypassed
+  - can leave until later
 - [ ] Keymap parameter targeting: 
   - requires a big new solution!
   - a new preparation: the Target Prep, or actually a MidiFilter prep
@@ -229,3 +197,39 @@ Typing as I do MidiFilter...
 - needed to create `~/.lldbinit` with `settings set target.load-cwd-lldbinit true` so that the debugger can provide more useful info about the ValueTrees
   - using melatonin sparklines and also juce_lldb_xcode.py
   - can see this in the `.lldbinit` file in the CLion project, `~/Code/bitklavier2/.lldbinit`
+
+--------
+## Notes from before Davis Left
+- [ ] Mods!
+  - some bugs and crashes:
+    - for Absolute and Circular tuning: if you create a mod and trigger it, you can't then edit the tunings directly; the modded values just stay
+      - should be fixed now; was missing a `stateChanges.changeState.clear();` in `TuningState::processStateChanges()`
+    - hit an assert all the time when just dragging a ramp mod across the tuning UI
+      - that's because the params are not setup properly for mods yet.
+      - look at the `for (auto [key, param] : state.params.modulatableParams)` in `DirectProcessor` constructor
+    - if i add a Reset to a Direct => boom.
+      - Reset should only be connected to a Mod prep
+      - we need to set it up so it won't crash if someone tries to connect it to any other kind of prep and just ignore it
+    - trying to access the modulation transposition slider can be really frustrating; it disappears as soon as you move over it, most of the time!
+      - yeah, all this needs work
+  - some questions:
+    - why is `stateChanges.changeState` a std::pair? is one of the VTs "defaultState" and the other "modulationState"?
+      - no, one of the items in the pair is for a sample location for when we might want to do sample-accurate timing; not used currently
+    - also, can we look at ramp mods? i have some notes below about what needs to be done to make a parameter modulatable, but don't really understand it
+      - ramp mods not actually doing anything yet. that will happen in `RampModulatorProcessor::getNextAudioBlock`
+    - how does the serializer relate to all this?
+      - let's look at the ones in TuningProcessor.cpp
+      - so, the serializer is called when we save/load. when we are making changes while using the app, we are NOT updating the main VT. we only need to do that on save and then load. so the default serializer will serialize all the regular chowdsp_params, and then we add to it for our more complex params (like absolutetuning array, the transposition slider, etc...)
+    - and let's also look at `TuningState::processStateChanges()`
+      - so, yes, these are stored as strings
+      - these are created in `OpenGLAbsoluteKeyboardSlider:mouseDrag`
+        - this mouseDrag function is not complete yet, with the `isModulated_` needing to be completed
+    - and think about how this might work for the MultiSlider.
+    - in general, I need to understand how this works;
+      - in trying to implement the MultiSlider for Blendronic/Synchronic, i got completely lost!
+      - might make sense to look through my notes below to see if they are accurate, what they are missing, etc...
+- [ ] what is `isBusesLayoutSupported`? in DirectProcessor, it just returns true.
+- [ ] Blendrónic audio in: Dan working on this
+- [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
+- [ ] opening multiple sample libs, assigning to individual preps!
+  - ConstructionSite::moduleAdded, should be doable there.
