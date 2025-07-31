@@ -161,6 +161,31 @@ juce::String arrayToString(const std::array<float, Size>& array) {
 }
 
 /**
+ * @brief Converts a std::array of floats into a single JUCE string,
+ * using only a specified number of elements.
+ *
+ * This is a templated function that takes a std::array by const reference
+ * and an integer count. It iterates up to the lesser of the array's size
+ * and the provided count, converting each element to a string.
+ *
+ * @tparam Size The size of the std::array, known at compile-time.
+ * @param array The std::array<float, Size> to convert.
+ * @param count The number of elements to use from the array.
+ * @return A juce::String containing the space-separated float values.
+ */
+template <size_t Size>
+juce::String arrayToStringLimited(const std::array<float, Size>& array, int count) {
+    juce::String s = "";
+
+    // The loop iterates up to the smaller of the array's size and the provided count.
+    for (size_t i = 0; i < Size && i < static_cast<size_t>(count); ++i) {
+        s += juce::String(array[i]) + " ";
+    }
+    return s;
+}
+
+
+/**
  * Converts a std::array of std::atomic<float> values of any size into a single juce::String.
  * Each float value (obtained atomically) is converted to a string and separated by a space.
  * This is a direct atomic version of the original arrayToString.
@@ -273,7 +298,7 @@ juce::String arrayToStringWithIndex(const std::array<float, Size>& array) {
 }
 
 template <size_t Size1, size_t Size2>
-std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::atomic<float>, Size1>& sliderVals, const std::array<std::atomic<bool>, Size2>& activeSliders, int outputValSize) {
+std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::atomic<float>, Size1>& sliderVals, const std::array<std::atomic<bool>, Size2>& activeSliders, const int outputValSize) {
 
     std::array<float, Size1> returnArray;
 
@@ -298,6 +323,7 @@ std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::ato
 
     return returnArray;
 }
+
 
 
 #endif //ARRAY_TO_STRING_H
