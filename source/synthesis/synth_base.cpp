@@ -596,7 +596,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     jassert(connection->modulation_output_bus_index != -1);
     //determine channel modulatable param reads moudlation from
     auto param_index = parameter_tree.getProperty (IDs::channel, -1);
-    auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0); //1 is mod
+    auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, connection->modulation_output_bus_index); //1 is mod
     auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index);
 
 

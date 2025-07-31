@@ -155,7 +155,10 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     sustain_attachment = std::make_unique<chowdsp::SliderAttachment>(params.sustainParam, listeners, *sustain_, nullptr);
     release_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releaseParam, listeners, *release_, nullptr);
     releasePower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releasePowerParam, listeners, *release_power_, nullptr);
-
+    attack_->addAttachment(attack_attachment.get());
+    decay_->addAttachment(decay_attachment.get());
+    sustain_->addAttachment(sustain_attachment.get());
+    release_->addAttachment(release_attachment.get());
     envelopeSectionBorder.setName("envelope border");
     envelopeSectionBorder.setText("Envelope");
     envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);

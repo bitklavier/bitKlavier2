@@ -24,7 +24,7 @@ class ModulationProcessor;
             state.setProperty(IDs::isState,false,nullptr);
             uuid = state.getProperty(IDs::uuid);
             index_in_all_mods = index;
-            scalingValue_ = 0.5f;
+            scalingValue_ = 0.0f;
             setDestination(to);
             setSource(from);
 
@@ -86,8 +86,8 @@ class ModulationProcessor;
             if (isBipolar())
             {
                 // Symmetric modulation up and down
-                float plusNorm  = range.convertTo0to1(sliderVal + modVal);
-                float minusNorm = range.convertTo0to1(sliderVal - modVal);
+                float plusNorm  = range.convertTo0to1(std::min(sliderVal + modVal,end));
+                float minusNorm = range.convertTo0to1(std::max(sliderVal - modVal,start));
 
                 // Half the total range (from center to one side)
                 modRangeNorm = 0.5f * std::abs(plusNorm - minusNorm);
@@ -115,6 +115,9 @@ class ModulationProcessor;
         {
             defaultBipolar = val;
             setBipolar(val);
+        }
+        bool isDefaultBipolar() {
+            return defaultBipolar;
         }
         void setBipolar(bool bipolar) {
             bipolar_ = bipolar;

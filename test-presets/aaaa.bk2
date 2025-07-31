@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <PREPARATION type="0" width="245" height="125" x_y="274, 215" uuid="29aff8917ac04c028c64d33a865f7ed5"
+                   nodeID="699398289" numIns="1" numOuts="2" Main="-19.428" Hammers="-13.100"
+                   Resonance="6.000" Pedal="-20.198" Send="-7.262" OutputGain="0.000"
+                   decay="497.598" sustain="0.453" release="50.462" attack="203.811"
+                   attackpower="0.000" hold="0.000" delay="0.000" decaypower="0.000"
+                   releasepower="0.000" t0="0.000" t1="0.000" t2="0.000" t3="0.000"
+                   t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000"
+                   t10="0.000" t11="0.000" sliderVals_size="1.000" UseTuning="0"
+                   velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="Main" channel="0" start="-60.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Hammers" channel="1" start="-60.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Resonance" channel="2" start="-60.0" end="30.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Pedal" channel="3" start="-60.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Send" channel="4" start="-60.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" channel="5" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="decay" channel="6" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" channel="7" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" channel="8" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="attack" channel="9" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="699398289" chIdx="4096" isIn="1"/>
+        <PORT nodeID="699398289" chIdx="2" isIn="0"/>
+        <PORT nodeID="699398289" chIdx="3" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="8" width="100" height="100" x_y="819, 180" uuid="bb4f8a15d8cd4d77a87c1bb52ba05ab5"
+                   nodeID="3142552085" numIns="1">
+        <PORT nodeID="3142552085" chIdx="4096" isIn="1"/>
+        <modulationproc type="lfo" isState="0" uuid="eea25d6995a74587a8515bdb5bc80d89"
+                        lfofreq="0.536"/>
+        <modulationproc type="lfo" isState="0" uuid="f8b33e6e1c074bcb9b7248d86d91ea82"
+                        lfofreq="8.742"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS>
+      <MODCONNECTION isMod="1" src="3142552085" dest="699398289">
+        <ModulationConnection uuid="1fec85da0f3e41eaadc2348278af4244" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_Send"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-eea25d6995a74587a8515bdb5bc80d89_mod"
+                              sliderval="-7.26202917098999" mod0to1="0.1647437214851379" modAmt="6.803671836853027"/>
+        <ModulationConnection uuid="5dcf0116cb684fcfa4a80eb0c5997f3e" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_Pedal"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-eea25d6995a74587a8515bdb5bc80d89_mod"
+                              sliderval="-20.19815444946289" mod0to1="0.3330011963844299" modAmt="18.22218894958496"/>
+        <ModulationConnection uuid="3537744c982043f7ab5cc6c9329de58c" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_decay"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-eea25d6995a74587a8515bdb5bc80d89_mod"
+                              sliderval="497.59765625" mod0to1="0.1961718648672104" modAmt="196.171875"/>
+        <ModulationConnection uuid="edf81d675cda4723928ec4b84a9d42f7" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_sustain"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-eea25d6995a74587a8515bdb5bc80d89_mod"
+                              sliderval="0.4533984363079071" mod0to1="0.2812890708446503" modAmt="0.2812890708446503"/>
+        <ModulationConnection uuid="6f6cdbff2e544b70917362b160d634fe" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_attack"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-eea25d6995a74587a8515bdb5bc80d89_mod"
+                              sliderval="203.8114471435547" mod0to1="0.3787190914154053" modAmt="2806.0546875"/>
+        <ModulationConnection uuid="b2e52904c485470488c58d1e5110e927" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_release"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-eea25d6995a74587a8515bdb5bc80d89_mod"
+                              sliderval="50.46180725097656" mod0to1="0.2877390086650848" modAmt="867.578125"/>
+        <ModulationConnection uuid="77402c5ac308407892c40c088c9204ee" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_Resonance"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-f8b33e6e1c074bcb9b7248d86d91ea82_mod"
+                              sliderval="6.000001430511475" mod0to1="0.2437473982572556" modAmt="14.95722675323486"/>
+        <ModulationConnection uuid="ad17fa3d90624de3a40a0f418d28fbdb" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_Hammers"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-f8b33e6e1c074bcb9b7248d86d91ea82_mod"
+                              sliderval="-13.09995460510254" mod0to1="0.2655059695243835" modAmt="12.32988262176514"/>
+        <ModulationConnection uuid="4091d257d8ef432eb4ed0941654293e9" isState="0" dest="29aff8917ac04c028c64d33a865f7ed5_Main"
+                              src="bb4f8a15d8cd4d77a87c1bb52ba05ab5_lfo-f8b33e6e1c074bcb9b7248d86d91ea82_mod"
+                              sliderval="-19.42789077758789" mod0to1="0.2477405965328217" modAmt="13.2992582321167"/>
+      </MODCONNECTION>
+    </MODCONNECTIONS>
+  </PIANO>
+</GALLERY>

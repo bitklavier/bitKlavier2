@@ -42,9 +42,9 @@ namespace bitklavier
 //        } else {
 //            std::cout << "No match found." << std::endl;
 //        }
-std::string check = match[1];
+        std::string check = match[1];
         std::size_t pos = check.find_first_of("-");
-        std::string prefix = source.substr( 0,pos);
+        std::string prefix = check.substr( 0,pos);
         return kBipolarModulationSourcePrefixes.count(prefix) > 0;
     }
 

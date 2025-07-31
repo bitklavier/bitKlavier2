@@ -108,6 +108,7 @@ public:
     std::vector<juce::ValueTree> connections_;
     virtual void getStateInformation (juce::MemoryBlock &destData)=0;
     virtual void setStateInformation (const void *data, int sizeInBytes)=0;
+     bool isDefaultBipolar = false;
 };
 
 

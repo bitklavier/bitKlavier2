@@ -66,7 +66,20 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         {
             for (auto connection : mod_routing[i].mod_connections)
             {
-                buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getScaling());
+                if(modulators_[i]->isDefaultBipolar && connection->isBipolar() || (!modulators_[i]->isDefaultBipolar && !connection->isBipolar())) {
+                    buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getScaling());
+                } else if (modulators_[i]->isDefaultBipolar && !connection->isBipolar()){
+                    // Remap [-1, 1] → [0, 1] → then scale by unipolar amount
+                    auto* src  = tmp_buffers[i].getReadPointer(0);
+                    auto* dest = buffer.getWritePointer(connection->modulation_output_bus_index);
+
+                    float scale = connection->getScaling();
+                    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                    {
+                        float unipolar = 0.5f * (src[sample] + 1.0f); // maps [-1,1] to [0,1]
+                        dest[sample] += unipolar * scale;
+                    }
+                }
             }
         }
 
