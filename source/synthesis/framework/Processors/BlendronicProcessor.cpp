@@ -302,8 +302,7 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
         (
             multiSliderArraysToFloatArray(
                 paramHolder.beatLengths.sliderVals,
-                paramHolder.beatLengths.activeSliders,
-                paramHolder.beatLengths.sliderVals_size),
+                paramHolder.beatLengths.activeSliders),
 
             paramHolder.beatLengths.sliderVals_size
         );
