@@ -1,6 +1,7 @@
 //
 // Created by Davis Polito on 6/3/25.
 //
+#pragma once
 
 #ifndef ARRAY_TO_STRING_H
 #define ARRAY_TO_STRING_H
@@ -270,5 +271,30 @@ juce::String arrayToStringWithIndex(const std::array<float, Size>& array) {
     }
     return s;
 }
+
+template <size_t Size1, size_t Size2>
+std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::atomic<float>, Size1>& sliderVals, const std::array<std::atomic<bool>, Size2>& activeSliders) {
+
+    std::array<float, Size1> returnArray;
+
+    int stateCtr = 0;       // counting through the activeSliders array
+    int valueCounter = 0;   // counting through the sliderVals and returnArray arrays
+
+    //if a slider is active, store its value in the output array, otherwise ignore
+    for (auto& bval : activeSliders)
+    {
+        if (bval)
+        {
+            returnArray[valueCounter] = sliderVals[valueCounter].load(); // 1d for now....
+            valueCounter++;
+        }
+        stateCtr++;
+
+        if (valueCounter >= Size1) return returnArray;
+    }
+
+    return returnArray;
+}
+
 
 #endif //ARRAY_TO_STRING_H

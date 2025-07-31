@@ -208,54 +208,62 @@ void BlendronicProcessor::clearNextDelayBlock(int numSamples)
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 
+    int numSamples = buffer.getNumSamples();
+
     /*
      * use these to display buffer info to bufferDebugger
      */
-    bufferDebugger->capture("L", buffer.getReadPointer(0), buffer.getNumSamples(), -1.f, 1.f);
-    bufferDebugger->capture("R", buffer.getReadPointer(1), buffer.getNumSamples(), -1.f, 1.f);
-
-    clearNextDelayBlock(buffer.getNumSamples());
+    bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
+    bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
-    buffer.applyGain(0, 0, buffer.getNumSamples(),inputgainmult);
-    buffer.applyGain(1, 0, buffer.getNumSamples(),inputgainmult);
+    buffer.applyGain(0, 0, numSamples, inputgainmult);
+    buffer.applyGain(1, 0, numSamples, inputgainmult);
+    /**
+     * todo: level meter for input?
+     */
 
     auto outL = buffer.getWritePointer(0, 0);
-    if (outL == nullptr)
-        return;
-
     auto outR = buffer.getWritePointer(1, 0);
-    if (outR == nullptr)
-        return;
+    if (outL == nullptr) return;
+    if (outR == nullptr) return;
 
+    /**
+     * todo: General Settings and Tempo
+     */
     // update some params
     //    pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
     //    pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
     pulseLength = (60.0 / (_subdivisions * _tempo));
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
 
+    // clears the end of the delay buffer so we aren't writing on top of really old stuff
+    clearNextDelayBlock(numSamples);
+
     // apply the delay
-    int numSamples = buffer.getNumSamples();
     while (--numSamples >= 0)
     {
         tick(outL++, outR++);
     }
 
+    // reset for the rest of the calls here
+    numSamples = buffer.getNumSamples();
+
     // output send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
-    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
-    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain(0, 0, buffer.getNumSamples(),outputgainmult);
-    buffer.applyGain(1, 0, buffer.getNumSamples(),outputgainmult);
+    buffer.applyGain(0, 0, numSamples, outputgainmult);
+    buffer.applyGain(1, 0, numSamples, outputgainmult);
 
     // level meter update stuff
-    std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
-    std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
+    std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
+    std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
 
     /**
      * todo: level meter for output send?
@@ -284,11 +292,15 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
     /*
      * then serialize the more complex params
      */
+
     /*
-     * first, get size from paramHolder.beatLengths.sliderVals_size
      * write function that takes sliderVals_size and sliderVals and converts it to a simple array of length sliderVals that can be sent to arrayToString
      *  - i basically have this already in multiSliderAllValuesChanged in OpenGL_MultiSlider.h
      */
+
+    juce::String testarr = arrayToString(multiSliderArraysToFloatArray(paramHolder.beatLengths.sliderVals, paramHolder.beatLengths.activeSliders));
+    DBG("BlendronicParams::serialize " + testarr);
+
 //        Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
 
     return ser;

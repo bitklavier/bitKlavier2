@@ -79,7 +79,7 @@ public:
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
         /**
-         * todo: allow for multiple values in each slider, for transpositions
+         * todo: allow for multiple values in each slider, for transpositions: perhaps make OpenGL_MultiSlider2d
          * todo: figure out how to deal with hard cap in the std::arrays for the params
          * todo: figure out the isModulation_/isModulated_ part
          */
