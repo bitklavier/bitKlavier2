@@ -273,7 +273,7 @@ juce::String arrayToStringWithIndex(const std::array<float, Size>& array) {
 }
 
 template <size_t Size1, size_t Size2>
-std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::atomic<float>, Size1>& sliderVals, const std::array<std::atomic<bool>, Size2>& activeSliders) {
+std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::atomic<float>, Size1>& sliderVals, const std::array<std::atomic<bool>, Size2>& activeSliders, int outputValSize) {
 
     std::array<float, Size1> returnArray;
 
@@ -290,7 +290,7 @@ std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::ato
         }
         stateCtr++;
 
-        if (valueCounter >= Size1) return returnArray;
+        if (valueCounter >= outputValSize) return returnArray;
     }
 
     return returnArray;
