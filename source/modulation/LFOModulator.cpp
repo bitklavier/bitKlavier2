@@ -9,6 +9,7 @@ LFOModulatorProcessor::LFOModulatorProcessor(juce::ValueTree& vt) : ModulatorSta
 {
 //    vt.setProperty(IDs::uuid, state.params.processor.processorUniqueID, nullptr);
 //    name = vt.getProperty(IDs::type).toString() + vt.getProperty(IDs::uuid).toString();
+    isDefaultBipolar = true;
     createUuidProperty(vt);
 }
 
@@ -22,7 +23,7 @@ void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,j
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
             float* channelData = buffer.getWritePointer(channel);
-            channelData[sample] = (1.0f + lfoValue)*0.5f;
+            channelData[sample] = (lfoValue);
         }
     }
     // melatonin::printSparkline(buffer);

@@ -70,6 +70,7 @@ PeakMeterSection::PeakMeterSection(
    volume_ = std::make_shared<VolumeSlider>(outGainDB.paramID);
    volumeAttach_ = std::make_unique<chowdsp::SliderAttachment>(outGainDB, listeners, *volume_, nullptr);
    addSlider(volume_.get());
+   volume_->addAttachment(volumeAttach_.get());
    volume_->setSliderStyle(juce::Slider::LinearBarVertical);
    volume_->setNumDecimalPlacesToDisplay(2);
    volume_->setPopupPlacement(juce::BubbleComponent::right);

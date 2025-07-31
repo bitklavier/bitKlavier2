@@ -121,8 +121,10 @@ class OpenGlShapeButton : public juce::ToggleButton {
      * can do checks for nullptr before this call, but not sure if that's the correct fix
      */
     void mouseUp(const juce::MouseEvent& e) override {
+        if(gl_component_ != nullptr)
+            gl_component_->setDown(false);
       juce::ToggleButton::mouseUp(e);
-      gl_component_->setDown(false);
+
     }
 
   private:

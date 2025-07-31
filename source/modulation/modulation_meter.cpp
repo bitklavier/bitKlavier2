@@ -155,7 +155,8 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 //      current_value_ += poly_total_->trigger_value;
 //  }
   current_value_ = destination_->getLiveModulation();
-  DBG("live mod"+ juce::String(current_value_));
+  // DBG(destination_->getName());
+  // DBG("live mod"+ juce::String(current_value_));
   // float range = destination_->getMaximum() - destination_->getMinimum();
   // float value = (current_value_ - destination_->getMinimum()) * (1.0f / range);
   // mod_percent_ = bitklavier::utils::clamp(value, 0.0f, 1.0f);
@@ -194,8 +195,11 @@ void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bo
   float min_percent = std::min(knob_percent + amount, knob_percent);
   float max_percent = std::max(knob_percent + amount, knob_percent);
   if (bipolar) {
-    min_percent = std::min(knob_percent + amount * 0.5f, knob_percent - amount * 0.5f);
-    max_percent = std::max(knob_percent + amount * 0.5f, knob_percent - amount * 0.5f);
+    min_percent = std::min(knob_percent + amount, knob_percent - amount);
+    max_percent = std::max(knob_percent + amount, knob_percent - amount);
+    // min_percent = std::min(knob_percent + amount * 0.5f, knob_percent - amount * 0.5f);
+    // max_percent = std::max(knob_percent + amount * 0.5f, knob_percent - amount * 0.5f);
+
   }
 
   if (rotary_) {
