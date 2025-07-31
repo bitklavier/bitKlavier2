@@ -53,6 +53,10 @@ public:
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
 
+                /**
+                 * todo: reset normalizqble range as needed:
+                 * slider
+                 */
             }
         }
 

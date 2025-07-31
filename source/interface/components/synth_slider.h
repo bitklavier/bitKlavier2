@@ -484,6 +484,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
   float getLiveModulation() const {
 
       if (attachment)  return attachment->getParameter()->getCurrentValue();
+
       return getValue();
     }
 
