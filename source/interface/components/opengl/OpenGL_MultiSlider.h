@@ -125,7 +125,7 @@ public:
             params->sliderVals_size.store (values.size()); // how many active slider values do we have
 
             valCtr = 0;
-            for (auto sval : values)
+            for (auto sval : states)
             {
                 params->activeSliders[valCtr].store(states[valCtr++]);
             }

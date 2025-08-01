@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <PREPARATION type="3" width="245" height="125" x_y="99, 363" uuid="9e03821121604da6b9e4f4fd5f189422"
+                   nodeID="2651030033" numIns="2" numOuts="2" OutputGain="0.000"
+                   InputGain="0.000" Send="0.000" beatLengths_size="4" beatLengths="4 3 2 5 "
+                   beatLengths_activeSliders_size="12" beatLengths_activeSliders="true true false true false false true false false false false false ">
+        <PORT nodeID="2651030033" chIdx="0" isIn="1"/>
+        <PORT nodeID="2651030033" chIdx="1" isIn="1"/>
+        <PORT nodeID="2651030033" chIdx="2" isIn="0"/>
+        <PORT nodeID="2651030033" chIdx="3" isIn="0"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

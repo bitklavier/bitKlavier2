@@ -128,6 +128,103 @@ void parseFloatStringToAtomicArrayCircular(const std::string& input, std::array<
 }
 
 /**
+ * @brief Parses a string of numbers into a std::vector.
+ *
+ * This templated function takes a juce::String and a delimiter and
+ * extracts space-separated numerical values, converting them to the
+ * specified type (e.g., float, int).
+ *
+ * @tparam T The type of the numbers to parse (e.g., float, int).
+ * @param input The juce::String containing the space-separated numbers.
+ * @return A std::vector<T> containing the parsed numbers.
+ */
+template <typename T>
+std::vector<T> parseStringToVector(const juce::String& input)
+{
+    std::vector<T> result;
+
+    // The JUCE String can be converted to a std::string to use with stringstream.
+    std::string s = input.toStdString();
+    std::stringstream ss(s);
+
+    T value;
+
+    // The loop will automatically extract whitespace-separated values.
+    while (ss >> value)
+    {
+        result.push_back(value);
+    }
+
+    return result;
+}
+
+/**
+ * @brief Specialization for boolean parsing.
+ *
+ * This specialized function handles parsing "true" and "false" string literals
+ * into a std::vector<bool>. It uses std::boolalpha to correctly interpret the strings.
+ *
+ * @param input The juce::String containing the space-separated boolean values.
+ * @return A std::vector<bool> containing the parsed booleans.
+ */
+std::vector<bool> parseStringToBoolVector(const juce::String& input);
+
+/**
+ * @brief Fills a std::array of std::atomic objects with a specified value.
+ *
+ * This templated function iterates through an array of atomic types
+ * and uses the thread-safe `.store()` method to assign the provided value
+ * to each element. This avoids the "explicitly deleted function" error
+ * that occurs when using `std::array::fill` on atomic types.
+ *
+ * @tparam T The type of the value stored in the atomic objects.
+ * @tparam Size The compile-time size of the std::array.
+ * @param arr The std::array of std::atomic<T> to be filled.
+ * @param value The value of type T to store in each element.
+ */
+template <typename T, size_t Size>
+void fillAtomicArray(std::array<std::atomic<T>, Size>& arr, const T& value) {
+    for (size_t i = 0; i < Size; ++i) {
+        arr[i].store(value);
+    }
+}
+
+/**
+ * @brief Fills an atomic array with a default value and then populates it
+ * with values from a vector.
+ *
+ * This function first fills the entire `std::array` of `std::atomic<T>`
+ * with a `fillValue` to ensure all elements are in a valid state. It then
+ * iterates through the provided `std::vector<T>` and stores those values
+ * in the atomic array, up to the smaller of the two container sizes.
+ * This is a thread-safe operation.
+ *
+ * @tparam T The type of the values in the atomic objects and vector.
+ * @tparam Size The compile-time size of the std::array.
+ * @param arr The std::array of std::atomic<T> to be filled and populated.
+ * @param fillValue The default value used to fill the entire array initially.
+ * @param sourceVector The std::vector<T> containing the new values to store.
+ */
+template <typename T, size_t Size>
+void populateAtomicArrayFromVector(
+    std::array<std::atomic<T>, Size>& arr,
+    const T& fillValue,
+    const std::vector<T>& sourceVector)
+{
+    // Step 1: Fill the entire array with the default value
+    fillAtomicArray(arr, fillValue);
+
+    // Step 2: Iterate and populate from the vector
+    // We use std::min to prevent out-of-bounds access
+    size_t numToCopy = std::min(Size, sourceVector.size());
+
+    for (size_t i = 0; i < numToCopy; ++i) {
+        arr[i].store(sourceVector[i]);
+    }
+}
+
+
+/**
  * Copies values from one std::array of std::atomic<float> to another std::array of std::atomic<float>.
  * Each value is atomically loaded from the source and atomically stored into the destination.
  *
@@ -180,6 +277,56 @@ juce::String arrayToStringLimited(const std::array<float, Size>& array, int coun
     // The loop iterates up to the smaller of the array's size and the provided count.
     for (size_t i = 0; i < Size && i < static_cast<size_t>(count); ++i) {
         s += juce::String(array[i]) + " ";
+    }
+    return s;
+}
+
+/**
+ * @brief Converts a std::array of atomics of floats into a single JUCE string,
+ * using only a specified number of elements.
+ *
+ * This is a templated function that takes a std::array of std::atomic by const reference
+ * and an integer count. It iterates up to the lesser of the array's size
+ * and the provided count, safely loading and converting each atomic element to a string.
+ *
+ * @tparam Size The size of the std::array, known at compile-time.
+ * @param array The std::array<std::atomic<float>, Size> to convert.
+ * @param count The number of elements to use from the array.
+ * @return A juce::String containing the space-separated float values.
+ */
+template <size_t Size>
+juce::String atomicArrayToStringLimited(const std::array<std::atomic<float>, Size>& array, int count) {
+    juce::String s = "";
+
+    // The loop iterates up to the smaller of the array's size and the provided count.
+    for (size_t i = 0; i < Size && i < static_cast<size_t>(count); ++i) {
+        // We use .load() to safely get the value from the atomic
+        s += juce::String(array[i].load()) + " ";
+    }
+    return s;
+}
+
+/**
+ * @brief Converts a std::array of atomics of booleans into a single JUCE string,
+ * using only a specified number of elements.
+ *
+ * This is a templated function that takes a std::array of std::atomic<bool> by const reference
+ * and an integer count. It iterates up to the lesser of the array's size
+ * and the provided count, safely loading each atomic element and converting it to a string.
+ *
+ * @tparam Size The size of the std::array, known at compile-time.
+ * @param array The std::array<std::atomic<bool>, Size> to convert.
+ * @param count The number of elements to use from the array.
+ * @return A juce::String containing the space-separated boolean values as "true" or "false".
+ */
+template <size_t Size>
+juce::String atomicArrayToStringLimited(const std::array<std::atomic<bool>, Size>& array, int count) {
+    juce::String s = "";
+
+    // The loop iterates up to the smaller of the array's size and the provided count.
+    for (size_t i = 0; i < Size && i < static_cast<size_t>(count); ++i) {
+        // We use .load() to safely get the value from the atomic
+        s += (array[i].load() ? "true" : "false") + juce::String(" ");
     }
     return s;
 }
@@ -302,8 +449,8 @@ std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::ato
 
     std::array<float, Size1> returnArray;
 
-//    int stateCtr = 0;       // counting through the activeSliders array
-    int valueCounter = 0;   // counting through the sliderVals and returnArray arrays
+    // counting through the sliderVals and returnArray arrays
+    int valueCounter = 0;
 
     //if a slider is active, store its value in the output array, otherwise ignore
     for (auto& bval : activeSliders)
@@ -314,7 +461,7 @@ std::array<float, Size1> multiSliderArraysToFloatArray(const std::array<std::ato
             valueCounter++;
         }
 
-        if (valueCounter >= Size1)
+        if (valueCounter > Size1)
         {
             return returnArray;
         }

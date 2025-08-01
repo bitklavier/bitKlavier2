@@ -374,7 +374,6 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
     /*
      * then serialize the more complex params
      */
-
     std::array<float, 12> tempCircularOffsets;
     copyAtomicArrayToFloatArray(paramHolder.tuningState.circularTuningOffset_custom, tempCircularOffsets);
     Serializer::template addChildElement<12> (ser, "circularTuning_custom", tempCircularOffsets, arrayToString<12>);
@@ -383,21 +382,25 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
     copyAtomicArrayToFloatArray(paramHolder.tuningState.absoluteTuningOffset, tempAbsoluteOffsets);
     Serializer::template addChildElement<128> (ser, "absoluteTuning", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
 
-//    Serializer::template addChildElement<128> (ser, "absoluteTuning", paramHolder.tuningState.absoluteTuningOffset, arrayToStringWithIndex<128>);
-
     return ser;
 }
 
 template <typename Serializer>
 void TuningParams::deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder)
 {
+    /*
+     * call the default deserializer first, for the simple params
+     */
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
+
+    /*
+     * then the more complex params
+     */
     auto myStr = deserial->getStringAttribute ("circularTuning_custom");
-//    paramHolder.tuningState.circularTuningOffset_custom = parseFloatStringToArrayCircular<12> (myStr.toStdString());
     parseFloatStringToAtomicArrayCircular(myStr.toStdString(), paramHolder.tuningState.circularTuningOffset_custom);
+
     myStr = deserial->getStringAttribute ("absoluteTuning");
     parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.tuningState.absoluteTuningOffset);
-//    paramHolder.tuningState.absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (myStr.toStdString());
 }
 
 /**

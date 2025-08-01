@@ -46,6 +46,78 @@
 #include "utils.h"
 #include "buffer_debugger.h"
 
+/**
+ * @brief Serializes a MultiSlider parameter set into a Serializer object.
+ *
+ * This function takes a struct containing multi-slider state, converts its
+ * atomic arrays into string representations, and adds them to a Serializer
+ * object with a given base ID.
+ *
+ * @tparam Serializer A template parameter for the Serializer type.
+ * @param ser A pointer to the Serializer object.
+ * @param msliderParam A const reference to the struct containing the multi-slider data.
+ * @param thisSliderID A const reference to the base ID string for this slider set.
+ */
+template <typename Serializer>
+void serializeMultiSliderParam(
+    typename Serializer::SerializedType& ser,
+    const MultiSliderState& msliderParam,
+    const juce::String& thisSliderID)
+{
+    // Define the specific string IDs for serialization
+    juce::String thisSlider_sizeID = thisSliderID + "_size";
+    juce::String activeSlidersID = thisSliderID + "_activeSliders";
+    juce::String activeSliders_sizeID = activeSlidersID + "_size";
+
+    // Serialize the float slider values
+    juce::String beatLengths_str = atomicArrayToStringLimited(msliderParam.sliderVals, msliderParam.sliderVals_size);
+    Serializer::addChildElement(ser, thisSlider_sizeID, juce::String(msliderParam.sliderVals_size));
+    Serializer::addChildElement(ser, thisSliderID, beatLengths_str);
+
+    // Serialize the boolean active sliders
+    juce::String activeSliders_str = atomicArrayToStringLimited(msliderParam.activeSliders, msliderParam.activeVals_size);
+    Serializer::addChildElement(ser, activeSliders_sizeID, juce::String(msliderParam.activeVals_size));
+    Serializer::addChildElement(ser, activeSlidersID, activeSliders_str);
+}
+
+/**
+ * @brief Deserializes and populates a MultiSliderState struct from a deserialized object.
+ *
+ * This function reads specific string attributes from a deserialized object,
+ * parses them, and populates the members of a MultiSliderState struct, including
+ * atomic arrays for slider values and active states.
+ *
+ * @tparam Serializer A template parameter for the Serializer type.
+ * @param deserial The deserialized object to read attributes from.
+ * @param msliderParam A reference to the MultiSliderState struct to be populated.
+ * @param thisSliderID The base ID string for this slider set.
+ */
+template <typename Serializer>
+void deserializeMultiSliderParam(
+    typename Serializer::DeserializedType deserial,
+    MultiSliderState& msliderParam,
+    const juce::String& thisSliderID)
+{
+    // Reconstruct the attribute names using the base ID
+    juce::String beatLengths_sizeID = thisSliderID + "_size";
+    juce::String activeSlidersID = thisSliderID + "_activeSliders";
+    juce::String activeSliders_sizeID = activeSlidersID + "_size";
+
+    // Deserialize the slider values
+    auto myStr = deserial->getStringAttribute(beatLengths_sizeID);
+    msliderParam.sliderVals_size = myStr.getIntValue();
+    myStr = deserial->getStringAttribute(thisSliderID);
+    std::vector<float> sliderVals_vec = parseStringToVector<float>(myStr);
+    populateAtomicArrayFromVector(msliderParam.sliderVals, 1.0f, sliderVals_vec);
+
+    // Deserialize the active sliders
+    myStr = deserial->getStringAttribute(activeSliders_sizeID);
+    msliderParam.activeVals_size = myStr.getIntValue();
+    myStr = deserial->getStringAttribute(activeSlidersID);
+    std::vector<bool> activeSliders_vec = parseStringToBoolVector(myStr);
+    populateAtomicArrayFromVector(msliderParam.activeSliders, false, activeSliders_vec);
+}
+
 struct BlendronicParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
@@ -100,9 +172,9 @@ struct BlendronicParams : chowdsp::ParamHolder
      *  - here we need these for all the multisliders
      */
     /* Custom serializer */
+
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const BlendronicParams& paramHolder);
-
     /* Custom deserializer */
     template <typename Serializer>
     static void deserialize (typename Serializer::DeserializedType deserial, BlendronicParams& paramHolder);

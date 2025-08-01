@@ -7,6 +7,8 @@
 #define BITKLAVIER0_MULTISLIDERSTATE_H
 
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
+#include "array_to_string.h"
+
 #define MAXMULTISLIDERLENGTH 128
 
 /**
@@ -29,7 +31,7 @@
 struct MultiSliderState : bitklavier::StateChangeableParameter
 {
     std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> sliderVals = {1.f};
-    std::array<std::atomic<bool>, MAXMULTISLIDERLENGTH> activeSliders = {true};
+    std::array<std::atomic<bool>, MAXMULTISLIDERLENGTH> activeSliders = {true}; // could change to std::bitset
 
     /*
      * how many sliders is the user actually working with (int)
@@ -41,6 +43,7 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
      */
     std::atomic<int> sliderVals_size = 1;
     std::atomic<int> activeVals_size = 1;
+
 };
 
 #endif //BITKLAVIER0_MULTISLIDERSTATE_H

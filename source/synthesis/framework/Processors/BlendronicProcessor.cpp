@@ -221,7 +221,7 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     buffer.applyGain(0, 0, numSamples, inputgainmult);
     buffer.applyGain(1, 0, numSamples, inputgainmult);
     /**
-     * todo: level meter for input?
+     * todo: level meter for input? yes, place on left side of prep pop_up
      */
 
     auto outL = buffer.getWritePointer(0, 0);
@@ -266,7 +266,7 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
 
     /**
-     * todo: level meter for output send?
+     * todo: level meter for output send? yes, place on right side of prep pop_up, just to the left of the main outputgain slider
      */
 }
 
@@ -276,7 +276,9 @@ void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
 }
 
 
-
+/**
+ * Serializers, for saving/loading complex params like the multisliders
+ */
 template <typename Serializer>
 typename Serializer::SerializedType BlendronicParams::serialize (const BlendronicParams& paramHolder)
 {
@@ -285,30 +287,13 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
      */
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
 
-    /**
-     * todo: make these using blendronicState.beatLengthsActual, rather than MAXMULTISLIDERLENGTH, so we don't write so much to the xml
-     */
-
     /*
      * then serialize the more complex params
      */
-
-    /*
-     * write function that takes sliderVals_size and sliderVals and converts it to a simple array of length sliderVals that can be sent to arrayToString
-     *  - i basically have this already in multiSliderAllValuesChanged in OpenGL_MultiSlider.h
-     */
-
-    juce::String testarr = arrayToStringLimited
-        (
-            multiSliderArraysToFloatArray(
-                paramHolder.beatLengths.sliderVals,
-                paramHolder.beatLengths.activeSliders),
-
-            paramHolder.beatLengths.sliderVals_size
-        );
-    DBG("BlendronicParams::serialize " + testarr);
-
-//        Serializer::template addChildElement<MAXMULTISLIDERLENGTH> (ser, "blendronic_beatLengths", paramHolder.beatLengths.sliderVals, arrayToString);
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengths, "beatLengths");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.delayLengths, "delayLengths");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.smoothingTimes, "smoothingTimes");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.feedbackCoeffs, "feedbackCoeffs");
 
     return ser;
 }
@@ -316,9 +301,17 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
 template <typename Serializer>
 void BlendronicParams::deserialize (typename Serializer::DeserializedType deserial, BlendronicParams& paramHolder)
 {
+    /*
+     * call the default deserializer first, for the simple params
+     */
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
 
-    auto myStr = deserial->getStringAttribute ("blendronic_beatLengths");
-    //    paramHolder.beatLengths.sliderVals = parseFloatStringToArrayCircular<MAXMULTISLIDERLENGTH> (myStr.toStdString());
+    /*
+     * then the more complex params
+     */
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengths, "beatLengths");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.delayLengths, "delayLengths");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.smoothingTimes, "smoothingTimes");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.feedbackCoeffs, "feedbackCoeffs");
 }
 
