@@ -14,14 +14,24 @@
 class OpenGL_MultiSlider: public OpenGlAutoImageComponent<BKMultiSlider>, BKMultiSlider::Listener
 {
 public:
-    OpenGL_MultiSlider(MultiSliderState *sliderstate, chowdsp::ParameterListeners &listeners) :
-            OpenGlAutoImageComponent<BKMultiSlider>(sliderstate->stateChanges.defaultState), params(sliderstate)
+    OpenGL_MultiSlider(juce::String sname, MultiSliderState *sliderstate, chowdsp::ParameterListeners &listeners) :
+            OpenGlAutoImageComponent<BKMultiSlider>(sliderstate->stateChanges.defaultState), params(sliderstate), name_(sname)
     {
-        isModulated_ = true;
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+
+        isModulated_ = true;
         addMyListener(this);
+
+        /*
+         * call setTo here, so the slider displays the passed param values in sliderstate
+         */
+        setToOnlyActive(
+            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
+            atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
+            juce::sendNotification);
+
     }
 
     //setBackgroundColor(findColour(Skin::kWidgetBackground, true));
@@ -80,40 +90,17 @@ public:
     {
         /**
          * todo: allow for multiple values in each slider, for transpositions: perhaps make OpenGL_MultiSlider2d
-         * todo: figure out how to deal with hard cap in the std::arrays for the params
-         * todo: figure out the isModulation_/isModulated_ part
          */
 
         /*
-         * this takes the arrays of values and states (whether a particular slider is active or not) from BKMultSlider
-         * and maps them to the params sliderVals and activeSliders, whose values should mirror what we see in the UI
-         * so, if the user has set sliders 0, 1, and 3 to values, and left slider 2 inactive, then
-         *  sliderVals = {val, val, 0, val, 0....}
-         *  activeSilders = {true, true, false, true, false, false....}
+         * create string representations of the multislider vals/states
          */
-        /**
-         * todo: yeah, don't need this. on the back end, we need the original values array. don't even need the states array, except for storage
-         * might want something like this for modulationState setting and serializer
-         */
+        juce::String valsStr = getFirstValueFromSubarrays(values);
+        juce::String activeStr = arrayBoolToString(states);
+        DBG("multiSliderAllValuesChanged " + valsStr + " " + activeStr);
+
         if (isModulated_)
         {
-//            int stateCtr = 0;
-//            int valueCounter = 0;
-//            for (auto bval : states)
-//            {
-//                if (bval)
-//                {
-//                    params->sliderVals[stateCtr].store (values[valueCounter++][0]); // 1d for now....
-//                    params->activeSliders[stateCtr].store (true);
-//                }
-//                else
-//                {
-//                    params->sliderVals[stateCtr].store (0.);
-//                    params->activeSliders[stateCtr].store (false);
-//                }
-//                stateCtr++;
-//            }
-
             /*
              * just copy the direct UI representations to the param arrays; the prep should know how to use them
              */
@@ -131,51 +118,27 @@ public:
             }
             params->activeVals_size.store (states.size()); // full array of slider states, including inactive ones (false)
 
-            /*
-             * write string representations of these arrays to default state for this property?
-             */
-            // defaultState.setProperty(str, val[i], nullptr);
+            // then update defaultState, with string representation of the multislider arrays
+
+            defaultState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
+            defaultState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
+            defaultState.setProperty(name_ + "_activeVals", activeStr, nullptr);
+            defaultState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
         }
         else if (isModulation_)
         {
             /*
-             * write string representations to modulationState.setProperty for reach fo these arrays?
+             * since this means we are manipulating the clone of the multislider, we are setting mod values, not the values
+             * themselves, so we don't write values to params->sliderVals, etc...
+             *
+             * we just write strings of the arrays to modulationState properties
              */
-            //modulationState.setProperty(str, val[i], nullptr);
+            modulationState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
+            modulationState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
+            modulationState.setProperty(name_ + "_activeVals", activeStr, nullptr);
+            modulationState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
         }
     }
-
-//    void addSlider(juce::NotificationType newnotify) override {
-////        BKMultiSlider::addSlider(newnotify);
-////        if (params != nullptr) // has no params if its a cloned component
-////        {
-////            params->numActive = (params->numActive + 1) % 12;
-////            params->sliderVals_size->setParameterValue(params->numActive);
-////        }
-//    }
-
-//    void multiSliderValueChanged(juce::String name, juce::Array<float> val) override {
-//        if (isModulation_) {
-////            for (int i = val.size(); i < 11; i++) {
-////                auto str = "t" + juce::String(i);
-////                modulationState.removeProperty(str, nullptr);
-////            }
-////            for (int i = 0; i < val.size(); i++) {
-////                auto str = "t" + juce::String(i);
-////                modulationState.setProperty(str, val[i], nullptr);
-////            }
-//        } else if (isModulated_) {
-////            for (int i = val.size(); i < 11; i++) {
-////                auto str = "t" + juce::String(i);
-////                defaultState.removeProperty(str, nullptr);
-////            }
-////            for (int i = 0; i < val.size(); i++) {
-////                auto str = "t" + juce::String(i);
-////                defaultState.setProperty(str, val[i], nullptr);
-////            }
-////            this->params->numActive = val.size();
-//        }
-//    }
 
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
 
@@ -183,6 +146,16 @@ public:
      * needed for the param-state modulation; is called when state mod popup is opened to set vals there
      */
     void syncToValueTree() override {
+
+        /**
+         * todo: redo this with modulationState vals?
+         */
+        setToOnlyActive(
+            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
+            atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
+            juce::sendNotification);
+
+
 //        juce::Array<float> vals;
 //        static juce::var nullVar;
 //        for (int i = 0; i < 11; i++) {
@@ -204,14 +177,19 @@ public:
         hovering_ = false;
     }
 
+    juce::String name_;
     MultiSliderState *params;
 
 private :
+    /**
+     * constructor for cloning UI in state-change mods
+     */
     OpenGL_MultiSlider() : OpenGlAutoImageComponent<BKMultiSlider>()
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+
         isModulation_ = true;
         addMyListener(this);
     }

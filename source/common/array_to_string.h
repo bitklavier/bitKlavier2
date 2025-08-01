@@ -9,6 +9,10 @@
 #include <sstream>
 #include <string>
 #include <juce_core/juce_core.h>
+
+juce::String getFirstValueFromSubarrays(const juce::Array<juce::Array<float>>& values);
+juce::String arrayBoolToString(const juce::Array<bool>& states);
+
 template <std::size_t N>
 std::array<float, N> parseIndexValueStringToArrayAbsolute(const std::string& input)
 {
@@ -331,6 +335,63 @@ juce::String atomicArrayToStringLimited(const std::array<std::atomic<bool>, Size
     return s;
 }
 
+/**
+ * @brief Converts a std::array of atomics of floats to a juce::Array.
+ *
+ * This templated function takes a std::array of std::atomic<float> by const reference
+ * and an integer count. It iterates up to the lesser of the array's size
+ * and the provided count, safely loading each atomic element and adding it to a juce::Array.
+ *
+ * @tparam Size The size of the std::array, known at compile-time.
+ * @param array The std::array<std::atomic<float>, Size> to convert.
+ * @param count The number of elements to use from the array.
+ * @return A juce::Array<float> containing the float values.
+ */
+template <size_t Size>
+juce::Array<float> atomicArrayToJuceArrayLimited(const std::array<std::atomic<float>, Size>& array, int count)
+{
+    juce::Array<float> result;
+
+    // Use std::min to ensure we don't go out of bounds
+    size_t numToCopy = std::min(Size, static_cast<size_t>(count));
+
+    for (size_t i = 0; i < numToCopy; ++i)
+    {
+        // Use .load() to safely get the value from the atomic and add it to the JUCE array
+        result.add(array[i].load());
+    }
+
+    return result;
+}
+
+/**
+ * @brief Converts a std::array of atomics of booleans to a juce::Array<bool>.
+ *
+ * This templated function takes a std::array of std::atomic<bool> by const reference
+ * and an integer count. It iterates up to the lesser of the array's size
+ * and the provided count, safely loading each atomic element and adding it to a juce::Array.
+ *
+ * @tparam Size The size of the std::array, known at compile-time.
+ * @param array The std::array<std::atomic<bool>, Size> to convert.
+ * @param count The number of elements to use from the array.
+ * @return A juce::Array<bool> containing the boolean values.
+ */
+template <size_t Size>
+juce::Array<bool> atomicBoolArrayToJuceArrayLimited(const std::array<std::atomic<bool>, Size>& array, int count)
+{
+    juce::Array<bool> result;
+
+    // Use std::min to ensure we don't go out of bounds
+    size_t numToCopy = std::min(Size, static_cast<size_t>(count));
+
+    for (size_t i = 0; i < numToCopy; ++i)
+    {
+        // Use .load() to safely get the value from the atomic and add it to the JUCE array
+        result.add(array[i].load());
+    }
+
+    return result;
+}
 
 /**
  * Converts a std::array of std::atomic<float> values of any size into a single juce::String.

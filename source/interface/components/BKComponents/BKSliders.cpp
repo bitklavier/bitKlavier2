@@ -484,7 +484,6 @@ inline void BKMultiSlider::dismissTextEditor(bool setValue)
 
 void BKMultiSlider::drawSliders(juce::NotificationType newnotify)
 {
-
     sliders.clearQuick(true);
 
     // rebuild display slider array

@@ -344,6 +344,7 @@ public:
     }
 
     void setTo (juce::Array<float> newvals, juce::NotificationType newnotify);
+
     void setValue (juce::Array<float> newvals, juce::NotificationType newnotify) { setTo (newvals, newnotify); }
     void resetRanges();
     int whichSlider();

@@ -7,11 +7,20 @@
       <PREPARATION type="3" width="245" height="125" x_y="99, 363" uuid="9e03821121604da6b9e4f4fd5f189422"
                    nodeID="2651030033" numIns="2" numOuts="2" OutputGain="0.000"
                    InputGain="0.000" Send="0.000" beatLengths_size="4" beatLengths="4 3 2 5 "
-                   beatLengths_activeSliders_size="12" beatLengths_activeSliders="true true false true false false true false false false false false ">
+                   beatLengths_activeSliders_size="12" beatLengths_activeSliders="true true false true false false true false false false false false "
+                   delayLengths_size="0" delayLengths="" delayLengths_activeSliders_size="0"
+                   delayLengths_activeSliders="" smoothingTimes_size="0" smoothingTimes=""
+                   smoothingTimes_activeSliders_size="0" smoothingTimes_activeSliders=""
+                   feedbackCoeffs_size="0" feedbackCoeffs="" feedbackCoeffs_activeSliders_size="0"
+                   feedbackCoeffs_activeSliders="" sliderVals="4 3 2 5" sliderVals_size="4"
+                   activeVals="true true false true false false true false false false false false"
+                   activeVals_size="12">
         <PORT nodeID="2651030033" chIdx="0" isIn="1"/>
         <PORT nodeID="2651030033" chIdx="1" isIn="1"/>
         <PORT nodeID="2651030033" chIdx="2" isIn="0"/>
         <PORT nodeID="2651030033" chIdx="3" isIn="0"/>
+        <PARAM_DEFAULT sliderVals="4 3 2 5" sliderVals_size="4" activeVals="true true false true false false true false false false false false"
+                       activeVals_size="12"/>
       </PREPARATION>
     </PREPARATIONS>
     <CONNECTIONS/>

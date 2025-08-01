@@ -116,8 +116,13 @@ void deserializeMultiSliderParam(
     myStr = deserial->getStringAttribute(activeSlidersID);
     std::vector<bool> activeSliders_vec = parseStringToBoolVector(myStr);
     populateAtomicArrayFromVector(msliderParam.activeSliders, false, activeSliders_vec);
+
+    DBG("deserializeMultiSliderParam activeVals_size = " + juce::String(msliderParam.activeVals_size));
 }
 
+/**
+ * holds all the parameters for Blendronic
+ */
 struct BlendronicParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
@@ -172,14 +177,69 @@ struct BlendronicParams : chowdsp::ParamHolder
      *  - here we need these for all the multisliders
      */
     /* Custom serializer */
-
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const BlendronicParams& paramHolder);
+
     /* Custom deserializer */
     template <typename Serializer>
     static void deserialize (typename Serializer::DeserializedType deserial, BlendronicParams& paramHolder);
 
-    /** for storing outputLevels of this preparation for display
+    /*
+     * processStateChanges() is used to handle state change modifications, including resets. should be called every block
+     *
+     * state changes are NOT audio-rate/continuous; those are handled by "modulatableParams" in the parameter definitions
+     * examples: TranspParams or velocityMinMaxParams
+     *
+     * 'stateChanges.change' state will have size() != 0 after a mod or reset is triggered. each change
+     * is handled here, and then it is cleared until another mod or reset is triggered
+     *
+     * in this specific case, if there is a changeState in stateChanges (which will only happen when
+     * a mod is triggered) we read through the valueTree and update all the modded transpositions (t0, t1, etc...)
+     */
+    void processStateChanges() override
+    {
+        for(auto [index, change] : stateChanges.changeState)
+        {
+            DBG("blendronic state change property: " + change.getPropertyName(0));
+        }
+
+        // must clear at the end, otherwise they'll get reapplied again and again
+        stateChanges.changeState.clear();
+
+//        for(auto [index, change] : stateChanges.changeState)
+//        {
+//            auto vminval = change.getProperty("velocitymin");
+//            velocityMinParam->setParameterValue(vminval);
+//
+//            auto vmaxval = change.getProperty("velocitymax");
+//            velocityMaxParam->setParameterValue(vmaxval);
+//        }
+
+//        auto float_params = getFloatParams();
+//
+//        int i = numActiveSliders->getCurrentValue();
+//        for(auto [index, change] : stateChanges.changeState)
+//        {
+//            static juce::var nullVar;
+//
+//            for (i = 0; i < 12; i++)
+//            {
+//                auto str = "t" + juce::String(i);
+//                auto val = change.getProperty(str);
+//
+//                // need to make sure we don't ignore values of 0.!
+//                if (val == nullVar && !val.equalsWithSameType(0.)) break;
+//
+//                auto& float_param = float_params->at(i);
+//                float_param.get()->setParameterValue(val);
+//            }
+//            numActiveSliders->setParameterValue(i);
+//        }
+//        stateChanges.changeState.clear();
+    }
+
+    /*
+     * for storing outputLevels of this preparation for display
      *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
      *      we simply update this in the processBlock() call
      *      and then the level meter will update its values during the OpenGL cycle
@@ -194,9 +254,8 @@ struct BlendronicNonParameterState : chowdsp::NonParamState
     }
 };
 
-class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<BlendronicParams, BlendronicNonParameterState>>
-//class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<BlendronicParams, BlendronicNonParameterState>>,
-//                            public juce::ValueTree::Listener
+class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<BlendronicParams, BlendronicNonParameterState>>,
+                            public juce::ValueTree::Listener
 {
 public:
     BlendronicProcessor (SynthBase& parent, const juce::ValueTree& v);
@@ -245,12 +304,10 @@ private:
     /*
      BlendronicProcessor has the primary function -- tick() -- that handles the delay line.
      The actual delay class is BlendronicDelay, a delay line with linear interpolation and feedback.
-
-     It connects Keymap, and Tempo preparations together as needed, and gets the Blendrónic
-     params it needs to behave as expected.
     */
 
     std::unique_ptr<BlendronicDelay> delay;
+
     void updateDelayParameters();
     void clearNextDelayBlock(int numSamples);
     void tick(float* inL, float* inR);
@@ -284,16 +341,15 @@ private:
     // Flag to clear the delay line on the next beat
     bool clearDelayOnNextBeat;
 
-    // For access in BlendronicDisplay
-    juce::Array<juce::uint64> beatPositionsInBuffer; // Record of the sample position of beat changes in the delay buffer (used in display)
-    int numBeatPositions; // Number of beat positions in the buffer and to be displayed
-    int beatPositionsIndex; // Index of beat sample positions for adding/removing positions
-    float pulseOffset; // Sample offset of the pulse grid from grid aligned with buffer start (used in display)
-    bool resetPhase;
-
     /**
      * todo: for display
      */
+    // For access in BlendronicDisplay
+//    juce::Array<juce::uint64> beatPositionsInBuffer; // Record of the sample position of beat changes in the delay buffer (used in display)
+//    int numBeatPositions; // Number of beat positions in the buffer and to be displayed
+//    int beatPositionsIndex; // Index of beat sample positions for adding/removing positions
+//    float pulseOffset; // Sample offset of the pulse grid from grid aligned with buffer start (used in display)
+//    bool resetPhase;
 //    OwnedArray<BlendronicDisplay::ChannelInfo> audio;
 //    std::unique_ptr<BlendronicDisplay::ChannelInfo> smoothing;
 

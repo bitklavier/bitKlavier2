@@ -47,14 +47,14 @@ public:
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID);
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
-                slider->addAttachment(attachment.get());
+                slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
 
                 /**
-                 * todo: reset normalizqble range as needed:
+                 * todo: reset normalizable range as needed:
                  * slider
                  */
             }

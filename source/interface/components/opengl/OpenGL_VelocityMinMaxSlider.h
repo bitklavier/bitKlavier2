@@ -155,13 +155,11 @@ public:
             return;
 
         if (isModulation_) {
-            DBG("updating modulationState in BKRangeSliderValueChanged");
             modulationState.setProperty("velocitymin", min, nullptr);
             modulationState.setProperty("velocitymax", max, nullptr);
         }
 
         else if (isModulated_) {
-            DBG("updating defaultState in BKRangeSliderValueChanged");
             defaultState.setProperty("velocitymin", min, nullptr);
             defaultState.setProperty("velocitymax", max, nullptr);
         }

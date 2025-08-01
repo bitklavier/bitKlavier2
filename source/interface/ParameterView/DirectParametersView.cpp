@@ -34,7 +34,6 @@ void DirectParametersView::resized()
     placeKnobsInArea(outputKnobsArea, _sliders, true);
     DBG(" output knob area" + juce::String(outputKnobsArea.getWidth()) + " " + juce::String(outputKnobsArea.getHeight()));
 
-
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 5);

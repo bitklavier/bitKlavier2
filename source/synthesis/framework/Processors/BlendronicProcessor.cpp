@@ -27,14 +27,30 @@
 */
 
 #include "BlendronicProcessor.h"
+#include "synth_base.h"
 
 BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, blendronicBusLayout())
 {
+    // for testing
+    bufferDebugger = new BufferDebugger();
+
     /**
-     * todo: set this constructor params from default params
+     * todo: set this constructor params from default params?
      */
     delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, getSampleRate());
-    bufferDebugger = new BufferDebugger();
+
+    /*
+     * state-change parameter stuff (for multisliders)
+     */
+    state.params.beatLengths.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.delayLengths.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.smoothingTimes.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.feedbackCoeffs.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "beatLengths", &(state.params.beatLengths.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "delayLengths", &(state.params.delayLengths.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "smoothingTimes", &(state.params.smoothingTimes.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "feedbackCoeffs", &(state.params.feedbackCoeffs.stateChanges)));
 }
 
 void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -136,22 +152,25 @@ void BlendronicProcessor::tick(float* inL, float* inR)
 //            clearDelayOnNextBeat = false;
 //        }
 
-        float beatPatternLength = 0.0;
-        for (int i=0; i<state.params.beatLengths.sliderVals_size; i++) {
-            beatPatternLength += state.params.beatLengths.sliderVals[i].load() * pulseLength * getSampleRate();
-        }
+        /**
+         * for display?
+         */
+//        float beatPatternLength = 0.0;
+//        for (int i=0; i<state.params.beatLengths.sliderVals_size; i++) {
+//            beatPatternLength += state.params.beatLengths.sliderVals[i].load() * pulseLength * getSampleRate();
+//        }
 
-        if (numBeatPositions != (int)((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals_size) - 1)
-        {
-            beatPositionsInBuffer.clear();
-            beatPositionsIndex = -1;
-            pulseOffset = delay->getInPoint();
-            numBeatPositions = ((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals_size) - 1;
-        }
-
-        // Set the next beat position, cycle if we've reached the max number of positions for the buffer
-        beatPositionsInBuffer.set(++beatPositionsIndex, delay->getInPoint());
-        if (beatPositionsIndex >= numBeatPositions) beatPositionsIndex = -1;
+//        if (numBeatPositions != (int)((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals_size) - 1)
+//        {
+//            beatPositionsInBuffer.clear();
+//            beatPositionsIndex = -1;
+//            pulseOffset = delay->getInPoint();
+//            numBeatPositions = ((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals_size) - 1;
+//        }
+//
+//        // Set the next beat position, cycle if we've reached the max number of positions for the buffer
+//        beatPositionsInBuffer.set(++beatPositionsIndex, delay->getInPoint());
+//        if (beatPositionsIndex >= numBeatPositions) beatPositionsIndex = -1;
 
         // Step sequenced params
         beatIndex++;
@@ -176,8 +195,13 @@ void BlendronicProcessor::tick(float* inL, float* inR)
     {
         // Set parameters of the delay object
         updateDelayParameters();
-        resetPhase = true;
+
         prevPulseLength = pulseLength;
+
+        /**
+         * for display?
+         */
+//        resetPhase = true;
     }
 
     // Tick the delay
@@ -215,6 +239,8 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      */
     bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
     bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+
+    state.params.processStateChanges();
 
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
@@ -272,7 +298,9 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
 void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-
+    /**
+     * todo: perhaps have a fadeout param, followed by a buffer clear?
+     */
 }
 
 

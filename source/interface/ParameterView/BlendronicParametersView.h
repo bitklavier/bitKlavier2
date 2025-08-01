@@ -15,118 +15,118 @@ class BlendronicParametersView : public SynthSection
 {
 public:
     BlendronicParametersView (chowdsp::PluginState& pluginState, BlendronicParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection ("")
-{
-    // the name that will appear in the UI as the name of the section
-    setName ("blendronic");
-
-    // every section needs a LaF
-    //  main settings for this LaF are in assets/default.bitklavierskin
-    //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
-    //  we probably want to merge these in the future, but ok for now
-    setLookAndFeel (DefaultLookAndFeel::instance());
-
-    setComponentID (name);
-
-    // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
-    // we need to grab the listeners for this preparation here, so we can pass them to components below
-    auto& listeners = pluginState.getParameterListeners();
-
-    // we're leaving out "outputGain" since that has its own VolumeSlider
-    for (auto& param_ : *params.getFloatParams())
     {
-        if ( // make group of params to display together
-            param_->paramID == "InputGain" ||
-            param_->paramID == "Send")
+        // the name that will appear in the UI as the name of the section
+        setName ("blendronic");
+
+        // every section needs a LaF
+        //  main settings for this LaF are in assets/default.bitklavierskin
+        //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
+        //  we probably want to merge these in the future, but ok for now
+        setLookAndFeel (DefaultLookAndFeel::instance());
+        setComponentID (name);
+
+        // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
+        // we need to grab the listeners for this preparation here, so we can pass them to components below
+        auto& listeners = pluginState.getParameterListeners();
+
+        // we're leaving out "outputGain" since that has its own VolumeSlider
+        for (auto& param_ : *params.getFloatParams())
         {
-            auto slider = std::make_unique<SynthSlider> (param_->paramID);
-            auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
-            addSlider (slider.get()); // adds the slider to the synthSection
-            slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-            floatAttachments.emplace_back (std::move (attachment));
-            _sliders.emplace_back (std::move (slider));
+            /**
+             * todo: move both InputGain and Send to PeakMeterSections, like outputGain
+             */
+            if ( // make group of params to display together
+                param_->paramID == "InputGain" ||
+                param_->paramID == "Send")
+            {
+                auto slider = std::make_unique<SynthSlider> (param_->paramID);
+                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
+                addSlider (slider.get()); // adds the slider to the synthSection
+                slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                floatAttachments.emplace_back (std::move (attachment));
+                _sliders.emplace_back (std::move (slider));
+            }
         }
+
+        beatLengthsSlider = std::make_unique<OpenGL_MultiSlider>("beat_lengths", &params.beatLengths, listeners);
+        beatLengthsSlider->setComponentID ("beat_lengths");
+        beatLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
+        beatLengthsSlider->setName("Beat Lengths (xTempo)");
+        addStateModulatedComponent (beatLengthsSlider.get());
+
+        delayLengthsSlider = std::make_unique<OpenGL_MultiSlider>("delay_lengths", &params.delayLengths, listeners);
+        delayLengthsSlider->setComponentID ("delay_lengths");
+        delayLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
+        delayLengthsSlider->setName("Delay Lengths (xTempo)");
+        addStateModulatedComponent (delayLengthsSlider.get());
+
+        smoothingTimesSlider = std::make_unique<OpenGL_MultiSlider>("smoothing_times", &params.smoothingTimes, listeners);
+        smoothingTimesSlider->setComponentID ("smoothing_times");
+        smoothingTimesSlider->setMinMaxDefaultInc({0., 500, 50., 1.});
+        smoothingTimesSlider->setSkewFromMidpoint(0.1);
+        smoothingTimesSlider->setName("Smooth Times (ms)");
+        addStateModulatedComponent (smoothingTimesSlider.get());
+
+        feedbackCoeffsSlider = std::make_unique<OpenGL_MultiSlider>("feedback_coefficients", &params.feedbackCoeffs, listeners);
+        feedbackCoeffsSlider->setComponentID ("feedback_coefficients");
+        feedbackCoeffsSlider->setMinMaxDefaultInc({0., 1., 0.95, 0.001});
+        feedbackCoeffsSlider->setSkewFromMidpoint(0.1);
+        feedbackCoeffsSlider->setName("Feedback Coefficients (0-1)");
+        addStateModulatedComponent (feedbackCoeffsSlider.get());
+
+        // the level meter and output gain slider (right side of preparation popup)
+        // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
+        levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        addSubSection(levelMeter.get());
+
+        /*
+         * not sure why we need to redo this here, but they don't draw without these calls
+         */
+        beatLengthsSlider->drawSliders(juce::dontSendNotification);
+        delayLengthsSlider->drawSliders(juce::dontSendNotification);
+        smoothingTimesSlider->drawSliders(juce::dontSendNotification);
+        feedbackCoeffsSlider->drawSliders(juce::dontSendNotification);
+
+    //    setSkinOverride(Skin::kBlendronic);
+
     }
 
-    beatLengthsSlider = std::make_unique<OpenGL_MultiSlider>(&params.beatLengths, listeners);
-    beatLengthsSlider->setComponentID ("beat_lengths");
-    beatLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
-    beatLengthsSlider->setName("Beat Lengths (xTempo)");
-    addStateModulatedComponent (beatLengthsSlider.get());
-
-    delayLengthsSlider = std::make_unique<OpenGL_MultiSlider>(&params.delayLengths, listeners);
-    delayLengthsSlider->setComponentID ("delay_lengths");
-    delayLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
-    delayLengthsSlider->setName("Delay Lengths (xTempo)");
-    addStateModulatedComponent (delayLengthsSlider.get());
-
-    smoothingTimesSlider = std::make_unique<OpenGL_MultiSlider>(&params.smoothingTimes, listeners);
-    smoothingTimesSlider->setComponentID ("smoothing_times");
-    smoothingTimesSlider->setMinMaxDefaultInc({0., 500, 50., 1.});
-    smoothingTimesSlider->setSkewFromMidpoint(0.1);
-    smoothingTimesSlider->setName("Smooth Times (ms)");
-    addStateModulatedComponent (smoothingTimesSlider.get());
-
-    feedbackCoeffsSlider = std::make_unique<OpenGL_MultiSlider>(&params.feedbackCoeffs, listeners);
-    feedbackCoeffsSlider->setComponentID ("feedback_coefficients");
-    feedbackCoeffsSlider->setMinMaxDefaultInc({0., 1., 0.95, 0.001});
-    feedbackCoeffsSlider->setSkewFromMidpoint(0.1);
-    feedbackCoeffsSlider->setName("Feedback Coefficients (0-1)");
-    addStateModulatedComponent (feedbackCoeffsSlider.get());
-
-//    // create the more complex UI elements
-//    envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
-//    transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
-//    velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
-//
-//    // we add subsections for the elements that have been defined as sections
-//    addSubSection (envSection.get());
-//    addSubSection (transpositionSlider.get());
-//
-//    // this slider does not need a section, since it's just one OpenGL component
-//    velocityMinMaxSlider->setComponentID ("velocity_min_max");
-//    addStateModulatedComponent (velocityMinMaxSlider.get());
-
-    // the level meter and output gain slider (right side of preparation popup)
-    // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
-    levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-    addSubSection(levelMeter.get());
-//    setSkinOverride(Skin::kBlendronic);
-}
-
-void paintBackground (juce::Graphics& g) override
-{
-    setLabelFont(g);
-    SynthSection::paintContainer (g);
-    paintHeadingText (g);
-    paintBorder (g);
-    paintKnobShadows (g);
-
-    for (auto& slider : _sliders)
+    void paintBackground (juce::Graphics& g) override
     {
-        drawLabelForComponent (g, slider->getName(), slider.get());
+        setLabelFont(g);
+        SynthSection::paintContainer (g);
+        paintHeadingText (g);
+        paintBorder (g);
+        paintKnobShadows (g);
+
+        for (auto& slider : _sliders)
+        {
+            drawLabelForComponent (g, slider->getName(), slider.get());
+        }
+
+        paintChildrenBackgrounds (g);
     }
 
-    paintChildrenBackgrounds (g);
-}
+    //// complex UI elements in this prep
+    //std::unique_ptr<TranspositionSliderSection> transpositionSlider;
+    //std::unique_ptr<EnvelopeSection> envSection;
+    //std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
-//// complex UI elements in this prep
-//std::unique_ptr<TranspositionSliderSection> transpositionSlider;
-//std::unique_ptr<EnvelopeSection> envSection;
-//std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
+    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
+    std::vector<std::unique_ptr<SynthSlider>> _sliders;
+    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
-// place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
-std::vector<std::unique_ptr<SynthSlider>> _sliders;
-std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+    std::unique_ptr<OpenGL_MultiSlider> beatLengthsSlider;
+    std::unique_ptr<OpenGL_MultiSlider> delayLengthsSlider;
+    std::unique_ptr<OpenGL_MultiSlider> smoothingTimesSlider;
+    std::unique_ptr<OpenGL_MultiSlider> feedbackCoeffsSlider;
 
-std::unique_ptr<OpenGL_MultiSlider> beatLengthsSlider;
-std::unique_ptr<OpenGL_MultiSlider> delayLengthsSlider;
-std::unique_ptr<OpenGL_MultiSlider> smoothingTimesSlider;
-std::unique_ptr<OpenGL_MultiSlider> feedbackCoeffsSlider;
+    // level meter with output gain slider
+    std::shared_ptr<PeakMeterSection> levelMeter;
 
-// level meter with output gain slider
-std::shared_ptr<PeakMeterSection> levelMeter;
-
-void resized() override;
+    void resized() override;
 };
 
 #endif //BITKLAVIER0_BLENDRONICPARAMETERSVIEW_H

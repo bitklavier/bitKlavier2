@@ -12,6 +12,9 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
                                                                                   releaseResonanceSynth (new BKSynthesiser (state.params.env, state.params.releaseResonanceParam)),
                                                                                   pedalSynth (new BKSynthesiser (state.params.env, state.params.pedalParam))
 {
+    // for testing
+    bufferDebugger = new BufferDebugger();
+
     for (int i = 0; i < 300; i++)
     {
         mainSynth->addVoice (new BKSamplerVoice());
@@ -58,7 +61,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
             mod++;
         }
     }
-    bufferDebugger = new BufferDebugger();
+
     state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
@@ -132,6 +135,8 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
 
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
+
     /*
      * this updates all the AudioThread callbacks we might have in place
      * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
@@ -140,35 +145,44 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      *  if we put them on the AudioThread, it would be important to have minimal actions in those
      *      callbacks, no UI stuff, etc, just updating params needed in the audio block here
      *      if we want to do other stuff for the same callback, we should have a second MessageThread callback
+     *
+     *  I'm not sure we have any of these for Direct, but no harm in calling it, and for reference going forward
      */
-    //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
     state.getParameterListeners().callAudioThreadBroadcasters();
-    auto mod_Bus = getBus(true,1);
-    auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
-    int i = index;
-    // melatonin::printSparkline(buffer);
-    for(auto param: state.params.modulatableParams){
-        // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
-        // DBG(a.getProperty(IDs::parameter).toString());
-        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
-    }
-   const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
+
+    /*
+     * modulation stuff
+     */
+
+    // this for debugging
+//    auto mod_Bus = getBus(true,1);
+//    auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
+//    int i = index;
+//    // melatonin::printSparkline(buffer);
+//    for(auto param: state.params.modulatableParams){
+//        // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
+//        // DBG(a.getProperty(IDs::parameter).toString());
+//        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
+//    }
+
+    // first, the continuous modulations (simple knobs/sliders...)
+    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
 
     int numInputChannels = modBus.getNumChannels();
     for (int channel = 0; channel < numInputChannels; ++channel) {
-       const float* in = modBus.getReadPointer(channel);
+        const float* in = modBus.getReadPointer(channel);
         std::visit([in](auto* p)->void
-    {
-        p->applyMonophonicModulation(*in);
-    },  state.params.modulatableParams[channel]);
-
+        {
+            p->applyMonophonicModulation(*in);
+        },  state.params.modulatableParams[channel]);
     }
-    // always top of the chain as an instrument source; doesn't take audio in
-    buffer.clear();
 
-    // need to call these every block; this is for state change discrete mods (as opposed to audio rate continuous mods)
+    // then, the state-change modulations
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
+
+    // since this is an instrument source; doesn't take audio in, other than mods handled above
+    buffer.clear();
 
     /**
      * todo:
@@ -199,7 +213,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         hammerSynth->updateVelocityMinMax (
             state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
             state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-        // DBG("processblockhammersytnh
+
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -220,7 +234,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-    // send out the right outlets: prefader send
+    // send goes out the right outlets: prefader send
     /*
      * all the audio channels are in buffer, so we first identify which channels carry the sendBuffer
      * we look at directBusLayout() in DirectProcessor.h, and see that 'Send' is the 3rd output, so its busIndex is 2

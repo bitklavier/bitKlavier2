@@ -31,12 +31,8 @@ void BlendronicParametersView::resized()
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
-    DBG(" output knob area" + juce::String(outputKnobsArea.getWidth()) + " " + juce::String(outputKnobsArea.getHeight()));
 
-    // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);
-//    juce::Rectangle<int> beatlengthsArea = bounds.removeFromTop(knob_section_height * 5);
-//    beatLengthsSlider->setBounds(beatlengthsArea);
 
     beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
     bounds.removeFromTop(bufferSpaceForEach);
@@ -45,15 +41,6 @@ void BlendronicParametersView::resized()
     smoothingTimesSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
     bounds.removeFromTop(bufferSpaceForEach);
     feedbackCoeffsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
-
-//    envSection->setBounds(adsrArea);
-//
-//    // add the transposition and velocity range sliders below that
-//    bounds.removeFromTop(bufferSpaceForEach);
-//    juce::Rectangle<int> transpositionSliderArea = bounds.removeFromTop(knob_section_height);
-//    juce::Rectangle<int> velocitySliderArea = transpositionSliderArea.removeFromLeft(transpositionSliderArea.getWidth() * 0.5);
-//    transpositionSlider->setBounds(transpositionSliderArea);
-//    velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     SynthSection::resized();
 }
