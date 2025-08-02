@@ -42,10 +42,10 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
     /*
      * state-change parameter stuff (for multisliders)
      */
-    state.params.beatLengths.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.delayLengths.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.smoothingTimes.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.feedbackCoeffs.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.beatLengths.stateChanges.defaultState      = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.delayLengths.stateChanges.defaultState     = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.smoothingTimes.stateChanges.defaultState   = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.feedbackCoeffs.stateChanges.defaultState   = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "beat_lengths",

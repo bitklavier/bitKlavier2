@@ -34,6 +34,17 @@ public:
 
     }
 
+    /**
+     *
+     */
+    void updateFromParams()
+    {
+        setToOnlyActive(
+            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
+            atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
+            juce::sendNotification);
+    }
+
     //setBackgroundColor(findColour(Skin::kWidgetBackground, true));
 
     virtual void resized() override {
@@ -96,14 +107,6 @@ public:
         /**
          * todo: allow for multiple values in each slider, for transpositions: perhaps make OpenGL_MultiSlider2d
          */
-//        if (isModulation_)
-//        {
-//            modulationState.setProperty(IDs::absoluteTuning, s, nullptr);
-//        }
-//        else if (isModulated_)
-//        {
-//            defaultState.setProperty(IDs::absoluteTuning, s, nullptr);
-//        }
 
         /*
          * create string representations of the multislider vals/states
@@ -131,21 +134,10 @@ public:
             params->activeVals_size.store (states.size()); // full array of slider states, including inactive ones (false)
 
             // then update defaultState, with string representation of the multislider arrays
-
-//            defaultState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
-//            defaultState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
-//            defaultState.setProperty(name_ + "_activeVals", activeStr, nullptr);
-//            defaultState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
-
             defaultState.setProperty(IDs::multislider_vals, valsStr, nullptr);
             defaultState.setProperty(IDs::multislider_size, values.size(), nullptr);
             defaultState.setProperty(IDs::multislider_states, activeStr, nullptr);
             defaultState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
-
-//            defaultState.setProperty("sliderVals", valsStr, nullptr);
-//            defaultState.setProperty("sliderVals_size", values.size(), nullptr);
-//            defaultState.setProperty("activeVals", activeStr, nullptr);
-//            defaultState.setProperty("activeVals_size", states.size(), nullptr);
         }
         else if (isModulation_)
         {
@@ -155,20 +147,10 @@ public:
              *
              * we just write strings of the arrays to modulationState properties
              */
-//            modulationState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
-//            modulationState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
-//            modulationState.setProperty(name_ + "_activeVals", activeStr, nullptr);
-//            modulationState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
-
             modulationState.setProperty(IDs::multislider_vals, valsStr, nullptr);
             modulationState.setProperty(IDs::multislider_size, values.size(), nullptr);
             modulationState.setProperty(IDs::multislider_states, activeStr, nullptr);
             modulationState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
-
-//            modulationState.setProperty("sliderVals", valsStr, nullptr);
-//            modulationState.setProperty("sliderVals_size", values.size(), nullptr);
-//            modulationState.setProperty("activeVals", activeStr, nullptr);
-//            modulationState.setProperty("activeVals_size", states.size(), nullptr);
         }
     }
 
@@ -179,26 +161,38 @@ public:
      */
     void syncToValueTree() override {
 
-        /**
-         * todo: redo this with modulationState vals?
-         */
-//        setToOnlyActive(
-//            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
-//            atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
-//            juce::sendNotification);
+        auto msvals = modulationState.getProperty(IDs::multislider_vals);
+        auto msvals_size = int(modulationState.getProperty(IDs::multislider_size));
+        auto msavals = modulationState.getProperty(IDs::multislider_states);
+        auto msavals_size = int(modulationState.getProperty(IDs::multislider_states_size));
 
+        if (!modulationState.hasProperty(IDs::multislider_vals))
+        {
+            DBG("using defaultState since we don't have a modulationState yet");
 
-//        juce::Array<float> vals;
-//        static juce::var nullVar;
-//        for (int i = 0; i < 11; i++) {
-//            auto str = "t" + juce::String(i);
-//            auto val = modulationState.getProperty(str);
-//            if (val == nullVar)
-//                break;
-//            vals.add(val);
-//        }
-//
-//        setTo(vals, juce::sendNotification);
+            /**
+             * todo: not working...
+             * we don't seem to have a defaultState either, probably because we are using the clone
+             * not a huge deal, since can copy-paste from main slider, so leave for now
+             */
+             msvals = defaultState.getProperty(IDs::multislider_vals);
+             msvals_size = int(defaultState.getProperty(IDs::multislider_size));
+             msavals = defaultState.getProperty(IDs::multislider_states);
+             msavals_size = int(defaultState.getProperty(IDs::multislider_states_size));
+
+            return;
+        }
+
+        std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> dispvals;
+        stringToAtomicArray(dispvals, msvals, 0.);
+
+        std::array<std::atomic<bool>, MAXMULTISLIDERLENGTH> dispstates;
+        stringToAtomicBoolArray(dispstates, msavals, false);
+
+        setToOnlyActive(
+             atomicArrayToJuceArrayLimited(dispvals, msvals_size),
+             atomicBoolArrayToJuceArrayLimited(dispstates, msavals_size),
+             juce::sendNotification);
     }
 
     void mouseExit(const juce::MouseEvent &e) override {

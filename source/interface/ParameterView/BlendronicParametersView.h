@@ -82,6 +82,24 @@ public:
         addSubSection(levelMeter.get());
 
         /*
+         * listen for changes from mods/resets, redraw as needed
+         */
+        sliderChangedCallback += {
+            listeners.addParameterListener
+            (
+            params.updateUIState, // this value will be changed whenever a mod or reset is called
+            chowdsp::ParameterListenerThread::MessageThread,
+                [this]
+                {
+                    beatLengthsSlider->updateFromParams();
+                    delayLengthsSlider->updateFromParams();
+                    smoothingTimesSlider->updateFromParams();
+                    feedbackCoeffsSlider->updateFromParams();
+                }
+            )
+        };
+
+        /*
          * not sure why we need to redo this here, but they don't draw without these calls
          */
         beatLengthsSlider->drawSliders(juce::dontSendNotification);
@@ -109,10 +127,7 @@ public:
         paintChildrenBackgrounds (g);
     }
 
-    //// complex UI elements in this prep
-    //std::unique_ptr<TranspositionSliderSection> transpositionSlider;
-    //std::unique_ptr<EnvelopeSection> envSection;
-    //std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
+    chowdsp::ScopedCallbackList sliderChangedCallback;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;

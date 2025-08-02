@@ -9,6 +9,10 @@
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include "array_to_string.h"
 
+/**
+ * todo: make much larger (2048?) mostly for Pascal!
+ * or only do that for MultiSlider2dState?
+ */
 #define MAXMULTISLIDERLENGTH 128
 
 /**
@@ -44,19 +48,14 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
     std::atomic<int> sliderVals_size = 1;
     std::atomic<int> activeVals_size = 1;
 
+    std::atomic<bool> updateUI;
+
     void processStateChanges() override
     {
+        updateUI = false;
         for(auto [index, change] : stateChanges.changeState)
         {
             static juce::var nullVar;
-            /**
-             * todo: change all these property names to IDs.
-             */
-
-//            auto sval = change.getProperty ("sliderVals");
-//            auto svalsize = change.getProperty ("sliderVals_size");
-//            auto aval = change.getProperty ("activeVals");
-//            auto avalsize = change.getProperty ("activeVals_size");
 
             auto sval = change.getProperty (IDs::multislider_vals);
             auto svalsize = change.getProperty (IDs::multislider_size);
@@ -75,14 +74,12 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
             if (avalsize != nullVar) {
                 activeVals_size.store(int(avalsize));
             }
-
-            /**
-             * todo: add a regular bool chowdsp param here that we can listen for a change to from OpenGL_MultiSlider or BlendronicParametersView to redraw?
-             */
+            updateUI = true;
         }
 
         // must clear at the end, otherwise they'll get reapplied again and again
         stateChanges.changeState.clear();
+
     }
 };
 

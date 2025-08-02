@@ -94,6 +94,7 @@ etc...
     - it will have all the same callbacks as the regular slider, so in `OpenGL_TranspositionSlider` the `BKStackedSliderValueChanged` callback will have two different roles, one if it is for setting the modulation values, and the other for the normal usage where the actual values of the slider are being set (called `isModulated_`, since it could be a target and is not the `isModulation_`)
   - when the modulation is triggered, the parameters will be changed in `processStateChanges()` (see TransposeParams.h, for instance)
   - those changes need to be reflected in the UI, so we add callbacks in the UI element (back in `OpenGL_TranspositionSlider`, for instance, where there are listeneres for each of the transposition parameters t0, t1, etc..., and change to any of them will cause the UI for the slider to reset itself)
+- there is LOTS to work on to make the UI for these work better, especially the pop_up "cloned" UI elements 
 
 ---------
 ## Adding a Parameter to a Preparation (Direct, for example)

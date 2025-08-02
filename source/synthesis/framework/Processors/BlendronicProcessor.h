@@ -132,6 +132,7 @@ struct BlendronicParams : chowdsp::ParamHolder
     BlendronicParams() : chowdsp::ParamHolder ("blendronic")
     {
         add (
+            updateUIState,
             outputGain,
             inputGain,
             outputSend);
@@ -142,6 +143,13 @@ struct BlendronicParams : chowdsp::ParamHolder
     MultiSliderState delayLengths;
     MultiSliderState smoothingTimes;
     MultiSliderState feedbackCoeffs;
+
+    // used internally to notify UI to redraw sliders
+    chowdsp::BoolParameter::Ptr updateUIState {
+        juce::ParameterID { "updateUIState", 100 },
+        "updateUIState",
+        false
+    };
 
     // To adjust the gain of signals coming in to blendronic
     chowdsp::GainDBParameter::Ptr inputGain {
@@ -196,10 +204,28 @@ struct BlendronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
+//        updateUIState->setParameterValue(false);
+
         beatLengths.processStateChanges();
         delayLengths.processStateChanges();
         smoothingTimes.processStateChanges();
         feedbackCoeffs.processStateChanges();
+
+        // signal the UI to redraw the sliders
+        if( beatLengths.updateUI == true || delayLengths.updateUI == true || smoothingTimes.updateUI == true || feedbackCoeffs.updateUI == true)
+        {
+            DBG("updateUIState for Multisliders");
+
+            /*
+             * need to actually change the value for the listener to get the message
+             * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
+             * so we switch it everything we one of the sliders gets modded.
+             */
+            if(updateUIState->get())
+                updateUIState->setValueNotifyingHost(false);
+            else
+                updateUIState->setValueNotifyingHost(true);
+        }
     }
 
     /*
