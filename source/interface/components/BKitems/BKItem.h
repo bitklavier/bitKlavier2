@@ -707,7 +707,7 @@ public:
         // 1. Define the bounds where you want to draw the target
         juce::Rectangle<float> targetBounds = getLocalBounds().toFloat().reduced(10.0f);
 
-        // 2. Call the function to get the three paths
+        // 2. Call the function to get the four paths
         std::vector<juce::Path> targetPaths = Paths::createTargetPaths(targetBounds);
 
         // 3. Set the colors and fill the paths in the correct order (largest to smallest)
@@ -715,7 +715,7 @@ public:
         // Fill the outer circle with red
         if (targetPaths.size() > 0)
         {
-            g.setColour(juce::Colours::red);
+            g.setColour(juce::Colours::orangered);
             g.fillPath(targetPaths[0]);
         }
 
@@ -729,44 +729,16 @@ public:
         // Fill the inner circle with red
         if (targetPaths.size() > 2)
         {
-            g.setColour(juce::Colours::red);
+            g.setColour(juce::Colours::orangered);
             g.fillPath(targetPaths[2]);
         }
 
-//        float centerX = bounds.getCentreX();
-//        float centerY = bounds.getCentreY();
-//        float radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.5f;
-//
-//        /**
-//         * todo: have it draw a target rather than a 5-pin MIDI jack symbol
-//         */
-//        juce::Path stopSign;
-//
-//        const float numSides = 5;
-//        const float angleStep = juce::MathConstants<float>::twoPi / numSides;
-//        const float rotation = (juce::MathConstants<float>::pi / numSides) * 3. + juce::MathConstants<float>::pi / 2.;
-//
-//        for (int i = 0; i < numSides; ++i)
-//        {
-//            float angle = angleStep * i + rotation; // Add rotation here
-//            float x = centerX + radius * std::cos(angle);
-//            float y = centerY + radius * std::sin(angle);
-//
-//            if (i == 0)
-//                stopSign.startNewSubPath(x, y);
-//            else
-//                stopSign.lineTo(x, y);
-//        }
-//
-//        stopSign.closeSubPath();
-//
-//        // fill
-//        g.setColour(juce::Colours::steelblue); // just to differentiate from reset for now
-//        g.fillPath(stopSign);
-//
-//        // White border
-//        g.setColour(juce::Colours::white);
-//        g.strokePath(stopSign, juce::PathStrokeType(6.0f));
+        // Fill the new center circle with white
+        if (targetPaths.size() > 3)
+        {
+            g.setColour(juce::Colours::white);
+            g.fillPath(targetPaths[3]);
+        }
     }
 };
 

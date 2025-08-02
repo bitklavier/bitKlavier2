@@ -8,7 +8,12 @@ MidiTargetProcessor::MidiTargetProcessor (
     const juce::ValueTree& v, SynthBase& parent) :
                          PluginBase (parent, v, nullptr, midiTargetBusLayout())
 {
+    state.params.activeTargets.fill(false);
 
+    /*
+     * these will be set by user
+     */
+    state.params.activeTargets[BlendronicTargetBeatSync] = true; // for testing
 }
 
 std::unique_ptr<juce::AudioProcessor> MidiTargetProcessor::create (SynthBase& parent, const juce::ValueTree& v)
@@ -20,41 +25,28 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 {
 
     juce::MidiBuffer saveMidi (midiMessages);
+
+    //clear the midi buffer, because we're only going to pass the ones we want, by channel
     midiMessages.clear();
 
-//    bool invertNoteOnNoteOff = true; // for now
-//    if (invertNoteOnNoteOff)
-//    {
-//        for (auto mi : saveMidi)
-//        {
-//            auto message = mi.getMessage();
-//            if (message.isNoteOn() || message.isNoteOff())
-//                midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
-//            else
-//                midiMessages.addEvent (message, mi.samplePosition);
-//        }
-//    }
+    for (auto mi : saveMidi)
+    {
+        auto message = mi.getMessage();
+
+        for (int i = BlendronicTargetNormal; i < BlendronicTargetNil; ++i)
+        {
+            // Cast the integer back to the enum type
+            BlendronicTargetType currentTarget = static_cast<BlendronicTargetType> (i);
+            if (state.params.activeTargets[currentTarget])
+            {
+                juce::MidiMessage newmsg(message);
+                newmsg.setChannel (i);
+                midiMessages.addEvent (newmsg, mi.samplePosition);
+            }
+        }
+    }
 }
 
-// turns noteOn messages into noteOff messages, and vice versa
-// there is surely a more efficient way to do this...
-juce::MidiMessage MidiTargetProcessor::swapNoteOnNoteOff (juce::MidiMessage inmsg)
-{
-    if (inmsg.isNoteOff())
-    {
-        auto newmsg = juce::MidiMessage::noteOn (inmsg.getChannel(), inmsg.getNoteNumber(), inmsg.getVelocity());
-        newmsg.addToTimeStamp (inmsg.getTimeStamp());
-        return newmsg;
-    }
-    else if (inmsg.isNoteOn())
-    {
-        auto newmsg = juce::MidiMessage::noteOff (inmsg.getChannel(), inmsg.getNoteNumber(), inmsg.getVelocity());
-        newmsg.addToTimeStamp (inmsg.getTimeStamp());
-        return newmsg;
-    }
-
-    return inmsg;
-}
 
 /**
  * not sure we'll need these

@@ -32,6 +32,7 @@
 #pragma once
 
 #include "PluginBase.h"
+#include "target_types.h"
 #include "Identifiers.h"
 #include "array_to_string.h"
 #include "MultiSliderState.h"
@@ -258,6 +259,7 @@ public:
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
+    bool acceptsMidi() const override { return true; }
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
 

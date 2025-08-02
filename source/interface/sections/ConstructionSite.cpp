@@ -248,8 +248,6 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
-                // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
-                // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -263,8 +261,6 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
-                // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
-                // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }

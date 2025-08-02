@@ -2,14 +2,36 @@
 // Created by Dan Trueman on 8/2/25.
 //
 
+/**
+ * MidiTarget takes a MidiMessage and sends it out on different channels
+ * depending on which preparation targets are activated by the user.
+ *
+ * For instance, if MidiTarget is between Keymap and Blendronic, and
+ * the user has toggled on 'BlendronicTargetPatternSync' and 'BlendronicTargetBeatSync'
+ * but left the remaining off, then MidiTarget will take each incoming MIDI message
+ * and send out two copies, one on channel 2 (BlendronicTargetPatternSync) and one on
+ * channel 3 (BlendronicTargetBeatSync), as determined by their positions in
+ * the enum 'BlendronicTargetType.' Note that there will NOT be a message on channel 1
+ * in this case, since 'BlendronicTargetNormal' was not toggled on by the user.
+ */
+
 #ifndef BITKLAVIER0_MIDITARGETPROCESSOR_H
 #define BITKLAVIER0_MIDITARGETPROCESSOR_H
 
+#pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"
 #include "PreparationStateImpl.h"
 #include "PluginBase.h"
+#include "target_types.h"
+
+/**
+ * todo: MidiTargetProcessor needs to know what kind of prep it first connects to
+ *      and then can only connect to that kind of prep again.
+ *      the processBlock then will choose the particular target channel vals to iterate
+ *      through based on the connected prep type
+ */
 
 struct MidiTargetParams : chowdsp::ParamHolder
 {
@@ -24,6 +46,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
         "some toggle",
         false
     };
+
+     // max size based on max channels for midimsg
+    std::array<bool, 16> activeTargets;
 
     /*
      * serializers are used for more complex params
@@ -76,11 +101,6 @@ public:
     void changeProgramName(int index, const juce::String &newName) override {}
     void getStateInformation(juce::MemoryBlock &destData) override {}
     void setStateInformation(const void *data, int sizeInBytes) override {}
-
-    /**
-     * Midi Processing Functions
-     */
-    juce::MidiMessage swapNoteOnNoteOff (juce::MidiMessage inmsg);
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiTargetProcessor)

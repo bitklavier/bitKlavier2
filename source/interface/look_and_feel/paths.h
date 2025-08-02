@@ -742,7 +742,7 @@ class Paths {
       path.lineTo(1.0f - kBorder - kEraserLength, kBorder + kPencilDimension + kEraserLength);
       path.lineTo(1.0f - kBorder - kEraserLength - kPencilDimension, kBorder + kEraserLength);
       path.closeSubPath();
-      
+
       path.addLineSegment(juce::Line<float>(0.0f, 0.0f, 0.0f, 0.0f), 0.2f);
       path.addLineSegment(juce::Line<float>(1.0f, 1.0f, 1.0f, 1.0f), 0.2f);
       return path;
@@ -1029,35 +1029,40 @@ class Paths {
     }
 
     /**
- * @brief Creates a vector of three concentric juce::Path objects for a target.
- *
- * This function generates three concentric elliptical paths, sized to fit within
- * the given bounds. The vector contains the paths for the outer, middle, and inner
- * circles, respectively, which can then be drawn with different colors.
- *
- * @param bounds The juce::Rectangle<float> defining the outer boundary of the target.
- * @return A std::vector<juce::Path> with three elements: outer, middle, and inner circles.
- */
+     * @brief Creates a vector of four concentric juce::Path objects for a target.
+     *
+     * This function generates four concentric elliptical paths, sized to fit within
+     * the given bounds. The vector contains the paths for the outer, middle, inner,
+     * and center circles, respectively, which can then be drawn with different colors.
+     *
+     * @param bounds The juce::Rectangle<float> defining the outer boundary of the target.
+     * @return A std::vector<juce::Path> with four elements: outer, middle, inner, and center circles.
+     */
     static std::vector<juce::Path> createTargetPaths(const juce::Rectangle<float>& bounds)
     {
         std::vector<juce::Path> paths;
+
         juce::Path outerCircle;
         juce::Path middleCircle;
         juce::Path innerCircle;
+        juce::Path centerCircle;
 
         // Define the dimensions for each circle as fractions of the outer bounds
         auto outerBounds = bounds;
-        auto middleBounds = bounds.reduced(bounds.getWidth() * 0.25f);
-        auto innerBounds = bounds.reduced(bounds.getWidth() * 0.40f);
+        auto middleBounds = bounds.reduced(bounds.getWidth() * 0.10f);
+        auto innerBounds = bounds.reduced(bounds.getWidth() * 0.25f);
+        auto centerBounds = bounds.reduced(bounds.getWidth() * 0.35f); // New, smaller circle
 
-        // Create the three elliptical paths
+        // Create the four elliptical paths
         outerCircle.addEllipse(outerBounds);
         middleCircle.addEllipse(middleBounds);
         innerCircle.addEllipse(innerBounds);
+        centerCircle.addEllipse(centerBounds);
 
         paths.push_back(outerCircle);
         paths.push_back(middleCircle);
         paths.push_back(innerCircle);
+        paths.push_back(centerCircle);
 
         return paths;
     }

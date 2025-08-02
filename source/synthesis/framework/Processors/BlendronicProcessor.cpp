@@ -239,7 +239,20 @@ void BlendronicProcessor::clearNextDelayBlock(int numSamples)
 
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    /**
+     * MIDI Targeting Stuff First
+     */
 
+    for (auto mi : midiMessages)
+    {
+        auto message = mi.getMessage();
+        DBG("BlendronicProcessor::processBlock MIDI message received on channel " + juce::String(message.getChannel()));
+    }
+
+
+    /**
+     * Then the Audio Stuff
+     */
     int numSamples = buffer.getNumSamples();
 
     /*

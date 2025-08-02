@@ -157,6 +157,8 @@ Typing as I do MidiFilter...
 - icon svg layers in assets/midifilter, with further info in BinaryData.h; BinaryData.h says it is autowritten -- how?
   - need to add a path() call in `paths.h`
   - some drawing stuff happens in `BKItem.h`
+  - might not need an image, can just draw a path()
+  - icon size is set in `ConstructionSite::perform`
 - preparation icon size is set in `ConstructionSite::perform`?
   - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 

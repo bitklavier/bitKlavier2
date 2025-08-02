@@ -108,20 +108,6 @@ namespace bitklavier {
         BKPreparationTypeNil,
     } BKPreparationType;
 
-//    //==============================================================================
-//    /**
-//    Utility wrapper for juce::ValueTree::Listener's that only want to override valueTreePropertyChanged.
-//*/
-//    struct ValueTreePropertyChangeListener  : public juce::ValueTree::Listener
-//    {
-//        void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) override {}
-//        void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) override {}
-//        void valueTreeChildOrderChanged (juce::ValueTree&, int, int) override {}
-//        void valueTreeParentChanged (juce::ValueTree&) override {}
-//        void valueTreeRedirected (juce::ValueTree&) override {}
-//    };
-
-
 } // namespace vital
 
 
