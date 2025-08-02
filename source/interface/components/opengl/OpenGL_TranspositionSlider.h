@@ -80,6 +80,7 @@ public:
     }
 
     virtual void mouseDrag(const juce::MouseEvent &e) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKStackedSlider>::mouseDrag(e);
         redoImage();
     }

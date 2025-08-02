@@ -24,18 +24,11 @@ public:
         isModulated_ = true;
         addMyListener(this);
 
-        /*
-         * call setTo here, so the slider displays the passed param values in sliderstate
-         */
-        setToOnlyActive(
-            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
-            atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
-            juce::sendNotification);
-
+        updateFromParams();
     }
 
-    /**
-     *
+    /*
+     * updates the sliders from the current parameter values: useful after a mod or reset
      */
     void updateFromParams()
     {
@@ -53,6 +46,7 @@ public:
     }
 
     virtual void mouseDrag(const juce::MouseEvent &e) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKMultiSlider>::mouseDrag(e);
         redoImage();
     }
@@ -131,8 +125,10 @@ public:
         if (isModulated_)
         {
             /*
-             * just copy the direct UI representations to the param arrays; the prep should know how to use them
+             * we are manipulating the actual multislider: need to update param vals and defaultState vals
              */
+
+            // just copy the direct UI representations to the param arrays; the prep should know how to use them
             int valCtr = 0;
             for (auto sval : values)
             {
