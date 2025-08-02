@@ -448,6 +448,7 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeBlendronic,"Blendronic");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiFilter,"MidiFilter");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiTarget,"MidiTarget");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypePianoMap,"PianoSwitch");
 
     auto pluginDescriptions = userPreferences->userPreferences->knownPluginList.getTypes();

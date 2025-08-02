@@ -49,6 +49,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,ResetPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchPreparation::create);
 
 }
@@ -67,11 +68,12 @@ enum CommandIDs {
     deletion = 0x0622,
     resetMod = 0x0623,
     midifilter = 0x0624,
-    pianoswitch = 0x0625
+    miditarget = 0x0625,
+    pianoswitch = 0x0626
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
-    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion, resetMod, midifilter, pianoswitch});
+    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion, resetMod, midifilter, miditarget, pianoswitch});
 }
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
 {
@@ -122,7 +124,11 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
             break;
         case midifilter:
             info.setInfo("Midifilter", "Create Midifilter Preparation", "Edit", 0);
-            info.addDefaultKeypress('f', juce::ModifierKeys::noModifiers);
+            info.addDefaultKeypress('f', juce::ModifierKeys::shiftModifier);
+            break;
+        case miditarget:
+            info.setInfo("Miditarget", "Create Miditarget Preparation", "Edit", 0);
+            info.addDefaultKeypress('t', juce::ModifierKeys::shiftModifier);
             break;
         case pianoswitch:
             info.setInfo("Pianoswitch", "Create Pianoswitch Preparation", "Edit", 0);
@@ -237,6 +243,21 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 juce::ValueTree t(IDs::PREPARATION);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiFilter, nullptr);
+                t.setProperty(IDs::width, 125, nullptr);
+                t.setProperty(IDs::height, 245, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                                             juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
+                // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
+                prep_list->appendChild(t,  &undo);
+                return true;
+            }
+            case miditarget:
+            {
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiTarget, nullptr);
                 t.setProperty(IDs::width, 125, nullptr);
                 t.setProperty(IDs::height, 245, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(

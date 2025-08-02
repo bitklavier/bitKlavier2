@@ -311,6 +311,7 @@ void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
 {
     /**
      * todo: perhaps have a fadeout param, followed by a buffer clear?
+     * - these could be user settable, perhaps...
      */
 }
 

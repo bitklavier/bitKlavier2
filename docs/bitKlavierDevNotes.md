@@ -1,13 +1,14 @@
 # Notes about how to do stuff in the bK codebase
 
 ## Things/Questions for Davis
-- [ ] did we discuss having preps identified by name instead of number in the VTs? 
-  - so that they show up in the saved XML files with more informative names than `<PREPARATION type="3" `...?
-  - probably good to do this before we start actually saving galleries we care about, if it's a possibility
 - [ ] connecting Synchronic and Nostalgic, and more generally connecting objects to one another and limiting what connections are possible 
   - no Tuning to Blendronic, for instance
   - also, having Target know which prep it's connected to, and then disallowing it from connecting to other types of preps
   - possible for Davis or Myra to take care of?
+- [ ] did we discuss having preps identified by name instead of number in the VTs?
+  - so that they show up in the saved XML files with more informative names than `<PREPARATION type="3" `...?
+  - probably good to do this before we start actually saving galleries we care about, if it's a possibility
+
 
 ## Quick Bug/Feature Notes
 - [ ] Keymap parameter targeting: 
@@ -152,6 +153,7 @@ Typing as I do MidiFilter...
   - `prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter,MidiFilterProcessor::create);`
 - might need to add it to `PreparationSection::itemDropped`
   - requires creating `midifilterDropped()` funcs in various places
+  - do NOT need it for midifilter, since its not one to connect via drag/drop
 - icon svg layers in assets/midifilter, with further info in BinaryData.h; BinaryData.h says it is autowritten -- how?
   - need to add a path() call in `paths.h`
   - some drawing stuff happens in `BKItem.h`

@@ -9,6 +9,7 @@
 #include "ModulationProcessor.h"
 #include "ResetProcessor.h"
 #include "MidiFilterProcessor.h"
+#include "MidiTargetProcessor.h"
 #include "PianoSwitchProcessor.h"
 #include "../UserPreferences.h"
 
@@ -22,6 +23,7 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning, TuningProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset, bitklavier::ResetProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchProcessor::create);
     rebuildObjects();
     for (auto object: objects) {

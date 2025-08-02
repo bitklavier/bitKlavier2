@@ -694,6 +694,54 @@ public:
     }
 };
 
+class MidiTargetItem : public BKItem
+{
+public:
+    MidiTargetItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeMidiTarget)
+    {
+
+    }
+
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+    {
+        auto bounds = getLocalBounds().toFloat();
+        float centerX = bounds.getCentreX();
+        float centerY = bounds.getCentreY();
+        float radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.5f;
+
+        /**
+         * todo: have it draw a target rather than a 5-pin MIDI jack symbol
+         */
+        juce::Path stopSign;
+
+        const float numSides = 5;
+        const float angleStep = juce::MathConstants<float>::twoPi / numSides;
+        const float rotation = (juce::MathConstants<float>::pi / numSides) * 3. + juce::MathConstants<float>::pi / 2.;
+
+        for (int i = 0; i < numSides; ++i)
+        {
+            float angle = angleStep * i + rotation; // Add rotation here
+            float x = centerX + radius * std::cos(angle);
+            float y = centerY + radius * std::sin(angle);
+
+            if (i == 0)
+                stopSign.startNewSubPath(x, y);
+            else
+                stopSign.lineTo(x, y);
+        }
+
+        stopSign.closeSubPath();
+
+        // fill
+        g.setColour(juce::Colours::steelblue); // just to differentiate from reset for now
+        g.fillPath(stopSign);
+
+        // White border
+        g.setColour(juce::Colours::white);
+        g.strokePath(stopSign, juce::PathStrokeType(6.0f));
+    }
+};
+
 class PianoSwitchItem : public BKItem
 {
 public:
