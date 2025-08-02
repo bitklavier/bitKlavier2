@@ -63,33 +63,44 @@ public:
     }
 
     void mouseDown(const juce::MouseEvent &e) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKMultiSlider>::mouseDown(e);
         redoImage();
+        mouseInteraction = false;
     }
 
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKMultiSlider>::textEditorReturnKeyPressed(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void textEditorFocusLost(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKMultiSlider>::textEditorFocusLost(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void textEditorEscapeKeyPressed(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKMultiSlider>::textEditorEscapeKeyPressed(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void textEditorTextChanged(juce::TextEditor &textEditor) override {
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKMultiSlider>::textEditorTextChanged(textEditor);
         redoImage();
+        mouseInteraction = false;
     }
 
     void mouseUp(const juce::MouseEvent &event) override {
         OpenGlAutoImageComponent<BKMultiSlider>::mouseUp(event);
         redoImage();
+        mouseInteraction = false;
     }
 
     OpenGL_MultiSlider* clone() {
@@ -107,6 +118,9 @@ public:
         /**
          * todo: allow for multiple values in each slider, for transpositions: perhaps make OpenGL_MultiSlider2d
          */
+
+        if (!mouseInteraction)
+            return;
 
         /*
          * create string representations of the multislider vals/states
@@ -220,6 +234,7 @@ private :
         addMyListener(this);
     }
 
+    bool mouseInteraction = false;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
