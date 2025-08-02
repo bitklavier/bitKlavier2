@@ -84,14 +84,19 @@ namespace IDs
     DECLARE_ID (selectedPianoName)
     DECLARE_ID (sync);
 
-    DECLARE_ID(mod0to1);
+    DECLARE_ID(mod0to1)
 
-    DECLARE_ID(start);
-    DECLARE_ID(end);
-    DECLARE_ID(skew);
+    DECLARE_ID(start)
+    DECLARE_ID(end)
+    DECLARE_ID(skew)
 
-    DECLARE_ID(numModChans);
-    DECLARE_ID(sliderval);
+    DECLARE_ID(numModChans)
+    DECLARE_ID(sliderval)
+
+    DECLARE_ID(multislider_vals)
+    DECLARE_ID(multislider_size)
+    DECLARE_ID(multislider_states)
+    DECLARE_ID(multislider_states_size)
 }
 
 #undef DECLARE_ID

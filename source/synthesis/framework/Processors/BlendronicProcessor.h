@@ -196,44 +196,10 @@ struct BlendronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
-        for(auto [index, change] : stateChanges.changeState)
-        {
-            DBG("blendronic state change property: " + change.getPropertyName(0));
-        }
-
-        // must clear at the end, otherwise they'll get reapplied again and again
-        stateChanges.changeState.clear();
-
-//        for(auto [index, change] : stateChanges.changeState)
-//        {
-//            auto vminval = change.getProperty("velocitymin");
-//            velocityMinParam->setParameterValue(vminval);
-//
-//            auto vmaxval = change.getProperty("velocitymax");
-//            velocityMaxParam->setParameterValue(vmaxval);
-//        }
-
-//        auto float_params = getFloatParams();
-//
-//        int i = numActiveSliders->getCurrentValue();
-//        for(auto [index, change] : stateChanges.changeState)
-//        {
-//            static juce::var nullVar;
-//
-//            for (i = 0; i < 12; i++)
-//            {
-//                auto str = "t" + juce::String(i);
-//                auto val = change.getProperty(str);
-//
-//                // need to make sure we don't ignore values of 0.!
-//                if (val == nullVar && !val.equalsWithSameType(0.)) break;
-//
-//                auto& float_param = float_params->at(i);
-//                float_param.get()->setParameterValue(val);
-//            }
-//            numActiveSliders->setParameterValue(i);
-//        }
-//        stateChanges.changeState.clear();
+        beatLengths.processStateChanges();
+        delayLengths.processStateChanges();
+        smoothingTimes.processStateChanges();
+        feedbackCoeffs.processStateChanges();
     }
 
     /*

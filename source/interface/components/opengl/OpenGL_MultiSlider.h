@@ -137,10 +137,15 @@ public:
 //            defaultState.setProperty(name_ + "_activeVals", activeStr, nullptr);
 //            defaultState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
 
-            defaultState.setProperty("sliderVals", valsStr, nullptr);
-            defaultState.setProperty("sliderVals_size", values.size(), nullptr);
-            defaultState.setProperty("activeVals", activeStr, nullptr);
-            defaultState.setProperty("activeVals_size", states.size(), nullptr);
+            defaultState.setProperty(IDs::multislider_vals, valsStr, nullptr);
+            defaultState.setProperty(IDs::multislider_size, values.size(), nullptr);
+            defaultState.setProperty(IDs::multislider_states, activeStr, nullptr);
+            defaultState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
+
+//            defaultState.setProperty("sliderVals", valsStr, nullptr);
+//            defaultState.setProperty("sliderVals_size", values.size(), nullptr);
+//            defaultState.setProperty("activeVals", activeStr, nullptr);
+//            defaultState.setProperty("activeVals_size", states.size(), nullptr);
         }
         else if (isModulation_)
         {
@@ -155,10 +160,15 @@ public:
 //            modulationState.setProperty(name_ + "_activeVals", activeStr, nullptr);
 //            modulationState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
 
-            modulationState.setProperty("sliderVals", valsStr, nullptr);
-            modulationState.setProperty("sliderVals_size", values.size(), nullptr);
-            modulationState.setProperty("activeVals", activeStr, nullptr);
-            modulationState.setProperty("activeVals_size", states.size(), nullptr);
+            modulationState.setProperty(IDs::multislider_vals, valsStr, nullptr);
+            modulationState.setProperty(IDs::multislider_size, values.size(), nullptr);
+            modulationState.setProperty(IDs::multislider_states, activeStr, nullptr);
+            modulationState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
+
+//            modulationState.setProperty("sliderVals", valsStr, nullptr);
+//            modulationState.setProperty("sliderVals_size", values.size(), nullptr);
+//            modulationState.setProperty("activeVals", activeStr, nullptr);
+//            modulationState.setProperty("activeVals_size", states.size(), nullptr);
         }
     }
 

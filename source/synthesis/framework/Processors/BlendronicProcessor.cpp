@@ -47,9 +47,6 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
     state.params.smoothingTimes.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.feedbackCoeffs.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
-    /**
-     * todo: make "beat_lengths" and others IDs?
-     */
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "beat_lengths",
         &(state.params.beatLengths.stateChanges)));
@@ -251,10 +248,10 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
     bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
-    state.params.beatLengths.processStateChanges();
-    state.params.delayLengths.processStateChanges();
-    state.params.smoothingTimes.processStateChanges();
-    state.params.feedbackCoeffs.processStateChanges();
+    /*
+     * process any mod changes to the multisliders
+     */
+    state.params.processStateChanges();
 
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());

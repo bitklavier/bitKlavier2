@@ -52,10 +52,16 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
             /**
              * todo: change all these property names to IDs.
              */
-            auto sval = change.getProperty ("sliderVals");
-            auto svalsize = change.getProperty ("sliderVals_size");
-            auto aval = change.getProperty ("activeVals");
-            auto avalsize = change.getProperty ("activeVals_size");
+
+//            auto sval = change.getProperty ("sliderVals");
+//            auto svalsize = change.getProperty ("sliderVals_size");
+//            auto aval = change.getProperty ("activeVals");
+//            auto avalsize = change.getProperty ("activeVals_size");
+
+            auto sval = change.getProperty (IDs::multislider_vals);
+            auto svalsize = change.getProperty (IDs::multislider_size);
+            auto aval = change.getProperty (IDs::multislider_states);
+            auto avalsize = change.getProperty (IDs::multislider_states_size);
 
             if (sval != nullVar) {
                 stringToAtomicArray(sliderVals, sval.toString(), 1.);
