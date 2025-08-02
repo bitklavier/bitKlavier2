@@ -4,54 +4,46 @@
          pedalSampleSet="/defaultPedals">
   <PIANO isActive="1" name="default">
     <PREPARATIONS>
-      <PREPARATION type="3" width="245" height="125" x_y="224, 218" uuid="36f8436963074380927b475891bf50c2"
-                   nodeID="922239849" numIns="2" numOuts="2" OutputGain="0.000"
-                   InputGain="0.000" Send="0.000" beat_lengths_sliderVals_size="5"
-                   beat_lengths_sliderVals="5.61 5.01 3.23 0.42 0.38" beat_lengths_activeVals_size="12"
-                   beat_lengths_activeVals="true true true true true false false false false false false false"
-                   delay_lengths_sliderVals_size="5" delay_lengths_sliderVals="0 1.71 6.99 6.58 6.78"
-                   delay_lengths_activeVals_size="12" delay_lengths_activeVals="true true true true true false false false false false false false"
-                   smoothing_times_sliderVals_size="6" smoothing_times_sliderVals="28 139 176 238 143 52"
-                   smoothing_times_activeVals_size="12" smoothing_times_activeVals="true true true false true true true false false false false false"
-                   feedback_coeffs_sliderVals_size="5" feedback_coeffs_sliderVals="0.953 0.995 0.998 0.987 1 "
-                   feedback_coeffs_activeVals_size="12" feedback_coeffs_activeVals="true false true true false false true true false false false false "
-                   feedback_coefficients_sliderVals="0.953 0.995 0.998 0.987 1"
-                   feedback_coefficients_sliderVals_size="5" feedback_coefficients_activeVals="true false true true false false true true false false false false"
-                   feedback_coefficients_activeVals_size="12">
-        <PARAM_DEFAULT beat_lengths_sliderVals="5.61 5.01 3.23 0.42 0.38" beat_lengths_sliderVals_size="5"
-                       beat_lengths_activeVals="true true true true true false false false false false false false"
-                       beat_lengths_activeVals_size="12" delay_lengths_sliderVals="0 1.71 6.99 6.58 6.78"
-                       delay_lengths_sliderVals_size="5" delay_lengths_activeVals="true true true true true false false false false false false false"
-                       delay_lengths_activeVals_size="12" smoothing_times_sliderVals="28 139 176 238 143 52"
-                       smoothing_times_sliderVals_size="6" smoothing_times_activeVals="true true true false true true true false false false false false"
-                       smoothing_times_activeVals_size="12" feedback_coefficients_sliderVals="0.953 0.995 0.998 0.987 1"
-                       feedback_coefficients_sliderVals_size="5" feedback_coefficients_activeVals="true false true true false false true true false false false false"
-                       feedback_coefficients_activeVals_size="12"/>
-        <PORT nodeID="922239849" chIdx="0" isIn="1"/>
-        <PORT nodeID="922239849" chIdx="1" isIn="1"/>
-        <PORT nodeID="922239849" chIdx="2" isIn="0"/>
-        <PORT nodeID="922239849" chIdx="3" isIn="0"/>
-      </PREPARATION>
-      <PREPARATION type="8" width="100" height="100" x_y="576, 231" uuid="8e79e280fb9843c582adc48f2f155935"
-                   nodeID="2390352512" numIns="1">
-        <PORT nodeID="2390352512" chIdx="4096" isIn="1"/>
-        <modulationproc type="state" isState="1" uuid="edc3ff0a0cf34263be354175fec01899"/>
-      </PREPARATION>
       <PREPARATION type="7" width="185" height="105" x_y="447, 420" uuid="1fe09f92e5974a079123cf67bde046f1"
                    nodeID="534814610" numOuts="1" keyOn="21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108">
         <PORT nodeID="534814610" chIdx="4096" isIn="0"/>
         <midiInput midiDeviceId="252967002"/>
       </PREPARATION>
+      <PREPARATION type="3" width="245" height="125" x_y="211, 250" uuid="6c1c3e899a92427bb8a78945be2e2757"
+                   nodeID="1813790345" numIns="2" numOuts="2" OutputGain="0.000"
+                   InputGain="0.000" Send="0.000" beat_lengths_sliderVals_size="7"
+                   beat_lengths_sliderVals="3.36 4.49 3.96 1.72 1.9 2.67 2.25 "
+                   beat_lengths_activeVals_size="12" beat_lengths_activeVals="true true true true true true true false false false false false "
+                   delay_lengths_sliderVals_size="4" delay_lengths_sliderVals="0 3.4 0 6.57 "
+                   delay_lengths_activeVals_size="12" delay_lengths_activeVals="true true false false false true false true false false false false "
+                   smoothing_times_sliderVals_size="1" smoothing_times_sliderVals="5 "
+                   smoothing_times_activeVals_size="12" smoothing_times_activeVals="true false false false false false false false false false false false "
+                   feedback_coeffs_sliderVals_size="1" feedback_coeffs_sliderVals="0.945 "
+                   feedback_coeffs_activeVals_size="12" feedback_coeffs_activeVals="true false false false false false false false false false false false "
+                   sliderVals="0.945" sliderVals_size="1" activeVals="true false false false false false false false false false false false"
+                   activeVals_size="12">
+        <PARAM_DEFAULT sliderVals="0.945" sliderVals_size="1" activeVals="true false false false false false false false false false false false"
+                       activeVals_size="12"/>
+        <PORT nodeID="1813790345" chIdx="0" isIn="1"/>
+        <PORT nodeID="1813790345" chIdx="1" isIn="1"/>
+        <PORT nodeID="1813790345" chIdx="2" isIn="0"/>
+        <PORT nodeID="1813790345" chIdx="3" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="8" width="100" height="100" x_y="473, 227" uuid="d1dbe70592394fe0ae7391e7a70fd042"
+                   nodeID="3520849669" numIns="1">
+        <PORT nodeID="3520849669" chIdx="4096" isIn="1"/>
+        <modulationproc type="state" isState="1" uuid="ca72b89951374297bab966ce37825308"/>
+      </PREPARATION>
     </PREPARATIONS>
     <CONNECTIONS>
-      <CONNECTION isMod="0" src="534814610" srcIdx="4096" dest="2390352512" destIdx="4096"/>
+      <CONNECTION isMod="0" src="534814610" srcIdx="4096" dest="3520849669" destIdx="4096"/>
     </CONNECTIONS>
     <MODCONNECTIONS>
-      <MODCONNECTION isMod="1" src="2390352512" dest="922239849">
-        <ModulationConnection uuid="5b0418d839d2451e83de311c75885e57" isState="1" src="8e79e280fb9843c582adc48f2f155935_state-edc3ff0a0cf34263be354175fec01899_mod"
-                              dest="36f8436963074380927b475891bf50c2_beat_lengths" _sliderVals="-0.26 0.71 -0.54 0.18 0.58"
-                              _sliderVals_size="5" _activeVals="true true true true false false false false true false false false"
-                              _activeVals_size="12"/>
+      <MODCONNECTION isMod="1" src="3520849669" dest="1813790345">
+        <ModulationConnection uuid="50a73790a62542a89767ed4b79541dd3" isState="1" src="d1dbe70592394fe0ae7391e7a70fd042_state-ca72b89951374297bab966ce37825308_mod"
+                              dest="6c1c3e899a92427bb8a78945be2e2757_beat_lengths" sliderVals="-0.34 0.82 -1"
+                              sliderVals_size="3" activeVals="true false true false true false false false false false false false"
+                              activeVals_size="12"/>
       </MODCONNECTION>
     </MODCONNECTIONS>
   </PIANO>

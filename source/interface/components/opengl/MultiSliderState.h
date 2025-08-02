@@ -58,21 +58,21 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
             auto avalsize = change.getProperty ("activeVals_size");
 
             if (sval != nullVar) {
-                DBG("MultiSliderState sliderVals: " + sval.toString());
                 stringToAtomicArray(sliderVals, sval.toString(), 1.);
             }
             if (svalsize != nullVar) {
-                DBG("MultiSliderState sliderVals_size: " + svalsize.toString());
                 sliderVals_size.store(int(svalsize));
             }
             if (aval != nullVar) {
-                DBG("MultiSliderState activeVals: " + aval.toString());
                 stringToAtomicBoolArray(activeSliders, aval.toString(), false);
             }
             if (avalsize != nullVar) {
-                DBG("MultiSliderState activeVals_size " + avalsize.toString());
                 activeVals_size.store(int(avalsize));
             }
+
+            /**
+             * todo: add a regular bool chowdsp param here that we can listen for a change to from OpenGL_MultiSlider or BlendronicParametersView to redraw?
+             */
         }
 
         // must clear at the end, otherwise they'll get reapplied again and again

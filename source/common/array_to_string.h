@@ -12,6 +12,7 @@
 
 juce::String getFirstValueFromSubarrays(const juce::Array<juce::Array<float>>& values);
 juce::String arrayBoolToString(const juce::Array<bool>& states);
+juce::String getOnKeyString(const std::bitset<128> &bits);
 
 template <std::size_t N>
 std::array<float, N> parseIndexValueStringToArrayAbsolute(const std::string& input)
@@ -269,15 +270,13 @@ void stringToAtomicBoolArray(std::array<std::atomic<bool>, Size>& arr, const juc
 {
     // Step 1: Parse the input string into a standard vector.
     // The specialized parseStringToVector<bool> handles "true" and "false" literals.
-    std::vector<bool> values_vec = parseStringToVector<bool>(input);
+    std::vector<bool> values_vec = parseStringToBoolVector(input);
 
     // Step 2: Populate the atomic array from the vector.
     // The second argument (false) is the default fill value for any
     // elements in the array that are not present in the input string.
     populateAtomicArrayFromVector(arr, defaultVal, values_vec);
 }
-
-
 
 /**
  * Copies values from one std::array of std::atomic<float> to another std::array of std::atomic<float>.
@@ -299,8 +298,6 @@ void copyAtomicArrayToAtomicArray(const std::array<std::atomic<float>, Size>& so
         destinationArray[i].store(value);
     }
 }
-
-juce::String getOnKeyString(const std::bitset<128> &bits);
 
 template <size_t Size>
 juce::String arrayToString(const std::array<float, Size>& array) {
