@@ -1027,5 +1027,41 @@ class Paths {
 
         return p;
     }
+
+    /**
+ * @brief Creates a vector of three concentric juce::Path objects for a target.
+ *
+ * This function generates three concentric elliptical paths, sized to fit within
+ * the given bounds. The vector contains the paths for the outer, middle, and inner
+ * circles, respectively, which can then be drawn with different colors.
+ *
+ * @param bounds The juce::Rectangle<float> defining the outer boundary of the target.
+ * @return A std::vector<juce::Path> with three elements: outer, middle, and inner circles.
+ */
+    static std::vector<juce::Path> createTargetPaths(const juce::Rectangle<float>& bounds)
+    {
+        std::vector<juce::Path> paths;
+        juce::Path outerCircle;
+        juce::Path middleCircle;
+        juce::Path innerCircle;
+
+        // Define the dimensions for each circle as fractions of the outer bounds
+        auto outerBounds = bounds;
+        auto middleBounds = bounds.reduced(bounds.getWidth() * 0.25f);
+        auto innerBounds = bounds.reduced(bounds.getWidth() * 0.40f);
+
+        // Create the three elliptical paths
+        outerCircle.addEllipse(outerBounds);
+        middleCircle.addEllipse(middleBounds);
+        innerCircle.addEllipse(innerBounds);
+
+        paths.push_back(outerCircle);
+        paths.push_back(middleCircle);
+        paths.push_back(innerCircle);
+
+        return paths;
+    }
 };
+
+
 

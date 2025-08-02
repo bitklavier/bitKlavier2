@@ -243,8 +243,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 juce::ValueTree t(IDs::PREPARATION);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiFilter, nullptr);
-                t.setProperty(IDs::width, 125, nullptr);
-                t.setProperty(IDs::height, 245, nullptr);
+                t.setProperty(IDs::width, 75, nullptr);
+                t.setProperty(IDs::height, 75, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
@@ -258,8 +258,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 juce::ValueTree t(IDs::PREPARATION);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiTarget, nullptr);
-                t.setProperty(IDs::width, 125, nullptr);
-                t.setProperty(IDs::height, 245, nullptr);
+                t.setProperty(IDs::width, 75, nullptr);
+                t.setProperty(IDs::height, 75, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
