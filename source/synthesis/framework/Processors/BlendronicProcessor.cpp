@@ -47,10 +47,21 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
     state.params.smoothingTimes.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.feedbackCoeffs.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "beatLengths", &(state.params.beatLengths.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "delayLengths", &(state.params.delayLengths.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "smoothingTimes", &(state.params.smoothingTimes.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "feedbackCoeffs", &(state.params.feedbackCoeffs.stateChanges)));
+    /**
+     * todo: make "beat_lengths" and others IDs?
+     */
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "beat_lengths",
+        &(state.params.beatLengths.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "delay_lengths",
+        &(state.params.delayLengths.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "smoothing_times",
+        &(state.params.smoothingTimes.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "feedback_coefficients",
+        &(state.params.feedbackCoeffs.stateChanges)));
 }
 
 void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -240,7 +251,10 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
     bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
-    state.params.processStateChanges();
+    state.params.beatLengths.processStateChanges();
+    state.params.delayLengths.processStateChanges();
+    state.params.smoothingTimes.processStateChanges();
+    state.params.feedbackCoeffs.processStateChanges();
 
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
@@ -318,10 +332,10 @@ typename Serializer::SerializedType BlendronicParams::serialize (const Blendroni
     /*
      * then serialize the more complex params
      */
-    serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengths, "beatLengths");
-    serializeMultiSliderParam<Serializer> (ser, paramHolder.delayLengths, "delayLengths");
-    serializeMultiSliderParam<Serializer> (ser, paramHolder.smoothingTimes, "smoothingTimes");
-    serializeMultiSliderParam<Serializer> (ser, paramHolder.feedbackCoeffs, "feedbackCoeffs");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengths, "beat_lengths");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.delayLengths, "delay_lengths");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.smoothingTimes, "smoothing_times");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.feedbackCoeffs, "feedback_coeffs");
 
     return ser;
 }
@@ -337,9 +351,9 @@ void BlendronicParams::deserialize (typename Serializer::DeserializedType deseri
     /*
      * then the more complex params
      */
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengths, "beatLengths");
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.delayLengths, "delayLengths");
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.smoothingTimes, "smoothingTimes");
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.feedbackCoeffs, "feedbackCoeffs");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengths, "beat_lengths");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.delayLengths, "delay_lengths");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.smoothingTimes, "smoothing_times");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.feedbackCoeffs, "feedback_coeffs");
 }
 

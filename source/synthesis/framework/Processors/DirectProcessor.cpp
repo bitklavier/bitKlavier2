@@ -66,8 +66,12 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose", &(state.params.transpose.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max", &(state.params.velocityMinMax.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose",
+        &(state.params.transpose.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max",
+        &(state.params.velocityMinMax.stateChanges)));
 }
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

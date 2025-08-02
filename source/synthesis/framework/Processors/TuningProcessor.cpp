@@ -22,7 +22,6 @@ void TuningState::setCircularKeyOffset (int midiNoteNumber, float val)
 
     if (tuningSystem->get() == TuningSystem::Custom)
         copyAtomicArrayToAtomicArray(circularTuningOffset, circularTuningOffset_custom);
-//        circularTuningOffset_custom = circularTuningOffset;
 }
 
 
@@ -44,13 +43,10 @@ void TuningState::processStateChanges()
         if (val != nullVar)
         {
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
-//            absoluteTuningOffset = parseIndexValueStringToArrayAbsolute<128> (val.toString().toStdString());
-
         }
         else if (val1 != nullVar)
         {
             parseFloatStringToAtomicArrayCircular(val1.toString().toStdString(), circularTuningOffset);
-//            circularTuningOffset = parseFloatStringToArrayCircular<12> (val1.toString().toStdString());
         }
     }
     stateChanges.changeState.clear();

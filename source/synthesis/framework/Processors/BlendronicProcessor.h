@@ -20,7 +20,7 @@
   set by a sequence of beat lengths; the changes can happen instantaneously,
   or can take place over a period of time, a "smoothing" time that creates
   a variety of artifacts, tied to the beat pattern. The smoothing parameters
-  themselves can be sequenced in a pattern, as can a feedback coefficient,
+  themselves can be sequenced in a pattern, as can a feefdback coefficient,
   which determines how much of the out of the delay line is fed back into it.
 
 ==============================================================================
@@ -65,14 +65,14 @@ void serializeMultiSliderParam(
     const juce::String& thisSliderID)
 {
     // Define the specific string IDs for serialization
-    juce::String thisSlider_sizeID = thisSliderID + "_size";
-    juce::String activeSlidersID = thisSliderID + "_activeSliders";
+    juce::String thisSlider_sizeID = thisSliderID + "_sliderVals_size";
+    juce::String activeSlidersID = thisSliderID + "_activeVals";
     juce::String activeSliders_sizeID = activeSlidersID + "_size";
 
     // Serialize the float slider values
-    juce::String beatLengths_str = atomicArrayToStringLimited(msliderParam.sliderVals, msliderParam.sliderVals_size);
+    juce::String sliderVals_str = atomicArrayToStringLimited(msliderParam.sliderVals, msliderParam.sliderVals_size);
     Serializer::addChildElement(ser, thisSlider_sizeID, juce::String(msliderParam.sliderVals_size));
-    Serializer::addChildElement(ser, thisSliderID, beatLengths_str);
+    Serializer::addChildElement(ser, thisSliderID+"_sliderVals", sliderVals_str);
 
     // Serialize the boolean active sliders
     juce::String activeSliders_str = atomicArrayToStringLimited(msliderParam.activeSliders, msliderParam.activeVals_size);
@@ -99,14 +99,14 @@ void deserializeMultiSliderParam(
     const juce::String& thisSliderID)
 {
     // Reconstruct the attribute names using the base ID
-    juce::String beatLengths_sizeID = thisSliderID + "_size";
-    juce::String activeSlidersID = thisSliderID + "_activeSliders";
+    juce::String thisSlider_sizeID = thisSliderID + "_sliderVals_size";
+    juce::String activeSlidersID = thisSliderID + "_activeVals";
     juce::String activeSliders_sizeID = activeSlidersID + "_size";
 
     // Deserialize the slider values
-    auto myStr = deserial->getStringAttribute(beatLengths_sizeID);
+    auto myStr = deserial->getStringAttribute(thisSlider_sizeID);
     msliderParam.sliderVals_size = myStr.getIntValue();
-    myStr = deserial->getStringAttribute(thisSliderID);
+    myStr = deserial->getStringAttribute(thisSliderID+"_sliderVals");
     std::vector<float> sliderVals_vec = parseStringToVector<float>(myStr);
     populateAtomicArrayFromVector(msliderParam.sliderVals, 1.0f, sliderVals_vec);
 
@@ -116,8 +116,6 @@ void deserializeMultiSliderParam(
     myStr = deserial->getStringAttribute(activeSlidersID);
     std::vector<bool> activeSliders_vec = parseStringToBoolVector(myStr);
     populateAtomicArrayFromVector(msliderParam.activeSliders, false, activeSliders_vec);
-
-    DBG("deserializeMultiSliderParam activeVals_size = " + juce::String(msliderParam.activeVals_size));
 }
 
 /**

@@ -227,6 +227,57 @@ void populateAtomicArrayFromVector(
     }
 }
 
+/**
+ * @brief Parses a string of floats and populates a std::array of atomics.
+ *
+ * This function takes a juce::String of space-separated float values and
+ * populates the corresponding std::array<std::atomic<float>, Size> that is passed by reference.
+ * It first parses the string into a temporary std::vector and then uses that vector
+ * to populate the atomic array, ensuring thread-safe updates.
+ *
+ * @tparam Size The compile-time size of the std::array.
+ * @param arr The std::array<std::atomic<float>, Size> to be populated.
+ * @param input The juce::String containing the space-separated float values.
+ */
+template <size_t Size>
+void stringToAtomicArray(std::array<std::atomic<float>, Size>& arr, const juce::String& input, float defaultVal)
+{
+    // Step 1: Parse the input string into a standard vector.
+    // This function handles the conversion from string to float and separation by whitespace.
+    std::vector<float> values_vec = parseStringToVector<float>(input);
+
+    // Step 2: Populate the atomic array from the vector.
+    // The second argument (0.0f) is the default fill value for any
+    // elements in the array that are not present in the input string.
+    populateAtomicArrayFromVector(arr, defaultVal, values_vec);
+}
+
+/**
+ * @brief Parses a string of boolean words and populates a std::array of atomics.
+ *
+ * This function takes a juce::String of space-separated boolean words ("true", "false")
+ * and populates the corresponding std::array<std::atomic<bool>, Size> that is passed by reference.
+ * It uses a specialized parsing function to convert the string literals to boolean values
+ * and then populates the atomic array, ensuring thread-safe updates.
+ *
+ * @tparam Size The compile-time size of the std::array.
+ * @param arr The std::array<std::atomic<bool>, Size> to be populated.
+ * @param input The juce::String containing the space-separated boolean words.
+ */
+template <size_t Size>
+void stringToAtomicBoolArray(std::array<std::atomic<bool>, Size>& arr, const juce::String& input, bool defaultVal)
+{
+    // Step 1: Parse the input string into a standard vector.
+    // The specialized parseStringToVector<bool> handles "true" and "false" literals.
+    std::vector<bool> values_vec = parseStringToVector<bool>(input);
+
+    // Step 2: Populate the atomic array from the vector.
+    // The second argument (false) is the default fill value for any
+    // elements in the array that are not present in the input string.
+    populateAtomicArrayFromVector(arr, defaultVal, values_vec);
+}
+
+
 
 /**
  * Copies values from one std::array of std::atomic<float> to another std::array of std::atomic<float>.

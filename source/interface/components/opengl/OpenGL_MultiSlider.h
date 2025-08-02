@@ -46,6 +46,11 @@ public:
         redoImage();
     }
 
+    virtual void mouseMove(const juce::MouseEvent &e) override {
+        OpenGlAutoImageComponent<BKMultiSlider>::mouseMove(e);
+        redoImage();
+    }
+
     void mouseDown(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent<BKMultiSlider>::mouseDown(e);
         redoImage();
@@ -91,13 +96,20 @@ public:
         /**
          * todo: allow for multiple values in each slider, for transpositions: perhaps make OpenGL_MultiSlider2d
          */
+//        if (isModulation_)
+//        {
+//            modulationState.setProperty(IDs::absoluteTuning, s, nullptr);
+//        }
+//        else if (isModulated_)
+//        {
+//            defaultState.setProperty(IDs::absoluteTuning, s, nullptr);
+//        }
 
         /*
          * create string representations of the multislider vals/states
          */
         juce::String valsStr = getFirstValueFromSubarrays(values);
         juce::String activeStr = arrayBoolToString(states);
-        DBG("multiSliderAllValuesChanged " + valsStr + " " + activeStr);
 
         if (isModulated_)
         {
@@ -120,10 +132,15 @@ public:
 
             // then update defaultState, with string representation of the multislider arrays
 
-            defaultState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
-            defaultState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
-            defaultState.setProperty(name_ + "_activeVals", activeStr, nullptr);
-            defaultState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
+//            defaultState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
+//            defaultState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
+//            defaultState.setProperty(name_ + "_activeVals", activeStr, nullptr);
+//            defaultState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
+
+            defaultState.setProperty("sliderVals", valsStr, nullptr);
+            defaultState.setProperty("sliderVals_size", values.size(), nullptr);
+            defaultState.setProperty("activeVals", activeStr, nullptr);
+            defaultState.setProperty("activeVals_size", states.size(), nullptr);
         }
         else if (isModulation_)
         {
@@ -133,10 +150,15 @@ public:
              *
              * we just write strings of the arrays to modulationState properties
              */
-            modulationState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
-            modulationState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
-            modulationState.setProperty(name_ + "_activeVals", activeStr, nullptr);
-            modulationState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
+//            modulationState.setProperty(name_ + "_sliderVals", valsStr, nullptr);
+//            modulationState.setProperty(name_ + "_sliderVals_size", values.size(), nullptr);
+//            modulationState.setProperty(name_ + "_activeVals", activeStr, nullptr);
+//            modulationState.setProperty(name_ + "_activeVals_size", states.size(), nullptr);
+
+            modulationState.setProperty("sliderVals", valsStr, nullptr);
+            modulationState.setProperty("sliderVals_size", values.size(), nullptr);
+            modulationState.setProperty("activeVals", activeStr, nullptr);
+            modulationState.setProperty("activeVals_size", states.size(), nullptr);
         }
     }
 
@@ -150,10 +172,10 @@ public:
         /**
          * todo: redo this with modulationState vals?
          */
-        setToOnlyActive(
-            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
-            atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
-            juce::sendNotification);
+//        setToOnlyActive(
+//            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
+//            atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
+//            juce::sendNotification);
 
 
 //        juce::Array<float> vals;

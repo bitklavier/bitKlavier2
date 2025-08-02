@@ -44,6 +44,40 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
     std::atomic<int> sliderVals_size = 1;
     std::atomic<int> activeVals_size = 1;
 
+    void processStateChanges() override
+    {
+        for(auto [index, change] : stateChanges.changeState)
+        {
+            static juce::var nullVar;
+            /**
+             * todo: change all these property names to IDs.
+             */
+            auto sval = change.getProperty ("sliderVals");
+            auto svalsize = change.getProperty ("sliderVals_size");
+            auto aval = change.getProperty ("activeVals");
+            auto avalsize = change.getProperty ("activeVals_size");
+
+            if (sval != nullVar) {
+                DBG("MultiSliderState sliderVals: " + sval.toString());
+                stringToAtomicArray(sliderVals, sval.toString(), 1.);
+            }
+            if (svalsize != nullVar) {
+                DBG("MultiSliderState sliderVals_size: " + svalsize.toString());
+                sliderVals_size.store(int(svalsize));
+            }
+            if (aval != nullVar) {
+                DBG("MultiSliderState activeVals: " + aval.toString());
+                stringToAtomicBoolArray(activeSliders, aval.toString(), false);
+            }
+            if (avalsize != nullVar) {
+                DBG("MultiSliderState activeVals_size " + avalsize.toString());
+                activeVals_size.store(int(avalsize));
+            }
+        }
+
+        // must clear at the end, otherwise they'll get reapplied again and again
+        stateChanges.changeState.clear();
+    }
 };
 
 #endif //BITKLAVIER0_MULTISLIDERSTATE_H
