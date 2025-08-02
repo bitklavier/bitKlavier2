@@ -38,17 +38,86 @@ struct MidiTargetParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     MidiTargetParams() : chowdsp::ParamHolder ("miditarget")
     {
-        add (mftoggle);
+        add (blendronicTargetNormal,
+            blendronicTargetPatternSync,
+            blendronicTargetBeatSync,
+            blendronicTargetClear,
+            blendronicTargetPausePlay,
+            blendronicTargetNormal_noteMode,
+            blendronicTargetPatternSync_noteMode,
+            blendronicTargetBeatSync_noteMode,
+            blendronicTargetClear_noteMode,
+            blendronicTargetPausePlay_noteMode);
     }
 
-    chowdsp::BoolParameter::Ptr mftoggle {
-        juce::ParameterID { "mftoggle", 100},
-        "some toggle",
+    chowdsp::BoolParameter::Ptr blendronicTargetNormal {
+        juce::ParameterID { "bTargetNormal", 100},
+        "Blendronic: Normal",
         false
     };
 
+    chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
+        juce::ParameterID { "bTargetPatternSync", 100},
+        "Blendronic: Pattern Sync",
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr blendronicTargetBeatSync {
+        juce::ParameterID { "bTargetBeatSync", 100},
+        "Blendronic: Beat Sync",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr blendronicTargetClear {
+        juce::ParameterID { "bTargetClear", 100},
+        "Blendronic: Clear",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr blendronicTargetPausePlay {
+        juce::ParameterID { "bTargetPausePlay", 100},
+        "Blendronic: Pause/Play",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetNormal_noteMode {
+        juce::ParameterID{"bTargetNormal_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetPatternSync_noteMode {
+        juce::ParameterID{"bTargetPatternSync_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOff,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetBeatSync_noteMode {
+        juce::ParameterID{"bTargetBeatSync_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetClear_noteMode {
+        juce::ParameterID{"bTargetClear_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetPausePlay_noteMode {
+        juce::ParameterID{"bTargetPausePlay_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
      // max size based on max channels for midimsg
-    std::array<bool, 16> activeTargets;
+    std::array<chowdsp::BoolParameter*, 16> activeTargets;
+    std::array<chowdsp::EnumChoiceParameter<TriggerType>*, 16> triggerModes;
 
     /*
      * serializers are used for more complex params

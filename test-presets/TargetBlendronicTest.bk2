@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <PREPARATION type="10" width="75" height="75" x_y="440, 342" uuid="c0684b019f264d789ea4adb8711bdd02"
+                   nodeID="3228060417" numIns="1" numOuts="1">
+        <PORT nodeID="3228060417" chIdx="4096" isIn="1"/>
+        <PORT nodeID="3228060417" chIdx="4096" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="3" width="245" height="125" x_y="178, 190" uuid="c407d872fb784dd2b61613ad6b051e67"
+                   nodeID="3288848498" numIns="3" numOuts="2" OutputGain="0.000"
+                   InputGain="0.000" Send="0.000" updateUIState="0" beat_lengths_sliderVals_size="0"
+                   beat_lengths_sliderVals="" beat_lengths_activeVals_size="0" beat_lengths_activeVals=""
+                   delay_lengths_sliderVals_size="0" delay_lengths_sliderVals=""
+                   delay_lengths_activeVals_size="0" delay_lengths_activeVals=""
+                   smoothing_times_sliderVals_size="0" smoothing_times_sliderVals=""
+                   smoothing_times_activeVals_size="0" smoothing_times_activeVals=""
+                   feedback_coeffs_sliderVals_size="0" feedback_coeffs_sliderVals=""
+                   feedback_coeffs_activeVals_size="0" feedback_coeffs_activeVals="">
+        <PARAM_DEFAULT/>
+        <PORT nodeID="3288848498" chIdx="0" isIn="1"/>
+        <PORT nodeID="3288848498" chIdx="1" isIn="1"/>
+        <PORT nodeID="3288848498" chIdx="4096" isIn="1"/>
+        <PORT nodeID="3288848498" chIdx="2" isIn="0"/>
+        <PORT nodeID="3288848498" chIdx="3" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="7" width="185" height="105" x_y="377, 464" uuid="6302fe369998477f89e46c4ff8c2e474"
+                   nodeID="1661140534" numOuts="1" keyOn="21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108">
+        <PORT nodeID="1661140534" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="252967002"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS>
+      <CONNECTION isMod="0" src="3228060417" srcIdx="4096" dest="3288848498" destIdx="4096"/>
+      <CONNECTION isMod="0" src="1661140534" srcIdx="4096" dest="3228060417" destIdx="4096"/>
+    </CONNECTIONS>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

@@ -13,10 +13,10 @@ MidiTargetParametersView::MidiTargetParametersView(chowdsp::PluginState& pluginS
 
     if (auto* param_ = dynamic_cast<MidiTargetParams*> (&params))
     {
-        mf_button = std::make_unique<SynthButton> (param_->mftoggle->paramID);
-        mf_button_attachment = std::make_unique<chowdsp::ButtonAttachment> (*param_->mftoggle, listeners, *mf_button, nullptr);
-        addAndMakeVisible (mf_button.get());
-        addSynthButton (mf_button.get(), true);
+//        mf_button = std::make_unique<SynthButton> (param_->mftoggle->paramID);
+//        mf_button_attachment = std::make_unique<chowdsp::ButtonAttachment> (*param_->mftoggle, listeners, *mf_button, nullptr);
+//        addAndMakeVisible (mf_button.get());
+//        addSynthButton (mf_button.get(), true);
     }
 }
 

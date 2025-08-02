@@ -14,4 +14,11 @@ typedef enum BlendronicTargetType {
     BlendronicTargetNil
 } BlendronicTargetType;
 
+enum TriggerType {
+    _NoteOn = 1 << 0,
+    _NoteOff = 1 << 1,
+    _Both = 1 << 2,
+};
+
+
 #endif //BITKLAVIER0_TARGET_TYPES_H
