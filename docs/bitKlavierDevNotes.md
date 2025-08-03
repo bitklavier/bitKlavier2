@@ -14,6 +14,7 @@
 
 
 ## Quick Bug/Feature Notes
+- [ ] lots of work remaining on state-mod UIs, in particular their visibility
 - [ ] in Keymap, include: key selection, velocity min/max, velocity curving
   - move harmonizer stuff to new MidiHarmonize, based on MidiFilter
 - [ ] control-click menu is completely unmanageable right now with all the plugins there...
