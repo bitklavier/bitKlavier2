@@ -23,7 +23,6 @@ ResetPreparation::ResetPreparation (juce::ValueTree v, OpenGlWrapper& open_gl, j
         false);
 
     addAndMakeVisible (item.get());
-    // setSkinOverride (Skin::kReset);
     juce::MemoryBlock data;
 
     width = 245;

@@ -565,7 +565,6 @@ void TuningState::printSpiralNotes()
 
 TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
 {
-
     state.params.tuningState.initializeSpiralNotes();
 
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>

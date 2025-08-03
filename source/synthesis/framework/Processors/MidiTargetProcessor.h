@@ -11,8 +11,14 @@
  * but left the remaining off, then MidiTarget will take each incoming MIDI message
  * and send out two copies, one on channel 2 (BlendronicTargetPatternSync) and one on
  * channel 3 (BlendronicTargetBeatSync), as determined by their positions in
- * the enum 'BlendronicTargetType.' Note that there will NOT be a message on channel 1
+ * the enum 'ParameterTargetType.' Note that there will NOT be a message on channel 1
  * in this case, since 'BlendronicTargetNormal' was not toggled on by the user.
+ *
+ * In addition, there is the noteOn/noteOff/both mode, where these messages will be
+ * sent only in the selected mode: in noteOff mode, for instance, noteOn messages are ignored
+ *
+ * NOTE: we can have no more than 16 target params for an individual preparation type!
+ *          because we are using the Midichannel byte... perhaps MIDI 2.0 will offer other options....
  */
 
 #ifndef BITKLAVIER0_MIDITARGETPROCESSOR_H
@@ -35,7 +41,7 @@
 
 struct MidiTargetParams : chowdsp::ParamHolder
 {
-    // Adds the appropriate parameters to the Tuning Processor
+    // Adds the appropriate parameters to the MidiTarget Processor
     MidiTargetParams() : chowdsp::ParamHolder ("miditarget")
     {
         add (blendronicTargetNormal,
@@ -43,40 +49,81 @@ struct MidiTargetParams : chowdsp::ParamHolder
             blendronicTargetBeatSync,
             blendronicTargetClear,
             blendronicTargetPausePlay,
+            blendronicTargetInput,
+            blendronicTargetOutput,
             blendronicTargetNormal_noteMode,
             blendronicTargetPatternSync_noteMode,
             blendronicTargetBeatSync_noteMode,
             blendronicTargetClear_noteMode,
-            blendronicTargetPausePlay_noteMode);
+            blendronicTargetPausePlay_noteMode,
+            blendronicTargetInput_noteMode,
+            blendronicTargetOutput_noteMode);
+
+        targetMapper[BlendronicTargetNormal]            = blendronicTargetNormal.get();
+        noteModeMapper[BlendronicTargetNormal]          = blendronicTargetNormal_noteMode.get();
+
+        targetMapper[BlendronicTargetPatternSync]       = blendronicTargetPatternSync.get();
+        noteModeMapper[BlendronicTargetPatternSync]     = blendronicTargetPatternSync_noteMode.get();
+
+        targetMapper[BlendronicTargetBeatSync]          = blendronicTargetBeatSync.get();
+        noteModeMapper[BlendronicTargetBeatSync]        = blendronicTargetBeatSync_noteMode.get();
+
+        targetMapper[BlendronicTargetClear]             = blendronicTargetClear.get();
+        noteModeMapper[BlendronicTargetClear]           = blendronicTargetClear_noteMode.get();
+
+        targetMapper[BlendronicTargetPausePlay]         = blendronicTargetPausePlay.get();
+        noteModeMapper[BlendronicTargetPausePlay]       = blendronicTargetPausePlay_noteMode.get();
+
+        targetMapper[BlendronicTargetInput]             = blendronicTargetInput.get();
+        noteModeMapper[BlendronicTargetInput]           = blendronicTargetInput_noteMode.get();
+
+        targetMapper[BlendronicTargetOutput]            = blendronicTargetOutput.get();
+        noteModeMapper[BlendronicTargetOutput]          = blendronicTargetOutput_noteMode.get();
+
+        /**
+         * add additional params for other preps/targets here and below
+         */
     }
 
     chowdsp::BoolParameter::Ptr blendronicTargetNormal {
         juce::ParameterID { "bTargetNormal", 100},
-        "Blendronic: Normal",
+        "Normal",
         false
     };
 
     chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
         juce::ParameterID { "bTargetPatternSync", 100},
-        "Blendronic: Pattern Sync",
-        true
+        "Pattern Sync",
+        false
     };
 
     chowdsp::BoolParameter::Ptr blendronicTargetBeatSync {
         juce::ParameterID { "bTargetBeatSync", 100},
-        "Blendronic: Beat Sync",
+        "Beat Sync",
         false
     };
 
     chowdsp::BoolParameter::Ptr blendronicTargetClear {
         juce::ParameterID { "bTargetClear", 100},
-        "Blendronic: Clear",
+        "Clear",
         false
     };
 
     chowdsp::BoolParameter::Ptr blendronicTargetPausePlay {
         juce::ParameterID { "bTargetPausePlay", 100},
-        "Blendronic: Pause/Play",
+        "Pause/Play",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr blendronicTargetInput {
+        juce::ParameterID { "bTargetInput", 100},
+        "Open/Close Input",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr blendronicTargetOutput {
+        juce::ParameterID { "bTargetOutput", 100},
+        "Open/Close Output",
         false
     };
 
@@ -90,7 +137,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetPatternSync_noteMode {
         juce::ParameterID{"bTargetPatternSync_noteMode", 100},
         "Note Mode",
-        TriggerType::_NoteOff,
+        TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
@@ -115,13 +162,27 @@ struct MidiTargetParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
-     // max size based on max channels for midimsg
-    std::array<chowdsp::BoolParameter*, 16> activeTargets;
-    std::array<chowdsp::EnumChoiceParameter<TriggerType>*, 16> triggerModes;
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetInput_noteMode {
+        juce::ParameterID{"bTargetInput_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetOutput_noteMode {
+        juce::ParameterID{"bTargetOutput_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
 
     /*
-     * serializers are used for more complex params
+     * we store all the targets and their noteModes here, so we can access them
+     * as needed in the processBlock loop, by PreparationParameterTargetType
      */
+    std::map<PreparationParameterTargetType, chowdsp::BoolParameter*> targetMapper;
+    std::map<PreparationParameterTargetType, chowdsp::EnumChoiceParameter<TriggerType>*> noteModeMapper;
+
     /* Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const MidiTargetParams& paramHolder);
@@ -129,6 +190,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     /* Custom deserializer */
     template <typename Serializer>
     static void deserialize (typename Serializer::DeserializedType deserial, MidiTargetParams& paramHolder);
+
 };
 
 struct MidiTargetNonParameterState : chowdsp::NonParamState
@@ -168,8 +230,8 @@ public:
 
     void setCurrentProgram(int index) override {}
     void changeProgramName(int index, const juce::String &newName) override {}
-    void getStateInformation(juce::MemoryBlock &destData) override {}
-    void setStateInformation(const void *data, int sizeInBytes) override {}
+//    void getStateInformation(juce::MemoryBlock &destData) override {}
+//    void setStateInformation(const void *data, int sizeInBytes) override {}
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiTargetProcessor)

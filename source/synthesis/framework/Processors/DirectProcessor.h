@@ -198,6 +198,10 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
+    /**
+     * todo: i think this is not used? remove if so
+     * @param vt
+     */
     void addToVT (juce::ValueTree& vt)
     {
         state.params.doForAllParameters ([this, &vt] (auto& param, size_t) {
@@ -242,6 +246,9 @@ private:
 
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
+    /**
+     * todo: are these used? if not, remove
+     */
     chowdsp::ScopedCallbackList adsrCallbacks;
     chowdsp::ScopedCallbackList vtCallbacks;
 

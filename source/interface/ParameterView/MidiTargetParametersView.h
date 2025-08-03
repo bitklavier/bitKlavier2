@@ -27,8 +27,12 @@ public:
 
     void resized() override;
 
-    std::unique_ptr<SynthButton> mf_button;
-    std::unique_ptr<chowdsp::ButtonAttachment> mf_button_attachment;
+    // place to store all the toggles for this prep, with their attachments for tracking/updating values
+    std::vector<std::unique_ptr<SynthButton>> _paramToggles;
+    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> _paramToggles_attachments;
+
+    std::vector<std::unique_ptr<OpenGLComboBox>> _noteModeMenus;
+    std::vector<std::unique_ptr<chowdsp::ComboBoxAttachment>> _noteModeMenus_attachments;
 
     MidiTargetParams& params;
 

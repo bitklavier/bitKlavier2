@@ -19,9 +19,8 @@ MidiTargetPreparation::MidiTargetPreparation(
     _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
         {item->getImageComponent()->init(_open_gl);
         },false);
-    addAndMakeVisible (item.get());
 
-    //    setSkinOverride (Skin::kTuning);
+    addAndMakeVisible (item.get());
 }
 
 std::unique_ptr<SynthSection> MidiTargetPreparation::getPrepPopup()

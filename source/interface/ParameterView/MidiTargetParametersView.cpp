@@ -11,26 +11,57 @@ MidiTargetParametersView::MidiTargetParametersView(chowdsp::PluginState& pluginS
 
     auto& listeners = pluginState.getParameterListeners();
 
-    if (auto* param_ = dynamic_cast<MidiTargetParams*> (&params))
+    // make the buttons and attachments
+    for (auto& param_ : *params.getBoolParams())
     {
-//        mf_button = std::make_unique<SynthButton> (param_->mftoggle->paramID);
-//        mf_button_attachment = std::make_unique<chowdsp::ButtonAttachment> (*param_->mftoggle, listeners, *mf_button, nullptr);
-//        addAndMakeVisible (mf_button.get());
-//        addSynthButton (mf_button.get(), true);
+        // create and add each button
+        auto button = std::make_unique<SynthButton> (param_->paramID);
+        auto attachment = std::make_unique<chowdsp::ButtonAttachment> (*param_.get(), listeners, *button.get(), nullptr);
+        addSynthButton(button.get());
+
+        // we need to keep these around, so we stick them in these vectors that are part of the class
+        _paramToggles_attachments.emplace_back (std::move (attachment));
+        _paramToggles.emplace_back (std::move (button));
+    }
+
+    // do the same for the note mode menus
+    for (auto& mparam_ : *params.getChoiceParams())
+    {
+        auto menu = std::make_unique<OpenGLComboBox>(mparam_->paramID.toStdString());
+        auto menu_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*mparam_.get(), listeners, *menu, nullptr);
+        addAndMakeVisible(menu.get());
+        addOpenGlComponent(menu->getImageComponent());
+
+        _noteModeMenus_attachments.emplace_back (std::move(menu_attachment));
+        _noteModeMenus.emplace_back (std::move (menu));
     }
 }
 
 void MidiTargetParametersView::resized()
 {
-    int knob_section_height = getKnobSectionHeight();
-    int knob_y = getHeight() - knob_section_height;
+    juce::Rectangle<int> area (getLocalBounds());
 
-    int widget_margin = findValue(Skin::kWidgetMargin);
+    int smallpadding = findValue(Skin::kPadding);
+    int largepadding = findValue(Skin::kLargePadding);
+    int comboboxheight = findValue(Skin::kComboMenuHeight);
     int title_width = getTitleWidth();
-    int area_width = getWidth() - 2 * title_width;
-    int envelope_height = knob_y - widget_margin;
 
-    mf_button->setBounds(115,10,100, 25);
+    area.reduce(title_width, 0);
+    int column_width = area.getWidth() / 4.;
+
+    juce::Rectangle<int> blendronicColumn = area.removeFromLeft(column_width);
+    juce::Rectangle<int> blendronicButtonsColumn = blendronicColumn.removeFromLeft(blendronicColumn.getWidth() / 2);
+    blendronicColumn.reduce(smallpadding, smallpadding);
+    blendronicButtonsColumn.reduce(smallpadding, smallpadding);
+
+    for(int i = BlendronicTargetNormal; i<BlendronicTargetNil; i++)
+    {
+        _paramToggles[i - BlendronicTargetNormal]->setBounds(blendronicButtonsColumn.removeFromTop(comboboxheight));
+        blendronicButtonsColumn.removeFromTop(smallpadding);
+
+        _noteModeMenus[i - BlendronicTargetNormal]->setBounds(blendronicColumn.removeFromTop(comboboxheight));
+        blendronicColumn.removeFromTop(smallpadding);
+    }
 
     SynthSection::resized();
 }
