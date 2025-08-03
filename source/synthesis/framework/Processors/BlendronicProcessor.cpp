@@ -292,9 +292,9 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     buffer.applyGain(0, 0, numSamples, inputgainmult);
     buffer.applyGain(1, 0, numSamples, inputgainmult);
 
-    /**
-     * todo: level meter for input? yes, place on left side of prep pop_up
-     */
+    // input level meter update stuff
+    std::get<0> (state.params.inputLevels) = buffer.getRMSLevel (0, 0, numSamples);
+    std::get<1> (state.params.inputLevels) = buffer.getRMSLevel (1, 0, numSamples);
 
     // get the pointers for the samples to read from and write to
     auto outL = buffer.getWritePointer(0, 0);
@@ -320,18 +320,19 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
     buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
 
+    // send level meter update
+    std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
+    std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
 
-    // level meter update stuff
+    // main level meter update
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
 
-    /**
-     * todo: level meter for output send? yes, place on right side of prep pop_up, just to the left of the main outputgain slider
-     */
 }
 
 void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

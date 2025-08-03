@@ -30,36 +30,16 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
-        // we're leaving out "outputGain" since that has its own VolumeSlider
-        for (auto& param_ : *params.getFloatParams())
-        {
-            /**
-             * todo: move both InputGain and Send to PeakMeterSections, like outputGain
-             */
-            if ( // make group of params to display together
-                param_->paramID == "InputGain" ||
-                param_->paramID == "Send")
-            {
-                auto slider = std::make_unique<SynthSlider> (param_->paramID);
-                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
-                slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
-                addSlider (slider.get()); // adds the slider to the synthSection
-                slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-                floatAttachments.emplace_back (std::move (attachment));
-                _sliders.emplace_back (std::move (slider));
-            }
-        }
-
         beatLengthsSlider = std::make_unique<OpenGL_MultiSlider>("beat_lengths", &params.beatLengths, listeners);
         beatLengthsSlider->setComponentID ("beat_lengths");
         beatLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
-        beatLengthsSlider->setName("Beat Lengths (xTempo)");
+        beatLengthsSlider->setName("Beat Lengths (x/Tempo)");
         addStateModulatedComponent (beatLengthsSlider.get());
 
         delayLengthsSlider = std::make_unique<OpenGL_MultiSlider>("delay_lengths", &params.delayLengths, listeners);
         delayLengthsSlider->setComponentID ("delay_lengths");
         delayLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
-        delayLengthsSlider->setName("Delay Lengths (xTempo)");
+        delayLengthsSlider->setName("Delay Lengths (x/Tempo)");
         addStateModulatedComponent (delayLengthsSlider.get());
 
         smoothingTimesSlider = std::make_unique<OpenGL_MultiSlider>("smoothing_times", &params.smoothingTimes, listeners);
@@ -76,10 +56,21 @@ public:
         feedbackCoeffsSlider->setName("Feedback Coefficients (0-1)");
         addStateModulatedComponent (feedbackCoeffsSlider.get());
 
+        /**
+         * todo: these level meters/sliders need titles displayed in the UI
+         */
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         addSubSection(levelMeter.get());
+
+        // similar for send level meter/slider
+        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
+        addSubSection(sendLevelMeter.get());
+
+        // and for input level meter/slider
+        inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
+        addSubSection(inLevelMeter.get());
 
         /*
          * listen for changes from mods/resets, redraw as needed
@@ -138,8 +129,10 @@ public:
     std::unique_ptr<OpenGL_MultiSlider> smoothingTimesSlider;
     std::unique_ptr<OpenGL_MultiSlider> feedbackCoeffsSlider;
 
-    // level meter with output gain slider
+    // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
+    std::shared_ptr<PeakMeterSection> sendLevelMeter;
+    std::shared_ptr<PeakMeterSection> inLevelMeter;
 
     void resized() override;
 };

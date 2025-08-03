@@ -125,7 +125,7 @@ void deserializeMultiSliderParam(
 struct BlendronicParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
-    float rangeStart = -60.0f;
+    float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
 
@@ -174,7 +174,7 @@ struct BlendronicParams : chowdsp::ParamHolder
     chowdsp::GainDBParameter::Ptr outputGain {
         juce::ParameterID { "OutputGain", 100 },
         "Output Gain",
-        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
         true
     };
@@ -236,6 +236,8 @@ struct BlendronicParams : chowdsp::ParamHolder
      *      and then the level meter will update its values during the OpenGL cycle
      */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
 };
 
 struct BlendronicNonParameterState : chowdsp::NonParamState
