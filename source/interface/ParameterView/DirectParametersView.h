@@ -76,6 +76,7 @@ public:
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        levelMeter->setLabel("Main");
         addSubSection(levelMeter.get());
         setSkinOverride(Skin::kDirect);
     }

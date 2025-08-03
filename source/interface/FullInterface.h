@@ -33,21 +33,20 @@ class FullInterface : public SynthSection, public juce::OpenGLRenderer, public H
 public :
     static constexpr double kMinOpenGlVersion = 1.4;
     FullInterface(SynthGuiData *synth_gui_data, juce::ApplicationCommandManager& _manager);
-     ~FullInterface() override;
-
-     void paintBackground(juce::Graphics& g) override;
-
+    ~FullInterface() override;
+    void paintBackground(juce::Graphics& g) override;
     void parentHierarchyChanged() override {
         SynthSection::parentHierarchyChanged();
         checkShouldReposition();
 
     }
+
     void timerCallback()   // to avoid flickering when resizing the window
     {
-
 //        open_gl_context_.attachTo(*this);
 //        stopTimer();
     }
+
     int getPixelMultiple() const override { return pixel_multiple_; }
     void copySkinValues(const Skin& skin);
     void reloadSkin(const Skin& skin);

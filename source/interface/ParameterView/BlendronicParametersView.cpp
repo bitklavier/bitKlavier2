@@ -28,8 +28,10 @@ void BlendronicParametersView::resized()
     bounds.removeFromRight(smallpadding);
     sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
+    bounds.reduce(largepadding, largepadding);
+
     // how much vertical space will we need for all the components?
-    int verticalAreaNeeded = knob_section_height * 7;
+    int verticalAreaNeeded = knob_section_height * 4;
 
     /*
      * todo: better spacing for these...

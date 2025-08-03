@@ -228,6 +228,14 @@ class PlainTextComponent : public OpenGlImageComponent {
 
       juce::Component* component = component_ ? component_ : this;
 
+      juce::Graphics::ScopedSaveState state(g); // Save current graphics state
+
+      // Apply rotation to the graphics context
+      g.addTransform(juce::AffineTransform::rotation(
+          juce::degreesToRadians(rotation_degrees_),
+          getWidth() / 2.0f, getHeight() / 2.0f // Pivot point (center of component)
+          ));
+
       g.drawFittedText(text_, buffer_, 0, component->getWidth() - 2 * buffer_,
                        component->getHeight(), justification_, false);
     }
@@ -247,12 +255,16 @@ class PlainTextComponent : public OpenGlImageComponent {
 
     void setBuffer(int buffer) { buffer_ = buffer; }
 
+    void setRotation(float degrees) { rotation_degrees_ = degrees; }
+
   private:
     juce::String text_;
     float text_size_;
     FontType font_type_;
     juce::Justification justification_;
     int buffer_;
+
+    float rotation_degrees_ = 0.;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlainTextComponent)
 };

@@ -62,14 +62,17 @@ public:
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        levelMeter->setLabel("Main");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
+        sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
         // and for input level meter/slider
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
+        inLevelMeter->setLabel("Input");
         addSubSection(inLevelMeter.get());
 
         /*
@@ -110,19 +113,21 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
 
-        for (auto& slider : _sliders)
-        {
-            drawLabelForComponent (g, slider->getName(), slider.get());
-        }
+//        for (auto& slider : _sliders)
+//        {
+//            drawLabelForComponent (g, slider->getName(), slider.get());
+//        }
 
         paintChildrenBackgrounds (g);
+
+        // g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f));
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
-    std::vector<std::unique_ptr<SynthSlider>> _sliders;
-    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+//    std::vector<std::unique_ptr<SynthSlider>> _sliders;
+//    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
     std::unique_ptr<OpenGL_MultiSlider> beatLengthsSlider;
     std::unique_ptr<OpenGL_MultiSlider> delayLengthsSlider;

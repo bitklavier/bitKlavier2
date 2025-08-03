@@ -49,6 +49,8 @@ public:
         // draw bigger tick mark at 0 dBFS
         g.setColour(findColour(Skin::kLinearSliderThumb, true));
         g.drawRect((getWidth() / 2) - 6, (int)getPositionOfValue(0), 12, 2);
+
+        // g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f));
     }
 };
 
@@ -75,13 +77,27 @@ PeakMeterSection::PeakMeterSection(
    volume_->setNumDecimalPlacesToDisplay(2);
    volume_->setPopupPlacement(juce::BubbleComponent::right);
    volume_->setDoubleClickReturnValue(true, 0.0);
+
+   peak_meter_label = std::make_shared<PlainTextComponent>("peak_meter", "Gain");
+   addOpenGlComponent(peak_meter_label);
+   peak_meter_label->setTextSize (12.0f);
+   peak_meter_label->setJustification(juce::Justification::centred);
+   peak_meter_label->setRotation(-90);
 }
 
 PeakMeterSection::~PeakMeterSection() { }
 
+void PeakMeterSection::setLabel(juce::String newLabel)
+{
+    peak_meter_label->setText(newLabel);
+}
+
 void PeakMeterSection::resized() {
 
    juce::Rectangle<int> bounds = getLocalBounds();
+   juce::Rectangle<int> labelRect = bounds.removeFromTop(50);
+   peak_meter_label->setBounds(labelRect);
+
    volume_->setBounds(bounds);
 
    juce::Rectangle<int> leftMeterBounds = bounds.removeFromLeft(bounds.getWidth()/2);

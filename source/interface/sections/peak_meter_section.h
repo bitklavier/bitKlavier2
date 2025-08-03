@@ -24,18 +24,20 @@ public:
         const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels);
     ~PeakMeterSection();
 
-    int getMeterHeight();
+//    int getMeterHeight();
     int getBuffer();
+
+    void setLabel(juce::String newLabel);
     void resized() override;
     void paintBackground(juce::Graphics& g) override;
 
     std::shared_ptr<VolumeSlider> volume_;
-private:
 
+private:
     std::shared_ptr<PeakMeterViewer> peak_meter_left_;
     std::shared_ptr<PeakMeterViewer> peak_meter_right_;
     std::unique_ptr<chowdsp::SliderAttachment> volumeAttach_;
-
+    std::shared_ptr<PlainTextComponent> peak_meter_label;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PeakMeterSection)
 };

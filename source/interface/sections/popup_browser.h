@@ -1,4 +1,5 @@
 /* Copyright 2013-2019 Matt Tytel
+/* Copyright 2013-2019 Matt Tytel
  *
  * vital is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

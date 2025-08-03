@@ -52,7 +52,6 @@ SynthSection::SynthSection(const juce::String &name, OpenGlWrapper *open_gl) : j
     //setWantsKeyboardFocus(true);
 }
 
-
 float SynthSection::findValue(Skin::ValueId value_id) const {
     if (value_lookup_.count(value_id)) {
         if (Skin::shouldScaleValue(value_id))
@@ -63,7 +62,6 @@ float SynthSection::findValue(Skin::ValueId value_id) const {
         return parent_->findValue(value_id);
 
     return 0.0f;
-
 }
 
 void SynthSection::reset() {
@@ -142,7 +140,6 @@ void SynthSection::repaintBackground() {
     if (parent)
         parent->repaintChildBackground(this);
 }
-
 
 void SynthSection::paintContainer(juce::Graphics &g) {
     paintBody(g);
@@ -487,9 +484,11 @@ void SynthSection::guiChanged(SynthButton *button) {
     if (button == activator_)
         setActive(activator_->getToggleStateValue().getValue());
 }
+
 void SynthSection::hoverStarted(SynthButton *button) {
 
 }
+
 void SynthSection::hoverEnded(SynthButton *button) {
 
 }
@@ -602,9 +601,7 @@ void SynthSection::removeSubSection(SynthSection *section) {
             }
         }
         sub_sections_.erase(location);
-
     }
-
     else jassertfalse;
 }
 
@@ -638,9 +635,7 @@ void SynthSection::addOpenGlComponent(std::shared_ptr<OpenGlComponent> open_gl_c
         open_gl_components_.insert(open_gl_components_.begin(), std::move(open_gl_component));
     else
         open_gl_components_.push_back(std::move(open_gl_component));
-
 }
-
 
 void SynthSection::setActivator(SynthButton *activator) {
     createOffOverlay();
@@ -829,7 +824,6 @@ void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<juce:
     }
 
     placeKnobsInArea(area, knobs);
-
 }
 
 void SynthSection::unlockCriticalSection() {
@@ -1002,8 +996,6 @@ void SynthSection::setActive(bool active) {
         off_overlay_->setVisible(!active);
 
     active_ = active;
-
-
     repaintBackground();
 }
 
@@ -1032,8 +1024,6 @@ void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> p
         parent->popupSelector(source, position, options, callback, cancel);
 }
 
-
-
 void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,bitklavier::BKPreparationType type) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent) {
@@ -1045,4 +1035,5 @@ void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,bitklavier::
         }
     }
 }
+
 SynthSection::SynthSection() {}
