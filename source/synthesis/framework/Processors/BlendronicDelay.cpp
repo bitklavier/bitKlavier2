@@ -12,13 +12,13 @@ BlendronicDelay::BlendronicDelay(float delayLength, float smoothValue, float smo
      dSmoothRate(smoothRate),
      sampleRate(sr)
 {
+    /**
+     * todo: check to make sure sampleRate is being updated correctly
+     *          - i'm assuming the constructor is called every time the sample rate is changed?
+     */
     delayLinear = std::make_unique<BKDelayL>(dDelayLength, dBufferSize, dDelayGain, sampleRate);
     dSmooth = std::make_unique<BKEnvelope>(dSmoothValue, dDelayLength, sampleRate);
     dSmooth->setRate(dSmoothRate);
-    dEnv = std::make_unique<BKEnvelope>(1.0f, 1.0f, sampleRate);
-    dEnv->setTime(5.0f);
-
-//    shouldDuck = false;
 
     DBG("Create bdelay");
 }
@@ -30,24 +30,13 @@ BlendronicDelay::~BlendronicDelay()
 
 void BlendronicDelay::scalePrevious(float coefficient, int offset, int channel)
 {
-//    if (loading) return;
     delayLinear->scalePrevious(coefficient, offset, channel);
 }
 
 void BlendronicDelay::tick(float* inL, float* inR)
 {
-    /**
-     * todo: check to see if we still need this dEnv stuff
-     * todo: confirm we don't need 'shouldDuck'
-     * todo: deal with dOutputOpen, dInputOpen...
-     */
-
     setDelayLength(dSmooth->tick());
-    float env = dEnv->tick();
-
     delayLinear->tick(inL, inR);
-    *inL *= env;
-    *inR *= env;
 }
 
 
@@ -65,9 +54,6 @@ BKDelayL::BKDelayL() :
        lastFrameLeft(0),
        lastFrameRight(0),
        feedback(0.9),
-       doNextOutLeft(false),
-       doNextOutRight(false),
-       loading(false),
        sampleRate(44100.)
 {
     inputs = juce::AudioBuffer<float>(2, bufferSize);
@@ -83,9 +69,6 @@ BKDelayL::BKDelayL(float delayLength, int bufferSize, float delayGain, double sr
      gain(delayGain),
      lastFrameLeft(0),
      lastFrameRight(0),
-     doNextOutLeft(false),
-     doNextOutRight(false),
-     loading(false),
      sampleRate(sr)
 {
     inputs = juce::AudioBuffer<float>(2, bufferSize);
@@ -110,8 +93,6 @@ void BKDelayL::setLength(float delayLength)
     alpha = outPointer - outPoint; //fractional part
     omAlpha = (float)1.0 - alpha;
     if (outPoint == inputs.getNumSamples()) outPoint = 0;
-    doNextOutLeft = true;
-    doNextOutRight = true;
 }
 
 void BKDelayL::setBufferSize(int size)
@@ -131,30 +112,22 @@ void BKDelayL::setBufferSize(int size)
  */
 float BKDelayL::nextOutLeft()
 {
-//    if (doNextOutLeft)
-    {
-        nextOutput = inputs.getSample(0, outPoint) * omAlpha;
-        if (outPoint + 1 < inputs.getNumSamples())
-            nextOutput += inputs.getSample(0, outPoint + 1) * alpha;
-        else
-            nextOutput += inputs.getSample(0, 0) * alpha;
-//        doNextOutLeft = false;
-    }
+    nextOutput = inputs.getSample(0, outPoint) * omAlpha;
+    if (outPoint + 1 < inputs.getNumSamples())
+        nextOutput += inputs.getSample(0, outPoint + 1) * alpha;
+    else
+        nextOutput += inputs.getSample(0, 0) * alpha;
 
     return nextOutput;
 }
 
 float BKDelayL::nextOutRight()
 {
-//    if (doNextOutRight)
-    {
-        nextOutput = inputs.getSample(1, outPoint) * omAlpha;
-        if (outPoint + 1 < inputs.getNumSamples())
-            nextOutput += inputs.getSample(1, outPoint + 1) * alpha;
-        else
-            nextOutput += inputs.getSample(1, 0) * alpha;
-//        doNextOutRight = false;
-    }
+    nextOutput = inputs.getSample(1, outPoint) * omAlpha;
+    if (outPoint + 1 < inputs.getNumSamples())
+        nextOutput += inputs.getSample(1, outPoint + 1) * alpha;
+    else
+        nextOutput += inputs.getSample(1, 0) * alpha;
 
     return nextOutput;
 }
@@ -174,31 +147,44 @@ void BKDelayL::scalePrevious(float coefficient, int offset, int channel)
 
 void BKDelayL::tick(float* inL, float* inR)
 {
-    /**
-     * todo: check on 'loading' and if we need it
-     */
-//    if (loading) return;
-
+    // check the inPoint boundary
     if (inPoint >= inputs.getNumSamples()) inPoint = 0;
 
-    /**
-     * todo: is this doNext stuff for freezing? omit for now...
+    /*
+     * if the input is not open, we don't add samples to the delay.
+     *  it still runs, however, continuing to process what it already had,
+     *  sending it out (if dOutputOpen is true, below)
      */
-    lastFrameLeft = nextOutLeft();
-//    doNextOutLeft = true;
-    lastFrameRight = nextOutRight();
-//    doNextOutRight = true;
+    if(dInputOpen)
+    {
+        inputs.addSample(0, inPoint, *inL);
+        inputs.addSample(1, inPoint, *inR);
+    }
 
+    // get our delayed outputs from both channels
+    lastFrameLeft = nextOutLeft();
+    lastFrameRight = nextOutRight();
+
+    // increment the position samples are read from and check its end boundary
     if (++outPoint >= inputs.getNumSamples()) outPoint = 0;
 
-    //add the current sample and feedback the last output as well
-    inputs.addSample(0, inPoint, *inL + lastFrameLeft * feedback);
-    inputs.addSample(1, inPoint, *inR + lastFrameRight * feedback);
+    // feedback of last output is added here now
+    inputs.addSample(0, inPoint, lastFrameLeft * feedback);
+    inputs.addSample(1, inPoint, lastFrameRight * feedback);
 
+    // increment the position samples are written to
     inPoint++;
 
-    *inL = lastFrameLeft;
-    *inR = lastFrameRight;
+    /*
+     * if the output is not open, we leave the samples passing through untouched
+     *  internally, the delay still runs, taking input samples, feeding back, etc...
+     *  but we just don't send anything out
+     */
+    if(dOutputOpen)
+    {
+        *inL = lastFrameLeft;
+        *inR = lastFrameRight;
+    }
 }
 
 void BKDelayL::clear()
@@ -217,8 +203,6 @@ void BKDelayL::reset()
     alpha = outPointer - outPoint; //fractional part
     omAlpha = (float)1.0 - alpha;
     if (outPoint == inputs.getNumSamples()) outPoint = 0;
-//    doNextOutLeft = true;
-//    doNextOutRight = true;
 }
 
 /*

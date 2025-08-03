@@ -23,11 +23,11 @@ public:
     ~BKDelayL();
 
     //accessors
-    inline const float getLength() const noexcept { return length; }
-    inline const float getBufferSize() const noexcept { return bufferSize; }
-    inline const float getGain() const noexcept { return gain; }
-    inline const float lastOutLeft() const noexcept { return lastFrameLeft; }
-    inline const float lastOutRight() const noexcept { return lastFrameRight; }
+//    inline const float getLength() const noexcept { return length; }
+//    inline const float getBufferSize() const noexcept { return bufferSize; }
+//    inline const float getGain() const noexcept { return gain; }
+//    inline const float lastOutLeft() const noexcept { return lastFrameLeft; }
+//    inline const float lastOutRight() const noexcept { return lastFrameRight; }
 
     inline const float getSample(int c, int i) const noexcept
     {
@@ -42,8 +42,8 @@ public:
     void setBufferSize(int size);
     inline void setGain(float delayGain) { gain = delayGain; }
     inline void setFeedback(float fb) { feedback = fb; }
-    inline int getInPoint() { return inPoint; }
-    inline int getOutPoint() { return outPoint; }
+//    inline int getInPoint() { return inPoint; }
+//    inline int getOutPoint() { return outPoint; }
 
     float nextOutLeft();
     float nextOutRight();
@@ -52,6 +52,9 @@ public:
     void tick(float* inL, float* inR);
     void clear();
     void reset();
+
+    bool dInputOpen = true;
+    bool dOutputOpen = true;
 
     inline void setSampleRate(double sr) { sampleRate = sr; }
 
@@ -71,8 +74,8 @@ private:
     float omAlpha;
     float feedback;
     float nextOutput;
-    bool doNextOutLeft;
-    bool doNextOutRight;
+//    bool doNextOutLeft;
+//    bool doNextOutRight;
 
     bool loading;
     double sampleRate;
@@ -130,7 +133,6 @@ public:
     ~BlendronicDelay();
 
     inline const juce::AudioBuffer<float>* getDelayBuffer() const noexcept { return delayLinear->getBuffer(); }
-    inline const int getInPoint() const noexcept { return delayLinear->getInPoint(); }
 
     inline void setDelayLength(float delayLength) { dDelayLength = delayLength; delayLinear->setLength(delayLength); }
     inline void setDelayTargetLength(float delayLength) { dSmooth->setTarget(delayLength); }
@@ -138,14 +140,17 @@ public:
     inline void setSampleRate(double sr) { sampleRate = sr; delayLinear->setSampleRate(sr); dSmooth->setSampleRate(sr); }
     inline void clear() { delayLinear->clear(); /*delayLinear->reset();*/ }
 
-    /*
-     * leave for now, might have this as an available user param as in the old bK
-     */
-//    inline void setBufferSize(int bufferSize)
-//    {
-//        dBufferSize = bufferSize;
-//        delayLinear->setBufferSize(dBufferSize);
-//    }
+    inline void toggleInput()
+    {
+        if (delayLinear->dInputOpen) delayLinear->dInputOpen = false;
+        else delayLinear->dInputOpen = true;
+    }
+
+    inline void toggleOutput()
+    {
+        if (delayLinear->dOutputOpen) delayLinear->dOutputOpen = false;
+        else delayLinear->dOutputOpen = true;
+    }
 
     inline void setSmoothRate(float smoothRate)
     {
@@ -154,21 +159,16 @@ public:
     }
 
     void scalePrevious(float coefficient, int offset, int channel);
-
     void tick(float* inL, float* inR);
 
 private:
     std::unique_ptr<BKDelayL> delayLinear;
     std::unique_ptr<BKEnvelope> dSmooth;
-    std::unique_ptr<BKEnvelope> dEnv;
     float dBufferSize;
     float dDelayGain;
     float dDelayLength;
     float dSmoothValue;
     float dSmoothRate;
-//    bool dInputOpen;
-//    bool dOutputOpen;
-    bool shouldDuck;
 
     double sampleRate;
 };

@@ -260,6 +260,7 @@ public:
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     bool acceptsMidi() const override { return true; }
+    void handleMidiTargetMessages(juce::MidiBuffer& midiMessages);
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
 
@@ -276,6 +277,15 @@ public:
 
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
+
+    void doPatternSync();
+    void doBeatSync();
+    void doClear();
+    void doPausePlay();
+    void doOpenCloseInput();
+    void doOpenCloseOutput();
+
+    inline void toggleActive() { blendronicActive = !blendronicActive; }
 
 private:
 
@@ -304,20 +314,6 @@ private:
     void clearNextDelayBlock(int numSamples);
     void tick(float* inL, float* inR);
 
-    juce::Array<juce::Array<float>> velocities;
-    juce::Array<juce::Array<float>> invertVelocities;
-    juce::Array<juce::uint64> holdTimers;
-    juce::Array<int> keysDepressed;   //current keys that are depressed
-
-    bool inSyncCluster, inClearCluster, inOpenCluster, inCloseCluster;
-    bool nextSyncOffIsFirst, nextClearOffIsFirst, nextOpenOffIsFirst, nextCloseOffIsFirst;
-
-    juce::uint64 thresholdSamples;
-    juce::uint64 syncThresholdTimer;
-    juce::uint64 clearThresholdTimer;
-    juce::uint64 openThresholdTimer;
-    juce::uint64 closeThresholdTimer;
-
     float pulseLength;      // Length in seconds of a pulse (1.0 length beat)
     float numSamplesBeat;   // Length in samples of the current step in the beat pattern
     float numSamplesDelay;  // Length in samples of the current step in the delay pattern
@@ -326,26 +322,10 @@ private:
 
     // Index of sequenced param patterns
     int beatIndex, delayIndex, smoothIndex, feedbackIndex;
+    bool blendronicActive = true;
 
     // Values of previous step values for smoothing. Saved separately from param arrays to account for changes to the sequences
     float prevBeat, prevDelay, prevPulseLength;
-
-    // Flag to clear the delay line on the next beat
-    bool clearDelayOnNextBeat;
-
-    /**
-     * todo: for display
-     */
-    // For access in BlendronicDisplay
-//    juce::Array<juce::uint64> beatPositionsInBuffer; // Record of the sample position of beat changes in the delay buffer (used in display)
-//    int numBeatPositions; // Number of beat positions in the buffer and to be displayed
-//    int beatPositionsIndex; // Index of beat sample positions for adding/removing positions
-//    float pulseOffset; // Sample offset of the pulse grid from grid aligned with buffer start (used in display)
-//    bool resetPhase;
-//    OwnedArray<BlendronicDisplay::ChannelInfo> audio;
-//    std::unique_ptr<BlendronicDisplay::ChannelInfo> smoothing;
-
-    chowdsp::Gain<float> gain;
 
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BlendronicProcessor)

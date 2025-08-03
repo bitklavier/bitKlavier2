@@ -8,6 +8,9 @@
 - [ ] did we discuss having preps identified by name instead of number in the VTs?
   - so that they show up in the saved XML files with more informative names than `<PREPARATION type="3" `...?
   - probably good to do this before we start actually saving galleries we care about, if it's a possibility
+- [ ] is everything rebuilt when the sample rate is changed? constructors called?
+  - asking because the only time the buffer and filter settings in blendronic are set is when the constructor is called
+    - if it's not called when the sample rate is changed, i need to sort out how the sr change is propagated down
 
 
 ## Quick Bug/Feature Notes

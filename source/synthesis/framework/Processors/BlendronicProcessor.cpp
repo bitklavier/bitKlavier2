@@ -34,9 +34,7 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
     // for testing
     bufferDebugger = new BufferDebugger();
 
-    /**
-     * todo: set this constructor params from default params?
-     */
+    // note: we are setting the buffer size to 10 seconds max here (delayBufferSize)
     delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, getSampleRate());
 
     /*
@@ -63,25 +61,6 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
 
 void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
-
-    gain.prepare (spec);
-    gain.setRampDurationSeconds (0.05);
-
-    /**
-     * todo: for display
-     */
-//    for (int i = 0; i < 1/*numChannels*/; ++i)
-//    {
-//        audio.getUnchecked(i)->setBufferSize(delay->getDelayBuffer()->getNumSamples());
-//    }
-//    smoothing->setBufferSize(delay->getDelayBuffer()->getNumSamples());
-//    beatPositionsInBuffer.ensureStorageAllocated(128);
-//    beatPositionsInBuffer.clear();
-//    beatPositionsInBuffer.add(0);
-//    pulseOffset = 0;
-//    beatPositionsIndex = 0;
-
     prevBeat = state.params.beatLengths.sliderVals[0].load();
     prevDelay = state.params.delayLengths.sliderVals[0].load();
 
@@ -92,6 +71,9 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     smoothIndex = 0;
     feedbackIndex = 0;
 
+    /**
+     * todo: get from Tempo and General Settings
+     */
     pulseLength = (60.0 / (_subdivisions * _tempo));
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
     numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load();
@@ -131,8 +113,44 @@ void BlendronicProcessor::updateDelayParameters()
 //    DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex]));
 }
 
+void BlendronicProcessor::doPatternSync()
+{
+    beatIndex = state.params.beatLengths.sliderVals_size;
+    delayIndex = state.params.delayLengths.sliderVals_size;
+    smoothIndex = state.params.smoothingTimes.sliderVals_size;
+    feedbackIndex = state.params.feedbackCoeffs.sliderVals_size;
+}
+
+void BlendronicProcessor::doBeatSync()
+{
+    sampleTimer = numSamplesBeat;
+}
+
+void BlendronicProcessor::doClear()
+{
+    delay->clear();
+}
+
+void BlendronicProcessor::doPausePlay()
+{
+    toggleActive();
+}
+
+void BlendronicProcessor::doOpenCloseInput()
+{
+    delay->toggleInput();
+}
+
+void BlendronicProcessor::doOpenCloseOutput()
+{
+    delay->toggleOutput();
+}
+
 void BlendronicProcessor::tick(float* inL, float* inR)
 {
+    // used for pause/play
+    if (!blendronicActive) return;
+
     /**
      * todo: does this ever get called, given the same check later in tick()?
      */
@@ -144,41 +162,6 @@ void BlendronicProcessor::tick(float* inL, float* inR)
         /*
          * everything in here only happens every beat, so not very often, so we don't need to overly optimize
          */
-
-//        // Clear if we need to
-//        /**
-//         * todo: is setClearDelayOnNextBeat actually used?
-//         */
-//        if (clearDelayOnNextBeat)
-//        {
-//            delay->clear();
-//            /**
-//             * todo: for display
-//             */
-////            for (auto channel : audio)
-////                channel->clear();
-//            clearDelayOnNextBeat = false;
-//        }
-
-        /**
-         * for display?
-         */
-//        float beatPatternLength = 0.0;
-//        for (int i=0; i<state.params.beatLengths.sliderVals_size; i++) {
-//            beatPatternLength += state.params.beatLengths.sliderVals[i].load() * pulseLength * getSampleRate();
-//        }
-
-//        if (numBeatPositions != (int)((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals_size) - 1)
-//        {
-//            beatPositionsInBuffer.clear();
-//            beatPositionsIndex = -1;
-//            pulseOffset = delay->getInPoint();
-//            numBeatPositions = ((delay->getDelayBuffer()->getNumSamples() / beatPatternLength) * state.params.beatLengths.sliderVals_size) - 1;
-//        }
-//
-//        // Set the next beat position, cycle if we've reached the max number of positions for the buffer
-//        beatPositionsInBuffer.set(++beatPositionsIndex, delay->getInPoint());
-//        if (beatPositionsIndex >= numBeatPositions) beatPositionsIndex = -1;
 
         // Step sequenced params
         beatIndex++;
@@ -203,29 +186,12 @@ void BlendronicProcessor::tick(float* inL, float* inR)
     {
         // Set parameters of the delay object
         updateDelayParameters();
-
         prevPulseLength = pulseLength;
-
-        /**
-         * for display?
-         */
-//        resetPhase = true;
     }
 
     // Tick the delay
     delay->tick(inL, inR);
 
-    /**
-     * todo: for display
-     */
-//    float dlr = 0.0f;
-//    if (pulseLength != INFINITY) dlr = delay->getDelayLength() / (pulseLength * getSampleRate());
-//
-//    int i = delay->getInPoint() - 1;
-//    if (i < 0) i = delay->getDelayBuffer()->getNumSamples() - 1;
-//    for (auto channel : audio)
-//        channel->pushSample (delay->getSample(0, i));
-//    smoothing->pushSample(dlr);
 }
 
 void BlendronicProcessor::clearNextDelayBlock(int numSamples)
@@ -237,95 +203,106 @@ void BlendronicProcessor::clearNextDelayBlock(int numSamples)
     }
 }
 
-void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+/**
+ * Blendrónic receives MIDI messages for various targeted behaviors:
+ *      - sync
+ *      - clear
+ *      - pause play,
+ *      - and open/close inputs and outputs
+ *
+ * the message targets are determined by MIDI channel, and are set in a
+ * MidiTarget preparation placed between a Keymap and Blendrónic
+ *
+ * @param midiMessages
+ */
+void BlendronicProcessor::handleMidiTargetMessages(juce::MidiBuffer& midiMessages)
 {
-    /**
-     * MIDI Targeting Stuff First
-     */
-
-//    typedef enum PreparationParameterTargetType {
-//        BlendronicTargetPatternSync = 1,
-//        BlendronicTargetBeatSync,
-//        BlendronicTargetClear,
-//        BlendronicTargetPausePlay,
-//        BlendronicTargetInput,
-//        BlendronicTargetOutput,
-//        BlendronicTargetNil
-//    } PreparationParameterTargetType;
-
     for (auto mi : midiMessages)
     {
         auto message = mi.getMessage();
+
+        /*
+         * 'BlendronicTargetPatternSync' is the first in the set of Blendrónic
+         * PreparationParameterTargetTypes, so determines the offset for
+         * the channel that the target messages are received on.
+         */
         switch(message.getChannel() + (BlendronicTargetPatternSync - 1))
         {
             case BlendronicTargetPatternSync:
-                DBG("BlendronicTargetPatternSync target");
+                doPatternSync();
                 break;
 
             case BlendronicTargetBeatSync:
-                DBG("BlendronicTargetBeatSync target");
+                doBeatSync();
                 break;
 
             case BlendronicTargetClear:
-                DBG("BlendronicTargetClear target");
+                doClear();
                 break;
 
             case BlendronicTargetPausePlay:
-                DBG("BlendronicTargetPausePlay target");
+                doPausePlay();
                 break;
 
             case BlendronicTargetInput:
-                DBG("BlendronicTargetInput target");
+                doOpenCloseInput();
                 break;
 
             case BlendronicTargetOutput:
-                DBG("BlendronicTargetOutput target");
+                doOpenCloseOutput();
                 break;
         }
-
-        DBG("BlendronicProcessor::processBlock MIDI message received on channel " + juce::String(message.getChannel()));
     }
+}
 
-
+void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
     /**
-     * Then the Audio Stuff
+     * todo: General Settings and Tempo
      */
-    int numSamples = buffer.getNumSamples();
-
     /*
-     * use these to display buffer info to bufferDebugger
+     * Update some params from Tempo and General Settings
+     *      pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
+     *      pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
      */
-    bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
-    bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+    pulseLength = (60.0 / (_subdivisions * _tempo));
+    pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
 
     /*
      * process any mod changes to the multisliders
      */
     state.params.processStateChanges();
 
+    /*
+     * MIDI Targeting Stuff First
+     */
+    handleMidiTargetMessages(midiMessages);
+
+    /*
+     * Then the Audio Stuff
+     */
+    int numSamples = buffer.getNumSamples();
+
+    // use these to display buffer info to bufferDebugger
+    bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
+    bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, inputgainmult);
     buffer.applyGain(1, 0, numSamples, inputgainmult);
+
     /**
      * todo: level meter for input? yes, place on left side of prep pop_up
      */
 
+    // get the pointers for the samples to read from and write to
     auto outL = buffer.getWritePointer(0, 0);
     auto outR = buffer.getWritePointer(1, 0);
     if (outL == nullptr) return;
     if (outR == nullptr) return;
 
-    /**
-     * todo: General Settings and Tempo
-     */
-    // update some params
-    //    pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
-    //    pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
-    pulseLength = (60.0 / (_subdivisions * _tempo));
-    pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
-
-    // clears the end of the delay buffer so we aren't writing on top of really old stuff
+    // clear the end of the delay buffer so we aren't writing on top of really old stuff
     clearNextDelayBlock(numSamples);
 
     // apply the delay
@@ -337,7 +314,7 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     // reset for the rest of the calls here
     numSamples = buffer.getNumSamples();
 
-    // output send
+    // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
     buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
