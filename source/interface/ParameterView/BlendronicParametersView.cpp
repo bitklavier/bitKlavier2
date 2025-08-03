@@ -4,6 +4,22 @@
 
 #include "BlendronicParametersView.h"
 
+void BlendronicParametersView::timerCallback()
+{
+    /*
+     * for updating the currently active sliders in the UI
+     */
+    beatLengthsSlider->setCurrentSlider(bparams_.beatLengths_current.load());
+    delayLengthsSlider->setCurrentSlider(bparams_.delayLengths_current.load());
+    smoothingTimesSlider->setCurrentSlider(bparams_.smoothingTimes_current.load());
+    feedbackCoeffsSlider->setCurrentSlider(bparams_.feedbackCoeffs_current.load());
+
+    beatLengthsSlider->redoImage();
+    delayLengthsSlider->redoImage();
+    smoothingTimesSlider->redoImage();
+    feedbackCoeffsSlider->redoImage();
+}
+
 void BlendronicParametersView::resized()
 {
     // width of the title at left, used in all preparations

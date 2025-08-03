@@ -263,6 +263,15 @@ struct BlendronicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+
+    /*
+     * for keeping track of the current multislider lengths
+     * being used by blendrónic, so we can update the UI accordingly
+     */
+    std::atomic<int> beatLengths_current = 0;
+    std::atomic<int> delayLengths_current = 0;
+    std::atomic<int> smoothingTimes_current = 0;
+    std::atomic<int> feedbackCoeffs_current = 0;
 };
 
 struct BlendronicNonParameterState : chowdsp::NonParamState

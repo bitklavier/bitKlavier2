@@ -14,29 +14,8 @@
 
 
 ## Quick Bug/Feature Notes
-- [ ] Keymap parameter targeting: 
-  - requires a big new solution!
-  - a new preparation: the Target Prep, or actually a MidiFilter prep
-  - Keymap => Preparation, we get the default behavior, as always
-  - Keymap => MidiFilter => Preparation (let's say Synchronic for this example)
-  - in Target, we have 
-    - all non-default behaviors (Pattern Sync, Beat Sync, etc...) that were in the old Keymap 
-    - along with the NoteOn/Off/Both options for each that were in the old Synchronic
-    - for every behavior that is checked on, we repack the MIDI messages with a new channel, assigned to that behavior, and filter according to the NoteOn/Off/Both settings
-      - so, if Pattern Sync is checked on, with Note-Off as the mode, the MIDI messages will be unpacked, NoteOn messages discarded, and the NoteOn messages reassigned to channel 2 (for Pattern Sync, 3 for Beat Sync, etc..), and the messages are repacked and sent out
-      - if there are multiple behaviors checked on, then there will be multiple MIDI messages for each original MIDI message, one on each behavior channel
-  - this is essentially a new class of MIDI filter prep, which could be useful going forward
-    - all/some of the filtering in the old Keymap might now be here (invert noteOn/Off, for example)
-      - but for now, let's just focus on the Target functionality
-    - MidiFilter.... Filter (F). We're using V for VST for audio plugin and F is available
-  - ACTUALLY, let's have:
-    - MidiTarget: which does the targeting by MIDI channel described above, and can only be connected to a particular prep type
-      - prep type can be determined at connection, and the color of MidiTarget set along with the available targets in that prep
-      - Target icon!
-    - MidiFilter: for doing the normal midi filter stuff (invert NoteOn, toggle keys, ignore noteOff etc...)
-      - can be connected to any prep type, and multiples
-    - MidiHarmonize: the big harmonizer from the old Keymap
 - [ ] in Keymap, include: key selection, velocity min/max, velocity curving
+  - move harmonizer stuff to new MidiHarmonize, based on MidiFilter
 - [ ] control-click menu is completely unmanageable right now with all the plugins there...
 - [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
 - [ ] we'll need to be able to override the default ranges of params, when a user types in a value outside the default range. 

@@ -11,10 +11,10 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 
-class BlendronicParametersView : public SynthSection
+class BlendronicParametersView : public SynthSection, public juce::Timer
 {
 public:
-    BlendronicParametersView (chowdsp::PluginState& pluginState, BlendronicParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection ("")
+    BlendronicParametersView (chowdsp::PluginState& pluginState, BlendronicParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), bparams_(params)
     {
         // the name that will appear in the UI as the name of the section
         setName ("blendronic");
@@ -101,9 +101,12 @@ public:
         smoothingTimesSlider->drawSliders(juce::dontSendNotification);
         feedbackCoeffsSlider->drawSliders(juce::dontSendNotification);
 
-    //    setSkinOverride(Skin::kBlendronic);
+        // for updating the current sliders in multisliders
+        startTimer(50);
 
     }
+
+    void timerCallback() override;
 
     void paintBackground (juce::Graphics& g) override
     {
@@ -113,21 +116,10 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
 
-//        for (auto& slider : _sliders)
-//        {
-//            drawLabelForComponent (g, slider->getName(), slider.get());
-//        }
-
         paintChildrenBackgrounds (g);
-
-        // g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f));
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
-
-    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
-//    std::vector<std::unique_ptr<SynthSlider>> _sliders;
-//    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
     std::unique_ptr<OpenGL_MultiSlider> beatLengthsSlider;
     std::unique_ptr<OpenGL_MultiSlider> delayLengthsSlider;
@@ -138,6 +130,8 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
     std::shared_ptr<PeakMeterSection> inLevelMeter;
+
+    BlendronicParams& bparams_;
 
     void resized() override;
 };

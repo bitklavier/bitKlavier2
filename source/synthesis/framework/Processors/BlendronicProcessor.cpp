@@ -366,6 +366,12 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         tick(outL++, outR++);
     }
 
+    // update current slider val for UI
+    state.params.beatLengths_current.store(beatIndex);
+    state.params.delayLengths_current.store(delayIndex);
+    state.params.smoothingTimes_current.store(smoothIndex);
+    state.params.feedbackCoeffs_current.store(feedbackIndex);
+
     // reset for the rest of the calls here
     numSamples = buffer.getNumSamples();
 
@@ -387,7 +393,6 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     // main level meter update
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
-
 }
 
 void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
