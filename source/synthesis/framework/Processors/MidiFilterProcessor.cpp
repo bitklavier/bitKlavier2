@@ -73,30 +73,18 @@ juce::MidiMessage MidiFilterProcessor::swapNoteOnNoteOff (juce::MidiMessage inms
     return inmsg;
 }
 
-/**
- * note sure we'll need these
- *
- * @tparam Serializer
- * @param paramHolder
- * @return
+/*
+ * for saving/loading
  */
 template <typename Serializer>
 typename Serializer::SerializedType MidiFilterParams::serialize (const MidiFilterParams& paramHolder)
 {
-    /*
-     * first, call the default serializer, which gets all the simple params
-     */
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
-
-    /*
-     * then serialize the more complex params
-     */
-
     return ser;
 }
 
 template <typename Serializer>
 void MidiFilterParams::deserialize (typename Serializer::DeserializedType deserial, MidiFilterParams& paramHolder)
 {
-
+    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
 }

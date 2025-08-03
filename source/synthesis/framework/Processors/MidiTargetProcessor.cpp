@@ -31,7 +31,7 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
          * todo: should be able to set the limits on this loop based on
          *       the connected prep and otherwise leave this.
          */
-        int startParam = BlendronicTargetNormal;
+        int startParam = BlendronicTargetPatternSync;
         int lastParam = BlendronicTargetNil;
 
         for (int i = startParam; i < lastParam; ++i)

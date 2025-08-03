@@ -243,9 +243,46 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      * MIDI Targeting Stuff First
      */
 
+//    typedef enum PreparationParameterTargetType {
+//        BlendronicTargetPatternSync = 1,
+//        BlendronicTargetBeatSync,
+//        BlendronicTargetClear,
+//        BlendronicTargetPausePlay,
+//        BlendronicTargetInput,
+//        BlendronicTargetOutput,
+//        BlendronicTargetNil
+//    } PreparationParameterTargetType;
+
     for (auto mi : midiMessages)
     {
         auto message = mi.getMessage();
+        switch(message.getChannel() + (BlendronicTargetPatternSync - 1))
+        {
+            case BlendronicTargetPatternSync:
+                DBG("BlendronicTargetPatternSync target");
+                break;
+
+            case BlendronicTargetBeatSync:
+                DBG("BlendronicTargetBeatSync target");
+                break;
+
+            case BlendronicTargetClear:
+                DBG("BlendronicTargetClear target");
+                break;
+
+            case BlendronicTargetPausePlay:
+                DBG("BlendronicTargetPausePlay target");
+                break;
+
+            case BlendronicTargetInput:
+                DBG("BlendronicTargetInput target");
+                break;
+
+            case BlendronicTargetOutput:
+                DBG("BlendronicTargetOutput target");
+                break;
+        }
+
         DBG("BlendronicProcessor::processBlock MIDI message received on channel " + juce::String(message.getChannel()));
     }
 

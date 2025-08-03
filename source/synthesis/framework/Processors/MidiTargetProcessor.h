@@ -44,23 +44,19 @@ struct MidiTargetParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the MidiTarget Processor
     MidiTargetParams() : chowdsp::ParamHolder ("miditarget")
     {
-        add (blendronicTargetNormal,
+        add (
             blendronicTargetPatternSync,
             blendronicTargetBeatSync,
             blendronicTargetClear,
             blendronicTargetPausePlay,
             blendronicTargetInput,
             blendronicTargetOutput,
-            blendronicTargetNormal_noteMode,
             blendronicTargetPatternSync_noteMode,
             blendronicTargetBeatSync_noteMode,
             blendronicTargetClear_noteMode,
             blendronicTargetPausePlay_noteMode,
             blendronicTargetInput_noteMode,
             blendronicTargetOutput_noteMode);
-
-        targetMapper[BlendronicTargetNormal]            = blendronicTargetNormal.get();
-        noteModeMapper[BlendronicTargetNormal]          = blendronicTargetNormal_noteMode.get();
 
         targetMapper[BlendronicTargetPatternSync]       = blendronicTargetPatternSync.get();
         noteModeMapper[BlendronicTargetPatternSync]     = blendronicTargetPatternSync_noteMode.get();
@@ -84,12 +80,6 @@ struct MidiTargetParams : chowdsp::ParamHolder
          * add additional params for other preps/targets here and below
          */
     }
-
-    chowdsp::BoolParameter::Ptr blendronicTargetNormal {
-        juce::ParameterID { "bTargetNormal", 100},
-        "Normal",
-        false
-    };
 
     chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
         juce::ParameterID { "bTargetPatternSync", 100},
@@ -125,13 +115,6 @@ struct MidiTargetParams : chowdsp::ParamHolder
         juce::ParameterID { "bTargetOutput", 100},
         "Open/Close Output",
         false
-    };
-
-    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetNormal_noteMode {
-        juce::ParameterID{"bTargetNormal_noteMode", 100},
-        "Note Mode",
-        TriggerType::_NoteOn,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetPatternSync_noteMode {

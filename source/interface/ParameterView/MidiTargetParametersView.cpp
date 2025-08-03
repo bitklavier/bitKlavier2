@@ -54,12 +54,12 @@ void MidiTargetParametersView::resized()
     blendronicColumn.reduce(smallpadding, smallpadding);
     blendronicButtonsColumn.reduce(smallpadding, smallpadding);
 
-    for(int i = BlendronicTargetNormal; i<BlendronicTargetNil; i++)
+    for(int i = BlendronicTargetPatternSync; i<BlendronicTargetNil; i++)
     {
-        _paramToggles[i - BlendronicTargetNormal]->setBounds(blendronicButtonsColumn.removeFromTop(comboboxheight));
+        _paramToggles[i - BlendronicTargetPatternSync]->setBounds(blendronicButtonsColumn.removeFromTop(comboboxheight));
         blendronicButtonsColumn.removeFromTop(smallpadding);
 
-        _noteModeMenus[i - BlendronicTargetNormal]->setBounds(blendronicColumn.removeFromTop(comboboxheight));
+        _noteModeMenus[i - BlendronicTargetPatternSync]->setBounds(blendronicColumn.removeFromTop(comboboxheight));
         blendronicColumn.removeFromTop(smallpadding);
     }
 

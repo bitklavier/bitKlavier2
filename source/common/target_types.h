@@ -16,8 +16,7 @@
  *          or some such
  */
 typedef enum PreparationParameterTargetType {
-    BlendronicTargetNormal = 1,
-    BlendronicTargetPatternSync,
+    BlendronicTargetPatternSync = 1,
     BlendronicTargetBeatSync,
     BlendronicTargetClear,
     BlendronicTargetPausePlay,
