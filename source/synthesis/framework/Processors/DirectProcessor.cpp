@@ -6,6 +6,7 @@
 #include "Synthesiser/Sample.h"
 #include "common.h"
 #include "synth_base.h"
+
 DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
                                                                                   mainSynth (new BKSynthesiser (state.params.env, state.params.gainParam)),
                                                                                   hammerSynth (new BKSynthesiser (state.params.env, state.params.hammerParam)),
@@ -31,11 +32,31 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     pedalSynth->isPedalSynth (true);
 
     /*
-     * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
-     *      from a modification preparation
-     *      modulations like this come on an audio channel
-     *      this is on a separate bus from the regular audio graph that carries audio between preparations
+     * modulations and state changes
      */
+    setupModulationMappings();
+
+    state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+
+    //add state change params here; this will add this to the set of params that are exposed to the state change mod system
+    // not needed for audio-rate modulatable params
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose",
+        &(state.params.transpose.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max",
+        &(state.params.velocityMinMax.stateChanges)));
+}
+
+/**
+ * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
+ *      from a modification preparation
+ *      modulations like this come on an audio channel
+ *      this is on a separate bus from the regular audio graph that carries audio between preparations
+ */
+void DirectProcessor::setupModulationMappings()
+{
     auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
     if (!mod_params.isValid()) {
         int mod = 0;
@@ -44,13 +65,13 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         {
             juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
             juce::String name = std::visit([](auto* p) -> juce::String
-        {
-            return p->paramID; // Works if all types have getParamID()
-        }, param);
+                {
+                    return p->paramID; // Works if all types have getParamID()
+                }, param);
             const auto& a  = std::visit([](auto* p) -> juce::NormalisableRange<float>
-        {
-            return p->getNormalisableRange(); // Works if all types have getParamID()
-        }, param);
+                {
+                    return p->getNormalisableRange(); // Works if all types have getParamID()
+                }, param);
             modChan.setProperty (IDs::parameter, name, nullptr);
             modChan.setProperty (IDs::channel, mod, nullptr);
             modChan.setProperty(IDs::start, a.start,nullptr);
@@ -61,17 +82,6 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
             mod++;
         }
     }
-
-    state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    //add state change params here; this will add this to the set of params that are exposed to the state change mod system
-    // not needed for audio-rate modulatable params
-    parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose",
-        &(state.params.transpose.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max",
-        &(state.params.velocityMinMax.stateChanges)));
 }
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -137,6 +147,31 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
     releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
 }
 
+void DirectProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
+{
+    // this for debugging
+    //    auto mod_Bus = getBus(true,1);
+    //    auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
+    //    int i = index;
+    //    // melatonin::printSparkline(buffer);
+    //    for(auto param: state.params.modulatableParams){
+    //        // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
+    //        // DBG(a.getProperty(IDs::parameter).toString());
+    //        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
+    //    }
+
+    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
+
+    int numInputChannels = modBus.getNumChannels();
+    for (int channel = 0; channel < numInputChannels; ++channel) {
+        const float* in = modBus.getReadPointer(channel);
+        std::visit([in](auto* p)->void
+            {
+                p->applyMonophonicModulation(*in);
+            },  state.params.modulatableParams[channel]);
+    }
+}
+
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
@@ -158,30 +193,10 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * modulation stuff
      */
 
-    // this for debugging
-//    auto mod_Bus = getBus(true,1);
-//    auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
-//    int i = index;
-//    // melatonin::printSparkline(buffer);
-//    for(auto param: state.params.modulatableParams){
-//        // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
-//        // DBG(a.getProperty(IDs::parameter).toString());
-//        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
-//    }
-
     // first, the continuous modulations (simple knobs/sliders...)
-    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
+    processContinuousModulations(buffer);
 
-    int numInputChannels = modBus.getNumChannels();
-    for (int channel = 0; channel < numInputChannels; ++channel) {
-        const float* in = modBus.getReadPointer(channel);
-        std::visit([in](auto* p)->void
-        {
-            p->applyMonophonicModulation(*in);
-        },  state.params.modulatableParams[channel]);
-    }
-
-    // then, the state-change modulations
+    // then, the state-change modulations, for more complex params
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
 

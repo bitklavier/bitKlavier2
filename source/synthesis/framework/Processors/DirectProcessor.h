@@ -27,8 +27,8 @@ struct DirectParams : chowdsp::ParamHolder
     float skewFactor = 2.0f;
 
     using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    // std::unordered_map<std::string, ParamPtrVariant> modulatableParams;
     std::vector<ParamPtrVariant> modulatableParams;
+
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
@@ -157,9 +157,14 @@ public:
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
+
+    void setupModulationMappings();
+
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
+
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
     {
@@ -190,6 +195,13 @@ public:
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
             .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+
+            /**
+             * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
+             *              for direct, we have 10:
+             *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
+             *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
+             */
             .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)

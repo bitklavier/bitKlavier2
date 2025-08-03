@@ -129,14 +129,39 @@ struct BlendronicParams : chowdsp::ParamHolder
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
 
+    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
+    std::vector<ParamPtrVariant> modulatableParams;
+
     // Adds the appropriate parameters to the Blendronic Processor
     BlendronicParams() : chowdsp::ParamHolder ("blendronic")
     {
         add (
-            updateUIState,
             outputGain,
             inputGain,
-            outputSend);
+            outputSend,
+            updateUIState);
+
+        // params that are audio-rate modulatable are added to vector of all continuously modulatable params
+        doForAllParameters ([this] (auto& param, size_t) {
+            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.push_back ( sliderParam);
+
+            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.push_back ( sliderParam);
+
+            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.push_back ( sliderParam);
+        });
+        /*
+         * note, if we want more continuous mod params, in addition to adding them above
+         * we need to adjust juce::AudioProcessor::BusesProperties blendronicBusLayout()
+         * so that:
+         *      '.withInput ("Modulation", juce::AudioChannelSet::discreteChannels (3), true)'
+         * sets dicreteChannels to the correct number
+         */
     }
 
     // primary multislider params
@@ -149,7 +174,7 @@ struct BlendronicParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr updateUIState {
         juce::ParameterID { "updateUIState", 100 },
         "updateUIState",
-        false
+        false,
     };
 
     // To adjust the gain of signals coming in to blendronic
@@ -258,6 +283,8 @@ public:
         return std::make_unique<BlendronicProcessor> (parent, v);
     }
 
+    void setupModulationMappings();
+
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
@@ -265,13 +292,19 @@ public:
     void handleMidiTargetMessages(juce::MidiBuffer& midiMessages);
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     juce::AudioProcessor::BusesProperties blendronicBusLayout()
     {
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), true)
             .withInput ("Input", juce::AudioChannelSet::stereo(), true)
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (9), true)
+
+            /**
+             * IMPORTANT: set discreteChannels here equal to the number of params you want to continuously modulate!!
+             *              for blendronic, we have three: outputGain, outputSend, inGain
+             */
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (3), true)
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false)
             .withOutput("Send",juce::AudioChannelSet::stereo(),true);
     }

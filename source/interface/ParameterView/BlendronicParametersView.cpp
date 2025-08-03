@@ -31,6 +31,9 @@ void BlendronicParametersView::resized()
     // how much vertical space will we need for all the components?
     int verticalAreaNeeded = knob_section_height * 7;
 
+    /*
+     * todo: better spacing for these...
+     */
     // how much vertical space is left, divided up so we have some buffer space between each component
     int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 5;
     if (bufferSpaceForEach < 0 ) bufferSpaceForEach = 0;
