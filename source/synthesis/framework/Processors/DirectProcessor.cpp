@@ -89,8 +89,8 @@ void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
 
     mainSynth->setCurrentPlaybackSampleRate (sampleRate);
-    gain.prepare (spec);
-    gain.setRampDurationSeconds (0.05);
+//    gain.prepare (spec);
+//    gain.setRampDurationSeconds (0.05);
 
     hammerSynth->setCurrentPlaybackSampleRate (sampleRate);
     releaseResonanceSynth->setCurrentPlaybackSampleRate (sampleRate);

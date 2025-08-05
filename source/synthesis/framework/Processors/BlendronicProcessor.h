@@ -230,8 +230,6 @@ struct BlendronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
-//        updateUIState->setParameterValue(false);
-
         beatLengths.processStateChanges();
         delayLengths.processStateChanges();
         smoothingTimes.processStateChanges();

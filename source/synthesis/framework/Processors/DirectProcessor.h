@@ -22,7 +22,7 @@
 struct DirectParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
-    float rangeStart = -60.0f;
+    float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
 
@@ -143,6 +143,11 @@ struct DirectNonParameterState : chowdsp::NonParamState
     DirectNonParameterState() {}
 };
 
+
+// ********************************************************************************************* //
+// ************************************** DirectProcessor ************************************** //
+// ********************************************************************************************* //
+
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams, DirectNonParameterState>>,
                         public juce::ValueTree::Listener
 {
@@ -207,6 +212,7 @@ public:
             .withOutput("Send",juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
     }
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
+
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
@@ -214,13 +220,17 @@ public:
      * todo: i think this is not used? remove if so
      * @param vt
      */
-    void addToVT (juce::ValueTree& vt)
-    {
-        state.params.doForAllParameters ([this, &vt] (auto& param, size_t) {
-            vt.setProperty (param.paramID, chowdsp::ParameterTypeHelpers::getValue (param), nullptr);
-        });
-    }
+//    void addToVT (juce::ValueTree& vt)
+//    {
+//        state.params.doForAllParameters ([this, &vt] (auto& param, size_t) {
+//            vt.setProperty (param.paramID, chowdsp::ParameterTypeHelpers::getValue (param), nullptr);
+//        });
+//    }
 
+    /**
+     * todo: question for Davis: is this used still? if so, what for?
+     * @param t
+     */
     void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
     {
         juce::String a = t.getProperty (IDs::mainSampleSet, "");
@@ -246,7 +256,7 @@ public:
 
 
 private:
-    chowdsp::Gain<float> gain;
+//    chowdsp::Gain<float> gain;
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
     std::unique_ptr<BKSynthesiser> mainSynth;
     std::unique_ptr<BKSynthesiser> hammerSynth;
@@ -256,13 +266,16 @@ private:
     juce::Array<float> midiNoteTranspositions;
     juce::Array<float> getMidiNoteTranspositions();
 
+    /**
+     * todo: is this used?
+     */
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
     /**
      * todo: are these used? if not, remove
      */
-    chowdsp::ScopedCallbackList adsrCallbacks;
-    chowdsp::ScopedCallbackList vtCallbacks;
+//    chowdsp::ScopedCallbackList adsrCallbacks;
+//    chowdsp::ScopedCallbackList vtCallbacks;
 
     BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
