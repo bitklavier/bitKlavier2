@@ -7,9 +7,12 @@
 #include "common.h"
 #include "synth_base.h"
 
+/**
+ * todo: change constructor ar for backwardSynth to backwardEnvParams, once we figure out how to manage multiple envParams
+ */
 SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, synchronicBusLayout()),
                                                                                           forwardsSynth (new BKSynthesiser (state.params.forwardsEnvParams, state.params.outputGain)),
-                                                                                          backwardsSynth (new BKSynthesiser (state.params.backwardsEnvParams, state.params.outputGain))
+                                                                                          backwardsSynth (new BKSynthesiser (state.params.forwardsEnvParams, state.params.outputGain))
 {
     // for testing
     bufferDebugger = new BufferDebugger();
@@ -154,7 +157,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      */
 
     // process continuous modulations (gain level sliders)
-    processContinuousModulations(buffer);
+//    processContinuousModulations(buffer);
 
     // process any mod changes to the multisliders
     state.params.processStateChanges();
@@ -194,9 +197,6 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         backwardsSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-    /**
-     * todo: perhaps all the below could be part of a preparation superclass?
-     */
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
@@ -216,4 +216,52 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
 
+}
+
+void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    /**
+     * todo: perhaps have a fadeout param, followed by a buffer clear?
+     * - these could be user settable, perhaps...
+     */
+}
+
+
+/**
+ * Serializers, for saving/loading complex params like the multisliders
+ */
+template <typename Serializer>
+typename Serializer::SerializedType SynchronicParams::serialize (const SynchronicParams& paramHolder)
+{
+    /*
+     * first, call the default serializer, which gets all the simple params
+     */
+    auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
+
+    /*
+     * then serialize the more complex params
+     */
+//    serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengths, "beat_lengths");
+//    serializeMultiSliderParam<Serializer> (ser, paramHolder.delayLengths, "delay_lengths");
+//    serializeMultiSliderParam<Serializer> (ser, paramHolder.smoothingTimes, "smoothing_times");
+//    serializeMultiSliderParam<Serializer> (ser, paramHolder.feedbackCoeffs, "feedback_coeffs");
+
+    return ser;
+}
+
+template <typename Serializer>
+void SynchronicParams::deserialize (typename Serializer::DeserializedType deserial, SynchronicParams& paramHolder)
+{
+    /*
+     * call the default deserializer first, for the simple params
+     */
+    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
+
+    /*
+     * then the more complex params
+     */
+//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengths, "beat_lengths");
+//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.delayLengths, "delay_lengths");
+//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.smoothingTimes, "smoothing_times");
+//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.feedbackCoeffs, "feedback_coeffs");
 }

@@ -40,8 +40,9 @@ struct SynchronicParams : chowdsp::ParamHolder
     {
         add (outputSendGain,
             outputGain,
-            backwardsEnvParams,
-            forwardsEnvParams);
+//            backwardsEnvParams,
+            forwardsEnvParams,
+            updateUIState);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
@@ -94,6 +95,13 @@ struct SynchronicParams : chowdsp::ParamHolder
         juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
         true
+    };
+
+    // used internally to notify UI to redraw sliders
+    chowdsp::BoolParameter::Ptr updateUIState {
+        juce::ParameterID { "updateUIState", 100 },
+        "updateUIState",
+        false,
     };
 
     /*
@@ -155,8 +163,11 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
 
+    /**
+     * todo: figure out how to deal with the multiple ADSRs that we use with the Synchronic patterns...
+     */
     EnvParams forwardsEnvParams;    // for the forward playing Synchronic pulses
-    EnvParams backwardsEnvParams;   // for the reverse playing Synchronic pulses (sustain length multipliers < 0)
+//    EnvParams backwardsEnvParams;   // for the reverse playing Synchronic pulses (sustain length multipliers < 0)
 
 
 };

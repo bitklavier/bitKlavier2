@@ -19,5 +19,6 @@
 #include "Preparations/MidiFilterPreparation.h"
 #include "Preparations/MidiTargetPreparation.h"
 #include "Preparations/PianoSwitchPreparation.h"
+#include "Preparations/SynchronicPreparation.h"
 
 #endif //BITKLAVIER2_PREPARATIONS_H

@@ -5,6 +5,7 @@
 #include "PreparationList.h"
 #include "DirectProcessor.h"
 #include "BlendronicProcessor.h"
+#include "SynchronicProcessor.h"
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 #include "ResetProcessor.h"
@@ -18,6 +19,7 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     jassert(v.hasType(IDs::PREPARATIONS));
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,bitklavier::ModulationProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning, TuningProcessor::create);

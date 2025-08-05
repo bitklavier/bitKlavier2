@@ -3,16 +3,24 @@
 /*********************************************************************************************/
 
 #include "DirectPreparation.h"
-
 #include "BKitems/BKItem.h"
 #include "DirectParametersView.h"
-#include "synth_base.h"
 #include "synth_slider.h"
 
 // Definition for the DirectPreparation constructor.  It takes three parameters: a pointer to
 // a Direct Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private DirectPreparation member proc with an initialization list.
-DirectPreparation::DirectPreparation (juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface* _synth_gui_interface) : PreparationSection (juce::String ("direct"), v, open_gl, node, *_synth_gui_interface->getUndoManager())
+DirectPreparation::DirectPreparation (
+    juce::ValueTree v,
+    OpenGlWrapper& open_gl,
+    juce::AudioProcessorGraph::NodeID node,
+    SynthGuiInterface* _synth_gui_interface) :
+                                               PreparationSection (juce::String ("direct"),
+                                                   v,
+                                                   open_gl,
+                                                   node,
+                                                   *_synth_gui_interface->getUndoManager()
+                                                   )
 
 {
     item = std::make_unique<DirectItem>(); // Initializes member variable `item` of PreparationSection class

@@ -1,19 +1,18 @@
 //
-// Created by Dan Trueman on 7/26/25.
+// Created by Dan Trueman on 8/5/25.
 //
 
-#include "BlendronicPreparation.h"
+#include "SynchronicPreparation.h"
 #include "BKitems/BKItem.h"
-#include "BlendronicParametersView.h"
+#include "SynchronicParametersView.h"
 #include "synth_slider.h"
 
-
-BlendronicPreparation::BlendronicPreparation (
+SynchronicPreparation::SynchronicPreparation (
     juce::ValueTree v,
     OpenGlWrapper& open_gl,
     juce::AudioProcessorGraph::NodeID node,
     SynthGuiInterface* _synth_gui_interface) :
-                                               PreparationSection (juce::String ("blendronic"),
+                                               PreparationSection (juce::String ("synchronic"),
                                                    v,
                                                    open_gl,
                                                    node,
@@ -21,7 +20,7 @@ BlendronicPreparation::BlendronicPreparation (
                                                    )
 
 {
-    item = std::make_unique<BlendronicItem>(); // Initializes member variable `item` of PreparationSection class
+    item = std::make_unique<SynchronicItem>(); // Initializes member variable `item` of PreparationSection class
     addOpenGlComponent (item->getImageComponent(), true); // Calls member function of SynthSection (parent class to PreparationSection)
     _open_gl.context.executeOnGLThread ([this] (juce::OpenGLContext& context) {
         item->getImageComponent()->init (_open_gl);
@@ -29,32 +28,32 @@ BlendronicPreparation::BlendronicPreparation (
         false);
 
     addAndMakeVisible (item.get());
-    setSkinOverride (Skin::kBlendronic);
+    setSkinOverride (Skin::kSynchronic);
     juce::MemoryBlock data;
 
     width = 245;
     height = 125;
 }
 
-std::unique_ptr<SynthSection> BlendronicPreparation::getPrepPopup()
+std::unique_ptr<SynthSection> SynchronicPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
-        if (auto* proc = dynamic_cast<BlendronicProcessor*> (getProcessor()))
-            return std::make_unique<BlendronicParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+        if (auto* proc = dynamic_cast<SynchronicProcessor*> (getProcessor()))
+            return std::make_unique<SynchronicParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
 
     return nullptr;
 }
 
-void BlendronicPreparation::resized()
+void SynchronicPreparation::resized()
 {
     PreparationSection::resized();
 }
 
-BlendronicPreparation::~BlendronicPreparation()
+SynchronicPreparation::~SynchronicPreparation()
 {
 }
 
-void BlendronicPreparation::paintBackground (juce::Graphics& g)
+void SynchronicPreparation::paintBackground (juce::Graphics& g)
 {
     for (auto* port : objects)
         port->redoImage();
