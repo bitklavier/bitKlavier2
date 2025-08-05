@@ -302,8 +302,22 @@ class BKSynthesiser
                  */
                 void isPedalSynth(bool mode) { pedalSynth = mode; }
 
+                /**
+                 * todo: not sure we ever use this or synthGain?
+                 * @param g
+                 */
                 void setSynthGain(float g) {
                     synthGain.setParameterValue(g);
+                }
+
+                void setTuning(TuningState* attachedTuning)
+                {
+                    tuning = attachedTuning;
+                }
+
+                void setPlaybackDirection(Direction newdir)
+                {
+                    playbackDirection = newdir;
                 }
 
                 void setBypassed(bool by) { bypassed = by;}
@@ -320,6 +334,11 @@ class BKSynthesiser
                     tuneTranspositions = tune_transpositions;
                 }
 
+                /**
+                 * todo: remove these next two after moving velocity min/max to Keymap
+                 * @param velmin
+                 * @param velmax
+                 */
                 void updateVelocityMinMax(float velmin, float velmax)
                 {
                     velocityMin = velmin;
@@ -344,11 +363,6 @@ class BKSynthesiser
                     if (velocity >= velocityMin || velocity <= velocityMax) return true;
                     else return false;
 
-                }
-
-                void setTuning(TuningState* attachedTuning)
-                {
-                    tuning = attachedTuning;
                 }
 
                 BKSynthesizerState getSynthesizerState()
@@ -478,6 +492,8 @@ private:
 
                 // becomes false when there are no voices active
                 bool someVoicesActive = true;
+
+                Direction playbackDirection = Direction::forward;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

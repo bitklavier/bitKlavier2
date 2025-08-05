@@ -255,12 +255,15 @@ public:
     bool appliesToNote (int midiNoteNumber)  {
         return midiNotes[midiNoteNumber];
     }
+
     bool appliesToChannel (int midiNoteNumber)  {
         return true;
     }
+
     bool appliesToVelocity (int midiNoteVelocity) {
         return midiVelocities[midiNoteVelocity];
     }
+
     void setSample (std::unique_ptr<Sample<T>> value)
     {
         sample = std::move (value);
@@ -329,6 +332,7 @@ public:
     //int layerId;
     int rootMidiNote;
     int transpose;
+
 private:
     std::shared_ptr<Sample<T>> sample;
     double centreFrequencyInHz { 440.0 };
@@ -624,6 +628,12 @@ public:
 
     }
 
+    void setDirection(Direction newdir)
+    {
+        currentDirection = newdir;
+    }
+
+
     virtual void stopNote (float velocity, bool allowTailOff)
     {
         if (allowTailOff)
@@ -789,11 +799,6 @@ private:
         currentSamplePos = 0.0;
     }
 
-    enum class Direction
-    {
-        forward,
-        backward
-    };
 
     [[nodiscard]] std::tuple<double, Direction> getNextState(double inc,
                                                double begin,

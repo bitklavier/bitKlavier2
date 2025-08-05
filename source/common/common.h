@@ -108,8 +108,13 @@ namespace bitklavier {
         BKPreparationTypeNil,
     } BKPreparationType;
 
-} // namespace vital
+} // namespace bitKlavier
 
+enum class Direction
+{
+    forward,
+    backward
+};
 
 
 #endif //BITKLAVIER2_COMMON_H

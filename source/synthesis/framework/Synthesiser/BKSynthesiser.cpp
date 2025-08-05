@@ -1,4 +1,5 @@
 //
+//
 // Created by Davis Polito on 8/12/24.
 //
 
@@ -377,9 +378,16 @@ void BKSynthesiser::noteOn (const int midiChannel,
             }
             else closestKey = std::round(midiNoteNumber + transp);
             //if (sound->appliesToNote (std::round(midiNoteNumber + transp)) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
+            /**
+             * set sound playback direction here, based on mode set for this BKSynth
+             */
             if (sound->appliesToNote ( closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
-                startVoice (findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes),
+                BKSamplerVoice* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
+                //set currentDirection here
+                newvoice->setDirection(playbackDirection);
+//                startVoice (findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes),
+                startVoice (newvoice,
                     sound,
                     midiChannel,
                     midiNoteNumber,
