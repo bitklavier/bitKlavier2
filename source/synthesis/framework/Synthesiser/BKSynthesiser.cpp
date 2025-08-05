@@ -346,6 +346,9 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * check first to see if velocity is within velocity min/max range, and return if not
      */
+     /**
+      * todo: remove this when we move velocity min/max to Keymap?
+      */
     if (!checkVelocityRange(velocity)) return;
 
     /**

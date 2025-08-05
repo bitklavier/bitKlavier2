@@ -459,15 +459,13 @@ static double ftom(const double f, double a440 )
 
 /**
  * struct to put information about the last state of the synth
- * at the end of each block. useful for UI, and also needed
- * for Nostalgic, Synchronic, etc... to keep track of which
- * notes are on and so on
+ * at the end of each block. useful for UI...
+ * todo: remove lastVelocity if not needed after moving velocity min/max to Keymap
  */
 struct BKSynthesizerState
 {
     int lastVelocity;
     double lastPitch;
-    std::map<int, float> currentNotesFrequencies; //notenumber, frequency
 };
 
 /*
