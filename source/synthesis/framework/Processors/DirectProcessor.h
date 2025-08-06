@@ -29,6 +29,8 @@ struct DirectParams : chowdsp::ParamHolder
     using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
     std::vector<ParamPtrVariant> modulatableParams;
 
+
+
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
     {
@@ -38,9 +40,11 @@ struct DirectParams : chowdsp::ParamHolder
             pedalParam,
             outputSendParam,
             outputGain,
-            env,
+            *env,
             transpose,
             velocityMinMax);
+
+        env = std::make_unique<EnvParams>("ENV");
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
@@ -114,7 +118,7 @@ struct DirectParams : chowdsp::ParamHolder
     };
 
     // ADSR params
-    EnvParams env;
+    std::unique_ptr<EnvParams> env;
 
     // Transposition slider (holds up to 12 transposition values)
     TransposeParams transpose;

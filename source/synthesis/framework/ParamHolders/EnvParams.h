@@ -1,6 +1,7 @@
 //
 // Created by Dan Trueman on 11/5/24.
 //
+#pragma once
 
 #ifndef BITKLAVIER2_ENVPARAMS_H
 #define BITKLAVIER2_ENVPARAMS_H
@@ -9,7 +10,7 @@
 
 struct EnvParams : public chowdsp::ParamHolder
 {
-    EnvParams() : chowdsp::ParamHolder("ENV")
+    EnvParams(juce::String name) : chowdsp::ParamHolder(name)
     {
         add(decayParam,
             sustainParam,

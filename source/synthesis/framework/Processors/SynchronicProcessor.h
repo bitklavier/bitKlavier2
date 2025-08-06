@@ -17,6 +17,7 @@
 #include "VelocityMinMaxParams.h"
 #include "buffer_debugger.h"
 #include "utils.h"
+#include "MultiSliderState.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
@@ -26,11 +27,13 @@
 
 struct SynchronicParams : chowdsp::ParamHolder
 {
-
     // gain slider params, for all gain-type knobs
     float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
+
+    // we're going to hard-wire the number of envelopes that can be sequenced to 12, like the original bK
+    static constexpr int numEnvelopes = 12;
 
     using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
     std::vector<ParamPtrVariant> modulatableParams;
@@ -38,46 +41,57 @@ struct SynchronicParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Synchronic Processor
     SynchronicParams()
     {
-        add (outputSendGain,
+        add (
+            skipFirst,
+            outputSendGain,
             outputGain,
-//            backwardsEnvParams,
-            forwardsEnvParams,
             updateUIState);
+
+        // create and add the parameter holders for the 12 envelopes
+        for (int i = 0; i < numEnvelopes; ++i)
+        {
+            // 1. Create a unique name for each instance.
+            // We'll use a string and the current index.
+            juce::String uniqueName = "env" + juce::String(i + 1);
+
+            // 2. Instantiate the EnvParams and store it in the unique_ptr array.
+            envs[i] = std::make_unique<EnvParams>(uniqueName);
+
+            // 3. Add the instantiated EnvParams to the ParamHolder.
+            // The add() method is overloaded to accept a reference to a ParamHolder.
+            add(*envs[i]);
+        }
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+                    modulatableParams.push_back (sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+                    modulatableParams.push_back (sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+                    modulatableParams.push_back (sliderParam);
         });
     }
 
-//    // Velocity param
-//    chowdsp::FloatParameter::Ptr velocityParam {
-//            juce::ParameterID { "Velocity", 100 },
-//            "Velocity",
-//            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f), // FIX
-//            1000.0f,
-//            &chowdsp::ParamUtils::floatValToString,
-//            &chowdsp::ParamUtils::stringToFloatVal
-//    };
-//
-//    // Attack param
-//    chowdsp::TimeMsParameter::Ptr attackParam {
-//            juce::ParameterID { "attack", 100 },
-//            "attack",
-//            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f),
-//            3.5f,
-//    };
+    // primary multislider params
+    MultiSliderState transpositions;
+    MultiSliderState accents;
+    MultiSliderState sustainLengthMultipliers;
+    MultiSliderState beatLengthMultipliers;
+
+    std::array<std::unique_ptr<EnvParams>, numEnvelopes> envs;
+
+    chowdsp::BoolParameter::Ptr skipFirst {
+        juce::ParameterID { "skipFirst", 100 },
+        "skip first",
+        false
+    };
 
     // Gain for output send (for blendronic, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSendGain {
@@ -103,6 +117,41 @@ struct SynchronicParams : chowdsp::ParamHolder
         "updateUIState",
         false,
     };
+
+    chowdsp::FloatParameter::Ptr numPulses {
+        juce::ParameterID { "numPulses", 100 },
+        "num pulses",
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 100.f, 50.f),
+        20.f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr numLayers {
+        juce::ParameterID { "numLayers", 100 },
+        "num layers",
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f),
+        1.f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::FloatParameter::Ptr clusterThickness {
+        juce::ParameterID { "clusterThickness", 100 },
+        "cluster thickness",
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 20.f, 10.f),
+        8.f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::TimeMsParameter::Ptr clusterThreshold {
+        juce::ParameterID { "clusterThreshold", 100 },
+        "cluster threshold",
+        chowdsp::ParamUtils::createNormalisableRange (20.0f, 2000.f, 1000.f),
+        500.f
+    };
+
 
     /*
      * serializers are used for more complex params, called on save and load
@@ -130,27 +179,27 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
-//
-//        beatLengths.processStateChanges();
-//        delayLengths.processStateChanges();
-//        smoothingTimes.processStateChanges();
-//        feedbackCoeffs.processStateChanges();
-//
-//        // signal the UI to redraw the sliders
-//        if( beatLengths.updateUI == true || delayLengths.updateUI == true || smoothingTimes.updateUI == true || feedbackCoeffs.updateUI == true)
-//        {
-//            DBG("updateUIState for Multisliders");
-//
-//            /*
-//             * need to actually change the value for the listener to get the message
-//             * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
-//             * so we switch it everything we one of the sliders gets modded.
-//             */
-//            if(updateUIState->get())
-//                updateUIState->setValueNotifyingHost(false);
-//            else
-//                updateUIState->setValueNotifyingHost(true);
-//        }
+
+        transpositions.processStateChanges();
+        accents.processStateChanges();
+        sustainLengthMultipliers.processStateChanges();
+        beatLengthMultipliers.processStateChanges();
+
+        // signal the UI to redraw the sliders
+        if( transpositions.updateUI == true || accents.updateUI == true || sustainLengthMultipliers.updateUI == true || beatLengthMultipliers.updateUI == true)
+        {
+            DBG("updateUIState for Multisliders");
+
+            /*
+             * need to actually change the value for the listener to get the message
+             * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
+             * so we switch it everything we one of the sliders gets modded.
+             */
+            if(updateUIState->get())
+                updateUIState->setValueNotifyingHost(false);
+            else
+                updateUIState->setValueNotifyingHost(true);
+        }
     }
 
     /*
@@ -165,10 +214,8 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     /**
      * todo: figure out how to deal with the multiple ADSRs that we use with the Synchronic patterns...
+     * perhaps we should have an array of 12 of them?
      */
-    EnvParams forwardsEnvParams;    // for the forward playing Synchronic pulses
-//    EnvParams backwardsEnvParams;   // for the reverse playing Synchronic pulses (sustain length multipliers < 0)
-
 
 };
 

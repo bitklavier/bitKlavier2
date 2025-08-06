@@ -11,8 +11,8 @@
  * todo: change constructor ar for backwardSynth to backwardEnvParams, once we figure out how to manage multiple envParams
  */
 SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, synchronicBusLayout()),
-                                                                                          forwardsSynth (new BKSynthesiser (state.params.forwardsEnvParams, state.params.outputGain)),
-                                                                                          backwardsSynth (new BKSynthesiser (state.params.forwardsEnvParams, state.params.outputGain))
+                                                                                          forwardsSynth (new BKSynthesiser (*state.params.envs[0], state.params.outputGain)),
+                                                                                          backwardsSynth (new BKSynthesiser (*state.params.envs[0], state.params.outputGain))
 {
     // for testing
     bufferDebugger = new BufferDebugger();
@@ -241,10 +241,10 @@ typename Serializer::SerializedType SynchronicParams::serialize (const Synchroni
     /*
      * then serialize the more complex params
      */
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengths, "beat_lengths");
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.delayLengths, "delay_lengths");
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.smoothingTimes, "smoothing_times");
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.feedbackCoeffs, "feedback_coeffs");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.transpositions, "transpositions_");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.accents, "accents_");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
 
     return ser;
 }
@@ -260,8 +260,8 @@ void SynchronicParams::deserialize (typename Serializer::DeserializedType deseri
     /*
      * then the more complex params
      */
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengths, "beat_lengths");
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.delayLengths, "delay_lengths");
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.smoothingTimes, "smoothing_times");
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.feedbackCoeffs, "feedback_coeffs");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions_");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
 }
