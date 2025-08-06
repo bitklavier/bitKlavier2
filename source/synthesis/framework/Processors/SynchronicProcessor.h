@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "ClusterMinMaxParams.h"
 #include "EnvParams.h"
 #include "Identifiers.h"
+#include "MultiSliderState.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "Synthesiser/Sample.h"
@@ -17,13 +19,13 @@
 #include "VelocityMinMaxParams.h"
 #include "buffer_debugger.h"
 #include "utils.h"
-#include "MultiSliderState.h"
 #include <PreparationStateImpl.h>
+#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
+#include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
-#include <chowdsp_plugin_state/chowdsp_plugin_state.h>
+#include <utility>
 
 struct SynchronicParams : chowdsp::ParamHolder
 {
@@ -42,25 +44,11 @@ struct SynchronicParams : chowdsp::ParamHolder
     SynchronicParams()
     {
         add (
+            clusterMinMaxParams,
             skipFirst,
             outputSendGain,
             outputGain,
             updateUIState);
-
-        // create and add the parameter holders for the 12 envelopes
-        for (int i = 0; i < numEnvelopes; ++i)
-        {
-            // 1. Create a unique name for each instance.
-            // We'll use a string and the current index.
-            juce::String uniqueName = "env" + juce::String(i + 1);
-
-            // 2. Instantiate the EnvParams and store it in the unique_ptr array.
-            envs[i] = std::make_unique<EnvParams>(uniqueName);
-
-            // 3. Add the instantiated EnvParams to the ParamHolder.
-            // The add() method is overloaded to accept a reference to a ParamHolder.
-            add(*envs[i]);
-        }
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
@@ -85,7 +73,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     MultiSliderState sustainLengthMultipliers;
     MultiSliderState beatLengthMultipliers;
 
-    std::array<std::unique_ptr<EnvParams>, numEnvelopes> envs;
+    EnvParams env;
+    ClusterMinMaxParams clusterMinMaxParams;
 
     chowdsp::BoolParameter::Ptr skipFirst {
         juce::ParameterID { "skipFirst", 100 },
@@ -151,6 +140,8 @@ struct SynchronicParams : chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (20.0f, 2000.f, 1000.f),
         500.f
     };
+
+
 
 
     /*

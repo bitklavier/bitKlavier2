@@ -10,7 +10,7 @@
 
 struct EnvParams : public chowdsp::ParamHolder
 {
-    EnvParams(juce::String name) : chowdsp::ParamHolder(name)
+    EnvParams() : chowdsp::ParamHolder("ENV")
     {
         add(decayParam,
             sustainParam,
@@ -28,7 +28,7 @@ struct EnvParams : public chowdsp::ParamHolder
         juce::ParameterID { "delay", 100 },
         "Delay",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1000.0f, 500.0f),
-        0.0f
+        0.0f, true
     };
 
     // Attack param
@@ -102,6 +102,5 @@ struct EnvParams : public chowdsp::ParamHolder
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
     };
-
 };
 #endif //BITKLAVIER2_ENVPARAMS_H

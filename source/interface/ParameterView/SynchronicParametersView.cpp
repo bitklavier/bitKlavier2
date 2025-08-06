@@ -55,6 +55,8 @@ void SynchronicParametersView::resized()
 
     bounds.removeFromTop(bufferSpaceForEach);
 
+    clusterMinMaxSlider->setBounds(bounds.removeFromTop(knob_section_height));
+
 //    beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
 //    bounds.removeFromTop(bufferSpaceForEach);
 //    delayLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));

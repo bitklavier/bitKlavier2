@@ -11,8 +11,8 @@
  * todo: change constructor ar for backwardSynth to backwardEnvParams, once we figure out how to manage multiple envParams
  */
 SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, synchronicBusLayout()),
-                                                                                          forwardsSynth (new BKSynthesiser (*state.params.envs[0], state.params.outputGain)),
-                                                                                          backwardsSynth (new BKSynthesiser (*state.params.envs[0], state.params.outputGain))
+                                                                                          forwardsSynth (new BKSynthesiser (state.params.env, state.params.outputGain)),
+                                                                                          backwardsSynth (new BKSynthesiser (state.params.env, state.params.outputGain))
 {
     // for testing
     bufferDebugger = new BufferDebugger();
@@ -48,6 +48,11 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
 //    parent.getStateBank().addParam (std::make_pair<std::string,
 //        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max",
 //        &(state.params.velocityMinMax.stateChanges)));
+
+    state.params.clusterMinMaxParams.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "cluster_min_max",
+        &(state.params.clusterMinMaxParams.stateChanges)));
 }
 
 /**
