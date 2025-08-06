@@ -2,24 +2,24 @@
 // Created by Dan Trueman on 8/6/25.
 //
 
-#ifndef BITKLAVIER0_CLUSTEROPENGL_MIINMAXSLIDER_H
-#define BITKLAVIER0_CLUSTEROPENGL_MIINMAXSLIDER_H
+#ifndef BITKLAVIER0_OPENGL_HOLDTIMEMINMAXSLIDER_H
+#define BITKLAVIER0_OPENGL_HOLDTIMEMINMAXSLIDER_H
 
 #include "../BKComponents/BKSliders.h"
-#include "ClusterMinMaxParams.h"
+#include "HoldTimeMinMaxParams.h"
 #include "synth_slider.h"
 #include "valuetree_utils/VariantConverters.h"
 #include "juce_data_structures/juce_data_structures.h"
 
-class OpenGL_ClusterMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>, BKRangeSlider::Listener {
+class OpenGL_HoldTimeMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>, BKRangeSlider::Listener {
 public:
-    OpenGL_ClusterMinMaxSlider(ClusterMinMaxParams *_params,
+    OpenGL_HoldTimeMinMaxSlider(HoldTimeMinMaxParams *_params,
         chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKRangeSlider>(
-                                                      "Accepted Cluster Range", // slider name
-                                                      1.f, // min
-                                                      12.f, // max
-                                                      1.f, // default min
-                                                      12.f, // default max
+                                                      "Accepted Hold Time Range", // slider name
+                                                      0.f, // min
+                                                      12000.f, // max
+                                                      0.f, // default min
+                                                      12000.f, // default max
                                                       1 ,//increment
                                                       _params->stateChanges.defaultState
                                                       ),
@@ -32,7 +32,9 @@ public:
         isModulated_ = true;
         addMyListener(this);
 
-        rangeSliderBorder.setText("Cluster Min/Max");
+        rangeSliderBorder.setText("Hold Time");
+        invisibleSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
+
 
         /**
          * these SliderAttachments contain the listeners for each slider, and so will be notified when the slider is manipulated
@@ -61,7 +63,7 @@ public:
          * each of these will be called, and the lambda executed, when the parameters are changed anywhere in the code
          */
         sliderChangedCallback += {
-            listeners.addParameterListener(_params->clusterMinParam,
+            listeners.addParameterListener(_params->holdTimeMinParam,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this] {
                     minValueTF.setText(juce::String(minSlider.getValue()),
@@ -73,7 +75,7 @@ public:
                     redoImage();
                 }
                 ),
-            listeners.addParameterListener(_params->clusterMaxParam,
+            listeners.addParameterListener(_params->holdTimeMaxParam,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this] {
                     maxValueTF.setText(juce::String(maxSlider.getValue()),
@@ -93,10 +95,10 @@ public:
              * when the param changes.
              * also, since this is not a slider that the user touches, we don't need a SliderAttachment
              */
-            listeners.addParameterListener(_params->lastClusterParam,
+            listeners.addParameterListener(_params->lastHoldTimeParam,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this] {
-                    setDisplayValue(this->params->lastClusterParam->getCurrentValue());
+                    setDisplayValue(this->params->lastHoldTimeParam->getCurrentValue());
                     redoImage();
                 }
                 )
@@ -146,8 +148,8 @@ public:
         mouseInteraction = false;
     }
 
-    OpenGL_ClusterMinMaxSlider *clone() {
-        return new OpenGL_ClusterMinMaxSlider();
+    OpenGL_HoldTimeMinMaxSlider *clone() {
+        return new OpenGL_HoldTimeMinMaxSlider();
     }
 
     void BKRangeSliderValueChanged(juce::String name, double min, double max) override
@@ -159,13 +161,13 @@ public:
             return;
 
         if (isModulation_) {
-            modulationState.setProperty("clustermin", min, nullptr);
-            modulationState.setProperty("clustermax", max, nullptr);
+            modulationState.setProperty("holdtimemin", min, nullptr);
+            modulationState.setProperty("holdtimemax", max, nullptr);
         }
 
         else if (isModulated_) {
-            defaultState.setProperty("clustermin", min, nullptr);
-            defaultState.setProperty("clustermax", max, nullptr);
+            defaultState.setProperty("holdtimemin", min, nullptr);
+            defaultState.setProperty("holdtimemax", max, nullptr);
         }
     }
 
@@ -186,24 +188,24 @@ public:
      */
     void syncToValueTree() override
     {
-        auto minval = modulationState.getProperty("clustermin");
+        auto minval = modulationState.getProperty("holdtimemin");
         setMinValue(minval, juce::sendNotification);
 
-        auto maxval = modulationState.getProperty("clustermax");
+        auto maxval = modulationState.getProperty("holdtimemax");
         setMaxValue(maxval, juce::sendNotification);
     }
 
-    ClusterMinMaxParams *params;
+    HoldTimeMinMaxParams *params;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
 
 private :
-    OpenGL_ClusterMinMaxSlider() : OpenGlAutoImageComponent<BKRangeSlider>(
-                                        "ClusterRange", // slider name
-                                        1, // min
-                                        12, // max
-                                        1, // default min
-                                        12, // default max
-                                        1, juce::ValueTree{}) // increment
+    OpenGL_HoldTimeMinMaxSlider() : OpenGlAutoImageComponent<BKRangeSlider>(
+                                       "HoldTimeRange", // slider name
+                                       0, // min
+                                       12000, // max
+                                       0, // default min
+                                       12000, // default max
+                                       1, juce::ValueTree{}) // increment
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -216,4 +218,4 @@ private :
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
-#endif //BITKLAVIER0_OPENGL_CLUSTERMIINMAXSLIDER_H
+#endif //BITKLAVIER0_OPENGL_HOLDTIMEMINMAXSLIDER_H

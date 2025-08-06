@@ -511,6 +511,7 @@ public:
     void setMinValue (double newval, juce::NotificationType notify);
     void setMaxValue (double newval, juce::NotificationType notify);
     void setIsMinAlwaysLessThanMax (bool im) { isMinAlwaysLessThanMax = im; }
+    void setSkew(float newskew);
 
     double getMinValue() { return sliderMin; }
     double getMaxValue() { return sliderMax; }
@@ -587,6 +588,8 @@ public:
     void addMyListener (Listener* listener) { listeners.add (listener); }
     void removeMyListener (Listener* listener) { listeners.remove (listener); }
 
+    juce::GroupComponent rangeSliderBorder;
+
 private:
     double sliderMin, sliderMax;
     double sliderDefaultMin, sliderDefaultMax;
@@ -602,7 +605,7 @@ private:
     BKRangeMaxSliderLookAndFeel maxSliderLookAndFeel;
     BKDisplaySliderLookAndFeel displaySliderLookAndFeel;
 
-    juce::GroupComponent rangeSliderBorder;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKRangeSlider)
 };

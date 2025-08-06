@@ -9,6 +9,7 @@
 
 #include "ClusterMinMaxParams.h"
 #include "EnvParams.h"
+#include "HoldTimeMinMaxParams.h"
 #include "Identifiers.h"
 #include "MultiSliderState.h"
 #include "PluginBase.h"
@@ -16,7 +17,6 @@
 #include "Synthesiser/Sample.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
-#include "VelocityMinMaxParams.h"
 #include "buffer_debugger.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
@@ -45,6 +45,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     {
         add (
             clusterMinMaxParams,
+            holdTimeMinMaxParams,
             skipFirst,
             outputSendGain,
             outputGain,
@@ -75,6 +76,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     EnvParams env;
     ClusterMinMaxParams clusterMinMaxParams;
+    HoldTimeMinMaxParams holdTimeMinMaxParams;
 
     chowdsp::BoolParameter::Ptr skipFirst {
         juce::ParameterID { "skipFirst", 100 },

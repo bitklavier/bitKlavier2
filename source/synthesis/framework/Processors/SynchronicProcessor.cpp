@@ -53,6 +53,11 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "cluster_min_max",
         &(state.params.clusterMinMaxParams.stateChanges)));
+
+    state.params.holdTimeMinMaxParams.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "holdtime_min_max",
+        &(state.params.holdTimeMinMaxParams.stateChanges)));
 }
 
 /**

@@ -55,7 +55,9 @@ void SynchronicParametersView::resized()
 
     bounds.removeFromTop(bufferSpaceForEach);
 
-    clusterMinMaxSlider->setBounds(bounds.removeFromTop(knob_section_height));
+    juce::Rectangle<int> minMaxSliderRect = bounds.removeFromTop(knob_section_height);
+    clusterMinMaxSlider->setBounds(minMaxSliderRect.removeFromLeft(minMaxSliderRect.getWidth() * 0.5));
+    holdTimeMinMaxSlider->setBounds(minMaxSliderRect);
 
 //    beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
 //    bounds.removeFromTop(bufferSpaceForEach);

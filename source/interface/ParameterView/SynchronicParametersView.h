@@ -6,6 +6,7 @@
 #define BITKLAVIER0_SYNCHRONICPARAMETERSVIEW_H
 
 #include "OpenGL_ClusterMinMaxSlider.h"
+#include "OpenGL_HoldTimeMinMaxSlider.h"
 #include "OpenGL_MultiSlider.h"
 #include "SynchronicProcessor.h"
 #include "peak_meter_section.h"
@@ -60,6 +61,10 @@ public:
         clusterMinMaxSlider = std::make_unique<OpenGL_ClusterMinMaxSlider>(&params.clusterMinMaxParams, listeners);
         clusterMinMaxSlider->setComponentID ("cluster_min_max");
         addStateModulatedComponent (clusterMinMaxSlider.get());
+
+        holdTimeMinMaxSlider = std::make_unique<OpenGL_HoldTimeMinMaxSlider>(&params.holdTimeMinMaxParams, listeners);
+        holdTimeMinMaxSlider->setComponentID ("holdtime_min_max");
+        addStateModulatedComponent (holdTimeMinMaxSlider.get());
 
         /**
          * todo: these level meters/sliders need titles displayed in the UI
@@ -127,6 +132,8 @@ public:
 //    std::unique_ptr<OpenGL_MultiSlider> feedbackCoeffsSlider;
 
     std::unique_ptr<OpenGL_ClusterMinMaxSlider> clusterMinMaxSlider;
+    std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> holdTimeMinMaxSlider;
+
 
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
