@@ -26,6 +26,7 @@ void SynchronicParametersView::resized()
 
     // height for most of these components
     int knob_section_height = getKnobSectionHeight();
+    int menu_section_height = findValue(Skin::kComboMenuHeight);
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
@@ -41,12 +42,45 @@ void SynchronicParametersView::resized()
     bounds.removeFromRight(smallpadding);
     sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
+    // *** done with meters placement section
+
     bounds.reduce(largepadding, largepadding);
 
-    juce::Rectangle<int> minMaxSliderRect = bounds.removeFromTop(knob_section_height);
-    minMaxSliderRect.removeFromLeft(minMaxSliderRect.getWidth() * 0.5);
-    clusterMinMaxSlider->setBounds(minMaxSliderRect.removeFromLeft(minMaxSliderRect.getWidth() * 0.5));
-    holdTimeMinMaxSlider->setBounds(minMaxSliderRect);
+    // make a left column for the menus, knobs, sliders, and ADSR
+    juce::Rectangle<int> leftColumn = bounds.removeFromLeft(bounds.getWidth() / 3);
+
+    juce::Rectangle comboBoxRow = leftColumn.removeFromTop(menu_section_height);
+    pulseTriggeredBy_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2));
+    comboBoxRow.removeFromRight(smallpadding);
+    pulseTriggeredBy_label->setBounds(comboBoxRow);
+
+    leftColumn.removeFromTop(smallpadding);
+
+    comboBoxRow = leftColumn.removeFromTop(menu_section_height);
+    determinesCluster_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2));
+    comboBoxRow.removeFromRight(smallpadding);
+    determinesCluster_label->setBounds(comboBoxRow);
+
+    // knobs
+    juce::Rectangle knobRow = leftColumn.removeFromTop(knob_section_height);
+    numPulses_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2));
+    numLayers_knob->setBounds(knobRow);
+    leftColumn.removeFromTop(smallpadding);
+
+    knobRow = leftColumn.removeFromTop(knob_section_height);
+    clusterThickness_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2));
+    clusterThreshold_knob->setBounds(knobRow);
+    leftColumn.removeFromTop(smallpadding);
+
+    envSection->setBounds(leftColumn.removeFromBottom(knob_section_height * 2));
+    leftColumn.removeFromBottom(smallpadding);
+    clusterMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
+    holdTimeMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
+
+    // *** now on to the right section for the multisliders
+
+    bounds.removeFromLeft(largepadding);
+    bounds.removeFromTop(largepadding);
 
     // how much vertical space will we need for all the components?
     int verticalAreaNeeded = knob_section_height * 1.5 * 4;
@@ -55,10 +89,8 @@ void SynchronicParametersView::resized()
      * todo: better spacing for these...
      */
     // how much vertical space is left, divided up so we have some buffer space between each component
-    int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 5;
+    int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 4;
     if (bufferSpaceForEach < 0 ) bufferSpaceForEach = 0;
-
-    bounds.removeFromTop(bufferSpaceForEach);
 
     transpositionsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
     bounds.removeFromTop(bufferSpaceForEach);

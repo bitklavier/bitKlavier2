@@ -27,6 +27,19 @@
 #include <chowdsp_sources/chowdsp_sources.h>
 #include <utility>
 
+enum SynchronicPulseTriggerType {
+    First_NoteOn = 1 << 0,
+    Any_NoteOn = 1 << 1,
+    First_NoteOff = 1 << 2,
+    Any_NoteOff = 1 << 3,
+    Last_NoteOff = 1 << 4,
+};
+
+enum SynchronicClusterTriggerType {
+    Key_On = 1 << 0,
+    Key_Off = 1 << 1,
+};
+
 struct SynchronicParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
@@ -50,7 +63,10 @@ struct SynchronicParams : chowdsp::ParamHolder
             clusterThreshold,
             clusterMinMaxParams,
             holdTimeMinMaxParams,
+            pulseTriggeredBy,
+            determinesCluster,
             skipFirst,
+            env,
             outputSendGain,
             outputGain,
             updateUIState);
@@ -80,6 +96,29 @@ struct SynchronicParams : chowdsp::ParamHolder
     MultiSliderState accents;
     MultiSliderState sustainLengthMultipliers;
     MultiSliderState beatLengthMultipliers;
+
+    /*
+     * for keeping track of the current multislider lengths
+     * being used by blendrónic, so we can update the UI accordingly
+     */
+    std::atomic<int> transpositions_current = 0;
+    std::atomic<int> accents_current = 0;
+    std::atomic<int> sustainLengthMultipliers_current = 0;
+    std::atomic<int> beatLengthMultipliers_current = 0;
+
+    chowdsp::EnumChoiceParameter<SynchronicPulseTriggerType>::Ptr pulseTriggeredBy {
+        juce::ParameterID { "pulseTriggeredBy", 100 },
+        "pulse triggered by",
+        SynchronicPulseTriggerType::First_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
+
+    chowdsp::EnumChoiceParameter<SynchronicClusterTriggerType>::Ptr determinesCluster {
+        juce::ParameterID { "determinesCluster", 100 },
+        "determines cluster",
+        SynchronicClusterTriggerType::Key_On,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
 
     chowdsp::BoolParameter::Ptr skipFirst {
         juce::ParameterID { "skipFirst", 100 },
@@ -115,7 +154,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr numPulses {
         juce::ParameterID { "numPulses", 100 },
         "num pulses",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 100.f, 50.f),
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 100.f, 50.f, 1.f),
         20.f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
@@ -124,7 +163,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr numLayers {
         juce::ParameterID { "numLayers", 100 },
         "num layers",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f),
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
@@ -133,7 +172,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr clusterThickness {
         juce::ParameterID { "clusterThickness", 100 },
         "cluster thickness",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 20.f, 10.f),
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 20.f, 10.f, 1.f),
         8.f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
@@ -150,29 +189,12 @@ struct SynchronicParams : chowdsp::ParamHolder
     ClusterMinMaxParams clusterMinMaxParams;
     HoldTimeMinMaxParams holdTimeMinMaxParams;
 
-    // placeholder for the current ADSR
+    // placeholder for the current ADSR, to pass to the synths
     EnvParams env;
 
     /**
      * todo: array of twelve adsr params to cycle through
      */
-
-    /**
-     * todo: "pulse triggered by" and "determines cluster" menus
-     */
-
-    /**
-     * todo: use Tuning bool for transpositions multislider
-     */
-
-    /*
-     * for keeping track of the current multislider lengths
-     * being used by blendrónic, so we can update the UI accordingly
-     */
-    std::atomic<int> transpositions_current = 0;
-    std::atomic<int> accents_current = 0;
-    std::atomic<int> sustainLengthMultipliers_current = 0;
-    std::atomic<int> beatLengthMultipliers_current = 0;
 
 
     /*
