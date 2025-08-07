@@ -32,31 +32,29 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
-//        beatLengthsSlider = std::make_unique<OpenGL_MultiSlider>("beat_lengths", &params.beatLengths, listeners);
-//        beatLengthsSlider->setComponentID ("beat_lengths");
-//        beatLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
-//        beatLengthsSlider->setName("Beat Lengths (x/Tempo)");
-//        addStateModulatedComponent (beatLengthsSlider.get());
-//
-//        delayLengthsSlider = std::make_unique<OpenGL_MultiSlider>("delay_lengths", &params.delayLengths, listeners);
-//        delayLengthsSlider->setComponentID ("delay_lengths");
-//        delayLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
-//        delayLengthsSlider->setName("Delay Lengths (x/Tempo)");
-//        addStateModulatedComponent (delayLengthsSlider.get());
-//
-//        smoothingTimesSlider = std::make_unique<OpenGL_MultiSlider>("smoothing_times", &params.smoothingTimes, listeners);
-//        smoothingTimesSlider->setComponentID ("smoothing_times");
-//        smoothingTimesSlider->setMinMaxDefaultInc({0., 500, 50., 1.});
-//        smoothingTimesSlider->setSkewFromMidpoint(0.1);
-//        smoothingTimesSlider->setName("Smooth Times (ms)");
-//        addStateModulatedComponent (smoothingTimesSlider.get());
-//
-//        feedbackCoeffsSlider = std::make_unique<OpenGL_MultiSlider>("feedback_coefficients", &params.feedbackCoeffs, listeners);
-//        feedbackCoeffsSlider->setComponentID ("feedback_coefficients");
-//        feedbackCoeffsSlider->setMinMaxDefaultInc({0., 1., 0.95, 0.001});
-//        feedbackCoeffsSlider->setSkewFromMidpoint(0.1);
-//        feedbackCoeffsSlider->setName("Feedback Coefficients (0-1)");
-//        addStateModulatedComponent (feedbackCoeffsSlider.get());
+        transpositionsSlider = std::make_unique<OpenGL_MultiSlider>("transpositions_", &params.transpositions, listeners);
+        transpositionsSlider->setComponentID ("transpositions_");
+        transpositionsSlider->setMinMaxDefaultInc({-12., 12, 0., 0.001});
+        transpositionsSlider->setName("Transpositions");
+        addStateModulatedComponent (transpositionsSlider.get());
+
+        accentsSlider = std::make_unique<OpenGL_MultiSlider>("accents_", &params.accents, listeners);
+        accentsSlider->setComponentID ("accents_");
+        accentsSlider->setMinMaxDefaultInc({0., 2, 1., 0.1});
+        accentsSlider->setName("Accents");
+        addStateModulatedComponent (accentsSlider.get());
+
+        sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustainlength_multipliers", &params.sustainLengthMultipliers, listeners);
+        sustainLengthMultipliersSlider->setComponentID ("sustainlength_multipliers");
+        sustainLengthMultipliersSlider->setMinMaxDefaultInc({-2., 2., 1., 0.01});
+        sustainLengthMultipliersSlider->setName("Sustain Length Multipliers");
+        addStateModulatedComponent (sustainLengthMultipliersSlider.get());
+
+        beatLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("beatlength_multipliers", &params.beatLengthMultipliers, listeners);
+        beatLengthMultipliersSlider->setComponentID ("beatlength_multipliers");
+        beatLengthMultipliersSlider->setMinMaxDefaultInc({0., 2., 1., 0.01});
+        beatLengthMultipliersSlider->setName("Beat Length Multipliers");
+        addStateModulatedComponent (beatLengthMultipliersSlider.get());
 
         clusterMinMaxSlider = std::make_unique<OpenGL_ClusterMinMaxSlider>(&params.clusterMinMaxParams, listeners);
         clusterMinMaxSlider->setComponentID ("cluster_min_max");
@@ -66,9 +64,6 @@ public:
         holdTimeMinMaxSlider->setComponentID ("holdtime_min_max");
         addStateModulatedComponent (holdTimeMinMaxSlider.get());
 
-        /**
-         * todo: these level meters/sliders need titles displayed in the UI
-         */
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
@@ -90,10 +85,10 @@ public:
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this]
                 {
-//                    beatLengthsSlider->updateFromParams();
-//                    delayLengthsSlider->updateFromParams();
-//                    smoothingTimesSlider->updateFromParams();
-//                    feedbackCoeffsSlider->updateFromParams();
+                    transpositionsSlider->updateFromParams();
+                    accentsSlider->updateFromParams();
+                    sustainLengthMultipliersSlider->updateFromParams();
+                    beatLengthMultipliersSlider->updateFromParams();
                 }
                 )
         };
@@ -101,10 +96,10 @@ public:
         /*
          * not sure why we need to redo this here, but they don't draw without these calls
          */
-//        beatLengthsSlider->drawSliders(juce::dontSendNotification);
-//        delayLengthsSlider->drawSliders(juce::dontSendNotification);
-//        smoothingTimesSlider->drawSliders(juce::dontSendNotification);
-//        feedbackCoeffsSlider->drawSliders(juce::dontSendNotification);
+        transpositionsSlider->drawSliders(juce::dontSendNotification);
+        accentsSlider->drawSliders(juce::dontSendNotification);
+        sustainLengthMultipliersSlider->drawSliders(juce::dontSendNotification);
+        beatLengthMultipliersSlider->drawSliders(juce::dontSendNotification);
 
         // for updating the current sliders in multisliders
         startTimer(50);
@@ -126,10 +121,10 @@ public:
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
 
-//    std::unique_ptr<OpenGL_MultiSlider> beatLengthsSlider;
-//    std::unique_ptr<OpenGL_MultiSlider> delayLengthsSlider;
-//    std::unique_ptr<OpenGL_MultiSlider> smoothingTimesSlider;
-//    std::unique_ptr<OpenGL_MultiSlider> feedbackCoeffsSlider;
+    std::unique_ptr<OpenGL_MultiSlider> transpositionsSlider;
+    std::unique_ptr<OpenGL_MultiSlider> accentsSlider;
+    std::unique_ptr<OpenGL_MultiSlider> sustainLengthMultipliersSlider;
+    std::unique_ptr<OpenGL_MultiSlider> beatLengthMultipliersSlider;
 
     std::unique_ptr<OpenGL_ClusterMinMaxSlider> clusterMinMaxSlider;
     std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> holdTimeMinMaxSlider;

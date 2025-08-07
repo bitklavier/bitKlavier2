@@ -8,15 +8,15 @@ void SynchronicParametersView::timerCallback()
     /*
      * for updating the currently active sliders in the UI
      */
-//    beatLengthsSlider->setCurrentSlider(bparams_.beatLengths_current.load());
-//    delayLengthsSlider->setCurrentSlider(bparams_.delayLengths_current.load());
-//    smoothingTimesSlider->setCurrentSlider(bparams_.smoothingTimes_current.load());
-//    feedbackCoeffsSlider->setCurrentSlider(bparams_.feedbackCoeffs_current.load());
-//
-//    beatLengthsSlider->redoImage();
-//    delayLengthsSlider->redoImage();
-//    smoothingTimesSlider->redoImage();
-//    feedbackCoeffsSlider->redoImage();
+    transpositionsSlider->setCurrentSlider(sparams_.transpositions_current.load());
+    accentsSlider->setCurrentSlider(sparams_.accents_current.load());
+    sustainLengthMultipliersSlider->setCurrentSlider(sparams_.sustainLengthMultipliers_current.load());
+    beatLengthMultipliersSlider->setCurrentSlider(sparams_.beatLengthMultipliers_current.load());
+
+    transpositionsSlider->redoImage();
+    accentsSlider->redoImage();
+    sustainLengthMultipliersSlider->redoImage();
+    beatLengthMultipliersSlider->redoImage();
 }
 
 void SynchronicParametersView::resized()
@@ -43,8 +43,13 @@ void SynchronicParametersView::resized()
 
     bounds.reduce(largepadding, largepadding);
 
+    juce::Rectangle<int> minMaxSliderRect = bounds.removeFromTop(knob_section_height);
+    minMaxSliderRect.removeFromLeft(minMaxSliderRect.getWidth() * 0.5);
+    clusterMinMaxSlider->setBounds(minMaxSliderRect.removeFromLeft(minMaxSliderRect.getWidth() * 0.5));
+    holdTimeMinMaxSlider->setBounds(minMaxSliderRect);
+
     // how much vertical space will we need for all the components?
-    int verticalAreaNeeded = knob_section_height * 4;
+    int verticalAreaNeeded = knob_section_height * 1.5 * 4;
 
     /*
      * todo: better spacing for these...
@@ -55,17 +60,13 @@ void SynchronicParametersView::resized()
 
     bounds.removeFromTop(bufferSpaceForEach);
 
-    juce::Rectangle<int> minMaxSliderRect = bounds.removeFromTop(knob_section_height);
-    clusterMinMaxSlider->setBounds(minMaxSliderRect.removeFromLeft(minMaxSliderRect.getWidth() * 0.5));
-    holdTimeMinMaxSlider->setBounds(minMaxSliderRect);
-
-//    beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
-//    bounds.removeFromTop(bufferSpaceForEach);
-//    delayLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
-//    bounds.removeFromTop(bufferSpaceForEach);
-//    smoothingTimesSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
-//    bounds.removeFromTop(bufferSpaceForEach);
-//    feedbackCoeffsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    transpositionsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    bounds.removeFromTop(bufferSpaceForEach);
+    accentsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    bounds.removeFromTop(bufferSpaceForEach);
+    sustainLengthMultipliersSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    bounds.removeFromTop(bufferSpaceForEach);
+    beatLengthMultipliersSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
 
     SynthSection::resized();
 }

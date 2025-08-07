@@ -143,7 +143,7 @@ Typing as I do MidiFilter...
   - might not need an image, can just draw a path()
   - icon size is set in `ConstructionSite::perform`
 - preparation icon size is set in `ConstructionSite::perform`?
-  - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
+- popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 
 ---------
 ## Audio Graph, New Pianos and Switching

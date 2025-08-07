@@ -44,6 +44,10 @@ struct SynchronicParams : chowdsp::ParamHolder
     SynchronicParams()
     {
         add (
+            numPulses,
+            numLayers,
+            clusterThickness,
+            clusterThreshold,
             clusterMinMaxParams,
             holdTimeMinMaxParams,
             skipFirst,
@@ -69,14 +73,13 @@ struct SynchronicParams : chowdsp::ParamHolder
     }
 
     // primary multislider params
+    /**
+     * todo: make transpositions 2D
+     */
     MultiSliderState transpositions;
     MultiSliderState accents;
     MultiSliderState sustainLengthMultipliers;
     MultiSliderState beatLengthMultipliers;
-
-    EnvParams env;
-    ClusterMinMaxParams clusterMinMaxParams;
-    HoldTimeMinMaxParams holdTimeMinMaxParams;
 
     chowdsp::BoolParameter::Ptr skipFirst {
         juce::ParameterID { "skipFirst", 100 },
@@ -143,7 +146,33 @@ struct SynchronicParams : chowdsp::ParamHolder
         500.f
     };
 
+    // the two min/max params
+    ClusterMinMaxParams clusterMinMaxParams;
+    HoldTimeMinMaxParams holdTimeMinMaxParams;
 
+    // placeholder for the current ADSR
+    EnvParams env;
+
+    /**
+     * todo: array of twelve adsr params to cycle through
+     */
+
+    /**
+     * todo: "pulse triggered by" and "determines cluster" menus
+     */
+
+    /**
+     * todo: use Tuning bool for transpositions multislider
+     */
+
+    /*
+     * for keeping track of the current multislider lengths
+     * being used by blendrónic, so we can update the UI accordingly
+     */
+    std::atomic<int> transpositions_current = 0;
+    std::atomic<int> accents_current = 0;
+    std::atomic<int> sustainLengthMultipliers_current = 0;
+    std::atomic<int> beatLengthMultipliers_current = 0;
 
 
     /*
@@ -209,6 +238,7 @@ struct SynchronicParams : chowdsp::ParamHolder
      * todo: figure out how to deal with the multiple ADSRs that we use with the Synchronic patterns...
      * perhaps we should have an array of 12 of them?
      */
+
 
 };
 
