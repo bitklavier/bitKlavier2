@@ -49,33 +49,47 @@ void SynchronicParametersView::resized()
     // make a left column for the menus, knobs, sliders, and ADSR
     juce::Rectangle<int> leftColumn = bounds.removeFromLeft(bounds.getWidth() / 3);
 
+    leftColumn.removeFromTop(largepadding);
+
     juce::Rectangle comboBoxRow = leftColumn.removeFromTop(menu_section_height);
-    pulseTriggeredBy_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2));
+    pulseTriggeredBy_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2).reduced(largepadding, 0));
     comboBoxRow.removeFromRight(smallpadding);
     pulseTriggeredBy_label->setBounds(comboBoxRow);
 
     leftColumn.removeFromTop(smallpadding);
 
     comboBoxRow = leftColumn.removeFromTop(menu_section_height);
-    determinesCluster_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2));
+    determinesCluster_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2).reduced(largepadding, 0));
     comboBoxRow.removeFromRight(smallpadding);
     determinesCluster_label->setBounds(comboBoxRow);
 
     // knobs
+    leftColumn.removeFromTop(largepadding);
+
     juce::Rectangle knobRow = leftColumn.removeFromTop(knob_section_height);
-    numPulses_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2));
-    numLayers_knob->setBounds(knobRow);
+    numPulses_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2).reduced(largepadding, 0));
+    numLayers_knob->setBounds(knobRow.reduced(largepadding, 0));
+
     leftColumn.removeFromTop(smallpadding);
 
     knobRow = leftColumn.removeFromTop(knob_section_height);
-    clusterThickness_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2));
-    clusterThreshold_knob->setBounds(knobRow);
-    leftColumn.removeFromTop(smallpadding);
+    clusterThickness_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2).reduced(largepadding, 0));
+    clusterThreshold_knob->setBounds(knobRow.reduced(largepadding, 0));
 
-    envSection->setBounds(leftColumn.removeFromBottom(knob_section_height * 2));
-    leftColumn.removeFromBottom(smallpadding);
-    clusterMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
-    holdTimeMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
+    leftColumn.removeFromTop(largepadding);
+
+    holdTimeMinMaxSlider->setBounds(leftColumn.removeFromTop(knob_section_height));
+    leftColumn.removeFromTop(smallpadding);
+    clusterMinMaxSlider->setBounds(leftColumn.removeFromTop(knob_section_height));
+
+    leftColumn.removeFromTop(largepadding);
+
+    envSection->setBounds(leftColumn);
+
+//    envSection->setBounds(leftColumn.removeFromBottom(knob_section_height * 2));
+//    leftColumn.removeFromBottom(smallpadding);
+//    clusterMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
+//    holdTimeMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
 
     // *** now on to the right section for the multisliders
 
