@@ -17,6 +17,9 @@ void SynchronicParametersView::timerCallback()
     accentsSlider->redoImage();
     sustainLengthMultipliersSlider->redoImage();
     beatLengthMultipliersSlider->redoImage();
+
+    // placeholder arg
+    envSequenceSection->setCurrentlyPlayingEnvelope(3);
 }
 
 void SynchronicParametersView::resized()
@@ -86,10 +89,6 @@ void SynchronicParametersView::resized()
 
     envSection->setBounds(leftColumn);
 
-//    envSection->setBounds(leftColumn.removeFromBottom(knob_section_height * 2));
-//    leftColumn.removeFromBottom(smallpadding);
-//    clusterMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
-//    holdTimeMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
 
     // *** now on to the right section for the multisliders
 
@@ -97,11 +96,8 @@ void SynchronicParametersView::resized()
     bounds.removeFromTop(largepadding);
 
     // how much vertical space will we need for all the components?
-    int verticalAreaNeeded = knob_section_height * 1.5 * 4;
+    int verticalAreaNeeded = knob_section_height * 1.5 * 5;
 
-    /*
-     * todo: better spacing for these...
-     */
     // how much vertical space is left, divided up so we have some buffer space between each component
     int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 4;
     if (bufferSpaceForEach < 0 ) bufferSpaceForEach = 0;
@@ -113,6 +109,8 @@ void SynchronicParametersView::resized()
     sustainLengthMultipliersSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
     bounds.removeFromTop(bufferSpaceForEach);
     beatLengthMultipliersSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    bounds.removeFromTop(bufferSpaceForEach);
+    envSequenceSection->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
 
     SynthSection::resized();
 }

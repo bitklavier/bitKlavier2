@@ -9,6 +9,7 @@
 
 #include "ClusterMinMaxParams.h"
 #include "EnvParams.h"
+#include "EnvelopeSequenceParams.h"
 #include "HoldTimeMinMaxParams.h"
 #include "Identifiers.h"
 #include "MultiSliderState.h"
@@ -67,6 +68,7 @@ struct SynchronicParams : chowdsp::ParamHolder
             determinesCluster,
             skipFirst,
             env,
+            envelopeSequence,
             outputSendGain,
             outputGain,
             updateUIState);
@@ -105,6 +107,11 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::atomic<int> accents_current = 0;
     std::atomic<int> sustainLengthMultipliers_current = 0;
     std::atomic<int> beatLengthMultipliers_current = 0;
+
+    /*
+     * the state of all the adsrs, for the row of 12 sequenced adsrs
+     *  similar to MultiSliderState for the multisliders
+     */
 
     chowdsp::EnumChoiceParameter<SynchronicPulseTriggerType>::Ptr pulseTriggeredBy {
         juce::ParameterID { "pulseTriggeredBy", 100 },
@@ -192,10 +199,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     // placeholder for the current ADSR, to pass to the synths
     EnvParams env;
 
-    /**
-     * todo: array of twelve adsr params to cycle through
-     */
-
+    // the 12 individual env params
+    EnvelopeSequenceParams envelopeSequence;
 
     /*
      * serializers are used for more complex params, called on save and load

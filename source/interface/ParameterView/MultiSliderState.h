@@ -6,10 +6,10 @@
 #ifndef BITKLAVIER0_MULTISLIDERSTATE_H
 #define BITKLAVIER0_MULTISLIDERSTATE_H
 
-#include <chowdsp_plugin_state/chowdsp_plugin_state.h>
-#include "array_to_string.h"
+    #include "array_to_string.h"
+    #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
 
-/**
+    /**
  * todo: make much larger (2048?) mostly for Pascal!
  * or only do that for MultiSlider2dState?
  */

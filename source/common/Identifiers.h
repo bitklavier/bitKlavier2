@@ -97,6 +97,16 @@ namespace IDs
     DECLARE_ID(multislider_size)
     DECLARE_ID(multislider_states)
     DECLARE_ID(multislider_states_size)
+
+    DECLARE_ID(adsr_attack)
+    DECLARE_ID(adsr_decay)
+    DECLARE_ID(adsr_sustain)
+    DECLARE_ID(adsr_release)
+    DECLARE_ID(adsr_attackPower)
+    DECLARE_ID(adsr_decayPower)
+    DECLARE_ID(adsr_releasePower)
+    DECLARE_ID(adsr_active)
+
 }
 
 #undef DECLARE_ID

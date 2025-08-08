@@ -64,7 +64,7 @@ SpringTuningSection::SpringTuningSection (
         if(param_->paramID.startsWith("useLocalOrFundamental_")){
             auto button = std::make_unique<SynthButton>(param_->paramID);
 //            SynthButton* currentButtonPtr = button.get(); // for use in the onStateChange lambda below
-            auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_,listeners, *button, nullptr);
+            auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, nullptr);
             button->setComponentID(param_->paramID);
             addSynthButton(button.get(), true);
             button->setButtonText("F");

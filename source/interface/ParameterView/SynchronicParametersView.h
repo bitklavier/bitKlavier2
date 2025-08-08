@@ -9,10 +9,13 @@
 #include "OpenGL_HoldTimeMinMaxSlider.h"
 #include "OpenGL_MultiSlider.h"
 #include "SynchronicProcessor.h"
+#include "EnvelopeSequenceState.h"
+#include "EnvelopeSequenceSection.h"
 #include "peak_meter_section.h"
 #include "envelope_section.h"
 #include "synth_section.h"
 #include "synth_slider.h"
+#include "synth_button.h"
 
 class SynchronicParametersView : public SynthSection, public juce::Timer
 {
@@ -33,6 +36,7 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
+        // menus
         if (auto* synchronicParams = dynamic_cast<SynchronicParams*>(&params)) {
             pulseTriggeredBy_combo_box = std::make_unique<OpenGLComboBox>(synchronicParams->pulseTriggeredBy->paramID.toStdString());
             pulseTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*synchronicParams->pulseTriggeredBy.get(), listeners, *pulseTriggeredBy_combo_box, nullptr);
@@ -45,6 +49,7 @@ public:
             addOpenGlComponent(determinesCluster_combo_box->getImageComponent());
         }
 
+        // menu labels
         pulseTriggeredBy_label = std::make_shared<PlainTextComponent>("ptb", "pulse triggered by:");
         addOpenGlComponent(pulseTriggeredBy_label);
         pulseTriggeredBy_label->setTextSize (12.0f);
@@ -55,6 +60,7 @@ public:
         determinesCluster_label->setTextSize (12.0f);
         determinesCluster_label->setJustification(juce::Justification::right);
 
+        // knobs
         numPulses_knob = std::make_unique<SynthSlider>(params.numPulses->paramID);
         addSlider(numPulses_knob.get());
         numPulses_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -83,6 +89,7 @@ public:
         clusterThreshold_knob->setShowPopupOnHover(true);
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshold, listeners, *clusterThreshold_knob, nullptr);
 
+        // multisliders
         transpositionsSlider = std::make_unique<OpenGL_MultiSlider>("transpositions_", &params.transpositions, listeners);
         transpositionsSlider->setComponentID ("transpositions_");
         transpositionsSlider->setMinMaxDefaultInc({-12., 12, 0., 0.001});
@@ -107,6 +114,7 @@ public:
         beatLengthMultipliersSlider->setName("Beat Length Multipliers");
         addStateModulatedComponent (beatLengthMultipliersSlider.get());
 
+        // min/max sliders
         clusterMinMaxSlider = std::make_unique<OpenGL_ClusterMinMaxSlider>(&params.clusterMinMaxParams, listeners);
         clusterMinMaxSlider->setComponentID ("cluster_min_max");
         addStateModulatedComponent (clusterMinMaxSlider.get());
@@ -115,8 +123,13 @@ public:
         holdTimeMinMaxSlider->setComponentID ("holdtime_min_max");
         addStateModulatedComponent (holdTimeMinMaxSlider.get());
 
+        // envelope/ADSR controller UI
         envSection = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         addSubSection (envSection.get());
+
+        // sequence of ADSRs
+        envSequenceSection = std::make_unique<EnvelopeSequenceSection>(name, params.envelopeSequence, listeners, *this);
+        addSubSection(envSequenceSection.get());
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
@@ -128,6 +141,22 @@ public:
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
+
+//        for (int i=0; i<MAXADSRS; i++)
+//        {
+//            auto button = std::make_unique<SynthButton>("adsrEditButton_" + juce::String(i));
+//            auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, nullptr);
+//            button->setComponentID(param_->paramID);
+//            addSynthButton(button.get(), true);
+//            button->setButtonText("e");
+//            button->setHelpText("edit this ADSR");
+//
+//            useLocalOrFundamentalToggles_sliderAttachments.emplace_back(std::move(button_ToggleAttachment));
+//            useLocalOrFundamentalToggles.emplace_back(std::move(button));
+//
+//        }
+//
+
 
         /*
          * listen for changes from mods/resets, redraw as needed
@@ -198,9 +227,6 @@ public:
     std::unique_ptr<OpenGL_ClusterMinMaxSlider> clusterMinMaxSlider;
     std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> holdTimeMinMaxSlider;
 
-    // ADSR controller
-    std::unique_ptr<EnvelopeSection> envSection;
-
     // knobs
     std::unique_ptr<SynthSlider> numPulses_knob;
     std::unique_ptr<chowdsp::SliderAttachment> numPulses_knob_attachment;
@@ -210,6 +236,12 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> clusterThickness_knob_attachment;
     std::unique_ptr<SynthSlider> clusterThreshold_knob;
     std::unique_ptr<chowdsp::SliderAttachment> clusterThreshold_knob_attachment;
+
+    // ADSR controller
+    std::unique_ptr<EnvelopeSection> envSection;
+
+    // ADSRs
+    std::unique_ptr<EnvelopeSequenceSection> envSequenceSection;
 
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;

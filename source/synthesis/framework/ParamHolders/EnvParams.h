@@ -12,16 +12,26 @@ struct EnvParams : public chowdsp::ParamHolder
 {
     EnvParams() : chowdsp::ParamHolder("ENV")
     {
-        add(decayParam,
+        add(
+            attackParam,
+            decayParam,
             sustainParam,
             releaseParam,
-            attackParam,
             attackPowerParam,
-            holdParam,
-            delayParam,
             decayPowerParam,
-            releasePowerParam);
+            releasePowerParam,
+            holdParam,
+            delayParam
+            );
     }
+
+    /**
+     * note: we are not currently using delay or hold but need to add
+     *          these for now to work with envelope_editor without
+     *          doing a lot of surgery on that code.
+     *          also, we might want to use them later, so we keep
+     *          them as placeholders for now
+     */
 
     // Delay param
     chowdsp::TimeMsParameter::Ptr delayParam {
