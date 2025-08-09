@@ -231,7 +231,7 @@ void BlendronicProcessor::handleMidiTargetMessages(juce::MidiBuffer& midiMessage
          * PreparationParameterTargetTypes, so determines the offset for
          * the channel that the target messages are received on.
          */
-        switch(message.getChannel() + (BlendronicTargetPatternSync - 1))
+        switch(message.getChannel() + (BlendronicTargetFirst))
         {
             case BlendronicTargetPatternSync:
                 doPatternSync();

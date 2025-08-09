@@ -16,13 +16,26 @@
  *          or some such
  */
 typedef enum PreparationParameterTargetType {
-    BlendronicTargetPatternSync = 1,
+    BlendronicTargetFirst = 0,
+    BlendronicTargetPatternSync,
     BlendronicTargetBeatSync,
     BlendronicTargetClear,
     BlendronicTargetPausePlay,
     BlendronicTargetInput,
     BlendronicTargetOutput,
-    BlendronicTargetNil
+    BlendronicTargetNil,
+    SynchronicTargetFirst,
+    SynchronicTargetDefault,
+    SynchronicTargetPatternSync,
+    SynchronicTargetBeatSync,
+    SynchronicTargetAddNotes,
+    SynchronicTargetClear,
+    SynchronicTargetPausePlay,
+    SynchronicTargetDeleteOldest,
+    SynchronicTargetDeleteNewest,
+    SynchronicTargetRotate,
+    SynchronicTargetNil
+
 } PreparationParameterTargetType;
 
 enum TriggerType {

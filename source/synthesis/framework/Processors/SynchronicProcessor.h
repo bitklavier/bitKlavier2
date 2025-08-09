@@ -20,6 +20,7 @@
 #include "TuningProcessor.h"
 #include "buffer_debugger.h"
 #include "utils.h"
+#include "target_types.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
@@ -394,7 +395,7 @@ public:
     {
         phasor -= numSamplesBeat;
 
-        if (++lengthMultiplierCounter   >= _sparams->beatLengthMultipliers.sliderVals_size) lengthMultiplierCounter = 0;
+        if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size) lengthMultiplierCounter = 0;
         if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)               accentMultiplierCounter = 0;
         if (++transpCounter             >= _sparams->transpositions.sliderVals_size)        transpCounter = 0;
         if (++envelopeCounter           >= _sparams->numEnvelopes)                          envelopeCounter = 0;
@@ -449,6 +450,7 @@ public:
     inline juce::Array<int> getCluster() {return cluster;}
     inline void setCluster(juce::Array<int> c) { cluster = c; }
     inline void setBeatPhasor(juce::uint64 c)  { phasor = c; }
+    inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
 
     inline void addNote(int note)
     {
@@ -491,10 +493,10 @@ public:
     int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
 
     //parameter field counters
-    int beatMultiplierCounter;   //beat length (time between beats) multipliers
-    int accentMultiplierCounter; //accent multipliers
-    int lengthMultiplierCounter; //note length (sounding length) multipliers (multiples of 50ms, at least for now)
-    int transpCounter;     //transposition offsets
+    int beatMultiplierCounter;      //beat length (time between beats) multipliers
+    int accentMultiplierCounter;    //accent multipliers
+    int lengthMultiplierCounter;    //note length (sounding length) multipliers (multiples of 50ms, at least for now)
+    int transpCounter;              //transposition offsets
     int envelopeCounter;
 
 private:
@@ -535,6 +537,7 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& forwardsMidiMessages, juce::MidiBuffer& backwardsMidiMessages, int numSamples);
 
     bool acceptsMidi() const override { return true; }
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
@@ -574,8 +577,10 @@ public:
     /*
      * Synchronic Functions
      */
-    void keyPressed(int noteNumber);
-    void keyReleased(int noteNumber);
+    void keyPressed(int noteNumber, int velocity, int channel);
+    void keyReleased(int noteNumber, int channel);
+    void handleMidiTargetMessages(int channel);
+    bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
     float getTimeToBeatMS(float beatsToSkip);
     void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
 
@@ -587,7 +592,7 @@ public:
     bool pausePlay = false; // pause phasor incrementing
     bool playCluster;
     bool inCluster;
-    int lastKeyPressed;
+//    int lastKeyPressed;
     bool nextOffIsFirst;
 
     // temporary, replace with Tempo info
@@ -604,12 +609,23 @@ public:
     juce::Array<int> syncKeysDepressed;
     juce::Array<int> clusterKeysDepressed;
     juce::Array<int> patternSyncKeysDepressed;
+    juce::Array<juce::uint8> clusterVelocities; // NOT scaled 0-1, as with the old bK
 
     juce::uint64 numSamplesBeat = 0;    // = beatThresholdSamples * beatMultiplier
     juce::uint64 beatThresholdSamples;  // # samples in a beat, as set by tempo
 
 private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
+
+    bool doCluster = false; // primary Synchronic mode
+    bool doPatternSync = false; // resetting pattern phases
+    bool doBeatSync = false; // resetting beat phase
+    bool doAddNotes = false; // adding notes to cluster
+    bool doPausePlay = false; // targeting pause/play
+    bool doClear = false;
+    bool doDeleteOldest = false;
+    bool doDeleteNewest = false;
+    bool doRotate = false;
 
     std::unique_ptr<BKSynthesiser> forwardsSynth;
     std::unique_ptr<BKSynthesiser> backwardsSynth;

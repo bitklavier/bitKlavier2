@@ -377,16 +377,16 @@ void BKSynthesiser::noteOn (const int midiChannel,
                 lastSynthState.lastPitch = tuning->getTargetFrequency(midiNoteNumber, transp, tuneTranspositions);
             }
             else closestKey = std::round(midiNoteNumber + transp);
-            //if (sound->appliesToNote (std::round(midiNoteNumber + transp)) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
+
             /**
              * set sound playback direction here, based on mode set for this BKSynth
              */
             if (sound->appliesToNote ( closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
                 BKSamplerVoice* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
+
                 //set currentDirection here
                 newvoice->setDirection(playbackDirection);
-//                startVoice (findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes),
                 startVoice (newvoice,
                     sound,
                     midiChannel,
