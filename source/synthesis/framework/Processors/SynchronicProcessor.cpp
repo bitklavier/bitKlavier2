@@ -303,6 +303,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                             forwardsMidiMessages.addEvent(newmsg, 0);
                         else
                             backwardsMidiMessages.addEvent(newmsg, 0);
+
+                        DBG("added MIDI Message in Synchronic");
                     }
                 }
 
@@ -624,7 +626,9 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     // always work on the most recent cluster/layer
     SynchronicCluster* cluster = clusters.getLast();
 
-    // do only if this note is targeted as a primary Synchronic note (TargetTypeSynchronic)
+    /*
+     * doCluster => default Synchronic behavior
+     */
     if (doCluster)
     {
         clusterKeysDepressed.addIfNotAlreadyThere(noteNumber);
@@ -664,7 +668,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
             {
                 // update cluster, create as needed
                 isNewCluster = updateCluster(cluster, noteNumber);
-                cluster = clusters.getLast();
+                if(isNewCluster) cluster = clusters.getLast();
 
                 // reset the beat phase and pattern phase, and start playing, depending on the mode
                 if (sMode == SynchronicPulseTriggerType::Any_NoteOn)
@@ -787,7 +791,9 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
      */
     beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
 
-    // do only if this note is targeted as a primary Synchronic note (TargetTypeSynchronic)
+    /*
+     * doCluster => default Synchronic behavior
+     */
     if (doCluster)
     {
         // remove key from cluster-targeted keys

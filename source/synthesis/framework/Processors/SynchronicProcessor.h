@@ -540,8 +540,14 @@ public:
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& forwardsMidiMessages, juce::MidiBuffer& backwardsMidiMessages, int numSamples);
 
     bool acceptsMidi() const override { return true; }
+    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
+    {
+        DBG("Synchronic addSoundSet map called");
+        ptrToSamples = s;
+    }
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {
+        DBG("Synchronic addSoundSet called");
         forwardsSynth->addSoundSet (s);
         backwardsSynth->addSoundSet (s);
     }
@@ -629,8 +635,7 @@ private:
 
     std::unique_ptr<BKSynthesiser> forwardsSynth;
     std::unique_ptr<BKSynthesiser> backwardsSynth;
-
-
+    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
     juce::Array<int> slimCluster;       //cluster without repetitions
 

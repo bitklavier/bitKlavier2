@@ -37,6 +37,16 @@ public:
             processor->addSoundSet (s);
     }
 
+    void addSoundSet (
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s,
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h,
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r,
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) override
+    {
+        if (auto processor = dynamic_cast<SynchronicProcessor*> (getProcessor()))
+            processor->addSoundSet (s);
+    }
+
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
     void paintBackground (juce::Graphics& g);
