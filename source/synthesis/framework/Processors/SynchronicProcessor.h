@@ -41,6 +41,10 @@ enum SynchronicClusterTriggerType {
     Key_Off = 1 << 1,
 };
 
+// ********************************************************************************************* //
+// ************************************  SynchronicParams  ************************************* //
+// ********************************************************************************************* //
+
 struct SynchronicParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
@@ -60,7 +64,7 @@ struct SynchronicParams : chowdsp::ParamHolder
         add (
             numPulses,
             numLayers,
-            clusterThickness,
+            clusterThickness, //SynchronicClusterCap in the old bK
             clusterThreshold,
             clusterMinMaxParams,
             holdTimeMinMaxParams,
@@ -202,6 +206,18 @@ struct SynchronicParams : chowdsp::ParamHolder
     // the 12 individual env params
     EnvelopeSequenceParams envelopeSequence;
 
+    bool isEnvelopeActive(int which)
+    {
+        for (auto& _ep : *envelopeSequence.getBoolParams())
+        {
+            //"envelope_10"
+            if(_ep->getParameterID() == "envelope_" + juce::String(which))
+            {
+                return _ep->get();
+            }
+        }
+    }
+
     /*
      * serializers are used for more complex params, called on save and load
      *  - here we need these for all the multisliders
@@ -281,6 +297,220 @@ struct SynchronicNonParameterState : chowdsp::NonParamState
 
 
 // ********************************************************************************************* //
+// ************************************  SynchronicCluster  ************************************ //
+// ********************************************************************************************* //
+
+/*
+ This class enables layers of Synchronic pulses by
+ maintaining a set of counters moving through all the
+ primary multi-parameters (accents, transpositions, etc...)
+ and by updating timers for each Synchronic independently
+ */
+class SynchronicCluster
+{
+public:
+    SynchronicCluster(SynchronicParams* inparams) : _sparams(inparams)
+    {
+        phasor = 0;
+        envelopeCounter = 0;
+        shouldPlay = false;
+        over = false;
+    }
+
+    ~SynchronicCluster() {}
+
+//
+//    inline const juce::uint64 getPhasor(void) const noexcept   { return phasor;            }
+//    inline const int getBeatMultiplierCounter() const noexcept { return beatMultiplierCounter; }
+//    inline const int getAccentMultiplierCounter() const noexcept { return accentMultiplierCounter; }
+//    inline const int getLengthMultiplierCounter() const noexcept { return lengthMultiplierCounter; }
+//    inline const int getTranspCounter() const noexcept { return transpCounter; }
+//    inline const int getEnvelopeCounter() const noexcept { return envelopeCounter; }
+//    inline const int getBeatCounter() const noexcept { return beatCounter; }
+//    inline const int getClusterSize() const noexcept { return cluster.size(); }
+//
+//    int getLengthMultiplierCounterForDisplay()
+//    {
+//        int tempsize = prep->sLengthMultipliers.value.size();
+//        //int counter = getLengthMultiplierCounter() - 1;
+//        int counter = getLengthMultiplierCounter() ;
+//
+//        if(counter < 0) counter = tempsize - 1;
+//        if(counter >= tempsize) counter = 0;
+//
+//        return counter;
+//    }
+//
+//    int getBeatMultiplierCounterForDisplay()
+//    {
+//        int tempsize = prep->sBeatMultipliers.value.size();
+//        int counter = getBeatMultiplierCounter() ;
+//
+//        if(counter < 0) counter = tempsize - 1;
+//        if(counter >= tempsize) counter = 0;
+//
+//        return counter;
+//    }
+//
+//    int getAccentMultiplierCounterForDisplay()
+//    {
+//        int tempsize = prep->sAccentMultipliers.value.size();
+//        int counter = getAccentMultiplierCounter() ;
+//
+//        if(counter < 0) counter = tempsize - 1;
+//        if(counter >= tempsize) counter = 0;
+//
+//        return counter;
+//    }
+//
+//    int getTranspCounterForDisplay()
+//    {
+//        int tempsize = prep->sTransposition.value.size();
+//        int counter = getTranspCounter() ;
+//
+//        if(counter < 0) counter = tempsize - 1;
+//        if(counter >= tempsize) counter = 0;
+//
+//        return counter;
+//    }
+//
+//    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; }
+//    inline void setBeatMultiplierCounter(int c) {  beatMultiplierCounter = c; }
+//    inline void setAccentMultiplierCounter(int c)  { accentMultiplierCounter = c; }
+//    inline void setLengthMultiplierCounter(int c)  { lengthMultiplierCounter = c; }
+//    inline void setTranspCounter(int c)  { transpCounter = c; }
+//    inline void setEnvelopeCounter(int c)  { envelopeCounter = c; }
+//    inline void setBeatCounter(int c)  { beatCounter = c; }
+//
+//    inline bool getOver(void) { return over; }
+//    inline void setOver(bool o) { over = o; }
+
+    inline void incrementPhasor (int numSamples)
+    {
+        phasor += numSamples;
+    }
+
+    inline void step (juce::uint64 numSamplesBeat)
+    {
+        phasor -= numSamplesBeat;
+
+        if (++lengthMultiplierCounter   >= _sparams->beatLengthMultipliers.sliderVals_size) lengthMultiplierCounter = 0;
+        if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)               accentMultiplierCounter = 0;
+        if (++transpCounter             >= _sparams->transpositions.sliderVals_size)        transpCounter = 0;
+        if (++envelopeCounter           >= _sparams->numEnvelopes)                          envelopeCounter = 0;
+
+        while(!_sparams->isEnvelopeActive(envelopeCounter + 1)) //skip untoggled envelopes
+        {
+            envelopeCounter++;
+            if (envelopeCounter >= _sparams->numEnvelopes) envelopeCounter = 0;
+        }
+    }
+
+    inline void postStep ()
+    {
+        if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size)
+        {
+            //increment beat and beatMultiplier counters, for next beat; check maxes and adjust
+            beatMultiplierCounter = 0;
+        }
+
+        int skipBeats = 0;
+        if (_sparams->skipFirst->get()) skipBeats = 1;
+
+        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats))
+        {
+            shouldPlay = false;
+        }
+    }
+
+    inline void resetPatternPhase()
+    {
+        int skipBeats = 0;
+        if (_sparams->skipFirst->get()) skipBeats = 1;
+
+        int idx = (skipBeats < -1) ? -1 : skipBeats;
+
+        if(_sparams->beatLengthMultipliers.sliderVals_size > 0)
+            beatMultiplierCounter = bitklavier::utils::mod(idx, _sparams->beatLengthMultipliers.sliderVals_size);
+        if(_sparams->sustainLengthMultipliers.sliderVals_size > 0)
+            lengthMultiplierCounter = bitklavier::utils::mod(idx, _sparams->sustainLengthMultipliers.sliderVals_size);
+        if(_sparams->accents.sliderVals_size > 0)
+            accentMultiplierCounter = bitklavier::utils::mod(idx, _sparams->accents.sliderVals_size);
+        if(_sparams->transpositions.sliderVals_size > 0)
+            transpCounter = bitklavier::utils::mod(idx, _sparams->transpositions.sliderVals_size);
+
+        envelopeCounter = bitklavier::utils::mod(idx, _sparams->numEnvelopes);
+
+        // DBG("beatMultiplierCounter = " + String(beatMultiplierCounter));
+
+        beatCounter = 0;
+    }
+
+    inline juce::Array<int> getCluster() {return cluster;}
+    inline void setCluster(juce::Array<int> c) { cluster = c; }
+    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; }
+
+    inline void addNote(int note)
+    {
+        // DBG("adding note: " + String(note));
+        cluster.insert(0, note);
+    }
+
+    inline void removeNote(int note)
+    {
+        int idx = 0;
+
+        for (auto n : cluster)
+        {
+            if (n == note)
+            {
+                break;
+            }
+            idx++;
+        }
+
+        cluster.remove(idx);
+    }
+
+    inline bool containsNote(int note)
+    {
+        return cluster.contains(note);
+    }
+
+    inline void setShouldPlay(bool play)
+    {
+        shouldPlay = play;
+    }
+
+    inline bool getShouldPlay(void)
+    {
+        return shouldPlay;
+
+    }
+
+    int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
+
+    //parameter field counters
+    int beatMultiplierCounter;   //beat length (time between beats) multipliers
+    int accentMultiplierCounter; //accent multipliers
+    int lengthMultiplierCounter; //note length (sounding length) multipliers (multiples of 50ms, at least for now)
+    int transpCounter;     //transposition offsets
+    int envelopeCounter;
+
+private:
+    SynchronicParams* _sparams;
+
+    juce::Array<int> cluster;
+
+
+    juce::uint64 phasor;
+    bool shouldPlay, over;
+
+    JUCE_LEAK_DETECTOR(SynchronicCluster);
+};
+
+
+// ********************************************************************************************* //
 // ************************************ SynchronicProcessor ************************************ //
 // ********************************************************************************************* //
 
@@ -341,11 +571,52 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
+    /*
+     * Synchronic Functions
+     */
+    void keyPressed(int noteNumber);
+    void keyReleased(int noteNumber);
+    float getTimeToBeatMS(float beatsToSkip);
+    void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
+
+    bool holdCheck(int noteNumber);
+
+    /*
+     * Synchronic Params
+     */
+    bool pausePlay = false; // pause phasor incrementing
+    bool playCluster;
+    bool inCluster;
+    int lastKeyPressed;
+    bool nextOffIsFirst;
+
+    // temporary, replace with Tempo info
+    float tempoTemp = 120.;
+
+    juce::uint64 thresholdSamples;
+    juce::uint64 clusterThresholdTimer;
+    juce::uint64 syncThresholdTimer;
+    juce::Array<juce::uint64> holdTimers;
+
+    juce::Array<SynchronicCluster*> clusters;
+
+    juce::Array<int> keysDepressed;   //current keys that are depressed
+    juce::Array<int> syncKeysDepressed;
+    juce::Array<int> clusterKeysDepressed;
+    juce::Array<int> patternSyncKeysDepressed;
+
+    juce::uint64 numSamplesBeat = 0;    // = beatThresholdSamples * beatMultiplier
+    juce::uint64 beatThresholdSamples;  // # samples in a beat, as set by tempo
+
 private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
 
     std::unique_ptr<BKSynthesiser> forwardsSynth;
     std::unique_ptr<BKSynthesiser> backwardsSynth;
+
+
+
+    juce::Array<int> slimCluster;       //cluster without repetitions
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
 };

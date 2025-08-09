@@ -123,6 +123,8 @@
       return modff(value, divisor);
     }
 
+    force_inline int mod(int a, int b) { return (a % b + b) % b; }
+
     force_inline int iclamp(int value, int min, int max) {
       return value > max ? max : (value < min ? min : value);
     }
