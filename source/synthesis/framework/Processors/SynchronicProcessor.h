@@ -72,6 +72,7 @@ struct SynchronicParams : chowdsp::ParamHolder
             pulseTriggeredBy,
             determinesCluster,
             skipFirst,
+            transpositionUsesTuning,
             env,
             envelopeSequence,
             outputSendGain,
@@ -136,6 +137,13 @@ struct SynchronicParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr skipFirst {
         juce::ParameterID { "skipFirst", 100 },
         "skip first",
+        true
+    };
+
+    // Transposition Uses Tuning param
+    chowdsp::BoolParameter::Ptr transpositionUsesTuning {
+        juce::ParameterID { "UseTuning", 100 },
+        "TranspositionUsesTuning",
         false
     };
 
@@ -639,6 +647,7 @@ public:
      * value    => specs for that key (start time, direction, loop mode)
      */
     std::map<int, NoteOnSpec> noteOnSpecMap;
+    juce::Array<float> updatedTransps;
 
 private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;

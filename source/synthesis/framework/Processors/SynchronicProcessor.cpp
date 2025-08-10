@@ -71,6 +71,11 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     clusterKeysDepressed = juce::Array<int>();
 
     inCluster = false;
+
+    for (auto& transp : state.params.transpositions.sliderVals)
+    {
+        transp.store(0.);
+    }
 }
 
 /**
@@ -167,6 +172,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
     noteOnSpecMap.clear();
+    updatedTransps.clear();
 
     // constrain number of clusters to numLayers
     //      numClusters in old bK is numLayers
@@ -301,8 +307,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         /**
                          * todo: when the transposition multislider is 2d, need to update here
                          */
-                        int newNote = slimCluster[n] + state.params.transpositions.sliderVals[cluster->transpCounter];
-                        auto newmsg = juce::MidiMessage::noteOn (1, newNote, clusterVelocities.getUnchecked(slimCluster[n]));
+                        updatedTransps.addIfNotAlreadyThere(state.params.transpositions.sliderVals[cluster->transpCounter]);
+
+                        int newNote = slimCluster[n];
+                        auto newmsg = juce::MidiMessage::noteOn (1, newNote, clusterVelocities.getUnchecked(newNote));
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                             outMidiMessages.addEvent(newmsg, 0);
                         else // backwards-playing note
@@ -449,10 +457,11 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     /*
      * then the synthesizer process blocks
      */
+    bool useTuningForTranspositions = state.params.transpositionUsesTuning->get();
     if (synchronicSynth->hasSamples())
     {
         synchronicSynth->setBypassed (false);
-        //        synchronicSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        synchronicSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
         synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
