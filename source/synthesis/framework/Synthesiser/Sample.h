@@ -765,6 +765,27 @@ private:
         auto currentLoopEnd = loopEnd.getNextValue();
         auto currentIncrement = sampleIncrement.getNextValue();
 
+        /**
+         * this should handle the case where we want to play backwards for a time longer than the sample length
+         *  - will simply return 0's and decrement the currentSamplePos (in getNextState)
+         */
+        if(currentDirection == Direction::backward && currentSamplePos > samplerSound->getSample()->getLength())
+        {
+            std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentLoopBegin, currentLoopEnd);
+
+            if (outR != nullptr)
+            {
+                outL[writePos] += 0.f;
+                outR[writePos] += 0.f;
+            }
+            else
+            {
+                outL[writePos] += 0.f;
+            }
+
+            return true;
+        }
+
         float ampEnvLast = ampEnv.getNextSample();
         if (ampEnv.isActive() && isTailingOff())
         {

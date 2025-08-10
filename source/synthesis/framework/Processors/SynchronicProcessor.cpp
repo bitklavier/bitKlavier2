@@ -315,6 +315,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                             float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * (60.0 / tempoTemp) * 1000.);
                             noteOnSpecMap[newNote].startDirection = Direction::backward;
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
+                            noteOnSpecMap[newNote].stopSameCurrentNote = false;
 
                             /*
                              * todo: go back to having forwardsSynth and backwardsSynth, to avoid noteOn/Off

@@ -355,14 +355,26 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * moved this out of the loop below because it was messing up voice handling with multiple transpositions
      * however, this move might break something else in the future, we'll have to see..
-     * todo: might need to make this an option, since in some cases (Synchronic, for instance) we might
-     *          want a note to overlay on itself
      */
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).
-    for (auto* voice : voices)
-        if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
-            stopVoice (voice, 1.0f, true);
+    if(!noteOnSpecs.contains(midiNoteNumber))
+    {
+        for (auto* voice : voices)
+            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+                stopVoice (voice, 1.0f, true);
+    }
+    else if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
+    {
+        /*
+        * the default behavior is to stop an existing note = midiNoteNumber
+        *  but in some situations (like Synchronic) this is undesirable
+        *  so we set the noteOnSpec to false for this
+        */
+       for (auto* voice : voices)
+           if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+               stopVoice (voice, 1.0f, true);
+    }
 
     /**
      * a midiNoteNumber, reflective of what key the player plays, might result in multiple notes being played

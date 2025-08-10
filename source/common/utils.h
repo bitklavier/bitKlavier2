@@ -480,6 +480,7 @@ struct NoteOnSpec
     float startTime = 0.f; // where to start playback (ms)
     Direction startDirection = Direction::forward;
     LoopMode loopMode = LoopMode::none;
+    bool stopSameCurrentNote = true; // if this note is playing already, stop it (default behavior)
 };
 
 /*
