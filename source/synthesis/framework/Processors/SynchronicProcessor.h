@@ -15,7 +15,7 @@
 #include "MultiSliderState.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
-#include "Synthesiser/Sample.h"
+//#include "Synthesiser/Sample.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
 #include "buffer_debugger.h"
@@ -76,6 +76,7 @@ struct SynchronicParams : chowdsp::ParamHolder
             envelopeSequence,
             outputSendGain,
             outputGain,
+            noteOnGain,
             updateUIState);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
@@ -195,6 +196,15 @@ struct SynchronicParams : chowdsp::ParamHolder
         "cluster threshold",
         chowdsp::ParamUtils::createNormalisableRange (20.0f, 2000.f, 1000.f),
         500.f
+    };
+
+    // passed to BKSynth, applies to noteOn msgs
+    chowdsp::GainDBParameter::Ptr noteOnGain {
+        juce::ParameterID { "noteOnGain", 100 },
+        "NoteOn Gain Scalar",
+        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
     };
 
     // the two min/max params
@@ -536,19 +546,24 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-    void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& forwardsMidiMessages, juce::MidiBuffer& backwardsMidiMessages, int numSamples);
+    void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
     bool acceptsMidi() const override { return true; }
-    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-    {
-        DBG("Synchronic addSoundSet map called");
-        ptrToSamples = s;
-    }
+
+    /**
+     * todo: confirm not needed
+     * @param s
+     */
+//    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
+//    {
+//        DBG("Synchronic addSoundSet map called");
+//        ptrToSamples = s;
+//    }
+
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {
         DBG("Synchronic addSoundSet called");
-        forwardsSynth->addSoundSet (s);
-        backwardsSynth->addSoundSet (s);
+        synchronicSynth->addSoundSet (s);
     }
 
     void setTuning (TuningProcessor*) override;
@@ -619,6 +634,12 @@ public:
     juce::uint64 numSamplesBeat = 0;    // = beatThresholdSamples * beatMultiplier
     juce::uint64 beatThresholdSamples;  // # samples in a beat, as set by tempo
 
+    /*
+     * key      => midiNoteNumber
+     * value    => specs for that key (start time, direction, loop mode)
+     */
+    std::map<int, NoteOnSpec> noteOnSpecMap;
+
 private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
 
@@ -632,9 +653,12 @@ private:
     bool doDeleteNewest = false;
     bool doRotate = false;
 
-    std::unique_ptr<BKSynthesiser> forwardsSynth;
-    std::unique_ptr<BKSynthesiser> backwardsSynth;
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
+    std::unique_ptr<BKSynthesiser> synchronicSynth;
+
+    /**
+     * todo: confirm not needed
+     */
+//    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
     juce::Array<int> slimCluster;       //cluster without repetitions
     std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value

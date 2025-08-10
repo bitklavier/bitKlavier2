@@ -10,24 +10,17 @@
 /**
  * todo: change constructor ar for backwardSynth to backwardEnvParams, once we figure out how to manage multiple envParams
  */
-SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, synchronicBusLayout()),
-                                                                                          forwardsSynth (new BKSynthesiser (state.params.env, state.params.outputGain)),
-                                                                                          backwardsSynth (new BKSynthesiser (state.params.env, state.params.outputGain))
+SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) :
+      PluginBase (parent, vt, nullptr, synchronicBusLayout()),
+      synchronicSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
     // for testing
     bufferDebugger = new BufferDebugger();
 
     for (int i = 0; i < 300; i++)
     {
-        forwardsSynth->addVoice (new BKSamplerVoice());
-        backwardsSynth->addVoice (new BKSamplerVoice());
+        synchronicSynth->addVoice (new BKSamplerVoice());
     }
-
-    /*
-     * backwardsSynth is for playing backwards samples
-     * forwardsSynth is for playing forwards samples
-     */
-    backwardsSynth->setPlaybackDirection(Direction::backward);
 
     /*
      * modulations and state changes
@@ -121,8 +114,7 @@ void SynchronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
 
-    forwardsSynth->setCurrentPlaybackSampleRate (sampleRate);
-    backwardsSynth->setCurrentPlaybackSampleRate (sampleRate);
+    synchronicSynth->setCurrentPlaybackSampleRate (sampleRate);
 
 }
 
@@ -134,8 +126,7 @@ bool SynchronicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bu
 void SynchronicProcessor::setTuning (TuningProcessor* tun)
 {
     tuning = tun;
-    forwardsSynth->setTuning (&tuning->getState().params.tuningState);
-    backwardsSynth->setTuning (&tuning->getState().params.tuningState);
+    synchronicSynth->setTuning (&tuning->getState().params.tuningState);
 }
 
 /**
@@ -167,12 +158,15 @@ void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>&
     }
 }
 
-void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& forwardsMidiMessages, juce::MidiBuffer& backwardsMidiMessages, int numSamples)
+void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     /**
      * todo: not sure this the right way to handle this?
      */
     if (pausePlay) return;
+
+    // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
+    noteOnSpecMap.clear();
 
     // constrain number of clusters to numLayers
     //      numClusters in old bK is numLayers
@@ -310,9 +304,20 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         int newNote = slimCluster[n] + state.params.transpositions.sliderVals[cluster->transpCounter];
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, clusterVelocities.getUnchecked(slimCluster[n]));
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
-                            forwardsMidiMessages.addEvent(newmsg, 0);
-                        else
-                            backwardsMidiMessages.addEvent(newmsg, 0);
+                            outMidiMessages.addEvent(newmsg, 0);
+                        else // backwards-playing note
+                        {
+                            /*
+                             * note that the noteOnSpecMap will apply to all other notes == newNote for this block!
+                             *  - shouldn't be an issue, unless note playback is very fast or block is very large
+                             *      AND we get multiple noteOn msgs in the same block that want different noteOnSpecs
+                             */
+                            float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * (60.0 / tempoTemp) * 1000.);
+                            noteOnSpecMap[newNote].startDirection = Direction::backward;
+                            noteOnSpecMap[newNote].startTime = newNoteDuration;
+
+                            outMidiMessages.addEvent(newmsg, 0);
+                        }
 
                         sustainedNotesTimers[newNote] = 0;
                     }
@@ -347,16 +352,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 {
                     auto newmsg = juce::MidiMessage::noteOff (1, tm->first, clusterVelocities.getUnchecked(tm->first));
 
-                    /*
-                     * because the sustainLengthMultiplier might have changed since this note was started, we just send
-                     * noteOff messages to both forwards and backwards synths
-                     */
                     /**
                      * todo: need to check to make sure that there isn't this same
                      *       note in a different cluster that might then get cut off?
                      */
-                    forwardsMidiMessages.addEvent(newmsg, 0);
-                    backwardsMidiMessages.addEvent(newmsg, 0);
+                    outMidiMessages.addEvent(newmsg, 0);
 
                     // The erase() method returns the iterator to the next element.
                     tm = sustainedNotesTimers.erase(tm);
@@ -395,6 +395,9 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
 void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    // this is a synth, so we want an empty audio buffer to start
+    buffer.clear();
+
     /*
      * this updates all the AudioThread callbacks we might have in place
      * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
@@ -427,9 +430,8 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      *      forwards and backwards midiBuffers to send to those respective synths
      */
     int numSamples = buffer.getNumSamples();
-    juce::MidiBuffer forwardsMidi;
-    juce::MidiBuffer backwardsMidi;
-    ProcessMIDIBlock(midiMessages, forwardsMidi, backwardsMidi, numSamples);
+    juce::MidiBuffer outMidi;
+    ProcessMIDIBlock(midiMessages, outMidi, numSamples);
 
     /*
      * Then the Audio Stuff
@@ -442,18 +444,12 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     /*
      * then the synthesizer process blocks
      */
-    if (forwardsSynth->hasSamples())
+    if (synchronicSynth->hasSamples())
     {
-        forwardsSynth->setBypassed (false);
-        //        forwardsSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        forwardsSynth->renderNextBlock (buffer, forwardsMidi, 0, buffer.getNumSamples());
-    }
-
-    if (backwardsSynth->hasSamples())
-    {
-        backwardsSynth->setBypassed (false);
-        //        forwardsSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        backwardsSynth->renderNextBlock (buffer, backwardsMidi, 0, buffer.getNumSamples());
+        synchronicSynth->setBypassed (false);
+        //        synchronicSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
+        synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
 
     // handle the send

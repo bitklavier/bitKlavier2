@@ -128,7 +128,6 @@ juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
     int i = 0;
     for (auto const& tp : *paramVals)
     {
-//        if (tp->getCurrentValue() != 0. && state.params.transpose.sliderVals_size->getCurrentValue() > i)
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
             transps.addIfNotAlreadyThere (tp->getCurrentValue());
         i++;
@@ -203,13 +202,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();
 
-    /**
-     * todo:
-     * used fixed length array since we know the max
-     * and reduce numbers of copies of this array
-     * fastest would be to have an array of pointers that points to the chowdsp version of these
-     * but, these are small arrays, at the block, not a huge concern
-     */
     // update transposition slider values
     juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();

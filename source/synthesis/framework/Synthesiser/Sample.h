@@ -206,12 +206,7 @@ private:
 //    }
 
 };
-enum class LoopMode
-{
-    none,
-    forward,
-    pingpong
-};
+
 template<typename T>
 class BKSamplerSound :  public juce::SynthesiserSound
 {
@@ -610,6 +605,43 @@ public:
         ampEnv.noteOn();
     }
 
+    virtual void startNote (int midiNoteNumber,
+        float velocity,
+        float transposition,
+        bool tune_transpositions,
+        BKSamplerSound<juce::AudioFormatReader> * _sound,
+        int currentPitchWheelPosition,
+        float startTimeMS,
+        Direction startDirection)
+    {
+        samplerSound = _sound;
+        currentlyPlayingSound = _sound;
+        currentlyPlayingNote = midiNoteNumber;
+        currentTransposition = transposition;
+        tuneTranspositions = tune_transpositions;
+
+        /* this will adjust the loudness of this layer according to velocity, based on the
+         *  - dB difference between this layer and the layer below
+         */
+        level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity) * voiceGain); // need gain setting for each synth
+
+        /* set the sample increment, based on the target frequency for this note
+         *  - we will update this every block for spring and regular tunings, but not for tuningType tunings
+         */
+        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+
+        auto loopPoints = samplerSound->getLoopPointsInSeconds();
+        loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
+        loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
+
+        currentSamplePos = startTimeMS * getSampleRate() * .001;
+        currentDirection = startDirection;
+
+        tailOff = 0.0;
+
+        ampEnv.noteOn();
+    }
+
     void setTuning(TuningState* attachedTuning)
     {
         if (attachedTuning == nullptr) return;
@@ -632,7 +664,6 @@ public:
     {
         currentDirection = newdir;
     }
-
 
     virtual void stopNote (float velocity, bool allowTailOff)
     {
@@ -829,7 +860,7 @@ private:
         if (nextDirection == Direction::backward && nextSamplePos < begin)
         {
             nextSamplePos = begin;
-            nextDirection = Direction::forward;
+            if (samplerSound->getLoopMode() == LoopMode::pingpong) nextDirection = Direction::forward;
 
             return std::tuple<double, Direction>(nextSamplePos, nextDirection);
         }

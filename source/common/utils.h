@@ -470,6 +470,18 @@ struct BKSynthesizerState
     double lastPitch;
 };
 
+/**
+ * additional specifications to associate with a particular noteOn msg
+ *  - usually included in a std::map, keyed by midiNoteNumber
+ * todo: perhaps add transpositions here? to condense...
+ */
+struct NoteOnSpec
+{
+    float startTime = 0.f; // where to start playback (ms)
+    Direction startDirection = Direction::forward;
+    LoopMode loopMode = LoopMode::none;
+};
+
 /*
  * sharp/flat mappings use substitutions in std::initializer_list
  * as part of the param definition (reffundamental, for instance)

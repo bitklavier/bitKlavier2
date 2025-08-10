@@ -337,7 +337,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * mute instruments with gain turned all the way down
      */
-    if (synthGain <= -60.) return;
+    if (synthGain <= -80.) return;
 
     /**
      * store this velocity for the UI to use
@@ -386,9 +386,6 @@ void BKSynthesiser::noteOn (const int midiChannel,
             if (sound->appliesToNote ( closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
                 BKSamplerVoice* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
-
-                //set currentDirection here
-                newvoice->setDirection(playbackDirection);
                 startVoice (newvoice,
                     sound,
                     midiChannel,
@@ -441,14 +438,30 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
 
-        voice->startNote (
-            midiNoteNumber,
-            velocity,
-            transposition,
-            tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
-            sound,
-            lastPitchWheelValues [midiChannel - 1]
+        if(noteOnSpecs.contains(midiNoteNumber))
+        {
+            //do stuff here for special noteOn instructions
+            voice->startNote (
+                midiNoteNumber,
+                velocity,
+                transposition,
+                tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
+                sound,
+                lastPitchWheelValues [midiChannel - 1],
+                noteOnSpecs[midiNoteNumber].startTime,
+                noteOnSpecs[midiNoteNumber].startDirection
             );
+        }
+        else
+        {
+            voice->startNote (
+                midiNoteNumber,
+                velocity,
+                transposition,
+                tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
+                sound,
+                lastPitchWheelValues[midiChannel - 1]);
+        }
     }
 }
 

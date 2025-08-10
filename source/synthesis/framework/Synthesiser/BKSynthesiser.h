@@ -302,36 +302,45 @@ class BKSynthesiser
                  */
                 void isPedalSynth(bool mode) { pedalSynth = mode; }
 
-                /**
-                 * todo: not sure we ever use this or synthGain?
-                 * @param g
-                 */
-                void setSynthGain(float g) {
-                    synthGain.setParameterValue(g);
-                }
+//                /**
+//                 * todo: not sure we ever use this or synthGain?
+//                 * @param g
+//                 */
+//                void setSynthGain(float g) {
+//                    synthGain.setParameterValue(g);
+//                }
 
                 void setTuning(TuningState* attachedTuning)
                 {
                     tuning = attachedTuning;
                 }
 
-                void setPlaybackDirection(Direction newdir)
-                {
-                    playbackDirection = newdir;
-                }
+//                void setPlaybackDirection(Direction newdir)
+//                {
+//                    playbackDirection = newdir;
+//                }
 
                 void setBypassed(bool by) { bypassed = by;}
                 bool isBypassed() { return bypassed; }
 
                 /**
-                 * todo
-                 * remove full array copy from this
+
                  * @param newOffsets
                  * @param tune_transpositions
                  */
-                void updateMidiNoteTranspositions(juce::Array<float> newOffsets, bool tune_transpositions) {
+                void updateMidiNoteTranspositions(juce::Array<float>& newOffsets, bool tune_transpositions) {
                     midiNoteTranspositions = newOffsets;
                     tuneTranspositions = tune_transpositions;
+                }
+
+                /**
+                 * get reference to any noteOn specifications (startTime, direction, loopmode) needed
+                 * for any particular note number (key), copy to internal map for use with sampler.h
+                 * @param inspecs
+                 */
+                void setNoteOnSpecMap(std::map<int, NoteOnSpec>& inspecs)
+                {
+                    noteOnSpecs = inspecs;
                 }
 
                 /**
@@ -473,6 +482,8 @@ private:
                 juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
                 std::bitset<128> activeNotes;
 
+                std::map<int, NoteOnSpec> noteOnSpecs;
+
                 //set by owning processor state.params.velocityMinMax
                 float velocityMin = 0.;
                 float velocityMax = 128.;
@@ -482,7 +493,7 @@ private:
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
 
-                //global gain for this synth
+                //global gain for this synth; applies at the noteOn stage, NOT to the audio
                 chowdsp::GainDBParameter& synthGain;
 
                 BKSynthesizerState lastSynthState;
@@ -493,7 +504,7 @@ private:
                 // becomes false when there are no voices active
                 bool someVoicesActive = true;
 
-                Direction playbackDirection = Direction::forward;
+//                Direction playbackDirection = Direction::forward;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

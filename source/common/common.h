@@ -116,5 +116,13 @@ enum class Direction
     backward
 };
 
+enum class LoopMode
+{
+    none,
+    forward,
+    pingpong
+};
+
+
 
 #endif //BITKLAVIER2_COMMON_H

@@ -8,7 +8,7 @@
 #include "Identifiers.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
-#include "Synthesiser/Sample.h"
+//#include "Synthesiser/Sample.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
 #include "VelocityMinMaxParams.h"
@@ -59,6 +59,12 @@ struct DirectParams : chowdsp::ParamHolder
         });
     }
 
+    /**
+     * these first four GainDBParameters are passed to each of the
+     * BKSynths, and affect the noteOn gains, so only have an
+     * impact when the noteOn messages are called (they are not
+     * continuous, like the outputGain and outputSend params)
+     */
     // Gain param
     chowdsp::GainDBParameter::Ptr gainParam {
         juce::ParameterID { "Main", 100 },
