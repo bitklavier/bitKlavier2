@@ -316,6 +316,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                             noteOnSpecMap[newNote].startDirection = Direction::backward;
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
 
+                            /*
+                             * todo: go back to having forwardsSynth and backwardsSynth, to avoid noteOn/Off
+                             *          clashes when sequencing forward/backward playing notes in close proximity
+                             */
                             outMidiMessages.addEvent(newmsg, 0);
                         }
 

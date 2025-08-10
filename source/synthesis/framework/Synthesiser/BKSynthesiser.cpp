@@ -460,7 +460,9 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
                 transposition,
                 tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
                 sound,
-                lastPitchWheelValues[midiChannel - 1]);
+                lastPitchWheelValues[midiChannel - 1],
+                0.,
+                Direction::forward);
         }
     }
 }
