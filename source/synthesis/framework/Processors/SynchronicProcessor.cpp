@@ -304,15 +304,17 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 {
                     for (int n=0; n < slimCluster.size(); n++)
                     {
-                        DBG("sending noteOn messages");
-                        auto newmsg = juce::MidiMessage::noteOn (1, slimCluster[n], clusterVelocities.getUnchecked(slimCluster[n]));
+                        /**
+                         * todo: when the transposition multislider is 2d, need to update here
+                         */
+                        int newNote = slimCluster[n] + state.params.transpositions.sliderVals[cluster->transpCounter];
+                        auto newmsg = juce::MidiMessage::noteOn (1, newNote, clusterVelocities.getUnchecked(slimCluster[n]));
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                             forwardsMidiMessages.addEvent(newmsg, 0);
                         else
                             backwardsMidiMessages.addEvent(newmsg, 0);
 
-
-                        sustainedNotesTimers[slimCluster[n]] = 0;
+                        sustainedNotesTimers[newNote] = 0;
                     }
                 }
 
