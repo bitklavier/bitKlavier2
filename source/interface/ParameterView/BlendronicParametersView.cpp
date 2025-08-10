@@ -9,15 +9,27 @@ void BlendronicParametersView::timerCallback()
     /*
      * for updating the currently active sliders in the UI
      */
-    beatLengthsSlider->setCurrentSlider(bparams_.beatLengths_current.load());
-    delayLengthsSlider->setCurrentSlider(bparams_.delayLengths_current.load());
-    smoothingTimesSlider->setCurrentSlider(bparams_.smoothingTimes_current.load());
-    feedbackCoeffsSlider->setCurrentSlider(bparams_.feedbackCoeffs_current.load());
 
-    beatLengthsSlider->redoImage();
-    delayLengthsSlider->redoImage();
-    smoothingTimesSlider->redoImage();
-    feedbackCoeffsSlider->redoImage();
+    if(!beatLengthsSlider->hovering_)
+    {
+        beatLengthsSlider->setCurrentSlider(bparams_.beatLengths_current.load());
+        beatLengthsSlider->redoImage();
+    }
+    if(!delayLengthsSlider->hovering_)
+    {
+        delayLengthsSlider->setCurrentSlider (bparams_.delayLengths_current.load());
+        delayLengthsSlider->redoImage();
+    }
+    if(!smoothingTimesSlider->hovering_)
+    {
+        smoothingTimesSlider->setCurrentSlider (bparams_.smoothingTimes_current.load());
+        smoothingTimesSlider->redoImage();
+    }
+    if(!feedbackCoeffsSlider->hovering_)
+    {
+        feedbackCoeffsSlider->setCurrentSlider (bparams_.feedbackCoeffs_current.load());
+        feedbackCoeffsSlider->redoImage();
+    }
 }
 
 void BlendronicParametersView::resized()

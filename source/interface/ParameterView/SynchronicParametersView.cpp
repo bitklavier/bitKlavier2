@@ -8,15 +8,26 @@ void SynchronicParametersView::timerCallback()
     /*
      * for updating the currently active sliders in the UI
      */
-    transpositionsSlider->setCurrentSlider(sparams_.transpositions_current.load());
-    accentsSlider->setCurrentSlider(sparams_.accents_current.load());
-    sustainLengthMultipliersSlider->setCurrentSlider(sparams_.sustainLengthMultipliers_current.load());
-    beatLengthMultipliersSlider->setCurrentSlider(sparams_.beatLengthMultipliers_current.load());
-
-    transpositionsSlider->redoImage();
-    accentsSlider->redoImage();
-    sustainLengthMultipliersSlider->redoImage();
-    beatLengthMultipliersSlider->redoImage();
+    if(!transpositionsSlider->hovering_)
+    {
+        transpositionsSlider->setCurrentSlider (sparams_.transpositions_current.load());
+        transpositionsSlider->redoImage();
+    }
+    if(!accentsSlider->hovering_)
+    {
+        accentsSlider->setCurrentSlider (sparams_.accents_current.load());
+        accentsSlider->redoImage();
+    }
+    if(!sustainLengthMultipliersSlider->hovering_)
+    {
+        sustainLengthMultipliersSlider->setCurrentSlider (sparams_.sustainLengthMultipliers_current.load());
+        sustainLengthMultipliersSlider->redoImage();
+    }
+    if(!beatLengthMultipliersSlider->hovering_)
+    {
+        beatLengthMultipliersSlider->setCurrentSlider (sparams_.beatLengthMultipliers_current.load());
+        beatLengthMultipliersSlider->redoImage();
+    }
 
     // placeholder arg
     envSequenceSection->setCurrentlyPlayingEnvelope(3);

@@ -72,10 +72,10 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
 
     inCluster = false;
 
-    for (auto& transp : state.params.transpositions.sliderVals)
-    {
-        transp.store(0.);
-    }
+//    fillAtomicArray(state.params.transpositions.sliderVals, 0.f);
+//    fillAtomicArray(state.params.accents.sliderVals, 1.f);
+//    fillAtomicArray(state.params.sustainLengthMultipliers.sliderVals, 1.f);
+//    fillAtomicArray(state.params.beatLengthMultipliers.sliderVals, 1.f);
 }
 
 /**
@@ -225,13 +225,12 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     {
         SynchronicCluster* cluster = clusters.getUnchecked(i);
 
-        if (cluster->getShouldPlay()) // check if pulses are done and remove cluster if so
+        if (cluster->getShouldPlay())
         {
             play = true;
 
+            // get the current cluster of notes, which we'll cook down to a slimCluster, with duplicate pitches removed
             juce::Array<int> clusterNotes = cluster->getCluster();
-
-            //DBG("cluster " + String(i) + ": " + intArrayToString(clusterNotes));
 
             //cap size of slimCluster, removing oldest notes
             juce::Array<int> tempCluster;
@@ -277,8 +276,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 //                 " ADSR :" + String(prep->getAttack(envelopeCounter)) + " " + String(prep->getDecay(envelopeCounter)) + " " + String(prep->getSustain(envelopeCounter)) + " " + String(prep->getRelease(envelopeCounter))
 //                 );
 
+                // increment all the param counters (cluster->beatMultiplierCounter, etc...)
                 cluster->step(numSamplesBeat);
-                //cluster->postStep();
 
                 //figure out whether to play the cluster
                 bool passCluster = false;
@@ -302,20 +301,34 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
                 if(playCluster)
                 {
+                    // the slimCluster is the cluster of notes in teh metronome pulse with duplicate notes removed
                     for (int n=0; n < slimCluster.size(); n++)
                     {
                         /**
                          * todo: when the transposition multislider is 2d, need to update here
                          */
+                        // prepare the transpositions
                         updatedTransps.addIfNotAlreadyThere(state.params.transpositions.sliderVals[cluster->transpCounter]);
 
+                        // put together the midi message
                         int newNote = slimCluster[n];
-                        auto newmsg = juce::MidiMessage::noteOn (1, newNote, clusterVelocities.getUnchecked(newNote));
+                        float velocityMultiplier = state.params.accents.sliderVals[cluster->accentMultiplierCounter];
+                        auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
+
+                        // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
+                        {
+                            // forward-playing note: add to the midiBuffer that gets passed to BKSynth
                             outMidiMessages.addEvent(newmsg, 0);
-                        else // backwards-playing note
+                        }
+                        else
                         {
                             /*
+                             * backwards-playing note
+                             *
+                             *  - for these we need to set values in noteOnSpec and put that in noteOnSpecMap for this midiNote
+                             *  - noteOnSpecMap will get passed on to BKSynth so it can do what it needs to do for a backward note
+                             *
                              * note that the noteOnSpecMap will apply to all other notes == newNote for this block!
                              *  - shouldn't be an issue, unless note playback is very fast or block is very large
                              *      AND we get multiple noteOn msgs in the same block that want different noteOnSpecs
@@ -325,18 +338,16 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
                             noteOnSpecMap[newNote].stopSameCurrentNote = false;
 
-                            /*
-                             * todo: go back to having forwardsSynth and backwardsSynth, to avoid noteOn/Off
-                             *          clashes when sequencing forward/backward playing notes in close proximity
-                             */
+                            // add it to the midiBuffer for BKSynth to process
                             outMidiMessages.addEvent(newmsg, 0);
                         }
 
+                        // reset the timer for keeping track how long this note has been sustained
                         sustainedNotesTimers[newNote] = 0;
                     }
                 }
 
-                // step cluster data
+                // some param counter cleanup that needs to happen here
                 cluster->postStep();
             }
 
@@ -347,30 +358,17 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             /**
              * todo: handle tempo/general stuff...
              */
-//            if (tempoPrep->getTempoSystem() == AdaptiveTempo1)
-//            {
-//                noteLength = (fabs(prep->sLengthMultipliers.value[cluster->getLengthMultiplierCounter()]) * tempoPrep->getBeatThreshMS());
-//            }
-//            else
-//            {
-//                noteLength = (fabs(prep->sLengthMultipliers.value[cluster->getLengthMultiplierCounter()]) * tempoPrep->getBeatThreshMS() / tempoPrep->getSubdivisions());
-//            }
-//            noteLength = (fabs(prep->sLengthMultipliers.value[cluster->getLengthMultiplierCounter()]) * tempoPrep->getBeatThreshMS() / tempoPrep->getSubdivisions());
             noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * (60.0 / tempoTemp);
-            //DBG("noteLength_samples = " + juce::String(noteLength_samples) + " and cluster->getPhasor() = " + juce::String(cluster->getPhasor()));
 
+            // check to see if the notes have been sustained their desired length
             for (auto tm = sustainedNotesTimers.begin(); tm != sustainedNotesTimers.end(); /* no increment here */)
             {
                 if (tm->second > noteLength_samples)
                 {
                     auto newmsg = juce::MidiMessage::noteOff (1, tm->first, clusterVelocities.getUnchecked(tm->first));
-
-                    /**
-                     * todo: need to check to make sure that there isn't this same
-                     *       note in a different cluster that might then get cut off?
-                     */
                     outMidiMessages.addEvent(newmsg, 0);
 
+                    // remove note from the sustainedNotes timer map, since we don't need it anymore
                     // The erase() method returns the iterator to the next element.
                     tm = sustainedNotesTimers.erase(tm);
                 }
@@ -382,17 +380,22 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 }
             }
 
-            //pass time until next beat
+            //pass time until next beat, increment phasor/timers
             cluster->incrementPhasor(numSamples);
             incrementSustainedNotesTimers(numSamples);
 
+            // update current slider val for UI
+            state.params.transpositions_current.store(cluster->transpCounter);
+            state.params.accents_current.store(cluster->accentMultiplierCounter);
+            state.params.sustainLengthMultipliers_current.store(cluster->lengthMultiplierCounter);
+            state.params.beatLengthMultipliers_current.store(cluster->beatMultiplierCounter);
+
         }
     }
-
     playCluster = play;
 
-    /**
-     * finally process actual incoming MIDI messages
+    /*
+     * finally: process actual incoming MIDI messages
      */
     for (auto mi : inMidiMessages)
     {
@@ -403,6 +406,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         else if(message.isNoteOff())
             keyReleased(message.getNoteNumber(), message.getChannel());
     }
+
+
 
 }
 
@@ -439,8 +444,8 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      */
 
     /**
-     * ProcessMIDIBlock takes all the input MIDI messages and writes to separate
-     *      forwards and backwards midiBuffers to send to those respective synths
+     * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer
+     *  to send to BKSynth
      */
     int numSamples = buffer.getNumSamples();
     juce::MidiBuffer outMidi;

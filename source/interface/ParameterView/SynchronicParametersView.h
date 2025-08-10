@@ -17,6 +17,12 @@
 #include "synth_slider.h"
 #include "synth_button.h"
 
+/**
+ * todo:
+ *  - when Key Off "determines cluster", grey out Note-On options in "pulse triggered by"
+ *  - grey out hold min/max slider when it's not relevant (most of the note-on options)
+ */
+
 class SynchronicParametersView : public SynthSection, public juce::Timer
 {
 public:

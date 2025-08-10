@@ -15,16 +15,16 @@
                    hold="0.000" delay="0.000" envelope_1="1" envelope_2="0" envelope_3="0"
                    envelope_4="0" envelope_5="0" envelope_6="0" envelope_7="0" envelope_8="0"
                    envelope_9="0" envelope_10="0" envelope_11="0" envelope_12="0"
-                   transpositions__sliderVals_size="4" transpositions__sliderVals="1 2 3 4 "
-                   transpositions__activeVals_size="12" transpositions__activeVals="true true true true false false false false false false false false "
-                   accents__sliderVals_size="4" accents__sliderVals="1 0 0.5 2 "
-                   accents__activeVals_size="12" accents__activeVals="true true true true false false false false false false false false "
-                   sustain_length_multipliers_sliderVals_size="5" sustain_length_multipliers_sliderVals="1 2 -2 0.5 -0.5 "
-                   sustain_length_multipliers_activeVals_size="12" sustain_length_multipliers_activeVals="true true true true true false false false false false false false "
-                   beat_length_multipliers_sliderVals_size="6" beat_length_multipliers_sliderVals="1 0.5 1 0.6 0.6 0.6 "
-                   beat_length_multipliers_activeVals_size="12" beat_length_multipliers_activeVals="true true true true true true false false false false false false "
-                   noteOnGain="0.000" UseTuning="0" multislider_vals="1 0.5 1 0.6 0.6 0.6"
-                   multislider_size="6" multislider_states="true true true true true true false false false false false false"
+                   transpositions__sliderVals_size="1" transpositions__sliderVals="0 "
+                   transpositions__activeVals_size="12" transpositions__activeVals="true false false false false false false false false false false false "
+                   accents__sliderVals_size="1" accents__sliderVals="1 " accents__activeVals_size="12"
+                   accents__activeVals="true false false false false false false false false false false false "
+                   sustain_length_multipliers_sliderVals_size="1" sustain_length_multipliers_sliderVals="0.24 "
+                   sustain_length_multipliers_activeVals_size="12" sustain_length_multipliers_activeVals="true false false false false false false false false false false false "
+                   beat_length_multipliers_sliderVals_size="1" beat_length_multipliers_sliderVals="1 "
+                   beat_length_multipliers_activeVals_size="12" beat_length_multipliers_activeVals="true false false false false false false false false false false false "
+                   noteOnGain="0.000" UseTuning="0" multislider_vals="0.24" multislider_size="1"
+                   multislider_states="true false false false false false false false false false false false"
                    multislider_states_size="12">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Send" channel="0" start="-80.0" end="6.0" skew="2.0"/>
@@ -41,7 +41,7 @@
           <MODULATABLE_PARAM parameter="release" channel="8" start="0.0" end="10000.0" skew="0.2313782125711441"/>
           <MODULATABLE_PARAM parameter="delay" channel="9" start="0.0" end="1000.0" skew="1.0"/>
         </MODULATABLE_PARAMS>
-        <PARAM_DEFAULT multislider_vals="1 0.5 1 0.6 0.6 0.6" multislider_size="6" multislider_states="true true true true true true false false false false false false"
+        <PARAM_DEFAULT multislider_vals="0.24" multislider_size="1" multislider_states="true false false false false false false false false false false false"
                        multislider_states_size="12"/>
         <PORT nodeID="3139049611" chIdx="4096" isIn="1"/>
         <PORT nodeID="3139049611" chIdx="2" isIn="0"/>
@@ -60,7 +60,7 @@
                    delay="0.000" t0="0.000" t1="0.000" t2="0.000" t3="0.000" t4="0.000"
                    t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000" t10="0.000"
                    t11="0.000" sliderVals_size="1.000" UseTuning="0" velocitymin="0.000"
-                   velocitymax="128.000" LastVelocity="0.000">
+                   velocitymax="128.000" LastVelocity="58.000">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Main" channel="0" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="Hammers" channel="1" start="-80.0" end="6.0" skew="2.0"/>

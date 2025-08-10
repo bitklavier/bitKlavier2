@@ -643,8 +643,11 @@ public:
     juce::uint64 beatThresholdSamples;  // # samples in a beat, as set by tempo
 
     /*
-     * key      => midiNoteNumber
-     * value    => specs for that key (start time, direction, loop mode)
+     * noteOnSpecMap
+     * - key      => midiNoteNumber
+     * - value    => specs for that key (start time, direction, loop mode)
+     *
+     * needed in particular for backwards-playing notes
      */
     std::map<int, NoteOnSpec> noteOnSpecMap;
     juce::Array<float> updatedTransps;
