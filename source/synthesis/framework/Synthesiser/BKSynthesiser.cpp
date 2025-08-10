@@ -355,6 +355,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * moved this out of the loop below because it was messing up voice handling with multiple transpositions
      * however, this move might break something else in the future, we'll have to see..
+     * todo: might need to make this an option, since in some cases (Synchronic, for instance) we might
+     *          want a note to overlay on itself
      */
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).

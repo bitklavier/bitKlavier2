@@ -449,7 +449,7 @@ public:
 
     inline juce::Array<int> getCluster() {return cluster;}
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; }
+    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG("seetting beat phasor to " + juce::String(c)); }
     inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
 
     inline void addNote(int note)
@@ -487,7 +487,6 @@ public:
     inline bool getShouldPlay(void)
     {
         return shouldPlay;
-
     }
 
     int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
@@ -503,9 +502,9 @@ private:
     SynchronicParams* _sparams;
 
     juce::Array<int> cluster;
-
-
     juce::uint64 phasor;
+
+
     bool shouldPlay, over;
 
     JUCE_LEAK_DETECTOR(SynchronicCluster);
@@ -638,6 +637,15 @@ private:
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
     juce::Array<int> slimCluster;       //cluster without repetitions
+    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
+
+    inline void incrementSustainedNotesTimers (int numSamples)
+    {
+        for (auto& tm : sustainedNotesTimers)
+        {
+            tm.second += numSamples;
+        }
+    }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
 };

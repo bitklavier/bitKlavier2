@@ -774,7 +774,7 @@ private:
             outL[writePos] += (m_Buffer.getSample(0, 0) + m_Buffer.getSample(1, 0)) * 0.5f;
         }
 
-        std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement,currentLoopBegin,currentLoopEnd);
+        std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentLoopBegin, currentLoopEnd);
 
         if (currentSamplePos > samplerSound->getSample()->getLength())
         {

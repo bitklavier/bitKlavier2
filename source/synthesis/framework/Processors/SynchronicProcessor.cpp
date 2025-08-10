@@ -65,13 +65,19 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "holdtime_min_max",
         &(state.params.holdTimeMinMaxParams.stateChanges)));
 
+    /*
+     * Init Synchronic params
+     */
     for (int i = 0; i < 128; i++)
     {
         holdTimers.add(0);
         clusterVelocities.add(0);
     }
 
+    keysDepressed = juce::Array<int>();
     clusterKeysDepressed = juce::Array<int>();
+
+    inCluster = false;
 }
 
 /**
@@ -176,7 +182,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     }
 
     //do this every block, for adaptive tempo updates
-    thresholdSamples = (state.params.clusterThreshold->getCurrentValue() * getSampleRate());
+    thresholdSamples = state.params.clusterThreshold->getCurrentValue() * getSampleRate() * .001;
 
     /**
      * todo: figure out how to handle the stuff from Tempo, to set beatThresholdSamples
@@ -206,7 +212,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             inCluster = false;
         }
 
-        //otherwise incrument cluster timer
+        //otherwise increment cluster timer
         else
         {
             clusterThresholdTimer += numSamples;
@@ -298,19 +304,20 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 {
                     for (int n=0; n < slimCluster.size(); n++)
                     {
+                        DBG("sending noteOn messages");
                         auto newmsg = juce::MidiMessage::noteOn (1, slimCluster[n], clusterVelocities.getUnchecked(slimCluster[n]));
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                             forwardsMidiMessages.addEvent(newmsg, 0);
                         else
                             backwardsMidiMessages.addEvent(newmsg, 0);
 
-                        DBG("added MIDI Message in Synchronic");
+
+                        sustainedNotesTimers[slimCluster[n]] = 0;
                     }
                 }
 
                 // step cluster data
                 cluster->postStep();
-
             }
 
             /*
@@ -329,30 +336,41 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 //                noteLength = (fabs(prep->sLengthMultipliers.value[cluster->getLengthMultiplierCounter()]) * tempoPrep->getBeatThreshMS() / tempoPrep->getSubdivisions());
 //            }
 //            noteLength = (fabs(prep->sLengthMultipliers.value[cluster->getLengthMultiplierCounter()]) * tempoPrep->getBeatThreshMS() / tempoPrep->getSubdivisions());
-            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * 60.0 / tempoTemp;
-            /*
-             * todo: should noteLength_samples be saved when the note is first made, and then checked from there?
-             */
-            if(cluster->getPhasor() > noteLength_samples)
+            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * (60.0 / tempoTemp);
+            //DBG("noteLength_samples = " + juce::String(noteLength_samples) + " and cluster->getPhasor() = " + juce::String(cluster->getPhasor()));
+
+            for (auto tm = sustainedNotesTimers.begin(); tm != sustainedNotesTimers.end(); /* no increment here */)
             {
-                for (int n=0; n < slimCluster.size(); n++)
+                if (tm->second > noteLength_samples)
                 {
-                    auto newmsg = juce::MidiMessage::noteOff (1, slimCluster[n], clusterVelocities.getUnchecked(slimCluster[n]));
+                    auto newmsg = juce::MidiMessage::noteOff (1, tm->first, clusterVelocities.getUnchecked(tm->first));
 
                     /*
                      * because the sustainLengthMultiplier might have changed since this note was started, we just send
                      * noteOff messages to both forwards and backwards synths
                      */
+                    /**
+                     * todo: need to check to make sure that there isn't this same
+                     *       note in a different cluster that might then get cut off?
+                     */
                     forwardsMidiMessages.addEvent(newmsg, 0);
                     backwardsMidiMessages.addEvent(newmsg, 0);
+
+                    // The erase() method returns the iterator to the next element.
+                    tm = sustainedNotesTimers.erase(tm);
                 }
-                clusters.removeFirstMatchingValue(cluster);
+                else
+                {
+                    // Manually increment the iterator to move to the next element
+                    // because the current element was not erased.
+                    ++tm;
+                }
             }
-            else
-            {
-                //pass time until next beat
-                cluster->incrementPhasor(numSamples);
-            }
+
+            //pass time until next beat
+            cluster->incrementPhasor(numSamples);
+            incrementSustainedNotesTimers(numSamples);
+
         }
     }
 
@@ -468,7 +486,7 @@ void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
 bool SynchronicProcessor::holdCheck(int noteNumber)
 {
     juce::uint64 hold = holdTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
-    DBG("holdCheck val = " + juce::String(holdTimers.getUnchecked(noteNumber)));
+    //DBG("holdCheck val = " + juce::String(holdTimers.getUnchecked(noteNumber)));
 
     auto holdmin = state.params.holdTimeMinMaxParams.holdTimeMinParam->getCurrentValue();
     auto holdmax = state.params.holdTimeMinMaxParams.holdTimeMaxParam->getCurrentValue();
@@ -600,7 +618,7 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
             break;
     }
 
-    DBG("handleMidiTargetMessages = " + juce::String(channel + (SynchronicTargetFirst)));
+    //DBG("handleMidiTargetMessages = " + juce::String(channel + (SynchronicTargetFirst)));
 }
 
 void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
@@ -648,7 +666,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
                     continue;
                 }
 
-                if((sMode == SynchronicPulseTriggerType::Last_NoteOff) || (sMode == Any_NoteOff))
+                if((sMode == Last_NoteOff) || (sMode == Any_NoteOff))
                 {
                     if(clusters.size() == 1) clusters[0]->setShouldPlay(false);
                     else
@@ -657,27 +675,26 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
                         {
                             clusters[i]->removeNote(noteNumber);
                         }
-
                     }
                 }
             }
 
             // OnOffMode determines whether the keyOffs or keyOns determine whether notes are within the cluster threshold
             // here, we only look at keyOns
-            if (onOffMode == SynchronicClusterTriggerType::Key_On) // onOffMode.value is set by the "determines cluster"
+            if (onOffMode == Key_On) // onOffMode.value is set by the "determines cluster"
             {
                 // update cluster, create as needed
                 isNewCluster = updateCluster(cluster, noteNumber);
                 if(isNewCluster) cluster = clusters.getLast();
 
                 // reset the beat phase and pattern phase, and start playing, depending on the mode
-                if (sMode == SynchronicPulseTriggerType::Any_NoteOn)
+                if (sMode == Any_NoteOn)
                 {
                     cluster->setShouldPlay(true);
                     cluster->setBeatPhasor(0);
                     cluster->resetPatternPhase();
                 }
-                else if (sMode == SynchronicPulseTriggerType::First_NoteOn)
+                else if (sMode == First_NoteOn)
                 {
                     cluster->setShouldPlay(true);
 
