@@ -79,6 +79,17 @@ class EnvelopeEditor : public OpenGlLineRenderer, public SynthSlider::SliderList
     void setReleasePowerSlider(SynthSlider* release_slider);
     void setSizeRatio(float ratio) { size_ratio_ = ratio; }
 
+    void setADSRVals(float a, float d, float s, float r, float ap, float dp, float rp)
+    {
+        attack_slider_->setValue(a, juce::dontSendNotification);
+        decay_slider_->setValue(d, juce::dontSendNotification);
+        sustain_slider_->setValue(s, juce::dontSendNotification);
+        release_slider_->setValue(r, juce::dontSendNotification);
+        attack_power_slider_->setValue(ap, juce::dontSendNotification);
+        decay_power_slider_->setValue(dp, juce::dontSendNotification);
+        release_power_slider_->setValue(rp, juce::dontSendNotification);
+    }
+
     void parentHierarchyChanged() override;
     void pickHoverPosition(juce::Point<float> position);
     void mouseMove(const juce::MouseEvent& e) override;

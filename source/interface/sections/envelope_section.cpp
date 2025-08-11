@@ -68,7 +68,8 @@ void DragMagnifyingGlass::mouseDoubleClick(const juce::MouseEvent& e) {
   OpenGlShapeButton::mouseDoubleClick(e);
 }
 
-EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection("") {
+EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection("envsection"), _params(params)
+{
 
     setComponentID(parent.getComponentID());
 
@@ -84,6 +85,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     attack_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     attack_->setPopupPlacement(juce::BubbleComponent::below);
     attack_->parentHierarchyChanged();
+    attack_->setShowPopupOnHover(true);
     attack_->setValue(params.attackParam->getDefaultValue());
 
     attack_power_ = std::make_unique<SynthSlider>( "attack_power");
@@ -102,6 +104,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     addSlider(decay_.get());
     decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     decay_->setPopupPlacement(juce::BubbleComponent::below);
+    decay_->setShowPopupOnHover(true);
     decay_->setValue(params.decayParam->getDefaultValue());
 
     decay_power_ = std::make_unique<SynthSlider>( "decay_power");
@@ -113,6 +116,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     addSlider(release_.get());
     release_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     release_->setPopupPlacement(juce::BubbleComponent::below);
+    release_->setShowPopupOnHover(true);
     release_->setValue(params.releaseParam->getDefaultValue());
 
     release_power_ = std::make_unique<SynthSlider>( "release_power");
@@ -124,6 +128,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     addSlider(sustain_.get());
     sustain_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     sustain_->setPopupPlacement(juce::BubbleComponent::below);
+    sustain_->setShowPopupOnHover(true);
     sustain_->setValue(params.sustainParam->getDefaultValue());
 
     envelope_ = std::make_shared<EnvelopeEditor>("");
@@ -159,6 +164,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     decay_->addAttachment(decay_attachment.get());
     sustain_->addAttachment(sustain_attachment.get());
     release_->addAttachment(release_attachment.get());
+
     envelopeSectionBorder.setName("envelope border");
     envelopeSectionBorder.setText("Envelope");
     envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
@@ -182,6 +188,15 @@ void EnvelopeSection::paintBackground(juce::Graphics& g) {
 
       envelopeSectionBorder.paint(g);
 }
+
+void EnvelopeSection::sliderValueChanged(juce::Slider* moved_slider)
+{
+    SynthSection::sliderValueChanged(moved_slider);
+    DBG("envelope_section sliderValueChanged ");
+    envelope_;
+    _params.notify->setValueNotifyingHost(true);
+}
+
 
 void EnvelopeSection::resized() {
 
@@ -217,6 +232,12 @@ void EnvelopeSection::resized() {
     envelope_->magnifyReset();
 
     SynthSection::resized();
+}
+
+void EnvelopeSection::setADSRVals(float a, float d, float s, float r, float ap, float dp, float rp)
+{
+//    attack_->setValue(a, juce::dontSendNotification);
+    envelope_->setADSRVals(a, d, s, r, ap, dp, rp);
 }
 
 void EnvelopeSection::reset() {

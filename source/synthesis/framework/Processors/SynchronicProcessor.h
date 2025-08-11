@@ -174,7 +174,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr numPulses {
         juce::ParameterID { "numPulses", 100 },
-        "num pulses",
+        "pulses",
         chowdsp::ParamUtils::createNormalisableRange (1.0f, 100.f, 50.f, 1.f),
         20.f,
         &chowdsp::ParamUtils::floatValToString,
@@ -183,7 +183,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr numLayers {
         juce::ParameterID { "numLayers", 100 },
-        "num layers",
+        "layers",
         chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.f,
         &chowdsp::ParamUtils::floatValToString,

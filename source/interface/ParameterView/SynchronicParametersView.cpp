@@ -92,9 +92,9 @@ void SynchronicParametersView::resized()
 
     leftColumn.removeFromTop(largepadding);
 
-    holdTimeMinMaxSlider->setBounds(leftColumn.removeFromTop(knob_section_height));
-    leftColumn.removeFromTop(smallpadding);
     clusterMinMaxSlider->setBounds(leftColumn.removeFromTop(knob_section_height));
+    leftColumn.removeFromTop(smallpadding);
+    holdTimeMinMaxSlider->setBounds(leftColumn.removeFromTop(knob_section_height));
 
     leftColumn.removeFromTop(largepadding);
 

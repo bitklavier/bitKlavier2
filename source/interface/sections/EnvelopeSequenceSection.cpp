@@ -8,7 +8,7 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
     juce::String name,
     EnvelopeSequenceParams &params,
     chowdsp::ParameterListeners &listeners,
-    SynthSection &parent)
+    SynthSection &parent) : _params(params)
 {
     for ( auto &param_ : *params.getBoolParams())
     {
@@ -46,7 +46,6 @@ void EnvelopeSequenceSection::buttonClicked (juce::Button* clicked_button)
 {
     if(clicked_button->getName().startsWith("edit_"))
     {
-        DBG("edit button clicked!");
         for (auto & _b : _envEditButtons)
         {
             if(clicked_button->getName() != _b->getName())
@@ -56,8 +55,7 @@ void EnvelopeSequenceSection::buttonClicked (juce::Button* clicked_button)
             }
             else
             {
-                currentSelectedEnvelope = getEnvelopeIndex(_b->getName());
-                DBG("currentSelectedEnvelope = " + juce::String(currentSelectedEnvelope));
+                _params.currentlyEditing->setParameterValue(getEnvelopeIndex(_b->getName()));
             }
         }
         return; // skip the rest

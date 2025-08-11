@@ -12,6 +12,19 @@
 
 struct EnvelopeSequenceState : bitklavier::StateChangeableParameter
 {
+
+    EnvelopeSequenceState() : bitklavier::StateChangeableParameter()
+    {
+        for (auto& attack : attacks) attack = 3.0f;
+        for (auto& decay : decays) decay = 10.0f;
+        for (auto& sustain : sustains) sustain = 1.0f;
+        for (auto& release : releases) release = 50.0f;
+
+        for (auto& attackPower : attackPowers) attackPower = 0.0f;
+        for (auto& decayPower : decayPowers) decayPower = 0.0f;
+        for (auto& releasePower : releasePowers) releasePower = 0.0f;
+    }
+
     // primary ADSR param values
     std::array<std::atomic<float>, MAXADSRS> attacks;
     std::array<std::atomic<float>, MAXADSRS> decays;
@@ -120,10 +133,6 @@ void deserializeArrayADSRParam(
     juce::String _activeADSRs = thisSliderID + "_activeADSRs";
 
     // Deserialize the slider values
-//    auto myStr = deserial->getStringAttribute(_attacks);
-//    std::vector<float> sliderVals_vec = parseStringToVector<float>(myStr);
-//    populateAtomicArrayFromVector(msliderParam.attacks, 1.0f, sliderVals_vec);
-
     paramFromString(_attacks, deserial, msliderParam.attacks);
     paramFromString(_decays, deserial, msliderParam.decays);
     paramFromString(_sustains, deserial, msliderParam.sustains);

@@ -23,7 +23,6 @@ public:
 
     void buttonClicked (juce::Button* clicked_button);
     void setCurrentlyPlayingEnvelope(int which);
-    int currentSelectedEnvelope = 1;
 
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
@@ -37,6 +36,7 @@ private:
     std::vector<std::unique_ptr<SynthButton>> _envPlayingButtons; // to display which one is actually playing right now
 
     int getEnvelopeIndex(const juce::String& s);
+    EnvelopeSequenceParams& _params;
 //
 //    // interval spring length scale selection menus
 //    std::unique_ptr<OpenGLComboBox> scaleId_ComboBox;

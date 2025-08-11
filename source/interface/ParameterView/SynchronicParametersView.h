@@ -130,7 +130,7 @@ public:
         addStateModulatedComponent (holdTimeMinMaxSlider.get());
 
         // envelope/ADSR controller UI
-        envSection = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
+        envSection = std::make_unique<EnvelopeSection>(params.env, listeners, *this);
         addSubSection (envSection.get());
 
         // sequence of ADSRs
@@ -148,22 +148,6 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
-//        for (int i=0; i<MAXADSRS; i++)
-//        {
-//            auto button = std::make_unique<SynthButton>("adsrEditButton_" + juce::String(i));
-//            auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, nullptr);
-//            button->setComponentID(param_->paramID);
-//            addSynthButton(button.get(), true);
-//            button->setButtonText("e");
-//            button->setHelpText("edit this ADSR");
-//
-//            useLocalOrFundamentalToggles_sliderAttachments.emplace_back(std::move(button_ToggleAttachment));
-//            useLocalOrFundamentalToggles.emplace_back(std::move(button));
-//
-//        }
-//
-
-
         /*
          * listen for changes from mods/resets, redraw as needed
          */
@@ -179,7 +163,35 @@ public:
                     sustainLengthMultipliersSlider->updateFromParams();
                     beatLengthMultipliersSlider->updateFromParams();
                 }
-                )
+            )
+        };
+
+        // this will get called when a different envelope of the 12 is selected for editing
+        sliderChangedCallback += {
+            listeners.addParameterListener
+            (
+                params.envelopeSequence.currentlyEditing,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this]
+                {
+                    DBG("currently editing: " + juce::String(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()));
+                    displayEnvSequenceValsInEnvEditor();
+                }
+            )
+        };
+
+        // this will get called when any of the params in the envelope editor Env are changed
+        sliderChangedCallback += {
+            listeners.addParameterListener
+            (
+                params.env.notify,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this]
+                {
+                    DBG("received notification from Env, envelope editor " + juce::String(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()));
+                    copyEnvEditorValsToEnvSequence();
+                }
+            )
         };
 
         /*
@@ -197,6 +209,46 @@ public:
 
     void timerCallback() override;
 
+    void copyEnvEditorValsToEnvSequence()
+    {
+        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()) - 1;
+
+        DBG("copyEnvEditorValsToEnvSequence " + juce::String(currentEnv));
+        sparams_.envelopeSequence.envStates.attacks[currentEnv]         = sparams_.env.attackParam->getCurrentValue();
+        sparams_.envelopeSequence.envStates.decays[currentEnv]          = sparams_.env.decayParam->getCurrentValue();
+        sparams_.envelopeSequence.envStates.sustains[currentEnv]        = sparams_.env.sustainParam->getCurrentValue();
+        sparams_.envelopeSequence.envStates.releases[currentEnv]        = sparams_.env.releaseParam->getCurrentValue();
+
+        sparams_.envelopeSequence.envStates.attackPowers[currentEnv]    = sparams_.env.attackPowerParam->getCurrentValue();
+        sparams_.envelopeSequence.envStates.decayPowers[currentEnv]     = sparams_.env.decayPowerParam->getCurrentValue();
+        sparams_.envelopeSequence.envStates.releasePowers[currentEnv]   = sparams_.env.releasePowerParam->getCurrentValue();
+
+        DBG(juce::String(sparams_.envelopeSequence.envStates.attacks[currentEnv]));
+        DBG(juce::String(sparams_.envelopeSequence.envStates.decays[currentEnv]));
+        DBG(juce::String(sparams_.envelopeSequence.envStates.sustains[currentEnv]));
+        DBG(juce::String(sparams_.envelopeSequence.envStates.releases[currentEnv]));
+        DBG(juce::String(sparams_.envelopeSequence.envStates.attackPowers[currentEnv]));
+        DBG(juce::String(sparams_.envelopeSequence.envStates.decayPowers[currentEnv]));
+        DBG(juce::String(sparams_.envelopeSequence.envStates.releasePowers[currentEnv]));
+    }
+
+    void displayEnvSequenceValsInEnvEditor()
+    {
+        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()) - 1;
+
+        DBG("displayEnvSequenceValsInEnvEditor " + juce::String(currentEnv));
+
+        envSection->setADSRVals(
+            sparams_.envelopeSequence.envStates.attacks[currentEnv],
+            sparams_.envelopeSequence.envStates.decays[currentEnv],
+            sparams_.envelopeSequence.envStates.sustains[currentEnv],
+            sparams_.envelopeSequence.envStates.releases[currentEnv],
+            sparams_.envelopeSequence.envStates.attackPowers[currentEnv],
+            sparams_.envelopeSequence.envStates.decayPowers[currentEnv],
+            sparams_.envelopeSequence.envStates.releasePowers[currentEnv]
+        );
+    }
+
     void paintBackground (juce::Graphics& g) override
     {
         setLabelFont(g);
@@ -205,8 +257,8 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
 
-        drawLabelForComponent(g, TRANS("num pulses"), numPulses_knob.get());
-        drawLabelForComponent(g, TRANS("num layers"), numLayers_knob.get());
+        drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
+        drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
         drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
         drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
 
@@ -243,10 +295,10 @@ public:
     std::unique_ptr<SynthSlider> clusterThreshold_knob;
     std::unique_ptr<chowdsp::SliderAttachment> clusterThreshold_knob_attachment;
 
-    // ADSR controller
+    // ADSR controller: for setting the parameters of each ADSR
     std::unique_ptr<EnvelopeSection> envSection;
 
-    // ADSRs
+    // ADSRs: for turning on/off particular ADSRs, and for choosing particular ones to edit with envSection
     std::unique_ptr<EnvelopeSequenceSection> envSequenceSection;
 
     // level meters with gain sliders

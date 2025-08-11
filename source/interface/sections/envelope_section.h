@@ -60,6 +60,9 @@ public:
     void reset() override;
     void magnifyDragged(juce::Point<float> delta) override;
     void magnifyDoubleClicked() override;
+    void sliderValueChanged(juce::Slider* moved_slider) override;
+
+    void setADSRVals(float a, float d, float s, float r, float ap, float dp, float rp);
 
   private:
     std::vector<std::unique_ptr<SynthSlider>> viewable;
@@ -85,6 +88,7 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> releasePower_attachment;
 
     juce::GroupComponent envelopeSectionBorder;
+    EnvParams& _params;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeSection)
 };

@@ -11,6 +11,8 @@
 - [ ] is everything rebuilt when the sample rate is changed? constructors called?
   - asking because the only time the buffer and filter settings in blendronic are set is when the constructor is called
     - if it's not called when the sample rate is changed, i need to sort out how the sr change is propagated down
+- [ ] how to NOT have a param or section eligible for state change mod? thinking the envelope stuff in Synchronic
+- [ ] finish revising the chowdsp range resizing
 
 
 ## Quick Bug/Feature Notes
