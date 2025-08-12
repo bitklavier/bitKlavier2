@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <PREPARATION type="1" width="245" height="125" x_y="719, 378" uuid="25f872e938b44ae7b497dbca31bdbf6a"
+                   nodeID="637039337" numIns="1" numOuts="2" numPulses="100.000"
+                   numLayers="1.000" clusterThickness="8.000" clusterThreshold="500.000"
+                   Send="0.000" OutputGain="0.000" noteOnGain="0.000" pulseTriggeredBy="0"
+                   determinesCluster="0" skipFirst="1" UseTuning="0" updateUIState="0"
+                   clustermin="1.000" clustermax="12.000" LastCluster="1.000" holdTimeMinParam="0.000"
+                   holdTimeMaxParam="12000.000" lastHoldTimeParam="0.000" attack="3.000"
+                   decay="10.000" sustain="1.000" release="50.000" attackpower="0.000"
+                   decaypower="0.000" releasepower="0.000" hold="0.000" delay="0.000"
+                   notify="0" currentlyEditing="0.000" envelope_0="1" envelope_1="0"
+                   envelope_2="0" envelope_3="0" envelope_4="0" envelope_5="0" envelope_6="0"
+                   envelope_7="0" envelope_8="0" envelope_9="0" envelope_10="0"
+                   envelope_11="0" transpositions__sliderVals_size="5" transpositions__sliderVals="0 1 2 3 4 "
+                   transpositions__activeVals_size="12" transpositions__activeVals="true true true true true false false false false false false false "
+                   accents__sliderVals_size="0" accents__sliderVals="" accents__activeVals_size="0"
+                   accents__activeVals="" sustain_length_multipliers_sliderVals_size="0"
+                   sustain_length_multipliers_sliderVals="" sustain_length_multipliers_activeVals_size="0"
+                   sustain_length_multipliers_activeVals="" beat_length_multipliers_sliderVals_size="0"
+                   beat_length_multipliers_sliderVals="" beat_length_multipliers_activeVals_size="0"
+                   beat_length_multipliers_activeVals="" envelope_sequence_attacks="3 3 3 3 3 3 3 3 3 3 3 3 "
+                   envelope_sequence_decays="10 10 10 10 10 10 10 10 10 10 10 10 "
+                   envelope_sequence_sustains="1 1 1 1 1 1 1 1 1 1 1 1 " envelope_sequence_releases="50 50 50 50 50 50 50 50 50 50 50 50 "
+                   envelope_sequence_attackPowers="0 0 0 0 0 0 0 0 0 0 0 0 " envelope_sequence_decayPowers="0 0 0 0 0 0 0 0 0 0 0 0 "
+                   envelope_sequence_releasePowers="0 0 0 0 0 0 0 0 0 0 0 0 " multislider_vals="0 1 2 3 4"
+                   multislider_size="5" multislider_states="true true true true true false false false false false false false"
+                   multislider_states_size="12">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="Send" channel="0" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" channel="1" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="noteOnGain" channel="2" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="holdTimeMinParam" channel="3" start="0.0" end="12000.0"
+                             skew="0.3333333432674408"/>
+          <MODULATABLE_PARAM parameter="holdTimeMaxParam" channel="4" start="0.0" end="12000.0"
+                             skew="0.3333333432674408"/>
+          <MODULATABLE_PARAM parameter="lastHoldTimeParam" channel="5" start="0.0" end="12000.0"
+                             skew="0.3333333432674408"/>
+          <MODULATABLE_PARAM parameter="attack" channel="6" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="decay" channel="7" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" channel="8" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" channel="9" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="delay" channel="10" start="0.0" end="1000.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT multislider_vals="0 1 2 3 4" multislider_size="5" multislider_states="true true true true true false false false false false false false"
+                       multislider_states_size="12"/>
+        <PORT nodeID="637039337" chIdx="4096" isIn="1"/>
+        <PORT nodeID="637039337" chIdx="2" isIn="0"/>
+        <PORT nodeID="637039337" chIdx="3" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="7" width="185" height="105" x_y="596, 675" uuid="cca607cf1d164738afa622b6c9e64f07"
+                   nodeID="3433433039" numOuts="1" keyOn="60">
+        <PORT nodeID="3433433039" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
+      </PREPARATION>
+      <PREPARATION type="10" width="75" height="75" x_y="889, 597" uuid="c39f757817504a50bdf622e0d5160f4b"
+                   nodeID="3282007416" numIns="1" numOuts="1" bTargetPatternSync_noteMode="0"
+                   bTargetBeatSync_noteMode="0" bTargetClear_noteMode="0" bTargetPausePlay_noteMode="0"
+                   bTargetInput_noteMode="0" bTargetOutput_noteMode="0" bTargetPatternSync="0"
+                   bTargetBeatSync="0" bTargetClear="0" bTargetPausePlay="0" bTargetInput="0"
+                   bTargetOutput="0" sTargetDefault_noteMode="2" sTargetPatternSync_noteMode="0"
+                   sTargetBeatSync_noteMode="0" sTargetAddNotes_noteMode="0" sTargetClear_noteMode="0"
+                   sTargetPausePlay_noteMode="0" sTargetDeleteOldest_noteMode="0"
+                   sTargetDeleteNewest_noteMode="0" sTargetRotate_noteMode="0" sTargetDefault="0"
+                   sTargetPatternSync="0" sTargetBeatSync="0" sTargetAddNotes="0"
+                   sTargetClear="0" sTargetPausePlay="0" sTargetDeleteOldest="0"
+                   sTargetDeleteNewest="0" sTargetRotate="0">
+        <PORT nodeID="3282007416" chIdx="4096" isIn="1"/>
+        <PORT nodeID="3282007416" chIdx="4096" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="0" width="245" height="125" x_y="262, 290" uuid="a4411a17f6694cb5a762449fa5e093e7"
+                   nodeID="2755729943" numIns="1" numOuts="2" Main="0.000" Hammers="-24.000"
+                   Resonance="6.000" Pedal="-6.000" Send="0.000" OutputGain="0.000"
+                   attack="3.000" decay="10.000" sustain="1.000" release="50.000"
+                   attackpower="0.000" decaypower="0.000" releasepower="0.000" hold="0.000"
+                   delay="0.000" notify="0" t0="0.000" t1="0.000" t2="0.000" t3="0.000"
+                   t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000"
+                   t10="0.000" t11="0.000" sliderVals_size="1.000" UseTuning="0"
+                   velocitymin="0.000" velocitymax="128.000" LastVelocity="87.000">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="Main" channel="0" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Hammers" channel="1" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Resonance" channel="2" start="-80.0" end="30.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Pedal" channel="3" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Send" channel="4" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" channel="5" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="attack" channel="6" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="decay" channel="7" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" channel="8" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" channel="9" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="delay" channel="10" start="0.0" end="1000.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="2755729943" chIdx="4096" isIn="1"/>
+        <PORT nodeID="2755729943" chIdx="2" isIn="0"/>
+        <PORT nodeID="2755729943" chIdx="3" isIn="0"/>
+      </PREPARATION>
+      <PREPARATION type="7" width="185" height="105" x_y="403, 598" uuid="510f5e9fb00841419ef277ca43baa4ac"
+                   nodeID="1359961759" numOuts="1" keyOn="21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108">
+        <PORT nodeID="1359961759" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
+      </PREPARATION>
+    </PREPARATIONS>
+    <CONNECTIONS>
+      <CONNECTION isMod="0" src="3433433039" srcIdx="4096" dest="3282007416" destIdx="4096"/>
+      <CONNECTION isMod="0" src="3282007416" srcIdx="4096" dest="637039337" destIdx="4096"/>
+      <CONNECTION isMod="0" src="1359961759" srcIdx="4096" dest="2755729943" destIdx="4096"/>
+      <CONNECTION isMod="0" src="1359961759" srcIdx="4096" dest="637039337" destIdx="4096"/>
+    </CONNECTIONS>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

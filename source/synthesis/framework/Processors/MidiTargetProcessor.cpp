@@ -48,6 +48,7 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 if(state.params.noteModeMapper[currentTarget]->get() == _NoteOn)
                 {
                     //only allow noteOffs through
+                    DBG("sending noteOn channel " + juce::String(newchan));
                     if (message.isNoteOn())
                     {
                         juce::MidiMessage newmsg(message);
@@ -58,6 +59,7 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 else if(state.params.noteModeMapper[currentTarget]->get() == _NoteOff)
                 {
                     //only allow noteOffs through
+                    DBG("sending noteOff channel " + juce::String(newchan));
                     if (message.isNoteOff())
                     {
                         juce::MidiMessage newmsg(message);
@@ -68,6 +70,7 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 else
                 {
                     //put it through for both noteOns and noteOffs
+                    DBG("sending both noteOn and noteOff channel " + juce::String(newchan));
                     juce::MidiMessage newmsg(message);
                     newmsg.setChannel (newchan);
                     midiMessages.addEvent (newmsg, mi.samplePosition);

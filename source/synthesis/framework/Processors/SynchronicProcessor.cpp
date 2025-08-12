@@ -165,10 +165,20 @@ void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>&
 
 void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
-    /**
-     * todo: not sure this the right way to handle this?
+    /*
+     * finally: process actual incoming MIDI messages
      */
-    if (pausePlay) return;
+    for (auto mi : inMidiMessages)
+    {
+        auto message = mi.getMessage();
+
+        if(message.isNoteOn())
+            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
+        else if(message.isNoteOff())
+            keyReleased(message.getNoteNumber(), message.getChannel());
+    }
+
+    if(doPausePlay) return;
 
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
     noteOnSpecMap.clear();
@@ -262,18 +272,24 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             //check to see if enough time has passed for next beat
             if (cluster->getPhasor() >= numSamplesBeat)
             {
-                //update display of counters in UI
+                if (doPatternSync)
+                {
+                    cluster->resetPatternPhase();
+                    //            cluster->setShouldPlay(true);
+                    doPatternSync = false; // reset this outside of the cluster loop?
+                }
 
-//                 DBG(" samplerate: " + String(sampleRate) +
-//                 " length: "         + String(prep->sLengthMultipliers.value[lengthMultiplierCounter]) +
-//                 " length counter: "  + String(lengthMultiplierCounter) +
-//                 " accent: "         + String(prep->getAccentMultipliers()[accentMultiplierCounter]) +
-//                 " accent counter: " + String(accentMultiplierCounter) +
-//                 " transp: "         + "{ "+floatArrayToString(prep->getTransposition()[transpCounter]) + " }" +
-//                 " transp counter: " + String(transpCounter) +
-//                 " envelope on: "       + String((int)prep->getEnvelopesOn()[envelopeCounter]) +
-//                 " envelope counter: " + String(envelopeCounter) +
-//                 " ADSR :" + String(prep->getAttack(envelopeCounter)) + " " + String(prep->getDecay(envelopeCounter)) + " " + String(prep->getSustain(envelopeCounter)) + " " + String(prep->getRelease(envelopeCounter))
+//                //update display of counters in UI
+//                 DBG(
+////                 " length: "         + String(prep->sLengthMultipliers.value[lengthMultiplierCounter]) +
+//                 " length counter: "  + juce::String(cluster->lengthMultiplierCounter) +
+////                 " accent: "         + String(prep->getAccentMultipliers()[accentMultiplierCounter]) +
+//                 " accent counter: " + juce::String(cluster->accentMultiplierCounter) +
+////                 " transp: "         + "{ "+floatArrayToString(prep->getTransposition()[transpCounter]) + " }" +
+//                 " transp counter: " + juce::String(cluster->transpCounter) +
+////                 " envelope on: "       + String((int)prep->getEnvelopesOn()[envelopeCounter]) +
+//                 " envelope counter: " + juce::String(cluster->envelopeCounter)
+////                 " ADSR :" + String(prep->getAttack(envelopeCounter)) + " " + String(prep->getDecay(envelopeCounter)) + " " + String(prep->getSustain(envelopeCounter)) + " " + String(prep->getRelease(envelopeCounter))
 //                 );
 
                 // increment all the param counters (cluster->beatMultiplierCounter, etc...)
@@ -404,22 +420,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         }
     }
     playCluster = play;
-
-    /*
-     * finally: process actual incoming MIDI messages
-     */
-    for (auto mi : inMidiMessages)
-    {
-        auto message = mi.getMessage();
-
-        if(message.isNoteOn())
-            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
-        else if(message.isNoteOff())
-            keyReleased(message.getNoteNumber(), message.getChannel());
-    }
-
-
-
 }
 
 void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -598,14 +598,16 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
      */
 
     doCluster = false; // primary Synchronic mode
-    doPatternSync = false; // resetting pattern phases
+//    doPatternSync = false; // resetting pattern phases
     doBeatSync = false; // resetting beat phase
     doAddNotes = false; // adding notes to cluster
-    doPausePlay = false; // targeting pause/play
     doClear = false;
     doDeleteOldest = false;
     doDeleteNewest = false;
     doRotate = false;
+    /*
+     * don't set doPausePlay to false here; toggle below
+     */
 
     switch(channel + (SynchronicTargetFirst))
     {
@@ -630,7 +632,8 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
             break;
 
         case SynchronicTargetPausePlay:
-            doPausePlay = true;
+            if (doPausePlay) doPausePlay = false;
+            else doPausePlay = true;
             break;
 
         case SynchronicTargetDeleteOldest:
@@ -682,10 +685,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         clusterKeysDepressed.addIfNotAlreadyThere(noteNumber);
         clusterVelocities.set(noteNumber, velocity);
 
-        /**
-         * todo: move pausePlay out of here if possible?
-         */
-        if(!pausePlay)
+        if(!doPausePlay)
         {
             // Remove old clusters, deal with layers and NoteOffSync modes
             for (int i = clusters.size(); --i >= 0; )
@@ -758,6 +758,16 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
          */
         beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
 
+        /*
+         * for cases when BOTH beatSync and patternSync are selected in MidiTarget,
+         * we need to reset the pattern counters here..
+         */
+        if (doPatternSync)
+        {
+            cluster->resetPatternPhase();
+            doPatternSync = false;
+        }
+
         /**
          * todo: check this
          *          and also add the General Settings and Tempo adjustments
@@ -771,7 +781,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     // resetPatternPhase() starts patterns over, if targeting beat sync on noteOn or on both noteOn/Off
     if (doPatternSync)
     {
-        cluster->resetPatternPhase();
+//        cluster->resetPatternPhase();
     }
 
     // add notes to the cluster, if targeting beat sync on noteOn or on both noteOn/Off
@@ -779,16 +789,6 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     {
         clusterVelocities.set(noteNumber, velocity);
         cluster->addNote(noteNumber);
-    }
-
-    /**
-     * todo: figure out how best to handle pausePlay and consolidate as much as possible
-     */
-    // toggle pause/play, if targeting beat sync on noteOn or on both noteOn/Off
-    if (doPausePlay)
-    {
-        if (pausePlay) pausePlay = false;
-        else pausePlay = true;
     }
 
     if (doClear)
@@ -849,7 +849,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         // remove key from cluster-targeted keys
         clusterKeysDepressed.removeAllInstancesOf(noteNumber);
 
-        if(!pausePlay)
+        if(!doPausePlay)
         {
             // cluster management
             // OnOffMode determines whether the timing of keyOffs or keyOns determine whether notes are within the cluster threshold
@@ -914,21 +914,14 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     // resetPatternPhase() starts patterns over, if targeting beat sync on noteOff or on both noteOn/Off
     if (doPatternSync)
     {
-        cluster->resetPatternPhase();
-        cluster->setShouldPlay(true);
+//        cluster->resetPatternPhase();
+//        cluster->setShouldPlay(true);
     }
 
     // add notes to the cluster, if targeting beat sync on noteOff or on both noteOn/Off
     if (doAddNotes)
     {
         cluster->addNote(noteNumber);
-    }
-
-    // toggle pause/play, if targeting beat sync on noteOff or on both noteOn/Off
-    if (doPausePlay)
-    {
-        if (pausePlay) pausePlay = false;
-        else pausePlay = true;
     }
 
     if (doClear)

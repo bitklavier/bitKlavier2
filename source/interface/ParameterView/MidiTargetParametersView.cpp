@@ -54,13 +54,33 @@ void MidiTargetParametersView::resized()
     blendronicColumn.reduce(smallpadding, smallpadding);
     blendronicButtonsColumn.reduce(smallpadding, smallpadding);
 
-    for(int i = BlendronicTargetPatternSync; i<BlendronicTargetNil; i++)
+    /*
+     * need to account for First and Nil targets, since toggles/menus don't get created for those
+     *  - will be different for each preparation type
+     */
+    int targetOffset = 1;
+    for(int i = (BlendronicTargetFirst - targetOffset) + 1; i<BlendronicTargetNil - targetOffset; i++)
     {
-        _paramToggles[i - BlendronicTargetPatternSync]->setBounds(blendronicButtonsColumn.removeFromTop(comboboxheight));
+        _paramToggles[i]->setBounds(blendronicButtonsColumn.removeFromTop(comboboxheight));
         blendronicButtonsColumn.removeFromTop(smallpadding);
 
-        _noteModeMenus[i - BlendronicTargetPatternSync]->setBounds(blendronicColumn.removeFromTop(comboboxheight));
+        _noteModeMenus[i]->setBounds(blendronicColumn.removeFromTop(comboboxheight));
         blendronicColumn.removeFromTop(smallpadding);
+    }
+
+    juce::Rectangle<int> synchronicColumn = area.removeFromLeft(column_width);
+    juce::Rectangle<int> synchronicButtonsColumn = synchronicColumn.removeFromLeft(synchronicColumn.getWidth() / 2);
+    synchronicColumn.reduce(smallpadding, smallpadding);
+    synchronicButtonsColumn.reduce(smallpadding, smallpadding);
+
+    targetOffset = 3;
+    for(int i = (SynchronicTargetFirst - targetOffset) + 1; i<SynchronicTargetNil - targetOffset; i++)
+    {
+        _paramToggles[i]->setBounds(synchronicButtonsColumn.removeFromTop(comboboxheight));
+        synchronicButtonsColumn.removeFromTop(smallpadding);
+
+        _noteModeMenus[i]->setBounds(synchronicColumn.removeFromTop(comboboxheight));
+        synchronicColumn.removeFromTop(smallpadding);
     }
 
     SynthSection::resized();

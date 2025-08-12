@@ -15,7 +15,6 @@
 #include "MultiSliderState.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
-//#include "Synthesiser/Sample.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
 #include "buffer_debugger.h"
@@ -273,8 +272,6 @@ struct SynchronicParams : chowdsp::ParamHolder
         // signal the UI to redraw the sliders
         if( transpositions.updateUI == true || accents.updateUI == true || sustainLengthMultipliers.updateUI == true || beatLengthMultipliers.updateUI == true)
         {
-            DBG("updateUIState for Multisliders");
-
             /*
              * need to actually change the value for the listener to get the message
              * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
@@ -296,12 +293,6 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
-
-    /**
-     * todo: figure out how to deal with the multiple ADSRs that we use with the Synchronic patterns...
-     * perhaps we should have an array of 12 of them?
-     */
-
 
 };
 
@@ -338,72 +329,6 @@ public:
     }
 
     ~SynchronicCluster() {}
-
-//
-//    inline const juce::uint64 getPhasor(void) const noexcept   { return phasor;            }
-//    inline const int getBeatMultiplierCounter() const noexcept { return beatMultiplierCounter; }
-//    inline const int getAccentMultiplierCounter() const noexcept { return accentMultiplierCounter; }
-//    inline const int getLengthMultiplierCounter() const noexcept { return lengthMultiplierCounter; }
-//    inline const int getTranspCounter() const noexcept { return transpCounter; }
-//    inline const int getEnvelopeCounter() const noexcept { return envelopeCounter; }
-//    inline const int getBeatCounter() const noexcept { return beatCounter; }
-//    inline const int getClusterSize() const noexcept { return cluster.size(); }
-//
-//    int getLengthMultiplierCounterForDisplay()
-//    {
-//        int tempsize = prep->sLengthMultipliers.value.size();
-//        //int counter = getLengthMultiplierCounter() - 1;
-//        int counter = getLengthMultiplierCounter() ;
-//
-//        if(counter < 0) counter = tempsize - 1;
-//        if(counter >= tempsize) counter = 0;
-//
-//        return counter;
-//    }
-//
-//    int getBeatMultiplierCounterForDisplay()
-//    {
-//        int tempsize = prep->sBeatMultipliers.value.size();
-//        int counter = getBeatMultiplierCounter() ;
-//
-//        if(counter < 0) counter = tempsize - 1;
-//        if(counter >= tempsize) counter = 0;
-//
-//        return counter;
-//    }
-//
-//    int getAccentMultiplierCounterForDisplay()
-//    {
-//        int tempsize = prep->sAccentMultipliers.value.size();
-//        int counter = getAccentMultiplierCounter() ;
-//
-//        if(counter < 0) counter = tempsize - 1;
-//        if(counter >= tempsize) counter = 0;
-//
-//        return counter;
-//    }
-//
-//    int getTranspCounterForDisplay()
-//    {
-//        int tempsize = prep->sTransposition.value.size();
-//        int counter = getTranspCounter() ;
-//
-//        if(counter < 0) counter = tempsize - 1;
-//        if(counter >= tempsize) counter = 0;
-//
-//        return counter;
-//    }
-//
-//    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; }
-//    inline void setBeatMultiplierCounter(int c) {  beatMultiplierCounter = c; }
-//    inline void setAccentMultiplierCounter(int c)  { accentMultiplierCounter = c; }
-//    inline void setLengthMultiplierCounter(int c)  { lengthMultiplierCounter = c; }
-//    inline void setTranspCounter(int c)  { transpCounter = c; }
-//    inline void setEnvelopeCounter(int c)  { envelopeCounter = c; }
-//    inline void setBeatCounter(int c)  { beatCounter = c; }
-//
-//    inline bool getOver(void) { return over; }
-//    inline void setOver(bool o) { over = o; }
 
     inline void incrementPhasor (int numSamples)
     {
@@ -445,30 +370,25 @@ public:
 
     inline void resetPatternPhase()
     {
-        int skipBeats = 0;
-        if (_sparams->skipFirst->get()) skipBeats = 1;
-
-        int idx = (skipBeats < -1) ? -1 : skipBeats;
-
-        if(_sparams->beatLengthMultipliers.sliderVals_size > 0)
-            beatMultiplierCounter = bitklavier::utils::mod(idx, _sparams->beatLengthMultipliers.sliderVals_size);
-        if(_sparams->sustainLengthMultipliers.sliderVals_size > 0)
-            lengthMultiplierCounter = bitklavier::utils::mod(idx, _sparams->sustainLengthMultipliers.sliderVals_size);
-        if(_sparams->accents.sliderVals_size > 0)
-            accentMultiplierCounter = bitklavier::utils::mod(idx, _sparams->accents.sliderVals_size);
-        if(_sparams->transpositions.sliderVals_size > 0)
-            transpCounter = bitklavier::utils::mod(idx, _sparams->transpositions.sliderVals_size);
-
-        envelopeCounter = bitklavier::utils::mod(idx, _sparams->numEnvelopes);
-
-        // DBG("beatMultiplierCounter = " + String(beatMultiplierCounter));
+        /*
+         * todo: decide whether we want skipBeats to be considered here
+         *          - might be best to just start at the beginning regardless
+         *              so, setting skipBeats = -1 here
+         */
+//        int skipBeats = _sparams->skipFirst->get() - 1;
+        int skipBeats = -1;
+        beatMultiplierCounter = skipBeats;
+        lengthMultiplierCounter = skipBeats;
+        accentMultiplierCounter = skipBeats;
+        transpCounter = skipBeats;
+        envelopeCounter = skipBeats;
 
         beatCounter = 0;
     }
 
     inline juce::Array<int> getCluster() {return cluster;}
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG("seetting beat phasor to " + juce::String(c)); }
+    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG(" beat phasor to " + juce::String(c)); }
     inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
 
     inline void addNote(int note)
@@ -618,10 +538,8 @@ public:
     /*
      * Synchronic Params
      */
-    bool pausePlay = false; // pause phasor incrementing
     bool playCluster;
     bool inCluster;
-//    int lastKeyPressed;
     bool nextOffIsFirst;
 
     // temporary, replace with Tempo info

@@ -44,6 +44,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the MidiTarget Processor
     MidiTargetParams() : chowdsp::ParamHolder ("miditarget")
     {
+
         add (
             blendronicTargetPatternSync,
             blendronicTargetBeatSync,
@@ -51,12 +52,30 @@ struct MidiTargetParams : chowdsp::ParamHolder
             blendronicTargetPausePlay,
             blendronicTargetInput,
             blendronicTargetOutput,
+            synchronicTargetDefault,
+            synchronicTargetPatternSync,
+            synchronicTargetBeatSync,
+            synchronicTargetAddNotes,
+            synchronicTargetClear,
+            synchronicTargetPausePlay,
+            synchronicTargetDeleteOldest,
+            synchronicTargetDeleteNewest,
+            synchronicTargetRotate,
             blendronicTargetPatternSync_noteMode,
             blendronicTargetBeatSync_noteMode,
             blendronicTargetClear_noteMode,
             blendronicTargetPausePlay_noteMode,
             blendronicTargetInput_noteMode,
-            blendronicTargetOutput_noteMode);
+            blendronicTargetOutput_noteMode,
+            synchronicTargetDefault_noteMode,
+            synchronicTargetPatternSync_noteMode,
+            synchronicTargetBeatSync_noteMode,
+            synchronicTargetAddNotes_noteMode,
+            synchronicTargetClear_noteMode,
+            synchronicTargetPausePlay_noteMode,
+            synchronicTargetDeleteOldest_noteMode,
+            synchronicTargetDeleteNewest_noteMode,
+            synchronicTargetRotate_noteMode);
 
         targetMapper[BlendronicTargetPatternSync]       = blendronicTargetPatternSync.get();
         noteModeMapper[BlendronicTargetPatternSync]     = blendronicTargetPatternSync_noteMode.get();
@@ -75,6 +94,33 @@ struct MidiTargetParams : chowdsp::ParamHolder
 
         targetMapper[BlendronicTargetOutput]            = blendronicTargetOutput.get();
         noteModeMapper[BlendronicTargetOutput]          = blendronicTargetOutput_noteMode.get();
+
+        targetMapper[SynchronicTargetDefault]           = synchronicTargetDefault.get();
+        noteModeMapper[SynchronicTargetDefault]         = synchronicTargetDefault_noteMode.get();
+
+        targetMapper[SynchronicTargetPatternSync]       = synchronicTargetPatternSync.get();
+        noteModeMapper[SynchronicTargetPatternSync]     = synchronicTargetPatternSync_noteMode.get();
+
+        targetMapper[SynchronicTargetBeatSync]          = synchronicTargetBeatSync.get();
+        noteModeMapper[SynchronicTargetBeatSync]        = synchronicTargetBeatSync_noteMode.get();
+
+        targetMapper[SynchronicTargetAddNotes]          = synchronicTargetAddNotes.get();
+        noteModeMapper[SynchronicTargetAddNotes]        = synchronicTargetAddNotes_noteMode.get();
+
+        targetMapper[SynchronicTargetClear]             = synchronicTargetClear.get();
+        noteModeMapper[SynchronicTargetClear]           = synchronicTargetClear_noteMode.get();
+
+        targetMapper[SynchronicTargetPausePlay]         = synchronicTargetPausePlay.get();
+        noteModeMapper[SynchronicTargetPausePlay]       = synchronicTargetPausePlay_noteMode.get();
+
+        targetMapper[SynchronicTargetDeleteOldest]      = synchronicTargetDeleteOldest.get();
+        noteModeMapper[SynchronicTargetDeleteOldest]    = synchronicTargetDeleteOldest_noteMode.get();
+
+        targetMapper[SynchronicTargetDeleteNewest]      = synchronicTargetDeleteNewest.get();
+        noteModeMapper[SynchronicTargetDeleteNewest]    = synchronicTargetDeleteNewest_noteMode.get();
+
+        targetMapper[SynchronicTargetRotate]            = synchronicTargetRotate.get();
+        noteModeMapper[SynchronicTargetRotate]          = synchronicTargetRotate_noteMode.get();
 
         /**
          * add additional params for other preps/targets here and below
@@ -158,6 +204,131 @@ struct MidiTargetParams : chowdsp::ParamHolder
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
+
+    /*
+     * Synchronic Targets
+     */
+
+    // pass through all messages on channel 1 by default; same as having no MidiTarget involved
+    chowdsp::BoolParameter::Ptr synchronicTargetDefault {
+        juce::ParameterID { "sTargetDefault", 100},
+        "Default Behavior",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDefault_noteMode {
+        juce::ParameterID{"sTargetDefault_noteMode", 100},
+        "Note Mode",
+        TriggerType::_Both,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetPatternSync {
+        juce::ParameterID { "sTargetPatternSync", 100},
+        "Pattern Sync",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetPatternSync_noteMode {
+        juce::ParameterID{"sTargetPatternSync_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetBeatSync {
+        juce::ParameterID { "sTargetBeatSync", 100},
+        "Beat Sync",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetBeatSync_noteMode {
+        juce::ParameterID{"sTargetBeatSync_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetAddNotes {
+        juce::ParameterID { "sTargetAddNotes", 100},
+        "Add Notes",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetAddNotes_noteMode {
+        juce::ParameterID{"sTargetAddNotes_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetClear {
+        juce::ParameterID { "sTargetClear", 100},
+        "Clear",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetClear_noteMode {
+        juce::ParameterID{"sTargetClear_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetPausePlay {
+        juce::ParameterID { "sTargetPausePlay", 100},
+        "Pause/Play",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetPausePlay_noteMode {
+        juce::ParameterID{"sTargetPausePlay_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetDeleteOldest {
+        juce::ParameterID { "sTargetDeleteOldest", 100},
+        "Delete Oldest Layer",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteOldest_noteMode {
+        juce::ParameterID{"sTargetDeleteOldest_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetDeleteNewest {
+        juce::ParameterID { "sTargetDeleteNewest", 100},
+        "Delete Newest Layer",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteNewest_noteMode {
+        juce::ParameterID{"sTargetDeleteNewest_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr synchronicTargetRotate {
+        juce::ParameterID { "sTargetRotate", 100},
+        "Rotate Layers",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetRotate_noteMode {
+        juce::ParameterID{"sTargetRotate_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    //        SynchronicTargetRotate,
+
 
     /*
      * we store all the targets and their noteModes here, so we can access them
