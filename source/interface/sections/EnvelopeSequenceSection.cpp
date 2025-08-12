@@ -30,7 +30,7 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
 
             auto playingbutton = std::make_unique<SynthButton>("playing_" + param_->paramID);
             playingbutton->setPowerButton();
-            playingbutton->setInterceptsMouseClicks(false, false);
+            playingbutton->setInterceptsMouseClicks(false, false); // user should not be able to interact with these
             addSynthButton(playingbutton.get(), true);
             _envPlayingButtons.emplace_back(std::move(playingbutton));
         }

@@ -399,6 +399,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             state.params.accents_current.store(cluster->accentMultiplierCounter);
             state.params.sustainLengthMultipliers_current.store(cluster->lengthMultiplierCounter);
             state.params.beatLengthMultipliers_current.store(cluster->beatMultiplierCounter);
+            state.params.envelopes_current.store(cluster->envelopeCounter);
 
         }
     }

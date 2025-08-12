@@ -29,8 +29,7 @@ void SynchronicParametersView::timerCallback()
         beatLengthMultipliersSlider->redoImage();
     }
 
-    // placeholder arg
-    envSequenceSection->setCurrentlyPlayingEnvelope(3);
+    envSequenceSection->setCurrentlyPlayingEnvelope(sparams_.envelopes_current.load());
 }
 
 void SynchronicParametersView::resized()

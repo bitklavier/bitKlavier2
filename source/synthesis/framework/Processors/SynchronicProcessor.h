@@ -114,6 +114,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::atomic<int> accents_current = 0;
     std::atomic<int> sustainLengthMultipliers_current = 0;
     std::atomic<int> beatLengthMultipliers_current = 0;
+    std::atomic<int> envelopes_current = 0;
 
     /*
      * the state of all the adsrs, for the row of 12 sequenced adsrs
