@@ -661,9 +661,11 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     // always work on the most recent cluster/layer
     SynchronicCluster* cluster = clusters.getLast();
 
+
     /*
-     * doCluster => default Synchronic behavior
+     * ************** doCluster => default Synchronic behavior **************
      */
+
     if (doCluster)
     {
         clusterKeysDepressed.addIfNotAlreadyThere(noteNumber);
@@ -725,15 +727,17 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         }
     }
 
-    // we should have a cluster now, but if not...
+
+    /*
+     * ************** now trigger behaviors set by Keymap targeting ****************
+     */
+
+    // if we don't have a cluster, then we're triggering something before we've made a cluster and should ignore
     if (cluster == nullptr) return;
 
     // since it's a new cluster, the next noteOff will be a first noteOff
     // this will be needed for keyReleased(), when in FirstNoteOffSync mode
     if (isNewCluster) nextOffIsFirst = true;
-
-
-    // ** now trigger behaviors set by Keymap targeting **
 
     // synchronize beat, if targeting beat sync on noteOn or on both noteOn/Off
     if (doBeatSync)
@@ -825,8 +829,9 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
      */
     beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
 
+
     /*
-     * doCluster => default Synchronic behavior
+     * ************** doCluster => default Synchronic behavior **************
      */
     if (doCluster)
     {
@@ -875,10 +880,13 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         }
     }
 
-    // we should have a cluster now, but if not...
-    if (cluster == nullptr) return;
 
-    // ** now trigger behaviors set by Keymap targeting **
+    /*
+     * ************** now trigger behaviors set by Keymap targeting ****************
+     */
+
+    // if we don't have a cluster, then we're triggering something before we've made a cluster and should ignore
+    if (cluster == nullptr) return;
 
     // synchronize beat, if targeting beat sync on noteOff or on both noteOn/Off
     if (doBeatSync)
@@ -955,6 +963,8 @@ typename Serializer::SerializedType SynchronicParams::serialize (const Synchroni
     serializeMultiSliderParam<Serializer> (ser, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
     serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
 
+    serializeArrayADSRParam<Serializer>(ser, paramHolder.envelopeSequence.envStates, "envelope_sequence");
+
     return ser;
 }
 
@@ -973,4 +983,6 @@ void SynchronicParams::deserialize (typename Serializer::DeserializedType deseri
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_");
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
+
+    deserializeArrayADSRParam<Serializer> (deserial, paramHolder.envelopeSequence.envStates, "envelope_sequence");
 }

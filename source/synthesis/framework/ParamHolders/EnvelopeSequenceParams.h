@@ -16,7 +16,8 @@ struct EnvelopeSequenceParams : public chowdsp::ParamHolder
 {
     EnvelopeSequenceParams() : chowdsp::ParamHolder("ENVELOPESEQUENCE")
     {
-        add(
+        add(currentlyEditing,
+            envelope_0,
             envelope_1,
             envelope_2,
             envelope_3,
@@ -27,9 +28,7 @@ struct EnvelopeSequenceParams : public chowdsp::ParamHolder
             envelope_8,
             envelope_9,
             envelope_10,
-            envelope_11,
-            envelope_12,
-            currentlyEditing
+            envelope_11
         );
     }
 
@@ -38,16 +37,22 @@ struct EnvelopeSequenceParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr currentlyEditing {
         juce::ParameterID { "currentlyEditing", 100 },
         "env to edit",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 12.f, 6.f, 1.f),
-        1.f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 12.f, 6.f, 1.f),
+        0.f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
+    };
+
+    chowdsp::BoolParameter::Ptr envelope_0 {
+        juce::ParameterID { "envelope_0", 100},
+        "0",
+        true
     };
 
     chowdsp::BoolParameter::Ptr envelope_1 {
         juce::ParameterID { "envelope_1", 100},
         "1",
-        true
+        false
     };
 
     chowdsp::BoolParameter::Ptr envelope_2 {
@@ -107,12 +112,6 @@ struct EnvelopeSequenceParams : public chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr envelope_11 {
         juce::ParameterID { "envelope_11", 100},
         "11",
-        false
-    };
-
-    chowdsp::BoolParameter::Ptr envelope_12 {
-        juce::ParameterID { "envelope_12", 100},
-        "12",
         false
     };
 };

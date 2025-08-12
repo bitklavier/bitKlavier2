@@ -166,7 +166,7 @@ public:
             )
         };
 
-        // this will get called when a different envelope of the 12 is selected for editing
+        // this will get called when a different envelope of the 12 is selected for editing (bottom row of buttons)
         sliderChangedCallback += {
             listeners.addParameterListener
             (
@@ -174,13 +174,13 @@ public:
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this]
                 {
-                    DBG("currently editing: " + juce::String(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()));
                     displayEnvSequenceValsInEnvEditor();
                 }
             )
         };
 
         // this will get called when any of the params in the envelope editor Env are changed
+        // triggered on mouseUp in the UI
         sliderChangedCallback += {
             listeners.addParameterListener
             (
@@ -188,19 +188,19 @@ public:
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this]
                 {
-                    DBG("received notification from Env, envelope editor " + juce::String(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()));
                     copyEnvEditorValsToEnvSequence();
                 }
             )
         };
 
-        /*
-         * not sure why we need to redo this here, but they don't draw without these calls
-         */
+        // draw them...
         transpositionsSlider->drawSliders(juce::dontSendNotification);
         accentsSlider->drawSliders(juce::dontSendNotification);
         sustainLengthMultipliersSlider->drawSliders(juce::dontSendNotification);
         beatLengthMultipliersSlider->drawSliders(juce::dontSendNotification);
+
+        // update UI for envelope editor
+        displayEnvSequenceValsInEnvEditor();
 
         // for updating the current sliders in multisliders
         startTimer(50);
@@ -211,7 +211,7 @@ public:
 
     void copyEnvEditorValsToEnvSequence()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()) - 1;
+        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
 
         DBG("copyEnvEditorValsToEnvSequence " + juce::String(currentEnv));
         sparams_.envelopeSequence.envStates.attacks[currentEnv]         = sparams_.env.attackParam->getCurrentValue();
@@ -234,10 +234,9 @@ public:
 
     void displayEnvSequenceValsInEnvEditor()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue()) - 1;
+        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
 
         DBG("displayEnvSequenceValsInEnvEditor " + juce::String(currentEnv));
-
         envSection->setADSRVals(
             sparams_.envelopeSequence.envStates.attacks[currentEnv],
             sparams_.envelopeSequence.envStates.decays[currentEnv],

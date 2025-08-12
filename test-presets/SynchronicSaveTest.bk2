@@ -10,8 +10,8 @@
                    Send="0.000" OutputGain="0.000" pulseTriggeredBy="0" determinesCluster="0"
                    skipFirst="0" updateUIState="0" clustermin="1.000" clustermax="12.000"
                    LastCluster="1.000" holdTimeMinParam="0.000" holdTimeMaxParam="12000.000"
-                   lastHoldTimeParam="0.000" attack="1.000" decay="0.000" sustain="1.000"
-                   release="50.000" attackpower="0.000" decaypower="0.000" releasepower="0.000"
+                   lastHoldTimeParam="0.000" attack="19.949" decay="10.986" sustain="0.769"
+                   release="106.853" attackpower="-1.225" decaypower="-1.788" releasepower="-3.444"
                    hold="0.000" delay="0.000" envelope_1="1" envelope_2="0" envelope_3="0"
                    envelope_4="0" envelope_5="0" envelope_6="0" envelope_7="0" envelope_8="0"
                    envelope_9="0" envelope_10="0" envelope_11="0" envelope_12="0"
@@ -25,7 +25,7 @@
                    beat_length_multipliers_activeVals_size="12" beat_length_multipliers_activeVals="true true true true true true false false false false false false "
                    noteOnGain="0.000" UseTuning="0" multislider_vals="1 0.5 1 0.6 0.6 0.6"
                    multislider_size="6" multislider_states="true true true true true true false false false false false false"
-                   multislider_states_size="12">
+                   multislider_states_size="12" notify="1" currentlyEditing="1.000">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Send" channel="0" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="OutputGain" channel="1" start="-80.0" end="6.0" skew="2.0"/>
@@ -60,7 +60,7 @@
                    delay="0.000" t0="0.000" t1="0.000" t2="0.000" t3="0.000" t4="0.000"
                    t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000" t10="0.000"
                    t11="0.000" sliderVals_size="1.000" UseTuning="0" velocitymin="0.000"
-                   velocitymax="128.000" LastVelocity="0.000">
+                   velocitymax="128.000" LastVelocity="0.000" notify="0">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Main" channel="0" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="Hammers" channel="1" start="-80.0" end="6.0" skew="2.0"/>

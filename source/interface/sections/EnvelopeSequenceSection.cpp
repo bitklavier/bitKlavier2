@@ -17,7 +17,7 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
             auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, nullptr);
             button->setComponentID(param_->paramID);
             addSynthButton(button.get(), true);
-            button->setButtonText(juce::String(getEnvelopeIndex(param_->paramID)));
+            button->setButtonText(juce::String(getEnvelopeIndex(param_->paramID) + 1)); // +1 for more human-centered labeling!
             button->setHelpText("activate this envelope");
 
             _envActiveButtons_toggleAttachments.emplace_back(std::move(button_ToggleAttachment));
@@ -35,6 +35,10 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
             _envPlayingButtons.emplace_back(std::move(playingbutton));
         }
     }
+
+    // turn on the edit button for the most recently edited envelope (one edit button should be on at all times)
+    auto currentEnvelopeBeingEdited = static_cast<int>(_params.currentlyEditing->getCurrentValue());
+    _envEditButtons[currentEnvelopeBeingEdited]->setToggleState(true, juce::NotificationType::dontSendNotification);
 }
 
 int EnvelopeSequenceSection::getEnvelopeIndex(const juce::String& s)
@@ -55,6 +59,12 @@ void EnvelopeSequenceSection::buttonClicked (juce::Button* clicked_button)
             }
             else
             {
+                //can't turn off the current one; will only be turned off if another is selected
+                if(!clicked_button->getToggleState())
+                {
+                    clicked_button->setToggleState(true, juce::NotificationType::dontSendNotification);
+                }
+
                 _params.currentlyEditing->setParameterValue(getEnvelopeIndex(_b->getName()));
             }
         }
@@ -76,8 +86,6 @@ void EnvelopeSequenceSection::buttonClicked (juce::Button* clicked_button)
     }
 }
 
-EnvelopeSequenceSection::~EnvelopeSequenceSection() {}
-
 void EnvelopeSequenceSection::setCurrentlyPlayingEnvelope(int which)
 {
     _envPlayingButtons[which]->setToggleState(true, juce::NotificationType::dontSendNotification);
@@ -97,27 +105,13 @@ void EnvelopeSequenceSection::setCurrentlyPlayingEnvelope(int which)
 void EnvelopeSequenceSection::paintBackground(juce::Graphics& g) {
 
     setLabelFont(g);
-
-//    for (auto& slider : _envActiveButtons)
-//    {
-//        drawLabelForComponent (g, slider->getName(), slider.get());
-//    }
-//
-//    for (auto& slider : intervalWeightSliders)
-//    {
-//        drawLabelForComponent (g, slider->getName(), slider.get());
-//    }
-
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
-
-//    sectionBorder.paint(g);
 }
 
 void EnvelopeSequenceSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());
-//    sectionBorder.setBounds(area);
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
@@ -144,7 +138,6 @@ void EnvelopeSequenceSection::resized() {
     {
         _b->setBounds(area.removeFromLeft(envButtonWidth));
     }
-
 
     SynthSection::resized();
 }

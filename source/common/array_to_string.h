@@ -228,6 +228,22 @@ void populateAtomicArrayFromVector(
     }
 }
 
+template <typename T, size_t Size>
+void populateAtomicArrayFromVector(
+    std::array<std::atomic<T>, Size>& arr,
+    const std::vector<T>& sourceVector)
+{
+    // skip the default fill vals
+
+    // Step 2: Iterate and populate from the vector
+    // We use std::min to prevent out-of-bounds access
+    size_t numToCopy = std::min(Size, sourceVector.size());
+
+    for (size_t i = 0; i < numToCopy; ++i) {
+        arr[i].store(sourceVector[i]);
+    }
+}
+
 /**
  * @brief Parses a string of floats and populates a std::array of atomics.
  *

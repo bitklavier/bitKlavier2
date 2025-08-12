@@ -60,7 +60,8 @@ public:
     void reset() override;
     void magnifyDragged(juce::Point<float> delta) override;
     void magnifyDoubleClicked() override;
-    void sliderValueChanged(juce::Slider* moved_slider) override;
+    void mouseUp(const juce::MouseEvent& e) override;
+    void notifyParentOfValueChange();
 
     void setADSRVals(float a, float d, float s, float r, float ap, float dp, float rp);
 

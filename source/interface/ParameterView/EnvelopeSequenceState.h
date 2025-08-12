@@ -12,9 +12,9 @@
 
 struct EnvelopeSequenceState : bitklavier::StateChangeableParameter
 {
-
     EnvelopeSequenceState() : bitklavier::StateChangeableParameter()
     {
+        DBG("EnvelopeSequenceState() initializing ");
         for (auto& attack : attacks) attack = 3.0f;
         for (auto& decay : decays) decay = 10.0f;
         for (auto& sustain : sustains) sustain = 1.0f;
@@ -90,6 +90,14 @@ struct EnvelopeSequenceState : bitklavier::StateChangeableParameter
     }
 };
 
+template <typename Serializer, typename T>
+void paramFromString(juce::String inStr, typename Serializer::DeserializedType& inDeserial, std::array<std::atomic<T>, MAXADSRS>& msliderParam)
+{
+    auto myStr = inDeserial->getStringAttribute(inStr);
+    std::vector<T> sliderVals_vec = parseStringToVector<T>(myStr);
+    populateAtomicArrayFromVector(msliderParam, sliderVals_vec);
+}
+
 template <typename Serializer>
 void serializeArrayADSRParam(
     typename Serializer::SerializedType& ser,
@@ -133,21 +141,13 @@ void deserializeArrayADSRParam(
     juce::String _activeADSRs = thisSliderID + "_activeADSRs";
 
     // Deserialize the slider values
-    paramFromString(_attacks, deserial, msliderParam.attacks);
-    paramFromString(_decays, deserial, msliderParam.decays);
-    paramFromString(_sustains, deserial, msliderParam.sustains);
-    paramFromString(_releases, deserial, msliderParam.releases);
-    paramFromString(_attackPowers, deserial, msliderParam.attackPowers);
-    paramFromString(_decayPowers, deserial, msliderParam.decayPowers);
-    paramFromString(_releasePowers, deserial, msliderParam.releasePowers);
-}
-
-template <typename Serializer, typename T>
-void paramFromString(juce::String inStr, typename Serializer::DeserializedType& inDeserial, std::array<std::atomic<T>, 12>& msliderParam)
-{
-    auto myStr = inDeserial->getStringAttribute(inStr);
-    std::vector<T> sliderVals_vec = parseStringToVector<T>(myStr);
-    populateAtomicArrayFromVector(msliderParam, 1.0f, sliderVals_vec);
+    paramFromString<Serializer>(_attacks, deserial, msliderParam.attacks);
+    paramFromString<Serializer>(_decays, deserial, msliderParam.decays);
+    paramFromString<Serializer>(_sustains, deserial, msliderParam.sustains);
+    paramFromString<Serializer>(_releases, deserial, msliderParam.releases);
+    paramFromString<Serializer>(_attackPowers, deserial, msliderParam.attackPowers);
+    paramFromString<Serializer>(_decayPowers, deserial, msliderParam.decayPowers);
+    paramFromString<Serializer>(_releasePowers, deserial, msliderParam.releasePowers);
 }
 
 

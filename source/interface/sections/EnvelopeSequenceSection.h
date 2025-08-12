@@ -19,7 +19,7 @@ public:
         chowdsp::ParameterListeners &listeners,
         SynthSection &parent);
 
-    virtual ~EnvelopeSequenceSection();
+    virtual ~EnvelopeSequenceSection() {}
 
     void buttonClicked (juce::Button* clicked_button);
     void setCurrentlyPlayingEnvelope(int which);
@@ -28,7 +28,6 @@ public:
     void resized() override;
 
 private:
-    //holds the 6 float params
     std::vector<std::unique_ptr<SynthButton>> _envActiveButtons;
     std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> _envActiveButtons_toggleAttachments;
 
@@ -37,30 +36,6 @@ private:
 
     int getEnvelopeIndex(const juce::String& s);
     EnvelopeSequenceParams& _params;
-//
-//    // interval spring length scale selection menus
-//    std::unique_ptr<OpenGLComboBox> scaleId_ComboBox;
-//    std::unique_ptr<chowdsp::ComboBoxAttachment> scaleId_ComboBox_ComboBoxAttachment;
-//    std::unique_ptr<OpenGLComboBox> intervalFundamental_ComboBox;
-//    std::unique_ptr<chowdsp::ComboBoxAttachment> intervalFundamental_ComboBoxAttachment;
-//    std::shared_ptr<PlainTextComponent> intervalsLabel;
-//
-//    // tether/anchor scale location selection menus
-//    std::unique_ptr<OpenGLComboBox> scaleId_tether_ComboBox;
-//    std::unique_ptr<chowdsp::ComboBoxAttachment> scaleId_tether_ComboBox_ComboBoxAttachment;
-//    std::unique_ptr<OpenGLComboBox> tetherFundamental_ComboBox;
-//    std::unique_ptr<chowdsp::ComboBoxAttachment> tetherFundamental_ComboBoxAttachment;
-//    std::shared_ptr<PlainTextComponent> anchorsLabel;
-//
-//    // individual interval weight knobs
-//    std::vector<std::unique_ptr<SynthSlider>> intervalWeightSliders;
-//    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> intervalWeightsSliders_sliderAttachments;
-//
-//    // toggles for setting springMode for each interval weight
-//    std::vector<std::unique_ptr<SynthButton>> useLocalOrFundamentalToggles;
-//    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> useLocalOrFundamentalToggles_sliderAttachments;
-//
-//    juce::GroupComponent sectionBorder;
 };
 
 

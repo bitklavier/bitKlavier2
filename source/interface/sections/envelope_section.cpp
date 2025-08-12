@@ -144,6 +144,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     envelope_->setReleaseSlider(release_.get());
     envelope_->setReleasePowerSlider(release_power_.get());
     envelope_->resetEnvelopeLine(-1);
+    envelope_->addMouseListener(this, true);
 
     drag_magnifying_glass_ = std::make_unique<DragMagnifyingGlass>();
     drag_magnifying_glass_->addListener(this);
@@ -174,26 +175,30 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
 
 EnvelopeSection::~EnvelopeSection() { }
 
-void EnvelopeSection::paintBackground(juce::Graphics& g) {
-      setLabelFont(g);
-      drawLabelForComponent(g, TRANS("DELAY"), delay_.get());
-      drawLabelForComponent(g, TRANS("Attack"), attack_.get());
-      drawLabelForComponent(g, TRANS("HOLD"), hold_.get());
-      drawLabelForComponent(g, TRANS("Decay"), decay_.get());
-      drawLabelForComponent(g, TRANS("Sustain"), sustain_.get());
-      drawLabelForComponent(g, TRANS("Release"), release_.get());
-
-      paintKnobShadows(g);
-      paintChildrenBackgrounds(g);
-
-      envelopeSectionBorder.paint(g);
+void EnvelopeSection::mouseUp(const juce::MouseEvent& e) {
+    DBG("EnvelopeSection::mouseUp");
+    SynthSection::mouseUp(e);
+    notifyParentOfValueChange();
 }
 
-void EnvelopeSection::sliderValueChanged(juce::Slider* moved_slider)
+void EnvelopeSection::paintBackground(juce::Graphics& g) {
+  setLabelFont(g);
+  drawLabelForComponent(g, TRANS("DELAY"), delay_.get());
+  drawLabelForComponent(g, TRANS("Attack"), attack_.get());
+  drawLabelForComponent(g, TRANS("HOLD"), hold_.get());
+  drawLabelForComponent(g, TRANS("Decay"), decay_.get());
+  drawLabelForComponent(g, TRANS("Sustain"), sustain_.get());
+  drawLabelForComponent(g, TRANS("Release"), release_.get());
+
+  paintKnobShadows(g);
+  paintChildrenBackgrounds(g);
+
+  envelopeSectionBorder.paint(g);
+}
+
+void EnvelopeSection::notifyParentOfValueChange()
 {
-    SynthSection::sliderValueChanged(moved_slider);
-    DBG("envelope_section sliderValueChanged ");
-    envelope_;
+    DBG("EnvelopeSection::notifyParentOfValueChange ");
     _params.notify->setValueNotifyingHost(true);
 }
 
