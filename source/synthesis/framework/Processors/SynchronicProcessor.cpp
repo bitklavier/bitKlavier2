@@ -506,8 +506,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     /**
-     * todo: perhaps have a fadeout param, followed by a buffer clear?
-     * - these could be user settable, perhaps...
+     * todo: handle noteOffs, otherwise nothing?
      */
 }
 
@@ -598,7 +597,6 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
      */
 
     doCluster = false; // primary Synchronic mode
-//    doPatternSync = false; // resetting pattern phases
     doBeatSync = false; // resetting beat phase
     doAddNotes = false; // adding notes to cluster
     doClear = false;
@@ -607,6 +605,7 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
     doRotate = false;
     /*
      * don't set doPausePlay to false here; toggle below
+     * also for doPatternSync, which gets toggled internally below
      */
 
     switch(channel + (SynchronicTargetFirst))
@@ -778,12 +777,6 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         cluster->setBeatPhasor(phasor);
     }
 
-    // resetPatternPhase() starts patterns over, if targeting beat sync on noteOn or on both noteOn/Off
-    if (doPatternSync)
-    {
-//        cluster->resetPatternPhase();
-    }
-
     // add notes to the cluster, if targeting beat sync on noteOn or on both noteOn/Off
     if (doAddNotes )
     {
@@ -909,13 +902,6 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
         cluster->setBeatPhasor(phasor);      // resetBeatPhasor resets beat timing
         cluster->setShouldPlay(true);
-    }
-
-    // resetPatternPhase() starts patterns over, if targeting beat sync on noteOff or on both noteOn/Off
-    if (doPatternSync)
-    {
-//        cluster->resetPatternPhase();
-//        cluster->setShouldPlay(true);
     }
 
     // add notes to the cluster, if targeting beat sync on noteOff or on both noteOn/Off

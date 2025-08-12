@@ -327,9 +327,6 @@ struct MidiTargetParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
-    //        SynchronicTargetRotate,
-
-
     /*
      * we store all the targets and their noteModes here, so we can access them
      * as needed in the processBlock loop, by PreparationParameterTargetType
