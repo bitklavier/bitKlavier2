@@ -315,6 +315,16 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         float velocityMultiplier = state.params.accents.sliderVals[cluster->accentMultiplierCounter];
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
 
+                        // Synchronic uses its own ADSRs for each cluster, so we need to add these to the noteOnSpecMap that gets passed to BKSynth
+                        //  these apply regardless of playback direction
+                        noteOnSpecMap[newNote].envParams.attack = state.params.envelopeSequence.envStates.attacks[cluster->envelopeCounter] * .001; // BKADSR expects seconds, not ms
+                        noteOnSpecMap[newNote].envParams.decay = state.params.envelopeSequence.envStates.decays[cluster->envelopeCounter] * .001;
+                        noteOnSpecMap[newNote].envParams.sustain = state.params.envelopeSequence.envStates.sustains[cluster->envelopeCounter];
+                        noteOnSpecMap[newNote].envParams.release = state.params.envelopeSequence.envStates.releases[cluster->envelopeCounter] * .001;
+                        noteOnSpecMap[newNote].envParams.attackPower = state.params.envelopeSequence.envStates.attackPowers[cluster->envelopeCounter];
+                        noteOnSpecMap[newNote].envParams.decayPower = state.params.envelopeSequence.envStates.decayPowers[cluster->envelopeCounter];
+                        noteOnSpecMap[newNote].envParams.releasePower = state.params.envelopeSequence.envStates.releasePowers[cluster->envelopeCounter];
+
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                         {

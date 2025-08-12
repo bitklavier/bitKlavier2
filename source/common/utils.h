@@ -24,6 +24,8 @@
 #include <juce_core/juce_core.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include "common.h"
+#include "BKADSR.h"
+
 #define NAME_AND_VALUE(x) #x, x
 
   namespace bitklavier::utils {
@@ -473,7 +475,6 @@ struct BKSynthesizerState
 /**
  * additional specifications to associate with a particular noteOn msg
  *  - usually included in a std::map, keyed by midiNoteNumber
- * todo: perhaps add transpositions here? to condense...
  */
 struct NoteOnSpec
 {
@@ -481,6 +482,7 @@ struct NoteOnSpec
     Direction startDirection = Direction::forward;
     LoopMode loopMode = LoopMode::none;
     bool stopSameCurrentNote = true; // if this note is playing already, stop it (default behavior)
+    BKADSR::Parameters envParams{3.0f * .001, 10.0f * .001, 1.0f, 50.0f* .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
 };
 
 /*

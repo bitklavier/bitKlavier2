@@ -9,6 +9,12 @@
 #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
 
 #define MAXADSRS 12
+/**
+ * todo: possibly use BKADSR::Parameters to format all these,
+ *      - so std::array<std::atomic<BKADSR::Parameters>, MAXADSRS>
+ *      which would condense some code elsewhere (SynchronicProcessor, for instance)
+ *      but may not be of much consequence
+ */
 
 struct EnvelopeSequenceState : bitklavier::StateChangeableParameter
 {

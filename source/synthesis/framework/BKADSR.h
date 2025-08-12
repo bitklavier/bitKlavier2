@@ -25,6 +25,8 @@ Based on the JUCE ADSR Class, with curvature additions
 
 **/
 
+#pragma once
+
 class BKADSR
 {
 public:

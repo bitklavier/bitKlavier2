@@ -413,12 +413,12 @@ public:
     {
         phasor -= numSamplesBeat;
 
-        if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size) lengthMultiplierCounter = 0;
-        if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)               accentMultiplierCounter = 0;
-        if (++transpCounter             >= _sparams->transpositions.sliderVals_size)        transpCounter = 0;
-        if (++envelopeCounter           >= _sparams->numEnvelopes)                          envelopeCounter = 0;
+        if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size)  lengthMultiplierCounter = 0;
+        if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)                   accentMultiplierCounter = 0;
+        if (++transpCounter             >= _sparams->transpositions.sliderVals_size)            transpCounter = 0;
+        if (++envelopeCounter           >= _sparams->numEnvelopes)                              envelopeCounter = 0;
 
-        while(!_sparams->isEnvelopeActive(envelopeCounter + 1)) //skip untoggled envelopes
+        while(!_sparams->isEnvelopeActive(envelopeCounter)) //skip untoggled envelopes
         {
             envelopeCounter++;
             if (envelopeCounter >= _sparams->numEnvelopes) envelopeCounter = 0;
