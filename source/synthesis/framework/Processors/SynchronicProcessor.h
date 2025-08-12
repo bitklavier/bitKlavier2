@@ -437,6 +437,8 @@ public:
     int transpCounter;              //transposition offsets
     int envelopeCounter;
 
+    bool doPatternSync = false;
+
 private:
     SynchronicParams* _sparams;
 
@@ -575,7 +577,6 @@ private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
 
     bool doCluster = false; // primary Synchronic mode
-    bool doPatternSync = false; // resetting pattern phases
     bool doBeatSync = false; // resetting beat phase
     bool doAddNotes = false; // adding notes to cluster
     bool doPausePlay = false; // targeting pause/play

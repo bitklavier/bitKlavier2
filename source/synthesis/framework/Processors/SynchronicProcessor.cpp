@@ -272,11 +272,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             //check to see if enough time has passed for next beat
             if (cluster->getPhasor() >= numSamplesBeat)
             {
-                if (doPatternSync)
+                if (cluster->doPatternSync)
                 {
                     cluster->resetPatternPhase();
-                    //            cluster->setShouldPlay(true);
-                    doPatternSync = false; // reset this outside of the cluster loop?
+                    cluster->doPatternSync = false;
                 }
 
 //                //update display of counters in UI
@@ -419,6 +418,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
         }
     }
+
     playCluster = play;
 }
 
@@ -615,7 +615,10 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
             break;
 
         case SynchronicTargetPatternSync:
-            doPatternSync = true;
+            for(auto& cl : clusters)
+            {
+                cl->doPatternSync = true;
+            }
             break;
 
         case SynchronicTargetBeatSync:
@@ -761,20 +764,24 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
          * for cases when BOTH beatSync and patternSync are selected in MidiTarget,
          * we need to reset the pattern counters here..
          */
-        if (doPatternSync)
+        if (cluster->doPatternSync)
         {
             cluster->resetPatternPhase();
-            doPatternSync = false;
+            cluster->doPatternSync = false;
         }
 
         /**
          * todo: check this
-         *          and also add the General Settings and Tempo adjustments
+         *       - and also add the General Settings and Tempo adjustments
          */
         juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
-        // reset beat timing
-        cluster->setBeatPhasor(phasor);
+        // reset beat timing, for ALL clusters
+        for (auto& ci : clusters)
+        {
+            ci->setBeatPhasor(phasor);
+//            ci->setShouldPlay(true);
+        }
     }
 
     // add notes to the cluster, if targeting beat sync on noteOn or on both noteOn/Off
@@ -786,6 +793,9 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
 
     if (doClear)
     {
+        /*
+         * todo: send all notes off here as well
+         */
         clusters.clear();
     }
 
@@ -900,8 +910,13 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
          * todo: check this and also add the General Settings and Tempo adjustments
          */
         juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
-        cluster->setBeatPhasor(phasor);      // resetBeatPhasor resets beat timing
-        cluster->setShouldPlay(true);
+
+        // reset the phase for ALL clusters
+        for (auto& ci : clusters)
+        {
+            ci->setBeatPhasor(phasor);
+            ci->setShouldPlay(true);
+        }
     }
 
     // add notes to the cluster, if targeting beat sync on noteOff or on both noteOn/Off
