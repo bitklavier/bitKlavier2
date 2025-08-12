@@ -60,12 +60,12 @@ public:
         }
 
         // menu labels
-        pulseTriggeredBy_label = std::make_shared<PlainTextComponent>("ptb", "pulse triggered by:");
+        pulseTriggeredBy_label = std::make_shared<PlainTextComponent>("ptb", "trigger:");
         addOpenGlComponent(pulseTriggeredBy_label);
         pulseTriggeredBy_label->setTextSize (12.0f);
         pulseTriggeredBy_label->setJustification(juce::Justification::right);
 
-        determinesCluster_label = std::make_shared<PlainTextComponent>("dtl", "determines cluster:");
+        determinesCluster_label = std::make_shared<PlainTextComponent>("dtl", "cluster:");
         addOpenGlComponent(determinesCluster_label);
         determinesCluster_label->setTextSize (12.0f);
         determinesCluster_label->setJustification(juce::Justification::right);
@@ -140,6 +140,19 @@ public:
         // sequence of ADSRs
         envSequenceSection = std::make_unique<EnvelopeSequenceSection>(name, params.envelopeSequence, listeners, *this);
         addSubSection(envSequenceSection.get());
+
+        // toggles
+        useTuning = std::make_unique<SynthButton>(params.transpositionUsesTuning->paramID);
+        useTuning_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.transpositionUsesTuning, listeners, *useTuning, nullptr);
+        useTuning->setComponentID(params.transpositionUsesTuning->paramID);
+        addSynthButton(useTuning.get(), true);
+        useTuning->setText("use Tuning?");
+
+        skipFirst = std::make_unique<SynthButton>(params.skipFirst->paramID);
+        skipFirst_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.skipFirst, listeners, *skipFirst, nullptr);
+        skipFirst->setComponentID(params.skipFirst->paramID);
+        addSynthButton(skipFirst.get(), true);
+        skipFirst->setText("skip first?");
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
@@ -283,6 +296,12 @@ public:
     std::unique_ptr<OpenGL_MultiSlider> accentsSlider;
     std::unique_ptr<OpenGL_MultiSlider> sustainLengthMultipliersSlider;
     std::unique_ptr<OpenGL_MultiSlider> beatLengthMultipliersSlider;
+
+    // "use tuning" and "skip first" toggles
+    std::unique_ptr<SynthButton> useTuning;
+    std::unique_ptr<chowdsp::ButtonAttachment> useTuning_attachment;
+    std::unique_ptr<SynthButton> skipFirst;
+    std::unique_ptr<chowdsp::ButtonAttachment> skipFirst_attachment;
 
     // range sliders
     std::unique_ptr<OpenGL_ClusterMinMaxSlider> clusterMinMaxSlider;

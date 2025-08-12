@@ -55,7 +55,9 @@ void SynchronicParametersView::resized()
     bounds.removeFromRight(smallpadding);
     sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
+    //
     // *** done with meters placement section
+    //
 
     bounds.reduce(largepadding, largepadding);
 
@@ -63,16 +65,20 @@ void SynchronicParametersView::resized()
     juce::Rectangle<int> leftColumn = bounds.removeFromLeft(bounds.getWidth() / 3);
 
     leftColumn.removeFromTop(largepadding);
-
+    int leftColumnWidth = leftColumn.getWidth();
     juce::Rectangle comboBoxRow = leftColumn.removeFromTop(menu_section_height);
-    pulseTriggeredBy_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2).reduced(largepadding, 0));
+    juce::Rectangle<int> skipFirstRect = comboBoxRow.removeFromRight(leftColumnWidth/4);
+    skipFirst->setBounds(skipFirstRect.removeFromTop(menu_section_height));
+
+    pulseTriggeredBy_combo_box->setBounds(comboBoxRow.removeFromRight(leftColumnWidth / 2).reduced(largepadding, 0));
     comboBoxRow.removeFromRight(smallpadding);
     pulseTriggeredBy_label->setBounds(comboBoxRow);
 
     leftColumn.removeFromTop(smallpadding);
 
     comboBoxRow = leftColumn.removeFromTop(menu_section_height);
-    determinesCluster_combo_box->setBounds(comboBoxRow.removeFromRight(comboBoxRow.getWidth() / 2).reduced(largepadding, 0));
+    comboBoxRow.removeFromRight(leftColumnWidth/4);
+    determinesCluster_combo_box->setBounds(comboBoxRow.removeFromRight(leftColumnWidth / 2).reduced(largepadding, 0));
     comboBoxRow.removeFromRight(smallpadding);
     determinesCluster_label->setBounds(comboBoxRow);
 
@@ -100,7 +106,9 @@ void SynchronicParametersView::resized()
     envSection->setBounds(leftColumn);
 
 
+    //
     // *** now on to the right section for the multisliders
+    //
 
     bounds.removeFromLeft(largepadding);
     bounds.removeFromTop(largepadding);
@@ -121,6 +129,11 @@ void SynchronicParametersView::resized()
     beatLengthMultipliersSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
     bounds.removeFromTop(bufferSpaceForEach);
     envSequenceSection->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+
+    int useTuningWidth = 100;
+    int useTuningHeight = 20;
+    useTuning->setBounds(transpositionsSlider->getRight() - useTuningWidth - 4, transpositionsSlider->getBottom() - useTuningHeight - 4, useTuningWidth, useTuningHeight);
+    useTuning->toFront(false);
 
     SynthSection::resized();
 }
