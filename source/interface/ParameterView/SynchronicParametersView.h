@@ -77,6 +77,7 @@ public:
         numPulses_knob->setPopupPlacement(juce::BubbleComponent::below);
         numPulses_knob->setShowPopupOnHover(true);
         numPulses_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numPulses, listeners, *numPulses_knob, nullptr);
+        numPulses_knob->addAttachment(numPulses_knob_attachment.get()); // needed for mods!!
 
         numLayers_knob = std::make_unique<SynthSlider>(params.numLayers->paramID);
         addSlider(numLayers_knob.get());
@@ -84,6 +85,7 @@ public:
         numLayers_knob->setPopupPlacement(juce::BubbleComponent::below);
         numLayers_knob->setShowPopupOnHover(true);
         numLayers_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numLayers, listeners, *numLayers_knob, nullptr);
+        numLayers_knob->addAttachment(numLayers_knob_attachment.get());
 
         clusterThickness_knob = std::make_unique<SynthSlider>(params.clusterThickness->paramID);
         addSlider(clusterThickness_knob.get());
@@ -91,6 +93,7 @@ public:
         clusterThickness_knob->setPopupPlacement(juce::BubbleComponent::below);
         clusterThickness_knob->setShowPopupOnHover(true);
         clusterThickness_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThickness, listeners, *clusterThickness_knob, nullptr);
+        clusterThickness_knob->addAttachment(clusterThickness_knob_attachment.get());
 
         clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshold->paramID);
         addSlider(clusterThreshold_knob.get());
@@ -98,6 +101,7 @@ public:
         clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);
         clusterThreshold_knob->setShowPopupOnHover(true);
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshold, listeners, *clusterThreshold_knob, nullptr);
+        clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
         // multisliders
         transpositionsSlider = std::make_unique<OpenGL_MultiSlider>("transpositions_", &params.transpositions, listeners);

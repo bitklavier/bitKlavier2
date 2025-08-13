@@ -18,6 +18,7 @@ SemitoneWidthSection::SemitoneWidthSection (
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
     widthSlider_->setShowPopupOnHover(true);
     widthSliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.semitoneWidthSliderParam, listeners, *widthSlider_, nullptr);
+    widthSlider_->addAttachment(widthSliderAttachment.get());
 
     fundamentalComboBox = std::make_unique<OpenGLComboBox>(params.reffundamental->paramID.toStdString());
     fundamentalComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.reffundamental, listeners, *fundamentalComboBox, nullptr);

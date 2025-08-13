@@ -160,7 +160,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     chowdsp::GainDBParameter::Ptr outputGain {
         juce::ParameterID { "OutputGain", 100 },
         "Output Gain",
-        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
         true
     };
@@ -178,7 +178,8 @@ struct SynchronicParams : chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (1.0f, 100.f, 50.f, 1.f),
         20.f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr numLayers {
@@ -187,7 +188,8 @@ struct SynchronicParams : chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr clusterThickness {
@@ -196,21 +198,23 @@ struct SynchronicParams : chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (1.0f, 20.f, 10.f, 1.f),
         8.f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::TimeMsParameter::Ptr clusterThreshold {
         juce::ParameterID { "clusterThreshold", 100 },
         "cluster threshold",
         chowdsp::ParamUtils::createNormalisableRange (20.0f, 2000.f, 1000.f),
-        500.f
+        500.f,
+        true
     };
 
     // passed to BKSynth, applies to noteOn msgs
     chowdsp::GainDBParameter::Ptr noteOnGain {
         juce::ParameterID { "noteOnGain", 100 },
         "NoteOn Gain Scalar",
-        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
         true
     };

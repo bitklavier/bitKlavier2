@@ -18,6 +18,8 @@ SpringTuningSection::SpringTuningSection (
     {
         auto slider = std::make_unique<SynthSlider>(param_->paramID);
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
+        slider->addAttachment(attachment.get());
+
         addSlider(slider.get());
         slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         slider->setShowPopupOnHover(true);

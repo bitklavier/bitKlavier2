@@ -167,6 +167,9 @@ struct TuningState : bitklavier::StateChangeableParameter
 
 struct TuningParams : chowdsp::ParamHolder
 {
+    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
+    std::vector<ParamPtrVariant> modulatableParams;
+
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams() : chowdsp::ParamHolder ("tuning")
     {
@@ -180,6 +183,20 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.offsetKnobParam);
 
         tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
+
+        doForAllParameters ([this] (auto& param, size_t) {
+            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.push_back ( sliderParam);
+
+            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.push_back ( sliderParam);
+
+            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.push_back ( sliderParam);
+        });
     }
 
     /**

@@ -8,7 +8,6 @@
 #include "Identifiers.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
-//#include "Synthesiser/Sample.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
 #include "VelocityMinMaxParams.h"

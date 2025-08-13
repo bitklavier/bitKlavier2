@@ -58,6 +58,11 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "holdtime_min_max",
         &(state.params.holdTimeMinMaxParams.stateChanges)));
 
+    state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "envelope_sequence",
+        &(state.params.envelopeSequence.stateChanges)));
+
     /*
      * Init Synchronic params
      */
@@ -69,13 +74,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
 
     keysDepressed = juce::Array<int>();
     clusterKeysDepressed = juce::Array<int>();
-
     inCluster = false;
-
-//    fillAtomicArray(state.params.transpositions.sliderVals, 0.f);
-//    fillAtomicArray(state.params.accents.sliderVals, 1.f);
-//    fillAtomicArray(state.params.sustainLengthMultipliers.sliderVals, 1.f);
-//    fillAtomicArray(state.params.beatLengthMultipliers.sliderVals, 1.f);
 }
 
 /**
@@ -166,7 +165,7 @@ void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>&
 void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     /*
-     * finally: process actual incoming MIDI messages
+     * process incoming MIDI messages
      */
     for (auto mi : inMidiMessages)
     {
@@ -445,10 +444,10 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      */
 
     // process continuous modulations (gain level sliders)
-//    processContinuousModulations(buffer);
+    processContinuousModulations(buffer);
 
     // process any mod changes to the multisliders
-//    state.params.processStateChanges();
+    state.params.processStateChanges();
 
     /*
      * do the MIDI stuff here

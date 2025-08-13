@@ -22,7 +22,8 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (-100.0f, 200.0f, 100.0f),
         100.0f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::EnumChoiceParameter<PitchClass>::Ptr reffundamental {
@@ -37,7 +38,6 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
         "Octave",
         Octave::_4 // _ is subbed by a space
     };
-
 };
 
 #endif //BITKLAVIER0_SEMITONEWIDTHPARAMS_H

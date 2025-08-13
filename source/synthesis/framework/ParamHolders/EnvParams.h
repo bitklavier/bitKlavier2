@@ -39,7 +39,8 @@ struct EnvParams : public chowdsp::ParamHolder
         juce::ParameterID { "delay", 100 },
         "Delay",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1000.0f, 500.0f),
-        0.0f, true
+        0.0f,
+        true
     };
 
     // Attack param
@@ -47,7 +48,8 @@ struct EnvParams : public chowdsp::ParamHolder
         juce::ParameterID { "attack", 100 },
         "Attack",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10000.0f, 500.0f),
-        3.0f, true
+        3.0f,
+        true
     };
 
     // Attack Power param
@@ -73,7 +75,8 @@ struct EnvParams : public chowdsp::ParamHolder
         juce::ParameterID { "decay", 100 },
         "Decay",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1000.0f, 500.0f),
-        10.0f,true
+        10.0f,
+        true
     };
 
     // Decay Power param
@@ -93,7 +96,8 @@ struct EnvParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal, true
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     // Release param
@@ -101,7 +105,8 @@ struct EnvParams : public chowdsp::ParamHolder
         juce::ParameterID { "release", 100 },
         "Release",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10000.0f, 500.0f),
-        50.0f,true
+        50.0f,
+        true
     };
 
     // release Power param

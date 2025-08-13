@@ -24,6 +24,7 @@ public:
             offsetKnob->setPopupPlacement(juce::BubbleComponent::below);
             offsetKnob->setShowPopupOnHover(true);
             offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSet, listeners, *offsetKnob, nullptr);
+            offsetKnob->addAttachment(offsetKnobAttachment.get()); // for modulations
 
             sectionBorder.setName("tuningoffset");
             sectionBorder.setText("Offset");

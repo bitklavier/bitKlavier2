@@ -161,6 +161,8 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     sustain_attachment = std::make_unique<chowdsp::SliderAttachment>(params.sustainParam, listeners, *sustain_, nullptr);
     release_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releaseParam, listeners, *release_, nullptr);
     releasePower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releasePowerParam, listeners, *release_power_, nullptr);
+
+    // for modulations
     attack_->addAttachment(attack_attachment.get());
     decay_->addAttachment(decay_attachment.get());
     sustain_->addAttachment(sustain_attachment.get());
@@ -176,7 +178,6 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
 EnvelopeSection::~EnvelopeSection() { }
 
 void EnvelopeSection::mouseUp(const juce::MouseEvent& e) {
-    DBG("EnvelopeSection::mouseUp");
     SynthSection::mouseUp(e);
     notifyParentOfValueChange();
 }
@@ -198,7 +199,6 @@ void EnvelopeSection::paintBackground(juce::Graphics& g) {
 
 void EnvelopeSection::notifyParentOfValueChange()
 {
-    DBG("EnvelopeSection::notifyParentOfValueChange ");
     _params.notify->setValueNotifyingHost(true);
 }
 
@@ -215,17 +215,6 @@ void EnvelopeSection::resized() {
 
     juce::Rectangle<int> knobs_area = area.removeFromTop(getKnobSectionHeight());
     placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
-    DBG(" env section knob area" + juce::String(knobs_area.getWidth()) + " " + juce::String(knobs_area.getHeight()));
-//    int knob_section_height = getKnobSectionHeight();
-//    //int knob_y = getHeight() - knob_section_height;
-//    int knob_y = area.getHeight() - knob_section_height;
-//
-//    int widget_margin = findValue(Skin::kWidgetMargin);
-//    int envelope_height = knob_y - widget_margin;
-//    envelope_->setBounds(widget_margin, widget_margin, area.getWidth() - 2 * widget_margin, envelope_height);
-//
-//    juce::Rectangle<int> knobs_area(0, area.getY(), area.getWidth(), knob_section_height);
-//    placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
 
     envelope_->setSizeRatio(getSizeRatio());
 
@@ -241,7 +230,6 @@ void EnvelopeSection::resized() {
 
 void EnvelopeSection::setADSRVals(float a, float d, float s, float r, float ap, float dp, float rp)
 {
-//    attack_->setValue(a, juce::dontSendNotification);
     envelope_->setADSRVals(a, d, s, r, ap, dp, rp);
 }
 

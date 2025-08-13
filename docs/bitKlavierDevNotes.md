@@ -1,6 +1,9 @@
 # Notes about how to do stuff in the bK codebase
 
 ## Things/Questions for Davis
+- [ ] Mod setup in Synchronic and Tuning.
+  - how to get the envelope section to either be state-moded or ignored
+  - can't get the knobs in the subsections (like SemitoneWidth) to work properly
 - [ ] connecting Synchronic and Nostalgic, and more generally connecting objects to one another and limiting what connections are possible 
   - no Tuning to Blendronic, for instance
   - also, having Target know which prep it's connected to, and then disallowing it from connecting to other types of preps
@@ -68,6 +71,7 @@ etc...
 - and then these are assigned to modulation audio channels: see DirectProcessor constructor, the `modChan.setProperty` calls
 - Mods across Piano Changes: will require mod-specific treatment in processBlockBypassed
   - can leave until later
+- also, ramp modulatable params must have an `attack_->addAttachment(attack_attachment.get());` call in the ParamViewer constructor
 
 ## State Change Modulation Parameters
 - as opposed to Modulatable parameters; these are not changed continuously at the audio rate, the way Modulatable Parameters are, but rather are changed together, all at once
