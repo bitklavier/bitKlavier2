@@ -241,7 +241,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void addToggleButton(juce::ToggleButton* button, bool show);
 
     void addButton(OpenGlShapeButton* button, bool show = true);
-    void addSynthButton(SynthButton* button, bool show = true);
+    void addSynthButton(SynthButton* button, bool show = true, bool isModulatable = false);
     void addStateModulatedComponent(StateModulatedComponent* component, bool show = true);
 
     void addBackgroundComponent(OpenGlBackground* open_gl_component, bool to_beginning = false);

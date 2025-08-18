@@ -522,10 +522,11 @@ void SynthSection::addButton(OpenGlShapeButton *button, bool show) {
     addOpenGlComponent(button->getGlComponent());
 }
 
-void SynthSection::addSynthButton(SynthButton *button, bool show) {
+void SynthSection::addSynthButton(SynthButton *button, bool show,bool isModulatable) {
     button->setComponentID(this->getComponentID().toStdString() + "_" + button->getComponentID().toStdString());
     button_lookup_[button->getComponentID().toStdString()] = button;
-    all_synth_buttons_[button->getComponentID().toStdString()] = button;
+    if(isModulatable)
+        all_synth_buttons_[button->getComponentID().toStdString()] = button;
     button->addListener(this);
     addOpenGlComponent(button->getGlComponent());
     if (show)

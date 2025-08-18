@@ -1276,7 +1276,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                     temporarily_set_destination_ = destination;
                     temporarily_set_button_ = button_model_lookup_[name];
                     std::string source_name = current_modulator_->getComponentID().toStdString();
-                    connectStateModulation(source_name, name);
+                    //connectStateModulation(source_name, name);
                     //setStateModulationValues(source_name, name, 1.0f);//, false, false, false);
                     makeModulationsVisible(button, true);
                 } else if (destination->getStateModulatedComponent()) {
