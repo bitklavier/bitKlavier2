@@ -181,6 +181,7 @@ int bitklavier::ModulationProcessor::createNewModIndex()
 
    getBus(false,1)->setNumberOfChannels(getBus(false,1)->getNumberOfChannels()+1);
     // state.setProperty(IDs::numModChans, getBus(false,1)->getNumberOfChannels(),nullptr);
+    DBG("createnewmodindex " + juce::String(getBus(false,1)->getNumberOfChannels()));
    return (getBus(false,1)->getNumberOfChannels()-1)-1; //(old number of channels) -1 to get 0 based
 }
 

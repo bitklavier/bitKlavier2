@@ -29,7 +29,7 @@ SpringTuningSection::SpringTuningSection (
          * put the intervalWeight knobs in their own vector, so we can group them in the UI
          *      - the rest of the knobs will go in the vector of more general controls
          */
-        if(param_->paramID.startsWith("intervalWeight_"))
+        if(param_->paramID.startsWith("intervalWeight"))
         {
             intervalWeightsSliders_sliderAttachments.emplace_back(std::move(attachment));
             intervalWeightSliders.emplace_back(std::move(slider));
@@ -63,7 +63,7 @@ SpringTuningSection::SpringTuningSection (
     // create and gather the useLocalOrFundamental toggle buttons
     for ( auto &param_ : *params.getBoolParams())
     {
-        if(param_->paramID.startsWith("useLocalOrFundamental_")){
+        if(param_->paramID.startsWith("useLocalOrFundamental")){
             auto button = std::make_unique<SynthButton>(param_->paramID);
 //            SynthButton* currentButtonPtr = button.get(); // for use in the onStateChange lambda below
             auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, nullptr);

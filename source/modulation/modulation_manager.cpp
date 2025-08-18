@@ -1326,10 +1326,10 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
 
                 setVisibleMeterBounds();
                 makeModulationsVisible(slider, true);
-                DBG("dragged to slider");
+                // DBG("dragged to slider");
             } else //this line is what allows the modulation to show whenever you initially drop it
             {
-                DBG("modulationchanged");
+                // DBG("modulationchanged");
                 modulationsChanged(name);
             }
         }

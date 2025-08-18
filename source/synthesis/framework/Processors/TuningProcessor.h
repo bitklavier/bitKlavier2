@@ -167,9 +167,6 @@ struct TuningState : bitklavier::StateChangeableParameter
 
 struct TuningParams : chowdsp::ParamHolder
 {
-    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::vector<ParamPtrVariant> modulatableParams;
-
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams() : chowdsp::ParamHolder ("tuning")
     {
@@ -254,8 +251,7 @@ public:
         return BusesProperties()
                 .withOutput("Output", juce::AudioChannelSet::stereo(), false)
                 .withInput ("Input", juce::AudioChannelSet::stereo(), false)
-                .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true);
+                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(25),true);
     }
 
 private:

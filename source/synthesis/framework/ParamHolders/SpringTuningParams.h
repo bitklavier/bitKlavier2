@@ -129,7 +129,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (5.0f, 400.0f, 100.0f),
         100.0f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     /**
@@ -146,7 +147,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.98f, // high drag
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
 //    /**
@@ -170,7 +172,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     /**
@@ -182,7 +185,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     /**
@@ -212,7 +216,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     /**
@@ -224,7 +229,8 @@ struct SpringTuningParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.1f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::EnumChoiceParameter<PitchClass>::Ptr tCurrentSpringTuningFundamental {
@@ -246,181 +252,193 @@ struct SpringTuningParams : public chowdsp::ParamHolder
       */
 
     chowdsp::FloatParameter::Ptr intervalWeight_1 { // minor 2nd
-        juce::ParameterID { "intervalWeight_1", 100 },
+        juce::ParameterID { "intervalWeight1", 100 },
         "m2",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_2 { // major 2nd
-        juce::ParameterID { "intervalWeight_2", 100 },
+        juce::ParameterID { "intervalWeight2", 100 },
         "M2",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_3 { // minor 3
-        juce::ParameterID { "intervalWeight_3", 100 },
+        juce::ParameterID { "intervalWeight3", 100 },
         "m3",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_4 { // major 3
-        juce::ParameterID { "intervalWeight_4", 100 },
+        juce::ParameterID { "intervalWeight4", 100 },
         "M3",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_5 { // perfect 4
-        juce::ParameterID { "intervalWeight_5", 100 },
+        juce::ParameterID { "intervalWeight5", 100 },
         "P4",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_6 { // tritone
-        juce::ParameterID { "intervalWeight_6", 100 },
+        juce::ParameterID { "intervalWeight6", 100 },
         "TT",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_7 { // perfect 5
-        juce::ParameterID { "intervalWeight_7", 100 },
+        juce::ParameterID { "intervalWeight7", 100 },
         "P5",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_8 { // minor 6
-        juce::ParameterID { "intervalWeight_8", 100 },
+        juce::ParameterID { "intervalWeight8", 100 },
         "m6",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_9 { // major 6
-        juce::ParameterID { "intervalWeight_9", 100 },
+        juce::ParameterID { "intervalWeight9", 100 },
         "M6",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_10 { // minor 7
-        juce::ParameterID { "intervalWeight_10", 100 },
+        juce::ParameterID { "intervalWeight10", 100 },
         "m7",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_11 { // major 7
-        juce::ParameterID { "intervalWeight_11", 100 },
+        juce::ParameterID { "intervalWeight11", 100 },
         "M7",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::FloatParameter::Ptr intervalWeight_12 { // octave
-        juce::ParameterID { "intervalWeight_12", 100 },
+        juce::ParameterID { "intervalWeight12", 100 },
         "P8",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.0f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_1 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_1", 100},
+        juce::ParameterID { "useLocalOrFundamental1", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_2 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_2", 100},
+        juce::ParameterID { "useLocalOrFundamental2", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_3 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_3", 100},
+        juce::ParameterID { "useLocalOrFundamental3", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_4 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_4", 100},
+        juce::ParameterID { "useLocalOrFundamental4", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_5 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_5", 100},
+        juce::ParameterID { "useLocalOrFundamental5", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_6 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_6", 100},
+        juce::ParameterID { "useLocalOrFundamental6", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_7 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_7", 100},
+        juce::ParameterID { "useLocalOrFundamental7", 100},
         "F",
         false
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_8 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_8", 100},
+        juce::ParameterID { "useLocalOrFundamental8", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_9 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_9", 100},
+        juce::ParameterID { "useLocalOrFundamental9", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_10 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_10", 100},
+        juce::ParameterID { "useLocalOrFundamental10", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_11 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_11", 100},
+        juce::ParameterID { "useLocalOrFundamental11", 100},
         "F",
         true
     };
 
     chowdsp::BoolParameter::Ptr useLocalOrFundamental_12 { // button for setting springMode for each interval weight
-        juce::ParameterID { "useLocalOrFundamental_12", 100},
+        juce::ParameterID { "useLocalOrFundamental12", 100},
         "F",
         true
     };

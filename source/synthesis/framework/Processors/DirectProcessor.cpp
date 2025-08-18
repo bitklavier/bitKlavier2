@@ -31,10 +31,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
 
-    /*
-     * modulations and state changes
-     */
-    setupModulationMappings();
+
 
     state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -49,40 +46,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         &(state.params.velocityMinMax.stateChanges)));
 }
 
-/**
- * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
- *      from a modification preparation
- *      modulations like this come on an audio channel
- *      this is on a separate bus from the regular audio graph that carries audio between preparations
- */
-void DirectProcessor::setupModulationMappings()
-{
-    auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
-    if (!mod_params.isValid()) {
-        int mod = 0;
-        mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS,nullptr);
-        for (auto param: state.params.modulatableParams)
-        {
-            juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
-            juce::String name = std::visit([](auto* p) -> juce::String
-                {
-                    return p->paramID; // Works if all types have getParamID()
-                }, param);
-            const auto& a  = std::visit([](auto* p) -> juce::NormalisableRange<float>
-                {
-                    return p->getNormalisableRange(); // Works if all types have getParamID()
-                }, param);
-            modChan.setProperty (IDs::parameter, name, nullptr);
-            modChan.setProperty (IDs::channel, mod, nullptr);
-            modChan.setProperty(IDs::start, a.start,nullptr);
-            modChan.setProperty(IDs::end, a.end,nullptr);
-            modChan.setProperty(IDs::skew, a.skew,nullptr);
 
-            mod_params.appendChild (modChan, nullptr);
-            mod++;
-        }
-    }
-}
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {

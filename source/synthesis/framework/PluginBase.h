@@ -134,6 +134,40 @@ namespace bitklavier {
         virtual juce::String getWrapperTypeString() const;
         bool supportsParameterModulation() const;
         juce::ValueTree v;
+        /**
+ * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
+ *      from a modification preparation
+ *      modulations like this come on an audio channel
+ *      this is on a separate bus from the regular audio graph that carries audio between preparations
+ */
+        void setupModulationMappings()
+        {
+            auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
+            if (!mod_params.isValid()) {
+                int mod = 0;
+                mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS,nullptr);
+                for (auto param: state.params.modulatableParams)
+                {
+                    juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
+                    juce::String name = std::visit([](auto* p) -> juce::String
+                        {
+                            return p->paramID; // Works if all types have getParamID()
+                        }, param);
+                    const auto& a  = std::visit([](auto* p) -> juce::NormalisableRange<float>
+                        {
+                            return p->getNormalisableRange(); // Works if all types have getParamID()
+                        }, param);
+                    modChan.setProperty (IDs::parameter, name, nullptr);
+                    modChan.setProperty (IDs::channel, mod, nullptr);
+                    modChan.setProperty(IDs::start, a.start,nullptr);
+                    modChan.setProperty(IDs::end, a.end,nullptr);
+                    modChan.setProperty(IDs::skew, a.skew,nullptr);
+
+                    mod_params.appendChild (modChan, nullptr);
+                    mod++;
+                }
+            }
+        }
     protected:
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
         PluginStateType state;
@@ -189,6 +223,10 @@ namespace bitklavier {
                   if(v.isValid())
                     chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(v.createXml(),state);
         createUuidProperty(v);
+        /*
+     * modulations and state changes
+     */
+        setupModulationMappings();
     }
 #else
     template <class Processor>

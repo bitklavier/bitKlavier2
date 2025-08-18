@@ -25,8 +25,8 @@ struct DirectParams : chowdsp::ParamHolder
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
 
-    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::vector<ParamPtrVariant> modulatableParams;
+    // using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
+    // std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Direct Processor
     DirectParams() : chowdsp::ParamHolder ("direct")
@@ -54,8 +54,8 @@ struct DirectParams : chowdsp::ParamHolder
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                         modulatableParams.push_back ( sliderParam);
-        });
+                    modulatableParams.push_back ( sliderParam);
+   });
     }
 
     /**
@@ -168,7 +168,7 @@ public:
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
-    void setupModulationMappings();
+    // void setupModulationMappings();
 
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
@@ -234,10 +234,13 @@ public:
 
     /**
      * todo: question for Davis: is this used still? if so, what for?
+     * DAVIS: It is used to respond to soundset changes. i.e. you change the valuetree
+     * and it triggers the samples to be swapped out
      * @param t
      */
     void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
     {
+        //should add an if check here to make sure its actually the sampleset changing
         juce::String a = t.getProperty (IDs::mainSampleSet, "");
         juce::String b = t.getProperty (IDs::hammerSampleSet, "");
         juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
@@ -250,6 +253,8 @@ public:
 
     /**
      * todo: do we need these?
+     * DAVIS: this just explicitly defines the other valuetree listener functions to be doing nothing
+     * we only care about the treepropertychanged valuetree
      */
 //    void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) {}
 //    void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) {}
@@ -273,15 +278,9 @@ private:
 
     /**
      * todo: is this used?
+     * see addSoundSet()
      */
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
-
-    /**
-     * todo: are these used? if not, remove
-     */
-//    chowdsp::ScopedCallbackList adsrCallbacks;
-//    chowdsp::ScopedCallbackList vtCallbacks;
-
     BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DirectProcessor)
 };

@@ -83,10 +83,11 @@ struct AdaptiveTuningParams : public chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr tAdaptiveHistory {
         juce::ParameterID { "tAdaptiveHistory", 100 },
         "tAdaptiveHistory",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 8.0f, 4.0f, 1.f), // last arg sets increment
+        juce::NormalisableRange {0.0f, 8.0f, 4.0f,1.f}, // last arg sets increment
         0.0f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
     };
 
     /**

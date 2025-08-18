@@ -575,10 +575,17 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     auto parameter_tree = mod_dst.getChildWithName(IDs::MODULATABLE_PARAMS).getChildWithProperty (IDs::parameter, juce::String (dst_param));
     connection->setParamTree(parameter_tree);
-    jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree. this means the paramid for the component does not match a modulatable param on the backend
+    jassert(parameter_tree.isValid());//if you hit this then the Parameter ID is not a modulatable param listed in the value tree.
+    //this means the paramid for the component does not match a modulatable param on the backend
+    //this requires you to add the Parameter ID to the value tree as a MODULATABLE_PARAM see DirectProcessor Constructor for an example
     /**
-     * todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
-     */
+     *todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
+* DAVIS : no this assert is to say that you are missing a REQUIRED step in the setup of parameters.
+* That is to say you have dragged a mod across the UI and crossed some parameter that is in a half-setup state
+* mods are created anytime a parameter is dragged over a knob so that it can show the modulatable param circle
+* this isnt a requiremnt but more of a nice UI feature where you get the snap as it crosses over without having to
+* drop the modulation.
+    */
 
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
@@ -623,10 +630,11 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         });
 
         //this is threadsafe because processorgraph will trigger rebuild on main thead
-        engine_->addConnection (connection->connection_);
-           // if(!)
-           //     jassertfalse;
-        // });
+       bool connectionAdded =  engine_->addConnection (connection->connection_);
+        jassert(connectionAdded);
+        //if this fails the connection wasn't added because the processorgraph could not determine how to connect it
+        // the most likely culprit would be lack of channels on the Prepartions "Modulation" input bus
+
     }
 }
 
