@@ -2,6 +2,7 @@
 
 ## Things/Questions for Davis
 - [ ] Mod setup in Synchronic and Tuning.
+  - Mod of menus? essential!
   - how to get the envelope section to either be state-moded or ignored
   - can't get the knobs in the subsections (like SemitoneWidth) to work properly
 - [ ] connecting Synchronic and Nostalgic, and more generally connecting objects to one another and limiting what connections are possible 
