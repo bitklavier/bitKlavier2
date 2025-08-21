@@ -472,7 +472,6 @@ public:
         return std::make_unique<SynchronicProcessor> (parent, v);
     }
 
-    void setupModulationMappings();
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
