@@ -220,8 +220,6 @@ public:
         return std::make_unique<BlendronicProcessor> (parent, v);
     }
 
-    void setupModulationMappings();
-
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};

@@ -141,12 +141,13 @@ namespace bitklavier {
         virtual juce::String getWrapperTypeString() const;
         bool supportsParameterModulation() const;
         juce::ValueTree v;
+
         /**
- * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
- *      from a modification preparation
- *      modulations like this come on an audio channel
- *      this is on a separate bus from the regular audio graph that carries audio between preparations
- */
+         * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
+         *      from a modification preparation
+         *      modulations like this come on an audio channel
+         *      this is on a separate bus from the regular audio graph that carries audio between preparations
+         */
         void setupModulationMappings()
         {
             auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
@@ -175,6 +176,7 @@ namespace bitklavier {
                 }
             }
         }
+
     protected:
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
         PluginStateType state;
