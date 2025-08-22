@@ -1,5 +1,73 @@
-# Creating and Deleting Preparations
-# Creating Preparations
+# Questions
+
+
+Add tempo to PluginBase so that blendronic and synchronic can access it
+
+Input for tempo
+
+# Creating a New Preparation
+## Functionality of the Tempo Preparation
+We want to create a tempo preparation. This way we can set a tempo and apply it to our other preparations like blendronic and synchronic. A user should be able to create a tempo preparation by pressing 'm' on their keyboard or by right-clicking on the ConstructionSite and selecting tempo. They should then be able to drag it onto other valid preparations to set their respective tempos.
+## Main Components of a Preparation
+Our tempo preparation (and any preparation in general) is made up of 3 classes:
+
+- TempoPreparation: Makes the preparation appear in the ConstructionSite
+- TempoProcessor: Takes care of audio things on the backend
+- TempoParametersView: Allows user to change parameters after double-clicking on the preparation
+
+## Steps
+1. Create ___Processor.cpp/h
+2. Create ___Preparation.cpp/h 
+3. Create ___ParametersView.cpp/h
+4. Add to BKPreparationTypes in common.h
+5. Create ___Item in BKItem.h
+
+## Tying All the Pieces Together
+
+
+## Connecting a New Preparation
+Our tempo object should be able to modulate synchronic and blendronic preparations. Here's what I'm doing to add that funcitonality...
+
+- In synth_base.cpp/h, create addTempoConnection() and connectTempo() functions 
+- In synth_base.cpp, include the TempoProcessor.h
+- In ModConnectionsList.cpp, create a case in the newObjectAdded() function for the case where the dragged item is a tempo preparation
+- add TEMPOCONNECTION to identifiers.h
+- In ModulationLineView.cpp/h and PreparationSection.h create a tempoDropped() function
+- In PreparationSection.cpp, add the case for tempo in itemDropped()
+- In ModConnectionsList.h, add TEMPOCONNECTION to isSuitableType()
+
+perhaps set tempo in pluginbase?
+
+Add to preparations.h
+
+## Creating a New Preparation
+Typing as I do MidiFilter...
+- create MidiFilterProcessor class, with params
+- create the MidiFilterParametersView class
+   - might not always need this: see Reset, for instance
+- create the MidiFilterPreparation class
+- add to `BKPreparationTypes` in common.h
+- create class MidiFilterItem in BKItem.h
+- in BKItem.cpp, add path for preparation in `getPathForPreparation (bitklavier::BKPreparationType type)`
+- add to menu in synth_gui_interface.cpp `SynthGuiInterface::getPluginPopupItems()`
+- `nodeFactory.Register` it in ConstructionSite.cpp.
+   - and to `CommandIDs` here
+   - also add a switch case in `perform()` here
+   - also `ConstructionSite::getAllCommands` and `getCommandInfo`
+- register in the constructor for `PreparationList.cpp`
+   - `prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter,MidiFilterProcessor::create);`
+- might need to add it to `PreparationSection::itemDropped`
+   - requires creating `midifilterDropped()` funcs in various places
+   - do NOT need it for midifilter, since its not one to connect via drag/drop
+- icon svg layers in assets/midifilter, with further info in BinaryData.h; BinaryData.h says it is autowritten -- how?
+   - need to add a path() call in `paths.h`
+   - some drawing stuff happens in `BKItem.h`
+   - might not need an image, can just draw a path()
+   - icon size is set in `ConstructionSite::perform`
+- preparation icon size is set in `ConstructionSite::perform`?
+- popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
+# Adding and Deleting Preparations
+# Adding Preparations
 There are two ways to do this:
 - Press the one of the hot keys
 - Right click anywhere on the screen and select the preparation you want from the from the popup
@@ -7,7 +75,7 @@ There are two ways to do this:
 Either one of these actions results in the a preparation popping up on your screen. Let's first walk through how this happens at a high level then we'll dig into some details in a function call trace.
 We will use the direct preparation as an example for simplicity.
 
-## Preparation Creation Overview
+## Preparation Addition Overview
 1. ConstructionSite registers a key press or handles the popup selection (however you decide to create the preparation)
 2. We add a direct preparation ValueTree to the PREPARATIONS ValueTree
 3. We create and set up the AudioProcessor for the direct preparation
@@ -16,7 +84,7 @@ We will use the direct preparation as an example for simplicity.
 6. We add the PreparationSection to the ConstructionSite's list of components so that we can continue to work with it
 7. OpenGL draws the preparation that is now properly hooked up and ready to use
 
-## Preparation Creation Function Call Trace
+## Preparation Addition Function Call Trace
 
 1. When we press the 'd' key, [a whole bunch of stuff](#the-applicationcommandtarget) happens [ConstructionSite::perform()](../source/interface/sections/ConstructionSite.cpp#L185) gets called. When we right-click on the ConstructionSite and select 'Direct' from the popup, [ConstructionSite::handlePluginPopup()](../source/interface/sections/ConstructionSite.cpp) gets called
     
@@ -233,7 +301,7 @@ Let's say you have a direct preparation. That direct preparation has a resonance
 4. Right click in the ModulationModuleSection and we have the option to create either a RampModulator or a StateModulator. In this example, the Direct's resonance parameter will use a ramp modulator, so we select that.
 5. In the top left corner of the RampModulator, we can click and drag a modulator button onto the Direct parameter that we want to modulate.
 
-Let's take a deeper look at how this is being implemented. Creating the Modulation Preparation is easy - it's the same as any other preparation. The creation process is explained in the [Preparation Creation Function Call Trace](#preparation-creation-function-call-trace).
+Let's take a deeper look at how this is being implemented. Creating the Modulation Preparation is easy - it's the same as any other preparation. The addition process is explained in the [Preparation Addition Function Call Trace](#preparation-addition-function-call-trace).
 
 ## Creating a Modulation Connection Between Preparations (MODCONNECTION)
 Creating a Modulation Connection is similar to creating a Cable connection. It's actually a bit simpler since you only draw the ModulationLine after connecting the preparations (whereas the Cable is drawn before you connect it to anything). It's also a bit simpler because you don't actually hook anything up to the AudioProcessorGraph until you start modulating parameters.
@@ -277,7 +345,7 @@ When you right-click in the ModulationModuleSection, you have the option to crea
 1. ModulationModuleSection's handlePopupResult() adds a modulationproc value tree to the PREPARATION value tree for the Modulation Preparation.
 2. When this processor gets added to the PREPARATION ValueTree, the [valueTreeChildAdded()](../third_party/tracktion_engine/tracktion_ValueTreeUtilities.h) function from the [ValueTreeObjectList](#the-valuetreeobjectlist) is listening... this function sees that we're adding a preparation to the ValueTree so it calls createNewObject() which has been implemented by our ModulationList object.
 
-    - This function creates a ModulatorBase (specifically a RampModulator ModulatorBase) and passes it as an argument to the ModulationProcessor's addModulator() function. This ModulationProcessor was created when we created our ModulationPreparation (see step 4 in the [Preparation Creation Function Call Trace](#preparation-creation-function-call-trace)). 
+    - This function creates a ModulatorBase (specifically a RampModulator ModulatorBase) and passes it as an argument to the ModulationProcessor's addModulator() function. This ModulationProcessor was created when we created our ModulationPreparation (see step 4 in the [Preparation Addition Function Call Trace](#preparation-addition-function-call-trace)). 
 3. ModulationProcessor's addModulator() function sets the ModulatorBase's parent and adds the ModulatorBase to the `modulators_` vector.
 4. After calling createNewObject(), the ValueTreeObject list calls newObjectAdded(), which calls the ModulationModuleSection's modulatorAdded() function.
 

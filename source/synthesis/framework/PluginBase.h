@@ -7,6 +7,7 @@
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 
 #include "Identifiers.h"
+#include "TempoProcessor.h"
 #include "bk_XMLSerializer.h"
 class SynthSection;
 class SynthBase;
@@ -24,10 +25,15 @@ namespace bitklavier {
         {
             tuning = tun;
         }
+        virtual void setTempo(TempoProcessor* tem)
+        {
+            tempo = tem;
+        }
 
             protected:
 
         TuningProcessor* tuning = nullptr;
+        TempoProcessor* tempo = nullptr;
     };
 
 /**

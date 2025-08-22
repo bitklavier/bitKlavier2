@@ -25,6 +25,8 @@ namespace bitklavier {
         // }
         if (c->state.hasType(IDs::RESETCONNECTION))
             synth.connectReset(c->state);
+        if (c->state.hasType (IDs::TEMPOCONNECTION))
+            synth.connectTempo(c->state);
         for (auto listener: listeners_) {
             listener->modConnectionAdded(c);
         } 

@@ -52,6 +52,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchPreparation::create);
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::create);
+
 
 }
 
@@ -212,14 +214,15 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case tempo:
             {
-                // juce::ValueTree t(IDs::PREPARATION);
-                //
-                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
-                // t.setProperty(IDs::width, 132, nullptr);
-                // t.setProperty(IDs::height, 260, nullptr);
-                // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
-                // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-                // prep_list->appendChild(t,  &undo);
+                juce::ValueTree t(IDs::PREPARATION);
+
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
+                t.setProperty(IDs::width, 132, nullptr);
+                t.setProperty(IDs::height, 260, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+
+                prep_list->appendChild(t,  &undo);
                 return true;
             }
             case tuning:

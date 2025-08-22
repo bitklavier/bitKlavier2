@@ -12,6 +12,7 @@
 #include "MidiFilterProcessor.h"
 #include "MidiTargetProcessor.h"
 #include "PianoSwitchProcessor.h"
+#include "TempoProcessor.h"
 #include "../UserPreferences.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : tracktion::engine::ValueTreeObjectList<
@@ -27,6 +28,8 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetProcessor::create);
     prepFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchProcessor::create);
+    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTempo, TempoProcessor::create);
+
     rebuildObjects();
     for (auto object: objects) {
         PreparationList::newObjectAdded(object);
