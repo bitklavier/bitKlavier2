@@ -162,7 +162,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     //    {
     //        beatThresholdSamples = (tempoPrep->getBeatThresh() / tempoPrep->getSubdivisions() * synth->getSampleRate());
     //    }
-    beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+
+    //beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+    //beatThresholdSamples = 60.0 / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue()) * getSampleRate();
+    beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
+
 
     for (auto key : keysDepressed)
     {
@@ -315,7 +319,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                              *  - shouldn't be an issue, unless note playback is very fast or block is very large
                              *      AND we get multiple noteOn msgs in the same block that want different noteOnSpecs
                              */
-                            float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * (60.0 / tempoTemp) * 1000.);
+                            //float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * (60.0 / tempoTemp) * 1000.);
+                            float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * getBeatThresholdSeconds() * 1000.);
                             noteOnSpecMap[newNote].startDirection = Direction::backward;
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
                             noteOnSpecMap[newNote].stopSameCurrentNote = false;
@@ -340,7 +345,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             /**
              * todo: handle tempo/general stuff...
              */
-            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * (60.0 / tempoTemp);
+            //noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * (60.0 / tempoTemp);
+            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * getBeatThresholdSeconds();
 
             // check to see if the notes have been sustained their desired length
             for (auto tm = sustainedNotesTimers.begin(); tm != sustainedNotesTimers.end(); /* no increment here */)
@@ -715,7 +721,8 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         /**
          * todo: figure out how to handle the stuff from Tempo, to set beatThresholdSamples
          */
-        beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+        //beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+        beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
         /*
          * for cases when BOTH beatSync and patternSync are selected in MidiTarget,
@@ -798,7 +805,8 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     /**
      * todo: figure out how to handle the stuff from Tempo, to set beatThresholdSamples
      */
-    beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+//    beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+    beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
 
     /*

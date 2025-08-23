@@ -6,7 +6,6 @@
 #define BITKLAVIER2_PLUGINBASE_H
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include "Identifiers.h"
-#include "TempoProcessor.h"
 #include "bk_XMLSerializer.h"
 
 class SynthSection;
