@@ -49,6 +49,7 @@ public:
                 addSlider (slider.get()); // adds the slider to the synthSection
 //                slider->setSliderStyle (juce::Slider::LinearHorizontal);
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setShowPopupOnHover(true);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
             }

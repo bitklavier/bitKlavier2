@@ -36,6 +36,7 @@
 #include "Identifiers.h"
 #include "array_to_string.h"
 #include "MultiSliderState.h"
+#include "TempoProcessor.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -257,14 +258,19 @@ public:
 
     inline void toggleActive() { blendronicActive = !blendronicActive; }
 
+float getPulseLength()
+{
+    if (tempo != nullptr)
+        return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
+    else
+        return 0.5; // 120bpm by default
+}
+
 private:
 
     /**
-     * todo: Tempo params
-     * placeholders here for now
+     * todo: Tempo params, periodMultiplier?
      */
-    double _tempo = 120.;
-    double _subdivisions = 4.;
     double _periodMultiplier = 1.;
 
     /**

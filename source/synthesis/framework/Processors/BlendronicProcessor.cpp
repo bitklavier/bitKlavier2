@@ -72,9 +72,9 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     feedbackIndex = 0;
 
     /**
-     * todo: get from Tempo and General Settings
+     * todo: get General Settings
      */
-    pulseLength = (60.0 / (_subdivisions * _tempo));
+    pulseLength = getPulseLength();
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
     numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load();
     numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * getSampleRate() * pulseLength;
@@ -279,7 +279,7 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      *      pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
      *      pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
      */
-    pulseLength = (60.0 / (_subdivisions * _tempo));
+    pulseLength = getPulseLength();
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
 
     // process continuous modulations (gain level sliders)
