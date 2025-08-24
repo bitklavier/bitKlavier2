@@ -265,7 +265,7 @@ void SynthBase::addTempoConnection (juce::AudioProcessorGraph::NodeID src, juce:
 {
     auto* sourceNode = getNodeForId (src);
     auto* destNode = getNodeForId (dest);
-    // dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor())->setTempo (dynamic_cast<TempoProcessor*> (sourceNode->getProcessor()));
+    dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor())->setTempo (dynamic_cast<TempoProcessor*> (sourceNode->getProcessor()));
     addModulationConnection (src, dest);
 }
 
@@ -273,7 +273,7 @@ void SynthBase::connectTempo (const juce::ValueTree& v)
 {
     auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src));
     auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest));
-    addTuningConnection (srcid, dstid);
+    addTempoConnection (srcid, dstid);
 }
 
 void SynthBase::setMpeEnabled (bool enabled)
