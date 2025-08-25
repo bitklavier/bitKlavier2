@@ -17,6 +17,7 @@
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
+#include "TempoProcessor.h"
 #include "buffer_debugger.h"
 #include "utils.h"
 #include "target_types.h"
@@ -63,10 +64,10 @@ struct SynchronicParams : chowdsp::ParamHolder
     {
         add (
             numPulses,
-            numLayers,
-            clusterThickness, //SynchronicClusterCap in the old bK
-            clusterThreshold,
-            clusterMinMaxParams,
+            numLayers, // how many independent synchronic layers can we have simultaneously? usually only 1, but...
+            clusterThickness, // SynchronicClusterCap in the old bK; max number of notes in a cluster (different than cluster min/max below)
+            clusterThreshold, // time (ms) between notes (as played) for them to be part of a cluster
+            clusterMinMaxParams, // min/max number of played notes to launch a pulse
             holdTimeMinMaxParams,
             pulseTriggeredBy,
             determinesCluster,
@@ -472,7 +473,6 @@ public:
         return std::make_unique<SynchronicProcessor> (parent, v);
     }
 
-    void setupModulationMappings();
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -502,6 +502,13 @@ public:
     }
 
     void setTuning (TuningProcessor*) override;
+    float getBeatThresholdSeconds()
+    {
+        if (tempo != nullptr)
+            return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
+        else
+            return 0.5; // 120bpm by default
+    }
 
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels

@@ -2,6 +2,7 @@
 
 ## Things/Questions for Davis
 - [ ] Mod setup in Synchronic and Tuning.
+  - Mod of menus? essential!
   - how to get the envelope section to either be state-moded or ignored
   - can't get the knobs in the subsections (like SemitoneWidth) to work properly
 - [ ] connecting Synchronic and Nostalgic, and more generally connecting objects to one another and limiting what connections are possible 
@@ -159,7 +160,10 @@ Typing as I do MidiFilter...
 - every Preparation that is in the Gallery is in the Graph. The activePiano defines which preparations are visible, and which ones are not bypassed in the graph
 - preparations that are bypassed have their processBlockBypassed called every block, to allow for transitions from Piano to Piano
   - that does mean that processBlockBypassed() should have a minimal amount going on, so we don't have a lot of overhead from inactive pianos
-- 
+
+---------
+## Connections between Preps
+- happen in SynthBase
 
 --------
 ## Debugger Notes

@@ -117,6 +117,10 @@ public:
 
     void connectTuning(const juce::ValueTree &v);
 
+    void addTempoConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
+
+    void connectTempo(const juce::ValueTree &v);
+
     bool isConnected(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
 
     bool addModulationConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);

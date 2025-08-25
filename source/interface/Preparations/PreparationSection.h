@@ -59,6 +59,8 @@ public:
         virtual void resetDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
 
         virtual void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
+        virtual void tempoDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
+
         virtual void midifilterDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
 
         virtual void createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type){}

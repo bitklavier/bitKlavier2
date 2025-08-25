@@ -445,6 +445,7 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTempo,"Tempo");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeBlendronic,"Blendronic");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeSynchronic,"Synchronic");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");

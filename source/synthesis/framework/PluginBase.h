@@ -5,12 +5,14 @@
 #ifndef BITKLAVIER2_PLUGINBASE_H
 #define BITKLAVIER2_PLUGINBASE_H
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
-
 #include "Identifiers.h"
 #include "bk_XMLSerializer.h"
+
 class SynthSection;
 class SynthBase;
 class TuningProcessor;
+class TempoProcessor;
+
 namespace bitklavier {
     class InternalProcessor : public juce::AudioProcessor {
     public:
@@ -24,10 +26,15 @@ namespace bitklavier {
         {
             tuning = tun;
         }
+        virtual void setTempo(TempoProcessor* tem)
+        {
+            tempo = tem;
+        }
 
-            protected:
+    protected:
 
         TuningProcessor* tuning = nullptr;
+        TempoProcessor* tempo = nullptr;
     };
 
 /**
@@ -134,12 +141,13 @@ namespace bitklavier {
         virtual juce::String getWrapperTypeString() const;
         bool supportsParameterModulation() const;
         juce::ValueTree v;
+
         /**
- * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
- *      from a modification preparation
- *      modulations like this come on an audio channel
- *      this is on a separate bus from the regular audio graph that carries audio between preparations
- */
+         * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
+         *      from a modification preparation
+         *      modulations like this come on an audio channel
+         *      this is on a separate bus from the regular audio graph that carries audio between preparations
+         */
         void setupModulationMappings()
         {
             auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
@@ -168,6 +176,7 @@ namespace bitklavier {
                 }
             }
         }
+
     protected:
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
         PluginStateType state;

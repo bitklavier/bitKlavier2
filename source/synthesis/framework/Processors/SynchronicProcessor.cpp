@@ -23,11 +23,6 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     }
 
     /*
-     * modulations and state changes
-     */
-    setupModulationMappings();
-
-    /*
      * state-change parameter stuff (for multisliders)
      */
     state.params.transpositions.stateChanges.defaultState               = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -75,43 +70,6 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     keysDepressed = juce::Array<int>();
     clusterKeysDepressed = juce::Array<int>();
     inCluster = false;
-}
-
-/**
- * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
- *      from a modification preparation
- *      modulations like this come on an audio channel
- *      this is on a separate bus from the regular audio graph that carries audio between preparations
- *
- * todo: perhaps this should be an inherited function for all preparation processors?
- */
-void SynchronicProcessor::setupModulationMappings()
-{
-    auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
-    if (!mod_params.isValid()) {
-        int mod = 0;
-        mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS,nullptr);
-        for (auto param: state.params.modulatableParams)
-        {
-            juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
-            juce::String name = std::visit([](auto* p) -> juce::String
-                {
-                    return p->paramID; // Works if all types have getParamID()
-                }, param);
-            const auto& a  = std::visit([](auto* p) -> juce::NormalisableRange<float>
-                {
-                    return p->getNormalisableRange(); // Works if all types have getParamID()
-                }, param);
-            modChan.setProperty (IDs::parameter, name, nullptr);
-            modChan.setProperty (IDs::channel, mod, nullptr);
-            modChan.setProperty(IDs::start, a.start,nullptr);
-            modChan.setProperty(IDs::end, a.end,nullptr);
-            modChan.setProperty(IDs::skew, a.skew,nullptr);
-
-            mod_params.appendChild (modChan, nullptr);
-            mod++;
-        }
-    }
 }
 
 void SynchronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -204,7 +162,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     //    {
     //        beatThresholdSamples = (tempoPrep->getBeatThresh() / tempoPrep->getSubdivisions() * synth->getSampleRate());
     //    }
-    beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+
+    //beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+    //beatThresholdSamples = 60.0 / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue()) * getSampleRate();
+    beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
+
 
     for (auto key : keysDepressed)
     {
@@ -357,7 +319,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                              *  - shouldn't be an issue, unless note playback is very fast or block is very large
                              *      AND we get multiple noteOn msgs in the same block that want different noteOnSpecs
                              */
-                            float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * (60.0 / tempoTemp) * 1000.);
+                            //float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * (60.0 / tempoTemp) * 1000.);
+                            float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * getBeatThresholdSeconds() * 1000.);
                             noteOnSpecMap[newNote].startDirection = Direction::backward;
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
                             noteOnSpecMap[newNote].stopSameCurrentNote = false;
@@ -382,7 +345,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             /**
              * todo: handle tempo/general stuff...
              */
-            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * (60.0 / tempoTemp);
+            //noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * (60.0 / tempoTemp);
+            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * getBeatThresholdSeconds();
 
             // check to see if the notes have been sustained their desired length
             for (auto tm = sustainedNotesTimers.begin(); tm != sustainedNotesTimers.end(); /* no increment here */)
@@ -757,7 +721,8 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         /**
          * todo: figure out how to handle the stuff from Tempo, to set beatThresholdSamples
          */
-        beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+        //beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+        beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
         /*
          * for cases when BOTH beatSync and patternSync are selected in MidiTarget,
@@ -840,7 +805,8 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     /**
      * todo: figure out how to handle the stuff from Tempo, to set beatThresholdSamples
      */
-    beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+//    beatThresholdSamples = getSampleRate() * 60.0 / tempoTemp;
+    beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
 
     /*
