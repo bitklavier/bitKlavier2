@@ -268,7 +268,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         // we don't want to play a cluster immediately with the noteOn message
                         if(cluster->beatCounter == 0) playNow = false;
 
-                        // we want the timing of the next beat to align properly
+                        // we want the timing of the first played beat to align properly
                         else if (cluster->beatCounter == 1) cluster->setBeatPhasor(0);
 
                         // otherwise, step the parameter values as usual
@@ -748,7 +748,6 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         for (auto& ci : clusters)
         {
             ci->setBeatPhasor(phasor);
-//            ci->setShouldPlay(true);
         }
     }
 

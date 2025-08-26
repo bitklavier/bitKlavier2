@@ -335,20 +335,31 @@ public:
 
     ~SynchronicCluster() {}
 
+    /*
+     * increment the timing phasor
+     *  - called every block, so numSamples is always the blocksize
+     */
     inline void incrementPhasor (int numSamples)
     {
         phasor += numSamples;
     }
 
+    /*
+     * we increment all the parameter counters here
+     * we also decrement the timing phasor by the amount of time to the next beat
+     */
     inline void step (juce::uint64 numSamplesBeat)
     {
+        // set the phasor back by the number of samples to the next beat
         phasor -= numSamplesBeat;
 
+        // increment all the counters
         if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size)  lengthMultiplierCounter = 0;
         if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)                   accentMultiplierCounter = 0;
         if (++transpCounter             >= _sparams->transpositions.sliderVals_size)            transpCounter = 0;
         if (++envelopeCounter           >= _sparams->numEnvelopes)                              envelopeCounter = 0;
 
+        // skip the inactive envelopes
         while(!_sparams->isEnvelopeActive(envelopeCounter)) //skip untoggled envelopes
         {
             envelopeCounter++;
