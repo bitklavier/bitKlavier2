@@ -1160,6 +1160,7 @@ void PreparationPopup::reset() {
     all_sliders_.clear();
     all_modulation_buttons_.clear();
     all_state_modulated_components.clear();
+    all_combo_box_.clear();
     if (prep_view != nullptr)
     {
         /* needed to solve weird button drawn crash*/
@@ -1208,6 +1209,13 @@ void PreparationPopup::resized() {
         prep_view->setBounds(bounds);
     }
     repaintPrepBackground();
+}
+
+std::map<std::string, OpenGLComboBox *> PreparationPopup::getAllComboBox() {
+    if(prep_view!= nullptr)
+        return prep_view->getAllComboBox();
+    return {};//SynthSection::getAllSliders();
+
 }
 
 std::map<std::string, SynthSlider *> PreparationPopup::getAllSliders() {

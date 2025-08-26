@@ -104,6 +104,7 @@ public :
     juce::CriticalSection open_gl_critical_section_;
     OpenGlWrapper open_gl_;
     juce::ScopedPointer<ValueTreeDebugger> valueTreeDebugger;
+    std::map<std::string, OpenGLComboBox*> getAllComboBox() override;
     std::map<std::string, SynthSlider*> getAllSliders() override;
     std::map<std::string, ModulationButton*> getAllModulationButtons() override;
     std::map<std::string, SynthButton*> getAllButtons() override;

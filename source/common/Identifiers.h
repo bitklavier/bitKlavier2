@@ -108,6 +108,12 @@ namespace IDs
     DECLARE_ID(adsr_releasePower)
     DECLARE_ID(adsr_active)
 
+    DECLARE_ID(combo_box_index)
+    DECLARE_ID(fundamental)
+    DECLARE_ID(tuningType)
+    DECLARE_ID(tuningSystem)
+
+
 }
 
 #undef DECLARE_ID

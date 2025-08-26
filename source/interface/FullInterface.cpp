@@ -457,6 +457,9 @@ std::map<std::string, ModulationButton*> FullInterface::getAllModulationButtons(
 {
     return mod_popup->getAllModulationButtons();
 }
+std::map<std::string, OpenGLComboBox*> FullInterface::getAllComboBox() {
+    return prep_popup->getAllComboBox();
+}
 
 std::map<std::string, StateModulatedComponent*> FullInterface::getAllStateModulatedComponents()
 {

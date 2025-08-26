@@ -23,6 +23,7 @@
 #include "synth_slider.h"
 #include "modulation_button.h"
 #include "Identifiers.h"
+#include "open_gl_combo_box.h"
 
 SynthSection::SynthSection(const juce::String &name) : juce::Component(name), parent_(nullptr), activator_(nullptr),
                                                        preset_selector_(nullptr), preset_selector_half_width_(false),
@@ -521,7 +522,15 @@ void SynthSection::addButton(OpenGlShapeButton *button, bool show) {
     addToggleButton(button, show);
     addOpenGlComponent(button->getGlComponent());
 }
-
+//only need to use to this funciton for modulatable combo boxes
+void SynthSection::addComboBox(OpenGLComboBox *box, bool show, bool isModulatable) {
+    box->setComponentID(this->getComponentID().toStdString() + "_" + box->getComponentID().toStdString());
+    if(isModulatable)
+        all_combo_box_[box->getComponentID().toStdString()] = box;
+    addOpenGlComponent(box->getImageComponent());
+    if(show)
+        addAndMakeVisible(box);
+}
 void SynthSection::addSynthButton(SynthButton *button, bool show,bool isModulatable) {
     button->setComponentID(this->getComponentID().toStdString() + "_" + button->getComponentID().toStdString());
     button_lookup_[button->getComponentID().toStdString()] = button;
@@ -587,6 +596,9 @@ void SynthSection::addSubSection(SynthSection *sub_section, bool show) {
 
     auto sub_state_modulated_components = sub_section->getAllStateModulatedComponents();
     all_state_modulated_components.insert(sub_state_modulated_components.begin(), sub_state_modulated_components.end());
+
+    auto sub_combo_boxes = sub_section->getAllComboBox();
+    all_combo_box_.insert(sub_combo_boxes.begin(),sub_combo_boxes.end());
 }
 
 void SynthSection::removeSubSection(SynthSection *section) {

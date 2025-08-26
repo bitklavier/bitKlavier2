@@ -31,25 +31,21 @@ AdaptiveTuningSection::AdaptiveTuningSection (
         auto index = tuningParams->tAdaptiveIntervalScale->getIndex();
         adaptiveIntervalScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveIntervalScale->paramID.toStdString());
         adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, nullptr);
-        addAndMakeVisible(adaptiveIntervalScale_ComboBox.get());
-        addOpenGlComponent(adaptiveIntervalScale_ComboBox->getImageComponent());
+        addComboBox(adaptiveIntervalScale_ComboBox.get(),true,true) ;
         setupTuningSystemMenu(adaptiveIntervalScale_ComboBox);
         adaptiveIntervalScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         index = tuningParams->tAdaptiveAnchorScale->getIndex();
         adaptiveAnchorScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorScale->paramID.toStdString());
         adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, nullptr);
-        addAndMakeVisible(adaptiveAnchorScale_ComboBox.get());
-        addOpenGlComponent(adaptiveAnchorScale_ComboBox->getImageComponent());
+        addComboBox(adaptiveAnchorScale_ComboBox.get(),true,true);
         setupTuningSystemMenu(adaptiveAnchorScale_ComboBox);
         adaptiveAnchorScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
     }
 
     adaptiveAnchorFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorFundamental->paramID.toStdString());
     adaptiveAnchorFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorFundamental, listeners, *adaptiveAnchorFundamental_ComboBox, nullptr);
-    addAndMakeVisible(adaptiveAnchorFundamental_ComboBox.get());
-    addOpenGlComponent(adaptiveAnchorFundamental_ComboBox->getImageComponent());
-
+    addComboBox(adaptiveAnchorFundamental_ComboBox.get(),true,true);
     useInversionOfIntervalScale_Toggle = std::make_unique<SynthButton>(params.tAdaptiveInversional->paramID);
     useInversionOfIntervalScale_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(params.tAdaptiveInversional,listeners,*useInversionOfIntervalScale_Toggle,nullptr);
     useInversionOfIntervalScale_Toggle->setComponentID(params.tAdaptiveInversional->paramID);

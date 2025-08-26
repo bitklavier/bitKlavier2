@@ -46,16 +46,14 @@ SpringTuningSection::SpringTuningSection (
         auto index = tuningParams->scaleId->getIndex();
         scaleId_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId->paramID.toStdString());
         scaleId_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId, listeners, *scaleId_ComboBox, nullptr);
-        addAndMakeVisible(scaleId_ComboBox.get());
-        addOpenGlComponent(scaleId_ComboBox->getImageComponent());
+        addComboBox(scaleId_ComboBox.get(),true,true);
         setupTuningSystemMenu(scaleId_ComboBox);
         scaleId_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         index = tuningParams->scaleId_tether->getIndex();
         scaleId_tether_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId_tether->paramID.toStdString());
         scaleId_tether_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId_tether, listeners, *scaleId_tether_ComboBox, nullptr);
-        addAndMakeVisible(scaleId_tether_ComboBox.get());
-        addOpenGlComponent(scaleId_tether_ComboBox->getImageComponent());
+        addComboBox(scaleId_tether_ComboBox.get(),true,true);
         setupTuningSystemMenu(scaleId_tether_ComboBox);
         scaleId_tether_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
     }
@@ -104,14 +102,11 @@ SpringTuningSection::SpringTuningSection (
     // the tuning system fundamental combo boxes
     intervalFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
     intervalFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.intervalFundamental, listeners, *intervalFundamental_ComboBox, nullptr);
-    addAndMakeVisible(intervalFundamental_ComboBox.get());
-    addOpenGlComponent(intervalFundamental_ComboBox->getImageComponent());
+    addComboBox(intervalFundamental_ComboBox.get(),true,true);
 
-    tetherFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
+    tetherFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tetherFundamental->paramID.toStdString());
     tetherFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tetherFundamental, listeners, *tetherFundamental_ComboBox, nullptr);
-    addAndMakeVisible(tetherFundamental_ComboBox.get());
-    addOpenGlComponent(tetherFundamental_ComboBox->getImageComponent());
-
+    addComboBox(tetherFundamental_ComboBox.get(),true,true);
     // labels...
     currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");
     addOpenGlComponent(currentFundamental);

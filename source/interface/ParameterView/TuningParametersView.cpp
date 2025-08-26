@@ -45,20 +45,18 @@ TuningParametersView::TuningParametersView(
         auto index = tuningParams->tuningState.tuningSystem->getIndex();
         tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString());
         tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners,*tuning_combo_box, nullptr);
-        addAndMakeVisible(tuning_combo_box.get());
-        addOpenGlComponent(tuning_combo_box->getImageComponent());
         setupTuningSystemMenu(tuning_combo_box);
+        addComboBox(tuning_combo_box.get(),true,true);
         tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString());
         fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners,*fundamental_combo_box, nullptr);
-        addAndMakeVisible(fundamental_combo_box.get());
-        addOpenGlComponent(fundamental_combo_box->getImageComponent());
+
+        addComboBox(fundamental_combo_box.get(),true,true);
 
         tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString());
         tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners,*tuningtype_combo_box, nullptr);
-        addAndMakeVisible(tuningtype_combo_box.get());
-        addOpenGlComponent(tuningtype_combo_box->getImageComponent());
+        addComboBox(tuningtype_combo_box.get(),true,true);
     }
 
     /*
