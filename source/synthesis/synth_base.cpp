@@ -647,9 +647,9 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
         //this is threadsafe because processorgraph will trigger rebuild on main thead
        bool connectionAdded =  engine_->addConnection (connection->connection_);
-        jassert(connectionAdded);
-        //if this fails the connection wasn't added because the processorgraph could not determine how to connect it
-        // the most likely culprit would be lack of channels on the Prepartions "Modulation" input bus
+       jassert(connectionAdded);
+       //if this fails the connection wasn't added because the processorgraph could not determine how to connect it
+       // the most likely culprit would be lack of channels on the Prepartions "Modulation" input bus
 
     }
 }
@@ -667,7 +667,7 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
 
     auto b = engine_->addConnection (connection_);
     if (b)
-        DBG ("Connected");
+        DBG ("connected");
     else
         DBG ("not connected");
 }

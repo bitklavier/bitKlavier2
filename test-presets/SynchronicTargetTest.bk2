@@ -58,6 +58,7 @@
         <PORT nodeID="3433433039" chIdx="4096" isIn="0"/>
         <midiInput midiDeviceId="812171291 116208109"/>
         <MODULATABLE_PARAMS/>
+        <midiInput midiDeviceId="252967002"/>
       </PREPARATION>
       <PREPARATION type="10" width="75" height="75" x_y="929, 640" uuid="c39f757817504a50bdf622e0d5160f4b"
                    nodeID="3282007416" numIns="1" numOuts="1" bTargetPatternSync_noteMode="0"
@@ -83,7 +84,7 @@
                    delay="0.000" notify="0" t0="0.000" t1="0.000" t2="0.000" t3="0.000"
                    t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000"
                    t10="0.000" t11="0.000" sliderVals_size="1.000" UseTuning="0"
-                   velocitymin="0.000" velocitymax="128.000" LastVelocity="39.000">
+                   velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Main" channel="0" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="Hammers" channel="1" start="-80.0" end="6.0" skew="2.0"/>
@@ -107,6 +108,7 @@
         <PORT nodeID="1359961759" chIdx="4096" isIn="0"/>
         <midiInput midiDeviceId="812171291 116208109"/>
         <MODULATABLE_PARAMS/>
+        <midiInput midiDeviceId="252967002"/>
       </PREPARATION>
     </PREPARATIONS>
     <CONNECTIONS>
