@@ -335,20 +335,31 @@ public:
 
     ~SynchronicCluster() {}
 
+    /*
+     * increment the timing phasor
+     *  - called every block, so numSamples is always the blocksize
+     */
     inline void incrementPhasor (int numSamples)
     {
         phasor += numSamples;
     }
 
+    /*
+     * we increment all the parameter counters here
+     * we also decrement the timing phasor by the amount of time to the next beat
+     */
     inline void step (juce::uint64 numSamplesBeat)
     {
+        // set the phasor back by the number of samples to the next beat
         phasor -= numSamplesBeat;
 
+        // increment all the counters
         if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size)  lengthMultiplierCounter = 0;
         if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)                   accentMultiplierCounter = 0;
         if (++transpCounter             >= _sparams->transpositions.sliderVals_size)            transpCounter = 0;
         if (++envelopeCounter           >= _sparams->numEnvelopes)                              envelopeCounter = 0;
 
+        // skip the inactive envelopes
         while(!_sparams->isEnvelopeActive(envelopeCounter)) //skip untoggled envelopes
         {
             envelopeCounter++;
@@ -358,35 +369,38 @@ public:
 
     inline void postStep ()
     {
-        if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size)
+        /*
+         * the reason we do this separately from step() is because the length of the beats
+         * is what determines when the next step() needs to happen, so we increment its counter
+         * at the end of each cycle, before we pass time until the next beat
+         */
+
+        /* this messy conditional....
+         *      in short: we always increment the beat multiplier counter UNLESS we are:
+         *                  - on the first beat
+         *                  - AND are in a noteOff trigger mode
+         *                  - AND are NOT skipping the first beat
+         *
+         *      this is a special case, but should behave as expected
+         */
+        auto sMode = _sparams->pulseTriggeredBy->get();
+        if (beatCounter > 0 || (sMode == Any_NoteOn || sMode == First_NoteOn) || _sparams->skipFirst->get())
         {
-            //increment beat and beatMultiplier counters, for next beat; check maxes and adjust
-            beatMultiplierCounter = 0;
+            if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size) beatMultiplierCounter = 0;
         }
 
         int skipBeats = 0;
         if (_sparams->skipFirst->get()) skipBeats = 1;
-
-        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats))
-        {
-            shouldPlay = false;
-        }
+        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats)) shouldPlay = false;
     }
 
     inline void resetPatternPhase()
     {
-        /*
-         * todo: decide whether we want skipBeats to be considered here
-         *          - might be best to just start at the beginning regardless
-         *              so, setting skipBeats = -1 here
-         */
-//        int skipBeats = _sparams->skipFirst->get() - 1;
-        int skipBeats = -1;
-        beatMultiplierCounter = skipBeats;
-        lengthMultiplierCounter = skipBeats;
-        accentMultiplierCounter = skipBeats;
-        transpCounter = skipBeats;
-        envelopeCounter = skipBeats;
+        beatMultiplierCounter = 0;
+        lengthMultiplierCounter = 0;
+        accentMultiplierCounter = 0;
+        transpCounter = 0;
+        envelopeCounter = 0;
 
         beatCounter = 0;
     }
@@ -502,6 +516,7 @@ public:
     }
 
     void setTuning (TuningProcessor*) override;
+
     float getBeatThresholdSeconds()
     {
         if (tempo != nullptr)
@@ -551,7 +566,6 @@ public:
     /*
      * Synchronic Params
      */
-    bool playCluster;
     bool inCluster;
     bool nextOffIsFirst;
 
@@ -613,6 +627,8 @@ private:
             tm.second += numSamples;
         }
     }
+
+    bool checkVelMinMax(int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
 };
