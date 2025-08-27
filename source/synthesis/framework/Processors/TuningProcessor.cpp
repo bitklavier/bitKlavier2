@@ -594,20 +594,26 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningSystem", &(state.params.tuningState.stateChanges)));
     //adaptive
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveIntervalScale", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveIntervalScale", &(state.params.tuningState.adaptiveParams.tAdaptiveIntervalScale->stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveAnchorScale", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveAnchorScale", &(state.params.tuningState.adaptiveParams.tAdaptiveAnchorScale->stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveAnchorFundamental", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveAnchorFundamental", &(state.params.tuningState.adaptiveParams.tAdaptiveAnchorFundamental->stateChanges)));
     //spring
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "scaleId", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "scaleId", &(state.params.tuningState.springTuningParams.scaleId->stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "intervalFundamental", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "intervalFundamental", &(state.params.tuningState.springTuningParams.intervalFundamental->stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "scaleIdTether", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "scaleIdTether", &(state.params.tuningState.springTuningParams.scaleId_tether->stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tetherFundamental", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tetherFundamental", &(state.params.tuningState.springTuningParams.tetherFundamental->stateChanges)));
+    //semitone
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "reffundamental", &(state.params.tuningState.semitoneWidthParams.reffundamental->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "octave", &(state.params.tuningState.semitoneWidthParams.octave->stateChanges)));
+
     state.params.tuningState.stateChanges.defaultState      = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.tuningSystem->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);

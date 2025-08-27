@@ -471,8 +471,11 @@ std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnecti
     std::vector<bitklavier::StateConnection*> connections;
     for (auto& connection : state_connections_)
     {
-        if (connection->destination_name == destination)
-            connections.push_back (connection);
+        if (connection->destination_name == destination) {
+            // check if already in vector
+            if (std::find(connections.begin(), connections.end(), connection) == connections.end())
+                connections.push_back(connection);
+        }
     }
     return connections;
 }
@@ -494,8 +497,11 @@ std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnecti
     std::vector<bitklavier::ModulationConnection*> connections;
     for (auto& connection : mod_connections_)
     {
-        if (connection->destination_name == destination)
-            connections.push_back (connection);
+        if (connection->destination_name == destination) {
+            // check if already in vector
+            if (std::find(connections.begin(), connections.end(), connection) == connections.end())
+                connections.push_back(connection);
+        }
     }
     return connections;
 }
@@ -640,9 +646,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
         //this is threadsafe because processorgraph will trigger rebuild on main thead
         bool connectionAdded = engine_->addConnection (connection->connection_);
-        jassert (connectionAdded);
-        //if this fails the connection wasn't added because the processorgraph could not determine how to connect it
-        // the most likely culprit would be lack of channels on the Prepartions "Modulation" input bus
+
     }
 }
 

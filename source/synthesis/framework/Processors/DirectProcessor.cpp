@@ -35,6 +35,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
 
     state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.transpose.transpositionUsesTuning->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
@@ -42,8 +43,11 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose",
         &(state.params.transpose.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max",
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocityminmax",
         &(state.params.velocityMinMax.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string,
+    bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
+    &(state.params.transpose.transpositionUsesTuning->stateChanges)));
 }
 
 
@@ -162,6 +166,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // then, the state-change modulations, for more complex params
     state.params.transpose.processStateChanges();
     state.params.velocityMinMax.processStateChanges();
+    state.params.transpose.transpositionUsesTuning->processStateChanges();
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();

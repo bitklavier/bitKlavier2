@@ -22,14 +22,11 @@ SemitoneWidthSection::SemitoneWidthSection (
 
     fundamentalComboBox = std::make_unique<OpenGLComboBox>(params.reffundamental->paramID.toStdString());
     fundamentalComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.reffundamental, listeners, *fundamentalComboBox, nullptr);
-    addAndMakeVisible(fundamentalComboBox.get());
-    addOpenGlComponent(fundamentalComboBox->getImageComponent());
+    addComboBox(fundamentalComboBox.get(),true,true);
 
     octaveComboBox = std::make_unique<OpenGLComboBox>(params.octave->paramID.toStdString());
     octaveComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.octave, listeners, *octaveComboBox, nullptr);
-    addAndMakeVisible(octaveComboBox.get());
-    addOpenGlComponent(octaveComboBox->getImageComponent());
-
+    addComboBox(octaveComboBox.get(),true,true);
     sectionBorder.setName("semitonewidth");
     sectionBorder.setText("Semitone Width");
     sectionBorder.setTextLabelPosition(juce::Justification::centred);

@@ -9,7 +9,7 @@
 
 struct VelocityMinMaxParams : chowdsp::ParamHolder
 {
-    VelocityMinMaxParams() : chowdsp::ParamHolder("ENV")
+    VelocityMinMaxParams() : chowdsp::ParamHolder("velocityminmax")
     {
         add(velocityMinParam, velocityMaxParam, lastVelocityParam);
     }
