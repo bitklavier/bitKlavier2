@@ -527,8 +527,8 @@ bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNu
 
         /**
          * todo: note that we are doing this on the audio thread, which is allocating memory!
-         *         - rework all this so we don't do that, as this is likely the cause
-         *         of the thread safety issues we're having here
+         *         - rework all this so we don't do that, as this is likely the cause of the thread safety issues we're having here
+         *         - probably just create a large number of them, as we do BKSynthVoices, and keep track of which ones are active
          */
         // make the new one and add it to the array of clusters
         _cluster = new SynchronicCluster(&state.params);
