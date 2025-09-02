@@ -347,6 +347,7 @@ public:
     /*
      * we increment all the parameter counters here
      * we also decrement the timing phasor by the amount of time to the next beat
+     * - typically called every beat, so the phasor reset is akin to the counter increments
      */
     inline void step (juce::uint64 numSamplesBeat)
     {
@@ -577,6 +578,9 @@ public:
     juce::uint64 syncThresholdTimer;
     juce::Array<juce::uint64> holdTimers;
 
+    /**
+     * todo: thread safety issues with this in the old version, need to make sure we aren't reproducing them here
+     */
     juce::Array<SynchronicCluster*> clusters;
 
     juce::Array<int> keysDepressed;   //current keys that are depressed
