@@ -644,7 +644,7 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator) {
 
                 addAndMakeVisible(editing_state_component_);
                 addOpenGlComponent(editing_state_component_->getImageComponent());
-                editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(),
+                editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight() ,
                                                     comp->getWidth(), comp->getHeight());
                 editing_state_component_->addListener(this);
                 editing_state_component_->setComponentID(juce::String(connection->destination_name));
@@ -2004,6 +2004,8 @@ void ModulationManager::hoverStarted(OpenGLComboBox *component) {
 
     if (!enteringHoverValue())
         makeModulationsVisible(component, true);
+    if(editing_state_component_)
+        editing_state_component_->setVisible(false);
 }
 
 void ModulationManager::hoverEnded(OpenGLComboBox* component) {
@@ -2021,11 +2023,15 @@ void ModulationManager::hoverStarted(StateModulatedComponent *component) {
 
     if (!enteringHoverValue())
         makeModulationsVisible(component, true);
+    // if(!component->isModulation_) {
+    //     if(editing_state_component_)
+    //         editing_state_component_->setVisible(false);
+    // }
 }
 
 void ModulationManager::hoverEnded(StateModulatedComponent *component) {
     if (component->isModulation_) {
-        editing_state_component_->setVisible(false);
+        // editing_state_component_->setVisible(false);
         //        editing_state_component_->setVisible(false);
     }
 }
@@ -2037,7 +2043,8 @@ void ModulationManager::hoverStarted(SynthButton *button) {
 
     if (!enteringHoverValue())
         makeModulationsVisible(button, true);
-
+    if(editing_state_component_)
+        editing_state_component_->setVisible(false);
     //    ModulationAmountKnob* amount_knob = dynamic_cast<ModulationIndicator*>(slider);
     //    if (amount_knob)
     //    {
@@ -2069,6 +2076,8 @@ void ModulationManager::hoverStarted(SynthSlider *slider) {
         showModulationAmountOverlay(amount_knob);
     } else
         hideModulationAmountOverlay();
+    if(editing_state_component_)
+        editing_state_component_->setVisible(false);
 }
 
 void ModulationManager::hoverEnded(SynthSlider *slider) {
