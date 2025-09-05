@@ -482,10 +482,6 @@ public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
     ~SynchronicProcessor(){}
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<SynchronicProcessor> (parent, v);
-    }
 
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
