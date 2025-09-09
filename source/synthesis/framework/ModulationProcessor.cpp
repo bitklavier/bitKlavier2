@@ -6,7 +6,7 @@
 #include "ModulatorBase.h"
 #include "ModulationConnection.h"
 #include "ModulationList.h"
-bitklavier::ModulationProcessor::ModulationProcessor(const juce::ValueTree& vt,SynthBase& parent) :
+bitklavier::ModulationProcessor::ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt) :
        juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
        .withOutput("disabled",juce::AudioChannelSet::mono(),false)
        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
@@ -17,11 +17,6 @@ mod_list(std::make_unique<ModulationList>(state,&parent,this))
 
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
-}
-std::unique_ptr<juce::AudioProcessor> bitklavier::ModulationProcessor::create(SynthBase &parent, const juce::ValueTree &v) {
-
-        return std::make_unique<ModulationProcessor>(v,parent);
-
 }
 
 void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

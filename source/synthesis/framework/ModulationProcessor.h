@@ -7,7 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"
-class ModulationList;
+#include "ModulationList.h"
 class ModulatorBase;
 
 namespace bitklavier {
@@ -18,9 +18,8 @@ class StateConnection;
     };
     class ModulationProcessor : public juce::AudioProcessor {
     public:
-        ModulationProcessor(const juce::ValueTree& vt,SynthBase& parent);
+        ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt);
 
-        static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v);
         bool acceptsMidi() const override {
             return true;
         }

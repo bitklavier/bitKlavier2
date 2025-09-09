@@ -33,7 +33,7 @@ public:
         on->setComponentID(params->transpositionUsesTuning->paramID);
 
         // add it and show it
-        addSynthButton(on.get(), true);
+        addSynthButton(on.get(), true,true);
 
         // what we want the button to show to the user
         on->setText("use Tuning?");

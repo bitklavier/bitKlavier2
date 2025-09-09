@@ -25,8 +25,7 @@ struct PianoSwitchNonParameterState : chowdsp::NonParamState
 class PianoSwitchProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<PianoSwitchParams, PianoSwitchNonParameterState>>
 {
 public:
-    PianoSwitchProcessor (const juce::ValueTree& v, SynthBase& parent);
-    static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent, const juce::ValueTree& v);
+    PianoSwitchProcessor (SynthBase& parent, const juce::ValueTree&);
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override {}
     void releaseResources() override {}

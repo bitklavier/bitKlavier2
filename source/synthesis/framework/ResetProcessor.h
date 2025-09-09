@@ -14,7 +14,7 @@ class StateConnection;
 
     class ResetProcessor : public juce::AudioProcessor {
     public:
-        ResetProcessor(const juce::ValueTree& vt,SynthBase& parent) :
+        ResetProcessor(SynthBase& parent,const juce::ValueTree& vt) :
         juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("main_out_disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
@@ -25,9 +25,6 @@ class StateConnection;
             createUuidProperty(state);
         }
 
-        static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v) {
-            return std::make_unique<ResetProcessor>(v,parent);
-        }
 
         bool acceptsMidi() const override {return true;}
         bool producesMidi() const override { return false; }
