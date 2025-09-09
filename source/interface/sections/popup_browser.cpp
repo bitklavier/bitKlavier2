@@ -179,7 +179,7 @@ int PopupList::getRowFromPosition(float mouse_position) {
 }
 
 int PopupList::getBrowseWidth() {
-    static constexpr int kMinWidth = 150;
+    static constexpr int kMinWidth = 300;
 
     juce::Font font = getFont();
     int max_width = kMinWidth * size_ratio_;
