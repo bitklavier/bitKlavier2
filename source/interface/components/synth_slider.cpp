@@ -480,17 +480,17 @@ double SynthSlider::getValueFromText(const juce::String& text) {
   if(attachment) {
     auto unclamped_val = attachment->getParameter()->getValueFromStringFunction()(text);
     if( attachment->getParameter()->range.end < unclamped_val) {//over
-      auto range =attachment->getParameter()->range ;
+      auto range = attachment->getParameter()->range ;
 
       attachment->getParameter()->range = juce::NormalisableRange<float>{range.start, static_cast<float>(unclamped_val), range.interval,range.skew};
     }else if ( attachment->getParameter()->range.start > unclamped_val) {//under
-      auto range =attachment->getParameter()->range ;
+      auto range = attachment->getParameter()->range ;
 
       attachment->getParameter()->range = juce::NormalisableRange<float>{static_cast<float>(unclamped_val),range.start,  range.interval,range.skew};
     }
   val = unclamped_val;
     attachment->setNormalisableRange(attachment->getParameter()->range );
-    147+-this->setNormalisableRange(juce::NormalisableRange<double>{attachment->getParameter()->range.start,attachment->getParameter()->range.end,attachment->getParameter()->range.interval,attachment->getParameter()->range.skew}frv45gt6);
+    this->setNormalisableRange(juce::NormalisableRange<double>{attachment->getParameter()->range.start,attachment->getParameter()->range.end,attachment->getParameter()->range.interval,attachment->getParameter()->range.skew});
   }
   //todo add checks for value over current normalisablerange reset range if so
 
