@@ -307,6 +307,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
       kClearMidiLearn,
       kDefaultValue,
       kManualEntry,
+      // kRangeResize,
       kClearModulations,
       kModulationList
     };
@@ -495,6 +496,8 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
 //        attachment = (param, pluginState, *this);
 //    }
   chowdsp::SliderAttachment* attachment = nullptr;
+  std::vector< bitklavier::ModulationConnection*> getConnections() ;
+
   protected:
 
     PopupItems createPopupMenu();

@@ -22,6 +22,8 @@
 #include "fonts.h"
 #include "curve_look_and_feel.h"
 #include "FullInterface.h"
+#include "ModulationConnection.h"
+#include "synth_base.h"
 
 #include "chowdsp_parameters/ParamUtils/chowdsp_ParameterTypes.h"
 #include "chowdsp_plugin_state/Backend/chowdsp_PluginState.h"
@@ -273,15 +275,28 @@ PopupItems SynthSlider::createPopupMenu() {
   PopupItems options;
 
   if (isDoubleClickReturnEnabled())
-    options.addItem(kDefaultValue, "Set to Default juce::Value");
+    options.addItem(kDefaultValue, "Set to Default Value");
 
   if (has_parameter_assignment_)
     options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
 
 //  if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getName().toStdString()))
-//    options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
 
-  options.addItem(kManualEntry, "Enter juce::Value");
+//    options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
+  options.addItem(kManualEntry, "Enter Value");
+  // options.addItem(kRangeResize, "Resize Range");
+  std::vector<bitklavier::ModulationConnection*> connections = getConnections();
+  if (!connections.empty())
+    options.addItem(-1, "");
+
+  std::string disconnect = "Disconnect from ";
+  for (int i = 0; i < connections.size(); ++i) {
+    // std::string name = ModulationMatrix::getMenuSourceDisplayName(connections[i]->source_name).toStdString();
+    options.addItem(kModulationList + i, disconnect + connections[i]->source_name);
+  }
+
+  if (connections.size() > 1)
+    options.addItem(kClearModulations, "Disconnect all modulations");
 
   return options;
 }
@@ -460,7 +475,23 @@ double SynthSlider::getValueFromText(const juce::String& text) {
 //    return (getMaximum() - getMinimum()) * t + getMinimum();
 //  }
   auto val = juce::Slider::getValueFromText(text);
+
   //it may come out of this already clamped
+  if(attachment) {
+    auto unclamped_val = attachment->getParameter()->getValueFromStringFunction()(text);
+    if( attachment->getParameter()->range.end < unclamped_val) {//over
+      auto range =attachment->getParameter()->range ;
+
+      attachment->getParameter()->range = juce::NormalisableRange<float>{range.start, static_cast<float>(unclamped_val), range.interval,range.skew};
+    }else if ( attachment->getParameter()->range.start > unclamped_val) {//under
+      auto range =attachment->getParameter()->range ;
+
+      attachment->getParameter()->range = juce::NormalisableRange<float>{static_cast<float>(unclamped_val),range.start,  range.interval,range.skew};
+    }
+  val = unclamped_val;
+    attachment->setNormalisableRange(attachment->getParameter()->range );
+    147+-this->setNormalisableRange(juce::NormalisableRange<double>{attachment->getParameter()->range.start,attachment->getParameter()->range.end,attachment->getParameter()->range.interval,attachment->getParameter()->range.skew}frv45gt6);
+  }
   //todo add checks for value over current normalisablerange reset range if so
 
   //  //access param range from attachment code
@@ -565,8 +596,11 @@ void SynthSlider::textEditorFocusLost(juce::TextEditor& editor) {
 }
 
 void SynthSlider::setSliderPositionFromText() {
-  if (text_entry_ && !text_entry_->getText().isEmpty())
+  if (text_entry_ && !text_entry_->getText().isEmpty()) {
     setValue(getValueFromText(text_entry_->getText()));
+
+
+  }
   text_entry_->setVisible(false);
 
   for (SliderListener* listener : slider_listeners_)
@@ -744,23 +778,24 @@ juce::Rectangle<int> SynthSlider::getModulationMeterBounds() const {
 
 void SynthSlider::handlePopupResult(int result) {
   SynthBase* synth = synth_interface_->getSynth();
-
+  std::vector<bitklavier::ModulationConnection*> connections = getConnections();
 
 //  if (result == kArmMidiLearn)
 //    mainSynth->armMidiLearn(getName().toStdString());
 //  else if (result == kClearMidiLearn)
 //    mainSynth->clearMidiLearn(getName().toStdString());
-//  else if (result == kDefaultValue)
-//    setValue(getDoubleClickReturnValue());
-//  else if (result == kManualEntry)
-//    showTextEntry();
-//  else if (result == kClearModulations) {
-//    for (bitklavier::ModulationConnection* connection : connections) {
-//      std::string source = connection->source_name;
-//      synth_interface_->disconnectModulation(connection);
-//    }
-//    notifyModulationsChanged();
-//  }
+   if (result == kDefaultValue)
+    setValue(getDoubleClickReturnValue());
+  else if (result == kManualEntry)
+    showTextEntry();
+   if (result == kClearModulations) {
+    for (bitklavier::ModulationConnection* connection : connections) {
+      std::string source = connection->source_name;
+      synth_interface_->disconnectModulation(connection);
+    }
+     auto parent = findParentComponentOfClass<SynthGuiInterface>();
+    parent->notifyModulationsChanged();
+  }
 //  else if (result >= kModulationList) {
 //    int connection_index = result - kModulationList;
 //    std::string source = connections[connection_index]->source_name;
@@ -768,6 +803,14 @@ void SynthSlider::handlePopupResult(int result) {
 //    notifyModulationsChanged();
 //  }
 }
+std::vector<bitklavier::ModulationConnection*> SynthSlider::getConnections()
+  {
+    if (synth_interface_ == nullptr)
+      return std::vector<bitklavier::ModulationConnection*>();
+
+    SynthBase* synth = synth_interface_->getSynth();
+    return synth->getDestinationConnections(getName().toStdString());
+  }
 
 void SynthSlider::setRotaryTextEntryBounds() {
   int text_width = getWidth() * text_entry_width_percent_;

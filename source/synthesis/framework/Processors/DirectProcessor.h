@@ -160,11 +160,6 @@ public:
     DirectProcessor (SynthBase& parent, const juce::ValueTree& v);
     ~DirectProcessor() {}
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<DirectProcessor> (parent, v);
-    }
-
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 

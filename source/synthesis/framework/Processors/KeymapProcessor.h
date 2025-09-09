@@ -49,9 +49,6 @@ class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
 {
 public:
     KeymapProcessor( SynthBase& parent,const juce::ValueTree& v);
-    // static std::unique_ptr<juce::AudioProcessor> create(SynthBase& parent,const juce::ValueTree& v) {
-    //     return std::make_unique<KeymapProcessor>(v,parent);
-    // }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override  {};
