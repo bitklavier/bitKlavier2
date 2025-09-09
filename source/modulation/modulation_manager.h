@@ -425,6 +425,9 @@ public OpenGLComboBox::Listener
         juce::ValueTree modulation;
         juce::String paramID;
     }comboBoxMod;
+
+    comboBoxMod editing_button_mod;
+
     comboBoxMod editing_comboBox_mod;
 
     std::map<juce::Viewport*, std::shared_ptr<OpenGlMultiQuad>> rotary_destinations_;

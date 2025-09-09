@@ -216,10 +216,6 @@ class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 public:
     BlendronicProcessor (SynthBase& parent, const juce::ValueTree& v);
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<BlendronicProcessor> (parent, v);
-    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

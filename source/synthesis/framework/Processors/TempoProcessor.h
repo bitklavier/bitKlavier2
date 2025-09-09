@@ -84,10 +84,6 @@ public:
     TempoProcessor (SynthBase& parent, const juce::ValueTree& v);
     ~TempoProcessor() {}
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<TempoProcessor> (parent, v);
-    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

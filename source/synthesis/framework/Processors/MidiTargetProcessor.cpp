@@ -4,15 +4,10 @@
 
 #include "MidiTargetProcessor.h"
 
-MidiTargetProcessor::MidiTargetProcessor (
-    const juce::ValueTree& v, SynthBase& parent) : PluginBase (parent, v, nullptr, midiTargetBusLayout())
+MidiTargetProcessor::MidiTargetProcessor ( SynthBase& parent,
+    const juce::ValueTree& v) : PluginBase (parent, v, nullptr, midiTargetBusLayout())
 {
 
-}
-
-std::unique_ptr<juce::AudioProcessor> MidiTargetProcessor::create (SynthBase& parent, const juce::ValueTree& v)
-{
-    return std::make_unique<MidiTargetProcessor> (v, parent);
 }
 
 void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

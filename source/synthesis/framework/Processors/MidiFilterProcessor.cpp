@@ -5,16 +5,13 @@
 #include "MidiFilterProcessor.h"
 
 MidiFilterProcessor::MidiFilterProcessor (
-    const juce::ValueTree& v, SynthBase& parent) :
+     SynthBase& parent,const juce::ValueTree& v) :
              PluginBase (parent, v, nullptr, midiFilterBusLayout())
 {
 
 }
 
-std::unique_ptr<juce::AudioProcessor> MidiFilterProcessor::create (SynthBase& parent, const juce::ValueTree& v)
-{
-    return std::make_unique<MidiFilterProcessor> (v, parent);
-}
+
 
 void MidiFilterProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
