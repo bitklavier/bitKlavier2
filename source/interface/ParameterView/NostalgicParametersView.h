@@ -1,0 +1,115 @@
+//
+// Created by Myra Norton on 9/10/25.
+//
+
+#ifndef BITKLAVIER2_NOSTALGICPARAMETERSVIEW_H
+#define BITKLAVIER2_NOSTALGICPARAMETERSVIEW_H
+#include "NostalgicProcessor.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
+#include "TranspositionSliderSection.h"
+#include "VelocityMinMaxParams.h"
+#include "envelope_section.h"
+#include "peak_meter_section.h"
+#include "synth_section.h"
+#include "synth_slider.h"
+
+class NostalgicParametersView : public SynthSection
+{
+public:
+    NostalgicParametersView (chowdsp::PluginState& pluginState, NostalgicParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection ("")
+    {
+        // the name that will appear in the UI as the name of the section
+        setName ("nostalgic");
+
+        // every section needs a LaF
+        //  main settings for this LaF are in assets/default.bitklavierskin
+        //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
+        //  we probably want to merge these in the future, but ok for now
+        setLookAndFeel (DefaultLookAndFeel::instance());
+        setComponentID (name);
+
+        // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
+        // we need to grab the listeners for this preparation here, so we can pass them to components below
+        auto& listeners = pluginState.getParameterListeners();
+
+        // go through and get all the main float params (gain, hammer, etc...), make sliders for them
+        // all the params for this prep are defined in struct NostalgicParams, in NostalgicProcessor.h
+        // we're only including the ones that we want to group together and call "placeKnobsInArea" on
+        // we're leaving out "outputGain" since that has its own VolumeSlider
+        for (auto& param_ : *params.getFloatParams())
+        {
+        //     if ( // make group of params to display together
+        //         param_->paramID == "Main" ||
+        //         param_->paramID == "Hammers" ||
+        //         param_->paramID == "Resonance" ||
+        //         param_->paramID == "Pedal" ||
+        //         param_->paramID == "Send")
+        //     {
+        //         auto slider = std::make_unique<SynthSlider> (param_->paramID);
+        //         auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+        //         slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
+        //         addSlider (slider.get()); // adds the slider to the synthSection
+        //         slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+        //         floatAttachments.emplace_back (std::move (attachment));
+        //         _sliders.emplace_back (std::move (slider));
+        //
+        //         /**
+        //          * todo: reset normalizable range as needed:
+        //          * slider
+        //          */
+        //     }
+        // }
+        //
+        // // create the more complex UI elements
+        // // envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
+        // // transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
+        // // velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
+        //
+        // // we add subsections for the elements that have been defined as sections
+        // addSubSection (envSection.get());
+        // addSubSection (transpositionSlider.get());
+        //
+        // // this slider does not need a section, since it's just one OpenGL component
+        // velocityMinMaxSlider->setComponentID ("velocity_min_max");
+        // addStateModulatedComponent (velocityMinMaxSlider.get());
+        //
+        // // the level meter and output gain slider (right side of preparation popup)
+        // // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
+        // levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        // levelMeter->setLabel("Main");
+        // addSubSection(levelMeter.get());
+        // setSkinOverride(Skin::kNostalgic);
+    }
+
+    void paintBackground (juce::Graphics& g) override
+    {
+        setLabelFont(g);
+        SynthSection::paintContainer (g);
+        paintHeadingText (g);
+        paintBorder (g);
+        paintKnobShadows (g);
+
+        for (auto& slider : _sliders)
+        {
+            drawLabelForComponent (g, slider->getName(), slider.get());
+        }
+
+        paintChildrenBackgrounds (g);
+    }
+
+    // complex UI elements in this prep
+    std::unique_ptr<TranspositionSliderSection> transpositionSlider;
+    std::unique_ptr<EnvelopeSection> envSection;
+    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
+
+    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
+    std::vector<std::unique_ptr<SynthSlider>> _sliders;
+    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+
+    // level meter with output gain slider
+    std::shared_ptr<PeakMeterSection> levelMeter;
+
+    void resized() override;
+};
+
+#endif //BITKLAVIER2_NOSTALGICPARAMETERSVIEW_H

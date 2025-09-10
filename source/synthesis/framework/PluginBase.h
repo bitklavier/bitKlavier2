@@ -7,11 +7,11 @@
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 
 #include "Identifiers.h"
-#include "TempoProcessor.h"
 #include "bk_XMLSerializer.h"
 class SynthSection;
 class SynthBase;
 class TuningProcessor;
+class TempoProcessor;
 namespace bitklavier {
     class InternalProcessor : public juce::AudioProcessor {
     public:

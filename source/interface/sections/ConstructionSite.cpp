@@ -53,7 +53,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchPreparation::create);
     nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::create);
-
+    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicPreparation::create);
 
 }
 
@@ -155,15 +155,13 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case nostalgic:
             {
-                // juce::ValueTree t(IDs::PREPARATION);
-                //
-                // t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
-                // t.setProperty(IDs::width, 260, nullptr);
-                // t.setProperty(IDs::height, 132, nullptr);
-                // t.setProperty(IDs::x, lastX - (260 / 2), nullptr);
-                // t.setProperty(IDs::y, lastY - (132 / 2), nullptr);
-                //
-                // prep_list->>appendChild(t,  &undo);
+                juce::ValueTree t(IDs::PREPARATION);
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
+                t.setProperty(IDs::width, 245, nullptr);
+                t.setProperty(IDs::height, 125, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+                prep_list->appendChild(t,  &undo);
+                return true;
                 return true;
             }
             case keymap:

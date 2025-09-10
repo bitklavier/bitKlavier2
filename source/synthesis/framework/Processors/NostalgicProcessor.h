@@ -13,6 +13,31 @@
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 
 // TODO change params
+// volume slider (-inf to 24.00) - on the right hand side in all the other preparations, goes out the mains
+// blendronic send volume slider (-inf to 24.00) - send gain (second slider on the right, goes out the right two ports)
+
+// note length multiplier (0 to 10.00) - knob
+// cluster slider (1 to 10) - knob, how many notes in the cluster
+// cluster threshold slider (0 to 1000) - knob, ms that the notes in the cluster are played within
+
+// hold time range slider (0 to 12000) - exists in synchronic, how long the notes need to be held to be considered
+
+// reverse adsr, first note that plays backward (look at new synchronic)
+// undertow adsr, if there's an undertow note that plays forward
+
+// transposition slider (-12.00 to 12.00) - exists in direct
+// use tuning checkbox - if it's on, look at the attached tuning
+
+// wave distance (0 to 20000), how far back you go, higher wave distance means more gentle wave
+// wave section (wrap in an opengl wrapper, transposition slider is done this way)
+    // line that goes through it means tracking the playback position (synthesizer status in direct)
+// undertow (0 to 9320), goes forward, dynamically shorten?
+
+// key on reset checkbox
+
+// velocity min/max double slider (0 to 127) - ignore because it's being pulled into keymap
+
+
 
 struct NostalgicParams : chowdsp::ParamHolder
 {
@@ -20,78 +45,31 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Nostalgic Processor
     NostalgicParams()
     {
-        add (gainParam, hammerParam, velocityParam, resonanceParam, attackParam,
-             decayParam, sustainParam, releaseParam);
+        add (outputSend, outputGain);
     }
 
-    // juce::Gain param
-    chowdsp::GainDBParameter::Ptr gainParam {
-            juce::ParameterID { "gain", 100 },
-            "Gain",
-            juce::NormalisableRange { -30.0f, 0.0f },
-            -24.0f
+    // gain slider params, for all gain-type knobs
+    float rangeStart = -80.0f;
+    float rangeEnd = 6.0f;
+    float skewFactor = 2.0f;
+
+    // Gain for output send (for other blendronics, VSTs, etc...)
+    chowdsp::GainDBParameter::Ptr outputSend {
+        juce::ParameterID { "Send", 100 },
+        "Send",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
     };
 
-    // Hammer param
-    chowdsp::GainDBParameter::Ptr hammerParam {
-            juce::ParameterID { "hammer", 100 },
-            "Hammer",
-            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-            -24.0f
+    // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
+    chowdsp::GainDBParameter::Ptr outputGain {
+        juce::ParameterID { "OutputGain", 100 },
+        "Output Gain",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
     };
-
-    // Velocity param
-    chowdsp::FloatParameter::Ptr velocityParam {
-            juce::ParameterID { "Velocity", 100 },
-            "Velocity",
-            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f), // FIX
-            1000.0f,
-            &chowdsp::ParamUtils::floatValToString,
-            &chowdsp::ParamUtils::stringToFloatVal
-    };
-
-    // Resonance param
-    chowdsp::GainDBParameter::Ptr resonanceParam {
-            juce::ParameterID { "resonance", 100 },
-            "Resonance",
-            juce::NormalisableRange { -30.0f, 0.0f }, // FIX
-            -24.0f
-    };
-
-    // Attack param
-    chowdsp::TimeMsParameter::Ptr attackParam {
-            juce::ParameterID { "attack", 100 },
-            "attack",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f),
-            3.5f,
-    };
-
-    // Decay param
-    chowdsp::TimeMsParameter::Ptr decayParam {
-            juce::ParameterID { "decay", 100 },
-            "Decay",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f), // FIX
-            3.5f,
-    };
-
-    // Sustain param
-    chowdsp::FloatParameter::Ptr sustainParam {
-            juce::ParameterID { "sustain", 100 },
-            "Sustain",
-            chowdsp::ParamUtils::createNormalisableRange (20.0f, 20000.0f, 2000.0f),
-            1000.0f,
-            &chowdsp::ParamUtils::floatValToString,
-            &chowdsp::ParamUtils::stringToFloatVal
-    };
-
-    // Release param
-    chowdsp::TimeMsParameter::Ptr releaseParam {
-            juce::ParameterID { "release", 100 },
-            "Release",
-            chowdsp::ParamUtils::createNormalisableRange (2.01f, 10.0f, 4.0f), // FIX
-            3.5f,
-    };
-
 };
 
 struct NostalgicNonParameterState : chowdsp::NonParamState
