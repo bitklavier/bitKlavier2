@@ -162,7 +162,6 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
-                return true;
             }
             case keymap:
             {

@@ -33,8 +33,8 @@ public:
     // in the PreparationSection base class
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s) override
     {
-        if (auto processor = dynamic_cast<NostalgicProcessor*> (getProcessor()))
-            processor->addSoundSet (s);
+        // if (auto processor = dynamic_cast<NostalgicProcessor*> (getProcessor()))
+        //     processor->addSoundSet (s);
     }
 
     void addSoundSet (
@@ -43,8 +43,8 @@ public:
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r,
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) override
     {
-        if (auto processor = dynamic_cast<NostalgicProcessor*> (getProcessor()))
-            processor->addSoundSet (s, h, r, p);
+        // if (auto processor = dynamic_cast<NostalgicProcessor*> (getProcessor()))
+        //     processor->addSoundSet (s, h, r, p);
     }
 
     std::unique_ptr<SynthSection> getPrepPopup() override;

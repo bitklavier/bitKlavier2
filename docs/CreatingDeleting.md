@@ -1,5 +1,28 @@
 # Questions
 
+// volume slider (-inf to 24.00) - on the right hand side in all the other preparations, goes out the mains
+// blendronic send volume slider (-inf to 24.00) - send gain (second slider on the right, goes out the right two ports)
+
+// note length multiplier (0 to 10.00) - knob
+// cluster slider (1 to 10) - knob, how many notes in the cluster
+// cluster threshold slider (0 to 1000) - knob, ms that the notes in the cluster are played within
+
+// hold time range slider (0 to 12000) - exists in synchronic, how long the notes need to be held to be considered
+
+// reverse adsr, first note that plays backward (look at new synchronic)
+// undertow adsr, if there's an undertow note that plays forward
+
+// transposition slider (-12.00 to 12.00) - exists in direct
+// use tuning checkbox - if it's on, look at the attached tuning
+
+// wave distance (0 to 20000), how far back you go, higher wave distance means more gentle wave
+// wave section (wrap in an opengl wrapper, transposition slider is done this way)
+// line that goes through it means tracking the playback position (synthesizer status in direct)
+// undertow (0 to 9320), goes forward, dynamically shorten?
+
+// key on reset checkbox
+
+// velocity min/max double slider (0 to 127) - ignore because it's being pulled into keymap
 
 Add tempo to PluginBase so that blendronic and synchronic can access it
 

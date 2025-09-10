@@ -1,12 +1,8 @@
 //
-// Created by Myra Norton on 9/10/2025.
+// Created by Myra Norton on 8/20/25.
 //
 
 #include "NostalgicParametersView.h"
-
-// transposition slider & knobs
-// adsrs
-// wave section
 
 void NostalgicParametersView::resized()
 {
@@ -20,12 +16,8 @@ void NostalgicParametersView::resized()
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft(title_width);
 
-    // bounds for level meter on right side
-    juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
-    levelMeter->setBounds(meterArea);
-
     // how much vertical space will we need for all the components?
-    int verticalAreaNeeded = knob_section_height * 7;
+    int verticalAreaNeeded = knob_section_height * 2;
 
     // how much vertical space is left, divided up so we have some buffer space between each component
     int bufferSpaceForEach = (bounds.getHeight() - verticalAreaNeeded) / 5;
@@ -33,21 +25,17 @@ void NostalgicParametersView::resized()
 
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
     bounds.removeFromTop(bufferSpaceForEach);
-    juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
-    placeKnobsInArea(outputKnobsArea, _sliders, true);
-    DBG(" output knob area" + juce::String(outputKnobsArea.getWidth()) + " " + juce::String(outputKnobsArea.getHeight()));
+    juce::Rectangle<int> slidersArea = bounds.removeFromTop(knob_section_height * 2);
+    int sliderHeight = knob_section_height; // or tweak this
+    slidersArea.setWidth (slidersArea.getWidth()*0.25);
+    // slidersArea.setX((bounds.getWidth() - slidersArea.getWidth()) * 0.5);
 
-    // add the adsr below that
-    bounds.removeFromTop(bufferSpaceForEach);
-    juce::Rectangle<int> adsrArea = bounds.removeFromTop(knob_section_height * 5);
-    envSection->setBounds(adsrArea);
+    for (auto& slider : _sliders)
+    {
+        slider->setBounds (slidersArea.removeFromTop(sliderHeight));
+    }
+    // DBG(" output knob area" + juce::String(outputKnobsArea.getWidth()) + " " + juce::String(outputKnobsArea.getHeight()));
 
-    // add the transposition and velocity range sliders below that
-    bounds.removeFromTop(bufferSpaceForEach);
-    juce::Rectangle<int> transpositionSliderArea = bounds.removeFromTop(knob_section_height);
-    juce::Rectangle<int> velocitySliderArea = transpositionSliderArea.removeFromLeft(transpositionSliderArea.getWidth() * 0.5);
-    transpositionSlider->setBounds(transpositionSliderArea);
-    velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     SynthSection::resized();
 }

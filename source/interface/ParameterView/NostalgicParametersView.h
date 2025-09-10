@@ -36,8 +36,8 @@ public:
         // all the params for this prep are defined in struct NostalgicParams, in NostalgicProcessor.h
         // we're only including the ones that we want to group together and call "placeKnobsInArea" on
         // we're leaving out "outputGain" since that has its own VolumeSlider
-        for (auto& param_ : *params.getFloatParams())
-        {
+        // for (auto& param_ : *params.getFloatParams())
+        // {
         //     if ( // make group of params to display together
         //         param_->paramID == "Main" ||
         //         param_->paramID == "Hammers" ||
