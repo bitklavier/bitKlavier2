@@ -5,6 +5,7 @@
 #pragma once
 
 #include "EnvParams.h"
+#include "EnvelopeSequenceParams.h"
 #include "Identifiers.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
@@ -17,6 +18,15 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
+#include "HoldTimeMinMaxParams.h"
+
+// wave distance (0 to 20000), how far back you go, higher wave distance means more gentle wave
+// wave section (wrap in an opengl wrapper, transposition slider is done this way)
+// line that goes through it means tracking the playback position (synthesizer status in direct)
+// undertow (0 to 9320), goes forward, dynamically shorten?
+
+// key on reset checkbox
+
 
 struct NostalgicParams : chowdsp::ParamHolder
 {
@@ -31,15 +41,18 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Nostalgic Processor
     NostalgicParams() : chowdsp::ParamHolder ("nostalgic")
     {
-        add (gainParam,
-            hammerParam,
-            releaseResonanceParam,
-            pedalParam,
-            outputSendParam,
+        add (transpose,
+            outputSendGain,
             outputGain,
-            env,
-            transpose,
-            velocityMinMax);
+            noteLengthMultParam,
+            clusterMinParam,
+            clusterThreshParam,
+            holdTimeMinMaxParams,
+            reverseEnv,
+            // reverseEnvSequence,
+            undertowEnv
+            // undertowEnvSequence
+            );
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the NostalgicProcessor constructor
@@ -57,51 +70,23 @@ struct NostalgicParams : chowdsp::ParamHolder
                     modulatableParams.push_back ( sliderParam);
    });
     }
+    // transposition slider
+    TransposeParams transpose;
 
-    /**
-     * these first four GainDBParameters are passed to each of the
-     * BKSynths, and affect the noteOn gains, so only have an
-     * impact when the noteOn messages are called (they are not
-     * continuous, like the outputGain and outputSend params)
-     */
-    // Gain param
-    chowdsp::GainDBParameter::Ptr gainParam {
-        juce::ParameterID { "Main", 100 },
-        "Main",
-        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        0.0f,
-        true // true => audio rate modulatable (continuously)
-    };
+    // Hold time range slider
+    HoldTimeMinMaxParams holdTimeMinMaxParams;
 
-    // Hammer param
-    chowdsp::GainDBParameter::Ptr hammerParam {
-        juce::ParameterID { "Hammers", 100 },
-        "Hammer",
-        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        -24.0f,
-        true
-    };
+    // Reverse and Undertow ADSRs and params
+    EnvParams reverseEnv{"Reverse"};
+    // EnvelopeSequenceParams reverseEnvSequence;
+    EnvParams undertowEnv{"Undertow"};
+    // undertowEnv.idPrepend = "1";
+    // EnvelopeSequenceParams undertowEnvSequence;
 
-    // Resonance param
-    chowdsp::GainDBParameter::Ptr releaseResonanceParam {
-        juce::ParameterID { "Resonance", 100 },
-        "Release Resonance",
-        juce::NormalisableRange { rangeStart, rangeEnd + 24, 0.0f, skewFactor, false },
-        6.0f,
-        true
-    };
 
-    // Pedal param
-    chowdsp::GainDBParameter::Ptr pedalParam {
-        juce::ParameterID { "Pedal", 100 },
-        "Pedal",
-        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        -6.0f,
-        true
-    };
 
     // Gain for output send (for blendronic, VSTs, etc...)
-    chowdsp::GainDBParameter::Ptr outputSendParam {
+    chowdsp::GainDBParameter::Ptr outputSendGain {
         juce::ParameterID { "Send", 100 },
         "Send",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
@@ -113,33 +98,47 @@ struct NostalgicParams : chowdsp::ParamHolder
     chowdsp::GainDBParameter::Ptr outputGain {
         juce::ParameterID { "OutputGain", 100 },
         "Output Gain",
-        juce::NormalisableRange { -80.0f, rangeEnd, 0.0f, skewFactor, false },
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
         true
     };
 
-    // ADSR params
-    EnvParams env;
+    // Note Length Multiplier param
+    chowdsp::GainDBParameter::Ptr noteLengthMultParam {
+        juce::ParameterID { "NoteLengthMultiplier", 100 },
+        "Note Length Multiplier",
+        juce::NormalisableRange { 0.0f, 10.00f, 0.0f, skewFactor, false },
+        1.0f,
+        true
+    };
 
-    // Transposition slider (holds up to 12 transposition values)
-    TransposeParams transpose;
+    // Cluster Minimum param
+    chowdsp::GainDBParameter::Ptr clusterMinParam {
+        juce::ParameterID { "ClusterMin", 100 },
+        "Cluster Min",
+        juce::NormalisableRange { 1.0f, 10.0f, 0.0f, skewFactor, false },
+        1.0f,
+        true
+    };
 
-    /**
-     * for storing min/max values for the velocityMinMax slider
-     * and also keeping track of the lastVelocity, which we'll get
-     * from the lastSynthState in processBlock()
-     * the code for OpenGL_VelocityMinMaxSlider has further comments about
-     * how the chowdsp system works with params, callbacks, and so on.
-     */
-    VelocityMinMaxParams velocityMinMax;
-
-    /** for storing outputLevels of this preparation for display
+    // Cluster Threshold param
+    chowdsp::GainDBParameter::Ptr clusterThreshParam {
+        juce::ParameterID { "ClusterThresh", 100 },
+        "Cluster Threshold",
+        juce::NormalisableRange { 0.0f, 1000.0f, 0.0f, skewFactor, false },
+        150.0f,
+        true
+    };
+    
+    /*
+     * for storing outputLevels of this preparation for display
      *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
      *      we simply update this in the processBlock() call
      *      and then the level meter will update its values during the OpenGL cycle
      */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
-
+    std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
     /****************************************************************************************/
 };
 
@@ -181,17 +180,17 @@ public:
         ptrToSamples = s;
     }
 
-    void addSoundSet (
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
-    {
-        mainSynth->addSoundSet (s);
-        hammerSynth->addSoundSet (h);
-        releaseResonanceSynth->addSoundSet (r);
-        pedalSynth->addSoundSet (p);
-    }
+    // void addSoundSet (
+    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
+    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
+    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
+    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
+    // {
+    //     mainSynth->addSoundSet (s);
+    //     hammerSynth->addSoundSet (h);
+    //     releaseResonanceSynth->addSoundSet (r);
+    //     pedalSynth->addSoundSet (p);
+    // }
 
     void setTuning (TuningProcessor*) override;
 
@@ -221,65 +220,24 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
-    /**
-     * todo: i think this is not used? remove if so
-     * @param vt
-     */
-//    void addToVT (juce::ValueTree& vt)
-//    {
-//        state.params.doForAllParameters ([this, &vt] (auto& param, size_t) {
-//            vt.setProperty (param.paramID, chowdsp::ParameterTypeHelpers::getValue (param), nullptr);
-//        });
-//    }
-
-    /**
-     * todo: question for Davis: is this used still? if so, what for?
-     * DAVIS: It is used to respond to soundset changes. i.e. you change the valuetree
-     * and it triggers the samples to be swapped out
-     * @param t
-     */
     void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
     {
-        //should add an if check here to make sure its actually the sampleset changing
-        juce::String a = t.getProperty (IDs::mainSampleSet, "");
-        juce::String b = t.getProperty (IDs::hammerSampleSet, "");
-        juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
-        juce::String d = t.getProperty (IDs::pedalSampleSet, "");
-        addSoundSet (&(*ptrToSamples)[a],
-            &(*ptrToSamples)[b],
-            &(*ptrToSamples)[c],
-            &(*ptrToSamples)[d]);
+        // //should add an if check here to make sure its actually the sampleset changing
+        // juce::String a = t.getProperty (IDs::mainSampleSet, "");
+        // juce::String b = t.getProperty (IDs::hammerSampleSet, "");
+        // juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
+        // juce::String d = t.getProperty (IDs::pedalSampleSet, "");
+        // addSoundSet (&(*ptrToSamples)[a],
+        //     &(*ptrToSamples)[b],
+        //     &(*ptrToSamples)[c],
+        //     &(*ptrToSamples)[d]);
     }
 
-    /**
-     * todo: do we need these?
-     * DAVIS: this just explicitly defines the other valuetree listener functions to be doing nothing
-     * we only care about the treepropertychanged valuetree
-     */
-//    void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) {}
-//    void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) {}
-//    void valueTreeChildOrderChanged (juce::ValueTree&, int, int) {}
-//    void valueTreeParentChanged (juce::ValueTree&) {}
-//    void valueTreeRedirected (juce::ValueTree&) {}
-
-//    bool getTranspositionUsesTuning() { return state.params.transpose.transpositionUsesTuning->get();}
+    bool holdCheck(int noteNumber);
+    juce::Array<juce::uint64> holdTimers;
 
 
 private:
-//    chowdsp::Gain<float> gain;
-    juce::ScopedPointer<BufferDebugger> bufferDebugger;
-    std::unique_ptr<BKSynthesiser> mainSynth;
-    std::unique_ptr<BKSynthesiser> hammerSynth;
-    std::unique_ptr<BKSynthesiser> releaseResonanceSynth;
-    std::unique_ptr<BKSynthesiser> pedalSynth;
-
-    juce::Array<float> midiNoteTranspositions;
-    juce::Array<float> getMidiNoteTranspositions();
-
-    /**
-     * todo: is this used?
-     * see addSoundSet()
-     */
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NostalgicProcessor)

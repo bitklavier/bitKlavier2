@@ -37,6 +37,7 @@ public:
         int i = 0;
         for (auto slider: dataSliders) {
             if ((*params->getFloatParams())[i].get()->paramID == "sliderVals_size") continue;
+
             auto ptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[i++].get(),
                 listeners,
                 *slider,
@@ -183,7 +184,6 @@ public:
     }
 
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
-
     /**
      * syncToValueTree() is called in ModulationManager::modulationClicked and
      * is used to set the mod view of the parameter to the most recent mod values

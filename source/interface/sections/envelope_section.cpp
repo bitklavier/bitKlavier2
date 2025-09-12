@@ -169,7 +169,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     release_->addAttachment(release_attachment.get());
 
     envelopeSectionBorder.setName("envelope border");
-    envelopeSectionBorder.setText("Envelope");
+    envelopeSectionBorder.setText(_params.idPrepend+" Envelope");
     envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
     addAndMakeVisible(envelopeSectionBorder);
 //    setLookAndFeel(DefaultLookAndFeel::instance());

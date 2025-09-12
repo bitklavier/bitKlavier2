@@ -6,8 +6,11 @@
 #define BITKLAVIER2_NOSTALGICPARAMETERSVIEW_H
 #include "NostalgicProcessor.h"
 #include "OpenGL_VelocityMinMaxSlider.h"
+#include "OpenGL_HoldTimeMinMaxSlider.h"
 #include "TranspositionSliderSection.h"
 #include "VelocityMinMaxParams.h"
+#include "EnvelopeSequenceState.h"
+#include "EnvelopeSequenceSection.h"
 #include "envelope_section.h"
 #include "peak_meter_section.h"
 #include "synth_section.h"
@@ -20,11 +23,6 @@ public:
     {
         // the name that will appear in the UI as the name of the section
         setName ("nostalgic");
-
-        // every section needs a LaF
-        //  main settings for this LaF are in assets/default.bitklavierskin
-        //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
-        //  we probably want to merge these in the future, but ok for now
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
@@ -32,53 +30,67 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
-        // go through and get all the main float params (gain, hammer, etc...), make sliders for them
-        // all the params for this prep are defined in struct NostalgicParams, in NostalgicProcessor.h
-        // we're only including the ones that we want to group together and call "placeKnobsInArea" on
-        // we're leaving out "outputGain" since that has its own VolumeSlider
-        // for (auto& param_ : *params.getFloatParams())
-        // {
-        //     if ( // make group of params to display together
-        //         param_->paramID == "Main" ||
-        //         param_->paramID == "Hammers" ||
-        //         param_->paramID == "Resonance" ||
-        //         param_->paramID == "Pedal" ||
-        //         param_->paramID == "Send")
-        //     {
-        //         auto slider = std::make_unique<SynthSlider> (param_->paramID);
-        //         auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
-        //         slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
-        //         addSlider (slider.get()); // adds the slider to the synthSection
-        //         slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-        //         floatAttachments.emplace_back (std::move (attachment));
-        //         _sliders.emplace_back (std::move (slider));
-        //
-        //         /**
-        //          * todo: reset normalizable range as needed:
-        //          * slider
-        //          */
-        //     }
-        // }
-        //
-        // // create the more complex UI elements
-        // // envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
-        // // transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
-        // // velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
-        //
-        // // we add subsections for the elements that have been defined as sections
-        // addSubSection (envSection.get());
-        // addSubSection (transpositionSlider.get());
-        //
-        // // this slider does not need a section, since it's just one OpenGL component
-        // velocityMinMaxSlider->setComponentID ("velocity_min_max");
-        // addStateModulatedComponent (velocityMinMaxSlider.get());
-        //
-        // // the level meter and output gain slider (right side of preparation popup)
-        // // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
-        // levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-        // levelMeter->setLabel("Main");
-        // addSubSection(levelMeter.get());
-        // setSkinOverride(Skin::kNostalgic);
+        // transposition slider
+        transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
+        addSubSection (transpositionSlider.get());
+
+        // knobs
+        noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID);
+        addSlider(noteLengthMult_knob.get());
+        noteLengthMult_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        noteLengthMult_knob->setPopupPlacement(juce::BubbleComponent::below);
+        noteLengthMult_knob->setShowPopupOnHover(true);
+        noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, nullptr);
+        noteLengthMult_knob->addAttachment(noteLengthMult_knob_attachment.get());
+
+        clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->paramID);
+        addSlider(clusterMin_knob.get());
+        clusterMin_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        clusterMin_knob->setPopupPlacement(juce::BubbleComponent::below);
+        clusterMin_knob->setShowPopupOnHover(true);
+        clusterMin_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterMinParam, listeners, *clusterMin_knob, nullptr);
+        clusterMin_knob->addAttachment(clusterMin_knob_attachment.get());
+
+        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->paramID);
+        addSlider(clusterThreshold_knob.get());
+        clusterThreshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);
+        clusterThreshold_knob->setShowPopupOnHover(true);
+        clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshParam, listeners, *clusterThreshold_knob, nullptr);
+        clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
+
+        // hold time min/max slider
+        holdTimeMinMaxSlider = std::make_unique<OpenGL_HoldTimeMinMaxSlider>(&params.holdTimeMinMaxParams, listeners);
+        holdTimeMinMaxSlider->setComponentID ("holdtime_min_max");
+        addStateModulatedComponent (holdTimeMinMaxSlider.get());
+
+        // envelope/ADSR controller UI
+        reverseEnvSection = std::make_unique<EnvelopeSection>(params.reverseEnv, listeners, *this);
+        addSubSection (reverseEnvSection.get());
+        undertowEnvSection = std::make_unique<EnvelopeSection>(params.undertowEnv, listeners, *this);
+        addSubSection (undertowEnvSection.get());
+
+        // sequence of ADSRs
+        // envSequenceSection = std::make_unique<EnvelopeSequenceSection>(name, params.reverseEnvSequence, listeners, *this);
+        // addSubSection(envSequenceSection.get());
+
+        // // toggles
+        // useTuning = std::make_unique<SynthButton>(params.transpositionUsesTuning->paramID);
+        // useTuning_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.transpositionUsesTuning, listeners, *useTuning, nullptr);
+        // useTuning->setComponentID(params.transpositionUsesTuning->paramID);
+        // addSynthButton(useTuning.get(), true);
+        // useTuning->setText("use Tuning?");
+
+        // the level meter and output gain slider (right side of preparation popup)
+        // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
+        levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        levelMeter->setLabel("Main");
+        addSubSection(levelMeter.get());
+
+        // similar for send level meter/slider
+        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
+        sendLevelMeter->setLabel("Send");
+        addSubSection(sendLevelMeter.get());
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -89,25 +101,46 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
 
-        for (auto& slider : _sliders)
-        {
-            drawLabelForComponent (g, slider->getName(), slider.get());
-        }
+        drawLabelForComponent(g, TRANS("note length multiplier"), noteLengthMult_knob.get());
+        drawLabelForComponent(g, TRANS("cluster min"), clusterMin_knob.get());
+        drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
 
         paintChildrenBackgrounds (g);
     }
 
+
+    chowdsp::ScopedCallbackList sliderChangedCallback;
+
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
-    std::unique_ptr<EnvelopeSection> envSection;
-    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
-    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
-    std::vector<std::unique_ptr<SynthSlider>> _sliders;
-    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+    // "use tuning" toggle
+    std::unique_ptr<SynthButton> useTuning;
+    std::unique_ptr<chowdsp::ButtonAttachment> useTuning_attachment;
 
-    // level meter with output gain slider
+    // range slider
+    std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> holdTimeMinMaxSlider;
+
+    // knobs
+    std::unique_ptr<SynthSlider> noteLengthMult_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> noteLengthMult_knob_attachment;
+    std::unique_ptr<SynthSlider> clusterMin_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> clusterMin_knob_attachment;
+    std::unique_ptr<SynthSlider> clusterThreshold_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> clusterThreshold_knob_attachment;
+
+    // ADSR controller: for setting the parameters of each ADSR
+    std::unique_ptr<EnvelopeSection> reverseEnvSection;
+    std::unique_ptr<EnvelopeSection> undertowEnvSection;
+
+    // ADSRs: for turning on/off particular ADSRs, and for choosing particular ones to edit with envSection
+    std::unique_ptr<EnvelopeSequenceSection> reverseEnvSequenceSection;
+    std::unique_ptr<EnvelopeSequenceSection> undertowEnvSequenceSection;
+
+
+    // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
+    std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     void resized() override;
 };
