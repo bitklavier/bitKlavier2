@@ -23,10 +23,10 @@ namespace bitklavier
 
     public:
         /** Constructs a plugin state with no processor */
-        explicit PreparationStateImpl (juce::UndoManager* um = nullptr);
+        explicit PreparationStateImpl (const juce::ValueTree& v={}, juce::UndoManager* um = nullptr);
 
         /** Constructs the state and adds all the state parameters to the given processor */
-        explicit PreparationStateImpl (juce::AudioProcessor& processor, juce::UndoManager* um = nullptr);
+        explicit PreparationStateImpl (juce::AudioProcessor& processor,const juce::ValueTree& v, juce::UndoManager* um = nullptr);
 
         /** Serializes the plugin state to the given juce::MemoryBlock */
         void serialize (juce::MemoryBlock& data) const override;
@@ -62,13 +62,13 @@ namespace bitklavier
 namespace bitklavier
 {
     template <typename ParameterState, typename NonParameterState, typename Serializer>
-    PreparationStateImpl<ParameterState, NonParameterState, Serializer>::PreparationStateImpl (juce::UndoManager* um)
+    PreparationStateImpl<ParameterState, NonParameterState, Serializer>::PreparationStateImpl (const juce::ValueTree& v, juce::UndoManager* um) : params(v)
     {
         initialise (params, nullptr, um);
     }
 
     template <typename ParameterState, typename NonParameterState, typename Serializer>
-    PreparationStateImpl<ParameterState, NonParameterState, Serializer>::PreparationStateImpl (juce::AudioProcessor& processor, juce::UndoManager* um)
+    PreparationStateImpl<ParameterState, NonParameterState, Serializer>::PreparationStateImpl (juce::AudioProcessor& processor,const juce::ValueTree& v, juce::UndoManager* um):params(v)
     {
         initialise (params, &processor, um);
     }

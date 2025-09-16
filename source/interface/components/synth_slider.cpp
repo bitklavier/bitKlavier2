@@ -183,7 +183,7 @@ void OpenGlSlider::setColors() {
   mod_color_ = getModColor();
 }
 
-SynthSlider::SynthSlider(juce::String name) : OpenGlSlider(name), show_popup_on_hover_(false), scroll_enabled_(true),
+SynthSlider::SynthSlider(juce::String name,const juce::ValueTree& _vt) : OpenGlSlider(name), show_popup_on_hover_(false), scroll_enabled_(true),
                                                                               bipolar_modulation_(false), stereo_modulation_(false),
                                                                               bypass_modulation_(false), modulation_bar_right_(true),
                                                                               snap_to_value_(false), hovering_(false),
@@ -200,8 +200,9 @@ SynthSlider::SynthSlider(juce::String name) : OpenGlSlider(name), show_popup_on_
                                                                               text_entry_height_percent_(kDefaultTextEntryHeightPercent),
                                                                               display_multiply_(0.0f), display_exponential_base_(2.0f),
                                                                               string_lookup_(nullptr), extra_modulation_target_(nullptr),
-                                                                              synth_interface_(nullptr) /*attachment(param,pluginState, *this)*/{
+                                                                              synth_interface_(nullptr), vt(_vt)/*attachment(param,pluginState, *this)*/{
     //setAttachment(param, pluginState);
+    vt.addListener(this);
     setComponentID (name);
     text_entry_ = std::make_unique<OpenGlTextEditor>(name);
     text_entry_->setMonospace();
@@ -270,6 +271,14 @@ SynthSlider::SynthSlider(juce::String name) : OpenGlSlider(name), show_popup_on_
 //  setVelocityBasedMode(false);
 //  setVelocityModeParameters(1.0, 0, 0.0, false, juce::ModifierKeys::ctrlAltCommandModifiers);
 //}
+SynthSlider::~SynthSlider() {
+  // if(attachment) {
+  //   if(attachment->getParameter()->modulatable_param != juce::ValueTree{})
+  //     attachment->getParameter()->modulatable_param.removeListener(this);
+  // }
+  if(vt.isValid())
+    vt.removeListener(this);
+}
 
 PopupItems SynthSlider::createPopupMenu() {
   PopupItems options;
@@ -461,7 +470,22 @@ juce::String SynthSlider::getTextFromValue(double value) {
     return popup_prefix_;
   return getSliderTextFromValue(value);
 }
+void SynthSlider::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged,
+                                       const juce::Identifier& property) {
+  if(treeWhosePropertyHasChanged.hasType(IDs::MODULATABLE_PARAM)) {
+    attachment->getParameter()->range = juce::NormalisableRange<float> {
+      treeWhosePropertyHasChanged.getProperty(IDs::start,0),
+      treeWhosePropertyHasChanged.getProperty(IDs::end,0),
+      attachment->getParameter()->range.interval,
+      treeWhosePropertyHasChanged.getProperty(IDs::skew,0)
+    };
 
+    attachment->setNormalisableRange(attachment->getParameter()->range );
+    this->setNormalisableRange(juce::NormalisableRange<double>{attachment->getParameter()->range.start,
+      attachment->getParameter()->range.end,attachment->getParameter()->range.interval,
+      attachment->getParameter()->range.skew});
+  }
+}
 double SynthSlider::getValueFromText(const juce::String& text) {
   juce::String cleaned = text.removeCharacters(" ").toLowerCase();
   if (string_lookup_) {
@@ -481,18 +505,19 @@ double SynthSlider::getValueFromText(const juce::String& text) {
     auto unclamped_val = attachment->getParameter()->getValueFromStringFunction()(text);
     if( attachment->getParameter()->range.end < unclamped_val) {//over
       auto range =attachment->getParameter()->range ;
-
+      attachment->getParameter()->modulatable_param.setProperty(IDs::end, unclamped_val,nullptr);
       attachment->getParameter()->range = juce::NormalisableRange<float>{range.start, static_cast<float>(unclamped_val), range.interval,range.skew};
     }else if ( attachment->getParameter()->range.start > unclamped_val) {//under
       auto range =attachment->getParameter()->range ;
 
+      attachment->getParameter()->modulatable_param.setProperty(IDs::start, unclamped_val,nullptr);
       attachment->getParameter()->range = juce::NormalisableRange<float>{static_cast<float>(unclamped_val),range.start,  range.interval,range.skew};
     }
   val = unclamped_val;
     attachment->setNormalisableRange(attachment->getParameter()->range );
-    147+-this->setNormalisableRange(juce::NormalisableRange<double>{attachment->getParameter()->range.start,attachment->getParameter()->range.end,attachment->getParameter()->range.interval,attachment->getParameter()->range.skew}frv45gt6);
+    this->setNormalisableRange(juce::NormalisableRange<double>{attachment->getParameter()->range.start,attachment->getParameter()->range.end,attachment->getParameter()->range.interval,attachment->getParameter()->range.skew});
   }
-  //todo add checks for value over current normalisablerange reset range if so
+
 
   //  //access param range from attachment code
   // attachment.setNormalisableRange()
@@ -503,29 +528,6 @@ double SynthSlider::getValueFromAdjusted(double value) {
 
   double readjusted_value = value;
   return value;
-//  if (display_multiply_)
-//    readjusted_value /= display_multiply_;
-//  else
-//    readjusted_value /= details->display_multiply;
-//
-//  if (details->display_invert)
-//    readjusted_value = 1.0 / readjusted_value;
-//  readjusted_value -= details->post_offset;
-//
-//  switch (details->value_scale) {
-//    case vital::ValueDetails::kQuadratic:
-//      return sqrtf(std::max(readjusted_value, 0.0));
-//    case vital::ValueDetails::kCubic:
-//      return powf(std::max(readjusted_value, 0.0), 1.0f / 3.0f);
-//    case vital::ValueDetails::kQuartic:
-//      return sqrtf(sqrtf(std::max(readjusted_value, 0.0)));
-//    case vital::ValueDetails::kExponential:
-//      return log(readjusted_value) / std::log(display_exponential_base_);
-//    case vital::ValueDetails::kSquareRoot:
-//      return readjusted_value * readjusted_value;
-//    default:
-//      return readjusted_value;
-//  }
 }
 double SynthSlider::getAdjustedValue(double value) {
 //  bitklavier::ValueDetails* details = getDisplayDetails();

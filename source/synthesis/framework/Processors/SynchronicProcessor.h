@@ -60,7 +60,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Synchronic Processor
-    SynchronicParams() : chowdsp::ParamHolder ("synchronic")
+    SynchronicParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("synchronic")
     {
         add (
             numPulses,

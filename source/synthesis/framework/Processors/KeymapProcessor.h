@@ -21,7 +21,7 @@ struct KeymapKeyboardState {
 
 struct KeymapParams : chowdsp::ParamHolder
 {
-    KeymapParams() : chowdsp::ParamHolder("keymap")
+    KeymapParams(const juce::ValueTree &v) : chowdsp::ParamHolder("keymap")
     {
     }
 

@@ -9,7 +9,7 @@
 #include "PreparationStateImpl.h"
 #include "Identifiers.h"
 struct RampParams : public chowdsp::ParamHolder {
-    RampParams() : chowdsp::ParamHolder("ramp")
+    RampParams(const juce::ValueTree& v) : chowdsp::ParamHolder("ramp")
     {
         add(time);
     }

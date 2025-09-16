@@ -168,7 +168,7 @@ struct TuningState : bitklavier::StateChangeableParameter
 struct TuningParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Tuning Processor
-    TuningParams() : chowdsp::ParamHolder ("tuning")
+    TuningParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("tuning")
     {
         add (tuningState.tuningSystem,
             tuningState.fundamental,

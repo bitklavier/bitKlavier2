@@ -14,7 +14,7 @@
 
 struct PianoSwitchParams : chowdsp::ParamHolder
 {
-    PianoSwitchParams() : chowdsp::ParamHolder ("pianoswitch"){}
+    PianoSwitchParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("pianoswitch"){}
 };
 
 struct PianoSwitchNonParameterState : chowdsp::NonParamState

@@ -42,7 +42,7 @@
 struct MidiTargetParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the MidiTarget Processor
-    MidiTargetParams() : chowdsp::ParamHolder ("miditarget")
+    MidiTargetParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("miditarget")
     {
 
         add (

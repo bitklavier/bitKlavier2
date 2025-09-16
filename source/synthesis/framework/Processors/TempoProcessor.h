@@ -21,7 +21,7 @@
 struct TempoParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Direct Processor
-    TempoParams() : chowdsp::ParamHolder ("tempo")
+    TempoParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("tempo")
     {
         add (tempoParam,
             subdivisionsParam);

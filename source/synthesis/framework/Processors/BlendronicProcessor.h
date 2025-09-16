@@ -64,7 +64,7 @@ struct BlendronicParams : chowdsp::ParamHolder
     std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Blendronic Processor
-    BlendronicParams() : chowdsp::ParamHolder ("blendronic")
+    BlendronicParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("blendronic")
     {
         add (
             outputGain,

@@ -15,7 +15,7 @@
 struct MidiFilterParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Tuning Processor
-    MidiFilterParams() : chowdsp::ParamHolder ("midifilter")
+    MidiFilterParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("midifilter")
     {
         add (mftoggle);
     }
