@@ -406,9 +406,20 @@ public:
         beatCounter = 0;
     }
 
+    inline void reset()
+    {
+        phasor = 0;
+        envelopeCounter = 0;
+        shouldPlay = false;
+        over = false;
+
+        resetPatternPhase();
+        cluster.clearQuick();
+    }
+
     inline juce::Array<int> getCluster() {return cluster;}
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG(" beat phasor to " + juce::String(c)); }
+    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; }
     inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
 
     inline void addNote(int note)
@@ -464,7 +475,6 @@ private:
 
     juce::Array<int> cluster;
     juce::uint64 phasor;
-
 
     bool shouldPlay, over;
 
@@ -578,6 +588,7 @@ public:
      * todo: thread safety issues with this in the old version, need to make sure we aren't reproducing them here
      */
     juce::Array<SynchronicCluster*> clusters;
+    int currentCluster = 0; // which cluster is most recent
 
     juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<int> syncKeysDepressed;

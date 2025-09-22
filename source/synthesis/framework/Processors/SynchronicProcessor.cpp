@@ -7,9 +7,6 @@
 #include "common.h"
 #include "synth_base.h"
 
-/**
- * todo: change constructor ar for backwardSynth to backwardEnvParams, once we figure out how to manage multiple envParams
- */
 SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) :
       PluginBase (parent, vt, nullptr, synchronicBusLayout()),
       synchronicSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
@@ -20,6 +17,14 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     for (int i = 0; i < 300; i++)
     {
         synchronicSynth->addVoice (new BKSamplerVoice());
+    }
+
+    /*
+     * todo: need to make sure that if the user tries to increase numLayers > 20 that this doesn't break
+     */
+    for (int i = 0; i < 20; i++)
+    {
+        clusters.add(new SynchronicCluster(&state.params));
     }
 
     /*
@@ -166,10 +171,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
     // constrain number of clusters to numLayers
     //      numClusters in old bK is numLayers
-    while (clusters.size() > state.params.numLayers->getCurrentValue())
-    {
-        clusters.remove(0);
-    }
+//    while (clusters.size() > state.params.numLayers->getCurrentValue())
+//    {
+//        clusters.remove(0);
+//    }
 
     //do this every block, for adaptive tempo updates
     thresholdSamples = state.params.clusterThreshold->getCurrentValue() * getSampleRate() * .001;
@@ -518,21 +523,43 @@ bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNu
     // if we have a new cluster
     if (!inCluster || _cluster == nullptr)
     {
-        // check to see if we have as many clusters as we are allowed, remove oldest if we are
-        //      numClusters in old bK is numLayers
-        if (clusters.size() >= state.params.numLayers->getCurrentValue())
-        {
-            clusters.remove(0); // remove first (oldest) cluster
-        }
+        //        // check to see if we have as many clusters as we are allowed, remove oldest if we are
+        //        //      numClusters in old bK is numLayers
+        //        if (clusters.size() >= state.params.numLayers->getCurrentValue())
+        //        {
+        //            clusters.remove(0); // remove first (oldest) cluster
+        //        }
+        //
+        //        /**
+        //         * todo: note that we are doing this on the audio thread, which is allocating memory!
+        //         *         - rework all this so we don't do that, as this is likely the cause of the thread safety issues we're having here
+        //         *         - probably just create a large number of them, as we do BKSynthVoices, and keep track of which ones are active
+        //         */
+        //        // make the new one and add it to the array of clusters
+        //        _cluster = new SynchronicCluster(&state.params);
+        //        clusters.add(_cluster); // add to the array of clusters (what are called "layers" in the UI)
 
-        /**
-         * todo: note that we are doing this on the audio thread, which is allocating memory!
-         *         - rework all this so we don't do that, as this is likely the cause of the thread safety issues we're having here
-         *         - probably just create a large number of them, as we do BKSynthVoices, and keep track of which ones are active
+        /*
+         * where i'm at: trying to figure out how to keep track of the currentCluster, capped at numLayers
+         * right now for some reason it's allowing values greater than it should
+         *  with layers set to 2, i get currentCluster values of 0, 1, 2....
+         *  need to get this sorted for deleteOldest, rotate, etc...
          */
-        // make the new one and add it to the array of clusters
-        _cluster = new SynchronicCluster(&state.params);
-        clusters.add(_cluster); // add to the array of clusters (what are called "layers" in the UI
+        for (int i = 0; i < state.params.numLayers->getCurrentValue(); ++i)
+        {
+            DBG("updateCluster i counter = " + juce::String(i));
+            auto tempCluster = clusters.getUnchecked(i);
+            if(!tempCluster->getShouldPlay())
+            {
+                currentCluster = i;
+                DBG("breaking out");
+                break;
+            }
+        }
+        DBG("updateCluster currentCluster = " + juce::String(currentCluster));
+        //if(currentCluster < state.params.numLayers->getCurrentValue() - 1) currentCluster++;
+        _cluster = clusters.getUnchecked(currentCluster);
+        _cluster->reset();
 
         // this is a new cluster!
         newCluster = true;
@@ -653,7 +680,11 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     bool isNewCluster = false;
 
     // always work on the most recent cluster/layer
-    SynchronicCluster* cluster = clusters.getLast();
+    //SynchronicCluster* cluster = clusters.getLast();
+    /*
+     * todo: replace by something that gets us the most recent
+     */
+    SynchronicCluster* cluster = clusters.getUnchecked(currentCluster);
 
     /*
      * ************** doCluster => default Synchronic behavior **************
@@ -668,11 +699,11 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
             // Remove old clusters, deal with layers and NoteOffSync modes
             for (int i = clusters.size(); --i >= 0; )
             {
-                if (!clusters[i]->getShouldPlay() && !inCluster)
-                {
-                    clusters.remove(i);
-                    continue;
-                }
+//                if (!clusters[i]->getShouldPlay() && !inCluster)
+//                {
+//                    clusters.remove(i);
+//                    continue;
+//                }
 
                 if((sMode == Last_NoteOff) || (sMode == Any_NoteOff))
                 {
@@ -693,7 +724,11 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
             {
                 // update cluster, create as needed
                 isNewCluster = updateCluster(cluster, noteNumber);
-                if(isNewCluster) cluster = clusters.getLast();
+                /*
+                 * todo: figure this out so we just have current or update current?
+                 */
+                //if(isNewCluster) cluster = clusters.getLast();
+                //if(isNewCluster) cluster = clusters.getUnchecked(currentCluster);
 
                 // reset the beat phase and pattern phase, and start playing, depending on the mode
                 if (sMode == Any_NoteOn)
@@ -721,8 +756,8 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
      * ************** now trigger behaviors set by Keymap targeting ****************
      */
 
-    // if we don't have a cluster, then we're triggering something before we've made a cluster and should ignore
-    if (cluster == nullptr) return;
+//    // if we don't have a cluster, then we're triggering something before we've made a cluster and should ignore
+//    if (cluster == nullptr) return;
 
     // since it's a new cluster, the next noteOff will be a first noteOff
     // this will be needed for keyReleased(), when in FirstNoteOffSync mode
@@ -763,6 +798,9 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         cluster->addNote(noteNumber);
     }
 
+    /*
+     * todo: need to redo all these so we are not relying on the size of clusters
+     */
     if (doClear)
     {
         /*
@@ -808,7 +846,8 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     if (!holdCheck(noteNumber)) return;
 
     // always work on the most recent cluster/layer
-    SynchronicCluster* cluster = clusters.getLast();
+//    SynchronicCluster* cluster = clusters.getLast();
+    SynchronicCluster* cluster = clusters.getUnchecked(currentCluster);
 
     // the number of samples until the next beat
     beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
@@ -888,6 +927,9 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         cluster->addNote(noteNumber);
     }
 
+    /*
+     * todo: redo these without relying on clusters size and so on
+     */
     if (doClear)
     {
         clusters.clear();
