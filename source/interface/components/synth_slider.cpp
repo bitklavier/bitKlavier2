@@ -484,6 +484,8 @@ void SynthSlider::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHas
     this->setNormalisableRange(juce::NormalisableRange<double>{attachment->getParameter()->range.start,
       attachment->getParameter()->range.end,attachment->getParameter()->range.interval,
       attachment->getParameter()->range.skew});
+    this->setValue(this->getValue());
+    redoImage();
   }
 }
 double SynthSlider::getValueFromText(const juce::String& text) {
