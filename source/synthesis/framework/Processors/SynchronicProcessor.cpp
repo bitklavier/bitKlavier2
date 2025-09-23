@@ -20,11 +20,11 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     }
 
     /*
-     * todo: need to make sure that if the user tries to increase numLayers > 20 that this doesn't break
+     * todo: need to make sure that if the user tries to increase numLayers > MAX_CLUSTERS that this doesn't break
      */
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < MAX_CLUSTERS; i++)
     {
-        clusters.add(new SynchronicCluster(&state.params));
+        clusters[i] = new SynchronicCluster(&state.params);
     }
 
     /*
@@ -148,6 +148,48 @@ bool SynchronicProcessor::checkVelMinMax(int clusterNotesSize)
     return passCluster;
 }
 
+/**
+ * removeOldestCluster rotates the clusters array so the first element (the oldest
+ * cluster) gets moved to the end of the array, and all the others slide left
+ * with that, it decrements mostRecentCluster to keep that inline with the rotation
+ *
+ * if there is only 1 cluster, mostRecentCluster will be 0, the first element in the array
+ */
+void SynchronicProcessor::removeOldestCluster()
+{
+    clusters[0]->setShouldPlay(false);
+    std::rotate(clusters.begin(), std::next(clusters.begin()), clusters.end());
+    mostRecentCluster--;
+    if(mostRecentCluster < 0) mostRecentCluster = 0;
+}
+
+void SynchronicProcessor::removeNewestCluster()
+{
+    clusters[mostRecentCluster]->setShouldPlay(false);
+    mostRecentCluster--;
+    if(mostRecentCluster < 0) mostRecentCluster = 0;
+}
+
+// rotate the clusters so that the oldest (0) becomes the most recent
+void SynchronicProcessor::rotateClusters()
+{
+    if (mostRecentCluster > 0 && mostRecentCluster < clusters.size()) {
+        // The sub-range to be rotated is defined by iterators from startIndex to endIndex.
+        // `first` is the beginning of the sub-range.
+        auto first = std::next(clusters.begin(), 0);
+
+        // `n_first` is the element that becomes the new first of the sub-range.
+        // For a single left rotation, this is the element immediately after `first`.
+        auto n_first = std::next(first);
+
+        // `last` is the end of the sub-range.
+        auto last = std::next(clusters.begin(), mostRecentCluster);
+
+        // Perform the rotation on the sub-range.
+        std::rotate(first, n_first, last);
+    }
+}
+
 void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     /*
@@ -171,10 +213,20 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
     // constrain number of clusters to numLayers
     //      numClusters in old bK is numLayers
-//    while (clusters.size() > state.params.numLayers->getCurrentValue())
-//    {
-//        clusters.remove(0);
-//    }
+    //while (clusters.size() > state.params.numLayers->getCurrentValue())
+    while (mostRecentCluster + 1 > state.params.numLayers->getCurrentValue())
+    {
+        DBG("removing cluster because in excess of num layers");
+        removeOldestCluster();
+        //clusters.remove(0);
+    }
+
+    // shouldn't need this?
+    mostRecentCluster = 0;
+    for (int i = 0; i < clusters.size(); i++)
+    {
+        if (clusters[i]->getShouldPlay()) mostRecentCluster = i;
+    }
 
     //do this every block, for adaptive tempo updates
     thresholdSamples = state.params.clusterThreshold->getCurrentValue() * getSampleRate() * .001;
@@ -205,7 +257,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
     for (int i = clusters.size(); --i >= 0;)
     {
-        SynchronicCluster* cluster = clusters.getUnchecked(i);
+        //SynchronicCluster* cluster = clusters.getUnchecked(i);
+        auto cluster = clusters[i];
 
         if (cluster->getShouldPlay())
         {
@@ -294,6 +347,9 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
                 // check to see whether velocity is in range to play this cluster
                 // if so, play it, if playNow is true (set just above)
+                /**
+                 * todo: remove the checkVelMinMax from here
+                 */
                 if (playNow && checkVelMinMax(clusterNotes.size()))
                 {
                     // the slimCluster is the cluster of notes in teh metronome pulse with duplicate notes removed
@@ -521,7 +577,7 @@ bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNu
     bool newCluster = false;
 
     // if we have a new cluster
-    if (!inCluster || _cluster == nullptr)
+    if (!inCluster)
     {
         //        // check to see if we have as many clusters as we are allowed, remove oldest if we are
         //        //      numClusters in old bK is numLayers
@@ -539,26 +595,21 @@ bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNu
         //        _cluster = new SynchronicCluster(&state.params);
         //        clusters.add(_cluster); // add to the array of clusters (what are called "layers" in the UI)
 
-        /*
-         * where i'm at: trying to figure out how to keep track of the currentCluster, capped at numLayers
-         * right now for some reason it's allowing values greater than it should
-         *  with layers set to 2, i get currentCluster values of 0, 1, 2....
-         *  need to get this sorted for deleteOldest, rotate, etc...
-         */
-        for (int i = 0; i < state.params.numLayers->getCurrentValue(); ++i)
-        {
-            DBG("updateCluster i counter = " + juce::String(i));
-            auto tempCluster = clusters.getUnchecked(i);
-            if(!tempCluster->getShouldPlay())
-            {
-                currentCluster = i;
-                DBG("breaking out");
-                break;
-            }
-        }
-        DBG("updateCluster currentCluster = " + juce::String(currentCluster));
         //if(currentCluster < state.params.numLayers->getCurrentValue() - 1) currentCluster++;
-        _cluster = clusters.getUnchecked(currentCluster);
+        DBG("mostRecentCluster = " + juce::String(mostRecentCluster) +" and numLayers = " + juce::String(state.params.numLayers->getCurrentValue()));
+//        if (
+//            mostRecentCluster + 1 < static_cast<int>(state.params.numLayers->getCurrentValue())
+//            &&
+//            clusters[mostRecentCluster]->getShouldPlay()
+//            )
+//        {
+//            mostRecentCluster++;
+//        }
+        mostRecentCluster++;
+        if(mostRecentCluster + 1 > static_cast<int>(state.params.numLayers->getCurrentValue())) mostRecentCluster = 0;
+
+        DBG("activating new cluster " + juce::String(mostRecentCluster));
+        _cluster = clusters[mostRecentCluster];
         _cluster->reset();
 
         // this is a new cluster!
@@ -684,7 +735,8 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     /*
      * todo: replace by something that gets us the most recent
      */
-    SynchronicCluster* cluster = clusters.getUnchecked(currentCluster);
+    //SynchronicCluster* cluster = clusters.getUnchecked(currentCluster);
+    auto cluster = clusters[mostRecentCluster];
 
     /*
      * ************** doCluster => default Synchronic behavior **************
@@ -699,15 +751,16 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
             // Remove old clusters, deal with layers and NoteOffSync modes
             for (int i = clusters.size(); --i >= 0; )
             {
-//                if (!clusters[i]->getShouldPlay() && !inCluster)
-//                {
-//                    clusters.remove(i);
-//                    continue;
-//                }
+                if (!clusters[i]->getShouldPlay() && !inCluster)
+                {
+                    // clusters.remove(i);
+                    continue;
+                }
 
                 if((sMode == Last_NoteOff) || (sMode == Any_NoteOff))
                 {
-                    if(clusters.size() == 1) clusters[0]->setShouldPlay(false);
+                    //if(clusters.size() == 1) clusters[0]->setShouldPlay(false);
+                    if(mostRecentCluster == 0) clusters[0]->setShouldPlay(false);
                     else
                     {
                         if(clusters[i]->containsNote(noteNumber))
@@ -806,25 +859,34 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         /*
          * todo: send all notes off here as well
          */
-        clusters.clear();
+        //clusters.clear();
+        for (auto cl : clusters)
+        {
+            cl->setShouldPlay(false);
+        }
     }
 
     if (doDeleteOldest)
     {
-        if (!clusters.isEmpty()) clusters.remove(0);
+        //if (!clusters.isEmpty()) clusters.remove(0);
+        removeOldestCluster();
     }
 
     if (doDeleteNewest)
     {
-        if (!clusters.isEmpty()) clusters.remove(clusters.size() - 1);
+        //if (!clusters.isEmpty()) clusters.remove(clusters.size() - 1);
+        removeNewestCluster();
     }
 
     if (doRotate )
     {
-        if (!clusters.isEmpty())
-        {
-            clusters.move(clusters.size() - 1, 0);
-        }
+//        if (!clusters.isEmpty())
+//        {
+//            clusters.move(clusters.size() - 1, 0);
+//        }
+
+        // if the mostRecentCluster is 0, or greater than or equal to the clusters size, no rotation is needed.
+        rotateClusters();
     }
 }
 
@@ -846,12 +908,12 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     if (!holdCheck(noteNumber)) return;
 
     // always work on the most recent cluster/layer
-//    SynchronicCluster* cluster = clusters.getLast();
-    SynchronicCluster* cluster = clusters.getUnchecked(currentCluster);
+    //SynchronicCluster* cluster = clusters.getLast();
+    //SynchronicCluster* cluster = clusters.getUnchecked(currentCluster);
+    auto cluster = clusters[mostRecentCluster];
 
     // the number of samples until the next beat
     beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
-
 
     /*
      * ************** doCluster => default Synchronic behavior **************
@@ -932,25 +994,32 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
      */
     if (doClear)
     {
-        clusters.clear();
+        //clusters.clear();
+        for (auto cl : clusters)
+        {
+            cl->setShouldPlay(false);
+        }
     }
 
     if (doDeleteOldest)
     {
-        if (!clusters.isEmpty()) clusters.remove(0);
+        //if (!clusters.isEmpty()) clusters.remove(0);
+        removeOldestCluster();
     }
 
     if (doDeleteNewest)
     {
-        if (!clusters.isEmpty()) clusters.remove(clusters.size() - 1);
+        //if (!clusters.isEmpty()) clusters.remove(clusters.size() - 1);
+        removeNewestCluster();
     }
 
     if (doRotate)
     {
-        if (!clusters.isEmpty())
-        {
-            clusters.move(clusters.size() - 1, 0);
-        }
+        rotateClusters();
+//        if (!clusters.isEmpty())
+//        {
+//            clusters.move(clusters.size() - 1, 0);
+//        }
     }
 }
 

@@ -486,6 +486,7 @@ private:
 // ************************************ SynchronicProcessor ************************************ //
 // ********************************************************************************************* //
 
+#define MAX_CLUSTERS 10
 class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<SynchronicParams, SynchronicNonParameterState>>,
                             public juce::ValueTree::Listener
 {
@@ -567,6 +568,9 @@ public:
     bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
     float getTimeToBeatMS(float beatsToSkip);
     void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
+    void removeOldestCluster();
+    void removeNewestCluster();
+    void rotateClusters();
 
     bool holdCheck(int noteNumber);
 
@@ -587,8 +591,24 @@ public:
     /**
      * todo: thread safety issues with this in the old version, need to make sure we aren't reproducing them here
      */
-    juce::Array<SynchronicCluster*> clusters;
-    int currentCluster = 0; // which cluster is most recent
+//    juce::Array<SynchronicCluster*> clusters;
+    /*
+     * the `clusters` array holds clusters to manage the 'layers' feature in bK
+     *
+     * every time we start a new cluster, we move to the next item in this array
+     * and turn off a previous cluster, as set by numLayers
+     *
+     * so, at first, no clusters are playing, so the first cluster will be item 0 in this array
+     * then, the next time a cluster is triggered, it will use item 1 in this array
+     * and turn off (set shouldPlay = false) the item (1 - numLayers) in this array
+     *  - if numLayers is 1, then it will turn off item 0 and we will only have one cluster playing (default behavior)
+     *  - if numLayers is 2, then cluster 0 will continue playing, and it will turn off the item -1 (mod the size of the array, so the last element)
+     *          - doesn't matter if that layer isn't playing....
+     *  - etc... for up to numLayers = MAX_CLUSTERS (or MAX_CLUSTERS - 1?)
+     *
+     */
+    std::array<SynchronicCluster*, MAX_CLUSTERS> clusters;
+    int mostRecentCluster = 0; // which cluster is most recent
 
     juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<int> syncKeysDepressed;
