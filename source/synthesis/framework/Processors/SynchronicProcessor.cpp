@@ -525,6 +525,11 @@ bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNu
             clusters.remove(0); // remove first (oldest) cluster
         }
 
+        /**
+         * todo: note that we are doing this on the audio thread, which is allocating memory!
+         *         - rework all this so we don't do that, as this is likely the cause
+         *         of the thread safety issues we're having here
+         */
         // make the new one and add it to the array of clusters
         _cluster = new SynchronicCluster(&state.params);
         clusters.add(_cluster); // add to the array of clusters (what are called "layers" in the UI
