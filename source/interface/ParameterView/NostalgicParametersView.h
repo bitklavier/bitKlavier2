@@ -7,6 +7,7 @@
 #include "NostalgicProcessor.h"
 #include "OpenGL_VelocityMinMaxSlider.h"
 #include "OpenGL_HoldTimeMinMaxSlider.h"
+#include "OpenGL_WaveDistUndertowSlider.h"
 #include "TranspositionSliderSection.h"
 #include "VelocityMinMaxParams.h"
 #include "EnvelopeSequenceState.h"
@@ -33,6 +34,10 @@ public:
         // transposition slider
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         addSubSection (transpositionSlider.get());
+
+        // wave distance undertow slider
+        waveSlider = std::make_unique<OpenGL_WaveDistUndertowSlider>(&params.waveDistUndertowParams, listeners);
+        addStateModulatedComponent (waveSlider.get());
 
         // knobs
         noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID);
@@ -113,6 +118,7 @@ public:
 
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
+    std::unique_ptr<OpenGL_WaveDistUndertowSlider> waveSlider;
 
     // "use tuning" toggle
     std::unique_ptr<SynthButton> useTuning;

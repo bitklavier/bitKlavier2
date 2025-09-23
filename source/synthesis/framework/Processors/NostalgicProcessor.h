@@ -10,6 +10,7 @@
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
+#include "WaveDistUndertowParams.h"
 #include "TuningProcessor.h"
 #include "VelocityMinMaxParams.h"
 #include "buffer_debugger.h"
@@ -42,6 +43,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     NostalgicParams() : chowdsp::ParamHolder ("nostalgic")
     {
         add (transpose,
+            waveDistUndertowParams,
             outputSendGain,
             outputGain,
             noteLengthMultParam,
@@ -72,6 +74,9 @@ struct NostalgicParams : chowdsp::ParamHolder
     }
     // transposition slider
     TransposeParams transpose;
+
+    // wave distance undertow slider
+    WaveDistUndertowParams waveDistUndertowParams;
 
     // Hold time range slider
     HoldTimeMinMaxParams holdTimeMinMaxParams;

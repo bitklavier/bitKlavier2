@@ -24,10 +24,8 @@ void NostalgicParametersView::resized()
     bounds.removeFromRight(largepadding);
 
     // wave section goes on the bottom
-    // juce::Rectangle<int> waveArea = bounds.removeFromBottom(Skin::kWavetableWaveHeight);
-    // waveSection->setBounds(waveArea);
-    bounds.removeFromBottom(Skin::kKnobSectionHeight*8);
-
+    // waveSlider->setBounds(bounds.removeFromBottom (Skin::kKnobSectionHeight*8));
+    bounds.removeFromBottom (Skin::kKnobSectionHeight*8);
     // left column for transposition slider, hold time slider, and reverse adsr
     juce::Rectangle<int> leftColumn = bounds.removeFromLeft(bounds.getWidth() / 2);
     leftColumn.removeFromRight (smallpadding);
