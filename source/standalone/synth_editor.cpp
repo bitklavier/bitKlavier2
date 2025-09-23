@@ -97,6 +97,7 @@ SynthEditor::~SynthEditor() {
   juce::PopupMenu::dismissAllActiveMenus();
   shutdownAudio();
   juce::MenuBarModel::setMacMainMenu(nullptr);
+  engine_->shutdown();
 }
 
 void SynthEditor::prepareToPlay(int buffer_size, double sample_rate) {

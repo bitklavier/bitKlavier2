@@ -22,7 +22,9 @@ ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier:
 
 ModulationList::~ModulationList()
 {
+    shutdown = true;
     freeObjects();
+
 }
 
 void ModulationList::deleteObject(ModulatorBase * base)
@@ -32,6 +34,16 @@ void ModulationList::deleteObject(ModulatorBase * base)
     for (auto listener: listeners_)
     {
         listener->removeModulator(base);
+    }
+    if(shutdown) {
+        base->parent_->removeModulator(base);
+        for (auto vt : base->connections_)
+        {
+            vt.getParent().removeChild (vt,nullptr);
+        }
+
+        delete base;
+        return;
     }
     if (parent_ && parent_->getGuiInterface()) {
         parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
@@ -44,10 +56,6 @@ void ModulationList::deleteObject(ModulatorBase * base)
                         {
                             vt.getParent().removeChild (vt,nullptr);
                         }
-                        // for (auto listener: listeners_)
-                        // {
-                        //     listener->removeModulator(base);
-                        // }
                         delete base;
 
                     });
@@ -55,6 +63,9 @@ void ModulationList::deleteObject(ModulatorBase * base)
                 }
 
             });
+
+    } else {// should only ever be called on shutdown
+
     }
 
 

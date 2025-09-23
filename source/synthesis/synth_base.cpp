@@ -87,6 +87,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
 SynthBase::~SynthBase()
 {
     tree.removeListener (this);
+
 }
 
 void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delete_id)
@@ -288,7 +289,10 @@ juce::AudioProcessorGraph::Node::Ptr SynthBase::addProcessor (std::unique_ptr<ju
 
 juce::AudioProcessorGraph::Node::Ptr SynthBase::removeProcessor (juce::AudioProcessorGraph::NodeID id)
 {
-    return engine_->removeNode (id);
+    if(engine_)
+        return engine_->removeNode (id);
+    else
+        return nullptr;
 }
 
 bool SynthBase::isConnected (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)

@@ -31,7 +31,13 @@ namespace bitklavier {
     }
 
     SoundEngine::~SoundEngine() {}
-
+    void  SoundEngine::shutdown() {
+        allNotesOff();
+        processorGraph->clear();
+        processorGraph->rebuild();
+        processorGraph.reset();
+        // processorGraph = nullptr;
+    }
     void SoundEngine::setOversamplingAmount(int oversampling_amount, int sample_rate) {
         static constexpr int kBaseSampleRate = 44100;
 

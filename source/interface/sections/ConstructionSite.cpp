@@ -463,6 +463,7 @@ DBG("moduleRemoved construction site");
 ConstructionSite::~ConstructionSite(void) {
     removeMouseListener(&cableView);
     removeChildComponent(&selectorLasso);
+    prep_list->removeListener(this);
 }
 
 void ConstructionSite::paintBackground(juce::Graphics &g) {

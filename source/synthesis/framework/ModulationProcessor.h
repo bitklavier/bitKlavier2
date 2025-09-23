@@ -19,7 +19,7 @@ class StateConnection;
     class ModulationProcessor : public juce::AudioProcessor {
     public:
         ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt);
-
+        // ~ModulationProcessor()
         bool acceptsMidi() const override {
             return true;
         }

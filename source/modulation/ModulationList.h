@@ -65,6 +65,7 @@ public:
                 listeners_.end());
     }
      bool isInit = true;
+    bool shutdown = false;
 private:
     std::vector<Listener*> listeners_;
 
