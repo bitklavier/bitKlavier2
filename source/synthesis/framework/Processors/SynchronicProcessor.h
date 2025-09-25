@@ -352,7 +352,8 @@ public:
     inline void step (juce::uint64 numSamplesBeat)
     {
         // set the phasor back by the number of samples to the next beat
-        phasor -= numSamplesBeat;
+        //phasor -= numSamplesBeat;
+        phasor = 0; // the decrement doesn't make sense to me, why not just set the phasor to 0?
 
         // increment all the counters
         if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size)  lengthMultiplierCounter = 0;
@@ -392,7 +393,11 @@ public:
 
         int skipBeats = 0;
         if (_sparams->skipFirst->get()) skipBeats = 1;
-        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats)) shouldPlay = false;
+        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats))
+        {
+            reset();
+            //shouldPlay = false;
+        }
     }
 
     inline void resetPatternPhase()
@@ -408,7 +413,7 @@ public:
 
     inline void reset()
     {
-        phasor = 0;
+        //setBeatPhasor(0);
         envelopeCounter = 0;
         shouldPlay = false;
         over = false;
@@ -419,7 +424,7 @@ public:
 
     inline juce::Array<int> getCluster() {return cluster;}
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; }
+    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG("resetting beat phasor");}
     inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
 
     inline void addNote(int note)
@@ -571,6 +576,7 @@ public:
     void removeOldestCluster();
     void removeNewestCluster();
     void rotateClusters();
+    int findIndexOfCluster(SynchronicCluster* item);
 
     bool holdCheck(int noteNumber);
 
@@ -606,9 +612,11 @@ public:
      *          - doesn't matter if that layer isn't playing....
      *  - etc... for up to numLayers = MAX_CLUSTERS (or MAX_CLUSTERS - 1?)
      *
+     * essentially a circular voice-stealing buffer
+     *
      */
-    std::array<SynchronicCluster*, MAX_CLUSTERS> clusters;
-    int mostRecentCluster = 0; // which cluster is most recent
+    std::array<SynchronicCluster*, MAX_CLUSTERS> clusterLayers;
+    int currentLayerIndex = 0; // which cluster is most recent
 
     juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<int> syncKeysDepressed;
@@ -659,7 +667,7 @@ private:
         }
     }
 
-    bool checkVelMinMax(int clusterNotesSize);
+    bool checkClusterMinMax (int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
 };

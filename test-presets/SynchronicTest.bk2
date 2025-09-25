@@ -63,6 +63,7 @@
         <MODULATABLE_PARAMS/>
         <PORT nodeID="550592322" chIdx="4096" isIn="0"/>
         <midiInput midiDeviceId="-670308381"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
       </keymap>
       <direct type="0" width="245" height="125" x_y="512, 308" uuid="c6544e84006e497f9cff6babbe487c30"
               nodeID="3327413892" numIns="1" numOuts="2" Main="0.000" Hammers="-24.000"
@@ -72,7 +73,7 @@
               delay="0.000" notify="0" t0="0.000" t1="0.000" t2="0.000" t3="0.000"
               t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000" t9="0.000"
               t10="0.000" t11="0.000" sliderVals_size="1.000" UseTuning="0"
-              velocitymin="0.000" velocitymax="128.000" LastVelocity="99.000">
+              velocitymin="0.000" velocitymax="128.000" LastVelocity="0.000">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Main" channel="0" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="Hammers" channel="1" start="-80.0" end="6.0" skew="2.0"/>
