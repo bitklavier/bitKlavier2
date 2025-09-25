@@ -554,10 +554,9 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
     return false;
 }
 
-bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNumber)
+bool SynchronicProcessor::updateCurrentCluster()
 {
-    bool newCluster = false;
-
+    bool ncluster = false;
     // if we have a new cluster
     if (!inCluster)
     {
@@ -565,31 +564,54 @@ bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNu
         currentLayerIndex++;
         if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
 
-        // get a cluster for this layer
-        DBG("activating new cluster " + juce::String(currentLayerIndex));
-        _cluster = clusterLayers[currentLayerIndex];
-
         // turn off oldest cluster
         int oldestClusterIndex = currentLayerIndex - static_cast<int>(state.params.numLayers->getCurrentValue());
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
         DBG("turning off cluster " + juce::String(oldestClusterIndex));
 
-        // declare this is a new cluster for later
-        newCluster = true;
+        ncluster = true;
     }
 
-    // add this played note to the cluster
-    _cluster->addNote(_noteNumber);
-
-    // yep, we are in a cluster!
-    inCluster = true;
-
-    // reset the timer for time between notes; we do this for every note added to a cluster
-    clusterThresholdTimer = 0;
-
-    return newCluster;
+    return ncluster;
 }
+
+//bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNumber)
+//{
+//    bool newCluster = false;
+//
+//    // if we have a new cluster
+//    if (!inCluster)
+//    {
+//        // move to the next layer
+//        currentLayerIndex++;
+//        if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
+//
+//        // get a cluster for this layer
+//        DBG("activating new cluster " + juce::String(currentLayerIndex));
+//        _cluster = clusterLayers[currentLayerIndex];
+//
+//        // turn off oldest cluster
+//        int oldestClusterIndex = currentLayerIndex - static_cast<int>(state.params.numLayers->getCurrentValue());
+//        while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
+//        clusterLayers[oldestClusterIndex]->reset();
+//        DBG("turning off cluster " + juce::String(oldestClusterIndex));
+//
+//        // declare this is a new cluster for later
+//        newCluster = true;
+//    }
+//
+//    // add this played note to the cluster
+//    _cluster->addNote(_noteNumber);
+//
+//    // yep, we are in a cluster!
+//    inCluster = true;
+//
+//    // reset the timer for time between notes; we do this for every note added to a cluster
+//    clusterThresholdTimer = 0;
+//
+//    return newCluster;
+//}
 
 /**
  * sets the bools for this message based on channel, set in MidiTarget
@@ -710,7 +732,6 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
      * todo: replace by something that gets us the most recent
      */
     //SynchronicCluster* cluster = clusters.getUnchecked(currentCluster);
-    auto cluster = clusterLayers[currentLayerIndex];
 
     /*
      * ************** doCluster => default Synchronic behavior **************
@@ -752,50 +773,20 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
             // here, we only look at keyOns
             if (onOffMode == Key_On) // onOffMode.value is set by the "determines cluster"
             {
-                // update cluster, create new one if needed, adding noteNumber to the cluster
-                //isNewCluster = updateCluster(cluster, noteNumber);
-                /*
-                 * todo: rewrite updateCluster to return a SynchronicCluster*
-                 *       set the bool isNewCluster just by checking inCluster
-                 *       replace what's below (until the inCluster = true line) with the new updateCluster
-                 */
+                // update currentLayerIndex, turn off old layers
+                isNewCluster = updateCurrentCluster();
 
-                //bool newCluster = false;
-
-                // if we have a new cluster
-                if (!inCluster)
-                {
-                    // move to the next layer
-                    currentLayerIndex++;
-                    if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
-
-                    // get a cluster for this layer
-                    DBG("activating new cluster " + juce::String(currentLayerIndex));
-                    cluster = clusterLayers[currentLayerIndex];
-
-                    // turn off oldest cluster
-                    int oldestClusterIndex = currentLayerIndex - static_cast<int>(state.params.numLayers->getCurrentValue());
-                    while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
-                    clusterLayers[oldestClusterIndex]->reset();
-                    DBG("turning off cluster " + juce::String(oldestClusterIndex));
-
-                    // declare this is a new cluster for later
-                    isNewCluster = true;
-                }
-
-                // add this played note to the cluster
-                cluster->addNote(noteNumber);
-
-                // yep, we are in a cluster!
-                inCluster = true;
+                // get the current cluster
+                auto cluster = clusterLayers[currentLayerIndex];
 
                 // reset the timer for time between notes; we do this for every note added to a cluster
                 clusterThresholdTimer = 0;
 
-                if (findIndexOfCluster(cluster) != currentLayerIndex)
-                {
-                    DBG("clusters not what they should be!");
-                }
+                // yep, we are in a cluster!
+                inCluster = true;
+
+                // add this played note to the cluster
+                cluster->addNote(noteNumber);
 
                 // reset the beat phase and pattern phase, and start playing, depending on the mode
                 if (sMode == Any_NoteOn)
@@ -835,6 +826,9 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     {
         beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
+        // get the current cluster
+        auto cluster = clusterLayers[currentLayerIndex];
+
         /*
          * for cases when BOTH beatSync and patternSync are selected in MidiTarget,
          * we need to reset the pattern counters here.
@@ -861,6 +855,9 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     // add notes to the cluster, if targeting beat sync on noteOn or on both noteOn/Off
     if (doAddNotes )
     {
+        // get the current cluster
+        auto cluster = clusterLayers[currentLayerIndex];
+
         clusterVelocities.set(noteNumber, velocity);
         cluster->addNote(noteNumber);
     }
@@ -945,7 +942,19 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
             if (onOffMode == Key_Off) // set in the "determines cluster" menu
             {
                 // update cluster, create as needed
-                isNewCluster = updateCluster (cluster, noteNumber);
+                //isNewCluster = updateCluster (cluster, noteNumber);
+
+                isNewCluster = updateCurrentCluster();
+                auto cluster = clusterLayers[currentLayerIndex];
+
+                // add this played note to the cluster
+                cluster->addNote(noteNumber);
+
+                // yep, we are in a cluster!
+                inCluster = true;
+
+                // reset the timer for time between notes; we do this for every note added to a cluster
+                clusterThresholdTimer = 0;
 
                 // if it's a new cluster, the next noteOff will be a first noteOff
                 // this will be needed for FirstNoteOffSync mode

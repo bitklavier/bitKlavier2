@@ -570,7 +570,8 @@ public:
     void keyPressed(int noteNumber, int velocity, int channel);
     void keyReleased(int noteNumber, int channel);
     void handleMidiTargetMessages(int channel);
-    bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
+    //bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
+    bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
     void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
     void removeOldestCluster();
