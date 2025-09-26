@@ -585,9 +585,12 @@ bool SynchronicProcessor::updateCurrentCluster()
         if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
 
         // turn off oldest cluster
-        int oldestClusterIndex = currentLayerIndex - static_cast<int>(state.params.numLayers->getCurrentValue());
+        int oldestClusterIndex = currentLayerIndex - std::round(state.params.numLayers->getCurrentValue());
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
+
+        DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
+        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }
@@ -819,7 +822,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         //clusters.clear();
         for (auto cl : clusterLayers)
         {
-            cl->reset();
+            cl->setIsOver(true);
         }
     }
 
@@ -955,7 +958,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         //clusters.clear();
         for (auto cl : clusterLayers)
         {
-            cl->reset();
+            cl->setIsOver(true);
         }
     }
 
