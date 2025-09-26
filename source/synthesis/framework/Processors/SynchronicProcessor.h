@@ -475,6 +475,15 @@ public:
 
     bool doPatternSync = false;
 
+    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
+    inline void incrementSustainedNotesTimers (int numSamples)
+    {
+        for (auto& tm : sustainedNotesTimers)
+        {
+            tm.second += numSamples;
+        }
+    }
+
 private:
     SynchronicParams* _sparams;
 
@@ -658,15 +667,15 @@ private:
 //    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
 
     juce::Array<int> slimCluster;       //cluster without repetitions
-    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
-
-    inline void incrementSustainedNotesTimers (int numSamples)
-    {
-        for (auto& tm : sustainedNotesTimers)
-        {
-            tm.second += numSamples;
-        }
-    }
+//    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
+//
+//    inline void incrementSustainedNotesTimers (int numSamples)
+//    {
+//        for (auto& tm : sustainedNotesTimers)
+//        {
+//            tm.second += numSamples;
+//        }
+//    }
 
     bool checkClusterMinMax (int clusterNotesSize);
 
