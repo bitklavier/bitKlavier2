@@ -585,7 +585,7 @@ bool SynchronicProcessor::updateCurrentCluster()
         if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
 
         // turn off oldest cluster
-        int oldestClusterIndex = currentLayerIndex - std::round(state.params.numLayers->getCurrentValue());
+        int oldestClusterIndex = currentLayerIndex - state.params.numLayers->getCurrentValue();
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
 
