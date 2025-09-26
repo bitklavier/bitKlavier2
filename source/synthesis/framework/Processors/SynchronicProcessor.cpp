@@ -589,8 +589,8 @@ bool SynchronicProcessor::updateCurrentCluster()
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
 
-        DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
-        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        //DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
+        //DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }
