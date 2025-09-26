@@ -337,7 +337,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * mute instruments with gain turned all the way down
      */
-    if (synthGain <= -80.) return;
+    if (synthGain <= -80.f) return;
 
     /**
      * store this velocity for the UI to use
