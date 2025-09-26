@@ -26,9 +26,9 @@ typedef enum PreparationParameterTargetType {
     SynchronicTargetAddNotes,
     SynchronicTargetClear,
     SynchronicTargetPausePlay,
-    SynchronicTargetDeleteOldest,
-    SynchronicTargetDeleteNewest,
-    SynchronicTargetRotate,
+    //SynchronicTargetDeleteOldest,
+    //SynchronicTargetDeleteNewest,
+    //SynchronicTargetRotate,
     SynchronicTargetNil
 
 } PreparationParameterTargetType;

@@ -7,9 +7,6 @@
 #include "common.h"
 #include "synth_base.h"
 
-/**
- * todo: change constructor ar for backwardSynth to backwardEnvParams, once we figure out how to manage multiple envParams
- */
 SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) :
       PluginBase (parent, vt, nullptr, synchronicBusLayout()),
       synchronicSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
@@ -20,6 +17,14 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     for (int i = 0; i < 300; i++)
     {
         synchronicSynth->addVoice (new BKSamplerVoice());
+    }
+
+    /*
+     * todo: need to make sure that if the user tries to increase numLayers > MAX_CLUSTERS that this doesn't break
+     */
+    for (int i = 0; i < MAX_CLUSTERS; i++)
+    {
+        clusterLayers[i] = new SynchronicCluster(&state.params);
     }
 
     /*
@@ -53,6 +58,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "holdtime_min_max",
         &(state.params.holdTimeMinMaxParams.stateChanges)));
 
+    state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "envelope_sequence",
@@ -120,7 +126,7 @@ void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>&
     }
 }
 
-bool SynchronicProcessor::checkVelMinMax(int clusterNotesSize)
+bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
 {
     //figure out whether to play the cluster, based on clusterMin and Max settings
     bool passCluster = false;
@@ -128,6 +134,7 @@ bool SynchronicProcessor::checkVelMinMax(int clusterNotesSize)
     //in the normal case, where cluster is within a range defined by clusterMin and Max
     int sClusterMin = state.params.clusterMinMaxParams.clusterMinParam->getCurrentValue();
     int sClusterMax = state.params.clusterMinMaxParams.clusterMaxParam->getCurrentValue();
+
     if(sClusterMin <= sClusterMax)
     {
         if (clusterNotesSize >= sClusterMin && clusterNotesSize <= sClusterMax)
@@ -141,6 +148,45 @@ bool SynchronicProcessor::checkVelMinMax(int clusterNotesSize)
     }
 
     return passCluster;
+}
+
+/**
+ * leaving these unimplemented for now, maybe permanently
+ * - had them in the old bK, but i'm not sure they are useful, trying to simplify as possible
+ */
+void SynchronicProcessor::removeOldestCluster()
+{
+//    clusters[0]->setShouldPlay(false);
+//    std::rotate(clusters.begin(), std::next(clusters.begin()), clusters.end());
+//    mostRecentCluster--;
+//    if(mostRecentCluster < 0) mostRecentCluster = 0;
+}
+
+void SynchronicProcessor::removeNewestCluster()
+{
+//    clusters[mostRecentCluster]->setShouldPlay(false);
+//    mostRecentCluster--;
+//    if(mostRecentCluster < 0) mostRecentCluster = 0;
+}
+
+// rotate the clusters so that the oldest (0) becomes the most recent
+void SynchronicProcessor::rotateClusters()
+{
+//    if (mostRecentCluster > 0 && mostRecentCluster < clusters.size()) {
+//        // The sub-range to be rotated is defined by iterators from startIndex to endIndex.
+//        // `first` is the beginning of the sub-range.
+//        auto first = std::next(clusters.begin(), 0);
+//
+//        // `n_first` is the element that becomes the new first of the sub-range.
+//        // For a single left rotation, this is the element immediately after `first`.
+//        auto n_first = std::next(first);
+//
+//        // `last` is the end of the sub-range.
+//        auto last = std::next(clusters.begin(), mostRecentCluster);
+//
+//        // Perform the rotation on the sub-range.
+//        std::rotate(first, n_first, last);
+//    }
 }
 
 void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
@@ -160,26 +206,12 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
     if(doPausePlay) return;
 
+    // trigger type
+    auto sMode = state.params.pulseTriggeredBy->get();
+
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
     noteOnSpecMap.clear();
     updatedTransps.clear();
-
-    // constrain number of clusters to numLayers
-    //      numClusters in old bK is numLayers
-    while (clusters.size() > state.params.numLayers->getCurrentValue())
-    {
-        clusters.remove(0);
-    }
-
-    //do this every block, for adaptive tempo updates
-    thresholdSamples = state.params.clusterThreshold->getCurrentValue() * getSampleRate() * .001;
-    auto sMode = state.params.pulseTriggeredBy->get();
-
-    /**
-     * todo: adaptive tempo stuff as needed, along with General Settings
-     */
-    // from the attached Tempo preparation: number of samples per beat
-    beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
     // keep track of how long keys have been held down, for holdTime check
     for (auto key : keysDepressed)
@@ -188,7 +220,12 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         holdTimers.setUnchecked(key, time);
     }
 
-    //cluster management
+    /*
+     * cluster management
+     * inCluster is true if the time since the last note played was less than clusterThreshold
+     * - gathers notes into a single cluster that is played metronomically
+    */
+    thresholdSamples = state.params.clusterThreshold->getCurrentValue() * getSampleRate() * .001;
     if (inCluster)
     {
         //moved beyond clusterThreshold time, done with cluster
@@ -198,38 +235,18 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         else clusterThresholdTimer += numSamples;
     }
 
-    for (int i = clusters.size(); --i >= 0;)
-    {
-        SynchronicCluster* cluster = clusters.getUnchecked(i);
+    /**
+     * todo: adaptive tempo stuff as needed, along with General Settings
+     */
+    // from the attached Tempo preparation: number of samples per beat
+    // update this every block, for adaptive tempo updates
+    beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
+    // all noteOn messages for all the clusters
+    for (auto cluster : clusterLayers)
+    {
         if (cluster->getShouldPlay())
         {
-
-            // get the current cluster of notes, which we'll cook down to a slimCluster, with duplicate pitches removed
-            juce::Array<int> clusterNotes = cluster->getCluster();
-
-            //cap size of slimCluster, removing oldest notes
-            juce::Array<int> tempCluster;
-            for(int i = 0; i < clusterNotes.size(); i++) tempCluster.set(i, clusterNotes.getUnchecked(i));
-
-            /*
-             * constrain thickness of cluster
-             *  why not use clusterMax for this? the intent is different:
-             *  - clusterMax: max number of keys pressed within clusterThresh, otherwise shut off pulses
-             *  - clusterCap: the most number of notes allowed in a cluster when playing pulses (clusterThickness in bK2)
-             *
-             *  an example: clusterMax=9, clusterCap=8; playing 9 notes simultaneously will result in cluster with 8 notes, but playing 10 notes will shut off pulse
-             *  another example: clusterMax=20, clusterCap=8; play a rapid ascending scale more than 8 and less than 20 notes, then stop; only last 8 notes will be in the cluster. If your scale exceeds 20 notes then it won't play.
-             */
-            if(tempCluster.size() > state.params.clusterThickness->getCurrentValue()) tempCluster.resize(state.params.clusterThickness->getCurrentValue());
-
-            //remove duplicates from cluster, so we don't play the same note twice in a single pulse
-            slimCluster.clearQuick();
-            for(int i = 0; i < tempCluster.size(); i++)
-            {
-                slimCluster.addIfNotAlreadyThere(tempCluster.getUnchecked(i));
-            }
-
             // adjust samples per beat by beat length multiplier, for this beat
             numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
@@ -287,11 +304,36 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     }
                 }
 
-                // check to see whether velocity is in range to play this cluster
-                // if so, play it, if playNow is true (set just above)
-                if (playNow && checkVelMinMax(clusterNotes.size()))
+                // get the current cluster of notes, which we'll cook down to a slimCluster, with duplicate pitches removed
+                juce::Array<int> clusterNotes = cluster->getCluster();
+
+                //cap size of slimCluster, removing oldest notes
+                juce::Array<int> tempCluster;
+                for(int i = 0; i < clusterNotes.size(); i++) tempCluster.set(i, clusterNotes.getUnchecked(i));
+
+                /*
+                 * constrain thickness of cluster
+                 *  why not use clusterMax for this? the intent is different:
+                 *  - clusterMax: max number of keys pressed within clusterThresh, otherwise shut off pulses
+                 *  - clusterCap: the most number of notes allowed in a cluster when playing pulses (clusterThickness in bK2)
+                 *
+                 *  an example: clusterMax=9, clusterCap=8; playing 9 notes simultaneously will result in cluster with 8 notes, but playing 10 notes will shut off pulse
+                 *  another example: clusterMax=20, clusterCap=8; play a rapid ascending scale more than 8 and less than 20 notes, then stop; only last 8 notes will be in the cluster. If your scale exceeds 20 notes then it won't play.
+                 */
+                if(tempCluster.size() > state.params.clusterThickness->getCurrentValue()) tempCluster.resize(state.params.clusterThickness->getCurrentValue());
+
+                //remove duplicates from cluster, so we don't play the same note twice in a single pulse
+                slimCluster.clearQuick();
+                for(int i = 0; i < tempCluster.size(); i++)
                 {
-                    // the slimCluster is the cluster of notes in teh metronome pulse with duplicate notes removed
+                    slimCluster.addIfNotAlreadyThere(tempCluster.getUnchecked(i));
+                }
+
+                // check to see whether number of notes played is within cluster min/max
+                // if so, play it, if playNow is true (set just above)
+                if (playNow && checkClusterMinMax (clusterNotes.size()))
+                {
+                    // the slimCluster is the cluster of notes in the metronome pulse with duplicate notes removed
                     for (int n=0; n < slimCluster.size(); n++)
                     {
                         /**
@@ -306,7 +348,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
 
                         // Synchronic uses its own ADSRs for each cluster, so we need to add these to the noteOnSpecMap that gets passed to BKSynth
-                        //  these apply regardless of playback direction
+                        // - these apply regardless of playback direction
                         noteOnSpecMap[newNote].envParams.attack = state.params.envelopeSequence.envStates.attacks[cluster->envelopeCounter] * .001; // BKADSR expects seconds, not ms
                         noteOnSpecMap[newNote].envParams.decay = state.params.envelopeSequence.envStates.decays[cluster->envelopeCounter] * .001;
                         noteOnSpecMap[newNote].envParams.sustain = state.params.envelopeSequence.envStates.sustains[cluster->envelopeCounter];
@@ -333,7 +375,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                              *  - shouldn't be an issue, unless note playback is very fast or block is very large
                              *      AND we get multiple noteOn msgs in the same block that want different noteOnSpecs
                              */
-                            //float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * (60.0 / tempoTemp) * 1000.);
                             float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * getBeatThresholdSeconds() * 1000.);
                             noteOnSpecMap[newNote].startDirection = Direction::backward;
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
@@ -344,46 +385,13 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         }
 
                         // reset the timer for keeping track how long this note has been sustained
-                        sustainedNotesTimers[newNote] = 0;
+                        cluster->sustainedNotesTimers[newNote] = 0;
                     }
                 }
 
                 // increment the remaining counters, check if we should continue to play
                 cluster->postStep();
             }
-
-            /*
-             * handle turning off notes here
-             */
-            juce::uint64 noteLength_samples = 0;
-            /**
-             * todo: handle tempo/general stuff...
-             */
-            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * getBeatThresholdSeconds();
-
-            // check to see if the notes have been sustained their desired length
-            for (auto tm = sustainedNotesTimers.begin(); tm != sustainedNotesTimers.end(); /* no increment here */)
-            {
-                if (tm->second > noteLength_samples)
-                {
-                    auto newmsg = juce::MidiMessage::noteOff (1, tm->first, clusterVelocities.getUnchecked(tm->first));
-                    outMidiMessages.addEvent(newmsg, 0);
-
-                    // remove note from the sustainedNotes timer map, since we don't need it anymore
-                    // The erase() method returns the iterator to the next element.
-                    tm = sustainedNotesTimers.erase(tm);
-                }
-                else
-                {
-                    // Manually increment the iterator to move to the next element
-                    // because the current element was not erased.
-                    ++tm;
-                }
-            }
-
-            //pass time until next beat, increment phasor/timers
-            cluster->incrementPhasor(numSamples);
-            incrementSustainedNotesTimers(numSamples);
 
             // update current slider val for UI
             state.params.transpositions_current.store(cluster->transpCounter);
@@ -392,6 +400,57 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             state.params.beatLengthMultipliers_current.store(cluster->beatMultiplierCounter);
             state.params.envelopes_current.store(cluster->envelopeCounter);
 
+        }
+
+        //pass time until next beat, increment phasor/timers
+        cluster->incrementPhasor(numSamples);
+        cluster->incrementSustainedNotesTimers(numSamples);
+    }
+
+    /*
+     * handle noteOff messaging here
+     * - we need to do this when "over" is true, since there may be sustained notes for the last pulse in a layer
+     *      - "over" is true when the number of beats played > num pulses; the sequence is over
+     * - we also need to do it for all the regular notes, when "shouldPlay" is true
+     * - because this is a complicated processBlock, we run through the clusters again, keeping the noteOn
+     *      work (above) separate from the noteOff work; only 10 layers, so not a big CPU hit
+     */
+    for (auto cluster : clusterLayers)
+    {
+        if(cluster->getIsOver() || cluster->getShouldPlay())
+        {
+            // if no notes are playing in this cluster, we can move on, resetting if this cluster is over (exceeded num pulses)
+            if(cluster->sustainedNotesTimers.size() == 0) {
+                if (cluster->getIsOver()) cluster->reset();
+                continue;
+            }
+
+            /**
+             * todo: handle tempo/general stuff...
+             */
+            // get the sustain length that we need to compare to
+            juce::uint64 noteLength_samples = 0;
+            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * getBeatThresholdSeconds();
+
+            // check to see if the notes have been sustained their desired length
+            for (auto tm = cluster->sustainedNotesTimers.begin(); tm != cluster->sustainedNotesTimers.end(); /* no increment here */)
+            {
+                if (tm->second > noteLength_samples)
+                {
+                    auto newmsg = juce::MidiMessage::noteOff (1, tm->first, clusterVelocities.getUnchecked(tm->first));
+                    outMidiMessages.addEvent(newmsg, 0);
+
+                    // remove note from the sustainedNotes timer map, since we don't need it anymore
+                    // The erase() method returns the iterator to the next element.
+                    tm = cluster->sustainedNotesTimers.erase(tm);
+                }
+                else
+                {
+                    // Manually increment the iterator to move to the next element
+                    // because the current element was not erased.
+                    ++tm;
+                }
+            }
         }
     }
 }
@@ -428,7 +487,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      * do the MIDI stuff here
      */
 
-    /**
+    /*
      * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer
      *  to send to BKSynth
      */
@@ -511,43 +570,29 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
     return false;
 }
 
-bool SynchronicProcessor::updateCluster(SynchronicCluster* _cluster, int _noteNumber)
+/**
+ * updates what the current cluster is, and turns off older clusters
+ * @return whether this is a newcluster or not (bool)
+ */
+bool SynchronicProcessor::updateCurrentCluster()
 {
-    bool newCluster = false;
-
+    bool ncluster = false;
     // if we have a new cluster
-    if (!inCluster || _cluster == nullptr)
+    if (!inCluster)
     {
-        // check to see if we have as many clusters as we are allowed, remove oldest if we are
-        //      numClusters in old bK is numLayers
-        if (clusters.size() >= state.params.numLayers->getCurrentValue())
-        {
-            clusters.remove(0); // remove first (oldest) cluster
-        }
+        // move to the next layer
+        currentLayerIndex++;
+        if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
 
-        /**
-         * todo: note that we are doing this on the audio thread, which is allocating memory!
-         *         - rework all this so we don't do that, as this is likely the cause
-         *         of the thread safety issues we're having here
-         */
-        // make the new one and add it to the array of clusters
-        _cluster = new SynchronicCluster(&state.params);
-        clusters.add(_cluster); // add to the array of clusters (what are called "layers" in the UI
+        // turn off oldest cluster
+        int oldestClusterIndex = currentLayerIndex - static_cast<int>(state.params.numLayers->getCurrentValue());
+        while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
+        clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
 
-        // this is a new cluster!
-        newCluster = true;
+        ncluster = true;
     }
 
-    // add this played note to the cluster
-    _cluster->addNote(_noteNumber);
-
-    // yep, we are in a cluster!
-    inCluster = true;
-
-    // reset the timer for time between notes; we do this for every note added to a cluster
-    clusterThresholdTimer = 0;
-
-    return newCluster;
+    return ncluster;
 }
 
 /**
@@ -594,7 +639,7 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
             break;
 
         case SynchronicTargetPatternSync:
-            for(auto& cl : clusters)
+            for(auto& cl : clusterLayers)
             {
                 cl->doPatternSync = true;
             }
@@ -617,20 +662,34 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
             else doPausePlay = true;
             break;
 
-        case SynchronicTargetDeleteOldest:
-            doDeleteOldest = true;
-            break;
-
-        case SynchronicTargetDeleteNewest:
-            doDeleteNewest = true;
-            break;
-
-        case SynchronicTargetRotate:
-            doRotate = true;
-            break;
+/*
+ * these are currently unimplemented
+ */
+//        case SynchronicTargetDeleteOldest:
+//            doDeleteOldest = true;
+//            break;
+//
+//        case SynchronicTargetDeleteNewest:
+//            doDeleteNewest = true;
+//            break;
+//
+//        case SynchronicTargetRotate:
+//            doRotate = true;
+//            break;
     }
 
     //DBG("handleMidiTargetMessages = " + juce::String(channel + (SynchronicTargetFirst)));
+}
+
+int SynchronicProcessor::findIndexOfCluster(SynchronicCluster* item) {
+    for (int i = 0; i < clusterLayers.size(); ++i) {
+        if (clusterLayers[i] == item) {
+            return i;
+        }
+    }
+    // Return a value indicating not found, e.g., arr.size() or throw an exception.
+    // For this example, we'll assume the item is always present.
+    return -1; // Or any other appropriate error value
 }
 
 void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
@@ -649,11 +708,8 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     // add note to array of depressed notes
     keysDepressed.addIfNotAlreadyThere(noteNumber);
 
-    // is this a new cluster?
+    // is this a new cluster? assume not to start
     bool isNewCluster = false;
-
-    // always work on the most recent cluster/layer
-    SynchronicCluster* cluster = clusters.getLast();
 
     /*
      * ************** doCluster => default Synchronic behavior **************
@@ -665,35 +721,24 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
 
         if(!doPausePlay)
         {
-            // Remove old clusters, deal with layers and NoteOffSync modes
-            for (int i = clusters.size(); --i >= 0; )
-            {
-                if (!clusters[i]->getShouldPlay() && !inCluster)
-                {
-                    clusters.remove(i);
-                    continue;
-                }
-
-                if((sMode == Last_NoteOff) || (sMode == Any_NoteOff))
-                {
-                    if(clusters.size() == 1) clusters[0]->setShouldPlay(false);
-                    else
-                    {
-                        if(clusters[i]->containsNote(noteNumber))
-                        {
-                            clusters[i]->removeNote(noteNumber);
-                        }
-                    }
-                }
-            }
-
             // OnOffMode determines whether the keyOffs or keyOns determine whether notes are within the cluster threshold
-            // here, we only look at keyOns
+            // - here, we only look at keyOns
             if (onOffMode == Key_On) // onOffMode.value is set by the "determines cluster"
             {
-                // update cluster, create as needed
-                isNewCluster = updateCluster(cluster, noteNumber);
-                if(isNewCluster) cluster = clusters.getLast();
+                // update currentLayerIndex, turn off old layers, determine whether this is a new cluster or not
+                isNewCluster = updateCurrentCluster();
+
+                // get the current cluster
+                auto cluster = clusterLayers[currentLayerIndex];
+
+                // reset the timer for time between notes; we do this for every note added to a cluster
+                clusterThresholdTimer = 0;
+
+                // yep, we are in a cluster!
+                inCluster = true;
+
+                // add this played note to the cluster
+                cluster->addNote(noteNumber);
 
                 // reset the beat phase and pattern phase, and start playing, depending on the mode
                 if (sMode == Any_NoteOn)
@@ -721,9 +766,6 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
      * ************** now trigger behaviors set by Keymap targeting ****************
      */
 
-    // if we don't have a cluster, then we're triggering something before we've made a cluster and should ignore
-    if (cluster == nullptr) return;
-
     // since it's a new cluster, the next noteOff will be a first noteOff
     // this will be needed for keyReleased(), when in FirstNoteOffSync mode
     if (isNewCluster) nextOffIsFirst = true;
@@ -732,6 +774,9 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     if (doBeatSync)
     {
         beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
+
+        // get the current cluster
+        auto cluster = clusterLayers[currentLayerIndex];
 
         /*
          * for cases when BOTH beatSync and patternSync are selected in MidiTarget,
@@ -750,7 +795,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
         // reset beat timing, for ALL clusters
-        for (auto& ci : clusters)
+        for (auto& ci : clusterLayers)
         {
             ci->setBeatPhasor(phasor);
         }
@@ -759,6 +804,9 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     // add notes to the cluster, if targeting beat sync on noteOn or on both noteOn/Off
     if (doAddNotes )
     {
+        // get the current cluster
+        auto cluster = clusterLayers[currentLayerIndex];
+
         clusterVelocities.set(noteNumber, velocity);
         cluster->addNote(noteNumber);
     }
@@ -768,26 +816,32 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         /*
          * todo: send all notes off here as well
          */
-        clusters.clear();
-    }
-
-    if (doDeleteOldest)
-    {
-        if (!clusters.isEmpty()) clusters.remove(0);
-    }
-
-    if (doDeleteNewest)
-    {
-        if (!clusters.isEmpty()) clusters.remove(clusters.size() - 1);
-    }
-
-    if (doRotate )
-    {
-        if (!clusters.isEmpty())
+        //clusters.clear();
+        for (auto cl : clusterLayers)
         {
-            clusters.move(clusters.size() - 1, 0);
+            cl->reset();
         }
     }
+
+    /**
+     * these are unimplemented, probably permanently
+     */
+//    if (doDeleteOldest)
+//    {
+//        //if (!clusters.isEmpty()) clusters.remove(0);
+//        removeOldestCluster();
+//    }
+//
+//    if (doDeleteNewest)
+//    {
+//        //if (!clusters.isEmpty()) clusters.remove(clusters.size() - 1);
+//        removeNewestCluster();
+//    }
+//
+//    if (doRotate )
+//    {
+//        rotateClusters();
+//    }
 }
 
 void SynchronicProcessor::keyReleased(int noteNumber, int channel)
@@ -807,12 +861,10 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     // do hold-time filtering (how long the key was held down)
     if (!holdCheck(noteNumber)) return;
 
-    // always work on the most recent cluster/layer
-    SynchronicCluster* cluster = clusters.getLast();
+    auto cluster = clusterLayers[currentLayerIndex];
 
     // the number of samples until the next beat
     beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
-
 
     /*
      * ************** doCluster => default Synchronic behavior **************
@@ -825,32 +877,42 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         if(!doPausePlay)
         {
             // cluster management
-            // OnOffMode determines whether the timing of keyOffs or keyOns determine whether notes are within the cluster threshold
-            // in this case, we only want to do these things when keyOffs set the clusters
-            if (onOffMode == SynchronicClusterTriggerType::Key_Off) // set in the "determines cluster" menu
+            // - OnOffMode determines whether the timing of keyOffs or keyOns determine whether notes are within the cluster threshold
+            // - in this case, we only want to do these things when keyOffs set the clusters
+            if (onOffMode == Key_Off) // set in the "determines cluster" menu
             {
                 // update cluster, create as needed
-                isNewCluster = updateCluster (cluster, noteNumber);
+                isNewCluster = updateCurrentCluster();
+                auto cluster = clusterLayers[currentLayerIndex];
+
+                // add this played note to the cluster
+                cluster->addNote(noteNumber);
+
+                // yep, we are in a cluster!
+                inCluster = true;
+
+                // reset the timer for time between notes; we do this for every note added to a cluster
+                clusterThresholdTimer = 0;
 
                 // if it's a new cluster, the next noteOff will be a first noteOff
-                // this will be needed for FirstNoteOffSync mode
+                // - this will be needed for FirstNoteOffSync mode
                 if (isNewCluster)
                     nextOffIsFirst = true;
             }
 
             // depending on the mode, and whether this is a first or last note, reset the beat and pattern phase and start playing
-            if ((sMode == SynchronicPulseTriggerType::First_NoteOff && nextOffIsFirst) || (sMode == SynchronicPulseTriggerType::Any_NoteOff) || (sMode == SynchronicPulseTriggerType::Last_NoteOff && clusterKeysDepressed.size() == 0))
+            if ((sMode == First_NoteOff && nextOffIsFirst) || (sMode == Any_NoteOff) || (sMode == Last_NoteOff && clusterKeysDepressed.size() == 0))
             {
-                for (int i = clusters.size(); --i >= 0;)
+                for (int i = clusterLayers.size(); --i >= 0;)
                 {
-                    if (clusters[i]->containsNote (noteNumber))
+                    if (clusterLayers[i]->containsNote (noteNumber))
                     {
-                        clusters[i]->resetPatternPhase();
-                        clusters[i]->setShouldPlay (true);
+                        clusterLayers[i]->resetPatternPhase();
+                        clusterLayers[i]->setShouldPlay (true);
 
                         //start right away
                         juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
-                        clusters[i]->setBeatPhasor (phasor);
+                        clusterLayers[i]->setBeatPhasor (phasor);
                     }
                 }
 
@@ -875,7 +937,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
         // reset the phase for ALL clusters
-        for (auto& ci : clusters)
+        for (auto& ci : clusterLayers)
         {
             ci->setBeatPhasor(phasor);
             ci->setShouldPlay(true);
@@ -890,25 +952,26 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
 
     if (doClear)
     {
-        clusters.clear();
+        //clusters.clear();
+        for (auto cl : clusterLayers)
+        {
+            cl->reset();
+        }
     }
 
     if (doDeleteOldest)
     {
-        if (!clusters.isEmpty()) clusters.remove(0);
+        removeOldestCluster();
     }
 
     if (doDeleteNewest)
     {
-        if (!clusters.isEmpty()) clusters.remove(clusters.size() - 1);
+        removeNewestCluster();
     }
 
     if (doRotate)
     {
-        if (!clusters.isEmpty())
-        {
-            clusters.move(clusters.size() - 1, 0);
-        }
+        rotateClusters();
     }
 }
 

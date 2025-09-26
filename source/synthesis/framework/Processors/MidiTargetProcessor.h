@@ -72,10 +72,10 @@ struct MidiTargetParams : chowdsp::ParamHolder
             synchronicTargetBeatSync_noteMode,
             synchronicTargetAddNotes_noteMode,
             synchronicTargetClear_noteMode,
-            synchronicTargetPausePlay_noteMode,
-            synchronicTargetDeleteOldest_noteMode,
-            synchronicTargetDeleteNewest_noteMode,
-            synchronicTargetRotate_noteMode);
+            synchronicTargetPausePlay_noteMode);
+//            synchronicTargetDeleteOldest_noteMode,
+//            synchronicTargetDeleteNewest_noteMode,
+//            synchronicTargetRotate_noteMode);
 
         targetMapper[BlendronicTargetPatternSync]       = blendronicTargetPatternSync.get();
         noteModeMapper[BlendronicTargetPatternSync]     = blendronicTargetPatternSync_noteMode.get();
@@ -113,14 +113,14 @@ struct MidiTargetParams : chowdsp::ParamHolder
         targetMapper[SynchronicTargetPausePlay]         = synchronicTargetPausePlay.get();
         noteModeMapper[SynchronicTargetPausePlay]       = synchronicTargetPausePlay_noteMode.get();
 
-        targetMapper[SynchronicTargetDeleteOldest]      = synchronicTargetDeleteOldest.get();
-        noteModeMapper[SynchronicTargetDeleteOldest]    = synchronicTargetDeleteOldest_noteMode.get();
-
-        targetMapper[SynchronicTargetDeleteNewest]      = synchronicTargetDeleteNewest.get();
-        noteModeMapper[SynchronicTargetDeleteNewest]    = synchronicTargetDeleteNewest_noteMode.get();
-
-        targetMapper[SynchronicTargetRotate]            = synchronicTargetRotate.get();
-        noteModeMapper[SynchronicTargetRotate]          = synchronicTargetRotate_noteMode.get();
+//        targetMapper[SynchronicTargetDeleteOldest]      = synchronicTargetDeleteOldest.get();
+//        noteModeMapper[SynchronicTargetDeleteOldest]    = synchronicTargetDeleteOldest_noteMode.get();
+//
+//        targetMapper[SynchronicTargetDeleteNewest]      = synchronicTargetDeleteNewest.get();
+//        noteModeMapper[SynchronicTargetDeleteNewest]    = synchronicTargetDeleteNewest_noteMode.get();
+//
+//        targetMapper[SynchronicTargetRotate]            = synchronicTargetRotate.get();
+//        noteModeMapper[SynchronicTargetRotate]          = synchronicTargetRotate_noteMode.get();
 
         /**
          * add additional params for other preps/targets here and below

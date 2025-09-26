@@ -352,7 +352,8 @@ public:
     inline void step (juce::uint64 numSamplesBeat)
     {
         // set the phasor back by the number of samples to the next beat
-        phasor -= numSamplesBeat;
+        //phasor -= numSamplesBeat;
+        phasor = 0; // the decrement doesn't make sense to me, why not just set the phasor to 0?
 
         // increment all the counters
         if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size)  lengthMultiplierCounter = 0;
@@ -390,9 +391,11 @@ public:
             if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size) beatMultiplierCounter = 0;
         }
 
-        int skipBeats = 0;
-        if (_sparams->skipFirst->get()) skipBeats = 1;
-        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats)) shouldPlay = false;
+        if (++beatCounter >= _sparams->numPulses->getCurrentValue())
+        {
+            over = true;
+            shouldPlay = false;
+        }
     }
 
     inline void resetPatternPhase()
@@ -402,35 +405,29 @@ public:
         accentMultiplierCounter = 0;
         transpCounter = 0;
         envelopeCounter = 0;
-
         beatCounter = 0;
+    }
+
+    inline void reset()
+    {
+        DBG("reset called");
+        envelopeCounter = 0;
+        shouldPlay = false;
+        over = false;
+
+        resetPatternPhase();
+        cluster.clearQuick();
     }
 
     inline juce::Array<int> getCluster() {return cluster;}
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG(" beat phasor to " + juce::String(c)); }
+    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG("resetting beat phasor");}
     inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
 
     inline void addNote(int note)
     {
         // DBG("adding note: " + String(note));
         cluster.insert(0, note);
-    }
-
-    inline void removeNote(int note)
-    {
-        int idx = 0;
-
-        for (auto n : cluster)
-        {
-            if (n == note)
-            {
-                break;
-            }
-            idx++;
-        }
-
-        cluster.remove(idx);
     }
 
     inline bool containsNote(int note)
@@ -448,6 +445,16 @@ public:
         return shouldPlay;
     }
 
+    inline bool getIsOver()
+    {
+        return over;
+    }
+
+    inline void setIsOver(bool isOver)
+    {
+        over = isOver;
+    }
+
     int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
 
     //parameter field counters
@@ -459,12 +466,20 @@ public:
 
     bool doPatternSync = false;
 
+    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
+    inline void incrementSustainedNotesTimers (int numSamples)
+    {
+        for (auto& tm : sustainedNotesTimers)
+        {
+            tm.second += numSamples;
+        }
+    }
+
 private:
     SynchronicParams* _sparams;
 
     juce::Array<int> cluster;
     juce::uint64 phasor;
-
 
     bool shouldPlay, over;
 
@@ -476,6 +491,7 @@ private:
 // ************************************ SynchronicProcessor ************************************ //
 // ********************************************************************************************* //
 
+#define MAX_CLUSTERS 10
 class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<SynchronicParams, SynchronicNonParameterState>>,
                             public juce::ValueTree::Listener
 {
@@ -554,9 +570,14 @@ public:
     void keyPressed(int noteNumber, int velocity, int channel);
     void keyReleased(int noteNumber, int channel);
     void handleMidiTargetMessages(int channel);
-    bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
+    //bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
+    bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
     void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
+    void removeOldestCluster();
+    void removeNewestCluster();
+    void rotateClusters();
+    int findIndexOfCluster(SynchronicCluster* item);
 
     bool holdCheck(int noteNumber);
 
@@ -577,7 +598,26 @@ public:
     /**
      * todo: thread safety issues with this in the old version, need to make sure we aren't reproducing them here
      */
-    juce::Array<SynchronicCluster*> clusters;
+//    juce::Array<SynchronicCluster*> clusters;
+    /*
+     * the `clusters` array holds clusters to manage the 'layers' feature in bK
+     *
+     * every time we start a new cluster, we move to the next item in this array
+     * and turn off a previous cluster, as set by numLayers
+     *
+     * so, at first, no clusters are playing, so the first cluster will be item 0 in this array
+     * then, the next time a cluster is triggered, it will use item 1 in this array
+     * and turn off (set shouldPlay = false) the item (1 - numLayers) in this array
+     *  - if numLayers is 1, then it will turn off item 0 and we will only have one cluster playing (default behavior)
+     *  - if numLayers is 2, then cluster 0 will continue playing, and it will turn off the item -1 (mod the size of the array, so the last element)
+     *          - doesn't matter if that layer isn't playing....
+     *  - etc... for up to numLayers = MAX_CLUSTERS (or MAX_CLUSTERS - 1?)
+     *
+     * essentially a circular voice-stealing buffer
+     *
+     */
+    std::array<SynchronicCluster*, MAX_CLUSTERS> clusterLayers;
+    int currentLayerIndex = 0; // which cluster is most recent
 
     juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<int> syncKeysDepressed;
@@ -612,23 +652,8 @@ private:
 
     std::unique_ptr<BKSynthesiser> synchronicSynth;
 
-    /**
-     * todo: confirm not needed
-     */
-//    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
-
     juce::Array<int> slimCluster;       //cluster without repetitions
-    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
-
-    inline void incrementSustainedNotesTimers (int numSamples)
-    {
-        for (auto& tm : sustainedNotesTimers)
-        {
-            tm.second += numSamples;
-        }
-    }
-
-    bool checkVelMinMax(int clusterNotesSize);
+    bool checkClusterMinMax (int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
 };
