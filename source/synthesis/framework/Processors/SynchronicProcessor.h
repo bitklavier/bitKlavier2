@@ -391,12 +391,10 @@ public:
             if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size) beatMultiplierCounter = 0;
         }
 
-        int skipBeats = 0;
-        if (_sparams->skipFirst->get()) skipBeats = 1;
-        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats))
+        if (++beatCounter >= _sparams->numPulses->getCurrentValue())
         {
-            reset();
-            //shouldPlay = false;
+            over = true;
+            shouldPlay = false;
         }
     }
 
@@ -407,13 +405,12 @@ public:
         accentMultiplierCounter = 0;
         transpCounter = 0;
         envelopeCounter = 0;
-
         beatCounter = 0;
     }
 
     inline void reset()
     {
-        //setBeatPhasor(0);
+        DBG("reset called");
         envelopeCounter = 0;
         shouldPlay = false;
         over = false;
@@ -433,22 +430,6 @@ public:
         cluster.insert(0, note);
     }
 
-    inline void removeNote(int note)
-    {
-        int idx = 0;
-
-        for (auto n : cluster)
-        {
-            if (n == note)
-            {
-                break;
-            }
-            idx++;
-        }
-
-        cluster.remove(idx);
-    }
-
     inline bool containsNote(int note)
     {
         return cluster.contains(note);
@@ -462,6 +443,16 @@ public:
     inline bool getShouldPlay(void)
     {
         return shouldPlay;
+    }
+
+    inline bool getIsOver()
+    {
+        return over;
+    }
+
+    inline void setIsOver(bool isOver)
+    {
+        over = isOver;
     }
 
     int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
@@ -661,22 +652,7 @@ private:
 
     std::unique_ptr<BKSynthesiser> synchronicSynth;
 
-    /**
-     * todo: confirm not needed
-     */
-//    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
-
     juce::Array<int> slimCluster;       //cluster without repetitions
-//    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
-//
-//    inline void incrementSustainedNotesTimers (int numSamples)
-//    {
-//        for (auto& tm : sustainedNotesTimers)
-//        {
-//            tm.second += numSamples;
-//        }
-//    }
-
     bool checkClusterMinMax (int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
