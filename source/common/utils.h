@@ -545,4 +545,9 @@ enum TuningType {
     Spring_Tuning = 1 << 3,
 };
 
+enum SelectChoice {
+    Select = 1 << 0,
+    Deselect = 1 << 1,
+};
+
 

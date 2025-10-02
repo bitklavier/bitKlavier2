@@ -1,9 +1,10 @@
-    //
+//
 // Created by Davis Polito on 5/27/25.
 //
 
 #include "BKKeymapKeyboardComponent.h"
 #include "array_to_string.h"
+
 void BKKeymapKeyboardComponent::resized() {
     float heightUnit = getHeight() * 0.1;
     float widthUnit = getWidth() * 0.1;
@@ -19,19 +20,18 @@ void BKKeymapKeyboardComponent::resized() {
 
     juce::Rectangle<int> keyboardRect = keymapRow.removeFromBottom(keyboardHeight);
 
-
     keyboard_.setBounds(keyboardRect);
 
     juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2*heightUnit + 4));
     keyboardValsTextFieldOpen.setBounds(textSlab.removeFromLeft(widthUnit*1.5));
 
     keyboardValsTextField->setBounds(keyboard_.getBounds());
-
 }
 
 void BKKeymapKeyboardComponent::mouseUp(const juce::MouseEvent& e) {
     keyboard_.repaint();
 }
+
 void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
     if (keyboardValsTextField->hasKeyboardFocus(false)) {
         keyboardValsTextField->mouseDown(e);
@@ -41,9 +41,8 @@ void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
         if (lastKeyPressed != -1)
             keyboard_state_.keyStates.flip(lastKeyPressed);
     }
-
-
 }
+
 void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
     if (keyboardValsTextField->hasKeyboardFocus(false)) {
         keyboardValsTextField->mouseDrag(e);
@@ -61,9 +60,7 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
         }
     }
     keyboard_.repaint();
-
 }
-
 
 void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
     if (button == &keyboardValsTextFieldOpen) {

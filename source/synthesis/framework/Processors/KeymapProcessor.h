@@ -9,6 +9,7 @@
 #include "midi_manager.h"
 #include "PreparationStateImpl.h"
 #include "PluginBase.h"
+#include "utils.h"
 
 struct KeymapKeyboardState {
     KeymapKeyboardState() {
@@ -23,7 +24,16 @@ struct KeymapParams : chowdsp::ParamHolder
 {
     KeymapParams(const juce::ValueTree &v) : chowdsp::ParamHolder("keymap")
     {
+        add(selectChoice);
     }
+
+    // sets whether the Keys choice will turn on (select) or off (deselect) particular keys
+    chowdsp::EnumChoiceParameter<SelectChoice>::Ptr selectChoice {
+        juce::ParameterID { "selectChoice", 100 },
+        "Select Deselect",
+        SelectChoice::Select,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
 
     KeymapKeyboardState keyboard_state;
     /** Custom serializer */

@@ -512,16 +512,6 @@ public:
 
     bool acceptsMidi() const override { return true; }
 
-    /**
-     * todo: confirm not needed
-     * @param s
-     */
-//    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-//    {
-//        DBG("Synchronic addSoundSet map called");
-//        ptrToSamples = s;
-//    }
-
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {
         DBG("Synchronic addSoundSet called");

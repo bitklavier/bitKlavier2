@@ -46,6 +46,7 @@ public:
         keyboardValsTextField->setInterceptsMouseClicks(false, false);
         setInterceptsMouseClicks(true, true);
     }
+
     ~BKKeymapKeyboardComponent() {
         keyboardValsTextField->setLookAndFeel(nullptr);
         keyboardValsTextField->removeListener(this);
@@ -58,6 +59,11 @@ public:
     BKKeymapKeyboardComponent* clone () {
         return nullptr;
     }
+
+    // to assist in placing other components on top of keyboard and to the right of the edit button
+    int getKeyboardTop() { return keyboard_.getY(); }
+    int getEditAllTextButtonRight() { return keyboardValsTextFieldOpen.getRight(); }
+
     void mouseUp(const juce::MouseEvent &event) override;
     void mouseDown(const juce::MouseEvent &event) override;
     void mouseDrag(const juce::MouseEvent &event) override;

@@ -9,6 +9,8 @@
 #include "synth_section.h"
 #include "default_look_and_feel.h"
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
+#include "open_gl_combo_box.h"
+
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
 public:
     OpenGLKeymapKeyboardComponent(KeymapParams & params)
@@ -58,9 +60,8 @@ public:
     }
 
 };
-class MidiInputSelectorComponentListBox : public juce::ListBox,
-                                                                              private juce::ListBoxModel,
-private juce::ChangeListener
+
+class MidiInputSelectorComponentListBox : public juce::ListBox, private juce::ListBoxModel, private juce::ChangeListener
 {
 public:
     MidiInputSelectorComponentListBox (const juce::ValueTree &v)
@@ -243,22 +244,18 @@ private:
 
 class KeymapParameterView : public SynthSection {
 public:
+
+    //KeymapParameterView(chowdsp::PluginState& pluginState, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
+    //KeymapParameterView(chowdsp::PluginState& pluginState, KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
+    KeymapParameterView(KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
+
+    void resized() override;
+
     void setColorRecursively(juce::Component *component, int color_id, const juce::Colour& color) {
         component->setColour(color_id, color);
         for (juce::Component *child : component->getChildren())
             setColorRecursively(child, color_id, color);
     }
-    // Constructor method that takes two arguments: a smart pointer to a KeymapProcessor,
-    // and a reference to an OpenGlWrapper
-    KeymapParameterView(KeymapProcessor &, OpenGlWrapper &);
-
-    // Public function definitions for the class, which override the base class methods for
-    // initializing, rendering, resizing, and painting OpenGl components
-    //    void initOpenGlComponents(OpenGlWrapper &open_gl) override;
-
-
-
-    void resized() override;
 
     void paintBackground(juce::Graphics &g) override {
         SynthSection::paintContainer(g);
@@ -275,16 +272,37 @@ public:
 
     ~KeymapParameterView();
 
+    /*
+     * todo: need
+     *  - Select/Deselect menu
+     *  - Keys menu
+     *  - Clear button
+     *  - Midi Edit (E) toggle
+     *
+     *  and then velocity curves
+     *
+     *  keymap should default to having all keys on
+     */
+
+    std::unique_ptr<OpenGLComboBox> selectDeselect_combobox;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> selectDeselect_attachment;
 
 private:
     OpenGlWrapper &opengl;
-    // Private function definitions and member variables for the KeymapParameterView class
     void redoImage();
 
-    KeymapParams *params = nullptr;
+    KeymapParams& params;
     KeymapProcessor &proc;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlMidiSelector> midi_selector_;
+
+
+
+//    std::unique_ptr<OpenGLComboBox> whichKeys_combobox;
+//    std::unique_ptr<chowdsp::ComboBoxAttachment> whichKeys_attachment;
+//
+//    std::unique_ptr<SynthButton> clearButton;
+//    std::unique_ptr<chowdsp::ButtonAttachment> clearButton_attachment;
 
 };
 #endif //KEYMAPPARAMETERVIEW_H
