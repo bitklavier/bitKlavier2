@@ -176,11 +176,26 @@ namespace bitklavier {
                     modChan.setProperty(IDs::end, a.end, nullptr);
                     modChan.setProperty(IDs::skew, a.skew, nullptr);
                     std::visit([&](auto *p) {
-                        p->modulatable_param = modChan;
+                        p->setRangeToValueTree(modChan);
                     }, param);
                     // param.modulatable_param = modChan;
                     mod_params.appendChild(modChan, nullptr);
                     mod++;
+                }
+            }
+            else {
+                for (auto param: state.params.modulatableParams) {
+                    juce::String name = std::visit([](auto *p) -> juce::String {
+                        return p->paramID; // Works if all types have getParamID()
+                    }, param);
+                    auto vt = mod_params.getChildWithProperty(IDs::parameter, name);
+                    std::visit([&](auto *p) {
+                        p->setRangeToValueTree(vt);
+                    }, param);
+                    auto val = v.getProperty(name);
+                    std::visit([&](auto *p) {
+                       p->setParameterValue(val);
+                   }, param);
                 }
             }
         }

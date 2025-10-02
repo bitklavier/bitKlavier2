@@ -73,14 +73,14 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
 
     setComponentID(parent.getComponentID());
 
-    delay_ = std::make_unique<SynthSlider>("delay");
+    delay_ = std::make_unique<SynthSlider>("delay", params.delayParam->getModParam());
     addSlider(delay_.get());
     delay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     delay_->setPopupPlacement(juce::BubbleComponent::below);
     delay_->parentHierarchyChanged();
     delay_->setVisible(false);
 
-    attack_ = std::make_unique<SynthSlider>("attack");
+    attack_ = std::make_unique<SynthSlider>("attack", params.attackParam->getModParam());
     addSlider(attack_.get());
     attack_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     attack_->setPopupPlacement(juce::BubbleComponent::below);
@@ -93,14 +93,14 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     attack_power_->setRange(-10., 10.); // don't need to do this in the original Vital version, not sure why we need this here
     attack_power_->setVisible(false);
 
-    hold_ = std::make_unique<SynthSlider>(parent.getComponentID() +"_hold");
+    hold_ = std::make_unique<SynthSlider>("hold");
     addSlider(hold_.get());
     hold_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     hold_->setPopupPlacement(juce::BubbleComponent::below);
     hold_->parentHierarchyChanged();
     hold_->setVisible(false);
 
-    decay_ = std::make_unique<SynthSlider>( "decay");
+    decay_ = std::make_unique<SynthSlider>( "decay", params.decayParam->getModParam());
     addSlider(decay_.get());
     decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     decay_->setPopupPlacement(juce::BubbleComponent::below);
@@ -124,7 +124,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     release_power_->setRange(-10., 10.);
     release_power_->setVisible(false);
 
-    sustain_ = std::make_unique<SynthSlider>("sustain");
+    sustain_ = std::make_unique<SynthSlider>("sustain", params.sustainParam->getModParam());
     addSlider(sustain_.get());
     sustain_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     sustain_->setPopupPlacement(juce::BubbleComponent::below);
