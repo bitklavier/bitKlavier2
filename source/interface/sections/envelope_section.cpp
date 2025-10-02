@@ -88,12 +88,12 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     attack_->setShowPopupOnHover(true);
     attack_->setValue(params.attackParam->getDefaultValue());
 
-    attack_power_ = std::make_unique<SynthSlider>( "attack_power");
+    attack_power_ = std::make_unique<SynthSlider>( "attack_power", juce::ValueTree{});
     addSlider(attack_power_.get());
     attack_power_->setRange(-10., 10.); // don't need to do this in the original Vital version, not sure why we need this here
     attack_power_->setVisible(false);
 
-    hold_ = std::make_unique<SynthSlider>("hold");
+    hold_ = std::make_unique<SynthSlider>("hold",juce::ValueTree{});
     addSlider(hold_.get());
     hold_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     hold_->setPopupPlacement(juce::BubbleComponent::below);
@@ -107,19 +107,19 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     decay_->setShowPopupOnHover(true);
     decay_->setValue(params.decayParam->getDefaultValue());
 
-    decay_power_ = std::make_unique<SynthSlider>( "decay_power");
+    decay_power_ = std::make_unique<SynthSlider>( "decay_power",juce::ValueTree{});
     addSlider(decay_power_.get());
     decay_power_->setRange(-10., 10.);
     decay_power_->setVisible(false);
 
-    release_ = std::make_unique<SynthSlider>("release");
+    release_ = std::make_unique<SynthSlider>("release",params.releaseParam->getModParam());
     addSlider(release_.get());
     release_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     release_->setPopupPlacement(juce::BubbleComponent::below);
     release_->setShowPopupOnHover(true);
     release_->setValue(params.releaseParam->getDefaultValue());
 
-    release_power_ = std::make_unique<SynthSlider>( "release_power");
+    release_power_ = std::make_unique<SynthSlider>( "release_power",juce::ValueTree{});
     addSlider(release_power_.get());
     release_power_->setRange(-10., 10.);
     release_power_->setVisible(false);

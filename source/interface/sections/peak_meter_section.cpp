@@ -21,7 +21,7 @@
 
 class VolumeSlider : public SynthSlider {
 public:
-    VolumeSlider(juce::String name) : SynthSlider(name)
+    VolumeSlider(juce::String name, const juce::ValueTree& mod_param) : SynthSlider(name,mod_param)
     {
         paintToImage(true);
     }
@@ -69,7 +69,7 @@ PeakMeterSection::PeakMeterSection(
    peak_meter_right_ = std::make_shared<PeakMeterViewer>(false, outputLevels);
    addOpenGlComponent(peak_meter_right_);
 
-   volume_ = std::make_shared<VolumeSlider>(outGainDB.paramID);
+   volume_ = std::make_shared<VolumeSlider>(outGainDB.paramID,outGainDB.getModParam());
    volumeAttach_ = std::make_unique<chowdsp::SliderAttachment>(outGainDB, listeners, *volume_, nullptr);
    addSlider(volume_.get());
    volume_->addAttachment(volumeAttach_.get());

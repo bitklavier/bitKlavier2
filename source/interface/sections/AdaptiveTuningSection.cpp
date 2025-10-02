@@ -11,7 +11,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
 {
     setComponentID(parent.getComponentID());
 
-    clusterThreshold_Slider = std::make_unique<SynthSlider>(params.tAdaptiveClusterThresh->paramID);
+    clusterThreshold_Slider = std::make_unique<SynthSlider>(params.tAdaptiveClusterThresh->paramID, params.tAdaptiveClusterThresh->getModParam());
     addSlider(clusterThreshold_Slider.get());
     clusterThreshold_Slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     clusterThreshold_Slider->setPopupPlacement(juce::BubbleComponent::below);
@@ -19,7 +19,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     clusterThreshold_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveClusterThresh, listeners, *clusterThreshold_Slider, nullptr);
     clusterThreshold_Slider->addAttachment(clusterThreshold_SliderAttachment.get());
 
-    history_Slider = std::make_unique<SynthSlider>(params.tAdaptiveHistory->paramID);
+    history_Slider = std::make_unique<SynthSlider>(params.tAdaptiveHistory->paramID, params.tAdaptiveHistory->getModParam());
     addSlider(history_Slider.get());
     history_Slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     history_Slider->setPopupPlacement(juce::BubbleComponent::below);

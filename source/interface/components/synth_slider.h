@@ -349,7 +349,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
     };
 
     //SynthSlider(juce::String name, chowdsp::FloatParameter& param);
-    SynthSlider(juce::String name,const juce::ValueTree & vt_to_listen_to={});
+    SynthSlider(juce::String name,const juce::ValueTree & vt_to_listen_to);
   ~SynthSlider();
     virtual void mouseDown(const juce::MouseEvent& e) override;
     virtual void mouseDrag(const juce::MouseEvent& e) override;
