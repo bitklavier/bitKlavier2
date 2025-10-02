@@ -247,7 +247,7 @@ public:
 
     //KeymapParameterView(chowdsp::PluginState& pluginState, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
     //KeymapParameterView(chowdsp::PluginState& pluginState, KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
-    KeymapParameterView(KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
+    KeymapParameterView(KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper *open_gl);
 
     void resized() override;
 
@@ -284,11 +284,10 @@ public:
      *  keymap should default to having all keys on
      */
 
-    std::unique_ptr<OpenGLComboBox> selectDeselect_combobox;
-    std::unique_ptr<chowdsp::ComboBoxAttachment> selectDeselect_attachment;
+
 
 private:
-    OpenGlWrapper &opengl;
+    //OpenGlWrapper &opengl;
     void redoImage();
 
     KeymapParams& params;
@@ -296,7 +295,11 @@ private:
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlMidiSelector> midi_selector_;
 
-
+    /**
+     * todo: move these to inside OpenGLKeymapKeyboardComponent
+     */
+    std::unique_ptr<OpenGLComboBox> selectDeselect_combobox;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> selectDeselect_attachment;
 
 //    std::unique_ptr<OpenGLComboBox> whichKeys_combobox;
 //    std::unique_ptr<chowdsp::ComboBoxAttachment> whichKeys_attachment;

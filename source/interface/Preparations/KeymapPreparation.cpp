@@ -37,7 +37,8 @@ std::unique_ptr<SynthSection> KeymapPreparation::getPrepPopup()
 
             //return std::make_unique<KeymapParameterView>(proc->getState(), *proc, proc->getState().params, state.getProperty (IDs::uuid).toString(), *parent->getOpenGlWrapper());
 
-            return std::make_unique<KeymapParameterView>(*proc, proc->getState().params, state.getProperty (IDs::uuid).toString(), *parent->getOpenGlWrapper());
+            return std::make_unique<KeymapParameterView>(*proc, proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+            //return std::make_unique<KeymapParameterView>(*proc, proc->getState().params, state.getProperty (IDs::uuid).toString(), *parent->getOpenGlWrapper());
 
     return nullptr;
 }

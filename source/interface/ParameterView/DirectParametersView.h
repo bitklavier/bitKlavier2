@@ -16,7 +16,7 @@
 class DirectParametersView : public SynthSection
 {
 public:
-    DirectParametersView (chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""),params(params)
+    DirectParametersView (chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), params(params)
     {
         // the name that will appear in the UI as the name of the section
         setName ("direct");

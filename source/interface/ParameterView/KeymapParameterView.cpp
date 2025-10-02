@@ -8,24 +8,27 @@ KeymapParameterView::KeymapParameterView (
     KeymapProcessor& _proc,
     KeymapParams& kparams,
     juce::String name,
-    OpenGlWrapper &open_gl) : proc(_proc), params(kparams), opengl(open_gl), SynthSection("")
+    OpenGlWrapper *open_gl) : proc(_proc), params(kparams), SynthSection("")
+    //OpenGlWrapper *open_gl) : proc(_proc), params(kparams), opengl(open_gl), SynthSection("")
  {
      setName("keymap");
      setLookAndFeel(DefaultLookAndFeel::instance());
      setComponentID(name);
 
-     auto& listeners = proc.getState().getParameterListeners();;
+     auto& listeners = proc.getState().getParameterListeners();
+
+     if (auto* kp = dynamic_cast<KeymapParams*>(&params))
+     {
+          selectDeselect_combobox = std::make_unique<OpenGLComboBox> (kp->selectChoice->paramID.toStdString());
+          selectDeselect_attachment = std::make_unique<chowdsp::ComboBoxAttachment> (*kp->selectChoice.get(), listeners, *selectDeselect_combobox, nullptr);
+          addComboBox (selectDeselect_combobox.get(), true, true);
+     }
 
      keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params);
      addStateModulatedComponent(keyboard_component_.get());
      addAndMakeVisible(keyboard_component_.get());
 
-     if (auto* kp = dynamic_cast<KeymapParams*>(&params))
-     {
-         selectDeselect_combobox = std::make_unique<OpenGLComboBox> (kp->selectChoice->paramID.toStdString());
-         selectDeselect_attachment = std::make_unique<chowdsp::ComboBoxAttachment> (*kp->selectChoice.get(), listeners, *selectDeselect_combobox, nullptr);
-         addComboBox (selectDeselect_combobox.get(), true, true);
-     }
+
 }
 
 KeymapParameterView::~KeymapParameterView(){}

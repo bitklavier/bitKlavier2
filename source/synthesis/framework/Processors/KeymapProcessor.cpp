@@ -127,6 +127,7 @@ void KeymapParams::deserialize (typename Serializer::DeserializedType deserial, 
     auto mystr = deserial->getStringAttribute ("keyOn");
     //also used in bkkeymapkeyboardcomponent TODO - make a function
     std::bitset<128> bits;
+    bits.set();
     std::istringstream iss (mystr.toStdString());
     int key;
 
@@ -137,5 +138,6 @@ void KeymapParams::deserialize (typename Serializer::DeserializedType deserial, 
             bits.set (key);
         }
     }
+
     paramHolder.keyboard_state.keyStates = bits;
 }

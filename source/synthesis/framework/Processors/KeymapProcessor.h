@@ -49,10 +49,7 @@ struct KeymapNonParameterState : chowdsp::NonParamState
 {
     KeymapNonParameterState()
     {
-        //addStateValues ({ &prepPoint });
     }
-
-    //chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
 class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<KeymapParams,KeymapNonParameterState>>
@@ -64,7 +61,6 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override  {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-
 
     bool acceptsMidi() const override { return false; }
     bool producesMidi() const override { return true; }
