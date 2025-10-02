@@ -26,6 +26,7 @@
 #include "modulation_manager.h"
 #include "PreparationSection.h"
 #include "TuningParametersView.h"
+#include "SampleLoadManager.h"
 
 namespace {
     template<class Comparator>
@@ -1113,6 +1114,16 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
                                        exit_button_(new OpenGlShapeButton("Exit")),
                                        background_(new OpenGlBackground()), is_modulation_(ismod)
 {
+sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
+                                                         juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+
+    addAndMakeVisible(sampleSelector.get());
+    sampleSelector->addListener(this);
+    sampleSelector->setTriggeredOnMouseDown(true);
+    sampleSelector->setShape(juce::Path(), true, true, true);
+    currentSampleType = 0;
+    sampleSelectText = std::make_shared<PlainTextComponent>("Sample Select Text", "---");
+    addOpenGlComponent(sampleSelectText);
     addBackgroundComponent(background_.get());
     background_->setComponent(this);
 
@@ -1187,6 +1198,22 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
     if (clicked_button == exit_button_.get())
     {
         reset();
+    } else if (clicked_button == sampleSelector.get()) {
+        PopupItems options;
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        auto string_names = parent->sampleLoadManager->getAllSampleSets();
+        for (int i = 0; i < string_names.size(); i++) {
+            options.addItem(i, string_names[i]);
+
+        }
+
+        juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+            parent->sampleLoadManager->loadSamples(selection, true);
+            sampleSelectText->setText(parent->sampleLoadManager->getAllSampleSets()[selection]);
+            resized();
+        });
     }
 
 }
@@ -1203,6 +1230,9 @@ void PreparationPopup::resized() {
 
     auto header_bounds = bounds.removeFromTop(35);
     exit_button_->setBounds(header_bounds.removeFromLeft(35).reduced(5));
+    header_bounds.removeFromLeft(10);
+    sampleSelector->setBounds(header_bounds.removeFromLeft(100));
+    sampleSelectText->setBounds(sampleSelector->getBounds());
 
     if(prep_view != nullptr)
     {

@@ -114,6 +114,11 @@ public:
     // void addListener(Listener* listener) {listeners_.push_back(listener);}
 
 private:
+
+    int currentSampleType;
+    std::shared_ptr<PlainTextComponent> sampleSelectText;
+    std::unique_ptr<juce::ShapeButton> sampleSelector ;
+
     bool is_modulation_;
     // std::vector<Listener*> listeners_;
     std::shared_ptr<OpenGlBorder> _border;

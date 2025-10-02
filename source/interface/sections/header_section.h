@@ -250,7 +250,9 @@ class HeaderSection : public SynthSection, public LogoSection::Listener {
 //      for (Listener* listener : listeners_)
 //        listener->showAboutSection();
 //    }
-
+    void setSampleSelectText(std::string text) {
+        sampleSelectText->setText(text);
+    }
     void setTabOffset(int offset) { tab_offset_ = offset; repaint(); }
     void notifyChange();
     void notifyFresh();

@@ -75,9 +75,22 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         gallery = synth_data.tree;
     }
 
-    sampleLoadManager->preferences = userPreferences;
-    sampleLoadManager->loadSamples(0,true);
-    synth_->user_prefs = userPreferences;
+    auto sets = sampleLoadManager->getAllSampleSets();
+    auto it = std::find(sets.begin(), sets.end(), "Default");
+    int defaultIndex = (it != sets.end())
+        ? static_cast<int>(std::distance(sets.begin(), it))
+        : -1;
+
+    if (defaultIndex >= 0)
+    {
+        sampleLoadManager->preferences = userPreferences;
+        sampleLoadManager->loadSamples(defaultIndex, true);
+
+        if (gui_)
+            gui_->header_->setSampleSelectText(sets[defaultIndex]);
+
+        synth_->user_prefs = userPreferences;
+    }
 
     //sampleLoadManager->loadSamples(0, true);
 }

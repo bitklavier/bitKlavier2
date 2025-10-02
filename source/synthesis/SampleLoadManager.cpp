@@ -141,13 +141,35 @@ juce::BigInteger SampleLoadManager::getMidiRange (juce::String pitchName)
 
     return midirange;
 }
+const std::vector<std::string> SampleLoadManager::getAllSampleSets()
+{
+    std::vector<std::string> sampleSets;
+
+    // Pull base path from preferences
+    juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+    juce::File baseDir (samplePath);
+
+    if (baseDir.isDirectory())
+    {
+        // Find only directories inside base path
+        juce::Array<juce::File> dirs = baseDir.findChildFiles (
+            juce::File::TypesOfFileToFind::findDirectories,
+            false // not recursive
+        );
+
+        for (auto& d : dirs)
+            sampleSets.push_back (d.getFileName().toStdString());
+    }
+
+    return sampleSets;
+}
 
 bool SampleLoadManager::loadSamples (int selection, bool isGlobal)
 {
     MyComparator sorter;
     juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
-
-    samplePath.append (bitklavier::utils::samplepaths[selection], 10); // change to "orig" to test that way
+    auto soundsets = getAllSampleSets();
+    samplePath.append (soundsets[selection], 10); // change to "orig" to test that way
     //samplePath.append("/orig", 10);
     DBG ("sample path = " + samplePath);
     juce::File directory (samplePath);
@@ -167,10 +189,10 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal)
     // save this set as the global set
     if (isGlobal)
     {
-        globalSoundset_name = bitklavier::utils::samplepaths[selection];
-        globalHammersSoundset_name = bitklavier::utils::samplepaths[selection] + "Hammers";
-        globalReleaseResonanceSoundset_name = bitklavier::utils::samplepaths[selection] + "ReleaseResonance";
-        globalPedalsSoundset_name = bitklavier::utils::samplepaths[selection] + "Pedals";
+        globalSoundset_name = soundsets[selection];
+        globalHammersSoundset_name = soundsets[selection] + "Hammers";
+        globalReleaseResonanceSoundset_name = soundsets[selection] + "ReleaseResonance";
+        globalPedalsSoundset_name = soundsets[selection] + "Pedals";
     }
 
     loadSamples_sub (bitklavier::utils::BKPianoMain);

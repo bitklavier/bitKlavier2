@@ -35,18 +35,6 @@ LogoSection::LogoSection() : SynthSection("logo_section") {
     setSkinOverride(Skin::kLogo);
 }
 
-namespace string_constants {
-    // i think the sample library menu should be autopopulated by subfolders in the samples folder
-    // and also by whatever other folders the user specifies in preferences for storing samples
-    // including SoundFonts
-    static const std::vector<std::string> cBKSampleLoadTypes = {
-        "Piano (Default)",
-        "Library 2",
-        "Library 3",
-        "Library 4"
-    };
-};
-
 void LogoSection::resized() {
     int logo_padding_y = kLogoPaddingY * size_ratio_;
     int logo_height = getHeight() - 2 * logo_padding_y;
@@ -106,7 +94,7 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     addPianoButton->setLookAndFeel(TextLookAndFeel::instance());
     addPianoButton->setButtonText("add piano");
 
-    sampleSelectText->setText(string_constants::cBKSampleLoadTypes[0]);
+    sampleSelectText->setText("---");
     pianoSelectText->setText(getAllPianoNames().at(0));
     setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
@@ -217,15 +205,18 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         resized();
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
-        for (int i = 0; i < bitklavier::utils::BKSampleLoadType::BKNumSampleLoadTypes; i++) {
-            options.addItem(i, string_constants::cBKSampleLoadTypes[i]);
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        auto string_names = parent->sampleLoadManager->getAllSampleSets();
+        for (int i = 0; i < string_names.size(); i++) {
+            options.addItem(i, string_names[i]);
+
         }
 
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
             SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
             parent->sampleLoadManager->loadSamples(selection, true);
-            sampleSelectText->setText(string_constants::cBKSampleLoadTypes[selection]);
+            sampleSelectText->setText(parent->sampleLoadManager->getAllSampleSets()[selection]);
             resized();
         });
     } else if (clicked_button == pianoSelector.get()) {

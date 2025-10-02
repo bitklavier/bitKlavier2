@@ -122,7 +122,7 @@ public:
     juce::String globalReleaseResonanceSoundset_name;
     juce::String globalPedalsSoundset_name;
 
-
+    const std::vector<std::string> getAllSampleSets();
     std::shared_ptr<UserPreferencesWrapper> preferences;
     void handleAsyncUpdate() override;
     SynthGuiInterface* synthGui;
