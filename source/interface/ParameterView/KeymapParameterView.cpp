@@ -9,7 +9,6 @@ KeymapParameterView::KeymapParameterView (
     KeymapParams& kparams,
     juce::String name,
     OpenGlWrapper *open_gl) : proc(_proc), params(kparams), SynthSection("")
-    //OpenGlWrapper *open_gl) : proc(_proc), params(kparams), opengl(open_gl), SynthSection("")
  {
      setName("keymap");
      setLookAndFeel(DefaultLookAndFeel::instance());
@@ -17,18 +16,9 @@ KeymapParameterView::KeymapParameterView (
 
      auto& listeners = proc.getState().getParameterListeners();
 
-     if (auto* kp = dynamic_cast<KeymapParams*>(&params))
-     {
-          selectDeselect_combobox = std::make_unique<OpenGLComboBox> (kp->selectChoice->paramID.toStdString());
-          selectDeselect_attachment = std::make_unique<chowdsp::ComboBoxAttachment> (*kp->selectChoice.get(), listeners, *selectDeselect_combobox, nullptr);
-          addComboBox (selectDeselect_combobox.get(), true, true);
-     }
-
      keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params);
      addStateModulatedComponent(keyboard_component_.get());
      addAndMakeVisible(keyboard_component_.get());
-
-
 }
 
 KeymapParameterView::~KeymapParameterView(){}
@@ -49,9 +39,6 @@ void KeymapParameterView::resized()
 
     juce::Rectangle keySelectorRect = area.removeFromBottom(150);
     keyboard_component_->setBounds(keySelectorRect);
-    int keyboardTop = keyboard_component_->getKeyboardTop();
-    int editButtonRight = keyboard_component_->getEditAllTextButtonRight();
-    int kcomboboxheight = keyboardTop - keyboard_component_->getY();
 
     area.removeFromBottom(smallpadding);
 
@@ -86,7 +73,7 @@ void KeymapParameterView::resized()
         setColorRecursively(midi_selector_.get(), juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
     }
 
-    selectDeselect_combobox->setBounds(area.getRight() - 150, keyboard_component_->getY(), 150, comboboxheight);
+    //selectDeselect_combobox->setBounds(area.getRight() - 150, keyboard_component_->getY(), 150, comboboxheight);
     //keyboard_component_->setBounds(kTitleWidth, 220, 600, 100);
 }
 

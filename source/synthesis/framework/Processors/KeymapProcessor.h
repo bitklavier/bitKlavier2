@@ -15,8 +15,8 @@ struct KeymapKeyboardState {
     KeymapKeyboardState() {
         keyStates.set();
     }
-    std::bitset<128> harmonizationState;
-    std::bitset<128> keyToHarmonize;
+//    std::bitset<128> harmonizationState;
+//    std::bitset<128> keyToHarmonize;
     std::bitset<128> keyStates;
 };
 

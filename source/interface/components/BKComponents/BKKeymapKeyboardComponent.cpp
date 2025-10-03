@@ -22,8 +22,20 @@ void BKKeymapKeyboardComponent::resized() {
 
     keyboard_.setBounds(keyboardRect);
 
-    juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2*heightUnit + 4));
-    keyboardValsTextFieldOpen.setBounds(textSlab.removeFromLeft(widthUnit*1.5));
+    keymapRow.removeFromBottom(2);
+    juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2 * heightUnit + 4));
+    keyboardValsTextFieldOpen.setBounds(textSlab.removeFromLeft(widthUnit * 1.5));
+
+    textSlab.removeFromLeft(20);
+    allOnButton.setBounds(textSlab.removeFromLeft(widthUnit));
+    textSlab.removeFromLeft(4);
+    clearButton.setBounds(textSlab.removeFromLeft(widthUnit));
+
+    textSlab.removeFromLeft(20);
+    keysCB.setBounds(textSlab.removeFromLeft(widthUnit));
+
+    textSlab.removeFromLeft(4);
+    keysButton.setBounds(textSlab.removeFromLeft(widthUnit));
 
     keyboardValsTextField->setBounds(keyboard_.getBounds());
 }
@@ -74,7 +86,220 @@ void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
        keyboardValsTextField->setCaretVisible(true);
        keyboardValsTextField->setColour(juce::TextEditor::outlineColourId, juce::Colours::black);
     }
+    else if (button == &clearButton) {
+        keyboard_state_.keyStates.reset();
+    }
+    else if (button == &allOnButton) {
+        keyboard_state_.keyStates.set();
+    }
+    else if (button == &keysButton)
+    {
+        getKeysMenu().showMenuAsync(
+        juce::PopupMenu::Options().withTargetComponent(&keysButton),
 
+        // FIX: Use juce::ModalCallbackFunction::create with a lambda that captures 'this'.
+        juce::ModalCallbackFunction::create(
+            // The lambda captures 'this' to access the non-static member function
+            [this](int result)
+            {
+                // Now, you can safely call your original member function,
+                // passing 'this' for the 'vc' argument if it expects the component pointer.
+                if (result != 0)
+                {
+                    this->keysMenuCallback(result, this);
+                    this->resized(); // triggers update of keyStates
+                }
+            })
+        );
+    }
+}
+
+void BKKeymapKeyboardComponent::keysMenuCallback(int result, BKKeymapKeyboardComponent* vc)
+{
+    int set = result / 12;
+    int pc = result % 12;
+    DBG("set: " + juce::String(set) + " pc: " + juce::String(pc));
+
+    switch (set) {
+        case KeySetBlack :
+            setBlack(deselectKey);
+            break;
+
+        case KeySetWhite :
+            setWhite(deselectKey);
+            break;
+
+        case KeySetAllPC :
+            setChord(static_cast<KeySet>(set), getPitchClassFromInt(pc));
+            break;
+
+        case KeySetOctatonicOne :
+            setOctatonic(Oct1);
+            break;
+
+        case KeySetOctatonicTwo :
+            setOctatonic(Oct2);
+            break;
+
+        case KeySetOctatonicThree :
+            setOctatonic(Oct3);
+            break;
+
+        default :
+            setChord(static_cast<KeySet>(set), getPitchClassFromInt(pc));
+            break;
+    }
+
+
+
+//    if (vc == nullptr)
+//    {
+//        juce::PopupMenu::dismissAllActiveMenus();
+//        return;
+//    }
+//
+//    BKAudioProcessor& processor = vc->processor;
+//
+//    // get old keys to send to update
+//    Keymap::Ptr keymap = processor.gallery->getKeymap(processor.updateState->currentKeymapId);
+//
+//    {
+//        int set = result/ 12;
+//        int pc = result % 12;
+//
+//        DBG("set: " + juce::String(set) + " pc: " + juce::String(pc));
+//
+//        keyboard_.setKeys((KeySet)set, vc->selectType, (PitchClass)pc);
+//    }
+//
+//    vc->keyboard->setKeysInKeymap(keymap->keys());
+//
+//    processor.updateState->editsMade = true;
+}
+
+void BKKeymapKeyboardComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
+{
+    if(comboBoxThatHasChanged == &keysCB)
+    {
+        deselectKey = keysCB.getSelectedItemIndex();
+    }
+}
+
+juce::PopupMenu BKKeymapKeyboardComponent::getKeysMenu(void)
+{
+    juce::PopupMenu menu;
+
+   // menu.addItem(ID(KeySetAll), "All");
+    menu.addSubMenu("Pitches:",  getPitchClassMenu((KeySet) ID(KeySetAllPC)));
+    menu.addItem(ID(KeySetBlack), "Black");
+    menu.addItem(ID(KeySetWhite), "White");
+    menu.addItem(ID(KeySetOctatonicOne), "Octatonic 1");
+    menu.addItem(ID(KeySetOctatonicTwo), "Octatonic 2");
+    menu.addItem(ID(KeySetOctatonicThree), "Octatonic 3");
+
+    menu.addSubMenu("Major Triad",  getPitchClassMenu((KeySet) ID(KeySetMajorTriad)));
+    menu.addSubMenu("Minor Triad",  getPitchClassMenu((KeySet) ID(KeySetMinorTriad)));
+    menu.addSubMenu("Major Seven",  getPitchClassMenu((KeySet) ID(KeySetMajorSeven)));
+    menu.addSubMenu("Dom Seven",    getPitchClassMenu((KeySet) ID(KeySetDomSeven)));
+    menu.addSubMenu("Minor Seven",  getPitchClassMenu((KeySet) ID(KeySetMinorSeven)));
+
+    menu.addSubMenu("Major", getPitchClassMenu((KeySet) ID(KeySetMajor)));
+    menu.addSubMenu("Natural Minor", getPitchClassMenu((KeySet) ID(KeySetNaturalMinor)));
+    menu.addSubMenu("Harmonic Minor", getPitchClassMenu((KeySet) ID(KeySetHarmonicMinor)));
+
+    return std::move(menu);
+}
+
+void BKKeymapKeyboardComponent::setWhite(bool action)
+{
+    int pc;
+    for (int note = 0; note < 128; note++)
+    {
+        pc = note % 12;
+
+        if (white.contains(pc))
+        {
+            keyboard_state_.keyStates[note] = !deselectKey;
+        }
+    }
+
+}
+
+void BKKeymapKeyboardComponent::setBlack(bool action)
+{
+    int pc;
+    for (int note = 0; note < 128; note++)
+    {
+        pc = note % 12;
+
+        if (black.contains(pc))
+        {
+            keyboard_state_.keyStates[note] = !deselectKey;
+        }
+    }
+}
+
+void BKKeymapKeyboardComponent::setChord(KeySet set, PitchClass root)
+{
+    int pc;
+    juce::Array<int> chord;
+    if      (set == KeySetMajorTriad)          chord = majortriad;
+    else if (set == KeySetMinorTriad)          chord = minortriad;
+    else if (set == KeySetMajorSeven)          chord = majorseven;
+    else if (set == KeySetDomSeven)            chord = domseven;
+    else if (set == KeySetMinorSeven)          chord = minorseven;
+    else if (set == KeySetAllPC)               chord = allpc;
+    else if (set == KeySetMajor)               chord = major;
+    else if (set == KeySetNaturalMinor)        chord = naturalminor;
+    else if (set == KeySetHarmonicMinor)       chord = harmonicminor;
+    else                                       return;
+
+    for (int note = 0; note < 128; note++)
+    {
+        pc = ((note - intFromPitchClass(root)) % 12);
+
+        if (chord.contains(pc))
+        {
+            //keymap.set(note, action);
+            keyboard_state_.keyStates[note] = !deselectKey;
+        }
+    }
+}
+
+void BKKeymapKeyboardComponent::setOctatonic(OctType type)
+{
+    int pc;
+    juce::Array<int> octatonic;
+    if      (type == Oct1)  octatonic = octatonic1;
+    else if (type == Oct2)  octatonic = octatonic2;
+    else if (type == Oct3)  octatonic = octatonic3;
+    else return;
+
+    for (int note = 0; note < 128; note++)
+    {
+        pc = note % 12;
+
+        if (octatonic.contains(pc))
+        {
+            keyboard_state_.keyStates[note] = !deselectKey;
+        }
+    }
+}
+
+juce::PopupMenu BKKeymapKeyboardComponent::getPitchClassMenu(int offset)
+{
+    int Id;
+
+    juce::PopupMenu menu;
+
+    for (int i = 0; i < 12; i++)
+    {
+        Id = offset + i;
+        DBG("ID: " + juce::String(Id));
+        menu.addItem(Id, pcs[i]);
+    }
+
+    return std::move(menu);
 }
 
 void BKKeymapKeyboardComponent::textEditorReturnKeyPressed(juce::TextEditor &textEditor) {

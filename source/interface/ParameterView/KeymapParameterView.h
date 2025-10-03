@@ -20,21 +20,23 @@ public:
         image_component_->setComponent(this);
     }
 
-    ~OpenGLKeymapKeyboardComponent()
-    {}
+    ~OpenGLKeymapKeyboardComponent(){}
+
     virtual void resized() override {
         OpenGlAutoImageComponent::resized();
-        // if (isShowing())
         redoImage();
     }
+
     void mouseDrag(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseDrag(e);
         redoImage();
     }
+
     void mouseMove(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseMove(e);
         redoImage();
     }
+
     void buttonClicked(juce::Button *b) override {
         OpenGlAutoImageComponent::buttonClicked(b);
         redoImage();
@@ -58,7 +60,6 @@ public:
         OpenGlAutoImageComponent::textEditorTextChanged(textEditor);
         redoImage();
     }
-
 };
 
 class MidiInputSelectorComponentListBox : public juce::ListBox, private juce::ListBoxModel, private juce::ChangeListener
@@ -73,7 +74,6 @@ public:
         setOutlineThickness (1);
     }
 
-
     void updateDevices()
     {
         items = juce::MidiInput::getAvailableDevices();
@@ -83,6 +83,7 @@ public:
     {
         return items.size();
     }
+
     static void drawTextLayout (juce::Graphics& g, juce::Component& owner, juce::StringRef text, const juce::Rectangle<int>& textBounds, bool enabled)
     {
         const auto textColour = owner.findColour (juce::ListBox::textColourId, true).withMultipliedAlpha (enabled ? 1.0f : 0.6f);
@@ -99,6 +100,7 @@ public:
                                  (float) textBounds.getHeight());
         textLayout.draw (g, textBounds.toFloat());
     }
+
     void paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool rowIsSelected) override
     {
         if (juce::isPositiveAndBelow (row, items.size()))
@@ -272,20 +274,6 @@ public:
 
     ~KeymapParameterView();
 
-    /*
-     * todo: need
-     *  - Select/Deselect menu
-     *  - Keys menu
-     *  - Clear button
-     *  - Midi Edit (E) toggle
-     *
-     *  and then velocity curves
-     *
-     *  keymap should default to having all keys on
-     */
-
-
-
 private:
     //OpenGlWrapper &opengl;
     void redoImage();
@@ -294,18 +282,5 @@ private:
     KeymapProcessor &proc;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlMidiSelector> midi_selector_;
-
-    /**
-     * todo: move these to inside OpenGLKeymapKeyboardComponent
-     */
-    std::unique_ptr<OpenGLComboBox> selectDeselect_combobox;
-    std::unique_ptr<chowdsp::ComboBoxAttachment> selectDeselect_attachment;
-
-//    std::unique_ptr<OpenGLComboBox> whichKeys_combobox;
-//    std::unique_ptr<chowdsp::ComboBoxAttachment> whichKeys_attachment;
-//
-//    std::unique_ptr<SynthButton> clearButton;
-//    std::unique_ptr<chowdsp::ButtonAttachment> clearButton_attachment;
-
 };
 #endif //KEYMAPPARAMETERVIEW_H
