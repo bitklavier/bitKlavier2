@@ -20,6 +20,39 @@ KeymapParameterView::KeymapParameterView (
      addStateModulatedComponent(keyboard_component_.get());
      addAndMakeVisible(keyboard_component_.get());
 
+     // knobs
+     asymmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_asymWarp->paramID);
+     addSlider(asymmetricalWarp_knob.get());
+     asymmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+     asymmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
+     asymmetricalWarp_knob->setShowPopupOnHover(true);
+     asymmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_asymWarp, listeners, *asymmetricalWarp_knob, nullptr);
+     asymmetricalWarp_knob->addAttachment(asymmetricalWarp_knob_attach.get());
+
+     symmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_symWarp->paramID);
+     addSlider(symmetricalWarp_knob.get());
+     symmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+     symmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
+     symmetricalWarp_knob->setShowPopupOnHover(true);
+     symmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_symWarp, listeners, *symmetricalWarp_knob, nullptr);
+     symmetricalWarp_knob->addAttachment(symmetricalWarp_knob_attach.get());
+
+     scale_knob = std::make_unique<SynthSlider>(params.velocityCurve_scale->paramID);
+     addSlider(scale_knob.get());
+     scale_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+     scale_knob->setPopupPlacement(juce::BubbleComponent::below);
+     scale_knob->setShowPopupOnHover(true);
+     scale_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_scale, listeners, *scale_knob, nullptr);
+     scale_knob->addAttachment(scale_knob_attach.get());
+
+     offset_knob = std::make_unique<SynthSlider>(params.velocityCurve_offset->paramID);
+     addSlider(offset_knob.get());
+     offset_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+     offset_knob->setPopupPlacement(juce::BubbleComponent::below);
+     offset_knob->setShowPopupOnHover(true);
+     offset_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_offset, listeners, *scale_knob, nullptr);
+     offset_knob->addAttachment(offset_knob_attach.get());
+
      //velocityCurveGraph.updateVelocityList(km->getVelocities());
      velocityCurveGraph.setAsym_k(1.);
      velocityCurveGraph.setSym_k(1.);
@@ -81,10 +114,17 @@ void KeymapParameterView::resized()
         setColorRecursively(midi_selector_.get(), juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
     }
 
-    velocityCurveGraph.setBounds(area);
+    // velocity knobs
+    juce::Rectangle velocityKnobsRect = area.removeFromLeft(area.getWidth() * 0.5);
+    juce::Rectangle velocityKnobsRect_top =  velocityKnobsRect.removeFromTop(velocityKnobsRect.getHeight() * 0.5);
+    asymmetricalWarp_knob->setBounds(velocityKnobsRect_top.removeFromLeft(velocityKnobsRect_top.getWidth() * 0.5));
+    symmetricalWarp_knob->setBounds(velocityKnobsRect_top);
 
-    //selectDeselect_combobox->setBounds(area.getRight() - 150, keyboard_component_->getY(), 150, comboboxheight);
-    //keyboard_component_->setBounds(kTitleWidth, 220, 600, 100);
+    scale_knob->setBounds(velocityKnobsRect.removeFromLeft(velocityKnobsRect.getWidth() * 0.5));
+    offset_knob->setBounds(velocityKnobsRect);
+
+
+
 }
 
 void KeymapParameterView::redoImage()

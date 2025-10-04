@@ -24,15 +24,57 @@ struct KeymapParams : chowdsp::ParamHolder
 {
     KeymapParams(const juce::ValueTree &v) : chowdsp::ParamHolder("keymap")
     {
-        add(selectChoice);
+        add(velocityCurve_asymWarp,
+            velocityCurve_symWarp,
+            velocityCurve_scale,
+            velocityCurve_offset,
+            velocityCurve_invert);
     }
 
-    // sets whether the Keys choice will turn on (select) or off (deselect) particular keys
-    chowdsp::EnumChoiceParameter<SelectChoice>::Ptr selectChoice {
-        juce::ParameterID { "selectChoice", 100 },
-        "Select Deselect",
-        SelectChoice::Select,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    chowdsp::FloatParameter::Ptr velocityCurve_asymWarp {
+        juce::ParameterID { "velocityCurve_asymWarp", 100 },
+        "Asymmetrical Warp",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.0f, 1.0f),
+        1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    chowdsp::FloatParameter::Ptr velocityCurve_symWarp {
+        juce::ParameterID { "velocityCurve_symWarp", 100 },
+        "Symmetrical Warp",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 5.0f, 1.0f),
+        1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    chowdsp::FloatParameter::Ptr velocityCurve_scale {
+        juce::ParameterID { "velocityCurve_scale", 100 },
+        "Scale",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.0f, 1.0f),
+        1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    chowdsp::FloatParameter::Ptr velocityCurve_offset {
+        juce::ParameterID { "velocityCurve_offset", 100 },
+        "Offset",
+        chowdsp::ParamUtils::createNormalisableRange (-1.0f, 1.0f, 0.0f),
+        0.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    chowdsp::BoolParameter::Ptr velocityCurve_invert {
+        juce::ParameterID { "velocityCurve_invert", 100 },
+        "velocityCurve_invert",
+        false
     };
 
     KeymapKeyboardState keyboard_state;

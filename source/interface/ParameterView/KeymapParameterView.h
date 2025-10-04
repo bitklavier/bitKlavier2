@@ -7,6 +7,7 @@
 
 #include "KeymapProcessor.h"
 #include "synth_section.h"
+#include "synth_slider.h"
 #include "default_look_and_feel.h"
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 #include "open_gl_combo_box.h"
@@ -247,9 +248,6 @@ private:
 
 class KeymapParameterView : public SynthSection {
 public:
-
-    //KeymapParameterView(chowdsp::PluginState& pluginState, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
-    //KeymapParameterView(chowdsp::PluginState& pluginState, KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper &);
     KeymapParameterView(KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper *open_gl);
 
     void resized() override;
@@ -266,6 +264,11 @@ public:
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
+
+        drawLabelForComponent(g, TRANS("asymmetrical warp"), asymmetricalWarp_knob.get());
+        drawLabelForComponent(g, TRANS("symmetrical warp"), symmetricalWarp_knob.get());
+        drawLabelForComponent(g, TRANS("scale"), scale_knob.get());
+        drawLabelForComponent(g, TRANS("offset"), offset_knob.get());
     }
 
     int getViewPosition() {
@@ -283,6 +286,20 @@ private:
     KeymapProcessor &proc;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlMidiSelector> midi_selector_;
+
+    // velocity curve knobs
+    std::unique_ptr<SynthSlider> asymmetricalWarp_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> asymmetricalWarp_knob_attach;
+
+    std::unique_ptr<SynthSlider> symmetricalWarp_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> symmetricalWarp_knob_attach;
+
+    std::unique_ptr<SynthSlider> scale_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> scale_knob_attach;
+
+    std::unique_ptr<SynthSlider> offset_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> offset_knob_attach;
+
     VelocityCurveGraph velocityCurveGraph;
 };
 #endif //KEYMAPPARAMETERVIEW_H

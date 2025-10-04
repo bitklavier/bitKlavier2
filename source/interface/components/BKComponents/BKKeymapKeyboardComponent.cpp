@@ -23,7 +23,7 @@ void BKKeymapKeyboardComponent::resized() {
 
     keymapRow.removeFromBottom(2);
     juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2 * heightUnit + 4));
-    keyboardValsTextFieldOpen.setBounds(textSlab.removeFromRight(widthUnit * 1.5));
+    keyboardValsTextFieldOpen.setBounds(textSlab.removeFromRight(widthUnit));
 
     allOnButton.setBounds(textSlab.removeFromLeft(widthUnit));
     textSlab.removeFromLeft(4);
