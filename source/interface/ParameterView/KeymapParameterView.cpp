@@ -50,16 +50,23 @@ KeymapParameterView::KeymapParameterView (
      offset_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
      offset_knob->setPopupPlacement(juce::BubbleComponent::below);
      offset_knob->setShowPopupOnHover(true);
-     offset_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_offset, listeners, *scale_knob, nullptr);
+     offset_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_offset, listeners, *offset_knob, nullptr);
      offset_knob->addAttachment(offset_knob_attach.get());
 
+     invert = std::make_unique<SynthButton>(params.velocityCurve_invert->paramID);
+     invert_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.velocityCurve_invert, listeners, *invert, nullptr);
+     invert->setComponentID(params.velocityCurve_invert->paramID);
+     addSynthButton(invert.get(), true);
+     invert->setText("invert?");
+
      //velocityCurveGraph.updateVelocityList(km->getVelocities());
-     velocityCurveGraph.setAsym_k(1.);
-     velocityCurveGraph.setSym_k(1.);
-     velocityCurveGraph.setScale(1.);
-     velocityCurveGraph.setOffset(0.);
-     velocityCurveGraph.setVelocityInvert(false);
-     addAndMakeVisible(velocityCurveGraph);
+//     velocityCurveGraph.setAsym_k(1.);
+//     velocityCurveGraph.setSym_k(1.);
+//     velocityCurveGraph.setScale(1.);
+//     velocityCurveGraph.setOffset(0.);
+//     velocityCurveGraph.setVelocityInvert(false);
+//     addAndMakeVisible(velocityCurveGraph);
+//
 }
 
 KeymapParameterView::~KeymapParameterView(){}
@@ -100,6 +107,7 @@ void KeymapParameterView::resized()
 
     if (midi_selector_) {
         juce::Rectangle midiSelectorRect = area.removeFromLeft(200);
+        midiSelectorRect.removeFromTop(20);
         midi_selector_->setBounds(midiSelectorRect);
         //midi_selector_->setBounds(kTitleWidth, 10, 200, 200);
         midi_selector_->redoImage();
@@ -114,12 +122,17 @@ void KeymapParameterView::resized()
         setColorRecursively(midi_selector_.get(), juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
     }
 
-    // velocity knobs
+    // velocity knobs and invert button
     juce::Rectangle velocityKnobsRect = area.removeFromLeft(area.getWidth() * 0.5);
-    juce::Rectangle velocityKnobsRect_top =  velocityKnobsRect.removeFromTop(velocityKnobsRect.getHeight() * 0.5);
+    velocityKnobsRect.reduce(velocityKnobsRect.getWidth() * 0.25, velocityKnobsRect.getHeight() * 0.25);
+    juce::Rectangle invertButtonRect = velocityKnobsRect.removeFromBottom(comboboxheight);
+    invertButtonRect.reduce(40, 0);
+    invert->setBounds(invertButtonRect);
+
+    velocityKnobsRect.removeFromBottom(20);
+    juce::Rectangle velocityKnobsRect_top = velocityKnobsRect.removeFromTop(velocityKnobsRect.getHeight() * 0.5);
     asymmetricalWarp_knob->setBounds(velocityKnobsRect_top.removeFromLeft(velocityKnobsRect_top.getWidth() * 0.5));
     symmetricalWarp_knob->setBounds(velocityKnobsRect_top);
-
     scale_knob->setBounds(velocityKnobsRect.removeFromLeft(velocityKnobsRect.getWidth() * 0.5));
     offset_knob->setBounds(velocityKnobsRect);
 

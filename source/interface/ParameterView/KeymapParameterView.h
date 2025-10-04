@@ -8,6 +8,7 @@
 #include "KeymapProcessor.h"
 #include "synth_section.h"
 #include "synth_slider.h"
+#include "synth_button.h"
 #include "default_look_and_feel.h"
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 #include "open_gl_combo_box.h"
@@ -265,8 +266,8 @@ public:
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
 
-        drawLabelForComponent(g, TRANS("asymmetrical warp"), asymmetricalWarp_knob.get());
-        drawLabelForComponent(g, TRANS("symmetrical warp"), symmetricalWarp_knob.get());
+        drawLabelForComponent(g, TRANS("center warp"), asymmetricalWarp_knob.get());
+        drawLabelForComponent(g, TRANS("sides warp"), symmetricalWarp_knob.get());
         drawLabelForComponent(g, TRANS("scale"), scale_knob.get());
         drawLabelForComponent(g, TRANS("offset"), offset_knob.get());
     }
@@ -299,6 +300,9 @@ private:
 
     std::unique_ptr<SynthSlider> offset_knob;
     std::unique_ptr<chowdsp::SliderAttachment> offset_knob_attach;
+
+    std::unique_ptr<SynthButton> invert;
+    std::unique_ptr<chowdsp::ButtonAttachment> invert_attachment;
 
     VelocityCurveGraph velocityCurveGraph;
 };
