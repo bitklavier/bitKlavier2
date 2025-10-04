@@ -206,7 +206,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-        auto string_names = parent->sampleLoadManager->getAllSampleSets();
+        auto string_names = parent->getSampleLoadManager()->getAllSampleSets();
         for (int i = 0; i < string_names.size(); i++) {
             options.addItem(i, string_names[i]);
 
@@ -214,9 +214,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-            parent->sampleLoadManager->loadSamples(selection, true);
-            sampleSelectText->setText(parent->sampleLoadManager->getAllSampleSets()[selection]);
+            SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+            _parent->getSampleLoadManager()->loadSamples(selection, true);
+            sampleSelectText->setText(_parent->getSampleLoadManager()->getAllSampleSets()[selection]);
             resized();
         });
     } else if (clicked_button == pianoSelector.get()) {

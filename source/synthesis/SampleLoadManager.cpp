@@ -10,9 +10,7 @@
  * ******* SampleLoadManager stuff *******
  */
 
-SampleLoadManager::SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences, SynthGuiInterface* synth_,SynthBase* synth) : preferences (preferences),
-                                                                                         synth (synth),
-                                                                                        synthGui(synth_),
+SampleLoadManager::SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences) : preferences (preferences),
                                                                                          audioFormatManager (new juce::AudioFormatManager())
 
 {
@@ -27,7 +25,7 @@ SampleLoadManager::SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> pr
             allPitches.add (noteOctave);
         }
     }
-    t = synth->getValueTree();
+
 
 }
 
@@ -47,14 +45,14 @@ void SampleLoadManager::handleAsyncUpdate()
 {
     if(sampleLoader.getNumJobs() > 0)
         return;
-    DBG ("samples loaded, tell the audio thread its okay to change the move soundsets");
+    if(temp_prep_tree.isValid())
+        temp_prep_tree.setProperty(IDs::soundset, nonGlobalSoundset_name,nullptr);
+    DBG ("samples loaded, tell the audio thread its okay to change the soundsets");
     DBG ("samplerSoundset size = " + juce::String (samplerSoundset[globalSoundset_name].size()));
-    // synthGui->tryEnqueueProcessorInitQueue([this] {
-        t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
-        t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
-        t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);
-        t.setProperty(IDs::pedalSampleSet,globalPedalsSoundset_name ,nullptr);
-    // });
+    t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
+    t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
+    t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);
+    t.setProperty(IDs::pedalSampleSet,globalPedalsSoundset_name ,nullptr);
 }
 
 // sort array of sample files into arrays of velocities by pitch
@@ -164,11 +162,34 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets()
     return sampleSets;
 }
 
-bool SampleLoadManager::loadSamples (int selection, bool isGlobal)
+bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::ValueTree& prep_tree)
 {
+    temp_prep_tree = prep_tree;
     MyComparator sorter;
     juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
     auto soundsets = getAllSampleSets();
+    // save this set as the global set
+    if (isGlobal)
+    {
+        globalSoundset_name = soundsets[selection];
+        globalHammersSoundset_name = soundsets[selection] + "Hammers";
+        globalReleaseResonanceSoundset_name = soundsets[selection] + "ReleaseResonance";
+        globalPedalsSoundset_name = soundsets[selection] + "Pedals";
+        if(samplerSoundset.contains(soundsets[selection])) {
+            t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
+            t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
+            t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);
+            t.setProperty(IDs::pedalSampleSet,globalPedalsSoundset_name ,nullptr);
+            return true;
+        }
+    }
+    if(samplerSoundset.contains(soundsets[selection]) && temp_prep_tree.isValid()) {
+        nonGlobalSoundset_name = soundsets[selection];
+        temp_prep_tree.setProperty(IDs::soundset,nonGlobalSoundset_name ,nullptr);
+        return true;
+    }
+
+
     samplePath.append (soundsets[selection], 10); // change to "orig" to test that way
     //samplePath.append("/orig", 10);
     DBG ("sample path = " + samplePath);
@@ -186,22 +207,13 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal)
         DBG (file.getFullPathName() + " " + juce::String (++i));
     }
 
-    // save this set as the global set
-    if (isGlobal)
-    {
-        globalSoundset_name = soundsets[selection];
-        globalHammersSoundset_name = soundsets[selection] + "Hammers";
-        globalReleaseResonanceSoundset_name = soundsets[selection] + "ReleaseResonance";
-        globalPedalsSoundset_name = soundsets[selection] + "Pedals";
-    }
-
-    loadSamples_sub (bitklavier::utils::BKPianoMain);
-    loadSamples_sub (bitklavier::utils::BKPianoHammer);
-    loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance);
-    loadSamples_sub (bitklavier::utils::BKPianoPedal);
+    loadSamples_sub (bitklavier::utils::BKPianoMain,soundsets[selection]);
+    loadSamples_sub (bitklavier::utils::BKPianoHammer,soundsets[selection]);
+    loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance, soundsets[selection]);
+    loadSamples_sub (bitklavier::utils::BKPianoPedal,soundsets[selection]);
 }
 
-void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thisSampleType)
+void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thisSampleType, std::string name)
 {
     using namespace bitklavier::utils;
 
@@ -217,7 +229,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
         soundsetName = globalPedalsSoundset_name;
 
     juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
-    samplePath.append("/Default", 20);
+    samplePath.append("/" + juce::String(name), 20);
     samplePath.append(BKPianoSampleType_string[thisSampleType], 20); // subfolders need to be named accordingly
     juce::File directory(samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false, "*.wav");

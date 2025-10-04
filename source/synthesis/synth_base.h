@@ -30,6 +30,7 @@ class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
 class PreparationList;
+class SampleLoadManager;
 
 namespace bitklavier {
     class ConnectionList;
@@ -106,6 +107,8 @@ public:
 
 
 
+
+    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> * getSamples();
 
 
     //all connection code
@@ -192,6 +195,7 @@ public:
     {
         mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
     }
+    std::unique_ptr<SampleLoadManager> sampleLoadManager ;
 protected:
     chowdsp::DeferredAction mainThreadAction;
     //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}

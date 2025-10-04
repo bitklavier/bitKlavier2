@@ -76,6 +76,8 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     keysDepressed = juce::Array<int>();
     clusterKeysDepressed = juce::Array<int>();
     inCluster = false;
+    v.addListener(this);
+    parent.getValueTree().addListener(this);
 }
 
 void SynchronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

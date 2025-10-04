@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "synth_base.h"
+#include "SampleLoadManager.h"
 
 #include "FullInterface.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
@@ -40,7 +40,11 @@
 #include "load_save.h"
 #include "valuetree_utils/VariantConverters.h"
 
-SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager)
+SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager),user_prefs (new UserPreferencesWrapper()),
+                                                                        sampleLoadManager (
+                                                                            new SampleLoadManager (
+                                                                                user_prefs
+                                                                                ))
 {
     self_reference_ = std::make_shared<SynthBase*>();
     *self_reference_ = this;
@@ -51,8 +55,9 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
 
     Startup::doStartupChecks();
     tree = juce::ValueTree (IDs::GALLERY);
+    sampleLoadManager->setValueTree(tree);
 
-    tree.setProperty (IDs::mainSampleSet, "Piano (Default)", nullptr);
+    tree.setProperty (IDs::mainSampleSet, "Default", nullptr);
     juce::ValueTree piano (IDs::PIANO);
     juce::ValueTree preparations (IDs::PREPARATIONS);
     juce::ValueTree connections (IDs::CONNECTIONS);
@@ -88,6 +93,10 @@ SynthBase::~SynthBase()
 {
     tree.removeListener (this);
 
+}
+
+std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > > *SynthBase::getSamples() {
+    return &sampleLoadManager->samplerSoundset;
 }
 
 void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delete_id)

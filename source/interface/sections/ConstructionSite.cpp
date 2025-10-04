@@ -400,14 +400,6 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
      * should be getting added to the PreparationList, and a few other things that will have happen around it!
      */
 
-    s->addSoundSet(&interface->sampleLoadManager->samplerSoundset);
-    if (!interface->sampleLoadManager->samplerSoundset.empty()) {
-        s->addSoundSet(
-            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalSoundset_name],
-            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalHammersSoundset_name],
-            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalReleaseResonanceSoundset_name],
-            &interface->sampleLoadManager->samplerSoundset[interface->sampleLoadManager->globalPedalsSoundset_name]);
-    }
     s->selectedSet = &(preparationSelector.getLassoSelection());
     preparationSelector.getLassoSelection().addChangeListener(s.get());
     s->addListener(&cableView);
@@ -597,7 +589,7 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         // t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
         // t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
 
-        auto desc = _parent->userPreferences->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
+        auto desc = _parent->getSynth()->user_prefs->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
         t.addChild(plugin,-1, &undo);
         prep_list->addPlugin(desc.pluginDescription,t);

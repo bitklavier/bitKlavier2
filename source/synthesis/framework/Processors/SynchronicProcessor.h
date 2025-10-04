@@ -497,7 +497,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 {
 public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
-    ~SynchronicProcessor(){}
+    ~SynchronicProcessor(){        parent.getValueTree().removeListener(this);
+}
 
 
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
@@ -527,7 +528,24 @@ public:
         DBG("Synchronic addSoundSet called");
         synchronicSynth->addSoundSet (s);
     }
+    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
+        if (t == v && property == IDs::soundset) {
+            juce::String soundset = t.getProperty(property, "");
+            if (soundset == IDs::syncglobal.toString()) {
+                juce::String a = t.getProperty(IDs::mainSampleSet, "");
+                addSoundSet(&(*parent.getSamples())[a]);
+            }
+            addSoundSet(&(*parent.getSamples())[soundset]);
 
+            return;
+        }
+        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+            return;
+        if(property != IDs::pedalSampleSet)
+            return;
+        juce::String a = t.getProperty(IDs::mainSampleSet, "");
+        addSoundSet(&(*parent.getSamples())[a]);
+    }
     void setTuning (TuningProcessor*) override;
 
     float getBeatThresholdSeconds()

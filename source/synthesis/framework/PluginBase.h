@@ -12,11 +12,12 @@ class SynthSection;
 class SynthBase;
 class TuningProcessor;
 class TempoProcessor;
-
+template <typename T>
+class BKSamplerSound;
 namespace bitklavier {
     class InternalProcessor : public juce::AudioProcessor {
     public:
-        InternalProcessor(juce::AudioProcessor::BusesProperties layout) : juce::AudioProcessor(layout) {
+        InternalProcessor(juce::AudioProcessor::BusesProperties layout,const juce::ValueTree& _v) : juce::AudioProcessor(layout),v(_v) {
         }
 
         InternalProcessor() : juce::AudioProcessor() {
@@ -29,6 +30,13 @@ namespace bitklavier {
         virtual void setTempo(TempoProcessor *tem) {
             tempo = tem;
         }
+        virtual void addSoundSet(
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *s, // main samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *h, // hammer samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *r, // release samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *p) {}// pedal samples;
+
+        juce::ValueTree v;
 
     protected:
         TuningProcessor *tuning = nullptr;
@@ -55,7 +63,7 @@ namespace bitklavier {
 #endif
     {
     public:
-        explicit PluginBase(SynthBase &parent, const juce::ValueTree &v = {}, juce::UndoManager *um = nullptr,
+        explicit PluginBase(SynthBase &parent, const juce::ValueTree &v , juce::UndoManager *um = nullptr,
                             const juce::AudioProcessor::BusesProperties &layout = getDefaultBusLayout());
 
         ~PluginBase() override = default;
@@ -149,7 +157,7 @@ namespace bitklavier {
 
         bool supportsParameterModulation() const;
 
-        juce::ValueTree v;
+
 
         /**
          * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
@@ -200,7 +208,9 @@ namespace bitklavier {
             }
         }
 
+
     protected:
+        SynthBase &parent;
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
         PluginStateType state;
 #else
@@ -245,17 +255,22 @@ namespace bitklavier {
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
 
     template<class State>
-    PluginBase<State>::PluginBase(SynthBase &parent, const juce::ValueTree &v_, juce::UndoManager *um,
+    PluginBase<State>::PluginBase(SynthBase &_parent, const juce::ValueTree &v_, juce::UndoManager *um,
                                   const juce::AudioProcessor::BusesProperties &layout)
-        : InternalProcessor(layout),
-          state(*this, v_, um),
-          v(v_) {
+        : InternalProcessor(layout,v_),
+    parent(_parent),
+          state(*this, v_, um)
+  {
         if (v.isValid())
             chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(v.createXml(), state);
         createUuidProperty(v);
+        if (!v.hasProperty(IDs::soundset)) {
+            v.setProperty(IDs::soundset, IDs::syncglobal.toString(),nullptr);
+        }
         /*
      * modulations and state changes
      */
+
         setupModulationMappings();
     }
 #else

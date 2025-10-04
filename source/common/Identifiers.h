@@ -127,6 +127,10 @@ namespace IDs
     DECLARE_ID(tempo)
     DECLARE_ID(vst)
     DECLARE_ID(keymap)
+
+    DECLARE_ID(soundset)
+    DECLARE_ID(globalsoundset)
+    DECLARE_ID(syncglobal)
 }
 
 #undef DECLARE_ID

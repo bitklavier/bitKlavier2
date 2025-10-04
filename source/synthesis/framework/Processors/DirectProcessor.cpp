@@ -48,8 +48,9 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     parent.getStateBank().addParam (std::make_pair<std::string,
     bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
     &(state.params.transpose.transpositionUsesTuning->stateChanges)));
+    v.addListener(this);
+    parent.getValueTree().addListener(this);
 }
-
 
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

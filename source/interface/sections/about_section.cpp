@@ -20,6 +20,7 @@
 #include "fonts.h"
 
 #include "paths.h"
+#include "synth_base.h"
 #include "synth_gui_interface.h"
 #include "synth_section.h"
 #include "text_look_and_feel.h"
@@ -62,7 +63,7 @@ void AboutSection::resized() {
     juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
     if (device_manager) {
       device_selector_ = std::make_unique<OpenGlDeviceSelector>(
-          *device_manager, 0, 0, bitklavier::kNumChannels, bitklavier::kNumChannels, true, false, false, false, parent->userPreferences->tree);
+          *device_manager, 0, 0, bitklavier::kNumChannels, bitklavier::kNumChannels, true, false, false, false, parent->getSynth()->user_prefs->tree);
       addAndMakeVisible(device_selector_.get());
       addOpenGlComponent(device_selector_->getImageComponent());
     }

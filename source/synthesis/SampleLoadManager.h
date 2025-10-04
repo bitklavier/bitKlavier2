@@ -106,14 +106,14 @@ class SynthBase;
 class SampleLoadManager : public juce::AsyncUpdater
 {
 public:
-    SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences, SynthGuiInterface* synth_, SynthBase * synth);
+    SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences);
     ~SampleLoadManager();
 
     juce::ThreadPool sampleLoader;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> samplerSoundset;
 
-    bool loadSamples (int selection, bool isGlobal);
-    void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType);
+    bool loadSamples (int selection, bool isGlobal,const juce::ValueTree &v={});
+    void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType,std::string);
     juce::Array<juce::File> samplesByPitch (juce::String whichPitch, juce::Array<juce::File> inFiles);
 
     // maybe this repetition can be cleaned up, but maybe not so important.
@@ -121,12 +121,11 @@ public:
     juce::String globalHammersSoundset_name;
     juce::String globalReleaseResonanceSoundset_name;
     juce::String globalPedalsSoundset_name;
+    juce::String nonGlobalSoundset_name;
 
     const std::vector<std::string> getAllSampleSets();
     std::shared_ptr<UserPreferencesWrapper> preferences;
     void handleAsyncUpdate() override;
-    SynthGuiInterface* synthGui;
-    SynthBase* synth;
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<AudioFormatReaderFactory> readerFactory;
 
@@ -136,6 +135,11 @@ public:
     juce::Array<int> allKeysWithSamples; // array that keeps track of which keys have samples, for building start/end ranges in keymap
     juce::BigInteger getMidiRange (juce::String pitchName);
     void clearAllSamples();
+    void setValueTree(const juce::ValueTree& v) {
+        t =v;
+    }
+private:
+    juce::ValueTree temp_prep_tree;
     juce::ValueTree t;
 };
 

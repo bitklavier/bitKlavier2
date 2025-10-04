@@ -58,13 +58,8 @@ void SynthGuiInterface::setGuiSize (float scale) {}
     #include <memory>
 
     #include "PluginList.h"
-SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (synth),
-                                                                        userPreferences (new UserPreferencesWrapper()),
-                                                                        sampleLoadManager (
-                                                                            new SampleLoadManager (
-                                                                                userPreferences,
-                                                                                this,
-                                                                                synth))
+SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (synth)
+
 {
     if (use_gui)
     {
@@ -73,28 +68,23 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         // for registering hotkeys etc.
         commandManager.registerAllCommandsForTarget(this);
         gallery = synth_data.tree;
-    }
-
-    auto sets = sampleLoadManager->getAllSampleSets();
-    auto it = std::find(sets.begin(), sets.end(), "Default");
-    int defaultIndex = (it != sets.end())
-        ? static_cast<int>(std::distance(sets.begin(), it))
-        : -1;
-
-    if (defaultIndex >= 0)
-    {
-        sampleLoadManager->preferences = userPreferences;
-        sampleLoadManager->loadSamples(defaultIndex, true);
-
-        if (gui_)
+        auto sets = synth->sampleLoadManager->getAllSampleSets();
+        auto it = std::find(sets.begin(), sets.end(), "Default");
+        int defaultIndex = (it != sets.end())
+            ? static_cast<int>(std::distance(sets.begin(), it))
+            : -1;
+        if (defaultIndex >= 0) {
+            synth_->sampleLoadManager->loadSamples(defaultIndex, true);
             gui_->header_->setSampleSelectText(sets[defaultIndex]);
+        }
 
-        synth_->user_prefs = userPreferences;
+
     }
 
-    //sampleLoadManager->loadSamples(0, true);
 }
-
+SampleLoadManager* SynthGuiInterface::getSampleLoadManager() {
+    return getSynth()->sampleLoadManager.get();
+}
 bool SynthGuiInterface::perform(const InvocationInfo & info) {
     {
         switch (info.commandID) {
@@ -112,7 +102,7 @@ bool SynthGuiInterface::perform(const InvocationInfo & info) {
             case CommandIDs::showPluginListEditor:
             {
                 if (pluginListWindow == nullptr)
-                    pluginListWindow.reset (new SynthGuiInterface::PluginListWindow (*this, *userPreferences, userPreferences->userPreferences->formatManager));
+                    pluginListWindow.reset (new SynthGuiInterface::PluginListWindow (*this, *synth_->user_prefs, synth_->user_prefs->userPreferences->formatManager));
 
                 pluginListWindow->toFront (true);
                 return true;
@@ -466,12 +456,12 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiTarget,"MidiTarget");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypePianoMap,"PianoSwitch");
 
-    auto pluginDescriptions = userPreferences->userPreferences->knownPluginList.getTypes();
+    auto pluginDescriptions = synth_->user_prefs->userPreferences->knownPluginList.getTypes();
 
-    auto tree = juce::KnownPluginList::createTree (pluginDescriptions, userPreferences->userPreferences->pluginSortMethod);
-    userPreferences->userPreferences->pluginDescriptionsAndPreference = {};
+    auto tree = juce::KnownPluginList::createTree (pluginDescriptions, synth_->user_prefs->userPreferences->pluginSortMethod);
+    synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference = {};
     popup.addItem (-1, "");
-    addToMenu (*tree, popup, pluginDescriptions, userPreferences->userPreferences->pluginDescriptionsAndPreference);
+    addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
     return popup;
 }
 
