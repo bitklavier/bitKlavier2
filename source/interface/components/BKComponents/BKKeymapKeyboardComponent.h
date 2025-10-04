@@ -21,6 +21,8 @@ typedef enum KeySet
     KeySetAllPC,
     KeySetBlack,
     KeySetWhite,
+    KeySetWholetoneOne,
+    KeySetWholetoneTwo,
     KeySetOctatonicOne,
     KeySetOctatonicTwo,
     KeySetOctatonicThree,
@@ -42,6 +44,12 @@ typedef enum OctType
     Oct3,
     OctNil
 } OctType;
+
+typedef enum WholetoneType
+{
+    WT1 = 0,
+    WT2
+} WholetoneType;
 
 class BKKeymapKeyboardComponent : public StateModulatedComponent,
                                   public juce::TextEditor::Listener,
@@ -139,6 +147,7 @@ public:
     void setBlack(bool action);
     void setChord(KeySet set, PitchClass root);
     void setOctatonic(OctType type);
+    void setWholetone(WholetoneType type);
 
     KeymapKeyboardState& keyboard_state_;
     BKOnOffKeyboardComponent keyboard_;
@@ -171,8 +180,13 @@ public:
     bool deselectKey = false;
 
     juce::String pcs[12] = {"C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab","A","A#/Bb","B",};
+
     juce::Array<int> white = {0,2,4,5,7,9,11};
     juce::Array<int> black = {1,3,6,8,10};
+
+    juce::Array<int> wholetone1 = {0,2,4,6,8,10};
+    juce::Array<int> wholetone2 = {1,3,5,7,9,11};
+
     juce::Array<int> octatonic1 = {0,1,3,4,6,7,9,10};
     juce::Array<int> octatonic2 = {1,2,4,5,7,8,10,11};
     juce::Array<int> octatonic3 = {0,2,3,5,6,8,9,11};

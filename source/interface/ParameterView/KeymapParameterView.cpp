@@ -19,6 +19,14 @@ KeymapParameterView::KeymapParameterView (
      keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params);
      addStateModulatedComponent(keyboard_component_.get());
      addAndMakeVisible(keyboard_component_.get());
+
+     //velocityCurveGraph.updateVelocityList(km->getVelocities());
+     velocityCurveGraph.setAsym_k(1.);
+     velocityCurveGraph.setSym_k(1.);
+     velocityCurveGraph.setScale(1.);
+     velocityCurveGraph.setOffset(0.);
+     velocityCurveGraph.setVelocityInvert(false);
+     addAndMakeVisible(velocityCurveGraph);
 }
 
 KeymapParameterView::~KeymapParameterView(){}
@@ -72,6 +80,8 @@ void KeymapParameterView::resized()
         setColorRecursively(midi_selector_.get(), juce::ComboBox::textColourId, text);
         setColorRecursively(midi_selector_.get(), juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
     }
+
+    velocityCurveGraph.setBounds(area);
 
     //selectDeselect_combobox->setBounds(area.getRight() - 150, keyboard_component_->getY(), 150, comboboxheight);
     //keyboard_component_->setBounds(kTitleWidth, 220, 600, 100);

@@ -10,6 +10,7 @@
 #include "default_look_and_feel.h"
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 #include "open_gl_combo_box.h"
+#include "VelocityCurveGraph.h"
 
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
 public:
@@ -282,5 +283,6 @@ private:
     KeymapProcessor &proc;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlMidiSelector> midi_selector_;
+    VelocityCurveGraph velocityCurveGraph;
 };
 #endif //KEYMAPPARAMETERVIEW_H

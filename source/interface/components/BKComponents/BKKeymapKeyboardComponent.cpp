@@ -13,7 +13,6 @@ void BKKeymapKeyboardComponent::resized() {
     float keyboardHeight = 8 * heightUnit;
     juce::Rectangle<int> keymapRow = area.removeFromBottom(10 * heightUnit);
 
-    //absolute keymap
     float keyWidth = keymapRow.getWidth() / round((maxKey - minKey) * 7./12 + 1); //num white keys
     keyboard_.setKeyWidth(keyWidth);
     keyboard_.setBlackNoteLengthProportion(0.65);
@@ -24,9 +23,8 @@ void BKKeymapKeyboardComponent::resized() {
 
     keymapRow.removeFromBottom(2);
     juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2 * heightUnit + 4));
-    keyboardValsTextFieldOpen.setBounds(textSlab.removeFromLeft(widthUnit * 1.5));
+    keyboardValsTextFieldOpen.setBounds(textSlab.removeFromRight(widthUnit * 1.5));
 
-    textSlab.removeFromLeft(20);
     allOnButton.setBounds(textSlab.removeFromLeft(widthUnit));
     textSlab.removeFromLeft(4);
     clearButton.setBounds(textSlab.removeFromLeft(widthUnit));
@@ -133,6 +131,14 @@ void BKKeymapKeyboardComponent::keysMenuCallback(int result, BKKeymapKeyboardCom
             setChord(static_cast<KeySet>(set), getPitchClassFromInt(pc));
             break;
 
+        case KeySetWholetoneOne :
+            setWholetone(WT1);
+            break;
+
+        case KeySetWholetoneTwo :
+            setWholetone(WT2);
+            break;
+
         case KeySetOctatonicOne :
             setOctatonic(Oct1);
             break;
@@ -149,32 +155,6 @@ void BKKeymapKeyboardComponent::keysMenuCallback(int result, BKKeymapKeyboardCom
             setChord(static_cast<KeySet>(set), getPitchClassFromInt(pc));
             break;
     }
-
-
-
-//    if (vc == nullptr)
-//    {
-//        juce::PopupMenu::dismissAllActiveMenus();
-//        return;
-//    }
-//
-//    BKAudioProcessor& processor = vc->processor;
-//
-//    // get old keys to send to update
-//    Keymap::Ptr keymap = processor.gallery->getKeymap(processor.updateState->currentKeymapId);
-//
-//    {
-//        int set = result/ 12;
-//        int pc = result % 12;
-//
-//        DBG("set: " + juce::String(set) + " pc: " + juce::String(pc));
-//
-//        keyboard_.setKeys((KeySet)set, vc->selectType, (PitchClass)pc);
-//    }
-//
-//    vc->keyboard->setKeysInKeymap(keymap->keys());
-//
-//    processor.updateState->editsMade = true;
 }
 
 void BKKeymapKeyboardComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
@@ -185,14 +165,22 @@ void BKKeymapKeyboardComponent::comboBoxChanged (juce::ComboBox* comboBoxThatHas
     }
 }
 
+/*
+ * todo: add whole tone scales
+ */
 juce::PopupMenu BKKeymapKeyboardComponent::getKeysMenu(void)
 {
     juce::PopupMenu menu;
 
    // menu.addItem(ID(KeySetAll), "All");
     menu.addSubMenu("Pitches:",  getPitchClassMenu((KeySet) ID(KeySetAllPC)));
+
     menu.addItem(ID(KeySetBlack), "Black");
     menu.addItem(ID(KeySetWhite), "White");
+
+    menu.addItem(ID(KeySetWholetoneOne), "Whole Tone 1");
+    menu.addItem(ID(KeySetWholetoneTwo), "Whole Tone 2");
+
     menu.addItem(ID(KeySetOctatonicOne), "Octatonic 1");
     menu.addItem(ID(KeySetOctatonicTwo), "Octatonic 2");
     menu.addItem(ID(KeySetOctatonicThree), "Octatonic 3");
@@ -280,6 +268,25 @@ void BKKeymapKeyboardComponent::setOctatonic(OctType type)
         pc = note % 12;
 
         if (octatonic.contains(pc))
+        {
+            keyboard_state_.keyStates[note] = !deselectKey;
+        }
+    }
+}
+
+void BKKeymapKeyboardComponent::setWholetone(WholetoneType type)
+{
+    int pc;
+    juce::Array<int> wholet;
+    if      (type == WT1)  wholet = wholetone1;
+    else if (type == WT2)  wholet = wholetone2;
+    else return;
+
+    for (int note = 0; note < 128; note++)
+    {
+        pc = note % 12;
+
+        if (wholet.contains(pc))
         {
             keyboard_state_.keyStates[note] = !deselectKey;
         }
