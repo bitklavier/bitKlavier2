@@ -27,7 +27,7 @@ VelocityCurveGraph.h
 class VelocityCurveGraph  : public juce::Component
 {
 public:
-    VelocityCurveGraph()
+    VelocityCurveGraph(KeymapParams& kparams) : params(kparams)
     {
     }
 
@@ -38,6 +38,14 @@ public:
     // note: geometry here could be greatly simplified if the graph label could be done in KeymapViewcontroller. The geometry is kind of ridiculous.
     void paint (juce::Graphics& g) override
     {
+        asym_k            = params.velocityCurve_asymWarp->getCurrentValue();
+        sym_k             = params.velocityCurve_symWarp->getCurrentValue();
+        scale             = params.velocityCurve_scale->getCurrentValue();
+        offset            = params.velocityCurve_offset->getCurrentValue();
+        velocityInvert    = params.velocityCurve_invert.get();
+
+        DBG("asym_k = " + juce::String(asym_k));
+
         int leftPadding = 80; // space for "velocity out" label
         int rightPadding = 4; // space for the graph's right edge to fully display
         int topPadding = 6; // space for the dot and graph's top edge to fully display
@@ -48,16 +56,11 @@ public:
         if (getWidth() <= leftPadding + rightPadding + 2 || getHeight() <= bottomPadding + topPadding + 2) return;
 
         // wrapper rectangles for labels
-        juce::Rectangle<int> graphArea(leftPadding, topPadding, getWidth() - leftPadding - rightPadding,
+        juce::Rectangle<int> graphArea(
+            getX() + leftPadding,
+            getY() + topPadding,
+            getWidth() - leftPadding - rightPadding,
             getHeight() - bottomPadding - topPadding);
-
-        juce::Rectangle<int> bottomLabel(leftPadding - rightPadding, getHeight() - bottomPadding,
-            getWidth() - leftPadding + rightPadding, bottomPadding);
-        juce::Rectangle<int> leftLabel(0, topPadding, leftPadding - leftAdditional,
-            getHeight() - bottomPadding - topPadding);
-        juce::Rectangle<int> leftNumbers(leftPadding - leftAdditional, topPadding - 5, leftAdditional,
-            getHeight() - bottomPadding - topPadding + 10);
-        juce::Rectangle<int> zeroLabel(0, getHeight() - bottomPadding, leftPadding, bottomPadding);
 
         // graph background setup
         g.setColour (juce::Colours::grey);
@@ -66,13 +69,28 @@ public:
         int graphWidth = graphArea.getWidth();
         int graphX = graphArea.getX();
         int graphY = graphArea.getY();
-        juce::Line<float> hMidLine(graphX, topPadding + graphHeight / 2,
-            graphWidth + graphX, topPadding + graphHeight / 2);
+
+        // dashed midlines
+        juce::Line<float> hMidLine(graphX, graphY + topPadding + graphHeight / 2,
+            graphWidth + graphX, graphY + topPadding + graphHeight / 2);
         juce::Line<float> vMidLine(graphWidth / 2 + graphX, graphY,
-            graphWidth / 2 + graphX, graphHeight + topPadding);
+            graphWidth / 2 + graphX, graphY + graphHeight);
         const float dashLengths[] = {5, 3};
         g.drawDashedLine(hMidLine, dashLengths, 2);
         g.drawDashedLine(vMidLine, dashLengths, 2);
+
+        //        juce::Rectangle<int> bottomLabel = graphArea.removeFromBottom(20);
+        //        juce::Rectangle<int> leftLabel = graphArea.removeFromLeft(100);
+
+
+        juce::Rectangle<int> bottomLabel(graphX - rightPadding, graphY + getHeight() - bottomPadding,
+            graphWidth - leftPadding + rightPadding, bottomPadding);
+        //        juce::Rectangle<int> leftLabel(getX(), topPadding, leftPadding - leftAdditional,
+        //            getHeight() - bottomPadding - topPadding);
+        juce::Rectangle<int> leftLabel(graphX, graphY, leftPadding, graphHeight);
+        juce::Rectangle<int> leftNumbers(graphX - leftAdditional, graphY + topPadding - 5, leftAdditional,
+            getHeight() - bottomPadding - topPadding + 10);
+        juce::Rectangle<int> zeroLabel(graphX - leftPadding, graphY + graphHeight - bottomPadding, leftPadding, bottomPadding);
 
         // graph label setup
         //g.drawText("0", bottomLabel, juce::Justification::topLeft);
@@ -84,7 +102,26 @@ public:
         g.drawText("1", leftNumbers, juce::Justification::topRight);
         g.setColour(juce::Colours::white);
         g.drawText("Velocity In", bottomLabel, juce::Justification::centredBottom);
-        g.drawFittedText("Velocity \nOut", leftLabel, juce::Justification::centred, 2);
+
+        // === START ROTATED BLOCK ===
+        // Save the current, un-rotated graphics context state.
+        g.saveState();
+
+        // Calculate the center point of the rectangle where the text will be drawn.
+        auto center = leftLabel.getCentre();
+
+        // Apply the rotation (-90 degrees, or -pi/2 radians) using the center
+        // of the target rectangle as the rotation pivot point.
+        g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f, center.getX(), center.getY()));
+
+        // Draw the text. Because we rotated the drawing context, the text will appear
+        // rotated around its center point.
+        g.drawFittedText("Velocity Out", leftLabel, juce::Justification::centred, 2);
+
+        // Restore the graphics context. This removes the rotation transform entirely,
+        // ensuring that any code following this block draws horizontally again.
+        g.restoreState();
+        // === END ROTATED BLOCK ===
 
         // plotter
         g.setColour(juce::Colours::red);
@@ -92,7 +129,7 @@ public:
 
         // go pixel by pixel, adding each point to plot
         for (int i = 0; i <= graphWidth; i++) {
-            juce::Point<float> toAdd (leftPadding + i,
+            juce::Point<float> toAdd (graphX + i,
                 graphHeight + topPadding -
                     graphHeight * bitklavier::utils::dt_warpscale((float) i / graphWidth, asym_k, sym_k, scale, offset));
 
@@ -122,12 +159,12 @@ public:
             if (warpscale < 0) warpscale = 0;
 
             if (velocityInvert) {
-                g.fillEllipse(leftPadding + velocity * graphWidth - radius / 2,
+                g.fillEllipse(graphArea.getX() + velocity * graphWidth - radius / 2,
                     topPadding + graphHeight * warpscale - radius / 2,
                     radius, radius);
             }
             else {
-                g.fillEllipse(leftPadding + velocity * graphWidth - radius / 2,
+                g.fillEllipse(graphArea.getX() + velocity * graphWidth - radius / 2,
                     topPadding + graphHeight - graphHeight * warpscale - radius / 2,
                     radius, radius);
             }
@@ -152,6 +189,8 @@ public:
 private:
 
     // Various Parameters
+    KeymapParams& params;
+
     float asym_k;
     float sym_k;
     float scale;

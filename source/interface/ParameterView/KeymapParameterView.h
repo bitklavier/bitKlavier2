@@ -247,10 +247,11 @@ private:
 };
 
 
-class KeymapParameterView : public SynthSection {
+class KeymapParameterView : public SynthSection, juce::Timer
+{
 public:
     KeymapParameterView(KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper *open_gl);
-
+    ~KeymapParameterView();
     void resized() override;
 
     void setColorRecursively(juce::Component *component, int color_id, const juce::Colour& color) {
@@ -258,6 +259,11 @@ public:
         for (juce::Component *child : component->getChildren())
             setColorRecursively(child, color_id, color);
     }
+
+//    void paint(juce::Graphics &g) override {
+//        drawVelocityCurve(g);
+//        redoImage();
+//    }
 
     void paintBackground(juce::Graphics &g) override {
         SynthSection::paintContainer(g);
@@ -270,6 +276,8 @@ public:
         drawLabelForComponent(g, TRANS("sides warp"), symmetricalWarp_knob.get());
         drawLabelForComponent(g, TRANS("scale"), scale_knob.get());
         drawLabelForComponent(g, TRANS("offset"), offset_knob.get());
+
+        drawVelocityCurve(g);
     }
 
     int getViewPosition() {
@@ -277,11 +285,12 @@ public:
         return view_height; //std::max(0, std::min<int>(selections_.size() * getRowHeight() - view_height, view_position_));
     }
 
-    ~KeymapParameterView();
+    void drawVelocityCurve(juce::Graphics &g);
 
 private:
     //OpenGlWrapper &opengl;
-    void redoImage();
+    void redoImage(); //not doing anything at the moment, remove?
+    void timerCallback(void) override;
 
     KeymapParams& params;
     KeymapProcessor &proc;
@@ -304,6 +313,7 @@ private:
     std::unique_ptr<SynthButton> invert;
     std::unique_ptr<chowdsp::ButtonAttachment> invert_attachment;
 
-    VelocityCurveGraph velocityCurveGraph;
+    std::unique_ptr<VelocityCurveGraph> velocityCurveGraph;
+    juce::Rectangle<int> velocityCurveBox;
 };
 #endif //KEYMAPPARAMETERVIEW_H

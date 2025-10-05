@@ -56,9 +56,13 @@ KeymapParameterView::KeymapParameterView (
      invert = std::make_unique<SynthButton>(params.velocityCurve_invert->paramID);
      invert_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.velocityCurve_invert, listeners, *invert, nullptr);
      invert->setComponentID(params.velocityCurve_invert->paramID);
-     addSynthButton(invert.get(), true);
+     addSynthButton(invert.get(), true, true);
      invert->setText("invert?");
 
+     velocityCurveGraph = std::make_unique<VelocityCurveGraph>(kparams);
+     addAndMakeVisible(velocityCurveGraph.get());
+
+     startTimer(50);
      //velocityCurveGraph.updateVelocityList(km->getVelocities());
 //     velocityCurveGraph.setAsym_k(1.);
 //     velocityCurveGraph.setSym_k(1.);
@@ -136,8 +140,9 @@ void KeymapParameterView::resized()
     scale_knob->setBounds(velocityKnobsRect.removeFromLeft(velocityKnobsRect.getWidth() * 0.5));
     offset_knob->setBounds(velocityKnobsRect);
 
-
-
+    area.reduce(0, 40);
+    velocityCurveBox = area;
+    //velocityCurveGraph->setBounds(area);
 }
 
 void KeymapParameterView::redoImage()
@@ -151,4 +156,143 @@ void KeymapParameterView::redoImage()
     //paintKnobShadows(g);
     //sliderShadows.setOwnImage(background_image);
 
+}
+
+void KeymapParameterView::timerCallback(void)
+{
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->getGui()->prep_popup->repaintPrepBackground();
+}
+
+void KeymapParameterView::drawVelocityCurve(juce::Graphics &g)
+{
+    float asym_k            = params.velocityCurve_asymWarp->getCurrentValue();
+    float sym_k             = params.velocityCurve_symWarp->getCurrentValue();
+    float scale             = params.velocityCurve_scale->getCurrentValue();
+    float offset            = params.velocityCurve_offset->getCurrentValue();
+    bool velocityInvert     = params.velocityCurve_invert->get();
+
+    int leftPadding = 40; // space for "velocity out" label
+    int rightPadding = 4; // space for the graph's right edge to fully display
+    int topPadding = 6; // space for the dot and graph's top edge to fully display
+    int bottomPadding = 40; // space for "velocity in" label
+    int leftAdditional = 40; // additional space for number labels on left
+
+    // wrapper rectangles for labels
+    juce::Rectangle<int> graphArea(
+        velocityCurveBox.getX() + leftPadding,
+        velocityCurveBox.getY() + topPadding,
+        velocityCurveBox.getWidth() - leftPadding - rightPadding,
+        velocityCurveBox.getHeight() - bottomPadding - topPadding);
+
+    // graph background setup
+    g.setColour (juce::Colours::grey);
+    g.drawRect(graphArea);
+    int graphHeight = graphArea.getHeight();
+    int graphWidth = graphArea.getWidth();
+    int graphX = graphArea.getX();
+    int graphY = graphArea.getY();
+
+    // dashed midlines
+    juce::Line<float> hMidLine(
+        graphX,
+        graphY + graphHeight / 2.,
+        graphWidth + graphX,
+        graphY + graphHeight / 2.);
+
+    juce::Line<float> vMidLine(
+        graphWidth / 2. + graphX,
+        graphY,
+        graphWidth / 2. + graphX,
+        graphY + graphHeight);
+
+    const float dashLengths[] = {5, 3};
+    g.drawDashedLine(hMidLine, dashLengths, 2);
+    g.drawDashedLine(vMidLine, dashLengths, 2);
+
+    juce::Rectangle<int> bottomLabel(graphX, graphY + graphHeight, graphWidth, bottomPadding);
+    juce::Rectangle<int> leftLabel(graphX - leftPadding - leftAdditional, graphY, leftPadding * 2, graphHeight);
+    juce::Rectangle<int> leftNumbers(graphX - leftAdditional, graphY, leftAdditional, graphHeight);
+
+    // graph label setup
+    g.drawText("0", bottomLabel, juce::Justification::topLeft);
+    g.drawText("0.5", bottomLabel, juce::Justification::centredTop);
+    g.drawText("1", bottomLabel, juce::Justification::topRight);
+    g.drawText("0.5", leftNumbers, juce::Justification::centredRight);
+    g.drawText("1", leftNumbers, juce::Justification::topRight);
+    g.setColour(juce::Colours::white);
+    g.drawText("Velocity In", bottomLabel, juce::Justification::centredBottom);
+
+    // === START ROTATED BLOCK ===
+    // Save the current, un-rotated graphics context state.
+    g.saveState();
+
+    // Calculate the center point of the rectangle where the text will be drawn.
+    auto center = leftLabel.getCentre();
+
+    // Apply the rotation (-90 degrees, or -pi/2 radians) using the center
+    // of the target rectangle as the rotation pivot point.
+    g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f, center.getX(), center.getY()));
+
+    // Draw the text. Because we rotated the drawing context, the text will appear
+    // rotated around its center point.
+    g.drawFittedText("Velocity Out", leftLabel, juce::Justification::centred, 2);
+
+    // Restore the graphics context. This removes the rotation transform entirely,
+    // ensuring that any code following this block draws horizontally again.
+    g.restoreState();
+    // === END ROTATED BLOCK ===
+
+    // plotter
+    g.setColour(juce::Colours::red);
+    juce::Path plot;
+
+    // go pixel by pixel, adding each point to plot
+    for (int i = 0; i <= graphWidth; i++) {
+        juce::Point<float> toAdd;
+        if(!velocityInvert)
+        {
+            toAdd = juce::Point<float> (
+                graphX + i,
+                (graphY + graphHeight) - graphHeight * bitklavier::utils::dt_warpscale((float) i / graphWidth, asym_k, sym_k, scale, offset));
+        }
+        else
+        {
+            toAdd = juce::Point<float> (
+                graphX + i,
+                graphY + graphHeight * bitklavier::utils::dt_warpscale((float) i / graphWidth, asym_k, sym_k, scale, offset));
+        }
+
+        if (toAdd.getY() < graphY) toAdd.setY(graphY);
+        if (toAdd.getY() > graphY + graphHeight) toAdd.setY(graphY + graphHeight);
+
+        // the first point starts the subpath, whereas all subsequent points are merely
+        // added to the subpath.
+        if (i == 0) plot.startNewSubPath(toAdd);
+        else plot.lineTo(toAdd);
+    }
+
+    g.strokePath(plot, juce::PathStrokeType(2.0));
+
+    // add a dot to represent input velocity
+    g.setColour(juce::Colours::goldenrod);
+    int radius = 12;
+//    for (std::pair<int, float> element : velocities)
+//    {
+//        float velocity = element.second;
+//        float warpscale = bitklavier::utils::dt_warpscale(velocity, asym_k, sym_k, scale, offset);
+//        if (warpscale > 1) warpscale = 1;
+//        if (warpscale < 0) warpscale = 0;
+//
+//        if (velocityInvert) {
+//            g.fillEllipse(graphArea.getX() + velocity * graphWidth - radius / 2,
+//                topPadding + graphHeight * warpscale - radius / 2,
+//                radius, radius);
+//        }
+//        else {
+//            g.fillEllipse(graphArea.getX() + velocity * graphWidth - radius / 2,
+//                topPadding + graphHeight - graphHeight * warpscale - radius / 2,
+//                radius, radius);
+//        }
+//    }
 }
