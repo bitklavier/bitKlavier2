@@ -12,7 +12,7 @@ SemitoneWidthSection::SemitoneWidthSection (
 {
     setComponentID(parent.getComponentID());
 
-    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->paramID);
+    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->paramID,params.semitoneWidthSliderParam->getModParam());
     addSlider(widthSlider_.get());
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);

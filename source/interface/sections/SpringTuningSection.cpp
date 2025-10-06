@@ -16,7 +16,7 @@ SpringTuningSection::SpringTuningSection (
 
     for ( auto &param_ : *params.getFloatParams())
     {
-        auto slider = std::make_unique<SynthSlider>(param_->paramID);
+        auto slider = std::make_unique<SynthSlider>(param_->paramID,param_->getModParam());
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
         slider->addAttachment(attachment.get());
 

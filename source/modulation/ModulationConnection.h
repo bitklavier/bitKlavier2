@@ -67,7 +67,6 @@ class ModulationProcessor;
 
         float getCurrentBaseValue()
         {
-
                 return state.getProperty(IDs::modAmt,  0.f);
         }
 

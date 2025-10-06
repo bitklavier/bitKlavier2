@@ -71,7 +71,7 @@ public:
         determinesCluster_label->setJustification(juce::Justification::right);
 
         // knobs
-        numPulses_knob = std::make_unique<SynthSlider>(params.numPulses->paramID);
+        numPulses_knob = std::make_unique<SynthSlider>(params.numPulses->paramID,params.numPulses->getModParam());
         addSlider(numPulses_knob.get());
         numPulses_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         numPulses_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -79,7 +79,7 @@ public:
         numPulses_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numPulses, listeners, *numPulses_knob, nullptr);
         numPulses_knob->addAttachment(numPulses_knob_attachment.get()); // needed for mods!!
 
-        numLayers_knob = std::make_unique<SynthSlider>(params.numLayers->paramID);
+        numLayers_knob = std::make_unique<SynthSlider>(params.numLayers->paramID,params.numLayers->getModParam());
         addSlider(numLayers_knob.get());
         numLayers_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         numLayers_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -87,7 +87,7 @@ public:
         numLayers_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numLayers, listeners, *numLayers_knob, nullptr);
         numLayers_knob->addAttachment(numLayers_knob_attachment.get());
 
-        clusterThickness_knob = std::make_unique<SynthSlider>(params.clusterThickness->paramID);
+        clusterThickness_knob = std::make_unique<SynthSlider>(params.clusterThickness->paramID,params.clusterThickness->getModParam());
         addSlider(clusterThickness_knob.get());
         clusterThickness_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThickness_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -95,7 +95,7 @@ public:
         clusterThickness_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThickness, listeners, *clusterThickness_knob, nullptr);
         clusterThickness_knob->addAttachment(clusterThickness_knob_attachment.get());
 
-        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshold->paramID);
+        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshold->paramID,params.clusterThreshold->getModParam());
         addSlider(clusterThreshold_knob.get());
         clusterThreshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);

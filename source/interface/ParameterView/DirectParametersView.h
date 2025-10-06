@@ -45,7 +45,7 @@ public:
                 param_->paramID == "Pedal" ||
                 param_->paramID == "Send")
             {
-                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->modulatable_param);
+                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
 
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly

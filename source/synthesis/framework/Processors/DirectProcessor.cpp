@@ -222,7 +222,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * busIndex is different than channel # because each bus might have a number of channels
      */
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendParam->getCurrentValue());
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
     buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
     buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
 

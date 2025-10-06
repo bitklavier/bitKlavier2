@@ -232,7 +232,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationDestination)
 };
 
-ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const juce::ValueTree &vt) : SynthSlider(name),
+ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const juce::ValueTree &vt) : SynthSlider(name,juce::ValueTree{}),
     color_component_(nullptr), index_(index), state(vt) {
     setModulationKnob();
     bypass_ = false;
