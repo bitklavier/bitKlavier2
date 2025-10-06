@@ -59,18 +59,7 @@ KeymapParameterView::KeymapParameterView (
      addSynthButton(invert.get(), true, true);
      invert->setText("invert?");
 
-     velocityCurveGraph = std::make_unique<VelocityCurveGraph>(kparams);
-     addAndMakeVisible(velocityCurveGraph.get());
-
      startTimer(50);
-     //velocityCurveGraph.updateVelocityList(km->getVelocities());
-//     velocityCurveGraph.setAsym_k(1.);
-//     velocityCurveGraph.setSym_k(1.);
-//     velocityCurveGraph.setScale(1.);
-//     velocityCurveGraph.setOffset(0.);
-//     velocityCurveGraph.setVelocityInvert(false);
-//     addAndMakeVisible(velocityCurveGraph);
-//
 }
 
 KeymapParameterView::~KeymapParameterView(){}
@@ -142,22 +131,11 @@ void KeymapParameterView::resized()
 
     area.reduce(0, 40);
     velocityCurveBox = area;
-    //velocityCurveGraph->setBounds(area);
 }
 
-void KeymapParameterView::redoImage()
-{
-    int mult = getPixelMultiple();
-    int image_width = getWidth() * mult;
-    int image_height = getHeight() * mult;
-    //juce::Image background_image(juce::Image::ARGB,image_width, image_height, true);
-    //juce::Graphics g (background_image);
-
-    //paintKnobShadows(g);
-    //sliderShadows.setOwnImage(background_image);
-
-}
-
+/**
+ * called for drawing the velocity curve
+ */
 void KeymapParameterView::timerCallback(void)
 {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
@@ -277,22 +255,9 @@ void KeymapParameterView::drawVelocityCurve(juce::Graphics &g)
     // add a dot to represent input velocity
     g.setColour(juce::Colours::goldenrod);
     int radius = 12;
-//    for (std::pair<int, float> element : velocities)
-//    {
-//        float velocity = element.second;
-//        float warpscale = bitklavier::utils::dt_warpscale(velocity, asym_k, sym_k, scale, offset);
-//        if (warpscale > 1) warpscale = 1;
-//        if (warpscale < 0) warpscale = 0;
-//
-//        if (velocityInvert) {
-//            g.fillEllipse(graphArea.getX() + velocity * graphWidth - radius / 2,
-//                topPadding + graphHeight * warpscale - radius / 2,
-//                radius, radius);
-//        }
-//        else {
-//            g.fillEllipse(graphArea.getX() + velocity * graphWidth - radius / 2,
-//                topPadding + graphHeight - graphHeight * warpscale - radius / 2,
-//                radius, radius);
-//        }
-//    }
+    g.fillEllipse(
+        graphX + params.invelocity * graphWidth - radius / 2,
+        (graphY + graphHeight) - graphHeight * params.warpedvelocity - radius / 2,
+        radius,
+        radius);
 }

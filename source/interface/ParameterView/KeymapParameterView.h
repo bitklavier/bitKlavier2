@@ -12,7 +12,6 @@
 #include "default_look_and_feel.h"
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 #include "open_gl_combo_box.h"
-#include "VelocityCurveGraph.h"
 
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
 public:
@@ -186,12 +185,6 @@ private:
         {
            return true;
         }
-//        for (auto mi : objects) {
-//
-//            if (mi->identifier == identifier) {
-//                return true;
-//            }
-//        }
         return false;
     }
     void flipEnablement (const int row)
@@ -212,8 +205,6 @@ private:
                 v.removeChild(v.getChildWithProperty(IDs::midiDeviceId, identifier), nullptr);
 
             }
-
-            //deviceManager.setMidiInputDeviceEnabled (identifier, ! deviceManager.isMidiInputDeviceEnabled (identifier));
         }
         resized(); // should probably do this with a changelistener/changebroadcaster
     }
@@ -260,11 +251,6 @@ public:
             setColorRecursively(child, color_id, color);
     }
 
-//    void paint(juce::Graphics &g) override {
-//        drawVelocityCurve(g);
-//        redoImage();
-//    }
-
     void paintBackground(juce::Graphics &g) override {
         SynthSection::paintContainer(g);
         paintHeadingText(g);
@@ -288,8 +274,6 @@ public:
     void drawVelocityCurve(juce::Graphics &g);
 
 private:
-    //OpenGlWrapper &opengl;
-    void redoImage(); //not doing anything at the moment, remove?
     void timerCallback(void) override;
 
     KeymapParams& params;
@@ -313,7 +297,6 @@ private:
     std::unique_ptr<SynthButton> invert;
     std::unique_ptr<chowdsp::ButtonAttachment> invert_attachment;
 
-    std::unique_ptr<VelocityCurveGraph> velocityCurveGraph;
     juce::Rectangle<int> velocityCurveBox;
 };
 #endif //KEYMAPPARAMETERVIEW_H

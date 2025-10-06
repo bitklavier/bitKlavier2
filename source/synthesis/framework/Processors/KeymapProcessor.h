@@ -11,12 +11,12 @@
 #include "PluginBase.h"
 #include "utils.h"
 
-struct KeymapKeyboardState {
+struct KeymapKeyboardState
+{
     KeymapKeyboardState() {
         keyStates.set();
     }
-//    std::bitset<128> harmonizationState;
-//    std::bitset<128> keyToHarmonize;
+
     std::bitset<128> keyStates;
 };
 
@@ -78,6 +78,10 @@ struct KeymapParams : chowdsp::ParamHolder
     };
 
     KeymapKeyboardState keyboard_state;
+
+    std::atomic<float> invelocity;
+    std::atomic<float> warpedvelocity;
+
     /** Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const KeymapParams& paramHolder);
@@ -94,7 +98,7 @@ struct KeymapNonParameterState : chowdsp::NonParamState
     }
 };
 
-class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<KeymapParams,KeymapNonParameterState>>
+class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<KeymapParams, KeymapNonParameterState>>
 {
 public:
     KeymapProcessor( SynthBase& parent,const juce::ValueTree& v);
@@ -113,6 +117,8 @@ public:
     bool setMidiDevice(juce::AudioDeviceManager& deviceManager, juce::String identifier) { deviceManager.addMidiInputDeviceCallback(identifier, static_cast<juce::MidiInputCallback*>(_midi.get()));}
     void allNotesOff();
     std::unique_ptr<MidiManager> _midi;
+
+    float applyVelocityCurve(float velocity);
 
 private:
     juce::MidiKeyboardState keyboard_state;

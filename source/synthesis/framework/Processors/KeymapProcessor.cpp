@@ -7,7 +7,7 @@
 #include "common.h"
 #include "synth_base.h"
 
-KeymapProcessor::KeymapProcessor (SynthBase& parent,const juce::ValueTree& v ) : PluginBase (
+KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& v ) : PluginBase (
                                                                                      parent,
                                                                                      v,
                                                                                      nullptr,
@@ -49,6 +49,7 @@ static juce::String getMidiMessageDescription (const juce::MidiMessage& m)
 
     return juce::String::toHexString (m.getRawData(), m.getRawDataSize());
 }
+
 static juce::String printMidi (juce::MidiMessage& message, const juce::String& source)
 {
     auto time = message.getTimeStamp(); //- startTime;
@@ -75,31 +76,91 @@ void KeymapProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     _midi->midi_collector_.reset (sampleRate);
 }
 
+float KeymapProcessor::applyVelocityCurve(float velocity)
+{
+    /*
+     **** Velocity Curving
+     user settable parameters:
+     --asymmetric warping coefficient (0, 10): default 1 (no warping)
+     --symmetric warping coefficent (0, 5): default 1 (no warping)
+     --scaling multipler (0, 10): default 1.
+     --offset (-1, 1): default 0.
+     --invert velocities, toggle: default off
+
+     also, the user should be able to set extendRange (in dB), which is in BKPianoSampler::startNote()
+     and will presumably need to pass through here.
+
+     velocity curving doesn't actually extend the dynamic range (well, it could if scaling results
+     in velocities > 1.), but rather just distributes the incoming velocities across the dynamic
+     range with the sample layers. extendRange will extend the total dynamic of the sample set, and
+     is set to 4dB by default at the moment (that's probably a reasonable default, and feels good for
+     the Heavy set and other new bK sample libraries).
+     */
+
+    float asym_k            = state.params.velocityCurve_asymWarp->getCurrentValue();
+    float sym_k             = state.params.velocityCurve_symWarp->getCurrentValue();
+    float scale             = state.params.velocityCurve_scale->getCurrentValue();
+    float offset            = state.params.velocityCurve_offset->getCurrentValue();
+    bool velocityInvert     = state.params.velocityCurve_invert->get();
+
+    // don't filter if not necessary
+    if (juce::approximatelyEqual(asym_k, 1.0f) &&
+        juce::approximatelyEqual(sym_k, 1.0f) &&
+        juce::approximatelyEqual(scale, 1.0f) &&
+        juce::approximatelyEqual(offset, 0.0f) &&
+        velocityInvert == false)
+    {
+        return velocity;
+    }
+
+    float velocityCurved = bitklavier::utils::dt_warpscale(velocity, asym_k, sym_k, scale, offset);
+    if (velocityInvert) velocityCurved = 1. - velocityCurved;
+
+    if (velocityCurved < 0.) velocityCurved = 0.;
+    else if (velocityCurved > 1.) velocityCurved = 1.;
+
+    return velocityCurved;
+}
+
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + " kmap");
-
     midiMessages.clear();
     int num_samples = buffer.getNumSamples();
 
-    juce::MidiBuffer midi_messages;
-    _midi->removeNextBlockOfMessages (midi_messages, num_samples);
-    _midi->replaceKeyboardMessages (midi_messages, num_samples);
-    for (auto message : midi_messages)
+    juce::MidiBuffer in_midi_messages;
+    _midi->removeNextBlockOfMessages (in_midi_messages, num_samples);
+    _midi->replaceKeyboardMessages (in_midi_messages, num_samples);
+    for (auto message : in_midi_messages)
     {
         if (state.params.keyboard_state.keyStates.test (message.getMessage().getNoteNumber()))
-            midiMessages.addEvent (message.getMessage(), message.samplePosition);
+        {
+            float oldvelocity = message.getMessage().getVelocity() / 127.0;
+            float newvelocity = applyVelocityCurve(oldvelocity);
+
+            if(newvelocity > 1.0) newvelocity = 1.0;
+            if(newvelocity < 0.0) newvelocity = 0.0;
+
+            auto newmsg = message.getMessage();
+            newmsg.setVelocity(newvelocity);
+            midiMessages.addEvent (newmsg, message.samplePosition);
+
+            if(newmsg.isNoteOn())
+            {
+                state.params.invelocity = oldvelocity;
+                state.params.warpedvelocity = newvelocity;
+            }
+        }
     }
 
-    //    // print them out for now
-    //    for (auto mi : midiMessages)
-    //    {
-    //        auto message = mi.getMessage();
-    //
-    //        mi.samplePosition;
-    //        mi.data;
-    //        DBG (printMidi (message, "kmap"));
-    //    }
+    // print them out for now
+//    for (auto mi : midiMessages)
+//    {
+//        auto message = mi.getMessage();
+//
+//        mi.samplePosition;
+//        mi.data;
+//        DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
+//    }
 
     // DBG("keymap");
 }
