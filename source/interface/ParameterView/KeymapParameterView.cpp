@@ -21,7 +21,7 @@ KeymapParameterView::KeymapParameterView (
      addAndMakeVisible(keyboard_component_.get());
 
      // knobs
-     asymmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_asymWarp->paramID);
+     asymmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_asymWarp->paramID,params.velocityCurve_asymWarp->getModParam());
      addSlider(asymmetricalWarp_knob.get());
      asymmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
      asymmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -29,7 +29,7 @@ KeymapParameterView::KeymapParameterView (
      asymmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_asymWarp, listeners, *asymmetricalWarp_knob, nullptr);
      asymmetricalWarp_knob->addAttachment(asymmetricalWarp_knob_attach.get());
 
-     symmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_symWarp->paramID);
+     symmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_symWarp->paramID,params.velocityCurve_symWarp->getModParam());
      addSlider(symmetricalWarp_knob.get());
      symmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
      symmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -37,7 +37,7 @@ KeymapParameterView::KeymapParameterView (
      symmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_symWarp, listeners, *symmetricalWarp_knob, nullptr);
      symmetricalWarp_knob->addAttachment(symmetricalWarp_knob_attach.get());
 
-     scale_knob = std::make_unique<SynthSlider>(params.velocityCurve_scale->paramID);
+     scale_knob = std::make_unique<SynthSlider>(params.velocityCurve_scale->paramID,params.velocityCurve_scale->getModParam());
      addSlider(scale_knob.get());
      scale_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
      scale_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -45,7 +45,7 @@ KeymapParameterView::KeymapParameterView (
      scale_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_scale, listeners, *scale_knob, nullptr);
      scale_knob->addAttachment(scale_knob_attach.get());
 
-     offset_knob = std::make_unique<SynthSlider>(params.velocityCurve_offset->paramID);
+     offset_knob = std::make_unique<SynthSlider>(params.velocityCurve_offset->paramID,params.velocityCurve_offset->getModParam());
      addSlider(offset_knob.get());
      offset_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
      offset_knob->setPopupPlacement(juce::BubbleComponent::below);
