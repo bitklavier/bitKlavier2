@@ -1233,7 +1233,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
             }
                 else {
                     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-                    parent->getSampleLoadManager()->loadSamples(selection, false);
+                    parent->getSampleLoadManager()->loadSamples(selection, false,curr_vt);
                     sampleSelectText->setText(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection]);
                 }
 
