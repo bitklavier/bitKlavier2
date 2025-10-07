@@ -11,7 +11,8 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
 {
     VelocityMinMaxParams() : chowdsp::ParamHolder("velocityminmax")
     {
-        add(velocityMinParam, velocityMaxParam, lastVelocityParam);
+        //add(velocityMinParam, velocityMaxParam, lastVelocityParam);
+        add(velocityMinParam, velocityMaxParam);
     }
 
     chowdsp::FloatParameter::Ptr velocityMinParam {
@@ -41,15 +42,21 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
      * when this value changes. since we are using a legacy bK UI component for the velocityMinMax slider
      * we need this callback, to trigger a redraw and so on, something we don't need to do with the
      * newer OpenGL components we're using (like the levelMeter)
+     *
+     * or, if there is a Timer running in the ParametersView class holding this, the value can be just accessed directly and updated
      */
-    chowdsp::FloatParameter::Ptr lastVelocityParam {
-        juce::ParameterID { "LastVelocity", 100 },
-        "LastVelocity",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f),
-        127.0f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
-    };
+     /**
+      * todo: replace with a simple std::atomic?
+      */
+      std::atomic<float> lastVelocityParam;
+//    chowdsp::FloatParameter::Ptr lastVelocityParam {
+//        juce::ParameterID { "LastVelocity", 100 },
+//        "LastVelocity",
+//        chowdsp::ParamUtils::createNormalisableRange (0.0f, 127.0f, 63.f),
+//        127.0f,
+//        &chowdsp::ParamUtils::floatValToString,
+//        &chowdsp::ParamUtils::stringToFloatVal
+//    };
 
     /**
      * this is called every block, but doesn't do anything unless there is a "changeState"

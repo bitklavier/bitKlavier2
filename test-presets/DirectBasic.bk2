@@ -4,8 +4,8 @@
          pedalSampleSet="/defaultPedals">
   <PIANO isActive="1" name="default">
     <PREPARATIONS>
-      <direct type="0" width="245" height="125" x_y="343, 376" uuid="62f036020a024f7087b6699c4c0938f4"
-              nodeID="1659909634" numIns="1" numOuts="2" Main="0.000" Hammers="-24.000"
+      <direct type="0" width="245" height="125" x_y="367, 227" uuid="ce60749b7b514018b0fe88445bbf622e"
+              nodeID="3462427803" numIns="1" numOuts="2" Main="0.000" Hammers="-24.000"
               Resonance="6.000" Pedal="-6.000" Send="0.000" OutputGain="0.000"
               attack="3.000" decay="10.000" sustain="1.000" release="50.000"
               attackpower="0.000" decaypower="0.000" releasepower="0.000" hold="0.000"
@@ -27,19 +27,30 @@
           <MODULATABLE_PARAM parameter="delay" channel="10" start="0.0" end="1000.0" skew="1.0"/>
         </MODULATABLE_PARAMS>
         <PARAM_DEFAULT/>
-        <PORT nodeID="1659909634" chIdx="4096" isIn="1"/>
-        <PORT nodeID="1659909634" chIdx="2" isIn="0"/>
-        <PORT nodeID="1659909634" chIdx="3" isIn="0"/>
+        <PORT nodeID="3462427803" chIdx="4096" isIn="1"/>
+        <PORT nodeID="3462427803" chIdx="2" isIn="0"/>
+        <PORT nodeID="3462427803" chIdx="3" isIn="0"/>
       </direct>
-      <keymap type="7" width="185" height="105" x_y="410, 514" uuid="3b328904d17e4a7f8590dfa8ec1d21fb"
-              nodeID="993167620" numOuts="1" keyOn="21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108">
-        <MODULATABLE_PARAMS/>
-        <PORT nodeID="993167620" chIdx="4096" isIn="0"/>
-        <midiInput midiDeviceId="-670308381"/>
+      <keymap type="7" width="185" height="105" x_y="355, 366" uuid="17bfae01dbe14ec9893dbc457bc99c72"
+              nodeID="398437889" numOuts="1" velocityCurve_asymWarp="1.000"
+              velocityCurve_symWarp="1.000" velocityCurve_scale="1.000" velocityCurve_offset="0.000"
+              velocityCurve_invert="0" keyOn="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurve_asymWarp" channel="0" start="0.0" end="10.0"
+                             skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_symWarp" channel="1" start="0.0" end="5.0"
+                             skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_scale" channel="2" start="0.0" end="10.0"
+                             skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_offset" channel="3" start="-1.0" end="1.0"
+                             skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PORT nodeID="398437889" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
       </keymap>
     </PREPARATIONS>
     <CONNECTIONS>
-      <CONNECTION isMod="0" src="993167620" srcIdx="4096" dest="1659909634" destIdx="4096"/>
+      <CONNECTION isMod="0" src="398437889" srcIdx="4096" dest="3462427803" destIdx="4096"/>
     </CONNECTIONS>
     <MODCONNECTIONS/>
   </PIANO>

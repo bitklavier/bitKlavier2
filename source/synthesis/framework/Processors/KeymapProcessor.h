@@ -10,6 +10,7 @@
 #include "PreparationStateImpl.h"
 #include "PluginBase.h"
 #include "utils.h"
+#include "VelocityMinMaxParams.h"
 
 struct KeymapKeyboardState
 {
@@ -28,7 +29,9 @@ struct KeymapParams : chowdsp::ParamHolder
             velocityCurve_symWarp,
             velocityCurve_scale,
             velocityCurve_offset,
-            velocityCurve_invert);
+            velocityCurve_invert,
+            velocityMinMax);
+
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
@@ -92,6 +95,7 @@ struct KeymapParams : chowdsp::ParamHolder
     };
 
     KeymapKeyboardState keyboard_state;
+    VelocityMinMaxParams velocityMinMax;
 
     std::atomic<float> invelocity;
     std::atomic<float> warpedvelocity;
@@ -133,6 +137,7 @@ public:
     std::unique_ptr<MidiManager> _midi;
 
     float applyVelocityCurve(float velocity);
+    bool checkVelocityRange(float velocity);
 
 private:
     juce::MidiKeyboardState keyboard_state;

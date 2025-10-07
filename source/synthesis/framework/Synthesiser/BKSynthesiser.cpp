@@ -340,19 +340,6 @@ void BKSynthesiser::noteOn (const int midiChannel,
     if (synthGain <= -80.f) return;
 
     /**
-     * store this velocity for the UI to use
-     */
-    lastSynthState.lastVelocity = velocity;
-
-    /**
-     * check first to see if velocity is within velocity min/max range, and return if not
-     */
-     /**
-      * todo: remove this when we move velocity min/max to Keymap?
-      */
-    if (!checkVelocityRange(velocity)) return;
-
-    /**
      * moved this out of the loop below because it was messing up voice handling with multiple transpositions
      * however, this move might break something else in the future, we'll have to see..
      */

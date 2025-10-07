@@ -20,6 +20,10 @@ KeymapParameterView::KeymapParameterView (
      addStateModulatedComponent(keyboard_component_.get());
      addAndMakeVisible(keyboard_component_.get());
 
+     velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
+     velocityMinMaxSlider->setComponentID ("keymap_velocity_min_max");
+     addStateModulatedComponent (velocityMinMaxSlider.get());
+
      // knobs
      asymmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_asymWarp->paramID,params.velocityCurve_asymWarp->getModParam());
      addSlider(asymmetricalWarp_knob.get());
@@ -115,8 +119,10 @@ void KeymapParameterView::resized()
         setColorRecursively(midi_selector_.get(), juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
     }
 
-    // velocity knobs and invert button
+    // velocity sliders, knobs and invert button
     juce::Rectangle velocityKnobsRect = area.removeFromLeft(area.getWidth() * 0.5);
+    juce::Rectangle velocityMinMaxSliderRect = velocityKnobsRect.removeFromBottom(knobsectionheight);
+    velocityMinMaxSlider->setBounds(velocityMinMaxSliderRect);
     velocityKnobsRect.reduce(velocityKnobsRect.getWidth() * 0.25, velocityKnobsRect.getHeight() * 0.25);
     juce::Rectangle invertButtonRect = velocityKnobsRect.removeFromBottom(comboboxheight);
     invertButtonRect.reduce(40, 0);
@@ -140,6 +146,9 @@ void KeymapParameterView::timerCallback(void)
 {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     interface->getGui()->prep_popup->repaintPrepBackground();
+
+    velocityMinMaxSlider->setDisplayValue(params.velocityMinMax.lastVelocityParam);
+    velocityMinMaxSlider->redoImage();
 }
 
 void KeymapParameterView::drawVelocityCurve(juce::Graphics &g)

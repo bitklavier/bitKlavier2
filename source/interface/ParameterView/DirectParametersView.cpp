@@ -32,7 +32,6 @@ void DirectParametersView::resized()
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
-    DBG(" output knob area" + juce::String(outputKnobsArea.getWidth()) + " " + juce::String(outputKnobsArea.getHeight()));
 
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);
@@ -42,9 +41,7 @@ void DirectParametersView::resized()
     // add the transposition and velocity range sliders below that
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> transpositionSliderArea = bounds.removeFromTop(knob_section_height);
-    juce::Rectangle<int> velocitySliderArea = transpositionSliderArea.removeFromLeft(transpositionSliderArea.getWidth() * 0.5);
     transpositionSlider->setBounds(transpositionSliderArea);
-    velocityMinMaxSlider->setBounds(velocitySliderArea);
 
     SynthSection::resized();
 }

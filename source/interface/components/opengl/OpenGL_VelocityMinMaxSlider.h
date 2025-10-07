@@ -90,13 +90,13 @@ public:
              * when the param changes.
              * also, since this is not a slider that the user touches, we don't need a SliderAttachment
              */
-            listeners.addParameterListener(_params->lastVelocityParam,
-                chowdsp::ParameterListenerThread::MessageThread,
-                [this] {
-                    setDisplayValue(this->params->lastVelocityParam->getCurrentValue());
-                    redoImage();
-                }
-                )
+//            listeners.addParameterListener(_params->lastVelocityParam,
+//                chowdsp::ParameterListenerThread::MessageThread,
+//                [this] {
+//                    setDisplayValue(this->params->lastVelocityParam->getCurrentValue());
+//                    redoImage();
+//                }
+//                )
         };
     }
 

@@ -12,6 +12,8 @@
 #include "default_look_and_feel.h"
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 #include "open_gl_combo_box.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
+#include "VelocityMinMaxParams.h"
 
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
 public:
@@ -298,5 +300,8 @@ private:
     std::unique_ptr<chowdsp::ButtonAttachment> invert_attachment;
 
     juce::Rectangle<int> velocityCurveBox;
+
+    // min/max filter slider
+    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 };
 #endif //KEYMAPPARAMETERVIEW_H

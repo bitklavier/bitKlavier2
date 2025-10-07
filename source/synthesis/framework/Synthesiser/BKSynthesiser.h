@@ -343,37 +343,6 @@ class BKSynthesiser
                     noteOnSpecs = inspecs;
                 }
 
-                /**
-                 * todo: remove these next two after moving velocity min/max to Keymap
-                 * @param velmin
-                 * @param velmax
-                 */
-                void updateVelocityMinMax(float velmin, float velmax)
-                {
-                    velocityMin = velmin;
-                    velocityMax = velmax;
-                }
-
-                bool checkVelocityRange(float velocity) const
-                {
-                    /**
-                    * need to send velocity back up, for display in velocity min/max slider, before returning
-                    */
-                    //
-
-                    //in normal case where velocityMin < velocityMax, we only pass if both are true
-                    if (velocityMax >= velocityMin)
-                    {
-                        if (velocity >= velocityMin && velocity <= velocityMax) return true;
-                        else return false;
-                    }
-
-                    //case where velocityMin > velocityMax, we pass if either is true
-                    if (velocity >= velocityMin || velocity <= velocityMax) return true;
-                    else return false;
-
-                }
-
                 BKSynthesizerState getSynthesizerState()
                 {
                     return lastSynthState;
@@ -484,10 +453,6 @@ private:
 
                 std::map<int, NoteOnSpec> noteOnSpecs;
 
-                //set by owning processor state.params.velocityMinMax
-                float velocityMin = 0.;
-                float velocityMax = 128.;
-
                 TuningState* tuning;
 
                 template <typename floatType>
@@ -503,8 +468,6 @@ private:
 
                 // becomes false when there are no voices active
                 bool someVoicesActive = true;
-
-//                Direction playbackDirection = Direction::forward;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

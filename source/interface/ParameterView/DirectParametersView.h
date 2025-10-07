@@ -64,15 +64,10 @@ public:
         // create the more complex UI elements
         envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
-        velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
         // we add subsections for the elements that have been defined as sections
         addSubSection (envSection.get());
         addSubSection (transpositionSlider.get());
-
-        // this slider does not need a section, since it's just one OpenGL component
-        velocityMinMaxSlider->setComponentID ("velocity_min_max");
-        addStateModulatedComponent (velocityMinMaxSlider.get());
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
@@ -101,7 +96,6 @@ public:
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
-    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
