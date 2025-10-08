@@ -1,5 +1,57 @@
 # Notes about how to do stuff in the bK codebase
 
+
+---------
+## Creating a New Preparation
+Typing as I do MidiFilter and Resonance
+- create the primary preparation classes, recreating the primary internal structures from the closest existing class:
+  - MidiFilterProcessor or ResonanceProcessor class, with params
+  - MidiFilterParametersView or ResonanceParametersView class
+    - might not always need this: see Reset, for instance
+  - MidiFilterPreparation or ResonancePreparation class
+- add to `BKPreparationTypes` in common.h
+- create class MidiFilterItem in BKItem.h
+- in BKItem.cpp, add path for preparation in `getPathForPreparation (bitklavier::BKPreparationType type)`
+- add to menu in synth_gui_interface.cpp `SynthGuiInterface::getPluginPopupItems()`
+- `nodeFactory.Register` it in ConstructionSite.cpp.
+  - and to `CommandIDs` here
+  - also add a switch case in `perform()` here
+  - also `ConstructionSite::getAllCommands` and `getCommandInfo`
+- register in the constructor for `PreparationList.cpp`
+  - `prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter,MidiFilterProcessor::create);`
+- might need to add it to `PreparationSection::itemDropped`
+  - requires creating `midifilterDropped()` funcs in various places
+  - do NOT need it for midifilter, since its not one to connect via drag/drop
+- icon svg layers in assets/midifilter, with further info in BinaryData.h; BinaryData.h says it is autowritten -- how?
+  - need to add a path() call in `paths.h`
+  - some drawing stuff happens in `BKItem.h`
+  - might not need an image, can just draw a path()
+  - icon size is set in `ConstructionSite::perform`
+- preparation icon size is set in `ConstructionSite::perform`?
+- popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
+---------
+## Quick Bug/Feature Notes
+- [ ] lots of work remaining on state-mod UIs, in particular their visibility
+- [ ] in Keymap, include: key selection, velocity min/max, velocity curving
+  - move harmonizer stuff to new MidiHarmonize, based on MidiFilter
+- [ ] control-click menu is completely unmanageable right now with all the plugins there...
+- [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
+- [ ] we'll need to be able to override the default ranges of params, when a user types in a value outside the default range.
+  - should be able to create a public function in chowdsp_ParameterTypes that accesses `const juce::NormalisableRange<float>& valueRange`. should able to make that not a `const` where it is privately declared there
+  - for changes to chowdsp, need to add/commit to that submodule branch, and then push. supdate first. we have our own fork of chowdsp, also used by electrosynth
+- [ ] weird dialog boxes when control-clicking on knobs
+- [ ] for the transposition slider, if 0 isn't the first element we don't get it at all. so [0 4] works but [4 0] does not
+- [ ] maybe we should allow drag/drop to make audio connections between preps as well
+- [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
+- [ ] i believe pitchbend is not yet implemented
+- [ ] MTS still needs to be implemented for Tuning, as does Scala
+- [ ] Spring and Adaptive tuning don't handle Transpositions properly
+- [ ] dragging preps around the construction site is a little frustrating; sometimes they move, sometimes they just pop back where they were
+- [ ] in general, the preps seem BIG. is scaling them going to be straightforward? might even want a user option to zoom in and out to various percentages for the construction site
+- [ ] would like the Audio Buffer Size to default to 128, not 512
+
+---------
+
 ## Things/Questions for Davis
 - [ ] Mod setup in Synchronic and Tuning.
   - Mod of menus? essential!
@@ -17,27 +69,6 @@
     - if it's not called when the sample rate is changed, i need to sort out how the sr change is propagated down
 - [ ] how to NOT have a param or section eligible for state change mod? thinking the envelope stuff in Synchronic
 - [ ] finish revising the chowdsp range resizing
-
-
-## Quick Bug/Feature Notes
-- [ ] lots of work remaining on state-mod UIs, in particular their visibility
-- [ ] in Keymap, include: key selection, velocity min/max, velocity curving
-  - move harmonizer stuff to new MidiHarmonize, based on MidiFilter
-- [ ] control-click menu is completely unmanageable right now with all the plugins there...
-- [ ] i'm thinking the knobs should show their values at all times, or at least on mouse-over; very hard to track what's going on just by knob position
-- [ ] we'll need to be able to override the default ranges of params, when a user types in a value outside the default range. 
-  - should be able to create a public function in chowdsp_ParameterTypes that accesses `const juce::NormalisableRange<float>& valueRange`. should able to make that not a `const` where it is privately declared there
-  - for changes to chowdsp, need to add/commit to that submodule branch, and then push. supdate first. we have our own fork of chowdsp, also used by electrosynth
-- [ ] weird dialog boxes when control-clicking on knobs
-- [ ] for the transposition slider, if 0 isn't the first element we don't get it at all. so [0 4] works but [4 0] does not
-- [ ] maybe we should allow drag/drop to make audio connections between preps as well
-- [ ] also need to be able to see the transposition values when mousing over the sub-sliders in Transposition slider
-- [ ] i believe pitchbend is not yet implemented
-- [ ] MTS still needs to be implemented for Tuning, as does Scala
-- [ ] Spring and Adaptive tuning don't handle Transpositions properly
-- [ ] dragging preps around the construction site is a little frustrating; sometimes they move, sometimes they just pop back where they were
-- [ ] in general, the preps seem BIG. is scaling them going to be straightforward? might even want a user option to zoom in and out to various percentages for the construction site
-- [ ] would like the Audio Buffer Size to default to 128, not 512
 
 ---------
 ## Action Sequences
@@ -123,34 +154,6 @@ etc...
 
   
 - then, in `DirectParametersView::resized()` you need to actually place the UI elements in the window
-
----------
-## Creating a New Preparation
-Typing as I do MidiFilter...
-- create MidiFilterProcessor class, with params
-- create the MidiFilterParametersView class
-  - might not always need this: see Reset, for instance
-- create the MidiFilterPreparation class
-- add to `BKPreparationTypes` in common.h
-- create class MidiFilterItem in BKItem.h
-- in BKItem.cpp, add path for preparation in `getPathForPreparation (bitklavier::BKPreparationType type)`
-- add to menu in synth_gui_interface.cpp `SynthGuiInterface::getPluginPopupItems()`
-- `nodeFactory.Register` it in ConstructionSite.cpp.
-  - and to `CommandIDs` here
-  - also add a switch case in `perform()` here
-  - also `ConstructionSite::getAllCommands` and `getCommandInfo`
-- register in the constructor for `PreparationList.cpp`
-  - `prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter,MidiFilterProcessor::create);`
-- might need to add it to `PreparationSection::itemDropped`
-  - requires creating `midifilterDropped()` funcs in various places
-  - do NOT need it for midifilter, since its not one to connect via drag/drop
-- icon svg layers in assets/midifilter, with further info in BinaryData.h; BinaryData.h says it is autowritten -- how?
-  - need to add a path() call in `paths.h`
-  - some drawing stuff happens in `BKItem.h`
-  - might not need an image, can just draw a path()
-  - icon size is set in `ConstructionSite::perform`
-- preparation icon size is set in `ConstructionSite::perform`?
-- popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 
 ---------
 ## Audio Graph, New Pianos and Switching

@@ -56,8 +56,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     // we're going to hard-wire the number of envelopes that can be sequenced to 12, like the original bK
     static constexpr int numEnvelopes = 12;
 
-    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::vector<ParamPtrVariant> modulatableParams;
+//    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
+//    std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Synchronic Processor
     SynchronicParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("synchronic")
@@ -94,7 +94,6 @@ struct SynchronicParams : chowdsp::ParamHolder
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back ( sliderParam);
         });
-
     }
 
     // primary multislider params
@@ -499,9 +498,6 @@ public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
     ~SynchronicProcessor(){}
 
-
-    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
-
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
@@ -509,6 +505,7 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     bool acceptsMidi() const override { return true; }
 
@@ -549,8 +546,8 @@ public:
             .withOutput("Modulation",   juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",         juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
     }
-    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
 
+    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 

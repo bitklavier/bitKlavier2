@@ -1,0 +1,12 @@
+//
+// Created by Dan Trueman on 10/8/25.
+//
+
+#ifndef BITKLAVIER0_RESONANCEPREPARATION_H
+#define BITKLAVIER0_RESONANCEPREPARATION_H
+
+class ResonancePreparation
+{
+};
+
+#endif //BITKLAVIER0_RESONANCEPREPARATION_H

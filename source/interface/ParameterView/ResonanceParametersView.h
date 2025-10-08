@@ -1,0 +1,12 @@
+//
+// Created by Dan Trueman on 10/8/25.
+//
+
+#ifndef BITKLAVIER0_RESONANCEPARAMETERSVIEW_H
+#define BITKLAVIER0_RESONANCEPARAMETERSVIEW_H
+
+class ResonanceParametersView
+{
+};
+
+#endif //BITKLAVIER0_RESONANCEPARAMETERSVIEW_H
