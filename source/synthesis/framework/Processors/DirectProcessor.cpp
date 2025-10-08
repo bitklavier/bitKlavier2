@@ -201,10 +201,16 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * "getChannelIndexInProcessBlockBuffer" will give us the proper channel in buffer to copy the buffer to for the send
      * busIndex is different than channel # because each bus might have a number of channels
      */
+
+    // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
     buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
     buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
+
+    // send level meter update
+    std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0,  buffer.getNumSamples());
+    std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0,  buffer.getNumSamples());
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());

@@ -135,6 +135,7 @@ struct DirectParams : chowdsp::ParamHolder {
      *      and then the level meter will update its values during the OpenGL cycle
      */
     std::tuple<std::atomic<float>, std::atomic<float> > outputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
 
     /****************************************************************************************/
 };

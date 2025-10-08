@@ -74,6 +74,12 @@ public:
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
         addSubSection(levelMeter.get());
+
+        // similar for send level meter/slider
+        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendParam, listeners, &params.sendLevels);
+        sendLevelMeter->setLabel("Send");
+        addSubSection(sendLevelMeter.get());
+
         setSkinOverride(Skin::kDirect);
     }
 
@@ -103,6 +109,7 @@ public:
 
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;
+    std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     void resized() override;
     DirectParams& params;

@@ -9,6 +9,7 @@ void DirectParametersView::resized()
 {
     // width of the title at left, used in all preparations
     int title_width = getTitleWidth();
+    int smallpadding = findValue(Skin::kPadding);
 
     // height for most of these components
     int knob_section_height = getKnobSectionHeight();
@@ -20,6 +21,8 @@ void DirectParametersView::resized()
     // bounds for level meter on right side
     juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
     levelMeter->setBounds(meterArea);
+    bounds.removeFromRight(smallpadding);
+    sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
     // how much vertical space will we need for all the components?
     int verticalAreaNeeded = knob_section_height * 7;
