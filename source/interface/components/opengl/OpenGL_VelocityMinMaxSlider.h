@@ -89,6 +89,8 @@ public:
              * need that for the newer OpenGL UI elements, which will just update automatically
              * when the param changes.
              * also, since this is not a slider that the user touches, we don't need a SliderAttachment
+             *
+             * not using for now, since we can update in the Keymap timer, but leaving for future reference
              */
 //            listeners.addParameterListener(_params->lastVelocityParam,
 //                chowdsp::ParameterListenerThread::MessageThread,

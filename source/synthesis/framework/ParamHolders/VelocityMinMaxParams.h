@@ -44,10 +44,9 @@ struct VelocityMinMaxParams : chowdsp::ParamHolder
      * newer OpenGL components we're using (like the levelMeter)
      *
      * or, if there is a Timer running in the ParametersView class holding this, the value can be just accessed directly and updated
+     * - in this case, we can just use a std::atomic and not add/save this parameter, which is preferable.
+     * - but leaving the chowdsp solution for future reference
      */
-     /**
-      * todo: replace with a simple std::atomic?
-      */
       std::atomic<float> lastVelocityParam;
 //    chowdsp::FloatParameter::Ptr lastVelocityParam {
 //        juce::ParameterID { "LastVelocity", 100 },

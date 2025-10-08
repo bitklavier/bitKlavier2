@@ -154,14 +154,16 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     juce::MidiBuffer in_midi_messages;
     _midi->removeNextBlockOfMessages (in_midi_messages, num_samples);
     _midi->replaceKeyboardMessages (in_midi_messages, num_samples);
+
     for (auto message : in_midi_messages)
     {
         if (state.params.keyboard_state.keyStates.test (message.getMessage().getNoteNumber()))
         {
             if(message.getMessage().isNoteOn())
-                //state.params.velocityMinMax.lastVelocityParam->setParameterValue(message.getMessage().getVelocity());
+            {
                 state.params.velocityMinMax.lastVelocityParam = message.getMessage().getVelocity();
-            if (!checkVelocityRange(message.getMessage().getVelocity())) continue;
+                if (!checkVelocityRange(message.getMessage().getVelocity())) continue;
+            }
 
             float oldvelocity = message.getMessage().getVelocity() / 127.0;
             float newvelocity = applyVelocityCurve(oldvelocity);
