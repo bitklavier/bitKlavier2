@@ -18,7 +18,7 @@ public:
         {
             setComponentID(parent.getComponentID());
 
-            offsetKnob = std::make_unique<SynthSlider>(params.offSet->paramID);
+            offsetKnob = std::make_unique<SynthSlider>(params.offSet->paramID,params.offSet->getModParam());
             addSlider(offsetKnob.get());
             offsetKnob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             offsetKnob->setPopupPlacement(juce::BubbleComponent::below);

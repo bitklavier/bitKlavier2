@@ -7,8 +7,14 @@
 
 #include "KeymapProcessor.h"
 #include "synth_section.h"
+#include "synth_slider.h"
+#include "synth_button.h"
 #include "default_look_and_feel.h"
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
+#include "open_gl_combo_box.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
+#include "VelocityMinMaxParams.h"
+
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
 public:
     OpenGLKeymapKeyboardComponent(KeymapParams & params)
@@ -18,21 +24,23 @@ public:
         image_component_->setComponent(this);
     }
 
-    ~OpenGLKeymapKeyboardComponent()
-    {}
+    ~OpenGLKeymapKeyboardComponent(){}
+
     virtual void resized() override {
         OpenGlAutoImageComponent::resized();
-        // if (isShowing())
         redoImage();
     }
+
     void mouseDrag(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseDrag(e);
         redoImage();
     }
+
     void mouseMove(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseMove(e);
         redoImage();
     }
+
     void buttonClicked(juce::Button *b) override {
         OpenGlAutoImageComponent::buttonClicked(b);
         redoImage();
@@ -56,11 +64,9 @@ public:
         OpenGlAutoImageComponent::textEditorTextChanged(textEditor);
         redoImage();
     }
-
 };
-class MidiInputSelectorComponentListBox : public juce::ListBox,
-                                                                              private juce::ListBoxModel,
-private juce::ChangeListener
+
+class MidiInputSelectorComponentListBox : public juce::ListBox, private juce::ListBoxModel, private juce::ChangeListener
 {
 public:
     MidiInputSelectorComponentListBox (const juce::ValueTree &v)
@@ -72,7 +78,6 @@ public:
         setOutlineThickness (1);
     }
 
-
     void updateDevices()
     {
         items = juce::MidiInput::getAvailableDevices();
@@ -82,6 +87,7 @@ public:
     {
         return items.size();
     }
+
     static void drawTextLayout (juce::Graphics& g, juce::Component& owner, juce::StringRef text, const juce::Rectangle<int>& textBounds, bool enabled)
     {
         const auto textColour = owner.findColour (juce::ListBox::textColourId, true).withMultipliedAlpha (enabled ? 1.0f : 0.6f);
@@ -98,6 +104,7 @@ public:
                                  (float) textBounds.getHeight());
         textLayout.draw (g, textBounds.toFloat());
     }
+
     void paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool rowIsSelected) override
     {
         if (juce::isPositiveAndBelow (row, items.size()))
@@ -180,12 +187,6 @@ private:
         {
            return true;
         }
-//        for (auto mi : objects) {
-//
-//            if (mi->identifier == identifier) {
-//                return true;
-//            }
-//        }
         return false;
     }
     void flipEnablement (const int row)
@@ -206,8 +207,6 @@ private:
                 v.removeChild(v.getChildWithProperty(IDs::midiDeviceId, identifier), nullptr);
 
             }
-
-            //deviceManager.setMidiInputDeviceEnabled (identifier, ! deviceManager.isMidiInputDeviceEnabled (identifier));
         }
         resized(); // should probably do this with a changelistener/changebroadcaster
     }
@@ -241,24 +240,18 @@ private:
 };
 
 
-class KeymapParameterView : public SynthSection {
+class KeymapParameterView : public SynthSection, juce::Timer
+{
 public:
+    KeymapParameterView(KeymapProcessor &, KeymapParams& kparams, juce::String name, OpenGlWrapper *open_gl);
+    ~KeymapParameterView();
+    void resized() override;
+
     void setColorRecursively(juce::Component *component, int color_id, const juce::Colour& color) {
         component->setColour(color_id, color);
         for (juce::Component *child : component->getChildren())
             setColorRecursively(child, color_id, color);
     }
-    // Constructor method that takes two arguments: a smart pointer to a KeymapProcessor,
-    // and a reference to an OpenGlWrapper
-    KeymapParameterView(KeymapProcessor &, OpenGlWrapper &);
-
-    // Public function definitions for the class, which override the base class methods for
-    // initializing, rendering, resizing, and painting OpenGl components
-    //    void initOpenGlComponents(OpenGlWrapper &open_gl) override;
-
-
-
-    void resized() override;
 
     void paintBackground(juce::Graphics &g) override {
         SynthSection::paintContainer(g);
@@ -266,6 +259,13 @@ public:
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
+
+        drawLabelForComponent(g, TRANS("center warp"), asymmetricalWarp_knob.get());
+        drawLabelForComponent(g, TRANS("sides warp"), symmetricalWarp_knob.get());
+        drawLabelForComponent(g, TRANS("scale"), scale_knob.get());
+        drawLabelForComponent(g, TRANS("offset"), offset_knob.get());
+
+        drawVelocityCurve(g);
     }
 
     int getViewPosition() {
@@ -273,18 +273,35 @@ public:
         return view_height; //std::max(0, std::min<int>(selections_.size() * getRowHeight() - view_height, view_position_));
     }
 
-    ~KeymapParameterView();
-
+    void drawVelocityCurve(juce::Graphics &g);
 
 private:
-    OpenGlWrapper &opengl;
-    // Private function definitions and member variables for the KeymapParameterView class
-    void redoImage();
+    void timerCallback(void) override;
 
-    KeymapParams *params = nullptr;
+    KeymapParams& params;
     KeymapProcessor &proc;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlMidiSelector> midi_selector_;
 
+    // velocity curve knobs
+    std::unique_ptr<SynthSlider> asymmetricalWarp_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> asymmetricalWarp_knob_attach;
+
+    std::unique_ptr<SynthSlider> symmetricalWarp_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> symmetricalWarp_knob_attach;
+
+    std::unique_ptr<SynthSlider> scale_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> scale_knob_attach;
+
+    std::unique_ptr<SynthSlider> offset_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> offset_knob_attach;
+
+    std::unique_ptr<SynthButton> invert;
+    std::unique_ptr<chowdsp::ButtonAttachment> invert_attachment;
+
+    juce::Rectangle<int> velocityCurveBox;
+
+    // min/max filter slider
+    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 };
 #endif //KEYMAPPARAMETERVIEW_H

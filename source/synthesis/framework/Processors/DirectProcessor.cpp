@@ -31,10 +31,8 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
 
-
-
     state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.transpose.transpositionUsesTuning->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
@@ -42,8 +40,8 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose",
         &(state.params.transpose.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocity_min_max",
-        &(state.params.velocityMinMax.stateChanges)));
+    bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
+    &(state.params.transpose.transpositionUsesTuning->stateChanges)));
 }
 
 
@@ -161,7 +159,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     // then, the state-change modulations, for more complex params
     state.params.transpose.processStateChanges();
-    state.params.velocityMinMax.processStateChanges();
+    state.params.transpose.transpositionUsesTuning->processStateChanges();
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();
@@ -174,21 +172,12 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     {
         mainSynth->setBypassed (false);
         mainSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        mainSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (hammerSynth->hasSamples())
     {
         hammerSynth->setBypassed (false);
-
-        hammerSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -196,10 +185,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     {
         releaseResonanceSynth->setBypassed (false);
         releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        releaseResonanceSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -216,10 +201,16 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * "getChannelIndexInProcessBlockBuffer" will give us the proper channel in buffer to copy the buffer to for the send
      * busIndex is different than channel # because each bus might have a number of channels
      */
+
+    // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendParam->getCurrentValue());
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
     buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
     buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
+
+    // send level meter update
+    std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0,  buffer.getNumSamples());
+    std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0,  buffer.getNumSamples());
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
@@ -242,7 +233,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      */
     // get last synthesizer state and update things accordingly
     lastSynthState = mainSynth->getSynthesizerState();
-    state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
     if (tuning != nullptr)
         tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
 }

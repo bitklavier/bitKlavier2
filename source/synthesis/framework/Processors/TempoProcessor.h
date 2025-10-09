@@ -21,7 +21,7 @@
 struct TempoParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Direct Processor
-    TempoParams() : chowdsp::ParamHolder ("tempo")
+    TempoParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("tempo")
     {
         add (tempoParam,
             subdivisionsParam);
@@ -84,10 +84,6 @@ public:
     TempoProcessor (SynthBase& parent, const juce::ValueTree& v);
     ~TempoProcessor() {}
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<TempoProcessor> (parent, v);
-    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

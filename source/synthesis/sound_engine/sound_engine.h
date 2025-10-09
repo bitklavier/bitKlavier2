@@ -113,7 +113,10 @@ namespace bitklavier
 
         juce::AudioProcessorGraph::Node::Ptr removeNode (juce::AudioProcessorGraph::NodeID id)
         {
-            return processorGraph->removeNode (id);
+            if(processorGraph)
+                return processorGraph->removeNode (id);
+            else
+                return nullptr;
         }
 
         Node::Ptr addNode (std::unique_ptr<ModulationProcessor> modProcessor, juce::AudioProcessorGraph::NodeID id);
@@ -165,6 +168,7 @@ namespace bitklavier
         }
 
         void allNotesOff();
+        void shutdown();
 
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);

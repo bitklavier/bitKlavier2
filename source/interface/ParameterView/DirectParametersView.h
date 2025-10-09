@@ -16,7 +16,7 @@
 class DirectParametersView : public SynthSection
 {
 public:
-    DirectParametersView (chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection ("")
+    DirectParametersView (chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), params(params)
     {
         // the name that will appear in the UI as the name of the section
         setName ("direct");
@@ -45,7 +45,8 @@ public:
                 param_->paramID == "Pedal" ||
                 param_->paramID == "Send")
             {
-                auto slider = std::make_unique<SynthSlider> (param_->paramID);
+                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
+
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
@@ -63,21 +64,22 @@ public:
         // create the more complex UI elements
         envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
-        velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
         // we add subsections for the elements that have been defined as sections
         addSubSection (envSection.get());
         addSubSection (transpositionSlider.get());
-
-        // this slider does not need a section, since it's just one OpenGL component
-        velocityMinMaxSlider->setComponentID ("velocity_min_max");
-        addStateModulatedComponent (velocityMinMaxSlider.get());
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
         addSubSection(levelMeter.get());
+
+        // similar for send level meter/slider
+        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendParam, listeners, &params.sendLevels);
+        sendLevelMeter->setLabel("Send");
+        addSubSection(sendLevelMeter.get());
+
         setSkinOverride(Skin::kDirect);
     }
 
@@ -100,7 +102,6 @@ public:
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
-    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
@@ -108,8 +109,10 @@ public:
 
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;
+    std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     void resized() override;
+    DirectParams& params;
 };
 
 #endif //BITKLAVIER2_DIRECTPARAMETERSVIEW_H

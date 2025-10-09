@@ -38,11 +38,6 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
     delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, getSampleRate());
 
     /*
-     * setup modulations (gain level sliders here)
-     */
-    setupModulationMappings();
-
-    /*
      * state-change parameter stuff (for multisliders)
      */
     state.params.beatLengths.stateChanges.defaultState      = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -77,9 +72,9 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     feedbackIndex = 0;
 
     /**
-     * todo: get from Tempo and General Settings
+     * todo: get General Settings
      */
-    pulseLength = (60.0 / (_subdivisions * _tempo));
+    pulseLength = getPulseLength();
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
     numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load();
     numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * getSampleRate() * pulseLength;
@@ -274,41 +269,6 @@ void BlendronicProcessor::processContinuousModulations(juce::AudioBuffer<float>&
     }
 }
 
-/**
- * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
- *      from a modification preparation
- *      modulations like this come on an audio channel
- *      this is on a separate bus from the regular audio graph that carries audio between preparations
- */
-void BlendronicProcessor::setupModulationMappings()
-{
-    auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
-    if (!mod_params.isValid()) {
-        int mod = 0;
-        mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS,nullptr);
-        for (auto param: state.params.modulatableParams)
-        {
-            juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
-            juce::String name = std::visit([](auto* p) -> juce::String
-                {
-                    return p->paramID; // Works if all types have getParamID()
-                }, param);
-            const auto& a  = std::visit([](auto* p) -> juce::NormalisableRange<float>
-                {
-                    return p->getNormalisableRange(); // Works if all types have getParamID()
-                }, param);
-            modChan.setProperty (IDs::parameter, name, nullptr);
-            modChan.setProperty (IDs::channel, mod, nullptr);
-            modChan.setProperty(IDs::start, a.start,nullptr);
-            modChan.setProperty(IDs::end, a.end,nullptr);
-            modChan.setProperty(IDs::skew, a.skew,nullptr);
-
-            mod_params.appendChild (modChan, nullptr);
-            mod++;
-        }
-    }
-}
-
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     /**
@@ -319,7 +279,7 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      *      pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
      *      pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
      */
-    pulseLength = (60.0 / (_subdivisions * _tempo));
+    pulseLength = getPulseLength();
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
 
     // process continuous modulations (gain level sliders)

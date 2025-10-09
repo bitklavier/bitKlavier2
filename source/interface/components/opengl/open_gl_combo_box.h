@@ -19,6 +19,8 @@ public:
         image_component_ = std::make_shared<OpenGlImageComponent> ();
         setLookAndFeel(&laf);
         image_component_->setComponent(this);
+        setComponentID(str);
+        paramID = str;
     }
     ~OpenGLComboBox() {
         setLookAndFeel(nullptr);
@@ -27,6 +29,21 @@ public:
     {
         OpenGlAutoImageComponent<juce::ComboBox>::resized();
         redoImage();
+    }
+
+
+    void mouseEnter(const juce::MouseEvent &event) override
+    {
+        for (auto* listener : listeners_)
+            listener->hoverStarted(this);
+        hovering_ = true;
+    }
+
+    void mouseExit(const juce::MouseEvent &event) override
+    {
+        for (auto* listener : listeners_)
+            listener->hoverEnded(this);
+        hovering_ = false;
     }
     // void mouseUp(const juce::MouseEvent &event) override {
     //     OpenGlAutoImageComponent<juce::ComboBox>::mouseUp(event);
@@ -41,6 +58,29 @@ public:
     //     redoImage();
     // }
     BKButtonAndMenuLAF laf;
+    class Listener {
+    public:
+        virtual ~Listener() { }
+        virtual void hoverStarted(OpenGLComboBox* button) { }
+        virtual void hoverEnded(OpenGLComboBox* button) { }
+    };
+    std::vector<Listener*> listeners_;
+    void addListener(OpenGLComboBox::Listener* listener)
+    {
+        listeners_.push_back(listener);
+    }
+    bool hovering_ = false;
+    // for components that are used to edit state modulation values
+    bool isModulation_ = false;
+
+    juce::PopupMenu* clone() {
+       auto menu = this->getRootMenu();
+        return menu;
+    }
+    std::string getParamID() {
+        return paramID;
+    }
+    std::string paramID;
 };
 
 

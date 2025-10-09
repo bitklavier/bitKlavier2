@@ -70,7 +70,7 @@ namespace bitklavier {
         class SliderParameterComponent : public juce::Component {
         public:
             SliderParameterComponent(chowdsp::FloatParameter &param, chowdsp::ParameterListeners& listeners, SynthSection &parent)
-                    : slider(std::make_shared<SynthSlider>(param.paramID)), attachment(param, listeners, *slider, nullptr) {
+                    : slider(std::make_shared<SynthSlider>(param.paramID,param.getModParam())), attachment(param, listeners, *slider, nullptr) {
                 setName(param.paramID);
                 setLookAndFeel(DefaultLookAndFeel::instance());
                 slider->setScrollWheelEnabled(false);

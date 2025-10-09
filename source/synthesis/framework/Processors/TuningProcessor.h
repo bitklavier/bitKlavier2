@@ -168,7 +168,7 @@ struct TuningState : bitklavier::StateChangeableParameter
 struct TuningParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Tuning Processor
-    TuningParams() : chowdsp::ParamHolder ("tuning")
+    TuningParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("tuning")
     {
         add (tuningState.tuningSystem,
             tuningState.fundamental,
@@ -231,8 +231,6 @@ class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
 public:
     TuningProcessor (SynthBase& parent, const juce::ValueTree& v);
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v) {
-        return std::make_unique<TuningProcessor> (parent, v); }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};

@@ -9,7 +9,7 @@
 #include "PreparationStateImpl.h"
 #include "Identifiers.h"
 struct LFOParams : public chowdsp::ParamHolder {
-    LFOParams() : chowdsp::ParamHolder("lfo")
+    LFOParams(const juce::ValueTree& v) : chowdsp::ParamHolder("lfo")
     {
         add(freq);
     }

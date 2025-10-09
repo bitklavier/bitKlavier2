@@ -27,6 +27,17 @@ public:
     virtual std::unique_ptr<AudioFormatReaderFactory> clone() const = 0;
 };
 
+/**
+ * holds all the information for the samples for a particular pitch
+ */
+struct PitchSamplesInfo
+{
+    bitklavier::utils::BKPianoSampleType sampleType;
+    int numLayers;
+    juce::BigInteger newMidiRange;
+    std::unique_ptr<AudioFormatReaderFactory> sampleReaderArray;
+};
+
 inline std::unique_ptr<juce::AudioFormatReader> makeAudioFormatReader (juce::AudioFormatManager& manager,
     const void* sampleData,
     size_t dataSize)
@@ -139,7 +150,7 @@ public:
 class SampleLoadJob : public juce::ThreadPoolJob
 {
 public:
-    SampleLoadJob ( //int loadType,
+    SampleLoadJob (
         int sampleType,
         int numLayers,
         juce::BigInteger newMidiRange,
@@ -150,13 +161,24 @@ public:
                                            soundset (soundset),
                                            loadManager (loadManager),
                                            sampleReader (std::move (ptr)),
-                                           //loadType(loadType),
                                            manager (manager)
     {
         thisSampleType = sampleType;
         velocityLayers = numLayers;
         thisMidiRange = newMidiRange;
     };
+
+    SampleLoadJob (
+        juce::AudioFormatManager* manager,
+        std::vector<PitchSamplesInfo>&& srvector,
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
+        juce::AsyncUpdater* loadManager) : juce::ThreadPoolJob ("sample_loader"),
+                                           sampleReaderVector (std::move(srvector)),
+                                           soundset (soundset),
+                                           loadManager (loadManager),
+                                           manager (manager)
+    {};
+
     ~SampleLoadJob()
     {loadManager->triggerAsyncUpdate();}
     JobStatus runJob() override;
@@ -174,8 +196,16 @@ public:
 
     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset;
     std::unique_ptr<AudioFormatReaderFactory> sampleReader;
+
     juce::AudioFormatManager* manager;
     juce::AsyncUpdater* loadManager;
+
+    /**
+     * a vector of all the pitches with relevant sample info, so the samples can be loaded
+     */
+    std::vector<PitchSamplesInfo> sampleReaderVector;
 };
+
+
 
 #endif //BITKLAVIER2_AUDIOFILEMANAGER_H

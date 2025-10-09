@@ -108,6 +108,25 @@ namespace IDs
     DECLARE_ID(adsr_releasePower)
     DECLARE_ID(adsr_active)
 
+    DECLARE_ID(combo_box_index)
+    DECLARE_ID(fundamental)
+    DECLARE_ID(tuningType)
+    DECLARE_ID(tuningSystem)
+
+
+    DECLARE_ID(direct)
+    DECLARE_ID(blendronic)
+    DECLARE_ID(reset)
+    DECLARE_ID(midiFilter)
+    DECLARE_ID(pianoMap)
+    DECLARE_ID(midiTarget)
+    DECLARE_ID(nostalgic)
+    DECLARE_ID(synchronic)
+    DECLARE_ID(modulation)
+    DECLARE_ID(tuning)
+    DECLARE_ID(tempo)
+    DECLARE_ID(vst)
+    DECLARE_ID(keymap)
 }
 
 #undef DECLARE_ID

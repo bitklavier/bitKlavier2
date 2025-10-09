@@ -35,19 +35,34 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 
 void TuningState::processStateChanges()
 {
-    for (auto [index, change] : stateChanges.changeState)
+    for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
         auto val = change.getProperty (IDs::absoluteTuning);
-        auto val1 = change.getProperty (IDs::circularTuning);
+
         if (val != nullVar)
         {
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
         }
-        else if (val1 != nullVar)
+       val = change.getProperty (IDs::circularTuning);
+        if (val != nullVar)
         {
-            parseFloatStringToAtomicArrayCircular(val1.toString().toStdString(), circularTuningOffset);
+            parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
         }
+        val = change.getProperty(IDs::tuningSystem);
+        if (val != nullVar) {
+            int n = val;
+            TuningSystem t = static_cast<TuningSystem> (1 << n);
+            tuningSystem->setParameterValue(t);
+        }
+        val = change.getProperty(IDs::tuningType);
+        if (val != nullVar) {
+            int n = val;
+            TuningType t =static_cast<TuningType>(1<<n);
+            tuningType->setParameterValue(t);
+        }
+
+
     }
     stateChanges.changeState.clear();
 }
@@ -563,7 +578,7 @@ void TuningState::printSpiralNotes()
 // ********************************************************************************************************************* //
 
 
-TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (parent, v, nullptr, tuningBusLayout())
+TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, tuningBusLayout())
 {
     state.params.tuningState.initializeSpiralNotes();
 
@@ -571,6 +586,47 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& v) :
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.tuningState.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "fundamental", &(state.params.tuningState.fundamental->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningType", &(state.params.tuningState.stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningSystem", &(state.params.tuningState.stateChanges)));
+    //adaptive
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveIntervalScale", &(state.params.tuningState.adaptiveParams.tAdaptiveIntervalScale->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveAnchorScale", &(state.params.tuningState.adaptiveParams.tAdaptiveAnchorScale->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tAdaptiveAnchorFundamental", &(state.params.tuningState.adaptiveParams.tAdaptiveAnchorFundamental->stateChanges)));
+    //spring
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "scaleId", &(state.params.tuningState.springTuningParams.scaleId->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "intervalFundamental", &(state.params.tuningState.springTuningParams.intervalFundamental->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "scaleIdTether", &(state.params.tuningState.springTuningParams.scaleId_tether->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tetherFundamental", &(state.params.tuningState.springTuningParams.tetherFundamental->stateChanges)));
+    //semitone
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "reffundamental", &(state.params.tuningState.semitoneWidthParams.reffundamental->stateChanges)));
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "octave", &(state.params.tuningState.semitoneWidthParams.octave->stateChanges)));
+
+    state.params.tuningState.stateChanges.defaultState      = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.tuningSystem->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.tuningType->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+//adaptive
+    state.params.tuningState.adaptiveParams.tAdaptiveIntervalScale->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.adaptiveParams.tAdaptiveAnchorScale->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.adaptiveParams.tAdaptiveAnchorFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    //spring
+    state.params.tuningState.springTuningParams.scaleId->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.springTuningParams.intervalFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.springTuningParams.scaleId_tether->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.springTuningParams.tetherFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -613,6 +669,8 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      *      - the circular and absolute tuning arrays in this case
      */
     state.params.tuningState.processStateChanges();
+    state.params.tuningState.fundamental->processStateChanges();
+
 
     /*
      * increment timer for tuningType tuning cluster measurements.

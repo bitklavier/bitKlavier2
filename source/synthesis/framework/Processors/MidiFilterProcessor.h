@@ -15,7 +15,7 @@
 struct MidiFilterParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Tuning Processor
-    MidiFilterParams() : chowdsp::ParamHolder ("midifilter")
+    MidiFilterParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("midifilter")
     {
         add (mftoggle);
     }
@@ -48,8 +48,7 @@ struct MidiFilterNonParameterState : chowdsp::NonParamState
 class MidiFilterProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiFilterParams,MidiFilterNonParameterState>>
 {
 public:
-    MidiFilterProcessor (const juce::ValueTree& v, SynthBase& parent);
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v);
+    MidiFilterProcessor ( SynthBase& parent,const juce::ValueTree& v);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
     void releaseResources() override {}

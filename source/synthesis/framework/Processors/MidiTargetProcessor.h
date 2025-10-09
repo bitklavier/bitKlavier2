@@ -42,7 +42,7 @@
 struct MidiTargetParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the MidiTarget Processor
-    MidiTargetParams() : chowdsp::ParamHolder ("miditarget")
+    MidiTargetParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("miditarget")
     {
 
         add (
@@ -72,10 +72,10 @@ struct MidiTargetParams : chowdsp::ParamHolder
             synchronicTargetBeatSync_noteMode,
             synchronicTargetAddNotes_noteMode,
             synchronicTargetClear_noteMode,
-            synchronicTargetPausePlay_noteMode,
-            synchronicTargetDeleteOldest_noteMode,
-            synchronicTargetDeleteNewest_noteMode,
-            synchronicTargetRotate_noteMode);
+            synchronicTargetPausePlay_noteMode);
+//            synchronicTargetDeleteOldest_noteMode,
+//            synchronicTargetDeleteNewest_noteMode,
+//            synchronicTargetRotate_noteMode);
 
         targetMapper[BlendronicTargetPatternSync]       = blendronicTargetPatternSync.get();
         noteModeMapper[BlendronicTargetPatternSync]     = blendronicTargetPatternSync_noteMode.get();
@@ -113,14 +113,14 @@ struct MidiTargetParams : chowdsp::ParamHolder
         targetMapper[SynchronicTargetPausePlay]         = synchronicTargetPausePlay.get();
         noteModeMapper[SynchronicTargetPausePlay]       = synchronicTargetPausePlay_noteMode.get();
 
-        targetMapper[SynchronicTargetDeleteOldest]      = synchronicTargetDeleteOldest.get();
-        noteModeMapper[SynchronicTargetDeleteOldest]    = synchronicTargetDeleteOldest_noteMode.get();
-
-        targetMapper[SynchronicTargetDeleteNewest]      = synchronicTargetDeleteNewest.get();
-        noteModeMapper[SynchronicTargetDeleteNewest]    = synchronicTargetDeleteNewest_noteMode.get();
-
-        targetMapper[SynchronicTargetRotate]            = synchronicTargetRotate.get();
-        noteModeMapper[SynchronicTargetRotate]          = synchronicTargetRotate_noteMode.get();
+//        targetMapper[SynchronicTargetDeleteOldest]      = synchronicTargetDeleteOldest.get();
+//        noteModeMapper[SynchronicTargetDeleteOldest]    = synchronicTargetDeleteOldest_noteMode.get();
+//
+//        targetMapper[SynchronicTargetDeleteNewest]      = synchronicTargetDeleteNewest.get();
+//        noteModeMapper[SynchronicTargetDeleteNewest]    = synchronicTargetDeleteNewest_noteMode.get();
+//
+//        targetMapper[SynchronicTargetRotate]            = synchronicTargetRotate.get();
+//        noteModeMapper[SynchronicTargetRotate]          = synchronicTargetRotate_noteMode.get();
 
         /**
          * add additional params for other preps/targets here and below
@@ -354,8 +354,7 @@ struct MidiTargetNonParameterState : chowdsp::NonParamState
 class MidiTargetProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>
 {
 public:
-    MidiTargetProcessor (const juce::ValueTree& v, SynthBase& parent);
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v);
+    MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
     void releaseResources() override {}

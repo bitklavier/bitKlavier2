@@ -19,18 +19,18 @@
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : tracktion::engine::ValueTreeObjectList<
     PluginInstanceWrapper>(v), synth(parent) {
     jassert(v.hasType(IDs::PREPARATIONS));
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation,bitklavier::ModulationProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning, TuningProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset, bitklavier::ResetProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeTempo, TempoProcessor::create);
-    prepFactory.Register(bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicProcessor::create);
+    prepFactory.template registerType<DirectProcessor,  SynthBase&, const juce::ValueTree&>(IDs::direct.toString().toStdString());
+    prepFactory.template registerType<BlendronicProcessor,  SynthBase&, const juce::ValueTree&>(IDs::blendronic.toString().toStdString());
+    prepFactory.template registerType<SynchronicProcessor,  SynthBase&, const juce::ValueTree&>(IDs::synchronic.toString().toStdString());
+    prepFactory.template registerType<KeymapProcessor,  SynthBase&, const juce::ValueTree&>(IDs::keymap.toString().toStdString());
+    prepFactory.template registerType<bitklavier::ModulationProcessor,  SynthBase&, const juce::ValueTree&>(IDs::modulation.toString().toStdString());
+    prepFactory.template registerType<TuningProcessor,  SynthBase&, const juce::ValueTree&>(IDs::tuning.toString().toStdString());
+    prepFactory.template registerType<bitklavier::ResetProcessor,  SynthBase&, const juce::ValueTree&>(IDs::reset.toString().toStdString());
+    prepFactory.template registerType<MidiFilterProcessor,  SynthBase&, const juce::ValueTree&>(IDs::midiFilter.toString().toStdString());
+    prepFactory.template registerType<MidiTargetProcessor,  SynthBase&, const juce::ValueTree&>(IDs::midiTarget.toString().toStdString());
+    prepFactory.template registerType<PianoSwitchProcessor,  SynthBase&, const juce::ValueTree&>(IDs::pianoMap.toString().toStdString());
+    prepFactory.template registerType<TempoProcessor,  SynthBase&, const juce::ValueTree&>(IDs::tempo.toString().toStdString());
+    prepFactory.template registerType<NostalgicProcessor,  SynthBase&, const juce::ValueTree&>(IDs::nostalgic.toString().toStdString());
 
 
     rebuildObjects();
@@ -46,7 +46,7 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
     juce::ValueTree state = v;
     if (temporary_instance == nullptr && static_cast<int>(state.getProperty(IDs::type)) <
         bitklavier::BKPreparationType::PreparationTypeVST) {
-        auto processor = prepFactory.CreateObject((int) state.getProperty(IDs::type), synth, v);
+       auto processor = prepFactory.create(v.getType().toString().toStdString(), std::any(std::tie(synth,v)));
         rawPtr = processor.get();
         processor->prepareToPlay(synth.getSampleRate(), synth.getBufferSize());
         //looking at ProcessorGraph i actually don't think their is any need to try to wrap this in thread safety because

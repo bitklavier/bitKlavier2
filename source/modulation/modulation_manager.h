@@ -28,6 +28,7 @@
 #include <tracktion_ValueTreeUtilities.h>
 #include <set>
 #include "ModuleListInterface.h"
+#include "open_gl_combo_box.h"
 class ModulationSection;
 class ExpandModulationButton;
 class ModulationMatrix;
@@ -238,7 +239,8 @@ class ModulationManager : public SynthSection,
                           public ModulationExpansionBox::Listener,
                           public ModulesInterface::Listener,
 public ModulationIndicator::Listener,
-public StateModulatedComponent::Listener
+public StateModulatedComponent::Listener,
+public OpenGLComboBox::Listener
 
 {
   public:
@@ -356,6 +358,8 @@ public StateModulatedComponent::Listener
     void removeAuxSourceConnection(int from_index);
     void hoverStarted(StateModulatedComponent* component) override;
     void hoverEnded(StateModulatedComponent* component) override;
+    void hoverStarted(OpenGLComboBox* component) override;
+    void hoverEnded(OpenGLComboBox* component) override;
 
     // this will be called by both
     //  ModulesInterface<ModulationSection>::Listener,
@@ -381,6 +385,7 @@ public StateModulatedComponent::Listener
     void makeCurrentModulatorAmountsVisible();
     void makeModulationsVisible(SynthSlider* destination, bool visible);
     void makeModulationsVisible(StateModulatedComponent* destination, bool visible);
+    void makeModulationsVisible(OpenGLComboBox* destination, bool visible);
     void makeModulationsVisible(SynthButton* destination, bool visible);
     void positionModulationAmountSlidersInside(const std::string& source,
                                                std::vector<bitklavier::ModulationConnection*> connections);
@@ -406,6 +411,7 @@ public StateModulatedComponent::Listener
     SynthSlider* temporarily_set_synth_slider_;
     SynthButton* temporarily_set_button_;
     StateModulatedComponent* temporarily_set_state_component_;
+    OpenGLComboBox* temporarily_set_state_combo_box_;
     ModulationAmountKnob* temporarily_set_hover_slider_;
     bool temporarily_set_bipolar_;
     OpenGlQuad drag_quad_;
@@ -414,6 +420,16 @@ public StateModulatedComponent::Listener
     OpenGlQuad editing_rotary_amount_quad_;
     OpenGlQuad editing_linear_amount_quad_;
     StateModulatedComponent* editing_state_component_ = nullptr;
+    typedef struct comboBoxMod {
+        juce::PopupMenu* popup_menu = nullptr;
+        juce::ValueTree modulation;
+        juce::String paramID;
+    }comboBoxMod;
+
+    comboBoxMod editing_button_mod;
+
+    comboBoxMod editing_comboBox_mod;
+
     std::map<juce::Viewport*, std::shared_ptr<OpenGlMultiQuad>> rotary_destinations_;
     std::map<juce::Viewport*, std::unique_ptr<OpenGlMultiQuad>> linear_destinations_;
     std::map<juce::Viewport*, std::shared_ptr<OpenGlMultiQuad>> rotary_meters_;
@@ -438,6 +454,7 @@ public StateModulatedComponent::Listener
     std::map<std::string, SynthSlider*> slider_model_lookup_;
     std::map<std::string, SynthButton*> button_model_lookup_;
     std::map<std::string, StateModulatedComponent*> state_model_lookup_;
+    std::map<std::string, OpenGLComboBox*> combo_box_lookup;
     std::map<std::string, ModulationAmountKnob*> modulation_amount_lookup_;
     std::map<std::string, ModulationIndicator*> modulation_indicators_lookup_;
 

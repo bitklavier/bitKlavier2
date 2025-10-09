@@ -299,7 +299,7 @@ class OpenGlSlider : public juce::Slider {
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OpenGlSlider)
 };
 
-class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
+class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, public juce::ValueTree::Listener {
   public:
     enum MenuId {
       kCancel = 0,
@@ -307,6 +307,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
       kClearMidiLearn,
       kDefaultValue,
       kManualEntry,
+      // kRangeResize,
       kClearModulations,
       kModulationList
     };
@@ -348,7 +349,8 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
     };
 
     //SynthSlider(juce::String name, chowdsp::FloatParameter& param);
-    SynthSlider(juce::String name);
+    SynthSlider(juce::String name,const juce::ValueTree & vt_to_listen_to);
+  ~SynthSlider();
     virtual void mouseDown(const juce::MouseEvent& e) override;
     virtual void mouseDrag(const juce::MouseEvent& e) override;
     virtual void mouseEnter(const juce::MouseEvent& e) override;
@@ -494,9 +496,13 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener {
 //    {
 //        attachment = (param, pluginState, *this);
 //    }
+  void valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
+                                       const juce::Identifier& property) override;
   chowdsp::SliderAttachment* attachment = nullptr;
+  std::vector< bitklavier::ModulationConnection*> getConnections() ;
+  juce::ValueTree modulatableparam_vt;
   protected:
-
+    juce::ValueTree vt;
     PopupItems createPopupMenu();
     void setRotaryTextEntryBounds();
     void setLinearTextEntryBounds();

@@ -144,7 +144,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
         switch (info.commandID) {
             case direct:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::direct);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
                 t.setProperty(IDs::width, 245, nullptr);
                 t.setProperty(IDs::height, 125, nullptr);
@@ -165,7 +165,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case keymap:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::keymap);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
                 t.setProperty(IDs::width, 185, nullptr);
                 t.setProperty(IDs::height, 105, nullptr);
@@ -189,7 +189,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case synchronic:
             {
-                 juce::ValueTree t(IDs::PREPARATION);
+                 juce::ValueTree t(IDs::synchronic);
 
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
                  t.setProperty(IDs::width, 260, nullptr);
@@ -200,7 +200,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case blendronic:
             {
-                 juce::ValueTree t(IDs::PREPARATION);
+                 juce::ValueTree t(IDs::blendronic);
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
                  t.setProperty(IDs::width, 245, nullptr);
                  t.setProperty(IDs::height, 125, nullptr);
@@ -211,7 +211,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case tempo:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::tempo);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
                 t.setProperty(IDs::width, 132, nullptr);
@@ -224,7 +224,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case tuning:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::tuning);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
                 t.setProperty(IDs::width, 125, nullptr);
@@ -239,7 +239,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case midifilter:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::midiFilter);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiFilter, nullptr);
                 t.setProperty(IDs::width, 75, nullptr);
@@ -252,7 +252,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case miditarget:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::midiTarget);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiTarget, nullptr);
                 t.setProperty(IDs::width, 75, nullptr);
@@ -265,7 +265,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case pianoswitch:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::pianoMap);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypePianoMap, nullptr);
                 t.setProperty(IDs::width, 150, nullptr);
@@ -278,7 +278,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case modulation:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::modulation);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
                 t.setProperty(IDs::width, 100, nullptr);
@@ -292,7 +292,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 return true;
             }
             case resetMod: {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::reset);
 
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeReset, nullptr);
                 t.setProperty(IDs::width, 100, nullptr);
@@ -460,6 +460,7 @@ DBG("moduleRemoved construction site");
 ConstructionSite::~ConstructionSite(void) {
     removeMouseListener(&cableView);
     removeChildComponent(&selectorLasso);
+    prep_list->removeListener(this);
 }
 
 void ConstructionSite::paintBackground(juce::Graphics &g) {

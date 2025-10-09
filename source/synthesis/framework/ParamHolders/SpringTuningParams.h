@@ -102,7 +102,7 @@ struct SpringTuningParams : public chowdsp::ParamHolder
      *      - usually ET
      */
     chowdsp::EnumChoiceParameter<TuningSystem>::Ptr scaleId_tether {
-        juce::ParameterID { "scaleId_tether", 100 },
+        juce::ParameterID { "scaleIdTether", 100 },
         "Anchor Tuning",
         TuningSystem::Equal_Temperament,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' } }

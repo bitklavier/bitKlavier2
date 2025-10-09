@@ -36,6 +36,7 @@
 #include "Identifiers.h"
 #include "array_to_string.h"
 #include "MultiSliderState.h"
+#include "TempoProcessor.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -59,11 +60,10 @@ struct BlendronicParams : chowdsp::ParamHolder
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
 
-    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::vector<ParamPtrVariant> modulatableParams;
+
 
     // Adds the appropriate parameters to the Blendronic Processor
-    BlendronicParams() : chowdsp::ParamHolder ("blendronic")
+    BlendronicParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("blendronic")
     {
         add (
             outputGain,
@@ -215,12 +215,6 @@ class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 public:
     BlendronicProcessor (SynthBase& parent, const juce::ValueTree& v);
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<BlendronicProcessor> (parent, v);
-    }
-
-    void setupModulationMappings();
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -259,14 +253,19 @@ public:
 
     inline void toggleActive() { blendronicActive = !blendronicActive; }
 
+float getPulseLength()
+{
+    if (tempo != nullptr)
+        return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
+    else
+        return 0.5; // 120bpm by default
+}
+
 private:
 
     /**
-     * todo: Tempo params
-     * placeholders here for now
+     * todo: Tempo params, periodMultiplier?
      */
-    double _tempo = 120.;
-    double _subdivisions = 4.;
     double _periodMultiplier = 1.;
 
     /**

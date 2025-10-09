@@ -67,15 +67,23 @@ class ModulationProcessor;
 
         float getCurrentBaseValue()
         {
-
                 return state.getProperty(IDs::modAmt,  0.f);
         }
+
         void setScalingValue(float modVal,float sliderVal)
         {
             float start = static_cast<float>(param_tree.getProperty(IDs::start));
             float end   = static_cast<float>(param_tree.getProperty(IDs::end));
             float skew  = static_cast<float>(param_tree.getProperty(IDs::skew));
 
+            if(sliderVal + modVal > end) {
+
+                end = sliderVal + modVal;
+                param_tree.setProperty(IDs::end,end,nullptr);
+            } else if (sliderVal - modVal < start) {
+                start = sliderVal - modVal;
+                param_tree.setProperty(IDs::start,start,nullptr);
+            }
             juce::NormalisableRange<float> range(start, end, 0.0f, skew);
 
             // Convert current slider value to normalized

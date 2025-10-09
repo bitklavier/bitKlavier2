@@ -35,6 +35,7 @@
 #include "StateModulatedComponent.h"
 
 
+class OpenGLComboBox;
 class ModulationButton;
 class OpenGlComponent;
 class PresetSelector;
@@ -185,7 +186,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     virtual void sliderValueChanged(juce::Slider* moved_slider) override;
     virtual void buttonClicked(juce::Button* clicked_button) override;
     virtual void guiChanged(SynthButton* button) override;
-
+    virtual std::map<std::string, OpenGLComboBox*> getAllComboBox() { return all_combo_box_;}
     virtual std::map<std::string, SynthSlider*> getAllSliders() { return all_sliders_; }
     virtual std::map<std::string, SynthButton*> getAllButtons() { return all_synth_buttons_; }
     virtual std::map<std::string, ModulationButton*> getAllModulationButtons() {
@@ -241,9 +242,9 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void addToggleButton(juce::ToggleButton* button, bool show);
 
     void addButton(OpenGlShapeButton* button, bool show = true);
-    void addSynthButton(SynthButton* button, bool show = true);
+    void addSynthButton(SynthButton* button, bool show = true, bool isModulatable = false);
     void addStateModulatedComponent(StateModulatedComponent* component, bool show = true);
-
+    void addComboBox(OpenGLComboBox* cbox, bool show = true, bool isModulatable = false);
     void addBackgroundComponent(OpenGlBackground* open_gl_component, bool to_beginning = false);
     void setActivator(SynthButton* activator);
     void createOffOverlay();
@@ -289,6 +290,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
 
     std::vector<juce::Component*> all_sliders_v;
     std::map<std::string, SynthButton*> all_synth_buttons_;
+    std::map<std::string, OpenGLComboBox*> all_combo_box_;
     std::map<std::string, juce::Button*> all_non_synth_buttons_;
     std::map<Skin::ValueId, float> value_lookup_;
     std::map<std::string, ModulationButton*> all_modulation_buttons_;

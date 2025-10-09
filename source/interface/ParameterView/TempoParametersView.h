@@ -43,11 +43,13 @@ public:
                 param_->paramID == "tempo" ||
                 param_->paramID == "subdivisions")
             {
-                auto slider = std::make_unique<SynthSlider> (param_->paramID);
+                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
-                slider->setSliderStyle (juce::Slider::LinearHorizontal);
+//                slider->setSliderStyle (juce::Slider::LinearHorizontal);
+                slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setShowPopupOnHover(true);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
             }

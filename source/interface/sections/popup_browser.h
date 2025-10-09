@@ -106,6 +106,7 @@ public:
     {
     }
     juce::CriticalSection mylock;
+    std::map<std::string, OpenGLComboBox*> getAllComboBox() override;
     std::map<std::string, SynthSlider *> getAllSliders() override;
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
     std::map<std::string, SynthButton*> getAllButtons() override;

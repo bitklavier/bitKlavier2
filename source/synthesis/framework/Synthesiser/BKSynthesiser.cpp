@@ -216,7 +216,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
     {
         if (m.isNoteOn())
         {
-            DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            //DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;
@@ -290,7 +290,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
 
         if (m.isNoteOn())
         {
-            DBG ("BKSynthesizer Note On (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            //DBG ("BKSynthesizer Note On (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;
@@ -303,7 +303,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
         }
         else if (m.isNoteOff())
         {
-            DBG ("BKSynthesizer Note Off (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            //DBG ("BKSynthesizer Note Off (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;
@@ -337,20 +337,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * mute instruments with gain turned all the way down
      */
-    if (synthGain <= -80.) return;
-
-    /**
-     * store this velocity for the UI to use
-     */
-    lastSynthState.lastVelocity = velocity;
-
-    /**
-     * check first to see if velocity is within velocity min/max range, and return if not
-     */
-     /**
-      * todo: remove this when we move velocity min/max to Keymap?
-      */
-    if (!checkVelocityRange(velocity)) return;
+    if (synthGain <= -80.f) return;
 
     /**
      * moved this out of the loop below because it was messing up voice handling with multiple transpositions

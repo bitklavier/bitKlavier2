@@ -17,6 +17,7 @@
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
+#include "TempoProcessor.h"
 #include "buffer_debugger.h"
 #include "utils.h"
 #include "target_types.h"
@@ -59,14 +60,14 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Synchronic Processor
-    SynchronicParams() : chowdsp::ParamHolder ("synchronic")
+    SynchronicParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("synchronic")
     {
         add (
             numPulses,
-            numLayers,
-            clusterThickness, //SynchronicClusterCap in the old bK
-            clusterThreshold,
-            clusterMinMaxParams,
+            numLayers, // how many independent synchronic layers can we have simultaneously? usually only 1, but...
+            clusterThickness, // SynchronicClusterCap in the old bK; max number of notes in a cluster (different than cluster min/max below)
+            clusterThreshold, // time (ms) between notes (as played) for them to be part of a cluster
+            clusterMinMaxParams, // min/max number of played notes to launch a pulse
             holdTimeMinMaxParams,
             pulseTriggeredBy,
             determinesCluster,
@@ -80,20 +81,20 @@ struct SynchronicParams : chowdsp::ParamHolder
             updateUIState);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
-        // used in the DirectProcessor constructor
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back (sliderParam);
+                    modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back (sliderParam);
+                    modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back (sliderParam);
+                    modulatableParams.push_back ( sliderParam);
         });
+
     }
 
     // primary multislider params
@@ -296,7 +297,7 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
-    std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+    //std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
 
 };
 
@@ -334,20 +335,33 @@ public:
 
     ~SynchronicCluster() {}
 
+    /*
+     * increment the timing phasor
+     *  - called every block, so numSamples is always the blocksize
+     */
     inline void incrementPhasor (int numSamples)
     {
         phasor += numSamples;
     }
 
+    /*
+     * we increment all the parameter counters here
+     * we also decrement the timing phasor by the amount of time to the next beat
+     * - typically called every beat, so the phasor reset is akin to the counter increments
+     */
     inline void step (juce::uint64 numSamplesBeat)
     {
-        phasor -= numSamplesBeat;
+        // set the phasor back by the number of samples to the next beat
+        //phasor -= numSamplesBeat;
+        phasor = 0; // the decrement doesn't make sense to me, why not just set the phasor to 0?
 
+        // increment all the counters
         if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size)  lengthMultiplierCounter = 0;
         if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)                   accentMultiplierCounter = 0;
         if (++transpCounter             >= _sparams->transpositions.sliderVals_size)            transpCounter = 0;
         if (++envelopeCounter           >= _sparams->numEnvelopes)                              envelopeCounter = 0;
 
+        // skip the inactive envelopes
         while(!_sparams->isEnvelopeActive(envelopeCounter)) //skip untoggled envelopes
         {
             envelopeCounter++;
@@ -357,64 +371,63 @@ public:
 
     inline void postStep ()
     {
-        if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size)
+        /*
+         * the reason we do this separately from step() is because the length of the beats
+         * is what determines when the next step() needs to happen, so we increment its counter
+         * at the end of each cycle, before we pass time until the next beat
+         */
+
+        /* this messy conditional....
+         *      in short: we always increment the beat multiplier counter UNLESS we are:
+         *                  - on the first beat
+         *                  - AND are in a noteOff trigger mode
+         *                  - AND are NOT skipping the first beat
+         *
+         *      this is a special case, but should behave as expected
+         */
+        auto sMode = _sparams->pulseTriggeredBy->get();
+        if (beatCounter > 0 || (sMode == Any_NoteOn || sMode == First_NoteOn) || _sparams->skipFirst->get())
         {
-            //increment beat and beatMultiplier counters, for next beat; check maxes and adjust
-            beatMultiplierCounter = 0;
+            if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size) beatMultiplierCounter = 0;
         }
 
-        int skipBeats = 0;
-        if (_sparams->skipFirst->get()) skipBeats = 1;
-
-        if (++beatCounter >= (_sparams->numPulses->getCurrentValue() + skipBeats))
+        if (++beatCounter >= _sparams->numPulses->getCurrentValue())
         {
+            over = true;
             shouldPlay = false;
         }
     }
 
     inline void resetPatternPhase()
     {
-        /*
-         * todo: decide whether we want skipBeats to be considered here
-         *          - might be best to just start at the beginning regardless
-         *              so, setting skipBeats = -1 here
-         */
-//        int skipBeats = _sparams->skipFirst->get() - 1;
-        int skipBeats = -1;
-        beatMultiplierCounter = skipBeats;
-        lengthMultiplierCounter = skipBeats;
-        accentMultiplierCounter = skipBeats;
-        transpCounter = skipBeats;
-        envelopeCounter = skipBeats;
-
+        beatMultiplierCounter = 0;
+        lengthMultiplierCounter = 0;
+        accentMultiplierCounter = 0;
+        transpCounter = 0;
+        envelopeCounter = 0;
         beatCounter = 0;
+    }
+
+    inline void reset()
+    {
+        DBG("reset called");
+        envelopeCounter = 0;
+        shouldPlay = false;
+        over = false;
+
+        resetPatternPhase();
+        cluster.clearQuick();
     }
 
     inline juce::Array<int> getCluster() {return cluster;}
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG(" beat phasor to " + juce::String(c)); }
+    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG("resetting beat phasor");}
     inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
 
     inline void addNote(int note)
     {
         // DBG("adding note: " + String(note));
         cluster.insert(0, note);
-    }
-
-    inline void removeNote(int note)
-    {
-        int idx = 0;
-
-        for (auto n : cluster)
-        {
-            if (n == note)
-            {
-                break;
-            }
-            idx++;
-        }
-
-        cluster.remove(idx);
     }
 
     inline bool containsNote(int note)
@@ -432,6 +445,16 @@ public:
         return shouldPlay;
     }
 
+    inline bool getIsOver()
+    {
+        return over;
+    }
+
+    inline void setIsOver(bool isOver)
+    {
+        over = isOver;
+    }
+
     int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
 
     //parameter field counters
@@ -443,12 +466,20 @@ public:
 
     bool doPatternSync = false;
 
+    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
+    inline void incrementSustainedNotesTimers (int numSamples)
+    {
+        for (auto& tm : sustainedNotesTimers)
+        {
+            tm.second += numSamples;
+        }
+    }
+
 private:
     SynchronicParams* _sparams;
 
     juce::Array<int> cluster;
     juce::uint64 phasor;
-
 
     bool shouldPlay, over;
 
@@ -460,6 +491,7 @@ private:
 // ************************************ SynchronicProcessor ************************************ //
 // ********************************************************************************************* //
 
+#define MAX_CLUSTERS 10
 class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<SynchronicParams, SynchronicNonParameterState>>,
                             public juce::ValueTree::Listener
 {
@@ -467,12 +499,7 @@ public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
     ~SynchronicProcessor(){}
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<SynchronicProcessor> (parent, v);
-    }
 
-    void setupModulationMappings();
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -485,16 +512,6 @@ public:
 
     bool acceptsMidi() const override { return true; }
 
-    /**
-     * todo: confirm not needed
-     * @param s
-     */
-//    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-//    {
-//        DBG("Synchronic addSoundSet map called");
-//        ptrToSamples = s;
-//    }
-
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {
         DBG("Synchronic addSoundSet called");
@@ -502,6 +519,14 @@ public:
     }
 
     void setTuning (TuningProcessor*) override;
+
+    float getBeatThresholdSeconds()
+    {
+        if (tempo != nullptr)
+            return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
+        else
+            return 0.5; // 120bpm by default
+    }
 
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
@@ -535,16 +560,20 @@ public:
     void keyPressed(int noteNumber, int velocity, int channel);
     void keyReleased(int noteNumber, int channel);
     void handleMidiTargetMessages(int channel);
-    bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
+    //bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
+    bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
     void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
+    void removeOldestCluster();
+    void removeNewestCluster();
+    void rotateClusters();
+    int findIndexOfCluster(SynchronicCluster* item);
 
     bool holdCheck(int noteNumber);
 
     /*
      * Synchronic Params
      */
-    bool playCluster;
     bool inCluster;
     bool nextOffIsFirst;
 
@@ -556,7 +585,29 @@ public:
     juce::uint64 syncThresholdTimer;
     juce::Array<juce::uint64> holdTimers;
 
-    juce::Array<SynchronicCluster*> clusters;
+    /**
+     * todo: thread safety issues with this in the old version, need to make sure we aren't reproducing them here
+     */
+//    juce::Array<SynchronicCluster*> clusters;
+    /*
+     * the `clusters` array holds clusters to manage the 'layers' feature in bK
+     *
+     * every time we start a new cluster, we move to the next item in this array
+     * and turn off a previous cluster, as set by numLayers
+     *
+     * so, at first, no clusters are playing, so the first cluster will be item 0 in this array
+     * then, the next time a cluster is triggered, it will use item 1 in this array
+     * and turn off (set shouldPlay = false) the item (1 - numLayers) in this array
+     *  - if numLayers is 1, then it will turn off item 0 and we will only have one cluster playing (default behavior)
+     *  - if numLayers is 2, then cluster 0 will continue playing, and it will turn off the item -1 (mod the size of the array, so the last element)
+     *          - doesn't matter if that layer isn't playing....
+     *  - etc... for up to numLayers = MAX_CLUSTERS (or MAX_CLUSTERS - 1?)
+     *
+     * essentially a circular voice-stealing buffer
+     *
+     */
+    std::array<SynchronicCluster*, MAX_CLUSTERS> clusterLayers;
+    int currentLayerIndex = 0; // which cluster is most recent
 
     juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<int> syncKeysDepressed;
@@ -591,21 +642,8 @@ private:
 
     std::unique_ptr<BKSynthesiser> synchronicSynth;
 
-    /**
-     * todo: confirm not needed
-     */
-//    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
-
     juce::Array<int> slimCluster;       //cluster without repetitions
-    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
-
-    inline void incrementSustainedNotesTimers (int numSamples)
-    {
-        for (auto& tm : sustainedNotesTimers)
-        {
-            tm.second += numSamples;
-        }
-    }
+    bool checkClusterMinMax (int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
 };

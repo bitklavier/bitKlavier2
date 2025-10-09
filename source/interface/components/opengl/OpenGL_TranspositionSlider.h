@@ -205,6 +205,9 @@ public:
     void mouseExit(const juce::MouseEvent &e) override {
         if (getTextEditor()->isVisible())
             return;
+        DBG(getComponentID() + "mouseexit");
+        DBG(juce::String("isModulation_: ") + (isModulation_ ? "true" : "false"));
+
         for (auto *listener: listeners_)
             listener->hoverEnded(this);
         hovering_ = false;
