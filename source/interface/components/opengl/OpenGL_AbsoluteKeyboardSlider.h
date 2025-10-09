@@ -15,9 +15,6 @@ public:
         image_component_->setComponent(this);
         setComponentID(IDs::absoluteTuning.toString());
     }
-    /**
-     * todo: update all this isModulation/isModulated_ stuff to match what is in OpenGL_TranspositionSlider and elsewhere
-     */
 
     OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state){
 

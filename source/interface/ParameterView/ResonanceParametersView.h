@@ -10,6 +10,7 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "synth_button.h"
+#include "OpenGL_AbsoluteKeyboardSlider.h"
 
 class ResonanceParametersView : public SynthSection
 {
@@ -29,6 +30,11 @@ public:
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
+
+        offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->tuningState);
+        addStateModulatedComponent(offsetsKeyboard.get());
+        offsetsKeyboard->setName("offsets");
+        offsetsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
@@ -59,6 +65,9 @@ public:
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
+
+    std::unique_ptr<OpenGLAbsoluteKeyboardSlider> offsetsKeyboard;
+    std::unique_ptr<OpenGLAbsoluteKeyboardSlider> gainsKeyboard;
 
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;

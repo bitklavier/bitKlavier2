@@ -21,7 +21,6 @@ typedef enum KSliderTextFieldType
 } KSliderTextFieldType;
 
 class KeyboardOffsetComponent : public juce::KeyboardComponentBase
-
 {
 public:
     enum ColourIds
@@ -36,7 +35,7 @@ public:
         upDownButtonArrowColourId       = 0x1005007,
         shadowColourId                  = 0x1005008
     };
-    KeyboardOffsetComponent(TuningState&state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o),state(state),isCircular(isCircular) {
+    KeyboardOffsetComponent(TuningState& state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o), state(state), isCircular(isCircular) {
         setColour(whiteNoteColourId, juce::Colours::white);
         setColour(blackNoteColourId, juce::Colours::black);
         setColour(keySeparatorLineColourId, juce::Colours::grey);
@@ -56,10 +55,9 @@ public:
     float midRange = 0.f;
     float minRange = -50.f;
     float maxRange = 50.f;
-    TuningState&state;
+    TuningState& state;
     bool isCircular;
 };
-
 
 class BKTuningKeyboardSlider :
 public StateModulatedComponent,

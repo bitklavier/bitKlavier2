@@ -327,7 +327,7 @@ void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
 
         dragPos = 1. - 2. * dragPos;
         if(dragPos > 0.) dragPos = dragPos * dragPos;
-        else dragPos = -1.* dragPos * dragPos;
+        else dragPos = -1. * dragPos * dragPos;
         DBG("BKTuningKeyboardSlider::mouseDrag dragPos = " + juce::String(dragPos));
 
         float outval;
@@ -337,7 +337,7 @@ void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
         auto val  = std::clamp(outval, keyboard->minRange, keyboard->maxRange);
        // tuningState->setKeyOffset(myNote, dragPos * 50.);
         keyboardValueTF.setText(juce::String(val, displayResolution), juce::dontSendNotification);
-        keyboardState->setKeyOffset(myNote, val,isCircular);
+        keyboardState->setKeyOffset(myNote, val, isCircular);
         if (isCircular)
             listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
                          "circular");
@@ -403,7 +403,7 @@ void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEd
                 }
             }
 
-        }else {
+        } else {
             auto array = parseIndexValueStringToArrayAbsolute<128>(keyboardValsTextField->getText().toStdString());
             for(int i=0; i<array.size(); i++)
             {
