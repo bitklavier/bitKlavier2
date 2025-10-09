@@ -71,7 +71,7 @@ public:
         determinesCluster_label->setJustification(juce::Justification::right);
 
         // knobs
-        numPulses_knob = std::make_unique<SynthSlider>(params.numPulses->paramID,params.numPulses->getModParam());
+        numPulses_knob = std::make_unique<SynthSlider>(params.numPulses->paramID, params.numPulses->getModParam());
         addSlider(numPulses_knob.get());
         numPulses_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         numPulses_knob->setPopupPlacement(juce::BubbleComponent::below);

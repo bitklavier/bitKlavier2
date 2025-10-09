@@ -40,7 +40,7 @@ public:
         addStateModulatedComponent (waveSlider.get());
 
         // knobs
-        noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID);
+        noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID, params.noteLengthMultParam->getModParam());
         addSlider(noteLengthMult_knob.get());
         noteLengthMult_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         noteLengthMult_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -48,7 +48,7 @@ public:
         noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, nullptr);
         noteLengthMult_knob->addAttachment(noteLengthMult_knob_attachment.get());
 
-        clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->paramID);
+        clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->paramID, params.clusterMinParam->getModParam());
         addSlider(clusterMin_knob.get());
         clusterMin_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterMin_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -56,7 +56,7 @@ public:
         clusterMin_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterMinParam, listeners, *clusterMin_knob, nullptr);
         clusterMin_knob->addAttachment(clusterMin_knob_attachment.get());
 
-        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->paramID);
+        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->paramID, params.clusterThreshParam->getModParam());
         addSlider(clusterThreshold_knob.get());
         clusterThreshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);
