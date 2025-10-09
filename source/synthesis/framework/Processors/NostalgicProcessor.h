@@ -28,6 +28,9 @@
 
 // key on reset checkbox
 
+// ********************************************************************************************* //
+// ************************************  NostalgicParams  ************************************** //
+// ********************************************************************************************* //
 
 struct NostalgicParams : chowdsp::ParamHolder
 {
@@ -50,6 +53,8 @@ struct NostalgicParams : chowdsp::ParamHolder
             clusterMinParam,
             clusterThreshParam,
             holdTimeMinMaxParams,
+            transpositionUsesTuning,
+            noteOnGain,
             reverseEnv,
             // reverseEnvSequence,
             undertowEnv
@@ -88,8 +93,12 @@ struct NostalgicParams : chowdsp::ParamHolder
     // undertowEnv.idPrepend = "1";
     // EnvelopeSequenceParams undertowEnvSequence;
 
-
-
+    // Transposition Uses Tuning param
+    chowdsp::BoolParameter::Ptr transpositionUsesTuning {
+        juce::ParameterID { "NostalgicUseTuning", 100 },
+        "TranspositionUsesTuning",
+        false
+    };
     // Gain for output send (for blendronic, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSendGain {
         juce::ParameterID { "Send", 100 },
@@ -109,29 +118,43 @@ struct NostalgicParams : chowdsp::ParamHolder
     };
 
     // Note Length Multiplier param
-    chowdsp::GainDBParameter::Ptr noteLengthMultParam {
+    chowdsp::FloatParameter::Ptr noteLengthMultParam {
         juce::ParameterID { "NoteLengthMultiplier", 100 },
         "Note Length Multiplier",
         juce::NormalisableRange { 0.0f, 10.00f, 0.0f, skewFactor, false },
         1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
         true
     };
 
     // Cluster Minimum param
-    chowdsp::GainDBParameter::Ptr clusterMinParam {
+    chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
         "Cluster Min",
         juce::NormalisableRange { 1.0f, 10.0f, 0.0f, skewFactor, false },
         1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
         true
     };
 
     // Cluster Threshold param
-    chowdsp::GainDBParameter::Ptr clusterThreshParam {
+    chowdsp::FloatParameter::Ptr clusterThreshParam {
         juce::ParameterID { "ClusterThresh", 100 },
         "Cluster Threshold",
         juce::NormalisableRange { 0.0f, 1000.0f, 0.0f, skewFactor, false },
         150.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+    // passed to BKSynth, applies to noteOn msgs
+    chowdsp::GainDBParameter::Ptr noteOnGain {
+        juce::ParameterID { "noteOnGainNostalgic", 100 },
+        "NoteOn Gain Scalar",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
         true
     };
     
@@ -150,6 +173,75 @@ struct NostalgicParams : chowdsp::ParamHolder
 struct NostalgicNonParameterState : chowdsp::NonParamState
 {
     NostalgicNonParameterState() {}
+};
+
+// ********************************************************************************************* //
+// ************************************  NostalgicNoteStuff  ************************************** //
+// ********************************************************************************************* //
+
+/*
+ NostalgicNoteStuff is a class for containing a variety of information needed
+ to create Nostalgic events. This is needed since the undertow note
+ is created after the keys related to this note have been released, so
+ we need to store that information to use when the undertow note is created.
+ */
+
+class NostalgicNoteStuff
+{
+public:
+    NostalgicNoteStuff(int noteNumber) : notenumber(noteNumber)
+    {
+        resetReverseTimer();
+        resetUndertowTimer();
+    }
+
+    ~NostalgicNoteStuff() {}
+
+    void setNoteNumber(int newnote)                         { notenumber = newnote; }
+    inline const int getNoteNumber() const noexcept         { return notenumber; }
+
+    void incrementReverseTimer(juce::uint64 numsamples)           { reverseTimer += numsamples; }
+    void incrementUndertowTimer(juce::uint64 numsamples)          { undertowTimer += numsamples; }
+
+    void resetReverseTimer()                                { reverseTimer = 0; }
+    void resetUndertowTimer()                               { undertowTimer = 0; }
+
+    void setReverseStartPosition(juce::uint64 rsp)                        { reverseStartPosition = rsp; }
+    inline const juce::uint64 getReverseStartPosition() const noexcept    { return reverseStartPosition; }
+
+    void setUndertowStartPosition(juce::uint64 usp)                        { undertowStartPosition = usp; }
+    inline const juce::uint64 getUndertowStartPosition() const noexcept    { return undertowStartPosition; }
+
+    void setReverseTargetLength(juce::uint64 rtl)                         { reverseTargetLength = rtl; }
+    void setUndertowTargetLength(juce::uint64 utl)                        { undertowTargetLength = utl; }
+    inline const juce::uint64 getUndertowTargetLength() const noexcept    { return undertowTargetLength; }
+
+    bool reverseTimerExceedsTarget()    { if(reverseTimer > reverseTargetLength) return true; else return false; }
+    bool undertowTimerExceedsTarget()   { if(undertowTimer > undertowTargetLength) return true; else return false; }
+
+    inline const juce::uint64 getReversePlayPosition()     { return (reverseStartPosition - reverseTimer); }
+    inline const juce::uint64 getUndertowPlayPosition()    { return (undertowStartPosition + undertowTimer); }
+
+    bool isActive() { if(reverseStartPosition < reverseTimer) return false; else return true; }
+    juce::uint64 undertowTimer;
+
+private:
+
+    int notenumber;
+
+    juce::uint64 reverseTimer;
+    // juce::uint64 undertowTimer;
+
+    juce::uint64 reverseStartPosition;
+    juce::uint64 reversePosition;
+
+    juce::uint64 undertowStartPosition;
+    juce::uint64 undertowPosition;
+
+    juce::uint64 reverseTargetLength;
+    juce::uint64 undertowTargetLength;
+
+    JUCE_LEAK_DETECTOR(NostalgicNoteStuff);
 };
 
 
@@ -177,6 +269,8 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     bool acceptsMidi() const override { return true; }
@@ -185,17 +279,14 @@ public:
         ptrToSamples = s;
     }
 
-    // void addSoundSet (
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
-    // {
-    //     mainSynth->addSoundSet (s);
-    //     hammerSynth->addSoundSet (h);
-    //     releaseResonanceSynth->addSoundSet (r);
-    //     pedalSynth->addSoundSet (p);
-    // }
+    void addSoundSet (
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
+    {
+        nostalgicSynth->addSoundSet (s);
+    }
 
     void setTuning (TuningProcessor*) override;
 
@@ -239,10 +330,28 @@ public:
     }
 
     bool holdCheck(int noteNumber);
-    juce::Array<juce::uint64> holdTimers;
 
+    //move timers forward by blocksize
+    void incrementTimers(int numSamples);
+
+    juce::Array<juce::uint64> holdTimers;
+    /*
+     * noteOnSpecMap
+     * - key      => midiNoteNumber
+     * - value    => specs for that key (start time, direction, loop mode)
+     *
+     * needed in particular for backwards-playing notes
+     */
+    std::map<int, NoteOnSpec> noteOnSpecMap;
+    juce::Array<float> updatedTransps;
+    juce::Array<int> keysDepressed;   //current keys that are depressed
 
 private:
+    std::vector<juce::uint8> velocities;
+    std::vector<juce::uint64> noteLengthTimers;
+    juce::OwnedArray<NostalgicNoteStuff> reverseNotes;
+    juce::OwnedArray<NostalgicNoteStuff> undertowNotes;
+    std::unique_ptr<BKSynthesiser> nostalgicSynth;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NostalgicProcessor)

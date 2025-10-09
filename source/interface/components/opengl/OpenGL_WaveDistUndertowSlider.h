@@ -135,8 +135,8 @@ public:
         }
 
         else if (isModulated_) {
-            modulationState.setProperty("wavedist", wavedist, nullptr);
-            modulationState.setProperty("undertow", undertow, nullptr);
+            defaultState.setProperty("wavedist", wavedist, nullptr);
+            defaultState.setProperty("undertow", undertow, nullptr);
         }
     }
 
