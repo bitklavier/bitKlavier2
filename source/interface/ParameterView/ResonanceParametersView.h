@@ -34,7 +34,13 @@ public:
         offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->tuningState);
         addStateModulatedComponent(offsetsKeyboard.get());
         offsetsKeyboard->setName("offsets");
-        offsetsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
+        offsetsKeyboard->setOctaveForMiddleC(5);
+
+        gainsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->tuningState);
+        addStateModulatedComponent(gainsKeyboard.get());
+        gainsKeyboard->setName("offsets");
+        gainsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
+        gainsKeyboard->setOctaveForMiddleC(5);
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
