@@ -24,6 +24,11 @@ void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     resonanceSynth->setCurrentPlaybackSampleRate (sampleRate);
 }
 
+bool ResonanceProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const
+{
+    return true;
+}
+
 void ResonanceProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {
     // this for debugging

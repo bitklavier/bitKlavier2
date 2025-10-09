@@ -6,6 +6,7 @@
 #include "DirectProcessor.h"
 #include "BlendronicProcessor.h"
 #include "SynchronicProcessor.h"
+#include "ResonanceProcessor.h"
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 #include "ResetProcessor.h"
@@ -21,6 +22,7 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     prepFactory.template registerType<DirectProcessor,  SynthBase&, const juce::ValueTree&>(IDs::direct.toString().toStdString());
     prepFactory.template registerType<BlendronicProcessor,  SynthBase&, const juce::ValueTree&>(IDs::blendronic.toString().toStdString());
     prepFactory.template registerType<SynchronicProcessor,  SynthBase&, const juce::ValueTree&>(IDs::synchronic.toString().toStdString());
+    prepFactory.template registerType<ResonanceProcessor,  SynthBase&, const juce::ValueTree&>(IDs::resonance.toString().toStdString());
     prepFactory.template registerType<KeymapProcessor,  SynthBase&, const juce::ValueTree&>(IDs::keymap.toString().toStdString());
     prepFactory.template registerType<bitklavier::ModulationProcessor,  SynthBase&, const juce::ValueTree&>(IDs::modulation.toString().toStdString());
     prepFactory.template registerType<TuningProcessor,  SynthBase&, const juce::ValueTree&>(IDs::tuning.toString().toStdString());
@@ -29,7 +31,6 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     prepFactory.template registerType<MidiTargetProcessor,  SynthBase&, const juce::ValueTree&>(IDs::midiTarget.toString().toStdString());
     prepFactory.template registerType<PianoSwitchProcessor,  SynthBase&, const juce::ValueTree&>(IDs::pianoMap.toString().toStdString());
     prepFactory.template registerType<TempoProcessor,  SynthBase&, const juce::ValueTree&>(IDs::tempo.toString().toStdString());
-
 
     rebuildObjects();
     for (auto object: objects) {

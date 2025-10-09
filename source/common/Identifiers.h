@@ -122,6 +122,7 @@ namespace IDs
     DECLARE_ID(midiTarget)
     DECLARE_ID(nostalgic)
     DECLARE_ID(synchronic)
+    DECLARE_ID(resonance)
     DECLARE_ID(modulation)
     DECLARE_ID(tuning)
     DECLARE_ID(tempo)

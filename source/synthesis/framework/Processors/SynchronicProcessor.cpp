@@ -97,10 +97,6 @@ void SynchronicProcessor::setTuning (TuningProcessor* tun)
     synchronicSynth->setTuning (&tuning->getState().params.tuningState);
 }
 
-/**
- * todo: should this inherited from a PreparationProcessor superclass?
- * @param buffer
- */
 void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {
     // this for debugging
