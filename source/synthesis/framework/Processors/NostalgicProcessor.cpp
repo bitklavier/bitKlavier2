@@ -129,6 +129,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         // store the velocity from the note on message
         if (message.isNoteOn ())
         {
+            DBG("received MIDI note on");
             velocities[message.getNoteNumber()] = message.getVelocity();
             noteLengthTimers[message.getNoteNumber()] = message.getTimeStamp();
         }

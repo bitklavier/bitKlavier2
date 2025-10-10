@@ -155,7 +155,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case nostalgic:
             {
-                juce::ValueTree t(IDs::PREPARATION);
+                juce::ValueTree t(IDs::nostalgic);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
                 t.setProperty(IDs::width, 245, nullptr);
                 t.setProperty(IDs::height, 125, nullptr);
