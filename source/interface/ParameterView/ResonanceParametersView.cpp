@@ -30,5 +30,12 @@ void ResonanceParametersView::resized()
     // *** done with meters placement section
     //
 
+    juce::Rectangle<int> keyboardsRect = bounds.removeFromRight(bounds.getWidth() * 0.75);
+    keyboardsRect.reduce(largepadding, largepadding);
+    int keyboardHeight = keyboardsRect.getHeight() / 4. - largepadding * 3;
+    gainsKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
+    keyboardsRect.removeFromTop(largepadding);
+    offsetsKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
+
     SynthSection::resized();
 }

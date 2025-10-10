@@ -143,15 +143,15 @@ typename Serializer::SerializedType ResonanceParams::serialize (const ResonanceP
      */
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
 
+    std::array<float, 128> tempAbsoluteOffsets;
+    copyAtomicArrayToFloatArray(paramHolder.offsetsKeyboardState.absoluteTuningOffset, tempAbsoluteOffsets);
+    Serializer::template addChildElement<128> (ser, "resonanceOffsets", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
+
     /*
-     * then serialize the more complex params
+     * then the more complex params
      */
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.transpositions, "transpositions_");
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.accents, "accents_");
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
-//    serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
-//
-//    serializeArrayADSRParam<Serializer>(ser, paramHolder.envelopeSequence.envStates, "envelope_sequence");
+    copyAtomicArrayToFloatArray(paramHolder.gainsKeyboardState.absoluteTuningOffset, tempAbsoluteOffsets);
+    Serializer::template addChildElement<128> (ser, "resonanceGains", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
 
     return ser;
 }
@@ -167,12 +167,11 @@ void ResonanceParams::deserialize (typename Serializer::DeserializedType deseria
     /*
      * then the more complex params
      */
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions_");
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_");
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
-//    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
-//
-//    deserializeArrayADSRParam<Serializer> (deserial, paramHolder.envelopeSequence.envStates, "envelope_sequence");
+    auto myStr = deserial->getStringAttribute ("resonanceOffsets");
+    parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.offsetsKeyboardState.absoluteTuningOffset);
+
+    myStr = deserial->getStringAttribute ("resonanceGains");
+    parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.gainsKeyboardState.absoluteTuningOffset);
 }
 
 

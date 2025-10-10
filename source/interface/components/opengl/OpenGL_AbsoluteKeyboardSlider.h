@@ -6,10 +6,11 @@
 #define OPENGL_ABSOLUTEKEYBOARDSLIDER_H
 #include "../BKComponents/BKTuningKeyboardSlider.h"
 #include "open_gl_image_component.h"
+
 class OpenGLAbsoluteKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
     OpenGLAbsoluteKeyboardSlider(TuningState& keystate)
-        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, false) {
+        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate, false, false, false) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);

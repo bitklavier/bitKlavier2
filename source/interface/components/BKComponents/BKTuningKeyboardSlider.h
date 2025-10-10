@@ -35,6 +35,7 @@ public:
         upDownButtonArrowColourId       = 0x1005007,
         shadowColourId                  = 0x1005008
     };
+
     KeyboardOffsetComponent(TuningState& state, Orientation o,bool isCircular= false) : juce::KeyboardComponentBase(o), state(state), isCircular(isCircular) {
         setColour(whiteNoteColourId, juce::Colours::white);
         setColour(blackNoteColourId, juce::Colours::black);
@@ -46,8 +47,8 @@ public:
         setColour(upDownButtonArrowColourId, juce::Colours::black);
         setColour(shadowColourId, juce::Colours::black.withAlpha(0.5f));
     }
-    ~KeyboardOffsetComponent() {
-    }
+
+    ~KeyboardOffsetComponent(){}
 
     void drawWhiteKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) override;
     void drawBlackKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) override;
@@ -59,13 +60,13 @@ public:
     bool isCircular;
 };
 
-class BKTuningKeyboardSlider :
-public StateModulatedComponent,
-public juce::MidiKeyboardState::Listener,
-public juce::TextEditor::Listener,
-public juce::Button::Listener
-{
 
+class BKTuningKeyboardSlider :
+    public StateModulatedComponent,
+    public juce::MidiKeyboardState::Listener,
+    public juce::TextEditor::Listener,
+    public juce::Button::Listener
+{
 public:
 
     BKTuningKeyboardSlider(TuningState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false);
@@ -118,10 +119,8 @@ public:
 
     void setName(juce::String newName) { sliderName = newName; showName.setText(sliderName, juce::dontSendNotification); }
     juce::String getName() { return sliderName; }
-
     void setAvailableRange(int min, int max);
     void setValues(juce::Array<float> newvals);
-
     void setMinMidMaxValues(float min, float mid, float max, int resolution)
     {
         if (min > mid || min > max || mid > max) {
@@ -154,8 +153,9 @@ public:
     void setBright() { setDim(1.); }
 
     BKTuningKeyboardSlider* clone() {
-        return new BKTuningKeyboardSlider(new TuningState(),false,false);
+        return new BKTuningKeyboardSlider(new TuningState(), false, false);
     }
+
     void syncToValueTree() override {}
 
     void handleNoteOn(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity) override{}

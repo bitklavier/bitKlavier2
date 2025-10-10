@@ -9,6 +9,7 @@
 
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
+
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -27,9 +28,12 @@ struct ResonanceParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Resonance Processor
     ResonanceParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("resonance")
     {
+        gainsKeyboardState.setAllAbsoluteOffsets(1.);
+
         add (outputSendGain,
             outputGain,
-            noteOnGain);
+            noteOnGain,
+            env);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters ([this] (auto& param, size_t) {
@@ -74,8 +78,15 @@ struct ResonanceParams : chowdsp::ParamHolder
         true
     };
 
-    // placeholder for the current ADSR, to pass to the synths
+    // adsr
     EnvParams env;
+
+    /*
+     * a bit overkill using the full TuningState here, but otherwise we'd have to significantly rewrite the AbsoluteKeyboardSlider
+     * - don't need to "add" anything, seince we're just going to serialize absoluteTuningOffset for both of these
+     */
+    TuningState offsetsKeyboardState;
+    TuningState gainsKeyboardState;
 
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;

@@ -11,6 +11,7 @@
 #include "synth_slider.h"
 #include "synth_button.h"
 #include "OpenGL_AbsoluteKeyboardSlider.h"
+#include "OpenGL_KeymapKeyboard.h"
 
 class ResonanceParametersView : public SynthSection
 {
@@ -31,14 +32,20 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
-        offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->tuningState);
+//        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params);
+//        addStateModulatedComponent(fundamentalKeyboard.get());
+//        addAndMakeVisible(fundamentalKeyboard.get());
+
+        offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->offsetsKeyboardState);
         addStateModulatedComponent(offsetsKeyboard.get());
         offsetsKeyboard->setName("offsets");
+        offsetsKeyboard->setAvailableRange(0, numKeys);
         offsetsKeyboard->setOctaveForMiddleC(5);
 
-        gainsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->tuningState);
+        gainsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->gainsKeyboardState);
         addStateModulatedComponent(gainsKeyboard.get());
-        gainsKeyboard->setName("offsets");
+        gainsKeyboard->setName("gains");
+        gainsKeyboard->setAvailableRange(0, numKeys);
         gainsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
         gainsKeyboard->setOctaveForMiddleC(5);
 
@@ -72,8 +79,11 @@ public:
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
 
+    std::unique_ptr<OpenGLKeymapKeyboardComponent> fundamentalKeyboard;
+    std::unique_ptr<OpenGLKeymapKeyboardComponent> closestKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> offsetsKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> gainsKeyboard;
+    int numKeys = 52;
 
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
