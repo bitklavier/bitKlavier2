@@ -43,7 +43,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Nostalgic Processor
-    NostalgicParams() : chowdsp::ParamHolder ("nostalgic")
+    NostalgicParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("nostalgic")
     {
         add (transpose,
             waveDistUndertowParams,
