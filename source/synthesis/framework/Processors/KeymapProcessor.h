@@ -12,14 +12,14 @@
 #include "utils.h"
 #include "VelocityMinMaxParams.h"
 
-struct KeymapKeyboardState
-{
-    KeymapKeyboardState() {
-        keyStates.set();
-    }
-
-    std::bitset<128> keyStates;
-};
+//struct KeymapKeyboardState
+//{
+//    KeymapKeyboardState() {
+//        keyStates.set();
+//    }
+//
+//    std::bitset<128> keyStates;
+//};
 
 struct KeymapParams : chowdsp::ParamHolder
 {

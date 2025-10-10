@@ -36,6 +36,10 @@ void ResonanceParametersView::resized()
     gainsKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
     keyboardsRect.removeFromTop(largepadding);
     offsetsKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
+    keyboardsRect.removeFromTop(largepadding);
+    closestKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
+    keyboardsRect.removeFromTop(largepadding);
+    fundamentalKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
 
     SynthSection::resized();
 }

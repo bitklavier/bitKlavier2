@@ -18,6 +18,15 @@
 #include "utils.h"
 #include <utility>
 
+//struct KeymapKeyboardState
+//{
+//    KeymapKeyboardState() {
+//        keyStates.set();
+//    }
+//
+//    std::bitset<128> keyStates;
+//};
+
 struct ResonanceParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
@@ -87,6 +96,9 @@ struct ResonanceParams : chowdsp::ParamHolder
      */
     TuningState offsetsKeyboardState;
     TuningState gainsKeyboardState;
+
+    KeymapKeyboardState fundamentalKeymap;
+    KeymapKeyboardState closestKeymap;
 
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;

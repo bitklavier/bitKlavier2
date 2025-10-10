@@ -554,6 +554,15 @@ enum SelectChoice {
     Deselect = 1 << 1,
 };
 
+struct KeymapKeyboardState
+{
+    KeymapKeyboardState() {
+        keyStates.set();
+    }
+
+    std::bitset<128> keyStates;
+};
+
 
 
 

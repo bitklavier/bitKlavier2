@@ -32,9 +32,22 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
-//        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params);
-//        addStateModulatedComponent(fundamentalKeyboard.get());
-//        addAndMakeVisible(fundamentalKeyboard.get());
+        /*
+         * todo: make all the buttons/menus optional in OpenGLKeymapKeyboardComponent, since we don't want them here
+         *          - also need to make the fundamentalKeyboard only allow one key
+         *          - need the setAvailableRange and setOctaveForMiddleC calls
+         */
+        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap);
+        addStateModulatedComponent(fundamentalKeyboard.get());
+        fundamentalKeyboard->setName("fundamental");
+//        fundamentalKeyboard->setAvailableRange(0, numKeys);
+//        fundamentalKeyboard->setOctaveForMiddleC(5);
+
+        closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap);
+        addStateModulatedComponent(closestKeyboard.get());
+        closestKeyboard->setName("closest");
+//        closestKeyboard->setAvailableRange(0, numKeys);
+//        closestKeyboard->setOctaveForMiddleC(5);
 
         offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->offsetsKeyboardState);
         addStateModulatedComponent(offsetsKeyboard.get());

@@ -16,7 +16,7 @@ KeymapParameterView::KeymapParameterView (
 
      auto& listeners = proc.getState().getParameterListeners();
 
-     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params);
+     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params.keyboard_state);
      addStateModulatedComponent(keyboard_component_.get());
      addAndMakeVisible(keyboard_component_.get());
 
