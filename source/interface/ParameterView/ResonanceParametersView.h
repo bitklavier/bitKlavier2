@@ -33,7 +33,8 @@ public:
         auto& listeners = pluginState.getParameterListeners();
 
         /*
-         * todo: make all the buttons/menus optional in OpenGLKeymapKeyboardComponent, since we don't want them here
+         * todo:
+         *          - make all the buttons/menus optional in OpenGLKeymapKeyboardComponent, since we don't want them here
          *          - also need to make the fundamentalKeyboard only allow one key
          *          - need the setAvailableRange and setOctaveForMiddleC calls
          */
