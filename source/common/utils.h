@@ -30,7 +30,6 @@
 
   namespace bitklavier::utils {
 
-
     constexpr float kDbGainConversionMult = 20.0f;
     constexpr int kMaxOrderLength = 10;
     constexpr float kLogOf2 = 0.69314718056f;
@@ -331,8 +330,7 @@
       double dt_symwarp(double inval, double k);
       double dt_warpscale(double inval, double asym_k, double sym_k, double scale, double offset);
 
-
-
+      std::bitset<128> loadBits(juce::String paramAttribute);
   } // namespace bitklavier::utils
 
 // namespace vital
@@ -562,6 +560,7 @@ struct KeymapKeyboardState
 
     std::bitset<128> keyStates;
 };
+
 
 
 

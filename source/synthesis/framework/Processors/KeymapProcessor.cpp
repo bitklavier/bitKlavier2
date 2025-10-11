@@ -204,6 +204,8 @@ void KeymapProcessor::allNotesOff()
     _midi->allNotesOff();
 }
 
+
+
 template <typename Serializer>
 typename Serializer::SerializedType KeymapParams::serialize (const KeymapParams& paramHolder)
 {
@@ -216,19 +218,22 @@ template <typename Serializer>
 void KeymapParams::deserialize (typename Serializer::DeserializedType deserial, KeymapParams& paramHolder)
 {
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
-    auto mystr = deserial->getStringAttribute ("keyOn");
+//    auto mystr = deserial->getStringAttribute ("keyOn");
     //also used in bkkeymapkeyboardcomponent TODO - make a function
-    std::bitset<128> bits;
-    std::istringstream iss (mystr.toStdString());
-    int key;
+//    std::bitset<128> bits;
+//    std::istringstream iss (mystr.toStdString());
+//    int key;
+//
+//    while (iss >> key)
+//    {
+//        if (key >= 0 && key < 128)
+//        {
+//            bits.set (key);
+//        }
+//    }
+//
+//    paramHolder.keyboard_state.keyStates = bits;
 
-    while (iss >> key)
-    {
-        if (key >= 0 && key < 128)
-        {
-            bits.set (key);
-        }
-    }
-
-    paramHolder.keyboard_state.keyStates = bits;
+    paramHolder.keyboard_state.keyStates = bitklavier::utils::loadBits(deserial->getStringAttribute ("keyOn"));
 }
+

@@ -143,15 +143,19 @@ typename Serializer::SerializedType ResonanceParams::serialize (const ResonanceP
      */
     auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
 
+    /*
+     * then the more complex params
+     */
+
     std::array<float, 128> tempAbsoluteOffsets;
     copyAtomicArrayToFloatArray(paramHolder.offsetsKeyboardState.absoluteTuningOffset, tempAbsoluteOffsets);
     Serializer::template addChildElement<128> (ser, "resonanceOffsets", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
 
-    /*
-     * then the more complex params
-     */
     copyAtomicArrayToFloatArray(paramHolder.gainsKeyboardState.absoluteTuningOffset, tempAbsoluteOffsets);
     Serializer::template addChildElement<128> (ser, "resonanceGains", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
+
+    Serializer::template addChildElement<128> (ser, "fundamental", paramHolder.fundamentalKeymap.keyStates, getOnKeyString);
+    Serializer::template addChildElement<128> (ser, "partials", paramHolder.closestKeymap.keyStates, getOnKeyString);
 
     return ser;
 }
@@ -172,6 +176,9 @@ void ResonanceParams::deserialize (typename Serializer::DeserializedType deseria
 
     myStr = deserial->getStringAttribute ("resonanceGains");
     parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.gainsKeyboardState.absoluteTuningOffset);
+
+    paramHolder.fundamentalKeymap.keyStates = bitklavier::utils::loadBits(deserial->getStringAttribute ("fundamental"));
+    paramHolder.closestKeymap.keyStates = bitklavier::utils::loadBits(deserial->getStringAttribute ("partials"));
 }
 
 

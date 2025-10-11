@@ -30,6 +30,7 @@ void ResonanceParametersView::resized()
     // *** done with meters placement section
     //
 
+    // overtone structure keyboards
     juce::Rectangle<int> keyboardsRect = bounds.removeFromRight(bounds.getWidth() * 0.5);
     keyboardsRect.reduce(largepadding, largepadding);
     int keyboardHeight = 120;
@@ -51,6 +52,7 @@ void ResonanceParametersView::resized()
     gainsKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
     gainsKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
 
+    // adsr
     bounds.reduce(largepadding, largepadding);
     juce::Rectangle<int> envRect = bounds.removeFromBottom(bounds.getHeight() * 0.5);
     envSection->setBounds(envRect);
