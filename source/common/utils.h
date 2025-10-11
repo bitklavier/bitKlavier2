@@ -557,7 +557,7 @@ enum SelectChoice {
 struct KeymapKeyboardState
 {
     KeymapKeyboardState() {
-        keyStates.set();
+        keyStates.reset();
     }
 
     std::bitset<128> keyStates;

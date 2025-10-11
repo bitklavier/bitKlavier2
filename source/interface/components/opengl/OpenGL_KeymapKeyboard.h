@@ -10,8 +10,8 @@
 
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
 public:
-    OpenGLKeymapKeyboardComponent(KeymapKeyboardState & params, bool helperButtons = true) :
-        OpenGlAutoImageComponent (&params, helperButtons) {
+    OpenGLKeymapKeyboardComponent(KeymapKeyboardState & params, bool helperButtons = true, bool isMono = false) :
+        OpenGlAutoImageComponent (&params, helperButtons, isMono) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
