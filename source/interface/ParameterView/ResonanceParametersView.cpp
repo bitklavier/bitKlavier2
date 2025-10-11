@@ -30,16 +30,30 @@ void ResonanceParametersView::resized()
     // *** done with meters placement section
     //
 
-    juce::Rectangle<int> keyboardsRect = bounds.removeFromRight(bounds.getWidth() * 0.75);
+    juce::Rectangle<int> keyboardsRect = bounds.removeFromRight(bounds.getWidth() * 0.5);
     keyboardsRect.reduce(largepadding, largepadding);
-    int keyboardHeight = keyboardsRect.getHeight() / 4. - largepadding * 3;
-    gainsKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
-    keyboardsRect.removeFromTop(largepadding);
-    offsetsKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
-    keyboardsRect.removeFromTop(largepadding);
-    closestKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
-    keyboardsRect.removeFromTop(largepadding);
-    fundamentalKeyboard->setBounds(keyboardsRect.removeFromTop(keyboardHeight));
+    int keyboardHeight = 120;
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+    int kpadding = (keyboardsRect.getHeight() - 4. * (keyboardHeight + labelsectionheight)) / 3.;
+
+    fundamentalKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
+    fundamentalKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
+    keyboardsRect.removeFromBottom(kpadding);
+
+    closestKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
+    closestKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
+    keyboardsRect.removeFromBottom(kpadding);
+
+    offsetsKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
+    offsetsKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
+    keyboardsRect.removeFromBottom(kpadding);
+
+    gainsKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
+    gainsKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
+
+    bounds.reduce(largepadding, largepadding);
+    juce::Rectangle<int> envRect = bounds.removeFromBottom(bounds.getHeight() * 0.5);
+    envSection->setBounds(envRect);
 
     SynthSection::resized();
 }

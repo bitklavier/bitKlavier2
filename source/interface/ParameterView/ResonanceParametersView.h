@@ -10,6 +10,7 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "synth_button.h"
+#include "envelope_section.h"
 #include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "OpenGL_KeymapKeyboard.h"
 
@@ -32,16 +33,16 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
-        /*
-         * todo:
-         *          - also need to make the fundamentalKeyboard only allow one key
-         *          - need the setAvailableRange and setOctaveForMiddleC calls
-         */
         fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true);
         addStateModulatedComponent(fundamentalKeyboard.get());
         fundamentalKeyboard->setName("fundamental");
         fundamentalKeyboard->setAvailableRange(0, numKeys);
         fundamentalKeyboard->setOctaveForMiddleC(5);
+
+        fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Held Key/Fundamental");
+        addOpenGlComponent(fundamentalKeyboard_label);
+        fundamentalKeyboard_label->setTextSize (12.0f);
+        fundamentalKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap, false);
         addStateModulatedComponent(closestKeyboard.get());
@@ -49,11 +50,21 @@ public:
         closestKeyboard->setAvailableRange(0, numKeys);
         closestKeyboard->setOctaveForMiddleC(5);
 
+        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "Resonant Keys/Partials");
+        addOpenGlComponent(closestKeyboard_label);
+        closestKeyboard_label->setTextSize (12.0f);
+        closestKeyboard_label->setJustification(juce::Justification::centredBottom);
+
         offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->offsetsKeyboardState);
         addStateModulatedComponent(offsetsKeyboard.get());
         offsetsKeyboard->setName("offsets");
         offsetsKeyboard->setAvailableRange(0, numKeys);
         offsetsKeyboard->setOctaveForMiddleC(5);
+
+        offsetsKeyboard_label = std::make_shared<PlainTextComponent>("offsets", "Offsets from ET (cents) for Partials");
+        addOpenGlComponent(offsetsKeyboard_label);
+        offsetsKeyboard_label->setTextSize (12.0f);
+        offsetsKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         gainsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->gainsKeyboardState);
         addStateModulatedComponent(gainsKeyboard.get());
@@ -61,6 +72,15 @@ public:
         gainsKeyboard->setAvailableRange(0, numKeys);
         gainsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
         gainsKeyboard->setOctaveForMiddleC(5);
+
+        gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
+        addOpenGlComponent(gainsKeyboard_label);
+        gainsKeyboard_label->setTextSize (12.0f);
+        gainsKeyboard_label->setJustification(juce::Justification::centredBottom);
+
+        // ADSR
+        envSection = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
+        addSubSection (envSection.get());
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
@@ -97,6 +117,13 @@ public:
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> offsetsKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> gainsKeyboard;
     int numKeys = 52;
+
+    std::shared_ptr<PlainTextComponent> fundamentalKeyboard_label;
+    std::shared_ptr<PlainTextComponent> closestKeyboard_label;
+    std::shared_ptr<PlainTextComponent> offsetsKeyboard_label;
+    std::shared_ptr<PlainTextComponent> gainsKeyboard_label;
+
+    std::unique_ptr<EnvelopeSection> envSection;
 
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
