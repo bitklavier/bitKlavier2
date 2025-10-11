@@ -194,7 +194,6 @@ keyboardState(state), isCircular(isCircular)
 
     addAndMakeVisible (*keyboard);
 
-
     // need slider or other interface for octave change
 
     minKey = 21; // 21

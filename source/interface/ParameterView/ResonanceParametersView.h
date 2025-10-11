@@ -38,13 +38,13 @@ public:
          *          - also need to make the fundamentalKeyboard only allow one key
          *          - need the setAvailableRange and setOctaveForMiddleC calls
          */
-        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap);
+        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false);
         addStateModulatedComponent(fundamentalKeyboard.get());
         fundamentalKeyboard->setName("fundamental");
 //        fundamentalKeyboard->setAvailableRange(0, numKeys);
 //        fundamentalKeyboard->setOctaveForMiddleC(5);
 
-        closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap);
+        closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap, false);
         addStateModulatedComponent(closestKeyboard.get());
         closestKeyboard->setName("closest");
 //        closestKeyboard->setAvailableRange(0, numKeys);

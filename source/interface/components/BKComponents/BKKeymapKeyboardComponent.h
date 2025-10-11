@@ -56,8 +56,10 @@ class BKKeymapKeyboardComponent : public StateModulatedComponent,
                                   public juce::Button::Listener,
                                   public juce::ComboBox::Listener {
 public:
-    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state) : StateModulatedComponent(juce::ValueTree{}),
-    keyboard_state_(*keyboard_state), keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard, keyboard_state->keyStates){
+    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state, bool helperButtons = true) :
+                  StateModulatedComponent(juce::ValueTree{}),
+                  keyboard_state_(*keyboard_state),
+                  keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard, keyboard_state->keyStates){
 
         minKey = 21; // 21
         maxKey = 108; // 108
@@ -84,19 +86,19 @@ public:
         keyboardValsTextFieldOpen.addListener(this);
         keyboardValsTextFieldOpen.setButtonText("edit all");
         keyboardValsTextFieldOpen.setTooltip("click drag on keys to set values by key, or press 'edit all' to edit as text");
-        addAndMakeVisible(keyboardValsTextFieldOpen);
+
 
         clearButton.setName("KSLIDERCLEAR");
         clearButton.addListener(this);
         clearButton.setButtonText("all off");
         clearButton.setTooltip("clear all selected keys");
-        addAndMakeVisible(clearButton);
+
 
         allOnButton.setName("KSLIDERALLON");
         allOnButton.addListener(this);
         allOnButton.setButtonText("all on");
         allOnButton.setTooltip("select all");
-        addAndMakeVisible(allOnButton);
+
 
         keysCB.setName("keysCB");
         keysCB.addListener(this);
@@ -104,16 +106,25 @@ public:
         keysCB.addItem("Select", SELECT_ID);
         keysCB.addItem("Deselect", DESELECT_ID);
         keysCB.setSelectedId(SELECT_ID);
-        addAndMakeVisible(keysCB);
+
 
         keysButton.setName("KSLIDERKEYSBUTTON");
         keysButton.addListener(this);
         keysButton.setButtonText("keys");
         keysButton.setTooltip("macros for selecting particular keys");
-        addAndMakeVisible(keysButton);
+
 
         keyboardValsTextField->setInterceptsMouseClicks(false, false);
         setInterceptsMouseClicks(true, true);
+
+        if (helperButtons)
+        {
+            addAndMakeVisible(keyboardValsTextFieldOpen);
+            addAndMakeVisible(clearButton);
+            addAndMakeVisible(allOnButton);
+            addAndMakeVisible(keysCB);
+            addAndMakeVisible(keysButton);
+        }
 
     }
 

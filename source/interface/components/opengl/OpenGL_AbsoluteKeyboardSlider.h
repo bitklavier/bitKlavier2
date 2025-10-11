@@ -9,12 +9,13 @@
 
 class OpenGLAbsoluteKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
-    OpenGLAbsoluteKeyboardSlider(TuningState& keystate)
+    OpenGLAbsoluteKeyboardSlider(TuningState& keystate, bool helperButtons = true)
         : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate, false, false, false) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         setComponentID(IDs::absoluteTuning.toString());
+        useHelperButtons = helperButtons;
     }
 
     OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state){
@@ -105,6 +106,7 @@ public:
     }
 
     TuningState mod_key_state;
+    bool useHelperButtons = true;
 };
 
 class OpenGLCircularKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
