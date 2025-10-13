@@ -81,20 +81,20 @@ struct SynchronicParams : chowdsp::ParamHolder
             updateUIState);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
-        // used in the DirectProcessor constructor
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back (sliderParam);
+                    modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back (sliderParam);
+                    modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back (sliderParam);
+                    modulatableParams.push_back ( sliderParam);
         });
+
     }
 
     // primary multislider params
@@ -512,16 +512,6 @@ public:
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
     bool acceptsMidi() const override { return true; }
-
-    /**
-     * todo: confirm not needed
-     * @param s
-     */
-//    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-//    {
-//        DBG("Synchronic addSoundSet map called");
-//        ptrToSamples = s;
-//    }
 
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {

@@ -320,6 +320,10 @@
       };
   
 
+      double dt_asymwarp(double inval, double k);
+      double dt_asymwarp_inverse(double inval, double k);
+      double dt_symwarp(double inval, double k);
+      double dt_warpscale(double inval, double asym_k, double sym_k, double scale, double offset);
 
 
 
@@ -538,5 +542,12 @@ enum TuningType {
     Adaptive_Anchored = 1 << 2,
     Spring_Tuning = 1 << 3,
 };
+
+enum SelectChoice {
+    Select = 1 << 0,
+    Deselect = 1 << 1,
+};
+
+
 
 

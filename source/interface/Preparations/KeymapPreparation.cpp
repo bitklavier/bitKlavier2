@@ -32,7 +32,13 @@ std::unique_ptr<SynthSection> KeymapPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
         if (auto *proc = dynamic_cast<KeymapProcessor*>(getProcessor()))
-            return std::make_unique<KeymapParameterView>(*proc, *parent->getOpenGlWrapper());
+            //return std::make_unique<KeymapParameterView>(*proc, *parent->getOpenGlWrapper());
+            //return std::make_unique<KeymapParameterView>(proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), *parent->getOpenGlWrapper());
+
+            //return std::make_unique<KeymapParameterView>(proc->getState(), *proc, proc->getState().params, state.getProperty (IDs::uuid).toString(), *parent->getOpenGlWrapper());
+
+            return std::make_unique<KeymapParameterView>(*proc, proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+            //return std::make_unique<KeymapParameterView>(*proc, proc->getState().params, state.getProperty (IDs::uuid).toString(), *parent->getOpenGlWrapper());
 
     return nullptr;
 }

@@ -60,8 +60,7 @@ struct BlendronicParams : chowdsp::ParamHolder
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
 
-    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::vector<ParamPtrVariant> modulatableParams;
+
 
     // Adds the appropriate parameters to the Blendronic Processor
     BlendronicParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("blendronic")
