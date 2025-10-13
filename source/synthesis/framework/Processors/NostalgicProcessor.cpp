@@ -79,6 +79,12 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     // increment the timers by number of samples in the MidiBuffer
     incrementTimers (numSamples);
 
+    // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
+    for (auto& spec : noteOnSpecMap)
+    {
+        spec.clear();
+    }
+
     // check on your reverse and undertow notes
     for(int i = reverseNotes.size() - 1; i >= 0; --i)
     {
@@ -100,6 +106,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             {
                 undertowNote->setUndertowTargetLength (undertowDuration);
                 undertowNotes.insert(0, undertowNote);
+                noteOnSpecMap[note].keyState = true;
                 noteOnSpecMap[note].startDirection = Direction::forward;
                 noteOnSpecMap[note].startTime = 0;
                 noteOnSpecMap[note].envParams.attack = state.params.undertowEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
@@ -146,6 +153,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             auto noteDurationSamples = noteLengthTimers[note] * state.params.noteLengthMultParam->getCurrentValue();
             auto newNoteStart = noteDurationSamples * (1000.0 / getSampleRate())  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
 
+            noteOnSpecMap[note].keyState = true;
             noteOnSpecMap[note].startDirection = Direction::backward;
             noteOnSpecMap[note].startTime = newNoteStart;
             noteOnSpecMap[note].envParams.attack = state.params.reverseEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
