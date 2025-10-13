@@ -580,10 +580,6 @@ public:
     juce::uint64 syncThresholdTimer;
     juce::Array<juce::uint64> holdTimers;
 
-    /**
-     * todo: thread safety issues with this in the old version, need to make sure we aren't reproducing them here
-     */
-//    juce::Array<SynchronicCluster*> clusters;
     /*
      * the `clusters` array holds clusters to manage the 'layers' feature in bK
      *

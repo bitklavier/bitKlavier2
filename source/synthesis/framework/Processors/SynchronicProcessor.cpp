@@ -588,19 +588,20 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
 bool SynchronicProcessor::updateCurrentCluster()
 {
     bool ncluster = false;
+
     // if we have a new cluster
     if (!inCluster)
     {
         // move to the next layer
         currentLayerIndex++;
-        if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
+        //if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
+        if (currentLayerIndex > state.params.numLayers->getIntValue()) currentLayerIndex = 0;
 
         // turn off oldest cluster
         int oldestClusterIndex = currentLayerIndex - state.params.numLayers->getIntValue();
 
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
-
 
         ncluster = true;
     }
