@@ -178,10 +178,12 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::V
             return true;
         }
     }
-    if(samplerSoundset.contains(soundsets[selection]) && temp_prep_tree.isValid()) {
+    if( temp_prep_tree.isValid()) {
         nonGlobalSoundset_name = soundsets[selection];
-        temp_prep_tree.setProperty(IDs::soundset,nonGlobalSoundset_name ,nullptr);
-        return true;
+        if(samplerSoundset.contains(soundsets[selection]) ) {
+            temp_prep_tree.setProperty(IDs::soundset,nonGlobalSoundset_name ,nullptr);
+            return true;
+        }
     }
 
 

@@ -149,22 +149,25 @@ namespace bitklavier
 
         void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
         {
-            processorGraph->removeConnection (connection);
+            if(processorGraph)
+                processorGraph->removeConnection (connection);
         }
 
         bool isConnected (juce::AudioProcessorGraph::Connection& connection)
         {
-            return processorGraph->isConnected (connection);
+            if(processorGraph)
+                return processorGraph->isConnected (connection);
         }
 
         bool isConnected (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
-        {
+        {if(processorGraph)
             return processorGraph->isConnected (src, dest);
         }
 
         void addChangeListener (juce::ChangeListener* listener)
         {
-            processorGraph->addChangeListener (listener);
+            if(processorGraph)
+                processorGraph->addChangeListener (listener);
         }
 
         void allNotesOff();

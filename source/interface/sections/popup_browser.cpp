@@ -1230,12 +1230,14 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
             if(selection == 0) {
                 // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 // parent->getSampleLoadManager()
+                curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(),nullptr);
+                sampleSelectText->setText("Sync Global");
             }
-                else {
-                    SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-                    parent->getSampleLoadManager()->loadSamples(selection, false,curr_vt);
-                    sampleSelectText->setText(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]);
-                }
+            else {
+                SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+                parent->getSampleLoadManager()->loadSamples(selection - 1, false,curr_vt);
+                sampleSelectText->setText(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]);
+            }
 
 
             resized();
