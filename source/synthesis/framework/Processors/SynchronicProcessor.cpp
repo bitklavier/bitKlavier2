@@ -27,6 +27,12 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         clusterLayers[i] = new SynchronicCluster(&state.params);
     }
 
+    for (int i = 0; i < MaxMidiNotes; ++i)
+    {
+        noteOnSpecMap[i] = NoteOnSpec{};
+        // You can customize default values based on the key (i) here.
+    }
+
     /*
      * state-change parameter stuff (for multisliders)
      */
@@ -206,7 +212,19 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     auto sMode = state.params.pulseTriggeredBy->get();
 
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
-    noteOnSpecMap.clear();
+    //noteOnSpecMap.clear();
+    for (auto& spec : noteOnSpecMap)
+    {
+        spec.keyState = false;
+        spec.startTime = 0.f;
+        spec.startDirection = Direction::forward;
+        spec.loopMode = LoopMode::none;
+        spec.stopSameCurrentNote = true;
+        spec.envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f* .001, 0.0f, 0.0f, 0.0f};
+        /**
+         * todo: make reset function for NoteOnSpecMap...?
+         */
+    }
     updatedTransps.clear();
 
     // keep track of how long keys have been held down, for holdTime check
@@ -345,6 +363,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
                         // Synchronic uses its own ADSRs for each cluster, so we need to add these to the noteOnSpecMap that gets passed to BKSynth
                         // - these apply regardless of playback direction
+                        noteOnSpecMap[newNote].keyState = true;
                         noteOnSpecMap[newNote].envParams.attack = state.params.envelopeSequence.envStates.attacks[cluster->envelopeCounter] * .001; // BKADSR expects seconds, not ms
                         noteOnSpecMap[newNote].envParams.decay = state.params.envelopeSequence.envStates.decays[cluster->envelopeCounter] * .001;
                         noteOnSpecMap[newNote].envParams.sustain = state.params.envelopeSequence.envStates.sustains[cluster->envelopeCounter];
@@ -372,6 +391,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                              *      AND we get multiple noteOn msgs in the same block that want different noteOnSpecs
                              */
                             float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * getBeatThresholdSeconds() * 1000.);
+                            noteOnSpecMap[newNote].keyState = true;
                             noteOnSpecMap[newNote].startDirection = Direction::backward;
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
                             noteOnSpecMap[newNote].stopSameCurrentNote = false;

@@ -338,7 +338,11 @@ class BKSynthesiser
                  * for any particular note number (key), copy to internal map for use with sampler.h
                  * @param inspecs
                  */
-                void setNoteOnSpecMap(std::map<int, NoteOnSpec>& inspecs)
+//                void setNoteOnSpecMap(std::map<int, NoteOnSpec>& inspecs)
+//                {
+//                    noteOnSpecs = inspecs;
+//                }
+                void setNoteOnSpecMap(std::array<NoteOnSpec, 128>& inspecs)
                 {
                     noteOnSpecs = inspecs;
                 }
@@ -451,7 +455,8 @@ private:
                 juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
                 std::bitset<128> activeNotes;
 
-                std::map<int, NoteOnSpec> noteOnSpecs;
+                //std::map<int, NoteOnSpec> noteOnSpecs;
+                std::array<NoteOnSpec, 128> noteOnSpecs;
 
                 TuningState* tuning;
 

@@ -9,7 +9,6 @@
 
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
-
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -17,6 +16,8 @@
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include "utils.h"
 #include <utility>
+
+#define MAX_SYMPSTRINGS 160
 
 struct ResonanceParams : chowdsp::ParamHolder
 {
@@ -150,6 +151,13 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
+    void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+
+    void keyPressed(int noteNumber, int velocity, int channel);
+    void keyReleased(int noteNumber, int channel);
+    void handleMidiTargetMessages(int channel);
+    void ringSympStrings(int noteNumber, float velocity);
+    void addSympStrings(int noteNumber, float velocity);
 
     bool acceptsMidi() const override { return true; }
     bool hasEditor() const override { return false; }
@@ -183,6 +191,19 @@ public:
         resonanceSynth->addSoundSet (s);
     }
 
+    void addPartial(int heldKey, int partialKey, float gain, float offset);
+    void removePartialsForHeldKey(int heldKey);
+
+private:
+    std::unique_ptr<BKSynthesiser> resonanceSynth;
+
+    // the two primary modes, set by target msgs
+    //  - channel 1 => both are true, default behavior
+    bool doRing = true;
+    bool doAdd = true;
+
+//    std::bitset<128> heldKeys; // in place of "getHeldKeys()" juce::Array
+
     /*
      * noteOnSpecMap
      * - key      => midiNoteNumber
@@ -190,11 +211,20 @@ public:
      *
      * needed in particular for backwards-playing notes
      */
-    std::map<int, NoteOnSpec> noteOnSpecMap;
+    //std::map<int, NoteOnSpec> noteOnSpecMap;
+    std::array<NoteOnSpec, 128> noteOnSpecMap;
 
-private:
-
-    std::unique_ptr<BKSynthesiser> resonanceSynth;
+    /*
+     * partialStructure
+     * - every partial is associated with a heldKey
+     * - and is close to a partialKey
+     * - and has an ofset from ET (of partialKey) and gain multiplier
+     */
+    std::array<int, MAX_SYMPSTRINGS> heldKeys;      // midiNoteNumber for key that is held down; for the undamped string that has this partial
+    std::array<int, MAX_SYMPSTRINGS> partialKeys;   // midiNoteNumber for nearest key to this partial; used to determine whether this partial gets excited
+    std::array<float, MAX_SYMPSTRINGS> gains;       // gain multiplier for this partial
+    std::array<float, MAX_SYMPSTRINGS> offsets;     // offset, in cents, from ET for this partial
+    std::array<int, MAX_SYMPSTRINGS> startTimes;    // time, in ms, that this partial began playing
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonanceProcessor)
 };

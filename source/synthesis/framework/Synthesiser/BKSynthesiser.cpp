@@ -345,7 +345,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
      */
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).
-    if(!noteOnSpecs.contains(midiNoteNumber))
+    //if(!noteOnSpecs.contains(midiNoteNumber))
+    if(!noteOnSpecs[midiNoteNumber].keyState)
     {
         for (auto* voice : voices)
             if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
@@ -437,7 +438,8 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
 
-        if(noteOnSpecs.contains(midiNoteNumber))
+        //if(noteOnSpecs.contains(midiNoteNumber))
+        if(noteOnSpecs[midiNoteNumber].keyState)
         {
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 

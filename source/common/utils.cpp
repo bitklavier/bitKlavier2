@@ -126,7 +126,7 @@ namespace bitklavier {
      * @param paramAttribute
      * @return
      */
-    std::bitset<128> loadBits(juce::String paramAttribute)
+    std::bitset<128> stringToBitset (juce::String paramAttribute)
     {
         std::bitset<128> bits;
         std::istringstream iss (paramAttribute.toStdString());

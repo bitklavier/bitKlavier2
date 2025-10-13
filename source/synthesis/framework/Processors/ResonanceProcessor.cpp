@@ -53,6 +53,92 @@ void ResonanceProcessor::processContinuousModulations(juce::AudioBuffer<float>& 
             },  state.params.modulatableParams[channel]);
     }
 }
+void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
+{
+    /*
+     * process incoming MIDI messages, including the target messages
+     */
+    for (auto mi : inMidiMessages)
+    {
+        auto message = mi.getMessage();
+
+        if(message.isNoteOn())
+            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
+        else if(message.isNoteOff())
+            keyReleased(message.getNoteNumber(), message.getChannel());
+    }
+}
+
+/**
+ * addPartial will insert this partial at the beginning of the array and shove
+ * all the existing partials to the right by one, removing the oldest partial
+ *
+ * @param heldKey
+ * @param partialKey
+ * @param gain
+ * @param offset
+ */
+void ResonanceProcessor::addPartial(int heldKey, int partialKey, float gain, float offset)
+{
+    insert_and_shift(heldKeys, heldKey);
+    insert_and_shift(partialKeys, partialKey);
+    insert_and_shift(gains, gain);
+    insert_and_shift(offsets, offset);
+    insert_and_shift(startTimes, 0);
+}
+
+/**
+ * removePartialsForHeldKey will do what it says, removing all the partials from
+ * the parallel arrays heldKeys, partialKeys, gains, and offsets, and compacting to the left
+ * the heldKeys array will/should hold 0s for all inactive keys, so as soon as an
+ * iterator encounters a 0, it can stop moving through the array looking for partials
+ *
+ * the four arrays should remain synchronized by index
+ *
+ * @param heldKey
+ */
+void ResonanceProcessor::removePartialsForHeldKey(int heldKey)
+{
+    synchronized_remove_and_compact(heldKeys, heldKey, partialKeys, gains, offsets, startTimes);
+}
+
+void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity)
+{
+
+}
+
+void ResonanceProcessor::addSympStrings(int noteNumber, float velocity)
+{
+
+}
+
+void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel)
+{
+    handleMidiTargetMessages(channel);
+
+    if (doRing)
+    {
+        // resonate the currently available strings and their overlapping partials
+        ringSympStrings(noteNumber, velocity);
+    }
+    if (doAdd)
+    {
+        // then, add this new string and its partials to the currently available sympathetic strings
+        // 3rd arg ignore repeated notes = true, so don't add this string if it's already there
+        addSympStrings(noteNumber, velocity);
+    }
+}
+
+void ResonanceProcessor::keyReleased(int noteNumber, int channel)
+{
+
+}
+
+void ResonanceProcessor::handleMidiTargetMessages(int channel)
+{
+//    bool doRing = true;
+//    bool doAdd = true;
+}
 
 void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -88,7 +174,7 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
      */
     int numSamples = buffer.getNumSamples();
     juce::MidiBuffer outMidi;
-    //ProcessMIDIBlock(midiMessages, outMidi, numSamples);
+    ProcessMIDIBlock(midiMessages, outMidi, numSamples);
 
     /*
      * Then the Audio Stuff
@@ -177,8 +263,8 @@ void ResonanceParams::deserialize (typename Serializer::DeserializedType deseria
     myStr = deserial->getStringAttribute ("resonanceGains");
     parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.gainsKeyboardState.absoluteTuningOffset);
 
-    paramHolder.fundamentalKeymap.keyStates = bitklavier::utils::loadBits(deserial->getStringAttribute ("fundamental"));
-    paramHolder.closestKeymap.keyStates = bitklavier::utils::loadBits(deserial->getStringAttribute ("partials"));
+    paramHolder.fundamentalKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("fundamental"));
+    paramHolder.closestKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("partials"));
 }
 
 

@@ -83,6 +83,10 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
  *
  * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
+/**
+ * todo: redo this with something audio-thread safe, like std::array, passing a reference? but might need one for each note?
+ * @return
+ */
 juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
 {
     juce::Array<float> transps;
