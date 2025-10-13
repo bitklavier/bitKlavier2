@@ -330,6 +330,8 @@ public:
         envelopeCounter = 0;
         shouldPlay = false;
         over = false;
+
+        sustainedNotesTimers.ensureStorageAllocated(50);
     }
 
     ~SynchronicCluster() {}
@@ -465,12 +467,13 @@ public:
 
     bool doPatternSync = false;
 
-    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
+    juce::Array<std::tuple<int, juce::uint64>> sustainedNotesTimers;
     inline void incrementSustainedNotesTimers (int numSamples)
     {
         for (auto& tm : sustainedNotesTimers)
         {
-            tm.second += numSamples;
+            //tm.second += numSamples;
+            std::get<1>(tm) += numSamples;
         }
     }
 
