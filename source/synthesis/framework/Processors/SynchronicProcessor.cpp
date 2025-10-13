@@ -33,6 +33,9 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     }
 
     updatedTransps.ensureStorageAllocated(50);
+    slimCluster.ensureStorageAllocated(128);
+    tempCluster.ensureStorageAllocated(128);
+    clusterNotes.ensureStorageAllocated(128);
 
     /*
      * state-change parameter stuff (for multisliders)
@@ -81,11 +84,13 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     }
 
     /**
-     * todo: replace these juce::Arrays with std::bitsets
-     *      - AND replace slimCluster with something else that doesn't allocate memory on the audio thread
+     * todo: add slimCluster here and ensureStorageAllocated for it
      */
     keysDepressed = juce::Array<int>();
+    keysDepressed.ensureStorageAllocated(100);
     clusterKeysDepressed = juce::Array<int>();
+    clusterKeysDepressed.ensureStorageAllocated(100);
+
     inCluster = false;
 }
 
@@ -314,10 +319,9 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 }
 
                 // get the current cluster of notes, which we'll cook down to a slimCluster, with duplicate pitches removed
-                juce::Array<int> clusterNotes = cluster->getCluster();
+                clusterNotes = cluster->getCluster();
 
                 //cap size of slimCluster, removing oldest notes
-                juce::Array<int> tempCluster;
                 for(int i = 0; i < clusterNotes.size(); i++) tempCluster.set(i, clusterNotes.getUnchecked(i));
 
                 /*
@@ -585,6 +589,28 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
  * updates what the current cluster is, and turns off older clusters
  * @return whether this is a newcluster or not (bool)
  */
+//bool SynchronicProcessor::updateCurrentCluster()
+//{
+//    bool ncluster = false;
+//
+//    // if we have a new cluster
+//    if (!inCluster)
+//    {
+//        // move to the next layer
+//        currentLayerIndex++;
+//        if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
+//
+//        // turn off oldest cluster
+//        int oldestClusterIndex = currentLayerIndex - state.params.numLayers->getIntValue();
+//        while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
+//        clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
+//
+//        ncluster = true;
+//    }
+//
+//    return ncluster;
+//}
+
 bool SynchronicProcessor::updateCurrentCluster()
 {
     bool ncluster = false;
@@ -594,14 +620,15 @@ bool SynchronicProcessor::updateCurrentCluster()
     {
         // move to the next layer
         currentLayerIndex++;
-        //if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
-        if (currentLayerIndex > state.params.numLayers->getIntValue()) currentLayerIndex = 0;
+        if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
 
         // turn off oldest cluster
-        int oldestClusterIndex = currentLayerIndex - state.params.numLayers->getIntValue();
-
+        int oldestClusterIndex = currentLayerIndex - std::round(state.params.numLayers->getCurrentValue());
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
+
+        DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
+        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }

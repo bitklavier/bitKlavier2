@@ -634,6 +634,8 @@ private:
     std::unique_ptr<BKSynthesiser> synchronicSynth;
 
     juce::Array<int> slimCluster;       //cluster without repetitions
+    juce::Array<int> clusterNotes;
+    juce::Array<int> tempCluster;
     bool checkClusterMinMax (int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
