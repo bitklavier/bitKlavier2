@@ -41,7 +41,6 @@ namespace bitklavier
             setSampleRate (sampleRate);
             setBufferSize (samplesPerBlock);
             processorGraph->prepareToPlay (sampleRate, samplesPerBlock);
-            initialiseGraph();
         }
 
         int getDefaultSampleRate() { return kDefaultSampleRate; }
@@ -81,6 +80,7 @@ namespace bitklavier
             midiOutputNode = processorGraph->addNode (std::make_unique<AudioGraphIOProcessor> (AudioGraphIOProcessor::midiOutputNode), getNextUID());
 
             connectMidiNodes();
+
         }
 
         juce::AudioProcessorGraph::NodeID lastUID;

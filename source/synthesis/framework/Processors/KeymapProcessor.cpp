@@ -91,15 +91,15 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
             midiMessages.addEvent (message.getMessage(), message.samplePosition);
     }
 
-    //    // print them out for now
-    //    for (auto mi : midiMessages)
-    //    {
-    //        auto message = mi.getMessage();
-    //
-    //        mi.samplePosition;
-    //        mi.data;
-    //        DBG (printMidi (message, "kmap"));
-    //    }
+    // print them out for now
+    for (auto mi : midiMessages)
+    {
+        auto message = mi.getMessage();
+
+        mi.samplePosition;
+        mi.data;
+        DBG (printMidi (message, "kmap"));
+    }
 
     // DBG("keymap");
 }

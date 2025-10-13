@@ -45,14 +45,14 @@ void SampleLoadManager::handleAsyncUpdate()
 {
     if(sampleLoader.getNumJobs() > 0)
         return;
-    if(temp_prep_tree.isValid())
+    if(temp_prep_tree.isValid()) {
         temp_prep_tree.setProperty(IDs::soundset, nonGlobalSoundset_name,nullptr);
+        temp_prep_tree = juce::ValueTree();
+    } else {
+        t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
+    }
     DBG ("samples loaded, tell the audio thread its okay to change the soundsets");
     DBG ("samplerSoundset size = " + juce::String (samplerSoundset[globalSoundset_name].size()));
-    t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
-    t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
-    t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);
-    t.setProperty(IDs::pedalSampleSet,globalPedalsSoundset_name ,nullptr);
 }
 
 // sort array of sample files into arrays of velocities by pitch
@@ -143,7 +143,7 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets()
 {
     std::vector<std::string> sampleSets;
 
-    // Pull base path from preferences
+ //   // Pull base path from preferences
     juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
     juce::File baseDir (samplePath);
 
@@ -172,14 +172,9 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::V
     if (isGlobal)
     {
         globalSoundset_name = soundsets[selection];
-        globalHammersSoundset_name = soundsets[selection] + "Hammers";
-        globalReleaseResonanceSoundset_name = soundsets[selection] + "ReleaseResonance";
-        globalPedalsSoundset_name = soundsets[selection] + "Pedals";
         if(samplerSoundset.contains(soundsets[selection])) {
             t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
-            t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
-            t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);
-            t.setProperty(IDs::pedalSampleSet,globalPedalsSoundset_name ,nullptr);
+
             return true;
         }
     }
@@ -190,7 +185,7 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::V
     }
 
 
-    samplePath.append (soundsets[selection], 10); // change to "orig" to test that way
+    samplePath.append (soundsets[selection], 1000); // change to "orig" to test that way
     //samplePath.append("/orig", 10);
     DBG ("sample path = " + samplePath);
     juce::File directory (samplePath);
@@ -220,23 +215,25 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
     // maybe better to do this with templates, but for now...
     juce::String soundsetName;
     if (thisSampleType == BKPianoMain)
-        soundsetName = globalSoundset_name;
+        soundsetName = name;
     else if (thisSampleType == BKPianoHammer)
-        soundsetName = globalHammersSoundset_name;
+        soundsetName = name + "Hammers";
     else if (thisSampleType == BKPianoReleaseResonance)
-        soundsetName = globalReleaseResonanceSoundset_name;
+        soundsetName = name+ "ReleaseResonance";
     else if (thisSampleType == BKPianoPedal)
-        soundsetName = globalPedalsSoundset_name;
+        soundsetName = name + "Pedals";
 
     juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
-    samplePath.append("/" + juce::String(name), 20);
-    samplePath.append(BKPianoSampleType_string[thisSampleType], 20); // subfolders need to be named accordingly
+    samplePath.append("/" + juce::String(name), 1000);
+    samplePath.append(BKPianoSampleType_string[thisSampleType], 1000); // subfolders need to be named accordingly
     juce::File directory(samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false, "*.wav");
 
     // sort alphabetically
     MyComparator sorter;
     allSamples.sort(sorter);
+    if(allSamples.isEmpty())
+        return;
 
     //Build allKeysWithSamples: array that keeps track of which keys have samples, for building start/end ranges in keymap
     for (auto thisFile : allSamples)
@@ -447,7 +444,6 @@ bool SampleLoadJob::loadSamples()
         }
     }
 
-    DBG("done loading all samples");
     return loadSuccess;
 }
 

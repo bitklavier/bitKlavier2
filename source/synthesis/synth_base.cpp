@@ -29,7 +29,6 @@
 #include "ModulationProcessor.h"
 #include "ObjectLists/ConnectionsList.h"
 #include "ObjectLists/ModConnectionsList.h"
-#include "PianoSwitchProcessor.h"
 #include "PluginBase.h"
 #include "RampModulator.h"
 #include "StateModulator.h"
@@ -37,7 +36,6 @@
 #include "TempoProcessor.h"
 #include "TuningProcessor.h"
 #include "chowdsp_sources/chowdsp_sources.h"
-#include "load_save.h"
 #include "valuetree_utils/VariantConverters.h"
 
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager),user_prefs (new UserPreferencesWrapper()),
@@ -335,6 +333,18 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
         return true;
     return false;
 }
+void SynthBase::clearAllBackend() {
+
+    this->mod_connections_.clear();
+    this->state_connections_.clear();
+    this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
+    this->state_connections_.reserve (bitklavier::kMaxStateConnections);
+    this->engine_->getModulationBank().reset();
+    this->engine_->getStateBank().reset();
+    preparationLists.clear();
+    mod_connection_lists_.clear();
+    connectionLists.clear();
+}
 
 bool SynthBase::loadFromFile (juce::File preset, std::string& error)
 {
@@ -354,15 +364,7 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
         return false;
     }
 
-    this->mod_connections_.clear();
-    this->state_connections_.clear();
-    this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
-    this->state_connections_.reserve (bitklavier::kMaxStateConnections);
-    this->engine_->getModulationBank().reset();
-    this->engine_->getStateBank().reset();
-    preparationLists.clear();
-    mod_connection_lists_.clear();
-    connectionLists.clear();
+    clearAllBackend();
     SynthGuiInterface* gui_interface = getGuiInterface();
     if (gui_interface)
     {

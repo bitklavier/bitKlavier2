@@ -541,10 +541,10 @@ public:
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if(property != IDs::pedalSampleSet)
-            return;
+        if (property == IDs::mainSampleSet) {
         juce::String a = t.getProperty(IDs::mainSampleSet, "");
         addSoundSet(&(*parent.getSamples())[a]);
+        }
     }
     void setTuning (TuningProcessor*) override;
 

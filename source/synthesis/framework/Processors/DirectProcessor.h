@@ -250,37 +250,38 @@ public:
     void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
 
         if (t == v && property == IDs::soundset) {
-            juce::String soundset = t.getProperty(property, "");
-            if (soundset == IDs::syncglobal.toString()) {
-                juce::String a = t.getProperty(IDs::mainSampleSet, "");
-                juce::String b = t.getProperty(IDs::hammerSampleSet, "");
-                juce::String c = t.getProperty(IDs::releaseResonanceSampleSet, "");
-                juce::String d = t.getProperty(IDs::pedalSampleSet, "");
-                addSoundSet(&(*parent.getSamples())[a],
-                            &(*parent.getSamples())[b],
-                            &(*parent.getSamples())[c],
-                            &(*parent.getSamples())[d]);
-            }
-            addSoundSet(&(*parent.getSamples())[soundset],
-                        &(*parent.getSamples())[soundset + "Hammers"],
-                        &(*parent.getSamples())[soundset + "Release"],
-                        &(*parent.getSamples())[soundset + "Pedals"]);
+            loadSamples();
             return;
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if(property != IDs::pedalSampleSet)
-            return;
-        juce::String a = t.getProperty(IDs::mainSampleSet, "");
-        juce::String b = t.getProperty(IDs::hammerSampleSet, "");
-        juce::String c = t.getProperty(IDs::releaseResonanceSampleSet, "");
-        juce::String d = t.getProperty(IDs::pedalSampleSet, "");
-        addSoundSet(&(*parent.getSamples())[a],
-                    &(*parent.getSamples())[b],
-                    &(*parent.getSamples())[c],
-                    &(*parent.getSamples())[d]);
-    }
+        if (property == IDs::mainSampleSet) {
+            juce::String a = t.getProperty(IDs::mainSampleSet, "");
+            addSoundSet(&(*parent.getSamples())[a],
+                        &(*parent.getSamples())[a+"Hammers"],
+                        &(*parent.getSamples())[a+"ReleaseResonance"],
+                        &(*parent.getSamples())[a+"Pedals"]);
+        }
 
+    }
+    void loadSamples() {
+        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+        if (soundset == IDs::syncglobal.toString()) {
+            //if global sync read soundset from global valuetree
+            soundset = parent.getValueTree().getProperty(IDs::mainSampleSet, "");
+
+            addSoundSet(&(*parent.getSamples())[soundset],
+                     &(*parent.getSamples())[soundset + "Hammers"],
+                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                     &(*parent.getSamples())[soundset + "Pedals"]);
+        }else {
+            //otherwise set the piano
+            addSoundSet(&(*parent.getSamples())[soundset],
+                        &(*parent.getSamples())[soundset + "Hammers"],
+                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                        &(*parent.getSamples())[soundset + "Pedals"]);
+        }
+    }
     /**
      * todo: do we need these?
      * DAVIS: this just explicitly defines the other valuetree listener functions to be doing nothing

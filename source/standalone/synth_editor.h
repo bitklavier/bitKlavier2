@@ -96,6 +96,7 @@ private:
     juce::CriticalSection critical_section_;
     juce::StringArray current_midi_ins_;
     double current_time_;
+    bool isInit;
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;
 #endif

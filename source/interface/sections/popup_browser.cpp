@@ -1159,8 +1159,8 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, cons
     curr_vt = v;
     if (curr_vt.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
         sampleSelectText->setText("Sync Global");
-        else
-            sampleSelectText->setText(curr_vt.getProperty(IDs::soundset));
+    else
+        sampleSelectText->setText(curr_vt.getProperty(IDs::soundset));
     resized();
     repaintPrepBackground();
 }
@@ -1220,7 +1220,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         auto string_names = parent->getSynth()->sampleLoadManager->getAllSampleSets();
         options.addItem(0,"Sync Global");
-        for (int i = 1; i < string_names.size(); i++) {
+        for (int i = 1; i < string_names.size() + 1; i++) {
             options.addItem(i, string_names[i-1]);
 
         }
@@ -1234,7 +1234,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
                 else {
                     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                     parent->getSampleLoadManager()->loadSamples(selection, false,curr_vt);
-                    sampleSelectText->setText(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection]);
+                    sampleSelectText->setText(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]);
                 }
 
 

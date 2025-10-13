@@ -118,9 +118,6 @@ public:
 
     // maybe this repetition can be cleaned up, but maybe not so important.
     juce::String globalSoundset_name;
-    juce::String globalHammersSoundset_name;
-    juce::String globalReleaseResonanceSoundset_name;
-    juce::String globalPedalsSoundset_name;
     juce::String nonGlobalSoundset_name;
 
     const std::vector<std::string> getAllSampleSets();

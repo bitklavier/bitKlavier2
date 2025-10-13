@@ -56,9 +56,7 @@ namespace IDs
     DECLARE_ID (active)
     DECLARE_ID (midiPrefs)
     DECLARE_ID (mainSampleSet)
-    DECLARE_ID (hammerSampleSet)
-    DECLARE_ID (releaseResonanceSampleSet)
-    DECLARE_ID (pedalSampleSet)
+
 
     DECLARE_ID (modulationproc)
     DECLARE_ID (ModulationConnection)

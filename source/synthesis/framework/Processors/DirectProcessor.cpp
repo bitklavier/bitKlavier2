@@ -50,6 +50,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     &(state.params.transpose.transpositionUsesTuning->stateChanges)));
     v.addListener(this);
     parent.getValueTree().addListener(this);
+    loadSamples();
 }
 
 
