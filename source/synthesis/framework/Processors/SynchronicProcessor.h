@@ -620,10 +620,6 @@ public:
      *
      * needed in particular for backwards-playing notes
      */
-    /**
-     * todo: redo this in a memory-safe way; std::map is not considered safe for the audio thread
-     */
-    //std::map<int, NoteOnSpec> noteOnSpecMap;
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
 

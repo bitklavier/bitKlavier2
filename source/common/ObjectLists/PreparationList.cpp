@@ -14,6 +14,7 @@
 #include "MidiTargetProcessor.h"
 #include "PianoSwitchProcessor.h"
 #include "TempoProcessor.h"
+#include "NostalgicProcessor.h"
 #include "../UserPreferences.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : tracktion::engine::ValueTreeObjectList<
@@ -31,6 +32,7 @@ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v) : 
     prepFactory.template registerType<MidiTargetProcessor,  SynthBase&, const juce::ValueTree&>(IDs::midiTarget.toString().toStdString());
     prepFactory.template registerType<PianoSwitchProcessor,  SynthBase&, const juce::ValueTree&>(IDs::pianoMap.toString().toStdString());
     prepFactory.template registerType<TempoProcessor,  SynthBase&, const juce::ValueTree&>(IDs::tempo.toString().toStdString());
+    prepFactory.template registerType<NostalgicProcessor,  SynthBase&, const juce::ValueTree&>(IDs::nostalgic.toString().toStdString());
 
     rebuildObjects();
     for (auto object: objects) {

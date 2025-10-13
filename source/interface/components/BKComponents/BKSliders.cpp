@@ -4,6 +4,7 @@
 
 #include "BKSliders.h"
 #include "BKGraphicsConstants.h"
+#include "BinaryData.h"
 
 /**
  * move this stuff somewhere else
@@ -1300,6 +1301,275 @@ void BKMultiSlider::deHighlightCurrentSlider()
         sliders[lastHighlightedSlider]->operator[](i)->setLookAndFeel(&activeSliderLookAndFeel);
     }
 
+}
+
+// ******************************************************************************************************************** //
+// *******************************************  BKWaveDistanceUndertowSlider ****************************************** //
+// ******************************************************************************************************************** //
+
+
+BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, double min, double max, double defmin, double defmax, double increment, const juce::ValueTree& stateDefault):
+StateModulatedComponent(stateDefault),
+                                                                                                                     sliderName(name),
+                                                                                                                     sliderMin(min),
+                                                                                                                     sliderMax(max),
+                                                                                                                     sliderDefaultMin(defmin),
+                                                                                                                     sliderDefaultMax(defmax),
+                                                                                                                     sliderIncrement(increment){
+
+    maxSliders = 10;
+
+    sliderMin = 0;
+    sliderMax = 20000;
+    sliderIncrement = 1;
+
+    float skewFactor = 0.7;
+
+    sampleImageComponent.setImage(juce::ImageCache::getFromMemory(BinaryData::samplePic_png, BinaryData::samplePic_pngSize));
+    sampleImageComponent.setImagePlacement(juce::RectanglePlacement(juce::RectanglePlacement::stretchToFit));
+    sampleImageComponent.setTooltip("Provides real-time visualization of each independent Nostalgic wave");
+    addAndMakeVisible(sampleImageComponent);
+
+    // wavedistanceSlider = std::make_unique<juce::Slider>();
+    wavedistanceSlider.addMouseListener(this, true);
+    wavedistanceSlider.setRange(sliderMin, sliderMax, sliderIncrement);
+    wavedistanceSlider.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
+    wavedistanceSlider.setLookAndFeel(&displaySliderLookAndFeel);
+    wavedistanceSlider.setTextBoxIsEditable(false);
+    wavedistanceSlider.setColour(juce::Slider::trackColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
+    displaySliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
+    wavedistanceSlider.addListener(this);
+    wavedistanceSlider.setSkewFactor(skewFactor);
+    addAndMakeVisible(wavedistanceSlider);
+
+    // undertowSlider = std::make_unique<juce::Slider>();
+    undertowSlider.addMouseListener(this, true);
+    undertowSlider.setRange(sliderMin, sliderMax, sliderIncrement);
+    undertowSlider.setSliderStyle(juce::Slider::SliderStyle::LinearBar);
+    undertowSlider.setLookAndFeel(&displaySliderLookAndFeel);
+    undertowSlider.setTextBoxIsEditable(false);
+    undertowSlider.setColour(juce::Slider::trackColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
+    undertowSlider.addListener(this);
+    undertowSlider.setSkewFactor(skewFactor);
+    addAndMakeVisible(undertowSlider);
+
+    for(int i=0; i<maxSliders; i++)
+    {
+        displaySliders.insert(0, new juce::Slider());
+        juce::Slider* newSlider = displaySliders.getUnchecked(0);
+
+        newSlider->setRange(sliderMin, sliderMax, sliderIncrement);
+        newSlider->setLookAndFeel(&displaySliderLookAndFeel);
+        newSlider->setSliderStyle(BKSubSlider::SliderStyle::LinearBar);
+        newSlider->setColour(juce::Slider::trackColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
+        // displaySliderLookAndFeel.setColour(Slider::thumbColourId, Colours::deepskyblue.withMultipliedAlpha(0.75));
+        newSlider->setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+        newSlider->setInterceptsMouseClicks(false, false);
+        newSlider->setSkewFactor(skewFactor);
+        addAndMakeVisible(newSlider);
+    }
+
+    undertowValueTF.setName("ut");
+    undertowValueTF.addListener(this);
+    addChildComponent(undertowValueTF);
+
+    wavedistanceValueTF.setName("wd");
+    wavedistanceValueTF.addListener(this);
+    addChildComponent(wavedistanceValueTF);
+
+    wavedistanceName.setText("wave distance (ms)", juce::dontSendNotification);
+    wavedistanceName.setJustificationType(juce::Justification::topRight);
+    addAndMakeVisible(wavedistanceName);
+
+    undertowName.setText("undertow (ms)", juce::dontSendNotification);
+    undertowName.setJustificationType(juce::Justification::bottomRight);
+    addAndMakeVisible(undertowName);
+}
+
+
+void BKWaveDistanceUndertowSlider::sliderValueChanged (juce::Slider *slider)
+{
+}
+void BKWaveDistanceUndertowSlider::setDim(float alphaVal)
+{
+    wavedistanceName.setAlpha(alphaVal);
+    undertowName.setAlpha(alphaVal);
+    wavedistanceSlider.setAlpha(alphaVal);
+    undertowSlider.setAlpha(alphaVal);
+
+    for(int i=0; i<maxSliders; i++)
+    {
+        juce::Slider* newSlider = displaySliders.getUnchecked(i);
+        newSlider->setAlpha(0.);
+    }
+
+}
+
+void BKWaveDistanceUndertowSlider::setBright()
+{
+    wavedistanceName.setAlpha(1.);
+    undertowName.setAlpha(1.);
+    wavedistanceSlider.setAlpha(1.);
+    undertowSlider.setAlpha(1.);
+}
+
+
+void BKWaveDistanceUndertowSlider::updateSliderPositions(juce::Array<int> newpositions)
+{
+
+    if(newpositions.size() > maxSliders) newpositions.resize(maxSliders);
+
+    for(int i=0; i<newpositions.size(); i++)
+    {
+        displaySliders.getUnchecked(i)->setValue(newpositions.getUnchecked(i) - wavedistanceSlider.getValue());
+        displaySliders.getUnchecked(i)->setVisible(true);
+    }
+
+    for(int i=newpositions.size(); i<displaySliders.size(); i++)
+    {
+        displaySliders.getUnchecked(i)->setVisible(false);
+    }
+}
+
+
+void BKWaveDistanceUndertowSlider::resized()
+{
+    juce::Rectangle<int> area (getLocalBounds());
+
+    wavedistanceSlider.setBounds(area.removeFromTop(getHeight() * 0.1));
+    undertowSlider.setBounds(area.removeFromBottom(getHeight() * 0.1));
+    //wavedistanceSlider->setBounds(area.removeFromTop(gComponentSingleSliderHeight));
+    //undertowSlider->setBounds(area.removeFromBottom(gComponentSingleSliderHeight));
+
+    wavedistanceValueTF.setBounds(wavedistanceSlider.getBounds());
+
+    //int xpos = wavedistanceSlider->getPositionOfValue(wavedistanceSlider->getValue());
+
+    //undertowSlider->setBounds(xpos, undertowSlider->getY(), getWidth() - xpos, undertowSlider->getHeight());
+
+    undertowValueTF.setBounds(undertowSlider.getBounds());
+
+    //undertowName.setBounds(area);
+    //wavedistanceName.setBounds(area);
+    undertowName.setBounds(
+                           undertowSlider.getRight() - undertowSlider.getWidth() / 4,
+                           undertowSlider.getY() - undertowSlider.getHeight(),
+                           undertowSlider.getWidth() / 4,
+                           undertowSlider.getHeight());
+    wavedistanceName.setBounds(
+                               wavedistanceSlider.getRight() - wavedistanceSlider.getWidth() / 4,
+                               wavedistanceSlider.getBottom(),
+                               wavedistanceSlider.getWidth() / 4,
+                               wavedistanceSlider.getHeight());
+
+    sampleImageComponent.setBounds(area);
+
+    for(int i=0; i<maxSliders; i++)
+    {
+        juce::Slider* newSlider = displaySliders.getUnchecked(i);
+        newSlider->setBounds(area);
+    }
+
+
+}
+
+void BKWaveDistanceUndertowSlider::mouseDoubleClick(const juce::MouseEvent& e)
+{
+    Component* c = e.eventComponent->getParentComponent();
+
+    if (c == &wavedistanceSlider)
+    {
+        wavedistanceValueTF.setVisible(true);
+        wavedistanceValueTF.grabKeyboardFocus();
+    }
+    else if (c == &undertowSlider)
+    {
+        undertowValueTF.setVisible(true);
+        undertowValueTF.grabKeyboardFocus();
+    }
+
+}
+
+void BKWaveDistanceUndertowSlider::textEditorReturnKeyPressed(juce::TextEditor& editor)
+{
+    double newval = editor.getText().getDoubleValue();
+
+    //DBG("nostalgic wavedistance/undertow slider return key pressed");
+
+    if (editor.getName() == "ut")
+    {
+        undertowSlider.setValue(newval, juce::sendNotification);
+    }
+    else if (editor.getName() == "wd")
+    {
+        wavedistanceSlider.setValue(newval, juce::sendNotification);
+    }
+
+    wavedistanceValueTF.setVisible(false);
+    undertowValueTF.setVisible(false);
+
+    setWaveDistance(wavedistanceSlider.getValue(), juce::dontSendNotification);
+
+    listeners.call(&BKWaveDistanceUndertowSlider::Listener::BKWaveDistanceUndertowSliderValueChanged,
+                   "nSlider",
+                   wavedistanceSlider.getValue(),
+                   undertowSlider.getValue());
+
+    unfocusAllComponents();
+}
+
+void BKWaveDistanceUndertowSlider::textEditorTextChanged(juce::TextEditor& textEditor)
+{
+    focusLostByEscapeKey = false;
+}
+
+void BKWaveDistanceUndertowSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
+{
+    //DBG("Nostalgic textEditorEscapeKeyPressed");
+    focusLostByEscapeKey = true;
+    unfocusAllComponents();
+}
+
+void BKWaveDistanceUndertowSlider::textEditorFocusLost(juce::TextEditor& textEditor)
+{
+}
+
+void BKWaveDistanceUndertowSlider::sliderDragEnded(juce::Slider *slider)
+{
+    if(slider == &wavedistanceSlider)
+    {
+        setWaveDistance(wavedistanceSlider.getValue(), juce::dontSendNotification);
+    }
+
+    listeners.call(&BKWaveDistanceUndertowSlider::Listener::BKWaveDistanceUndertowSliderValueChanged,
+                   "nSlider",
+                   wavedistanceSlider.getValue(),
+                   undertowSlider.getValue());
+}
+
+void BKWaveDistanceUndertowSlider::setWaveDistance(int newwavedist, juce::NotificationType notify)
+{
+    wavedistanceSlider.setValue(newwavedist, notify);
+
+    int xpos = wavedistanceSlider.getPositionOfValue(wavedistanceSlider.getValue());
+    undertowSlider.setBounds(xpos, undertowSlider.getY(), getWidth() - xpos, undertowSlider.getHeight());
+    double max = sliderMax - wavedistanceSlider.getValue();
+    if (max <= sliderMin) max = sliderMin + 0.0001;
+    undertowSlider.setRange(sliderMin, max, sliderIncrement);
+
+    for(int i=0; i<maxSliders; i++)
+    {
+        juce::Slider* newSlider = displaySliders.getUnchecked(i);
+
+        newSlider->setBounds(xpos, newSlider->getY(), getWidth() - xpos, newSlider->getHeight());
+        newSlider->setRange(sliderMin, max, sliderIncrement);
+    }
+
+}
+
+void BKWaveDistanceUndertowSlider::setUndertow(int newundertow, juce::NotificationType notify)
+{
+    undertowSlider.setValue(newundertow, notify);
 }
 
 
