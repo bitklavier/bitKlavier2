@@ -210,15 +210,15 @@ private:
      * - value    => specs for that key (start time, direction, loop mode)
      *
      * needed in particular for backwards-playing notes
+     * (originally was std::map, but changed to std::array for audio thread safety)
      */
-    //std::map<int, NoteOnSpec> noteOnSpecMap;
-    std::array<NoteOnSpec, 128> noteOnSpecMap;
+    std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
 
     /*
      * partialStructure
      * - every partial is associated with a heldKey
      * - and is close to a partialKey
-     * - and has an ofset from ET (of partialKey) and gain multiplier
+     * - and has an offset from ET (of partialKey) and gain multiplier
      */
     std::array<int, MAX_SYMPSTRINGS> heldKeys;      // midiNoteNumber for key that is held down; for the undamped string that has this partial
     std::array<int, MAX_SYMPSTRINGS> partialKeys;   // midiNoteNumber for nearest key to this partial; used to determine whether this partial gets excited

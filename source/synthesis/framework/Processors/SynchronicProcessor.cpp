@@ -30,8 +30,9 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};
-        // You can customize default values based on the key (i) here.
     }
+
+    updatedTransps.ensureStorageAllocated(50);
 
     /*
      * state-change parameter stuff (for multisliders)
@@ -79,6 +80,10 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         clusterVelocities.add(0);
     }
 
+    /**
+     * todo: replace these juce::Arrays with std::bitsets
+     *      - AND replace slimCluster with something else that doesn't allocate memory on the audio thread
+     */
     keysDepressed = juce::Array<int>();
     clusterKeysDepressed = juce::Array<int>();
     inCluster = false;
@@ -87,9 +92,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
 void SynchronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
-
     synchronicSynth->setCurrentPlaybackSampleRate (sampleRate);
-
 }
 
 bool SynchronicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const
@@ -212,19 +215,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     auto sMode = state.params.pulseTriggeredBy->get();
 
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
-    //noteOnSpecMap.clear();
     for (auto& spec : noteOnSpecMap)
     {
-        spec.keyState = false;
-        spec.startTime = 0.f;
-        spec.startDirection = Direction::forward;
-        spec.loopMode = LoopMode::none;
-        spec.stopSameCurrentNote = true;
-        spec.envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f* .001, 0.0f, 0.0f, 0.0f};
-        /**
-         * todo: make reset function for NoteOnSpecMap...?
-         */
+        spec.clear();
     }
+
     updatedTransps.clear();
 
     // keep track of how long keys have been held down, for holdTime check

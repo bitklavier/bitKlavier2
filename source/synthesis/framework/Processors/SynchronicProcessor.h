@@ -511,7 +511,6 @@ public:
 
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {
-        DBG("Synchronic addSoundSet called");
         synchronicSynth->addSoundSet (s);
     }
 
@@ -560,7 +559,6 @@ public:
     //bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
     bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
-    void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
     void removeOldestCluster();
     void removeNewestCluster();
     void rotateClusters();
@@ -626,7 +624,6 @@ public:
      * todo: redo this in a memory-safe way; std::map is not considered safe for the audio thread
      */
     //std::map<int, NoteOnSpec> noteOnSpecMap;
-    static constexpr int MaxMidiNotes = 128;
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
 

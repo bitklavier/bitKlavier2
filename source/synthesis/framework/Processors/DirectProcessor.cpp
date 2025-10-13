@@ -34,6 +34,8 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.transpose.transpositionUsesTuning->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
+    midiNoteTranspositions.ensureStorageAllocated(50);
+
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
     parent.getStateBank().addParam (std::make_pair<std::string,
@@ -43,8 +45,6 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
     &(state.params.transpose.transpositionUsesTuning->stateChanges)));
 }
-
-
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -77,32 +77,21 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
 /*
  * grabs all the TransposeParams values and compiles them into a single array
  * the first slider is always represented, so we always have at least on value to return
- *
- * these operate at the synthesizer level, not the voice level, so need to be passed here
- * and not just looked at by individual voices in the synth
- *
- * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
-/**
- * todo: redo this with something audio-thread safe, like std::array, passing a reference? but might need one for each note?
- * @return
- */
-juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
+void DirectProcessor::updateMidiNoteTranspositions()
 {
-    juce::Array<float> transps;
+    midiNoteTranspositions.clear();
     auto paramVals = state.params.transpose.getFloatParams();
     int i = 0;
     for (auto const& tp : *paramVals)
     {
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
-            transps.addIfNotAlreadyThere (tp->getCurrentValue());
+            midiNoteTranspositions.addIfNotAlreadyThere (tp->getCurrentValue());
         i++;
     }
 
     // make sure that the first slider is always represented
-    transps.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
-
-    return transps;
+    midiNoteTranspositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
 }
 
 void DirectProcessor::setTuning (TuningProcessor* tun)
@@ -169,13 +158,13 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     buffer.clear();
 
     // update transposition slider values
-    juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
+    updateMidiNoteTranspositions();
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples())
     {
         mainSynth->setBypassed (false);
-        mainSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        mainSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -188,7 +177,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->setBypassed (false);
-        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+        releaseResonanceSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 

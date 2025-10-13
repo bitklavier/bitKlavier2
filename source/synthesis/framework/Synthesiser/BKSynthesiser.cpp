@@ -14,6 +14,15 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
     for (int i = 0; i<=128; i++)
         playingVoicesByNote.insert(0, {  });
 
+    // init the noteOnSpecs to default; will be overridden by some preparations
+    for (int i = 0; i < MaxMidiNotes; ++i)
+    {
+        noteOnSpecs[i] = NoteOnSpec{};
+    }
+
+    // have a default tuning in case one is not connected
+    tuning = new TuningState();
+
     activeNotes.reset();
 }
 

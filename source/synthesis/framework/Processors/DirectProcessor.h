@@ -274,8 +274,7 @@ private:
     std::unique_ptr<BKSynthesiser> pedalSynth;
 
     juce::Array<float> midiNoteTranspositions;
-
-    juce::Array<float> getMidiNoteTranspositions();
+    void updateMidiNoteTranspositions();
 
     /**
      * todo: is this used?

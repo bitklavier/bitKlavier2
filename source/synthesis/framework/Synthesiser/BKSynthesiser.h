@@ -342,7 +342,7 @@ class BKSynthesiser
 //                {
 //                    noteOnSpecs = inspecs;
 //                }
-                void setNoteOnSpecMap(std::array<NoteOnSpec, 128>& inspecs)
+                void setNoteOnSpecMap(std::array<NoteOnSpec, MaxMidiNotes>& inspecs)
                 {
                     noteOnSpecs = inspecs;
                 }
@@ -453,10 +453,10 @@ private:
                 juce::Array<float> midiNoteTranspositions = { 0.}; // needs to be set via UI, for additional transpositions
                 bool tuneTranspositions = false;
                 juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
-                std::bitset<128> activeNotes;
+                std::bitset<MaxMidiNotes> activeNotes;
 
                 //std::map<int, NoteOnSpec> noteOnSpecs;
-                std::array<NoteOnSpec, 128> noteOnSpecs;
+                std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecs;
 
                 TuningState* tuning;
 

@@ -26,6 +26,8 @@
 #include "common.h"
 #include "BKADSR.h"
 
+static constexpr int MaxMidiNotes = 128;
+
 #define NAME_AND_VALUE(x) #x, x
 
   namespace bitklavier::utils {
@@ -470,22 +472,31 @@ static double ftom(const double f, double a440 )
  */
 struct BKSynthesizerState
 {
-    int lastVelocity;
     double lastPitch;
 };
 
-/**
+/*
  * additional specifications to associate with a particular noteOn msg
  *  - usually included in a std::map, keyed by midiNoteNumber
  */
 struct NoteOnSpec
 {
-    bool keyState = false; // turn on for notes that should have the extra specs here
-    float startTime = 0.f; // where to start playback (ms)
-    Direction startDirection = Direction::forward;
-    LoopMode loopMode = LoopMode::none;
-    bool stopSameCurrentNote = true; // if this note is playing already, stop it (default behavior)
-    BKADSR::Parameters envParams{3.0f * .001, 10.0f * .001, 1.0f, 50.0f* .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+    bool keyState = false;                          // turn on for notes that should use the extra specs here
+    float startTime = 0.f;                          // where to start playback (ms)
+    Direction startDirection = Direction::forward;  // direction
+    LoopMode loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
+    bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
+    BKADSR::Parameters envParams {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+
+    void clear()
+    {
+        keyState = false;                          // turn on for notes that should use the extra specs here
+        startTime = 0.f;                          // where to start playback (ms)
+        startDirection = Direction::forward;  // direction
+        loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
+        stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
+        envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+    }
 };
 
 /*

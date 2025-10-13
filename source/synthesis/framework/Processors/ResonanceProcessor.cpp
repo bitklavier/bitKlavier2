@@ -16,6 +16,11 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         resonanceSynth->addVoice (new BKSamplerVoice());
     }
 
+    for (int i = 0; i < MaxMidiNotes; ++i)
+    {
+        noteOnSpecMap[i] = NoteOnSpec{};
+    }
+
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
