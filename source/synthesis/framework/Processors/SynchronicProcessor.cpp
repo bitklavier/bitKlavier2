@@ -33,7 +33,6 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         noteOnSpecMap[i].transpositions = {0.};
     }
 
-//    updatedTransps.ensureStorageAllocated(50);
     slimCluster.ensureStorageAllocated(100);
     tempCluster.ensureStorageAllocated(100);
     clusterNotes.ensureStorageAllocated(128);
@@ -377,6 +376,9 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].transpositions.clearQuick();
                         noteOnSpecMap[newNote].transpositions.add(newTransp);
 
+                        noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
+                                                             * getBeatThresholdSeconds() * 1000;
+
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                         {
@@ -404,27 +406,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                             // add it to the midiBuffer for BKSynth to process
                             outMidiMessages.addEvent(newmsg, 0);
                         }
-
-                        // reset the timer for keeping track how long this note has been sustained
-                        // 1. Search the array to find the index where the tuple's first member matches newNote.
-                        int foundIndex = -1;
-                        for (int i = 0; i < cluster->sustainedNotesTimers.size(); ++i)
-                        {
-                            // Access the key (index 0) using getReference() for safety/efficiency
-                            int keyInTuple = std::get<0>(cluster->sustainedNotesTimers.getReference(i));
-
-                            if (keyInTuple == newNote)
-                            {
-                                foundIndex = i;
-                                break;
-                            }
-                        }
-
-                        // 2. Assign the new value ONLY if the key was found.
-                        if (foundIndex != -1)
-                        {
-                            std::get<1>(cluster->sustainedNotesTimers.getReference(foundIndex)) = 0;
-                        }
                     }
                 }
 
@@ -438,68 +419,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             state.params.sustainLengthMultipliers_current.store(cluster->lengthMultiplierCounter);
             state.params.beatLengthMultipliers_current.store(cluster->beatMultiplierCounter);
             state.params.envelopes_current.store(cluster->envelopeCounter);
-
         }
 
         //pass time until next beat, increment phasor/timers
         cluster->incrementPhasor(numSamples);
-        cluster->incrementSustainedNotesTimers(numSamples);
-    }
-
-    /*
-     * handle noteOff messaging here
-     * - we need to do this when "over" is true, since there may be sustained notes for the last pulse in a layer
-     *      - "over" is true when the number of beats played > num pulses; the sequence is over
-     * - we also need to do it for all the regular notes, when "shouldPlay" is true
-     * - because this is a complicated processBlock, we run through the clusters again, keeping the noteOn
-     *      work (above) separate from the noteOff work; only 10 layers, so not a big CPU hit
-     */
-    for (auto cluster : clusterLayers)
-    {
-        if(cluster->getIsOver() || cluster->getShouldPlay())
-        {
-            // if no notes are playing in this cluster, we can move on, resetting if this cluster is over (exceeded num pulses)
-            if(cluster->sustainedNotesTimers.size() == 0) {
-                if (cluster->getIsOver()) cluster->reset();
-                continue;
-            }
-
-            /**
-             * todo: handle tempo/general stuff...
-             */
-            // get the sustain length that we need to compare to
-            juce::uint64 noteLength_samples = 0;
-            noteLength_samples = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter]) * getSampleRate() * getBeatThresholdSeconds();
-
-            // check to see if the notes have been sustained their desired length
-            // 1. Convert to an index-based loop for safe removal
-            int i = 0;
-            while (i < cluster->sustainedNotesTimers.size())
-            {
-                auto& tm = cluster->sustainedNotesTimers.getReference(i);
-
-                juce::uint64 currentlength = std::get<1>(tm);
-                if (currentlength > noteLength_samples)
-                {
-                    // 2. Perform MIDI Note Off
-                    // std::get<0>(tm) gets the note number (the int)
-                    auto newmsg = juce::MidiMessage::noteOff (1, std::get<0>(tm), clusterVelocities.getUnchecked(std::get<0>(tm)));
-                    outMidiMessages.addEvent(newmsg, 0);
-
-                    // 3. Remove the element using the index
-                    // The remove() call shifts all subsequent elements to the left,
-                    // effectively moving the next element into the current position 'i'.
-                    cluster->sustainedNotesTimers.remove(i);
-
-                    // DO NOT increment 'i' here. The next element is now at the current index 'i'.
-                }
-                else
-                {
-                    // 4. If not removed, move to the next index.
-                    ++i;
-                }
-            }
-        }
     }
 }
 
@@ -558,7 +481,6 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     if (synchronicSynth->hasSamples())
     {
         synchronicSynth->setBypassed (false);
-//        synchronicSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
         synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
@@ -632,11 +554,12 @@ bool SynchronicProcessor::updateCurrentCluster()
         // move to the next layer
         currentLayerIndex++;
         if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
+        clusterLayers[currentLayerIndex]->reset();
 
         // turn off oldest cluster
         int oldestClusterIndex = currentLayerIndex - std::round(state.params.numLayers->getCurrentValue());
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
-        clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
+        clusterLayers[oldestClusterIndex]->reset();
 
         DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
         DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));

@@ -602,6 +602,7 @@ public:
         currentSamplePos = 0.0;
         tailOff = 0.0;
 
+        currentSustainTime_samples = 0;
         ampEnv.noteOn();
     }
 
@@ -639,6 +640,7 @@ public:
 
         tailOff = 0.0;
 
+        currentSustainTime_samples = 0;
         ampEnv.noteOn();
     }
 
@@ -656,8 +658,6 @@ public:
 
         // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
-
-
     }
 
     void setDirection(Direction newdir)
@@ -709,6 +709,15 @@ public:
     void copyAmpEnv(BKADSR::Parameters parameters)
     {
         updateAmpEnv(parameters);
+    }
+
+    /*
+     * for situations where we specify a sustain time at noteOn, we want to ignore noteOff messages
+     */
+    bool ignoreNoteOff = false;
+    void setTargetSustainTime(float sustainTimeMS)
+    {
+        targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
     }
 
 private:
@@ -834,6 +843,18 @@ private:
             return false;
         }
 
+        /*
+         * if we have a target sustain time set at noteOff, check the duration and stop note as needed
+         */
+        currentSustainTime_samples++;
+        if (targetSustainTime_samples > 0)
+        {
+            if (currentSustainTime_samples > targetSustainTime_samples)
+            {
+                stopNote(64, true);
+            }
+        }
+
         return true;
     }
 
@@ -845,7 +866,7 @@ private:
     void stopNote()
     {
         // todo: are these necessary?
-            ampEnv.reset();
+        ampEnv.reset();
 
         clearCurrentNote();
         currentSamplePos = 0.0;
@@ -920,6 +941,9 @@ private:
     BKADSR ampEnv;
     TuningState* tuning;
     bool tuningAttached;
+
+    juce::uint64 currentSustainTime_samples = 0;
+    int64_t targetSustainTime_samples = -1;
 
     juce::AudioBuffer<float> m_Buffer;
 };

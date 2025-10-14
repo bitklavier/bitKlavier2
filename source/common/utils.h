@@ -491,6 +491,7 @@ struct NoteOnSpec
      */
     bool keyState = false;                          // turn on for notes that should use the extra specs here
     float startTime = 0.f;                          // where to start playback (ms)
+    float sustainTime = -1.0f;                      // time to sustain the note (ms); -1 => wait for noteOff or play the full sample
     Direction startDirection = Direction::forward;  // direction
     LoopMode loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
     bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
@@ -501,6 +502,7 @@ struct NoteOnSpec
     {
         keyState = false;
         startTime = 0.f;
+        sustainTime = -1.0f;
         startDirection = Direction::forward;
         loopMode = LoopMode::none;
         stopSameCurrentNote = true;

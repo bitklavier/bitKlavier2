@@ -447,6 +447,7 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setKeyDown (true);
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
+        voice->setTargetSustainTime(noteOnSpecs[midiNoteNumber].sustainTime);
 
         //if(noteOnSpecs.contains(midiNoteNumber))
         if(noteOnSpecs[midiNoteNumber].keyState)
@@ -514,9 +515,12 @@ void BKSynthesiser::noteOff (const int midiChannel,
     {
         voice->setKeyDown (false);
 
-        if (!(voice->isSustainPedalDown() || voice->isSostenutoPedalDown()))
+        if (!voice->ignoreNoteOff)
         {
-            stopVoice (voice, velocity, allowTailOff);
+            if (!(voice->isSustainPedalDown() || voice->isSostenutoPedalDown()))
+            {
+                stopVoice (voice, velocity, allowTailOff);
+            }
         }
     }
     playingVoicesByNote.set(midiNoteNumber, {}); // clear and clearQuick didn't actually do the trick for this!

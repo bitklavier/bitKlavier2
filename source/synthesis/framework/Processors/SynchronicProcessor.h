@@ -330,8 +330,6 @@ public:
         envelopeCounter = 0;
         shouldPlay = false;
         over = false;
-
-        sustainedNotesTimers.ensureStorageAllocated(50);
     }
 
     ~SynchronicCluster() {}
@@ -429,7 +427,6 @@ public:
     {
         // DBG("adding note: " + String(note));
         cluster.insert(0, note);
-        sustainedNotesTimers.add({note, 0});
     }
 
     inline bool containsNote(int note)
@@ -467,16 +464,6 @@ public:
     int envelopeCounter;
 
     bool doPatternSync = false;
-
-    juce::Array<std::tuple<int, juce::uint64>> sustainedNotesTimers;
-    inline void incrementSustainedNotesTimers (int numSamples)
-    {
-        for (auto& tm : sustainedNotesTimers)
-        {
-            //tm.second += numSamples;
-            std::get<1>(tm) += numSamples;
-        }
-    }
 
 private:
     SynchronicParams* _sparams;
@@ -618,10 +605,9 @@ public:
      * - key      => midiNoteNumber
      * - value    => specs for that key (start time, direction, loop mode)
      *
-     * needed in particular for backwards-playing notes
+     * needed in particular for backwards-playing notes and setting note durations
      */
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
-//    juce::Array<float> updatedTransps;
 
 private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
