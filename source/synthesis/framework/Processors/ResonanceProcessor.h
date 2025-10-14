@@ -216,9 +216,35 @@ private:
 
     /*
      * partialStructure
+     * - active (bool; false => default)
+     * - offset from fundamental (fractional MIDI note val; 0. => default)
+     * - gains (floats; 1.0 => default)
+     *      --if gain < 0, the entry in the array is considered inactive
+     */
+    // --- Quick Access to Check or Modify ---
+    // Example of checking the first float (index 1) of the 5th tuple (index 4)
+    // float value = std::get<1>(partialStructure[4]);
+
+    // Example of setting the boolean (index 0) of the 10th tuple (index 9)
+    // std::get<0>(partialStructure[9]) = true;
+    using PartialSpec = std::tuple<bool, float, float>;
+    std::array<PartialSpec, MaxMidiNotes> partialStructure;
+
+    /*
+     * will update partialStructure based on parameter settings
+     */
+    void updatePartialStructure();
+    void resetPartialStructure();
+    void printPartialStructure();
+
+    /*
+     * partials are collected here
      * - every partial is associated with a heldKey
      * - and is close to a partialKey
-     * - and has an offset from ET (of partialKey) and gain multiplier
+     * - and has an offset from ET (relative to partialKey)
+     * - and gain multiplier
+     * - newest partials are beginning of arrays, oldest get pushed off the end
+     * - these parallel arrays are kept in sync via addPartial and removePartialsForHeldKey
      */
     std::array<int, MAX_SYMPSTRINGS> heldKeys;      // midiNoteNumber for key that is held down; for the undamped string that has this partial
     std::array<int, MAX_SYMPSTRINGS> partialKeys;   // midiNoteNumber for nearest key to this partial; used to determine whether this partial gets excited

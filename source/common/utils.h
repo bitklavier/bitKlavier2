@@ -573,6 +573,19 @@ struct KeymapKeyboardState
     std::bitset<128> keyStates;
 };
 
+template <size_t N>
+size_t find_first_set_bit(const std::bitset<N>& bs)
+{
+    for (size_t i = 0; i < bs.size(); ++i)
+    {
+        if (bs.test(i))
+        {
+            return i; // Found the index of the first '1'
+        }
+    }
+    return N; // No set bits found
+}
+
 template <typename T, std::size_t N>
 void insert_and_shift(std::array<T, N>& arr, const T& new_value)
 {

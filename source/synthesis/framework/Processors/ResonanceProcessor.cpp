@@ -21,6 +21,7 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         noteOnSpecMap[i] = NoteOnSpec{};
     }
 
+    resetPartialStructure();
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -107,6 +108,82 @@ void ResonanceProcessor::removePartialsForHeldKey(int heldKey)
     synchronized_remove_and_compact(heldKeys, heldKey, partialKeys, gains, offsets, startTimes);
 }
 
+/**
+ * clear the partialStructure array and set it to default vals
+ */
+void ResonanceProcessor::resetPartialStructure()
+{
+    for (size_t i = 0; i < partialStructure.size(); ++i)
+    {
+        /*
+         * by default, each partial is inactive, with no offset from fundamental and gain multipler of 1.0
+         */
+        partialStructure[i] = {false, 0.f, 1.f};
+    }
+}
+
+/**
+ * set the partialStructure array vals based on parameter settings
+ */
+void ResonanceProcessor::updatePartialStructure()
+{
+    /*
+     * partialStructure
+     * - active (bool; false => default)
+     * - offset from fundamental (fractional MIDI note val; 0. => default)
+     * - gains (floats; 1.0 => default)
+     *      --if gain < 0, the entry in the array is considered inactive
+     */
+    // --- Quick Access to Check or Modify ---
+    // Example of checking the first float (index 1) of the 5th tuple (index 4)
+    // float value = std::get<1>(partialStructure[4]);
+
+    // Example of setting the boolean (index 0) of the 10th tuple (index 9)
+    // std::get<0>(partialStructure[9]) = true;
+
+    //    using PartialSpec = std::tuple<bool, float, float>;
+    //    std::array<PartialSpec, 60> partialStructure;
+
+    resetPartialStructure();
+
+    int pFundamental = find_first_set_bit(state.params.fundamentalKeymap.keyStates);
+    if (pFundamental >= state.params.fundamentalKeymap.keyStates.size())
+    {
+        DBG("ResonanceProcessor::updatePartialStructure() -- no fundamental found!");
+        return;
+    }
+
+    for (size_t i = 0; i < state.params.closestKeymap.keyStates.size(); ++i)
+    {
+        if (state.params.closestKeymap.keyStates.test(i))
+        {
+            float pOffset       = state.params.offsetsKeyboardState.absoluteTuningOffset[i];
+            float pGain         = state.params.gainsKeyboardState.absoluteTuningOffset[i];
+            partialStructure[i] = { true, i - pFundamental + pOffset, pGain };
+        }
+    }
+
+    // printPartialStructure();
+}
+
+void ResonanceProcessor::printPartialStructure()
+{
+    DBG("Partial Structure:");
+    DBG("     fundamental = " + juce::String(find_first_set_bit(state.params.fundamentalKeymap.keyStates)));
+
+    int partialNum = 1;
+    for (auto& pstruct : partialStructure)
+    {
+        if (std::get<0>(pstruct))
+        {
+            DBG ("     partial " + juce::String (partialNum++));
+            DBG ("          offset from fundamental = " + juce::String (std::get<1> (pstruct)));
+            DBG ("                             gain = " + juce::String (std::get<2> (pstruct)));
+        }
+    }
+
+}
+
 void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity)
 {
 
@@ -120,6 +197,9 @@ void ResonanceProcessor::addSympStrings(int noteNumber, float velocity)
 void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel)
 {
     handleMidiTargetMessages(channel);
+
+    updatePartialStructure();
+    printPartialStructure();
 
     if (doRing)
     {
