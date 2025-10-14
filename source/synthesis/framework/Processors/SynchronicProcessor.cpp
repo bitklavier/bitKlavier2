@@ -220,7 +220,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     for (auto& spec : noteOnSpecMap)
     {
         spec.clear();
-        spec.transpositions = {0.};
+        //spec.transpositions = {0.};
     }
 
 //    updatedTransps.clear();
@@ -257,7 +257,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     // all noteOn messages for all the clusters
     for (auto cluster : clusterLayers)
     {
-        if (cluster->getShouldPlay())
+        if (cluster->getShouldPlay() && !cluster->getIsOver())
         {
             // adjust samples per beat by beat length multiplier, for this beat
             numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
@@ -320,6 +320,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 clusterNotes = cluster->getCluster();
 
                 //cap size of slimCluster, removing oldest notes
+                tempCluster.clearQuick();
                 for(int i = 0; i < clusterNotes.size(); i++) tempCluster.set(i, clusterNotes.getUnchecked(i));
 
                 /*
@@ -330,6 +331,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                  *
                  *  an example: clusterMax=9, clusterCap=8; playing 9 notes simultaneously will result in cluster with 8 notes, but playing 10 notes will shut off pulse
                  *  another example: clusterMax=20, clusterCap=8; play a rapid ascending scale more than 8 and less than 20 notes, then stop; only last 8 notes will be in the cluster. If your scale exceeds 20 notes then it won't play.
+                 */
+                /**
+                 * todo: redo this without using resize, which might release the ensured memory allocation and reallocate
+                 *          - should be able to do it in the for loop above, stopping adding after clusterThickness has been reached
                  */
                 if(tempCluster.size() > state.params.clusterThickness->getCurrentValue()) tempCluster.resize(state.params.clusterThickness->getCurrentValue());
 
@@ -633,8 +638,8 @@ bool SynchronicProcessor::updateCurrentCluster()
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->setIsOver(true); // tell the cluster that it's done, and should only send noteOffs for the currently sounding cluster
 
-//        DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
-//        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
+        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }
