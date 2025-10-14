@@ -1,6 +1,16 @@
-//
-// Created by Joshua Warner on 6/27/24.
-//
+/*
+==============================================================================
+
+  Resonance.cpp
+  Created: 12 May 2021 12:41:26pm
+  Author:  Dan Trueman and Theodore R Trevisan
+  Rewritten: Dan Trueman, October 2025
+
+  Models the sympathetic resonance within the piano, with options for
+  static resonances akin to the Hardanger fiddle
+
+==============================================================================
+*/
 
 #ifndef BITKLAVIER2_RESONANCEPROCESSOR_H
 #define BITKLAVIER2_RESONANCEPROCESSOR_H
@@ -154,10 +164,10 @@ public:
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
     void keyPressed(int noteNumber, int velocity, int channel);
-    void keyReleased(int noteNumber, int channel);
+    void keyReleased(int noteNumber);
     void handleMidiTargetMessages(int channel);
     void ringSympStrings(int noteNumber, float velocity);
-    void addSympStrings(int noteNumber, float velocity);
+    void addSympStrings(int noteNumber);
 
     bool acceptsMidi() const override { return true; }
     bool hasEditor() const override { return false; }
@@ -197,19 +207,20 @@ public:
 private:
     std::unique_ptr<BKSynthesiser> resonanceSynth;
 
-    // the two primary modes, set by target msgs
-    //  - channel 1 => both are true, default behavior
+    /* the two primary modes, set by target msgs
+     *  - channel 1 => both are true, default behavior
+     *  - channel 2 => only ring the currently held strings
+     *  - channel 3 => only add/subtract to/from the currently held strings
+     */
     bool doRing = true;
     bool doAdd = true;
-
-//    std::bitset<128> heldKeys; // in place of "getHeldKeys()" juce::Array
 
     /*
      * noteOnSpecMap
      * - key      => midiNoteNumber
      * - value    => specs for that key (start time, direction, loop mode)
      *
-     * needed in particular for backwards-playing notes
+     * needed here to play notes with start time > 0
      * (originally was std::map, but changed to std::array for audio thread safety)
      */
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
@@ -219,14 +230,7 @@ private:
      * - active (bool; false => default)
      * - offset from fundamental (fractional MIDI note val; 0. => default)
      * - gains (floats; 1.0 => default)
-     *      --if gain < 0, the entry in the array is considered inactive
      */
-    // --- Quick Access to Check or Modify ---
-    // Example of checking the first float (index 1) of the 5th tuple (index 4)
-    // float value = std::get<1>(partialStructure[4]);
-
-    // Example of setting the boolean (index 0) of the 10th tuple (index 9)
-    // std::get<0>(partialStructure[9]) = true;
     using PartialSpec = std::tuple<bool, float, float>;
     std::array<PartialSpec, MaxMidiNotes> partialStructure;
 
@@ -234,7 +238,8 @@ private:
      * will update partialStructure based on parameter settings
      */
     void updatePartialStructure();
-    void resetPartialStructure();
+    void resetPartialStructure();       // clear it
+    void setDefaultPartialStructure();  // set to standard overtone series, first 8 partials
     void printPartialStructure();
 
     /*
