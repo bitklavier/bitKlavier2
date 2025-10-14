@@ -471,12 +471,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             int i = 0;
             while (i < cluster->sustainedNotesTimers.size())
             {
-                // Get the tuple reference safely using the index
                 auto& tm = cluster->sustainedNotesTimers.getReference(i);
 
-                // Access tuple members using the dereferenced form (*tm) is not needed here
-                // because tm is now the tuple reference itself.
-                if (std::get<1>(tm) > noteLength_samples)
+                juce::uint64 currentlength = std::get<1>(tm);
+                if (currentlength > noteLength_samples)
                 {
                     // 2. Perform MIDI Note Off
                     // std::get<0>(tm) gets the note number (the int)

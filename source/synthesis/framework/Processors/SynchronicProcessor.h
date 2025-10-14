@@ -429,6 +429,7 @@ public:
     {
         // DBG("adding note: " + String(note));
         cluster.insert(0, note);
+        sustainedNotesTimers.add({note, 0});
     }
 
     inline bool containsNote(int note)
