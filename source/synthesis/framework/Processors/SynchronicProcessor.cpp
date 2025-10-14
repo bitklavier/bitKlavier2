@@ -30,9 +30,10 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};
+        noteOnSpecMap[i].transpositions = {0.};
     }
 
-    updatedTransps.ensureStorageAllocated(50);
+//    updatedTransps.ensureStorageAllocated(50);
     slimCluster.ensureStorageAllocated(100);
     tempCluster.ensureStorageAllocated(100);
     clusterNotes.ensureStorageAllocated(128);
@@ -219,9 +220,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     for (auto& spec : noteOnSpecMap)
     {
         spec.clear();
+        spec.transpositions = {0.};
     }
 
-    updatedTransps.clear();
+//    updatedTransps.clear();
 
     // keep track of how long keys have been held down, for holdTime check
     for (auto key : keysDepressed)
@@ -349,10 +351,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                          * todo: when the transposition multislider is 2d, need to update here
                          */
                         // prepare the transpositions
-                        updatedTransps.addIfNotAlreadyThere(state.params.transpositions.sliderVals[cluster->transpCounter]);
+                        //updatedTransps.addIfNotAlreadyThere(state.params.transpositions.sliderVals[cluster->transpCounter]);
 
                         // put together the midi message
                         int newNote = slimCluster[n];
+                        float newTransp = state.params.transpositions.sliderVals[cluster->transpCounter];
                         float velocityMultiplier = state.params.accents.sliderVals[cluster->accentMultiplierCounter];
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
 
@@ -366,6 +369,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].envParams.attackPower = state.params.envelopeSequence.envStates.attackPowers[cluster->envelopeCounter];
                         noteOnSpecMap[newNote].envParams.decayPower = state.params.envelopeSequence.envStates.decayPowers[cluster->envelopeCounter];
                         noteOnSpecMap[newNote].envParams.releasePower = state.params.envelopeSequence.envStates.releasePowers[cluster->envelopeCounter];
+                        noteOnSpecMap[newNote].transpositions.clearQuick();
+                        noteOnSpecMap[newNote].transpositions.add(newTransp);
 
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
@@ -550,7 +555,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     if (synchronicSynth->hasSamples())
     {
         synchronicSynth->setBypassed (false);
-        //synchronicSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
+//        synchronicSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
         synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }

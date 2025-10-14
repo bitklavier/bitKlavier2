@@ -378,7 +378,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
      *      as set by currentTransposition sliders in Direct/Nostalgic/Synchronic.
      *      iterate through each currentTransposition here, but they are all tracked by the same original midiNoteNumber
      */
-    for (auto transp : midiNoteTranspositions)
+    for (auto transp : noteOnSpecs[midiNoteNumber].transpositions)
+    //for (auto transp : midiNoteTranspositions)
     {
         for (auto* sound : *sounds)
         {

@@ -620,7 +620,7 @@ public:
      * needed in particular for backwards-playing notes
      */
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
-    juce::Array<float> updatedTransps;
+//    juce::Array<float> updatedTransps;
 
 private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;

@@ -481,21 +481,31 @@ struct BKSynthesizerState
  */
 struct NoteOnSpec
 {
+    NoteOnSpec()
+    {
+        transpositions.ensureStorageAllocated(MaxMidiNotes);
+    }
+
+    /**
+     * todo: possibly rework this so we don't use keyState. would mean always using noteOnSpec and the envParams in particular
+     */
     bool keyState = false;                          // turn on for notes that should use the extra specs here
     float startTime = 0.f;                          // where to start playback (ms)
     Direction startDirection = Direction::forward;  // direction
     LoopMode loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
     bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
     BKADSR::Parameters envParams {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+    juce::Array<float> transpositions;              // all the transpositions related to this noteOn; BKSynth will launch all of them, and handle noteOffs for them
 
     void clear()
     {
-        keyState = false;                          // turn on for notes that should use the extra specs here
-        startTime = 0.f;                          // where to start playback (ms)
-        startDirection = Direction::forward;  // direction
-        loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
-        stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
-        envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+        keyState = false;
+        startTime = 0.f;
+        startDirection = Direction::forward;
+        loopMode = LoopMode::none;
+        stopSameCurrentNote = true;
+        envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f};
+        transpositions.clearQuick();
     }
 };
 

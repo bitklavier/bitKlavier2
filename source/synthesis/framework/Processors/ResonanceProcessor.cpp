@@ -211,6 +211,11 @@ void ResonanceProcessor::printPartialStructure()
 
 void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity)
 {
+    /**
+     * todo: flip these for loops? and put the partialKeys loop inside the if statement, to reduce the number of loops?
+     *          - also, reduce MAX_SYMPSTRINGS?
+     *          - could switch partialKeys and all the others to juce::Arrays, ensure their storage, and use their size() to reduce loop size as well
+     */
     int pkey_index = 0;
     for (auto pkey : partialKeys)
     {
@@ -220,13 +225,13 @@ void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity)
             {
                 float partial       = static_cast<float>(noteNumber) + std::get<1>(pstruct);
                 int   partialKey    = std::round(partial);
-                float partialOffset = partial - static_cast<float>(partialKey);
-                float partialGain   = std::get<2>(pstruct);
 
                 if (partialKey == pkey)
                 {
                     // need a way to check if this partialKey is actually active? or is pKey == 0 unless it is set?
                     DBG("found overlap of partials, play resonance here");
+                    float partialOffset = partial - static_cast<float>(partialKey);
+                    float partialGain   = std::get<2>(pstruct);
                 }
             }
         }

@@ -266,19 +266,31 @@ public:
 
 
 private:
-    //    chowdsp::Gain<float> gain;
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
     std::unique_ptr<BKSynthesiser> mainSynth;
     std::unique_ptr<BKSynthesiser> hammerSynth;
     std::unique_ptr<BKSynthesiser> releaseResonanceSynth;
     std::unique_ptr<BKSynthesiser> pedalSynth;
 
+    /*
+     * array of transpositions associated with a single noteOn msg
+     */
     juce::Array<float> midiNoteTranspositions;
     void updateMidiNoteTranspositions();
+    void updateMidiNoteTranspositions(int noteOnNumber);
+    void updateAllMidiNoteTranspositions();
 
-    /**
-     * todo: is this used?
-     * see addSoundSet()
+    /*
+     * noteOnSpecMap
+     * - key      => midiNoteNumber
+     * - value    => specs for that key (start time, direction, loop mode, transpositions)
+     *
+     * needed here for transpositions
+     */
+    std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
+
+    /*
+     * see addSoundSet() for usage of ptrToSamples
      */
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > > *ptrToSamples;
     BKSynthesizerState lastSynthState;
