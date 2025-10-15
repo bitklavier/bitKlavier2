@@ -272,6 +272,8 @@ public:
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
+    void updateMidiNoteTranspositions(int noteOnNumber);
+    void updateAllMidiNoteTranspositions();
 
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)

@@ -74,16 +74,45 @@ void NostalgicProcessor::processContinuousModulations(juce::AudioBuffer<float>& 
 {
 }
 
+void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
+{
+    noteOnSpecMap[noteOnNumber].transpositions.clear();
+    auto paramVals = state.params.transpose.getFloatParams();
+    int i = 0;
+    for (auto const& tp : *paramVals)
+    {
+        if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
+            noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (tp->getCurrentValue());
+        i++;
+    }
+
+    // make sure that the first slider is always represented
+    noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+}
+
+/*
+ * update them all to the same transpositions.
+ * - since Nostalgic uses the same transpositions, we just have them all set to the same values
+ * - this is different in other preps like Resonance, where individual noteOn msgs will have their own transpositions
+ */
+void NostalgicProcessor::updateAllMidiNoteTranspositions()
+{
+    for (int i=0; i<MaxMidiNotes; i++)
+    {
+        updateMidiNoteTranspositions(i);
+    }
+}
+
 void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     // increment the timers by number of samples in the MidiBuffer
     incrementTimers (numSamples);
 
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
-    for (auto& spec : noteOnSpecMap)
-    {
-        spec.clear();
-    }
+    // for (auto& spec : noteOnSpecMap)
+    // {
+    //     spec.clear();
+    // }
 
     // check on your reverse and undertow notes
     for(int i = reverseNotes.size() - 1; i >= 0; --i)
@@ -196,6 +225,7 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     buffer.clear();
     state.getParameterListeners().callAudioThreadBroadcasters();
     processContinuousModulations(buffer);
+    updateAllMidiNoteTranspositions();
     state.params.processStateChanges();
     int numSamples = buffer.getNumSamples();
     juce::MidiBuffer outMidi;
