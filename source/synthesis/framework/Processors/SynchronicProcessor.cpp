@@ -221,8 +221,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         //spec.transpositions = {0.};
     }
 
-//    updatedTransps.clear();
-
     // keep track of how long keys have been held down, for holdTime check
     for (auto key : keysDepressed)
     {

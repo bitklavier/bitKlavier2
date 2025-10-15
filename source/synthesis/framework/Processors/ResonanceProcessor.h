@@ -163,10 +163,10 @@ public:
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
-    void keyPressed(int noteNumber, int velocity, int channel);
+    void keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
     void keyReleased(int noteNumber);
     void handleMidiTargetMessages(int channel);
-    void ringSympStrings(int noteNumber, float velocity);
+    void ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages);
     void addSympStrings(int noteNumber);
 
     bool acceptsMidi() const override { return true; }

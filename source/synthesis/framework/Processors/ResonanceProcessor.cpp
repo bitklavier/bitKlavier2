@@ -71,6 +71,12 @@ void ResonanceProcessor::processContinuousModulations(juce::AudioBuffer<float>& 
 }
 void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
+    // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
+    for (auto& spec : noteOnSpecMap)
+    {
+        spec.clear();
+    }
+
     /*
      * process incoming MIDI messages, including the target messages
      */
@@ -79,7 +85,7 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         auto message = mi.getMessage();
 
         if(message.isNoteOn())
-            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
+            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
         else if(message.isNoteOff())
             keyReleased(message.getNoteNumber());
     }
@@ -96,8 +102,10 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
  * @param gain
  * @param offset
  */
-void ResonanceProcessor::addPartial(int heldKey, int partialKey, float gain, float offset)
+void ResonanceProcessor::addPartial(int heldKey, int partialKey, float offset, float gain)
 {
+    DBG("adding partial: heldKey = " + juce::String(heldKey) + " partialKey = " + juce::String(partialKey) + " gain = " + juce::String(gain) + " offset = " + juce::String(offset));
+
     insert_and_shift(heldKeys, heldKey);
     insert_and_shift(partialKeys, partialKey);
     insert_and_shift(gains, gain);
@@ -189,7 +197,7 @@ void ResonanceProcessor::updatePartialStructure()
         {
             float pOffset       = state.params.offsetsKeyboardState.absoluteTuningOffset[i];
             float pGain         = state.params.gainsKeyboardState.absoluteTuningOffset[i];
-            partialStructure[i] = { true, i - pFundamental + pOffset, pGain };
+            partialStructure[i] = { true, static_cast<float>(i - pFundamental) + pOffset * .01, pGain };
         }
     }
 }
@@ -209,33 +217,57 @@ void ResonanceProcessor::printPartialStructure()
     }
 }
 
-void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity)
+void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages)
 {
     /**
      * todo: flip these for loops? and put the partialKeys loop inside the if statement, to reduce the number of loops?
      *          - also, reduce MAX_SYMPSTRINGS?
      *          - could switch partialKeys and all the others to juce::Arrays, ensure their storage, and use their size() to reduce loop size as well
+     *
+     * todo: attached Tuning?
+     *
+     * need to invert the behavior here:
+     *  - noteNumber is the "struck" key
+     *  - heldKeys are the fundamentals of the partialStructure and need to play a role here somehow
      */
-    int pkey_index = 0;
-    for (auto pkey : partialKeys)
+    int heldPartialKey_index = 0; // so we can access parallel data from the held partials
+    for (auto heldPartialKey : partialKeys)  // active partial keys from held keys
     {
         for (auto& pstruct : partialStructure)
         {
             if (std::get<0>(pstruct))
             {
-                float partial       = static_cast<float>(noteNumber) + std::get<1>(pstruct);
-                int   partialKey    = std::round(partial);
+                float struckPartial       = static_cast<float>(noteNumber) + std::get<1>(pstruct) ;
+                int   struckPartialKey    = std::round(struckPartial);
 
-                if (partialKey == pkey)
+                if (struckPartialKey == heldPartialKey)
                 {
-                    // need a way to check if this partialKey is actually active? or is pKey == 0 unless it is set?
-                    DBG("found overlap of partials, play resonance here");
-                    float partialOffset = partial - static_cast<float>(partialKey);
+                    float partialOffset = struckPartial - static_cast<float>(struckPartialKey);
                     float partialGain   = std::get<2>(pstruct);
+
+                    /*
+                     * add this offset to the transpositions for this partialKey
+                     *  - we may have more than one partial attached to this key, with different offsets
+                     */
+                    noteOnSpecMap[heldPartialKey].transpositions.add(offsets[heldPartialKey_index]);
+
+                    /*
+                     * start time should be into the file; perhaps modulate with velocity, and/or set range by user as in old bK
+                     */
+                    noteOnSpecMap[heldPartialKey].startTime = 400;
+                    noteOnSpecMap[heldPartialKey].sustainTime = 2000; // might want to cap the duration of these...
+
+                    /*
+                     * make the midi message
+                     */
+                    auto newmsg = juce::MidiMessage::noteOn (1, heldPartialKey, static_cast<float>(velocity/128.)); // velocity * partialGain?
+                    outMidiMessages.addEvent(newmsg, 0);
+
+                    DBG("found overlap of partials, play resonance here: " + juce::String(struckPartial) + " at key " + juce::String(heldPartialKey) + " with offset " + juce::String(offsets[heldPartialKey_index]));
                 }
             }
         }
-        pkey_index++;
+        heldPartialKey_index++;
     }
 }
 
@@ -268,7 +300,7 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
 
 }
 
-void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel)
+void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
     handleMidiTargetMessages(channel);
 
@@ -277,12 +309,11 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel)
     if (doRing)
     {
         // resonate the currently available strings and their overlapping partials
-        ringSympStrings(noteNumber, velocity);
+        ringSympStrings(noteNumber, velocity, outMidiMessages);
     }
     if (doAdd)
     {
         // then, add this new string and its partials to the currently available sympathetic strings
-        // 3rd arg ignore repeated notes = true, so don't add this string if it's already there
         addSympStrings(noteNumber);
     }
 }
