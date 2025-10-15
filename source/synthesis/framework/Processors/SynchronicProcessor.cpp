@@ -34,7 +34,6 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     }
 
     slimCluster.ensureStorageAllocated(100);
-    tempCluster.ensureStorageAllocated(100);
     clusterNotes.ensureStorageAllocated(128);
     keysDepressed = juce::Array<int>();
     keysDepressed.ensureStorageAllocated(100);
@@ -256,7 +255,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     // all noteOn messages for all the clusters
     for (auto cluster : clusterLayers)
     {
-        if (cluster->getShouldPlay() && !cluster->getIsOver())
+        if (cluster->getShouldPlay())
         {
             // adjust samples per beat by beat length multiplier, for this beat
             numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
@@ -318,10 +317,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 // get the current cluster of notes, which we'll cook down to a slimCluster, with duplicate pitches removed
                 clusterNotes = cluster->getCluster();
 
-                //cap size of slimCluster, removing oldest notes
-                tempCluster.clearQuick();
-                for(int i = 0; i < clusterNotes.size(); i++) tempCluster.set(i, clusterNotes.getUnchecked(i));
-
                 /*
                  * constrain thickness of cluster
                  *  why not use clusterMax for this? the intent is different:
@@ -331,17 +326,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                  *  an example: clusterMax=9, clusterCap=8; playing 9 notes simultaneously will result in cluster with 8 notes, but playing 10 notes will shut off pulse
                  *  another example: clusterMax=20, clusterCap=8; play a rapid ascending scale more than 8 and less than 20 notes, then stop; only last 8 notes will be in the cluster. If your scale exceeds 20 notes then it won't play.
                  */
-                /**
-                 * todo: redo this without using resize, which might release the ensured memory allocation and reallocate
-                 *          - should be able to do it in the for loop above, stopping adding after clusterThickness has been reached
-                 */
-                if(tempCluster.size() > state.params.clusterThickness->getCurrentValue()) tempCluster.resize(state.params.clusterThickness->getCurrentValue());
-
-                //remove duplicates from cluster, so we don't play the same note twice in a single pulse
                 slimCluster.clearQuick();
-                for(int i = 0; i < tempCluster.size(); i++)
+                for(int i = 0; i < clusterNotes.size() && i <= state.params.clusterThickness->getCurrentValue(); i++)
                 {
-                    slimCluster.addIfNotAlreadyThere(tempCluster.getUnchecked(i));
+                    slimCluster.addIfNotAlreadyThere(clusterNotes.getUnchecked(i));
                 }
 
                 // check to see whether number of notes played is within cluster min/max
@@ -351,12 +339,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     // the slimCluster is the cluster of notes in the metronome pulse with duplicate notes removed
                     for (int n=0; n < slimCluster.size(); n++)
                     {
-                        /**
-                         * todo: when the transposition multislider is 2d, need to update here
-                         */
-                        // prepare the transpositions
-                        //updatedTransps.addIfNotAlreadyThere(state.params.transpositions.sliderVals[cluster->transpCounter]);
-
                         // put together the midi message
                         int newNote = slimCluster[n];
                         float newTransp = state.params.transpositions.sliderVals[cluster->transpCounter];
@@ -373,9 +355,14 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].envParams.attackPower = state.params.envelopeSequence.envStates.attackPowers[cluster->envelopeCounter];
                         noteOnSpecMap[newNote].envParams.decayPower = state.params.envelopeSequence.envStates.decayPowers[cluster->envelopeCounter];
                         noteOnSpecMap[newNote].envParams.releasePower = state.params.envelopeSequence.envStates.releasePowers[cluster->envelopeCounter];
+
+                        /**
+                         * todo: when the transposition multislider is 2d, need to update here
+                         */
                         noteOnSpecMap[newNote].transpositions.clearQuick();
                         noteOnSpecMap[newNote].transpositions.add(newTransp);
 
+                        // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
                                                              * getBeatThresholdSeconds() * 1000;
 
@@ -794,7 +781,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         //clusters.clear();
         for (auto cl : clusterLayers)
         {
-            cl->setIsOver(true);
+            cl->reset();
         }
     }
 
@@ -930,7 +917,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
         //clusters.clear();
         for (auto cl : clusterLayers)
         {
-            cl->setIsOver(true);
+            cl->reset();
         }
     }
 

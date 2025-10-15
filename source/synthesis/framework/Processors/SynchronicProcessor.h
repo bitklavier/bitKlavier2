@@ -267,7 +267,6 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
-
         transpositions.processStateChanges();
         accents.processStateChanges();
         sustainLengthMultipliers.processStateChanges();
@@ -329,7 +328,6 @@ public:
         phasor = 0;
         envelopeCounter = 0;
         shouldPlay = false;
-        over = false;
     }
 
     ~SynchronicCluster() {}
@@ -392,7 +390,6 @@ public:
 
         if (++beatCounter >= _sparams->numPulses->getCurrentValue())
         {
-            over = true;
             shouldPlay = false;
         }
     }
@@ -412,8 +409,6 @@ public:
         DBG("reset called");
         envelopeCounter = 0;
         shouldPlay = false;
-        over = false;
-
         resetPatternPhase();
         cluster.clearQuick();
     }
@@ -444,16 +439,6 @@ public:
         return shouldPlay;
     }
 
-    inline bool getIsOver()
-    {
-        return over;
-    }
-
-    inline void setIsOver(bool isOver)
-    {
-        over = isOver;
-    }
-
     int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
 
     //parameter field counters
@@ -471,7 +456,7 @@ private:
     juce::Array<int> cluster;
     juce::uint64 phasor;
 
-    bool shouldPlay, over;
+    bool shouldPlay;
 
     JUCE_LEAK_DETECTOR(SynchronicCluster);
 };
@@ -547,7 +532,6 @@ public:
     void keyPressed(int noteNumber, int velocity, int channel);
     void keyReleased(int noteNumber, int channel);
     void handleMidiTargetMessages(int channel);
-    //bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
     bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
     void removeOldestCluster();
@@ -625,7 +609,6 @@ private:
 
     juce::Array<int> slimCluster;       //cluster without repetitions
     juce::Array<int> clusterNotes;
-    juce::Array<int> tempCluster;
     bool checkClusterMinMax (int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
