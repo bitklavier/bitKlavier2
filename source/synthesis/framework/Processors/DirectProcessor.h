@@ -276,7 +276,6 @@ private:
      * array of transpositions associated with a single noteOn msg
      */
     juce::Array<float> midiNoteTranspositions;
-    void updateMidiNoteTranspositions();
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();
 

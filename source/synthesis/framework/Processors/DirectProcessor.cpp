@@ -80,26 +80,6 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
 }
 
 /*
- * grabs all the TransposeParams values and compiles them into a single array
- * the first slider is always represented, so we always have at least on value to return
- */
-void DirectProcessor::updateMidiNoteTranspositions()
-{
-    midiNoteTranspositions.clear();
-    auto paramVals = state.params.transpose.getFloatParams();
-    int i = 0;
-    for (auto const& tp : *paramVals)
-    {
-        if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
-            midiNoteTranspositions.addIfNotAlreadyThere (tp->getCurrentValue());
-        i++;
-    }
-
-    // make sure that the first slider is always represented
-    midiNoteTranspositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
-}
-
-/*
  * like above, but assigns transpositions to a particular noteOnSpec
  */
 void DirectProcessor::updateMidiNoteTranspositions(int noteOnNumber)
@@ -197,12 +177,15 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // update transposition slider values
     //updateMidiNoteTranspositions();
     updateAllMidiNoteTranspositions();
+    /**
+     * todo: need to include useTuningForTranspositions in noteOnSpecMap now...
+     *      - in place of synth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
+     */
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples())
     {
         mainSynth->setBypassed (false);
-        //mainSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
         mainSynth->setNoteOnSpecMap(noteOnSpecMap);
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
@@ -216,7 +199,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->setBypassed (false);
-        //releaseResonanceSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
         releaseResonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }

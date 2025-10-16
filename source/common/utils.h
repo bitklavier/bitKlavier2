@@ -487,7 +487,7 @@ struct NoteOnSpec
     }
 
     /**
-     * todo: possibly rework this so we don't use keyState. would mean always using noteOnSpec and the envParams in particular
+     * todo: keyState is only used for applying these envParams instead of the envParams passed to the synth on construction, so name appropriately
      */
     bool keyState = false;                          // turn on for notes that should use the extra specs here
     float startTime = 0.f;                          // where to start playback (ms)

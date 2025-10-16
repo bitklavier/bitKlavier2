@@ -27,7 +27,7 @@
 #include "utils.h"
 #include <utility>
 
-#define MAX_SYMPSTRINGS 160
+#define MAX_SYMPSTRINGS 64 // capped at roughly 4 held strings with 16 partials each
 
 struct ResonanceParams : chowdsp::ParamHolder
 {
@@ -164,7 +164,7 @@ public:
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
     void keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
-    void keyReleased(int noteNumber);
+    void keyReleased(int noteNumber, juce::MidiBuffer& outMidiMessages);
     void handleMidiTargetMessages(int channel);
     void ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages);
     void addSympStrings(int noteNumber);
@@ -251,11 +251,14 @@ private:
      * - newest partials are beginning of arrays, oldest get pushed off the end
      * - these parallel arrays are kept in sync via addPartial and removePartialsForHeldKey
      */
-    std::array<int, MAX_SYMPSTRINGS> heldKeys;      // midiNoteNumber for key that is held down; for the undamped string that has this partial
-    std::array<int, MAX_SYMPSTRINGS> partialKeys;   // midiNoteNumber for nearest key to this partial; used to determine whether this partial gets excited
-    std::array<float, MAX_SYMPSTRINGS> gains;       // gain multiplier for this partial
-    std::array<float, MAX_SYMPSTRINGS> offsets;     // offset, in cents, from ET for this partial
-    std::array<int, MAX_SYMPSTRINGS> startTimes;    // time, in ms, that this partial began playing
+    std::array<int, MAX_SYMPSTRINGS> heldKeys{};      // midiNoteNumber for key that is held down; for the undamped string that has this partial
+    std::array<int, MAX_SYMPSTRINGS> partialKeys{};   // midiNoteNumber for nearest key to this partial; used to determine whether this partial gets excited
+    std::array<float, MAX_SYMPSTRINGS> gains{};       // gain multiplier for this partial
+    std::array<float, MAX_SYMPSTRINGS> offsets{};     // offset, in cents, from ET for this partial
+    std::array<int, MAX_SYMPSTRINGS> startTimes{};    // time, in ms, that this partial began playing
+
+    // held key is index of outer array, inner array includes all partial currently playing from that associated held key
+    juce::Array<juce::Array<int>> currentPlayingPartialsFromHeldKey;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonanceProcessor)
 };

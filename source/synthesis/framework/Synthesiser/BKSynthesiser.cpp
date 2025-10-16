@@ -379,7 +379,6 @@ void BKSynthesiser::noteOn (const int midiChannel,
      *      iterate through each currentTransposition here, but they are all tracked by the same original midiNoteNumber
      */
     for (auto transp : noteOnSpecs[midiNoteNumber].transpositions)
-    //for (auto transp : midiNoteTranspositions)
     {
         for (auto* sound : *sounds)
         {
@@ -430,15 +429,6 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
             voice->stopNote (0.0f, false);
 
         voice->setTuning(tuning);
-
-//        voice->copyAmpEnv ({ adsrParams.attackParam->getCurrentValue() * 0.001f,
-//            adsrParams.decayParam->getCurrentValue() * 0.001f,
-//            adsrParams.sustainParam->getCurrentValue(),
-//            adsrParams.releaseParam->getCurrentValue() * 0.001f,
-//            static_cast<float> (adsrParams.attackPowerParam->getCurrentValue() * -1.),
-//            static_cast<float> (adsrParams.decayPowerParam->getCurrentValue() * -1.),
-//            static_cast<float> (adsrParams.releasePowerParam->getCurrentValue() * -1.) });
-
         voice->setGain(juce::Decibels::decibelsToGain (synthGain.getCurrentValue()));
         voice->currentlyPlayingNote = midiNoteNumber;
         voice->currentPlayingMidiChannel = midiChannel;
@@ -448,8 +438,8 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
         voice->setTargetSustainTime(noteOnSpecs[midiNoteNumber].sustainTime);
+        //voice->setAssociatedKey(noteOnSpecs[midiNoteNumber].associatedKey);
 
-        //if(noteOnSpecs.contains(midiNoteNumber))
         if(noteOnSpecs[midiNoteNumber].keyState)
         {
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
@@ -513,7 +503,22 @@ void BKSynthesiser::noteOff (const int midiChannel,
      */
     for (auto* voice : playingVoicesByNote[midiNoteNumber])
     {
+        /**
+         * todo: something like this,
+         *
+         *      if (voice->associatedKey == noteOnSpecs[midiNoteNumber].associatedKey)
+         *
+         * to have an associatedKey with this midiNoteNumber for Resonance
+         *          - problem: when we release a key in Resonance, it needs to turn off all its associated partials that may be playing
+         *                      - BUT, we don't want to turn of partials associated with a different held key, so we need to differentiate
+         *                      - by default, associatedKey will be -1 and will match, unless specified otherwise at noteOn and noteOff
+         */
+
+
         voice->setKeyDown (false);
+
+        if(noteOnSpecs[midiNoteNumber].keyState)
+            voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 
         if (!voice->ignoreNoteOff)
         {
