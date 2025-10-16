@@ -178,6 +178,14 @@ struct NostalgicNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 // ************************************  NostalgicNoteStuff  ************************************** //
 // ********************************************************************************************* //
+struct NostalgicNoteData
+{
+    int noteNumber;
+    int reverseTimerSamples = 0;
+    float reverseDurationTargetSamples = 0;
+    float undertowDurationMs = 0;
+    float waveDistanceMs = 0;
+};
 
 /*
  NostalgicNoteStuff is a class for containing a variety of information needed
@@ -350,12 +358,14 @@ public:
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
     juce::Array<int> keysDepressed;   //current keys that are depressed
+    juce::Array<juce::uint8> velocities;
+    // std::array<juce::uint8,128> std_vels;
+    juce::Array<float> noteLengthTimers;
+    juce::Array<NostalgicNoteData> reverseTimers;
 
 private:
-    std::vector<juce::uint8> velocities;
-    std::vector<juce::uint64> noteLengthTimers;
-    juce::OwnedArray<NostalgicNoteStuff> reverseNotes;
-    juce::OwnedArray<NostalgicNoteStuff> undertowNotes;
+    // juce::Array<NostalgicNoteStuff> reverseNotes;
+    // juce::Array<NostalgicNoteStuff> undertowNotes;
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;

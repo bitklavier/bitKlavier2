@@ -184,14 +184,14 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
 
     // print them out for now
-//    for (auto mi : midiMessages)
-//    {
-//        auto message = mi.getMessage();
-//
-//        mi.samplePosition;
-//        mi.data;
-//        DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
-//    }
+    for (auto mi : midiMessages)
+    {
+        auto message = mi.getMessage();
+
+        mi.samplePosition;
+        mi.data;
+        DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
+    }
 
     // DBG("keymap");
 }
