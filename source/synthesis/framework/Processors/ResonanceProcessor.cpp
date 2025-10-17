@@ -223,6 +223,7 @@ void ResonanceProcessor::processContinuousModulations(juce::AudioBuffer<float>& 
             },  state.params.modulatableParams[channel]);
     }
 }
+
 void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
@@ -366,14 +367,15 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
             return;
         }
     }
+    /*
+     * todo: figure out what to do in this situation
+     */
     DBG("no available string found!");
 }
 
 void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
     handleMidiTargetMessages(channel);
-
-    //printPartialStructure();
 
     if (doRing)
     {
@@ -397,10 +399,7 @@ void ResonanceProcessor::keyReleased(int noteNumber, juce::MidiBuffer& outMidiMe
                 _string->removeString (noteNumber, outMidiMessages);
         }
     }
-    if (doRing)
-    {
-
-    }
+    if (doRing) {}
 }
 
 void ResonanceProcessor::handleMidiTargetMessages(int channel)

@@ -23,7 +23,8 @@
  *      -- up to 16 natural overtones
  *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
  *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, etc...
- *
+ * - handleMidiTargetMessages, and updates to MidiTarget
+ * - processBlockBypassed
  */
 
 #ifndef BITKLAVIER2_RESONANCEPROCESSOR_H
@@ -270,10 +271,6 @@ public:
         DBG("Resonance addSoundSet called");
         resonanceSynth->addSoundSet (s);
     }
-
-//    void addPartial(int heldKey, int partialKey, float gain, float offset);
-//    void removePartialsForHeldKey(int heldKey);
-
 
 private:
     std::unique_ptr<BKSynthesiser> resonanceSynth;
