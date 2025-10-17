@@ -31,14 +31,17 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         noteOnSpecMap[i] = NoteOnSpec{};
     }
 
-    for (int i = 0; i < MaxMidiNotes; ++i)
-    {
-        currentPlayingPartialsFromHeldKey.add(juce::Array<int>{});
-        juce::Array<int>& internalArray = currentPlayingPartialsFromHeldKey.getReference(i);
-        internalArray.ensureStorageAllocated(MaxMidiNotes);
-    }
-
     resetPartialStructure();
+
+    for (size_t i = 0; i < resonantStringsArray.size(); ++i)
+    {
+        // Use std::make_unique to safely allocate and store the pointer
+        resonantStringsArray[i] = std::make_unique<ResonantString>(&state.params, partialStructure, noteOnSpecMap);
+
+        // Set channel
+        // Note: If you want channel to match index, use the casted size_t 'i'
+        resonantStringsArray[i]->channel = static_cast<int>(i + 1);
+    }
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -98,40 +101,6 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     }
 
     updatePartialStructure();
-}
-
-/**
- * addPartial will insert this partial at the beginning of the array and shove
- * all the existing partials to the right by one, removing the oldest partial
- *
- * @param heldKey
- * @param partialKey
- * @param gain
- * @param offset
- */
-void ResonanceProcessor::addPartial(int heldKey, int partialKey, float offset, float gain)
-{
-    //DBG("adding partial: heldKey = " + juce::String(heldKey) + " partialKey = " + juce::String(partialKey) + " gain = " + juce::String(gain) + " offset = " + juce::String(offset));
-    insert_and_shift(heldKeys, heldKey);
-    insert_and_shift(partialKeys, partialKey);
-    insert_and_shift(gains, gain);
-    insert_and_shift(offsets, offset);
-    insert_and_shift(startTimes, 0);
-}
-
-/**
- * removePartialsForHeldKey will do what it says, removing all the partials from
- * the parallel arrays heldKeys, partialKeys, gains, and offsets, and compacting to the left
- * the heldKeys array will/should hold 0s for all inactive keys, so as soon as an
- * iterator encounters a 0, it can stop moving through the array looking for partials
- *
- * the four arrays should remain synchronized by index
- *
- * @param heldKey
- */
-void ResonanceProcessor::removePartialsForHeldKey(int heldKey)
-{
-    synchronized_remove_and_compact(heldKeys, heldKey, partialKeys, gains, offsets, startTimes);
 }
 
 /**
@@ -205,6 +174,7 @@ void ResonanceProcessor::updatePartialStructure()
             float pGain         = state.params.gainsKeyboardState.absoluteTuningOffset[i];
             float pFundOffset   = static_cast<float>(i) - static_cast<float>(pFundamental) + pOffset * .01;
             partialStructure[i] = { true, pFundOffset, pGain };
+            //DBG("added to partialStructure " + juce::String(i) + " " + juce::String(pFundOffset) + " " + juce::String(pGain));
         }
     }
 }
@@ -236,95 +206,23 @@ void ResonanceProcessor::printPartialStructure()
  */
 void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages)
 {
-    /*
-     * iterate through all active partial keys from currently held keys
-     */
-    int heldPartialKey_index = 0; // so we can access parallel data from the held partials
-    for (auto heldPartialKey : partialKeys)
+    for (auto& _string : resonantStringsArray)
     {
-        // we've reached the end of the active partials, since they are left-packed and the first inactive partial means the rest are also inactive
-        if (heldPartialKey <= 0) {
-            //DBG("stopped at heldPartialKey_index = " + juce::String(heldPartialKey_index));
-            return;
-        }
-
-        /*
-         * now iterate through the partial structure and look for overlaps between partials of the struck note and the held partials
-         */
-        for (auto& pstruct : partialStructure)
-        {
-            if (std::get<0>(pstruct))
-            {
-                float struckPartial       = static_cast<float>(noteNumber) + std::get<1>(pstruct) ;
-                int   struckPartialKey    = std::round(struckPartial);
-
-                if (struckPartialKey == heldPartialKey)
-                {
-                    /*
-                     * todo: decide how to use these
-                     *          - we could have differences between the struck and held offsets impact how much sympathetic resonance is induced
-                     *          - and we can have the gain be a multiplier of the velocity, or considered some other way
-                     *          - also might be fine to ignore!
-                     */
-                    float partialOffset = struckPartial - static_cast<float>(struckPartialKey);
-                    float partialGain   = std::get<2>(pstruct);
-
-                    /*
-                     * add the held key offset for this partialKey to the transpositions
-                     *  - we may have more than one partial attached to this key, with different offsets
-                     *  - but we also don't want to add duplicates, so only add if not already there
-                     */
-                    noteOnSpecMap[heldPartialKey].transpositions.addIfNotAlreadyThere(offsets[heldPartialKey_index]);
-
-                    /*
-                     * start time should be into the sample, to play just its tail
-                     * - perhaps modulate with velocity, and/or set range by user as in old bK?
-                     * - hard-wired for now, and maybe that's best anyhow...
-                     *
-                     * also, setting a fixed sustain time to avoid pileup of nearly-silent tails being added to the CPU load
-                     * - setting the release time will be crucial for how it all sounds (and the CPU load), since that is in addition to the sustain time here
-                     */
-                    noteOnSpecMap[heldPartialKey].startTime = 400;      // ms
-                    noteOnSpecMap[heldPartialKey].sustainTime = 2000;   // ms
-                    noteOnSpecMap[heldPartialKey].stopSameCurrentNote = false;
-                    //DBG("held key associated with partial " + juce::String(heldPartialKey) + " = " + juce::String(heldKeys[heldPartialKey_index]));
-                    //noteOnSpecMap[heldPartialKey].associatedKey = heldKeys[heldPartialKey_index];???
-
-                    /*
-                     * make the midi message
-                     */
-                    auto newmsg = juce::MidiMessage::noteOn (1, heldPartialKey, static_cast<float>(velocity/128.)); // velocity * partialGain?
-                    outMidiMessages.addEvent(newmsg, 0);
-
-                    /*
-                     * add this partial to the array of partial associated with this heldKey that are currently playing
-                     * - for noteOffs later....
-                     */
-                    auto& cp = currentPlayingPartialsFromHeldKey.getReference(heldKeys[heldPartialKey_index]);
-                    cp.addIfNotAlreadyThere(heldPartialKey);
-
-                    //DBG("found overlap of partials, play resonance here: " + juce::String(struckPartial) + " at key " + juce::String(heldPartialKey) + " with offset " + juce::String(offsets[heldPartialKey_index]));
-                }
-            }
-        }
-        heldPartialKey_index++;
+        _string->ringString(noteNumber, velocity, outMidiMessages);
     }
 }
 
 void ResonanceProcessor::addSympStrings(int noteNumber)
 {
-    for (auto& pstruct : partialStructure)
+    for (auto& _string : resonantStringsArray)
     {
-        if (std::get<0>(pstruct))
+        if(!_string->active)
         {
-            float partial       = static_cast<float>(noteNumber) + std::get<1>(pstruct);
-            int   partialKey    = std::round(partial);
-            float partialOffset = partial - static_cast<float>(partialKey);
-            float partialGain   = std::get<2>(pstruct);
-
-            addPartial(noteNumber, partialKey, partialOffset, partialGain);
+            _string->addString (noteNumber);
+            return;
         }
     }
+    DBG("no available string found!");
 }
 
 void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
@@ -349,21 +247,11 @@ void ResonanceProcessor::keyReleased(int noteNumber, juce::MidiBuffer& outMidiMe
 {
     if (doAdd)
     {
-        removePartialsForHeldKey(noteNumber);
-
-        // read through currentPlayingPartialsFromHeldKey and send noteOffs for each
-        // might need an "associatedKey" spec as well, to avoid turning off partials from other held keys
-        for (auto pnotes : currentPlayingPartialsFromHeldKey[noteNumber])
+        for (auto& _string : resonantStringsArray)
         {
-            noteOnSpecMap[pnotes].keyState = true; // override the UI controlled envelope and use envParams specified here
-            noteOnSpecMap[pnotes].envParams = {50.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f};
-
-            //DBG("sending noteOffs for partial " + juce::String(pnotes) + " of held note " + juce::String(noteNumber));
-            auto newmsg = juce::MidiMessage::noteOff (1, pnotes, 0.0f);
-            outMidiMessages.addEvent(newmsg, 0);
+            if(_string->heldKey == noteNumber)
+                _string->removeString (noteNumber, outMidiMessages);
         }
-        currentPlayingPartialsFromHeldKey.set(noteNumber, {});
-
     }
     if (doRing)
     {

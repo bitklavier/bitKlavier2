@@ -10,9 +10,16 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
     for (int i = 0; i < juce::numElementsInArray (lastPitchWheelValues); ++i)
         lastPitchWheelValues[i] = 0x2000;
 
-    // init hash of currently playing notes
-    for (int i = 0; i<=128; i++)
-        playingVoicesByNote.insert(0, {  });
+    // init hash of currently playing notes, by channel
+    // 1. Create the prototype array for one channel
+    juce::Array<juce::Array<BKSamplerVoice*>> prototypeNotesArray;
+    prototypeNotesArray.resize(129); // Resizes and default-constructs 129 empty inner arrays
+
+    // 2. Use a loop to copy the prototype into all 16 slots of the std::array
+    for (int chan = 0; chan < 16; ++chan)
+    {
+        playingVoicesByNote[chan] = prototypeNotesArray;
+    }
 
     // init the noteOnSpecs to default; will be overridden by some preparations
     for (int i = 0; i < MaxMidiNotes; ++i)
@@ -419,9 +426,9 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
      * save this voice, since it might be one of several associated with this midiNoteNumber
      * and we will need to be able to stop it on noteOff(midiNoteNumber)
      */
-    auto tempv = playingVoicesByNote.getUnchecked(midiNoteNumber);
+    auto tempv = playingVoicesByNote[midiChannel - 1].getUnchecked(midiNoteNumber);
     tempv.insert(0, voice);
-    playingVoicesByNote.set(midiNoteNumber, tempv);
+    playingVoicesByNote[midiChannel - 1].set(midiNoteNumber, tempv);
 
     //if (voice != nullptr && sound != nullptr)
     {
@@ -440,7 +447,7 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setTargetSustainTime(noteOnSpecs[midiNoteNumber].sustainTime);
         //voice->setAssociatedKey(noteOnSpecs[midiNoteNumber].associatedKey);
 
-        if(noteOnSpecs[midiNoteNumber].keyState)
+        if(noteOnSpecs[midiNoteNumber].keyState && noteOnSpecs[midiNoteNumber].channel == midiChannel)
         {
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 
@@ -501,19 +508,10 @@ void BKSynthesiser::noteOff (const int midiChannel,
      * by storing voices as they are played, we can avoid the problem where the transpositions change
      * while the notes are still held and turn them off here
      */
-    for (auto* voice : playingVoicesByNote[midiNoteNumber])
+    for (auto* voice : playingVoicesByNote[midiChannel - 1][midiNoteNumber])
     {
-        /**
-         * todo: something like this,
-         *
-         *      if (voice->associatedKey == noteOnSpecs[midiNoteNumber].associatedKey)
-         *
-         * to have an associatedKey with this midiNoteNumber for Resonance
-         *          - problem: when we release a key in Resonance, it needs to turn off all its associated partials that may be playing
-         *                      - BUT, we don't want to turn of partials associated with a different held key, so we need to differentiate
-         *                      - by default, associatedKey will be -1 and will match, unless specified otherwise at noteOn and noteOff
-         */
-
+        // skip voices not on this midi channel
+        if(voice->currentPlayingMidiChannel != midiChannel) continue;
 
         voice->setKeyDown (false);
 
@@ -528,7 +526,7 @@ void BKSynthesiser::noteOff (const int midiChannel,
             }
         }
     }
-    playingVoicesByNote.set(midiNoteNumber, {}); // clear and clearQuick didn't actually do the trick for this!
+    playingVoicesByNote[midiChannel - 1].set(midiNoteNumber, {}); // clear and clearQuick didn't actually do the trick for this!
 }
 
 void BKSynthesiser::allNotesOff (const int midiChannel, const bool allowTailOff)
