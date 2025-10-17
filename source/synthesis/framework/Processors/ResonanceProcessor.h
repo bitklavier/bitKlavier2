@@ -17,6 +17,9 @@
  * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
  * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
  *      -- for instance, when the 7th partial is "rung" by a key that is ET
+ *      -- one idea: we use those to set start time between a user set range, and use velocity as a
+ *                  general gain scalar separately, on top of that.
+ *                  - so this would mean adding a range slider to the UI
  * - figure out how to manage the noteOff release times and marking a ResonantString as inactive
  *      -- ideally, wait for the release time to mark it inactive, but what's the best way?
  * - figure out how to deal with running out of the 16 ResonantStrings
@@ -31,6 +34,8 @@
  * - processBlockBypassed
  * - does currentPlayingPartialsFromHeldKey need to be a 2D array?
  *      -- now that ALL the playing notes are associated with heldKey in this class?
+ * - am i setting the individual partials to inactive when they are done?
+ *
  */
 
 #ifndef BITKLAVIER2_RESONANCEPROCESSOR_H
@@ -117,7 +122,7 @@ struct ResonanceParams : chowdsp::ParamHolder
 
     /*
      * a bit overkill using the full TuningState here, but otherwise we'd have to significantly rewrite the AbsoluteKeyboardSlider
-     * - don't need to "add" anything, seince we're just going to serialize absoluteTuningOffset for both of these
+     * - don't need to "add" anything, since we're just going to serialize absoluteTuningOffset for both of these
      */
     TuningState offsetsKeyboardState;
     TuningState gainsKeyboardState;
