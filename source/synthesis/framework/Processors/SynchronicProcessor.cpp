@@ -1,6 +1,14 @@
-//
-// Created by Joshua Warner on 6/27/24.
-//
+/*
+==============================================================================
+
+Synchronic.h
+    Created: 22 Nov 2016 3:46:45pm
+    Author:  Michael R Mulshine and Dan Trueman
+
+         Completely rewritten by Dan Trueman, 2025
+
+==============================================================================
+*/
 
 #include "SynchronicProcessor.h"
 #include "Synthesiser/Sample.h"
