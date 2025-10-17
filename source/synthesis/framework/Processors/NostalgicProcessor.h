@@ -132,7 +132,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
         "Cluster Min",
-        juce::NormalisableRange { 1.0f, 10.0f, 0.0f, skewFactor, false },
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,

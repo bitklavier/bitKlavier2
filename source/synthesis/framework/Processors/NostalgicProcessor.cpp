@@ -148,6 +148,24 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     // increment the timers by number of samples in the MidiBuffer
     incrementTimers (numSamples);
 
+    // cluster management
+    int clusterThreshSamples = state.params.clusterThreshParam->getCurrentValue() * (getSampleRate()/1000.0);
+    float clusterMin = std::round(state.params.clusterMinParam->getCurrentValue());
+    if (inCluster)
+    {
+        if (clusterTimer >= clusterThreshSamples)
+        {
+            inCluster = false;
+            clusterCount = 0;
+            clusterNotes.clearQuick();
+        }
+        //otherwise increment cluster timer
+        else
+        {
+            clusterTimer += numSamples;
+        }
+    }
+
     // if any of the reverse timers have exceeded their target, play undertow
     for (int i = reverseTimers.size() - 1; i >= 0; --i)
     {
@@ -192,62 +210,29 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         // if there's a note off message, check cluster and play the associated reverse note
         if(message.isNoteOff())
         {
-            int clusterThreshSamples = state.params.clusterThreshParam->getCurrentValue() * (getSampleRate()/1000.0);
-            float clusterMin = state.params.clusterMinParam->getCurrentValue();
+            NostalgicNoteData currentNoteData;
+            currentNoteData.noteNumber = message.getNoteNumber();
+            currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
+            currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
+            currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+            currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
+            currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
 
-            // if clusterTimer < clusterThresh, you're in a cluster
-            if (clusterMin == 1 || clusterTimer < clusterThreshSamples)
+            clusterNotes.add(currentNoteData);
+            clusterCount++;
+
+            // if we haven't reached the clusterMin yet, add the note to clusterNotes
+            if (clusterCount >= clusterMin)
             {
-                inCluster = true; // this is used in increment timer to update the clusterTimer
-
-                NostalgicNoteData currentNoteData;
-                currentNoteData.noteNumber = message.getNoteNumber();
-                currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
-                currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
-                currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
-                currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
-                currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
-
-                // if we haven't reached the clusterMin yet, add the note to clusterNotes
-                if (clusterCount < clusterMin)
+                for (auto clusterNote : clusterNotes)
                 {
-                    DBG("ClusterNotes Size: " + juce::String(clusterNotes.size()));
-                    clusterNotes.add(currentNoteData);
-                    clusterCount++;
-                    DBG("Note added to ClusterNotes");
-
-                    // if you reach clusterMin notes, play all the clusterNotes
-                    if (clusterCount >= clusterMin)
-                    {
-                        DBG("Playing ClusterNotes");
-                        for (auto clusterNote : clusterNotes)
-                        {
-                            DBG("Note: " + juce::String(clusterNote.noteNumber));
-                            playReverseNote (clusterNote, outMidiMessages);
-                        }
-                        clusterNotes.clear();
-                    }
+                    playReverseNote (clusterNote, outMidiMessages);
                 }
-                // if you're in a cluster and clusterMin has been reached, just play the note
-                else
-                {
-                    DBG("Playing Non-Cluster Note: " + juce::String(currentNoteData.noteNumber));
-                    clusterCount++;
-                    playReverseNote (currentNoteData, outMidiMessages);
-                }
+                clusterNotes.clearQuick();
             }
-
-            // if clusterTimer has exceeded clusterThresh, you're no longer in a cluster
-            else
-            {
-                inCluster = false;
-                clusterCount = 0;
-                clusterNotes.clear();
-            }
-
-            // either way, a note off means resetting the timer
-            // since the threshold is for successive notes
+            // reset the timer since the threshold is for successive notes
             clusterTimer = 0;
+            inCluster = true;
         }
     }
 
@@ -327,7 +312,6 @@ bool NostalgicProcessor::holdCheck(int noteNumber)
 //increment timers for all active notes, and all currently reversing notes
 void NostalgicProcessor::incrementTimers(int numSamples)
 {
-
     // increment the timers by number of samples in the MidiBuffer
     for (int i = 0; i < noteLengthTimers.size(); i++)
     {
@@ -336,9 +320,5 @@ void NostalgicProcessor::incrementTimers(int numSamples)
     for (auto& timer : reverseTimers) // auto& = reference
     {
         timer.reverseTimerSamples += numSamples;
-    }
-    if (inCluster)
-    {
-        clusterTimer += numSamples;
     }
 }
