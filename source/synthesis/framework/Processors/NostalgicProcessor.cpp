@@ -210,35 +210,35 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         // if there's a note off message, check cluster and play the associated reverse note
         if(message.isNoteOff())
         {
-            NostalgicNoteData currentNoteData;
-            currentNoteData.noteNumber = message.getNoteNumber();
-            currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
-            currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
-            currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
-            currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
-            currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
-
-            clusterNotes.add(currentNoteData);
-            clusterCount++;
-
-            // if we haven't reached the clusterMin yet, add the note to clusterNotes
-            if (clusterCount >= clusterMin)
+            // only proceed if hold time is in the specified range
+            if (holdCheck(message.getNoteNumber()))
             {
-                for (auto clusterNote : clusterNotes)
+                NostalgicNoteData currentNoteData;
+                currentNoteData.noteNumber = message.getNoteNumber();
+                currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
+                currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
+                currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+                currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
+                currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+
+                clusterNotes.add(currentNoteData);
+                clusterCount++;
+
+                // if we haven't reached the clusterMin yet, add the note to clusterNotes
+                if (clusterCount >= clusterMin)
                 {
-                    playReverseNote (clusterNote, outMidiMessages);
+                    for (auto clusterNote : clusterNotes)
+                    {
+                        playReverseNote (clusterNote, outMidiMessages);
+                    }
+                    clusterNotes.clearQuick();
                 }
-                clusterNotes.clearQuick();
+                // reset the timer since the threshold is for successive notes
+                clusterTimer = 0;
+                inCluster = true;
             }
-            // reset the timer since the threshold is for successive notes
-            clusterTimer = 0;
-            inCluster = true;
         }
     }
-
-    // check the hold time, if it falls out of specified range, return
-    // if (!holdCheck(noteNumber)) return;
-    // check the velocity, if it falls out of specified range, return
 }
 
 void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -286,8 +286,8 @@ void NostalgicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
 
 bool NostalgicProcessor::holdCheck(int noteNumber)
 {
-    juce::uint64 hold = holdTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
-
+    juce::uint64 hold = noteLengthTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
+    DBG(juce::String(hold));
     auto holdmin = state.params.holdTimeMinMaxParams.holdTimeMinParam->getCurrentValue();
     auto holdmax = state.params.holdTimeMinMaxParams.holdTimeMaxParam->getCurrentValue();
 
