@@ -17,10 +17,12 @@
  * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
  * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
  *      -- for instance, when the 7th partial is "rung" by a key that is ET
+ * - figure out how to manage the noteOff release times and marking a ResonantString as inactive
+ *      -- ideally, wait for the release time to mark it inactive, but what's the best way?
  * - basic setup like processStateChanges and mods
  * - figure out how to handle a situation where the number of heldKeys tries to exceed 16
  * - create a way to pull up some standard partial structures
- *      -- up to 16 natural overtones
+ *      -- up to 19 natural overtones
  *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
  *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, etc...
  * - handleMidiTargetMessages, and updates to MidiTarget
@@ -164,12 +166,14 @@ struct ResonanceNonParameterState : chowdsp::NonParamState
 };
 
 /*
+ * ResonantString Class
+ *
  * Every held note on the keyboard will have an ResonantString class, which keeps track
  * of all the partials associated with this held note, sending noteOn and noteOff
  * messages as needed, on separate channels to keep the behaviors of the held notes
  * disambiguated.
  *
- * About disambiguation: since different hold notes might have the same partials that are ringing,
+ * About disambiguation: since different held notes might have the same partials that are ringing,
  * releasing one key won't necessarily turn off all the sympathetic resonances at a particular
  * pitch. For instance, if both F3 and C4 are held down, and C3 is struck, then C5 will resonate
  * for BOTH F3 and C4 (and they will be slightly different C5s!). If we release the F3 key, we

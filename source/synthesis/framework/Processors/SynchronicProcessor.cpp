@@ -29,7 +29,6 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
 
     /*
      * todo: need to make sure that if the user tries to increase numLayers > MAX_CLUSTERS that this doesn't break
-     * todo: replace with make_unique pointers? OR need to manually call delete on each of these in the destructor?
      */
     for (int i = 0; i < MAX_CLUSTERS; i++)
     {
@@ -97,6 +96,21 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     }
 
     inCluster = false;
+}
+
+SynchronicProcessor::~SynchronicProcessor()
+{
+    {
+        for (int i = 0; i < MAX_CLUSTERS; i++)
+        {
+            // Check if the pointer is not null before deleting
+            if (clusterLayers[i] != nullptr)
+            {
+                delete clusterLayers[i];
+                clusterLayers[i] = nullptr; // Optional, but good practice
+            }
+        }
+    }
 }
 
 void SynchronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

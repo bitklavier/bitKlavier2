@@ -480,7 +480,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 {
 public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
-    ~SynchronicProcessor(){}
+    ~SynchronicProcessor();
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
