@@ -181,8 +181,10 @@ struct NostalgicNonParameterState : chowdsp::NonParamState
 struct NostalgicNoteData
 {
     int noteNumber;
+    float noteDurationSamples = 0;
+    double noteDurationMs = 0;
+    double noteStart = 0;
     int reverseTimerSamples = 0;
-    float reverseDurationTargetSamples = 0;
     float undertowDurationMs = 0;
     float waveDistanceMs = 0;
 };
@@ -278,6 +280,7 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+    void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
 
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void updateMidiNoteTranspositions(int noteOnNumber);
@@ -359,13 +362,14 @@ public:
     juce::Array<float> updatedTransps;
     juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<juce::uint8> velocities;
-    // std::array<juce::uint8,128> std_vels;
     juce::Array<float> noteLengthTimers;
     juce::Array<NostalgicNoteData> reverseTimers;
+    juce::Array<NostalgicNoteData> clusterNotes;
+    float clusterTimer;
+    int clusterCount;
+    bool inCluster = false;
 
 private:
-    // juce::Array<NostalgicNoteStuff> reverseNotes;
-    // juce::Array<NostalgicNoteStuff> undertowNotes;
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;

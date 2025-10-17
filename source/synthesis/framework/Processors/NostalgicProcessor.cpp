@@ -26,10 +26,13 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
     velocities.ensureStorageAllocated(128);
     noteLengthTimers.ensureStorageAllocated(128);
     reverseTimers.ensureStorageAllocated(500);
+    clusterNotes.ensureStorageAllocated(100);
 
+    clusterTimer = 0;
+    clusterCount = 0;
     velocities.insertMultiple(0,0,128);
     noteLengthTimers.insertMultiple(0,0,128);
-    noteLengthTimers.insertMultiple(0,0,500);
+    // do i need to insert for reverseTimers and clusterNotes?
 
     state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.waveDistUndertowParams.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -109,22 +112,52 @@ void NostalgicProcessor::updateAllMidiNoteTranspositions()
     }
 }
 
+void NostalgicProcessor::playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages)
+{
+    auto note = noteData.noteNumber;
+    noteOnSpecMap[note].keyState = true;
+    noteOnSpecMap[note].stopSameCurrentNote = false;
+    noteOnSpecMap[note].startDirection = Direction::backward;
+    noteOnSpecMap[note].startTime = noteData.noteStart;
+    noteOnSpecMap[note].sustainTime = noteData.noteDurationMs;
+    noteOnSpecMap[note].envParams.attack = state.params.reverseEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
+    noteOnSpecMap[note].envParams.decay = state.params.reverseEnv.decayParam->getCurrentValue() * .001;
+    noteOnSpecMap[note].envParams.sustain = state.params.reverseEnv.sustainParam->getCurrentValue();
+    noteOnSpecMap[note].envParams.release = state.params.reverseEnv.releaseParam->getCurrentValue() * .001;
+
+    // we want to keep track of how long the reverse note is playing
+    reverseTimers.add(noteData);
+
+    // play the reverse note
+    auto reverseOnMsg = juce::MidiMessage::noteOn (1, note, velocities[note]);
+    outMidiMessages.addEvent(reverseOnMsg, 0);
+
+    // clean up
+    noteLengthTimers.set(note, 0.0f);
+}
+
 void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
+    // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
+    for (auto& spec : noteOnSpecMap)
+    {
+        spec.clear();
+    }
+    updateAllMidiNoteTranspositions();
+
     // increment the timers by number of samples in the MidiBuffer
     incrementTimers (numSamples);
 
-    // check if any of the reverse timers have exceeded their target
+    // if any of the reverse timers have exceeded their target, play undertow
     for (int i = reverseTimers.size() - 1; i >= 0; --i)
     {
         auto& reverseNote = reverseTimers.getReference(i);
-        if (reverseNote.reverseTimerSamples > reverseNote.reverseDurationTargetSamples)
+        if (reverseNote.reverseTimerSamples > reverseNote.noteDurationSamples)
         {
             // play the undertow for that note
             if (reverseNote.undertowDurationMs > 0)
             {
                 auto note = reverseNote.noteNumber;
-                // noteOnSpecMap[note].clear();
                 noteOnSpecMap[note].keyState = true;
                 noteOnSpecMap[note].stopSameCurrentNote = false;
                 noteOnSpecMap[note].startDirection = Direction::forward;
@@ -152,71 +185,82 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         // store the velocity from the note on message
         if (message.isNoteOn ())
         {
-            DBG("received MIDI note on");
             velocities.set(message.getNoteNumber(), message.getVelocity());
-            noteLengthTimers.set(message.getNoteNumber(), message.getTimeStamp());
+            noteLengthTimers.set(message.getNoteNumber(), 1);
         }
         
-        // if there's a note off message, play the associated reverse note
+        // if there's a note off message, check cluster and play the associated reverse note
         if(message.isNoteOff())
         {
-            int note = message.getNoteNumber();
-            auto noteDurationSamples = noteLengthTimers[note] * state.params.noteLengthMultParam->getCurrentValue();
-            auto noteDurationMs = noteDurationSamples * (1000.0 / getSampleRate());
-            auto newNoteStart = noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+            int clusterThreshSamples = state.params.clusterThreshParam->getCurrentValue() * (getSampleRate()/1000.0);
+            float clusterMin = state.params.clusterMinParam->getCurrentValue();
 
-            noteOnSpecMap[note].keyState = true;
-            noteOnSpecMap[note].stopSameCurrentNote = false;
-            noteOnSpecMap[note].startDirection = Direction::backward;
-            noteOnSpecMap[note].startTime = newNoteStart;
-            noteOnSpecMap[note].sustainTime = noteDurationMs;
-            // noteOnSpecMap[note].loopMode = LoopMode::pingpong;
-            noteOnSpecMap[note].envParams.attack = state.params.reverseEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
-            noteOnSpecMap[note].envParams.decay = state.params.reverseEnv.decayParam->getCurrentValue() * .001;
-            noteOnSpecMap[note].envParams.sustain = state.params.reverseEnv.sustainParam->getCurrentValue();
-            noteOnSpecMap[note].envParams.release = state.params.reverseEnv.releaseParam->getCurrentValue() * .001;
+            // if clusterTimer < clusterThresh, you're in a cluster
+            if (clusterMin == 1 || clusterTimer < clusterThreshSamples)
+            {
+                inCluster = true; // this is used in increment timer to update the clusterTimer
 
-            // we want to keep track of how long the reverse note is playing
-            reverseTimers.add({note, 0, noteDurationSamples,
-                state.params.waveDistUndertowParams.undertowParam->getCurrentValue(),
-                state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue()});
+                NostalgicNoteData currentNoteData;
+                currentNoteData.noteNumber = message.getNoteNumber();
+                currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
+                currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
+                currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+                currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
+                currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
 
-            // play the reverse note
-            auto reverseOnMsg = juce::MidiMessage::noteOn (1, note, velocities[note]);
-            outMidiMessages.addEvent(reverseOnMsg, 0);
+                // if we haven't reached the clusterMin yet, add the note to clusterNotes
+                if (clusterCount < clusterMin)
+                {
+                    DBG("ClusterNotes Size: " + juce::String(clusterNotes.size()));
+                    clusterNotes.add(currentNoteData);
+                    clusterCount++;
+                    DBG("Note added to ClusterNotes");
 
-            // cleanup
-            noteLengthTimers.set(note, 0.0f);
+                    // if you reach clusterMin notes, play all the clusterNotes
+                    if (clusterCount >= clusterMin)
+                    {
+                        DBG("Playing ClusterNotes");
+                        for (auto clusterNote : clusterNotes)
+                        {
+                            DBG("Note: " + juce::String(clusterNote.noteNumber));
+                            playReverseNote (clusterNote, outMidiMessages);
+                        }
+                        clusterNotes.clear();
+                    }
+                }
+                // if you're in a cluster and clusterMin has been reached, just play the note
+                else
+                {
+                    DBG("Playing Non-Cluster Note: " + juce::String(currentNoteData.noteNumber));
+                    clusterCount++;
+                    playReverseNote (currentNoteData, outMidiMessages);
+                }
+            }
+
+            // if clusterTimer has exceeded clusterThresh, you're no longer in a cluster
+            else
+            {
+                inCluster = false;
+                clusterCount = 0;
+                clusterNotes.clear();
+            }
+
+            // either way, a note off means resetting the timer
+            // since the threshold is for successive notes
+            clusterTimer = 0;
         }
     }
 
     // check the hold time, if it falls out of specified range, return
     // if (!holdCheck(noteNumber)) return;
-
-    // figure out if notes are in a cluster
-    // if cluster size < cluster min, return
-
-    // get transposed sample if needed
-
-    // figure out where in the sample we start the reverse note
-        // current spot * note length multiplier + wave distance
-        // play reverse with reverse envelope
-
-    // once reverse note ends, play forward until undertow with env
-
+    // check the velocity, if it falls out of specified range, return
 }
 
 void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     buffer.clear();
-    // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
-    for (auto& spec : noteOnSpecMap)
-    {
-        spec.clear();
-    }
     state.getParameterListeners().callAudioThreadBroadcasters();
     processContinuousModulations(buffer);
-    updateAllMidiNoteTranspositions();
     state.params.processStateChanges();
     int numSamples = buffer.getNumSamples();
     juce::MidiBuffer outMidi;
@@ -293,8 +337,8 @@ void NostalgicProcessor::incrementTimers(int numSamples)
     {
         timer.reverseTimerSamples += numSamples;
     }
-    // for(int i = 0; i<undertowNotes.size(); i++)
-    // {
-    //     undertowNotes.getUnchecked(i)->incrementUndertowTimer(numSamples);
-    // }
+    if (inCluster)
+    {
+        clusterTimer += numSamples;
+    }
 }
