@@ -19,6 +19,8 @@
  *      -- for instance, when the 7th partial is "rung" by a key that is ET
  * - figure out how to manage the noteOff release times and marking a ResonantString as inactive
  *      -- ideally, wait for the release time to mark it inactive, but what's the best way?
+ * - figure out how to deal with running out of the 16 ResonantStrings
+ *      -- ignore, cap, override, take over oldest?
  * - basic setup like processStateChanges and mods
  * - figure out how to handle a situation where the number of heldKeys tries to exceed 16
  * - create a way to pull up some standard partial structures
@@ -27,6 +29,8 @@
  *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, etc...
  * - handleMidiTargetMessages, and updates to MidiTarget
  * - processBlockBypassed
+ * - does currentPlayingPartialsFromHeldKey need to be a 2D array?
+ *      -- now that ALL the playing notes are associated with heldKey in this class?
  */
 
 #ifndef BITKLAVIER2_RESONANCEPROCESSOR_H
@@ -168,21 +172,25 @@ struct ResonanceNonParameterState : chowdsp::NonParamState
 /*
  * ResonantString Class
  *
- * Every held note on the keyboard will have an ResonantString class, which keeps track
+ * Every held note on the keyboard will have a ResonantString class, which keeps track
  * of all the partials associated with this held note, sending noteOn and noteOff
- * messages as needed, on separate channels to keep the behaviors of the held notes
- * disambiguated.
+ * messages as needed. Each instantiation of ResonantString will be on a separate MIDI channel
+ * to keep the behaviors of the held notes disambiguated.
  *
  * About disambiguation: since different held notes might have the same partials that are ringing,
  * releasing one key won't necessarily turn off all the sympathetic resonances at a particular
  * pitch. For instance, if both F3 and C4 are held down, and C3 is struck, then C5 will resonate
- * for BOTH F3 and C4 (and they will be slightly different C5s!). If we release the F3 key, we
- * want to turn of the resonating C5 for the F3 string, but not for the C4 string.
+ * for BOTH F3 and C4 (and they will be slightly different C5s, 2c off from one another!).
+ * If we release the F3 key, we want to turn of the resonating C5 for the F3 string, but not
+ * for the C4 string.
  *
- * About the MIDI channels: whenever we create a new ResonantString, we will assign it the next
- * available MIDI channel and all noteOn/Off messages will be sent on that channel. We will need to
- * make sure that all the strings have "rung down" (envelopes fully released) before we mark
- * a channel as available.
+ * About the MIDI channels: every ResonantString will be assigned it the next a MIDI channel and
+ * all noteOn/Off messages will be sent on that channel. At the moment, we are allocating 16
+ * ResonantStrings, one per each MIDI channel and simply noting whether they are "active" or not.
+ * When a key is pressed, we look for an inactive ResonantString and use the first available. In
+ * practice, 16 should be more than enough, especially given how CPU intensive this can be.
+ * Ideally, we will make sure that all the strings have "rung down" (envelopes fully released)
+ * before we mark a string as available.
  *
  * Note: when we try the multi-threaded synth, perhaps the MIDI channels can simply be assigned
  * to different threads
