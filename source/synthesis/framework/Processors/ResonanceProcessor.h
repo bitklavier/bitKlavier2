@@ -212,10 +212,15 @@ public:
     void addString (int midiNote);
     void ringString(int midiNote, int velocity, juce::MidiBuffer& outMidiMessages);
     void removeString (int midiNote, juce::MidiBuffer& outMidiMessages);
+    void incrementTimer_seconds(float blockSize_seconds);
 
     int heldKey = 0;                // MIDI note value for the key that is being held down
     int channel = 1;                // MIDI channel for this held note
     bool active = false;            // set to false after envelope release time has passed, following removeString()
+
+    bool stringJustRemoved = false;     // set to true when removeString is called, to start timer to release after release time has passed
+    float timeToMakeInactive;           // set this to releaseTime when removeString is called, in seconds
+    float timeSinceRemoved = 0.0f;      // increment this every block if stringJustRemoved == true, in seconds
 
 private:
     ResonanceParams* _rparams;

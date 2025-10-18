@@ -47,7 +47,7 @@ void ResonantString::addString (int midiNote)
 {
     heldKey = midiNote;
     active = true;
-    //DBG("added sympathetic string, channel = " + juce::String(channel));
+    DBG("added sympathetic string, channel = " + juce::String(channel));
 }
 
 /**
@@ -159,14 +159,20 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
      * BUT: the overhead to do this is very small, and given how many noteOffs we might be sending here with all the partials
      * it's cleaner to wait that short time before releasing this channel, so why not just do it?
      */
-    active = false;
+    // active = false; do this in the timer update
     //DBG("removed string " + juce::String(midiNote) + " on channel " + juce::String(channel));
+
+    // just removed so start the envelope timer
+    stringJustRemoved = true;
+    timeSinceRemoved = 0.0f;
+    float releaseTime = 0.05f; //in seconds; put this in envParams below
+    timeToMakeInactive = releaseTime;
 
     // read through currentPlayingPartialsFromHeldKey and send noteOffs for each
     for (auto pnotes : currentPlayingPartialsFromHeldKey[midiNote])
     {
         _noteOnSpecMap[pnotes].keyState = true; // override the UI controlled envelope and use envParams specified here
-        _noteOnSpecMap[pnotes].envParams = {50.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f};
+        _noteOnSpecMap[pnotes].envParams = {50.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
         _noteOnSpecMap[pnotes].channel = channel;
 
         //DBG("sending noteOffs for partial " + juce::String(pnotes) + " of held note " + juce::String(midiNote) + " on channel " + juce::String(channel));
@@ -176,6 +182,20 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
     currentPlayingPartialsFromHeldKey.set(midiNote, {});
 }
 
+void ResonantString::incrementTimer_seconds(float blockSize_seconds)
+{
+    if (stringJustRemoved)
+    {
+        timeSinceRemoved += blockSize_seconds;
+        if (timeSinceRemoved > timeToMakeInactive)
+        {
+            active = false;
+            stringJustRemoved = false;
+
+            DBG("string released on channel " + juce::String(channel));
+        }
+    }
+}
 
 /*
  * ========================== ResonanceProcessor ==========================
@@ -262,6 +282,16 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
         else if(message.isNoteOff())
             keyReleased(message.getNoteNumber(), outMidiMessages);
+    }
+
+    /*
+     * increment the timers in each resonating string, so they can be made active after they
+     * have been released and their release times have passed.
+     */
+    float blockTime_seconds = static_cast<float>(numSamples) / getSampleRate();
+    for (auto& rstring: resonantStringsArray)
+    {
+        rstring->incrementTimer_seconds(blockTime_seconds);
     }
 
     updatePartialStructure();
