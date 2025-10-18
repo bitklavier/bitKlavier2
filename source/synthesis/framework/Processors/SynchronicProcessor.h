@@ -545,7 +545,6 @@ public:
     void removeOldestCluster();
     void removeNewestCluster();
     void rotateClusters();
-    int findIndexOfCluster(SynchronicCluster* item);
 
     bool holdCheck(int noteNumber);
 
@@ -580,8 +579,8 @@ public:
      * essentially a circular voice-stealing buffer
      *
      */
-    std::array<SynchronicCluster*, MAX_CLUSTERS> clusterLayers;
-    //std::array<std::unique_ptr<SynchronicCluster>, MAX_CLUSTERS> clusterLayers;
+
+    std::array<std::unique_ptr<SynchronicCluster>, MAX_CLUSTERS> clusterLayers;
     int currentLayerIndex = 0; // which cluster is most recent
 
     juce::Array<int> keysDepressed;   //current keys that are depressed

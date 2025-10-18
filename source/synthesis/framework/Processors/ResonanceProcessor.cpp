@@ -106,7 +106,7 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                 _noteOnSpecMap[heldPartialKey].channel = channel;
                 _noteOnSpecMap[heldPartialKey].startTime = 400;      // ms
                 _noteOnSpecMap[heldPartialKey].sustainTime = 2000;   // ms
-                _noteOnSpecMap[heldPartialKey].stopSameCurrentNote = false;
+                _noteOnSpecMap[heldPartialKey].stopSameCurrentNote = false; // perhaps this should be true, now that we're running different channels?
                 //DBG("held key associated with partial " + juce::String(heldPartialKey) + " = " + juce::String(heldKeys[heldPartialKey_index]));
 
                 /*
@@ -138,7 +138,26 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
 void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessages)
 {
     /*
-     * need to figure out how to delay setting this until release time is done
+     * need to figure out how to delay setting this until release time is done. or do we?
+     *
+     * local var:
+     * float releaseTime = 50; //ms; put this in envParams below
+     *
+     * class vars:
+     * bool stringJustRemoved = true;
+     * juce::uint64 timeToMakeInactive = releaseTime * sampleRate/1000.;
+     * juce::uint64 timeSinceRemoved = 0;
+     *
+     * then, in releaseTimeTimer(), called every block if stringJustRemoved = true, increment timeSinceRemoved by numSamples,
+     * and if timeSinceRemove > timeToMakeInactive, set active = false and set string stringJustRemoved = false
+     *
+     * BUT: do we really need to worry about this? what's the worst that could happen? key is released, and while it is ramping
+     * down, this string is activated again as a held note with a different noteOnNumber? and then still in release time another
+     * note is played that rings this string? this would just send noteOn messages on this channel which the synth should be able
+     * to handle, no?
+     *
+     * BUT: the overhead to do this is very small, and given how many noteOffs we might be sending here with all the partials
+     * it's cleaner to wait that short time before releasing this channel, so why not just do it?
      */
     active = false;
     //DBG("removed string " + juce::String(midiNote) + " on channel " + juce::String(channel));

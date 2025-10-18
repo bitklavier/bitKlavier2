@@ -32,8 +32,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
      */
     for (int i = 0; i < MAX_CLUSTERS; i++)
     {
-        clusterLayers[i] = new SynchronicCluster(&state.params);
-        //clusterLayers[i] = std::make_unique<SynchronicCluster>(&state.params);
+        clusterLayers[i] = std::make_unique<SynchronicCluster>(&state.params);
     }
 
     for (int i = 0; i < MaxMidiNotes; ++i)
@@ -99,19 +98,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
 }
 
 SynchronicProcessor::~SynchronicProcessor()
-{
-    {
-        for (int i = 0; i < MAX_CLUSTERS; i++)
-        {
-            // Check if the pointer is not null before deleting
-            if (clusterLayers[i] != nullptr)
-            {
-                delete clusterLayers[i];
-                clusterLayers[i] = nullptr; // Optional, but good practice
-            }
-        }
-    }
-}
+{}
 
 void SynchronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -275,7 +262,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
     // all noteOn messages for all the clusters
-    for (auto cluster : clusterLayers)
+    for (auto& cluster : clusterLayers)
     {
         if (cluster->getShouldPlay())
         {
@@ -665,17 +652,6 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
     //DBG("handleMidiTargetMessages = " + juce::String(channel + (SynchronicTargetFirst)));
 }
 
-int SynchronicProcessor::findIndexOfCluster(SynchronicCluster* item) {
-    for (int i = 0; i < clusterLayers.size(); ++i) {
-        if (clusterLayers[i] == item) {
-            return i;
-        }
-    }
-    // Return a value indicating not found, e.g., arr.size() or throw an exception.
-    // For this example, we'll assume the item is always present.
-    return -1; // Or any other appropriate error value
-}
-
 void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
 {
     // set all the modes, handled below (like doCluster, etc...)
@@ -713,7 +689,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
                 isNewCluster = updateCurrentCluster();
 
                 // get the current cluster
-                auto cluster = clusterLayers[currentLayerIndex];
+                auto& cluster = clusterLayers[currentLayerIndex];
 
                 // reset the timer for time between notes; we do this for every note added to a cluster
                 clusterThresholdTimer = 0;
@@ -760,7 +736,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
         beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
 
         // get the current cluster
-        auto cluster = clusterLayers[currentLayerIndex];
+        auto& cluster = clusterLayers[currentLayerIndex];
 
         /*
          * for cases when BOTH beatSync and patternSync are selected in MidiTarget,
@@ -789,7 +765,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     if (doAddNotes )
     {
         // get the current cluster
-        auto cluster = clusterLayers[currentLayerIndex];
+        auto& cluster = clusterLayers[currentLayerIndex];
 
         clusterVelocities.set(noteNumber, velocity);
         cluster->addNote(noteNumber);
@@ -801,7 +777,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
          * todo: send all notes off here as well
          */
         //clusters.clear();
-        for (auto cl : clusterLayers)
+        for (auto& cl : clusterLayers)
         {
             cl->reset();
         }
@@ -845,7 +821,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     // do hold-time filtering (how long the key was held down)
     if (!holdCheck(noteNumber)) return;
 
-    auto cluster = clusterLayers[currentLayerIndex];
+    auto& cluster = clusterLayers[currentLayerIndex];
 
     // the number of samples until the next beat
     beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
@@ -867,7 +843,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
             {
                 // update cluster, create as needed
                 isNewCluster = updateCurrentCluster();
-                auto cluster = clusterLayers[currentLayerIndex];
+                auto& cluster = clusterLayers[currentLayerIndex];
 
                 // add this played note to the cluster
                 cluster->addNote(noteNumber);
@@ -937,7 +913,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     if (doClear)
     {
         //clusters.clear();
-        for (auto cl : clusterLayers)
+        for (auto& cl : clusterLayers)
         {
             cl->reset();
         }

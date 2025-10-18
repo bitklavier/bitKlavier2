@@ -21,9 +21,12 @@
  *                  general gain scalar separately, on top of that.
  *                  - so this would mean adding a range slider to the UI
  * - figure out how to manage the noteOff release times and marking a ResonantString as inactive
- *      -- ideally, wait for the release time to mark it inactive, but what's the best way?
+ *      -- just need a sample counter timer....
  * - figure out how to deal with running out of the 16 ResonantStrings
  *      -- ignore, cap, override, take over oldest?
+ * - does currentPlayingPartialsFromHeldKey need to be a 2D array?
+ *      -- now that ALL the playing notes are associated with heldKey in this class?
+ * - should noteOnSpecMap[heldPartialKey].stopSameCurrentNote be true instead of false?
  * - basic setup like processStateChanges and mods
  * - figure out how to handle a situation where the number of heldKeys tries to exceed 16
  * - create a way to pull up some standard partial structures
@@ -32,9 +35,6 @@
  *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, etc...
  * - handleMidiTargetMessages, and updates to MidiTarget
  * - processBlockBypassed
- * - does currentPlayingPartialsFromHeldKey need to be a 2D array?
- *      -- now that ALL the playing notes are associated with heldKey in this class?
- * - am i setting the individual partials to inactive when they are done?
  *
  */
 
