@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY mainSampleSet="/default" hammerSampleSet="/defaultHammers" releaseResonanceSampleSet="/defaultReleaseResonance"
+         pedalSampleSet="/defaultPedals">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <keymap type="7" width="185" height="105" x_y="295, 380" uuid="311cebbbafa8423eb375cec65e7b07da"
+              nodeID="823978939" numOuts="1" velocityCurve_asymWarp="0.458"
+              velocityCurve_symWarp="1.355" velocityCurve_scale="1.121" velocityCurve_offset="-0.075"
+              velocityCurve_invert="0" velocitymin="20.0" velocitymax="121.0"
+              keyOn="9 13 16 21 25 28 33 37 40 45 49 52 57 61 64 69 73 76 81 85 88 93 97 100 105 109 112 117 121 124">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurve_asymWarp" channel="0" start="0.0" end="10.0"
+                             skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_symWarp" channel="1" start="0.0" end="5.0"
+                             skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_scale" channel="2" start="0.0" end="10.0"
+                             skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_offset" channel="3" start="-1.0" end="1.0"
+                             skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT velocitymin="20.0" velocitymax="121.0"/>
+        <PORT nodeID="823978939" chIdx="4096" isIn="0"/>
+      </keymap>
+      <resonance type="4" width="245" height="125" x_y="676, 423" uuid="e6373f9a11314646a0da523c834e06f9"
+                 nodeID="3862380442" numIns="1" numOuts="2" Send="0.000" OutputGain="0.000"
+                 noteOnGain="0.000" attack="64.176" decay="0.000" sustain="1.000"
+                 release="50.000" attackpower="2.590" decaypower="0.000" releasepower="-1.533"
+                 hold="0.000" delay="0.000" notify="1" resonanceOffsets="16:12.5 "
+                 resonanceGains="0:1 1:1 2:1 3:1 4:1 5:1 6:1 7:1 8:1 9:1 10:1 11:1 12:1 13:1 14:1 15:1 16:1 17:1 18:1 19:1 20:1 21:1 22:1 23:1 24:1 25:1 26:1 27:1 28:1 29:1 30:1 31:1 32:1 33:0.671484 34:1 35:1 36:1 37:1 38:1 39:1 40:1 41:1 42:1 43:1 44:1 45:1 46:1 47:1 48:1 49:1 50:1 51:1 52:1 53:1 54:1 55:1 56:1 57:1 58:1 59:1 60:1 61:1 62:1 63:1 64:1 65:1 66:1 67:1 68:1 69:1 70:1 71:1 72:1 73:1 74:1 75:1 76:1 77:1 78:1 79:1 80:1 81:1 82:1 83:1 84:1 85:1 86:1 87:1 88:1 89:1 90:1 91:1 92:1 93:1 94:1 95:1 96:1 97:1 98:1 99:1 100:1 101:1 102:1 103:1 104:1 105:1 106:1 107:1 108:1 109:1 110:1 111:1 112:1 113:1 114:1 115:1 116:1 117:1 118:1 119:1 120:1 121:1 122:1 123:1 124:1 125:1 126:1 127:1 "
+                 fundamental="12" partials="10 11 32 43">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="Send" channel="0" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" channel="1" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="noteOnGain" channel="2" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="attack" channel="3" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="decay" channel="4" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" channel="5" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" channel="6" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="delay" channel="7" start="0.0" end="1000.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PORT nodeID="3862380442" chIdx="4096" isIn="1"/>
+        <PORT nodeID="3862380442" chIdx="2" isIn="0"/>
+        <PORT nodeID="3862380442" chIdx="3" isIn="0"/>
+      </resonance>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

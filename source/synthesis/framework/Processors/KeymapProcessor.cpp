@@ -9,11 +9,16 @@
 
 KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (
                                                                                      parent,
-                                                                                     v,
+                                                                                     vt,
                                                                                      nullptr,
                                                                                      keymapBusLayout()),
-                                                                                 _midi (std::make_unique<MidiManager> (&keyboard_state, parent.manager, v))
+                                                                                 _midi (std::make_unique<MidiManager> (&keyboard_state, parent.manager, vt))
 {
+    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
+
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocityminmax",
+        &(state.params.velocityMinMax.stateChanges)));
 }
 
 static juce::String getMidiMessageDescription (const juce::MidiMessage& m)
@@ -121,18 +126,49 @@ float KeymapProcessor::applyVelocityCurve (float velocity)
     return velocityCurved;
 }
 
+bool KeymapProcessor::checkVelocityRange (float velocity)
+{
+    float velocityMin = state.params.velocityMinMax.velocityMinParam->getCurrentValue();
+    float velocityMax = state.params.velocityMinMax.velocityMaxParam->getCurrentValue();
+
+    //in normal case where velocityMin < velocityMax, we only pass if both are true
+    if (velocityMax >= velocityMin)
+    {
+        if (velocity >= velocityMin && velocity <= velocityMax)
+            return true;
+        else
+            return false;
+    }
+
+    //case where velocityMin > velocityMax, we pass if either is true
+    if (velocity >= velocityMin || velocity <= velocityMax)
+        return true;
+    else
+        return false;
+}
+
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    state.params.velocityMinMax.processStateChanges();
+
     midiMessages.clear();
     int num_samples = buffer.getNumSamples();
 
     juce::MidiBuffer in_midi_messages;
     _midi->removeNextBlockOfMessages (in_midi_messages, num_samples);
     _midi->replaceKeyboardMessages (in_midi_messages, num_samples);
+
     for (auto message : in_midi_messages)
     {
         if (state.params.keyboard_state.keyStates.test (message.getMessage().getNoteNumber()))
         {
+            if (message.getMessage().isNoteOn())
+            {
+                state.params.velocityMinMax.lastVelocityParam = message.getMessage().getVelocity();
+                if (!checkVelocityRange (message.getMessage().getVelocity()))
+                    continue;
+            }
+
             float oldvelocity = message.getMessage().getVelocity() / 127.0;
             float newvelocity = applyVelocityCurve (oldvelocity);
 
@@ -186,19 +222,5 @@ template <typename Serializer>
 void KeymapParams::deserialize (typename Serializer::DeserializedType deserial, KeymapParams& paramHolder)
 {
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
-    auto mystr = deserial->getStringAttribute ("keyOn");
-    //also used in bkkeymapkeyboardcomponent TODO - make a function
-    std::bitset<128> bits;
-    std::istringstream iss (mystr.toStdString());
-    int key;
-
-    while (iss >> key)
-    {
-        if (key >= 0 && key < 128)
-        {
-            bits.set (key);
-        }
-    }
-
-    paramHolder.keyboard_state.keyStates = bits;
+    paramHolder.keyboard_state.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("keyOn"));
 }

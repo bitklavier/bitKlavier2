@@ -38,8 +38,7 @@ struct DirectParams : chowdsp::ParamHolder {
             outputSendParam,
             outputGain,
             env,
-            transpose,
-            velocityMinMax);
+            transpose);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
@@ -132,21 +131,13 @@ struct DirectParams : chowdsp::ParamHolder {
     // Transposition slider (holds up to 12 transposition values)
     TransposeParams transpose;
 
-    /**
-     * for storing min/max values for the velocityMinMax slider
-     * and also keeping track of the lastVelocity, which we'll get
-     * from the lastSynthState in processBlock()
-     * the code for OpenGL_VelocityMinMaxSlider has further comments about
-     * how the chowdsp system works with params, callbacks, and so on.
-     */
-    VelocityMinMaxParams velocityMinMax;
-
     /** for storing outputLevels of this preparation for display
      *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
      *      we simply update this in the processBlock() call
      *      and then the level meter will update its values during the OpenGL cycle
      */
     std::tuple<std::atomic<float>, std::atomic<float> > outputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
 
     /****************************************************************************************/
 };
@@ -305,8 +296,7 @@ private:
     std::unique_ptr<BKSynthesiser> pedalSynth;
 
     juce::Array<float> midiNoteTranspositions;
-
-    juce::Array<float> getMidiNoteTranspositions();
+    void updateMidiNoteTranspositions();
 
     /**
      * todo: is this used?

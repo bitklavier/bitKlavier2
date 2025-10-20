@@ -24,6 +24,12 @@ void TuningState::setCircularKeyOffset (int midiNoteNumber, float val)
         copyAtomicArrayToAtomicArray(circularTuningOffset, circularTuningOffset_custom);
 }
 
+void TuningState::setAllAbsoluteOffsets(float val)
+{
+    for (auto& atom : absoluteTuningOffset) {
+        atom.store(val);
+    }
+}
 
 void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 {

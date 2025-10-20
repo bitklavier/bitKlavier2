@@ -10,59 +10,11 @@
 #include "synth_slider.h"
 #include "synth_button.h"
 #include "default_look_and_feel.h"
-#include "../components/BKComponents/BKKeymapKeyboardComponent.h"
+#include "OpenGL_KeymapKeyboard.h"
 #include "open_gl_combo_box.h"
+#include "OpenGL_VelocityMinMaxSlider.h"
+#include "VelocityMinMaxParams.h"
 
-class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
-public:
-    OpenGLKeymapKeyboardComponent(KeymapParams & params)
-        : OpenGlAutoImageComponent (&params.keyboard_state) {
-        image_component_ = std::make_shared<OpenGlImageComponent>();
-        setLookAndFeel(DefaultLookAndFeel::instance());
-        image_component_->setComponent(this);
-    }
-
-    ~OpenGLKeymapKeyboardComponent(){}
-
-    virtual void resized() override {
-        OpenGlAutoImageComponent::resized();
-        redoImage();
-    }
-
-    void mouseDrag(const juce::MouseEvent &e) override {
-        OpenGlAutoImageComponent::mouseDrag(e);
-        redoImage();
-    }
-
-    void mouseMove(const juce::MouseEvent &e) override {
-        OpenGlAutoImageComponent::mouseMove(e);
-        redoImage();
-    }
-
-    void buttonClicked(juce::Button *b) override {
-        OpenGlAutoImageComponent::buttonClicked(b);
-        redoImage();
-    }
-    void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
-        OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
-        redoImage();
-    }
-
-    void textEditorFocusLost(juce::TextEditor &textEditor) override {
-        OpenGlAutoImageComponent::textEditorFocusLost(textEditor);
-        redoImage();
-    }
-
-    void textEditorEscapeKeyPressed(juce::TextEditor &textEditor) override {
-        OpenGlAutoImageComponent::textEditorEscapeKeyPressed(textEditor);
-        redoImage();
-    }
-
-    void textEditorTextChanged(juce::TextEditor &textEditor) override {
-        OpenGlAutoImageComponent::textEditorTextChanged(textEditor);
-        redoImage();
-    }
-};
 
 class MidiInputSelectorComponentListBox : public juce::ListBox, private juce::ListBoxModel, private juce::ChangeListener
 {
@@ -298,5 +250,8 @@ private:
     std::unique_ptr<chowdsp::ButtonAttachment> invert_attachment;
 
     juce::Rectangle<int> velocityCurveBox;
+
+    // min/max filter slider
+    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 };
 #endif //KEYMAPPARAMETERVIEW_H

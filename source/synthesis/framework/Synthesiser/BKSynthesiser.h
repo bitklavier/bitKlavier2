@@ -338,40 +338,13 @@ class BKSynthesiser
                  * for any particular note number (key), copy to internal map for use with sampler.h
                  * @param inspecs
                  */
-                void setNoteOnSpecMap(std::map<int, NoteOnSpec>& inspecs)
+//                void setNoteOnSpecMap(std::map<int, NoteOnSpec>& inspecs)
+//                {
+//                    noteOnSpecs = inspecs;
+//                }
+                void setNoteOnSpecMap(std::array<NoteOnSpec, MaxMidiNotes>& inspecs)
                 {
                     noteOnSpecs = inspecs;
-                }
-
-                /**
-                 * todo: remove these next two after moving velocity min/max to Keymap
-                 * @param velmin
-                 * @param velmax
-                 */
-                void updateVelocityMinMax(float velmin, float velmax)
-                {
-                    velocityMin = velmin;
-                    velocityMax = velmax;
-                }
-
-                bool checkVelocityRange(float velocity) const
-                {
-                    /**
-                    * need to send velocity back up, for display in velocity min/max slider, before returning
-                    */
-                    //
-
-                    //in normal case where velocityMin < velocityMax, we only pass if both are true
-                    if (velocityMax >= velocityMin)
-                    {
-                        if (velocity >= velocityMin && velocity <= velocityMax) return true;
-                        else return false;
-                    }
-
-                    //case where velocityMin > velocityMax, we pass if either is true
-                    if (velocity >= velocityMin || velocity <= velocityMax) return true;
-                    else return false;
-
                 }
 
                 BKSynthesizerState getSynthesizerState()
@@ -480,13 +453,10 @@ private:
                 juce::Array<float> midiNoteTranspositions = { 0.}; // needs to be set via UI, for additional transpositions
                 bool tuneTranspositions = false;
                 juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
-                std::bitset<128> activeNotes;
+                std::bitset<MaxMidiNotes> activeNotes;
 
-                std::map<int, NoteOnSpec> noteOnSpecs;
-
-                //set by owning processor state.params.velocityMinMax
-                float velocityMin = 0.;
-                float velocityMax = 128.;
+                //std::map<int, NoteOnSpec> noteOnSpecs;
+                std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecs;
 
                 TuningState* tuning;
 
@@ -503,8 +473,6 @@ private:
 
                 // becomes false when there are no voices active
                 bool someVoicesActive = true;
-
-//                Direction playbackDirection = Direction::forward;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

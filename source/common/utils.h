@@ -26,10 +26,11 @@
 #include "common.h"
 #include "BKADSR.h"
 
+static constexpr int MaxMidiNotes = 128;
+
 #define NAME_AND_VALUE(x) #x, x
 
   namespace bitklavier::utils {
-
 
     constexpr float kDbGainConversionMult = 20.0f;
     constexpr int kMaxOrderLength = 10;
@@ -325,8 +326,7 @@
       double dt_symwarp(double inval, double k);
       double dt_warpscale(double inval, double asym_k, double sym_k, double scale, double offset);
 
-
-
+      std::bitset<128> stringToBitset (juce::String paramAttribute);
   } // namespace bitklavier::utils
 
 // namespace vital
@@ -466,21 +466,31 @@ static double ftom(const double f, double a440 )
  */
 struct BKSynthesizerState
 {
-    int lastVelocity;
     double lastPitch;
 };
 
-/**
+/*
  * additional specifications to associate with a particular noteOn msg
  *  - usually included in a std::map, keyed by midiNoteNumber
  */
 struct NoteOnSpec
 {
-    float startTime = 0.f; // where to start playback (ms)
-    Direction startDirection = Direction::forward;
-    LoopMode loopMode = LoopMode::none;
-    bool stopSameCurrentNote = true; // if this note is playing already, stop it (default behavior)
-    BKADSR::Parameters envParams{3.0f * .001, 10.0f * .001, 1.0f, 50.0f* .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+    bool keyState = false;                          // turn on for notes that should use the extra specs here
+    float startTime = 0.f;                          // where to start playback (ms)
+    Direction startDirection = Direction::forward;  // direction
+    LoopMode loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
+    bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
+    BKADSR::Parameters envParams {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+
+    void clear()
+    {
+        keyState = false;                          // turn on for notes that should use the extra specs here
+        startTime = 0.f;                          // where to start playback (ms)
+        startDirection = Direction::forward;  // direction
+        loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
+        stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
+        envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
+    }
 };
 
 /*
@@ -548,6 +558,137 @@ enum SelectChoice {
     Deselect = 1 << 1,
 };
 
+struct KeymapKeyboardState
+{
+    KeymapKeyboardState() {
+        keyStates.reset();
+    }
 
+    std::bitset<128> keyStates;
+};
+
+template <size_t N>
+size_t find_first_set_bit(const std::bitset<N>& bs)
+{
+    for (size_t i = 0; i < bs.size(); ++i)
+    {
+        if (bs.test(i))
+        {
+            return i; // Found the index of the first '1'
+        }
+    }
+    return N; // No set bits found
+}
+
+template <typename T, std::size_t N>
+void insert_and_shift(std::array<T, N>& arr, const T& new_value)
+{
+    // Check for an empty array, although N is usually known at compile time.
+    if constexpr (N > 0)
+    {
+        // 1. Shift elements back one index.
+        //    std::copy(source_begin, source_end, destination_begin);
+        //    We copy from arr[0] up to arr[N-2]
+        //    TO arr[1] up to arr[N-1]
+        //    This effectively discards the value at arr[N-1] (the end).
+
+        // This is safe because the source range (arr.begin() to arr.end() - 1)
+        // and the destination range (arr.begin() + 1 to arr.end())
+        // do not overlap in a way that causes corruption (it's a backward shift).
+        std::copy(
+            arr.begin(),          // Source start (arr[0])
+            arr.end() - 1,        // Source end (one past arr[N-2])
+            arr.begin() + 1       // Destination start (arr[1])
+        );
+
+        // 2. Insert the new value at the beginning.
+        arr[0] = new_value;
+    }
+}
+
+template <typename T, std::size_t N>
+std::size_t remove_all_and_compact(std::array<T, N>& arr, const T& value_to_remove)
+{
+    if constexpr (N == 0)
+    {
+        return 0;
+    }
+
+    // 1. Use std::remove to perform the logical removal.
+    //    std::remove shifts all elements *not* equal to 'value_to_remove'
+    //    to the beginning of the array. The order of the remaining elements is preserved.
+    //    It returns an iterator ('new_end') pointing to the element *after* //    the last non-removed element.
+    auto new_end = std::remove(arr.begin(), arr.end(), value_to_remove);
+
+    // 2. Determine the new number of valid elements.
+    std::size_t new_size = std::distance(arr.begin(), new_end);
+
+    // 3. "Clear" the space: Overwrite the remaining elements with a default value.
+    //    This is equivalent to the 'erase' part of the idiom for a dynamic container.
+    //    For numeric types, T{} often means 0. For class types, it calls the default constructor.
+    for (auto it = new_end; it != arr.end(); ++it)
+    {
+        *it = T{};
+    }
+
+    // Return the new size (the count of elements NOT removed).
+    return new_size;
+}
+
+template <typename T, std::size_t N, typename... Arrays>
+void synchronized_remove_and_compact(
+    std::array<T, N>& primaryArray,
+    const T& value_to_remove,
+    Arrays&... parallelArrays)
+{
+    if constexpr (N == 0) return;
+
+    // 'writeIdx' tracks where the next kept element should be placed (the destination).
+    std::size_t writeIdx = 0;
+
+    // 'readIdx' tracks the element currently being inspected (the source).
+    for (std::size_t readIdx = 0; readIdx < N; ++readIdx)
+    {
+        // Check if the current element in the primary array should be KEPT.
+        if (primaryArray[readIdx] != value_to_remove)
+        {
+            // The element should be KEPT. We only shift if writeIdx < readIdx,
+            // otherwise, it's already in the correct spot.
+            if (writeIdx != readIdx)
+            {
+                // 1. Shift the value in the PRIMARY array.
+                primaryArray[writeIdx] = primaryArray[readIdx];
+
+                // 2. Shift the corresponding values in ALL PARALLEL arrays.
+                //    This uses a C++17 fold expression to process all arguments.
+                ([&]()
+                    {
+                        parallelArrays[writeIdx] = parallelArrays[readIdx];
+                    }(), ...); // The comma operator ensures sequencing.
+            }
+
+            // Move the write pointer forward.
+            writeIdx++;
+        }
+        // If (primaryArray[readIdx] == value_to_remove), we do nothing and
+        // simply advance 'readIdx'. The 'writeIdx' stays put, and the next
+        // kept element will overwrite this removed slot.
+    }
+
+    // --- Compaction (Clearing the remaining slots) ---
+    // The elements from writeIdx to N-1 are duplicates of the last valid element.
+    // We clear them to ensure a predictable state (like T{} or 0).
+    for (std::size_t i = writeIdx; i < N; ++i)
+    {
+        primaryArray[i] = T{};
+
+        ([&]()
+            {
+                parallelArrays[i] = typename std::decay_t<decltype(parallelArrays)>::value_type{};
+            }(), ...);
+    }
+
+    // NOTE: 'writeIdx' is the new effective size of all arrays.
+}
 
 

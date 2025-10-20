@@ -609,3 +609,149 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKRangeSlider)
 };
+
+// ******************************************************************************************************************** //
+// *******************************************  BKWaveDistanceUndertowSlider ****************************************** //
+// ******************************************************************************************************************** //
+
+
+class BKWaveDistanceUndertowSlider : public StateModulatedComponent,
+                                    public juce::Slider::Listener,
+                                    public juce::TextEditor::Listener
+
+{
+public:
+    BKWaveDistanceUndertowSlider (juce::String sliderName, double min, double max, double defmin, double defmax, double increment, const juce::ValueTree& stateDefault);
+    ~BKWaveDistanceUndertowSlider()
+    {
+        wavedistanceSlider.setLookAndFeel(nullptr);
+        undertowSlider.setLookAndFeel(nullptr);
+        // for(int i=0; i<maxSliders; i++)
+        // {
+        //     juce::Slider* newSlider = displaySliders.getUnchecked(i);
+        //     newSlider->setLookAndFeel(nullptr);
+        // }
+    }
+
+    void sliderValueChanged (juce::Slider *slider) override;
+    void textEditorReturnKeyPressed(juce::TextEditor& textEditor) override;
+    void textEditorFocusLost(juce::TextEditor& textEditor) override;
+    void textEditorEscapeKeyPressed (juce::TextEditor& textEditor) override;
+    void textEditorTextChanged(juce::TextEditor& textEditor) override;
+
+    // inline juce::TextEditor* getTextEditor(NostalgicParameterType which)
+    // {
+    //     if (which == NostalgicUndertow) return &undertowValueTF;
+    //     if (which == NostalgicWaveDistance) return &wavedistanceValueTF;
+    //     return nullptr;
+    // }
+
+    inline void dismissTextEditor(bool setValue = false)
+    {
+        if (setValue)
+        {
+            textEditorReturnKeyPressed(wavedistanceValueTF);
+            textEditorReturnKeyPressed(undertowValueTF);
+        }
+        else
+        {
+            textEditorEscapeKeyPressed(wavedistanceValueTF);
+            textEditorEscapeKeyPressed(undertowValueTF);
+        }
+    }
+
+    void setWaveDistance(int newwavedist, juce::NotificationType notify);
+    void setUndertow(int newundertow, juce::NotificationType notify);
+
+    void setName(juce::String newName)
+    {
+        sliderName = newName;
+    }
+
+    juce::String getName()
+    {
+        return sliderName;
+    }
+
+    void resized() override;
+    void setDim(float newAlpha);
+    void setBright();
+
+    class Listener
+    {
+    public:
+        virtual ~Listener() {};
+        virtual void BKWaveDistanceUndertowSliderValueChanged(juce::String name, double wavedist, double undertow) = 0;
+    };
+
+    juce::ListenerList<Listener> listeners;
+    void addMyListener(Listener* listener)     { listeners.add(listener);      }
+    void removeMyListener(Listener* listener)  { listeners.remove(listener);   }
+    BKMultiSliderLookAndFeel displaySliderLookAndFeel;
+
+    juce::Slider wavedistanceSlider;
+    juce::Slider undertowSlider;
+    juce::OwnedArray<juce::Slider> displaySliders;
+
+    juce::String wavedistanceSliderName;
+    juce::String undertowSliderName;
+
+    juce::String sliderName;
+
+    juce::Label wavedistanceName;
+    juce::Label undertowName;
+
+    juce::TextEditor wavedistanceValueTF;
+    juce::TextEditor undertowValueTF;
+
+
+
+    void updateSliderPositions(juce::Array<int> newpositions);
+
+    void sliderDragEnded(juce::Slider *slider) override;
+    void mouseDoubleClick (const juce::MouseEvent &event) override;
+
+    // inline void setText(NostalgicParameterType which, juce::String text)
+    // {
+    //     if (which == NostalgicUndertow)             undertowValueTF.setText(text, false);
+    //     else if (which == NostalgicWaveDistance)    wavedistanceValueTF.setText(text, false);
+    // }
+    //
+    // inline void setUndertowTooltip(juce::String tip) {    undertowSlider->setTooltip(tip);
+    //                                                 undertowName.setTooltip(tip);
+    //                                                 undertowValueTF.setTooltip(tip); }
+    //
+    // inline void setWaveDistanceTooltip(juce::String tip) {    wavedistanceSlider->setTooltip(tip);
+    //                                                     wavedistanceName.setTooltip(tip);
+    //                                                     wavedistanceValueTF.setTooltip(tip); }
+
+    /*
+     * needed for the state modulation system
+     */
+    // BKWaveDistanceUndertowSlider* clone()
+    // {
+    //     return new BKWaveDistanceUndertowSlider (param);
+    // }
+    void syncToValueTree()
+    {
+    }
+
+private:
+    double sliderMin, sliderMax;
+    double sliderDefaultMin, sliderDefaultMax;
+    double sliderDefault;
+    double sliderIncrement;
+
+    int maxSliders;
+
+    bool newDrag;
+    bool clickedOnMinSlider;
+
+    juce::ImageComponent sampleImageComponent;
+
+    bool focusLostByEscapeKey;
+
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKWaveDistanceUndertowSlider)
+
+};

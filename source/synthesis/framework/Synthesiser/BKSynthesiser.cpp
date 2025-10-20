@@ -14,6 +14,15 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
     for (int i = 0; i<=128; i++)
         playingVoicesByNote.insert(0, {  });
 
+    // init the noteOnSpecs to default; will be overridden by some preparations
+    for (int i = 0; i < MaxMidiNotes; ++i)
+    {
+        noteOnSpecs[i] = NoteOnSpec{};
+    }
+
+    // have a default tuning in case one is not connected
+    tuning = new TuningState();
+
     activeNotes.reset();
 }
 
@@ -340,25 +349,13 @@ void BKSynthesiser::noteOn (const int midiChannel,
     if (synthGain <= -80.f) return;
 
     /**
-     * store this velocity for the UI to use
-     */
-    lastSynthState.lastVelocity = velocity;
-
-    /**
-     * check first to see if velocity is within velocity min/max range, and return if not
-     */
-     /**
-      * todo: remove this when we move velocity min/max to Keymap?
-      */
-    if (!checkVelocityRange(velocity)) return;
-
-    /**
      * moved this out of the loop below because it was messing up voice handling with multiple transpositions
      * however, this move might break something else in the future, we'll have to see..
      */
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).
-    if(!noteOnSpecs.contains(midiNoteNumber))
+    //if(!noteOnSpecs.contains(midiNoteNumber))
+    if(!noteOnSpecs[midiNoteNumber].keyState)
     {
         for (auto* voice : voices)
             if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
@@ -450,7 +447,8 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
 
-        if(noteOnSpecs.contains(midiNoteNumber))
+        //if(noteOnSpecs.contains(midiNoteNumber))
+        if(noteOnSpecs[midiNoteNumber].keyState)
         {
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 

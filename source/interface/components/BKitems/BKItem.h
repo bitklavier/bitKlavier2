@@ -24,7 +24,6 @@ BKItem (bitklavier::BKPreparationType type);
         layer_1_ = layer_1;
         layer_2_ = layer_2;
         layer_3_ = layer_3;
-
     }
 
     void resized() override
@@ -94,13 +93,14 @@ BKItem (bitklavier::BKPreparationType type);
     bool hitTest(int x, int y) override {
         layer_1_.contains(x, y);
     }
-//
-        float size_ratio;
+
+    float size_ratio;
 
     juce::Path layer_1_;
     juce::Rectangle<float> hit_test_bounds;
     juce::Image shadow_;
     static constexpr float kMeterPixel = 5.0f;
+
 protected:
     //void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
     //    juce::ValueTree &state;
@@ -411,7 +411,6 @@ class ResonanceItem : public BKItem
 public:
     ResonanceItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeResonance)
     {
-
     }
 
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
@@ -468,7 +467,6 @@ class TuningItem : public BKItem
 public:
     TuningItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeTuning)
     {
-
     }
 
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)

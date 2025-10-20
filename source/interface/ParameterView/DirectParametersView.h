@@ -64,21 +64,22 @@ public:
         // create the more complex UI elements
         envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
-        velocityMinMaxSlider    = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
 
         // we add subsections for the elements that have been defined as sections
         addSubSection (envSection.get());
         addSubSection (transpositionSlider.get());
-
-        // this slider does not need a section, since it's just one OpenGL component
-        velocityMinMaxSlider->setComponentID ("velocity_min_max");
-        addStateModulatedComponent (velocityMinMaxSlider.get());
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
         addSubSection(levelMeter.get());
+
+        // similar for send level meter/slider
+        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendParam, listeners, &params.sendLevels);
+        sendLevelMeter->setLabel("Send");
+        addSubSection(sendLevelMeter.get());
+
         setSkinOverride(Skin::kDirect);
     }
 
@@ -101,7 +102,6 @@ public:
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
-    std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
@@ -109,6 +109,7 @@ public:
 
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;
+    std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     void resized() override;
     DirectParams& params;

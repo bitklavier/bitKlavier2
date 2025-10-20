@@ -21,21 +21,24 @@ void BKKeymapKeyboardComponent::resized() {
 
     keyboard_.setBounds(keyboardRect);
 
-    keymapRow.removeFromBottom(2);
-    juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2 * heightUnit + 4));
-    keyboardValsTextFieldOpen.setBounds(textSlab.removeFromRight(widthUnit));
+    if(useHelperButtons)
+    {
+        keymapRow.removeFromBottom(2);
+        juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2 * heightUnit + 4));
+        keyboardValsTextFieldOpen.setBounds(textSlab.removeFromRight(widthUnit));
 
-    allOnButton.setBounds(textSlab.removeFromLeft(widthUnit));
-    textSlab.removeFromLeft(4);
-    clearButton.setBounds(textSlab.removeFromLeft(widthUnit));
+        allOnButton.setBounds(textSlab.removeFromLeft(widthUnit));
+        textSlab.removeFromLeft(4);
+        clearButton.setBounds(textSlab.removeFromLeft(widthUnit));
 
-    textSlab.removeFromLeft(20);
-    keysCB.setBounds(textSlab.removeFromLeft(widthUnit));
+        textSlab.removeFromLeft(20);
+        keysCB.setBounds(textSlab.removeFromLeft(widthUnit));
 
-    textSlab.removeFromLeft(4);
-    keysButton.setBounds(textSlab.removeFromLeft(widthUnit));
+        textSlab.removeFromLeft(4);
+        keysButton.setBounds(textSlab.removeFromLeft(widthUnit));
 
-    keyboardValsTextField->setBounds(keyboard_.getBounds());
+        keyboardValsTextField->setBounds(keyboard_.getBounds());
+    }
 }
 
 void BKKeymapKeyboardComponent::mouseUp(const juce::MouseEvent& e) {
@@ -47,9 +50,17 @@ void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
         keyboardValsTextField->mouseDown(e);
     }
     else if(e.y >= 0 && e.y <= keyboard_.getHeight()) {
-        lastKeyPressed =  keyboard_.getNoteAndVelocityAtPosition(e.position).note;
+        lastKeyPressed = keyboard_.getNoteAndVelocityAtPosition(e.position).note;
         if (lastKeyPressed != -1)
-            keyboard_state_.keyStates.flip(lastKeyPressed);
+        {
+            if (isMonophonic)
+            {
+                keyboard_state_.keyStates.reset();
+                keyboard_state_.keyStates.set(lastKeyPressed);
+            }
+            else
+                keyboard_state_.keyStates.flip(lastKeyPressed);
+        }
     }
 }
 
@@ -62,11 +73,17 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
        auto key = keyboard_.getNoteAndVelocityAtPosition(e.position).note;
         if (key != lastKeyPressed)
         {
-
-
             lastKeyPressed = key;
             if (lastKeyPressed != -1)
-                keyboard_state_.keyStates.flip(lastKeyPressed);
+            {
+                if (isMonophonic)
+                {
+                    keyboard_state_.keyStates.reset();
+                    keyboard_state_.keyStates.set(lastKeyPressed);
+                }
+                else
+                    keyboard_state_.keyStates.flip(lastKeyPressed);
+            }
         }
     }
     keyboard_.repaint();

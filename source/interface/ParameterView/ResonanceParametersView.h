@@ -1,0 +1,137 @@
+//
+// Created by Dan Trueman on 10/8/25.
+//
+
+#ifndef BITKLAVIER0_RESONANCEPARAMETERSVIEW_H
+#define BITKLAVIER0_RESONANCEPARAMETERSVIEW_H
+
+#include "ResonanceProcessor.h"
+#include "peak_meter_section.h"
+#include "synth_section.h"
+#include "synth_slider.h"
+#include "synth_button.h"
+#include "envelope_section.h"
+#include "OpenGL_AbsoluteKeyboardSlider.h"
+#include "OpenGL_KeymapKeyboard.h"
+
+class ResonanceParametersView : public SynthSection
+{
+public:
+    ResonanceParametersView (chowdsp::PluginState& pluginState, ResonanceParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), sparams_ (params)
+    {
+        // the name that will appear in the UI as the name of the section
+        setName ("resonance");
+
+        // every section needs a LaF
+        //  main settings for this LaF are in assets/default.bitklavierskin
+        //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
+        //  we probably want to merge these in the future, but ok for now
+        setLookAndFeel (DefaultLookAndFeel::instance());
+        setComponentID (name);
+
+        // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
+        // we need to grab the listeners for this preparation here, so we can pass them to components below
+        auto& listeners = pluginState.getParameterListeners();
+
+        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true);
+        addStateModulatedComponent(fundamentalKeyboard.get());
+        fundamentalKeyboard->setName("fundamental");
+        fundamentalKeyboard->setAvailableRange(0, numKeys);
+        fundamentalKeyboard->setOctaveForMiddleC(5);
+
+        fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Held Key/Fundamental");
+        addOpenGlComponent(fundamentalKeyboard_label);
+        fundamentalKeyboard_label->setTextSize (12.0f);
+        fundamentalKeyboard_label->setJustification(juce::Justification::centredBottom);
+
+        closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap, false);
+        addStateModulatedComponent(closestKeyboard.get());
+        closestKeyboard->setName("closest");
+        closestKeyboard->setAvailableRange(0, numKeys);
+        closestKeyboard->setOctaveForMiddleC(5);
+
+        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "Resonant Keys/Partials");
+        addOpenGlComponent(closestKeyboard_label);
+        closestKeyboard_label->setTextSize (12.0f);
+        closestKeyboard_label->setJustification(juce::Justification::centredBottom);
+
+        offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->offsetsKeyboardState);
+        addStateModulatedComponent(offsetsKeyboard.get());
+        offsetsKeyboard->setName("offsets");
+        offsetsKeyboard->setAvailableRange(0, numKeys);
+        offsetsKeyboard->setOctaveForMiddleC(5);
+
+        offsetsKeyboard_label = std::make_shared<PlainTextComponent>("offsets", "Offsets from ET (cents) for Partials");
+        addOpenGlComponent(offsetsKeyboard_label);
+        offsetsKeyboard_label->setTextSize (12.0f);
+        offsetsKeyboard_label->setJustification(juce::Justification::centredBottom);
+
+        gainsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->gainsKeyboardState);
+        addStateModulatedComponent(gainsKeyboard.get());
+        gainsKeyboard->setName("gains");
+        gainsKeyboard->setAvailableRange(0, numKeys);
+        gainsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
+        gainsKeyboard->setOctaveForMiddleC(5);
+
+        gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
+        addOpenGlComponent(gainsKeyboard_label);
+        gainsKeyboard_label->setTextSize (12.0f);
+        gainsKeyboard_label->setJustification(juce::Justification::centredBottom);
+
+        // ADSR
+        envSection = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
+        addSubSection (envSection.get());
+
+        // the level meter and output gain slider (right side of preparation popup)
+        // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
+        levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        levelMeter->setLabel("Main");
+        addSubSection(levelMeter.get());
+
+        // similar for send level meter/slider
+        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
+        sendLevelMeter->setLabel("Send");
+        addSubSection(sendLevelMeter.get());
+    }
+
+    void paintBackground (juce::Graphics& g) override
+    {
+        setLabelFont(g);
+        SynthSection::paintContainer (g);
+        paintHeadingText (g);
+        paintBorder (g);
+        paintKnobShadows (g);
+
+//        drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
+//        drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
+//        drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
+//        drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
+
+        paintChildrenBackgrounds (g);
+    }
+
+    chowdsp::ScopedCallbackList sliderChangedCallback;
+
+    std::unique_ptr<OpenGLKeymapKeyboardComponent> fundamentalKeyboard;
+    std::unique_ptr<OpenGLKeymapKeyboardComponent> closestKeyboard;
+    std::unique_ptr<OpenGLAbsoluteKeyboardSlider> offsetsKeyboard;
+    std::unique_ptr<OpenGLAbsoluteKeyboardSlider> gainsKeyboard;
+    int numKeys = 52;
+
+    std::shared_ptr<PlainTextComponent> fundamentalKeyboard_label;
+    std::shared_ptr<PlainTextComponent> closestKeyboard_label;
+    std::shared_ptr<PlainTextComponent> offsetsKeyboard_label;
+    std::shared_ptr<PlainTextComponent> gainsKeyboard_label;
+
+    std::unique_ptr<EnvelopeSection> envSection;
+
+    // level meters with gain sliders
+    std::shared_ptr<PeakMeterSection> levelMeter;
+    std::shared_ptr<PeakMeterSection> sendLevelMeter;
+
+    ResonanceParams& sparams_;
+
+    void resized() override;
+};
+
+#endif //BITKLAVIER0_RESONANCEPARAMETERSVIEW_H

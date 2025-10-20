@@ -121,6 +121,27 @@ namespace bitklavier {
         return offset + scale * dt_asymwarp(dt_symwarp(inval, sym_k), asym_k);
     }
 
+    /**
+     * for loading std::bitsets for keymaps and so on in deserializers
+     * @param paramAttribute
+     * @return
+     */
+    std::bitset<128> stringToBitset (juce::String paramAttribute)
+    {
+        std::bitset<128> bits;
+        std::istringstream iss (paramAttribute.toStdString());
+        int key;
+
+        while (iss >> key)
+        {
+            if (key >= 0 && key < 128)
+            {
+                bits.set (key);
+            }
+        }
+
+        return bits;
+    }
 
   } // namespace utils
 } // namespace vital

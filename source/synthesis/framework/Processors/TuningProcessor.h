@@ -55,6 +55,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
     double getStaticTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
     void updateLastFrequency(double lastFreq);
+    void setAllAbsoluteOffsets(float val);
 
     juce::MidiKeyboardState keyboardState;
     std::array<std::atomic<float>, 128> absoluteTuningOffset = { 0.f };
@@ -162,7 +163,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     float clusterTimeMS = 0.;
     double lastFrequencyTarget = 440.;
 
-    std::atomic<bool> setFromAudioThread;
+    //std::atomic<bool> setFromAudioThread;
 };
 
 struct TuningParams : chowdsp::ParamHolder

@@ -4,11 +4,11 @@
 
 #ifndef BITKLAVIER2_PLUGINBASE_H
 #define BITKLAVIER2_PLUGINBASE_H
-#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include "Identifiers.h"
-#include "bk_XMLSerializer.h"
 #include "SampleLoadManager.h"
+#include "bk_XMLSerializer.h"
 #include "synth_base.h"
+#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 
 class SynthSection;
 class SynthBase;
@@ -16,33 +16,41 @@ class TuningProcessor;
 class TempoProcessor;
 template <typename T>
 class BKSamplerSound;
-namespace bitklavier {
-    class InternalProcessor : public juce::AudioProcessor {
+namespace bitklavier
+{
+    class InternalProcessor : public juce::AudioProcessor
+    {
     public:
-        InternalProcessor(juce::AudioProcessor::BusesProperties layout,const juce::ValueTree& _v) : juce::AudioProcessor(layout),v(_v) {
+        InternalProcessor (juce::AudioProcessor::BusesProperties layout, const juce::ValueTree& _v) : juce::AudioProcessor (layout), v (_v)
+        {
         }
 
-        InternalProcessor() : juce::AudioProcessor() {
+        InternalProcessor() : juce::AudioProcessor()
+        {
         }
 
-        virtual void setTuning(TuningProcessor *tun) {
+        virtual void setTuning (TuningProcessor* tun)
+        {
             tuning = tun;
         }
 
-        virtual void setTempo(TempoProcessor *tem) {
+        virtual void setTempo (TempoProcessor* tem)
+        {
             tempo = tem;
         }
-        virtual void addSoundSet(
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *s, // main samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *h, // hammer samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *r, // release samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *p) {}// pedal samples;
+        virtual void addSoundSet (
+            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
+            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
+            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
+            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p)
+        {
+        } // pedal samples;
 
         juce::ValueTree v;
 
     protected:
-        TuningProcessor *tuning = nullptr;
-        TempoProcessor *tempo = nullptr;
+        TuningProcessor* tuning = nullptr;
+        TempoProcessor* tempo = nullptr;
     };
 
     /**
@@ -53,20 +61,19 @@ namespace bitklavier {
       * `addParameters`.
      */
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
-    template<class PluginStateType>
+    template <class PluginStateType>
 #else
     template <class Processor>
 #endif
     class PluginBase : public InternalProcessor
 #if JUCE_MODULE_AVAILABLE_chowdsp_clap_extensions
         ,
-                   public CLAPExtensions::CLAPInfoExtensions,
-                   public clap_juce_extensions::clap_juce_audio_processor_capabilities
+                       public CLAPExtensions::CLAPInfoExtensions,
+                       public clap_juce_extensions::clap_juce_audio_processor_capabilities
 #endif
     {
     public:
-        explicit PluginBase(SynthBase &parent, const juce::ValueTree &v , juce::UndoManager *um = nullptr,
-                            const juce::AudioProcessor::BusesProperties &layout = getDefaultBusLayout());
+        explicit PluginBase (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager* um = nullptr, const juce::AudioProcessor::BusesProperties& layout = getDefaultBusLayout());
 
         ~PluginBase() override = default;
 
@@ -77,12 +84,13 @@ namespace bitklavier {
         }
 #else
         const juce::String getName() const override // NOLINT(readability-const-return-type): Needs to return a const juce::String for override compatibility
-    {
-        return juce::String();
-    }
+        {
+            return juce::String();
+        }
 #endif
 
-        bool acceptsMidi() const override {
+        bool acceptsMidi() const override
+        {
             return false;
         }
 
@@ -95,62 +103,66 @@ namespace bitklavier {
 
         int getCurrentProgram() override;
 
-        void setCurrentProgram(int) override;
+        void setCurrentProgram (int) override;
 
-        const juce::String getProgramName(int) override;
+        const juce::String getProgramName (int) override;
 
-        void changeProgramName(int, const juce::String &) override;
+        void changeProgramName (int, const juce::String&) override;
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_presets_v2
         virtual presets::PresetManager& getPresetManager()
-    {
-        return *presetManager;
-    }
+        {
+            return *presetManager;
+        }
 #elif JUCE_MODULE_AVAILABLE_chowdsp_presets
         virtual PresetManager& getPresetManager()
-    {
-        return *presetManager;
-    }
-
-    void setUsePresetManagerForPluginInterface (bool shouldUse)
-    {
-        programAdaptor = shouldUse
-                             ? std::make_unique<ProgramAdapter::PresetsProgramAdapter> (presetManager)
-                             : std::make_unique<ProgramAdapter::BaseProgramAdapter>();
-    }
-#endif
-
-        bool isBusesLayoutSupported(const juce::AudioProcessor::BusesLayout &layouts) const override;
-
-        void prepareToPlay(double sampleRate, int samplesPerBlock) override;
-
-        void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
-
-        void processBlock(juce::AudioBuffer<double> &, juce::MidiBuffer &) override {
+        {
+            return *presetManager;
         }
 
-        virtual void processAudioBlock(juce::AudioBuffer<float> &) = 0;
+        void setUsePresetManagerForPluginInterface (bool shouldUse)
+        {
+            programAdaptor = shouldUse
+                                 ? std::make_unique<ProgramAdapter::PresetsProgramAdapter> (presetManager)
+                                 : std::make_unique<ProgramAdapter::BaseProgramAdapter>();
+        }
+#endif
 
-        bool hasEditor() const override {
+        bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
+
+        void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+
+        void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
+        void processBlock (juce::AudioBuffer<double>&, juce::MidiBuffer&) override
+        {
+        }
+
+        virtual void processAudioBlock (juce::AudioBuffer<float>&) = 0;
+
+        bool hasEditor() const override
+        {
             return true;
         }
 #if JUCE_MODULE_AVAILABLE_foleys_gui_magic
         juce::AudioProcessorEditor* createEditor() override
-    {
-        return new foleys::MagicPluginEditor (magicState);
-    }
+        {
+            return new foleys::MagicPluginEditor (magicState);
+        }
 #endif
 
-        void getStateInformation(juce::MemoryBlock &data) override;
+        void getStateInformation (juce::MemoryBlock& data) override;
 
-        void setStateInformation(const void *data, int sizeInBytes) override;
+        void setStateInformation (const void* data, int sizeInBytes) override;
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
-        auto &getState() {
+        auto& getState()
+        {
             return state;
         }
 
-        const auto &getState() const {
+        const auto& getState() const
+        {
             return state;
         }
 #endif
@@ -159,117 +171,128 @@ namespace bitklavier {
 
         bool supportsParameterModulation() const;
 
-
-
         /**
          * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
          *      from a modification preparation
          *      modulations like this come on an audio channel
          *      this is on a separate bus from the regular audio graph that carries audio between preparations
          */
-        void setupModulationMappings() {
-            auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
-            if (!mod_params.isValid()) {
+        void setupModulationMappings()
+        {
+            auto mod_params = v.getChildWithName (IDs::MODULATABLE_PARAMS);
+            if (!mod_params.isValid())
+            {
                 int mod = 0;
-                mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, nullptr);
-                for (auto param: state.params.modulatableParams) {
-                    juce::ValueTree modChan{IDs::MODULATABLE_PARAM};
-                    juce::String name = std::visit([](auto *p) -> juce::String {
+                mod_params = v.getOrCreateChildWithName (IDs::MODULATABLE_PARAMS, nullptr);
+                for (auto param : state.params.modulatableParams)
+                {
+                    juce::ValueTree modChan { IDs::MODULATABLE_PARAM };
+                    juce::String name = std::visit ([] (auto* p) -> juce::String {
                         return p->paramID; // Works if all types have getParamID()
-                    }, param);
-                    const auto &a = std::visit([](auto *p) -> juce::NormalisableRange<float> {
+                    },
+                        param);
+                    const auto& a = std::visit ([] (auto* p) -> juce::NormalisableRange<float> {
                         return p->getNormalisableRange(); // Works if all types have getParamID()
-                    }, param);
-                    modChan.setProperty(IDs::parameter, name, nullptr);
-                    modChan.setProperty(IDs::channel, mod, nullptr);
-                    modChan.setProperty(IDs::start, a.start, nullptr);
-                    modChan.setProperty(IDs::end, a.end, nullptr);
-                    modChan.setProperty(IDs::skew, a.skew, nullptr);
-                    std::visit([&](auto *p) {
-                        p->setRangeToValueTree(modChan);
-                    }, param);
+                    },
+                        param);
+                    modChan.setProperty (IDs::parameter, name, nullptr);
+                    modChan.setProperty (IDs::channel, mod, nullptr);
+                    modChan.setProperty (IDs::start, a.start, nullptr);
+                    modChan.setProperty (IDs::end, a.end, nullptr);
+                    modChan.setProperty (IDs::skew, a.skew, nullptr);
+                    std::visit ([&] (auto* p) {
+                        p->setRangeToValueTree (modChan);
+                    },
+                        param);
                     // param.modulatable_param = modChan;
-                    mod_params.appendChild(modChan, nullptr);
+                    mod_params.appendChild (modChan, nullptr);
                     mod++;
                 }
             }
-            else {
-                for (auto param: state.params.modulatableParams) {
-                    juce::String name = std::visit([](auto *p) -> juce::String {
+            else
+            {
+                for (auto param : state.params.modulatableParams)
+                {
+                    juce::String name = std::visit ([] (auto* p) -> juce::String {
                         return p->paramID; // Works if all types have getParamID()
-                    }, param);
-                    auto vt = mod_params.getChildWithProperty(IDs::parameter, name);
-                    std::visit([&](auto *p) {
-                        p->setRangeToValueTree(vt);
-                    }, param);
-                    auto val = v.getProperty(name);
-                    std::visit([&](auto *p) {
-                       p->setParameterValue(val);
-                   }, param);
+                    },
+                        param);
+                    auto vt = mod_params.getChildWithProperty (IDs::parameter, name);
+                    std::visit ([&] (auto* p) {
+                        p->setRangeToValueTree (vt);
+                    },
+                        param);
+                    auto val = v.getProperty (name);
+                    std::visit ([&] (auto* p) {
+                        p->setParameterValue (val);
+                    },
+                        param);
                 }
             }
         }
 
-
     protected:
-        SynthBase &parent;
+        SynthBase& parent;
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
         PluginStateType state;
 #else
         using juce::Parameters = chowdsp::Parameters;
-    juce::AudioProcessorValueTreeState vts;
+        juce::AudioProcessorValueTreeState vts;
 
-#if JUCE_MODULE_AVAILABLE_foleys_gui_magic
-    foleys::MagicProcessorState magicState { *this, vts };
-#endif
+    #if JUCE_MODULE_AVAILABLE_foleys_gui_magic
+        foleys::MagicProcessorState magicState { *this, vts };
+    #endif
 #endif
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_presets_v2
         std::unique_ptr<presets::PresetManager> presetManager {};
-    std::unique_ptr<ProgramAdapter::BaseProgramAdapter> programAdaptor = std::make_unique<ProgramAdapter::BaseProgramAdapter>();
+        std::unique_ptr<ProgramAdapter::BaseProgramAdapter> programAdaptor = std::make_unique<ProgramAdapter::BaseProgramAdapter>();
 #elif JUCE_MODULE_AVAILABLE_chowdsp_presets
         std::unique_ptr<PresetManager> presetManager;
-    std::unique_ptr<ProgramAdapter::BaseProgramAdapter> programAdaptor = std::make_unique<ProgramAdapter::PresetsProgramAdapter> (presetManager);
+        std::unique_ptr<ProgramAdapter::BaseProgramAdapter> programAdaptor = std::make_unique<ProgramAdapter::PresetsProgramAdapter> (presetManager);
 #else
-        //std::unique_ptr<chowdsp::ProgramAdapter::BaseProgramAdapter> programAdaptor = std::make_unique<chowdsp::ProgramAdapter::BaseProgramAdapter>();
+            //std::unique_ptr<chowdsp::ProgramAdapter::BaseProgramAdapter> programAdaptor = std::make_unique<chowdsp::ProgramAdapter::BaseProgramAdapter>();
 #endif
 
     private:
         static juce::AudioProcessor::BusesProperties getDefaultBusLayout();
 
-#if ! JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
+#if !JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
         juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-    CHOWDSP_CHECK_HAS_STATIC_METHOD (HasAddParameters, addParameters)
+        CHOWDSP_CHECK_HAS_STATIC_METHOD (HasAddParameters, addParameters)
 #endif
 
     private:
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginBase)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginBase)
     };
 
-    template<class P>
-    juce::AudioProcessor::BusesProperties PluginBase<P>::getDefaultBusLayout() {
+    template <class P>
+    juce::AudioProcessor::BusesProperties PluginBase<P>::getDefaultBusLayout()
+    {
         return BusesProperties()
-                .withInput("Input", juce::AudioChannelSet::stereo(), true)
-                .withOutput("Output", juce::AudioChannelSet::stereo(), true);
+            .withInput ("Input", juce::AudioChannelSet::stereo(), true)
+            .withOutput ("Output", juce::AudioChannelSet::stereo(), true);
     }
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
 
-    template<class State>
-    PluginBase<State>::PluginBase(SynthBase &_parent, const juce::ValueTree &v_, juce::UndoManager *um,
-                                  const juce::AudioProcessor::BusesProperties &layout)
-        : InternalProcessor(layout,v_),
-    parent(_parent),
-          state(*this, v_, um)
-  {
+    template <class State>
+    PluginBase<State>::PluginBase (SynthBase& _parent, const juce::ValueTree& v_, juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout)
+        : InternalProcessor (layout, v_),
+          parent (_parent),
+          state (*this, v_, um)
+    {
         if (v.isValid())
-            chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(v.createXml(), state);
-        createUuidProperty(v);
-        if (!v.hasProperty(IDs::soundset)) {
-            v.setProperty(IDs::soundset, IDs::syncglobal.toString(),nullptr);
-        }else {
-            _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString().toStdString());
+            chowdsp::Serialization::deserialize<bitklavier::XMLSerializer> (v.createXml(), state);
+        createUuidProperty (v);
+        if (!v.hasProperty (IDs::soundset))
+        {
+            v.setProperty (IDs::soundset, IDs::syncglobal.toString(), nullptr);
+        }
+        else
+        {
+            _parent.sampleLoadManager->loadSamples (v.getProperty (IDs::soundset).toString().toStdString());
         }
         /*
      * modulations and state changes
@@ -279,51 +302,56 @@ namespace bitklavier {
     }
 #else
     template <class Processor>
-PluginBase<Processor>::PluginBase (juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout) : juce::AudioProcessor (layout),
-                                                                                                                 vts (*this, um, juce::Identifier ("Parameters"), createParameterLayout())
-{
-}
+    PluginBase<Processor>::PluginBase (juce::UndoManager* um, const juce::AudioProcessor::BusesProperties& layout) : juce::AudioProcessor (layout),
+                                                                                                                     vts (*this, um, juce::Identifier ("Parameters"), createParameterLayout())
+    {
+    }
 
-template <class Processor>
-juce::AudioProcessorValueTreeState::ParameterLayout PluginBase<Processor>::createParameterLayout()
-{
-    juce::Parameters params;
+    template <class Processor>
+    juce::AudioProcessorValueTreeState::ParameterLayout PluginBase<Processor>::createParameterLayout()
+    {
+        juce::Parameters params;
 
-    static_assert (HasAddParameters<Processor>, "Processor class MUST contain a static addParameters function!");
-    Processor::addParameters (params);
+        static_assert (HasAddParameters<Processor>, "Processor class MUST contain a static addParameters function!");
+        Processor::addParameters (params);
 
-    return { params.begin(), params.end() };
-}
+        return { params.begin(), params.end() };
+    }
 #endif
 
-    template<class P>
-    int PluginBase<P>::getNumPrograms() {
-        return 1;
-    }
-
-    template<class P>
-    int PluginBase<P>::getCurrentProgram() {
-        return 1;
-    }
-
-    template<class P>
-    void PluginBase<P>::setCurrentProgram(int index) {
-        return;
-    }
-
-    template<class P>
-    const juce::String PluginBase<P>::getProgramName(int index) // NOLINT(readability-const-return-type): Needs to return a const juce::String for override compatibility
+    template <class P>
+    int PluginBase<P>::getNumPrograms()
     {
-        return juce::String("");
+        return 1;
     }
 
-    template<class P>
-    void PluginBase<P>::changeProgramName(int index, const juce::String &newName) {
+    template <class P>
+    int PluginBase<P>::getCurrentProgram()
+    {
+        return 1;
+    }
+
+    template <class P>
+    void PluginBase<P>::setCurrentProgram (int index)
+    {
         return;
     }
 
-    template<class P>
-    bool PluginBase<P>::isBusesLayoutSupported(const juce::AudioProcessor::BusesLayout &layouts) const {
+    template <class P>
+    const juce::String PluginBase<P>::getProgramName (int index) // NOLINT(readability-const-return-type): Needs to return a const juce::String for override compatibility
+    {
+        return juce::String ("");
+    }
+
+    template <class P>
+    void PluginBase<P>::changeProgramName (int index, const juce::String& newName)
+    {
+        return;
+    }
+
+    template <class P>
+    bool PluginBase<P>::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const
+    {
         // // only supports mono and stereo (for now)
         // if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
         //     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
@@ -336,30 +364,33 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginBase<Processor>::creat
         return true;
     }
 
-    template<class P>
-    void PluginBase<P>::prepareToPlay(double sampleRate, int samplesPerBlock) {
-        setRateAndBufferSizeDetails(sampleRate, samplesPerBlock);
+    template <class P>
+    void PluginBase<P>::prepareToPlay (double sampleRate, int samplesPerBlock)
+    {
+        setRateAndBufferSizeDetails (sampleRate, samplesPerBlock);
 #if JUCE_MODULE_AVAILABLE_foleys_gui_magic
         magicState.prepareToPlay (sampleRate, samplesPerBlock);
 #endif
     }
 
-    template<class P>
-    void PluginBase<P>::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) {
+    template <class P>
+    void PluginBase<P>::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+    {
         juce::ScopedNoDenormals noDenormals;
 
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
         state.getParameterListeners().callAudioThreadBroadcasters();
 #endif
 
-        processAudioBlock(buffer);
+        processAudioBlock (buffer);
     }
 
     // magic number to identify memory blocks that we've stored as XML
     const juce::uint32 magicXmlNumber = 0x21324356;
 #if JUCE_MODULE_AVAILABLE_chowdsp_plugin_state
-    template<class State>
-    void PluginBase<State>::getStateInformation(juce::MemoryBlock &data) {
+    template <class State>
+    void PluginBase<State>::getStateInformation (juce::MemoryBlock& data)
+    {
         //    {
         //        juce::MemoryOutputStream out (data, false);
         //        out.writeInt (magicXmlNumber);
@@ -368,52 +399,55 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginBase<Processor>::creat
         //        out.writeByte (0);
         //    }
 
-        state.serialize(data);
+        state.serialize (data);
     }
 
-    template<class State>
-    void PluginBase<State>::setStateInformation(const void *data, int sizeInBytes) {
-        state.deserialize(juce::MemoryBlock{data, (size_t) sizeInBytes});
+    template <class State>
+    void PluginBase<State>::setStateInformation (const void* data, int sizeInBytes)
+    {
+        state.deserialize (juce::MemoryBlock { data, (size_t) sizeInBytes });
     }
 #else
     template <class Processor>
-void PluginBase<Processor>::getStateInformation (juce::MemoryBlock& data)
-{
-#if JUCE_MODULE_AVAILABLE_foleys_gui_magic
-    magicState.getStateInformation (data);
-#else
-    auto state = vts.copyState();
-    std::unique_ptr<juce::XmlElement> xml (state.createXml());
-    copyXmlToBinary (*xml, data);
-#endif
-}
+    void PluginBase<Processor>::getStateInformation (juce::MemoryBlock& data)
+    {
+    #if JUCE_MODULE_AVAILABLE_foleys_gui_magic
+        magicState.getStateInformation (data);
+    #else
+        auto state = vts.copyState();
+        std::unique_ptr<juce::XmlElement> xml (state.createXml());
+        copyXmlToBinary (*xml, data);
+    #endif
+    }
 
-template <class Processor>
-void PluginBase<Processor>::setStateInformation (const void* data, int sizeInBytes)
-{
-#if JUCE_MODULE_AVAILABLE_foleys_gui_magic
-    magicState.setStateInformation (data, sizeInBytes, getActiveEditor());
-#else
-    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+    template <class Processor>
+    void PluginBase<Processor>::setStateInformation (const void* data, int sizeInBytes)
+    {
+    #if JUCE_MODULE_AVAILABLE_foleys_gui_magic
+        magicState.setStateInformation (data, sizeInBytes, getActiveEditor());
+    #else
+        std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
 
-    if (xmlState != nullptr)
-        if (xmlState->hasTagName (vts.state.getType()))
-            vts.replaceState (juce::ValueTree::fromXml (*xmlState));
-#endif
-}
+        if (xmlState != nullptr)
+            if (xmlState->hasTagName (vts.state.getType()))
+                vts.replaceState (juce::ValueTree::fromXml (*xmlState));
+    #endif
+    }
 #endif
 
-    template<class P>
-    juce::String PluginBase<P>::getWrapperTypeString() const {
+    template <class P>
+    juce::String PluginBase<P>::getWrapperTypeString() const
+    {
 #if JUCE_MODULE_AVAILABLE_chowdsp_clap_extensions
         return CLAPExtensions::CLAPInfoExtensions::getPluginTypeString (wrapperType);
 #else
-        return juce::AudioProcessor::getWrapperTypeDescription(wrapperType);
+        return juce::AudioProcessor::getWrapperTypeDescription (wrapperType);
 #endif
     }
 
-    template<class P>
-    bool PluginBase<P>::supportsParameterModulation() const {
+    template <class P>
+    bool PluginBase<P>::supportsParameterModulation() const
+    {
 #if JUCE_MODULE_AVAILABLE_chowdsp_clap_extensions
         return CLAPExtensions::CLAPInfoExtensions::is_clap;
 #else

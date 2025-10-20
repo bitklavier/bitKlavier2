@@ -6,18 +6,17 @@
 #define OPENGL_ABSOLUTEKEYBOARDSLIDER_H
 #include "../BKComponents/BKTuningKeyboardSlider.h"
 #include "open_gl_image_component.h"
+
 class OpenGLAbsoluteKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
-    OpenGLAbsoluteKeyboardSlider(TuningState& keystate)
-        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, false) {
+    OpenGLAbsoluteKeyboardSlider(TuningState& keystate, bool helperButtons = true)
+        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate, false, false, false) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         setComponentID(IDs::absoluteTuning.toString());
+        useHelperButtons = helperButtons;
     }
-    /**
-     * todo: update all this isModulation/isModulated_ stuff to match what is in OpenGL_TranspositionSlider and elsewhere
-     */
 
     OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state){
 
@@ -107,6 +106,7 @@ public:
     }
 
     TuningState mod_key_state;
+    bool useHelperButtons = true;
 };
 
 class OpenGLCircularKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {

@@ -31,11 +31,10 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
 
+    state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
+    state.params.transpose.transpositionUsesTuning->stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
 
-
-    state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.transpose.transpositionUsesTuning->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    midiNoteTranspositions.ensureStorageAllocated (50);
 
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
@@ -43,24 +42,20 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose",
         &(state.params.transpose.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocityminmax",
-        &(state.params.velocityMinMax.stateChanges)));
-    parent.getStateBank().addParam (std::make_pair<std::string,
-    bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
-    &(state.params.transpose.transpositionUsesTuning->stateChanges)));
-    v.addListener(this);
-    parent.getValueTree().addListener(this);
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
+        &(state.params.transpose.transpositionUsesTuning->stateChanges)));
+    v.addListener (this);
+    parent.getValueTree().addListener (this);
     loadSamples();
 }
-
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
 
     mainSynth->setCurrentPlaybackSampleRate (sampleRate);
-//    gain.prepare (spec);
-//    gain.setRampDurationSeconds (0.05);
+    //    gain.prepare (spec);
+    //    gain.setRampDurationSeconds (0.05);
 
     hammerSynth->setCurrentPlaybackSampleRate (sampleRate);
     releaseResonanceSynth->setCurrentPlaybackSampleRate (sampleRate);
@@ -85,28 +80,21 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
 /*
  * grabs all the TransposeParams values and compiles them into a single array
  * the first slider is always represented, so we always have at least on value to return
- *
- * these operate at the synthesizer level, not the voice level, so need to be passed here
- * and not just looked at by individual voices in the synth
- *
- * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
-juce::Array<float> DirectProcessor::getMidiNoteTranspositions()
+void DirectProcessor::updateMidiNoteTranspositions()
 {
-    juce::Array<float> transps;
+    midiNoteTranspositions.clear();
     auto paramVals = state.params.transpose.getFloatParams();
     int i = 0;
     for (auto const& tp : *paramVals)
     {
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
-            transps.addIfNotAlreadyThere (tp->getCurrentValue());
+            midiNoteTranspositions.addIfNotAlreadyThere (tp->getCurrentValue());
         i++;
     }
 
     // make sure that the first slider is always represented
-    transps.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
-
-    return transps;
+    midiNoteTranspositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
 }
 
 void DirectProcessor::setTuning (TuningProcessor* tun)
@@ -116,7 +104,7 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
     releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
 }
 
-void DirectProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
+void DirectProcessor::processContinuousModulations (juce::AudioBuffer<float>& buffer)
 {
     // this for debugging
     //    auto mod_Bus = getBus(true,1);
@@ -129,15 +117,16 @@ void DirectProcessor::processContinuousModulations(juce::AudioBuffer<float>& buf
     //        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
     //    }
 
-    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
+    const auto& modBus = getBusBuffer (buffer, true, 1); // true = input, bus index 0 = mod
 
     int numInputChannels = modBus.getNumChannels();
-    for (int channel = 0; channel < numInputChannels; ++channel) {
-        const float* in = modBus.getReadPointer(channel);
-        std::visit([in](auto* p)->void
-            {
-                p->applyMonophonicModulation(*in);
-            },  state.params.modulatableParams[channel]);
+    for (int channel = 0; channel < numInputChannels; ++channel)
+    {
+        const float* in = modBus.getReadPointer (channel);
+        std::visit ([in] (auto* p) -> void {
+            p->applyMonophonicModulation (*in);
+        },
+            state.params.modulatableParams[channel]);
     }
 }
 
@@ -163,50 +152,36 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      */
 
     // first, the continuous modulations (simple knobs/sliders...)
-    processContinuousModulations(buffer);
+    processContinuousModulations (buffer);
 
     // then, the state-change modulations, for more complex params
     state.params.transpose.processStateChanges();
-    state.params.velocityMinMax.processStateChanges();
     state.params.transpose.transpositionUsesTuning->processStateChanges();
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();
 
     // update transposition slider values
-    juce::Array<float> updatedTransps = getMidiNoteTranspositions(); // from the Direct transposition slider
+    updateMidiNoteTranspositions();
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples())
     {
         mainSynth->setBypassed (false);
-        mainSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        mainSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
+        mainSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (hammerSynth->hasSamples())
     {
         hammerSynth->setBypassed (false);
-
-        hammerSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->setBypassed (false);
-        releaseResonanceSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
-        releaseResonanceSynth->updateVelocityMinMax (
-            state.params.velocityMinMax.velocityMinParam->getCurrentValue(),
-            state.params.velocityMinMax.velocityMaxParam->getCurrentValue());
-
+        releaseResonanceSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -223,15 +198,21 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * "getChannelIndexInProcessBlockBuffer" will give us the proper channel in buffer to copy the buffer to for the send
      * busIndex is different than channel # because each bus might have a number of channels
      */
+
+    // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
-    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
-    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom (sendBufferIndex, 0, buffer.getReadPointer (0), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom (sendBufferIndex + 1, 0, buffer.getReadPointer (1), buffer.getNumSamples(), sendgainmult);
+
+    // send level meter update
+    std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, buffer.getNumSamples());
+    std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex + 1, 0, buffer.getNumSamples());
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain(0, 0, buffer.getNumSamples(),outputgainmult);
-    buffer.applyGain(1, 0, buffer.getNumSamples(),outputgainmult);
+    buffer.applyGain (0, 0, buffer.getNumSamples(), outputgainmult);
+    buffer.applyGain (1, 0, buffer.getNumSamples(), outputgainmult);
 
     // level meter update stuff
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
@@ -249,7 +230,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      */
     // get last synthesizer state and update things accordingly
     lastSynthState = mainSynth->getSynthesizerState();
-    state.params.velocityMinMax.lastVelocityParam->setParameterValue (lastSynthState.lastVelocity);
     if (tuning != nullptr)
         tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
 }

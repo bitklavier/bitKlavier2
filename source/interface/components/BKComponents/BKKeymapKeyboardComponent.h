@@ -56,8 +56,13 @@ class BKKeymapKeyboardComponent : public StateModulatedComponent,
                                   public juce::Button::Listener,
                                   public juce::ComboBox::Listener {
 public:
-    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state) : StateModulatedComponent(juce::ValueTree{}),
-    keyboard_state_(*keyboard_state), keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard, keyboard_state->keyStates){
+    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state, bool helperButtons = true, bool isMono = false) :
+                  StateModulatedComponent(juce::ValueTree{}),
+                  keyboard_state_(*keyboard_state),
+                  keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard, keyboard_state->keyStates){
+
+        useHelperButtons = helperButtons;
+        isMonophonic = isMono;
 
         minKey = 21; // 21
         maxKey = 108; // 108
@@ -67,60 +72,65 @@ public:
         keyboard_.setScrollButtonsVisible(false);
         keyboard_.setAvailableRange(minKey, maxKey);
         keyboard_.setOctaveForMiddleC(4);
-
-        // keyboard->setAllowDrag(false);
-        // keyboard->doKeysToggle(toggles);
         keyboard_.addMouseListener(this, true);
         addAndMakeVisible(keyboard_);
-        keyboardValsTextField = std::make_unique<juce::TextEditor>();
-        keyboardValsTextField->setMultiLine(true);
-        keyboardValsTextField->setName("KSLIDERTXTEDITALL");
-        keyboardValsTextField->addListener(this);
-        addAndMakeVisible(keyboardValsTextField.get());
-        keyboardValsTextField->setAlpha(0);
-        keyboardValsTextField->toBack();
 
-        keyboardValsTextFieldOpen.setName("KSLIDERTXTEDITALLBUTTON");
-        keyboardValsTextFieldOpen.addListener(this);
-        keyboardValsTextFieldOpen.setButtonText("edit all");
-        keyboardValsTextFieldOpen.setTooltip("click drag on keys to set values by key, or press 'edit all' to edit as text");
-        addAndMakeVisible(keyboardValsTextFieldOpen);
+        if (useHelperButtons)
+        {
+            keyboardValsTextField = std::make_unique<juce::TextEditor>();
+            keyboardValsTextField->setMultiLine(true);
+            keyboardValsTextField->setName("KSLIDERTXTEDITALL");
+            keyboardValsTextField->addListener(this);
+            addAndMakeVisible(keyboardValsTextField.get());
+            keyboardValsTextField->setAlpha(0);
+            keyboardValsTextField->toBack();
 
-        clearButton.setName("KSLIDERCLEAR");
-        clearButton.addListener(this);
-        clearButton.setButtonText("all off");
-        clearButton.setTooltip("clear all selected keys");
-        addAndMakeVisible(clearButton);
+            keyboardValsTextFieldOpen.setName("KSLIDERTXTEDITALLBUTTON");
+            keyboardValsTextFieldOpen.addListener(this);
+            keyboardValsTextFieldOpen.setButtonText("edit all");
+            keyboardValsTextFieldOpen.setTooltip("click drag on keys to set values by key, or press 'edit all' to edit as text");
 
-        allOnButton.setName("KSLIDERALLON");
-        allOnButton.addListener(this);
-        allOnButton.setButtonText("all on");
-        allOnButton.setTooltip("select all");
-        addAndMakeVisible(allOnButton);
+            clearButton.setName("KSLIDERCLEAR");
+            clearButton.addListener(this);
+            clearButton.setButtonText("all off");
+            clearButton.setTooltip("clear all selected keys");
 
-        keysCB.setName("keysCB");
-        keysCB.addListener(this);
-        keysCB.setTooltip("Choose between 'select' or 'deselect' for batch operations (under Keys)");
-        keysCB.addItem("Select", SELECT_ID);
-        keysCB.addItem("Deselect", DESELECT_ID);
-        keysCB.setSelectedId(SELECT_ID);
-        addAndMakeVisible(keysCB);
+            allOnButton.setName("KSLIDERALLON");
+            allOnButton.addListener(this);
+            allOnButton.setButtonText("all on");
+            allOnButton.setTooltip("select all");
 
-        keysButton.setName("KSLIDERKEYSBUTTON");
-        keysButton.addListener(this);
-        keysButton.setButtonText("keys");
-        keysButton.setTooltip("macros for selecting particular keys");
-        addAndMakeVisible(keysButton);
+            keysCB.setName("keysCB");
+            keysCB.addListener(this);
+            keysCB.setTooltip("Choose between 'select' or 'deselect' for batch operations (under Keys)");
+            keysCB.addItem("Select", SELECT_ID);
+            keysCB.addItem("Deselect", DESELECT_ID);
+            keysCB.setSelectedId(SELECT_ID);
 
-        keyboardValsTextField->setInterceptsMouseClicks(false, false);
-        setInterceptsMouseClicks(true, true);
+            keysButton.setName("KSLIDERKEYSBUTTON");
+            keysButton.addListener(this);
+            keysButton.setButtonText("keys");
+            keysButton.setTooltip("macros for selecting particular keys");
 
+            keyboardValsTextField->setInterceptsMouseClicks(false, false);
+            setInterceptsMouseClicks(true, true);
+
+            addAndMakeVisible(keyboardValsTextFieldOpen);
+            addAndMakeVisible(clearButton);
+            addAndMakeVisible(allOnButton);
+            addAndMakeVisible(keysCB);
+            addAndMakeVisible(keysButton);
+        }
     }
 
     ~BKKeymapKeyboardComponent() {
-        keyboardValsTextField->setLookAndFeel(nullptr);
-        keyboardValsTextField->removeListener(this);
-        keyboardValsTextField.reset();
+        if (useHelperButtons)
+        {
+            keyboardValsTextField->setLookAndFeel(nullptr);
+            keyboardValsTextField->removeListener(this);
+            keyboardValsTextField.reset();
+        }
+
         keyboard_.setLookAndFeel(nullptr);
     }
 
@@ -128,6 +138,21 @@ public:
 
     BKKeymapKeyboardComponent* clone () {
         return nullptr;
+    }
+
+    void setAvailableRange(int min, int max)
+    {
+        minKey = min;
+        maxKey = max;
+        keyboardSize = max - min; //
+
+        //all of the above unnecessary?
+        keyboard_.setAvailableRange(minKey, maxKey);
+    }
+
+    void setOctaveForMiddleC(int octaveNum)
+    {
+        keyboard_.setOctaveForMiddleC(octaveNum);
     }
 
     void mouseUp(const juce::MouseEvent &event) override;
@@ -153,24 +178,15 @@ public:
     BKOnOffKeyboardComponent keyboard_;
     juce::TextButton keyboardValsTextFieldOpen;
     std::unique_ptr<juce::TextEditor> keyboardValsTextField;
+    bool isMonophonic = true;
 
     juce::TextButton clearButton;
     juce::TextButton allOnButton;
     juce::TextButton keysButton;
     juce::ComboBox keysCB;
 
-    /*
-     * todo: need
-     *  - Select/Deselect menu
-     *  - Keys menu
-     *  - Clear button
-     *  - Midi Edit (E) toggle
-     *
-     *  and then velocity curves
-     *
-     *  keymap should default to having all keys on
-     */
-
+    // set to false if all the edit, key, clear buttons are not needed
+    bool useHelperButtons = false;
 
     int keyboardSize, minKey, maxKey;
     int lastKeyPressed = -1;

@@ -56,8 +56,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     // we're going to hard-wire the number of envelopes that can be sequenced to 12, like the original bK
     static constexpr int numEnvelopes = 12;
 
-    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    std::vector<ParamPtrVariant> modulatableParams;
+//    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
+//    std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Synchronic Processor
     SynchronicParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("synchronic")
@@ -94,7 +94,6 @@ struct SynchronicParams : chowdsp::ParamHolder
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back ( sliderParam);
         });
-
     }
 
     // primary multislider params
@@ -297,7 +296,7 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
-    std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+    //std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
 
 };
 
@@ -331,6 +330,8 @@ public:
         envelopeCounter = 0;
         shouldPlay = false;
         over = false;
+
+        sustainedNotesTimers.ensureStorageAllocated(50);
     }
 
     ~SynchronicCluster() {}
@@ -466,12 +467,13 @@ public:
 
     bool doPatternSync = false;
 
-    std::map<int, juce::uint64> sustainedNotesTimers; // midinoteNumber, sustained timer value
+    juce::Array<std::tuple<int, juce::uint64>> sustainedNotesTimers;
     inline void incrementSustainedNotesTimers (int numSamples)
     {
         for (auto& tm : sustainedNotesTimers)
         {
-            tm.second += numSamples;
+            //tm.second += numSamples;
+            std::get<1>(tm) += numSamples;
         }
     }
 
@@ -500,9 +502,6 @@ public:
     ~SynchronicProcessor(){        parent.getValueTree().removeListener(this);
 }
 
-
-    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
-
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
@@ -510,12 +509,12 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     bool acceptsMidi() const override { return true; }
 
     void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {
-        DBG("Synchronic addSoundSet called");
         synchronicSynth->addSoundSet (s);
     }
     void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
@@ -567,8 +566,8 @@ public:
             .withOutput("Modulation",   juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",         juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
     }
-    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
 
+    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
@@ -581,7 +580,6 @@ public:
     //bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
     bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
-    void playNote(int channel, int note, float velocity, SynchronicCluster* cluster);
     void removeOldestCluster();
     void removeNewestCluster();
     void rotateClusters();
@@ -603,10 +601,6 @@ public:
     juce::uint64 syncThresholdTimer;
     juce::Array<juce::uint64> holdTimers;
 
-    /**
-     * todo: thread safety issues with this in the old version, need to make sure we aren't reproducing them here
-     */
-//    juce::Array<SynchronicCluster*> clusters;
     /*
      * the `clusters` array holds clusters to manage the 'layers' feature in bK
      *
@@ -643,7 +637,7 @@ public:
      *
      * needed in particular for backwards-playing notes
      */
-    std::map<int, NoteOnSpec> noteOnSpecMap;
+    std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
 
 private:
@@ -661,6 +655,8 @@ private:
     std::unique_ptr<BKSynthesiser> synchronicSynth;
 
     juce::Array<int> slimCluster;       //cluster without repetitions
+    juce::Array<int> clusterNotes;
+    juce::Array<int> tempCluster;
     bool checkClusterMinMax (int clusterNotesSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)

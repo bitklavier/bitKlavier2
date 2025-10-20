@@ -88,9 +88,6 @@ void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g
     g.setColour (c);
     g.fillRect (x, y, w, h);
 
-
-
-
     if (! juce::Colours::dimgrey.isTransparent())
     {
         g.setColour (juce::Colours::dimgrey);
@@ -130,9 +127,8 @@ void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g
             }
         }
     }
-
-
 }
+
 void KeyboardOffsetComponent::drawKeyboardBackground(juce::Graphics & g, juce::Rectangle<float> area) {
        g.fillAll (findColour (whiteNoteColourId));
 
@@ -188,7 +184,8 @@ void KeyboardOffsetComponent::drawKeyboardBackground(juce::Graphics & g, juce::R
         }
     }
 }
-BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningState* state,bool toggles, bool nos,bool isCircular): StateModulatedComponent(juce::ValueTree{}),
+
+BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningState* state, bool toggles, bool nos, bool isCircular): StateModulatedComponent(juce::ValueTree{}),
 needsOctaveSlider(nos),
 ratio(1.0),
 keyboardState(state), isCircular(isCircular)
@@ -196,7 +193,6 @@ keyboardState(state), isCircular(isCircular)
     keyboard = std::make_unique<KeyboardOffsetComponent>(*keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard,isCircular);
 
     addAndMakeVisible (*keyboard);
-
 
     // need slider or other interface for octave change
 
@@ -227,9 +223,6 @@ keyboardState(state), isCircular(isCircular)
     keyboardValueTF.setText(juce::String(keyboard->midRange, displayResolution));
     keyboardValueTF.setName("KSLIDERTXT");
     keyboardValueTF.addListener(this);
-#if JUCE_IOS
-    keyboardValueTF.setReadOnly(true);
-#endif
     addAndMakeVisible(keyboardValueTF);
 
     keyboardValsTextField = std::make_unique<juce::TextEditor>();
@@ -250,9 +243,6 @@ keyboardState(state), isCircular(isCircular)
     keyboardValueTF.addMouseListener(this, true);
 }
 
-
-
-
 void BKTuningKeyboardSlider::resized()
 {
     float heightUnit = getHeight() * 0.1;
@@ -269,29 +259,14 @@ void BKTuningKeyboardSlider::resized()
 
     juce::Rectangle<int> keyboardRect = keymapRow.removeFromBottom(keyboardHeight);
 
-#if JUCE_IOS
-    if (needsOctaveSlider)
-    {
-        float sliderHeight = 15;
-        juce::Rectangle<int> sliderArea = keyboardRect.removeFromTop(sliderHeight);
-        octaveSlider.setBounds(sliderArea);
-    }
-#endif
     keyboard->setBounds(keyboardRect);
 
     juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2*heightUnit + 4));
     keyboardValueTF.setBounds(textSlab.removeFromRight(ratio * widthUnit));
     showName.setBounds(textSlab.removeFromRight(2*ratio*widthUnit));
     keyboardValsTextFieldOpen.setBounds(textSlab.removeFromLeft(ratio*widthUnit*1.5));
-
-#if JUCE_IOS
     keyboardValsTextField->setBounds(keyboard->getBounds());
-    keyboardValsTextField->setSize(keyboard->getWidth() * 0.5f, keyboard->getHeight());
-#else
-    keyboardValsTextField->setBounds(keyboard->getBounds());
-#endif
 }
-
 
 void BKTuningKeyboardSlider::setAvailableRange(int min, int max)
 {
@@ -327,7 +302,7 @@ void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
 
         dragPos = 1. - 2. * dragPos;
         if(dragPos > 0.) dragPos = dragPos * dragPos;
-        else dragPos = -1.* dragPos * dragPos;
+        else dragPos = -1. * dragPos * dragPos;
         DBG("BKTuningKeyboardSlider::mouseDrag dragPos = " + juce::String(dragPos));
 
         float outval;
@@ -337,7 +312,7 @@ void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
         auto val  = std::clamp(outval, keyboard->minRange, keyboard->maxRange);
        // tuningState->setKeyOffset(myNote, dragPos * 50.);
         keyboardValueTF.setText(juce::String(val, displayResolution), juce::dontSendNotification);
-        keyboardState->setKeyOffset(myNote, val,isCircular);
+        keyboardState->setKeyOffset(myNote, val, isCircular);
         if (isCircular)
             listeners.call(&BKTuningKeyboardSlider::Listener::keyboardSliderChanged,
                          "circular");
@@ -355,9 +330,6 @@ void BKTuningKeyboardSlider::mouseUp(const juce::MouseEvent& e)
             keyboardState->setKeyOffset(lastKeyPressed, 0.,isCircular);
         }
     }
-
-
-
     keyboard->repaint();
 }
 
@@ -383,8 +355,6 @@ void BKTuningKeyboardSlider::mouseDown(const juce::MouseEvent& e)
 
 }
 
-
-
 void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 {
     if(textEditor.getName() == keyboardValsTextField->getName())
@@ -403,7 +373,7 @@ void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEd
                 }
             }
 
-        }else {
+        } else {
             auto array = parseIndexValueStringToArrayAbsolute<128>(keyboardValsTextField->getText().toStdString());
             for(int i=0; i<array.size(); i++)
             {
@@ -458,13 +428,11 @@ void BKTuningKeyboardSlider::textEditorFocusLost(juce::TextEditor& textEditor)
     {
         textEditorReturnKeyPressed(textEditor);
     }
-
 }
 
 void BKTuningKeyboardSlider::textEditorTextChanged(juce::TextEditor& tf)
 {
 }
-
 
 void BKTuningKeyboardSlider::buttonClicked (juce::Button* b)
 {
@@ -488,8 +456,6 @@ void BKTuningKeyboardSlider::buttonClicked (juce::Button* b)
         keyboardValsTextField->toFront(true);
 
     }
-
-
 }
 
 void BKTuningKeyboardSlider::setValues(juce::Array<float> newvals)
