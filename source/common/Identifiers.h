@@ -55,7 +55,6 @@ namespace IDs
     DECLARE_ID (midiDeviceId)
     DECLARE_ID (active)
     DECLARE_ID (midiPrefs)
-    DECLARE_ID (mainSampleSet)
 
 
     DECLARE_ID (modulationproc)

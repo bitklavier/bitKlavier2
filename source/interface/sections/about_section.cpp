@@ -38,7 +38,7 @@ AboutSection::AboutSection(const juce::String& name) : Overlay(name), body_(new 
     // logo_ = std::make_unique<AppLogo>("logo");
     //addOpenGlComponent(logo_.get());
 
-    name_text_ = std::make_shared<PlainTextComponent> ("plugin name", "VIAL");
+    name_text_ = std::make_shared<PlainTextComponent> ("plugin name", "bitklavier");
     addOpenGlComponent (name_text_);
     name_text_->setFontType (PlainTextComponent::kRegular);
     name_text_->setTextSize (40.0f);

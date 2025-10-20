@@ -7,6 +7,8 @@
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include "Identifiers.h"
 #include "bk_XMLSerializer.h"
+#include "SampleLoadManager.h"
+#include "synth_base.h"
 
 class SynthSection;
 class SynthBase;
@@ -266,6 +268,8 @@ namespace bitklavier {
         createUuidProperty(v);
         if (!v.hasProperty(IDs::soundset)) {
             v.setProperty(IDs::soundset, IDs::syncglobal.toString(),nullptr);
+        }else {
+            _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString().toStdString());
         }
         /*
      * modulations and state changes

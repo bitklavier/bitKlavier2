@@ -255,8 +255,8 @@ public:
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if (property == IDs::mainSampleSet) {
-            juce::String a = t.getProperty(IDs::mainSampleSet, "");
+        if (property == IDs::soundset) {
+            juce::String a = t.getProperty(IDs::soundset, "");
             addSoundSet(&(*parent.getSamples())[a],
                         &(*parent.getSamples())[a+"Hammers"],
                         &(*parent.getSamples())[a+"ReleaseResonance"],
@@ -268,7 +268,7 @@ public:
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {
             //if global sync read soundset from global valuetree
-            soundset = parent.getValueTree().getProperty(IDs::mainSampleSet, "");
+            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
 
             addSoundSet(&(*parent.getSamples())[soundset],
                      &(*parent.getSamples())[soundset + "Hammers"],

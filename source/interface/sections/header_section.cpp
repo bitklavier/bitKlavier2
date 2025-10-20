@@ -21,6 +21,7 @@
 #include "text_look_and_feel.h"
 #include "load_save.h"
 #include "SampleLoadManager.h"
+#include "synth_base.h"
 
 LogoSection::LogoSection() : SynthSection("logo_section") {
 #if !defined(NO_TEXT_ENTRY)
@@ -96,7 +97,7 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
 
     sampleSelectText->setText("---");
     pianoSelectText->setText(getAllPianoNames().at(0));
-    setAlwaysOnTop(true);
+    // setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
 }
 
@@ -215,7 +216,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
             SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-            _parent->getSampleLoadManager()->loadSamples(selection, true);
+            _parent->getSampleLoadManager()->loadSamples(selection, true, _parent->getSynth()->getValueTree());
             sampleSelectText->setText(_parent->getSampleLoadManager()->getAllSampleSets()[selection]);
             resized();
         });

@@ -522,7 +522,7 @@ public:
         if (t == v && property == IDs::soundset) {
             juce::String soundset = t.getProperty(property, "");
             if (soundset == IDs::syncglobal.toString()) {
-                juce::String a = t.getProperty(IDs::mainSampleSet, "");
+                juce::String a = t.getProperty(IDs::soundset, "");
                 addSoundSet(&(*parent.getSamples())[a]);
             }
             addSoundSet(&(*parent.getSamples())[soundset]);
@@ -531,8 +531,8 @@ public:
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if (property == IDs::mainSampleSet) {
-        juce::String a = t.getProperty(IDs::mainSampleSet, "");
+        if (property == IDs::soundset) {
+        juce::String a = t.getProperty(IDs::soundset, "");
         addSoundSet(&(*parent.getSamples())[a]);
         }
     }

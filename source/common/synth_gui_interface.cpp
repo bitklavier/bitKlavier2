@@ -61,27 +61,29 @@ void SynthGuiInterface::setGuiSize (float scale) {}
 SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (synth)
 
 {
-    if (use_gui)
-    {
-        SynthGuiData synth_data (synth_);
-        gui_ = std::make_unique<FullInterface> (&synth_data, commandManager);
-        // for registering hotkeys etc.
-        commandManager.registerAllCommandsForTarget(this);
-        gallery = synth_data.tree;
-        auto sets = synth->sampleLoadManager->getAllSampleSets();
-        auto it = std::find(sets.begin(), sets.end(), "Default");
-        int defaultIndex = (it != sets.end())
-            ? static_cast<int>(std::distance(sets.begin(), it))
-            : -1;
-        if (defaultIndex >= 0) {
-            synth_->sampleLoadManager->loadSamples(defaultIndex, true);
-            gui_->header_->setSampleSelectText(sets[defaultIndex]);
-        }
-
+    gallery = synth_->getValueTree();
+    auto sets = synth->sampleLoadManager->getAllSampleSets();
+    auto it = std::find(sets.begin(), sets.end(), "Default");
+    int defaultIndex = (it != sets.end())
+        ? static_cast<int>(std::distance(sets.begin(), it))
+        : -1;
+    if (defaultIndex >= 0) {
+        synth_->sampleLoadManager->loadSamples(defaultIndex, true,synth_->getValueTree());
 
     }
+    if (use_gui) {
+        SynthGuiData synth_data (synth_);
+        gui_ = std::make_unique<FullInterface> (&synth_data, commandManager);
+        gui_->showLoadingSection();
+        // for registering hotkeys etc.
+        commandManager.registerAllCommandsForTarget(this);
+        if (defaultIndex >= 0)
+            gui_->header_->setSampleSelectText(sets[defaultIndex]);
+    }
+
 
 }
+
 SampleLoadManager* SynthGuiInterface::getSampleLoadManager() {
     return getSynth()->sampleLoadManager.get();
 }
