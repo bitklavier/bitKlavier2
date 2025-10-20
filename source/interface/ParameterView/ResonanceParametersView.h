@@ -116,7 +116,7 @@ public:
     std::unique_ptr<OpenGLKeymapKeyboardComponent> closestKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> offsetsKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> gainsKeyboard;
-    int numKeys = 52;
+    int numKeys = TotalNumberOfPartialKeysInUI;
 
     std::shared_ptr<PlainTextComponent> fundamentalKeyboard_label;
     std::shared_ptr<PlainTextComponent> closestKeyboard_label;

@@ -1,12 +1,27 @@
-//
-// Created by Joshua Warner on 6/27/24.
-//
+/*
+==============================================================================
+
+Synchronic.h
+      Created: 22 Nov 2016 3:46:45pm
+  Author:  Michael R Mulshine and Dan Trueman
+
+  Completely rewritten by Dan Trueman, 2025
+
+==============================================================================
+*/
 
 #ifndef BITKLAVIER2_SYNCHRONICPROCESSOR_H
 #define BITKLAVIER2_SYNCHRONICPROCESSOR_H
 
 #pragma once
 
+#include <PreparationStateImpl.h>
+#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
+#include <chowdsp_plugin_state/chowdsp_plugin_state.h>
+#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
+#include <chowdsp_serialization/chowdsp_serialization.h>
+#include <chowdsp_sources/chowdsp_sources.h>
+#include <utility>
 #include "ClusterMinMaxParams.h"
 #include "EnvParams.h"
 #include "EnvelopeSequenceParams.h"
@@ -15,21 +30,15 @@
 #include "MultiSliderState.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
+#include "TempoProcessor.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
-#include "TempoProcessor.h"
 #include "buffer_debugger.h"
-#include "utils.h"
 #include "target_types.h"
-#include <PreparationStateImpl.h>
-#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
-#include <chowdsp_plugin_state/chowdsp_plugin_state.h>
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
-#include <chowdsp_serialization/chowdsp_serialization.h>
-#include <chowdsp_sources/chowdsp_sources.h>
-#include <utility>
+#include "utils.h"
 
-enum SynchronicPulseTriggerType {
+enum SynchronicPulseTriggerType
+{
     First_NoteOn = 1 << 0,
     Any_NoteOn = 1 << 1,
     First_NoteOff = 1 << 2,
@@ -37,7 +46,8 @@ enum SynchronicPulseTriggerType {
     Last_NoteOff = 1 << 4,
 };
 
-enum SynchronicClusterTriggerType {
+enum SynchronicClusterTriggerType
+{
     Key_On = 1 << 0,
     Key_Off = 1 << 1,
 };
@@ -56,17 +66,17 @@ struct SynchronicParams : chowdsp::ParamHolder
     // we're going to hard-wire the number of envelopes that can be sequenced to 12, like the original bK
     static constexpr int numEnvelopes = 12;
 
-//    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-//    std::vector<ParamPtrVariant> modulatableParams;
+    //    using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
+    //    std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Synchronic Processor
-    SynchronicParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("synchronic")
+    SynchronicParams(const juce::ValueTree& v) : chowdsp::ParamHolder("synchronic")
     {
-        add (
+        add(
             numPulses,
-            numLayers, // how many independent synchronic layers can we have simultaneously? usually only 1, but...
-            clusterThickness, // SynchronicClusterCap in the old bK; max number of notes in a cluster (different than cluster min/max below)
-            clusterThreshold, // time (ms) between notes (as played) for them to be part of a cluster
+            numLayers,           // how many independent synchronic layers can we have simultaneously? usually only 1, but...
+            clusterThickness,    // SynchronicClusterCap in the old bK; max number of notes in a cluster (different than cluster min/max below)
+            clusterThreshold,    // time (ms) between notes (as played) for them to be part of a cluster
             clusterMinMaxParams, // min/max number of played notes to launch a pulse
             holdTimeMinMaxParams,
             pulseTriggeredBy,
@@ -81,7 +91,8 @@ struct SynchronicParams : chowdsp::ParamHolder
             updateUIState);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
-        doForAllParameters ([this] (auto& param, size_t) {
+        doForAllParameters([this](auto& param, size_t)
+                           {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back ( sliderParam);
@@ -92,8 +103,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-        });
+                    modulatableParams.push_back ( sliderParam); });
     }
 
     // primary multislider params
@@ -120,104 +130,93 @@ struct SynchronicParams : chowdsp::ParamHolder
      *  similar to MultiSliderState for the multisliders
      */
 
-    chowdsp::EnumChoiceParameter<SynchronicPulseTriggerType>::Ptr pulseTriggeredBy {
-        juce::ParameterID { "pulseTriggeredBy", 100 },
+    chowdsp::EnumChoiceParameter<SynchronicPulseTriggerType>::Ptr pulseTriggeredBy{
+        juce::ParameterID{"pulseTriggeredBy", 100},
         "pulse triggered by",
         SynchronicPulseTriggerType::First_NoteOn,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
-    };
+        std::initializer_list<std::pair<char, char>>{{'_', ' '}, {'1', '/'}, {'2', '-'}, {'3', '\''}, {'4', '#'}, {'5', 'b'}}};
 
-    chowdsp::EnumChoiceParameter<SynchronicClusterTriggerType>::Ptr determinesCluster {
-        juce::ParameterID { "determinesCluster", 100 },
+    chowdsp::EnumChoiceParameter<SynchronicClusterTriggerType>::Ptr determinesCluster{
+        juce::ParameterID{"determinesCluster", 100},
         "determines cluster",
         SynchronicClusterTriggerType::Key_On,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
-    };
+        std::initializer_list<std::pair<char, char>>{{'_', ' '}, {'1', '/'}, {'2', '-'}, {'3', '\''}, {'4', '#'}, {'5', 'b'}}};
 
-    chowdsp::BoolParameter::Ptr skipFirst {
-        juce::ParameterID { "skipFirst", 100 },
+    chowdsp::BoolParameter::Ptr skipFirst{
+        juce::ParameterID{"skipFirst", 100},
         "skip first",
-        true
-    };
+        true};
 
     // Transposition Uses Tuning param
-    chowdsp::BoolParameter::Ptr transpositionUsesTuning {
-        juce::ParameterID { "UseTuning", 100 },
+    chowdsp::BoolParameter::Ptr transpositionUsesTuning{
+        juce::ParameterID{"UseTuning", 100},
         "TranspositionUsesTuning",
-        false
-    };
+        false};
 
     // Gain for output send (for blendronic, VSTs, etc...)
-    chowdsp::GainDBParameter::Ptr outputSendGain {
-        juce::ParameterID { "Send", 100 },
+    chowdsp::GainDBParameter::Ptr outputSendGain{
+        juce::ParameterID{"Send", 100},
         "Send",
-        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
-        true
-    };
+        true};
 
     // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
-    chowdsp::GainDBParameter::Ptr outputGain {
-        juce::ParameterID { "OutputGain", 100 },
+    chowdsp::GainDBParameter::Ptr outputGain{
+        juce::ParameterID{"OutputGain", 100},
         "Output Gain",
-        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
-        true
-    };
+        true};
 
     // used internally to notify UI to redraw sliders
-    chowdsp::BoolParameter::Ptr updateUIState {
-        juce::ParameterID { "updateUIState", 100 },
+    chowdsp::BoolParameter::Ptr updateUIState{
+        juce::ParameterID{"updateUIState", 100},
         "updateUIState",
         false,
     };
 
-    chowdsp::FloatParameter::Ptr numPulses {
-        juce::ParameterID { "numPulses", 100 },
+    chowdsp::FloatParameter::Ptr numPulses{
+        juce::ParameterID{"numPulses", 100},
         "pulses",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 100.f, 50.f, 1.f),
+        chowdsp::ParamUtils::createNormalisableRange(1.0f, 100.f, 50.f, 1.f),
         20.f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
-        true
-    };
+        true};
 
-    chowdsp::FloatParameter::Ptr numLayers {
-        juce::ParameterID { "numLayers", 100 },
+    chowdsp::FloatParameter::Ptr numLayers{
+        juce::ParameterID{"numLayers", 100},
         "layers",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
+        chowdsp::ParamUtils::createNormalisableRange(1.0f, 10.f, 5.f, 1.f),
         1.f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
-        true
-    };
+        true};
 
-    chowdsp::FloatParameter::Ptr clusterThickness {
-        juce::ParameterID { "clusterThickness", 100 },
+    chowdsp::FloatParameter::Ptr clusterThickness{
+        juce::ParameterID{"clusterThickness", 100},
         "cluster thickness",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 20.f, 10.f, 1.f),
+        chowdsp::ParamUtils::createNormalisableRange(1.0f, 20.f, 10.f, 1.f),
         8.f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
-        true
-    };
+        true};
 
-    chowdsp::TimeMsParameter::Ptr clusterThreshold {
-        juce::ParameterID { "clusterThreshold", 100 },
+    chowdsp::TimeMsParameter::Ptr clusterThreshold{
+        juce::ParameterID{"clusterThreshold", 100},
         "cluster threshold",
-        chowdsp::ParamUtils::createNormalisableRange (20.0f, 2000.f, 1000.f),
+        chowdsp::ParamUtils::createNormalisableRange(20.0f, 2000.f, 1000.f),
         500.f,
-        true
-    };
+        true};
 
     // passed to BKSynth, applies to noteOn msgs
-    chowdsp::GainDBParameter::Ptr noteOnGain {
-        juce::ParameterID { "noteOnGain", 100 },
+    chowdsp::GainDBParameter::Ptr noteOnGain{
+        juce::ParameterID{"noteOnGain", 100},
         "NoteOn Gain Scalar",
-        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
-        true
-    };
+        true};
 
     // the two min/max params
     ClusterMinMaxParams clusterMinMaxParams;
@@ -234,7 +233,7 @@ struct SynchronicParams : chowdsp::ParamHolder
         for (auto& _ep : *envelopeSequence.getBoolParams())
         {
             //"envelope_10"
-            if(_ep->getParameterID() == "envelope_" + juce::String(which))
+            if (_ep->getParameterID() == "envelope_" + juce::String(which))
             {
                 return _ep->get();
             }
@@ -247,11 +246,11 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     /* Custom serializer */
     template <typename Serializer>
-    static typename Serializer::SerializedType serialize (const SynchronicParams& paramHolder);
+    static typename Serializer::SerializedType serialize(const SynchronicParams& paramHolder);
 
     /* Custom deserializer */
     template <typename Serializer>
-    static void deserialize (typename Serializer::DeserializedType deserial, SynchronicParams& paramHolder);
+    static void deserialize(typename Serializer::DeserializedType deserial, SynchronicParams& paramHolder);
 
     /*
      * processStateChanges() is used to handle state change modifications, including resets. should be called every block
@@ -267,21 +266,20 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
-
         transpositions.processStateChanges();
         accents.processStateChanges();
         sustainLengthMultipliers.processStateChanges();
         beatLengthMultipliers.processStateChanges();
 
         // signal the UI to redraw the sliders
-        if( transpositions.updateUI == true || accents.updateUI == true || sustainLengthMultipliers.updateUI == true || beatLengthMultipliers.updateUI == true)
+        if (transpositions.updateUI == true || accents.updateUI == true || sustainLengthMultipliers.updateUI == true || beatLengthMultipliers.updateUI == true)
         {
             /*
              * need to actually change the value for the listener to get the message
              * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
              * so we switch it everything we one of the sliders gets modded.
              */
-            if(updateUIState->get())
+            if (updateUIState->get())
                 updateUIState->setValueNotifyingHost(false);
             else
                 updateUIState->setValueNotifyingHost(true);
@@ -296,20 +294,18 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
-    //std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
-
+    // std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
 };
 
 struct SynchronicNonParameterState : chowdsp::NonParamState
 {
     SynchronicNonParameterState()
     {
-        addStateValues ({ &prepPoint });
+        addStateValues({&prepPoint});
     }
 
-    chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
+    chowdsp::StateValue<juce::Point<int>> prepPoint{"prep_point", {300, 500}};
 };
-
 
 // ********************************************************************************************* //
 // ************************************  SynchronicCluster  ************************************ //
@@ -323,15 +319,12 @@ struct SynchronicNonParameterState : chowdsp::NonParamState
  */
 class SynchronicCluster
 {
-public:
+   public:
     SynchronicCluster(SynchronicParams* inparams) : _sparams(inparams)
     {
         phasor = 0;
         envelopeCounter = 0;
         shouldPlay = false;
-        over = false;
-
-        sustainedNotesTimers.ensureStorageAllocated(50);
     }
 
     ~SynchronicCluster() {}
@@ -340,7 +333,7 @@ public:
      * increment the timing phasor
      *  - called every block, so numSamples is always the blocksize
      */
-    inline void incrementPhasor (int numSamples)
+    inline void incrementPhasor(int numSamples)
     {
         phasor += numSamples;
     }
@@ -350,27 +343,32 @@ public:
      * we also decrement the timing phasor by the amount of time to the next beat
      * - typically called every beat, so the phasor reset is akin to the counter increments
      */
-    inline void step (juce::uint64 numSamplesBeat)
+    inline void step(juce::uint64 numSamplesBeat)
     {
         // set the phasor back by the number of samples to the next beat
-        //phasor -= numSamplesBeat;
+        // phasor -= numSamplesBeat;
         phasor = 0; // the decrement doesn't make sense to me, why not just set the phasor to 0?
 
         // increment all the counters
-        if (++lengthMultiplierCounter   >= _sparams->sustainLengthMultipliers.sliderVals_size)  lengthMultiplierCounter = 0;
-        if (++accentMultiplierCounter   >= _sparams->accents.sliderVals_size)                   accentMultiplierCounter = 0;
-        if (++transpCounter             >= _sparams->transpositions.sliderVals_size)            transpCounter = 0;
-        if (++envelopeCounter           >= _sparams->numEnvelopes)                              envelopeCounter = 0;
+        if (++lengthMultiplierCounter >= _sparams->sustainLengthMultipliers.sliderVals_size)
+            lengthMultiplierCounter = 0;
+        if (++accentMultiplierCounter >= _sparams->accents.sliderVals_size)
+            accentMultiplierCounter = 0;
+        if (++transpCounter >= _sparams->transpositions.sliderVals_size)
+            transpCounter = 0;
+        if (++envelopeCounter >= _sparams->numEnvelopes)
+            envelopeCounter = 0;
 
         // skip the inactive envelopes
-        while(!_sparams->isEnvelopeActive(envelopeCounter)) //skip untoggled envelopes
+        while (!_sparams->isEnvelopeActive(envelopeCounter)) // skip untoggled envelopes
         {
             envelopeCounter++;
-            if (envelopeCounter >= _sparams->numEnvelopes) envelopeCounter = 0;
+            if (envelopeCounter >= _sparams->numEnvelopes)
+                envelopeCounter = 0;
         }
     }
 
-    inline void postStep ()
+    inline void postStep()
     {
         /*
          * the reason we do this separately from step() is because the length of the beats
@@ -389,12 +387,12 @@ public:
         auto sMode = _sparams->pulseTriggeredBy->get();
         if (beatCounter > 0 || (sMode == Any_NoteOn || sMode == First_NoteOn) || _sparams->skipFirst->get())
         {
-            if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size) beatMultiplierCounter = 0;
+            if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size)
+                beatMultiplierCounter = 0;
         }
 
         if (++beatCounter >= _sparams->numPulses->getCurrentValue())
         {
-            over = true;
             shouldPlay = false;
         }
     }
@@ -414,16 +412,18 @@ public:
         DBG("reset called");
         envelopeCounter = 0;
         shouldPlay = false;
-        over = false;
-
         resetPatternPhase();
         cluster.clearQuick();
     }
 
-    inline juce::Array<int> getCluster() {return cluster;}
+    inline juce::Array<int> getCluster() { return cluster; }
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)  { phasor = c; DBG("resetting beat phasor");}
-    inline const juce::uint64 getPhasor(void) const noexcept   { return phasor; }
+    inline void setBeatPhasor(juce::uint64 c)
+    {
+        phasor = c;
+        DBG("resetting beat phasor");
+    }
+    inline const juce::uint64 getPhasor(void) const noexcept { return phasor; }
 
     inline void addNote(int note)
     {
@@ -446,48 +446,27 @@ public:
         return shouldPlay;
     }
 
-    inline bool getIsOver()
-    {
-        return over;
-    }
+    int beatCounter; // beat (or pulse) counter; max set by users -- sNumBeats
 
-    inline void setIsOver(bool isOver)
-    {
-        over = isOver;
-    }
-
-    int beatCounter;  //beat (or pulse) counter; max set by users -- sNumBeats
-
-    //parameter field counters
-    int beatMultiplierCounter;      //beat length (time between beats) multipliers
-    int accentMultiplierCounter;    //accent multipliers
-    int lengthMultiplierCounter;    //note length (sounding length) multipliers (multiples of 50ms, at least for now)
-    int transpCounter;              //transposition offsets
+    // parameter field counters
+    int beatMultiplierCounter;   // beat length (time between beats) multipliers
+    int accentMultiplierCounter; // accent multipliers
+    int lengthMultiplierCounter; // note length (sounding length) multipliers (multiples of 50ms, at least for now)
+    int transpCounter;           // transposition offsets
     int envelopeCounter;
 
     bool doPatternSync = false;
 
-    juce::Array<std::tuple<int, juce::uint64>> sustainedNotesTimers;
-    inline void incrementSustainedNotesTimers (int numSamples)
-    {
-        for (auto& tm : sustainedNotesTimers)
-        {
-            //tm.second += numSamples;
-            std::get<1>(tm) += numSamples;
-        }
-    }
-
-private:
+   private:
     SynchronicParams* _sparams;
 
     juce::Array<int> cluster;
     juce::uint64 phasor;
 
-    bool shouldPlay, over;
+    bool shouldPlay;
 
     JUCE_LEAK_DETECTOR(SynchronicCluster);
 };
-
 
 // ********************************************************************************************* //
 // ************************************ SynchronicProcessor ************************************ //
@@ -497,30 +476,35 @@ private:
 class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<SynchronicParams, SynchronicNonParameterState>>,
                             public juce::ValueTree::Listener
 {
-public:
+   public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
-    ~SynchronicProcessor(){        parent.getValueTree().removeListener(this);
-}
+    ~SynchronicProcessor()
+    {
+        parent.getValueTree().removeListener(this);
+    }
 
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
-    void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
-    void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processAudioBlock(juce::AudioBuffer<float>& buffer) override {};
+    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processBlockBypassed(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     bool acceptsMidi() const override { return true; }
 
-    void addSoundSet (juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
+    void addSoundSet(juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
     {
-        synchronicSynth->addSoundSet (s);
+        synchronicSynth->addSoundSet(s);
     }
-    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
-        if (t == v && property == IDs::soundset) {
+    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
+    {
+        if (t == v && property == IDs::soundset)
+        {
             juce::String soundset = t.getProperty(property, "");
-            if (soundset == IDs::syncglobal.toString()) {
+            if (soundset == IDs::syncglobal.toString())
+            {
                 juce::String a = t.getProperty(IDs::soundset, "");
                 addSoundSet(&(*parent.getSamples())[a]);
             }
@@ -530,12 +514,13 @@ public:
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if (property == IDs::soundset) {
-        juce::String a = t.getProperty(IDs::soundset, "");
-        addSoundSet(&(*parent.getSamples())[a]);
+        if (property == IDs::soundset)
+        {
+            juce::String a = t.getProperty(IDs::soundset, "");
+            addSoundSet(&(*parent.getSamples())[a]);
         }
     }
-    void setTuning (TuningProcessor*) override;
+    void setTuning(TuningProcessor*) override;
 
     float getBeatThresholdSeconds()
     {
@@ -553,8 +538,8 @@ public:
     juce::AudioProcessor::BusesProperties synchronicBusLayout()
     {
         return BusesProperties()
-            .withOutput("Output",       juce::AudioChannelSet::stereo(), true) // Main Output
-            .withInput ("Input",        juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+            .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
+            .withInput("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
@@ -562,12 +547,12 @@ public:
              *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
              *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
              */
-            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
-            .withOutput("Modulation",   juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
-            .withOutput("Send",         juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
+            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withOutput("Modulation", juce::AudioChannelSet::mono(), false)             // Modulation send channel; disabled for all but Modulation preps!
+            .withOutput("Send", juce::AudioChannelSet::stereo(), true);                 // Send channel (right outputs)
     }
 
-    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
+    bool isBusesLayoutSupported(const juce::AudioProcessor::BusesLayout& layouts) const override;
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
@@ -577,13 +562,11 @@ public:
     void keyPressed(int noteNumber, int velocity, int channel);
     void keyReleased(int noteNumber, int channel);
     void handleMidiTargetMessages(int channel);
-    //bool updateCluster(SynchronicCluster* _cluster, int _noteNumber);
     bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
     void removeOldestCluster();
     void removeNewestCluster();
     void rotateClusters();
-    int findIndexOfCluster(SynchronicCluster* item);
 
     bool holdCheck(int noteNumber);
 
@@ -618,34 +601,34 @@ public:
      * essentially a circular voice-stealing buffer
      *
      */
-    std::array<SynchronicCluster*, MAX_CLUSTERS> clusterLayers;
+
+    std::array<std::unique_ptr<SynchronicCluster>, MAX_CLUSTERS> clusterLayers;
     int currentLayerIndex = 0; // which cluster is most recent
 
-    juce::Array<int> keysDepressed;   //current keys that are depressed
+    juce::Array<int> keysDepressed; // current keys that are depressed
     juce::Array<int> syncKeysDepressed;
     juce::Array<int> clusterKeysDepressed;
     juce::Array<int> patternSyncKeysDepressed;
     juce::Array<juce::uint8> clusterVelocities; // NOT scaled 0-1, as with the old bK
 
-    juce::uint64 numSamplesBeat = 0;    // = beatThresholdSamples * beatMultiplier
-    juce::uint64 beatThresholdSamples;  // # samples in a beat, as set by tempo
+    juce::uint64 numSamplesBeat = 0;   // = beatThresholdSamples * beatMultiplier
+    juce::uint64 beatThresholdSamples; // # samples in a beat, as set by tempo
 
     /*
      * noteOnSpecMap
      * - key      => midiNoteNumber
      * - value    => specs for that key (start time, direction, loop mode)
      *
-     * needed in particular for backwards-playing notes
+     * needed in particular for backwards-playing notes and setting note durations
      */
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
-    juce::Array<float> updatedTransps;
 
-private:
+   private:
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
 
-    bool doCluster = false; // primary Synchronic mode
-    bool doBeatSync = false; // resetting beat phase
-    bool doAddNotes = false; // adding notes to cluster
+    bool doCluster = false;   // primary Synchronic mode
+    bool doBeatSync = false;  // resetting beat phase
+    bool doAddNotes = false;  // adding notes to cluster
     bool doPausePlay = false; // targeting pause/play
     bool doClear = false;
     bool doDeleteOldest = false;
@@ -654,14 +637,11 @@ private:
 
     std::unique_ptr<BKSynthesiser> synchronicSynth;
 
-    juce::Array<int> slimCluster;       //cluster without repetitions
+    juce::Array<int> slimCluster; // cluster without repetitions
     juce::Array<int> clusterNotes;
-    juce::Array<int> tempCluster;
-    bool checkClusterMinMax (int clusterNotesSize);
+    bool checkClusterMinMax(int clusterNotesSize);
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynchronicProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynchronicProcessor)
 };
 
-
-
-#endif //BITKLAVIER2_SYNCHRONICPROCESSOR_H
+#endif // BITKLAVIER2_SYNCHRONICPROCESSOR_H

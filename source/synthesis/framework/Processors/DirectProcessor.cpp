@@ -24,6 +24,11 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         pedalSynth->addVoice (new BKSamplerVoice());
     }
 
+    for (int i = 0; i < MaxMidiNotes; ++i)
+    {
+        noteOnSpecMap[i] = NoteOnSpec{};
+    }
+
     /*
      * these synths play their stuff on noteOff rather than noteOn
      */
@@ -78,23 +83,35 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
 }
 
 /*
- * grabs all the TransposeParams values and compiles them into a single array
- * the first slider is always represented, so we always have at least on value to return
+ * like above, but assigns transpositions to a particular noteOnSpec
  */
-void DirectProcessor::updateMidiNoteTranspositions()
+void DirectProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 {
-    midiNoteTranspositions.clear();
+    noteOnSpecMap[noteOnNumber].transpositions.clear();
     auto paramVals = state.params.transpose.getFloatParams();
     int i = 0;
     for (auto const& tp : *paramVals)
     {
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
-            midiNoteTranspositions.addIfNotAlreadyThere (tp->getCurrentValue());
+            noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (tp->getCurrentValue());
         i++;
     }
 
     // make sure that the first slider is always represented
-    midiNoteTranspositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+}
+
+/*
+ * update them all to the same transpositions.
+ * - since Direct uses the same transpositions, we just have them all set to the same values
+ * - this is different in other preps like Resonance, where individual noteOn msgs will have their own transpositions
+ */
+void DirectProcessor::updateAllMidiNoteTranspositions()
+{
+    for (int i=0; i<MaxMidiNotes; i++)
+    {
+        updateMidiNoteTranspositions(i);
+    }
 }
 
 void DirectProcessor::setTuning (TuningProcessor* tun)
@@ -162,13 +179,18 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     buffer.clear();
 
     // update transposition slider values
-    updateMidiNoteTranspositions();
+    //updateMidiNoteTranspositions();
+    updateAllMidiNoteTranspositions();
+    /**
+     * todo: need to include useTuningForTranspositions in noteOnSpecMap now...
+     *      - in place of synth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
+     */
     bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples())
     {
         mainSynth->setBypassed (false);
-        mainSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
+        mainSynth->setNoteOnSpecMap(noteOnSpecMap);
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -181,7 +203,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->setBypassed (false);
-        releaseResonanceSynth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
+        releaseResonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
