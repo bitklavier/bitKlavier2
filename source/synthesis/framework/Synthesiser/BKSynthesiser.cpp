@@ -351,6 +351,13 @@ void BKSynthesiser::noteOn (const int midiChannel,
     const juce::ScopedLock sl (lock);
 
     /**
+     * if the following is true, then we have a mismatch between noteOnSpec for a
+     * particular noteOn(midiNoteNumber) within the same the same block, which
+     * shouldn't happen for reasonbly small blocks and actual humans
+     */
+    if(midiChannel != noteOnSpecs[midiNoteNumber].channel) return;
+
+    /**
      * mute instruments with gain turned all the way down
      */
     if (synthGain <= -80.f) return;
@@ -362,22 +369,34 @@ void BKSynthesiser::noteOn (const int midiChannel,
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).
     //if(!noteOnSpecs.contains(midiNoteNumber))
-    if(!noteOnSpecs[midiNoteNumber].keyState)
-    {
-        for (auto* voice : voices)
-            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
-                stopVoice (voice, 1.0f, true);
-    }
-    else if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
+//    if(!noteOnSpecs[midiNoteNumber].keyState)
+//    {
+//        for (auto* voice : voices)
+//            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+//                stopVoice (voice, 1.0f, true);
+//    }
+//    else if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
+//    {
+//        /*
+//        * the default behavior is to stop an existing note = midiNoteNumber
+//        *  but in some situations (like Synchronic) this is undesirable
+//        *  so we set the noteOnSpec to false for this
+//        */
+//       for (auto* voice : voices)
+//           if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+//               stopVoice (voice, 1.0f, true);
+//    }
+
+    if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
     {
         /*
         * the default behavior is to stop an existing note = midiNoteNumber
         *  but in some situations (like Synchronic) this is undesirable
         *  so we set the noteOnSpec to false for this
         */
-       for (auto* voice : voices)
-           if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
-               stopVoice (voice, 1.0f, true);
+        for (auto* voice : voices)
+            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+                stopVoice (voice, 1.0f, true);
     }
 
     /**
@@ -445,7 +464,6 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
         voice->setTargetSustainTime(noteOnSpecs[midiNoteNumber].sustainTime);
-        //voice->setAssociatedKey(noteOnSpecs[midiNoteNumber].associatedKey);
 
         if(noteOnSpecs[midiNoteNumber].keyState && noteOnSpecs[midiNoteNumber].channel == midiChannel)
         {
@@ -503,6 +521,8 @@ void BKSynthesiser::noteOff (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
+    if(midiChannel != noteOnSpecs[midiNoteNumber].channel) return;
+
     /**
      * go through all voices that were triggered by this particular midiNoteNumber and turn them off
      * by storing voices as they are played, we can avoid the problem where the transpositions change
@@ -515,7 +535,7 @@ void BKSynthesiser::noteOff (const int midiChannel,
 
         voice->setKeyDown (false);
 
-        if(noteOnSpecs[midiNoteNumber].keyState)
+        if(noteOnSpecs[midiNoteNumber].keyState && noteOnSpecs[midiNoteNumber].channel == midiChannel)
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 
         if (!voice->ignoreNoteOff)

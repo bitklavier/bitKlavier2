@@ -56,7 +56,7 @@ void ResonantString::addString (int midiNote)
  */
 void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& outMidiMessages)
 {
-    if(!active) return;
+    if(!active || stringJustRemoved) return;
 
     for (auto& heldPartialToCheck : _partialStructure)
     {
@@ -112,8 +112,8 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                 /*
                  * make the midi message, play it on the channel for this particular resonant string
                  */
-                auto newmsg = juce::MidiMessage::noteOn (channel, heldPartialKey, static_cast<float>(velocity/128.)); // velocity * partialGain?
-                outMidiMessages.addEvent(newmsg, 0);
+                auto newmsg = juce::MidiMessage::noteOn (channel, heldPartialKey, static_cast<float>(velocity/128.));
+                outMidiMessages.addEvent(newmsg, 1); // put these after the noteOff messages
 
                 /*
                  * add this partial to the array of partial associated with this heldKey that are currently playing
@@ -137,32 +137,12 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
  */
 void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessages)
 {
-    /*
-     * need to figure out how to delay setting this until release time is done. or do we?
-     *
-     * local var:
-     * float releaseTime = 50; //ms; put this in envParams below
-     *
-     * class vars:
-     * bool stringJustRemoved = true;
-     * juce::uint64 timeToMakeInactive = releaseTime * sampleRate/1000.;
-     * juce::uint64 timeSinceRemoved = 0;
-     *
-     * then, in releaseTimeTimer(), called every block if stringJustRemoved = true, increment timeSinceRemoved by numSamples,
-     * and if timeSinceRemove > timeToMakeInactive, set active = false and set string stringJustRemoved = false
-     *
-     * BUT: do we really need to worry about this? what's the worst that could happen? key is released, and while it is ramping
-     * down, this string is activated again as a held note with a different noteOnNumber? and then still in release time another
-     * note is played that rings this string? this would just send noteOn messages on this channel which the synth should be able
-     * to handle, no?
-     *
-     * BUT: the overhead to do this is very small, and given how many noteOffs we might be sending here with all the partials
-     * it's cleaner to wait that short time before releasing this channel, so why not just do it?
-     */
-    // active = false; do this in the timer update
     //DBG("removed string " + juce::String(midiNote) + " on channel " + juce::String(channel));
 
-    // just removed so start the envelope timer
+    if(!active || stringJustRemoved) return;
+
+    // just removed so start the envelope timer; separately (in incrementTimer_seconds)
+    // this string will be made inactive when that time has passed
     stringJustRemoved = true;
     timeSinceRemoved = 0.0f;
     float releaseTime = 0.05f; //in seconds; put this in envParams below
@@ -172,7 +152,7 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
     for (auto pnotes : currentPlayingPartialsFromHeldKey[midiNote])
     {
         _noteOnSpecMap[pnotes].keyState = true; // override the UI controlled envelope and use envParams specified here
-        _noteOnSpecMap[pnotes].envParams = {50.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
+        _noteOnSpecMap[pnotes].envParams = {3.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
         _noteOnSpecMap[pnotes].channel = channel;
 
         //DBG("sending noteOffs for partial " + juce::String(pnotes) + " of held note " + juce::String(midiNote) + " on channel " + juce::String(channel));
@@ -192,7 +172,7 @@ void ResonantString::incrementTimer_seconds(float blockSize_seconds)
             active = false;
             stringJustRemoved = false;
 
-            DBG("string released on channel " + juce::String(channel));
+            //DBG("string released on channel " + juce::String(channel));
         }
     }
 }
@@ -274,14 +254,23 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     /*
      * process incoming MIDI messages, including the target messages
      */
+
+    /*
+     * need to do noteOffs before noteOns, to make sure that keys are released and deactivated
+     * before they might be rung by noteOns in the same block
+     */
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
+        if(message.isNoteOff())
+            keyReleased(message.getNoteNumber(), outMidiMessages);
+    }
 
+    for (auto mi : inMidiMessages)
+    {
+        auto message = mi.getMessage();
         if(message.isNoteOn())
             keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
-        else if(message.isNoteOff())
-            keyReleased(message.getNoteNumber(), outMidiMessages);
     }
 
     /*
@@ -408,14 +397,28 @@ void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity, juce::M
 
 void ResonanceProcessor::addSympStrings(int noteNumber)
 {
-    for (auto& _string : resonantStringsArray)
+    // this first approach will always move forward through the channels, which might be useful
+    // for letting noteOffs resolve and so on, but shouldn't make a difference
+    for (int i = currentHeldKey + 1; i < currentHeldKey + resonantStringsArray.size() + 1; i++)
     {
-        if(!_string->active)
+        if (!resonantStringsArray[i % resonantStringsArray.size()]->active)
         {
-            _string->addString (noteNumber);
+            currentHeldKey = i % resonantStringsArray.size();
+            resonantStringsArray[currentHeldKey]->addString(noteNumber);
             return;
         }
     }
+
+//    // this approach will just find the first inactive string and assign it, so we'll generally
+      // stay down among the first few channels.
+//    for (auto& _string : resonantStringsArray)
+//    {
+//        if(!_string->active)
+//        {
+//            _string->addString (noteNumber);
+//            return;
+//        }
+//    }
     /*
      * todo: figure out what to do in this situation
      */
