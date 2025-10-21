@@ -125,6 +125,15 @@ void BKSynthesiser::setCurrentPlaybackSampleRate (const double newRate)
     }
 }
 
+/*
+ * todo: possibly make a processNextBlock that takes something like a juce::Array<MidiMessageExtended> instead of a MidiBuffer
+ *          which would include all the noteOnSpec information with each noteOn directly, rather than doing it the
+ *          sideways way we are not. Sample accuracy and so on is not crucial in this case, as we'd be using this
+ *          with Synchronic/Nostalgic/Resonance, and not Direct. This would guarantee that all the noteOnSpec
+ *          information is properly associated with relevant noteOn/Off messages in each block, which is basically
+ *          true with the current noteOnSpec setup, but it's just a bit messy.
+ */
+
 template <typename floatType>
 void BKSynthesiser::processNextBlock (juce::AudioBuffer<floatType>& outputAudio,
                                     const juce::MidiBuffer& midiData,

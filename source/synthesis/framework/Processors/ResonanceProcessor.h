@@ -14,8 +14,6 @@
 
 /**
  * Resonance ToDo list:
- * - clicks when attack time is larger than 3ms, say, 50ms, and rapidly changing notes:
- *      -- problem in ADSR?
  * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
  * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
  *      -- for instance, when the 7th partial is "rung" by a key that is ET
@@ -77,6 +75,10 @@
 using PartialSpec = std::tuple<bool, float, float>;     // active, offset from ET in cents, gain
 static constexpr int MaxHeldKeys = 16;                  // currently constrained by number of MIDI channels; might change if we use threaded synth
 static constexpr int TotalNumberOfPartialKeysInUI = 52; //number if keys in UI elements for setting partial structure
+
+//float intervalToRatio(float interval) {
+//    return mtof(interval + 60., 440.) / mtof(60., 440.);
+//}
 
 struct ResonanceParams : chowdsp::ParamHolder
 {
