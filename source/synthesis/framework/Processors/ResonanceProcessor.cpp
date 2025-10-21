@@ -113,22 +113,13 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
             }
         }
     }
-    /*
-     * ok, so better, but we still need to wait until ALL the noteOn messages have been processed, because we will want to add
-     * transpositions for ALL the ring notes to this one noteOn message for this heldKey. Could easily have several notes
-     * ringing this heldNote in one block
-     */
-//    auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, static_cast<float>(velocity/128.));
-//    outMidiMessages.addEvent(newmsg, 0);
-//    auto& cp = currentPlayingPartialsFromHeldKey.getReference(heldKey);
-//    cp.addIfNotAlreadyThere(heldKey);
 }
 
 /**
- * when keys are released, we call removeString to see if this heldKey should been released,
- * and if so, send the appropriate noteOff messages.
- * this should also start a timer of some sort that will set doneRinging to true after
- * the noteOff release time has passed, and release the MIDI channel
+ * when this key is released, we send the appropriate noteOff message that will turn off
+ * ALL the partials associated with this string (handled as transpositions in BKSynth)
+ * and wait for the release time to pass before making this string inactive (and available
+ * for the next addString)
  */
 void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessages)
 {
@@ -143,9 +134,13 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
     float releaseTime = 0.05f; //in seconds; put this in envParams below
     timeToMakeInactive = releaseTime;
 
+    // we want all these partials to be muted quickly, so we don't use the ADSR the user
+    // sees, which might have a long release time for decaying resonant notes
     _noteOnSpecMap[midiNote].keyState = true; // override the UI controlled envelope and use envParams specified here
     _noteOnSpecMap[midiNote].envParams = {50.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
+
     _noteOnSpecMap[midiNote].channel = channel;
+
     auto newmsg = juce::MidiMessage::noteOff (channel, midiNote, 0.0f);
     outMidiMessages.addEvent(newmsg, 0);
 }
@@ -183,6 +178,14 @@ void ResonantString::incrementTimer_seconds(float blockSize_seconds)
     }
 }
 
+/**
+ * since we might receive multiple ringString messages that apply to this
+ * string, we wait until they are all managed and the partials they activate
+ * are added to the transpositions for this string, then we send a single
+ * note on that will activate all of those partials (BKSynth handles the
+ * transpositions, both on and off, internally)
+ * @param outMidiMessages
+ */
 void ResonantString::finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages)
 {
     if(active)
@@ -213,11 +216,9 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
 
     for (size_t i = 0; i < resonantStringsArray.size(); ++i)
     {
-        // Use std::make_unique to safely allocate and store the pointer
         resonantStringsArray[i] = std::make_unique<ResonantString>(&state.params, partialStructure, noteOnSpecMap);
 
-        // Set channel
-        // Note: If you want channel to match index, use the casted size_t 'i'
+        // Set midi channel for each string
         resonantStringsArray[i]->channel = static_cast<int>(i + 1);
     }
 }
@@ -292,9 +293,9 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     }
 
     /*
-     * increment the timers in each resonating string, so they can be made active after they
-     * have been released and their release times have passed, and so they can be made
-     * active after a buffer time has passed
+     * increment the timers in each resonating string, so they can be made inactive after they
+     * have been released and their release times have passed, or so they can be made
+     * active after a buffer time has passed following addString
      *
      * also, finalize note on messages, so that all the activated partials are collected
      * into one message
@@ -421,7 +422,8 @@ void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity, juce::M
 void ResonanceProcessor::addSympStrings(int noteNumber)
 {
     // this first approach will always move forward through the channels, which might be useful
-    // for letting noteOffs resolve and so on, but shouldn't make a difference
+    // for letting noteOffs resolve and so on, but shouldn't make a difference if we've
+    // handled everything correctly
     for (int i = currentHeldKey + 1; i < currentHeldKey + resonantStringsArray.size() + 1; i++)
     {
         if (!resonantStringsArray[i % resonantStringsArray.size()]->active)
@@ -442,9 +444,7 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
 //            return;
 //        }
 //    }
-    /*
-     * todo: figure out what to do in this situation
-     */
+
     DBG("no available string found!");
 }
 
@@ -521,10 +521,6 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
     /*
      * Then the Audio Stuff
-     */
-
-    /*
-     * then the synthesizer process blocks
      */
     if (resonanceSynth->hasSamples())
     {

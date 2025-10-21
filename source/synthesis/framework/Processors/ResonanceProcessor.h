@@ -14,16 +14,9 @@
 
 /**
  * Resonance ToDo list:
- * - rework the noteOn message handling:
- *      -- one noteOn/Off message per resonatingString per block
-
- *      -- go back to processing all the noteOn/Off messages together, rather than noteOffs first
- * - add short "timeToMakeActive" in addString(), akin to "timeToMakeInactive"
- *      -- to prevent simultaneities from ringing each other randomly and causing huge CPU hits
- *      -- make this available to the user, as it's kind of interesting to have it = 0.
- *      -- make it 50ms by default
- *
  * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
+ *      -- perhaps also make it clear that 16 is the max
+ *
  * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
  *      -- for instance, when the 7th partial is "rung" by a key that is ET
  *      -- one idea: we use those to set start time between a user set range, and use velocity as a
@@ -41,11 +34,10 @@
  *          -- the more overlapped they are, the closer to the start time offset the playback starts
  *              - actual start time = (startTime + startTimeRange) - overlap * startTimeRange
  *                                  = startTime + startTimeRange * (1 - overlap)
+ *      -- also: "quickness" or something, a knob that sets timeToMakeActive
+ *
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
- * - figure out how to deal with running out of the 16 ResonantStrings
- *      -- ignore, cap, override, take over oldest?
- *          -- i think just ignore; user needs to release a key before adding a new resonatingString
- * - basic setup like processStateChanges and mods
+ *
  * - create a way to pull up some standard partial structures
  *      -- up to 19 natural overtones
  *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
@@ -59,7 +51,9 @@
  *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
  *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
  *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
+ *
  * - handleMidiTargetMessages, and updates to MidiTarget
+ * - basic setup like processStateChanges and mods
  * - processBlockBypassed
  *
  */
@@ -269,9 +263,6 @@ private:
     std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& _partialStructure;
     std::array<NoteOnSpec, MaxMidiNotes>& _noteOnSpecMap;
     float currentVelocity; // for noteOn message
-
-    // held key is index of outer array, inner array includes all partial currently playing from that associated held key
-    //juce::Array<juce::Array<int>> currentPlayingPartialsFromHeldKey;
 
     JUCE_LEAK_DETECTOR(ResonantString);
 };
