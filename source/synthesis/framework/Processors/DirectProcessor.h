@@ -246,7 +246,7 @@ public:
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if (property == IDs::soundset) {
+        if (property == IDs::soundset && t == parent.getValueTree() ) {
             juce::String a = t.getProperty(IDs::soundset, "");
             addSoundSet(&(*parent.getSamples())[a],
                         &(*parent.getSamples())[a+"Hammers"],

@@ -205,6 +205,8 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         // Note: If you want channel to match index, use the casted size_t 'i'
         resonantStringsArray[i]->channel = static_cast<int>(i + 1);
     }
+    parent.getValueTree().addListener(this);
+    loadSamples();
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

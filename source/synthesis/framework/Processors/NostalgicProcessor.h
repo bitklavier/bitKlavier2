@@ -319,18 +319,42 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
-    void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
-    {
-        // //should add an if check here to make sure its actually the sampleset changing
-        // juce::String a = t.getProperty (IDs::mainSampleSet, "");
-        // juce::String b = t.getProperty (IDs::hammerSampleSet, "");
-        // juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
-        // juce::String d = t.getProperty (IDs::pedalSampleSet, "");
-        // addSoundSet (&(*ptrToSamples)[a],
-        //     &(*ptrToSamples)[b],
-        //     &(*ptrToSamples)[c],
-        //     &(*ptrToSamples)[d]);
+    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
+
+        if (t == v && property == IDs::soundset) {
+            loadSamples();
+            return;
+        }
+        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+            return;
+        if (property == IDs::soundset && t == parent.getValueTree()) {
+            juce::String a = t.getProperty(IDs::soundset, "");
+            addSoundSet(&(*parent.getSamples())[a],
+                        &(*parent.getSamples())[a+"Hammers"],
+                        &(*parent.getSamples())[a+"ReleaseResonance"],
+                        &(*parent.getSamples())[a+"Pedals"]);
+        }
+
     }
+    void loadSamples() {
+        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+        if (soundset == IDs::syncglobal.toString()) {
+            //if global sync read soundset from global valuetree
+            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
+
+            addSoundSet(&(*parent.getSamples())[soundset],
+                     &(*parent.getSamples())[soundset + "Hammers"],
+                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                     &(*parent.getSamples())[soundset + "Pedals"]);
+        }else {
+            //otherwise set the piano
+            addSoundSet(&(*parent.getSamples())[soundset],
+                        &(*parent.getSamples())[soundset + "Hammers"],
+                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                        &(*parent.getSamples())[soundset + "Pedals"]);
+        }
+    }
+
 
     bool holdCheck(int noteNumber);
 

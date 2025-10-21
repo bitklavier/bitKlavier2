@@ -40,6 +40,8 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
     for (int i = 0; i < 128; i++){
         holdTimers.add(0);
     }
+    parent.getValueTree().addListener(this);
+    loadSamples();
 }
 
 void NostalgicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

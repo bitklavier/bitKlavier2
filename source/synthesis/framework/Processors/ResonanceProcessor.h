@@ -314,7 +314,42 @@ public:
         DBG("Resonance addSoundSet called");
         resonanceSynth->addSoundSet (s);
     }
+    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
+    {
+        if (t == v && property == IDs::soundset)
+        {
+            juce::String soundset = t.getProperty(property, "");
+            if (soundset == IDs::syncglobal.toString())
+            {
+                juce::String a = t.getProperty(IDs::soundset, "");
+                addSoundSet(&(*parent.getSamples())[a]);
+            }
+            addSoundSet(&(*parent.getSamples())[soundset]);
 
+            return;
+        }
+        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+            return;
+        if (property == IDs::soundset && t == parent.getValueTree())
+        {
+            juce::String a = t.getProperty(IDs::soundset, "");
+            addSoundSet(&(*parent.getSamples())[a]);
+        }
+    }
+    void loadSamples() {
+        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+        if (soundset == IDs::syncglobal.toString()) {
+            //if global sync read soundset from global valuetree
+            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
+
+            addSoundSet(&(*parent.getSamples())[soundset]);
+
+        }else {
+            //otherwise set the piano
+            addSoundSet(&(*parent.getSamples())[soundset]);
+
+        }
+    }
 private:
     std::unique_ptr<BKSynthesiser> resonanceSynth;
 

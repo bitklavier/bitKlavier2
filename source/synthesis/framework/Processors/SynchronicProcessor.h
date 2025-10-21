@@ -514,10 +514,24 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if (property == IDs::soundset)
+        if (property == IDs::soundset && t == parent.getValueTree())
         {
             juce::String a = t.getProperty(IDs::soundset, "");
             addSoundSet(&(*parent.getSamples())[a]);
+        }
+    }
+    void loadSamples() {
+        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+        if (soundset == IDs::syncglobal.toString()) {
+            //if global sync read soundset from global valuetree
+            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
+
+            addSoundSet(&(*parent.getSamples())[soundset]);
+
+        }else {
+            //otherwise set the piano
+            addSoundSet(&(*parent.getSamples())[soundset]);
+
         }
     }
     void setTuning(TuningProcessor*) override;

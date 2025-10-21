@@ -7,7 +7,7 @@
 #include "common.h"
 #include "synth_base.h"
 
-KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& v) : PluginBase (
+KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (
                                                                                      parent,
                                                                                      vt,
                                                                                      nullptr,
