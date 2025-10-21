@@ -347,6 +347,7 @@ class SynchronicCluster
     {
         // set the phasor back by the number of samples to the next beat
         // phasor -= numSamplesBeat;
+        // phasor -= numSamplesBeat;
         phasor = 0; // the decrement doesn't make sense to me, why not just set the phasor to 0?
 
         // increment all the counters
@@ -514,7 +515,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if (property == IDs::soundset && t == parent.getValueTree())
+        if (property == IDs::soundset)
         {
             juce::String a = t.getProperty(IDs::soundset, "");
             addSoundSet(&(*parent.getSamples())[a]);
