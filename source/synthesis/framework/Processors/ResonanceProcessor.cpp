@@ -31,22 +31,17 @@ ResonantString::ResonantString(
 {
     heldKey = 0;
     active = false;
-
-    for (int i = 0; i < MaxMidiNotes; ++i)
-    {
-        currentPlayingPartialsFromHeldKey.add(juce::Array<int>{});
-        juce::Array<int>& internalArray = currentPlayingPartialsFromHeldKey.getReference(i);
-        internalArray.ensureStorageAllocated(MaxMidiNotes);
-    }
 }
 
 /**
- * when a key is pressed, call initialize string to setup the partials
+ * when a key is pressed, set the midiNote and start the timer to activate
+ * - wait a small buffer time to avoid pileup during simultaneities
  */
 void ResonantString::addString (int midiNote)
 {
     heldKey = midiNote;
-    active = true;
+    stringJustAdded = true;
+    timeSinceAdded = 0.0f;
     //DBG("added sympathetic string, channel = " + juce::String(channel));
 }
 
@@ -88,13 +83,14 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                 float heldPartialGain   = std::get<2>(heldPartialToCheck);
                 float struckPartialOffset = struckPartial - static_cast<float>(struckPartialKey);
                 float struckPartialGain   = std::get<2>(struckPartialToCheck);
+                currentVelocity = static_cast<float>(velocity/128.);
 
                 /*
                  * add the held key offset for this partialKey to the transpositions
                  *  - we may have more than one partial attached to this key, with different offsets
                  *  - but we also don't want to add duplicates, so only add if not already there
                  */
-                //_noteOnSpecMap[heldPartialKey].transpositions.addIfNotAlreadyThere(heldPartialOffset);
+
                 _noteOnSpecMap[heldKey].transpositions.addIfNotAlreadyThere(std::get<1>(heldPartialToCheck));
                 /*
                  * then here, if addIfNotAlreadyThere returns true, had a gain value to transpositionGains
@@ -109,36 +105,11 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                  * - setting the release time will be crucial for how it all sounds (and the CPU load), since that is in addition to the sustain time here
                  * - channel is important for disambiguating from other held strings
                  */
-                _noteOnSpecMap[heldPartialKey].channel = channel;
-                _noteOnSpecMap[heldPartialKey].startTime = 400;      // ms
-                _noteOnSpecMap[heldPartialKey].sustainTime = 2000;   // ms
-                _noteOnSpecMap[heldPartialKey].stopSameCurrentNote = true;
-
                 _noteOnSpecMap[heldKey].channel = channel;
                 _noteOnSpecMap[heldKey].startTime = 400;      // ms
                 _noteOnSpecMap[heldKey].sustainTime = 2000;   // ms
-                _noteOnSpecMap[heldKey].stopSameCurrentNote = true;
+                _noteOnSpecMap[heldKey].stopSameCurrentNote = true; // ???
                 //DBG("playing partial associated with held key" + juce::String(heldPartialOffset) + " for " + juce::String(heldPartial));
-
-                /*
-                 * make the midi message, play it on the channel for this particular resonant string
-                 */
-                /**
-                 * todo: could instead add these to the noteOneSpecMap.transpositions array and send a single noteOn, and similar for noteOff?
-                 *          will need a noteOnSpecMap.transpositionGains as well then...
-                 */
-//                auto newmsg = juce::MidiMessage::noteOn (channel, heldPartialKey, static_cast<float>(velocity/128.));
-//                outMidiMessages.addEvent(newmsg, 32); // put these after the noteOff messages
-
-                /*
-                 * add this partial to the array of partial associated with this heldKey that are currently playing
-                 * - for noteOffs when the heldKey is released
-                 */
-//                auto& cp = currentPlayingPartialsFromHeldKey.getReference(heldKey);
-//                cp.addIfNotAlreadyThere(heldPartialKey);
-
-                //DBG("found overlap of partials, play resonance here: " + juce::String(struckPartial) + " at key " + juce::String(heldPartialKey) + " with offset " + juce::String(heldPartialOffset));
-
             }
         }
     }
@@ -147,8 +118,8 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
      * transpositions for ALL the ring notes to this one noteOn message for this heldKey. Could easily have several notes
      * ringing this heldNote in one block
      */
-    auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, static_cast<float>(velocity/128.));
-    outMidiMessages.addEvent(newmsg, 32); // put these after the noteOff messages
+//    auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, static_cast<float>(velocity/128.));
+//    outMidiMessages.addEvent(newmsg, 0);
 //    auto& cp = currentPlayingPartialsFromHeldKey.getReference(heldKey);
 //    cp.addIfNotAlreadyThere(heldKey);
 }
@@ -163,7 +134,7 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
 {
     //DBG("removed string " + juce::String(midiNote) + " on channel " + juce::String(channel));
 
-    if(!active || stringJustRemoved) return;
+    if((!active && !stringJustAdded) || stringJustRemoved) return;
 
     // just removed so start the envelope timer; separately (in incrementTimer_seconds)
     // this string will be made inactive when that time has passed
@@ -172,26 +143,19 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
     float releaseTime = 0.05f; //in seconds; put this in envParams below
     timeToMakeInactive = releaseTime;
 
-            _noteOnSpecMap[midiNote].keyState = true; // override the UI controlled envelope and use envParams specified here
-            _noteOnSpecMap[midiNote].envParams = {3.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
-            _noteOnSpecMap[midiNote].channel = channel;
+    _noteOnSpecMap[midiNote].keyState = true; // override the UI controlled envelope and use envParams specified here
+    _noteOnSpecMap[midiNote].envParams = {50.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
+    _noteOnSpecMap[midiNote].channel = channel;
     auto newmsg = juce::MidiMessage::noteOff (channel, midiNote, 0.0f);
     outMidiMessages.addEvent(newmsg, 0);
-
-//    // read through currentPlayingPartialsFromHeldKey and send noteOffs for each
-//    for (auto pnotes : currentPlayingPartialsFromHeldKey[midiNote])
-//    {
-//        _noteOnSpecMap[pnotes].keyState = true; // override the UI controlled envelope and use envParams specified here
-//        _noteOnSpecMap[pnotes].envParams = {3.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
-//        _noteOnSpecMap[pnotes].channel = channel;
-//
-//        //DBG("sending noteOffs for partial " + juce::String(pnotes) + " of held note " + juce::String(midiNote) + " on channel " + juce::String(channel));
-//        auto newmsg = juce::MidiMessage::noteOff (channel, pnotes, 0.0f);
-//        outMidiMessages.addEvent(newmsg, 0);
-//    }
-//    currentPlayingPartialsFromHeldKey.set(midiNote, {});
 }
 
+/**
+ * increment timers for activating and deactivating this resonant string
+ * dependent on release time in envelope, and a buffer time
+ * for simultaneous attacks (timeToMakeActive)
+ * @param blockSize_seconds
+ */
 void ResonantString::incrementTimer_seconds(float blockSize_seconds)
 {
     if (stringJustRemoved)
@@ -204,6 +168,27 @@ void ResonantString::incrementTimer_seconds(float blockSize_seconds)
 
             //DBG("string released on channel " + juce::String(channel));
         }
+    }
+
+    if (stringJustAdded)
+    {
+        timeSinceAdded += blockSize_seconds;
+        if (timeSinceAdded > timeToMakeActive)
+        {
+            active = true;
+            stringJustAdded = false;
+
+            //DBG("string added on channel " + juce::String(channel));
+        }
+    }
+}
+
+void ResonantString::finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages)
+{
+    if(active)
+    {
+        auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, currentVelocity);
+        outMidiMessages.addEvent (newmsg, 32);
     }
 }
 
@@ -287,11 +272,14 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
     /*
      * need to do noteOffs before noteOns, to make sure that keys are released and deactivated
-     * before they might be rung by noteOns in the same block
+     * before they might be rung by noteOns in the same block. we seem to get some occasional
+     * hung notes if we don't do this
      */
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
+//        if(message.isNoteOn())
+//            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
         if(message.isNoteOff())
             keyReleased(message.getNoteNumber(), outMidiMessages);
     }
@@ -305,17 +293,17 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
     /*
      * increment the timers in each resonating string, so they can be made active after they
-     * have been released and their release times have passed.
+     * have been released and their release times have passed, and so they can be made
+     * active after a buffer time has passed
+     *
+     * also, finalize note on messages, so that all the activated partials are collected
+     * into one message
      */
     float blockTime_seconds = static_cast<float>(numSamples) / getSampleRate();
     for (auto& rstring: resonantStringsArray)
     {
-        /*
-         * add midi messages to outMidiMessages here. each held string
-         * should have values in its transposition arrays for every rung note
-         * currentPlayNotes should NOT be cut off, i think
-         */
         rstring->incrementTimer_seconds(blockTime_seconds);
+        rstring->finalizeNoteOnMessage(outMidiMessages);
     }
 
     updatePartialStructure();

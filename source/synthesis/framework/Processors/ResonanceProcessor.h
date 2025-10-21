@@ -14,12 +14,22 @@
 
 /**
  * Resonance ToDo list:
+ * - rework the noteOn message handling:
+ *      -- one noteOn/Off message per resonatingString per block
+
+ *      -- go back to processing all the noteOn/Off messages together, rather than noteOffs first
+ * - add short "timeToMakeActive" in addString(), akin to "timeToMakeInactive"
+ *      -- to prevent simultaneities from ringing each other randomly and causing huge CPU hits
+ *      -- make this available to the user, as it's kind of interesting to have it = 0.
+ *      -- make it 50ms by default
+ *
  * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
  * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
  *      -- for instance, when the 7th partial is "rung" by a key that is ET
  *      -- one idea: we use those to set start time between a user set range, and use velocity as a
  *                  general gain scalar separately, on top of that.
  *                  - so this would mean adding a range slider to the UI
+ *      -- will need to add transpositionGains to noteOnSpec
  * - or, how about the following single knob params:
  *      -- start time offset (ms), sets "startTime"
  *      -- ring duration (ms), sets "sustainTime"
@@ -34,11 +44,8 @@
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - figure out how to deal with running out of the 16 ResonantStrings
  *      -- ignore, cap, override, take over oldest?
- * - does currentPlayingPartialsFromHeldKey need to be a 2D array?
- *      -- now that ALL the playing notes are associated with heldKey in this class?
- *      -- it looks like we don't need 2d, and don't even need to pass midiNoteNumber to removeString()
+ *          -- i think just ignore; user needs to release a key before adding a new resonatingString
  * - basic setup like processStateChanges and mods
- * - figure out how to handle a situation where the number of heldKeys tries to exceed 16
  * - create a way to pull up some standard partial structures
  *      -- up to 19 natural overtones
  *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
@@ -236,6 +243,7 @@ public:
     void ringString(int midiNote, int velocity, juce::MidiBuffer& outMidiMessages);
     void removeString (int midiNote, juce::MidiBuffer& outMidiMessages);
     void incrementTimer_seconds(float blockSize_seconds);
+    void finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages);
 
     int heldKey = 0;                // MIDI note value for the key that is being held down
     int channel = 1;                // MIDI channel for this held note
@@ -244,6 +252,10 @@ public:
     bool stringJustRemoved = false;     // set to true when removeString is called, to start timer to release after release time has passed
     float timeToMakeInactive;           // set this to releaseTime when removeString is called, in seconds
     float timeSinceRemoved = 0.0f;      // increment this every block if stringJustRemoved == true, in seconds
+
+    bool stringJustAdded = false;       // set to true when addString is called, to start timer and activate after timeToMakeActive has passed
+    float timeToMakeActive = .05f;      // how much time to pass before making active; 50ms by default, but expose to user
+    float timeSinceAdded = 0.0f;        // increment this every block if stringJustAdded = true;
 
 private:
     ResonanceParams* _rparams;
@@ -256,9 +268,10 @@ private:
      */
     std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& _partialStructure;
     std::array<NoteOnSpec, MaxMidiNotes>& _noteOnSpecMap;
+    float currentVelocity; // for noteOn message
 
     // held key is index of outer array, inner array includes all partial currently playing from that associated held key
-    juce::Array<juce::Array<int>> currentPlayingPartialsFromHeldKey;
+    //juce::Array<juce::Array<int>> currentPlayingPartialsFromHeldKey;
 
     JUCE_LEAK_DETECTOR(ResonantString);
 };
