@@ -14,10 +14,13 @@
 #include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "OpenGL_KeymapKeyboard.h"
 
-class ResonanceParametersView : public SynthSection
+class ResonanceParametersView : public SynthSection, juce::Timer, BKKeymapKeyboardComponent::Listener
 {
 public:
-    ResonanceParametersView (chowdsp::PluginState& pluginState, ResonanceParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), sparams_ (params)
+    ResonanceParametersView (chowdsp::PluginState& pluginState,
+        ResonanceParams& params,
+        juce::String name,
+        OpenGlWrapper* open_gl) : SynthSection (""), sparams_ (params)
     {
         // the name that will appear in the UI as the name of the section
         setName ("resonance");
@@ -54,6 +57,11 @@ public:
         addOpenGlComponent(closestKeyboard_label);
         closestKeyboard_label->setTextSize (12.0f);
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
+
+        heldKeysKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.heldKeymap, false);
+        addStateModulatedComponent(heldKeysKeyboard.get());
+        heldKeysKeyboard->setName("heldKeys");
+        heldKeysKeyboard->addMyListener(this);
 
         offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->offsetsKeyboardState);
         addStateModulatedComponent(offsetsKeyboard.get());
@@ -92,6 +100,13 @@ public:
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
+
+        startTimer(50);
+    }
+
+    ~ResonanceParametersView()
+    {
+        stopTimer();
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -110,10 +125,17 @@ public:
         paintChildrenBackgrounds (g);
     }
 
+    void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey) override
+    {
+        DBG("BKKeymapKeyboardChanged called in ResonanceParametersView " + juce::String(lastKey));
+        sparams_.heldKeymap_changedInUI = lastKey; // notify processor that the held keymap has changed vai the UI
+    }
+
     chowdsp::ScopedCallbackList sliderChangedCallback;
 
     std::unique_ptr<OpenGLKeymapKeyboardComponent> fundamentalKeyboard;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> closestKeyboard;
+    std::unique_ptr<OpenGLKeymapKeyboardComponent> heldKeysKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> offsetsKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> gainsKeyboard;
     int numKeys = TotalNumberOfPartialKeysInUI;
@@ -130,6 +152,8 @@ public:
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     ResonanceParams& sparams_;
+
+    void timerCallback(void) override;
 
     void resized() override;
 };

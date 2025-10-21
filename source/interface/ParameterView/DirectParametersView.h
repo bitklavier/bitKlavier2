@@ -51,6 +51,7 @@ public:
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setShowPopupOnHover(true);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
 

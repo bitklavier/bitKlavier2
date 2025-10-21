@@ -8,10 +8,11 @@
 
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 
-class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent> {
+class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent>, BKKeymapKeyboardComponent::Listener {
 public:
-    OpenGLKeymapKeyboardComponent(KeymapKeyboardState & params, bool helperButtons = true, bool isMono = false) :
-        OpenGlAutoImageComponent (&params, helperButtons, isMono) {
+    OpenGLKeymapKeyboardComponent(KeymapKeyboardState& params, bool helperButtons = true, bool isMono = false) :
+        OpenGlAutoImageComponent (&params, helperButtons, isMono), _params(params)
+    {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
@@ -29,6 +30,11 @@ public:
         redoImage();
     }
 
+    void mouseDown(const juce::MouseEvent &e) override {
+        OpenGlAutoImageComponent::mouseDown(e);
+        redoImage();
+    }
+
     void mouseMove(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseMove(e);
         redoImage();
@@ -38,6 +44,7 @@ public:
         OpenGlAutoImageComponent::buttonClicked(b);
         redoImage();
     }
+
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
         OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
         redoImage();
@@ -57,6 +64,10 @@ public:
         OpenGlAutoImageComponent::textEditorTextChanged(textEditor);
         redoImage();
     }
+
+    virtual void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey) override {}
+
+    KeymapKeyboardState& _params;
 };
 
 #endif //BITKLAVIER0_OPENGL_KEYMAPKEYBOARD_H

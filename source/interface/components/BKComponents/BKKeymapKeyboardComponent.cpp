@@ -60,6 +60,11 @@ void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
             }
             else
                 keyboard_state_.keyStates.flip(lastKeyPressed);
+
+            listeners.call(&BKKeymapKeyboardComponent::Listener::BKKeymapKeyboardChanged,
+                getName(),
+                keyboard_state_.keyStates,
+                lastKeyPressed);
         }
     }
 }
@@ -83,6 +88,11 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
                 }
                 else
                     keyboard_state_.keyStates.flip(lastKeyPressed);
+
+                listeners.call(&BKKeymapKeyboardComponent::Listener::BKKeymapKeyboardChanged,
+                    getName(),
+                    keyboard_state_.keyStates,
+                    lastKeyPressed);
             }
         }
     }

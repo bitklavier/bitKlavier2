@@ -362,7 +362,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * if the following is true, then we have a mismatch between noteOnSpec for a
      * particular noteOn(midiNoteNumber) within the same the same block, which
-     * shouldn't happen for reasonbly small blocks and actual humans
+     * shouldn't happen for reasonably small blocks and actual humans
      */
     if(midiChannel != noteOnSpecs[midiNoteNumber].channel) return;
 

@@ -267,6 +267,21 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         spec.clear();
     }
 
+    // check UI for updates to held keys
+    if (state.params.heldKeymap_changedInUI)
+    {
+        if (state.params.heldKeymap.keyStates.test(state.params.heldKeymap_changedInUI))
+        {
+            addSympStrings(state.params.heldKeymap_changedInUI);
+        }
+        else
+        {
+            keyReleased(state.params.heldKeymap_changedInUI, outMidiMessages);
+        }
+
+        state.params.heldKeymap_changedInUI = 0;
+    }
+
     /*
      * process incoming MIDI messages, including the target messages
      */
@@ -461,6 +476,7 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, j
     {
         // then, add this new string and its partials to the currently available sympathetic strings
         addSympStrings(noteNumber);
+        state.params.heldKeymap.keyStates.set(noteNumber, true);
     }
 }
 
@@ -473,6 +489,7 @@ void ResonanceProcessor::keyReleased(int noteNumber, juce::MidiBuffer& outMidiMe
             if(_string->heldKey == noteNumber)
                 _string->removeString (noteNumber, outMidiMessages);
         }
+        state.params.heldKeymap.keyStates.set(noteNumber, false);
     }
     if (doRing) {}
 }
@@ -581,6 +598,7 @@ typename Serializer::SerializedType ResonanceParams::serialize (const ResonanceP
 
     Serializer::template addChildElement<128> (ser, "fundamental", paramHolder.fundamentalKeymap.keyStates, getOnKeyString);
     Serializer::template addChildElement<128> (ser, "partials", paramHolder.closestKeymap.keyStates, getOnKeyString);
+    Serializer::template addChildElement<128> (ser, "heldKeys", paramHolder.heldKeymap.keyStates, getOnKeyString);
 
     return ser;
 }
@@ -604,6 +622,7 @@ void ResonanceParams::deserialize (typename Serializer::DeserializedType deseria
 
     paramHolder.fundamentalKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("fundamental"));
     paramHolder.closestKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("partials"));
+    paramHolder.heldKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("heldKeys"));
 }
 
 

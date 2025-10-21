@@ -14,8 +14,11 @@
 
 /**
  * Resonance ToDo list:
+ *
  * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
  *      -- perhaps also make it clear that 16 is the max
+ *
+ * - UI sometimes gets caught in a spinning ball when changing the Fundamental, doesn't crash though
  *
  * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
  *      -- for instance, when the 7th partial is "rung" by a key that is ET
@@ -40,6 +43,8 @@
  *
  * - create a way to pull up some standard partial structures
  *      -- up to 19 natural overtones
+ *      -- perhaps some other fun variants, like a "minor" overtone series with 6/5 instead of 5/4
+ *      -- also undertone series
  *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
  *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, stretched spectra etc...
  *          -- could even have a "stretch" parameter that stretches the spectra? and adjusts the "closest" key automatically?
@@ -153,6 +158,8 @@ struct ResonanceParams : chowdsp::ParamHolder
 
     KeymapKeyboardState fundamentalKeymap;
     KeymapKeyboardState closestKeymap;
+    KeymapKeyboardState heldKeymap;
+    std::atomic<int> heldKeymap_changedInUI = 0; // note number for key that was changed
 
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
