@@ -1,6 +1,63 @@
-//
-// Created by Joshua Warner on 6/27/24.
-//
+/*
+==============================================================================
+
+  Resonance.cpp
+  Created: 12 May 2021 12:41:26pm
+  Author:  Dan Trueman and Theodore R Trevisan
+  Rewritten: Dan Trueman, October 2025
+
+  Models the sympathetic resonance within the piano, with options for
+  static resonances akin to the Hardanger fiddle
+
+==============================================================================
+*/
+
+/**
+ * Resonance ToDo list:
+ * - clicks when attack time is larger than 3ms, say, 50ms, and rapidly changing notes:
+ *      -- problem in ADSR?
+ * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
+ * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
+ *      -- for instance, when the 7th partial is "rung" by a key that is ET
+ *      -- one idea: we use those to set start time between a user set range, and use velocity as a
+ *                  general gain scalar separately, on top of that.
+ *                  - so this would mean adding a range slider to the UI
+ * - or, how about the following single knob params:
+ *      -- start time offset (ms), sets "startTime"
+ *      -- ring duration (ms), sets "sustainTime"
+ *      -- start time range (ms), sets range of start times that the gain/offset overlap will set
+ *          -- multiply gains and look at difference between offsets
+ *              - overlap = gain1 * gain2 * (1. - offsetDifference), where offsetDifference is in fractional MIDI vals
+ *                  overlap range [0, 1]
+ *                  - cap gains at 1, so they go between 0 and 1?
+ *          -- the more overlapped they are, the closer to the start time offset the playback starts
+ *              - actual start time = (startTime + startTimeRange) - overlap * startTimeRange
+ *                                  = startTime + startTimeRange * (1 - overlap)
+ * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
+ * - figure out how to deal with running out of the 16 ResonantStrings
+ *      -- ignore, cap, override, take over oldest?
+ * - does currentPlayingPartialsFromHeldKey need to be a 2D array?
+ *      -- now that ALL the playing notes are associated with heldKey in this class?
+ *      -- it looks like we don't need 2d, and don't even need to pass midiNoteNumber to removeString()
+ * - basic setup like processStateChanges and mods
+ * - figure out how to handle a situation where the number of heldKeys tries to exceed 16
+ * - create a way to pull up some standard partial structures
+ *      -- up to 19 natural overtones
+ *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
+ *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, stretched spectra etc...
+ *          -- could even have a "stretch" parameter that stretches the spectra? and adjusts the "closest" key automatically?
+ *          -- ideal bar from Sethares: f, 2.76f, 5.41f, 8.94f, 13.35f, and 18.65f
+ *          -- Bell table on Sethares page 117
+ *          -- Sarons (p 204 in Sethares): f, 2.39f, 2.78f, 4.75f, 5.08f, 5.96f.
+*           -- Gender
+ *              - f, 2.01f, 2.57f, 4.05f, 4.8f, 6.27f
+ *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
+ *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
+ *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
+ * - handleMidiTargetMessages, and updates to MidiTarget
+ * - processBlockBypassed
+ *
+ */
 
 #ifndef BITKLAVIER2_RESONANCEPROCESSOR_H
 #define BITKLAVIER2_RESONANCEPROCESSOR_H
@@ -17,7 +74,9 @@
 #include "utils.h"
 #include <utility>
 
-#define MAX_SYMPSTRINGS 160
+using PartialSpec = std::tuple<bool, float, float>;     // active, offset from ET in cents, gain
+static constexpr int MaxHeldKeys = 16;                  // currently constrained by number of MIDI channels; might change if we use threaded synth
+static constexpr int TotalNumberOfPartialKeysInUI = 52; //number if keys in UI elements for setting partial structure
 
 struct ResonanceParams : chowdsp::ParamHolder
 {
@@ -84,7 +143,7 @@ struct ResonanceParams : chowdsp::ParamHolder
 
     /*
      * a bit overkill using the full TuningState here, but otherwise we'd have to significantly rewrite the AbsoluteKeyboardSlider
-     * - don't need to "add" anything, seince we're just going to serialize absoluteTuningOffset for both of these
+     * - don't need to "add" anything, since we're just going to serialize absoluteTuningOffset for both of these
      */
     TuningState offsetsKeyboardState;
     TuningState gainsKeyboardState;
@@ -105,7 +164,6 @@ struct ResonanceParams : chowdsp::ParamHolder
 
     void processStateChanges() override
     {
-
 //        transpositions.processStateChanges();
 //        accents.processStateChanges();
 //        sustainLengthMultipliers.processStateChanges();
@@ -137,6 +195,72 @@ struct ResonanceNonParameterState : chowdsp::NonParamState
     chowdsp::StateValue<juce::Point<int>> prepPoint { "prep_point", { 300, 500 } };
 };
 
+/*
+ * ResonantString Class
+ *
+ * Every held note on the keyboard will have a ResonantString class, which keeps track
+ * of all the partials associated with this held note, sending noteOn and noteOff
+ * messages as needed. Each instantiation of ResonantString will be on a separate MIDI channel
+ * to keep the behaviors of the held notes disambiguated.
+ *
+ * About disambiguation: since different held notes might have the same partials that are ringing,
+ * releasing one key won't necessarily turn off all the sympathetic resonances at a particular
+ * pitch. For instance, if both F3 and C4 are held down, and C3 is struck, then C5 will resonate
+ * for BOTH F3 and C4 (and they will be slightly different C5s, 2c off from one another!).
+ * If we release the F3 key, we want to turn of the resonating C5 for the F3 string, but not
+ * for the C4 string.
+ *
+ * About the MIDI channels: every ResonantString will be assigned it the next a MIDI channel and
+ * all noteOn/Off messages will be sent on that channel. At the moment, we are allocating 16
+ * ResonantStrings, one per each MIDI channel and simply noting whether they are "active" or not.
+ * When a key is pressed, we look for an inactive ResonantString and use the first available. In
+ * practice, 16 should be more than enough, especially given how CPU intensive this can be.
+ * Ideally, we will make sure that all the strings have "rung down" (envelopes fully released)
+ * before we mark a string as available.
+ *
+ * Note: when we try the multi-threaded synth, perhaps the MIDI channels can simply be assigned
+ * to different threads
+ */
+class ResonantString
+{
+public:
+    ResonantString(
+        ResonanceParams* inparams,
+        std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& inPartialStructure,
+        std::array<NoteOnSpec, MaxMidiNotes>& inNoteOnSpecMap);
+
+    //~ResonantString() {}
+    void addString (int midiNote);
+    void ringString(int midiNote, int velocity, juce::MidiBuffer& outMidiMessages);
+    void removeString (int midiNote, juce::MidiBuffer& outMidiMessages);
+    void incrementTimer_seconds(float blockSize_seconds);
+
+    int heldKey = 0;                // MIDI note value for the key that is being held down
+    int channel = 1;                // MIDI channel for this held note
+    bool active = false;            // set to false after envelope release time has passed, following removeString()
+
+    bool stringJustRemoved = false;     // set to true when removeString is called, to start timer to release after release time has passed
+    float timeToMakeInactive;           // set this to releaseTime when removeString is called, in seconds
+    float timeSinceRemoved = 0.0f;      // increment this every block if stringJustRemoved == true, in seconds
+
+private:
+    ResonanceParams* _rparams;
+
+    /*
+     * partialStructure
+     * - active (bool; false => default)
+     * - offset from fundamental (fractional MIDI note val; 0. => default)
+     * - gains (floats; 1.0 => default)
+     */
+    std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& _partialStructure;
+    std::array<NoteOnSpec, MaxMidiNotes>& _noteOnSpecMap;
+
+    // held key is index of outer array, inner array includes all partial currently playing from that associated held key
+    juce::Array<juce::Array<int>> currentPlayingPartialsFromHeldKey;
+
+    JUCE_LEAK_DETECTOR(ResonantString);
+};
+
 class ResonanceProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<ResonanceParams, ResonanceNonParameterState>>,
                            public juce::ValueTree::Listener
 {
@@ -153,11 +277,11 @@ public:
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
-    void keyPressed(int noteNumber, int velocity, int channel);
-    void keyReleased(int noteNumber, int channel);
+    void keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
+    void keyReleased(int noteNumber, juce::MidiBuffer& outMidiMessages);
     void handleMidiTargetMessages(int channel);
-    void ringSympStrings(int noteNumber, float velocity);
-    void addSympStrings(int noteNumber, float velocity);
+    void ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages);
+    void addSympStrings(int noteNumber);
 
     bool acceptsMidi() const override { return true; }
     bool hasEditor() const override { return false; }
@@ -191,25 +315,23 @@ public:
         resonanceSynth->addSoundSet (s);
     }
 
-    void addPartial(int heldKey, int partialKey, float gain, float offset);
-    void removePartialsForHeldKey(int heldKey);
-
 private:
     std::unique_ptr<BKSynthesiser> resonanceSynth;
 
-    // the two primary modes, set by target msgs
-    //  - channel 1 => both are true, default behavior
+    /* the two primary modes, set by target msgs
+     *  - channel 1 => both are true, default behavior
+     *  - channel 2 => only ring the currently held strings
+     *  - channel 3 => only add/subtract to/from the currently held strings
+     */
     bool doRing = true;
     bool doAdd = true;
-
-//    std::bitset<128> heldKeys; // in place of "getHeldKeys()" juce::Array
 
     /*
      * noteOnSpecMap
      * - key      => midiNoteNumber
      * - value    => specs for that key (start time, direction, loop mode)
      *
-     * needed in particular for backwards-playing notes
+     * needed here to play notes with start time > 0
      * (originally was std::map, but changed to std::array for audio thread safety)
      */
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
@@ -219,38 +341,19 @@ private:
      * - active (bool; false => default)
      * - offset from fundamental (fractional MIDI note val; 0. => default)
      * - gains (floats; 1.0 => default)
-     *      --if gain < 0, the entry in the array is considered inactive
      */
-    // --- Quick Access to Check or Modify ---
-    // Example of checking the first float (index 1) of the 5th tuple (index 4)
-    // float value = std::get<1>(partialStructure[4]);
-
-    // Example of setting the boolean (index 0) of the 10th tuple (index 9)
-    // std::get<0>(partialStructure[9]) = true;
-    using PartialSpec = std::tuple<bool, float, float>;
-    std::array<PartialSpec, MaxMidiNotes> partialStructure;
+    std::array<PartialSpec, TotalNumberOfPartialKeysInUI> partialStructure;
 
     /*
      * will update partialStructure based on parameter settings
      */
     void updatePartialStructure();
-    void resetPartialStructure();
+    void resetPartialStructure();       // clear it
+    void setDefaultPartialStructure();  // set to standard overtone series, first 8 partials
     void printPartialStructure();
 
-    /*
-     * partials are collected here
-     * - every partial is associated with a heldKey
-     * - and is close to a partialKey
-     * - and has an offset from ET (relative to partialKey)
-     * - and gain multiplier
-     * - newest partials are beginning of arrays, oldest get pushed off the end
-     * - these parallel arrays are kept in sync via addPartial and removePartialsForHeldKey
-     */
-    std::array<int, MAX_SYMPSTRINGS> heldKeys;      // midiNoteNumber for key that is held down; for the undamped string that has this partial
-    std::array<int, MAX_SYMPSTRINGS> partialKeys;   // midiNoteNumber for nearest key to this partial; used to determine whether this partial gets excited
-    std::array<float, MAX_SYMPSTRINGS> gains;       // gain multiplier for this partial
-    std::array<float, MAX_SYMPSTRINGS> offsets;     // offset, in cents, from ET for this partial
-    std::array<int, MAX_SYMPSTRINGS> startTimes;    // time, in ms, that this partial began playing
+    std::array<std::unique_ptr<ResonantString>, MaxHeldKeys> resonantStringsArray;
+    int currentHeldKey = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonanceProcessor)
 };
