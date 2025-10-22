@@ -15,9 +15,7 @@
 /**
  * Resonance ToDo list:
  *
- * - decide whether to use Tuning
- *      -- could be used to factor into the variance calculation
- *      -- not a priority for now
+ * - handleMidiTargetMessages, and updates to MidiTarget
  *
  * - create a way to pull up some standard partial structures
  *      -- up to 19 natural overtones
@@ -36,7 +34,6 @@
  *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
  *      -- a "stretch" knob that will stretch the given series and adjust the keymap settings accordingly
  *
- * - handleMidiTargetMessages, and updates to MidiTarget
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
  * - processBlockBypassed
@@ -285,6 +282,7 @@ public:
     void removeString (int midiNote, juce::MidiBuffer& outMidiMessages);
     void incrementTimer_seconds(float blockSize_seconds);
     void finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages);
+    void setTuning(TuningProcessor *tun) {attachedTuning = tun;}
 
     int heldKey = 0;                // MIDI note value for the key that is being held down
     int channel = 1;                // MIDI channel for this held note
@@ -311,6 +309,8 @@ private:
     std::array<NoteOnSpec, MaxMidiNotes>& _noteOnSpecMap;
     float currentVelocity; // for noteOn message
 
+    TuningProcessor *attachedTuning = nullptr;
+
     JUCE_LEAK_DETECTOR(ResonantString);
 };
 
@@ -329,6 +329,8 @@ public:
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+
+    void setTuning(TuningProcessor *tun) override;
 
     void keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
     void keyReleased(int noteNumber, juce::MidiBuffer& outMidiMessages);

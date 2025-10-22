@@ -63,12 +63,26 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
             // again, skip if partial is inactive
             if(!std::get<0>(struckPartialToCheck)) continue;
 
+            /*
+             * take into account the attached Tuning system settings
+             */
+            float heldPartialTuningOffset = 0.;
+            float struckPartialTuningOffset = 0.;
+            if(attachedTuning != nullptr)
+            {
+                auto heldPartialOffset_freq = attachedTuning->getState().params.tuningState.getTargetFrequency(heldKey, 0, false);
+                auto struckPartialOffset_freq = attachedTuning->getState().params.tuningState.getTargetFrequency(midiNote, 0, false);
+
+                heldPartialTuningOffset = ftom(heldPartialOffset_freq,  440.) - static_cast<float>(heldKey);
+                struckPartialTuningOffset = ftom(struckPartialOffset_freq,  440.) - static_cast<float>(midiNote);
+            }
+
             // partial for the held key/string
-            float heldPartial       = static_cast<float>(heldKey) + std::get<1>(heldPartialToCheck);
+            float heldPartial       = static_cast<float>(heldKey) + std::get<1>(heldPartialToCheck) + heldPartialTuningOffset;
             int   heldPartialKey    = std::round(heldPartial);
 
             // partial for the struck key/string
-            float struckPartial       = static_cast<float>(midiNote) + std::get<1>(struckPartialToCheck);
+            float struckPartial       = static_cast<float>(midiNote) + std::get<1>(struckPartialToCheck) + struckPartialTuningOffset;
             int   struckPartialKey    = std::round(struckPartial);
 
             if (heldPartialKey == struckPartialKey)
@@ -78,6 +92,11 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                 float struckPartialOffset = struckPartial - static_cast<float>(struckPartialKey);
                 float struckPartialGain   = std::get<2>(struckPartialToCheck);
 
+                /*
+                 * calculate how much we want to attenuate this particular partial because of the
+                 * gains of the overlapping partials and how much tuning variance there is
+                 * between the partials. this will all be scaled by the "variance" parameter
+                 */
                 float offsetDifference = std::fabs(heldPartialOffset - struckPartialOffset);
                 float partialOverlap = heldPartialGain * struckPartialGain * (1. - offsetDifference);
                 float varianceGainScale = 1. - (*_rparams->variance) * (1. - partialOverlap);
@@ -91,7 +110,7 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                  *  - we may have more than one partial attached to this key, with different offsets
                  *  - but we also don't want to add duplicates, so only add if not already there
                  */
-                if (_noteOnSpecMap[heldKey].transpositions.addIfNotAlreadyThere(std::get<1>(heldPartialToCheck)))
+                if (_noteOnSpecMap[heldKey].transpositions.addIfNotAlreadyThere(std::get<1>(heldPartialToCheck) + heldPartialTuningOffset))
                 {
                     /*
                     * then here, if addIfNotAlreadyThere returns true, add a gain value to transpositionGains
@@ -230,6 +249,15 @@ void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 bool ResonanceProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const
 {
     return true;
+}
+
+void ResonanceProcessor::setTuning(TuningProcessor *tun)
+{
+    tuning = tun;
+    for (auto& rstring : resonantStringsArray)
+    {
+        rstring->setTuning(tuning);
+    }
 }
 
 void ResonanceProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
