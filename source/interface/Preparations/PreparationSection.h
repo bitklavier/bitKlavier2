@@ -94,19 +94,6 @@ public:
 
     std::vector<Listener *> listeners_;
 
-    //TODO: move this to the backend processor
-    //TODO: add a listener that actually waits for this to happen a triggers it on
-    // the audio thread
-    virtual void
-    addSoundSet(std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> *s) {}
-    //TODO: move this to the backend processor
-    //TODO: add a listener that actually waits for this to happen a triggers it on
-    // the audio thread
-    virtual void addSoundSet(
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *s,
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *h,
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *r,
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>> *p) {}
 
 
     BKPort *createNewObject(const juce::ValueTree &v) override;
@@ -183,7 +170,7 @@ public:
 
     void mouseDoubleClick(const juce::MouseEvent &event) override {
 
-        showPrepPopup(std::move(this->getPrepPopup()),bitklavier::BKPreparationTypeNil);
+        showPrepPopup(std::move(this->getPrepPopup()),state,bitklavier::BKPreparationTypeNil);
     }
 
     ///drraganddrop for line view and modulator

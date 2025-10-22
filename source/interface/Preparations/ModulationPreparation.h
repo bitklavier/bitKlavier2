@@ -40,7 +40,7 @@ public:
     }
     void mouseDoubleClick(const juce::MouseEvent &event) override {
 
-        showPrepPopup(std::move(this->getPrepPopup()),bitklavier::BKPreparationType::PreparationTypeModulation);
+        showPrepPopup(std::move(this->getPrepPopup()),state,bitklavier::BKPreparationType::PreparationTypeModulation);
     }
 
 

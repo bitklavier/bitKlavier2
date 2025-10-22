@@ -232,13 +232,7 @@ static constexpr int MaxMidiNotes = 128;
         BKNumSampleLoadTypes
     } BKSampleLoadType;
 
-    const std::string samplepaths[BKSampleLoadType::BKNumSampleLoadTypes]
-        {
-         "/default",
-         "/sampleset2", // made up for now...
-         "/sampleset3",
-         "/sampleset4"
-        };
+
 
     typedef enum BKPianoSampleType
     {
@@ -487,7 +481,7 @@ struct NoteOnSpec
     }
 
     /**
-     * todo: possibly rework this so we don't use keyState. would mean always using noteOnSpec and the envParams in particular
+     * todo: keyState is only used for applying these envParams instead of the envParams passed to the synth on construction, so name appropriately
      */
     bool keyState = false;                          // turn on for notes that should use the extra specs here
     float startTime = 0.f;                          // where to start playback (ms)
@@ -497,6 +491,7 @@ struct NoteOnSpec
     bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
     BKADSR::Parameters envParams {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
     juce::Array<float> transpositions;              // all the transpositions related to this noteOn; BKSynth will launch all of them, and handle noteOffs for them
+    int channel = 1;                                // midi channel
 
     void clear()
     {
@@ -508,6 +503,7 @@ struct NoteOnSpec
         stopSameCurrentNote = true;
         envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f};
         transpositions.clearQuick();
+        channel = 1;
     }
 };
 

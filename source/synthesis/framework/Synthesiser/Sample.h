@@ -340,6 +340,7 @@ private:
 
 };
 class BKSynthesiser;
+
 /**
     Represents a voice that a juce::Synthesiser can use to play a juce::SynthesiserSound.
 

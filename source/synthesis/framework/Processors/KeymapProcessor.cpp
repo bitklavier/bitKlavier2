@@ -7,14 +7,14 @@
 #include "common.h"
 #include "synth_base.h"
 
-KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt ) : PluginBase (
+KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (
                                                                                      parent,
                                                                                      vt,
                                                                                      nullptr,
                                                                                      keymapBusLayout()),
                                                                                  _midi (std::make_unique<MidiManager> (&keyboard_state, parent.manager, vt))
 {
-    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
 
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocityminmax",
@@ -81,7 +81,7 @@ void KeymapProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     _midi->midi_collector_.reset (sampleRate);
 }
 
-float KeymapProcessor::applyVelocityCurve(float velocity)
+float KeymapProcessor::applyVelocityCurve (float velocity)
 {
     /*
      **** Velocity Curving
@@ -102,32 +102,31 @@ float KeymapProcessor::applyVelocityCurve(float velocity)
      the Heavy set and other new bK sample libraries).
      */
 
-    float asym_k            = state.params.velocityCurve_asymWarp->getCurrentValue();
-    float sym_k             = state.params.velocityCurve_symWarp->getCurrentValue();
-    float scale             = state.params.velocityCurve_scale->getCurrentValue();
-    float offset            = state.params.velocityCurve_offset->getCurrentValue();
-    bool velocityInvert     = state.params.velocityCurve_invert->get();
+    float asym_k = state.params.velocityCurve_asymWarp->getCurrentValue();
+    float sym_k = state.params.velocityCurve_symWarp->getCurrentValue();
+    float scale = state.params.velocityCurve_scale->getCurrentValue();
+    float offset = state.params.velocityCurve_offset->getCurrentValue();
+    bool velocityInvert = state.params.velocityCurve_invert->get();
 
     // don't filter if not necessary
-    if (juce::approximatelyEqual(asym_k, 1.0f) &&
-        juce::approximatelyEqual(sym_k, 1.0f) &&
-        juce::approximatelyEqual(scale, 1.0f) &&
-        juce::approximatelyEqual(offset, 0.0f) &&
-        velocityInvert == false)
+    if (juce::approximatelyEqual (asym_k, 1.0f) && juce::approximatelyEqual (sym_k, 1.0f) && juce::approximatelyEqual (scale, 1.0f) && juce::approximatelyEqual (offset, 0.0f) && velocityInvert == false)
     {
         return velocity;
     }
 
-    float velocityCurved = bitklavier::utils::dt_warpscale(velocity, asym_k, sym_k, scale, offset);
-    if (velocityInvert) velocityCurved = 1. - velocityCurved;
+    float velocityCurved = bitklavier::utils::dt_warpscale (velocity, asym_k, sym_k, scale, offset);
+    if (velocityInvert)
+        velocityCurved = 1. - velocityCurved;
 
-    if (velocityCurved < 0.) velocityCurved = 0.;
-    else if (velocityCurved > 1.) velocityCurved = 1.;
+    if (velocityCurved < 0.)
+        velocityCurved = 0.;
+    else if (velocityCurved > 1.)
+        velocityCurved = 1.;
 
     return velocityCurved;
 }
 
-bool KeymapProcessor::checkVelocityRange(float velocity)
+bool KeymapProcessor::checkVelocityRange (float velocity)
 {
     float velocityMin = state.params.velocityMinMax.velocityMinParam->getCurrentValue();
     float velocityMax = state.params.velocityMinMax.velocityMaxParam->getCurrentValue();
@@ -135,13 +134,17 @@ bool KeymapProcessor::checkVelocityRange(float velocity)
     //in normal case where velocityMin < velocityMax, we only pass if both are true
     if (velocityMax >= velocityMin)
     {
-        if (velocity >= velocityMin && velocity <= velocityMax) return true;
-        else return false;
+        if (velocity >= velocityMin && velocity <= velocityMax)
+            return true;
+        else
+            return false;
     }
 
     //case where velocityMin > velocityMax, we pass if either is true
-    if (velocity >= velocityMin || velocity <= velocityMax) return true;
-    else return false;
+    if (velocity >= velocityMin || velocity <= velocityMax)
+        return true;
+    else
+        return false;
 }
 
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -159,23 +162,26 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     {
         if (state.params.keyboard_state.keyStates.test (message.getMessage().getNoteNumber()))
         {
-            if(message.getMessage().isNoteOn())
+            if (message.getMessage().isNoteOn())
             {
                 state.params.velocityMinMax.lastVelocityParam = message.getMessage().getVelocity();
-                if (!checkVelocityRange(message.getMessage().getVelocity())) continue;
+                if (!checkVelocityRange (message.getMessage().getVelocity()))
+                    continue;
             }
 
             float oldvelocity = message.getMessage().getVelocity() / 127.0;
-            float newvelocity = applyVelocityCurve(oldvelocity);
+            float newvelocity = applyVelocityCurve (oldvelocity);
 
-            if(newvelocity > 1.0) newvelocity = 1.0;
-            if(newvelocity < 0.0) newvelocity = 0.0;
+            if (newvelocity > 1.0)
+                newvelocity = 1.0;
+            if (newvelocity < 0.0)
+                newvelocity = 0.0;
 
             auto newmsg = message.getMessage();
-            newmsg.setVelocity(newvelocity);
+            newmsg.setVelocity (newvelocity);
             midiMessages.addEvent (newmsg, message.samplePosition);
 
-            if(newmsg.isNoteOn())
+            if (newmsg.isNoteOn())
             {
                 state.params.invelocity = oldvelocity;
                 state.params.warpedvelocity = newvelocity;
@@ -184,14 +190,14 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
 
     // print them out for now
-    for (auto mi : midiMessages)
-    {
-        auto message = mi.getMessage();
-
-        mi.samplePosition;
-        mi.data;
-        DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
-    }
+    //    for (auto mi : midiMessages)
+    //    {
+    //        auto message = mi.getMessage();
+    //
+    //        mi.samplePosition;
+    //        mi.data;
+    //        DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
+    //    }
 
     // DBG("keymap");
 }
@@ -203,8 +209,6 @@ void KeymapProcessor::allNotesOff()
 {
     _midi->allNotesOff();
 }
-
-
 
 template <typename Serializer>
 typename Serializer::SerializedType KeymapParams::serialize (const KeymapParams& paramHolder)
@@ -220,4 +224,3 @@ void KeymapParams::deserialize (typename Serializer::DeserializedType deserial, 
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
     paramHolder.keyboard_state.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("keyOn"));
 }
-

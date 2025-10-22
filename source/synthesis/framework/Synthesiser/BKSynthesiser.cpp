@@ -10,9 +10,16 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
     for (int i = 0; i < juce::numElementsInArray (lastPitchWheelValues); ++i)
         lastPitchWheelValues[i] = 0x2000;
 
-    // init hash of currently playing notes
-    for (int i = 0; i<=128; i++)
-        playingVoicesByNote.insert(0, {  });
+    // init hash of currently playing notes, by channel
+    // 1. Create the prototype array for one channel
+    juce::Array<juce::Array<BKSamplerVoice*>> prototypeNotesArray;
+    prototypeNotesArray.resize(129); // Resizes and default-constructs 129 empty inner arrays
+
+    // 2. Use a loop to copy the prototype into all 16 slots of the std::array
+    for (int chan = 0; chan < 16; ++chan)
+    {
+        playingVoicesByNote[chan] = prototypeNotesArray;
+    }
 
     // init the noteOnSpecs to default; will be overridden by some preparations
     for (int i = 0; i < MaxMidiNotes; ++i)
@@ -344,6 +351,13 @@ void BKSynthesiser::noteOn (const int midiChannel,
     const juce::ScopedLock sl (lock);
 
     /**
+     * if the following is true, then we have a mismatch between noteOnSpec for a
+     * particular noteOn(midiNoteNumber) within the same the same block, which
+     * shouldn't happen for reasonbly small blocks and actual humans
+     */
+    if(midiChannel != noteOnSpecs[midiNoteNumber].channel) return;
+
+    /**
      * mute instruments with gain turned all the way down
      */
     if (synthGain <= -80.f) return;
@@ -355,22 +369,34 @@ void BKSynthesiser::noteOn (const int midiChannel,
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).
     //if(!noteOnSpecs.contains(midiNoteNumber))
-    if(!noteOnSpecs[midiNoteNumber].keyState)
-    {
-        for (auto* voice : voices)
-            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
-                stopVoice (voice, 1.0f, true);
-    }
-    else if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
+//    if(!noteOnSpecs[midiNoteNumber].keyState)
+//    {
+//        for (auto* voice : voices)
+//            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+//                stopVoice (voice, 1.0f, true);
+//    }
+//    else if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
+//    {
+//        /*
+//        * the default behavior is to stop an existing note = midiNoteNumber
+//        *  but in some situations (like Synchronic) this is undesirable
+//        *  so we set the noteOnSpec to false for this
+//        */
+//       for (auto* voice : voices)
+//           if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+//               stopVoice (voice, 1.0f, true);
+//    }
+
+    if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
     {
         /*
         * the default behavior is to stop an existing note = midiNoteNumber
         *  but in some situations (like Synchronic) this is undesirable
         *  so we set the noteOnSpec to false for this
         */
-       for (auto* voice : voices)
-           if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
-               stopVoice (voice, 1.0f, true);
+        for (auto* voice : voices)
+            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+                stopVoice (voice, 1.0f, true);
     }
 
     /**
@@ -379,7 +405,6 @@ void BKSynthesiser::noteOn (const int midiChannel,
      *      iterate through each currentTransposition here, but they are all tracked by the same original midiNoteNumber
      */
     for (auto transp : noteOnSpecs[midiNoteNumber].transpositions)
-    //for (auto transp : midiNoteTranspositions)
     {
         for (auto* sound : *sounds)
         {
@@ -420,9 +445,9 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
      * save this voice, since it might be one of several associated with this midiNoteNumber
      * and we will need to be able to stop it on noteOff(midiNoteNumber)
      */
-    auto tempv = playingVoicesByNote.getUnchecked(midiNoteNumber);
+    auto tempv = playingVoicesByNote[midiChannel - 1].getUnchecked(midiNoteNumber);
     tempv.insert(0, voice);
-    playingVoicesByNote.set(midiNoteNumber, tempv);
+    playingVoicesByNote[midiChannel - 1].set(midiNoteNumber, tempv);
 
     //if (voice != nullptr && sound != nullptr)
     {
@@ -430,15 +455,6 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
             voice->stopNote (0.0f, false);
 
         voice->setTuning(tuning);
-
-//        voice->copyAmpEnv ({ adsrParams.attackParam->getCurrentValue() * 0.001f,
-//            adsrParams.decayParam->getCurrentValue() * 0.001f,
-//            adsrParams.sustainParam->getCurrentValue(),
-//            adsrParams.releaseParam->getCurrentValue() * 0.001f,
-//            static_cast<float> (adsrParams.attackPowerParam->getCurrentValue() * -1.),
-//            static_cast<float> (adsrParams.decayPowerParam->getCurrentValue() * -1.),
-//            static_cast<float> (adsrParams.releasePowerParam->getCurrentValue() * -1.) });
-
         voice->setGain(juce::Decibels::decibelsToGain (synthGain.getCurrentValue()));
         voice->currentlyPlayingNote = midiNoteNumber;
         voice->currentPlayingMidiChannel = midiChannel;
@@ -449,8 +465,7 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
         voice->setTargetSustainTime(noteOnSpecs[midiNoteNumber].sustainTime);
 
-        //if(noteOnSpecs.contains(midiNoteNumber))
-        if(noteOnSpecs[midiNoteNumber].keyState)
+        if(noteOnSpecs[midiNoteNumber].keyState && noteOnSpecs[midiNoteNumber].channel == midiChannel)
         {
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 
@@ -506,14 +521,22 @@ void BKSynthesiser::noteOff (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
+    if(midiChannel != noteOnSpecs[midiNoteNumber].channel) return;
+
     /**
      * go through all voices that were triggered by this particular midiNoteNumber and turn them off
      * by storing voices as they are played, we can avoid the problem where the transpositions change
      * while the notes are still held and turn them off here
      */
-    for (auto* voice : playingVoicesByNote[midiNoteNumber])
+    for (auto* voice : playingVoicesByNote[midiChannel - 1][midiNoteNumber])
     {
+        // skip voices not on this midi channel
+        if(voice->currentPlayingMidiChannel != midiChannel) continue;
+
         voice->setKeyDown (false);
+
+        if(noteOnSpecs[midiNoteNumber].keyState && noteOnSpecs[midiNoteNumber].channel == midiChannel)
+            voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 
         if (!voice->ignoreNoteOff)
         {
@@ -523,7 +546,7 @@ void BKSynthesiser::noteOff (const int midiChannel,
             }
         }
     }
-    playingVoicesByNote.set(midiNoteNumber, {}); // clear and clearQuick didn't actually do the trick for this!
+    playingVoicesByNote[midiChannel - 1].set(midiNoteNumber, {}); // clear and clearQuick didn't actually do the trick for this!
 }
 
 void BKSynthesiser::allNotesOff (const int midiChannel, const bool allowTailOff)

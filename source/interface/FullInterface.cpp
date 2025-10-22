@@ -24,6 +24,7 @@
 #include "synth_base.h"
 #include "synth_slider.h"
 #include "text_look_and_feel.h"
+#include "loading_section.h"
 
 FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommandManager& _manager)
     : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_),
@@ -84,10 +85,15 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     about_section_ = std::make_unique<AboutSection> ("about");
     addSubSection (about_section_.get(), false);
     addChildComponent (about_section_.get());
+    loading_section = std::make_unique<LoadingSection> ("load");
+    addSubSection (loading_section.get(), false);
+    addChildComponent (loading_section.get());
+
 
     addSubSection (modulation_manager.get());
 
     about_section_->toFront (true);
+    loading_section->toFront (true);
     setOpaque (true);
     open_gl_context_.setContinuousRepainting (true);
     open_gl_context_.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
@@ -240,6 +246,7 @@ void FullInterface::resized()
     prep_popup->setBounds (voice_padding * 2, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.2 * display_scale_));
     mod_popup->setBounds (bounds.getRight() - 200 * ratio, header_->getBottom(), 200, 400);
     about_section_->setBounds (new_bounds);
+    loading_section->setBounds (new_bounds);
     if (getWidth() && getHeight())
         redoBackground();
 }
@@ -248,6 +255,16 @@ void FullInterface::showAboutSection()
 {
     juce::ScopedLock lock (open_gl_critical_section_);
     about_section_->setVisible (true);
+}
+void FullInterface::showLoadingSection()
+{
+    juce::ScopedLock lock (open_gl_critical_section_);
+    loading_section->setVisible (true);
+}
+
+void FullInterface::hideLoadingSection() {
+    juce::ScopedLock lock (open_gl_critical_section_);
+    loading_section->setVisible (false);
 }
 
 void FullInterface::animate (bool animate)
@@ -283,16 +300,16 @@ void FullInterface::popupDisplay (juce::Component* source, const std::string& te
     display->setVisible (true);
 }
 
-void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section)
+void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, const juce::ValueTree &v)
 {
-    prep_popup->setContent (std::move(synth_section));
+    prep_popup->setContent (std::move(synth_section),v);
     prep_popup->setVisible (true);
     modulation_manager->added();
 }
 
-void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section)
+void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section,const juce::ValueTree &v)
 {
-    mod_popup->setContent (std::move(synth_section));
+    mod_popup->setContent (std::move(synth_section),v);
     mod_popup->setVisible (true);
     modulation_manager->added();
 }

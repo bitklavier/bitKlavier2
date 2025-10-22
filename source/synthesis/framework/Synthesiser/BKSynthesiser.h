@@ -452,7 +452,9 @@ private:
                  */
                 juce::Array<float> midiNoteTranspositions = { 0.}; // needs to be set via UI, for additional transpositions
                 bool tuneTranspositions = false;
-                juce::Array<juce::Array<BKSamplerVoice*>> playingVoicesByNote; // Array of current voices playing for a particular midiNoteNumber
+
+                // Array of current voices playing for a particular midiNoteNumber, for each channel
+                std::array<juce::Array<juce::Array<BKSamplerVoice*>>, 16> playingVoicesByNote;
                 std::bitset<MaxMidiNotes> activeNotes;
 
                 //std::map<int, NoteOnSpec> noteOnSpecs;

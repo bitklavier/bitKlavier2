@@ -73,20 +73,11 @@ public:
 
     void paintBackgroundShadow(juce::Graphics& g) override {}
     void renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) override;
-    void repaintPrepBackground()
-    {
-        background_->lock();
-        background_image_ = juce::Image(juce::Image::RGB, getWidth(),getHeight(), true);
-        juce::Graphics g(background_image_);
-        if (prep_view.get() != nullptr)
-            paintChildBackground(g, prep_view.get());
-        background_->updateBackgroundImage(background_image_);
-        background_->unlock();
-    }
+    void repaintPrepBackground();
 
     void resized() override;
 
-    void setContent(std::unique_ptr<SynthSection>&&);
+    void setContent(std::unique_ptr<SynthSection>&&, const juce::ValueTree &v);
 
     void buttonClicked(juce::Button* clicked_button) override;
 
@@ -114,6 +105,11 @@ public:
     // void addListener(Listener* listener) {listeners_.push_back(listener);}
 
 private:
+juce::ValueTree curr_vt;
+    int currentSampleType;
+    std::shared_ptr<PlainTextComponent> sampleSelectText;
+    std::unique_ptr<juce::ShapeButton> sampleSelector ;
+
     bool is_modulation_;
     // std::vector<Listener*> listeners_;
     std::shared_ptr<OpenGlBorder> _border;

@@ -194,7 +194,7 @@ public:
                 // optimized, using lookup table
                 if (parameters.attackPower != 0.0f)
                     return lastPreReleaseEnvelopeVal = powerScale(envelopeVal, attackCurve);
-                return envelopeVal;
+                return lastPreReleaseEnvelopeVal = envelopeVal;
             }
 
             case State::decay:

@@ -29,24 +29,6 @@ public:
         return std::make_unique<NostalgicPreparation> (v, interface->getGui()->open_gl_, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::nodeID)), interface);
     }
 
-    // Public function definitions for the NostalgicPreparation class, which override functions
-    // in the PreparationSection base class
-    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s) override
-    {
-        // if (auto processor = dynamic_cast<NostalgicProcessor*> (getProcessor()))
-        //     processor->addSoundSet (s);
-    }
-
-    void addSoundSet (
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) override
-    {
-        if (auto processor = dynamic_cast<NostalgicProcessor*> (getProcessor()))
-            processor->addSoundSet (s, h, r, p);
-    }
-
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
     void paintBackground (juce::Graphics& g);

@@ -25,8 +25,7 @@ namespace bitklavier {
     SoundEngine::SoundEngine() : /*voice_handler_(nullptr),*/
             last_oversampling_amount_(-1), last_sample_rate_(-1),
             processorGraph(std::make_unique<juce::AudioProcessorGraph>()) {
-
-        processorGraph->clear();
+        initialiseGraph();
         processorGraph->enableAllBuses();
     }
 
@@ -36,7 +35,6 @@ namespace bitklavier {
         processorGraph->clear();
         processorGraph->rebuild();
         processorGraph.reset();
-        // processorGraph = nullptr;
     }
     void SoundEngine::setOversamplingAmount(int oversampling_amount, int sample_rate) {
         static constexpr int kBaseSampleRate = 44100;
