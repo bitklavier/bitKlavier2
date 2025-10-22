@@ -251,6 +251,23 @@ bool ResonanceProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
     return true;
 }
 
+/**
+ * Sets the Tuning for the ResonantStrings
+ *
+ * The effect of an attached Tuning is subtle but important, impacting
+ * both the pitch of the ringing partials of the held strings and
+ * the calculation of the overlap between struck and held partials, which
+ * in turn impacts how loud the ringing partial is.
+ *
+ * - example to try: Resonance and Direct both attached to Tuning set to C-partial
+ *      -- Resonance set with standard overtone structure and septimal 7th partial
+ *      -- hold C3 and strike Bb5, listen
+ *      -- hold Bb5 and strike C3, listen
+ *      -- compare to when Tuning is set to ET
+ *          -- and when "Overlap Variance" is set to both 0 and 1, between ET and C-partial
+ *      -- differences in tuning and loudness of the ringing Bb6 partial captures both effects
+ * @param tun
+ */
 void ResonanceProcessor::setTuning(TuningProcessor *tun)
 {
     tuning = tun;

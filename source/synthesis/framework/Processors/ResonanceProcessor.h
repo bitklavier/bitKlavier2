@@ -32,7 +32,11 @@
  *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
  *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
  *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
- *      -- a "stretch" knob that will stretch the given series and adjust the keymap settings accordingly
+ * - a "stretch" knob that will stretch the given series; constrains to small range, at least for now 0.9 - 1.1 or similar
+ *      -- use equation 2 from here: https://pubs.aip.org/asa/jasa/article/138/4/2359/900231/Explaining-the-Railsback-stretch-in-terms-of-the
+ *          - OCTOBER 23 2015 "Explaining the Railsback stretch in terms of the inharmonicity of piano tones and sensory dissonance", N. Giordano
+ *      -- Fn = nF1 * (1 + alpha * n^2), so our knob would be for alpha.
+ *          - Fn is frequency of nth partial, F1 is frequency of fundamental, n is partial #
  *
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
