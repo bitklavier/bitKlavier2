@@ -38,12 +38,15 @@ void NostalgicParametersView::resized()
     clusterThreshold_knob->setBounds(leftColumn.removeFromRight(leftColumn.getWidth() / 2).reduced(largepadding, 0));
     noteLengthMult_knob->setBounds(leftColumn.reduced(largepadding, 0));
 
-    // right column for knobs and udnertow adsr
+    // right column for knobs and undertow adsr
     bounds.removeFromLeft (smallpadding);
     undertowEnvSection->setBounds(bounds.removeFromBottom (Skin::kKnobSectionHeight*8));
     bounds.removeFromBottom (largepadding);
     transpositionSlider->setBounds(bounds.removeFromBottom(Skin::kKnobSectionHeight*3));
-
+    bounds.removeFromBottom (largepadding);
+    nostalgicTriggeredBy_combo_box->setBounds(bounds.removeFromRight(bounds.getWidth() / 3).removeFromBottom (Skin::kComboMenuHeight));
+    keyOnReset->setBounds(bounds.removeFromRight(bounds.getWidth() / 3).removeFromBottom (Skin::kComboMenuHeight));
+    // nostalgicTriggeredBy_label->setBounds(bounds);
 
 
     SynthSection::resized();

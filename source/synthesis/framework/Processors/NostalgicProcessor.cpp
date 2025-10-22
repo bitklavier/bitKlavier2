@@ -116,7 +116,7 @@ void NostalgicProcessor::playReverseNote(NostalgicNoteData& noteData, juce::Midi
 {
     auto note = noteData.noteNumber;
     noteOnSpecMap[note].keyState = true;
-    noteOnSpecMap[note].stopSameCurrentNote = false;
+    noteOnSpecMap[note].stopSameCurrentNote = state.params.keyOnReset->get();
     noteOnSpecMap[note].startDirection = Direction::backward;
     noteOnSpecMap[note].startTime = noteData.noteStart;
     noteOnSpecMap[note].sustainTime = noteData.noteDurationMs;
@@ -177,7 +177,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             {
                 auto note = reverseNote.noteNumber;
                 noteOnSpecMap[note].keyState = true;
-                noteOnSpecMap[note].stopSameCurrentNote = false;
+                noteOnSpecMap[note].stopSameCurrentNote = state.params.keyOnReset->get();
                 noteOnSpecMap[note].startDirection = Direction::forward;
                 noteOnSpecMap[note].startTime = reverseNote.waveDistanceMs;
                 noteOnSpecMap[note].sustainTime = reverseNote.undertowDurationMs;

@@ -27,6 +27,11 @@
 // undertow (0 to 9320), goes forward, dynamically shorten?
 
 // key on reset checkbox
+enum NostalgicComboBox {
+    Note_Length = 1 << 0,
+    Sync_KeyDown = 1 << 1,
+    Sync_KeyUp = 1 << 2
+};
 
 // ********************************************************************************************* //
 // ************************************  NostalgicParams  ************************************** //
@@ -55,6 +60,8 @@ struct NostalgicParams : chowdsp::ParamHolder
             holdTimeMinMaxParams,
             transpositionUsesTuning,
             noteOnGain,
+            keyOnReset,
+            nostalgicTriggeredBy,
             reverseEnv,
             // reverseEnvSequence,
             undertowEnv
@@ -99,6 +106,22 @@ struct NostalgicParams : chowdsp::ParamHolder
         "TranspositionUsesTuning",
         false
     };
+
+    // key-on reset toggle
+    chowdsp::BoolParameter::Ptr keyOnReset {
+        juce::ParameterID { "keyOnReset", 100 },
+        "key-on reset",
+        false
+    };
+
+    // combo box
+    chowdsp::EnumChoiceParameter<NostalgicComboBox>::Ptr nostalgicTriggeredBy {
+        juce::ParameterID { "nostalgicTriggeredBy", 100 },
+        "nostalgic triggered by",
+        NostalgicComboBox::Note_Length,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' } }
+    };
+
     // Gain for output send (for blendronic, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSendGain {
         juce::ParameterID { "Send", 100 },
