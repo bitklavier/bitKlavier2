@@ -33,19 +33,7 @@ public:
         return std::make_unique<PluginPreparation> (v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
 
-    // Public function definitions for the PluginPreparation class, which override functions
-    // in the PreparationSection base class
-    void addSoundSet(std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s) override
-    {
-    }
 
-    void addSoundSet(
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) override
-    {
-    }
 
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;

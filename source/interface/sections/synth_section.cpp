@@ -1037,14 +1037,14 @@ void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> p
         parent->popupSelector(source, position, options, callback, cancel);
 }
 
-void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,bitklavier::BKPreparationType type) {
+void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,const juce::ValueTree &v, bitklavier::BKPreparationType type) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent) {
         if (type ==
             bitklavier::BKPreparationType::PreparationTypeModulation) {
-            parent->modDisplay(std::move(prep));
+            parent->modDisplay(std::move(prep),v);
         } else {
-            parent->prepDisplay(std::move(prep));
+            parent->prepDisplay(std::move(prep),v);
         }
     }
 }

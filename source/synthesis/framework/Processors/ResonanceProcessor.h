@@ -37,6 +37,7 @@
  *          - OCTOBER 23 2015 "Explaining the Railsback stretch in terms of the inharmonicity of piano tones and sensory dissonance", N. Giordano
  *      -- Fn = nF1 * (1 + alpha * n^2), so our knob would be for alpha.
  *          - Fn is frequency of nth partial, F1 is frequency of fundamental, n is partial #
+ *          - partial freq multiplier: FMn = 1 + a * (n - 1)^2, very small range of n
  *
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
@@ -373,7 +374,42 @@ public:
         DBG("Resonance addSoundSet called");
         resonanceSynth->addSoundSet (s);
     }
+    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
+    {
+        if (t == v && property == IDs::soundset)
+        {
+            juce::String soundset = t.getProperty(property, "");
+            if (soundset == IDs::syncglobal.toString())
+            {
+                juce::String a = t.getProperty(IDs::soundset, "");
+                addSoundSet(&(*parent.getSamples())[a]);
+            }
+            addSoundSet(&(*parent.getSamples())[soundset]);
 
+            return;
+        }
+        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+            return;
+        if (property == IDs::soundset && t == parent.getValueTree())
+        {
+            juce::String a = t.getProperty(IDs::soundset, "");
+            addSoundSet(&(*parent.getSamples())[a]);
+        }
+    }
+    void loadSamples() {
+        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+        if (soundset == IDs::syncglobal.toString()) {
+            //if global sync read soundset from global valuetree
+            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
+
+            addSoundSet(&(*parent.getSamples())[soundset]);
+
+        }else {
+            //otherwise set the piano
+            addSoundSet(&(*parent.getSamples())[soundset]);
+
+        }
+    }
 private:
     std::unique_ptr<BKSynthesiser> resonanceSynth;
 

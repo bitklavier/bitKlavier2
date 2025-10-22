@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "synth_base.h"
+#include "SampleLoadManager.h"
 
 #include "FullInterface.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
@@ -29,7 +29,6 @@
 #include "ModulationProcessor.h"
 #include "ObjectLists/ConnectionsList.h"
 #include "ObjectLists/ModConnectionsList.h"
-#include "PianoSwitchProcessor.h"
 #include "PluginBase.h"
 #include "RampModulator.h"
 #include "StateModulator.h"
@@ -37,10 +36,13 @@
 #include "TempoProcessor.h"
 #include "TuningProcessor.h"
 #include "chowdsp_sources/chowdsp_sources.h"
-#include "load_save.h"
 #include "valuetree_utils/VariantConverters.h"
 
-SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager)
+SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager),user_prefs (new UserPreferencesWrapper()),
+                                                                        sampleLoadManager (
+                                                                            new SampleLoadManager (this,
+                                                                                user_prefs
+                                                                                ))
 {
     self_reference_ = std::make_shared<SynthBase*>();
     *self_reference_ = this;
@@ -51,8 +53,9 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
 
     Startup::doStartupChecks();
     tree = juce::ValueTree (IDs::GALLERY);
+    sampleLoadManager->setValueTree(tree);
 
-    tree.setProperty (IDs::mainSampleSet, "Piano (Default)", nullptr);
+    tree.setProperty (IDs::soundset, "Default", nullptr);
     juce::ValueTree piano (IDs::PIANO);
     juce::ValueTree preparations (IDs::PREPARATIONS);
     juce::ValueTree connections (IDs::CONNECTIONS);
@@ -88,6 +91,10 @@ SynthBase::~SynthBase()
 {
     tree.removeListener (this);
 
+}
+
+std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > > *SynthBase::getSamples() {
+    return &sampleLoadManager->samplerSoundset;
 }
 
 void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delete_id)
@@ -321,10 +328,23 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
     //engine_->allSoundsOff();
     tree.copyPropertiesAndChildrenFrom (state, nullptr);
 
+    tree.getProperty(IDs::PREPARATIONS);
     pauseProcessing (false);
     if (tree.isValid())
         return true;
     return false;
+}
+void SynthBase::clearAllBackend() {
+
+    this->mod_connections_.clear();
+    this->state_connections_.clear();
+    this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
+    this->state_connections_.reserve (bitklavier::kMaxStateConnections);
+    this->engine_->getModulationBank().reset();
+    this->engine_->getStateBank().reset();
+    preparationLists.clear();
+    mod_connection_lists_.clear();
+    connectionLists.clear();
 }
 
 bool SynthBase::loadFromFile (juce::File preset, std::string& error)
@@ -345,15 +365,7 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
         return false;
     }
 
-    this->mod_connections_.clear();
-    this->state_connections_.clear();
-    this->mod_connections_.reserve (bitklavier::kMaxModulationConnections);
-    this->state_connections_.reserve (bitklavier::kMaxStateConnections);
-    this->engine_->getModulationBank().reset();
-    this->engine_->getStateBank().reset();
-    preparationLists.clear();
-    mod_connection_lists_.clear();
-    connectionLists.clear();
+    clearAllBackend();
     SynthGuiInterface* gui_interface = getGuiInterface();
     if (gui_interface)
     {
@@ -457,6 +469,7 @@ juce::UndoManager& SynthBase::getUndoManager()
     return um;
 }
 
+
 //modulations
 std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (const std::string& source) const
 {
@@ -468,6 +481,15 @@ std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (
     }
     return connections;
 }
+void SynthBase::finishedSampleLoading() {
+    if(getGuiInterface() && getGuiInterface()->getGui())
+        getGuiInterface()->getGui()->hideLoadingSection();
+}
+void SynthBase::startSampleLoading() {
+    if(getGuiInterface() && getGuiInterface()->getGui())
+        getGuiInterface()->getGui()->showLoadingSection();
+}
+
 
 std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnections (
     const std::string& destination) const

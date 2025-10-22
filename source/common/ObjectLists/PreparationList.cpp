@@ -45,6 +45,7 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
     juce::AudioProcessor *rawPtr;
     juce::AudioProcessorGraph::Node::Ptr node_ptr;
     juce::ValueTree state = v;
+
     if (temporary_instance == nullptr && static_cast<int>(state.getProperty(IDs::type)) <
         bitklavier::BKPreparationType::PreparationTypeVST) {
        auto processor = prepFactory.create(v.getType().toString().toStdString(), std::any(std::tie(synth,v)));
@@ -106,6 +107,7 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
 }
 
 void PreparationList::deleteObject(PluginInstanceWrapper *at) {
+
     for (auto listener: listeners_)
         listener->removeModule(at);
     // find and delete cables and modulation lines associated with this preparation section
@@ -130,6 +132,7 @@ void PreparationList::newObjectAdded(PluginInstanceWrapper *instance_wrapper) {
     } else {
         prependAllPianoChangeProcessorsTo(instance_wrapper);
     }
+
     for (auto listener: listeners_)
         listener->moduleAdded(instance_wrapper);
 }

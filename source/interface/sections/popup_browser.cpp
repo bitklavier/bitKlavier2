@@ -26,6 +26,7 @@
 #include "modulation_manager.h"
 #include "PreparationSection.h"
 #include "TuningParametersView.h"
+#include "SampleLoadManager.h"
 
 namespace {
     template<class Comparator>
@@ -1113,6 +1114,16 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
                                        exit_button_(new OpenGlShapeButton("Exit")),
                                        background_(new OpenGlBackground()), is_modulation_(ismod)
 {
+sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
+                                                         juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+
+    addAndMakeVisible(sampleSelector.get());
+    sampleSelector->addListener(this);
+    sampleSelector->setTriggeredOnMouseDown(true);
+    sampleSelector->setShape(juce::Path(), true, true, true);
+    currentSampleType = 0;
+    sampleSelectText = std::make_shared<PlainTextComponent>("Sample Select Text", "---");
+    addOpenGlComponent(sampleSelectText);
     addBackgroundComponent(background_.get());
     background_->setComponent(this);
 
@@ -1123,7 +1134,7 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
     exit_button_->setShape(Paths::exitX());
     constrainer.setMinimumOnscreenAmounts(0xffffff,0xffffff,0xffffff,0xffffff);
 }
-void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
+void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, const juce::ValueTree& v)
 {
 
     if(prep_view.get() != nullptr )
@@ -1144,6 +1155,12 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop)
 
     prep_view->setSkinValues(default_skin,false);
     prep_view->setAlwaysOnTop(true);
+
+    curr_vt = v;
+    if (curr_vt.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+        sampleSelectText->setText("Sync Global");
+    else
+        sampleSelectText->setText(curr_vt.getProperty(IDs::soundset));
     resized();
     repaintPrepBackground();
 }
@@ -1181,12 +1198,50 @@ void PreparationPopup::reset() {
     parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
     // repaintPrepBackground();
 }
+void PreparationPopup::repaintPrepBackground() {
+        background_->lock();
+        background_image_ = juce::Image(juce::Image::RGB, getWidth(),getHeight(), true);
+        juce::Graphics g(background_image_);
+    paintContainer(g);
+        if (prep_view.get() != nullptr)
+            paintChildBackground(g, prep_view.get());
+
+        background_->updateBackgroundImage(background_image_);
+        background_->unlock();
+}
 
 void PreparationPopup::buttonClicked(juce::Button *clicked_button)
 {
     if (clicked_button == exit_button_.get())
     {
         reset();
+    } else if (clicked_button == sampleSelector.get()) {
+        PopupItems options;
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        auto string_names = parent->getSynth()->sampleLoadManager->getAllSampleSets();
+        options.addItem(0,"Sync Global");
+        for (int i = 1; i < string_names.size() + 1; i++) {
+            options.addItem(i, string_names[i-1]);
+
+        }
+
+        juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            if(selection == 0) {
+                // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+                // parent->getSampleLoadManager()
+                curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(),nullptr);
+                sampleSelectText->setText("Sync Global");
+            }
+            else {
+                SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+                parent->getSampleLoadManager()->loadSamples(selection - 1, false,curr_vt);
+                sampleSelectText->setText(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]);
+            }
+
+
+            resized();
+        });
     }
 
 }
@@ -1203,6 +1258,16 @@ void PreparationPopup::resized() {
 
     auto header_bounds = bounds.removeFromTop(35);
     exit_button_->setBounds(header_bounds.removeFromLeft(35).reduced(5));
+    header_bounds.removeFromLeft(10);
+    if(!is_modulation_) {
+        int label_height = findValue(Skin::kLabelBackgroundHeight);
+        sampleSelector->setBounds(exit_button_->getRight() + 10, exit_button_->getY(),100,label_height);
+        sampleSelectText->setBounds(sampleSelector->getBounds());
+
+        float label_text_height = findValue(Skin::kLabelHeight);
+        sampleSelectText->setTextSize(label_text_height);
+
+    }
 
     if(prep_view != nullptr)
     {

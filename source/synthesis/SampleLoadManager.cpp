@@ -10,10 +10,8 @@
  * ******* SampleLoadManager stuff *******
  */
 
-SampleLoadManager::SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences, SynthGuiInterface* synth_,SynthBase* synth) : preferences (preferences),
-                                                                                         synth (synth),
-                                                                                        synthGui(synth_),
-                                                                                         audioFormatManager (new juce::AudioFormatManager())
+SampleLoadManager::SampleLoadManager (SynthBase* parent, std::shared_ptr<UserPreferencesWrapper> preferences) : preferences (preferences),
+                                                                                         audioFormatManager (new juce::AudioFormatManager()),parent(parent)
 
 {
     audioFormatManager->registerBasicFormats();
@@ -27,7 +25,7 @@ SampleLoadManager::SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> pr
             allPitches.add (noteOctave);
         }
     }
-    t = synth->getValueTree();
+
 
 }
 
@@ -41,20 +39,24 @@ void SampleLoadManager::clearAllSamples() {
 //    globalReleaseResonanceSoundset = nullptr;
 //    globalSoundset = nullptr;
     samplerSoundset.clear();
-
 }
 void SampleLoadManager::handleAsyncUpdate()
 {
-    if(sampleLoader.getNumJobs() > 0)
+    if (sampleLoader.getNumJobs() > 0)
         return;
-    DBG ("samples loaded, tell the audio thread its okay to change the move soundsets");
-    DBG ("samplerSoundset size = " + juce::String (samplerSoundset[globalSoundset_name].size()));
-    // synthGui->tryEnqueueProcessorInitQueue([this] {
-        t.setProperty(IDs::mainSampleSet,globalSoundset_name ,nullptr);
-        t.setProperty(IDs::hammerSampleSet,globalHammersSoundset_name ,nullptr);
-        t.setProperty(IDs::releaseResonanceSampleSet,globalReleaseResonanceSoundset_name ,nullptr);
-        t.setProperty(IDs::pedalSampleSet,globalPedalsSoundset_name ,nullptr);
-    // });
+
+    DBG ("All samples loaded. Audio thread can safely switch soundsets.");
+
+    for (auto& [name, progress] : soundsetProgressMap)
+    {
+        if (progress->completedJobs == progress->totalJobs)
+        {
+            DBG ("Soundset " + name + " finished loading.");
+            progress->currentProgress = 1.0f;
+        }
+    }
+    parent->finishedSampleLoading();
+
 }
 
 // sort array of sample files into arrays of velocities by pitch
@@ -141,13 +143,89 @@ juce::BigInteger SampleLoadManager::getMidiRange (juce::String pitchName)
 
     return midirange;
 }
-
-bool SampleLoadManager::loadSamples (int selection, bool isGlobal)
+const std::vector<std::string> SampleLoadManager::getAllSampleSets()
 {
+    std::vector<std::string> sampleSets;
+
+ //   // Pull base path from preferences
+    juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+    juce::File baseDir (samplePath);
+
+    if (baseDir.isDirectory())
+    {
+        // Find only directories inside base path
+        juce::Array<juce::File> dirs = baseDir.findChildFiles (
+            juce::File::TypesOfFileToFind::findDirectories,
+            false // not recursive
+        );
+
+        for (auto& d : dirs)
+            sampleSets.push_back (d.getFileName().toStdString());
+    }
+
+    return sampleSets;
+}
+bool SampleLoadManager::loadSamples(std::string sample_name) {
+    juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+    MyComparator sorter;
+    samplePath.append (sample_name, 1000); // change to "orig" to test that way
+    //samplePath.append("/orig", 10);
+    DBG ("sample path = " + samplePath);
+    juce::File directory (samplePath);
+    DBG (samplePath);
+    juce::Array<juce::File> allSamples = directory.findChildFiles (juce::File::TypesOfFileToFind::findFiles, false, "*.wav");
+    allSamples.sort (sorter);
+
+    // look for how many of each type there are: 3 A0 samples, 7 C3 samples, 0 D# samples, 1 C# sample, etc...
+    // divide up the velocity range depending on how many there are, and/or using dBFS
+    // load accordingly
+    int i = 0;
+    for (auto file : allSamples)
+    {
+        DBG (file.getFullPathName() + " " + juce::String (++i));
+    }
+    std::shared_ptr<SampleSetProgress> progress;
+
+    // Create or fetch the progress entry
+    if (!soundsetProgressMap.contains (sample_name))
+        soundsetProgressMap[sample_name] = std::make_shared<SampleSetProgress>();
+
+    progress = soundsetProgressMap[sample_name];
+
+    // Attach ValueTree + property info for later completion
+    progress->soundsetName = sample_name;
+    progress->targetTree = juce::ValueTree{};
+
+
+    loadSamples_sub (bitklavier::utils::BKPianoMain,sample_name);
+    loadSamples_sub (bitklavier::utils::BKPianoHammer,sample_name);
+    loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance,sample_name);
+    loadSamples_sub (bitklavier::utils::BKPianoPedal,sample_name);
+}
+
+bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::ValueTree& prep_tree)
+{
+    temp_prep_tree = prep_tree;
     MyComparator sorter;
     juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+    auto soundsets = getAllSampleSets();
+    // save this set as the global set
+    if (isGlobal)
+    {
+        if(samplerSoundset.contains(soundsets[selection])) {
+            t.setProperty(IDs::soundset,juce::String(soundsets[selection]),nullptr);
+            return true;
+        }
+    }
+    if(temp_prep_tree.isValid()) {
+        if(samplerSoundset.contains(soundsets[selection]) ) {
+            temp_prep_tree.setProperty(IDs::soundset,juce::String(soundsets[selection]) ,nullptr);
+            return true;
+        }
+    }
 
-    samplePath.append (bitklavier::utils::samplepaths[selection], 10); // change to "orig" to test that way
+
+    samplePath.append (soundsets[selection], 1000); // change to "orig" to test that way
     //samplePath.append("/orig", 10);
     DBG ("sample path = " + samplePath);
     juce::File directory (samplePath);
@@ -164,45 +242,54 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal)
         DBG (file.getFullPathName() + " " + juce::String (++i));
     }
 
-    // save this set as the global set
-    if (isGlobal)
-    {
-        globalSoundset_name = bitklavier::utils::samplepaths[selection];
-        globalHammersSoundset_name = bitklavier::utils::samplepaths[selection] + "Hammers";
-        globalReleaseResonanceSoundset_name = bitklavier::utils::samplepaths[selection] + "ReleaseResonance";
-        globalPedalsSoundset_name = bitklavier::utils::samplepaths[selection] + "Pedals";
-    }
+    std::shared_ptr<SampleSetProgress> progress;
 
-    loadSamples_sub (bitklavier::utils::BKPianoMain);
-    loadSamples_sub (bitklavier::utils::BKPianoHammer);
-    loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance);
-    loadSamples_sub (bitklavier::utils::BKPianoPedal);
+    // Create or fetch the progress entry
+    if (!soundsetProgressMap.contains (soundsets[selection]))
+        soundsetProgressMap[soundsets[selection]] = std::make_shared<SampleSetProgress>();
+
+    progress = soundsetProgressMap[soundsets[selection]];
+
+    // Attach ValueTree + property info for later completion
+    progress->soundsetName =soundsets[selection];
+    progress->targetTree = prep_tree;
+
+    parent->startSampleLoading();
+    loadSamples_sub (bitklavier::utils::BKPianoMain,soundsets[selection]);
+    loadSamples_sub (bitklavier::utils::BKPianoHammer,soundsets[selection]);
+    loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance, soundsets[selection]);
+    loadSamples_sub (bitklavier::utils::BKPianoPedal,soundsets[selection]);
 }
 
-void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thisSampleType)
+void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thisSampleType, std::string name)
 {
     using namespace bitklavier::utils;
 
     // maybe better to do this with templates, but for now...
     juce::String soundsetName;
     if (thisSampleType == BKPianoMain)
-        soundsetName = globalSoundset_name;
+        soundsetName = name;
     else if (thisSampleType == BKPianoHammer)
-        soundsetName = globalHammersSoundset_name;
+        soundsetName = name + "Hammers";
     else if (thisSampleType == BKPianoReleaseResonance)
-        soundsetName = globalReleaseResonanceSoundset_name;
+        soundsetName = name+ "ReleaseResonance";
     else if (thisSampleType == BKPianoPedal)
-        soundsetName = globalPedalsSoundset_name;
+        soundsetName = name + "Pedals";
 
     juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
-    samplePath.append("/Default", 20);
-    samplePath.append(BKPianoSampleType_string[thisSampleType], 20); // subfolders need to be named accordingly
+    samplePath.append("/" + juce::String(name), 1000);
+    samplePath.append(BKPianoSampleType_string[thisSampleType], 1000); // subfolders need to be named accordingly
     juce::File directory(samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false, "*.wav");
 
     // sort alphabetically
     MyComparator sorter;
     allSamples.sort(sorter);
+    if(allSamples.isEmpty())
+        return;
+    auto progressPtr = soundsetProgressMap[name];
+    if (!progressPtr)
+        progressPtr = soundsetProgressMap[name] = std::make_shared<SampleSetProgress>();
 
     //Build allKeysWithSamples: array that keeps track of which keys have samples, for building start/end ranges in keymap
     for (auto thisFile : allSamples)
@@ -297,12 +384,17 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
         juce::AsyncUpdater* loadManager
      */
+    int totalUnits = 0;
+    for (auto& ps : pitchesVector)
+        totalUnits += std::max(1, ps.numLayers);
 
+    progressPtr->totalJobs++; // one job per sample type
     sampleLoader.addJob(new SampleLoadJob(
                              audioFormatManager.get(),
                              std::move(pitchesVector),
                              &samplerSoundset[soundsetName],
-                             this), true);
+                             this,progressPtr,
+                            totalUnits), true);
 }
 
 
@@ -411,9 +503,9 @@ bool SampleLoadJob::loadSamples()
         {
             DBG("SampleLoadJob::loadSamples() did not load some samples successfully");
         }
+        tickProgress();
     }
 
-    DBG("done loading all samples");
     return loadSuccess;
 }
 

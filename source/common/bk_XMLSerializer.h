@@ -1,4 +1,5 @@
 #pragma once
+#include <chowdsp_serialization/chowdsp_serialization.h>
 namespace bitklavier
 {
 /** Serializer which serializes data into an XML format */

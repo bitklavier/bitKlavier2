@@ -30,6 +30,7 @@ class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
 class PreparationList;
+class SampleLoadManager;
 
 namespace bitklavier {
     class ConnectionList;
@@ -106,6 +107,8 @@ public:
 
 
 
+
+    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> * getSamples();
 
 
     //all connection code
@@ -192,6 +195,17 @@ public:
     {
         mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
     }
+    std::unique_ptr<SampleLoadManager> sampleLoadManager ;
+
+    juce::ValueTree getCurrentPiano() {
+        for (auto vt : tree) {
+            if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::isActive))
+                return vt;
+        }
+    }
+    void finishedSampleLoading();
+    void startSampleLoading();
+
 protected:
     chowdsp::DeferredAction mainThreadAction;
     //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
@@ -215,6 +229,7 @@ protected:
 
     void processKeyboardEvents(juce::MidiBuffer &buffer, int num_samples);
 
+    void clearAllBackend();
     std::unique_ptr<bitklavier::SoundEngine> engine_;
     std::unique_ptr<MidiManager> midi_manager_;
     std::unique_ptr<juce::MidiKeyboardState> keyboard_state_;

@@ -208,7 +208,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void removeSubSection(SynthSection* section);
     virtual void setScrollWheelEnabled(bool enabled);
     SynthButton* activator() const { return activator_; }
-    void showPrepPopup(std::unique_ptr<SynthSection> prep, bitklavier::BKPreparationType);
+    void showPrepPopup(std::unique_ptr<SynthSection> prep, const juce::ValueTree& tree, bitklavier::BKPreparationType);
     float getTitleWidth();
     float getPadding();
     float getPowerButtonOffset() const { return size_ratio_ * kDefaultPowerButtonOffset; }

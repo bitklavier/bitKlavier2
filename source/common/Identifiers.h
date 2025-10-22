@@ -6,9 +6,8 @@
 #define BITKLAVIER2_IDENTIFIERS_H
 #pragma once
 
-#include "common.h"
 #include <juce_core/juce_core.h>
-
+#include <juce_data_structures/juce_data_structures.h>
 namespace IDs
 {
 #define DECLARE_ID(name) const juce::Identifier name (#name);
@@ -55,10 +54,7 @@ namespace IDs
     DECLARE_ID (midiDeviceId)
     DECLARE_ID (active)
     DECLARE_ID (midiPrefs)
-    DECLARE_ID (mainSampleSet)
-    DECLARE_ID (hammerSampleSet)
-    DECLARE_ID (releaseResonanceSampleSet)
-    DECLARE_ID (pedalSampleSet)
+
 
     DECLARE_ID (modulationproc)
     DECLARE_ID (ModulationConnection)
@@ -128,6 +124,10 @@ namespace IDs
     DECLARE_ID(tempo)
     DECLARE_ID(vst)
     DECLARE_ID(keymap)
+
+    DECLARE_ID(soundset)
+    DECLARE_ID(globalsoundset)
+    DECLARE_ID(syncglobal)
 }
 
 #undef DECLARE_ID

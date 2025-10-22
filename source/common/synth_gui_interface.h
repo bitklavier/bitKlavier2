@@ -29,12 +29,11 @@ class juce::AudioDeviceManager { };
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 
-class SampleLoadManager;
 class UserPreferencesWrapper;
 class FullInterface;
 struct OpenGlWrapper;
 class ModulatorBase;
-
+class SampleLoadManager;
 struct SynthGuiData {
   SynthGuiData(SynthBase* synth_base);
   juce::ValueTree& tree;
@@ -92,6 +91,7 @@ public:
 
     virtual juce::AudioDeviceManager* getAudioDeviceManager() { return nullptr; }
     SynthBase* getSynth() { return synth_; }
+    SampleLoadManager* getSampleLoadManager();
     juce::UndoManager* getUndoManager();
     virtual void updateFullGui();
     virtual void updateGuiControl(const std::string& name, float value);
@@ -128,8 +128,7 @@ public:
     FullInterface* getGui() { return gui_.get(); }
     OpenGlWrapper* getOpenGlWrapper();
     juce::File getActiveFile();
-    std::shared_ptr<UserPreferencesWrapper> userPreferences;
-    std::unique_ptr<SampleLoadManager> sampleLoadManager ;
+
    // std::unique_ptr<ApplicationCommandHandler> commandHandler;
     PopupItems getPluginPopupItems();
     class PluginListWindow;

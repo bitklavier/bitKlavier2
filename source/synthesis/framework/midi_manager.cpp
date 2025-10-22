@@ -323,7 +323,7 @@ void MidiManager::processMidiMessage(const juce::MidiMessage& midi_message, int 
 
 
 
-
+//add messages from actual device callback
 void MidiManager::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage &midi_message) {
   midi_collector_.addMessageToQueue(midi_message);
 }

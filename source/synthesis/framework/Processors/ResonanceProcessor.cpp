@@ -238,6 +238,8 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         // Set midi channel for each string
         resonantStringsArray[i]->channel = static_cast<int>(i + 1);
     }
+    parent.getValueTree().addListener(this);
+    loadSamples();
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

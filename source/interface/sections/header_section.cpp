@@ -21,6 +21,7 @@
 #include "text_look_and_feel.h"
 #include "load_save.h"
 #include "SampleLoadManager.h"
+#include "synth_base.h"
 
 LogoSection::LogoSection() : SynthSection("logo_section") {
 #if !defined(NO_TEXT_ENTRY)
@@ -34,18 +35,6 @@ LogoSection::LogoSection() : SynthSection("logo_section") {
 
     setSkinOverride(Skin::kLogo);
 }
-
-namespace string_constants {
-    // i think the sample library menu should be autopopulated by subfolders in the samples folder
-    // and also by whatever other folders the user specifies in preferences for storing samples
-    // including SoundFonts
-    static const std::vector<std::string> cBKSampleLoadTypes = {
-        "Piano (Default)",
-        "Library 2",
-        "Library 3",
-        "Library 4"
-    };
-};
 
 void LogoSection::resized() {
     int logo_padding_y = kLogoPaddingY * size_ratio_;
@@ -106,9 +95,9 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     addPianoButton->setLookAndFeel(TextLookAndFeel::instance());
     addPianoButton->setButtonText("add piano");
 
-    sampleSelectText->setText(string_constants::cBKSampleLoadTypes[0]);
+    sampleSelectText->setText("---");
     pianoSelectText->setText(getAllPianoNames().at(0));
-    setAlwaysOnTop(true);
+    // setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
 }
 
@@ -217,15 +206,18 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         resized();
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
-        for (int i = 0; i < bitklavier::utils::BKSampleLoadType::BKNumSampleLoadTypes; i++) {
-            options.addItem(i, string_constants::cBKSampleLoadTypes[i]);
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        auto string_names = parent->getSampleLoadManager()->getAllSampleSets();
+        for (int i = 0; i < string_names.size(); i++) {
+            options.addItem(i, string_names[i]);
+
         }
 
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-            parent->sampleLoadManager->loadSamples(selection, true);
-            sampleSelectText->setText(string_constants::cBKSampleLoadTypes[selection]);
+            SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+            _parent->getSampleLoadManager()->loadSamples(selection, true, _parent->getSynth()->getValueTree());
+            sampleSelectText->setText(_parent->getSampleLoadManager()->getAllSampleSets()[selection]);
             resized();
         });
     } else if (clicked_button == pianoSelector.get()) {

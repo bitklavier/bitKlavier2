@@ -9,6 +9,7 @@
 #include "utils.h"
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_events/juce_events.h>
+#include "overlay.h"
 template <typename T>
 class BKSamplerSound;
 
@@ -36,6 +37,21 @@ struct PitchSamplesInfo
     int numLayers;
     juce::BigInteger newMidiRange;
     std::unique_ptr<AudioFormatReaderFactory> sampleReaderArray;
+};
+struct SampleSetProgress
+{
+    std::atomic<float> currentProgress { 0.0f }; // 0..1 total
+    std::atomic<int> totalJobs { 0 };
+    std::atomic<int> completedJobs { 0 };
+
+    juce::ValueTree targetTree;       // tree to update when loading completes
+    juce::String soundsetName;        // actual sample set name to set into the tree
+
+    void markComplete()
+    {
+        if (targetTree.isValid())
+            targetTree.setProperty (IDs::soundset, soundsetName, nullptr);
+    }
 };
 
 inline std::unique_ptr<juce::AudioFormatReader> makeAudioFormatReader (juce::AudioFormatManager& manager,
@@ -101,32 +117,24 @@ private:
 //private:
 //    juce::File file;
 //};
-class SynthGuiInterface;
 class SynthBase;
 class SampleLoadManager : public juce::AsyncUpdater
 {
 public:
-    SampleLoadManager (std::shared_ptr<UserPreferencesWrapper> preferences, SynthGuiInterface* synth_, SynthBase * synth);
+    SampleLoadManager (SynthBase* parent,std::shared_ptr<UserPreferencesWrapper> preferences);
     ~SampleLoadManager();
 
     juce::ThreadPool sampleLoader;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> samplerSoundset;
 
-    bool loadSamples (int selection, bool isGlobal);
-    void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType);
+    bool loadSamples (int selection, bool isGlobal,const juce::ValueTree &v);
+    bool loadSamples (std::string);
+    void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType,std::string);
     juce::Array<juce::File> samplesByPitch (juce::String whichPitch, juce::Array<juce::File> inFiles);
 
-    // maybe this repetition can be cleaned up, but maybe not so important.
-    juce::String globalSoundset_name;
-    juce::String globalHammersSoundset_name;
-    juce::String globalReleaseResonanceSoundset_name;
-    juce::String globalPedalsSoundset_name;
-
-
+    const std::vector<std::string> getAllSampleSets();
     std::shared_ptr<UserPreferencesWrapper> preferences;
     void handleAsyncUpdate() override;
-    SynthGuiInterface* synthGui;
-    SynthBase* synth;
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<AudioFormatReaderFactory> readerFactory;
 
@@ -136,6 +144,21 @@ public:
     juce::Array<int> allKeysWithSamples; // array that keeps track of which keys have samples, for building start/end ranges in keymap
     juce::BigInteger getMidiRange (juce::String pitchName);
     void clearAllSamples();
+    void setValueTree(const juce::ValueTree& v) {
+        t =v;
+    }
+    std::map<std::string, std::shared_ptr<SampleSetProgress>> soundsetProgressMap;
+    float  getSoundsetProgress(const std::string& name)
+    {
+        if (auto it = soundsetProgressMap.find(name); it != soundsetProgressMap.end())
+            return it->second->currentProgress.load();
+        return -1.0f;
+    }
+
+private:
+    SynthBase* parent;
+    std::promise<void> loadPromise;
+    juce::ValueTree temp_prep_tree;
     juce::ValueTree t;
 };
 
@@ -157,11 +180,13 @@ public:
         std::unique_ptr<AudioFormatReaderFactory> ptr,
         juce::AudioFormatManager* manager,
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
-        juce::AsyncUpdater* loadManager) : juce::ThreadPoolJob ("sample_loader"),
+        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits) : juce::ThreadPoolJob ("sample_loader"),
                                            soundset (soundset),
                                            loadManager (loadManager),
                                            sampleReader (std::move (ptr)),
-                                           manager (manager)
+                                           manager (manager),
+    progress(progress),
+         totalUnits(totalUnits)
     {
         thisSampleType = sampleType;
         velocityLayers = numLayers;
@@ -172,15 +197,24 @@ public:
         juce::AudioFormatManager* manager,
         std::vector<PitchSamplesInfo>&& srvector,
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
-        juce::AsyncUpdater* loadManager) : juce::ThreadPoolJob ("sample_loader"),
+        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits) : juce::ThreadPoolJob ("sample_loader"),
                                            sampleReaderVector (std::move(srvector)),
                                            soundset (soundset),
                                            loadManager (loadManager),
-                                           manager (manager)
+                                           manager (manager),
+    progress(progress),
+         totalUnits(totalUnits)
     {};
 
-    ~SampleLoadJob()
-    {loadManager->triggerAsyncUpdate();}
+    ~SampleLoadJob() {
+        if (progress)
+        {
+            int done = ++progress->completedJobs;
+            if (done >= progress->totalJobs)
+                progress->markComplete();  // safely updates ValueTree
+        }
+        loadManager->triggerAsyncUpdate();
+    }
     JobStatus runJob() override;
 
     bool loadSamples(); // calls one of the following, depending on context
@@ -199,13 +233,28 @@ public:
 
     juce::AudioFormatManager* manager;
     juce::AsyncUpdater* loadManager;
+//progressbar stuff
+    std::shared_ptr<SampleSetProgress> progress;
+    const int totalUnits;
+    std::atomic<int> completedUnits { 0 };
+    inline void tickProgress()
+    {
+        if (!progress) return;
+
+        float jobFrac = (float)(++completedUnits) / (float)totalUnits;
+
+        // Blend this job’s fractional progress into total sample set progress
+        float totalFrac = ((float)progress->completedJobs + jobFrac)
+                          / (float)progress->totalJobs;
+        progress->currentProgress.store(totalFrac);
+    }
+
 
     /**
      * a vector of all the pitches with relevant sample info, so the samples can be loaded
      */
     std::vector<PitchSamplesInfo> sampleReaderVector;
 };
-
 
 
 #endif //BITKLAVIER2_AUDIOFILEMANAGER_H

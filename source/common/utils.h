@@ -232,13 +232,7 @@ static constexpr int MaxMidiNotes = 128;
         BKNumSampleLoadTypes
     } BKSampleLoadType;
 
-    const std::string samplepaths[BKSampleLoadType::BKNumSampleLoadTypes]
-        {
-         "/default",
-         "/sampleset2", // made up for now...
-         "/sampleset3",
-         "/sampleset4"
-        };
+
 
     typedef enum BKPianoSampleType
     {

@@ -27,6 +27,11 @@
 // undertow (0 to 9320), goes forward, dynamically shorten?
 
 // key on reset checkbox
+enum NostalgicComboBox {
+    Note_Length = 1 << 0,
+    Sync_KeyDown = 1 << 1,
+    Sync_KeyUp = 1 << 2
+};
 
 // ********************************************************************************************* //
 // ************************************  NostalgicParams  ************************************** //
@@ -55,6 +60,8 @@ struct NostalgicParams : chowdsp::ParamHolder
             holdTimeMinMaxParams,
             transpositionUsesTuning,
             noteOnGain,
+            keyOnReset,
+            nostalgicTriggeredBy,
             reverseEnv,
             // reverseEnvSequence,
             undertowEnv
@@ -99,6 +106,22 @@ struct NostalgicParams : chowdsp::ParamHolder
         "TranspositionUsesTuning",
         false
     };
+
+    // key-on reset toggle
+    chowdsp::BoolParameter::Ptr keyOnReset {
+        juce::ParameterID { "keyOnReset", 100 },
+        "key-on reset",
+        false
+    };
+
+    // combo box
+    chowdsp::EnumChoiceParameter<NostalgicComboBox>::Ptr nostalgicTriggeredBy {
+        juce::ParameterID { "nostalgicTriggeredBy", 100 },
+        "nostalgic triggered by",
+        NostalgicComboBox::Note_Length,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' } }
+    };
+
     // Gain for output send (for blendronic, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSendGain {
         juce::ParameterID { "Send", 100 },
@@ -132,7 +155,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
         "Cluster Min",
-        juce::NormalisableRange { 1.0f, 10.0f, 0.0f, skewFactor, false },
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
@@ -178,6 +201,16 @@ struct NostalgicNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 // ************************************  NostalgicNoteStuff  ************************************** //
 // ********************************************************************************************* //
+struct NostalgicNoteData
+{
+    int noteNumber;
+    float noteDurationSamples = 0;
+    double noteDurationMs = 0;
+    double noteStart = 0;
+    int reverseTimerSamples = 0;
+    float undertowDurationMs = 0;
+    float waveDistanceMs = 0;
+};
 
 /*
  NostalgicNoteStuff is a class for containing a variety of information needed
@@ -270,8 +303,11 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+    void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
 
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
+    void updateMidiNoteTranspositions(int noteOnNumber);
+    void updateAllMidiNoteTranspositions();
 
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
@@ -319,18 +355,42 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
-    void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
-    {
-        // //should add an if check here to make sure its actually the sampleset changing
-        // juce::String a = t.getProperty (IDs::mainSampleSet, "");
-        // juce::String b = t.getProperty (IDs::hammerSampleSet, "");
-        // juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
-        // juce::String d = t.getProperty (IDs::pedalSampleSet, "");
-        // addSoundSet (&(*ptrToSamples)[a],
-        //     &(*ptrToSamples)[b],
-        //     &(*ptrToSamples)[c],
-        //     &(*ptrToSamples)[d]);
+    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
+
+        if (t == v && property == IDs::soundset) {
+            loadSamples();
+            return;
+        }
+        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+            return;
+        if (property == IDs::soundset && t == parent.getValueTree()) {
+            juce::String a = t.getProperty(IDs::soundset, "");
+            addSoundSet(&(*parent.getSamples())[a],
+                        &(*parent.getSamples())[a+"Hammers"],
+                        &(*parent.getSamples())[a+"ReleaseResonance"],
+                        &(*parent.getSamples())[a+"Pedals"]);
+        }
+
     }
+    void loadSamples() {
+        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+        if (soundset == IDs::syncglobal.toString()) {
+            //if global sync read soundset from global valuetree
+            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
+
+            addSoundSet(&(*parent.getSamples())[soundset],
+                     &(*parent.getSamples())[soundset + "Hammers"],
+                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                     &(*parent.getSamples())[soundset + "Pedals"]);
+        }else {
+            //otherwise set the piano
+            addSoundSet(&(*parent.getSamples())[soundset],
+                        &(*parent.getSamples())[soundset + "Hammers"],
+                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                        &(*parent.getSamples())[soundset + "Pedals"]);
+        }
+    }
+
 
     bool holdCheck(int noteNumber);
 
@@ -348,12 +408,15 @@ public:
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
     juce::Array<int> keysDepressed;   //current keys that are depressed
+    juce::Array<juce::uint8> velocities;
+    juce::Array<float> noteLengthTimers;
+    juce::Array<NostalgicNoteData> reverseTimers;
+    juce::Array<NostalgicNoteData> clusterNotes;
+    float clusterTimer;
+    int clusterCount;
+    bool inCluster = false;
 
 private:
-    std::vector<juce::uint8> velocities;
-    std::vector<juce::uint64> noteLengthTimers;
-    juce::OwnedArray<NostalgicNoteStuff> reverseNotes;
-    juce::OwnedArray<NostalgicNoteStuff> undertowNotes;
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;

@@ -95,10 +95,10 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     }
 
     inCluster = false;
+    v.addListener(this);
+    parent.getValueTree().addListener(this);
+    loadSamples();
 }
-
-SynchronicProcessor::~SynchronicProcessor()
-{}
 
 void SynchronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {

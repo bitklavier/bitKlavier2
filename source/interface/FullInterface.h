@@ -16,6 +16,7 @@
 
 class TestSection;
 class AboutSection;
+class LoadingSection;
 struct SynthGuiData;
 class HeaderSection;
 class ModulationPreparation;
@@ -51,6 +52,8 @@ public :
     void copySkinValues(const Skin& skin);
     void reloadSkin(const Skin& skin);
     void showAboutSection() override;
+    void showLoadingSection();
+    void hideLoadingSection();
     void repaintChildBackground(SynthSection* child);
     void repaintSynthesisSection();
     void repaintOpenGlBackground(OpenGlComponent* component);
@@ -81,8 +84,8 @@ public :
     void popupDisplay(juce::Component* source, const std::string& text,
         juce::BubbleComponent::BubblePlacement placement, bool primary);
 
-    void prepDisplay(std::unique_ptr<SynthSection> synth_section);
-    void modDisplay(std::unique_ptr<SynthSection> synth_section);
+    void prepDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v );
+    void modDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v);
     std::unique_ptr<SinglePopupSelector> popup_selector_;
     std::unique_ptr<PreparationPopup> prep_popup;
     std::unique_ptr<PreparationPopup> mod_popup;
@@ -90,6 +93,7 @@ public :
     std::unique_ptr<PopupDisplay> popup_display_2_;
         SynthSection* full_screen_section_;
     std::unique_ptr<AboutSection> about_section_;
+    std::unique_ptr<LoadingSection> loading_section;
     std::unique_ptr<MainSection> main_;
     std::unique_ptr<ModulationManager> modulation_manager;
     std::unique_ptr<HeaderSection> header_;

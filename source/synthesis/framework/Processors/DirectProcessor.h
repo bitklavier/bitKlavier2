@@ -18,6 +18,8 @@
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 
+#include "SampleLoadManager.h"
+
 struct DirectParams : chowdsp::ParamHolder {
     // gain slider params, for all gain-type knobs
     float rangeStart = -80.0f;
@@ -63,13 +65,13 @@ struct DirectParams : chowdsp::ParamHolder {
      * continuous, like the outputGain and outputSend params)
      */
     // Gain param
-    chowdsp::GainDBParameter::Ptr gainParam {
+    chowdsp::GainDBParameter::Ptr gainParam{
         juce::ParameterID{"Main", 100},
-                "Main",
-                juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
-                0.0f,
-                true, // true => audio rate modulatable (continuously),
-                v.getChildWithProperty("parameter", "Main")
+        "Main",
+        juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
+        0.0f,
+        true, // true => audio rate modulatable (continuously),
+        v.getChildWithProperty("parameter", "Main")
     };
 
     // Hammer param
@@ -109,7 +111,7 @@ struct DirectParams : chowdsp::ParamHolder {
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
         true,
-          v.getChildWithProperty("parameter", "Send")
+        v.getChildWithProperty("parameter", "Send")
     };
 
     // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
@@ -119,7 +121,7 @@ struct DirectParams : chowdsp::ParamHolder {
         juce::NormalisableRange{-80.0f, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
         true,
-          v.getChildWithProperty("parameter", "OutputGain")
+        v.getChildWithProperty("parameter", "OutputGain")
 
     };
 
@@ -157,6 +159,7 @@ public:
     DirectProcessor(SynthBase &parent, const juce::ValueTree &v);
 
     ~DirectProcessor() {
+        parent.getValueTree().removeListener(this);
     }
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -175,17 +178,13 @@ public:
 
     bool acceptsMidi() const override { return true; }
 
-    void addSoundSet(
-        std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > > *s) {
-        ptrToSamples = s;
-    }
 
     void addSoundSet(
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *s, // main samples
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *h, // hammer samples
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *r, // release samples
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *p) // pedal samples
-    {
+    override {
         mainSynth->addSoundSet(s);
         hammerSynth->addSoundSet(h);
         releaseResonanceSynth->addSoundSet(r);
@@ -239,18 +238,41 @@ public:
      * and it triggers the samples to be swapped out
      * @param t
      */
-    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &) {
-        //should add an if check here to make sure its actually the sampleset changing
-        juce::String a = t.getProperty(IDs::mainSampleSet, "");
-        juce::String b = t.getProperty(IDs::hammerSampleSet, "");
-        juce::String c = t.getProperty(IDs::releaseResonanceSampleSet, "");
-        juce::String d = t.getProperty(IDs::pedalSampleSet, "");
-        addSoundSet(&(*ptrToSamples)[a],
-                    &(*ptrToSamples)[b],
-                    &(*ptrToSamples)[c],
-                    &(*ptrToSamples)[d]);
-    }
+    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
 
+        if (t == v && property == IDs::soundset) {
+            loadSamples();
+            return;
+        }
+        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+            return;
+        if (property == IDs::soundset && t == parent.getValueTree() ) {
+            juce::String a = t.getProperty(IDs::soundset, "");
+            addSoundSet(&(*parent.getSamples())[a],
+                        &(*parent.getSamples())[a+"Hammers"],
+                        &(*parent.getSamples())[a+"ReleaseResonance"],
+                        &(*parent.getSamples())[a+"Pedals"]);
+        }
+
+    }
+    void loadSamples() {
+        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+        if (soundset == IDs::syncglobal.toString()) {
+            //if global sync read soundset from global valuetree
+            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
+
+            addSoundSet(&(*parent.getSamples())[soundset],
+                     &(*parent.getSamples())[soundset + "Hammers"],
+                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                     &(*parent.getSamples())[soundset + "Pedals"]);
+        }else {
+            //otherwise set the piano
+            addSoundSet(&(*parent.getSamples())[soundset],
+                        &(*parent.getSamples())[soundset + "Hammers"],
+                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                        &(*parent.getSamples())[soundset + "Pedals"]);
+        }
+    }
     /**
      * todo: do we need these?
      * DAVIS: this just explicitly defines the other valuetree listener functions to be doing nothing

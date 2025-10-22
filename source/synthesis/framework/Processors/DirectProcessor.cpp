@@ -36,10 +36,10 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     releaseResonanceSynth->isKeyReleaseSynth (true);
     pedalSynth->isPedalSynth (true);
 
-    state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.transpose.transpositionUsesTuning->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
+    state.params.transpose.transpositionUsesTuning->stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
 
-    midiNoteTranspositions.ensureStorageAllocated(50);
+    midiNoteTranspositions.ensureStorageAllocated (50);
 
     //add state change params here; this will add this to the set of params that are exposed to the state change mod system
     // not needed for audio-rate modulatable params
@@ -47,8 +47,11 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpose",
         &(state.params.transpose.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string,
-    bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
-    &(state.params.transpose.transpositionUsesTuning->stateChanges)));
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
+        &(state.params.transpose.transpositionUsesTuning->stateChanges)));
+    v.addListener (this);
+    parent.getValueTree().addListener (this);
+    loadSamples();
 }
 
 void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -56,8 +59,8 @@ void DirectProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
 
     mainSynth->setCurrentPlaybackSampleRate (sampleRate);
-//    gain.prepare (spec);
-//    gain.setRampDurationSeconds (0.05);
+    //    gain.prepare (spec);
+    //    gain.setRampDurationSeconds (0.05);
 
     hammerSynth->setCurrentPlaybackSampleRate (sampleRate);
     releaseResonanceSynth->setCurrentPlaybackSampleRate (sampleRate);
@@ -118,7 +121,7 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
     releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
 }
 
-void DirectProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
+void DirectProcessor::processContinuousModulations (juce::AudioBuffer<float>& buffer)
 {
     // this for debugging
     //    auto mod_Bus = getBus(true,1);
@@ -131,15 +134,16 @@ void DirectProcessor::processContinuousModulations(juce::AudioBuffer<float>& buf
     //        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
     //    }
 
-    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
+    const auto& modBus = getBusBuffer (buffer, true, 1); // true = input, bus index 0 = mod
 
     int numInputChannels = modBus.getNumChannels();
-    for (int channel = 0; channel < numInputChannels; ++channel) {
-        const float* in = modBus.getReadPointer(channel);
-        std::visit([in](auto* p)->void
-            {
-                p->applyMonophonicModulation(*in);
-            },  state.params.modulatableParams[channel]);
+    for (int channel = 0; channel < numInputChannels; ++channel)
+    {
+        const float* in = modBus.getReadPointer (channel);
+        std::visit ([in] (auto* p) -> void {
+            p->applyMonophonicModulation (*in);
+        },
+            state.params.modulatableParams[channel]);
     }
 }
 
@@ -165,7 +169,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      */
 
     // first, the continuous modulations (simple knobs/sliders...)
-    processContinuousModulations(buffer);
+    processContinuousModulations (buffer);
 
     // then, the state-change modulations, for more complex params
     state.params.transpose.processStateChanges();
@@ -220,17 +224,17 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
-    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), buffer.getNumSamples(), sendgainmult);
-    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom (sendBufferIndex, 0, buffer.getReadPointer (0), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom (sendBufferIndex + 1, 0, buffer.getReadPointer (1), buffer.getNumSamples(), sendgainmult);
 
     // send level meter update
-    std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0,  buffer.getNumSamples());
-    std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0,  buffer.getNumSamples());
+    std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, buffer.getNumSamples());
+    std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex + 1, 0, buffer.getNumSamples());
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain(0, 0, buffer.getNumSamples(),outputgainmult);
-    buffer.applyGain(1, 0, buffer.getNumSamples(),outputgainmult);
+    buffer.applyGain (0, 0, buffer.getNumSamples(), outputgainmult);
+    buffer.applyGain (1, 0, buffer.getNumSamples(), outputgainmult);
 
     // level meter update stuff
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());

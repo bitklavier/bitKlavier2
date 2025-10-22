@@ -20,6 +20,7 @@
 #include "fonts.h"
 
 #include "paths.h"
+#include "synth_base.h"
 #include "synth_gui_interface.h"
 #include "synth_section.h"
 #include "text_look_and_feel.h"
@@ -37,7 +38,7 @@ AboutSection::AboutSection(const juce::String& name) : Overlay(name), body_(new 
     // logo_ = std::make_unique<AppLogo>("logo");
     //addOpenGlComponent(logo_.get());
 
-    name_text_ = std::make_shared<PlainTextComponent> ("plugin name", "VIAL");
+    name_text_ = std::make_shared<PlainTextComponent> ("plugin name", "bitklavier");
     addOpenGlComponent (name_text_);
     name_text_->setFontType (PlainTextComponent::kRegular);
     name_text_->setTextSize (40.0f);
@@ -62,7 +63,7 @@ void AboutSection::resized() {
     juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
     if (device_manager) {
       device_selector_ = std::make_unique<OpenGlDeviceSelector>(
-          *device_manager, 0, 0, bitklavier::kNumChannels, bitklavier::kNumChannels, true, false, false, false, parent->userPreferences->tree);
+          *device_manager, 0, 0, bitklavier::kNumChannels, bitklavier::kNumChannels, true, false, false, false, parent->getSynth()->user_prefs->tree);
       addAndMakeVisible(device_selector_.get());
       addOpenGlComponent(device_selector_->getImageComponent());
     }
