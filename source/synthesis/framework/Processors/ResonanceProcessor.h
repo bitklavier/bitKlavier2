@@ -15,36 +15,14 @@
 /**
  * Resonance ToDo list:
  *
- * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
- *      -- perhaps also make it clear that 16 is the max
- *
- * - UI sometimes gets caught in a spinning ball when changing the Fundamental, doesn't crash though
- *
- * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
- *      -- for instance, when the 7th partial is "rung" by a key that is ET
- *      -- one idea: we use those to set start time between a user set range, and use velocity as a
- *                  general gain scalar separately, on top of that.
- *                  - so this would mean adding a range slider to the UI
- *      -- will need to add transpositionGains to noteOnSpec
- * - or, how about the following single knob params:
- *      -- start time offset (ms), sets "startTime"
- *      -- ring duration (ms), sets "sustainTime"
- *      -- start time range (ms), sets range of start times that the gain/offset overlap will set
- *          -- multiply gains and look at difference between offsets
- *              - overlap = gain1 * gain2 * (1. - offsetDifference), where offsetDifference is in fractional MIDI vals
- *                  overlap range [0, 1]
- *                  - cap gains at 1, so they go between 0 and 1?
- *          -- the more overlapped they are, the closer to the start time offset the playback starts
- *              - actual start time = (startTime + startTimeRange) - overlap * startTimeRange
- *                                  = startTime + startTimeRange * (1 - overlap)
- *      -- also: "quickness" or something, a knob that sets timeToMakeActive
- *
- * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
+ * - decide whether to use Tuning
+ *      -- could be used to factor into the variance calculation
+ *      -- not a priority for now
  *
  * - create a way to pull up some standard partial structures
  *      -- up to 19 natural overtones
  *      -- perhaps some other fun variants, like a "minor" overtone series with 6/5 instead of 5/4
- *      -- also undertone series
+ *      -- also undertone series, and combo of undertone/overtone, with fundamental mid-keyboard
  *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
  *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, stretched spectra etc...
  *          -- could even have a "stretch" parameter that stretches the spectra? and adjusts the "closest" key automatically?
@@ -56,8 +34,10 @@
  *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
  *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
  *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
+ *      -- a "stretch" knob that will stretch the given series and adjust the keymap settings accordingly
  *
  * - handleMidiTargetMessages, and updates to MidiTarget
+ * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
  * - processBlockBypassed
  *
@@ -101,6 +81,10 @@ struct ResonanceParams : chowdsp::ParamHolder
         add (outputSendGain,
             outputGain,
             noteOnGain,
+            presence,
+            sustain,
+            variance,
+            smoothness,
             env);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
@@ -143,6 +127,62 @@ struct ResonanceParams : chowdsp::ParamHolder
         "NoteOn Gain Scalar",
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
+        true
+    };
+
+    // presence maps to start time, inverted
+    chowdsp::FloatParameter::Ptr presence {
+        juce::ParameterID { "rpresence", 100 },
+        "presence",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.25f),
+        0.25f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    // maps to sustain time
+    chowdsp::FloatParameter::Ptr sustain {
+        juce::ParameterID { "rsustain", 100 },
+        "sustain",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    /*
+     * the partials will not always be perfectly aligned, tuning-wise
+     * and they also may have varying gains, so we adjust the gain
+     * of a particular resonance based on their gains and how
+     * far off they are from one another. That adjustment is
+     * further scaled by "variance"
+     * - if variance = 0, we ignore differences in tuning and the relative
+     *      partial gains
+     * - if variance is 1, we fully adjust the gain based on these differences
+     *
+     * gain adjustment = variance * (gain1 * gain2 * fabs(1. - offsetDifference)^2), roughly
+     *  - see the code in ringString() for exactly what it is
+     */
+    chowdsp::FloatParameter::Ptr variance {
+        juce::ParameterID { "rvariance", 100 },
+        "variance",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
+        1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    // maps to delay time before resonantString becomes active after held initiated
+    chowdsp::FloatParameter::Ptr smoothness {
+        juce::ParameterID { "rsmoothness", 100 },
+        "smoothness",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
         true
     };
 
@@ -313,9 +353,9 @@ public:
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
-             *              for Resonance, we have 2: sendGain and outputGain
+             *              for Resonance, we have 6: sendGain and outputGain, + the 4 qualities
              */
-            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (2), true)  // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (6), true)  // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation",   juce::AudioChannelSet::mono(), false)               // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",         juce::AudioChannelSet::stereo(), true);             // Send channel (right outputs)
     }

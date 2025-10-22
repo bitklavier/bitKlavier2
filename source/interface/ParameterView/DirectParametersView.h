@@ -54,11 +54,6 @@ public:
                 slider->setShowPopupOnHover(true);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
-
-                /**
-                 * todo: reset normalizable range as needed:
-                 * slider
-                 */
             }
         }
 

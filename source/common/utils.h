@@ -484,6 +484,7 @@ struct NoteOnSpec
     NoteOnSpec()
     {
         transpositions.ensureStorageAllocated(MaxMidiNotes);
+        transpositionGains.ensureStorageAllocated(MaxMidiNotes);
     }
 
     /**
@@ -497,6 +498,7 @@ struct NoteOnSpec
     bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
     BKADSR::Parameters envParams {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
     juce::Array<float> transpositions;              // all the transpositions related to this noteOn; BKSynth will launch all of them, and handle noteOffs for them
+    juce::Array<float> transpositionGains;          // gains related to transpositions, by same index
     int channel = 1;                                // midi channel
 
     void clear()
@@ -509,6 +511,7 @@ struct NoteOnSpec
         stopSameCurrentNote = true;
         envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f};
         transpositions.clearQuick();
+        transpositionGains.clearQuick();
         channel = 1;
     }
 };

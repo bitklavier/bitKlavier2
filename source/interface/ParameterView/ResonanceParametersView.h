@@ -36,6 +36,25 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
+        for (auto& param_ : *params.getFloatParams())
+        {
+            if ( // make group of params to display together
+                param_->paramID == "rpresence" ||
+                param_->paramID == "rsustain" ||
+                param_->paramID == "rvariance")
+                //param_->paramID == "rsmoothness") // i'm not persuaded this is a useful parameter to expose
+            {
+                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
+                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
+                addSlider (slider.get()); // adds the slider to the synthSection
+                slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setShowPopupOnHover(true);
+                floatAttachments.emplace_back (std::move (attachment));
+                _sliders.emplace_back (std::move (slider));
+            }
+        }
+
         fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true);
         addStateModulatedComponent(fundamentalKeyboard.get());
         fundamentalKeyboard->setName("fundamental");
@@ -78,7 +97,7 @@ public:
         addStateModulatedComponent(gainsKeyboard.get());
         gainsKeyboard->setName("gains");
         gainsKeyboard->setAvailableRange(0, numKeys);
-        gainsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
+        gainsKeyboard->setMinMidMaxValues(0., 0.5, 1., 2); // min, mid, max, display resolution
         gainsKeyboard->setOctaveForMiddleC(5);
 
         gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
@@ -117,10 +136,14 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
 
-//        drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
-//        drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
-//        drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
-//        drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
+        for (auto& slider : _sliders)
+        {
+            //drawLabelForComponent (g, slider->getName(), slider.get());
+            if (slider->getName() == "rsustain") drawLabelForComponent(g, TRANS("Sustain"), slider.get());
+            if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Variance"), slider.get());
+            if (slider->getName() == "rpresence") drawLabelForComponent(g, TRANS("Presence"), slider.get());
+            //if (slider->getName() == "rsmoothness") drawLabelForComponent(g, TRANS("Smoothness"), slider.get());
+        }
 
         paintChildrenBackgrounds (g);
     }
@@ -150,6 +173,10 @@ public:
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
+
+    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
+    std::vector<std::unique_ptr<SynthSlider>> _sliders;
+    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
 
     ResonanceParams& sparams_;
 

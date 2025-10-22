@@ -68,5 +68,10 @@ void ResonanceParametersView::resized()
     juce::Rectangle<int> envRect = bounds.removeFromBottom(bounds.getHeight() * 0.5);
     envSection->setBounds(envRect);
 
+    // knobs
+    bounds.removeFromBottom(largepadding);
+    juce::Rectangle<int> outputKnobsArea = bounds.removeFromBottom(knob_section_height);
+    placeKnobsInArea(outputKnobsArea, _sliders, false);
+
     SynthSection::resized();
 }

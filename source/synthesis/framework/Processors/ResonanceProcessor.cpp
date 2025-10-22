@@ -73,41 +73,38 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
 
             if (heldPartialKey == struckPartialKey)
             {
-                /*
-                 * todo: decide how to use these
-                 *          - we could have differences between the struck and held offsets impact how much sympathetic resonance is induced
-                 *          - and we can have the gain be a multiplier of the velocity, or considered some other way
-                 *          - also might be fine to ignore!
-                 */
                 float heldPartialOffset = heldPartial - static_cast<float>(heldPartialKey);
                 float heldPartialGain   = std::get<2>(heldPartialToCheck);
                 float struckPartialOffset = struckPartial - static_cast<float>(struckPartialKey);
                 float struckPartialGain   = std::get<2>(struckPartialToCheck);
+
+                float offsetDifference = std::fabs(heldPartialOffset - struckPartialOffset);
+                float partialOverlap = heldPartialGain * struckPartialGain * (1. - offsetDifference);
+                float varianceGainScale = 1. - (*_rparams->variance) * (1. - partialOverlap);
+                varianceGainScale *= varianceGainScale; // magnify the scaling
+
                 currentVelocity = static_cast<float>(velocity/128.);
+                _noteOnSpecMap[heldKey].channel = channel;
 
                 /*
                  * add the held key offset for this partialKey to the transpositions
                  *  - we may have more than one partial attached to this key, with different offsets
                  *  - but we also don't want to add duplicates, so only add if not already there
                  */
+                if (_noteOnSpecMap[heldKey].transpositions.addIfNotAlreadyThere(std::get<1>(heldPartialToCheck)))
+                {
+                    /*
+                    * then here, if addIfNotAlreadyThere returns true, add a gain value to transpositionGains
+                    */
+                    _noteOnSpecMap[heldKey].transpositionGains.add(varianceGainScale);
+                }
 
-                _noteOnSpecMap[heldKey].transpositions.addIfNotAlreadyThere(std::get<1>(heldPartialToCheck));
                 /*
-                 * then here, if addIfNotAlreadyThere returns true, had a gain value to transpositionGains
+                 * start time should be into the sample, to play just its tail;
+                 * - closer to the beginning of the sample, the more "presence"
                  */
-
-                /*
-                 * start time should be into the sample, to play just its tail
-                 * - perhaps modulate with velocity, and/or set range by user as in old bK?
-                 * - hard-wired for now, and maybe that's best anyhow...
-                 *
-                 * also, setting a fixed sustain time to avoid pileup of nearly-silent tails being added to the CPU load
-                 * - setting the release time will be crucial for how it all sounds (and the CPU load), since that is in addition to the sustain time here
-                 * - channel is important for disambiguating from other held strings
-                 */
-                _noteOnSpecMap[heldKey].channel = channel;
-                _noteOnSpecMap[heldKey].startTime = 400;      // ms
-                _noteOnSpecMap[heldKey].sustainTime = 2000;   // ms
+                _noteOnSpecMap[heldKey].startTime = 2000. * (1.0 - *_rparams->presence); // ms
+                _noteOnSpecMap[heldKey].sustainTime = 4000. * (*_rparams->sustain); // ms
                 _noteOnSpecMap[heldKey].stopSameCurrentNote = true; // ???
                 //DBG("playing partial associated with held key" + juce::String(heldPartialOffset) + " for " + juce::String(heldPartial));
             }
@@ -168,7 +165,8 @@ void ResonantString::incrementTimer_seconds(float blockSize_seconds)
     if (stringJustAdded)
     {
         timeSinceAdded += blockSize_seconds;
-        if (timeSinceAdded > timeToMakeActive)
+        //if (timeSinceAdded > timeToMakeActive)
+        if (timeSinceAdded > .1f * (*_rparams->smoothness))
         {
             active = true;
             stringJustAdded = false;
@@ -272,6 +270,11 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     {
         if (state.params.heldKeymap.keyStates.test(state.params.heldKeymap_changedInUI))
         {
+            /*
+             * todo: check to make sure there aren't already 16; if there are, then
+             *          don't add, and removed from state.params.heldKeymap.keyStates
+             *          and redo image for heldKey keyboard
+             */
             addSympStrings(state.params.heldKeymap_changedInUI);
         }
         else
@@ -379,7 +382,6 @@ void ResonanceProcessor::updatePartialStructure()
      * - offset from fundamental (fractional MIDI note val; 0. => default)
      * - gains (floats; 1.0 => default)
      */
-    resetPartialStructure();
 
     int pFundamental = find_first_set_bit(state.params.fundamentalKeymap.keyStates);
     if (pFundamental >= state.params.fundamentalKeymap.keyStates.size())
@@ -387,6 +389,8 @@ void ResonanceProcessor::updatePartialStructure()
         //DBG("ResonanceProcessor::updatePartialStructure() -- no fundamental found!");
         return;
     }
+
+    resetPartialStructure();
 
     for (size_t i = 0; i < state.params.closestKeymap.keyStates.size(); ++i)
     {
