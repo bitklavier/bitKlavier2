@@ -33,6 +33,10 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         startParam = SynchronicTargetFirst + 1;
         lastParam = SynchronicTargetNil;
 
+        // for Resonance...
+        startParam = ResonanceTargetFirst + 1;
+        lastParam = ResonanceTargetNil;
+
         for (int i = startParam; i < lastParam; ++i)
         {
             // Cast the integer back to the enum type
@@ -63,6 +67,7 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 else
                 {
                     //put it through for both noteOns and noteOffs
+                    DBG("passing through bo0th ons and offs");
                     juce::MidiMessage newmsg(message);
                     newmsg.setChannel (newchan);
                     midiMessages.addEvent (newmsg, mi.samplePosition);

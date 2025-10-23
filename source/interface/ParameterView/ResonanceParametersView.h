@@ -140,7 +140,7 @@ public:
         {
             //drawLabelForComponent (g, slider->getName(), slider.get());
             if (slider->getName() == "rsustain") drawLabelForComponent(g, TRANS("Sustain"), slider.get());
-            if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Variance"), slider.get());
+            if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Bandwidth"), slider.get());
             if (slider->getName() == "rpresence") drawLabelForComponent(g, TRANS("Presence"), slider.get());
             //if (slider->getName() == "rsmoothness") drawLabelForComponent(g, TRANS("Smoothness"), slider.get());
         }

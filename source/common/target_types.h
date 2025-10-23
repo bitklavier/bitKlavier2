@@ -29,7 +29,12 @@ typedef enum PreparationParameterTargetType {
     //SynchronicTargetDeleteOldest,
     //SynchronicTargetDeleteNewest,
     //SynchronicTargetRotate,
-    SynchronicTargetNil
+    SynchronicTargetNil,
+    ResonanceTargetFirst,
+    ResonanceTargetDefault,
+    ResonanceTargetRing,
+    ResonanceTargetAdd,
+    ResonanceTargetNil
 
 } PreparationParameterTargetType;
 

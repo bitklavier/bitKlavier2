@@ -98,8 +98,10 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                  * between the partials. this will all be scaled by the "variance" parameter
                  */
                 float offsetDifference = std::fabs(heldPartialOffset - struckPartialOffset);
+                if(offsetDifference > 1.) offsetDifference = 1.;
                 float partialOverlap = heldPartialGain * struckPartialGain * (1. - offsetDifference);
-                float varianceGainScale = 1. - (*_rparams->variance) * (1. - partialOverlap);
+                //float varianceGainScale = 1. - (*_rparams->variance) * (1. - partialOverlap);
+                float varianceGainScale = 1. - (1. - *_rparams->variance) * partialOverlap;
                 varianceGainScale *= varianceGainScale; // magnify the scaling
 
                 currentVelocity = static_cast<float>(velocity/128.);
@@ -124,7 +126,8 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                  */
                 _noteOnSpecMap[heldKey].startTime = 2000. * (1.0 - *_rparams->presence); // ms
                 _noteOnSpecMap[heldKey].sustainTime = 4000. * (*_rparams->sustain); // ms
-                _noteOnSpecMap[heldKey].stopSameCurrentNote = true; // ???
+                _noteOnSpecMap[heldKey].stopSameCurrentNote = false; // don't want to interrupt resonances already playing on this string
+                sendMIDImsg = true;
                 //DBG("playing partial associated with held key" + juce::String(heldPartialOffset) + " for " + juce::String(heldPartial));
             }
         }
@@ -205,10 +208,11 @@ void ResonantString::incrementTimer_seconds(float blockSize_seconds)
  */
 void ResonantString::finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages)
 {
-    if(active)
+    if(active && sendMIDImsg)
     {
         auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, currentVelocity);
         outMidiMessages.addEvent (newmsg, 32);
+        sendMIDImsg = false;
     }
 }
 
@@ -238,8 +242,18 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         // Set midi channel for each string
         resonantStringsArray[i]->channel = static_cast<int>(i + 1);
     }
+
     parent.getValueTree().addListener(this);
     loadSamples();
+
+    // add sympathetic strings if they have been saved
+    for (size_t i = 0; i < state.params.closestKeymap.keyStates.size(); ++i)
+    {
+        if (state.params.heldKeymap.keyStates.test (i))
+        {
+            addSympStrings (i);
+        }
+    }
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -312,7 +326,9 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         spec.clear();
     }
 
-    // check UI for updates to held keys
+    /*
+     * check UI for changes to the UI keyboard
+     */
     if (state.params.heldKeymap_changedInUI)
     {
         if (state.params.heldKeymap.keyStates.test(state.params.heldKeymap_changedInUI))
@@ -326,7 +342,7 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         }
         else
         {
-            keyReleased(state.params.heldKeymap_changedInUI, outMidiMessages);
+            keyReleased(state.params.heldKeymap_changedInUI, 64, 1, outMidiMessages);
         }
 
         state.params.heldKeymap_changedInUI = 0;
@@ -347,7 +363,7 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 //        if(message.isNoteOn())
 //            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
         if(message.isNoteOff())
-            keyReleased(message.getNoteNumber(), outMidiMessages);
+            keyReleased(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
     }
 
     for (auto mi : inMidiMessages)
@@ -485,8 +501,32 @@ void ResonanceProcessor::ringSympStrings(int noteNumber, float velocity, juce::M
     }
 }
 
+/**
+ * if there is currently an active string with noteNumber, remove it
+ * otherwise add resonant string at noteNumber
+ * @param noteNumber
+ * @param outMidiMessages
+ */
+void ResonanceProcessor::toggleSympString(int noteNumber, juce::MidiBuffer& outMidiMessages)
+{
+    for (auto& _string : resonantStringsArray)
+    {
+        // find an active string with this noteNumber and shut it off
+        if (_string->heldKey == noteNumber && (_string->active || _string->stringJustAdded))
+        {
+            _string->removeString(noteNumber, outMidiMessages);
+            state.params.heldKeymap.keyStates.set(noteNumber, false);
+            return;
+        }
+    }
+
+    // otherwise, add it
+    addSympStrings(noteNumber);
+}
+
 void ResonanceProcessor::addSympStrings(int noteNumber)
 {
+    DBG("adding sympgSting");
     // this first approach will always move forward through the channels, which might be useful
     // for letting noteOffs resolve and so on, but shouldn't make a difference if we've
     // handled everything correctly
@@ -496,6 +536,7 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
         {
             currentHeldKey = i % resonantStringsArray.size();
             resonantStringsArray[currentHeldKey]->addString(noteNumber);
+            state.params.heldKeymap.keyStates.set(noteNumber, true);
             return;
         }
     }
@@ -516,7 +557,7 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
 
 void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
-    handleMidiTargetMessages(channel);
+    handleMidiTargetMessages(noteNumber, velocity, channel, outMidiMessages);
 
     if (doRing)
     {
@@ -527,12 +568,14 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, j
     {
         // then, add this new string and its partials to the currently available sympathetic strings
         addSympStrings(noteNumber);
-        state.params.heldKeymap.keyStates.set(noteNumber, true);
+//        state.params.heldKeymap.keyStates.set(noteNumber, true);
     }
 }
 
-void ResonanceProcessor::keyReleased(int noteNumber, juce::MidiBuffer& outMidiMessages)
+void ResonanceProcessor::keyReleased(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
+    handleMidiTargetMessages(noteNumber, velocity, channel, outMidiMessages);
+
     if (doAdd)
     {
         for (auto& _string : resonantStringsArray)
@@ -545,10 +588,28 @@ void ResonanceProcessor::keyReleased(int noteNumber, juce::MidiBuffer& outMidiMe
     if (doRing) {}
 }
 
-void ResonanceProcessor::handleMidiTargetMessages(int channel)
+void ResonanceProcessor::handleMidiTargetMessages(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
-//    bool doRing = true;
-//    bool doAdd = true;
+    doRing = false;
+    doAdd = false;
+
+    switch(channel + (ResonanceTargetFirst))
+    {
+        case ResonanceTargetDefault :
+            doRing = true;
+            doAdd = true;
+            break;
+
+        case ResonanceTargetRing :
+            // in this case, we might ring the strings with noteOffs or both noteOn/Off, depending on MIDITarget settings
+            ringSympStrings(noteNumber, velocity, outMidiMessages);
+            break;
+
+        case ResonanceTargetAdd :
+            // add or subtract this particular sympathetic string
+            toggleSympString(noteNumber, outMidiMessages);
+            break;
+    }
 }
 
 void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -639,7 +700,6 @@ typename Serializer::SerializedType ResonanceParams::serialize (const ResonanceP
     /*
      * then the more complex params
      */
-
     std::array<float, 128> tempAbsoluteOffsets;
     copyAtomicArrayToFloatArray(paramHolder.offsetsKeyboardState.absoluteTuningOffset, tempAbsoluteOffsets);
     Serializer::template addChildElement<128> (ser, "resonanceOffsets", tempAbsoluteOffsets, arrayToStringWithIndex<128>);

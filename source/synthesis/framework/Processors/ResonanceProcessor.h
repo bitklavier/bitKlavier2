@@ -15,8 +15,6 @@
 /**
  * Resonance ToDo list:
  *
- * - handleMidiTargetMessages, and updates to MidiTarget
- *
  * - create a way to pull up some standard partial structures
  *      -- up to 19 natural overtones
  *      -- perhaps some other fun variants, like a "minor" overtone series with 6/5 instead of 5/4
@@ -32,12 +30,13 @@
  *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
  *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
  *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
+ *
  * - a "stretch" knob that will stretch the given series; constrains to small range, at least for now 0.9 - 1.1 or similar
  *      -- use equation 2 from here: https://pubs.aip.org/asa/jasa/article/138/4/2359/900231/Explaining-the-Railsback-stretch-in-terms-of-the
  *          - OCTOBER 23 2015 "Explaining the Railsback stretch in terms of the inharmonicity of piano tones and sensory dissonance", N. Giordano
  *      -- Fn = nF1 * (1 + alpha * n^2), so our knob would be for alpha.
  *          - Fn is frequency of nth partial, F1 is frequency of fundamental, n is partial #
- *          - partial freq multiplier: FMn = 1 + a * (n - 1)^2, very small range of n
+ *          - partial freq multiplier: FMn = 1 + a * (n - 1)^2, very small range of n, like [-.001, .001]
  *
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
@@ -52,6 +51,7 @@
 
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
+#include "target_types.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -136,8 +136,8 @@ struct ResonanceParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr presence {
         juce::ParameterID { "rpresence", 100 },
         "presence",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.25f),
-        0.25f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.75f),
+        0.75f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
@@ -166,6 +166,11 @@ struct ResonanceParams : chowdsp::ParamHolder
      *
      * gain adjustment = variance * (gain1 * gain2 * fabs(1. - offsetDifference)^2), roughly
      *  - see the code in ringString() for exactly what it is
+     *
+     *  NOTE: actually, we've reversed the way this reads to the user. The knob
+     *  says "Overlap Bandwidth" which is 1 - variance. So, when it's set to 1,
+     *  the "bandwidth" of the partials is wide and they will excite each other
+     *  even if far apart.
      */
     chowdsp::FloatParameter::Ptr variance {
         juce::ParameterID { "rvariance", 100 },
@@ -292,6 +297,7 @@ public:
     int heldKey = 0;                // MIDI note value for the key that is being held down
     int channel = 1;                // MIDI channel for this held note
     bool active = false;            // set to false after envelope release time has passed, following removeString()
+    bool sendMIDImsg = false;       // set to true whenevern a msg should be sent this block
 
     bool stringJustRemoved = false;     // set to true when removeString is called, to start timer to release after release time has passed
     float timeToMakeInactive;           // set this to releaseTime when removeString is called, in seconds
@@ -338,10 +344,11 @@ public:
     void setTuning(TuningProcessor *tun) override;
 
     void keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
-    void keyReleased(int noteNumber, juce::MidiBuffer& outMidiMessages);
-    void handleMidiTargetMessages(int channel);
+    void keyReleased(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
+    void handleMidiTargetMessages(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
     void ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages);
     void addSympStrings(int noteNumber);
+    void toggleSympString(int noteNumber, juce::MidiBuffer& outMidiMessages);
 
     bool acceptsMidi() const override { return true; }
     bool hasEditor() const override { return false; }
@@ -404,7 +411,7 @@ public:
 
             addSoundSet(&(*parent.getSamples())[soundset]);
 
-        }else {
+        } else {
             //otherwise set the piano
             addSoundSet(&(*parent.getSamples())[soundset]);
 
