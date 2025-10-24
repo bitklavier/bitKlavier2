@@ -577,21 +577,22 @@ enum SelectChoice {
 };
 
 enum SpectralType {
-    Overtones8 = 1 << 0,
-    Undertones8 = 1 << 1,
-    Overtones20 = 1 << 2,
-    Undertones20 = 1 << 3,
-    OverUnderTones = 1 << 4,
-    PianoLow = 1 << 5,
-    PianoMid = 1 << 6,
-    PianoHigh = 1 << 7,
-    MetalBar = 1 << 8,
-    MajorBell = 1 << 9,
-    MinorBell = 1 << 10,
-    Saron = 1 << 11,
-    Gender = 1 << 12,
-    Bonang = 1 << 13,
-    Gong = 1 << 14,
+    None = 1 << 0,
+    Overtones8 = 1 << 1,
+    Undertones8 = 1 << 2,
+    Overtones20 = 1 << 3,
+    Undertones20 = 1 << 4,
+    OverUnderTones = 1 << 5,
+    PianoLow = 1 << 6,
+    PianoMid = 1 << 7,
+    PianoHigh = 1 << 8,
+    MetalBar = 1 << 9,
+    MajorBell = 1 << 10,
+    MinorBell = 1 << 11,
+    Saron = 1 << 12,
+    Gender = 1 << 13,
+    Bonang = 1 << 14,
+    Gong = 1 << 15,
 };
 
 struct KeymapKeyboardState

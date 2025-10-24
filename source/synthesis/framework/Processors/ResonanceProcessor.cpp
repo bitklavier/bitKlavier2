@@ -27,17 +27,169 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
     std::bitset<128> new_state;
     switch (spectrum->get())
     {
-        case Overtones8 :
-            DBG("setting to Overtones8");
+        case PianoLow :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(OvertoneGains_A0, gainsKeyboardState.absoluteTuningOffset);
             parseIndexValueStringToAtomicArray(OvertoneOffsets_A0, offsetsKeyboardState.absoluteTuningOffset);
             new_state = bitklavier::utils::stringToBitset(OvertoneKeys_A0);
-            closestKeymap.keyStates.store(new_state); // commenting out this line prevents the crash
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case PianoMid :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(OvertoneGains_A3, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(OvertoneOffsets_A3, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(OvertoneKeys_A3);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case PianoHigh :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(OvertoneGains_A7, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(OvertoneOffsets_A7, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(OvertoneKeys_A7);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case Overtones8 :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(OvertoneGains_O8, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(OvertoneOffsets_O8, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(OvertoneKeys_O8);
+            closestKeymap.keyStates.store(new_state);
             fundamentalKeymap.setAllKeysState(false);
             fundamentalKeymap.setKeyState(0, true);
             break;
 
         case Overtones20 :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(OvertoneGains_O20, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(OvertoneOffsets_O20, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(OvertoneKeys_O20);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case Undertones8 :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(UndertoneGains_U8, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(UndertoneOffsets_U8, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(UndertoneKeys_U8);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(52, true);
+            break;
+
+        case Undertones20 :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(UndertoneGains_U20, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(UndertoneOffsets_U20, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(UndertoneKeys_U20);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(52, true);
+            break;
+
+        case OverUnderTones :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(UnderOvertoneGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(UnderOvertoneOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(UnderOvertoneKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(26, true); // D fundamental, mid-keyboard
+            break;
+
+        case MetalBar :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(MetalBarGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(MetalBarOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(MetalBarKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case MajorBell :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(MajorBellGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(MajorBellOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(MajorBellKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(12, true);
+            break;
+
+        case MinorBell :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(MinorBellGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(MinorBellOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(MinorBellKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(12, true);
+            break;
+
+        case Saron :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(SaronGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(SaronOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(SaronKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case Gender :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(GenderGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(GenderOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(GenderKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case Bonang :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(BonangGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(BonangOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(BonangKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case Gong :
+            gainsKeyboardState.setAllAbsoluteOffsets(0.);
+            offsetsKeyboardState.setAllAbsoluteOffsets(0.);
+            parseIndexValueStringToAtomicArray(GongGains, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(GongOffsets, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(GongKeys);
+            closestKeymap.keyStates.store(new_state);
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
             break;
     }
 }
@@ -48,7 +200,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
 
 ResonantString::ResonantString(
     ResonanceParams* inparams,
-    std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& inPartialStructure,
+    std::array<PartialSpec, TotalNumberOfPartialKeysInUI + 1>& inPartialStructure,
     std::array<NoteOnSpec, MaxMidiNotes>& inNoteOnSpecMap)
     : _rparams(inparams),
       _partialStructure(inPartialStructure),
@@ -362,6 +514,7 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
              *          don't add, and removed from state.params.heldKeymap.keyStates
              *          and redo image for heldKey keyboard
              */
+            updatePartialStructure();
             addSympStrings(state.params.heldKeymap_changedInUI);
         }
         else
@@ -388,6 +541,7 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             keyReleased(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
     }
 
+    firstNoteOn = true;
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
@@ -409,8 +563,6 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         rstring->incrementTimer_seconds(blockTime_seconds);
         rstring->finalizeNoteOnMessage(outMidiMessages);
     }
-
-    updatePartialStructure();
 }
 
 /**
@@ -424,39 +576,7 @@ void ResonanceProcessor::resetPartialStructure()
          * by default, each partial is inactive, with no offset from fundamental and gain multipler of 1.0
          */
         partialStructure[i] = {false, 0.f, 1.f};
-//        std::get<0>(partialStructure[i]) = false;
-//        std::get<1>(partialStructure[i]) = 0.f;
-//        std::get<2>(partialStructure[i]) = 1.f;
     }
-}
-
-/**
- * set the partial structure to the first 8 partials of the overtone series
- * todo: move this to ResonanceParams?
- *          - perhaps give it an argument to set the number of partials?
- *          - and make this callable from the UI
- */
-void ResonanceProcessor::setDefaultPartialStructure()
-{
-//    //fundamentalKey = 0;
-//    rFundamentalKey = 0;
-//
-//    for(int i = 0; i < 128; i++)
-//    {
-//        //offsetsKeys.set(i, 0.);
-//        //gainsKeys.set(i, 1.);
-//        rOffsetsKeys.setArrayValue(i, 0.0f);
-//        rGainsKeys.setArrayValue(i, 1.0f);
-//    }
-//
-//    addResonanceKey( 0, 1.0, 0.);
-//    addResonanceKey(12, 0.8, 0);
-//    addResonanceKey(19, 0.7, 2);
-//    addResonanceKey(24, 0.8, 0);
-//    addResonanceKey(28, 0.6, -13.7);
-//    addResonanceKey(31, 0.7, 2);
-//    addResonanceKey(34, 0.5, -31.175);
-//    addResonanceKey(36, 0.8, 0);
 }
 
 /**
@@ -479,28 +599,27 @@ void ResonanceProcessor::updatePartialStructure()
 //        return;
     }
 
-    resetPartialStructure();
-
     auto ckeymap = state.params.closestKeymap.keyStates.load();
-    for (size_t i = 0; i < ckeymap.size(); ++i)
+    for (size_t i = 0; i < partialStructure.size(); ++i) // partialStructure is always smaller than closestKeymap.keyStates
     {
         if (ckeymap.test(i))
         {
             //FMn = 1 + alpha * (n - 1)^2 (n = partialNum, and alpha = stretch factor)
-            float partialNum = intervalToRatio(i - pFundamental); // for calculating the partial stretch
+            float partialInterval = static_cast<float>(i) - static_cast<float>(pFundamental);
+            float partialNum = intervalToRatio(partialInterval); // for calculating the partial stretch
+            if(partialNum < 1.) partialNum = 1. / partialNum; // invert to get proper distances when the partial is below the assigned fundamental
+
             float stretchAlpha = bitklavier::utils::dt_symwarp_range(*state.params.stretch, 2., -1., 1.) * .002f; // focus the range around 0., and scale
             float stretchMultiplier = 1. + stretchAlpha * std::pow(partialNum - 1., 2.);
 
             float pOffset       = state.params.offsetsKeyboardState.absoluteTuningOffset[i];
             float pGain         = state.params.gainsKeyboardState.absoluteTuningOffset[i];
-            float pFundOffset   = static_cast<float>(i) - static_cast<float>(pFundamental) + pOffset * .01;
-            partialStructure[i] = { true, pFundOffset * stretchMultiplier, pGain }; // or commenting out THIS line will prevent the crash
-//            std::get<0>(partialStructure[i]) = true;
-//            std::get<1>(partialStructure[i]) = pFundOffset * stretchMultiplier;
-//            std::get<2>(partialStructure[i]) = pGain;
+            float pFundOffset   = partialInterval + pOffset * .01;
+            partialStructure[i] = { true, pFundOffset * stretchMultiplier, pGain };
 
             //DBG("added to partialStructure " + juce::String(i) + " " + juce::String(pFundOffset) + " " + juce::String(pGain));
         }
+        else partialStructure[i] = {false, 0.f, 1.f};
     }
 }
 
@@ -595,7 +714,15 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, j
 {
     handleMidiTargetMessages(noteNumber, velocity, channel, outMidiMessages);
 
-    //updatePartialStructure();
+    /*
+     * update the partial structure if this is the first noteOn in this block
+     */
+    if(firstNoteOn)
+    {
+        updatePartialStructure();
+        //printPartialStructure();
+        firstNoteOn = false;
+    }
 
     if (doRing)
     {

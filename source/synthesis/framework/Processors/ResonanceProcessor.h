@@ -15,23 +15,7 @@
 /**
  * Resonance ToDo list:
  *
- * - create a way to pull up some standard partial structures
- *      -- up to 19 natural overtones
- *          - how about 8 partials and 19 partials as two presets in the meny
- *          - perhaps one "low string" that favors upper partial gains and one "high string" that favors lower partial gains?
- *      -- perhaps some other fun variants, like a "minor" overtone series with 6/5 instead of 5/4
- *      -- also undertone series, and combo of undertone/overtone, with fundamental mid-keyboard
- *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
- *          -- ideal bar from Sethares: f, 2.76f, 5.41f, 8.94f, 13.35f, and 18.65f
- *          -- Bell table on Sethares page 117
- *          -- Sarons (p 204 in Sethares): f, 2.39f, 2.78f, 4.75f, 5.08f, 5.96f.
-*           -- Gender
- *              - f, 2.01f, 2.57f, 4.05f, 4.8f, 6.27f
- *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
- *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
- *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
- *          -- steel pan? perhaps i can deduce from our samples
- *
+ * - change color range display in Gains keyboard
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
  * - processBlockBypassed
@@ -60,17 +44,112 @@ static constexpr int MaxHeldKeys = 16;                  // currently constrained
 static constexpr int TotalNumberOfPartialKeysInUI = 52; //number if keys in UI elements for setting partial structure
 
 //key:gain (dBFS) pairs
+    //Overtones8 = 1 << 0,
+    //Undertones8 = 1 << 1,
+    //Overtones20 = 1 << 2,
+    //Undertones20 = 1 << 3,
+    //OverUnderTones = 1 << 4,
+    //PianoLow = 1 << 5,
+    //PianoMid = 1 << 6,
+    //PianoHigh = 1 << 7,
+    //MetalBar = 1 << 8,
+    //MajorBell = 1 << 9,
+    //MinorBell = 1 << 10,
+    //Saron = 1 << 11,
+    //Gender = 1 << 12,
+    //Bonang = 1 << 13,
+    //Gong = 1 << 14,
+
+// Overtones8
+static const std::string OvertoneOffsets_O8   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0";
+static const std::string OvertoneGains_O8     = "0:0 12:0 19:0 24:0 28:0 31:0 34:0 36:0";
+static const std::string OvertoneKeys_O8      = "0 12 19 24 28 31 34 36";
+
+// Overtone20
+static const std::string OvertoneOffsets_O20   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0 38:4 40:-14 42:-49 43:2 44:41 46:-31 47:-12 48:0 49:5 50:4 51:-2.5 52:-14";
+static const std::string OvertoneGains_O20     = "0:0 12:0 19:0 24:0 28:0 31:0 34:0 36:0 38:0 40:0 42:0 43:0 44:0 46:0 47:0 48:0 49:0 50:0 51:0 52:0";
+static const std::string OvertoneKeys_O20      = "0 12 19 24 28 31 34 36 38 40 42 43 44 46 47 48 49 50 51 52";
+
+// Undertone8
+static const std::string UndertoneOffsets_U8   = "16:0 18:31 21:-2 24:14 28:0 33:-2 40:0 52:0";
+static const std::string UndertoneGains_U8     = "16:0 18:0 21:0 24:0 28:0 33:0 40:0 52:0";
+static const std::string UndertoneKeys_U8      = "16 18 21 24 28 33 40 52";
+
+// Undertone20
+static const std::string UndertoneOffsets_U20   = "0:14 1:2.5 2:-4 3:-5 4:0 5:12 6:31 8:-41 9:-2 10:49 12:14 14:-4 16:0 18:31 21:-2 24:14 28:0 33:-2 40:0 52:0";
+static const std::string UndertoneGains_U20     = "0:0 1:0 2:0 3:0 4:0 5:0 6:0 8:0 9:0 10:0 12:0 14:0 16:0 18:0 21:0 24:0 28:0 33:0 40:0 52:0";
+static const std::string UndertoneKeys_U20      = "0 1 2 3 4 5 6 8 9 10 12 14 16 18 21 24 28 33 40 52";
+
+// OverUndertones ( 7 overtones and 7 undertones, around D (26), for symmetry in UI. Leaving out octave above/below.)
+// overtones    "26:0 33:2 38:0 42:-14 45:2 48:-31 50:0 52:4"
+// undertones   "0:-4 2:0 4:31 7:-2 10:14 14:0 19:-2"
+static const std::string UnderOvertoneOffsets   = "0:-4 2:0 4:31 7:-2 10:14 14:0 19:-2 26:0 33:2 38:0 42:-14 45:2 48:-31 50:0 52:4";
+static const std::string UnderOvertoneGains     = "0:0 2:0 4:0 7:0 10:0 14:0 19:0 26:0 33:0 38:0 42:0 45:0 48:0 50:0 52:0";
+static const std::string UnderOvertoneKeys      = "0 2 4 7 10 14 19 26 33 38 42 45 48 50 52";
+
+// PianoLow
 static const std::string OvertoneOffsets_A0   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0 38:4 40:-14 42:-49 43:2 44:41 46:-31 47:-12 48:0 49:5 50:4 51:-2.5 52:-14";
 static const std::string OvertoneGains_A0     = "0:-35 12:-20 19:0 24:-3 28:-6 31:-5 34:-20 36:-28 38:-25 40:-23 42:-30 43:-25 44:-10 46:-15 47:-15 48:-40 49:-41 50:-25 51:-15 52:-7";
 static const std::string OvertoneKeys_A0      = "0 12 19 24 28 31 34 36 38 40 42 43 44 46 47 48 49 50 51 52";
 
+// PianoMid
 static const std::string OvertoneOffsets_A3   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0";
 static const std::string OvertoneGains_A3     = "0:0 12:-40 19:-50 24:-60 28:-18 31:-20 34:-70 36:-60";
 static const std::string OvertoneKeys_A3      = "0 12 19 24 28 31 34 36";
 
+// PianoHigh
 static const std::string OvertoneOffsets_A7   = "0:0 12:0 ";
 static const std::string OvertoneGains_A7     = "0:0 12:-10";
 static const std::string OvertoneKeys_A7      = "0 12";
+
+/*
+ * the following are based on numbers from Sethares: "Tuning, Timbre, Spectrum, Scale"
+ */
+// Metal Bar
+//f, 2.76f, 5.41f, 8.94f, 13.35f, and 18.65f
+// "0:0 18:-42.4 29:23 38:-7.7 45:-13.5 51:-34.7"
+static const std::string MetalBarOffsets   = "0:0 18:-42.4 29:23 38:-7.7 45:-13.5 51:-34.7";
+static const std::string MetalBarGains     = "0:0 18:0 29:0 38:0 45:0 51:0";
+static const std::string MetalBarKeys      = "0 18 29 38 45 51";
+
+// Major Bell
+//0.5 1 1.25 1.5 2 2.5 2.95 3.25 4
+// "0:0 12:0 16:-14 19:2 24:0 28:-14 31:-27 32:40.5 36"
+// fundamental at 12
+static const std::string MajorBellOffsets   = "0:0 12:0 16:-14 19:2 24:0 28:-14 31:-27 32:40.5 36:0";
+static const std::string MajorBellGains     = "0:0 12:0 16:0 19:0 24:0 28:0 31:0 32:0 36:0";
+static const std::string MajorBellKeys      = "0 12 16 19 24 28 31 32 36";
+
+// Minor Bell
+//0.5 1 1.2 1.5 2 2.5 2.61 3.0 4
+// fundamental at 12
+static const std::string MinorBellOffsets   = "0:0 12:0 15:15.6 19:2 24:0 28:-14 29:-31 31:2 36:0";
+static const std::string MinorBellGains     = "0:0 12:0 15:0 19:0 24:0 28:0 29:0 31:0 36:0";
+static const std::string MinorBellKeys      = "0 12 15 19 24 28 29 31 36";
+
+// Saron
+// f, 2.39f, 2.78f, 4.75f, 5.08f, 5.96f.
+static const std::string SaronOffsets   = "0:0 15:8.4 18:-30 27:-2.5 28:14 31:-9.6";
+static const std::string SaronGains     = "0:0 15:0 18:0 27:0 28:0 31:0";
+static const std::string SaronKeys      = "0 15 18 27 28 31";
+
+// Gender
+// f, 2.01f, 2.57f, 4.05f, 4.8f, 6.27f
+//or f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f (this one below)
+static const std::string GenderOffsets   = "0:0 12:-26 18:-30 26:1 29:-3 34:-38.6";
+static const std::string GenderGains     = "0:0 12:0 18:0 26:0 29:0 34:0";
+static const std::string GenderKeys      = "0 12 18 26 29 34";
+
+// Bonang:
+// f, 1.52f, 3.46f, 3.92f.
+static const std::string BonangOffsets   = "0:0 7:25 21:49 42:-35";
+static const std::string BonangGains     = "0:0 7:0 21:0 42:0";
+static const std::string BonangKeys      = "0:0 7 21 42";
+
+// Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
+static const std::string GongOffsets   = "0:0 7:-9.6 9:-12 12:0 17:0 19:-9.6 22:-46 24:-8.7 31:-6.7 34:-46";
+static const std::string GongGains     = "0:0 7:0 9:0 12:0 17:0 19:0 22:0 24:0 31:0 34:0";
+static const std::string GongKeys      = "0 7 9 12 17 19 22 24 31 34";
 
 struct ResonanceParams : chowdsp::ParamHolder
 {
@@ -219,7 +298,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     chowdsp::EnumChoiceParameter<SpectralType>::Ptr spectrum {
         juce::ParameterID { "rspectrum", 100 },
         "SpectralType",
-        SpectralType::Overtones8,
+        SpectralType::None,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
@@ -315,7 +394,7 @@ class ResonantString
 public:
     ResonantString(
         ResonanceParams* inparams,
-        std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& inPartialStructure,
+        std::array<PartialSpec, TotalNumberOfPartialKeysInUI + 1>& inPartialStructure,
         std::array<NoteOnSpec, MaxMidiNotes>& inNoteOnSpecMap);
 
     //~ResonantString() {}
@@ -348,7 +427,7 @@ private:
      * - offset from fundamental (fractional MIDI note val; 0. => default)
      * - gains (floats; 1.0 => default)
      */
-    std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& _partialStructure;
+    std::array<PartialSpec, TotalNumberOfPartialKeysInUI + 1>& _partialStructure;
     std::array<NoteOnSpec, MaxMidiNotes>& _noteOnSpecMap;
     float currentVelocity; // for noteOn message
 
@@ -478,15 +557,15 @@ private:
      * - offset from fundamental (fractional MIDI note val; 0. => default)
      * - gains (floats; 1.0 => default)
      */
-    std::array<PartialSpec, TotalNumberOfPartialKeysInUI> partialStructure;
+    std::array<PartialSpec, TotalNumberOfPartialKeysInUI + 1> partialStructure;
 
     /*
      * will update partialStructure based on parameter settings
      */
     void updatePartialStructure();
     void resetPartialStructure();       // clear it
-    void setDefaultPartialStructure();  // set to standard overtone series, first 8 partials
     void printPartialStructure();
+    bool firstNoteOn;  // set this to true every block; if we get a noteOn message, updatePartialStructure and set to false
 
     std::array<std::unique_ptr<ResonantString>, MaxHeldKeys> resonantStringsArray;
     int currentHeldKey = 0;

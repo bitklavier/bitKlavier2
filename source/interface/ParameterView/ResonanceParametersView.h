@@ -62,7 +62,7 @@ public:
         fundamentalKeyboard->setAvailableRange(0, numKeys);
         fundamentalKeyboard->setOctaveForMiddleC(5);
 
-        fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Held Key/Fundamental");
+        fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Fundamental");
         addOpenGlComponent(fundamentalKeyboard_label);
         fundamentalKeyboard_label->setTextSize (12.0f);
         fundamentalKeyboard_label->setJustification(juce::Justification::centredBottom);
@@ -73,7 +73,7 @@ public:
         closestKeyboard->setAvailableRange(0, numKeys);
         closestKeyboard->setOctaveForMiddleC(5);
 
-        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "Resonant Keys/Partials");
+        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "partials");
         addOpenGlComponent(closestKeyboard_label);
         closestKeyboard_label->setTextSize (12.0f);
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
