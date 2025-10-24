@@ -324,6 +324,7 @@ static constexpr int MaxMidiNotes = 128;
       double dt_asymwarp(double inval, double k);
       double dt_asymwarp_inverse(double inval, double k);
       double dt_symwarp(double inval, double k);
+      double dt_symwarp_range(double inval, double k, double rangeMin, double rangeMax);
       double dt_warpscale(double inval, double asym_k, double sym_k, double scale, double offset);
 
       std::bitset<128> stringToBitset (juce::String paramAttribute);
@@ -575,13 +576,66 @@ enum SelectChoice {
     Deselect = 1 << 1,
 };
 
+enum SpectralType {
+    Overtones8 = 1 << 0,
+    Undertones8 = 1 << 1,
+    Overtones20 = 1 << 2,
+    Undertones20 = 1 << 3,
+    OverUnderTones = 1 << 4,
+    PianoLow = 1 << 5,
+    PianoMid = 1 << 6,
+    PianoHigh = 1 << 7,
+    MetalBar = 1 << 8,
+    MajorBell = 1 << 9,
+    MinorBell = 1 << 10,
+    Saron = 1 << 11,
+    Gender = 1 << 12,
+    Bonang = 1 << 13,
+    Gong = 1 << 14,
+};
+
 struct KeymapKeyboardState
 {
-    KeymapKeyboardState() {
-        keyStates.reset();
+    KeymapKeyboardState() : keyStates(std::bitset<128>().reset()) {}
+    std::atomic<std::bitset<128>> keyStates;
+
+    void setKeyState(int note, bool isDown)
+    {
+        std::bitset<128> current_keys = keyStates.load();
+        std::bitset<128> desired_keys;
+        do
+        {
+            // 1. Create the desired state by modifying the local copy
+            desired_keys = current_keys;
+            desired_keys[note] = isDown; // Set bit based on the 'isDown' argument
+
+            // 2. Attempt the atomic exchange
+        } while (!keyStates.compare_exchange_weak(current_keys, desired_keys));
     }
 
-    std::bitset<128> keyStates;
+    void setAllKeysState(bool isDown)
+    {
+        for(int i=0; i<keyStates.load().size(); i++)
+        {
+            setKeyState(i, isDown);
+        }
+    }
+
+    void flipKeyState(int note)
+    {
+        std::bitset<128> current_keys = keyStates.load();
+        std::bitset<128> desired_keys;
+
+        do
+        {
+            // 1. Create the desired state by modifying the local copy
+            desired_keys = current_keys;
+            desired_keys.flip(note); // Use the std::bitset::flip method
+
+            // 2. Attempt the atomic exchange
+            // If it fails, current_keys is updated with the new value, and the loop repeats
+        } while (!keyStates.compare_exchange_weak(current_keys, desired_keys));
+    }
 };
 
 template <size_t N>

@@ -44,6 +44,10 @@ void ResonanceParametersView::resized()
     // overtone structure keyboards
     juce::Rectangle<int> keyboardsRect = bounds.removeFromRight(bounds.getWidth() * 0.5);
     keyboardsRect.reduce(largepadding, largepadding);
+    juce::Rectangle<int> spectrumMenuArea = keyboardsRect.removeFromTop(menu_section_height);
+    spectrumMenuArea.reduce(spectrumMenuArea.getWidth() * 0.25, 0);
+    spectrum_combo_box->setBounds(spectrumMenuArea);
+
     int keyboardHeight = 100;
     int labelsectionheight = findValue(Skin::kLabelHeight);
     int kpadding = (keyboardsRect.getHeight() - 4. * (keyboardHeight + labelsectionheight)) / 3.;
@@ -72,6 +76,8 @@ void ResonanceParametersView::resized()
     bounds.removeFromBottom(largepadding);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromBottom(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, false);
+
+
 
     SynthSection::resized();
 }

@@ -51,7 +51,6 @@ TuningParametersView::TuningParametersView(
 
         fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString());
         fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, nullptr);
-
         addComboBox(fundamental_combo_box.get(), true, true);
 
         tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString());

@@ -152,7 +152,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     inline const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
     inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
     inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
-    float intervalToRatio(float interval) const;
+    //float intervalToRatio(float interval) const;
 
     /*
      * Adaptive vars

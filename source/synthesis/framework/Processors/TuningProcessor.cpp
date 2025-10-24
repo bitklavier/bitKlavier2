@@ -425,9 +425,9 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
  * @param interval (in midinotes, float, so 4 is a M3rd)
  * @return frequency multiplier (float)
  */
-float TuningState::intervalToRatio(float interval) const {
-    return mtof(interval + 60.,  getGlobalTuningReference()) / mtof(60., getGlobalTuningReference());
-}
+//float TuningState::intervalToRatio(float interval) const {
+//    return mtof(interval + 60.,  getGlobalTuningReference()) / mtof(60., getGlobalTuningReference());
+//}
 
 /**
  * get the current cluster time, in ms

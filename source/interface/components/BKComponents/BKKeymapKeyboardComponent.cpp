@@ -55,15 +55,18 @@ void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
         {
             if (isMonophonic)
             {
-                keyboard_state_.keyStates.reset();
-                keyboard_state_.keyStates.set(lastKeyPressed);
+                //keyboard_state_.keyStates.load().reset();
+                keyboard_state_.setAllKeysState(false);
+                //keyboard_state_.keyStates.load().set(lastKeyPressed);
+                keyboard_state_.setKeyState(lastKeyPressed, true);
             }
             else
-                keyboard_state_.keyStates.flip(lastKeyPressed);
+                keyboard_state_.flipKeyState(lastKeyPressed);
+                //keyboard_state_.keyStates.load().flip(lastKeyPressed);
 
             listeners.call(&BKKeymapKeyboardComponent::Listener::BKKeymapKeyboardChanged,
                 getName(),
-                keyboard_state_.keyStates,
+                keyboard_state_.keyStates.load(),
                 lastKeyPressed);
         }
     }
@@ -83,15 +86,19 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
             {
                 if (isMonophonic)
                 {
-                    keyboard_state_.keyStates.reset();
-                    keyboard_state_.keyStates.set(lastKeyPressed);
+                    //keyboard_state_.keyStates.load().reset();
+                    keyboard_state_.setAllKeysState(false);
+                    keyboard_state_.setKeyState(lastKeyPressed, true);
+                    //keyboard_state_.keyStates.load().set(lastKeyPressed);
                 }
                 else
-                    keyboard_state_.keyStates.flip(lastKeyPressed);
+                    keyboard_state_.flipKeyState(lastKeyPressed);
+                    //keyboard_state_.keyStates.load().flip(lastKeyPressed);
+
 
                 listeners.call(&BKKeymapKeyboardComponent::Listener::BKKeymapKeyboardChanged,
                     getName(),
-                    keyboard_state_.keyStates,
+                    keyboard_state_.keyStates.load(),
                     lastKeyPressed);
             }
         }
@@ -101,7 +108,7 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
 
 void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
     if (button == &keyboardValsTextFieldOpen) {
-       auto onKeys = getOnKeyString(keyboard_state_.keyStates);
+       auto onKeys = getOnKeyString(keyboard_state_.keyStates.load());
        keyboardValsTextField->setText(onKeys, juce::dontSendNotification);
        keyboardValsTextField->setAlpha(1);
        keyboardValsTextField->toFront(true);
@@ -112,10 +119,12 @@ void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
        keyboardValsTextField->setColour(juce::TextEditor::outlineColourId, juce::Colours::black);
     }
     else if (button == &clearButton) {
-        keyboard_state_.keyStates.reset();
+        //keyboard_state_.keyStates.load().reset();
+        keyboard_state_.setAllKeysState(false);
     }
     else if (button == &allOnButton) {
-        keyboard_state_.keyStates.set();
+        //keyboard_state_.keyStates.load().set();
+        keyboard_state_.setAllKeysState(true);
     }
     else if (button == &keysButton)
     {
@@ -234,7 +243,8 @@ void BKKeymapKeyboardComponent::setWhite(bool action)
 
         if (white.contains(pc))
         {
-            keyboard_state_.keyStates[note] = !deselectKey;
+            keyboard_state_.setKeyState(note, !deselectKey);
+            //keyboard_state_.keyStates[note] = !deselectKey;
         }
     }
 
@@ -249,7 +259,8 @@ void BKKeymapKeyboardComponent::setBlack(bool action)
 
         if (black.contains(pc))
         {
-            keyboard_state_.keyStates[note] = !deselectKey;
+            keyboard_state_.setKeyState(note, !deselectKey);
+            //keyboard_state_.keyStates[note] = !deselectKey;
         }
     }
 }
@@ -276,7 +287,8 @@ void BKKeymapKeyboardComponent::setChord(KeySet set, PitchClass root)
         if (chord.contains(pc))
         {
             //keymap.set(note, action);
-            keyboard_state_.keyStates[note] = !deselectKey;
+            keyboard_state_.setKeyState(note, !deselectKey);
+            //keyboard_state_.keyStates[note] = !deselectKey;
         }
     }
 }
@@ -296,7 +308,8 @@ void BKKeymapKeyboardComponent::setOctatonic(OctType type)
 
         if (octatonic.contains(pc))
         {
-            keyboard_state_.keyStates[note] = !deselectKey;
+            keyboard_state_.setKeyState(note, !deselectKey);
+            //keyboard_state_.keyStates[note] = !deselectKey;
         }
     }
 }
@@ -315,7 +328,8 @@ void BKKeymapKeyboardComponent::setWholetone(WholetoneType type)
 
         if (wholet.contains(pc))
         {
-            keyboard_state_.keyStates[note] = !deselectKey;
+            keyboard_state_.setKeyState(note, !deselectKey);
+            //keyboard_state_.keyStates[note] = !deselectKey;
         }
     }
 }
@@ -350,7 +364,7 @@ void BKKeymapKeyboardComponent::textEditorReturnKeyPressed(juce::TextEditor &tex
                 bits.set(key);
             }
         }
-        keyboard_state_.keyStates = bits;
+        keyboard_state_.keyStates.store(bits);
         keyboardValsTextField->setAlpha(0);
         keyboardValsTextField->toBack();
         unfocusAllComponents();

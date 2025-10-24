@@ -41,7 +41,8 @@ public:
             if ( // make group of params to display together
                 param_->paramID == "rpresence" ||
                 param_->paramID == "rsustain" ||
-                param_->paramID == "rvariance")
+                param_->paramID == "rvariance" ||
+                param_->paramID == "rstretch")
                 //param_->paramID == "rsmoothness") // i'm not persuaded this is a useful parameter to expose
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
@@ -97,7 +98,7 @@ public:
         addStateModulatedComponent(gainsKeyboard.get());
         gainsKeyboard->setName("gains");
         gainsKeyboard->setAvailableRange(0, numKeys);
-        gainsKeyboard->setMinMidMaxValues(0., 0.5, 1., 2); // min, mid, max, display resolution
+        gainsKeyboard->setMinMidMaxValues(-100., -50., 0., 2); // min, mid, max, display resolution; dBFS
         gainsKeyboard->setOctaveForMiddleC(5);
 
         gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
@@ -109,6 +110,11 @@ public:
         envSection = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         addSubSection (envSection.get());
 
+        // spectrum choices
+        spectrum_combo_box = std::make_unique<OpenGLComboBox>(params.spectrum->paramID.toStdString());
+        spectrum_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*params.spectrum.get(), listeners, *spectrum_combo_box, nullptr);
+        addComboBox(spectrum_combo_box.get(), true, true);
+
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
@@ -119,6 +125,18 @@ public:
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
+
+        resonanceCallbacks += {listeners.addParameterListener(
+            params.spectrum,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this, &params]() {
+                params.setSpectrumFromMenu(params.spectrum->getIndex());
+                fundamentalKeyboard->redoImage();
+                offsetsKeyboard->redoImage();
+                gainsKeyboard->redoImage();
+                closestKeyboard->redoImage();
+            })
+        };
 
         startTimer(50);
     }
@@ -140,8 +158,9 @@ public:
         {
             //drawLabelForComponent (g, slider->getName(), slider.get());
             if (slider->getName() == "rsustain") drawLabelForComponent(g, TRANS("Sustain"), slider.get());
-            if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Bandwidth"), slider.get());
+            if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Sensitivity"), slider.get());
             if (slider->getName() == "rpresence") drawLabelForComponent(g, TRANS("Presence"), slider.get());
+            if (slider->getName() == "rstretch") drawLabelForComponent(g, TRANS("Stretch"), slider.get());
             //if (slider->getName() == "rsmoothness") drawLabelForComponent(g, TRANS("Smoothness"), slider.get());
         }
 
@@ -177,6 +196,11 @@ public:
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+
+    std::unique_ptr<OpenGLComboBox> spectrum_combo_box;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> spectrum_attachment;
+
+    chowdsp::ScopedCallbackList resonanceCallbacks;
 
     ResonanceParams& sparams_;
 

@@ -18,6 +18,31 @@
 #include "synth_base.h"
 
 /*
+ * ========================== ResonanceParams class ==========================
+ */
+void ResonanceParams::setSpectrumFromMenu(int menuChoice)
+{
+    DBG("setSpectrumFromMenu " + juce::String(menuChoice));
+
+    std::bitset<128> new_state;
+    switch (spectrum->get())
+    {
+        case Overtones8 :
+            DBG("setting to Overtones8");
+            parseIndexValueStringToAtomicArray(OvertoneGains_A0, gainsKeyboardState.absoluteTuningOffset);
+            parseIndexValueStringToAtomicArray(OvertoneOffsets_A0, offsetsKeyboardState.absoluteTuningOffset);
+            new_state = bitklavier::utils::stringToBitset(OvertoneKeys_A0);
+            closestKeymap.keyStates.store(new_state); // commenting out this line prevents the crash
+            fundamentalKeymap.setAllKeysState(false);
+            fundamentalKeymap.setKeyState(0, true);
+            break;
+
+        case Overtones20 :
+            break;
+    }
+}
+
+/*
  * ========================== ResonantString class ==========================
  */
 
@@ -88,9 +113,9 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
             if (heldPartialKey == struckPartialKey)
             {
                 float heldPartialOffset = heldPartial - static_cast<float>(heldPartialKey);
-                float heldPartialGain   = std::get<2>(heldPartialToCheck);
+                float heldPartialGain   = std::powf(10., std::get<2>(heldPartialToCheck) / 20.); // convert dBFS to gain multiplier
                 float struckPartialOffset = struckPartial - static_cast<float>(struckPartialKey);
-                float struckPartialGain   = std::get<2>(struckPartialToCheck);
+                float struckPartialGain   = std::powf(10., std::get<2>(struckPartialToCheck) / 20.);
 
                 /*
                  * calculate how much we want to attenuate this particular partial because of the
@@ -100,9 +125,8 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                 float offsetDifference = std::fabs(heldPartialOffset - struckPartialOffset);
                 if(offsetDifference > 1.) offsetDifference = 1.;
                 float partialOverlap = heldPartialGain * struckPartialGain * (1. - offsetDifference);
-                //float varianceGainScale = 1. - (*_rparams->variance) * (1. - partialOverlap);
-                float varianceGainScale = 1. - (1. - *_rparams->variance) * partialOverlap;
-                varianceGainScale *= varianceGainScale; // magnify the scaling
+                float sensitivityCoeff = 1. / (*_rparams->variance * 100. + 1.);
+                float varianceGainScale = std::powf(partialOverlap, sensitivityCoeff);
 
                 currentVelocity = static_cast<float>(velocity/128.);
                 _noteOnSpecMap[heldKey].channel = channel;
@@ -167,7 +191,7 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
 /**
  * increment timers for activating and deactivating this resonant string
  * dependent on release time in envelope, and a buffer time
- * for simultaneous attacks (timeToMakeActive)
+ * for simultaneous attacks (determined by *_rparams->smoothness)
  * @param blockSize_seconds
  */
 void ResonantString::incrementTimer_seconds(float blockSize_seconds)
@@ -211,7 +235,7 @@ void ResonantString::finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages)
     if(active && sendMIDImsg)
     {
         auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, currentVelocity);
-        outMidiMessages.addEvent (newmsg, 32);
+        outMidiMessages.addEvent (newmsg, 1);
         sendMIDImsg = false;
     }
 }
@@ -247,9 +271,9 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
     loadSamples();
 
     // add sympathetic strings if they have been saved
-    for (size_t i = 0; i < state.params.closestKeymap.keyStates.size(); ++i)
+    for (size_t i = 0; i < state.params.closestKeymap.keyStates.load().size(); ++i)
     {
-        if (state.params.heldKeymap.keyStates.test (i))
+        if (state.params.heldKeymap.keyStates.load().test (i))
         {
             addSympStrings (i);
         }
@@ -331,7 +355,7 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
      */
     if (state.params.heldKeymap_changedInUI)
     {
-        if (state.params.heldKeymap.keyStates.test(state.params.heldKeymap_changedInUI))
+        if (state.params.heldKeymap.keyStates.load().test(state.params.heldKeymap_changedInUI))
         {
             /*
              * todo: check to make sure there aren't already 16; if there are, then
@@ -360,8 +384,6 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
-//        if(message.isNoteOn())
-//            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
         if(message.isNoteOff())
             keyReleased(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
     }
@@ -402,6 +424,9 @@ void ResonanceProcessor::resetPartialStructure()
          * by default, each partial is inactive, with no offset from fundamental and gain multipler of 1.0
          */
         partialStructure[i] = {false, 0.f, 1.f};
+//        std::get<0>(partialStructure[i]) = false;
+//        std::get<1>(partialStructure[i]) = 0.f;
+//        std::get<2>(partialStructure[i]) = 1.f;
     }
 }
 
@@ -446,23 +471,34 @@ void ResonanceProcessor::updatePartialStructure()
      * - gains (floats; 1.0 => default)
      */
 
-    int pFundamental = find_first_set_bit(state.params.fundamentalKeymap.keyStates);
-    if (pFundamental >= state.params.fundamentalKeymap.keyStates.size())
+    int pFundamental = find_first_set_bit(state.params.fundamentalKeymap.keyStates.load());
+    if (pFundamental >= state.params.fundamentalKeymap.keyStates.load().size())
     {
-        //DBG("ResonanceProcessor::updatePartialStructure() -- no fundamental found!");
-        return;
+        pFundamental = 0;
+//        DBG("ResonanceProcessor::updatePartialStructure() -- no fundamental found!");
+//        return;
     }
 
     resetPartialStructure();
 
-    for (size_t i = 0; i < state.params.closestKeymap.keyStates.size(); ++i)
+    auto ckeymap = state.params.closestKeymap.keyStates.load();
+    for (size_t i = 0; i < ckeymap.size(); ++i)
     {
-        if (state.params.closestKeymap.keyStates.test(i))
+        if (ckeymap.test(i))
         {
+            //FMn = 1 + alpha * (n - 1)^2 (n = partialNum, and alpha = stretch factor)
+            float partialNum = intervalToRatio(i - pFundamental); // for calculating the partial stretch
+            float stretchAlpha = bitklavier::utils::dt_symwarp_range(*state.params.stretch, 2., -1., 1.) * .002f; // focus the range around 0., and scale
+            float stretchMultiplier = 1. + stretchAlpha * std::pow(partialNum - 1., 2.);
+
             float pOffset       = state.params.offsetsKeyboardState.absoluteTuningOffset[i];
             float pGain         = state.params.gainsKeyboardState.absoluteTuningOffset[i];
             float pFundOffset   = static_cast<float>(i) - static_cast<float>(pFundamental) + pOffset * .01;
-            partialStructure[i] = { true, pFundOffset, pGain };
+            partialStructure[i] = { true, pFundOffset * stretchMultiplier, pGain }; // or commenting out THIS line will prevent the crash
+//            std::get<0>(partialStructure[i]) = true;
+//            std::get<1>(partialStructure[i]) = pFundOffset * stretchMultiplier;
+//            std::get<2>(partialStructure[i]) = pGain;
+
             //DBG("added to partialStructure " + juce::String(i) + " " + juce::String(pFundOffset) + " " + juce::String(pGain));
         }
     }
@@ -471,7 +507,7 @@ void ResonanceProcessor::updatePartialStructure()
 void ResonanceProcessor::printPartialStructure()
 {
     DBG("Partial Structure:");
-    DBG("     fundamental = " + juce::String(find_first_set_bit(state.params.fundamentalKeymap.keyStates)));
+    DBG("     fundamental = " + juce::String(find_first_set_bit(state.params.fundamentalKeymap.keyStates.load())));
 
     int partialNum = 1;
     for (auto& pstruct : partialStructure)
@@ -515,7 +551,7 @@ void ResonanceProcessor::toggleSympString(int noteNumber, juce::MidiBuffer& outM
         if (_string->heldKey == noteNumber && (_string->active || _string->stringJustAdded))
         {
             _string->removeString(noteNumber, outMidiMessages);
-            state.params.heldKeymap.keyStates.set(noteNumber, false);
+            state.params.heldKeymap.keyStates.load().set(noteNumber, false);
             return;
         }
     }
@@ -536,7 +572,7 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
         {
             currentHeldKey = i % resonantStringsArray.size();
             resonantStringsArray[currentHeldKey]->addString(noteNumber);
-            state.params.heldKeymap.keyStates.set(noteNumber, true);
+            state.params.heldKeymap.keyStates.load().set(noteNumber, true);
             return;
         }
     }
@@ -558,6 +594,8 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
 void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
     handleMidiTargetMessages(noteNumber, velocity, channel, outMidiMessages);
+
+    //updatePartialStructure();
 
     if (doRing)
     {
@@ -583,7 +621,7 @@ void ResonanceProcessor::keyReleased(int noteNumber, int velocity, int channel, 
             if(_string->heldKey == noteNumber)
                 _string->removeString (noteNumber, outMidiMessages);
         }
-        state.params.heldKeymap.keyStates.set(noteNumber, false);
+        state.params.heldKeymap.keyStates.load().set(noteNumber, false);
     }
     if (doRing) {}
 }
@@ -707,9 +745,9 @@ typename Serializer::SerializedType ResonanceParams::serialize (const ResonanceP
     copyAtomicArrayToFloatArray(paramHolder.gainsKeyboardState.absoluteTuningOffset, tempAbsoluteOffsets);
     Serializer::template addChildElement<128> (ser, "resonanceGains", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
 
-    Serializer::template addChildElement<128> (ser, "fundamental", paramHolder.fundamentalKeymap.keyStates, getOnKeyString);
-    Serializer::template addChildElement<128> (ser, "partials", paramHolder.closestKeymap.keyStates, getOnKeyString);
-    Serializer::template addChildElement<128> (ser, "heldKeys", paramHolder.heldKeymap.keyStates, getOnKeyString);
+    Serializer::template addChildElement<128> (ser, "fundamental", paramHolder.fundamentalKeymap.keyStates.load(), getOnKeyString);
+    Serializer::template addChildElement<128> (ser, "partials", paramHolder.closestKeymap.keyStates.load(), getOnKeyString);
+    Serializer::template addChildElement<128> (ser, "heldKeys", paramHolder.heldKeymap.keyStates.load(), getOnKeyString);
 
     return ser;
 }
@@ -731,9 +769,9 @@ void ResonanceParams::deserialize (typename Serializer::DeserializedType deseria
     myStr = deserial->getStringAttribute ("resonanceGains");
     parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.gainsKeyboardState.absoluteTuningOffset);
 
-    paramHolder.fundamentalKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("fundamental"));
-    paramHolder.closestKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("partials"));
-    paramHolder.heldKeymap.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("heldKeys"));
+    paramHolder.fundamentalKeymap.keyStates.store(bitklavier::utils::stringToBitset (deserial->getStringAttribute ("fundamental")));
+    paramHolder.closestKeymap.keyStates.store(bitklavier::utils::stringToBitset (deserial->getStringAttribute ("partials")));
+    paramHolder.heldKeymap.keyStates.store(bitklavier::utils::stringToBitset (deserial->getStringAttribute ("heldKeys")));
 }
 
 

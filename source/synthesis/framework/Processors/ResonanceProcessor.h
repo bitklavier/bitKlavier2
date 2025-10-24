@@ -17,11 +17,11 @@
  *
  * - create a way to pull up some standard partial structures
  *      -- up to 19 natural overtones
+ *          - how about 8 partials and 19 partials as two presets in the meny
+ *          - perhaps one "low string" that favors upper partial gains and one "high string" that favors lower partial gains?
  *      -- perhaps some other fun variants, like a "minor" overtone series with 6/5 instead of 5/4
  *      -- also undertone series, and combo of undertone/overtone, with fundamental mid-keyboard
  *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
- *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, stretched spectra etc...
- *          -- could even have a "stretch" parameter that stretches the spectra? and adjusts the "closest" key automatically?
  *          -- ideal bar from Sethares: f, 2.76f, 5.41f, 8.94f, 13.35f, and 18.65f
  *          -- Bell table on Sethares page 117
  *          -- Sarons (p 204 in Sethares): f, 2.39f, 2.78f, 4.75f, 5.08f, 5.96f.
@@ -30,13 +30,7 @@
  *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
  *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
  *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
- *
- * - a "stretch" knob that will stretch the given series; constrains to small range, at least for now 0.9 - 1.1 or similar
- *      -- use equation 2 from here: https://pubs.aip.org/asa/jasa/article/138/4/2359/900231/Explaining-the-Railsback-stretch-in-terms-of-the
- *          - OCTOBER 23 2015 "Explaining the Railsback stretch in terms of the inharmonicity of piano tones and sensory dissonance", N. Giordano
- *      -- Fn = nF1 * (1 + alpha * n^2), so our knob would be for alpha.
- *          - Fn is frequency of nth partial, F1 is frequency of fundamental, n is partial #
- *          - partial freq multiplier: FMn = 1 + a * (n - 1)^2, very small range of n, like [-.001, .001]
+ *          -- steel pan? perhaps i can deduce from our samples
  *
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
@@ -52,6 +46,7 @@
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "target_types.h"
+#include "TuningUtils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -64,9 +59,18 @@ using PartialSpec = std::tuple<bool, float, float>;     // active, offset from E
 static constexpr int MaxHeldKeys = 16;                  // currently constrained by number of MIDI channels; might change if we use threaded synth
 static constexpr int TotalNumberOfPartialKeysInUI = 52; //number if keys in UI elements for setting partial structure
 
-//float intervalToRatio(float interval) {
-//    return mtof(interval + 60., 440.) / mtof(60., 440.);
-//}
+//key:gain (dBFS) pairs
+static const std::string OvertoneOffsets_A0   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0 38:4 40:-14 42:-49 43:2 44:41 46:-31 47:-12 48:0 49:5 50:4 51:-2.5 52:-14";
+static const std::string OvertoneGains_A0     = "0:-35 12:-20 19:0 24:-3 28:-6 31:-5 34:-20 36:-28 38:-25 40:-23 42:-30 43:-25 44:-10 46:-15 47:-15 48:-40 49:-41 50:-25 51:-15 52:-7";
+static const std::string OvertoneKeys_A0      = "0 12 19 24 28 31 34 36 38 40 42 43 44 46 47 48 49 50 51 52";
+
+static const std::string OvertoneOffsets_A3   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0";
+static const std::string OvertoneGains_A3     = "0:0 12:-40 19:-50 24:-60 28:-18 31:-20 34:-70 36:-60";
+static const std::string OvertoneKeys_A3      = "0 12 19 24 28 31 34 36";
+
+static const std::string OvertoneOffsets_A7   = "0:0 12:0 ";
+static const std::string OvertoneGains_A7     = "0:0 12:-10";
+static const std::string OvertoneKeys_A7      = "0 12";
 
 struct ResonanceParams : chowdsp::ParamHolder
 {
@@ -78,7 +82,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Resonance Processor
     ResonanceParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("resonance")
     {
-        gainsKeyboardState.setAllAbsoluteOffsets(1.);
+        //gainsKeyboardState.setAllAbsoluteOffsets(-50.);
 
         add (outputSendGain,
             outputGain,
@@ -87,7 +91,9 @@ struct ResonanceParams : chowdsp::ParamHolder
             sustain,
             variance,
             smoothness,
-            env);
+            env,
+            stretch,
+            spectrum);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters ([this] (auto& param, size_t) {
@@ -155,34 +161,32 @@ struct ResonanceParams : chowdsp::ParamHolder
     };
 
     /*
+     * For the "Overlap Sensitivity" parameter
      * the partials will not always be perfectly aligned, tuning-wise
      * and they also may have varying gains, so we adjust the gain
      * of a particular resonance based on their gains and how
      * far off they are from one another. That adjustment is
      * further scaled by "variance"
-     * - if variance = 0, we ignore differences in tuning and the relative
+     * - if variance = 1, we ignore differences in tuning and the relative
      *      partial gains
-     * - if variance is 1, we fully adjust the gain based on these differences
+     * - if variance is 0, we fully adjust the gain based on these differences
      *
-     * gain adjustment = variance * (gain1 * gain2 * fabs(1. - offsetDifference)^2), roughly
-     *  - see the code in ringString() for exactly what it is
-     *
-     *  NOTE: actually, we've reversed the way this reads to the user. The knob
-     *  says "Overlap Bandwidth" which is 1 - variance. So, when it's set to 1,
-     *  the "bandwidth" of the partials is wide and they will excite each other
-     *  even if far apart.
      */
     chowdsp::FloatParameter::Ptr variance {
         juce::ParameterID { "rvariance", 100 },
         "variance",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
-        1.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.1f),
+        0.1f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
     };
 
-    // maps to delay time before resonantString becomes active after held initiated
+    /*
+     * maps to delay time before resonantString becomes active after held initiated
+     * have decided NOT to expose this to the UI, at least not for now. it's just
+     * not convincing enough to warrant the users attention.
+     */
     chowdsp::FloatParameter::Ptr smoothness {
         juce::ParameterID { "rsmoothness", 100 },
         "smoothness",
@@ -191,6 +195,32 @@ struct ResonanceParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
+    };
+
+    /*
+     * a "stretch" knob that will stretch the given partial structure
+     *      -- FMn = 1 + alpha * (n - 1)^2, very small range of alpha, like [-.002, .002] so our knob would be for alpha.
+     *          - FMn is frequency multiplier for nth partial (n=1 is fundamental), alpha is the stretch factor
+     *              - using the 7th partial as a reference; a max of .002 would have it reach almost a M7! with an ET m7 well within that range
+     *      -- based on equation 2 from here: OCTOBER 23 2015 "Explaining the Railsback stretch in terms of the inharmonicity of piano tones and sensory dissonance", N. Giordano
+     *         - https://pubs.aip.org/asa/jasa/article/138/4/2359/900231/Explaining-the-Railsback-stretch-in-terms-of-the
+     *          - there is more here: https://acris.aalto.fi/ws/portalfiles/portal/98111997/Effect_of_inharmonicity_on_pitch_perception_and_subjective_tuning_of_piano_tones.pdf
+     */
+    chowdsp::FloatParameter::Ptr stretch {
+        juce::ParameterID { "rstretch", 100 },
+        "stretch",
+        chowdsp::ParamUtils::createNormalisableRange (-1.0f, 1.0f, 0.0f),
+        0.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    chowdsp::EnumChoiceParameter<SpectralType>::Ptr spectrum {
+        juce::ParameterID { "rspectrum", 100 },
+        "SpectralType",
+        SpectralType::Overtones8,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 
     // adsr
@@ -207,6 +237,8 @@ struct ResonanceParams : chowdsp::ParamHolder
     KeymapKeyboardState closestKeymap;
     KeymapKeyboardState heldKeymap;
     std::atomic<int> heldKeymap_changedInUI = 0; // note number for key that was changed
+
+    void setSpectrumFromMenu(int menuChoice);
 
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
@@ -367,9 +399,9 @@ public:
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
-             *              for Resonance, we have 6: sendGain and outputGain, + the 4 qualities
+             *              for Resonance, we have 7: sendGain and outputGain, + the 5 "qualities"
              */
-            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (6), true)  // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (7), true)  // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation",   juce::AudioChannelSet::mono(), false)               // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",         juce::AudioChannelSet::stereo(), true);             // Send channel (right outputs)
     }
@@ -381,6 +413,7 @@ public:
         DBG("Resonance addSoundSet called");
         resonanceSynth->addSoundSet (s);
     }
+
     void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
     {
         if (t == v && property == IDs::soundset)
@@ -403,6 +436,7 @@ public:
             addSoundSet(&(*parent.getSamples())[a]);
         }
     }
+
     void loadSamples() {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {
