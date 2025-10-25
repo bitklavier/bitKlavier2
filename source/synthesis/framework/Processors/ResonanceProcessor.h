@@ -19,6 +19,10 @@
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
  * - basic setup like processStateChanges and mods
  * - processBlockBypassed
+ * - possibly have a display above the ADSR showing the cooked partial structure (including stretch and overlap impacts)?
+ *      -- would probably need to be some kind of spectrum display that shows the partial structure for the heldkeys and then
+ *          the ringing structure? for all active keys? or could just be the last ring string against all the held strings?
+ *      -- not a priority for now....
  *
  */
 

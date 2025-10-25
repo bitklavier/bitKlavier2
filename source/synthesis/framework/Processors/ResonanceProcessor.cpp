@@ -720,7 +720,7 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, j
     if(firstNoteOn)
     {
         updatePartialStructure();
-        //printPartialStructure();
+        printPartialStructure();
         firstNoteOn = false;
     }
 
