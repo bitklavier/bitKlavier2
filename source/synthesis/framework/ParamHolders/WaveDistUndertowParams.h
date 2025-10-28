@@ -30,6 +30,8 @@ struct WaveDistUndertowParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
+    juce::Array<int> displaySliderPositions;
+
 
 
 

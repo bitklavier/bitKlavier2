@@ -1308,17 +1308,12 @@ void BKMultiSlider::deHighlightCurrentSlider()
 // ******************************************************************************************************************** //
 
 
-BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, double min, double max, double defmin, double defmax, double increment, const juce::ValueTree& stateDefault):
-StateModulatedComponent(stateDefault),
-                                                                                                                     sliderName(name),
-                                                                                                                     sliderMin(min),
-                                                                                                                     sliderMax(max),
-                                                                                                                     sliderDefaultMin(defmin),
-                                                                                                                     sliderDefaultMax(defmax),
-                                                                                                                     sliderIncrement(increment){
-
+BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, double min, double max,
+    double defmin, double defmax, double increment, const juce::ValueTree& stateDefault):
+        StateModulatedComponent(stateDefault), sliderName(name), sliderMin(min), sliderMax(max),
+        sliderDefaultMin(defmin), sliderDefaultMax(defmax), sliderIncrement(increment)
+{
     maxSliders = 10;
-
     sliderMin = 0;
     sliderMax = 20000;
     sliderIncrement = 1;
@@ -1337,7 +1332,6 @@ StateModulatedComponent(stateDefault),
     wavedistanceSlider.setLookAndFeel(&displaySliderLookAndFeel);
     wavedistanceSlider.setTextBoxIsEditable(false);
     wavedistanceSlider.setColour(juce::Slider::trackColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
-    displaySliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
     wavedistanceSlider.addListener(this);
     wavedistanceSlider.setSkewFactor(skewFactor);
     addAndMakeVisible(wavedistanceSlider);
@@ -1353,6 +1347,7 @@ StateModulatedComponent(stateDefault),
     undertowSlider.setSkewFactor(skewFactor);
     addAndMakeVisible(undertowSlider);
 
+    displaySliderLookAndFeel.setColour(juce::Slider::thumbColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
     for(int i=0; i<maxSliders; i++)
     {
         displaySliders.insert(0, new juce::Slider());
@@ -1362,7 +1357,6 @@ StateModulatedComponent(stateDefault),
         newSlider->setLookAndFeel(&displaySliderLookAndFeel);
         newSlider->setSliderStyle(BKSubSlider::SliderStyle::LinearBar);
         newSlider->setColour(juce::Slider::trackColourId, juce::Colours::goldenrod.withMultipliedAlpha(0.5));
-        // displaySliderLookAndFeel.setColour(Slider::thumbColourId, Colours::deepskyblue.withMultipliedAlpha(0.75));
         newSlider->setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
         newSlider->setInterceptsMouseClicks(false, false);
         newSlider->setSkewFactor(skewFactor);

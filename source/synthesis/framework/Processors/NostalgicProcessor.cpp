@@ -138,6 +138,24 @@ void NostalgicProcessor::playReverseNote(NostalgicNoteData& noteData, juce::Midi
     noteLengthTimers.set(note, 0.0f);
 }
 
+void NostalgicProcessor::updateNoteVisualization()
+{
+    juce::Array<int> newpositions;
+    for(auto note : reverseTimers)
+    {
+        if (note.isReverse)
+        {
+            auto position = note.noteStart - (note.reverseTimerSamples * (1000./getSampleRate()));
+            newpositions.add(position);
+        }
+        else
+        {
+            newpositions.add(note.undertowTimerSamples * (1000./getSampleRate()));
+        }
+    }
+    state.params.waveDistUndertowParams.displaySliderPositions = newpositions;
+}
+
 void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
@@ -149,6 +167,9 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
     // increment the timers by number of samples in the MidiBuffer
     incrementTimers (numSamples);
+
+    // update slider positions
+    updateNoteVisualization();
 
     // cluster management
     int clusterThreshSamples = state.params.clusterThreshParam->getCurrentValue() * (getSampleRate()/1000.0);
@@ -175,7 +196,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         if (reverseNote.reverseTimerSamples > reverseNote.noteDurationSamples)
         {
             // play the undertow for that note
-            if (reverseNote.undertowDurationMs > 0)
+            if (reverseNote.undertowDurationMs > 0 && reverseNote.isReverse)
             {
                 auto note = reverseNote.noteNumber;
                 noteOnSpecMap[note].keyState = true;
@@ -188,11 +209,17 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 noteOnSpecMap[note].envParams.sustain = state.params.undertowEnv.sustainParam->getCurrentValue();
                 noteOnSpecMap[note].envParams.release = state.params.undertowEnv.releaseParam->getCurrentValue() * .001;
 
+                reverseNote.isReverse = false;
+
                 auto forwardOnMsg = juce::MidiMessage::noteOn (1, note, velocities[note]);
                 outMidiMessages.addEvent(forwardOnMsg, 0);
             }
-            // clean up
-            reverseTimers.remove(i);
+
+            // once the undertow has completed, clean it up
+            if (reverseNote.undertowTimerSamples > reverseNote.undertowDurationSamples)
+            {
+                reverseTimers.remove(i);
+            }
         }
     }
 
@@ -221,6 +248,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
                 currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
                 currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
+                currentNoteData.undertowDurationSamples = currentNoteData.undertowDurationMs * (getSampleRate()/1000.0);
                 currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
 
                 clusterNotes.add(currentNoteData);
@@ -321,6 +349,15 @@ void NostalgicProcessor::incrementTimers(int numSamples)
     }
     for (auto& timer : reverseTimers) // auto& = reference
     {
-        timer.reverseTimerSamples += numSamples;
+        // increment the reverse timer
+        if (timer.isReverse)
+        {
+            timer.reverseTimerSamples += numSamples;
+        }
+        // increment the undertow timer
+        else
+        {
+            timer.undertowTimerSamples += numSamples;
+        }
     }
 }

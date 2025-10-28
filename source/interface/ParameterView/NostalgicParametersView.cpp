@@ -4,6 +4,12 @@
 
 #include "NostalgicParametersView.h"
 
+void NostalgicParametersView::timerCallback()
+{
+    waveSlider->updateSliderPositionsGL (nparams_.waveDistUndertowParams.displaySliderPositions);
+
+}
+
 void NostalgicParametersView::resized()
 {
     // width of the title at left, used in all preparations
