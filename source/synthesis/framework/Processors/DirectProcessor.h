@@ -38,7 +38,10 @@ struct DirectParams : chowdsp::ParamHolder {
             outputSendParam,
             outputGain,
             env,
-            transpose);
+            transpose,
+            resonanceLoaded,
+            hammerLoaded,
+            pedalLoaded);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
@@ -122,8 +125,12 @@ struct DirectParams : chowdsp::ParamHolder {
         0.0f,
         true,
         v.getChildWithProperty("parameter", "OutputGain")
-
     };
+
+    chowdsp::BoolParameter::Ptr hammerLoaded{ juce::ParameterID{"hammerLoaded", 100}, "Hammer Loaded", false};
+    chowdsp::BoolParameter::Ptr resonanceLoaded{ juce::ParameterID{"resonanceLoaded", 100}, "Release Loaded", true};
+    chowdsp::BoolParameter::Ptr pedalLoaded{ juce::ParameterID{"pedalLoaded", 100}, "Pedal Loaded", true};
+
 
     // ADSR params
     EnvParams env;
@@ -185,9 +192,13 @@ public:
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *r, // release samples
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *p) // pedal samples
     override {
+
         mainSynth->addSoundSet(s);
+        state.params.hammerLoaded->setParameterValue( h != nullptr);
         hammerSynth->addSoundSet(h);
+        state.params.resonanceLoaded->setParameterValue( r != nullptr);
         releaseResonanceSynth->addSoundSet(r);
+        state.params.pedalLoaded->setParameterValue( p != nullptr);
         pedalSynth->addSoundSet(p);
     }
 
@@ -247,11 +258,15 @@ public:
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
         if (property == IDs::soundset && t == parent.getValueTree() ) {
-            juce::String a = t.getProperty(IDs::soundset, "");
-            addSoundSet(&(*parent.getSamples())[a],
-                        &(*parent.getSamples())[a+"Hammers"],
-                        &(*parent.getSamples())[a+"ReleaseResonance"],
-                        &(*parent.getSamples())[a+"Pedals"]);
+            juce::String soundset = t.getProperty(IDs::soundset, "");
+            auto* samples = parent.getSamples();
+
+            addSoundSet(
+                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
+                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
+                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+            );
         }
 
     }
@@ -261,16 +276,24 @@ public:
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
 
-            addSoundSet(&(*parent.getSamples())[soundset],
-                     &(*parent.getSamples())[soundset + "Hammers"],
-                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                     &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+
+            addSoundSet(
+                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
+                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
+                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+            );
         }else {
             //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset],
-                        &(*parent.getSamples())[soundset + "Hammers"],
-                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                        &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+
+            addSoundSet(
+                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
+                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
+                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+            );
         }
     }
     /**

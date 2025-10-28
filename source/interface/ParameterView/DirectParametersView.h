@@ -13,57 +13,56 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 
-class DirectParametersView : public SynthSection
-{
+class DirectParametersView : public SynthSection{
 public:
-    DirectParametersView (chowdsp::PluginState& pluginState, DirectParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), params(params)
-    {
+    DirectParametersView(chowdsp::PluginState &pluginState, DirectParams &_params, juce::String name,
+                         OpenGlWrapper *open_gl) : SynthSection(""), params(_params) {
         // the name that will appear in the UI as the name of the section
-        setName ("direct");
+        setName("direct");
 
         // every section needs a LaF
         //  main settings for this LaF are in assets/default.bitklavierskin
         //  different from the bk LaF that we've taken from the old JUCE, to support the old UI elements
         //  we probably want to merge these in the future, but ok for now
-        setLookAndFeel (DefaultLookAndFeel::instance());
-        setComponentID (name);
+        setLookAndFeel(DefaultLookAndFeel::instance());
+        setComponentID(name);
 
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
-        auto& listeners = pluginState.getParameterListeners();
+        auto &listeners = pluginState.getParameterListeners();
 
         // go through and get all the main float params (gain, hammer, etc...), make sliders for them
         // all the params for this prep are defined in struct DirectParams, in DirectProcessor.h
         // we're only including the ones that we want to group together and call "placeKnobsInArea" on
         // we're leaving out "outputGain" since that has its own VolumeSlider
-        for (auto& param_ : *params.getFloatParams())
-        {
+        for (auto &param_: *params.getFloatParams()) {
             if ( // make group of params to display together
                 param_->paramID == "Main" ||
                 param_->paramID == "Hammers" ||
                 param_->paramID == "Resonance" ||
-                param_->paramID == "Pedal" ||
-                param_->paramID == "Send")
-            {
-                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
+                param_->paramID == "Pedal"
+                ) {
+                auto slider = std::make_unique<SynthSlider>(param_->paramID, param_->getModParam());
 
-                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                auto attachment = std::make_unique<chowdsp::SliderAttachment>(
+                    *param_.get(), listeners, *slider.get(), nullptr);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
-                addSlider (slider.get()); // adds the slider to the synthSection
-                slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                addSlider(slider.get()); // adds the slider to the synthSection
+                slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
-                floatAttachments.emplace_back (std::move (attachment));
-                _sliders.emplace_back (std::move (slider));
+                floatAttachments.emplace_back(std::move(attachment));
+                _sliders.emplace_back(std::move(slider));
             }
         }
 
         // create the more complex UI elements
-        envSection              = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
-        transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
+        envSection = std::make_unique<EnvelopeSection>(params.env, listeners, *this);
+        transpositionSlider = std::make_unique<TranspositionSliderSection>(
+            &params.transpose, listeners, name.toStdString());
 
         // we add subsections for the elements that have been defined as sections
-        addSubSection (envSection.get());
-        addSubSection (transpositionSlider.get());
+        addSubSection(envSection.get());
+        addSubSection(transpositionSlider.get());
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
@@ -72,43 +71,92 @@ public:
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
-        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendParam, listeners, &params.sendLevels);
+        sendLevelMeter = std::make_unique<
+            PeakMeterSection>(name, params.outputSendParam, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
         setSkinOverride(Skin::kDirect);
+
+        disableSliderCallback += {
+            listeners.addParameterListener(
+                params.resonanceLoaded,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this]() {
+                    auto it = std::find_if(_sliders.begin(), _sliders.end(),
+                                           [](const std::unique_ptr<SynthSlider> &slider) {
+                                               return slider && slider->getComponentID().containsIgnoreCase("Resonance");
+                                           });
+
+                    if (it != _sliders.end())
+                        it->get()->setDisabled(!*this->params.resonanceLoaded);
+
+                }
+            ),
+            listeners.addParameterListener(
+                params.hammerLoaded,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this]() {
+                    auto it = std::find_if(_sliders.begin(), _sliders.end(),
+                                          [](const std::unique_ptr<SynthSlider> &slider) {
+                                              return slider && slider->getComponentID().containsIgnoreCase("Hammer");
+                                          });
+
+                   if (it != _sliders.end())
+                       it->get()->setDisabled(!*this->params.hammerLoaded);
+
+                }
+            ),
+            listeners.addParameterListener(
+                params.pedalLoaded,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this]() {
+                    auto it = std::find_if(_sliders.begin(), _sliders.end(),
+                                          [](const std::unique_ptr<SynthSlider> &slider) {
+                                              return slider && slider->getComponentID().containsIgnoreCase("Pedal");
+                                          });
+
+                   if (it != _sliders.end())
+                       it->get()->setDisabled(!*this->params.pedalLoaded);
+
+                }
+            ),
+        };
     }
 
-    void paintBackground (juce::Graphics& g) override
-    {
+    void paintBackground(juce::Graphics &g) override {
         setLabelFont(g);
-        SynthSection::paintContainer (g);
-        paintHeadingText (g);
-        paintBorder (g);
-        paintKnobShadows (g);
+        SynthSection::paintContainer(g);
+        paintHeadingText(g);
+        paintBorder(g);
+        paintKnobShadows(g);
 
-        for (auto& slider : _sliders)
-        {
-            drawLabelForComponent (g, slider->getName(), slider.get());
+        for (auto &slider: _sliders) {
+            drawLabelForComponent(g, slider->getName(), slider.get());
         }
 
-        paintChildrenBackgrounds (g);
+        paintChildrenBackgrounds(g);
     }
+
+
 
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
     std::unique_ptr<EnvelopeSection> envSection;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
-    std::vector<std::unique_ptr<SynthSlider>> _sliders;
-    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+    std::vector<std::unique_ptr<SynthSlider> > _sliders;
+    std::vector<std::unique_ptr<chowdsp::SliderAttachment> > floatAttachments;
 
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
+    chowdsp::ScopedCallbackList disableSliderCallback;
+
     void resized() override;
-    DirectParams& params;
+
+    DirectParams &params;
 };
 
 #endif //BITKLAVIER2_DIRECTPARAMETERSVIEW_H

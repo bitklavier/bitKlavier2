@@ -134,7 +134,13 @@ void OpenGlSlider::redoImage(bool skip_image) {
         slider_quad_->setAltColor(unselected_color_);
         slider_quad_->setThumbColor(thumb_color_);
         slider_quad_->setStartPos(bipolar_ ? 0.0f : -bitklavier::kPi);
-
+        if(!isEnabled()) {
+                auto dim = findColour(Skin::kWidgetBackground, true).darker(0.3f);
+                slider_quad_->setColor(dim);
+                slider_quad_->setAltColor(dim.darker(0.5f));
+                slider_quad_->setThumbColor(dim.brighter(0.2f));
+                // slider_quad_->setActive(false);
+        }
         float thickness = findValue(Skin::kKnobArcThickness);
         if (isMouseOverOrDragging())
             thickness *= kRotaryHoverBoost;
@@ -822,3 +828,19 @@ void SynthSlider::setLinearTextEntryBounds() {
 //  for (SynthSlider::SliderListener* listener : slider_listeners_)
 //    listener->modulationsChanged(getName().toStdString());
 //}
+void SynthSlider::setDisabled(bool shouldDisable)
+{
+    setEnabled(!shouldDisable);
+
+    // Dim the slider visually (you can tweak the multiplier)
+    if (shouldDisable)
+    {
+        setAlpha(0.3f); // makes it look greyed out
+        redoImage();    // trigger GL redraw
+    }
+    else
+    {
+        setAlpha(1.0f);
+        redoImage();
+    }
+}

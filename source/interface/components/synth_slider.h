@@ -501,6 +501,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
   chowdsp::SliderAttachment* attachment = nullptr;
   std::vector< bitklavier::ModulationConnection*> getConnections() ;
   juce::ValueTree modulatableparam_vt;
+  void setDisabled(bool);
   protected:
     juce::ValueTree vt;
     PopupItems createPopupMenu();

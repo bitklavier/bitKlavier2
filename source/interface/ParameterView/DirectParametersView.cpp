@@ -48,3 +48,5 @@ void DirectParametersView::resized()
 
     SynthSection::resized();
 }
+
+
