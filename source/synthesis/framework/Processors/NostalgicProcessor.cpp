@@ -9,8 +9,7 @@
 
 NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree& vt)
     : PluginBase (parent, vt, nullptr, nostalgicBusLayout()),
-    nostalgicSynth (new BKSynthesiser (state.params.reverseEnv, state.params.noteOnGain)),
-    velocities(128,0), noteLengthTimers (128,0)
+    nostalgicSynth (new BKSynthesiser (state.params.reverseEnv, state.params.noteOnGain))
 
 {
     for (int i = 0; i < 300; i++)
@@ -24,6 +23,16 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
     }
 
     updatedTransps.ensureStorageAllocated(50);
+    velocities.ensureStorageAllocated(128);
+    noteLengthTimers.ensureStorageAllocated(128);
+    reverseTimers.ensureStorageAllocated(500);
+    clusterNotes.ensureStorageAllocated(100);
+
+    clusterTimer = 0;
+    clusterCount = 0;
+    velocities.insertMultiple(0,0,128);
+    noteLengthTimers.insertMultiple(0,0,128);
+    // do i need to insert for reverseTimers and clusterNotes?
 
     state.params.transpose.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.waveDistUndertowParams.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -76,41 +85,104 @@ void NostalgicProcessor::processContinuousModulations(juce::AudioBuffer<float>& 
 {
 }
 
+void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
+{
+    noteOnSpecMap[noteOnNumber].transpositions.clear();
+    auto paramVals = state.params.transpose.getFloatParams();
+    int i = 0;
+    for (auto const& tp : *paramVals)
+    {
+        if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
+            noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (tp->getCurrentValue());
+        i++;
+    }
+
+    // make sure that the first slider is always represented
+    noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+}
+
+/*
+ * update them all to the same transpositions.
+ * - since Nostalgic uses the same transpositions, we just have them all set to the same values
+ * - this is different in other preps like Resonance, where individual noteOn msgs will have their own transpositions
+ */
+void NostalgicProcessor::updateAllMidiNoteTranspositions()
+{
+    for (int i=0; i<MaxMidiNotes; i++)
+    {
+        updateMidiNoteTranspositions(i);
+    }
+}
+
+void NostalgicProcessor::playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages)
+{
+    auto note = noteData.noteNumber;
+    noteOnSpecMap[note].keyState = true;
+    noteOnSpecMap[note].stopSameCurrentNote = state.params.keyOnReset->get();
+    noteOnSpecMap[note].startDirection = Direction::backward;
+    noteOnSpecMap[note].startTime = noteData.noteStart;
+    noteOnSpecMap[note].sustainTime = noteData.noteDurationMs;
+    noteOnSpecMap[note].envParams.attack = state.params.reverseEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
+    noteOnSpecMap[note].envParams.decay = state.params.reverseEnv.decayParam->getCurrentValue() * .001;
+    noteOnSpecMap[note].envParams.sustain = state.params.reverseEnv.sustainParam->getCurrentValue();
+    noteOnSpecMap[note].envParams.release = state.params.reverseEnv.releaseParam->getCurrentValue() * .001;
+
+    // we want to keep track of how long the reverse note is playing
+    reverseTimers.add(noteData);
+
+    // play the reverse note
+    auto reverseOnMsg = juce::MidiMessage::noteOn (1, note, velocities[note]);
+    outMidiMessages.addEvent(reverseOnMsg, 0);
+
+    // clean up
+    noteLengthTimers.set(note, 0.0f);
+}
+
 void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
-    // increment the timers by number of samples in the MidiBuffer
-    incrementTimers (numSamples);
-
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
     for (auto& spec : noteOnSpecMap)
     {
         spec.clear();
     }
+    updateAllMidiNoteTranspositions();
 
-    // check on your reverse and undertow notes
-    for(int i = reverseNotes.size() - 1; i >= 0; --i)
+    // increment the timers by number of samples in the MidiBuffer
+    incrementTimers (numSamples);
+
+    // cluster management
+    int clusterThreshSamples = state.params.clusterThreshParam->getCurrentValue() * (getSampleRate()/1000.0);
+    float clusterMin = std::round(state.params.clusterMinParam->getCurrentValue());
+    if (inCluster)
     {
-        NostalgicNoteStuff* reverseNote = reverseNotes.getUnchecked(i);
-
-        // after reverse note has played for time note was held
-        if (reverseNote->reverseTimerExceedsTarget())
+        if (clusterTimer >= clusterThreshSamples)
         {
-            auto note = reverseNote->getNoteNumber();
+            inCluster = false;
+            clusterCount = 0;
+            clusterNotes.clearQuick();
+        }
+        //otherwise increment cluster timer
+        else
+        {
+            clusterTimer += numSamples;
+        }
+    }
 
-            // stop the reverse note and remove from reverseNotes
-            auto reverseOffMsg = juce::MidiMessage::noteOff (1, note, 0.0f);
-            outMidiMessages.addEvent(reverseOffMsg, 0);
-            auto undertowNote = reverseNotes.removeAndReturn(i);
-
-            // start the undertow note
-            auto undertowDuration = state.params.waveDistUndertowParams.undertowParam->getCurrentValue() * (getSampleRate()/1000.);
-            if (undertowDuration > 0)
+    // if any of the reverse timers have exceeded their target, play undertow
+    for (int i = reverseTimers.size() - 1; i >= 0; --i)
+    {
+        auto& reverseNote = reverseTimers.getReference(i);
+        if (reverseNote.reverseTimerSamples > reverseNote.noteDurationSamples)
+        {
+            // play the undertow for that note
+            if (reverseNote.undertowDurationMs > 0)
             {
-                undertowNote->setUndertowTargetLength (undertowDuration);
-                undertowNotes.insert(0, undertowNote);
+                auto note = reverseNote.noteNumber;
                 noteOnSpecMap[note].keyState = true;
+                noteOnSpecMap[note].stopSameCurrentNote = state.params.keyOnReset->get();
                 noteOnSpecMap[note].startDirection = Direction::forward;
-                noteOnSpecMap[note].startTime = 0;
+                noteOnSpecMap[note].startTime = reverseNote.waveDistanceMs;
+                noteOnSpecMap[note].sustainTime = reverseNote.undertowDurationMs;
                 noteOnSpecMap[note].envParams.attack = state.params.undertowEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
                 noteOnSpecMap[note].envParams.decay = state.params.undertowEnv.decayParam->getCurrentValue() * .001;
                 noteOnSpecMap[note].envParams.sustain = state.params.undertowEnv.sustainParam->getCurrentValue();
@@ -119,20 +191,10 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 auto forwardOnMsg = juce::MidiMessage::noteOn (1, note, velocities[note]);
                 outMidiMessages.addEvent(forwardOnMsg, 0);
             }
+            // clean up
+            reverseTimers.remove(i);
         }
     }
-    for(int i = undertowNotes.size() - 1; i >= 0; --i)
-    {
-        NostalgicNoteStuff* thisNote = undertowNotes.getUnchecked(i);
-        if (thisNote->undertowTimerExceedsTarget())
-        {
-            auto note = thisNote->getNoteNumber();
-            auto undertowOffMsg = juce::MidiMessage::noteOff (1, note, 0.0f);
-            outMidiMessages.addEvent(undertowOffMsg, 0);
-            undertowNotes.remove(i);
-        }
-    }
-
 
     // go through the incoming MIDI messages
     for (auto mi : inMidiMessages)
@@ -143,54 +205,42 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         // store the velocity from the note on message
         if (message.isNoteOn ())
         {
-            DBG("received MIDI note on");
-            velocities[message.getNoteNumber()] = message.getVelocity();
-            noteLengthTimers[message.getNoteNumber()] = message.getTimeStamp();
+            velocities.set(message.getNoteNumber(), message.getVelocity());
+            noteLengthTimers.set(message.getNoteNumber(), 1);
         }
         
-        // if there's a note off message, play the associated reverse note
+        // if there's a note off message, check cluster and play the associated reverse note
         if(message.isNoteOff())
         {
-            int note = message.getNoteNumber();
-            auto noteDurationSamples = noteLengthTimers[note] * state.params.noteLengthMultParam->getCurrentValue();
-            auto newNoteStart = noteDurationSamples * (1000.0 / getSampleRate())  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+            // only proceed if hold time is in the specified range
+            if (holdCheck(message.getNoteNumber()))
+            {
+                NostalgicNoteData currentNoteData;
+                currentNoteData.noteNumber = message.getNoteNumber();
+                currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
+                currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
+                currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+                currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
+                currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
 
-            noteOnSpecMap[note].keyState = true;
-            noteOnSpecMap[note].startDirection = Direction::backward;
-            noteOnSpecMap[note].startTime = newNoteStart;
-            noteOnSpecMap[note].envParams.attack = state.params.reverseEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
-            noteOnSpecMap[note].envParams.decay = state.params.reverseEnv.decayParam->getCurrentValue() * .001;
-            noteOnSpecMap[note].envParams.sustain = state.params.reverseEnv.sustainParam->getCurrentValue();
-            noteOnSpecMap[note].envParams.release = state.params.reverseEnv.releaseParam->getCurrentValue() * .001;
+                clusterNotes.add(currentNoteData);
+                clusterCount++;
 
-            // we want to keep track of how long the reverse note is playing
-            NostalgicNoteStuff* currentNote = new NostalgicNoteStuff(note);
-            currentNote->setReverseTargetLength (noteDurationSamples);
-            reverseNotes.insert(0, currentNote);
-
-            // play the reverse note
-            auto reverseOnMsg = juce::MidiMessage::noteOn (1, note, velocities[note]);
-            outMidiMessages.addEvent(reverseOnMsg, 0);
-
-            // cleanup
-            noteLengthTimers[note] = 0;
+                // if we haven't reached the clusterMin yet, add the note to clusterNotes
+                if (clusterCount >= clusterMin)
+                {
+                    for (auto clusterNote : clusterNotes)
+                    {
+                        playReverseNote (clusterNote, outMidiMessages);
+                    }
+                    clusterNotes.clearQuick();
+                }
+                // reset the timer since the threshold is for successive notes
+                clusterTimer = 0;
+                inCluster = true;
+            }
         }
     }
-
-    // check the hold time, if it falls out of specified range, return
-    // if (!holdCheck(noteNumber)) return;
-
-    // figure out if notes are in a cluster
-    // if cluster size < cluster min, return
-
-    // get transposed sample if needed
-
-    // figure out where in the sample we start the reverse note
-        // current spot * note length multiplier + wave distance
-        // play reverse with reverse envelope
-
-    // once reverse note ends, play forward until undertow with env
-
 }
 
 void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -238,8 +288,8 @@ void NostalgicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
 
 bool NostalgicProcessor::holdCheck(int noteNumber)
 {
-    juce::uint64 hold = holdTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
-
+    juce::uint64 hold = noteLengthTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
+    DBG(juce::String(hold));
     auto holdmin = state.params.holdTimeMinMaxParams.holdTimeMinParam->getCurrentValue();
     auto holdmax = state.params.holdTimeMinMaxParams.holdTimeMaxParam->getCurrentValue();
 
@@ -264,18 +314,13 @@ bool NostalgicProcessor::holdCheck(int noteNumber)
 //increment timers for all active notes, and all currently reversing notes
 void NostalgicProcessor::incrementTimers(int numSamples)
 {
-
     // increment the timers by number of samples in the MidiBuffer
     for (int i = 0; i < noteLengthTimers.size(); i++)
     {
-        if (noteLengthTimers[i] > 0) noteLengthTimers[i] += numSamples;
+        if (noteLengthTimers[i] > 0) noteLengthTimers.set(i, noteLengthTimers[i] + numSamples);;
     }
-    for(int i = 0; i<reverseNotes.size(); i++)
+    for (auto& timer : reverseTimers) // auto& = reference
     {
-        reverseNotes.getUnchecked(i)->incrementReverseTimer(numSamples);
-    }
-    for(int i = 0; i<undertowNotes.size(); i++)
-    {
-        undertowNotes.getUnchecked(i)->incrementUndertowTimer(numSamples);
+        timer.reverseTimerSamples += numSamples;
     }
 }

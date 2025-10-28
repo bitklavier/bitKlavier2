@@ -31,6 +31,14 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
+        // menus
+        if (auto* nostalgicParams = dynamic_cast<NostalgicParams*>(&params)) {
+            nostalgicTriggeredBy_combo_box = std::make_unique<OpenGLComboBox>(nostalgicParams->nostalgicTriggeredBy->paramID.toStdString());
+            nostalgicTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*nostalgicParams->nostalgicTriggeredBy.get(), listeners, *nostalgicTriggeredBy_combo_box, nullptr);
+            addAndMakeVisible(nostalgicTriggeredBy_combo_box.get());
+            addOpenGlComponent(nostalgicTriggeredBy_combo_box->getImageComponent());
+        }
+
         // transposition slider
         transpositionSlider     = std::make_unique<TranspositionSliderSection>(&params.transpose, listeners,name.toStdString());
         addSubSection (transpositionSlider.get());
@@ -38,6 +46,19 @@ public:
         // wave distance undertow slider
         waveSlider = std::make_unique<OpenGL_WaveDistUndertowSlider>(&params.waveDistUndertowParams, listeners);
         addStateModulatedComponent (waveSlider.get());
+
+        // key-on reset button
+        keyOnReset = std::make_unique<SynthButton>(params.keyOnReset->paramID);
+        keyOnReset_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.keyOnReset, listeners, *keyOnReset, nullptr);
+        keyOnReset->setComponentID(params.keyOnReset->paramID);
+        addSynthButton(keyOnReset.get(), true);
+        keyOnReset->setText("key-on reset?");
+
+        // menu label
+        // nostalgicTriggeredBy_label = std::make_shared<PlainTextComponent>("ptb", "trigger:");
+        // addOpenGlComponent(nostalgicTriggeredBy_label);
+        // nostalgicTriggeredBy_label->setTextSize (12.0f);
+        // nostalgicTriggeredBy_label->setJustification(juce::Justification::right);
 
         // knobs
         noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID, params.noteLengthMultParam->getModParam());
@@ -123,6 +144,16 @@ public:
     // "use tuning" toggle
     std::unique_ptr<SynthButton> useTuning;
     std::unique_ptr<chowdsp::ButtonAttachment> useTuning_attachment;
+
+    // key-on reset toggle
+    std::unique_ptr<SynthButton> keyOnReset;
+    std::unique_ptr<chowdsp::ButtonAttachment> keyOnReset_attachment;
+
+    // combo box menus
+    std::unique_ptr<OpenGLComboBox> nostalgicTriggeredBy_combo_box;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> nostalgicTriggeredBy_attachment;
+    // std::shared_ptr<PlainTextComponent> nostalgicTriggeredBy_label;
+
 
     // range slider
     std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> holdTimeMinMaxSlider;

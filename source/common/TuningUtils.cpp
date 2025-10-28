@@ -305,3 +305,12 @@ void copyStdArrayIntoJuceArray(const std::array<float, 12>& stdArr,
     }
     */
 }
+
+/**
+ * given an interval in midinote vals, this will return a multiplier that can be used to multiply frequencies to get that interval
+ * @param interval (in midinotes, float, so 4 is a M3rd)
+ * @return frequency multiplier (float)
+ */
+float intervalToRatio(float interval)  {
+    return mtof(interval + 60.,  440.) / mtof(60., 440.);
+}

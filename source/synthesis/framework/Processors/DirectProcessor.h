@@ -88,8 +88,8 @@ struct DirectParams : chowdsp::ParamHolder {
     chowdsp::GainDBParameter::Ptr releaseResonanceParam{
         juce::ParameterID{"Resonance", 100},
         "Release Resonance",
-        juce::NormalisableRange{rangeStart, rangeEnd + 24, 0.0f, skewFactor, false},
-        6.0f,
+        juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
+        0.0f,
         true,
         v.getChildWithProperty("parameter", "Resonance")
     };

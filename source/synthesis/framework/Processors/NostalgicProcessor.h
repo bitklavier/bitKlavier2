@@ -27,6 +27,11 @@
 // undertow (0 to 9320), goes forward, dynamically shorten?
 
 // key on reset checkbox
+enum NostalgicComboBox {
+    Note_Length = 1 << 0,
+    Sync_KeyDown = 1 << 1,
+    Sync_KeyUp = 1 << 2
+};
 
 // ********************************************************************************************* //
 // ************************************  NostalgicParams  ************************************** //
@@ -55,6 +60,8 @@ struct NostalgicParams : chowdsp::ParamHolder
             holdTimeMinMaxParams,
             transpositionUsesTuning,
             noteOnGain,
+            keyOnReset,
+            nostalgicTriggeredBy,
             reverseEnv,
             // reverseEnvSequence,
             undertowEnv
@@ -99,6 +106,22 @@ struct NostalgicParams : chowdsp::ParamHolder
         "TranspositionUsesTuning",
         false
     };
+
+    // key-on reset toggle
+    chowdsp::BoolParameter::Ptr keyOnReset {
+        juce::ParameterID { "keyOnReset", 100 },
+        "key-on reset",
+        false
+    };
+
+    // combo box
+    chowdsp::EnumChoiceParameter<NostalgicComboBox>::Ptr nostalgicTriggeredBy {
+        juce::ParameterID { "nostalgicTriggeredBy", 100 },
+        "nostalgic triggered by",
+        NostalgicComboBox::Note_Length,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '2', '-' } }
+    };
+
     // Gain for output send (for blendronic, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSendGain {
         juce::ParameterID { "Send", 100 },
@@ -132,7 +155,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
         "Cluster Min",
-        juce::NormalisableRange { 1.0f, 10.0f, 0.0f, skewFactor, false },
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
@@ -178,6 +201,16 @@ struct NostalgicNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 // ************************************  NostalgicNoteStuff  ************************************** //
 // ********************************************************************************************* //
+struct NostalgicNoteData
+{
+    int noteNumber;
+    float noteDurationSamples = 0;
+    double noteDurationMs = 0;
+    double noteStart = 0;
+    int reverseTimerSamples = 0;
+    float undertowDurationMs = 0;
+    float waveDistanceMs = 0;
+};
 
 /*
  NostalgicNoteStuff is a class for containing a variety of information needed
@@ -270,8 +303,11 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+    void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
 
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
+    void updateMidiNoteTranspositions(int noteOnNumber);
+    void updateAllMidiNoteTranspositions();
 
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
@@ -372,12 +408,15 @@ public:
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
     juce::Array<int> keysDepressed;   //current keys that are depressed
+    juce::Array<juce::uint8> velocities;
+    juce::Array<float> noteLengthTimers;
+    juce::Array<NostalgicNoteData> reverseTimers;
+    juce::Array<NostalgicNoteData> clusterNotes;
+    float clusterTimer;
+    int clusterCount;
+    bool inCluster = false;
 
 private:
-    std::vector<juce::uint8> velocities;
-    std::vector<juce::uint64> noteLengthTimers;
-    juce::OwnedArray<NostalgicNoteStuff> reverseNotes;
-    juce::OwnedArray<NostalgicNoteStuff> undertowNotes;
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;

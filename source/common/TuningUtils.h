@@ -93,6 +93,12 @@ std::string pitchClassToString(PitchClass value);
 PitchClass getPitchClassFromInt(int bitPosition);
 Fundamental getFundamentalFromInt(int bitPosition);
 std::array<float, 12> getOffsetsFromTuningSystem (TuningSystem ts);
+/**
+ * given an interval in midinote vals, this will return a multiplier that can be used to multiply frequencies to get that interval
+ * @param interval (in midinotes, float, so 4 is a M3rd)
+ * @return frequency multiplier (float)
+ */
+float intervalToRatio(float interval);
 
 void setupTuningSystemMenu(std::unique_ptr<OpenGLComboBox> &tuning_combo_box_);
 void setOffsetsFromTuningSystem(TuningSystem t, int newFund, std::array<std::atomic<float>, 12>& circularTuningVec);

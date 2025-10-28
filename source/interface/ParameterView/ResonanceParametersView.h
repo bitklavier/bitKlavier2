@@ -14,10 +14,13 @@
 #include "OpenGL_AbsoluteKeyboardSlider.h"
 #include "OpenGL_KeymapKeyboard.h"
 
-class ResonanceParametersView : public SynthSection
+class ResonanceParametersView : public SynthSection, juce::Timer, BKKeymapKeyboardComponent::Listener
 {
 public:
-    ResonanceParametersView (chowdsp::PluginState& pluginState, ResonanceParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), sparams_ (params)
+    ResonanceParametersView (chowdsp::PluginState& pluginState,
+        ResonanceParams& params,
+        juce::String name,
+        OpenGlWrapper* open_gl) : SynthSection (""), sparams_ (params)
     {
         // the name that will appear in the UI as the name of the section
         setName ("resonance");
@@ -33,13 +36,33 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
+        for (auto& param_ : *params.getFloatParams())
+        {
+            if ( // make group of params to display together
+                param_->paramID == "rpresence" ||
+                param_->paramID == "rsustain" ||
+                param_->paramID == "rvariance" ||
+                param_->paramID == "rstretch")
+                //param_->paramID == "rsmoothness") // i'm not persuaded this is a useful parameter to expose
+            {
+                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
+                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
+                addSlider (slider.get()); // adds the slider to the synthSection
+                slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setShowPopupOnHover(true);
+                floatAttachments.emplace_back (std::move (attachment));
+                _sliders.emplace_back (std::move (slider));
+            }
+        }
+
         fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true);
         addStateModulatedComponent(fundamentalKeyboard.get());
         fundamentalKeyboard->setName("fundamental");
         fundamentalKeyboard->setAvailableRange(0, numKeys);
         fundamentalKeyboard->setOctaveForMiddleC(5);
 
-        fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Held Key/Fundamental");
+        fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Fundamental");
         addOpenGlComponent(fundamentalKeyboard_label);
         fundamentalKeyboard_label->setTextSize (12.0f);
         fundamentalKeyboard_label->setJustification(juce::Justification::centredBottom);
@@ -50,10 +73,15 @@ public:
         closestKeyboard->setAvailableRange(0, numKeys);
         closestKeyboard->setOctaveForMiddleC(5);
 
-        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "Resonant Keys/Partials");
+        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "partials");
         addOpenGlComponent(closestKeyboard_label);
         closestKeyboard_label->setTextSize (12.0f);
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
+
+        heldKeysKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.heldKeymap, false);
+        addStateModulatedComponent(heldKeysKeyboard.get());
+        heldKeysKeyboard->setName("heldKeys");
+        heldKeysKeyboard->addMyListener(this);
 
         offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->offsetsKeyboardState);
         addStateModulatedComponent(offsetsKeyboard.get());
@@ -70,7 +98,7 @@ public:
         addStateModulatedComponent(gainsKeyboard.get());
         gainsKeyboard->setName("gains");
         gainsKeyboard->setAvailableRange(0, numKeys);
-        gainsKeyboard->setMinMidMaxValues(0.1, 1., 10., 2); // min, mid, max, display resolution
+        gainsKeyboard->setMinMidMaxValues(-100., -50., 0., 2); // min, mid, max, display resolution; dBFS
         gainsKeyboard->setOctaveForMiddleC(5);
 
         gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
@@ -82,6 +110,11 @@ public:
         envSection = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         addSubSection (envSection.get());
 
+        // spectrum choices
+        spectrum_combo_box = std::make_unique<OpenGLComboBox>(params.spectrum->paramID.toStdString());
+        spectrum_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*params.spectrum.get(), listeners, *spectrum_combo_box, nullptr);
+        addComboBox(spectrum_combo_box.get(), true, true);
+
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
@@ -92,6 +125,25 @@ public:
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
+
+        resonanceCallbacks += {listeners.addParameterListener(
+            params.spectrum,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this, &params]() {
+                params.setSpectrumFromMenu(params.spectrum->getIndex());
+                fundamentalKeyboard->redoImage();
+                offsetsKeyboard->redoImage();
+                gainsKeyboard->redoImage();
+                closestKeyboard->redoImage();
+            })
+        };
+
+        startTimer(50);
+    }
+
+    ~ResonanceParametersView()
+    {
+        stopTimer();
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -102,18 +154,30 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
 
-//        drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
-//        drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
-//        drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
-//        drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
+        for (auto& slider : _sliders)
+        {
+            //drawLabelForComponent (g, slider->getName(), slider.get());
+            if (slider->getName() == "rsustain") drawLabelForComponent(g, TRANS("Sustain"), slider.get());
+            if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Sensitivity"), slider.get());
+            if (slider->getName() == "rpresence") drawLabelForComponent(g, TRANS("Presence"), slider.get());
+            if (slider->getName() == "rstretch") drawLabelForComponent(g, TRANS("Stretch"), slider.get());
+            //if (slider->getName() == "rsmoothness") drawLabelForComponent(g, TRANS("Smoothness"), slider.get());
+        }
 
         paintChildrenBackgrounds (g);
+    }
+
+    void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey) override
+    {
+        DBG("BKKeymapKeyboardChanged called in ResonanceParametersView " + juce::String(lastKey));
+        sparams_.heldKeymap_changedInUI = lastKey; // notify processor that the held keymap has changed vai the UI
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
 
     std::unique_ptr<OpenGLKeymapKeyboardComponent> fundamentalKeyboard;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> closestKeyboard;
+    std::unique_ptr<OpenGLKeymapKeyboardComponent> heldKeysKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> offsetsKeyboard;
     std::unique_ptr<OpenGLAbsoluteKeyboardSlider> gainsKeyboard;
     int numKeys = TotalNumberOfPartialKeysInUI;
@@ -129,7 +193,18 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
+    // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
+    std::vector<std::unique_ptr<SynthSlider>> _sliders;
+    std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+
+    std::unique_ptr<OpenGLComboBox> spectrum_combo_box;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> spectrum_attachment;
+
+    chowdsp::ScopedCallbackList resonanceCallbacks;
+
     ResonanceParams& sparams_;
+
+    void timerCallback(void) override;
 
     void resized() override;
 };

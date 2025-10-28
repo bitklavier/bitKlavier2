@@ -44,7 +44,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the MidiTarget Processor
     MidiTargetParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("miditarget")
     {
-
+        /*
+         * be sure to add these in matched orders (_noteMode same as regular param), otherwise the UI won't setup correctly
+         */
         add (
             blendronicTargetPatternSync,
             blendronicTargetBeatSync,
@@ -58,9 +60,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
             synchronicTargetAddNotes,
             synchronicTargetClear,
             synchronicTargetPausePlay,
-            synchronicTargetDeleteOldest,
-            synchronicTargetDeleteNewest,
-            synchronicTargetRotate,
+//            synchronicTargetDeleteOldest,
+//            synchronicTargetDeleteNewest,
+//            synchronicTargetRotate,
             blendronicTargetPatternSync_noteMode,
             blendronicTargetBeatSync_noteMode,
             blendronicTargetClear_noteMode,
@@ -72,7 +74,13 @@ struct MidiTargetParams : chowdsp::ParamHolder
             synchronicTargetBeatSync_noteMode,
             synchronicTargetAddNotes_noteMode,
             synchronicTargetClear_noteMode,
-            synchronicTargetPausePlay_noteMode);
+            synchronicTargetPausePlay_noteMode,
+            resonanceTargetDefault,
+            resonanceTargetRing,
+            resonanceTargetAdd,
+            resonanceTargetDefault_noteMode,
+            resonanceTargetRing_noteMode,
+            resonanceTargetAdd_noteMode);
 //            synchronicTargetDeleteOldest_noteMode,
 //            synchronicTargetDeleteNewest_noteMode,
 //            synchronicTargetRotate_noteMode);
@@ -112,6 +120,15 @@ struct MidiTargetParams : chowdsp::ParamHolder
 
         targetMapper[SynchronicTargetPausePlay]         = synchronicTargetPausePlay.get();
         noteModeMapper[SynchronicTargetPausePlay]       = synchronicTargetPausePlay_noteMode.get();
+
+        targetMapper[ResonanceTargetDefault]            = resonanceTargetDefault.get();
+        noteModeMapper[ResonanceTargetDefault]          = resonanceTargetDefault_noteMode.get();
+
+        targetMapper[ResonanceTargetAdd]                = resonanceTargetAdd.get();
+        noteModeMapper[ResonanceTargetAdd]              = resonanceTargetAdd_noteMode.get();
+
+        targetMapper[ResonanceTargetRing]                = resonanceTargetRing.get();
+        noteModeMapper[ResonanceTargetRing]              = resonanceTargetRing_noteMode.get();
 
 //        targetMapper[SynchronicTargetDeleteOldest]      = synchronicTargetDeleteOldest.get();
 //        noteModeMapper[SynchronicTargetDeleteOldest]    = synchronicTargetDeleteOldest_noteMode.get();
@@ -288,40 +305,84 @@ struct MidiTargetParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
-    chowdsp::BoolParameter::Ptr synchronicTargetDeleteOldest {
-        juce::ParameterID { "sTargetDeleteOldest", 100},
-        "Delete Oldest Layer",
+//    chowdsp::BoolParameter::Ptr synchronicTargetDeleteOldest {
+//        juce::ParameterID { "sTargetDeleteOldest", 100},
+//        "Delete Oldest Layer",
+//        false
+//    };
+//
+//    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteOldest_noteMode {
+//        juce::ParameterID{"sTargetDeleteOldest_noteMode", 100},
+//        "Note Mode",
+//        TriggerType::_NoteOn,
+//        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+//    };
+//
+//    chowdsp::BoolParameter::Ptr synchronicTargetDeleteNewest {
+//        juce::ParameterID { "sTargetDeleteNewest", 100},
+//        "Delete Newest Layer",
+//        false
+//    };
+//
+//    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteNewest_noteMode {
+//        juce::ParameterID{"sTargetDeleteNewest_noteMode", 100},
+//        "Note Mode",
+//        TriggerType::_NoteOn,
+//        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+//    };
+//
+//    chowdsp::BoolParameter::Ptr synchronicTargetRotate {
+//        juce::ParameterID { "sTargetRotate", 100},
+//        "Rotate Layers",
+//        false
+//    };
+//
+//    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetRotate_noteMode {
+//        juce::ParameterID{"sTargetRotate_noteMode", 100},
+//        "Note Mode",
+//        TriggerType::_NoteOn,
+//        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+//    };
+
+    /*
+     * Resonance Targets
+     */
+
+    // pass through all messages on channel 1 by default; same as having no MidiTarget involved
+    chowdsp::BoolParameter::Ptr resonanceTargetDefault {
+        juce::ParameterID { "rTargetDefault", 100},
+        "Default Behavior",
         false
     };
 
-    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteOldest_noteMode {
-        juce::ParameterID{"sTargetDeleteOldest_noteMode", 100},
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetDefault_noteMode {
+        juce::ParameterID{"rTargetDefault_noteMode", 100},
+        "Note Mode",
+        TriggerType::_Both,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr resonanceTargetRing {
+        juce::ParameterID { "rTargetRing", 100},
+        "Ring Strings",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetRing_noteMode {
+        juce::ParameterID{"rTargetRing_noteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
-    chowdsp::BoolParameter::Ptr synchronicTargetDeleteNewest {
-        juce::ParameterID { "sTargetDeleteNewest", 100},
-        "Delete Newest Layer",
+    chowdsp::BoolParameter::Ptr resonanceTargetAdd {
+        juce::ParameterID { "rTargetAdd", 100},
+        "Add/Remove String",
         false
     };
 
-    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteNewest_noteMode {
-        juce::ParameterID{"sTargetDeleteNewest_noteMode", 100},
-        "Note Mode",
-        TriggerType::_NoteOn,
-        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
-    };
-
-    chowdsp::BoolParameter::Ptr synchronicTargetRotate {
-        juce::ParameterID { "sTargetRotate", 100},
-        "Rotate Layers",
-        false
-    };
-
-    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetRotate_noteMode {
-        juce::ParameterID{"sTargetRotate_noteMode", 100},
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetAdd_noteMode {
+        juce::ParameterID{"rTargetAdd_noteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
