@@ -17,10 +17,10 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 
-class NostalgicParametersView : public SynthSection
+class NostalgicParametersView : public SynthSection, public juce::Timer
 {
 public:
-    NostalgicParametersView (chowdsp::PluginState& pluginState, NostalgicParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection ("")
+    NostalgicParametersView (chowdsp::PluginState& pluginState, NostalgicParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), nparams_ (params)
     {
         // the name that will appear in the UI as the name of the section
         setName ("nostalgic");
@@ -117,7 +117,12 @@ public:
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
+
+        // for updating the wavedistundertow display sliders
+        startTimer(50);
     }
+
+    void timerCallback() override;
 
     void paintBackground (juce::Graphics& g) override
     {
@@ -179,6 +184,7 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
+    NostalgicParams& nparams_;
     void resized() override;
 };
 

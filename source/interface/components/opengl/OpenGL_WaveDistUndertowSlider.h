@@ -140,6 +140,12 @@ public:
         }
     }
 
+    void updateSliderPositionsGL(juce::Array<int> newpositions)
+    {
+        updateSliderPositions (newpositions);
+        redoImage();
+    }
+
     /**
      * syncToValueTree() is called in ModulationManager::modulationClicked and
      * is used to set the mod view of the parameter to the most recent mod values

@@ -204,12 +204,15 @@ struct NostalgicNonParameterState : chowdsp::NonParamState
 struct NostalgicNoteData
 {
     int noteNumber;
-    float noteDurationSamples = 0;
+    juce::uint64 noteDurationSamples = 0;
     double noteDurationMs = 0;
     double noteStart = 0;
-    int reverseTimerSamples = 0;
+    std::atomic<juce::uint64> reverseTimerSamples = 0;
+    std::atomic<juce::uint64> undertowTimerSamples = 0;
     float undertowDurationMs = 0;
+    float undertowDurationSamples = 0;
     float waveDistanceMs = 0;
+    bool isReverse = true;
 };
 
 /*
@@ -303,6 +306,7 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
+    void updateNoteVisualization();
     void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
 
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
@@ -411,6 +415,7 @@ public:
     juce::Array<juce::uint8> velocities;
     juce::Array<float> noteLengthTimers;
     juce::Array<NostalgicNoteData> reverseTimers;
+    juce::Array<float> undertowTimers;
     juce::Array<NostalgicNoteData> clusterNotes;
     float clusterTimer;
     int clusterCount;

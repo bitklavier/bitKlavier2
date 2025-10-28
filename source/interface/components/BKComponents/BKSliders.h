@@ -626,11 +626,11 @@ public:
     {
         wavedistanceSlider.setLookAndFeel(nullptr);
         undertowSlider.setLookAndFeel(nullptr);
-        // for(int i=0; i<maxSliders; i++)
-        // {
-        //     juce::Slider* newSlider = displaySliders.getUnchecked(i);
-        //     newSlider->setLookAndFeel(nullptr);
-        // }
+        for(int i=0; i<maxSliders; i++)
+        {
+            juce::Slider* newSlider = displaySliders.getUnchecked(i);
+            newSlider->setLookAndFeel(nullptr);
+        }
     }
 
     void sliderValueChanged (juce::Slider *slider) override;
@@ -703,8 +703,6 @@ public:
 
     juce::TextEditor wavedistanceValueTF;
     juce::TextEditor undertowValueTF;
-
-
 
     void updateSliderPositions(juce::Array<int> newpositions);
 
