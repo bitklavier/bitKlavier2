@@ -203,6 +203,49 @@ struct NostalgicNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 struct NostalgicNoteData
 {
+    // Default constructor
+    NostalgicNoteData() = default;
+
+    // Delete copy operations (std::atomic can't be copied)
+    NostalgicNoteData(const NostalgicNoteData&) = delete;
+    NostalgicNoteData& operator=(const NostalgicNoteData&) = delete;
+
+    // Allow move semantics
+    NostalgicNoteData(NostalgicNoteData&& other) noexcept
+    {
+        // Copy non-atomic fields normally
+        noteNumber = other.noteNumber;
+        noteDurationSamples = other.noteDurationSamples;
+        noteDurationMs = other.noteDurationMs;
+        noteStart = other.noteStart;
+        undertowDurationMs = other.undertowDurationMs;
+        undertowDurationSamples = other.undertowDurationSamples;
+        waveDistanceMs = other.waveDistanceMs;
+        isReverse = other.isReverse;
+
+        // Copy atomic values safely
+        reverseTimerSamples.store(other.reverseTimerSamples.load());
+        undertowTimerSamples.store(other.undertowTimerSamples.load());
+    }
+
+    NostalgicNoteData& operator=(NostalgicNoteData&& other) noexcept
+    {
+        if (this != &other)
+        {
+            noteNumber = other.noteNumber;
+            noteDurationSamples = other.noteDurationSamples;
+            noteDurationMs = other.noteDurationMs;
+            noteStart = other.noteStart;
+            undertowDurationMs = other.undertowDurationMs;
+            undertowDurationSamples = other.undertowDurationSamples;
+            waveDistanceMs = other.waveDistanceMs;
+            isReverse = other.isReverse;
+
+            reverseTimerSamples.store(other.reverseTimerSamples.load());
+            undertowTimerSamples.store(other.undertowTimerSamples.load());
+        }
+        return *this;
+    }
     int noteNumber;
     juce::uint64 noteDurationSamples = 0;
     double noteDurationMs = 0;
