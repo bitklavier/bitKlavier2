@@ -113,6 +113,20 @@ namespace bitklavier {
         else                return      0.5 * (pow(2. * inval - 1., k) + 1);
     }
 
+    /*
+     * takes a range with any input (provided Max > Min) and scales accordingly,
+     * returning warped value within the input range
+     */
+    double dt_symwarp_range(double inval, double k, double rangeMin, double rangeMax)
+    {
+        if (rangeMin >= rangeMax) return inval;
+
+        double scaledInval = (inval - rangeMin) / (rangeMax - rangeMin);
+        double scaledOutval = dt_symwarp(scaledInval, k);
+
+        return scaledOutval * (rangeMax - rangeMin) + rangeMin;
+    }
+
     // this one combines asymwarp, symwarp, and generally scaling and offset
     // with both k values == 1, this is linear
     // with scale = 1 and offset = 0, and k's == 1, this returns the input

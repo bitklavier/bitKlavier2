@@ -324,6 +324,7 @@ static constexpr int MaxMidiNotes = 128;
       double dt_asymwarp(double inval, double k);
       double dt_asymwarp_inverse(double inval, double k);
       double dt_symwarp(double inval, double k);
+      double dt_symwarp_range(double inval, double k, double rangeMin, double rangeMax);
       double dt_warpscale(double inval, double asym_k, double sym_k, double scale, double offset);
 
       std::bitset<128> stringToBitset (juce::String paramAttribute);
@@ -478,6 +479,7 @@ struct NoteOnSpec
     NoteOnSpec()
     {
         transpositions.ensureStorageAllocated(MaxMidiNotes);
+        transpositionGains.ensureStorageAllocated(MaxMidiNotes);
     }
 
     /**
@@ -491,6 +493,7 @@ struct NoteOnSpec
     bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
     BKADSR::Parameters envParams {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
     juce::Array<float> transpositions;              // all the transpositions related to this noteOn; BKSynth will launch all of them, and handle noteOffs for them
+    juce::Array<float> transpositionGains;          // gains related to transpositions, by same index
     int channel = 1;                                // midi channel
 
     void clear()
@@ -503,6 +506,7 @@ struct NoteOnSpec
         stopSameCurrentNote = true;
         envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f};
         transpositions.clearQuick();
+        transpositionGains.clearQuick();
         channel = 1;
     }
 };
@@ -572,13 +576,67 @@ enum SelectChoice {
     Deselect = 1 << 1,
 };
 
+enum SpectralType {
+    None = 1 << 0,
+    Overtones8 = 1 << 1,
+    Undertones8 = 1 << 2,
+    Overtones20 = 1 << 3,
+    Undertones20 = 1 << 4,
+    OverUnderTones = 1 << 5,
+    PianoLow = 1 << 6,
+    PianoMid = 1 << 7,
+    PianoHigh = 1 << 8,
+    MetalBar = 1 << 9,
+    MajorBell = 1 << 10,
+    MinorBell = 1 << 11,
+    Saron = 1 << 12,
+    Gender = 1 << 13,
+    Bonang = 1 << 14,
+    Gong = 1 << 15,
+};
+
 struct KeymapKeyboardState
 {
-    KeymapKeyboardState() {
-        keyStates.reset();
+    KeymapKeyboardState() : keyStates(std::bitset<128>().reset()) {}
+    std::atomic<std::bitset<128>> keyStates;
+
+    void setKeyState(int note, bool isDown)
+    {
+        std::bitset<128> current_keys = keyStates.load();
+        std::bitset<128> desired_keys;
+        do
+        {
+            // 1. Create the desired state by modifying the local copy
+            desired_keys = current_keys;
+            desired_keys[note] = isDown; // Set bit based on the 'isDown' argument
+
+            // 2. Attempt the atomic exchange
+        } while (!keyStates.compare_exchange_weak(current_keys, desired_keys));
     }
 
-    std::bitset<128> keyStates;
+    void setAllKeysState(bool isDown)
+    {
+        for(int i=0; i<keyStates.load().size(); i++)
+        {
+            setKeyState(i, isDown);
+        }
+    }
+
+    void flipKeyState(int note)
+    {
+        std::bitset<128> current_keys = keyStates.load();
+        std::bitset<128> desired_keys;
+
+        do
+        {
+            // 1. Create the desired state by modifying the local copy
+            desired_keys = current_keys;
+            desired_keys.flip(note); // Use the std::bitset::flip method
+
+            // 2. Attempt the atomic exchange
+            // If it fails, current_keys is updated with the new value, and the loop repeats
+        } while (!keyStates.compare_exchange_weak(current_keys, desired_keys));
+    }
 };
 
 template <size_t N>

@@ -14,48 +14,15 @@
 
 /**
  * Resonance ToDo list:
- * - clicks when attack time is larger than 3ms, say, 50ms, and rapidly changing notes:
- *      -- problem in ADSR?
- * - keyboard at bottom of UI displaying heldKeys, and allowing user to set static heldKeys
- * - figure out how to handle partial gain and mismatches between partial tunings when finding a match
- *      -- for instance, when the 7th partial is "rung" by a key that is ET
- *      -- one idea: we use those to set start time between a user set range, and use velocity as a
- *                  general gain scalar separately, on top of that.
- *                  - so this would mean adding a range slider to the UI
- * - or, how about the following single knob params:
- *      -- start time offset (ms), sets "startTime"
- *      -- ring duration (ms), sets "sustainTime"
- *      -- start time range (ms), sets range of start times that the gain/offset overlap will set
- *          -- multiply gains and look at difference between offsets
- *              - overlap = gain1 * gain2 * (1. - offsetDifference), where offsetDifference is in fractional MIDI vals
- *                  overlap range [0, 1]
- *                  - cap gains at 1, so they go between 0 and 1?
- *          -- the more overlapped they are, the closer to the start time offset the playback starts
- *              - actual start time = (startTime + startTimeRange) - overlap * startTimeRange
- *                                  = startTime + startTimeRange * (1 - overlap)
+ *
+ * - change color range display in Gains keyboard
  * - in UI, have keys offset and gain keys that are not relevant greyed out and not clickable
- * - figure out how to deal with running out of the 16 ResonantStrings
- *      -- ignore, cap, override, take over oldest?
- * - does currentPlayingPartialsFromHeldKey need to be a 2D array?
- *      -- now that ALL the playing notes are associated with heldKey in this class?
- *      -- it looks like we don't need 2d, and don't even need to pass midiNoteNumber to removeString()
  * - basic setup like processStateChanges and mods
- * - figure out how to handle a situation where the number of heldKeys tries to exceed 16
- * - create a way to pull up some standard partial structures
- *      -- up to 19 natural overtones
- *      -- some other structures; look at Sethares, for instance, for some other instrument partial structures
- *      -- perhaps a menu, like the tuning system menus, where we can call up 4, 8, 12, 16, 19, overtones, and some gongs, stretched spectra etc...
- *          -- could even have a "stretch" parameter that stretches the spectra? and adjusts the "closest" key automatically?
- *          -- ideal bar from Sethares: f, 2.76f, 5.41f, 8.94f, 13.35f, and 18.65f
- *          -- Bell table on Sethares page 117
- *          -- Sarons (p 204 in Sethares): f, 2.39f, 2.78f, 4.75f, 5.08f, 5.96f.
-*           -- Gender
- *              - f, 2.01f, 2.57f, 4.05f, 4.8f, 6.27f
- *              - f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f
- *          -- Bonang: f, 1.52f, 3.46f, 3.92f.
- *          -- Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
- * - handleMidiTargetMessages, and updates to MidiTarget
  * - processBlockBypassed
+ * - possibly have a display above the ADSR showing the cooked partial structure (including stretch and overlap impacts)?
+ *      -- would probably need to be some kind of spectrum display that shows the partial structure for the heldkeys and then
+ *          the ringing structure? for all active keys? or could just be the last ring string against all the held strings?
+ *      -- not a priority for now....
  *
  */
 
@@ -66,6 +33,8 @@
 
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
+#include "target_types.h"
+#include "TuningUtils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
@@ -78,6 +47,114 @@ using PartialSpec = std::tuple<bool, float, float>;     // active, offset from E
 static constexpr int MaxHeldKeys = 16;                  // currently constrained by number of MIDI channels; might change if we use threaded synth
 static constexpr int TotalNumberOfPartialKeysInUI = 52; //number if keys in UI elements for setting partial structure
 
+//key:gain (dBFS) pairs
+    //Overtones8 = 1 << 0,
+    //Undertones8 = 1 << 1,
+    //Overtones20 = 1 << 2,
+    //Undertones20 = 1 << 3,
+    //OverUnderTones = 1 << 4,
+    //PianoLow = 1 << 5,
+    //PianoMid = 1 << 6,
+    //PianoHigh = 1 << 7,
+    //MetalBar = 1 << 8,
+    //MajorBell = 1 << 9,
+    //MinorBell = 1 << 10,
+    //Saron = 1 << 11,
+    //Gender = 1 << 12,
+    //Bonang = 1 << 13,
+    //Gong = 1 << 14,
+
+// Overtones8
+static const std::string OvertoneOffsets_O8   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0";
+static const std::string OvertoneGains_O8     = "0:0 12:0 19:0 24:0 28:0 31:0 34:0 36:0";
+static const std::string OvertoneKeys_O8      = "0 12 19 24 28 31 34 36";
+
+// Overtone20
+static const std::string OvertoneOffsets_O20   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0 38:4 40:-14 42:-49 43:2 44:41 46:-31 47:-12 48:0 49:5 50:4 51:-2.5 52:-14";
+static const std::string OvertoneGains_O20     = "0:0 12:0 19:0 24:0 28:0 31:0 34:0 36:0 38:0 40:0 42:0 43:0 44:0 46:0 47:0 48:0 49:0 50:0 51:0 52:0";
+static const std::string OvertoneKeys_O20      = "0 12 19 24 28 31 34 36 38 40 42 43 44 46 47 48 49 50 51 52";
+
+// Undertone8
+static const std::string UndertoneOffsets_U8   = "16:0 18:31 21:-2 24:14 28:0 33:-2 40:0 52:0";
+static const std::string UndertoneGains_U8     = "16:0 18:0 21:0 24:0 28:0 33:0 40:0 52:0";
+static const std::string UndertoneKeys_U8      = "16 18 21 24 28 33 40 52";
+
+// Undertone20
+static const std::string UndertoneOffsets_U20   = "0:14 1:2.5 2:-4 3:-5 4:0 5:12 6:31 8:-41 9:-2 10:49 12:14 14:-4 16:0 18:31 21:-2 24:14 28:0 33:-2 40:0 52:0";
+static const std::string UndertoneGains_U20     = "0:0 1:0 2:0 3:0 4:0 5:0 6:0 8:0 9:0 10:0 12:0 14:0 16:0 18:0 21:0 24:0 28:0 33:0 40:0 52:0";
+static const std::string UndertoneKeys_U20      = "0 1 2 3 4 5 6 8 9 10 12 14 16 18 21 24 28 33 40 52";
+
+// OverUndertones ( 7 overtones and 7 undertones, around D (26), for symmetry in UI. Leaving out octave above/below.)
+// overtones    "26:0 33:2 38:0 42:-14 45:2 48:-31 50:0 52:4"
+// undertones   "0:-4 2:0 4:31 7:-2 10:14 14:0 19:-2"
+static const std::string UnderOvertoneOffsets   = "0:-4 2:0 4:31 7:-2 10:14 14:0 19:-2 26:0 33:2 38:0 42:-14 45:2 48:-31 50:0 52:4";
+static const std::string UnderOvertoneGains     = "0:0 2:0 4:0 7:0 10:0 14:0 19:0 26:0 33:0 38:0 42:0 45:0 48:0 50:0 52:0";
+static const std::string UnderOvertoneKeys      = "0 2 4 7 10 14 19 26 33 38 42 45 48 50 52";
+
+// PianoLow
+static const std::string OvertoneOffsets_A0   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0 38:4 40:-14 42:-49 43:2 44:41 46:-31 47:-12 48:0 49:5 50:4 51:-2.5 52:-14";
+static const std::string OvertoneGains_A0     = "0:-35 12:-20 19:0 24:-3 28:-6 31:-5 34:-20 36:-28 38:-25 40:-23 42:-30 43:-25 44:-10 46:-15 47:-15 48:-40 49:-41 50:-25 51:-15 52:-7";
+static const std::string OvertoneKeys_A0      = "0 12 19 24 28 31 34 36 38 40 42 43 44 46 47 48 49 50 51 52";
+
+// PianoMid
+static const std::string OvertoneOffsets_A3   = "0:0 12:0 19:2 24:0 28:-14 31:2 34:-31 36:0";
+static const std::string OvertoneGains_A3     = "0:0 12:-40 19:-50 24:-60 28:-18 31:-20 34:-70 36:-60";
+static const std::string OvertoneKeys_A3      = "0 12 19 24 28 31 34 36";
+
+// PianoHigh
+static const std::string OvertoneOffsets_A7   = "0:0 12:0 ";
+static const std::string OvertoneGains_A7     = "0:0 12:-10";
+static const std::string OvertoneKeys_A7      = "0 12";
+
+/*
+ * the following are based on numbers from Sethares: "Tuning, Timbre, Spectrum, Scale"
+ */
+// Metal Bar
+//f, 2.76f, 5.41f, 8.94f, 13.35f, and 18.65f
+// "0:0 18:-42.4 29:23 38:-7.7 45:-13.5 51:-34.7"
+static const std::string MetalBarOffsets   = "0:0 18:-42.4 29:23 38:-7.7 45:-13.5 51:-34.7";
+static const std::string MetalBarGains     = "0:0 18:0 29:0 38:0 45:0 51:0";
+static const std::string MetalBarKeys      = "0 18 29 38 45 51";
+
+// Major Bell
+//0.5 1 1.25 1.5 2 2.5 2.95 3.25 4
+// "0:0 12:0 16:-14 19:2 24:0 28:-14 31:-27 32:40.5 36"
+// fundamental at 12
+static const std::string MajorBellOffsets   = "0:0 12:0 16:-14 19:2 24:0 28:-14 31:-27 32:40.5 36:0";
+static const std::string MajorBellGains     = "0:0 12:0 16:0 19:0 24:0 28:0 31:0 32:0 36:0";
+static const std::string MajorBellKeys      = "0 12 16 19 24 28 31 32 36";
+
+// Minor Bell
+//0.5 1 1.2 1.5 2 2.5 2.61 3.0 4
+// fundamental at 12
+static const std::string MinorBellOffsets   = "0:0 12:0 15:15.6 19:2 24:0 28:-14 29:-31 31:2 36:0";
+static const std::string MinorBellGains     = "0:0 12:0 15:0 19:0 24:0 28:0 29:0 31:0 36:0";
+static const std::string MinorBellKeys      = "0 12 15 19 24 28 29 31 36";
+
+// Saron
+// f, 2.39f, 2.78f, 4.75f, 5.08f, 5.96f.
+static const std::string SaronOffsets   = "0:0 15:8.4 18:-30 27:-2.5 28:14 31:-9.6";
+static const std::string SaronGains     = "0:0 15:0 18:0 27:0 28:0 31:0";
+static const std::string SaronKeys      = "0 15 18 27 28 31";
+
+// Gender
+// f, 2.01f, 2.57f, 4.05f, 4.8f, 6.27f
+//or f, 1.97f, 2.78f, 4.49f, 5.33f, 6.97f (this one below)
+static const std::string GenderOffsets   = "0:0 12:-26 18:-30 26:1 29:-3 34:-38.6";
+static const std::string GenderGains     = "0:0 12:0 18:0 26:0 29:0 34:0";
+static const std::string GenderKeys      = "0 12 18 26 29 34";
+
+// Bonang:
+// f, 1.52f, 3.46f, 3.92f.
+static const std::string BonangOffsets   = "0:0 7:25 21:49 42:-35";
+static const std::string BonangGains     = "0:0 7:0 21:0 42:0";
+static const std::string BonangKeys      = "0:0 7 21 42";
+
+// Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
+static const std::string GongOffsets   = "0:0 7:-9.6 9:-12 12:0 17:0 19:-9.6 22:-46 24:-8.7 31:-6.7 34:-46";
+static const std::string GongGains     = "0:0 7:0 9:0 12:0 17:0 19:0 22:0 24:0 31:0 34:0";
+static const std::string GongKeys      = "0 7 9 12 17 19 22 24 31 34";
+
 struct ResonanceParams : chowdsp::ParamHolder
 {
     // gain slider params, for all gain-type knobs
@@ -88,12 +165,18 @@ struct ResonanceParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Resonance Processor
     ResonanceParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("resonance")
     {
-        gainsKeyboardState.setAllAbsoluteOffsets(1.);
+        //gainsKeyboardState.setAllAbsoluteOffsets(-50.);
 
         add (outputSendGain,
             outputGain,
             noteOnGain,
-            env);
+            presence,
+            sustain,
+            variance,
+            smoothness,
+            env,
+            stretch,
+            spectrum);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters ([this] (auto& param, size_t) {
@@ -138,6 +221,91 @@ struct ResonanceParams : chowdsp::ParamHolder
         true
     };
 
+    // presence maps to start time, inverted
+    chowdsp::FloatParameter::Ptr presence {
+        juce::ParameterID { "rpresence", 100 },
+        "presence",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.75f),
+        0.75f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    // maps to sustain time
+    chowdsp::FloatParameter::Ptr sustain {
+        juce::ParameterID { "rsustain", 100 },
+        "sustain",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    /*
+     * For the "Overlap Sensitivity" parameter
+     * the partials will not always be perfectly aligned, tuning-wise
+     * and they also may have varying gains, so we adjust the gain
+     * of a particular resonance based on their gains and how
+     * far off they are from one another. That adjustment is
+     * further scaled by "variance"
+     * - if variance = 1, we ignore differences in tuning and the relative
+     *      partial gains
+     * - if variance is 0, we fully adjust the gain based on these differences
+     *
+     */
+    chowdsp::FloatParameter::Ptr variance {
+        juce::ParameterID { "rvariance", 100 },
+        "variance",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.1f),
+        0.1f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    /*
+     * maps to delay time before resonantString becomes active after held initiated
+     * have decided NOT to expose this to the UI, at least not for now. it's just
+     * not convincing enough to warrant the users attention.
+     */
+    chowdsp::FloatParameter::Ptr smoothness {
+        juce::ParameterID { "rsmoothness", 100 },
+        "smoothness",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
+        0.5f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    /*
+     * a "stretch" knob that will stretch the given partial structure
+     *      -- FMn = 1 + alpha * (n - 1)^2, very small range of alpha, like [-.002, .002] so our knob would be for alpha.
+     *          - FMn is frequency multiplier for nth partial (n=1 is fundamental), alpha is the stretch factor
+     *              - using the 7th partial as a reference; a max of .002 would have it reach almost a M7! with an ET m7 well within that range
+     *      -- based on equation 2 from here: OCTOBER 23 2015 "Explaining the Railsback stretch in terms of the inharmonicity of piano tones and sensory dissonance", N. Giordano
+     *         - https://pubs.aip.org/asa/jasa/article/138/4/2359/900231/Explaining-the-Railsback-stretch-in-terms-of-the
+     *          - there is more here: https://acris.aalto.fi/ws/portalfiles/portal/98111997/Effect_of_inharmonicity_on_pitch_perception_and_subjective_tuning_of_piano_tones.pdf
+     */
+    chowdsp::FloatParameter::Ptr stretch {
+        juce::ParameterID { "rstretch", 100 },
+        "stretch",
+        chowdsp::ParamUtils::createNormalisableRange (-1.0f, 1.0f, 0.0f),
+        0.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    chowdsp::EnumChoiceParameter<SpectralType>::Ptr spectrum {
+        juce::ParameterID { "rspectrum", 100 },
+        "SpectralType",
+        SpectralType::None,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
+    };
+
     // adsr
     EnvParams env;
 
@@ -150,6 +318,10 @@ struct ResonanceParams : chowdsp::ParamHolder
 
     KeymapKeyboardState fundamentalKeymap;
     KeymapKeyboardState closestKeymap;
+    KeymapKeyboardState heldKeymap;
+    std::atomic<int> heldKeymap_changedInUI = 0; // note number for key that was changed
+
+    void setSpectrumFromMenu(int menuChoice);
 
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
@@ -226,7 +398,7 @@ class ResonantString
 public:
     ResonantString(
         ResonanceParams* inparams,
-        std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& inPartialStructure,
+        std::array<PartialSpec, TotalNumberOfPartialKeysInUI + 1>& inPartialStructure,
         std::array<NoteOnSpec, MaxMidiNotes>& inNoteOnSpecMap);
 
     //~ResonantString() {}
@@ -234,14 +406,21 @@ public:
     void ringString(int midiNote, int velocity, juce::MidiBuffer& outMidiMessages);
     void removeString (int midiNote, juce::MidiBuffer& outMidiMessages);
     void incrementTimer_seconds(float blockSize_seconds);
+    void finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages);
+    void setTuning(TuningProcessor *tun) {attachedTuning = tun;}
 
     int heldKey = 0;                // MIDI note value for the key that is being held down
     int channel = 1;                // MIDI channel for this held note
     bool active = false;            // set to false after envelope release time has passed, following removeString()
+    bool sendMIDImsg = false;       // set to true whenevern a msg should be sent this block
 
     bool stringJustRemoved = false;     // set to true when removeString is called, to start timer to release after release time has passed
     float timeToMakeInactive;           // set this to releaseTime when removeString is called, in seconds
     float timeSinceRemoved = 0.0f;      // increment this every block if stringJustRemoved == true, in seconds
+
+    bool stringJustAdded = false;       // set to true when addString is called, to start timer and activate after timeToMakeActive has passed
+    float timeToMakeActive = .05f;      // how much time to pass before making active; 50ms by default, but expose to user
+    float timeSinceAdded = 0.0f;        // increment this every block if stringJustAdded = true;
 
 private:
     ResonanceParams* _rparams;
@@ -252,11 +431,11 @@ private:
      * - offset from fundamental (fractional MIDI note val; 0. => default)
      * - gains (floats; 1.0 => default)
      */
-    std::array<PartialSpec, TotalNumberOfPartialKeysInUI>& _partialStructure;
+    std::array<PartialSpec, TotalNumberOfPartialKeysInUI + 1>& _partialStructure;
     std::array<NoteOnSpec, MaxMidiNotes>& _noteOnSpecMap;
+    float currentVelocity; // for noteOn message
 
-    // held key is index of outer array, inner array includes all partial currently playing from that associated held key
-    juce::Array<juce::Array<int>> currentPlayingPartialsFromHeldKey;
+    TuningProcessor *attachedTuning = nullptr;
 
     JUCE_LEAK_DETECTOR(ResonantString);
 };
@@ -277,11 +456,14 @@ public:
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
 
+    void setTuning(TuningProcessor *tun) override;
+
     void keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
-    void keyReleased(int noteNumber, juce::MidiBuffer& outMidiMessages);
-    void handleMidiTargetMessages(int channel);
+    void keyReleased(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
+    void handleMidiTargetMessages(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
     void ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages);
     void addSympStrings(int noteNumber);
+    void toggleSympString(int noteNumber, juce::MidiBuffer& outMidiMessages);
 
     bool acceptsMidi() const override { return true; }
     bool hasEditor() const override { return false; }
@@ -300,9 +482,9 @@ public:
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
-             *              for Resonance, we have 2: sendGain and outputGain
+             *              for Resonance, we have 7: sendGain and outputGain, + the 5 "qualities"
              */
-            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (2), true)  // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (7), true)  // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation",   juce::AudioChannelSet::mono(), false)               // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",         juce::AudioChannelSet::stereo(), true);             // Send channel (right outputs)
     }
@@ -314,6 +496,7 @@ public:
         DBG("Resonance addSoundSet called");
         resonanceSynth->addSoundSet (s);
     }
+
     void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
     {
         if (t == v && property == IDs::soundset)
@@ -336,6 +519,7 @@ public:
             addSoundSet(&(*parent.getSamples())[a]);
         }
     }
+
     void loadSamples() {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {
@@ -344,7 +528,7 @@ public:
 
             addSoundSet(&(*parent.getSamples())[soundset]);
 
-        }else {
+        } else {
             //otherwise set the piano
             addSoundSet(&(*parent.getSamples())[soundset]);
 
@@ -377,15 +561,15 @@ private:
      * - offset from fundamental (fractional MIDI note val; 0. => default)
      * - gains (floats; 1.0 => default)
      */
-    std::array<PartialSpec, TotalNumberOfPartialKeysInUI> partialStructure;
+    std::array<PartialSpec, TotalNumberOfPartialKeysInUI + 1> partialStructure;
 
     /*
      * will update partialStructure based on parameter settings
      */
     void updatePartialStructure();
     void resetPartialStructure();       // clear it
-    void setDefaultPartialStructure();  // set to standard overtone series, first 8 partials
     void printPartialStructure();
+    bool firstNoteOn;  // set this to true every block; if we get a noteOn message, updatePartialStructure and set to false
 
     std::array<std::unique_ptr<ResonantString>, MaxHeldKeys> resonantStringsArray;
     int currentHeldKey = 0;

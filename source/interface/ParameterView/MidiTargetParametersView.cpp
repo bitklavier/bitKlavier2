@@ -83,5 +83,20 @@ void MidiTargetParametersView::resized()
         synchronicColumn.removeFromTop(smallpadding);
     }
 
+    juce::Rectangle<int> resonanceColumn = area.removeFromLeft(column_width);
+    juce::Rectangle<int> resonanceButtonsColumn = resonanceColumn.removeFromLeft(resonanceColumn.getWidth() / 2);
+    resonanceColumn.reduce(smallpadding, smallpadding);
+    resonanceButtonsColumn.reduce(smallpadding, smallpadding);
+
+    targetOffset = 5;
+    for(int i = (ResonanceTargetFirst - targetOffset) + 1; i<ResonanceTargetNil - targetOffset; i++)
+    {
+        _paramToggles[i]->setBounds(resonanceButtonsColumn.removeFromTop(comboboxheight));
+        resonanceButtonsColumn.removeFromTop(smallpadding);
+
+        _noteModeMenus[i]->setBounds(resonanceColumn.removeFromTop(comboboxheight));
+        resonanceColumn.removeFromTop(smallpadding);
+    }
+
     SynthSection::resized();
 }

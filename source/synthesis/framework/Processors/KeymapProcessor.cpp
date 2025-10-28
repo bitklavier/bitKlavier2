@@ -160,7 +160,7 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     for (auto message : in_midi_messages)
     {
-        if (state.params.keyboard_state.keyStates.test (message.getMessage().getNoteNumber()))
+        if (state.params.keyboard_state.keyStates.load().test (message.getMessage().getNoteNumber()))
         {
             if (message.getMessage().isNoteOn())
             {
@@ -222,5 +222,5 @@ template <typename Serializer>
 void KeymapParams::deserialize (typename Serializer::DeserializedType deserial, KeymapParams& paramHolder)
 {
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
-    paramHolder.keyboard_state.keyStates = bitklavier::utils::stringToBitset (deserial->getStringAttribute ("keyOn"));
+    paramHolder.keyboard_state.keyStates.store(bitklavier::utils::stringToBitset (deserial->getStringAttribute ("keyOn")));
 }

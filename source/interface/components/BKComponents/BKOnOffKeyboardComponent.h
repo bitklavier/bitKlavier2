@@ -21,7 +21,7 @@ public:
         upDownButtonArrowColourId       = 0x1005007,
         shadowColourId                  = 0x1005008
     };
-    BKOnOffKeyboardComponent(Orientation o,std::bitset<128> & keys) : juce::KeyboardComponentBase(o), keys(keys)
+    BKOnOffKeyboardComponent(Orientation o, std::atomic<std::bitset<128>> & keys) : juce::KeyboardComponentBase(o), keys(keys)
     {
         setColour(whiteNoteColourId, juce::Colours::white);
         setColour(blackNoteColourId, juce::Colours::black);
@@ -40,7 +40,7 @@ public:
     void drawBlackKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) override;
     void drawKeyboardBackground(juce::Graphics &g, juce::Rectangle<float> area) override;
     int mouseOverNote = -1;
-    std::bitset<128> &keys;
+    std::atomic<std::bitset<128>> &keys;
 };
 
 

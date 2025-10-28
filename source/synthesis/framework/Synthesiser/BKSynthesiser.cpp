@@ -125,6 +125,15 @@ void BKSynthesiser::setCurrentPlaybackSampleRate (const double newRate)
     }
 }
 
+/*
+ * todo: possibly make a processNextBlock that takes something like a juce::Array<MidiMessageExtended> instead of a MidiBuffer
+ *          which would include all the noteOnSpec information with each noteOn directly, rather than doing it the
+ *          sideways way we are not. Sample accuracy and so on is not crucial in this case, as we'd be using this
+ *          with Synchronic/Nostalgic/Resonance, and not Direct. This would guarantee that all the noteOnSpec
+ *          information is properly associated with relevant noteOn/Off messages in each block, which is basically
+ *          true with the current noteOnSpec setup, but it's just a bit messy.
+ */
+
 template <typename floatType>
 void BKSynthesiser::processNextBlock (juce::AudioBuffer<floatType>& outputAudio,
                                     const juce::MidiBuffer& midiData,
@@ -353,7 +362,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
     /**
      * if the following is true, then we have a mismatch between noteOnSpec for a
      * particular noteOn(midiNoteNumber) within the same the same block, which
-     * shouldn't happen for reasonbly small blocks and actual humans
+     * shouldn't happen for reasonably small blocks and actual humans
      */
     if(midiChannel != noteOnSpecs[midiNoteNumber].channel) return;
 
@@ -406,6 +415,17 @@ void BKSynthesiser::noteOn (const int midiChannel,
      */
     for (auto transp : noteOnSpecs[midiNoteNumber].transpositions)
     {
+        /*
+         * adjust the velocity of this transposition by the transpositionGain in noteOnSpec, if it has
+         * been filled aligned with transpositions
+         */
+        float velocityScaled = velocity;
+        if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size()
+            && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
+        {
+            velocityScaled *= noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf(transp)];
+        }
+
         for (auto* sound : *sounds)
         {
             int closestKey;
@@ -425,7 +445,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
                     sound,
                     midiChannel,
                     midiNoteNumber,
-                    velocity,
+                    velocityScaled,
                     transp);
 
                 break;
@@ -465,21 +485,9 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
         voice->setTargetSustainTime(noteOnSpecs[midiNoteNumber].sustainTime);
 
-        if(noteOnSpecs[midiNoteNumber].keyState && noteOnSpecs[midiNoteNumber].channel == midiChannel)
+        if(noteOnSpecs[midiNoteNumber].keyState)
         {
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
-
-            //do stuff here for special noteOn instructions
-            voice->startNote (
-                midiNoteNumber,
-                velocity,
-                transposition,
-                tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
-                sound,
-                lastPitchWheelValues [midiChannel - 1],
-                noteOnSpecs[midiNoteNumber].startTime,
-                noteOnSpecs[midiNoteNumber].startDirection
-            );
         }
         else
         {
@@ -490,17 +498,28 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
                 static_cast<float> (adsrParams.attackPowerParam->getCurrentValue() * -1.),
                 static_cast<float> (adsrParams.decayPowerParam->getCurrentValue() * -1.),
                 static_cast<float> (adsrParams.releasePowerParam->getCurrentValue() * -1.) });
-
-            voice->startNote (
-                midiNoteNumber,
-                velocity,
-                transposition,
-                tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
-                sound,
-                lastPitchWheelValues[midiChannel - 1],
-                0.,
-                Direction::forward);
+//
+//            voice->startNote (
+//                midiNoteNumber,
+//                velocity,
+//                transposition,
+//                tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
+//                sound,
+//                lastPitchWheelValues[midiChannel - 1],
+//                noteOnSpecs[midiNoteNumber].startTime,
+//                noteOnSpecs[midiNoteNumber].startDirection);
         }
+
+        voice->startNote (
+            midiNoteNumber,
+            velocity,
+            transposition,
+            tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
+            sound,
+            lastPitchWheelValues [midiChannel - 1],
+            noteOnSpecs[midiNoteNumber].startTime,
+            noteOnSpecs[midiNoteNumber].startDirection
+        );
     }
 }
 

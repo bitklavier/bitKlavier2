@@ -3,6 +3,15 @@
 //
 
 #include "ResonanceParametersView.h"
+
+void ResonanceParametersView::timerCallback(void)
+{
+    /*
+     * probably a more direct way to do this without a timer...
+     */
+    heldKeysKeyboard->redoImage();
+}
+
 void ResonanceParametersView::resized()
 {
     // width of the title at left, used in all preparations
@@ -30,32 +39,45 @@ void ResonanceParametersView::resized()
     // *** done with meters placement section
     //
 
+    heldKeysKeyboard->setBounds(bounds.removeFromBottom(120));
+
     // overtone structure keyboards
     juce::Rectangle<int> keyboardsRect = bounds.removeFromRight(bounds.getWidth() * 0.5);
     keyboardsRect.reduce(largepadding, largepadding);
-    int keyboardHeight = 120;
+    juce::Rectangle<int> spectrumMenuArea = keyboardsRect.removeFromTop(menu_section_height);
+    spectrumMenuArea.reduce(spectrumMenuArea.getWidth() * 0.25, 0);
+    spectrum_combo_box->setBounds(spectrumMenuArea);
+
+    int keyboardHeight = 100;
     int labelsectionheight = findValue(Skin::kLabelHeight);
     int kpadding = (keyboardsRect.getHeight() - 4. * (keyboardHeight + labelsectionheight)) / 3.;
 
     fundamentalKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
-    fundamentalKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
-    keyboardsRect.removeFromBottom(kpadding);
+    fundamentalKeyboard_label->setBounds(fundamentalKeyboard->getX(), fundamentalKeyboard->getY() + 4, fundamentalKeyboard->getWidth(), labelsectionheight);
+    keyboardsRect.removeFromBottom(kpadding + labelsectionheight);
 
     closestKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
-    closestKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
-    keyboardsRect.removeFromBottom(kpadding);
+    closestKeyboard_label->setBounds(closestKeyboard->getX(), closestKeyboard->getY() + 4, closestKeyboard->getWidth(), labelsectionheight);
+    keyboardsRect.removeFromBottom(kpadding + labelsectionheight);
 
     offsetsKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
-    offsetsKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
-    keyboardsRect.removeFromBottom(kpadding);
+    offsetsKeyboard_label->setBounds(offsetsKeyboard->getX(), offsetsKeyboard->getY() + 4, offsetsKeyboard->getWidth(), labelsectionheight);
+    keyboardsRect.removeFromBottom(kpadding + labelsectionheight);
 
     gainsKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
-    gainsKeyboard_label->setBounds(keyboardsRect.removeFromBottom(labelsectionheight));
+    gainsKeyboard_label->setBounds(gainsKeyboard->getX(), gainsKeyboard->getY() + 4, gainsKeyboard->getWidth(), labelsectionheight);
 
     // adsr
     bounds.reduce(largepadding, largepadding);
     juce::Rectangle<int> envRect = bounds.removeFromBottom(bounds.getHeight() * 0.5);
     envSection->setBounds(envRect);
+
+    // knobs
+    bounds.removeFromBottom(largepadding);
+    juce::Rectangle<int> outputKnobsArea = bounds.removeFromBottom(knob_section_height);
+    placeKnobsInArea(outputKnobsArea, _sliders, false);
+
+
 
     SynthSection::resized();
 }

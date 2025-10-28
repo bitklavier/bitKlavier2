@@ -136,6 +136,17 @@ public:
 
     void syncToValueTree() override {}
 
+    class Listener
+    {
+    public:
+        virtual ~Listener() {};
+
+        virtual void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey) = 0;
+    };
+
+    juce::ListenerList<Listener> listeners;
+    void addMyListener (Listener* listener) { listeners.add (listener); }
+
     BKKeymapKeyboardComponent* clone () {
         return nullptr;
     }
