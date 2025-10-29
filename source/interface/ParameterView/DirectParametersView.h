@@ -43,7 +43,12 @@ public:
                 param_->paramID == "Pedal"
                 ) {
                 auto slider = std::make_unique<SynthSlider>(param_->paramID, param_->getModParam());
-
+                if (param_->paramID == "Hammers")
+                    slider->setDisabled(!*this->params.hammerLoaded);
+                if (param_->paramID == "Resonance")
+                    slider->setDisabled(!*this->params.resonanceLoaded);
+                if (param_->paramID == "Pedal")
+                    slider->setDisabled(!*this->params.pedalLoaded);
                 auto attachment = std::make_unique<chowdsp::SliderAttachment>(
                     *param_.get(), listeners, *slider.get(), nullptr);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
@@ -52,6 +57,8 @@ public:
                 slider->setShowPopupOnHover(true);
                 floatAttachments.emplace_back(std::move(attachment));
                 _sliders.emplace_back(std::move(slider));
+
+
             }
         }
 
@@ -122,6 +129,8 @@ public:
                 }
             ),
         };
+
+
     }
 
     void paintBackground(juce::Graphics &g) override {
