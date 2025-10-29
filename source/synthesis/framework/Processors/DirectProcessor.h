@@ -161,13 +161,16 @@ struct DirectNonParameterState : chowdsp::NonParamState {
 
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams,
                             DirectNonParameterState> >,
-                        public juce::ValueTree::Listener {
+                        public juce::ValueTree::Listener,public TuningListener {
 public:
     DirectProcessor(SynthBase &parent, const juce::ValueTree &v);
 
     ~DirectProcessor() {
         parent.getValueTree().removeListener(this);
+        if(tuning !=nullptr) tuning->removeListener(this);
     }
+
+    void tuningStateInvalidated() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
 

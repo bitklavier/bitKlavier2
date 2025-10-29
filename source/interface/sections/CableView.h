@@ -87,13 +87,14 @@ public:
 
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         connection_list = interface->getSynth()->getActiveConnectionList();
-        connections_vt = connection_list->getValueTree();
+        //connections_vt = connection_list->getValueTree();
         connection_list->addListener (this);
         connection_list->rebuildAllGui();
     }
 
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
     void removeAllGuiListeners();
+    void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
 private:
     juce::CriticalSection open_gl_critical_section_;
     bitklavier::ConnectionList* connection_list;
@@ -102,7 +103,7 @@ private:
     ConstructionSite& site;
     juce::UndoManager& undoManager;
 
-    juce::ValueTree connections_vt;
+    //juce::ValueTree connections_vt;
 
     float scaleFactor = 1.0f;
     bool isDraggingCable = false;
@@ -137,7 +138,6 @@ private:
     //
     //        CableView& cableView;
     //    } pathTask;
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CableView)
 };

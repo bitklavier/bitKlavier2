@@ -116,6 +116,11 @@ void SynchronicProcessor::setTuning (TuningProcessor* tun)
     tuning = tun;
     synchronicSynth->setTuning (&tuning->getState().params.tuningState);
 }
+void SynchronicProcessor::tuningStateInvalidated() {
+    tuning = nullptr;
+    synchronicSynth->setTuning(nullptr);
+}
+
 
 void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {

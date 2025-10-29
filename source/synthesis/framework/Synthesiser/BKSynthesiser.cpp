@@ -27,8 +27,6 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
         noteOnSpecs[i] = NoteOnSpec{};
     }
 
-    // have a default tuning in case one is not connected
-    tuning = new TuningState();
 
     activeNotes.reset();
 }
@@ -474,7 +472,7 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         if (voice->currentlyPlayingSound != nullptr)
             voice->stopNote (0.0f, false);
 
-        voice->setTuning(tuning);
+
         voice->setGain(juce::Decibels::decibelsToGain (synthGain.getCurrentValue()));
         voice->currentlyPlayingNote = midiNoteNumber;
         voice->currentPlayingMidiChannel = midiChannel;

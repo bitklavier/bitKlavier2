@@ -47,7 +47,6 @@ namespace bitklavier {
     {
         undoManager->beginNewTransaction();
         this->parent.appendChild(child,undoManager);
-
     }
 
     void ConnectionList::removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)

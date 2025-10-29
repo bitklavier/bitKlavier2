@@ -77,9 +77,16 @@ bool NostalgicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
 void NostalgicProcessor::setTuning (TuningProcessor* tun)
 {
     tuning = tun;
+    tuning->addListener(this);
     nostalgicSynth->setTuning (&tuning->getState().params.tuningState);
 
 }
+void NostalgicProcessor::tuningStateInvalidated() {
+    tuning = nullptr;
+    nostalgicSynth->setTuning(nullptr);
+
+}
+
 
 void NostalgicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {

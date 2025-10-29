@@ -329,11 +329,11 @@ private:
 // ********************************************************************************************* //
 
 class NostalgicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<NostalgicParams, NostalgicNonParameterState>>,
-                        public juce::ValueTree::Listener
+                        public juce::ValueTree::Listener, public TuningListener
 {
 public:
     NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v);
-    ~NostalgicProcessor() {}
+    ~NostalgicProcessor() {if(tuning !=nullptr) tuning->removeListener(this);}
 
     static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
     {
@@ -372,7 +372,7 @@ public:
     }
 
     void setTuning (TuningProcessor*) override;
-
+    void tuningStateInvalidated() override;
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
      *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have

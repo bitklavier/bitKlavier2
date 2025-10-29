@@ -52,6 +52,7 @@ namespace bitklavier {
             return v.hasType(IDs::RESETCONNECTION) || v.hasType(IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION) || v.hasType (IDs::TEMPOCONNECTION);
         }
         void addListener (Listener* l) { listeners_.push_back (l); }
+        void clearListeners(){listeners_.clear();}
 
         void removeListener (Listener* l) {listeners_.erase(
                     std::remove(listeners_.begin(), listeners_.end(), l),

@@ -313,6 +313,9 @@ class BKSynthesiser
                 void setTuning(TuningState* attachedTuning)
                 {
                     tuning = attachedTuning;
+                    for (auto voice : voices) {
+                        voice->setTuning(tuning);
+                    }
                 }
 
 //                void setPlaybackDirection(Direction newdir)

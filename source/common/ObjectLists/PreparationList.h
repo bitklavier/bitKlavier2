@@ -188,7 +188,6 @@ class PreparationList : public tracktion::engine::ValueTreeObjectList<PluginInst
 public:
     PreparationList(SynthBase& parent, const juce::ValueTree & v);
     ~PreparationList() {
-        deleteAllGui();
         freeObjects();
     }
 
@@ -204,6 +203,7 @@ public:
         virtual void removeModule(PluginInstanceWrapper* moduleToRemove) = 0;
     };
     void addListener (Listener* l) { listeners_.push_back (l); }
+    void clearListeners(){listeners_.clear();}
 
     void removeListener (Listener* l) {listeners_.erase(
                 std::remove(listeners_.begin(), listeners_.end(), l),

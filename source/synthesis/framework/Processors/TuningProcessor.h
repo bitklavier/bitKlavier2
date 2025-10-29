@@ -13,7 +13,6 @@
 #include "tuning_systems.h"
 #include "utils.h"
 #include "TuningUtils.h"
-#include "synth_base.h"
 #include "SemitoneWidthParams.h"
 #include "AdaptiveTuningParams.h"
 #include "SpringTuningParams.h"
@@ -34,6 +33,10 @@
 /**
  * TuningState is the primary struct that is shared around to get/set tuning information
  */
+struct TuningListener
+{
+    virtual void tuningStateInvalidated() = 0;
+};
 struct TuningState : bitklavier::StateChangeableParameter
 {
     void setKeyOffset (int midiNoteNumber, float val);
@@ -197,6 +200,8 @@ struct TuningParams : chowdsp::ParamHolder
         });
     }
 
+
+
     /**
      * todo:
      * params to add:
@@ -218,6 +223,7 @@ struct TuningParams : chowdsp::ParamHolder
     /* Custom deserializer */
     template <typename Serializer>
     static void deserialize (typename Serializer::DeserializedType deserial, TuningParams& paramHolder);
+
 };
 
 struct TuningNonParameterState : chowdsp::NonParamState
@@ -231,7 +237,11 @@ class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
 {
 public:
     TuningProcessor (SynthBase& parent, const juce::ValueTree& v);
-
+~TuningProcessor() {
+    parent.pauseProcessing(true);
+    listeners.call ([] (TuningListener& l) { l.tuningStateInvalidated(); });
+    parent.pauseProcessing(false);
+}
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
@@ -254,7 +264,9 @@ public:
                 .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
 
     }
-
+    void addListener (TuningListener* l)  { listeners.add (l); }
+    void removeListener (TuningListener* l) { listeners.remove (l); }
+    juce::ListenerList<TuningListener> listeners;
 private:
     chowdsp::Gain<float> gain;
 

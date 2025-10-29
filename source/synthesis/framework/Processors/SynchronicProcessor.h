@@ -475,13 +475,14 @@ class SynchronicCluster
 
 #define MAX_CLUSTERS 10
 class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<SynchronicParams, SynchronicNonParameterState>>,
-                            public juce::ValueTree::Listener
+                            public juce::ValueTree::Listener, public TuningListener
 {
    public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
     ~SynchronicProcessor()
     {
         parent.getValueTree().removeListener(this);
+        if(tuning !=nullptr) tuning->removeListener(this);
     }
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -536,7 +537,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         }
     }
     void setTuning(TuningProcessor*) override;
-
+    void tuningStateInvalidated() override;
     float getBeatThresholdSeconds()
     {
         if (tempo != nullptr)

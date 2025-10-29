@@ -247,8 +247,8 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
             float struckPartialTuningOffset = 0.;
             if(attachedTuning != nullptr)
             {
-                auto heldPartialOffset_freq = attachedTuning->getState().params.tuningState.getTargetFrequency(heldKey, 0, false);
-                auto struckPartialOffset_freq = attachedTuning->getState().params.tuningState.getTargetFrequency(midiNote, 0, false);
+                auto heldPartialOffset_freq = attachedTuning->getTargetFrequency(heldKey, 0, false);
+                auto struckPartialOffset_freq = attachedTuning->getTargetFrequency(midiNote, 0, false);
 
                 heldPartialTuningOffset = ftom(heldPartialOffset_freq,  440.) - static_cast<float>(heldKey);
                 struckPartialTuningOffset = ftom(struckPartialOffset_freq,  440.) - static_cast<float>(midiNote);
@@ -460,12 +460,21 @@ bool ResonanceProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
  *      -- differences in tuning and loudness of the ringing Bb6 partial captures both effects
  * @param tun
  */
+#include "TuningProcessor.h"
 void ResonanceProcessor::setTuning(TuningProcessor *tun)
 {
     tuning = tun;
+    tuning->addListener(this);
     for (auto& rstring : resonantStringsArray)
     {
-        rstring->setTuning(tuning);
+        rstring->setTuning(&tun->getState().params.tuningState);
+    }
+}
+void ResonanceProcessor::tuningStateInvalidated() {
+   tuning = nullptr;
+    for (auto& rstring : resonantStringsArray)
+    {
+        rstring->setTuning(nullptr);
     }
 }
 

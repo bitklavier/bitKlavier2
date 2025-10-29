@@ -560,7 +560,6 @@ public:
     {
         ampEnv.setParameters(BKADSR::Parameters(0.005, 0.5,1.0,0.1));
         m_Buffer.setSize(2, 1, false, true, false);
-        tuningAttached = false;
         // call the smooth.reset() here if we want smoothing for various smoothingFloat vars
     }
 
@@ -647,15 +646,13 @@ public:
 
     void setTuning(TuningState* attachedTuning)
     {
-        if (attachedTuning == nullptr) return;
         tuning = attachedTuning;
-        tuningAttached = true;
     }
 
     double getTargetFrequency()
     {
         // if there is no Tuning prep connected, just return the equal tempered frequency
-        if (tuning == nullptr || !tuningAttached) return mtof ((double) currentlyPlayingNote + currentTransposition);
+        if (tuning == nullptr) return mtof ((double) currentlyPlayingNote + currentTransposition);
 
         // otherwise, get the target frequency from the attached Tuning pre
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
@@ -738,7 +735,7 @@ private:
          * don't change tuning after noteOn for adaptive tunings
          * do need to for spring, and probably for regular notes it might be handy
          */
-        if(tuning != nullptr && tuningAttached) {
+        if(tuning != nullptr ) {
             if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring_Tuning)) {
                 sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
             }
@@ -941,7 +938,6 @@ private:
 
     BKADSR ampEnv;
     TuningState* tuning;
-    bool tuningAttached;
 
     juce::uint64 currentSustainTime_samples = 0;
     int64_t targetSustainTime_samples = -1;

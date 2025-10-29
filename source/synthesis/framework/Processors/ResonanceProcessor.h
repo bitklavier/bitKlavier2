@@ -407,7 +407,7 @@ public:
     void removeString (int midiNote, juce::MidiBuffer& outMidiMessages);
     void incrementTimer_seconds(float blockSize_seconds);
     void finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages);
-    void setTuning(TuningProcessor *tun) {attachedTuning = tun;}
+    void setTuning(TuningState *tun) {attachedTuning = tun;}
 
     int heldKey = 0;                // MIDI note value for the key that is being held down
     int channel = 1;                // MIDI channel for this held note
@@ -435,17 +435,17 @@ private:
     std::array<NoteOnSpec, MaxMidiNotes>& _noteOnSpecMap;
     float currentVelocity; // for noteOn message
 
-    TuningProcessor *attachedTuning = nullptr;
+    TuningState *attachedTuning = nullptr;
 
     JUCE_LEAK_DETECTOR(ResonantString);
 };
 
 class ResonanceProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<ResonanceParams, ResonanceNonParameterState>>,
-                           public juce::ValueTree::Listener
+                           public juce::ValueTree::Listener, public TuningListener
 {
 public:
     ResonanceProcessor(SynthBase& parent, const juce::ValueTree& v);
-    ~ResonanceProcessor(){}
+    ~ResonanceProcessor(){if(tuning !=nullptr) tuning->removeListener(this);}
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -468,7 +468,7 @@ public:
     bool acceptsMidi() const override { return true; }
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-
+    void tuningStateInvalidated() override;
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
      *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have

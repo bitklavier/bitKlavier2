@@ -12,6 +12,7 @@
 
 class SynthSection;
 class SynthBase;
+class TuningState;
 class TuningProcessor;
 class TempoProcessor;
 template<typename T>
@@ -28,7 +29,7 @@ namespace bitklavier {
         }
 
         virtual void setTuning(TuningProcessor *tun) {
-            tuning = tun;
+            // tuning = tun;
         }
 
         virtual void setTempo(TempoProcessor *tem) {

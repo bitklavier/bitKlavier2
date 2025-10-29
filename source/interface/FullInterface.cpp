@@ -87,6 +87,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     addChildComponent (about_section_.get());
     loading_section = std::make_unique<LoadingSection> ("load");
     addSubSection (loading_section.get(), false);
+    loading_section->setAlwaysOnTop(true);
     addChildComponent (loading_section.get());
 
 
@@ -379,13 +380,16 @@ void FullInterface::openGLContextClosing()
     background_.destroy (open_gl_);
     prep_popup->destroyOpenGlComponents (open_gl_);
     mod_popup->destroyOpenGlComponents (open_gl_);
+    destroyOpenGlComponents (open_gl_);
+    removeSubSection(loading_section.get());
     removeSubSection (main_.get());
     removeSubSection (header_.get());
 
     removeSubSection (prep_popup.get());
     removeSubSection (mod_popup.get());
-    destroyOpenGlComponents (open_gl_);
 
+    // main_.reset();
+    // main_->destroyOpenGlComponents(open_gl);
     main_ = nullptr;
     header_ = nullptr;
     prep_popup = nullptr;

@@ -205,7 +205,7 @@ public:
     }
     void finishedSampleLoading();
     void startSampleLoading();
-
+    void clearAllGuiListeners();
 protected:
     chowdsp::DeferredAction mainThreadAction;
     //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}

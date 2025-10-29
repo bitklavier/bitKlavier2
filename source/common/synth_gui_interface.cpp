@@ -117,6 +117,8 @@ bool SynthGuiInterface::perform(const InvocationInfo & info) {
 }
 
 SynthGuiInterface::~SynthGuiInterface() {
+    DBG("synthguiinterface destroyed");
+    synth_->clearAllGuiListeners();
 }
 
 

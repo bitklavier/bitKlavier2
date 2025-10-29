@@ -4,7 +4,6 @@
 
 #include "DirectProcessor.h"
 #include "Synthesiser/Sample.h"
-#include "common.h"
 #include "synth_base.h"
 
 DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
@@ -117,8 +116,15 @@ void DirectProcessor::updateAllMidiNoteTranspositions()
 void DirectProcessor::setTuning (TuningProcessor* tun)
 {
     tuning = tun;
+    tuning->addListener(this);
     mainSynth->setTuning (&tuning->getState().params.tuningState);
     releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
+}
+void DirectProcessor::tuningStateInvalidated() {
+    tuning = nullptr;
+    mainSynth->setTuning(nullptr);
+    releaseResonanceSynth->setTuning(nullptr);
+
 }
 
 void DirectProcessor::processContinuousModulations (juce::AudioBuffer<float>& buffer)
@@ -307,3 +313,5 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
      * todo: include send buffer copy stuff here?
      */
 }
+
+

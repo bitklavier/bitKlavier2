@@ -90,7 +90,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
 SynthBase::~SynthBase()
 {
     tree.removeListener (this);
-
+    um.clearUndoHistory();
 }
 
 std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > > *SynthBase::getSamples() {
@@ -139,6 +139,16 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
     }
     // }
 }
+
+void SynthBase::clearAllGuiListeners() {
+    for (auto &connectionList: connectionLists)
+        connectionList->clearListeners();
+    for (auto &list : preparationLists)
+        list->clearListeners();
+    for (auto &list : mod_connection_lists_)
+        list->clearListeners();
+}
+
 void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenAdded)
 {
