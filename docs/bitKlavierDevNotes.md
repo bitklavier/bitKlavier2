@@ -1,5 +1,11 @@
 # Notes about how to do stuff in the bK codebase
-
+---------
+## Mod Notes
+- i think there should be an add menu, in addition to being able to control-click
+  - let's put LFO below ramp and before state, since state is really quite different than LFO/ramp
+- perhaps the column with the mods should be top to bottom, in addition to having the scroll
+  - I also think it could be narrower
+- 
 
 ---------
 ## Creating a New Preparation
