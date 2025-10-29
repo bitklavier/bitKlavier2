@@ -463,7 +463,7 @@ private:
                 //std::map<int, NoteOnSpec> noteOnSpecs;
                 std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecs;
 
-                TuningState* tuning;
+                TuningState* tuning = nullptr;
 
                 template <typename floatType>
                 void processNextBlock (juce::AudioBuffer<floatType>&, const juce::MidiBuffer&, int startSample, int numSamples);
