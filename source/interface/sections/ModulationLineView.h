@@ -43,6 +43,7 @@ public:
     void resetDropped (const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void tuningDropped (const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void tempoDropped (const juce::ValueTree& source, const juce::ValueTree& dest) override;
+    void synchronicDropped (const juce::ValueTree& source, const juce::ValueTree& dest) override;
     void modConnectionAdded (bitklavier::ModConnection*) override;
     void modConnectionListChanged() override;
     void removeModConnection (bitklavier::ModConnection*) override;

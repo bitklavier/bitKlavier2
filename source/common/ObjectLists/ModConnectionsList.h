@@ -49,7 +49,7 @@ namespace bitklavier {
         };
         bool isSuitableType (const juce::ValueTree& v) const override
         {
-            return v.hasType(IDs::RESETCONNECTION) || v.hasType(IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION) || v.hasType (IDs::TEMPOCONNECTION);
+            return v.hasType(IDs::RESETCONNECTION) || v.hasType(IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION) || v.hasType (IDs::TEMPOCONNECTION) || v.hasType (IDs::SYNCHRONICCONNECTION);
         }
         void addListener (Listener* l) { listeners_.push_back (l); }
         void clearListeners(){listeners_.clear();}

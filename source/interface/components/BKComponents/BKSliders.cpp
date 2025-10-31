@@ -1436,19 +1436,10 @@ void BKWaveDistanceUndertowSlider::resized()
 
     wavedistanceSlider.setBounds(area.removeFromTop(getHeight() * 0.1));
     undertowSlider.setBounds(area.removeFromBottom(getHeight() * 0.1));
-    //wavedistanceSlider->setBounds(area.removeFromTop(gComponentSingleSliderHeight));
-    //undertowSlider->setBounds(area.removeFromBottom(gComponentSingleSliderHeight));
 
     wavedistanceValueTF.setBounds(wavedistanceSlider.getBounds());
-
-    //int xpos = wavedistanceSlider->getPositionOfValue(wavedistanceSlider->getValue());
-
-    //undertowSlider->setBounds(xpos, undertowSlider->getY(), getWidth() - xpos, undertowSlider->getHeight());
-
     undertowValueTF.setBounds(undertowSlider.getBounds());
 
-    //undertowName.setBounds(area);
-    //wavedistanceName.setBounds(area);
     undertowName.setBounds(
                            undertowSlider.getRight() - undertowSlider.getWidth() / 4,
                            undertowSlider.getY() - undertowSlider.getHeight(),

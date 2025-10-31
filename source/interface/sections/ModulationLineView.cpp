@@ -171,6 +171,29 @@ void ModulationLineView::tempoDropped (const juce::ValueTree& source, const juce
     }
 }
 
+void ModulationLineView::synchronicDropped (const juce::ValueTree& source, const juce::ValueTree& dest)
+{
+    auto sourceId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+        source.getProperty (IDs::nodeID, -1));
+    auto destId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (dest.getProperty (IDs::nodeID, -1));
+    //protects against short/accidental drag drops
+    if (sourceId == destId)
+        return;
+    // only connect to blendronic or synchronic
+    if (static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeNostalgic)
+    {
+        //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
+        juce::ValueTree _connection (IDs::SYNCHRONICCONNECTION);
+        _connection.setProperty (IDs::isMod, false, nullptr);
+        _connection.setProperty (IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar (sourceId), nullptr);
+        _connection.setProperty (IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar (destId), nullptr);
+        undoManager.beginNewTransaction();
+        connection_list->appendChild (_connection, &undoManager);
+        SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+        _parent->getGui()->modulation_manager->added();
+    }
+}
+
 void ModulationLineView::resized()
 {
     for (auto line : objects)

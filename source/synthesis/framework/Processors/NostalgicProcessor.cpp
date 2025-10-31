@@ -73,6 +73,10 @@ bool NostalgicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
  *
  * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
+void NostalgicProcessor::setSynchronic (SynchronicProcessor* synch)
+{
+    synchronic = synch;
+}
 
 void NostalgicProcessor::setTuning (TuningProcessor* tun)
 {
@@ -84,7 +88,6 @@ void NostalgicProcessor::setTuning (TuningProcessor* tun)
 void NostalgicProcessor::tuningStateInvalidated() {
     tuning = nullptr;
     nostalgicSynth->setTuning(nullptr);
-
 }
 
 
