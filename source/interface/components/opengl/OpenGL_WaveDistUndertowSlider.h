@@ -48,12 +48,6 @@ public:
         attachmentVec.emplace_back(std::move(undertowSliderPtr));
         wavedistanceValueTF.setText(juce::String(wavedistanceSlider.getValue()),juce::dontSendNotification);
         undertowValueTF.setText(juce::String(undertowSlider.getValue()),juce::dontSendNotification);
-        /**
-         * this list of callbacks is handled by the chowdsp system.
-         * each of these will be called, and the lambda executed, when the parameters are changed anywhere in the code
-         */
-
-
     }
 
     virtual void resized() override {

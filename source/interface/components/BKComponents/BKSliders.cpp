@@ -1313,7 +1313,7 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
         StateModulatedComponent(stateDefault), sliderName(name), sliderMin(min), sliderMax(max),
         sliderDefaultMin(defmin), sliderDefaultMax(defmax), sliderIncrement(increment)
 {
-    maxSliders = 10;
+    maxSliders = 100;
     sliderMin = 0;
     sliderMax = 20000;
     sliderIncrement = 1;
@@ -1383,6 +1383,10 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
 
 void BKWaveDistanceUndertowSlider::sliderValueChanged (juce::Slider *slider)
 {
+    if(slider == &wavedistanceSlider)
+    {
+        setWaveDistance(wavedistanceSlider.getValue(), juce::dontSendNotification);
+    }
 }
 void BKWaveDistanceUndertowSlider::setDim(float alphaVal)
 {
@@ -1464,6 +1468,7 @@ void BKWaveDistanceUndertowSlider::resized()
         newSlider->setBounds(area);
     }
 
+    setWaveDistance(wavedistanceSlider.getValue(), juce::NotificationType::dontSendNotification);
 
 }
 

@@ -157,7 +157,7 @@ void NostalgicProcessor::updateNoteVisualization()
         }
         else
         {
-            newpositions.add(note.undertowTimerSamples * (1000./getSampleRate()));
+            newpositions.add(note.undertowTimerSamples * (1000./getSampleRate())+note.waveDistanceMs);
         }
     }
     state.params.waveDistUndertowParams.displaySliderPositions = newpositions;
@@ -324,7 +324,7 @@ void NostalgicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
 bool NostalgicProcessor::holdCheck(int noteNumber)
 {
     juce::uint64 hold = noteLengthTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
-    DBG(juce::String(hold));
+    // DBG(juce::String(hold));
     auto holdmin = state.params.holdTimeMinMaxParams.holdTimeMinParam->getCurrentValue();
     auto holdmax = state.params.holdTimeMinMaxParams.holdTimeMaxParam->getCurrentValue();
 
