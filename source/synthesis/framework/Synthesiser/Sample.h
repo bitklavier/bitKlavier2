@@ -937,7 +937,7 @@ private:
     Direction currentDirection{ Direction::forward };
 
     BKADSR ampEnv;
-    TuningState* tuning;
+    TuningState* tuning = nullptr;
 
     juce::uint64 currentSustainTime_samples = 0;
     int64_t targetSustainTime_samples = -1;
