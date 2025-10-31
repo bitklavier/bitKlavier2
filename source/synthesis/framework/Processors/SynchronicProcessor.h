@@ -530,7 +530,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
             addSoundSet(&(*parent.getSamples())[soundset]);
 
-        }else {
+        }
+        else {
             //otherwise set the piano
             addSoundSet(&(*parent.getSamples())[soundset]);
 

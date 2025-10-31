@@ -210,6 +210,41 @@ void SynchronicProcessor::rotateClusters()
 //    }
 }
 
+float SynchronicProcessor::getTimeToBeatMS(float beatsToSkip)
+{
+    auto& cluster =  clusterLayers[currentLayerIndex];
+
+    /**
+    * todo: adaptive tempo stuff as needed, along with General Settings
+    */
+    // from the attached Tempo preparation: number of samples per beat
+    // update this every block, for adaptive tempo updates
+    beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
+    numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
+
+    // set the timeToReturn for the next beat
+    juce::uint64 timeToReturn = 0;
+    if(numSamplesBeat > cluster->getPhasor())
+        timeToReturn = numSamplesBeat - cluster->getPhasor(); //next beat
+    if (timeToReturn < 0.100f * getSampleRate()) beatsToSkip++; // a little padding so we skip a beat that we are nearly simultaneous with
+
+    // add to that if we're skipping beats
+    int myBeat = cluster->beatMultiplierCounter;
+    while(beatsToSkip-- > 0)
+    {
+        if (++myBeat >= state.params.beatLengthMultipliers.sliderVals_size)
+            myBeat = 0;
+
+        /**
+         * todo: add general and tempo period multipliers
+         */
+        timeToReturn += state.params.beatLengthMultipliers.sliderVals[myBeat].load() * beatThresholdSamples;
+    }
+
+    DBG("time in ms to next beat = " + juce::String(timeToReturn * 1000./getSampleRate()));
+    return timeToReturn * 1000./getSampleRate(); //optimize later....
+}
+
 void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     /*
