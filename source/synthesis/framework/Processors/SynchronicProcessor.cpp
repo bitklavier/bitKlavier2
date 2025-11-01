@@ -396,7 +396,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
                         // Synchronic uses its own ADSRs for each cluster, so we need to add these to the noteOnSpecMap that gets passed to BKSynth
                         // - these apply regardless of playback direction
-                        noteOnSpecMap[newNote].keyState = true;
+                        noteOnSpecMap[newNote].overrideDefaultEnvParams = true;
                         noteOnSpecMap[newNote].envParams.attack = state.params.envelopeSequence.envStates.attacks[cluster->envelopeCounter] * .001; // BKADSR expects seconds, not ms
                         noteOnSpecMap[newNote].envParams.decay = state.params.envelopeSequence.envStates.decays[cluster->envelopeCounter] * .001;
                         noteOnSpecMap[newNote].envParams.sustain = state.params.envelopeSequence.envStates.sustains[cluster->envelopeCounter];
@@ -434,7 +434,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                              *      AND we get multiple noteOn msgs in the same block that want different noteOnSpecs
                              */
                             float newNoteDuration = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] * getBeatThresholdSeconds() * 1000.);
-                            noteOnSpecMap[newNote].keyState = true;
+                            noteOnSpecMap[newNote].overrideDefaultEnvParams = true;
                             noteOnSpecMap[newNote].startDirection = Direction::backward;
                             noteOnSpecMap[newNote].startTime = newNoteDuration;
                             noteOnSpecMap[newNote].stopSameCurrentNote = false;
