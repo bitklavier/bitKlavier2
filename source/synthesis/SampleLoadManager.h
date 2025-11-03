@@ -122,7 +122,9 @@ class SampleLoadManager : public juce::AsyncUpdater
 {
 public:
     SampleLoadManager (SynthBase* parent,std::shared_ptr<UserPreferencesWrapper> preferences);
-    ~SampleLoadManager();
+    ~SampleLoadManager(
+
+        );
 
     juce::ThreadPool sampleLoader;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> samplerSoundset;
@@ -212,6 +214,7 @@ public:
             int done = ++progress->completedJobs;
             if (done >= progress->totalJobs)
                 progress->markComplete();  // safely updates ValueTree
+            // DBG(sampleReaderVector
         }
         loadManager->triggerAsyncUpdate();
     }
@@ -248,8 +251,9 @@ public:
                           / (float)progress->totalJobs;
         progress->currentProgress.store(totalFrac);
     }
-
-
+     int continueValue = 0;
+    int velLayerContinue = 0;
+    float dbfsBelowContinue = 0.f;
     /**
      * a vector of all the pitches with relevant sample info, so the samples can be loaded
      */

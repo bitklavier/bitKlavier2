@@ -31,6 +31,9 @@ SampleLoadManager::SampleLoadManager (SynthBase* parent, std::shared_ptr<UserPre
 
 SampleLoadManager::~SampleLoadManager()
 {
+    for (auto [_, samples]: samplerSoundset) {
+            samples.clear();
+    }
 }
 
 void SampleLoadManager::clearAllSamples() {
@@ -201,10 +204,13 @@ bool SampleLoadManager::loadSamples(std::string sample_name) {
     loadSamples_sub (bitklavier::utils::BKPianoHammer,sample_name);
     loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance,sample_name);
     loadSamples_sub (bitklavier::utils::BKPianoPedal,sample_name);
+    return true;
 }
 
 bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::ValueTree& prep_tree)
 {
+    allKeysWithSamples.clear();
+
     temp_prep_tree = prep_tree;
     MyComparator sorter;
     juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
@@ -259,12 +265,12 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::V
     loadSamples_sub (bitklavier::utils::BKPianoHammer,soundsets[selection]);
     loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance, soundsets[selection]);
     loadSamples_sub (bitklavier::utils::BKPianoPedal,soundsets[selection]);
+    return true;
 }
 
 void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thisSampleType, std::string name)
 {
     using namespace bitklavier::utils;
-
     // maybe better to do this with templates, but for now...
     juce::String soundsetName;
     if (thisSampleType == BKPianoMain)
@@ -292,6 +298,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
         progressPtr = soundsetProgressMap[name] = std::make_shared<SampleSetProgress>();
 
     //Build allKeysWithSamples: array that keeps track of which keys have samples, for building start/end ranges in keymap
+    allKeysWithSamples.clear();
     for (auto thisFile : allSamples)
     {
         if (thisSampleType == BKPianoMain || thisSampleType == BKPianoReleaseResonance)
@@ -299,7 +306,10 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
             juce::StringArray stringArray;
             stringArray.addTokens( thisFile.getFileName(), "v", "");
             juce::String noteName = stringArray[0].removeCharacters("harm");
-            allKeysWithSamples.addIfNotAlreadyThere(noteNameToRoot(noteName));
+            if (allKeysWithSamples.addIfNotAlreadyThere(noteNameToRoot(noteName))) {
+                DBG(noteName + " " + juce::String(noteNameToRoot(noteName)));
+            }
+
         }
     }
     allKeysWithSamples.sort();
@@ -481,11 +491,21 @@ bool SampleLoadJob::loadSamples()
     using namespace bitklavier::utils;
     bool loadSuccess = false;
 
-    for (auto& samplePitch : sampleReaderVector)
+    for (int i = continueValue; i < sampleReaderVector.size(); i ++)
+
     {
+        auto &samplePitch = sampleReaderVector[i];
         thisSampleType = samplePitch.sampleType;
         velocityLayers = samplePitch.numLayers;
         thisMidiRange = samplePitch.newMidiRange;
+        velLayerContinue = 0;
+        dbfsBelowContinue = -50.f;
+        // int start = thisMidiRange.findNextSetBit (0);   // first (lowest) bit that’s set
+        // int end   = thisMidiRange.getHighestBit();      // last (highest) bit that’s set
+        //
+        // DBG ("BigInteger range: start = " + juce::String (start)
+        //      + ", end = " + juce::String (end)
+        //      + ", length = " + juce::String (end - start + 1));
         sampleReader = std::move(samplePitch.sampleReaderArray);
 
         //DBG ("loadSamples called for " + juce::String (BKPianoSampleType_string[thisSampleType]));
@@ -501,7 +521,9 @@ bool SampleLoadJob::loadSamples()
 
         if (!loadSuccess)
         {
+            continueValue = i;
             DBG("SampleLoadJob::loadSamples() did not load some samples successfully");
+            return false;
         }
         tickProgress();
     }
@@ -513,7 +535,7 @@ bool SampleLoadJob::loadHammerSamples()
 {
     //for v1 samples, to define bottom threshold.
     //  for hammers, just to define a baseline, since we don't have velocity layers here
-    float dBFSBelow = -50.f;
+    float dBFSBelow = dbfsBelowContinue;
 
     while (true)
     {
@@ -541,20 +563,19 @@ bool SampleLoadJob::loadHammerSamples()
         if (shouldExit())
             return false;
     }
+    // DBG ("done loading hammer samples");
     return true;
-    DBG ("done loading hammer samples");
 }
 
 bool SampleLoadJob::loadReleaseResonanceSamples()
 {
-    DBG ("loadReleaseResonanceSamples called");
     auto ranges = getVelLayers (velocityLayers);
     int layers = ranges.size();
-    int currentVelLayer = 0;
+    int currentVelLayer = velLayerContinue;
 
     //for v1 samples, to define bottom threshold.
     //  quietest Yamaha sample is about -41dbFS, so -50 seems safe and reasonable
-    float dBFSBelow = -50.f;
+    float dBFSBelow = dbfsBelowContinue;
 
     while (true)
     {
@@ -585,7 +606,7 @@ bool SampleLoadJob::loadReleaseResonanceSamples()
             return false;
     }
 
-    DBG ("done loading resonance samples, with this many velocity layers " + juce::String (currentVelLayer));
+    // DBG ("done loading resonance samples, with this many velocity layers " + juce::String (currentVelLayer));
     return true;
 
 }
@@ -593,11 +614,11 @@ bool SampleLoadJob::loadReleaseResonanceSamples()
 bool SampleLoadJob::loadPedalSamples()
 {
     //for v1 samples, to define bottom threshold.
-    float dBFSBelow = -50.f;
+    float dBFSBelow = dbfsBelowContinue;
 
     auto ranges = getVelLayers (velocityLayers);
     int layers = ranges.size();
-    int currentVelLayer = 0;
+    int currentVelLayer = velLayerContinue;
 
     while (true)
     {
@@ -639,39 +660,41 @@ bool SampleLoadJob::loadMainSamplesByPitch()
 {
     auto ranges = getVelLayers (velocityLayers);
     int layers = ranges.size();
-    int currentVelLayer = 0;
+    int currentVelLayer = velLayerContinue;
 
     //for v1 samples, to define bottom threshold.
     //  quietest Yamaha sample is about -41dbFS, so -50 seems safe and reasonable
-    float dBFSBelow = -50.f;
-
+    float dBFSBelow = dbfsBelowContinue;
+    // DBG ("**** loading sample: " );
     while (true)
     {
         auto [reader, filename] = sampleReader->make (*manager);
+
+
         if (!reader)
             break; // Break the loop if the reader is null
-
-        //DBG ("**** loading sample: " + filename);
         auto sample = new Sample (*(reader.get()), 90);
-
         juce::StringArray stringArray;
         stringArray.addTokens (filename, "v", "");
         juce::String noteName = stringArray[0];
         juce::String velLayer = stringArray[1];
         int midiNote = noteNameToRoot (noteName);
-
+        // DBG(velLayer + "= " +  juce::String(currentVelLayer));
         auto [begin, end] = ranges.getUnchecked (currentVelLayer++);
         juce::BigInteger velRange;
         velRange.setRange (begin, end - begin, true);
 
-        auto sound = soundset->add (new BKSamplerSound (filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), thisMidiRange, midiNote, 0, velRange, layers, dBFSBelow));
+        auto sound = soundset->add (new BKSamplerSound <juce::AudioFormatReader>(filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), thisMidiRange, midiNote, 0, velRange, layers, dBFSBelow));
 
         dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
 
 //        DBG ("**** loading sample: " + filename);
 //        DBG ("");
-        if (shouldExit())
+        if (shouldExit()) {
+            velLayerContinue = currentVelLayer++;
             return false;
+        }
+
 
         //DBG ("done loading main samples for " + filename);
     }

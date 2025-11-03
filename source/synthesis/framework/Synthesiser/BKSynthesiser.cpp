@@ -268,7 +268,8 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             else
             {
                 if(activeNotes.test(m.getNoteNumber())) {
-                    noteOn (channel, m.getNoteNumber(), m.getVelocity());
+
+                    noteOn (channel, m.getNoteNumber(),127.f);
                     activeNotes.reset(m.getNoteNumber());
                 }
             }
@@ -418,8 +419,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
          * been filled aligned with transpositions
          */
         float velocityScaled = velocity;
-        if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size()
-            && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
+        if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size())
+         //redundant. size must be > 0 if we are this loop   && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
         {
             velocityScaled *= noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf(transp)];
         }
