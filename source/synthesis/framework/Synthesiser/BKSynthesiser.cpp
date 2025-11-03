@@ -268,8 +268,8 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             else
             {
                 if(activeNotes.test(m.getNoteNumber())) {
-
-                    noteOn (channel, m.getNoteNumber(),127.f);
+                    //TODO
+                    noteOn (channel, m.getNoteNumber(), m.getVelocity() ? m.getVelocity() : 64.f);
                     activeNotes.reset(m.getNoteNumber());
                 }
             }
