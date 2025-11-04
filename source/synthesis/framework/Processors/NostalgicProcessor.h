@@ -371,7 +371,7 @@ public:
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();
-
+    void handleMidiTargetMessages(int channel);
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
     {
@@ -483,6 +483,9 @@ public:
     bool inCluster = false;
 
 private:
+    bool doDefault = false;
+    bool doClear = false;
+
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;

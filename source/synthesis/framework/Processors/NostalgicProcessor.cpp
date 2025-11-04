@@ -112,7 +112,25 @@ void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
 }
+/**
+ * sets the bools for this message based on channel, set in MidiTarget
+ * @param channel
+ */
+void NostalgicProcessor::handleMidiTargetMessages(int channel)
+{
+    doDefault = false;
+    doClear = false;
 
+    switch(channel + (NostalgicTargetFirst))
+    {
+        case NostalgicTargetDefault:
+            doDefault = true;
+            break;
+        case NostalgicTargetClear:
+            doClear = true;
+            break;
+    }
+}
 /*
  * update them all to the same transpositions.
  * - since Nostalgic uses the same transpositions, we just have them all set to the same values
@@ -290,27 +308,42 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
+        handleMidiTargetMessages (message.getChannel());
 
-        // TODO: we can make it an option for noteOn velocity to set noteOff velocity
-        if (message.isNoteOn ())
+        if (doDefault)
         {
-            // store the velocity and note duration from the note on message
-            velocities.set(message.getNoteNumber(), message.getVelocity());
-            noteLengthTimers.set(message.getNoteNumber(), 1);
+            // TODO: we can make it an option for noteOn velocity to set noteOff velocity
+            if (message.isNoteOn ())
+            {
+                // store the velocity and note duration from the note on message
+                velocities.set(message.getNoteNumber(), message.getVelocity());
+                noteLengthTimers.set(message.getNoteNumber(), 1);
 
-            // if we're syncing with synchronic
-            if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Sync_KeyDown)
+                // if we're syncing with synchronic
+                if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Sync_KeyDown)
+                {
+                    handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
+                }
+            }
+
+            // if there's a note off message and hold time is in specified range,
+            // check cluster and play the associated reverse note
+            if (message.isNoteOff() && holdCheck(message.getNoteNumber()) &&
+                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown)
             {
                 handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
             }
         }
-        
-        // if there's a note off message and hold time is in specified range,
-        // check cluster and play the associated reverse note
-        if (message.isNoteOff() && holdCheck(message.getNoteNumber()) &&
-            state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown)
+        if (doClear)
         {
-            handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
+            for (int i = reverseTimers.size() - 1; i >= 0; --i)
+            {
+                auto& note = reverseTimers.getReference(i);
+                // is there a better velocity to use for this midi message?
+                auto noteOffMsg = juce::MidiMessage::noteOff (1, note.noteNumber, 1.f);
+                outMidiMessages.addEvent(noteOffMsg, 0);
+                reverseTimers.remove(i);
+            }
         }
     }
 }

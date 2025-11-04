@@ -37,6 +37,10 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         startParam = ResonanceTargetFirst + 1;
         lastParam = ResonanceTargetNil;
 
+        // for Nostalgic...
+        startParam = NostalgicTargetFirst + 1;
+        lastParam = NostalgicTargetNil;
+
         for (int i = startParam; i < lastParam; ++i)
         {
             // Cast the integer back to the enum type

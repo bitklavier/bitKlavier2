@@ -98,5 +98,20 @@ void MidiTargetParametersView::resized()
         resonanceColumn.removeFromTop(smallpadding);
     }
 
+    juce::Rectangle<int> nostalgicColumn = area.removeFromLeft(column_width);
+    juce::Rectangle<int> nostalgicButtonsColumn = nostalgicColumn.removeFromLeft(nostalgicColumn.getWidth() / 2);
+    nostalgicColumn.reduce(smallpadding, smallpadding);
+    nostalgicButtonsColumn.reduce(smallpadding, smallpadding);
+
+    targetOffset = 7;
+    for(int i = (NostalgicTargetFirst - targetOffset) + 1; i<NostalgicTargetNil - targetOffset; i++)
+    {
+        _paramToggles[i]->setBounds(nostalgicButtonsColumn.removeFromTop(comboboxheight));
+        nostalgicButtonsColumn.removeFromTop(smallpadding);
+
+        _noteModeMenus[i]->setBounds(nostalgicColumn.removeFromTop(comboboxheight));
+        nostalgicColumn.removeFromTop(smallpadding);
+    }
+
     SynthSection::resized();
 }

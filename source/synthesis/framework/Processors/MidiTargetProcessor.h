@@ -80,7 +80,11 @@ struct MidiTargetParams : chowdsp::ParamHolder
             resonanceTargetAdd,
             resonanceTargetDefault_noteMode,
             resonanceTargetRing_noteMode,
-            resonanceTargetAdd_noteMode);
+            resonanceTargetAdd_noteMode,
+            nostalgicTargetDefault,
+            nostalgicTargetClear,
+            nostalgicTargetDefault_noteMode,
+            nostalgicTargetClear_noteMode);
 //            synchronicTargetDeleteOldest_noteMode,
 //            synchronicTargetDeleteNewest_noteMode,
 //            synchronicTargetRotate_noteMode);
@@ -142,6 +146,11 @@ struct MidiTargetParams : chowdsp::ParamHolder
         /**
          * add additional params for other preps/targets here and below
          */
+        targetMapper[NostalgicTargetDefault]           = nostalgicTargetDefault.get();
+        noteModeMapper[NostalgicTargetDefault]         = nostalgicTargetDefault_noteMode.get();
+
+        targetMapper[NostalgicTargetClear]           = nostalgicTargetClear.get();
+        noteModeMapper[NostalgicTargetClear]         = nostalgicTargetClear_noteMode.get();
     }
 
     chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
@@ -385,6 +394,37 @@ struct MidiTargetParams : chowdsp::ParamHolder
         juce::ParameterID{"rTargetAdd_noteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr nostalgicTargetClear_noteMode {
+        juce::ParameterID{"nTargetClear_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    /*
+     * Nostalgic Targets
+     */
+
+    // pass through all messages on channel 1 by default; same as having no MidiTarget involved
+    chowdsp::BoolParameter::Ptr nostalgicTargetDefault {
+        juce::ParameterID { "nTargetDefault", 100},
+        "Default Behavior",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr nostalgicTargetClear {
+        juce::ParameterID { "nTargetClear", 100},
+        "Clear",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr nostalgicTargetDefault_noteMode {
+        juce::ParameterID{"nTargetDefault_noteMode", 100},
+        "Note Mode",
+        TriggerType::_Both,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
