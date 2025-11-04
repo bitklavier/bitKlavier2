@@ -170,6 +170,16 @@ void NostalgicProcessor::updateNoteVisualization()
 
 void NostalgicProcessor::handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages)
 {
+    // if key-on reset is selected, remove previous notes
+    if (state.params.keyOnReset->get())
+    {
+        for (int i = reverseTimers.size() - 1; i >= 0; --i)
+        {
+            auto& note = reverseTimers.getReference(i);
+            if (note.noteNumber == noteNumber) reverseTimers.remove(i);
+        }
+    }
+
     NostalgicNoteData currentNoteData;
     currentNoteData.noteNumber = noteNumber;
     currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();

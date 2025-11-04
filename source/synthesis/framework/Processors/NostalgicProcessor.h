@@ -154,8 +154,8 @@ struct NostalgicParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr beatsToSkipParam {
         juce::ParameterID { "BeatsToSkip", 100 },
         "Beats To Skip",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
-        1.0f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.f, 5.f, 1.f),
+        0.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
