@@ -268,7 +268,8 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             else
             {
                 if(activeNotes.test(m.getNoteNumber())) {
-                    noteOn (channel, m.getNoteNumber(), m.getVelocity());
+                    //TODO
+                    noteOn (channel, m.getNoteNumber(), m.getVelocity() ? m.getVelocity() : 64.f);
                     activeNotes.reset(m.getNoteNumber());
                 }
             }
@@ -376,7 +377,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).
     //if(!noteOnSpecs.contains(midiNoteNumber))
-//    if(!noteOnSpecs[midiNoteNumber].keyState)
+//    if(!noteOnSpecs[midiNoteNumber].overrideDefaultEnvParams)
 //    {
 //        for (auto* voice : voices)
 //            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
@@ -418,8 +419,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
          * been filled aligned with transpositions
          */
         float velocityScaled = velocity;
-        if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size()
-            && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
+        if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size())
+         //redundant. size must be > 0 if we are this loop   && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
         {
             velocityScaled *= noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf(transp)];
         }
@@ -483,7 +484,7 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
         voice->setTargetSustainTime(noteOnSpecs[midiNoteNumber].sustainTime);
 
-        if(noteOnSpecs[midiNoteNumber].keyState)
+        if(noteOnSpecs[midiNoteNumber].overrideDefaultEnvParams)
         {
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
         }
@@ -552,7 +553,7 @@ void BKSynthesiser::noteOff (const int midiChannel,
 
         voice->setKeyDown (false);
 
-        if(noteOnSpecs[midiNoteNumber].keyState && noteOnSpecs[midiNoteNumber].channel == midiChannel)
+        if(noteOnSpecs[midiNoteNumber].overrideDefaultEnvParams && noteOnSpecs[midiNoteNumber].channel == midiChannel)
             voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
 
         if (!voice->ignoreNoteOff)

@@ -331,7 +331,7 @@ void ResonantString::removeString (int midiNote, juce::MidiBuffer& outMidiMessag
 
     // we want all these partials to be muted quickly, so we don't use the ADSR the user
     // sees, which might have a long release time for decaying resonant notes
-    _noteOnSpecMap[midiNote].keyState = true; // override the UI controlled envelope and use envParams specified here
+    _noteOnSpecMap[midiNote].overrideDefaultEnvParams = true; // override the UI controlled envelope and use envParams specified here
     _noteOnSpecMap[midiNote].envParams = {50.0f * .001, 10.0f * .001, 1.0f, releaseTime, 0.0f, 0.0f, 0.0f};
 
     _noteOnSpecMap[midiNote].channel = channel;

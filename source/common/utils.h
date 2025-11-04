@@ -482,28 +482,25 @@ struct NoteOnSpec
         transpositionGains.ensureStorageAllocated(MaxMidiNotes);
     }
 
-    /**
-     * todo: keyState is only used for applying these envParams instead of the envParams passed to the synth on construction, so name appropriately
-     */
-    bool keyState = false;                          // turn on for notes that should use the extra specs here
     float startTime = 0.f;                          // where to start playback (ms)
     float sustainTime = -1.0f;                      // time to sustain the note (ms); -1 => wait for noteOff or play the full sample
     Direction startDirection = Direction::forward;  // direction
     LoopMode loopMode = LoopMode::none;             // currently we don't use loopmode, but perhaps some day
     bool stopSameCurrentNote = true;                // if this note is playing already, stop it (default behavior)
+    bool overrideDefaultEnvParams = false;          // set to true to override default ADSR params in BKSynth with envParams below
     BKADSR::Parameters envParams {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f}; // BKADSR time values are in seconds
-    juce::Array<float> transpositions;              // all the transpositions related to this noteOn; BKSynth will launch all of them, and handle noteOffs for them
-    juce::Array<float> transpositionGains;          // gains related to transpositions, by same index
+    juce::Array<float> transpositions = {0.f};              // all the transpositions related to this noteOn; BKSynth will launch all of them, and handle noteOffs for them
+    juce::Array<float> transpositionGains= {1.f};          // gains related to transpositions, by same index
     int channel = 1;                                // midi channel
 
     void clear()
     {
-        keyState = false;
         startTime = 0.f;
         sustainTime = -1.0f;
         startDirection = Direction::forward;
         loopMode = LoopMode::none;
         stopSameCurrentNote = true;
+        overrideDefaultEnvParams = false;
         envParams = {3.0f * .001, 10.0f * .001, 1.0f, 50.0f * .001, 0.0f, 0.0f, 0.0f};
         transpositions.clearQuick();
         transpositionGains.clearQuick();
