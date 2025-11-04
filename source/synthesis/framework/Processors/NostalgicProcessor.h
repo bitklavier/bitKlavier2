@@ -55,6 +55,7 @@ struct NostalgicParams : chowdsp::ParamHolder
             outputSendGain,
             outputGain,
             noteLengthMultParam,
+            beatsToSkipParam,
             clusterMinParam,
             clusterThreshParam,
             holdTimeMinMaxParams,
@@ -63,9 +64,7 @@ struct NostalgicParams : chowdsp::ParamHolder
             keyOnReset,
             nostalgicTriggeredBy,
             reverseEnv,
-            // reverseEnvSequence,
             undertowEnv
-            // undertowEnvSequence
             );
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
@@ -151,6 +150,17 @@ struct NostalgicParams : chowdsp::ParamHolder
         true
     };
 
+    // Beats To Skip param
+    chowdsp::FloatParameter::Ptr beatsToSkipParam {
+        juce::ParameterID { "BeatsToSkip", 100 },
+        "Beats To Skip",
+        chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
+        1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
     // Cluster Minimum param
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
@@ -180,7 +190,7 @@ struct NostalgicParams : chowdsp::ParamHolder
         0.0f,
         true
     };
-    
+
     /*
      * for storing outputLevels of this preparation for display
      *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
@@ -190,6 +200,9 @@ struct NostalgicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+
+    bool synchronicConnected = false;
+
     /****************************************************************************************/
 };
 
@@ -354,7 +367,7 @@ public:
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
     void updateNoteVisualization();
     void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
-
+    void handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages);
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();

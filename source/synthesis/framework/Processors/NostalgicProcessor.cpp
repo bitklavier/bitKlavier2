@@ -3,6 +3,7 @@
 //
 
 #include "NostalgicProcessor.h"
+#include "SynchronicProcessor.h"
 #include "Synthesiser/Sample.h"
 #include "common.h"
 #include "synth_base.h"
@@ -76,6 +77,7 @@ bool NostalgicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
 void NostalgicProcessor::setSynchronic (SynchronicProcessor* synch)
 {
     synchronic = synch;
+    state.params.synchronicConnected = true;
 }
 
 void NostalgicProcessor::setTuning (TuningProcessor* tun)
@@ -166,6 +168,47 @@ void NostalgicProcessor::updateNoteVisualization()
     state.params.waveDistUndertowParams.displaySliderPositions = newpositions;
 }
 
+void NostalgicProcessor::handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages)
+{
+    NostalgicNoteData currentNoteData;
+    currentNoteData.noteNumber = noteNumber;
+    currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+    currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
+    currentNoteData.undertowDurationSamples = currentNoteData.undertowDurationMs * (getSampleRate()/1000.0);
+
+    // handle length of nostalgic swell
+    if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Note_Length)
+    {
+        currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
+        currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
+        currentNoteData.noteStart = currentNoteData.noteDurationMs  + currentNoteData.waveDistanceMs;
+    }
+    // this is the same whether it's Sync_KeyUp or Sync_KeyDown
+    else
+    {
+        auto timeFromSynchronic = synchronic->getTimeToBeatMS (state.params.beatsToSkipParam->getCurrentValue());
+        currentNoteData.noteDurationMs = timeFromSynchronic;
+        currentNoteData.noteDurationSamples = timeFromSynchronic * (getSampleRate()/1000.0);
+        currentNoteData.noteStart = timeFromSynchronic + currentNoteData.waveDistanceMs;
+    }
+
+    clusterNotes.add(std::move(currentNoteData));
+    clusterCount++;
+
+    // if we haven't reached the clusterMin yet, add the note to clusterNotes
+    if (clusterCount >= clusterMin)
+    {
+        for (auto &clusterNote : clusterNotes)
+        {
+            playReverseNote (clusterNote, outMidiMessages);
+        }
+        clusterNotes.clearQuick();
+    }
+    // reset the timer since the threshold is for successive notes
+    clusterTimer = 0;
+    inCluster = true;
+}
+
 void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
@@ -239,44 +282,25 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         auto message = mi.getMessage();
 
         // TODO: we can make it an option for noteOn velocity to set noteOff velocity
-        // store the velocity from the note on message
         if (message.isNoteOn ())
         {
+            // store the velocity and note duration from the note on message
             velocities.set(message.getNoteNumber(), message.getVelocity());
             noteLengthTimers.set(message.getNoteNumber(), 1);
+
+            // if we're syncing with synchronic
+            if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Sync_KeyDown)
+            {
+                handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
+            }
         }
         
-        // if there's a note off message, check cluster and play the associated reverse note
-        if(message.isNoteOff())
+        // if there's a note off message and hold time is in specified range,
+        // check cluster and play the associated reverse note
+        if (message.isNoteOff() && holdCheck(message.getNoteNumber()) &&
+            state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown)
         {
-            // only proceed if hold time is in the specified range
-            if (holdCheck(message.getNoteNumber()))
-            {
-                NostalgicNoteData currentNoteData;
-                currentNoteData.noteNumber = message.getNoteNumber();
-                currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
-                currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
-                currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
-                currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
-                currentNoteData.undertowDurationSamples = currentNoteData.undertowDurationMs * (getSampleRate()/1000.0);
-                currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
-
-                clusterNotes.add(std::move(currentNoteData));
-                clusterCount++;
-
-                // if we haven't reached the clusterMin yet, add the note to clusterNotes
-                if (clusterCount >= clusterMin)
-                {
-                    for (auto &clusterNote : clusterNotes)
-                    {
-                        playReverseNote (clusterNote, outMidiMessages);
-                    }
-                    clusterNotes.clearQuick();
-                }
-                // reset the timer since the threshold is for successive notes
-                clusterTimer = 0;
-                inCluster = true;
-            }
+            handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
         }
     }
 }

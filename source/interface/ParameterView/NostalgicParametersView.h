@@ -35,6 +35,12 @@ public:
         if (auto* nostalgicParams = dynamic_cast<NostalgicParams*>(&params)) {
             nostalgicTriggeredBy_combo_box = std::make_unique<OpenGLComboBox>(nostalgicParams->nostalgicTriggeredBy->paramID.toStdString());
             nostalgicTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*nostalgicParams->nostalgicTriggeredBy.get(), listeners, *nostalgicTriggeredBy_combo_box, nullptr);
+            // disable sync key up/down if synchronic isn't connected
+            if (!nparams_.synchronicConnected)
+            {
+                nostalgicTriggeredBy_combo_box->setItemEnabled (2, false);
+                nostalgicTriggeredBy_combo_box->setItemEnabled (3, false);
+            }
             addAndMakeVisible(nostalgicTriggeredBy_combo_box.get());
             addOpenGlComponent(nostalgicTriggeredBy_combo_box->getImageComponent());
         }
@@ -68,6 +74,14 @@ public:
         noteLengthMult_knob->setShowPopupOnHover(true);
         noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, nullptr);
         noteLengthMult_knob->addAttachment(noteLengthMult_knob_attachment.get());
+
+        beatsToSkip_knob = std::make_unique<SynthSlider>(params.beatsToSkipParam->paramID, params.beatsToSkipParam->getModParam());
+        addSlider(beatsToSkip_knob.get());
+        beatsToSkip_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        beatsToSkip_knob->setPopupPlacement(juce::BubbleComponent::below);
+        beatsToSkip_knob->setShowPopupOnHover(true);
+        beatsToSkip_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.beatsToSkipParam, listeners, *beatsToSkip_knob, nullptr);
+        beatsToSkip_knob->addAttachment(beatsToSkip_knob_attachment.get());
 
         clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->paramID, params.clusterMinParam->getModParam());
         addSlider(clusterMin_knob.get());
@@ -118,6 +132,38 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
+        // draw note length multiplier or beats to skip depending on selected option from combo box
+        if (nparams_.nostalgicTriggeredBy->get() != NostalgicComboBox::Note_Length)
+        {
+            beatsToSkip_knob->setVisible(true);
+            noteLengthMult_knob->setVisible(false);
+        }
+        else
+        {
+            noteLengthMult_knob->setVisible(true);
+            beatsToSkip_knob->setVisible(false);
+        }
+
+        // this draws the correct parameter as soon as a new option is selected
+        nostalgicTriggerByCallback = {listeners.addParameterListener (params.nostalgicTriggeredBy,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() {
+                auto* interface = findParentComponentOfClass<SynthGuiInterface>();
+                juce::ScopedLock{*interface->getOpenGlCriticalSection()};
+                if (nparams_.nostalgicTriggeredBy->get() != NostalgicComboBox::Note_Length)
+                {
+                    beatsToSkip_knob->setVisible(true);
+                    noteLengthMult_knob->setVisible(false);
+                }
+                else
+                {
+                    noteLengthMult_knob->setVisible(true);
+                    beatsToSkip_knob->setVisible(false);
+                }
+                auto* prep_popup = findParentComponentOfClass<PreparationPopup>();
+                prep_popup->repaintPrepBackground();
+            })};
+
         // for updating the wavedistundertow display sliders
         startTimer(50);
     }
@@ -131,8 +177,10 @@ public:
         paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
-
-        drawLabelForComponent(g, TRANS("note length multiplier"), noteLengthMult_knob.get());
+        if (noteLengthMult_knob->isVisible())
+            drawLabelForComponent(g, TRANS("note length multiplier"), noteLengthMult_knob.get());
+        if (beatsToSkip_knob->isVisible())
+            drawLabelForComponent(g, TRANS("beats to skip"), beatsToSkip_knob.get());
         drawLabelForComponent(g, TRANS("cluster min"), clusterMin_knob.get());
         drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
 
@@ -166,6 +214,8 @@ public:
     // knobs
     std::unique_ptr<SynthSlider> noteLengthMult_knob;
     std::unique_ptr<chowdsp::SliderAttachment> noteLengthMult_knob_attachment;
+    std::unique_ptr<SynthSlider> beatsToSkip_knob;
+    std::unique_ptr<chowdsp::SliderAttachment> beatsToSkip_knob_attachment;
     std::unique_ptr<SynthSlider> clusterMin_knob;
     std::unique_ptr<chowdsp::SliderAttachment> clusterMin_knob_attachment;
     std::unique_ptr<SynthSlider> clusterThreshold_knob;
@@ -185,6 +235,8 @@ public:
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     NostalgicParams& nparams_;
+
+    chowdsp::ScopedCallback nostalgicTriggerByCallback;
     void resized() override;
 };
 
