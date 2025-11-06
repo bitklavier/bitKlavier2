@@ -142,12 +142,13 @@ public:
 
     // perhaps these should be moved to utils or something
     juce::Array<juce::String> allPitches;
-    juce::Array<juce::String> allPitchClasses = { "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#" };
+    juce::Array<juce::String> allPitchClasses = { "A", "A#", "Bb", "B", "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab" };
+    //juce::Array<juce::String> allPitchClasses = { "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#" };
     juce::Array<int> allKeysWithSamples; // array that keeps track of which keys have samples, for building start/end ranges in keymap
     juce::BigInteger getMidiRange (juce::String pitchName);
     void clearAllSamples();
     void setValueTree(const juce::ValueTree& v) {
-        t =v;
+        t = v;
     }
     std::map<std::string, std::shared_ptr<SampleSetProgress>> soundsetProgressMap;
     float  getSoundsetProgress(const std::string& name)

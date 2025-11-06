@@ -70,9 +70,12 @@ juce::Array<juce::File> SampleLoadManager::samplesByPitch (juce::String whichPit
 
     juce::Array<juce::File> outFiles;
     bool sharp = false;
+    bool flat = false;
 
     if (whichPitch.contains ("#"))
         sharp = true;
+    if (whichPitch.contains ("b"))
+        flat = true;
 
     for (auto file : inFiles)
     {
@@ -84,7 +87,7 @@ juce::Array<juce::File> SampleLoadManager::samplesByPitch (juce::String whichPit
             //DBG("removing 'harm' from filename, new name = " + fileToPlace);
         }
 
-        if (sharp)
+        if (sharp || flat)
         {
             if (fileToPlace.startsWith (whichPitch))
             {
@@ -93,7 +96,7 @@ juce::Array<juce::File> SampleLoadManager::samplesByPitch (juce::String whichPit
         }
         else
         {
-            if (fileToPlace.startsWith (whichPitch) && !fileToPlace.contains ("#"))
+            if (fileToPlace.startsWith (whichPitch) && !fileToPlace.contains ("#") && !fileToPlace.contains ("b"))
             {
                 outFiles.add (file);
             }
