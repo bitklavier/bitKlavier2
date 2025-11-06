@@ -45,13 +45,13 @@ namespace bitklavier {
     }
     void ConnectionList::appendChild (const juce::ValueTree& child, juce::UndoManager* undoManager)
     {
-        undoManager->beginNewTransaction();
+        if (undoManager != nullptr) undoManager->beginNewTransaction();
         this->parent.appendChild(child,undoManager);
     }
 
     void ConnectionList::removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)
     {
-        undoManager->beginNewTransaction();
+        if (undoManager != nullptr) undoManager->beginNewTransaction();
         this->parent.removeChild(child,undoManager);
     }
 }

@@ -124,6 +124,7 @@ namespace IDs
     DECLARE_ID(tempo)
     DECLARE_ID(vst)
     DECLARE_ID(keymap)
+    DECLARE_ID(noConnection)
 
     DECLARE_ID(soundset)
     DECLARE_ID(globalsoundset)

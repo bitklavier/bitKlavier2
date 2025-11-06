@@ -25,12 +25,13 @@
 #define BITKLAVIER0_MIDITARGETPROCESSOR_H
 
 #pragma once
-#include <juce_audio_processors/juce_audio_processors.h>
-#include <Identifiers.h>
-#include "synth_base.h"
-#include "PreparationStateImpl.h"
+#include "ObjectLists/ConnectionsList.h"
 #include "PluginBase.h"
+#include "PreparationStateImpl.h"
+#include "synth_base.h"
 #include "target_types.h"
+#include <Identifiers.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 
 /**
  * todo: MidiTargetProcessor needs to know what kind of prep it first connects to
@@ -435,6 +436,8 @@ struct MidiTargetParams : chowdsp::ParamHolder
     std::map<PreparationParameterTargetType, chowdsp::BoolParameter*> targetMapper;
     std::map<PreparationParameterTargetType, chowdsp::EnumChoiceParameter<TriggerType>*> noteModeMapper;
 
+    juce::Identifier connectedPrep = IDs::noConnection;
+
     /* Custom serializer */
     template <typename Serializer>
     static typename Serializer::SerializedType serialize (const MidiTargetParams& paramHolder);
@@ -452,7 +455,8 @@ struct MidiTargetNonParameterState : chowdsp::NonParamState
     }
 };
 
-class MidiTargetProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>
+class MidiTargetProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>,
+public bitklavier::ConnectionList::Listener
 {
 public:
     MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v);
@@ -466,6 +470,10 @@ public:
     bool producesMidi() const override { return true; }
     bool isMidiEffect() const override { return true; }
     bool hasEditor() const override { return false; }
+
+    void connectionAdded(bitklavier::Connection*) override;
+    void connectionListChanged() override {};
+    void removeConnection(bitklavier::Connection*) override {};
 
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
     juce::AudioProcessor::BusesProperties midiTargetBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
