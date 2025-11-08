@@ -473,7 +473,7 @@ public:
 
     void connectionAdded(bitklavier::Connection*) override;
     void connectionListChanged() override {};
-    void removeConnection(bitklavier::Connection*) override {};
+    void removeConnection(bitklavier::Connection*) override;
 
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
     juce::AudioProcessor::BusesProperties midiTargetBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
@@ -491,6 +491,7 @@ public:
     void changeProgramName(int index, const juce::String &newName) override {}
 
 private:
+    juce::Array<juce::var> connectedPrepIds;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiTargetProcessor)
 };
 #endif //BITKLAVIER0_MIDITARGETPROCESSOR_H

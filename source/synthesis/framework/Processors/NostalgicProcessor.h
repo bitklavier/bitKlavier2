@@ -348,6 +348,7 @@ public:
     NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v);
     ~NostalgicProcessor()
     {
+        parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
 

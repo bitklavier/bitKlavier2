@@ -8,6 +8,7 @@ MidiTargetProcessor::MidiTargetProcessor ( SynthBase& parent,
     const juce::ValueTree& v) : PluginBase (parent, v, nullptr, midiTargetBusLayout())
 {
     parent.getActiveConnectionList()->addListener (this);
+    connectedPrepIds.ensureStorageAllocated (10);
 }
 
 void MidiTargetProcessor::connectionAdded (bitklavier::Connection* connection)
@@ -17,11 +18,37 @@ void MidiTargetProcessor::connectionAdded (bitklavier::Connection* connection)
     auto midiTarget_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty (IDs::nodeID));
     if (connection->src_id.get() == midiTarget_id)
     {
-        auto prep = preparationList.getChildWithProperty (IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(connection->dest_id.get()));
+        auto nodeIdVar = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(connection->dest_id.get());
+        auto prep = preparationList.getChildWithProperty (IDs::nodeID, nodeIdVar);
         auto prepType = prep.getType();
         if (state.params.connectedPrep == IDs::noConnection) state.params.connectedPrep = prepType;
-        else if (state.params.connectedPrep != prepType) parent.getActiveConnectionList()->removeChild (connection->state, nullptr);
+        else if (state.params.connectedPrep != prepType)
+        {
+            juce::String message = "You've already connected your midiTarget to a " + state.params.connectedPrep.toString() +
+                " preparation, which means you can't connect to a " + prepType.toString() + " preparation.";
+            juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::InfoIcon,
+                "Invalid Connection", message);
+            parent.getActiveConnectionList()->removeChild (connection->state, nullptr);
+            return;
+        }
+        connectedPrepIds.add (nodeIdVar);
     }
+}
+
+void MidiTargetProcessor::removeConnection(bitklavier::Connection* connection)
+{
+    auto nodeIdVar = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(connection->dest_id.get());
+    // if you are disconnecting a prep from a midi target, remove it from the
+    // array of node ids. if that array is empty, reset the connectedPrep param
+    auto midiTarget_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty (IDs::nodeID));
+    if ((connection->src_id.get() == midiTarget_id) && (connectedPrepIds.contains (nodeIdVar)))
+    {
+        connectedPrepIds.removeFirstMatchingValue (nodeIdVar);
+        if (connectedPrepIds.isEmpty ())
+        {
+            state.params.connectedPrep = IDs::noConnection;
+        }
+    };
 }
 
 void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
