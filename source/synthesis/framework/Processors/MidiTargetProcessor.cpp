@@ -44,10 +44,7 @@ void MidiTargetProcessor::removeConnection(bitklavier::Connection* connection)
     if ((connection->src_id.get() == midiTarget_id) && (connectedPrepIds.contains (nodeIdVar)))
     {
         connectedPrepIds.removeFirstMatchingValue (nodeIdVar);
-        if (connectedPrepIds.isEmpty ())
-        {
-            state.params.connectedPrep = IDs::noConnection;
-        }
+        if (connectedPrepIds.isEmpty ()) state.params.connectedPrep = IDs::noConnection;
     };
 }
 
