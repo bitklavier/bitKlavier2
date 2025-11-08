@@ -49,6 +49,12 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
         &(state.params.transpose.transpositionUsesTuning->stateChanges)));
     v.addListener (this);
+
+    /*
+     * this call is required by any preparation that uses samples, and is
+     * used to notify the prep when the choice of sample library for this
+     * prep has been changed by the user
+     */
     parent.getValueTree().addListener (this);
     loadSamples();
 }

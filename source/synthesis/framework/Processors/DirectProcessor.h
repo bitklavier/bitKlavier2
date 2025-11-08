@@ -166,6 +166,11 @@ public:
     DirectProcessor(SynthBase &parent, const juce::ValueTree &v);
 
     ~DirectProcessor() {
+        /*
+         * both of these need to be called in the destructor
+         * - the first is regarding sample library choice for this preparation
+         * - the second is for any attached Tuning prep
+         */
         parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
