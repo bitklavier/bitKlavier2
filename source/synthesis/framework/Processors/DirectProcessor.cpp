@@ -120,7 +120,9 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
     mainSynth->setTuning (&tuning->getState().params.tuningState);
     releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
 }
+
 void DirectProcessor::tuningStateInvalidated() {
+    DBG("DirectProcessor::tuningStateInvalidated()");
     tuning = nullptr;
     mainSynth->setTuning(nullptr);
     releaseResonanceSynth->setTuning(nullptr);
