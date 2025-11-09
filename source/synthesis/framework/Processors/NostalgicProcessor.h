@@ -436,8 +436,8 @@ public:
                         &(*parent.getSamples())[a+"ReleaseResonance"],
                         &(*parent.getSamples())[a+"Pedals"]);
         }
-
     }
+
     void loadSamples() {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {
@@ -456,7 +456,6 @@ public:
                         &(*parent.getSamples())[soundset + "Pedals"]);
         }
     }
-
 
     bool holdCheck(int noteNumber);
 

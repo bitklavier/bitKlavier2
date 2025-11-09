@@ -124,7 +124,6 @@ void SynchronicProcessor::tuningStateInvalidated() {
     synchronicSynth->setTuning(nullptr);
 }
 
-
 void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {
     // this for debugging

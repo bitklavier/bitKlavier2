@@ -229,7 +229,6 @@ public:
     std::unique_ptr<EnvelopeSequenceSection> reverseEnvSequenceSection;
     std::unique_ptr<EnvelopeSequenceSection> undertowEnvSequenceSection;
 
-
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
