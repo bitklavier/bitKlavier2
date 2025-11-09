@@ -111,7 +111,9 @@ void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].useAttachedTuning = state.params.transpose.transpositionUsesTuning->get();
 }
+
 /**
  * sets the bools for this message based on channel, set in MidiTarget
  * @param channel

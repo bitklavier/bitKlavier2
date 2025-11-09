@@ -425,6 +425,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
             velocityScaled *= noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf(transp)];
         }
 
+        tuneTranspositions = noteOnSpecs[midiNoteNumber].useAttachedTuning;
+
         for (auto* sound : *sounds)
         {
             int closestKey;

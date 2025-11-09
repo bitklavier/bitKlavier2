@@ -104,6 +104,7 @@ void DirectProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].useAttachedTuning = state.params.transpose.transpositionUsesTuning->get();
 }
 
 /*
