@@ -470,6 +470,7 @@ void ResonanceProcessor::setTuning(TuningProcessor *tun)
         rstring->setTuning(&tun->getState().params.tuningState);
     }
 }
+
 void ResonanceProcessor::tuningStateInvalidated() {
    tuning = nullptr;
     for (auto& rstring : resonantStringsArray)

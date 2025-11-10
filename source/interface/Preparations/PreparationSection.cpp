@@ -235,6 +235,10 @@ void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetail
         for (auto listener: listeners_)
             listener->tempoDropped(dropped_tree, state);
     }
+    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeSynchronic) {
+        for (auto listener: listeners_)
+            listener->synchronicDropped(dropped_tree, state);
+    }
 }
 
 void PreparationSection::resized() {

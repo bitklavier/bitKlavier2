@@ -35,6 +35,7 @@
 #include "Synthesiser/Sample.h"
 #include "TempoProcessor.h"
 #include "TuningProcessor.h"
+#include "SynchronicProcessor.h"
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "valuetree_utils/VariantConverters.h"
 
@@ -288,6 +289,21 @@ void SynthBase::connectTempo (const juce::ValueTree& v)
     auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src));
     auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest));
     addTempoConnection (srcid, dstid);
+}
+
+void SynthBase::addSynchronicConnection (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
+{
+    auto* sourceNode = getNodeForId (src);
+    auto* destNode = getNodeForId (dest);
+    dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor())->setSynchronic (dynamic_cast<SynchronicProcessor*> (sourceNode->getProcessor()));
+    addModulationConnection (src, dest);
+}
+
+void SynthBase::connectSynchronic (const juce::ValueTree& v)
+{
+    auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src));
+    auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest));
+    addSynchronicConnection (srcid, dstid);
 }
 
 void SynthBase::setMpeEnabled (bool enabled)

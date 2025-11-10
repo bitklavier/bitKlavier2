@@ -137,6 +137,9 @@ public:
     juce::ApplicationCommandManager commandManager;
     juce::ValueTree gallery;
 
+    juce::CriticalSection* getOpenGlCriticalSection();
+
+
   protected:
     std::atomic<bool> loading;
     std::unique_ptr<juce::FileChooser> filechooser;

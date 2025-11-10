@@ -42,7 +42,10 @@ void NostalgicParametersView::resized()
     leftColumn.removeFromTop (Skin::kKnobSectionHeight);
     clusterMin_knob->setBounds(leftColumn.removeFromRight(leftColumn.getWidth() / 3).reduced(largepadding, 0));
     clusterThreshold_knob->setBounds(leftColumn.removeFromRight(leftColumn.getWidth() / 2).reduced(largepadding, 0));
-    noteLengthMult_knob->setBounds(leftColumn.reduced(largepadding, 0));
+    auto knobSpot = leftColumn.reduced(largepadding, 0);
+    beatsToSkip_knob->setBounds(knobSpot);
+    noteLengthMult_knob->setBounds(knobSpot);
+
 
     // right column for knobs and undertow adsr
     bounds.removeFromLeft (smallpadding);

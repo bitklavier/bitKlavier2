@@ -49,6 +49,12 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "UseTuning",
         &(state.params.transpose.transpositionUsesTuning->stateChanges)));
     v.addListener (this);
+
+    /*
+     * this call is required by any preparation that uses samples, and is
+     * used to notify the prep when the choice of sample library for this
+     * prep has been changed by the user
+     */
     parent.getValueTree().addListener (this);
     loadSamples();
 }
@@ -98,6 +104,7 @@ void DirectProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].useAttachedTuning = state.params.transpose.transpositionUsesTuning->get();
 }
 
 /*
@@ -120,7 +127,9 @@ void DirectProcessor::setTuning (TuningProcessor* tun)
     mainSynth->setTuning (&tuning->getState().params.tuningState);
     releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
 }
+
 void DirectProcessor::tuningStateInvalidated() {
+    DBG("DirectProcessor::tuningStateInvalidated()");
     tuning = nullptr;
     mainSynth->setTuning(nullptr);
     releaseResonanceSynth->setTuning(nullptr);

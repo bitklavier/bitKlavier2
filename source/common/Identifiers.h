@@ -46,6 +46,7 @@ namespace IDs
     DECLARE_ID (MODCONNECTION)
     DECLARE_ID (MODCONNECTIONS)
     DECLARE_ID (TEMPOCONNECTION)
+    DECLARE_ID (SYNCHRONICCONNECTION)
 
     DECLARE_ID (assignment)
 
@@ -123,6 +124,7 @@ namespace IDs
     DECLARE_ID(tempo)
     DECLARE_ID(vst)
     DECLARE_ID(keymap)
+    DECLARE_ID(noConnection)
 
     DECLARE_ID(soundset)
     DECLARE_ID(globalsoundset)

@@ -3,6 +3,7 @@
 //
 
 #include "NostalgicProcessor.h"
+#include "SynchronicProcessor.h"
 #include "Synthesiser/Sample.h"
 #include "common.h"
 #include "synth_base.h"
@@ -73,6 +74,11 @@ bool NostalgicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
  *
  * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
  */
+void NostalgicProcessor::setSynchronic (SynchronicProcessor* synch)
+{
+    synchronic = synch;
+    state.params.synchronicConnected = true;
+}
 
 void NostalgicProcessor::setTuning (TuningProcessor* tun)
 {
@@ -84,7 +90,6 @@ void NostalgicProcessor::setTuning (TuningProcessor* tun)
 void NostalgicProcessor::tuningStateInvalidated() {
     tuning = nullptr;
     nostalgicSynth->setTuning(nullptr);
-
 }
 
 
@@ -106,8 +111,28 @@ void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].useAttachedTuning = state.params.transpose.transpositionUsesTuning->get();
 }
 
+/**
+ * sets the bools for this message based on channel, set in MidiTarget
+ * @param channel
+ */
+void NostalgicProcessor::handleMidiTargetMessages(int channel)
+{
+    doDefault = false;
+    doClear = false;
+
+    switch(channel + (NostalgicTargetFirst))
+    {
+        case NostalgicTargetDefault:
+            doDefault = true;
+            break;
+        case NostalgicTargetClear:
+            doClear = true;
+            break;
+    }
+}
 /*
  * update them all to the same transpositions.
  * - since Nostalgic uses the same transpositions, we just have them all set to the same values
@@ -161,6 +186,57 @@ void NostalgicProcessor::updateNoteVisualization()
         }
     }
     state.params.waveDistUndertowParams.displaySliderPositions = newpositions;
+}
+
+void NostalgicProcessor::handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages)
+{
+    // if key-on reset is selected, remove previous notes
+    if (state.params.keyOnReset->get())
+    {
+        for (int i = reverseTimers.size() - 1; i >= 0; --i)
+        {
+            auto& note = reverseTimers.getReference(i);
+            if (note.noteNumber == noteNumber) reverseTimers.remove(i);
+        }
+    }
+
+    NostalgicNoteData currentNoteData;
+    currentNoteData.noteNumber = noteNumber;
+    currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+    currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
+    currentNoteData.undertowDurationSamples = currentNoteData.undertowDurationMs * (getSampleRate()/1000.0);
+
+    // handle length of nostalgic swell
+    if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Note_Length)
+    {
+        currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
+        currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
+        currentNoteData.noteStart = currentNoteData.noteDurationMs  + currentNoteData.waveDistanceMs;
+    }
+    // this is the same whether it's Sync_KeyUp or Sync_KeyDown
+    else
+    {
+        auto timeFromSynchronic = synchronic->getTimeToBeatMS (state.params.beatsToSkipParam->getCurrentValue());
+        currentNoteData.noteDurationMs = timeFromSynchronic;
+        currentNoteData.noteDurationSamples = timeFromSynchronic * (getSampleRate()/1000.0);
+        currentNoteData.noteStart = timeFromSynchronic + currentNoteData.waveDistanceMs;
+    }
+
+    clusterNotes.add(std::move(currentNoteData));
+    clusterCount++;
+
+    // if we haven't reached the clusterMin yet, add the note to clusterNotes
+    if (clusterCount >= clusterMin)
+    {
+        for (auto &clusterNote : clusterNotes)
+        {
+            playReverseNote (clusterNote, outMidiMessages);
+        }
+        clusterNotes.clearQuick();
+    }
+    // reset the timer since the threshold is for successive notes
+    clusterTimer = 0;
+    inCluster = true;
 }
 
 void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
@@ -234,45 +310,41 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
+        handleMidiTargetMessages (message.getChannel());
 
-        // TODO: we can make it an option for noteOn velocity to set noteOff velocity
-        // store the velocity from the note on message
-        if (message.isNoteOn ())
+        if (doDefault)
         {
-            velocities.set(message.getNoteNumber(), message.getVelocity());
-            noteLengthTimers.set(message.getNoteNumber(), 1);
-        }
-        
-        // if there's a note off message, check cluster and play the associated reverse note
-        if(message.isNoteOff())
-        {
-            // only proceed if hold time is in the specified range
-            if (holdCheck(message.getNoteNumber()))
+            // TODO: we can make it an option for noteOn velocity to set noteOff velocity
+            if (message.isNoteOn ())
             {
-                NostalgicNoteData currentNoteData;
-                currentNoteData.noteNumber = message.getNoteNumber();
-                currentNoteData.noteDurationSamples = noteLengthTimers[currentNoteData.noteNumber] * state.params.noteLengthMultParam->getCurrentValue();
-                currentNoteData.noteDurationMs = currentNoteData.noteDurationSamples * (1000.0 / getSampleRate());
-                currentNoteData.noteStart = currentNoteData.noteDurationMs  + state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
-                currentNoteData.undertowDurationMs = state.params.waveDistUndertowParams.undertowParam->getCurrentValue();
-                currentNoteData.undertowDurationSamples = currentNoteData.undertowDurationMs * (getSampleRate()/1000.0);
-                currentNoteData.waveDistanceMs = state.params.waveDistUndertowParams.waveDistanceParam->getCurrentValue();
+                // store the velocity and note duration from the note on message
+                velocities.set(message.getNoteNumber(), message.getVelocity());
+                noteLengthTimers.set(message.getNoteNumber(), 1);
 
-                clusterNotes.add(std::move(currentNoteData));
-                clusterCount++;
-
-                // if we haven't reached the clusterMin yet, add the note to clusterNotes
-                if (clusterCount >= clusterMin)
+                // if we're syncing with synchronic
+                if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Sync_KeyDown)
                 {
-                    for (auto &clusterNote : clusterNotes)
-                    {
-                        playReverseNote (clusterNote, outMidiMessages);
-                    }
-                    clusterNotes.clearQuick();
+                    handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
                 }
-                // reset the timer since the threshold is for successive notes
-                clusterTimer = 0;
-                inCluster = true;
+            }
+
+            // if there's a note off message and hold time is in specified range,
+            // check cluster and play the associated reverse note
+            if (message.isNoteOff() && holdCheck(message.getNoteNumber()) &&
+                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown)
+            {
+                handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
+            }
+        }
+        if (doClear)
+        {
+            for (int i = reverseTimers.size() - 1; i >= 0; --i)
+            {
+                auto& note = reverseTimers.getReference(i);
+                // is there a better velocity to use for this midi message?
+                auto noteOffMsg = juce::MidiMessage::noteOff (1, note.noteNumber, 1.f);
+                outMidiMessages.addEvent(noteOffMsg, 0);
+                reverseTimers.remove(i);
             }
         }
     }

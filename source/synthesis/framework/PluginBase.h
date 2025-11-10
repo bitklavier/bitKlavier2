@@ -15,6 +15,7 @@ class SynthBase;
 class TuningState;
 class TuningProcessor;
 class TempoProcessor;
+class SynchronicProcessor;
 template<typename T>
 class BKSamplerSound;
 
@@ -36,6 +37,9 @@ namespace bitklavier {
             tempo = tem;
         }
 
+        virtual void setSynchronic(SynchronicProcessor *synchronic) {
+        }
+
         virtual void addSoundSet(
             juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *s, // main samples
             juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *h, // hammer samples
@@ -48,6 +52,7 @@ namespace bitklavier {
     protected:
         TuningProcessor *tuning = nullptr;
         TempoProcessor *tempo = nullptr;
+        SynchronicProcessor *synchronic = nullptr;
     };
 
     /**

@@ -55,6 +55,7 @@ struct NostalgicParams : chowdsp::ParamHolder
             outputSendGain,
             outputGain,
             noteLengthMultParam,
+            beatsToSkipParam,
             clusterMinParam,
             clusterThreshParam,
             holdTimeMinMaxParams,
@@ -63,9 +64,7 @@ struct NostalgicParams : chowdsp::ParamHolder
             keyOnReset,
             nostalgicTriggeredBy,
             reverseEnv,
-            // reverseEnvSequence,
             undertowEnv
-            // undertowEnvSequence
             );
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
@@ -151,6 +150,17 @@ struct NostalgicParams : chowdsp::ParamHolder
         true
     };
 
+    // Beats To Skip param
+    chowdsp::FloatParameter::Ptr beatsToSkipParam {
+        juce::ParameterID { "BeatsToSkip", 100 },
+        "Beats To Skip",
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.f, 5.f, 1.f),
+        0.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
     // Cluster Minimum param
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
@@ -180,7 +190,7 @@ struct NostalgicParams : chowdsp::ParamHolder
         0.0f,
         true
     };
-    
+
     /*
      * for storing outputLevels of this preparation for display
      *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
@@ -190,6 +200,9 @@ struct NostalgicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+
+    bool synchronicConnected = false;
+
     /****************************************************************************************/
 };
 
@@ -333,7 +346,11 @@ class NostalgicProcessor : public bitklavier::PluginBase<bitklavier::Preparation
 {
 public:
     NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v);
-    ~NostalgicProcessor() {if(tuning !=nullptr) tuning->removeListener(this);}
+    ~NostalgicProcessor()
+    {
+        parent.getValueTree().removeListener(this);
+        if(tuning !=nullptr) tuning->removeListener(this);
+    }
 
     static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
     {
@@ -351,11 +368,11 @@ public:
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
     void updateNoteVisualization();
     void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
-
+    void handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages);
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();
-
+    void handleMidiTargetMessages(int channel);
     bool acceptsMidi() const override { return true; }
     void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
     {
@@ -371,8 +388,10 @@ public:
         nostalgicSynth->addSoundSet (s);
     }
 
+    void setSynchronic (SynchronicProcessor*) override;
     void setTuning (TuningProcessor*) override;
     void tuningStateInvalidated() override;
+
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
      *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have
@@ -417,8 +436,8 @@ public:
                         &(*parent.getSamples())[a+"ReleaseResonance"],
                         &(*parent.getSamples())[a+"Pedals"]);
         }
-
     }
+
     void loadSamples() {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {
@@ -437,7 +456,6 @@ public:
                         &(*parent.getSamples())[soundset + "Pedals"]);
         }
     }
-
 
     bool holdCheck(int noteNumber);
 
@@ -465,6 +483,9 @@ public:
     bool inCluster = false;
 
 private:
+    bool doDefault = false;
+    bool doClear = false;
+
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;

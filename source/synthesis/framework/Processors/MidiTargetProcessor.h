@@ -25,12 +25,13 @@
 #define BITKLAVIER0_MIDITARGETPROCESSOR_H
 
 #pragma once
-#include <juce_audio_processors/juce_audio_processors.h>
-#include <Identifiers.h>
-#include "synth_base.h"
-#include "PreparationStateImpl.h"
+#include "ObjectLists/ConnectionsList.h"
 #include "PluginBase.h"
+#include "PreparationStateImpl.h"
+#include "synth_base.h"
 #include "target_types.h"
+#include <Identifiers.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 
 /**
  * todo: MidiTargetProcessor needs to know what kind of prep it first connects to
@@ -80,7 +81,11 @@ struct MidiTargetParams : chowdsp::ParamHolder
             resonanceTargetAdd,
             resonanceTargetDefault_noteMode,
             resonanceTargetRing_noteMode,
-            resonanceTargetAdd_noteMode);
+            resonanceTargetAdd_noteMode,
+            nostalgicTargetDefault,
+            nostalgicTargetClear,
+            nostalgicTargetDefault_noteMode,
+            nostalgicTargetClear_noteMode);
 //            synchronicTargetDeleteOldest_noteMode,
 //            synchronicTargetDeleteNewest_noteMode,
 //            synchronicTargetRotate_noteMode);
@@ -142,6 +147,11 @@ struct MidiTargetParams : chowdsp::ParamHolder
         /**
          * add additional params for other preps/targets here and below
          */
+        targetMapper[NostalgicTargetDefault]           = nostalgicTargetDefault.get();
+        noteModeMapper[NostalgicTargetDefault]         = nostalgicTargetDefault_noteMode.get();
+
+        targetMapper[NostalgicTargetClear]           = nostalgicTargetClear.get();
+        noteModeMapper[NostalgicTargetClear]         = nostalgicTargetClear_noteMode.get();
     }
 
     chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
@@ -388,12 +398,45 @@ struct MidiTargetParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr nostalgicTargetClear_noteMode {
+        juce::ParameterID{"nTargetClear_noteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    /*
+     * Nostalgic Targets
+     */
+
+    // pass through all messages on channel 1 by default; same as having no MidiTarget involved
+    chowdsp::BoolParameter::Ptr nostalgicTargetDefault {
+        juce::ParameterID { "nTargetDefault", 100},
+        "Default Behavior",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr nostalgicTargetClear {
+        juce::ParameterID { "nTargetClear", 100},
+        "Clear",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr nostalgicTargetDefault_noteMode {
+        juce::ParameterID{"nTargetDefault_noteMode", 100},
+        "Note Mode",
+        TriggerType::_Both,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
     /*
      * we store all the targets and their noteModes here, so we can access them
      * as needed in the processBlock loop, by PreparationParameterTargetType
      */
     std::map<PreparationParameterTargetType, chowdsp::BoolParameter*> targetMapper;
     std::map<PreparationParameterTargetType, chowdsp::EnumChoiceParameter<TriggerType>*> noteModeMapper;
+
+    juce::Identifier connectedPrep = IDs::noConnection;
 
     /* Custom serializer */
     template <typename Serializer>
@@ -412,7 +455,8 @@ struct MidiTargetNonParameterState : chowdsp::NonParamState
     }
 };
 
-class MidiTargetProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>
+class MidiTargetProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>,
+public bitklavier::ConnectionList::Listener
 {
 public:
     MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v);
@@ -426,6 +470,10 @@ public:
     bool producesMidi() const override { return true; }
     bool isMidiEffect() const override { return true; }
     bool hasEditor() const override { return false; }
+
+    void connectionAdded(bitklavier::Connection*) override;
+    void connectionListChanged() override {};
+    void removeConnection(bitklavier::Connection*) override;
 
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
     juce::AudioProcessor::BusesProperties midiTargetBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
@@ -443,6 +491,7 @@ public:
     void changeProgramName(int index, const juce::String &newName) override {}
 
 private:
+    juce::Array<juce::var> connectedPrepIds;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiTargetProcessor)
 };
 #endif //BITKLAVIER0_MIDITARGETPROCESSOR_H

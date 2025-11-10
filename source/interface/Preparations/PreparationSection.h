@@ -60,6 +60,7 @@ public:
 
         virtual void tuningDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
         virtual void tempoDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
+        virtual void synchronicDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
 
         virtual void midifilterDropped(const juce::ValueTree &source, const juce::ValueTree &dest) {}
 

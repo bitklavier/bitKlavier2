@@ -34,7 +34,11 @@ typedef enum PreparationParameterTargetType {
     ResonanceTargetDefault,
     ResonanceTargetRing,
     ResonanceTargetAdd,
-    ResonanceTargetNil
+    ResonanceTargetNil,
+    NostalgicTargetFirst,
+    NostalgicTargetDefault,
+    NostalgicTargetClear,
+    NostalgicTargetNil
 
 } PreparationParameterTargetType;
 

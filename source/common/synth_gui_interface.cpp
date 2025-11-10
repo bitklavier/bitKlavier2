@@ -132,7 +132,10 @@ void SynthGuiInterface::updateFullGui() {
 OpenGlWrapper *SynthGuiInterface::getOpenGlWrapper() {
     return &gui_->open_gl_;
 }
-
+juce::CriticalSection* SynthGuiInterface::getOpenGlCriticalSection()
+{
+    return &gui_->open_gl_critical_section_;
+}
 void SynthGuiInterface::updateGuiControl(const std::string &name, float value) {
     if (gui_ == nullptr)
         return;
@@ -384,7 +387,6 @@ void SynthGuiInterface::removeAllGuiListeners()
 void SynthGuiInterface::addPiano (const juce::String& piano_name)
 {
 }
-//probably dont need to do this. i think we can just do this from the modulationmodulesection
 
 const juce::CriticalSection& SynthGuiInterface::getCriticalSection()
 {
