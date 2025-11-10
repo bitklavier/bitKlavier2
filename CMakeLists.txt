@@ -53,6 +53,8 @@ juce_add_module(modules/melatonin_audio_sparklines)
 # Add any other modules you want modules here, before the juce_add_plugin call
 message("-- Adding external libraries" )
 add_subdirectory(third_party/chowdsp_utils)
+add_subdirectory(third_party/sfzq/SFZPlayer
+)
 
 # Add CLAP format
 
