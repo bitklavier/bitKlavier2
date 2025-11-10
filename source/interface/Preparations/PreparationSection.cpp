@@ -272,11 +272,11 @@ void PreparationSection::resized() {
                     portSize, portSize);
             } else {
                 port->setBounds(isInput
-                                    ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
-                                    : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel,
-                                transformedBounds.getY() + transformedBounds.getHeight() * (
-                                    (1.0f + indexPos) / (totalSpaces + 1.0f)) - portSize / 2,
-                                portSize, portSize);
+                      ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
+                      : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel,
+                  transformedBounds.getY() + transformedBounds.getHeight() * (
+                      1.0f - ((1.0f + indexPos) / (totalSpaces + 1.0f))) - portSize / 2,
+                  portSize, portSize);
             }
         }
     }
