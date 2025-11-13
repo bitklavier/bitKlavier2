@@ -81,7 +81,6 @@ struct MultiSlider2DState : bitklavier::StateChangeableParameter
 
         // must clear at the end, otherwise they'll get reapplied again and again
         stateChanges.changeState.clear();
-
     }
 };
 
