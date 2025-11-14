@@ -487,58 +487,108 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
-
     void processAudioBlock(juce::AudioBuffer<float>& buffer) override {};
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
     void processContinuousModulations(juce::AudioBuffer<float>& buffer);
-
     bool acceptsMidi() const override { return true; }
 
-    void addSoundSet(juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
-    {
-        synchronicSynth->addSoundSet(s);
-    }
-    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
-    {
-        if (t == v && property == IDs::soundset)
-        {
-            juce::String soundset = t.getProperty(property, "");
-            if (soundset == IDs::syncglobal.toString())
-            {
-                juce::String a = t.getProperty(IDs::soundset, "");
-                addSoundSet(&(*parent.getSamples())[a]);
-            }
-            addSoundSet(&(*parent.getSamples())[soundset]);
+//    void addSoundSet(juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
+//    {
+//        synchronicSynth->addSoundSet(s);
+//    }
 
+    void addSoundSet (
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
+        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
+    {
+        synchronicSynth->addSoundSet (s);
+    }
+
+//    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
+//    {
+//        if (t == v && property == IDs::soundset)
+//        {
+//            juce::String soundset = t.getProperty(property, "");
+//            if (soundset == IDs::syncglobal.toString())
+//            {
+//                juce::String a = t.getProperty(IDs::soundset, "");
+//                addSoundSet(&(*parent.getSamples())[a]);
+//            }
+//            addSoundSet(&(*parent.getSamples())[soundset]);
+//
+//            return;
+//        }
+//        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
+//            return;
+//        if (property == IDs::soundset)
+//        {
+//            juce::String a = t.getProperty(IDs::soundset, "");
+//            addSoundSet(&(*parent.getSamples())[a]);
+//        }
+//    }
+
+    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
+
+        if (t == v && property == IDs::soundset) {
+            loadSamples();
             return;
         }
         if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
             return;
-        if (property == IDs::soundset)
-        {
-            juce::String a = t.getProperty(IDs::soundset, "");
-            addSoundSet(&(*parent.getSamples())[a]);
+        if (property == IDs::soundset && t == parent.getValueTree() ) {
+            juce::String soundset = t.getProperty(IDs::soundset, "");
+            auto* samples = parent.getSamples();
+
+            addSoundSet(
+                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
+                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
+                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+            );
         }
     }
+
+//    void loadSamples() {
+//        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
+//        if (soundset == IDs::syncglobal.toString()) {
+//            //if global sync read soundset from global valuetree
+//            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
+//
+//            addSoundSet(&(*parent.getSamples())[soundset]);
+//
+//        }
+//        else {
+//            //otherwise set the piano
+//            addSoundSet(&(*parent.getSamples())[soundset]);
+//        }
+//    }
+
     void loadSamples() {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
 
-            addSoundSet(&(*parent.getSamples())[soundset]);
-
-        }
-        else {
+            addSoundSet(&(*parent.getSamples())[soundset],
+                &(*parent.getSamples())[soundset + "Hammers"],
+                &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                &(*parent.getSamples())[soundset + "Pedals"]);
+        }else {
             //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset]);
-
+            addSoundSet(&(*parent.getSamples())[soundset],
+                &(*parent.getSamples())[soundset + "Hammers"],
+                &(*parent.getSamples())[soundset + "ReleaseResonance"],
+                &(*parent.getSamples())[soundset + "Pedals"]);
         }
     }
+
     void setTuning(TuningProcessor*) override;
     void tuningStateInvalidated() override;
+
     float getBeatThresholdSeconds()
     {
         if (tempo != nullptr)

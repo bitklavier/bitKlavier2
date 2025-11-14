@@ -144,13 +144,46 @@ namespace bitklavier
 
         bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
-            return processorGraph->addConnection (connection);
+            if(connection.source.channelIndex == 0 or connection.source.channelIndex == 1
+                && connection.destination.nodeID != audioOutputNode->nodeID) {
+                processorGraph->removeConnection({{connection.source.nodeID, 0},{audioOutputNode->nodeID,0}});
+                processorGraph->removeConnection({{connection.source.nodeID, 1},{audioOutputNode->nodeID,1}});
+                DBG("[Graph] Removed previous stereo connections from node "
+         + juce::String(connection.source.nodeID.uid)
+         + " to audio output node "
+         + juce::String(audioOutputNode->nodeID.uid));
+            }
+
+            if(processorGraph) {
+                if (!connection.source.isMIDI())
+                    processorGraph->addConnection({{connection.source.nodeID, connection.source.channelIndex+1},
+                        {connection.destination.nodeID,connection.destination.channelIndex+1}});
+                return processorGraph->addConnection (connection);
+            }
+
+            return false;
         }
 
         void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
         {
-            if(processorGraph)
+            if(processorGraph) {
+                if (!connection.source.isMIDI())
+                    processorGraph->removeConnection({{connection.source.nodeID, connection.source.channelIndex+1},
+                       {connection.destination.nodeID,connection.destination.channelIndex+1}});
                 processorGraph->removeConnection (connection);
+            }
+
+            if(connection.source.channelIndex == 0 or connection.source.channelIndex == 1
+             && connection.destination.nodeID != audioOutputNode->nodeID) {
+                if (!processorGraph->isAnInputTo(connection.source.nodeID,audioOutputNode->nodeID)) {
+                    processorGraph->addConnection ({ { connection.source.nodeID, 0 }, { audioOutputNode->nodeID, 0 } });
+                    processorGraph->addConnection ({ { connection.source.nodeID, 1 }, { audioOutputNode->nodeID, 1 } });
+                    DBG ("[Graph] Reconnected node "
+                 + juce::String(connection.source.nodeID.uid) + "  to audio output node "
+                 + juce::String(audioOutputNode->nodeID.uid));
+                }
+
+             }
         }
 
         bool isConnected (juce::AudioProcessorGraph::Connection& connection)
@@ -160,7 +193,8 @@ namespace bitklavier
         }
 
         bool isConnected (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
-        {if(processorGraph)
+        {
+            if(processorGraph)
             return processorGraph->isConnected (src, dest);
         }
 

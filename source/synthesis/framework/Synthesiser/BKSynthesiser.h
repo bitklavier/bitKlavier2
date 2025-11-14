@@ -331,10 +331,10 @@ class BKSynthesiser
                  * @param newOffsets
                  * @param tune_transpositions
                  */
-                void updateMidiNoteTranspositions(juce::Array<float>& newOffsets, bool tune_transpositions) {
-                    midiNoteTranspositions = newOffsets;
-                    tuneTranspositions = tune_transpositions;
-                }
+//                void updateMidiNoteTranspositions(juce::Array<float>& newOffsets, bool tune_transpositions) {
+//                    midiNoteTranspositions = newOffsets;
+//                    tuneTranspositions = tune_transpositions;
+//                }
 
                 /**
                  * get reference to any noteOn specifications (startTime, direction, loopmode) needed

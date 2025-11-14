@@ -96,7 +96,7 @@ void PreparationSection::setPortInfo() {
                 auto processor = node->getProcessor();
                 //check if main audio input bus/ is enabled
                 if (processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
-                    for (int i = 0; i < processor->getMainBusNumInputChannels(); ++i) {
+                    for (int i = 0; i < processor->getMainBusNumInputChannels(); i+=2) {
                         juce::ValueTree v{IDs::PORT};
                         v.setProperty(IDs::nodeID,
                                       juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
@@ -138,9 +138,31 @@ void PreparationSection::setPortInfo() {
                     numIns = numIns + 1;
                 }
 
+                //check if main audio output bus is enabled
+                if (processor->getBus(false, 0) != nullptr && getProcessor()->getBus(false, 0)->isEnabled()) {
+                    for (int i = 0; i < processor->getMainBusNumOutputChannels(); i+=2) {
+                        auto chIdx = processor->getBus(false,0)->getChannelIndexInProcessBlockBuffer(i);
+                        juce::ValueTree v{IDs::PORT};
+                        v.setProperty(IDs::nodeID,
+                                      juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
+                                      nullptr);
+                        v.setProperty(IDs::chIdx, chIdx, nullptr);
+                        v.setProperty(IDs::isIn, false, nullptr);
+                        bool add = true;
+                        for (auto vt: state) {
+                            if (vt.isEquivalentTo(v)) {
+                                add = false;
+                            }
+                        }
+                        if (add) {
+                            state.addChild(v, -1, nullptr);
+                        }
+                        numOuts = numOuts + 1;
+                    }
+                }
                 //check if send audio output bus is enabled
                 if (processor->getBus(false, 2) != nullptr && getProcessor()->getBus(false, 2)->isEnabled()) {
-                    for (int i = 0; i < processor->getBus(false,2)->getNumberOfChannels(); ++i) {
+                    for (int i = 0; i < processor->getBus(false,2)->getNumberOfChannels(); i+=2) {
                         auto chIdx = processor->getBus(false,2)->getChannelIndexInProcessBlockBuffer(i);
                         juce::ValueTree v{IDs::PORT};
                         v.setProperty(IDs::nodeID,
@@ -178,7 +200,6 @@ void PreparationSection::setPortInfo() {
                     }
                     numOuts = numOuts + 1;
                 }
-                //this->resized();
             }
     }
 }
@@ -186,7 +207,7 @@ void PreparationSection::setPortInfo() {
 void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
     //todo investigate need for this only in release build
-    if(e.getNumberOfClicks() == 2) {
+    if (e.getNumberOfClicks() == 2) {
         mouseDoubleClick(e);
     }
 }
@@ -235,8 +256,7 @@ void PreparationSection::resized() {
             const bool isInput = port->isInput;
 
             auto channelIndex = port->pin.channelIndex;
-            if (!isInput)
-                channelIndex -= 2; //safely assume all outputs have stereo main output and only draw send ports
+
             int busIdx = 0;
             processor->getOffsetInBusBufferForAbsoluteChannelIndex(isInput, channelIndex, busIdx);
 
@@ -244,7 +264,7 @@ void PreparationSection::resized() {
             int index = port->pin.isMIDI() ? (total - 1) : channelIndex;
             auto totalSpaces = static_cast<float>(total) +
                                (static_cast<float>(juce::jmax(0, processor->getBusCount(isInput) - 1)) * 0.5f);
-            auto indexPos = static_cast<float>(index) + (static_cast<float>(busIdx) * 0.5f);
+            auto indexPos = static_cast<float>(index/2) + (static_cast<float>(busIdx) * 0.5f);
             auto transformedBounds = item->layer_1_.getBounds();
             if (port->pin.isMIDI()) {
                 port->setBounds(
@@ -256,11 +276,11 @@ void PreparationSection::resized() {
                     portSize, portSize);
             } else {
                 port->setBounds(isInput
-                                    ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
-                                    : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel,
-                                transformedBounds.getY() + transformedBounds.getHeight() * (
-                                    (1.0f + indexPos) / (totalSpaces + 1.0f)) - portSize / 2,
-                                portSize, portSize);
+                      ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
+                      : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel,
+                  transformedBounds.getY() + transformedBounds.getHeight() * (
+                      1.0f - ((1.0f + indexPos) / (totalSpaces + 1.0f))) - portSize / 2,
+                  portSize, portSize);
             }
         }
     }

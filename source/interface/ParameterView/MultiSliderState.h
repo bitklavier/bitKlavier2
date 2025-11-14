@@ -133,7 +133,8 @@ template <typename Serializer>
 void deserializeMultiSliderParam(
     typename Serializer::DeserializedType deserial,
     MultiSliderState& msliderParam,
-    const juce::String& thisSliderID)
+    const juce::String& thisSliderID,
+    float defaultVal = 1.f)
 {
     // Reconstruct the attribute names using the base ID
     juce::String thisSlider_sizeID = thisSliderID + "_sliderVals_size";
@@ -145,7 +146,7 @@ void deserializeMultiSliderParam(
     msliderParam.sliderVals_size = myStr.getIntValue();
     myStr = deserial->getStringAttribute(thisSliderID+"_sliderVals");
     std::vector<float> sliderVals_vec = parseStringToVector<float>(myStr);
-    populateAtomicArrayFromVector(msliderParam.sliderVals, 1.0f, sliderVals_vec);
+    populateAtomicArrayFromVector(msliderParam.sliderVals, defaultVal, sliderVals_vec);
 
     // Deserialize the active sliders
     myStr = deserial->getStringAttribute(activeSliders_sizeID);

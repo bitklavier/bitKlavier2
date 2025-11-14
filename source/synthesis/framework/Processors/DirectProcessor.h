@@ -164,14 +164,17 @@ class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
                         public juce::ValueTree::Listener,public TuningListener {
 public:
     DirectProcessor(SynthBase &parent, const juce::ValueTree &v);
-
     ~DirectProcessor() {
+        /*
+         * both of these need to be called in the destructor
+         * - the first is regarding sample library choice for this preparation
+         * - the second is for any attached Tuning prep
+         */
         parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
 
     void tuningStateInvalidated() override;
-
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
 
     void releaseResources() override {
@@ -181,13 +184,9 @@ public:
     };
 
     void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
-
     void processBlockBypassed(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
-
     void processContinuousModulations(juce::AudioBuffer<float> &buffer);
-
     bool acceptsMidi() const override { return true; }
-
 
     void addSoundSet(
         juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *s, // main samples
@@ -271,8 +270,8 @@ public:
                 samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
             );
         }
-
     }
+
     void loadSamples() {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {

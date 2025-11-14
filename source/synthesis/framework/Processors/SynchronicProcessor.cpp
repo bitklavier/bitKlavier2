@@ -124,7 +124,6 @@ void SynchronicProcessor::tuningStateInvalidated() {
     synchronicSynth->setTuning(nullptr);
 }
 
-
 void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {
     // this for debugging
@@ -1013,8 +1012,8 @@ void SynchronicParams::deserialize (typename Serializer::DeserializedType deseri
     /*
      * then the more complex params
      */
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions_");
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions_", 0.f); // 0 offset for transpositions
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_"); // 1. multiplier for the rest
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
 
