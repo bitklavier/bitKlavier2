@@ -158,6 +158,8 @@ public:
         return -1.0f;
     }
 
+
+
 private:
     SynthBase* parent;
     std::promise<void> loadPromise;
@@ -220,7 +222,11 @@ public:
         loadManager->triggerAsyncUpdate();
     }
     JobStatus runJob() override;
+    bool loadSoundFont(
+                      juce::File sfzFile,
+                     juce::AudioFormatManager& formatManager,
 
+                     double maxSampleLengthSecs = 10.0);
     bool loadSamples(); // calls one of the following, depending on context
     bool loadMainSamplesByPitch();
     bool loadHammerSamples();

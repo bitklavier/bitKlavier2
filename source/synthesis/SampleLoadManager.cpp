@@ -9,7 +9,8 @@
 /**
  * ******* SampleLoadManager stuff *******
  */
-
+#include "SFZSound.h"
+#include "SF2Sound.h"
 SampleLoadManager::SampleLoadManager (SynthBase* parent, std::shared_ptr<UserPreferencesWrapper> preferences) : preferences (preferences),
                                                                                          audioFormatManager (new juce::AudioFormatManager()),parent(parent)
 
@@ -702,5 +703,117 @@ bool SampleLoadJob::loadMainSamplesByPitch()
         //DBG ("done loading main samples for " + filename);
     }
 
+    return true;
+}
+
+bool SampleLoadJob::loadSoundFont(
+                   juce::File sfzFile,
+                   juce::AudioFormatManager& formatManager,
+                   double maxSampleLengthSecs)
+{
+    // --- Validation ---
+    if (soundset == nullptr)
+    {
+        DBG("loadSoundFont: soundset pointer is null.");
+        return false;
+    }
+
+    if (!sfzFile.existsAsFile())
+    {
+        DBG("loadSoundFont: File does not exist: " + sfzFile.getFullPathName());
+        return false;
+    }
+
+    formatManager.registerBasicFormats();
+
+    const juce::String ext = sfzFile.getFileExtension().toLowerCase();
+    std::unique_ptr<SFZSound> sound;
+
+    if (ext == ".sfz")
+        sound = std::make_unique<SFZSound>(sfzFile.getFullPathName().toStdString());
+    else if (ext == ".sf2")
+        sound = std::make_unique<SF2Sound>(sfzFile.getFullPathName().toStdString());
+    else
+    {
+        DBG("loadSoundFont: Unsupported extension " + ext);
+        return false;
+    }
+
+    // --- Load the soundfont ---
+    sound->load_regions();
+    sound->load_samples();
+
+
+
+
+
+    float dBFSBelow = -100.0f;
+    int regionIndex = 0;
+
+    // --- Load each region into BKSamplerSound ---
+    for (int i =0; i <sound->num_regions(); i++)
+    {
+    auto regions = sound->region_at(i);
+        if (region == nullptr || region->sample == nullptr)
+            continue;
+
+        const juce::File sampleFile = region->sample->getFile();
+
+        std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(sampleFile));
+        if (reader == nullptr)
+        {
+            DBG("loadSoundFont: Failed to open sample file: " + sampleFile.getFullPathName());
+            continue;
+        }
+
+        // --- Wrap the reader into your Sample class ---
+        std::shared_ptr<Sample<juce::AudioFormatReader>> sample =
+            std::make_shared<Sample<juce::AudioFormatReader>>(*reader, maxSampleLengthSecs);
+
+        // --- Define note and velocity ranges ---
+        juce::BigInteger noteRange;
+        noteRange.setRange(region->lokey, region->hikey - region->lokey + 1, true);
+
+        juce::BigInteger velRange;
+        velRange.setRange(region->lovel, region->hivel - region->lovel + 1, true);
+
+        int rootMidiNote = region->pitch_keycenter >= 0 ? region->pitch_keycenter : region->lokey;
+        int transpose = (region->lokey == region->hikey) ? (region->lokey - rootMidiNote) : 0;
+
+        // --- Create BKSamplerSound ---
+        auto* newSound = new BKSamplerSound<juce::AudioFormatReader>(
+            region->sample->getShortName(),
+            sample,
+            noteRange,
+            rootMidiNote,
+            transpose,
+            velRange,
+            1,  // numLayers
+            dBFSBelow
+        );
+
+        // --- Apply loop information ---
+        if (region->loop_mode != sfzero::Region::no_loop)
+        {
+            newSound->setLoopMode(BKSamplerSound<juce::AudioFormatReader>::LoopMode::forward);
+
+            const double sampleRate = sample->getSampleRate();
+            const double startSecs = (double)region->loop_start / sampleRate;
+            const double endSecs   = (double)region->loop_end / sampleRate;
+
+            newSound->setLoopPointsInSeconds(juce::Range<double>(startSecs, endSecs));
+        }
+
+        // --- Add to soundset ---
+        soundset->add(newSound);
+
+        // --- Debug output ---
+        DBG("Loaded region " + juce::String(regionIndex++) +
+            ": " + region->sample->getShortName() +
+            " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
+            " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
+    }
+
+    DBG("loadSoundFont: Finished loading " + sfzFile.getFileNameWithoutExtension());
     return true;
 }

@@ -31,3 +31,6 @@
 	path = modules/clap-juce-extensions
 	url = https://github.com/free-audio/clap-juce-extensions.git
 	branch = main
+[submodule "third_party/sfzq"]
+	path = third_party/sfzq
+	url = git@github.com:davispolito/sfzq.git
