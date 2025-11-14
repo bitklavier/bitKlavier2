@@ -92,6 +92,11 @@ void PeakMeterSection::setLabel(juce::String newLabel)
     peak_meter_label->setText(newLabel);
 }
 
+void PeakMeterSection::setColor(juce::Colour color)
+{
+    peak_meter_label->setColor (color);
+}
+
 void PeakMeterSection::resized() {
 
    juce::Rectangle<int> bounds = getLocalBounds();

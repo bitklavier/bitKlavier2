@@ -28,6 +28,7 @@ public:
     int getBuffer();
 
     void setLabel(juce::String newLabel);
+    void setColor(juce::Colour color);
     void resized() override;
     void paintBackground(juce::Graphics& g) override;
 

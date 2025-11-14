@@ -475,6 +475,7 @@ void ConstructionSite::resized() {
         &gainParams.outputLevels
     );
     levelMeter->setLabel("Main");
+    levelMeter->setColor (juce::Colours::black);
     addSubSection(levelMeter.get());
 
     // Debug log the bounds
@@ -484,6 +485,7 @@ void ConstructionSite::resized() {
     cableView.updateCablePositions();
     modulationLineView.setBounds(getLocalBounds());
     bounds.removeFromRight(title_width);
+    bounds.removeFromTop(50);
 
     // bounds for level meter on right side
     juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
