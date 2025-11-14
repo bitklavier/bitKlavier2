@@ -109,28 +109,28 @@ public:
         transpositionsSlider->setMinMaxDefaultInc({-12., 12, 0., 0.001});
         transpositionsSlider->setName("Transpositions");
         addStateModulatedComponent (transpositionsSlider.get());
-        transpositionsSlider->updateFromParams();
+        transpositionsSlider->updateFromParams(juce::dontSendNotification);
 
         accentsSlider = std::make_unique<OpenGL_MultiSlider>("accents_", &params.accents, listeners);
         accentsSlider->setComponentID ("accents_");
         accentsSlider->setMinMaxDefaultInc({0., 2, 1., 0.1});
         accentsSlider->setName("Accents");
         addStateModulatedComponent (accentsSlider.get());
-        accentsSlider->updateFromParams();
+        accentsSlider->updateFromParams(juce::dontSendNotification);
 
         sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustainlength_multipliers", &params.sustainLengthMultipliers, listeners);
         sustainLengthMultipliersSlider->setComponentID ("sustainlength_multipliers");
         sustainLengthMultipliersSlider->setMinMaxDefaultInc({-2., 2., 1., 0.01});
         sustainLengthMultipliersSlider->setName("Sustain Length Multipliers");
         addStateModulatedComponent (sustainLengthMultipliersSlider.get());
-        sustainLengthMultipliersSlider->updateFromParams();
+        sustainLengthMultipliersSlider->updateFromParams(juce::dontSendNotification);
 
         beatLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("beatlength_multipliers", &params.beatLengthMultipliers, listeners);
         beatLengthMultipliersSlider->setComponentID ("beatlength_multipliers");
         beatLengthMultipliersSlider->setMinMaxDefaultInc({0., 2., 1., 0.01});
         beatLengthMultipliersSlider->setName("Beat Length Multipliers");
         addStateModulatedComponent (beatLengthMultipliersSlider.get());
-        beatLengthMultipliersSlider->updateFromParams();
+        beatLengthMultipliersSlider->updateFromParams(juce::dontSendNotification);
 
         // min/max sliders
         clusterMinMaxSlider = std::make_unique<OpenGL_ClusterMinMaxSlider>(&params.clusterMinMaxParams, listeners);

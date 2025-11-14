@@ -24,18 +24,18 @@ public:
         isModulated_ = true;
         addMyListener(this);
 
-        updateFromParams();
+        updateFromParams(juce::dontSendNotification);
     }
 
     /*
      * updates the sliders from the current parameter values: useful after a mod or reset
      */
-    void updateFromParams()
+    void updateFromParams(juce::NotificationType notify = juce::sendNotification)
     {
         setToOnlyActive(
             atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
             atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
-            juce::sendNotification);
+            notify);
     }
 
     //setBackgroundColor(findColour(Skin::kWidgetBackground, true));
@@ -110,11 +110,11 @@ public:
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
         /**
-         * todo: allow for multiple values in each slider, for transpositions: perhaps make OpenGL_MultiSlider2d
+         * todo: confirm we can remove this mouseInteraction stuff, now that we have notifications settings differently
+         * depending on what the values are changes
          */
-
-        if (!mouseInteraction)
-            return;
+//        if (!mouseInteraction)
+//            return;
 
         /*
          * create string representations of the multislider vals/states

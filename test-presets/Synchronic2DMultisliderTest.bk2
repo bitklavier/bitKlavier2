@@ -3,8 +3,8 @@
 <GALLERY soundset="Default">
   <PIANO isActive="1" name="default">
     <PREPARATIONS>
-      <synchronic type="1" width="245" height="125" x_y="332, 412" uuid="6221ede139e04585901d2bfbc4ed6d0b"
-                  soundset="syncglobal" nodeID="1646390753" numIns="1" numOuts="2"
+      <synchronic type="1" width="245" height="125" x_y="590, 336" uuid="7f364d827b824761b0fec791cc66ff0e"
+                  soundset="syncglobal" nodeID="2134265218" numIns="1" numOuts="2"
                   numPulses="20.000" numLayers="1.000" clusterThickness="8.000"
                   clusterThreshold="500.000" Send="0.000" OutputGain="0.000" noteOnGain="0.000"
                   pulseTriggeredBy="0" determinesCluster="0" skipFirst="1" UseTuning="0"
@@ -15,20 +15,20 @@
                   delay="0.000" notify="0" currentlyEditing="0.000" envelope_0="1"
                   envelope_1="0" envelope_2="0" envelope_3="0" envelope_4="0" envelope_5="0"
                   envelope_6="0" envelope_7="0" envelope_8="0" envelope_9="0" envelope_10="0"
-                  envelope_11="0" transpositions__sliderVals_size="5" transpositions__sliderVals="4.925001/-5.666000,1.965001/8.796001/-3.055000,3.622642/6.969001/"
-                  transpositions__activeVals_size="12" transpositions__activeVals="true true false true true false true false false false false false "
-                  accents__sliderVals_size="0" accents__sliderVals="" accents__activeVals_size="0"
-                  accents__activeVals="" sustain_length_multipliers_sliderVals_size="0"
-                  sustain_length_multipliers_sliderVals="" sustain_length_multipliers_activeVals_size="0"
-                  sustain_length_multipliers_activeVals="" beat_length_multipliers_sliderVals_size="0"
-                  beat_length_multipliers_sliderVals="" beat_length_multipliers_activeVals_size="0"
-                  beat_length_multipliers_activeVals="" envelope_sequence_attacks="3 3 3 3 3 3 3 3 3 3 3 3 "
-                  envelope_sequence_decays="10 10 10 10 10 10 10 10 10 10 10 10 "
+                  envelope_11="0" transpositions__sliderVals_size="6" transpositions__sliderVals="7.536000/-6.484000/6.730000,-6.113210/1.442000/-2.992000,10.188700,3.622640/12.000000/"
+                  transpositions__activeVals_size="13" transpositions__activeVals="true true false true false true true true false false false false false "
+                  accents__sliderVals_size="2" accents__sliderVals="1.3 0.5 " accents__activeVals_size="12"
+                  accents__activeVals="true false true false false false false false false false false false "
+                  sustain_length_multipliers_sliderVals_size="5" sustain_length_multipliers_sliderVals="1 1.85 2 2 2 "
+                  sustain_length_multipliers_activeVals_size="12" sustain_length_multipliers_activeVals="true true true true true false false false false false false false "
+                  beat_length_multipliers_sliderVals_size="6" beat_length_multipliers_sliderVals="1 0.87 0.78 0.78 0.57 0.6 "
+                  beat_length_multipliers_activeVals_size="12" beat_length_multipliers_activeVals="true false false false false true true true true true false false "
+                  envelope_sequence_attacks="3 3 3 3 3 3 3 3 3 3 3 3 " envelope_sequence_decays="10 10 10 10 10 10 10 10 10 10 10 10 "
                   envelope_sequence_sustains="1 1 1 1 1 1 1 1 1 1 1 1 " envelope_sequence_releases="50 50 50 50 50 50 50 50 50 50 50 50 "
                   envelope_sequence_attackPowers="0 0 0 0 0 0 0 0 0 0 0 0 " envelope_sequence_decayPowers="0 0 0 0 0 0 0 0 0 0 0 0 "
-                  envelope_sequence_releasePowers="0 0 0 0 0 0 0 0 0 0 0 0 " multislider_vals="4.925001/-5.666000,1.965001/8.796001/-3.055000,3.622642/6.950001/"
-                  multislider_size="5" multislider_states="true true false true true false true false false false false false"
-                  multislider_states_size="12">
+                  envelope_sequence_releasePowers="0 0 0 0 0 0 0 0 0 0 0 0 " multislider_vals="7.536000/-6.484000/6.730000,-6.113210/1.442000/-2.992000,10.188700,3.622640/12.000000/"
+                  multislider_size="6" multislider_states="true true false true false true true true false false false false false"
+                  multislider_states_size="13">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="numPulses" start="1.0" end="100.0" skew="0.9855645895004272"/>
           <MODULATABLE_PARAM parameter="numLayers" start="1.0" end="10.0" skew="0.854755699634552"/>
@@ -46,12 +46,12 @@
           <MODULATABLE_PARAM parameter="release" start="0.0" end="10000.0" skew="0.2313782125711441"/>
           <MODULATABLE_PARAM parameter="delay" start="0.0" end="1000.0" skew="1.0"/>
         </MODULATABLE_PARAMS>
-        <PARAM_DEFAULT multislider_vals="4.925001/-5.666000,1.965001/8.796001/-3.055000,3.622642/6.950001/"
-                       multislider_size="5" multislider_states="true true false true true false true false false false false false"
-                       multislider_states_size="12"/>
-        <PORT nodeID="1646390753" chIdx="4096" isIn="1"/>
-        <PORT nodeID="1646390753" chIdx="0" isIn="0"/>
-        <PORT nodeID="1646390753" chIdx="2" isIn="0"/>
+        <PARAM_DEFAULT multislider_vals="7.536000/-6.484000/6.730000,-6.113210/1.442000/-2.992000,10.188700,3.622640/12.000000/"
+                       multislider_size="6" multislider_states="true true false true false true true true false false false false false"
+                       multislider_states_size="13"/>
+        <PORT nodeID="2134265218" chIdx="4096" isIn="1"/>
+        <PORT nodeID="2134265218" chIdx="0" isIn="0"/>
+        <PORT nodeID="2134265218" chIdx="2" isIn="0"/>
       </synchronic>
     </PREPARATIONS>
     <CONNECTIONS/>

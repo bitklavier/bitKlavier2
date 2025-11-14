@@ -1206,7 +1206,10 @@ void BKMultiSlider::showModifyPopupMenu(int which)
         juce::ModalCallbackFunction::forComponent (sliderModifyMenuCallback, this, which));
 }
 
-
+/**
+ * todo: need for OpenGL wrapper to know that this is from a mouseInteraction
+ *      none of these are registering for real unless something is changed after this, before closing/opening the prepview
+ */
 void BKMultiSlider::sliderModifyMenuCallback (const int result, BKMultiSlider* ms, int which)
 {
     if (ms == nullptr)

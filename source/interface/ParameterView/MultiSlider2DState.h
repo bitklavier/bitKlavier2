@@ -151,7 +151,7 @@ void deserializeMultiSliderParam(
     typename Serializer::DeserializedType deserial,
     MultiSlider2DState& msliderParam,
     const juce::String& thisSliderID,
-    float defaultVal = 1.f)
+    float defaultVal = 0.f)
 {
     // Reconstruct the attribute names using the base ID
     juce::String thisSlider_sizeID = thisSliderID + "_sliderVals_size";

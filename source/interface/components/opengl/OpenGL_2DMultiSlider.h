@@ -11,6 +11,14 @@
 #include "synth_slider.h"
 #include "juce_data_structures/juce_data_structures.h"
 
+/**
+ * current problem: when you add a second transposition, it won't actually save unless you drag it around
+ *  - simple: add second transposition, don't move it, close the Synchronic prep view, reopen it, and the second transposition will be gone
+ *
+ * then: need to actually implement the multiple transpositions on the back end
+ *  - right now it's just loading the first value
+ */
+
 class OpenGL_2DMultiSlider: public OpenGlAutoImageComponent<BKMultiSlider>, BKMultiSlider::Listener
 {
 public:
@@ -26,7 +34,7 @@ public:
         isModulated_ = true;
         addMyListener(this);
 
-        updateFromParams();
+        updateFromParams(juce::dontSendNotification);
     }
 
     juce::Array<juce::Array<float>> getUIValuesFromSliderVals(
@@ -72,13 +80,13 @@ public:
     /*
      * updates the sliders from the current parameter values: useful after a mod or reset
      */
-    void updateFromParams()
+    void updateFromParams(juce::NotificationType notify = juce::sendNotification)
     {
         setToOnlyActive(
             //atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
             getUIValuesFromSliderVals(params->sliderVals, params->sliderVals_size, params->sliderDepths),
             atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
-            juce::sendNotification);
+            notify);
     }
 
     //setBackgroundColor(findColour(Skin::kWidgetBackground, true));
@@ -144,12 +152,6 @@ public:
         return new OpenGL_2DMultiSlider();
     }
 
-    void multiSliderValueChanged(juce::String name, int whichSlider, juce::Array<float> values) override
-    {
-        DBG("multiSliderValueChanged");
-        //seems to not ever be called
-    }
-
     void updateSliderValsFromUI(
         const juce::Array<juce::Array<float>>& userMultiSliderValues,
         std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH>& sliderVals,
@@ -212,10 +214,20 @@ public:
         sliderVals_size.store(new_sliderVals_size);
     }
 
+    void multiSliderValueChanged(juce::String name, int whichSlider, juce::Array<float> values) override
+    {
+        DBG("multiSliderValueChanged");
+        //seems to not ever be called
+    }
+
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
-        if (!mouseInteraction)
-            return;
+        /**
+         * todo: confirm we can remove this mouseInteraction stuff, now that we have notifications settings differently
+         * depending on what the values are changes
+         */
+//        if (!mouseInteraction)
+//            return;
 
         /*
          * create string representations of the multislider vals/states
