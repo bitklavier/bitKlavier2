@@ -5,19 +5,15 @@
 #include "footer_section.h"
 #include "text_look_and_feel.h"
 #include "synth_base.h"
-
+#include "GainProcessor.h"
 FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"),
                                                            body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
-                                                            gallery(data->tree),
-                                                            gainProcessor (*data->synth, data->tree),
-                                                            busEqProcessor (*data->synth, data->tree),
-                                                            busCompressorProcessor (*data->synth, data->tree)
+                                                            gallery(data->tree)
 {
 
     jassert(gallery.hasType(IDs::GALLERY));
     addOpenGlComponent(body_);
 
-    data->synth->setGainProcessor(&gainProcessor);
 
     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(keymap_);
     addStateModulatedComponent(keyboard_component_.get());
@@ -37,6 +33,17 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     compressorButton->setLookAndFeel(TextLookAndFeel::instance());
     compressorButton->setButtonText("Compressor");
 
+    auto gainProcessor = data->synth->getMainVolumeProcessor();
+    auto& gainParams = gainProcessor->getState().params;
+    auto& listeners  = gainProcessor->getState().getParameterListeners();
+    levelMeter = std::make_unique<PeakMeterSection>(
+        "BusGain",
+        gainParams.outputGain,
+        listeners,
+        &gainParams.outputLevels,
+        true
+    );
+    addSubSection(levelMeter.get());
     // setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
 }
@@ -61,16 +68,7 @@ void FooterSection::resized() {
 
     // the level meter and output gain slider
     // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
-    auto& gainParams = gainProcessor.getState().params;
-    auto& listeners  = gainProcessor.getState().getParameterListeners();
-    levelMeter = std::make_unique<PeakMeterSection>(
-        "BusGain",
-        gainParams.outputGain,
-        listeners,
-        &gainParams.outputLevels,
-        true
-    );
-    addSubSection(levelMeter.get());
+
 
     auto bounds = getLocalBounds();
     const int keySelectorWidth = 1000;
@@ -105,7 +103,11 @@ void FooterSection::reset() {
 
 
 void FooterSection::buttonClicked(juce::Button *clicked_button) {
-    // if (clicked_button == eqButton.get()) {
+    if (clicked_button == compressorButton.get()) {
+        auto interface = findParentComponentOfClass<SynthGuiInterface>();
+        showPrepPopup(interface->getCompressorPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);
+    }
+
     //     showPrepPopup(std::move(EQPrep.getPrepPopup()),gallery,bitklavier::BKPreparationType::PreparationTypeEQ);
     // } else if (clicked_button == compressorButton.get()) {
     //     showPrepPopup(std::move(CompressorPrep.getPrepPopup()),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);

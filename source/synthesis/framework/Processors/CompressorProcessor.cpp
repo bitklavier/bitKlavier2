@@ -11,7 +11,6 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
     : PluginBase (parent, vt, nullptr, compressorBusLayout())
 {
     parent.getValueTree().addListener(this);
-    loadSamples();
 }
 
 void CompressorProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

@@ -6,16 +6,10 @@
 
 #include "EnvParams.h"
 #include "EnvelopeSequenceParams.h"
-#include "Identifiers.h"
 #include "PluginBase.h"
-#include "Synthesiser/BKSynthesiser.h"
-#include "TransposeParams.h"
-#include "TuningProcessor.h"
-#include "buffer_debugger.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
-#include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 
 // ********************************************************************************************* //
@@ -65,7 +59,7 @@ struct GainNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 
 class GainProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<GainParams, GainNonParameterState>>,
-                        public juce::ValueTree::Listener, public TuningListener
+                        public juce::ValueTree::Listener
 {
 public:
     GainProcessor (SynthBase& parent, const juce::ValueTree& v);
@@ -93,10 +87,8 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
     void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {};
-    void tuningStateInvalidated() override {};
 
 private:
-    BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainProcessor)
 };
 

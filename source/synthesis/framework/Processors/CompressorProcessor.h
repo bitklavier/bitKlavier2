@@ -5,13 +5,9 @@
 #pragma once
 #include "Identifiers.h"
 #include "PluginBase.h"
-#include "Synthesiser/BKSynthesiser.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
-#include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-
 // ********************************************************************************************* //
 // ****************************  CompressorParams  ********************************************* //
 // ********************************************************************************************* //
@@ -36,7 +32,7 @@ struct CompressorNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 
 class CompressorProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<CompressorParams, CompressorNonParameterState>>,
-                        public juce::ValueTree::Listener, public TuningListener
+                        public juce::ValueTree::Listener
 {
 public:
     CompressorProcessor (SynthBase& parent, const juce::ValueTree& v);
@@ -58,29 +54,7 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override{};
-    // void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
-    // void processContinuousModulations(juce::AudioBuffer<float>& buffer);
-    // void updateMidiNoteTranspositions(int noteOnNumber);
-    // void updateAllMidiNoteTranspositions();
-    // void handleMidiTargetMessages(int channel);
-    // bool acceptsMidi() const override { return true; }
-    // void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-    // {
-    //     ptrToSamples = s;
-    // }
 
-    // void addSoundSet (
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
-    // {
-    //     nostalgicSynth->addSoundSet (s);
-    // }
-
-    // void setSynchronic (SynchronicProcessor*) override;
-    // void setTuning (TuningProcessor*) override;
-    void tuningStateInvalidated() override{};
 
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
@@ -111,44 +85,9 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
-    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {
 
-        if (t == v && property == IDs::soundset) {
-            loadSamples();
-            return;
-        }
-        if (!v.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
-            return;
-        if (property == IDs::soundset && t == parent.getValueTree()) {
-            juce::String a = t.getProperty(IDs::soundset, "");
-            addSoundSet(&(*parent.getSamples())[a],
-                        &(*parent.getSamples())[a+"Hammers"],
-                        &(*parent.getSamples())[a+"ReleaseResonance"],
-                        &(*parent.getSamples())[a+"Pedals"]);
-        }
-    }
 
-    void loadSamples() {
-        juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
-        if (soundset == IDs::syncglobal.toString()) {
-            //if global sync read soundset from global valuetree
-            soundset = parent.getValueTree().getProperty(IDs::soundset, "");
-
-            addSoundSet(&(*parent.getSamples())[soundset],
-                     &(*parent.getSamples())[soundset + "Hammers"],
-                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                     &(*parent.getSamples())[soundset + "Pedals"]);
-        }else {
-            //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset],
-                        &(*parent.getSamples())[soundset + "Hammers"],
-                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                        &(*parent.getSamples())[soundset + "Pedals"]);
-        }
-    }
 
 private:
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
-    BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompressorProcessor)
 };

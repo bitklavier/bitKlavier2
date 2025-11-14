@@ -49,6 +49,7 @@ namespace bitklavier
 }
 
 class PopupItems;
+class SynthSection;
 class
 SynthGuiInterface :  public juce::ApplicationCommandTarget {
 public:
@@ -138,8 +139,7 @@ public:
     juce::ValueTree gallery;
 
     juce::CriticalSection* getOpenGlCriticalSection();
-
-
+    std::unique_ptr<SynthSection> getCompressorPopup();
   protected:
     std::atomic<bool> loading;
     std::unique_ptr<juce::FileChooser> filechooser;

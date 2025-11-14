@@ -3,11 +3,6 @@
 //
 
 #pragma once
-#include "EQProcessor.h"
-#include "CompressorProcessor.h"
-// #include "EQPreparation.h"
-// #include "CompressorPreparation.h"
-#include "GainProcessor.h"
 #include "OpenGL_KeymapKeyboard.h"
 #include "open_gl_background.h"
 #include "peak_meter_section.h"
@@ -33,9 +28,7 @@ public:
     // EQPreparation EQPrep;
     // CompressorPreparation CompressorPrep;
     std::shared_ptr<PeakMeterSection> levelMeter;
-    GainProcessor gainProcessor;
-    EQProcessor  busEqProcessor;
-    CompressorProcessor busCompressorProcessor;
+
     KeymapKeyboardState keymap_;
     std::vector<Listener*> listeners_;
     std::shared_ptr<OpenGlQuad> body_;

@@ -16,6 +16,7 @@
 
 #include "synth_gui_interface.h"
 
+#include "CompressorParameterView.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
 
@@ -471,6 +472,11 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
     popup.addItem (-1, "");
     addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
     return popup;
+}
+
+std::unique_ptr<SynthSection> SynthGuiInterface::getCompressorPopup() {
+    auto proc = synth_->getCompressorProcessor();
+    return std::make_unique<CompressorParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper());
 }
 
 #endif

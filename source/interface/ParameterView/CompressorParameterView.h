@@ -6,14 +6,14 @@
 #define BITKLAVIER2_CompressorPARAMETERVIEW_H
 #include "CompressorProcessor.h"
 #include "synth_section.h"
-
+#include "default_look_and_feel.h"
 class CompressorParameterView : public SynthSection
 {
 public:
     CompressorParameterView (chowdsp::PluginState& pluginState, CompressorParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), eqparams_ (params)
     {
         // the name that will appear in the UI as the name of the section
-        setName ("eq");
+        setName ("compressor");
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 

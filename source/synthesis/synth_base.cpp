@@ -14,6 +14,8 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "synth_base.h"
+
+#include "CompressorProcessor.h"
 #include "SampleLoadManager.h"
 
 #include "FullInterface.h"
@@ -87,6 +89,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
         std::make_unique<bitklavier::ModConnectionList> (
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
     engine_ = std::make_unique<bitklavier::SoundEngine>();
+    gainProcessor = std::make_unique<GainProcessor>(*this,v);
+    compressorProcessor = std::make_unique<CompressorProcessor>(*this,v);
 }
 
 SynthBase::~SynthBase()
@@ -894,3 +898,12 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
         connectStateModulation (connection);
     return create;
 }
+
+CompressorProcessor *SynthBase::getCompressorProcessor() {
+    return compressorProcessor.get();
+}
+
+GainProcessor *SynthBase::getMainVolumeProcessor() {
+    return gainProcessor.get();
+}
+
