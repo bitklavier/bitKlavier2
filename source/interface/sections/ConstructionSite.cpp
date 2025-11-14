@@ -20,7 +20,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                          cableView(*this, um,data),
                                                          modulationLineView(*this, um,data),
                                                          preparationSelector(*this), parent(v),
-                                                        commandManager (_manager)
+                                                        commandManager (_manager),
+                                                        gainProcessor (*data->synth, v)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
     commandManager.registerAllCommandsForTarget (this);
@@ -32,6 +33,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     setSkinOverride(Skin::kConstructionSite);
     setInterceptsMouseClicks(false, true);
     //data->synth->getEngine()->addChangeListener(this);
+    data->synth->setGainProcessor(&gainProcessor);
 
     cableView.setAlwaysOnTop(true);
     addSubSection(&cableView);
@@ -459,6 +461,21 @@ void ConstructionSite::paintBackground(juce::Graphics &g) {
 void ConstructionSite::resized() {
     // Get the current local bounds of this component
     auto bounds = getLocalBounds();
+    int title_width = getTitleWidth();
+
+    // the level meter and output gain slider (right side of preparation popup)
+    // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
+
+    auto& gainParams = gainProcessor.getState().params;
+    auto& listeners  = gainProcessor.getState().getParameterListeners();
+    levelMeter = std::make_unique<PeakMeterSection>(
+        "BusGain",
+        gainParams.outputGain,
+        listeners,
+        &gainParams.outputLevels
+    );
+    levelMeter->setLabel("Main");
+    addSubSection(levelMeter.get());
 
     // Debug log the bounds
     DBG("Local Bounds: " + bounds.toString());
@@ -466,7 +483,11 @@ void ConstructionSite::resized() {
     cableView.setBounds(getLocalBounds());
     cableView.updateCablePositions();
     modulationLineView.setBounds(getLocalBounds());
+    bounds.removeFromRight(title_width);
 
+    // bounds for level meter on right side
+    juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
+    levelMeter->setBounds(meterArea);
     // _line->setBounds(get);
 
     SynthSection::resized();

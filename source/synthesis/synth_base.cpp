@@ -17,6 +17,7 @@
 #include "SampleLoadManager.h"
 
 #include "FullInterface.h"
+#include "GainProcessor.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
 #include "synth_gui_interface.h"
 
@@ -424,6 +425,7 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
         action();
 
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
+    gainProcessor->processBlock (audio_buffer, midi_buffer);
     sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }

@@ -26,11 +26,13 @@
 #include "circular_queue.h"
 #include "ModulatorBase.h"
 #include "../common/ObjectLists/PreparationList.h"
+// #include "../synthesis/framework/Processors/GainProcessor.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
 class PreparationList;
 class SampleLoadManager;
+class GainProcessor;
 
 namespace bitklavier {
     class ConnectionList;
@@ -262,6 +264,12 @@ public:
     std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;
     std::vector<std::unique_ptr<bitklavier::ModConnectionList> > mod_connection_lists_;
     std::vector<std::unique_ptr<PreparationList> > preparationLists;
+
+    void setGainProcessor(GainProcessor* gp)
+    {
+        gainProcessor = gp;
+    }
+    GainProcessor* gainProcessor = nullptr;
 
 private:
 
