@@ -32,7 +32,7 @@ juce::String sliderValsToString(
         }
 
         // Add the " / " row separator to mark the end of the inner array
-        result += " / ";
+        result += "/";
     }
 
     return result;
@@ -62,7 +62,7 @@ void stringToSliderVals(
     }
 
     // 1. Split the string into rows using " / " as the delimiter.
-    auto rows = juce::StringArray::fromTokens(savedState, " / ", "");
+    auto rows = juce::StringArray::fromTokens(savedState, "/", "");
 
     // Iterate through the rows, respecting the maximum allowed size
     for (int i = 0; i < std::min((int)rows.size(), (int)MAXMULTISLIDER2DLENGTH); ++i)

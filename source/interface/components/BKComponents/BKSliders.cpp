@@ -695,7 +695,8 @@ void BKMultiSlider::addSubSlider(int where, bool active, juce::NotificationType 
         sliderHeight);
 
     newslider->setRange(sliderMin, sliderMax, sliderIncrement);
-    newslider->setValue(newslider->proportionOfLengthToValue( 1. - (clickedHeight / this->getHeight())), juce::dontSendNotification);
+    if(this->getHeight() > 0.)
+        newslider->setValue(newslider->proportionOfLengthToValue( 1. - (clickedHeight / this->getHeight())), juce::dontSendNotification);
     newslider->addListener(this);
 
     juce::OwnedArray<BKSubSlider> *newsliderArray = sliders[where];
