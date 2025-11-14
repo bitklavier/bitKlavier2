@@ -28,6 +28,7 @@ Synchronic.h
 #include "HoldTimeMinMaxParams.h"
 #include "Identifiers.h"
 #include "MultiSliderState.h"
+#include "MultiSlider2DState.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "TempoProcessor.h"
@@ -110,7 +111,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     /**
      * todo: make transpositions 2D
      */
-    MultiSliderState transpositions;
+    MultiSlider2DState transpositions;
     MultiSliderState accents;
     MultiSliderState sustainLengthMultipliers;
     MultiSliderState beatLengthMultipliers;

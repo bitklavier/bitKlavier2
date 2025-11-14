@@ -8,6 +8,7 @@
 #include "OpenGL_ClusterMinMaxSlider.h"
 #include "OpenGL_HoldTimeMinMaxSlider.h"
 #include "OpenGL_MultiSlider.h"
+#include "OpenGL_2DMultiSlider.h"
 #include "SynchronicProcessor.h"
 #include "EnvelopeSequenceState.h"
 #include "EnvelopeSequenceSection.h"
@@ -103,7 +104,7 @@ public:
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
         // multisliders
-        transpositionsSlider = std::make_unique<OpenGL_MultiSlider>("transpositions_", &params.transpositions, listeners);
+        transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions_", &params.transpositions, listeners);
         transpositionsSlider->setComponentID ("transpositions_");
         transpositionsSlider->setMinMaxDefaultInc({-12., 12, 0., 0.001});
         transpositionsSlider->setName("Transpositions");
@@ -299,7 +300,7 @@ public:
     std::shared_ptr<PlainTextComponent> determinesCluster_label;
 
     // multisliders
-    std::unique_ptr<OpenGL_MultiSlider> transpositionsSlider;
+    std::unique_ptr<OpenGL_2DMultiSlider> transpositionsSlider;
     std::unique_ptr<OpenGL_MultiSlider> accentsSlider;
     std::unique_ptr<OpenGL_MultiSlider> sustainLengthMultipliersSlider;
     std::unique_ptr<OpenGL_MultiSlider> beatLengthMultipliersSlider;

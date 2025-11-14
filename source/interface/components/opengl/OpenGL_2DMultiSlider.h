@@ -6,7 +6,7 @@
 #define BITKLAVIER0_OPENGL_2DMULTISLIDER_H
 
 #include "../BKComponents/BKSliders.h"
-#include "MultiSliderState.h"
+#include "MultiSlider2DState.h"
 #include "open_gl_component.h"
 #include "synth_slider.h"
 #include "juce_data_structures/juce_data_structures.h"
@@ -14,17 +14,59 @@
 class OpenGL_2DMultiSlider: public OpenGlAutoImageComponent<BKMultiSlider>, BKMultiSlider::Listener
 {
 public:
-    OpenGL_2DMultiSlider(juce::String sname, MultiSliderState *sliderstate, chowdsp::ParameterListeners &listeners) :
+    OpenGL_2DMultiSlider(juce::String sname, MultiSlider2DState *sliderstate, chowdsp::ParameterListeners &listeners) :
                          OpenGlAutoImageComponent<BKMultiSlider>(sliderstate->stateChanges.defaultState), params(sliderstate), name_(sname)
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
+        allowSubSliders = true; //2D
+
         isModulated_ = true;
         addMyListener(this);
 
         updateFromParams();
+    }
+
+    juce::Array<juce::Array<float>> getUIValuesFromSliderVals(
+        const std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH>& sliderVals,
+        const std::atomic<int>& sliderVals_size,
+        const std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH>& sliderDepths)
+    {
+        juce::Array<juce::Array<float>> result;
+
+        // 1. Atomically read the overall size LAST.
+        // This provides a consistent boundary. We rely on the fact that the
+        // writing function updates sliderVals *before* updating sliderVals_size.
+        const int N_used = sliderVals_size.load();
+
+        // Loop through the active rows
+        for (int i = 0; i < N_used; ++i)
+        {
+            // 2. Atomically read the depth for this row.
+            const int M_used_i = sliderDepths[i].load();
+
+            juce::Array<float> innerArray;
+
+            // Loop through the active values in the current row
+            for (int j = 0; j < M_used_i; ++j)
+            {
+                // 3. Atomically load the float value and add it to the inner array.
+                innerArray.add(sliderVals[i][j].load());
+            }
+
+            // Add the populated inner array (row) to the result.
+            // We only add the row if it had active values, though M_used_i > 0
+            // should be guaranteed by the setting logic (unless M_used_i was set to 0
+            // while N_used still included the index 'i').
+            if (M_used_i > 0)
+            {
+                result.add(innerArray);
+            }
+        }
+
+        return result;
     }
 
     /*
@@ -33,7 +75,8 @@ public:
     void updateFromParams()
     {
         setToOnlyActive(
-            atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
+            //atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
+            getUIValuesFromSliderVals(params->sliderVals, params->sliderVals_size, params->sliderDepths),
             atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
             juce::sendNotification);
     }
@@ -107,19 +150,78 @@ public:
         //seems to not ever be called
     }
 
+    void updateSliderValsFromUI(
+        const juce::Array<juce::Array<float>>& userMultiSliderValues,
+        std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH>& sliderVals,
+        std::atomic<int>& sliderVals_size,
+        std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH>& sliderDepths)
+    {
+        // A. Calculate the new dimensions and transfer data to temporary structures.
+
+        // 1. Determine the new overall size (N_used).
+        const int new_sliderVals_size = std::min(userMultiSliderValues.size(), (int)MAXMULTISLIDER2DLENGTH);
+
+        // 2. Use a temporary, non-atomic structure for safe staging.
+        std::array<std::array<float, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH> temp_sliderVals = {};
+        std::array<int, MAXMULTISLIDER2DLENGTH> temp_sliderDepths = {};
+
+        // 3. Populate the temporary structures, respecting the max bounds.
+        for (int i = 0; i < new_sliderVals_size; ++i)
+        {
+            const auto& innerArray = userMultiSliderValues.getUnchecked(i);
+
+            // Determine the new depth (M_used(i)) for this row.
+            const int new_depth = std::min(innerArray.size(), (int)MAXMULTISLIDER2DVALS);
+            temp_sliderDepths[i] = new_depth;
+
+            // Copy the float values.
+            for (int j = 0; j < new_depth; ++j)
+            {
+                temp_sliderVals[i][j] = innerArray.getUnchecked(j);
+            }
+        }
+
+        // B. Update the atomics (Critical Section).
+
+        // 1. Update the actual slider values (`sliderVals`).
+        // Iterate over the dimensions we actually need to update.
+        for (int i = 0; i < new_sliderVals_size; ++i)
+        {
+            for (int j = 0; j < temp_sliderDepths[i]; ++j)
+            {
+                // Atomically update the float value.
+                sliderVals[i][j].store(temp_sliderVals[i][j]);
+            }
+        }
+
+        // 2. Update the depths (`sliderDepths`).
+        // First, update the active depths.
+        for (int i = 0; i < new_sliderVals_size; ++i)
+        {
+            sliderDepths[i].store(temp_sliderDepths[i]);
+        }
+        // Second, zero out any rows that were previously active but are now unused.
+        for (int i = new_sliderVals_size; i < sliderVals_size.load(); ++i)
+        {
+            sliderDepths[i].store(0);
+        }
+
+        // 3. Update the overall size (`sliderVals_size`) LAST.
+        // This is the "switch" that tells any processing threads the new data
+        // and new dimensions are ready to be read.
+        sliderVals_size.store(new_sliderVals_size);
+    }
+
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
-        /**
-         * todo: allow for multiple values in each slider, for transpositions: perhaps make OpenGL_MultiSlider2d
-         */
-
         if (!mouseInteraction)
             return;
 
         /*
          * create string representations of the multislider vals/states
          */
-        juce::String valsStr = getFirstValueFromSubarrays(values);
+        //juce::String valsStr = getFirstValueFromSubarrays(values);
+        juce::String valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
         juce::String activeStr = arrayBoolToString(states);
 
         if (isModulated_)
@@ -128,15 +230,22 @@ public:
              * we are manipulating the actual multislider: need to update param vals and defaultState vals
              */
 
+//            updateSliderValsFromUI(
+//                const juce::Array<juce::Array<float>>& userMultiSliderValues,
+//                std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH>& sliderVals,
+//                std::atomic<int>& sliderVals_size,
+//                std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH>& sliderDepths)
+
+            updateSliderValsFromUI(values, params->sliderVals, params->sliderVals_size, params->sliderDepths);
             // just copy the direct UI representations to the param arrays; the prep should know how to use them
             int valCtr = 0;
-            for (auto sval : values)
-            {
-                params->sliderVals[valCtr].store(values[valCtr++][0]); // 1d for now
-            }
-            params->sliderVals_size.store (values.size()); // how many active slider values do we have
-
-            valCtr = 0;
+//            for (auto sval : values)
+//            {
+//                params->sliderVals[valCtr].store(values[valCtr++][0]); // 1d for now
+//            }
+//            params->sliderVals_size.store (values.size()); // how many active slider values do we have
+//
+//            valCtr = 0;
             for (auto sval : states)
             {
                 params->activeSliders[valCtr].store(states[valCtr++]);
@@ -194,14 +303,22 @@ public:
             return;
         }
 
-        std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> dispvals;
-        stringToAtomicArray(dispvals, msvals, 0.);
+        /**
+         * todo: need to update this to include 2D vals
+         */
+//        std::array<std::atomic<float>, MAXMULTISLIDER2DLENGTH> dispvals;
+//        stringToAtomicArray(dispvals, msvals, 0.);
 
-        std::array<std::atomic<bool>, MAXMULTISLIDERLENGTH> dispstates;
+        std::array<std::atomic<bool>, MAXMULTISLIDER2DLENGTH> dispstates;
         stringToAtomicBoolArray(dispstates, msavals, false);
 
+        /**
+         * todo: need to update this to include 2D vals
+         */
         setToOnlyActive(
-            atomicArrayToJuceArrayLimited(dispvals, msvals_size),
+            //atomicArrayToJuceArrayLimited(dispvals, msvals_size),
+            // i don't think this will do it, need to be getting these args from defaultState.getProperty, no?
+            getUIValuesFromSliderVals(params->sliderVals, params->sliderVals_size, params->sliderDepths),
             atomicBoolArrayToJuceArrayLimited(dispstates, msavals_size),
             juce::sendNotification);
     }
@@ -215,7 +332,7 @@ public:
     }
 
     juce::String name_;
-    MultiSliderState *params;
+    MultiSlider2DState *params;
 
 private :
     /**

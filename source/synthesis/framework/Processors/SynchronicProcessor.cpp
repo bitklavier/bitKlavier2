@@ -392,7 +392,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     {
                         // put together the midi message
                         int newNote = slimCluster[n];
-                        float newTransp = state.params.transpositions.sliderVals[cluster->transpCounter];
+                        auto newTransp = state.params.transpositions.sliderVals[cluster->transpCounter][0].load();
                         float velocityMultiplier = state.params.accents.sliderVals[cluster->accentMultiplierCounter];
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
 
