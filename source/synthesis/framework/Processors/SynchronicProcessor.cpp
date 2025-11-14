@@ -392,7 +392,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     {
                         // put together the midi message
                         int newNote = slimCluster[n];
-                        float newTransp = state.params.transpositions.sliderVals[cluster->transpCounter];
+                        //auto newTransp = state.params.transpositions.sliderVals[cluster->transpCounter][0].load();
                         float velocityMultiplier = state.params.accents.sliderVals[cluster->accentMultiplierCounter];
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
 
@@ -407,11 +407,24 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].envParams.decayPower = state.params.envelopeSequence.envStates.decayPowers[cluster->envelopeCounter];
                         noteOnSpecMap[newNote].envParams.releasePower = state.params.envelopeSequence.envStates.releasePowers[cluster->envelopeCounter];
 
-                        /**
-                         * todo: when the transposition multislider is 2d, need to update here
-                         */
                         noteOnSpecMap[newNote].transpositions.clearQuick();
-                        noteOnSpecMap[newNote].transpositions.add(newTransp);
+                        //noteOnSpecMap[newNote].transpositions.add(newTransp);
+
+                        // need to make sure that first slider has at least one transposition
+                        if(state.params.transpositions.sliderDepths[0].load() == 0)
+                        {
+                            noteOnSpecMap[newNote].transpositions.addIfNotAlreadyThere(0.);
+                        }
+
+                        // add the rest of the transpositions
+                        for (int i = 0; i < state.params.transpositions.sliderDepths[cluster->transpCounter].load(); i++)
+                        {
+                            noteOnSpecMap[newNote].transpositions.add(state.params.transpositions.sliderVals[cluster->transpCounter][i].load());
+                        }
+
+                        /**
+                         * todo: useTuning is not working properly for 2D sliders; seems to be applying one offsets to all the transpositions
+                         */
 
                         // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])

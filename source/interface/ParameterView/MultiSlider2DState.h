@@ -1,10 +1,10 @@
 //
-// Created by Dan Trueman on 7/25/25.
+// Created by Dan Trueman on 11/13/25.
+// 2D version of MultiSlider, for Synchronic Transpositions multislider
 //
-
 #pragma once
-#ifndef BITKLAVIER0_MULTISLIDERSTATE_H
-#define BITKLAVIER0_MULTISLIDERSTATE_H
+#ifndef BITKLAVIER0_MULTISLIDER2DSTATE_H
+#define BITKLAVIER0_MULTISLIDER2DSTATE_H
 
 #include "array_to_string.h"
 #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
@@ -13,7 +13,8 @@
  * todo: make much larger (2048?) mostly for Pascal!
  * or only do that for MultiSlider2dState?
  */
-#define MAXMULTISLIDERLENGTH 128
+#define MAXMULTISLIDER2DLENGTH 128
+#define MAXMULTISLIDER2DVALS 10 // max transpositions per each slider
 
 /**
  * for a multislider, we have a sequence of values, sometimes with gaps,
@@ -22,20 +23,34 @@
  *  sliderVals holds the sequence of values without gaps, and activeSliders holds which sliders are active
  *
  *  ex:
- *      values in the UI slider: 1 2 / 3 / 4
+ *      values in the UI slider: 1 [2 -2] / 3 / [4 5 6]
  *          (/ => gap, as represented in the text editor for the slider)
+ *          ([ ] => multiple transpositions at one slider index)
  *
  *  leads to:
- *      sliderVals      = {1, 2, 3, 4},                             with sliderVals_size = 4
+ *      sliderVals      = {1, {2, -2}, 3, {4, 5, 6}},               with sliderVals_size = 4
  *      activeSliders   = {true, true, false, true, false, true},   with activeSliders_size = 6
+ *      sliderDepths    = {1, 2, 1, 3};                             so we don't serialize 10-deep strings for each slider
  *
- * for blendrónic at least (and I think all of the bK preps),we only need the activeSliders for saving/restoring the UI.
- *      internally, blendrónic only needs sliderVals and sliderVals_size
  */
-struct MultiSliderState : bitklavier::StateChangeableParameter
+
+juce::String sliderValsToString(
+    const std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH>& sliderVals,
+    const std::atomic<int>& sliderVals_size,
+    const std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH>& sliderDepths);
+
+void stringToSliderVals(
+    const juce::String& savedState,
+    std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH>& sliderVals,
+    std::atomic<int>& sliderVals_size,
+    std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH>& sliderDepths,
+    float defaultValue = 0.0f);
+
+
+struct MultiSlider2DState : bitklavier::StateChangeableParameter
 {
-    std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> sliderVals = {1.f};
-    std::array<std::atomic<bool>, MAXMULTISLIDERLENGTH> activeSliders = {true}; // could change to std::bitset
+    std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH> sliderVals = {1.f};
+    std::array<std::atomic<bool>, MAXMULTISLIDER2DLENGTH> activeSliders = {true}; // could change to std::bitset
 
     /*
      * how many sliders is the user actually working with (int)
@@ -47,6 +62,7 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
      */
     std::atomic<int> sliderVals_size = 1;
     std::atomic<int> activeVals_size = 1;
+    std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH> sliderDepths;
 
     std::atomic<bool> updateUI;
 
@@ -63,7 +79,8 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
             auto avalsize = change.getProperty (IDs::multislider_states_size);
 
             if (sval != nullVar) {
-                stringToAtomicArray(sliderVals, sval.toString(), 1.);
+                //stringToAtomicArray(sliderVals, sval.toString(), 1.);
+                stringToSliderVals(sval.toString(), sliderVals, sliderVals_size, sliderDepths);
             }
             if (svalsize != nullVar) {
                 sliderVals_size.store(int(svalsize));
@@ -79,7 +96,6 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
 
         // must clear at the end, otherwise they'll get reapplied again and again
         stateChanges.changeState.clear();
-
     }
 };
 
@@ -98,7 +114,7 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
 template <typename Serializer>
 void serializeMultiSliderParam(
     typename Serializer::SerializedType& ser,
-    const MultiSliderState& msliderParam,
+    const MultiSlider2DState& msliderParam,
     const juce::String& thisSliderID)
 {
     // Define the specific string IDs for serialization
@@ -107,7 +123,8 @@ void serializeMultiSliderParam(
     juce::String activeSliders_sizeID = activeSlidersID + "_size";
 
     // Serialize the float slider values
-    juce::String sliderVals_str = atomicArrayToStringLimited(msliderParam.sliderVals, msliderParam.sliderVals_size);
+    //juce::String sliderVals_str = atomicArrayToStringLimited(msliderParam.sliderVals, msliderParam.sliderVals_size);
+    juce::String sliderVals_str = sliderValsToString(msliderParam.sliderVals, msliderParam.sliderVals_size, msliderParam.sliderDepths);
     Serializer::addChildElement(ser, thisSlider_sizeID, juce::String(msliderParam.sliderVals_size));
     Serializer::addChildElement(ser, thisSliderID+"_sliderVals", sliderVals_str);
 
@@ -132,9 +149,9 @@ void serializeMultiSliderParam(
 template <typename Serializer>
 void deserializeMultiSliderParam(
     typename Serializer::DeserializedType deserial,
-    MultiSliderState& msliderParam,
+    MultiSlider2DState& msliderParam,
     const juce::String& thisSliderID,
-    float defaultVal = 1.f)
+    float defaultVal = 0.f)
 {
     // Reconstruct the attribute names using the base ID
     juce::String thisSlider_sizeID = thisSliderID + "_sliderVals_size";
@@ -145,8 +162,9 @@ void deserializeMultiSliderParam(
     auto myStr = deserial->getStringAttribute(thisSlider_sizeID);
     msliderParam.sliderVals_size = myStr.getIntValue();
     myStr = deserial->getStringAttribute(thisSliderID+"_sliderVals");
-    std::vector<float> sliderVals_vec = parseStringToVector<float>(myStr);
-    populateAtomicArrayFromVector(msliderParam.sliderVals, defaultVal, sliderVals_vec);
+    //std::vector<float> sliderVals_vec = parseStringToVector<float>(myStr);
+    //populateAtomicArrayFromVector(msliderParam.sliderVals, defaultVal, sliderVals_vec);
+    stringToSliderVals(myStr, msliderParam.sliderVals, msliderParam.sliderVals_size, msliderParam.sliderDepths);
 
     // Deserialize the active sliders
     myStr = deserial->getStringAttribute(activeSliders_sizeID);
@@ -156,4 +174,6 @@ void deserializeMultiSliderParam(
     populateAtomicArrayFromVector(msliderParam.activeSliders, false, activeSliders_vec);
 }
 
-#endif //BITKLAVIER0_MULTISLIDERSTATE_H
+
+
+#endif //BITKLAVIER0_MULTISLIDER2DSTATE_H
