@@ -52,6 +52,10 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     addSubSection (header_.get());
     header_->addListener (this);
 
+    footer_ = std::make_unique<FooterSection>(synth_data);
+    addSubSection (footer_.get());
+    footer_->addListener (this);
+
     prep_popup = std::make_unique<PreparationPopup> (false);
     addSubSection (prep_popup.get());
     prep_popup->setVisible (false);
@@ -242,6 +246,7 @@ void FullInterface::resized()
 
     header_->setTabOffset (2 * voice_padding);
     header_->setBounds (left, top, width, top_height);
+    footer_->setBounds (left, height - 100, width, 100);
     juce::Rectangle<int> new_bounds (0, 0, width, height);
     main_->setBounds (new_bounds);
     prep_popup->setBounds (voice_padding * 2, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.2 * display_scale_));
@@ -384,6 +389,7 @@ void FullInterface::openGLContextClosing()
     removeSubSection(loading_section.get());
     removeSubSection (main_.get());
     removeSubSection (header_.get());
+    removeSubSection (footer_.get());
 
     removeSubSection (prep_popup.get());
     removeSubSection (mod_popup.get());
@@ -392,6 +398,7 @@ void FullInterface::openGLContextClosing()
     // main_->destroyOpenGlComponents(open_gl);
     main_ = nullptr;
     header_ = nullptr;
+    footer_ = nullptr;
     prep_popup = nullptr;
     mod_popup = nullptr;
 

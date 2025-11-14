@@ -6,12 +6,10 @@
 #define BITKLAVIER2_CONSTRUCTIONSITE_H
 #include "../../common/ObjectLists/PreparationList.h"
 #include "CableView.h"
-#include "GainProcessor.h"
 #include "ModulationLineView.h"
 #include "PluginWindow.h"
 #include "PreparationSelector.h"
 #include "common.h"
-#include "peak_meter_section.h"
 #include "templates/Factory.h"
 
 class OpenGlLine;
@@ -119,8 +117,6 @@ public:
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
     void removeAllGuiListeners();
 private:
-    GainProcessor gainProcessor;
-    std::shared_ptr<PeakMeterSection> levelMeter;
     PreparationList* prep_list;
     juce::ApplicationCommandManager& commandManager;
     void moduleListChanged() {}

@@ -8,6 +8,7 @@
 
 //#include "open_gl_background.h"
 #include "sections/header_section.h"
+#include "sections/footer_section.h"
 #include "sections/main_section.h"
 #include "sections/synth_section.h"
 #include "sections/popup_browser.h"
@@ -97,6 +98,7 @@ public :
     std::unique_ptr<MainSection> main_;
     std::unique_ptr<ModulationManager> modulation_manager;
     std::unique_ptr<HeaderSection> header_;
+    std::unique_ptr<FooterSection> footer_;
     //juce::OpenGLContext open_gl_context_;
     std::unique_ptr<Shaders> shaders_;
 
