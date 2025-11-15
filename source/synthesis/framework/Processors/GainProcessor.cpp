@@ -10,7 +10,6 @@
 GainProcessor::GainProcessor (SynthBase& parent, const juce::ValueTree& vt)
     : PluginBase (parent, vt, nullptr, gainBusLayout())
 {
-    parent.getValueTree().addListener(this);
 }
 
 /*

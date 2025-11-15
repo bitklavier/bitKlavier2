@@ -58,14 +58,14 @@ struct GainNonParameterState : chowdsp::NonParamState
 // ************************************** GainProcessor ************************************** //
 // ********************************************************************************************* //
 
-class GainProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<GainParams, GainNonParameterState>>,
-                        public juce::ValueTree::Listener
+class GainProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<GainParams, GainNonParameterState>>
+
 {
 public:
     GainProcessor (SynthBase& parent, const juce::ValueTree& v);
     ~GainProcessor()
     {
-        parent.getValueTree().removeListener(this);
+
     }
 
     static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
@@ -86,7 +86,6 @@ public:
     bool acceptsMidi() const override { return true; }
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-    void valueTreePropertyChanged(juce::ValueTree &t, const juce::Identifier &property) {};
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainProcessor)
