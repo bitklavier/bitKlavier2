@@ -52,8 +52,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     *self_reference_ = this;
 
     keyboard_state_ = std::make_unique<juce::MidiKeyboardState>();
-    juce::ValueTree v;
-    midi_manager_ = std::make_unique<MidiManager> (keyboard_state_.get(), manager, v);
+    midi_manager_ = std::make_unique<MidiManager> (keyboard_state_.get(), manager, juce::ValueTree{});
 
     Startup::doStartupChecks();
     tree = juce::ValueTree (IDs::GALLERY);
@@ -89,8 +88,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
         std::make_unique<bitklavier::ModConnectionList> (
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
     engine_ = std::make_unique<bitklavier::SoundEngine>();
-    gainProcessor = std::make_unique<GainProcessor>(*this,v);
-    compressorProcessor = std::make_unique<CompressorProcessor>(*this,v);
+    gainProcessor = std::make_unique<GainProcessor>(*this,tree);
+    compressorProcessor = std::make_unique<CompressorProcessor>(*this,tree);
 }
 
 SynthBase::~SynthBase()
