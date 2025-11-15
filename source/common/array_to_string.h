@@ -326,6 +326,31 @@ juce::String arrayToString(const std::array<float, Size>& array) {
 }
 
 /**
+ * Converts any juce::Array of numerical types (float, int, double, etc.)
+ * into a single juce::String, with elements separated by a given delimiter.
+ * * @tparam Type The data type held by the juce::Array (e.g., float, int).
+ * @param dataArray The array to convert.
+ * @param separator The string to place between elements.
+ * @return A single juce::String containing all array elements.
+ */
+template <typename Type>
+juce::String juceArrayToString(const juce::Array<Type>& dataArray,
+    const juce::String& separator = ", ")
+{
+    juce::StringArray stringElements;
+
+    // Convert each element (regardless of its original Type) to a String
+    // juce::String has constructors for all basic types.
+    for (const auto& value : dataArray)
+    {
+        stringElements.add(juce::String(value));
+    }
+
+    // Join all elements into one string using the specified separator
+    return stringElements.joinIntoString(separator);
+}
+
+/**
  * @brief Converts a std::array of floats into a single JUCE string,
  * using only a specified number of elements.
  *

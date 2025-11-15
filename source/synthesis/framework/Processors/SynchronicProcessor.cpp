@@ -410,8 +410,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].transpositions.clearQuick();
                         //noteOnSpecMap[newNote].transpositions.add(newTransp);
 
-                        // need to make sure that first slider has at least one transposition
-                        if(state.params.transpositions.sliderDepths[0].load() == 0)
+                        // need to make sure that slider has at least one transposition
+                        if(state.params.transpositions.sliderDepths[cluster->transpCounter].load() == 0)
                         {
                             noteOnSpecMap[newNote].transpositions.addIfNotAlreadyThere(0.);
                         }
@@ -421,9 +421,12 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         {
                             noteOnSpecMap[newNote].transpositions.add(state.params.transpositions.sliderVals[cluster->transpCounter][i].load());
                         }
+                        noteOnSpecMap[newNote].useAttachedTuning = state.params.transpositionUsesTuning.get();
+
+                        DBG(juceArrayToString(noteOnSpecMap[newNote].transpositions));
 
                         /**
-                         * todo: useTuning is not working properly for 2D sliders; seems to be applying one offsets to all the transpositions
+                         * todo: useTuning is not working properly for 2D sliders; seems to be applying one offset to all the transpositions
                          */
 
                         // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
