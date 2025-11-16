@@ -236,32 +236,20 @@ public:
 
     void copyEnvEditorValsToEnvSequence()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
+        int currentEnv = *sparams_.envelopeSequence.currentlyEditing;
+        sparams_.envelopeSequence.envStates.attacks[currentEnv].store(*sparams_.env.attackParam);
+        sparams_.envelopeSequence.envStates.decays[currentEnv].store(*sparams_.env.decayParam);
+        sparams_.envelopeSequence.envStates.sustains[currentEnv].store(*sparams_.env.sustainParam);
+        sparams_.envelopeSequence.envStates.releases[currentEnv].store(*sparams_.env.releaseParam);
 
-        DBG("copyEnvEditorValsToEnvSequence " + juce::String(currentEnv));
-        sparams_.envelopeSequence.envStates.attacks[currentEnv]         = sparams_.env.attackParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.decays[currentEnv]          = sparams_.env.decayParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.sustains[currentEnv]        = sparams_.env.sustainParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.releases[currentEnv]        = sparams_.env.releaseParam->getCurrentValue();
-
-        sparams_.envelopeSequence.envStates.attackPowers[currentEnv]    = sparams_.env.attackPowerParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.decayPowers[currentEnv]     = sparams_.env.decayPowerParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.releasePowers[currentEnv]   = sparams_.env.releasePowerParam->getCurrentValue();
-
-        DBG(juce::String(sparams_.envelopeSequence.envStates.attacks[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.decays[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.sustains[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.releases[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.attackPowers[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.decayPowers[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.releasePowers[currentEnv]));
+        sparams_.envelopeSequence.envStates.attackPowers[currentEnv].store(*sparams_.env.attackPowerParam);
+        sparams_.envelopeSequence.envStates.decayPowers[currentEnv].store(*sparams_.env.decayPowerParam);
+        sparams_.envelopeSequence.envStates.releasePowers[currentEnv].store(*sparams_.env.releasePowerParam);
     }
 
     void displayEnvSequenceValsInEnvEditor()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
-
-        DBG("displayEnvSequenceValsInEnvEditor " + juce::String(currentEnv));
+        int currentEnv = *sparams_.envelopeSequence.currentlyEditing;
         envSection->setADSRVals(
             sparams_.envelopeSequence.envStates.attacks[currentEnv],
             sparams_.envelopeSequence.envStates.decays[currentEnv],
