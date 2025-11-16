@@ -335,7 +335,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 bool playNow = true;
 
                 // easy case: if we are skipping the first pattern value, we always increment the pattern counters, in step()
-                if(state.params.skipFirst.get()->get()) cluster->step(numSamplesBeat);
+                if(*state.params.skipFirst) cluster->step(numSamplesBeat);
 
                 // it gets messy when we are not skipping the first pattern value
                 else
@@ -525,7 +525,6 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     /*
      * then the synthesizer process blocks
      */
-    bool useTuningForTranspositions = state.params.transpositionUsesTuning->get();
     if (synchronicSynth->hasSamples())
     {
         synchronicSynth->setBypassed (false);
