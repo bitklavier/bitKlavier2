@@ -12,7 +12,7 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
 
     // init hash of currently playing notes, by channel
     // 1. Create the prototype array for one channel
-    juce::Array<juce::Array<BKSamplerVoice*>> prototypeNotesArray;
+    juce::Array<juce::Array<BKSynthesiserVoice*>> prototypeNotesArray;
     prototypeNotesArray.resize(129); // Resizes and default-constructs 129 empty inner arrays
 
     // 2. Use a loop to copy the prototype into all 16 slots of the std::array
@@ -29,6 +29,8 @@ BKSynthesiser::BKSynthesiser(EnvParams &params, chowdsp::GainDBParameter& gain) 
 
 
     activeNotes.reset();
+    voices.ensureStorageAllocated(300);
+    usableVoicesToStealArray.ensureStorageAllocated(301);
 }
 
 BKSynthesiser::~BKSynthesiser()
@@ -37,7 +39,7 @@ BKSynthesiser::~BKSynthesiser()
 }
 
 //==============================================================================
-BKSamplerVoice* BKSynthesiser::getVoice (const int index) const
+BKSynthesiserVoice* BKSynthesiser::getVoice (const int index) const
 {
     const juce::ScopedLock sl (lock);
     return voices [index];
@@ -49,9 +51,9 @@ void BKSynthesiser::clearVoices()
     voices.clear();
 }
 
-BKSamplerVoice* BKSynthesiser::addVoice (BKSamplerVoice* const newVoice)
+BKSynthesiserVoice* BKSynthesiser::addVoice (BKSynthesiserVoice* const newVoice)
 {
-    BKSamplerVoice* voice;
+    BKSynthesiserVoice* voice;
 
     {
         const juce::ScopedLock sl (lock);
@@ -63,7 +65,6 @@ BKSamplerVoice* BKSynthesiser::addVoice (BKSamplerVoice* const newVoice)
         const juce::ScopedLock sl (stealLock);
         usableVoicesToStealArray.ensureStorageAllocated (voices.size() + 1);
     }
-
     return voice;
 }
 
@@ -73,9 +74,21 @@ void BKSynthesiser::removeVoice (const int index)
     voices.remove (index);
 }
 
-void BKSynthesiser::addSoundSet(juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
+void BKSynthesiser::addSoundSet(juce::ReferenceCountedArray<BKSynthesiserSound>* s)
 {
     const juce::ScopedLock sl (lock);
+
+    voices.clearQuick(false);
+    if (s != nullptr) {
+        for (int i =0; i < 300; i++) {
+            if(s->getFirst()->getSoundSampleType() == SoundSampleType::SFZ) {
+                voices.add(new BKSamplerVoice<SFZRegion>());
+            }
+            else {
+                voices.add(new BKSamplerVoice<juce::AudioFormatReader>());
+            }
+        }
+    }
     sounds = s;
 }
 //
@@ -441,7 +454,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
              */
             if (sound->appliesToNote ( closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
-                BKSamplerVoice* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
+                auto* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
                 startVoice (newvoice,
                     sound,
                     midiChannel,
@@ -455,8 +468,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
     }
 }
 
-void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
-                                BKSamplerSound<juce::AudioFormatReader>* const sound,
+void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
+                                BKSynthesiserSound* const sound,
                                 const int midiChannel,
                                 const int midiNoteNumber,
                                 const float velocity,
@@ -524,7 +537,7 @@ void BKSynthesiser::startVoice (BKSamplerVoice* const voice,
     }
 }
 
-void BKSynthesiser::stopVoice (BKSamplerVoice* voice, float velocity, const bool allowTailOff)
+void BKSynthesiser::stopVoice (BKSynthesiserVoice* voice, float velocity, const bool allowTailOff)
 {
     jassert (voice != nullptr);
 
@@ -713,7 +726,7 @@ void BKSynthesiser::handleProgramChange ([[maybe_unused]] int midiChannel,
 }
 
 //==============================================================================
-BKSamplerVoice* BKSynthesiser::findFreeVoice (BKSamplerSound<juce::AudioFormatReader>* soundToPlay,
+BKSynthesiserVoice* BKSynthesiser::findFreeVoice (BKSynthesiserSound* soundToPlay,
                                               int midiChannel, int midiNoteNumber,
                                               const bool stealIfNoneAvailable) const
 {
@@ -729,7 +742,7 @@ BKSamplerVoice* BKSynthesiser::findFreeVoice (BKSamplerSound<juce::AudioFormatRe
     return nullptr;
 }
 
-BKSamplerVoice* BKSynthesiser::findVoiceToSteal (BKSamplerSound<juce::AudioFormatReader>* soundToPlay,
+BKSynthesiserVoice* BKSynthesiser::findVoiceToSteal (BKSynthesiserSound* soundToPlay,
                                                  int /*midiChannel*/, int midiNoteNumber) const
 {
     // This voice-stealing algorithm applies the following heuristics:
@@ -740,8 +753,8 @@ BKSamplerVoice* BKSynthesiser::findVoiceToSteal (BKSamplerSound<juce::AudioForma
     jassert (! voices.isEmpty());
 
     // These are the voices we want to protect (ie: only steal if unavoidable)
-    BKSamplerVoice* low = nullptr; // Lowest sounding note, might be sustained, but NOT in release phase
-    BKSamplerVoice* top = nullptr; // Highest sounding note, might be sustained, but NOT in release phase
+    BKSynthesiserVoice* low = nullptr; // Lowest sounding note, might be sustained, but NOT in release phase
+    BKSynthesiserVoice* top = nullptr; // Highest sounding note, might be sustained, but NOT in release phase
 
     // All major OSes use double-locking so this will be lock- and wait-free as long as the lock is not
     // contended. This is always the case if you do not call findVoiceToSteal on multiple threads at
@@ -763,7 +776,7 @@ BKSamplerVoice* BKSynthesiser::findVoiceToSteal (BKSamplerSound<juce::AudioForma
             // compilers generating code containing heap allocations..
             struct Sorter
             {
-                bool operator() (const BKSamplerVoice* a, const BKSamplerVoice* b) const noexcept { return a->wasStartedBefore (*b); }
+                bool operator() (const BKSynthesiserVoice* a, const BKSynthesiserVoice* b) const noexcept { return a->wasStartedBefore (*b); }
             };
 
             std::sort (usableVoicesToStealArray.begin(), usableVoicesToStealArray.end(), Sorter());

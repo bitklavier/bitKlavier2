@@ -15,13 +15,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     // for testing
     bufferDebugger = new BufferDebugger();
 
-    for (int i = 0; i < 300; i++)
-    {
-        mainSynth->addVoice (new BKSamplerVoice());
-        hammerSynth->addVoice (new BKSamplerVoice());
-        releaseResonanceSynth->addVoice (new BKSamplerVoice());
-        pedalSynth->addVoice (new BKSamplerVoice());
-    }
+
 
     for (int i = 0; i < MaxMidiNotes; ++i)
     {

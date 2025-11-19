@@ -13,10 +13,7 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
     nostalgicSynth (new BKSynthesiser (state.params.reverseEnv, state.params.noteOnGain))
 
 {
-    for (int i = 0; i < 300; i++)
-    {
-        nostalgicSynth->addVoice (new BKSamplerVoice());
-    }
+
 
     for (int i = 0; i < MaxMidiNotes; ++i)
     {

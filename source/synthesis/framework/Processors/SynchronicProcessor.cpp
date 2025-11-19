@@ -22,10 +22,6 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     // for testing
     bufferDebugger = new BufferDebugger();
 
-    for (int i = 0; i < 300; i++)
-    {
-        synchronicSynth->addVoice (new BKSamplerVoice());
-    }
 
     /*
      * todo: need to make sure that if the user tries to increase numLayers > MAX_CLUSTERS that this doesn't break
