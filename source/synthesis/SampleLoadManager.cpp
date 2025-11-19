@@ -9,9 +9,12 @@
 /**
  * ******* SampleLoadManager stuff *******
  */
+#include "SFZSound.h"
+#include "SF2Sound.h"
+#include "SFZSample.h"
 
 SampleLoadManager::SampleLoadManager (SynthBase* parent, std::shared_ptr<UserPreferencesWrapper> preferences) : preferences (preferences),
-                                                                                         audioFormatManager (new juce::AudioFormatManager()),parent(parent)
+                                                                                                                audioFormatManager (new juce::AudioFormatManager()),parent(parent)
 
 {
     audioFormatManager->registerBasicFormats();
@@ -153,21 +156,31 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets()
 {
     std::vector<std::string> sampleSets;
 
- //   // Pull base path from preferences
-    juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
-    juce::File baseDir (samplePath);
+    juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
+    juce::File baseDir(samplePath);
 
     if (baseDir.isDirectory())
     {
-        // Find only directories inside base path
-        juce::Array<juce::File> dirs = baseDir.findChildFiles (
-            juce::File::TypesOfFileToFind::findDirectories,
-            false // not recursive
+        // 1. Directories
+        juce::Array<juce::File> dirs = baseDir.findChildFiles(
+            juce::File::findDirectories,
+            false
         );
 
         for (auto& d : dirs)
-            sampleSets.push_back (d.getFileName().toStdString());
+            sampleSets.push_back(d.getFileName().toStdString());
+
+        // 2. .sf2 and .sfz files
+        juce::Array<juce::File> sfFiles = baseDir.findChildFiles(
+            juce::File::findFiles,
+            false,
+            "*.sf2;*.sfz" // JUCE supports ";"-separated patterns
+        );
+
+        for (auto& f : sfFiles)
+            sampleSets.push_back(f.getFileName().toStdString());
     }
+
 
     return sampleSets;
 }
@@ -201,6 +214,13 @@ bool SampleLoadManager::loadSamples(std::string sample_name) {
     // Attach ValueTree + property info for later completion
     progress->soundsetName = sample_name;
     progress->targetTree = juce::ValueTree{};
+
+    const juce::String ext = directory.getFileExtension().toLowerCase();
+    if(ext == ".sfz" || ext == ".sf2") {
+        loadSamples_sub(bitklavier::utils::BKPianoSoundFont,sample_name);
+        return true;
+    }
+
 
 
     loadSamples_sub (bitklavier::utils::BKPianoMain,sample_name);
@@ -264,6 +284,11 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::V
     progress->targetTree = prep_tree;
 
     parent->startSampleLoading();
+    const juce::String ext = directory.getFileExtension().toLowerCase();
+    if(ext == ".sfz" || ext == ".sf2") {
+        loadSamples_sub(bitklavier::utils::BKPianoSoundFont,soundsets[selection]);
+        return true;
+    }
     loadSamples_sub (bitklavier::utils::BKPianoMain,soundsets[selection]);
     loadSamples_sub (bitklavier::utils::BKPianoHammer,soundsets[selection]);
     loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance, soundsets[selection]);
@@ -275,7 +300,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
 {
     using namespace bitklavier::utils;
     // maybe better to do this with templates, but for now...
-    juce::String soundsetName;
+    juce::String soundsetName = name;
     if (thisSampleType == BKPianoMain)
         soundsetName = name;
     else if (thisSampleType == BKPianoHammer)
@@ -285,12 +310,23 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
     else if (thisSampleType == BKPianoPedal)
         soundsetName = name + "Pedals";
 
+
     juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
     samplePath.append("/" + juce::String(name), 1000);
     samplePath.append(BKPianoSampleType_string[thisSampleType], 1000); // subfolders need to be named accordingly
     juce::File directory(samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false, "*.wav");
-
+    if(thisSampleType == BKPianoSoundFont) {
+        auto progressPtr = soundsetProgressMap[name];
+        if (!progressPtr)
+            progressPtr = soundsetProgressMap[name] = std::make_shared<SampleSetProgress>();
+        progressPtr->totalJobs++; // one job per sample type
+        sampleLoader.addJob(new SampleLoadJob(directory,
+                                 &samplerSoundset[soundsetName],
+                                 this,progressPtr,
+                                *this), true);
+        return;
+    }
     // sort alphabetically
     MyComparator sorter;
     allSamples.sort(sorter);
@@ -407,7 +443,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
                              std::move(pitchesVector),
                              &samplerSoundset[soundsetName],
                              this,progressPtr,
-                            totalUnits), true);
+                            totalUnits,*this), true);
 }
 
 
@@ -493,7 +529,8 @@ bool SampleLoadJob::loadSamples()
 {
     using namespace bitklavier::utils;
     bool loadSuccess = false;
-
+    if (sampleReaderVector.empty() && sfzFile.exists())
+        return loadSoundFont(sfzFile);
     for (int i = continueValue; i < sampleReaderVector.size(); i ++)
 
     {
@@ -702,5 +739,111 @@ bool SampleLoadJob::loadMainSamplesByPitch()
         //DBG ("done loading main samples for " + filename);
     }
 
+    return true;
+}
+
+bool SampleLoadJob::loadSoundFont(
+                   juce::File sfzFile)
+
+
+{
+    // --- Validation ---
+    if (soundset == nullptr)
+    {
+        DBG("loadSoundFont: soundset pointer is null.");
+        return false;
+    }
+
+    if (!sfzFile.existsAsFile())
+    {
+        DBG("loadSoundFont: File does not exist: " + sfzFile.getFullPathName());
+        return false;
+    }
+
+    // formatManager.registerBasicFormats();
+
+    const juce::String ext = sfzFile.getFileExtension().toLowerCase();
+    std::unique_ptr<SFZSound> sound;
+
+    if (ext == ".sfz")
+        sound = std::make_unique<SFZSound>(sfzFile.getFullPathName().toStdString());
+    else if (ext == ".sf2")
+        sound = std::make_unique<SF2Sound>(sfzFile.getFullPathName().toStdString());
+    else
+    {
+        DBG("loadSoundFont: Unsupported extension " + ext);
+        return false;
+    }
+
+    // --- Load the soundfont ---
+    sound->load_regions();
+    sound->load_samples();
+
+
+
+
+
+    float dBFSBelow = -100.0f;
+    int regionIndex = 0;
+
+    // --- Load each region into BKSamplerSound ---
+    for (int i =0; i <sound->num_regions(); i++)
+    {
+    auto region = sound->region_at(i);
+        if (region == nullptr || region->sample == nullptr)
+            continue;
+
+        const juce::File sampleFile = juce::File(region->sample->get_path());
+
+        // std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(sampleFile));
+        // if (reader == nullptr)
+        // {
+        //     DBG("loadSoundFont: Failed to open sample file: " + sampleFile.getFullPathName());
+        //     continue;
+        // }
+
+        // --- Wrap the reader into your Sample class ---
+        std::shared_ptr<Sample<SFZRegion>> sample =
+            std::make_shared<Sample<SFZRegion>>(*region);
+
+        // --- Define note and velocity ranges ---
+        juce::BigInteger noteRange;
+        noteRange.setRange(region->lokey, region->hikey - region->lokey + 1, true);
+
+        juce::BigInteger velRange;
+        velRange.setRange(region->lovel, region->hivel - region->lovel + 1, true);
+
+        int rootMidiNote = region->pitch_keycenter >= 0 ? region->pitch_keycenter : region->lokey;
+        int transpose = (region->lokey == region->hikey) ? (region->lokey - rootMidiNote) : 0;
+
+        // --- Create BKSamplerSound ---
+        auto* newSound = new BKSamplerSound<SFZRegion>(
+            region->sample->short_name(),
+           sample
+        );
+
+        // --- Apply loop information ---
+        // if (region->loop_mode != SFZRegion::no_loop)
+        // {
+        //     newSound->setLoopMode(LoopMode::forward);
+        //
+        //     const double sampleRate = sample->getSampleRate();
+        //     const double startSecs = (double)region->loop_start / sampleRate;
+        //     const double endSecs   = (double)region->loop_end / sampleRate;
+        //
+        //     newSound->setLoopPointsInSeconds(juce::Range<double>(startSecs, endSecs));
+        // }
+
+        // --- Add to soundset ---
+        soundset->add(newSound);
+
+        // --- Debug output ---
+        DBG("Loaded region " + juce::String(regionIndex++) +
+            ": " + region->sample->short_name() +
+            " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
+            " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
+    }
+    samplerLoader.soundfonts.push_back(std::move(sound));
+    DBG("loadSoundFont: Finished loading " + sfzFile.getFileNameWithoutExtension());
     return true;
 }

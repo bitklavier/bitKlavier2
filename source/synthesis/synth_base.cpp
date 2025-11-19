@@ -94,7 +94,7 @@ SynthBase::~SynthBase()
     um.clearUndoHistory();
 }
 
-std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > > *SynthBase::getSamples() {
+std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > >*SynthBase::getSamples() {
     return &sampleLoadManager->samplerSoundset;
 }
 

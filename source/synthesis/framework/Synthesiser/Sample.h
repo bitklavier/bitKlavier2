@@ -20,8 +20,10 @@
 #include "common.h"
 #include "utils.h"
 #include "BKADSR.h"
+#include "SFZEG.h"
 #include "TuningProcessor.h"
-
+#include "SampleBuffer.h"
+#include "SFZSample.h"
 /**
  * todo: cleanup Sample.h!
  * @tparam T
@@ -34,15 +36,32 @@
 // time, to reduce duplication and copying.
 
 
+class SampleBuffer;
 // Declaration of the concept “Hashable”, which is satisfied by any type “T”
 // such that for values “a” of type “T”, the expression std::hash<T>{}(a)
 // compiles and its result is convertible to std::size_t
+// ---------------------------------------------
+// Trait to detect whether ReaderType supports read()
+// ---------------------------------------------
+template <typename T, typename = void>
+struct IsReaderType : std::false_type {};
+
+template <typename T>
+struct IsReaderType<T, std::void_t<
+    decltype(std::declval<T>().read(
+        (juce::AudioBuffer<float>*)nullptr,
+        0, 0, 0, true, true))
+    >>
+: std::true_type {};
+#include "SFZRegion.h"
+
 // concept
 template<class T>
 concept LoadImmediate = not (std::is_base_of_v<juce::MemoryMappedAudioFormatReader, T> || std::is_base_of_v<juce::BufferingAudioReader, T>);
 template<class T>
 concept NonLoadImmediate = (std::is_base_of_v<juce::MemoryMappedAudioFormatReader, T> || std::is_base_of_v<juce::BufferingAudioReader, T>);
-
+template<class T>
+concept SFZLoadType = std::is_same_v<T, SFZRegion>;
 template<typename ReaderType>
 class Sample
 {
@@ -206,9 +225,156 @@ private:
 //    }
 
 };
+template <>
+class Sample<SFZRegion>
+{
+public:
+    explicit Sample(SFZRegion& sfz)
+        : m_sfz(sfz)
+    {
+        jassert(sfz.sample != nullptr && "SFZRegion::sample is null! Did you call load()?");
+        jassert(sfz.sample->buffer != nullptr && "SFZRegion::sample->buffer is null! SFZ loader didn't decode the audio!");
 
+        SampleBuffer* buffer = sfz.sample->buffer;
+
+        m_sourceSampleRate = sfz.sample->sample_rate;
+        m_length           = (int) sfz.sample->num_samples;
+
+        const int numChans = buffer->num_channels;
+        m_data.setSize(numChans, m_length, false, true, false);
+
+        auto in_read  = buffer->read_sample;  // function pointer
+        auto stride   = buffer->stride;       // step between samples
+        auto chans    = buffer->num_channels;
+
+        for (int ch = 0; ch < numChans; ++ch)
+        {
+            auto* out = m_data.getWritePointer(ch);
+
+            uint8_t* inPtr = buffer->channel_start(ch);
+
+            for (int i = 0; i < m_length; ++i)
+            {
+                out[i] = (float) in_read(inPtr);
+                inPtr += stride;
+            }
+        }
+
+        // Initialize offsets
+        m_startSample = 0;
+        m_numSamps    = m_length;
+        // if (sfz.buffer == nullptr)
+        //     throw std::runtime_error("SFZSample buffer is null (did you call load()?)");
+        //
+        // m_sourceSampleRate = sfz.sample_rate;
+        // m_length = (int)sfz.num_samples;
+        //
+        // const int numChans = sfz.buffer->num_channels();
+        // m_data.setSize(numChans, m_length);
+        //
+        // // Copy raw PCM from SFZ loader's SampleBuffer
+        // for (int ch = 0; ch < numChans; ++ch)
+        //     m_data.copyFrom(ch, 0, sfz.buffer->getChannelPointer(ch), m_length);
+    }
+
+    double getSampleRate() const { return m_sourceSampleRate; }
+    int getLength() const { return m_length; }
+
+    void setStartSample(int start) { m_startSample = juce::jlimit(0, m_length, start); }
+    void setNumSamps(int num)      { m_numSamps   = juce::jlimit(0, m_length, num); }
+
+    std::tuple<const float*, const float*> getBuffer() const
+    {
+        const float* left  = m_data.getReadPointer(0, m_startSample);
+        const float* right = (m_data.getNumChannels() > 1)
+                               ? m_data.getReadPointer(1, m_startSample)
+                               : left;
+
+        return { left, right };
+    }
+
+    float getRMS() const
+    {
+        const int win = juce::jmin((int)(m_sourceSampleRate * 0.4), m_data.getNumSamples());
+
+        float sum = 0.f;
+        for (int c = 0; c < m_data.getNumChannels(); ++c)
+            sum += m_data.getRMSLevel(c, 0, win);
+
+        sum /= (float)m_data.getNumChannels();
+        return juce::Decibels::gainToDecibels(sum);
+    }
+    SFZRegion& getSourceRegion () {
+        return m_sfz;
+    }
+
+private:
+    SFZRegion& m_sfz;
+
+    double m_sourceSampleRate = 44100.0;
+    int m_length = 0;
+
+    int m_startSample = 0;
+    int m_numSamps   = 0;
+
+    juce::AudioBuffer<float> m_data;
+};;
+enum class SoundSampleType {
+    Unknown,
+    WAV,
+    MMap,
+    Buffered,
+    SFZ
+};
+class BKSamplerSoundBase;
+class  BKSynthesiserSound    : public juce::ReferenceCountedObject
+{
+protected:
+    //==============================================================================
+    BKSynthesiserSound(){};
+
+public:
+    /** Destructor. */
+    ~BKSynthesiserSound() override{};
+
+    //==============================================================================
+    /** Returns true if this sound should be played when a given midi note is pressed.
+
+        The Synthesiser will use this information when deciding which sounds to trigger
+        for a given note.
+    */
+    virtual bool appliesToNote (int midiNoteNumber) = 0;
+
+    /** Returns true if the sound should be triggered by midi events on a given channel.
+
+        The Synthesiser will use this information when deciding which sounds to trigger
+        for a given note.
+    */
+    virtual bool appliesToChannel (int midiChannel) = 0;
+    virtual bool appliesToVelocity (int midiChannel) = 0;
+
+    /** The class is reference-counted, so this is a handy pointer class for it. */
+    using Ptr = juce::ReferenceCountedObjectPtr<BKSynthesiserSound>;
+
+    float dBFSLevel; // dBFS value of this velocity layer
+    float dBFSBelow; // dBFS value of velocity layer below this layer
+    virtual SoundSampleType getSoundSampleType() const {return SoundSampleType::Unknown;};
+    virtual BKSamplerSoundBase* getSamplerSoundBase() noexcept { return nullptr; }
+
+private:
+    //==============================================================================
+    JUCE_LEAK_DETECTOR (BKSynthesiserSound)
+};
+class BKSamplerSoundBase : public BKSynthesiserSound
+{
+public:
+    virtual ~BKSamplerSoundBase() = default;
+
+    // Returning `this` allows a safe static_cast later
+    virtual BKSamplerSoundBase* getSamplerSoundBase() noexcept override { return this; }
+};
 template<typename T>
-class BKSamplerSound :  public juce::SynthesiserSound
+class BKSamplerSound :  public BKSamplerSoundBase
 {
 public:
     BKSamplerSound( const juce::String& soundName,
@@ -219,9 +385,9 @@ public:
                     const juce::BigInteger& midiVelocities,
                     int numLayers,
                     //int layerId,
-                    float dBFSBelow
-                    ) :
-                    dBFSBelow(dBFSBelow),
+                    float dBFSBelo
+                    ) requires (!std::is_same_v<T, SFZRegion>) :
+
                     numLayers(numLayers), // i don't think we need this argument anymore
                     //layerId(layerId),
                     rootMidiNote(rootMidiNote),
@@ -230,6 +396,7 @@ public:
                     midiVelocities(midiVelocities),
                     sample(std::move(samp))
     {
+        dBFSBelow = dBFSBelo;
 //        // Print the class name and action
 //        DBG("Create BKSamplerSound");
 
@@ -246,6 +413,63 @@ public:
 
 
     }
+    BKSamplerSound(const juce::String& soundName,
+                      std::shared_ptr<Sample<T>> samp)
+           requires (std::is_same_v<T, SFZRegion>)
+           : sample(std::move(samp))
+    {
+        // very important: you expose region via Sample<SFZRegion>
+        SFZRegion& region = sample->getSourceRegion();
+
+        // ---------------------------
+        // KEY & VELOCITY RANGES
+        // ---------------------------
+        midiNotes.clear();
+        midiVelocities.clear();
+        midiNotes.setRange(region.lokey, region.hikey - region.lokey + 1, true);
+        midiVelocities.setRange(region.lovel, region.hivel - region.lovel + 1, true);
+
+        // ---------------------------
+        // PITCH & ROOT NOTE
+        // ---------------------------
+        rootMidiNote = region.pitch_keycenter;
+        transpose    = region.transpose;
+
+        // ---------------------------
+        // LOOPING INFORMATION
+        // ---------------------------
+        //loopMode = convertLoopMode(region.loop_mode);
+
+        // if (region.loop_mode != SFZRegion::no_loop)
+        //     loopPoints = juce::Range<double>(
+        //         (double)region.loop_start,
+        //         (double)region.loop_end
+        //     );
+
+        // ---------------------------
+        // FILTER / AMP PARAMETERS
+        // ---------------------------
+        params.attack  = region.ampeg.attack;
+        params.decay   = region.ampeg.decay;
+        params.sustain = region.ampeg.sustain;
+        params.release = region.ampeg.release;
+
+        // params.pan     = region.pan;
+        // params.volume  = region.volume;
+
+        // ---------------------------
+        // Calculate RMS
+        // ---------------------------
+        dBFSLevel = sample->getRMS();
+        dBFSBelow = region.volume;   // or sfz "volume" mapping
+
+        // ---------------------------
+        // CENTER FREQUENCY
+        // ---------------------------
+        setCentreFrequencyInHz(mtof(rootMidiNote));
+    }
+
+
     //==============================================================================
     bool appliesToNote (int midiNoteNumber)  {
         return midiNotes[midiNoteNumber];
@@ -321,13 +545,13 @@ public:
     /** The class is reference-counted, so this is a handy pointer class for it. */
     //typedef juce::ReferenceCountedObjectPtr<BKSamplerSound<T>> Ptr;
 
-    float dBFSLevel; // dBFS value of this velocity layer
-    float dBFSBelow; // dBFS value of velocity layer below this layer
     int numLayers; // don't think we need this...
     //int layerId;
     int rootMidiNote;
     int transpose;
-
+    SoundSampleType getSoundSampleType() const override {
+        return sampleType;
+    }
 private:
     std::shared_ptr<Sample<T>> sample;
     double centreFrequencyInHz { 440.0 };
@@ -337,8 +561,14 @@ private:
     juce::BigInteger midiVelocities;
 
     BKADSR::Parameters params;
-
+    static constexpr SoundSampleType sampleType =
+        std::is_same_v<T, SFZRegion> ? SoundSampleType::SFZ :
+        std::is_base_of_v<juce::MemoryMappedAudioFormatReader, T> ? SoundSampleType::MMap :
+        std::is_base_of_v<juce::BufferingAudioReader, T> ? SoundSampleType::Buffered :
+        SoundSampleType::WAV;
 };
+
+
 class BKSynthesiser;
 
 /**
@@ -370,7 +600,7 @@ public:
     /** Returns the sound that this voice is currently playing.
         Returns nullptr if it's not playing.
     */
-    juce::SynthesiserSound::Ptr getCurrentlyPlayingSound() const noexcept     { return currentlyPlayingSound; }
+     BKSynthesiserSound::Ptr getCurrentlyPlayingSound() const noexcept     { return currentlyPlayingSound; }
 
     /** Must return true if this voice object is capable of playing the given sound.
 
@@ -381,7 +611,7 @@ public:
         of voice and sound, or it might check the type of the sound object passed-in and
         see if it's one that it understands.
     */
-    virtual bool canPlaySound (juce::SynthesiserSound*)  {return true;};
+    virtual bool canPlaySound (BKSynthesiserSound*)  {return true;};
 
     /** Called to start a new note.
         This will be called during the rendering callback, so must be fast and thread-safe.
@@ -503,15 +733,53 @@ public:
         return isVoiceActive() && ! (isKeyDown() || isSostenutoPedalDown() || isSustainPedalDown());
     }
 
+
+    virtual void startNote (int midiNoteNumber,
+float velocity,
+float transposition,
+bool tune_transpositions,
+BKSynthesiserSound * _sound,
+int currentPitchWheelPosition,
+float startTimeMS=0.f,
+Direction startDirection= Direction::forward) = 0;
     /** Returns true if this voice started playing its current note before the other voice did. */
     bool wasStartedBefore (const BKSynthesiserVoice& other) const noexcept;
     double currentSampleRate = 44100.0;
 
     juce::uint32 noteOnTime = 0; int currentlyPlayingNote = -1, currentPlayingMidiChannel = 0;
-    juce::SynthesiserSound::Ptr currentlyPlayingSound;
-    bool keyIsDown = false, sustainPedalDown = false, sostenutoPedalDown = false;
+    BKSynthesiserSound::Ptr currentlyPlayingSound;
 
+    bool keyIsDown = false, sustainPedalDown = false, sostenutoPedalDown = false;
+    void updateAmpEnv(BKADSR::Parameters &parameters) {
+        ampEnv.setParameters(parameters);
+        // todo: update mod amount
+    }
+    void copyAmpEnv(BKADSR::Parameters parameters)
+    {
+        updateAmpEnv(parameters);
+    }
+    void setTargetSustainTime(float sustainTimeMS)
+    {
+        targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
+    }
+    void setGain(float g)
+    {
+        voiceGain = g;
+    }
+    /*
+ * for situations where we specify a sustain time at noteOn, we want to ignore noteOff messages
+ */
+    bool ignoreNoteOff = false;
 protected:
+    int64_t targetSustainTime_samples = -1;
+    float voiceGain {1.};
+
+    BKADSR ampEnv;
+
+    void setTuning(TuningState* attachedTuning)
+    {
+        tuning = attachedTuning;
+    }
     /** Resets the state of this voice after a sound has finished playing.
 
         The subclass must call this when it finishes playing a note and becomes available
@@ -526,7 +794,11 @@ protected:
     */
     void clearCurrentNote();
 
+protected:
+    TuningState* tuning = nullptr;
+
 private:
+
     //==============================================================================
     friend class BKSynthesiser;
 
@@ -548,10 +820,11 @@ private:
    without fee is hereby granted provided that the above copyright notice and
    this permission notice appear in all copies.
    THE SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES,
-   WHETHER EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR
+   WHETHER EXPRESSED OR IMPLIED, INCL]UDING MERCHANTABILITY AND FITNESS FOR
    PURPOSE, ARE DISCLAIMED.
   ==============================================================================
 */
+template<typename T>
 
 class BKSamplerVoice : public BKSynthesiserVoice
 {
@@ -572,48 +845,29 @@ public:
         ampEnv.setSampleRate(newRate);
         ampEnv.setParameters(ampEnv.getParameters());
     }
-
-    virtual void startNote (int midiNoteNumber,
-                            float velocity,
-                            float transposition,
-                            bool tune_transpositions,
-                            BKSamplerSound<juce::AudioFormatReader> * _sound,
-                            int currentPitchWheelPosition)
-    {
-        samplerSound = _sound;
-        currentlyPlayingSound = _sound;
-        currentlyPlayingNote = midiNoteNumber;
-        currentTransposition = transposition;
-        tuneTranspositions = tune_transpositions;
-
-        /* this will adjust the loudness of this layer according to velocity, based on the
-         *  - dB difference between this layer and the layer below
-         */
-        level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity) * voiceGain); // need gain setting for each synth
-
-        /* set the sample increment, based on the target frequency for this note
-         *  - we will update this every block for spring and regular tunings, but not for tuningType tunings
-         */
-        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
-
-        auto loopPoints = samplerSound->getLoopPointsInSeconds();
-        loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
-        loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
-        currentSamplePos = 0.0;
-        tailOff = 0.0;
-
-        currentSustainTime_samples = 0;
-        ampEnv.noteOn();
+    void startNote (int midiNoteNumber,
+         float velocity,
+         float transposition,
+         bool tune_transpositions,
+         BKSynthesiserSound * _sound,
+         int currentPitchWheelPosition,
+         float startTimeMS = 0.f,
+         Direction startDirection = Direction::forward) {
+        auto* sampler = static_cast<BKSamplerSound<T>*>(_sound->getSamplerSoundBase());
+        jassert(sampler != nullptr);
+        myStartNote(midiNoteNumber,velocity,transposition,tune_transpositions,sampler,
+            currentPitchWheelPosition,startTimeMS,startDirection);
     }
 
-    virtual void startNote (int midiNoteNumber,
+
+    void myStartNote (int midiNoteNumber,
         float velocity,
         float transposition,
         bool tune_transpositions,
-        BKSamplerSound<juce::AudioFormatReader> * _sound,
+        BKSamplerSound<T>* _sound,
         int currentPitchWheelPosition,
-        float startTimeMS,
-        Direction startDirection)
+        float startTimeMS = 0.f,
+        Direction startDirection = Direction::forward)
     {
         samplerSound = _sound;
         currentlyPlayingSound = _sound;
@@ -642,12 +896,57 @@ public:
 
         currentSustainTime_samples = 0;
         ampEnv.noteOn();
+        if constexpr (std::is_same_v<T, SFZRegion>)
+        {
+            auto& region = samplerSound->getSample()->getSourceRegion();
+            ampeg.start_note(
+    &region.ampeg, velocity, samplerSound->getSample()->getSampleRate(), &region.ampeg_veltrack);
+
+            // -----------------------
+            // Offset / End
+            // -----------------------
+            currentSamplePos = region.offset;
+            //sample_end = region.sample->num_samples;
+
+            //if (region.end > 0 && region.end < sample_end)
+                //sample_end = region.end + 1;
+
+            // -----------------------
+            // Looping
+            // -----------------------
+            loop_start = 0;
+            loop_end   = 0;
+
+            SFZRegion::LoopMode loop_mode = region.loop_mode;
+
+            if (loop_mode == SFZRegion::sample_loop)
+            {
+                if (region.sample->loop_start < region.sample->loop_end)
+                    loop_mode = SFZRegion::loop_continuous;
+                else
+                    loop_mode = SFZRegion::no_loop;
+            }
+
+            if (loop_mode != SFZRegion::no_loop &&
+                loop_mode != SFZRegion::one_shot)
+            {
+                if (region.loop_start < region.loop_end)
+                {
+                    loop_start = region.loop_start;
+                    loop_end   = region.loop_end;
+                }
+                else
+                {
+                    loop_start = region.sample->loop_start;
+                    loop_end   = region.sample->loop_end;
+                }
+            }
+
+            num_loops = 0;
+        }
     }
 
-    void setTuning(TuningState* attachedTuning)
-    {
-        tuning = attachedTuning;
-    }
+
 
     double getTargetFrequency()
     {
@@ -682,10 +981,7 @@ public:
             */
     }
 
-    void setGain(float g)
-    {
-        voiceGain = g;
-    }
+
 
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                          int startSample,
@@ -704,26 +1000,14 @@ public:
         //updateAmpEnv();
     }
 
-    void copyAmpEnv(BKADSR::Parameters parameters)
-    {
-        updateAmpEnv(parameters);
-    }
 
-    /*
-     * for situations where we specify a sustain time at noteOn, we want to ignore noteOff messages
-     */
-    bool ignoreNoteOff = false;
-    void setTargetSustainTime(float sustainTimeMS)
-    {
-        targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
-    }
+
+
+
 
 private:
 
-    void updateAmpEnv(BKADSR::Parameters &parameters) {
-        ampEnv.setParameters(parameters);
-        // todo: update mod amount
-    }
+
 
     template <typename Element>
     void render(juce::AudioBuffer<Element>& outputBuffer, int startSample, int numSamples)
@@ -807,11 +1091,37 @@ private:
         auto nextPos = pos + 1;
         auto alpha = (Element)(currentSamplePos - pos);
         auto invAlpha = 1.0f - alpha;
-
-        // Very simple linear interpolation here because the Sampler class should have already upsampled.
-        auto l = static_cast<Element> ((inL[pos] * invAlpha + inL[nextPos] * alpha));
-        auto r = static_cast<Element> ((inR != nullptr) ? (inR[pos] * invAlpha + inR[nextPos] * alpha)
-                                                        : l);
+        float l,r, ampeg_gain,ampeg_slope;
+        long samples_until_next_amp_segment = ampeg.samples_until_next_segment;
+        bool amp_segment_is_exponential = ampeg.segment_is_exponential;
+        if constexpr (std::is_same_v<T, SFZRegion>) {
+            auto& region = samplerSound->getSample()->getSourceRegion();
+            SampleBuffer* in_buffer = region.sample->buffer;
+            auto in_l = in_buffer->channel_start(0);
+            auto in_r = in_buffer->num_channels > 1 ? in_buffer->channel_start(1) : nullptr;
+            auto in_read = in_buffer->read_sample;
+            if (loop_start < loop_end && nextPos > loop_end)
+                nextPos = loop_start;
+            // Simple linear interpolation.
+            auto stride = in_buffer->stride;
+            l =
+                in_read(in_l + pos * stride) * invAlpha + in_read(in_l + nextPos * stride) * alpha;
+            r =
+                in_r ?
+                (in_read(in_r + pos * stride) * invAlpha + in_read(in_r + nextPos * stride) * alpha) :
+                l;
+             ampeg_gain = ampeg.level;
+            ampeg_slope = ampeg.slope;
+            float gain_left = ampeg_gain;
+            float gain_right = ampeg_gain;
+            l *= gain_left;
+            r *= gain_right;
+        } else {
+            // Very simple linear interpolation here because the Sampler class should have already upsampled.
+            l = static_cast<Element> ((inL[pos] * invAlpha + inL[nextPos] * alpha));
+            r = static_cast<Element> ((inR != nullptr) ? (inR[pos] * invAlpha + inR[nextPos] * alpha)
+                                                            : l);
+        }
         m_Buffer.setSample(0, 0, l);
         m_Buffer.setSample(1, 0, r);
 
@@ -834,7 +1144,27 @@ private:
         }
 
         std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentLoopBegin, currentLoopEnd);
-
+        if constexpr (std::is_same_v<T, SFZRegion>) {
+            if (loop_start < loop_end && currentSamplePos > loop_end) {
+                currentSamplePos = loop_start;
+                num_loops += 1;
+            }
+            // Update EG.
+            if (amp_segment_is_exponential)
+                ampeg_gain *= ampeg_slope;
+            else
+                ampeg_gain += ampeg_slope;
+            if (--samples_until_next_amp_segment < 0) {
+                ampeg.level = ampeg_gain;
+                ampeg.next_segment();
+                ampeg_gain = ampeg.level;
+                ampeg_slope = ampeg.slope;
+                samples_until_next_amp_segment = ampeg.samples_until_next_segment;
+                amp_segment_is_exponential = ampeg.segment_is_exponential;
+            }
+            ampeg.level = ampeg_gain;
+            ampeg.samples_until_next_segment = samples_until_next_amp_segment;
+        }
         if (currentSamplePos > samplerSound->getSample()->getLength())
         {
             stopNote();
@@ -921,8 +1251,7 @@ private:
         return std::tuple<double, Direction>(nextSamplePos, nextDirection);
     }
 
-    BKSamplerSound<juce::AudioFormatReader>* samplerSound;
-    float voiceGain {1.};
+    BKSamplerSound<T>* samplerSound = nullptr;
 
     double currentTransposition; // comes from Transposition sliders in Direct/Nostalgic/Synchronic
     bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the current tuning system (in TuningState)
@@ -931,16 +1260,16 @@ private:
     juce::SmoothedValue<double> loopBegin;
     juce::SmoothedValue<double> loopEnd;
     juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions
-
+    float loop_end;
+    float loop_start;
+    float num_loops;
+    SFZEG ampeg;
     double currentSamplePos { 0 };
     double tailOff { 0 };
     Direction currentDirection{ Direction::forward };
 
-    BKADSR ampEnv;
-    TuningState* tuning = nullptr;
 
     juce::uint64 currentSustainTime_samples = 0;
-    int64_t targetSustainTime_samples = -1;
 
     juce::AudioBuffer<float> m_Buffer;
 };

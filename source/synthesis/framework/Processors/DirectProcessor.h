@@ -189,10 +189,10 @@ public:
     bool acceptsMidi() const override { return true; }
 
     void addSoundSet(
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *s, // main samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *h, // hammer samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *r, // release samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *p) // pedal samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     override {
 
         mainSynth->addSoundSet(s);

@@ -203,6 +203,7 @@ target_link_libraries(SharedCode
     ${CHOWDSP_DEPENDENCIES}
     ${JUCE_DEPENDENCIES}
     melatonin_audio_sparklines
+        sfzero
 )
 
 

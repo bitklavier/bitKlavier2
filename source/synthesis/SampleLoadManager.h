@@ -10,6 +10,8 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_events/juce_events.h>
 #include "overlay.h"
+#include "SFZSound.h"
+class BKSynthesiserSound;
 template <typename T>
 class BKSamplerSound;
 
@@ -127,7 +129,7 @@ public:
         );
 
     juce::ThreadPool sampleLoader;
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> samplerSoundset;
+    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>> samplerSoundset;
 
     bool loadSamples (int selection, bool isGlobal,const juce::ValueTree &v);
     bool loadSamples (std::string);
@@ -158,6 +160,8 @@ public:
         return -1.0f;
     }
 
+    std::vector<std::unique_ptr<SFZSound>> soundfonts;
+
 private:
     SynthBase* parent;
     std::promise<void> loadPromise;
@@ -182,12 +186,12 @@ public:
         juce::BigInteger newMidiRange,
         std::unique_ptr<AudioFormatReaderFactory> ptr,
         juce::AudioFormatManager* manager,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
-        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits) : juce::ThreadPoolJob ("sample_loader"),
+        juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
+        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits, SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
                                            soundset (soundset),
                                            loadManager (loadManager),
                                            sampleReader (std::move (ptr)),
-                                           manager (manager),
+                                           manager (manager),samplerLoader(sampleLoad),
     progress(progress),
          totalUnits(totalUnits)
     {
@@ -199,16 +203,25 @@ public:
     SampleLoadJob (
         juce::AudioFormatManager* manager,
         std::vector<PitchSamplesInfo>&& srvector,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
-        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits) : juce::ThreadPoolJob ("sample_loader"),
+        juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
+        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits, SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
                                            sampleReaderVector (std::move(srvector)),
                                            soundset (soundset),
                                            loadManager (loadManager),
                                            manager (manager),
     progress(progress),
-         totalUnits(totalUnits)
+         totalUnits(totalUnits), samplerLoader(sampleLoad)
     {};
 
+    SampleLoadJob (juce::File sfzFile,
+           juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
+           juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress ,SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
+                                              soundset (soundset),
+                                              loadManager (loadManager),
+       progress(progress),
+    totalUnits(0),
+             samplerLoader(sampleLoad),sfzFile(sfzFile)
+    {};
     ~SampleLoadJob() {
         if (progress)
         {
@@ -220,6 +233,8 @@ public:
         loadManager->triggerAsyncUpdate();
     }
     JobStatus runJob() override;
+    bool loadSoundFont(
+                      juce::File sfzFile);
 
     bool loadSamples(); // calls one of the following, depending on context
     bool loadMainSamplesByPitch();
@@ -232,9 +247,9 @@ public:
     juce::BigInteger thisMidiRange;
     juce::Array<std::tuple<int, int>> getVelLayers (int howmany);
 
-    juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset;
+    juce::ReferenceCountedArray<BKSynthesiserSound>* soundset;
     std::unique_ptr<AudioFormatReaderFactory> sampleReader;
-
+    juce::File sfzFile;
     juce::AudioFormatManager* manager;
     juce::AsyncUpdater* loadManager;
 //progressbar stuff
@@ -259,6 +274,7 @@ public:
      * a vector of all the pitches with relevant sample info, so the samples can be loaded
      */
     std::vector<PitchSamplesInfo> sampleReaderVector;
+    SampleLoadManager& samplerLoader;
 };
 
 

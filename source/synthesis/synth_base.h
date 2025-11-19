@@ -31,7 +31,7 @@ template<typename T>
 class BKSamplerSound;
 class PreparationList;
 class SampleLoadManager;
-
+class BKSynthesiserSound;
 namespace bitklavier {
     class ConnectionList;
     class ModConnectionList;
@@ -108,7 +108,7 @@ public:
 
 
 
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> * getSamples();
+    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>> * getSamples();
 
 
     //all connection code

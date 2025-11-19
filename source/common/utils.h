@@ -240,6 +240,7 @@ static constexpr int MaxMidiNotes = 128;
         BKPianoHammer,
         BKPianoReleaseResonance,
         BKPianoPedal,
+        BKPianoSoundFont,
         BKPianoSampleTypes
     } BKPianoSampleType;
 

@@ -399,12 +399,7 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         PluginBase (parent, vt, nullptr, resonanceBusLayout()),
         resonanceSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
-    for (int i = 0; i < 300; i++)
-    {
-        resonanceSynth->addVoice (new BKSamplerVoice());
-    }
-
-    for (int i = 0; i < MaxMidiNotes; ++i)
+      for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};
     }
