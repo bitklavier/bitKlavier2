@@ -8,6 +8,7 @@
 #include "OpenGL_ClusterMinMaxSlider.h"
 #include "OpenGL_HoldTimeMinMaxSlider.h"
 #include "OpenGL_MultiSlider.h"
+#include "OpenGL_2DMultiSlider.h"
 #include "SynchronicProcessor.h"
 #include "EnvelopeSequenceState.h"
 #include "EnvelopeSequenceSection.h"
@@ -103,29 +104,33 @@ public:
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
         // multisliders
-        transpositionsSlider = std::make_unique<OpenGL_MultiSlider>("transpositions_", &params.transpositions, listeners);
+        transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions_", &params.transpositions, listeners);
         transpositionsSlider->setComponentID ("transpositions_");
         transpositionsSlider->setMinMaxDefaultInc({-12., 12, 0., 0.001});
         transpositionsSlider->setName("Transpositions");
         addStateModulatedComponent (transpositionsSlider.get());
+        transpositionsSlider->updateFromParams(juce::dontSendNotification);
 
         accentsSlider = std::make_unique<OpenGL_MultiSlider>("accents_", &params.accents, listeners);
         accentsSlider->setComponentID ("accents_");
         accentsSlider->setMinMaxDefaultInc({0., 2, 1., 0.1});
         accentsSlider->setName("Accents");
         addStateModulatedComponent (accentsSlider.get());
+        accentsSlider->updateFromParams(juce::dontSendNotification);
 
         sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustainlength_multipliers", &params.sustainLengthMultipliers, listeners);
         sustainLengthMultipliersSlider->setComponentID ("sustainlength_multipliers");
         sustainLengthMultipliersSlider->setMinMaxDefaultInc({-2., 2., 1., 0.01});
         sustainLengthMultipliersSlider->setName("Sustain Length Multipliers");
         addStateModulatedComponent (sustainLengthMultipliersSlider.get());
+        sustainLengthMultipliersSlider->updateFromParams(juce::dontSendNotification);
 
         beatLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("beatlength_multipliers", &params.beatLengthMultipliers, listeners);
         beatLengthMultipliersSlider->setComponentID ("beatlength_multipliers");
         beatLengthMultipliersSlider->setMinMaxDefaultInc({0., 2., 1., 0.01});
         beatLengthMultipliersSlider->setName("Beat Length Multipliers");
         addStateModulatedComponent (beatLengthMultipliersSlider.get());
+        beatLengthMultipliersSlider->updateFromParams(juce::dontSendNotification);
 
         // min/max sliders
         clusterMinMaxSlider = std::make_unique<OpenGL_ClusterMinMaxSlider>(&params.clusterMinMaxParams, listeners);
@@ -231,32 +236,20 @@ public:
 
     void copyEnvEditorValsToEnvSequence()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
+        int currentEnv = *sparams_.envelopeSequence.currentlyEditing;
+        sparams_.envelopeSequence.envStates.attacks[currentEnv].store(*sparams_.env.attackParam);
+        sparams_.envelopeSequence.envStates.decays[currentEnv].store(*sparams_.env.decayParam);
+        sparams_.envelopeSequence.envStates.sustains[currentEnv].store(*sparams_.env.sustainParam);
+        sparams_.envelopeSequence.envStates.releases[currentEnv].store(*sparams_.env.releaseParam);
 
-        DBG("copyEnvEditorValsToEnvSequence " + juce::String(currentEnv));
-        sparams_.envelopeSequence.envStates.attacks[currentEnv]         = sparams_.env.attackParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.decays[currentEnv]          = sparams_.env.decayParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.sustains[currentEnv]        = sparams_.env.sustainParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.releases[currentEnv]        = sparams_.env.releaseParam->getCurrentValue();
-
-        sparams_.envelopeSequence.envStates.attackPowers[currentEnv]    = sparams_.env.attackPowerParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.decayPowers[currentEnv]     = sparams_.env.decayPowerParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.releasePowers[currentEnv]   = sparams_.env.releasePowerParam->getCurrentValue();
-
-        DBG(juce::String(sparams_.envelopeSequence.envStates.attacks[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.decays[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.sustains[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.releases[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.attackPowers[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.decayPowers[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.releasePowers[currentEnv]));
+        sparams_.envelopeSequence.envStates.attackPowers[currentEnv].store(*sparams_.env.attackPowerParam);
+        sparams_.envelopeSequence.envStates.decayPowers[currentEnv].store(*sparams_.env.decayPowerParam);
+        sparams_.envelopeSequence.envStates.releasePowers[currentEnv].store(*sparams_.env.releasePowerParam);
     }
 
     void displayEnvSequenceValsInEnvEditor()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
-
-        DBG("displayEnvSequenceValsInEnvEditor " + juce::String(currentEnv));
+        int currentEnv = *sparams_.envelopeSequence.currentlyEditing;
         envSection->setADSRVals(
             sparams_.envelopeSequence.envStates.attacks[currentEnv],
             sparams_.envelopeSequence.envStates.decays[currentEnv],
@@ -295,7 +288,7 @@ public:
     std::shared_ptr<PlainTextComponent> determinesCluster_label;
 
     // multisliders
-    std::unique_ptr<OpenGL_MultiSlider> transpositionsSlider;
+    std::unique_ptr<OpenGL_2DMultiSlider> transpositionsSlider;
     std::unique_ptr<OpenGL_MultiSlider> accentsSlider;
     std::unique_ptr<OpenGL_MultiSlider> sustainLengthMultipliersSlider;
     std::unique_ptr<OpenGL_MultiSlider> beatLengthMultipliersSlider;

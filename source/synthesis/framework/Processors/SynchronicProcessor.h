@@ -28,6 +28,7 @@ Synchronic.h
 #include "HoldTimeMinMaxParams.h"
 #include "Identifiers.h"
 #include "MultiSliderState.h"
+#include "MultiSlider2DState.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "TempoProcessor.h"
@@ -110,7 +111,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     /**
      * todo: make transpositions 2D
      */
-    MultiSliderState transpositions;
+    MultiSlider2DState transpositions;
     MultiSliderState accents;
     MultiSliderState sustainLengthMultipliers;
     MultiSliderState beatLengthMultipliers;
@@ -235,7 +236,7 @@ struct SynchronicParams : chowdsp::ParamHolder
             //"envelope_10"
             if (_ep->getParameterID() == "envelope_" + juce::String(which))
             {
-                return _ep->get();
+                return *_ep;
             }
         }
     }
@@ -279,7 +280,7 @@ struct SynchronicParams : chowdsp::ParamHolder
              * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
              * so we switch it everything we one of the sliders gets modded.
              */
-            if (updateUIState->get())
+            if (*updateUIState)
                 updateUIState->setValueNotifyingHost(false);
             else
                 updateUIState->setValueNotifyingHost(true);
@@ -386,13 +387,13 @@ class SynchronicCluster
          *      this is a special case, but should behave as expected
          */
         auto sMode = _sparams->pulseTriggeredBy->get();
-        if (beatCounter > 0 || (sMode == Any_NoteOn || sMode == First_NoteOn) || _sparams->skipFirst->get())
+        if (beatCounter > 0 || (sMode == Any_NoteOn || sMode == First_NoteOn) || *_sparams->skipFirst)
         {
             if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size)
                 beatMultiplierCounter = 0;
         }
 
-        if (++beatCounter >= _sparams->numPulses->getCurrentValue())
+        if (++beatCounter >= *_sparams->numPulses)
         {
             shouldPlay = false;
         }
@@ -592,7 +593,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     float getBeatThresholdSeconds()
     {
         if (tempo != nullptr)
-            return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
+            return 60.f / (*tempo->getState().params.tempoParam * *tempo->getState().params.subdivisionsParam);
         else
             return 0.5; // 120bpm by default
     }

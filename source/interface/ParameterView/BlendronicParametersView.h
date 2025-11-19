@@ -35,12 +35,14 @@ public:
         beatLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
         beatLengthsSlider->setName("Beat Lengths (x/Tempo)");
         addStateModulatedComponent (beatLengthsSlider.get());
+        beatLengthsSlider->updateFromParams();
 
         delayLengthsSlider = std::make_unique<OpenGL_MultiSlider>("delay_lengths", &params.delayLengths, listeners);
         delayLengthsSlider->setComponentID ("delay_lengths");
         delayLengthsSlider->setMinMaxDefaultInc({0., 8, 4., 0.01});
         delayLengthsSlider->setName("Delay Lengths (x/Tempo)");
         addStateModulatedComponent (delayLengthsSlider.get());
+        delayLengthsSlider->updateFromParams();
 
         smoothingTimesSlider = std::make_unique<OpenGL_MultiSlider>("smoothing_times", &params.smoothingTimes, listeners);
         smoothingTimesSlider->setComponentID ("smoothing_times");
@@ -48,6 +50,7 @@ public:
         smoothingTimesSlider->setSkewFromMidpoint(0.1);
         smoothingTimesSlider->setName("Smooth Times (ms)");
         addStateModulatedComponent (smoothingTimesSlider.get());
+        smoothingTimesSlider->updateFromParams();
 
         feedbackCoeffsSlider = std::make_unique<OpenGL_MultiSlider>("feedback_coefficients", &params.feedbackCoeffs, listeners);
         feedbackCoeffsSlider->setComponentID ("feedback_coefficients");
@@ -55,6 +58,7 @@ public:
         feedbackCoeffsSlider->setSkewFromMidpoint(0.1);
         feedbackCoeffsSlider->setName("Feedback Coefficients (0-1)");
         addStateModulatedComponent (feedbackCoeffsSlider.get());
+        feedbackCoeffsSlider->updateFromParams();
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly

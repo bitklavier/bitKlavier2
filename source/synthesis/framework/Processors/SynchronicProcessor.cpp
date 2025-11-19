@@ -155,8 +155,8 @@ bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
     bool passCluster = false;
 
     //in the normal case, where cluster is within a range defined by clusterMin and Max
-    int sClusterMin = state.params.clusterMinMaxParams.clusterMinParam->getCurrentValue();
-    int sClusterMax = state.params.clusterMinMaxParams.clusterMaxParam->getCurrentValue();
+    int sClusterMin = *state.params.clusterMinMaxParams.clusterMinParam;
+    int sClusterMax = *state.params.clusterMinMaxParams.clusterMaxParam;
 
     if(sClusterMin <= sClusterMax)
     {
@@ -286,7 +286,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
      * inCluster is true if the time since the last note played was less than clusterThreshold
      * - gathers notes into a single cluster that is played metronomically
     */
-    thresholdSamples = state.params.clusterThreshold->getCurrentValue() * getSampleRate() * .001;
+    thresholdSamples = *state.params.clusterThreshold * getSampleRate() * .001;
     if (inCluster)
     {
         //moved beyond clusterThreshold time, done with cluster
@@ -335,7 +335,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 bool playNow = true;
 
                 // easy case: if we are skipping the first pattern value, we always increment the pattern counters, in step()
-                if(state.params.skipFirst.get()->get()) cluster->step(numSamplesBeat);
+                if(*state.params.skipFirst) cluster->step(numSamplesBeat);
 
                 // it gets messy when we are not skipping the first pattern value
                 else
@@ -378,7 +378,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                  *  another example: clusterMax=20, clusterCap=8; play a rapid ascending scale more than 8 and less than 20 notes, then stop; only last 8 notes will be in the cluster. If your scale exceeds 20 notes then it won't play.
                  */
                 slimCluster.clearQuick();
-                for(int i = 0; i < clusterNotes.size() && i <= state.params.clusterThickness->getCurrentValue(); i++)
+                for(int i = 0; i < clusterNotes.size() && i <= *state.params.clusterThickness; i++)
                 {
                     slimCluster.addIfNotAlreadyThere(clusterNotes.getUnchecked(i));
                 }
@@ -392,7 +392,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     {
                         // put together the midi message
                         int newNote = slimCluster[n];
-                        float newTransp = state.params.transpositions.sliderVals[cluster->transpCounter];
+                        //auto newTransp = state.params.transpositions.sliderVals[cluster->transpCounter][0].load();
                         float velocityMultiplier = state.params.accents.sliderVals[cluster->accentMultiplierCounter];
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
 
@@ -407,11 +407,21 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].envParams.decayPower = state.params.envelopeSequence.envStates.decayPowers[cluster->envelopeCounter];
                         noteOnSpecMap[newNote].envParams.releasePower = state.params.envelopeSequence.envStates.releasePowers[cluster->envelopeCounter];
 
-                        /**
-                         * todo: when the transposition multislider is 2d, need to update here
-                         */
                         noteOnSpecMap[newNote].transpositions.clearQuick();
-                        noteOnSpecMap[newNote].transpositions.add(newTransp);
+                        //noteOnSpecMap[newNote].transpositions.add(newTransp);
+
+                        // need to make sure that slider has at least one transposition
+                        if(state.params.transpositions.sliderDepths[cluster->transpCounter].load() == 0)
+                        {
+                            noteOnSpecMap[newNote].transpositions.addIfNotAlreadyThere(0.);
+                        }
+
+                        // add the rest of the transpositions
+                        for (int i = 0; i < state.params.transpositions.sliderDepths[cluster->transpCounter].load(); i++)
+                        {
+                            noteOnSpecMap[newNote].transpositions.add(state.params.transpositions.sliderVals[cluster->transpCounter][i].load());
+                        }
+                        noteOnSpecMap[newNote].useAttachedTuning = *state.params.transpositionUsesTuning;
 
                         // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
@@ -515,7 +525,6 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     /*
      * then the synthesizer process blocks
      */
-    bool useTuningForTranspositions = state.params.transpositionUsesTuning->get();
     if (synchronicSynth->hasSamples())
     {
         synchronicSynth->setBypassed (false);
@@ -525,7 +534,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+    float sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendGain);
     buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
     buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
 
@@ -534,7 +543,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
 
     // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    float outputgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputGain);
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
 
@@ -554,10 +563,9 @@ void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
 bool SynchronicProcessor::holdCheck(int noteNumber)
 {
     juce::uint64 hold = holdTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
-    //DBG("holdCheck val = " + juce::String(holdTimers.getUnchecked(noteNumber)));
 
-    auto holdmin = state.params.holdTimeMinMaxParams.holdTimeMinParam->getCurrentValue();
-    auto holdmax = state.params.holdTimeMinMaxParams.holdTimeMaxParam->getCurrentValue();
+    float holdmin = *state.params.holdTimeMinMaxParams.holdTimeMinParam;
+    float holdmax = *state.params.holdTimeMinMaxParams.holdTimeMaxParam;
 
     if(holdmin <= holdmax)
     {
@@ -595,11 +603,11 @@ bool SynchronicProcessor::updateCurrentCluster()
         clusterLayers[currentLayerIndex]->reset();
 
         // turn off oldest cluster
-        int oldestClusterIndex = currentLayerIndex - std::round(state.params.numLayers->getCurrentValue());
+        int oldestClusterIndex = currentLayerIndex - *state.params.numLayers;
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
 
-        DBG("num layers = " + juce::String(std::round(state.params.numLayers->getCurrentValue())));
+        DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
         DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
@@ -1012,8 +1020,8 @@ void SynchronicParams::deserialize (typename Serializer::DeserializedType deseri
     /*
      * then the more complex params
      */
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions_");
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_");
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions_", 0.f); // 0 offset for transpositions
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_"); // 1. multiplier for the rest
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
 
