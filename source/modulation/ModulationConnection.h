@@ -76,14 +76,13 @@ class ModulationProcessor;
             float end   = static_cast<float>(param_tree.getProperty(IDs::end));
             float skew  = static_cast<float>(param_tree.getProperty(IDs::skew));
 
-            if(sliderVal + modVal > end) {
-
-                end = sliderVal + modVal;
-                param_tree.setProperty(IDs::end,end,nullptr);
-            } else if (sliderVal - modVal < start) {
-                start = sliderVal - modVal;
-                param_tree.setProperty(IDs::start,start,nullptr);
-            }
+//            if(sliderVal + modVal > end) {
+//                end = sliderVal + modVal;
+//                param_tree.setProperty(IDs::end,end,nullptr);
+//            } else if (sliderVal - modVal < start) {
+//                start = sliderVal - modVal;
+//                param_tree.setProperty(IDs::start,start,nullptr);
+//            }
             juce::NormalisableRange<float> range(start, end, 0.0f, skew);
 
             // Convert current slider value to normalized
@@ -94,8 +93,8 @@ class ModulationProcessor;
             if (isBipolar())
             {
                 // Symmetric modulation up and down
-                float plusNorm  = range.convertTo0to1(std::min(sliderVal + modVal,end));
-                float minusNorm = range.convertTo0to1(std::max(sliderVal - modVal,start));
+                float plusNorm  = range.convertTo0to1(std::min(sliderVal + modVal, end));
+                float minusNorm = range.convertTo0to1(std::max(sliderVal - modVal, start));
 
                 // Half the total range (from center to one side)
                 modRangeNorm = 0.5f * std::abs(plusNorm - minusNorm);
@@ -103,10 +102,42 @@ class ModulationProcessor;
             else
             {
                 // Unipolar modulation (e.g., 0 to +modVal)
-                float targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
+//                float targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
+//                modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
 
-                modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
+
+//                // Symmetric modulation up and down
+//                DBG("modval = " + juce::String(modVal));
+//                float plusNorm  = range.convertTo0to1(std::min(sliderVal + modVal, end));
+//                float minusNorm = range.convertTo0to1(std::max(sliderVal - modVal, start));
+//
+//                // Half the total range (from center to one side)
+//                modRangeNorm = 0.5f * (plusNorm - minusNorm);
+
+                DBG("modVal = " + juce::String(modVal));
+                float targetNorm = 0.;
+
+                if(modVal > sliderVal)
+                {
+                    float targetNorm = range.convertTo0to1(std::min(modVal, end));
+                    modRangeNorm = targetNorm - sliderNorm;
+
+//                    float targetNorm = range.convertTo0to1(std::min(modVal, end));
+//                    modRangeNorm = targetNorm - sliderNorm;
+//                    DBG("targetNorm = " + juce::String(targetNorm));
+                        //targetNorm  = range.convertTo0to1(std::min(sliderVal + modVal, end));
+                        //targetNorm  = range.convertTo0to1(std::min(modVal - sliderNorm, end));
+                }
+                else
+                {
+                    float targetNorm = range.convertTo0to1(std::max(modVal, start));
+                    modRangeNorm = (sliderNorm - targetNorm) * -1.f;
+//                    DBG("targetNorm = " + juce::String(targetNorm));
+                     //targetNorm = range.convertTo0to1(std::max(sliderVal - modVal, start));
+                }
+                //modRangeNorm = targetNorm;
             }
+
             state.setProperty(IDs::sliderval,sliderVal,nullptr);
             scalingValue_.store(modRangeNorm);
             state.setProperty(IDs::mod0to1, scalingValue_.load(),nullptr);

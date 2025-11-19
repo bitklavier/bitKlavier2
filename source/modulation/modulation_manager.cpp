@@ -250,6 +250,7 @@ ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const j
     hovering_ = false;
     current_modulator_ = false;
     setRange(0.f, 1.f, 0.f);
+    //setRange(-1.f, 1.f, 0.f);
 }
 
 void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
@@ -390,7 +391,10 @@ void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
     destination = dest;
     if(destination == nullptr)
         return;
-    this->setRange(0, dest->getNormalisableRange().getRange().getLength(), 0.f);
+    auto paramRange = dest->getNormalisableRange().getRange().getLength();
+    //this->setRange(-paramRange * 0.5, paramRange * 0.5, 0.f);
+    this->setRange(dest->getNormalisableRange().getRange().getStart(), dest->getNormalisableRange().getRange().getEnd(), 0.f);
+    //this->setRange(0, dest->getNormalisableRange().getRange().getLength(), 0.f);
     DBG(dest->getNormalisableRange().getRange().getLength());
     //this->setNormalisableRange(dest->getNormalisableRange());
     // this->valueFromTextFunction = dest->attachment->getParameter()->getStringFromValueFunction();
@@ -2326,7 +2330,7 @@ void ModulationManager::sliderValueChanged(juce::Slider *slider) {
         connection->setScalingValue(value,amount_knob->destination->getValue());
     else
         connection->setScalingValue(value,connection->currentDestinationSliderVal);
-    DBG(juce::String(value) +"," + juce::String(connection->getScaling()));
+    DBG("ModulationManager::sliderValueChanged " + juce::String(value) +"," + juce::String(connection->getScaling()));
     setModulationValues(connection->source_name, connection->destination_name, value, bipolar, stereo, bypass);
     amount_knob->my0to1amt = connection->getScaling();
     showModulationAmountOverlay(amount_knob);
