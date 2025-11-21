@@ -140,6 +140,8 @@ public:
 
     juce::CriticalSection* getOpenGlCriticalSection();
     std::unique_ptr<SynthSection> getCompressorPopup();
+    std::unique_ptr<SynthSection> getEQPopup();
+
   protected:
     std::atomic<bool> loading;
     std::unique_ptr<juce::FileChooser> filechooser;

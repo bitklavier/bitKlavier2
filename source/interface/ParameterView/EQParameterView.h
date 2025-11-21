@@ -6,6 +6,7 @@
 #define BITKLAVIER2_EQPARAMETERVIEW_H
 #include "EQProcessor.h"
 #include "synth_section.h"
+#include "default_look_and_feel.h"
 
 class EQParameterView : public SynthSection
 {

@@ -15,7 +15,7 @@
 struct CompressorParams : chowdsp::ParamHolder
 {
     // Adds the appropriate parameters to the Nostalgic Processor
-    CompressorParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("eq")
+    CompressorParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("compressor")
     {
             // add();
     }

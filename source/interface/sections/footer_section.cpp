@@ -107,11 +107,10 @@ void FooterSection::buttonClicked(juce::Button *clicked_button) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         showPrepPopup(interface->getCompressorPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);
     }
-
-    //     showPrepPopup(std::move(EQPrep.getPrepPopup()),gallery,bitklavier::BKPreparationType::PreparationTypeEQ);
-    // } else if (clicked_button == compressorButton.get()) {
-    //     showPrepPopup(std::move(CompressorPrep.getPrepPopup()),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);
-    // } else
+    else if (clicked_button == eqButton.get()) {
+        auto interface = findParentComponentOfClass<SynthGuiInterface>();
+        showPrepPopup(interface->getEQPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeEQ);
+    }
     SynthSection::buttonClicked(clicked_button);
 }
 

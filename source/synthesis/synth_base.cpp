@@ -16,6 +16,7 @@
 #include "synth_base.h"
 
 #include "CompressorProcessor.h"
+#include "EQProcessor.h"
 #include "SampleLoadManager.h"
 
 #include "FullInterface.h"
@@ -90,6 +91,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     engine_ = std::make_unique<bitklavier::SoundEngine>();
     gainProcessor = std::make_unique<GainProcessor>(*this,tree);
     compressorProcessor = std::make_unique<CompressorProcessor>(*this,tree);
+    eqProcessor = std::make_unique<EQProcessor>(*this,tree);
 }
 
 SynthBase::~SynthBase()
@@ -900,6 +902,10 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
 
 CompressorProcessor *SynthBase::getCompressorProcessor() {
     return compressorProcessor.get();
+}
+
+EQProcessor *SynthBase::getEQProcessor() {
+    return eqProcessor.get();
 }
 
 GainProcessor *SynthBase::getMainVolumeProcessor() {

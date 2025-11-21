@@ -17,6 +17,7 @@
 #include "synth_gui_interface.h"
 
 #include "CompressorParameterView.h"
+#include "EQParameterView.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
 
@@ -477,6 +478,11 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
 std::unique_ptr<SynthSection> SynthGuiInterface::getCompressorPopup() {
     auto proc = synth_->getCompressorProcessor();
     return std::make_unique<CompressorParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper());
+}
+
+std::unique_ptr<SynthSection> SynthGuiInterface::getEQPopup() {
+    auto proc = synth_->getEQProcessor();
+    return std::make_unique<EQParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper());
 }
 
 #endif

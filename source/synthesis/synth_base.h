@@ -34,6 +34,8 @@ class PreparationList;
 class SampleLoadManager;
 class GainProcessor;
 class CompressorProcessor;
+class EQProcessor;
+
 
 namespace bitklavier {
     class ConnectionList;
@@ -258,6 +260,7 @@ public:
 
     juce::ValueTree activePiano;
     CompressorProcessor* getCompressorProcessor();
+    EQProcessor* getEQProcessor();
     GainProcessor* getMainVolumeProcessor();
     SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
     int sample_index_of_switch;
@@ -270,6 +273,8 @@ public:
 
     std::unique_ptr<GainProcessor> gainProcessor ;
     std::unique_ptr<CompressorProcessor> compressorProcessor ;
+    std::unique_ptr<EQProcessor> eqProcessor ;
+
 
 private:
 

@@ -8,10 +8,9 @@
 #include "synth_base.h"
 
 EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
-    : PluginBase (parent, vt, nullptr, EQBusLayout())
+    : PluginBase (parent, vt, nullptr, eqBusLayout())
 {
     parent.getValueTree().addListener(this);
-    loadSamples();
 }
 
 void EQProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
