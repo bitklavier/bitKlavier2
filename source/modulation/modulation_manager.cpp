@@ -195,7 +195,8 @@ public:
                     return juce::Rectangle<float>(margin_, y, width - 2 * margin_, glow_height);
                 }
             }
-        }        float x = width * 0.5f * (1.0f - SynthSlider::kLinearWidthPercent);
+        }
+        float x = width * 0.5f * (1.0f - SynthSlider::kLinearWidthPercent);
         float glow_width = width * SynthSlider::kLinearWidthPercent;
         x -= 2.0f * glow_width * kBufferPercent;
         glow_width += 4.0f * kBufferPercent * glow_width;
@@ -250,7 +251,6 @@ ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const j
     hovering_ = false;
     current_modulator_ = false;
     setRange(0.f, 1.f, 0.f);
-    //setRange(-1.f, 1.f, 0.f);
 }
 
 void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
@@ -337,17 +337,20 @@ void ModulationAmountKnob::handleModulationMenuCallback(int result) {
     if (result == kDisconnect) {
         for (Listener *listener: listeners_)
             listener->disconnectModulation(this);
-    } else if (result == kToggleBypass)
+    }
+    else if (result == kToggleBypass)
         toggleBypass();
     else if (result == kToggleBipolar) {
         bipolar_ = !bipolar_;
         for (Listener *listener: listeners_)
             listener->setModulationBipolar(this, bipolar_);
-    } else if (result == kToggleStereo) {
+    }
+    else if (result == kToggleStereo) {
         stereo_ = !stereo_;
         for (Listener *listener: listeners_)
             listener->setModulationStereo(this, stereo_);
-    } else
+    }
+    else
         handlePopupResult(result);
 
     if (result != kManualEntry) {
@@ -401,7 +404,6 @@ void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
     this->textFromValueFunction = dest->attachment->getParameter()->getStringFromValueFunction();
 }
 
-
 juce::Colour ModulationAmountKnob::getInternalColor() {
     if (color_component_)
         return color_component_->findColour(Skin::kRotaryArc, true);
@@ -427,7 +429,6 @@ void ModulationIndicator::mouseDown(const juce::MouseEvent &e) {
         options.addItem(-1, "");
 
         hovering_ = false;
-
 
         auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
         auto cancel = [=]() {
@@ -1327,6 +1328,7 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
             setDestinationQuadBounds(destination.second);
         }
     }
+
     //DEBUG FIX
     for (auto &index_count: rotary_indices) {
         rotary_destinations_[index_count.first]->setNumQuads(index_count.second);
@@ -1337,6 +1339,7 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
         linear_destinations_[index_count.first]->setNumQuads(index_count.second);
         linear_destinations_[index_count.first]->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
     }
+
     for (auto &index_count: button_indices) {
         button_destinations_[index_count.first]->setNumQuads(index_count.second);
         button_destinations_[index_count.first]->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
@@ -2510,6 +2513,7 @@ void ModulationManager::setModulationSliderScale(int index) {
     //      return;
     //    }
     //  }
+
     modulation_amount_sliders_[index]->setDisplayMultiply(1.0f);
     modulation_hover_sliders_[index]->setDisplayMultiply(1.0f);
     selected_modulation_sliders_[index]->setDisplayMultiply(1.0f);
@@ -2722,6 +2726,11 @@ void ModulationManager::makeCurrentModulatorAmountsVisible() {
         int center_y = destination_bounds.getCentreY();
 
         juce::BubbleComponent::BubblePlacement placement = destination_slider->getModulationPlacement();
+        /**
+         * todo: set this somewhere more appropriate?
+         */
+        //placement = juce::BubbleComponent::above;
+
         selected_slider->setPopupPlacement(placement);
         if (placement == juce::BubbleComponent::below)
             selected_slider->setBounds(center_x - width / 2, bottom, width, width);
@@ -2787,6 +2796,7 @@ void ModulationManager::makeCurrentStateModulatorsVisible() {
         int center_y = destination_bounds.getCentreY();
 
         juce::BubbleComponent::BubblePlacement placement = juce::BubbleComponent::below;
+        //juce::BubbleComponent::BubblePlacement placement = juce::BubbleComponent::above;
         //destination_indicator->getModulationPlacement();
         //        selected_indicator->setPopupPlacement(placement);
         if (placement == juce::BubbleComponent::below)
@@ -2805,6 +2815,7 @@ void ModulationManager::makeCurrentStateModulatorsVisible() {
             selected->makeVisible(false);
     }
 }
+
 void ModulationManager::makeModulationsVisible(OpenGLComboBox* destination, bool visible) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -2828,7 +2839,6 @@ void ModulationManager::makeModulationsVisible(OpenGLComboBox* destination, bool
         indicator->setSource(connection->source_name);
     }
 
-
     int hover_indicator_width = size_ratio_ * 24.0f;
     if (current_modulation_showing) {
         auto position = modulation_hover_indicators.begin() + (modulation_hover_indicators.size() + 1) / 2;
@@ -2840,18 +2850,20 @@ void ModulationManager::makeModulationsVisible(OpenGLComboBox* destination, bool
 
     juce::Rectangle<int> destination_bounds = getLocalArea(destination, destination->getLocalBounds());
     int x = destination_bounds.getRight();
-    int y = destination_bounds.getBottom();
+    //int y = destination_bounds.getBottom();
+    int y = destination_bounds.getY();
     int beginning_offset = hover_indicator_width * num_sliders / 2;
     int delta_x = 0;
     int delta_y = 0;
 
     juce::BubbleComponent::BubblePlacement placement = juce::BubbleComponent::below;
+    //juce::BubbleComponent::BubblePlacement placement = juce::BubbleComponent::above;
     //; destination->getModulationPlacement();
-    if (placement == juce::BubbleComponent::below) {
+    //if (placement == juce::BubbleComponent::below)
+    {
         x = destination_bounds.getCentreX() - beginning_offset;
         delta_x = hover_indicator_width;
     }
-
 
     std::unordered_set<ModulationIndicator *> lookup(modulation_hover_indicators.begin(),
                                                      modulation_hover_indicators.end());
@@ -2872,6 +2884,7 @@ void ModulationManager::makeModulationsVisible(OpenGLComboBox* destination, bool
         y += delta_y;
     }
 }
+
 void ModulationManager::makeModulationsVisible(StateModulatedComponent *destination, bool visible) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();

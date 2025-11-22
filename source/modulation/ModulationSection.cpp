@@ -27,8 +27,6 @@ ModulationSection::~ModulationSection()
     _view.reset();
 }
 
-
-
 void ModulationSection::resized()
 {
     int widget_margin = findValue(Skin::kWidgetMargin);
@@ -42,7 +40,6 @@ void ModulationSection::resized()
     int knob_y2 =0;
     SynthSection::resized();
 }
-
 
 void ModulationSection::addModButtonListener(ModulationManager* manager)
 {

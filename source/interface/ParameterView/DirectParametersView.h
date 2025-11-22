@@ -55,10 +55,9 @@ public:
                 addSlider(slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
+                slider->setPopupPlacement(juce::BubbleComponent::above);
                 floatAttachments.emplace_back(std::move(attachment));
                 _sliders.emplace_back(std::move(slider));
-
-
             }
         }
 

@@ -124,8 +124,7 @@ class ModulationAmountKnob : public SynthSlider {
     void addModulationAmountListener(Listener* listener) { listeners_.push_back(listener); }
     void setDestinationSlider(SynthSlider* dest);
     SynthSlider *destination = nullptr;
-    float get0to1value()
-    {return my0to1amt;}
+    float get0to1value() {return my0to1amt;}
     float my0to1amt;
 
   private:
@@ -158,13 +157,16 @@ public:
         kToggleBipolar,
         kToggleStereo,
     };
+
     ModulationIndicator (juce::String name, int index, const juce::ValueTree &v):
     OpenGlQuad(Shaders::kRoundedRectangleFragment) , index_(index), state(v)
     {
         setInterceptsMouseClicks(true,false);
         setName(name);
     }
+
     juce::ValueTree state;
+
     void makeVisible(bool visible)
     {
         if (visible == showing_)
@@ -174,10 +176,12 @@ public:
         setVisible(visible);
         setAlpha((showing_ || hovering_) ? 1.0f : 0.0f);
     }
+
     void render(OpenGlWrapper& open_gl, bool animate) override
     {
         OpenGlQuad::render(open_gl, animate);
     }
+
     class Listener {
     public:
         virtual ~Listener() { }
@@ -186,10 +190,10 @@ public:
 //        virtual void beginModulationEdit(ModulationIndicator* mod) = 0;
 //        virtual void endModulationEdit(ModulationIndicator* mod) = 0;
     };
+
     void addModulationIndicatorListener(Listener* listener) { listeners_.push_back(listener); }
     void setSource(const std::string& name);
     void setDestination(const std::string& name);
-
     void setCurrentModulator(bool current);
     void mouseDown(const juce::MouseEvent&) override;
     void positionModulationIndicators();
@@ -199,7 +203,6 @@ public:
 
 private:
     int index_;
-
     bool showing_;
     bool current_modulator_;
     bool hovering_;
@@ -251,7 +254,6 @@ public OpenGLComboBox::Listener
                       );
     ~ModulationManager();
 
-
     void createModulationMeter(
                                SynthSlider* slider, OpenGlMultiQuad* quads, int index);
     void createModulationSlider(std::string name, SynthSlider* slider, bool poly);
@@ -301,7 +303,6 @@ public OpenGLComboBox::Listener
 
     void preparationClosed(bool isModulation);
 
-
     void clearModulationSource();
 
     void disconnectModulation(ModulationIndicator* modulation_knob) override;
@@ -321,7 +322,6 @@ public OpenGLComboBox::Listener
     void updateSmoothModValues();
     void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
     void paintBackground(juce::Graphics& g) override { positionModulationAmountSliders(); }
-
 
     void modulationClicked(ModulationIndicator*);
     void setModulationAmounts();
@@ -379,8 +379,8 @@ public OpenGLComboBox::Listener
     {
         return;
     }
-  private:
 
+  private:
     void setDestinationQuadBounds(ModulationDestination* destination);
     void makeCurrentModulatorAmountsVisible();
     void makeModulationsVisible(SynthSlider* destination, bool visible);
