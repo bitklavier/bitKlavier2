@@ -22,6 +22,7 @@ public:
         virtual void removeModulator(ModulatorBase*) = 0;
 //        virtual void modulationRemoved() = 0;
     };
+
     ModulationList(const juce::ValueTree&, SynthBase*, bitklavier::ModulationProcessor*);
     ~ModulationList();
     ModulatorBase* createNewObject(const juce::ValueTree &) override;
@@ -29,10 +30,7 @@ public:
     void objectRemoved (ModulatorBase*) override     { }//resized(); }
     void objectOrderChanged() override              { }//resized(); }
     void valueTreeParentChanged (juce::ValueTree&) override{};
-
     void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
-
-
     void valueTreeRedirected (juce::ValueTree&) override{
         deleteAllObjects();
         rebuildObjects();
@@ -51,10 +49,8 @@ public:
     {
         return parent;
     }
+
     void deleteObject(ModulatorBase*);
-
-
-
 
     bitklavier::ModulationProcessor *proc_;
     SynthBase* parent_;
@@ -64,8 +60,10 @@ public:
                 std::remove(listeners_.begin(), listeners_.end(), l),
                 listeners_.end());
     }
-     bool isInit = true;
+
+    bool isInit = true;
     bool shutdown = false;
+
 private:
     std::vector<Listener*> listeners_;
 

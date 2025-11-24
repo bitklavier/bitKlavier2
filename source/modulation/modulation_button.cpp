@@ -261,7 +261,6 @@ void ModulationButton::mouseDrag(const juce::MouseEvent& e) {
     mouse_state_ = kDraggingOut;
     setMouseCursor(juce::MouseCursor::DraggingHandCursor);
   }
-
   if (mouse_state_ == kDraggingOut) {
     for (Listener* listener : listeners_)
       listener->modulationDragged(e);

@@ -27,13 +27,13 @@ class ModulationProcessor;
             scalingValue_ = 0.0f;
             setDestination(to);
             setSource(from);
-
-
         }
+
         ~ModulationConnection()
         {
             //count--;
         }
+
         static bool isModulationSourceDefaultBipolar(const std::string& source);
         void setSource(const std::string& from)
         {
