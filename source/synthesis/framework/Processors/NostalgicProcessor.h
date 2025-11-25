@@ -277,7 +277,6 @@ struct NostalgicNoteData
  is created after the keys related to this note have been released, so
  we need to store that information to use when the undertow note is created.
  */
-
 class NostalgicNoteStuff
 {
 public:
@@ -380,10 +379,10 @@ public:
     }
 
     void addSoundSet (
-    juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
-juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
-juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
-juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
         nostalgicSynth->addSoundSet (s);
     }

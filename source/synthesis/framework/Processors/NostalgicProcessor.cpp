@@ -13,8 +13,6 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
     nostalgicSynth (new BKSynthesiser (state.params.reverseEnv, state.params.noteOnGain))
 
 {
-
-
     for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};
@@ -62,15 +60,6 @@ bool NostalgicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
     return true;
 }
 
-/*
- * grabs all the TransposeParams values and compiles them into a single array
- * the first slider is always represented, so we always have at least on value to return
- *
- * these operate at the synthesizer level, not the voice level, so need to be passed here
- * and not just looked at by individual voices in the synth
- *
- * this is all pretty inefficient, making copies of copies, but also very small arrays, so....
- */
 void NostalgicProcessor::setSynchronic (SynchronicProcessor* synch)
 {
     synchronic = synch;
@@ -88,7 +77,6 @@ void NostalgicProcessor::tuningStateInvalidated() {
     tuning = nullptr;
     nostalgicSynth->setTuning(nullptr);
 }
-
 
 void NostalgicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {
@@ -349,21 +337,25 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
 void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    // set up the block
     buffer.clear();
     state.getParameterListeners().callAudioThreadBroadcasters();
     processContinuousModulations(buffer);
     state.params.processStateChanges();
     int numSamples = buffer.getNumSamples();
+
+    // do all the MIDI handling; this is where the main work happens
     juce::MidiBuffer outMidi;
     ProcessMIDIBlock(midiMessages, outMidi, numSamples);
-    bool useTuningForTranspositions = state.params.transpositionUsesTuning->get();
+
+    // send the MIDI messages to the synth
     if (nostalgicSynth->hasSamples())
     {
         nostalgicSynth->setBypassed (false);
-        // nostalgicSynth->updateMidiNoteTranspositions (updatedTransps, useTuningForTranspositions);
         nostalgicSynth->setNoteOnSpecMap(noteOnSpecMap);
         nostalgicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
+
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
@@ -384,7 +376,6 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
 
 }
-
 
 void NostalgicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {

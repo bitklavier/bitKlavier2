@@ -7,7 +7,7 @@
                  soundset="syncglobal" nodeID="3417425203" numIns="1" numOuts="2"
                  Send="0.000" OutputGain="0.000" NoteLengthMultiplier="1.000"
                  ClusterMin="1.000" ClusterThresh="150.000" noteOnGainNostalgic="0.000"
-                 nostalgicTriggeredBy="0" NostalgicUseTuning="0" keyOnReset="0"
+                 nostalgicTriggeredBy="2" NostalgicUseTuning="0" keyOnReset="0"
                  t0="4.0" t1="0.0" t2="0.000" t3="0.000" t4="0.000" t5="0.000"
                  t6="0.000" t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000"
                  sliderVals_size="2.000" UseTuning="0" wavedistance="242.000"
@@ -19,7 +19,7 @@
                  Undertowdecay="10.000" Undertowsustain="1.000" Undertowrelease="1000.000"
                  Undertowattackpower="0.000" Undertowdecaypower="0.000" Undertowreleasepower="0.000"
                  Undertowhold="0.000" Undertowdelay="0.000" Undertownotify="0"
-                 wavedist="242.0" BeatsToSkip="0.000">
+                 wavedist="242.0" BeatsToSkip="3.000">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>
@@ -109,12 +109,61 @@
         <PARAM_DEFAULT/>
         <PORT nodeID="1159800021" chIdx="4096" isIn="1"/>
       </tuning>
+      <synchronic type="1" width="245" height="125" x_y="811, 281" uuid="e188fb8408954683964fa81d53043849"
+                  soundset="syncglobal" nodeID="3783850884" numIns="1" numOuts="2"
+                  numPulses="20.000" numLayers="1.000" clusterThickness="8.000"
+                  clusterThreshold="500.000" Send="0.000" OutputGain="0.000" noteOnGain="0.000"
+                  pulseTriggeredBy="0" determinesCluster="0" skipFirst="1" UseTuning="0"
+                  updateUIState="0" clustermin="1.000" clustermax="12.000" LastCluster="1.000"
+                  holdTimeMinParam="0.000" holdTimeMaxParam="12000.000" lastHoldTimeParam="0.000"
+                  attack="3.000" decay="10.000" sustain="1.000" release="50.000"
+                  attackpower="0.000" decaypower="0.000" releasepower="0.000" hold="0.000"
+                  delay="0.000" notify="0" currentlyEditing="0.000" envelope_0="1"
+                  envelope_1="0" envelope_2="0" envelope_3="0" envelope_4="0" envelope_5="0"
+                  envelope_6="0" envelope_7="0" envelope_8="0" envelope_9="0" envelope_10="0"
+                  envelope_11="0" transpositions__sliderVals_size="0" transpositions__sliderVals=""
+                  transpositions__activeVals_size="0" transpositions__activeVals=""
+                  accents__sliderVals_size="0" accents__sliderVals="" accents__activeVals_size="0"
+                  accents__activeVals="" sustain_length_multipliers_sliderVals_size="0"
+                  sustain_length_multipliers_sliderVals="" sustain_length_multipliers_activeVals_size="0"
+                  sustain_length_multipliers_activeVals="" beat_length_multipliers_sliderVals_size="0"
+                  beat_length_multipliers_sliderVals="" beat_length_multipliers_activeVals_size="0"
+                  beat_length_multipliers_activeVals="" envelope_sequence_attacks="3 3 3 3 3 3 3 3 3 3 3 3 "
+                  envelope_sequence_decays="10 10 10 10 10 10 10 10 10 10 10 10 "
+                  envelope_sequence_sustains="1 1 1 1 1 1 1 1 1 1 1 1 " envelope_sequence_releases="50 50 50 50 50 50 50 50 50 50 50 50 "
+                  envelope_sequence_attackPowers="0 0 0 0 0 0 0 0 0 0 0 0 " envelope_sequence_decayPowers="0 0 0 0 0 0 0 0 0 0 0 0 "
+                  envelope_sequence_releasePowers="0 0 0 0 0 0 0 0 0 0 0 0 ">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="numPulses" start="1.0" end="100.0" skew="0.9855645895004272"/>
+          <MODULATABLE_PARAM parameter="numLayers" start="1.0" end="10.0" skew="0.854755699634552"/>
+          <MODULATABLE_PARAM parameter="clusterThickness" start="1.0" end="20.0" skew="0.9276416301727295"/>
+          <MODULATABLE_PARAM parameter="clusterThreshold" start="20.0" end="2000.0" skew="0.9855645895004272"/>
+          <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="noteOnGain" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="holdTimeMinParam" start="0.0" end="12000.0" skew="0.3333333432674408"/>
+          <MODULATABLE_PARAM parameter="holdTimeMaxParam" start="0.0" end="12000.0" skew="0.3333333432674408"/>
+          <MODULATABLE_PARAM parameter="lastHoldTimeParam" start="0.0" end="12000.0" skew="0.3333333432674408"/>
+          <MODULATABLE_PARAM parameter="attack" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="decay" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="delay" start="0.0" end="1000.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="3783850884" chIdx="4096" isIn="1"/>
+        <PORT nodeID="3783850884" chIdx="0" isIn="0"/>
+        <PORT nodeID="3783850884" chIdx="2" isIn="0"/>
+      </synchronic>
     </PREPARATIONS>
     <CONNECTIONS>
       <CONNECTION isMod="0" src="1978022199" srcIdx="4096" dest="3417425203" destIdx="4096"/>
+      <CONNECTION isMod="0" src="1978022199" srcIdx="4096" dest="3783850884" destIdx="4096"/>
     </CONNECTIONS>
     <MODCONNECTIONS>
       <TUNINGCONNECTION isMod="0" src="1159800021" dest="3417425203"/>
+      <TUNINGCONNECTION isMod="0" src="1159800021" dest="3783850884"/>
+      <SYNCHRONICCONNECTION isMod="0" src="3783850884" dest="3417425203"/>
     </MODCONNECTIONS>
   </PIANO>
 </GALLERY>
