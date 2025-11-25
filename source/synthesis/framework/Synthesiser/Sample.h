@@ -889,9 +889,15 @@ public:
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
         loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
 
-        // need to account for sampleIncrement when setting start time; otherwise faster played samples might end before others, for instance
-        currentSamplePos = startTimeMS * getSampleRate() * .001 * sampleIncrement.getTargetValue();
         currentDirection = startDirection;
+        currentSamplePos = startTimeMS * getSampleRate() * .001;
+
+        /*
+         * need to account for sampleIncrement when setting start time
+         * - backwards playing samples with sampleIncrement > 1 will reach start of sample earlier than those with lower sampleIncrement, for instance
+         */
+        if (currentDirection == Direction::backward)
+            currentSamplePos *= sampleIncrement.getTargetValue();
 
         tailOff = 0.0;
 
@@ -900,8 +906,7 @@ public:
         if constexpr (std::is_same_v<T, SFZRegion>)
         {
             auto& region = samplerSound->getSample()->getSourceRegion();
-            ampeg.start_note(
-    &region.ampeg, velocity, samplerSound->getSample()->getSampleRate(), &region.ampeg_veltrack);
+            ampeg.start_note(&region.ampeg, velocity, samplerSound->getSample()->getSampleRate(), &region.ampeg_veltrack);
 
             // -----------------------
             // Offset / End
@@ -947,8 +952,6 @@ public:
         }
     }
 
-
-
     double getTargetFrequency()
     {
         // if there is no Tuning prep connected, just return the equal tempered frequency
@@ -982,8 +985,6 @@ public:
             */
     }
 
-
-
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                          int startSample,
                          int numSamples) override
@@ -1001,15 +1002,7 @@ public:
         //updateAmpEnv();
     }
 
-
-
-
-
-
 private:
-
-
-
     template <typename Element>
     void render(juce::AudioBuffer<Element>& outputBuffer, int startSample, int numSamples)
     {
@@ -1057,7 +1050,7 @@ private:
         auto currentLoopEnd = loopEnd.getNextValue();
         auto currentIncrement = sampleIncrement.getNextValue();
 
-        /**
+        /*
          * this should handle the case where we want to play backwards for a time longer than the sample length
          *  - will simply return 0's and decrement the currentSamplePos (in getNextState)
          */
@@ -1201,10 +1194,12 @@ private:
         currentSamplePos = 0.0;
     }
 
-
-    [[nodiscard]] std::tuple<double, Direction> getNextState(double inc,
-                                               double begin,
-                                               double end) const
+    [[nodiscard]] std::tuple<double, Direction> getNextState
+        (
+        double inc,
+        double begin,
+        double end
+        ) const
     {
         auto nextPitchRatio = inc;
         auto nextSamplePos = currentSamplePos;
