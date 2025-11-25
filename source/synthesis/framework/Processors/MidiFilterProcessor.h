@@ -17,14 +17,41 @@ struct MidiFilterParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     MidiFilterParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("midifilter")
     {
-        add (mftoggle);
+        add (ignoreNoteOn,
+             ignoreNoteOff,
+             invertNoteOnOff,
+             toggleNoteMessages);
     }
 
-    chowdsp::BoolParameter::Ptr mftoggle {
-        juce::ParameterID { "mftoggle", 100},
-        "some toggle",
+    chowdsp::BoolParameter::Ptr ignoreNoteOn {
+        juce::ParameterID { "ignoreNoteOn", 100},
+        "ignore noteOn",
         false
     };
+
+    chowdsp::BoolParameter::Ptr ignoreNoteOff {
+        juce::ParameterID { "ignoreNoteOff", 100},
+        "ignore noteOff",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr invertNoteOnOff {
+        juce::ParameterID { "invertNoteOnOff", 100},
+        "invert noteOn/Off",
+        false
+    };
+
+    /*
+     * turn each key into a toggle
+     * - if note is not playing, noteOn will play, and noteOff will be ignored
+     * - if note is already playing, then noteOn will trigger noteOff to turn it off
+     */
+    chowdsp::BoolParameter::Ptr toggleNoteMessages {
+        juce::ParameterID { "toggleNoteMessages", 100},
+        "toggle noteOn/Off",
+        false
+    };
+
 
     /*
      * serializers are used for more complex params
@@ -83,6 +110,8 @@ public:
     juce::MidiMessage swapNoteOnNoteOff (juce::MidiMessage inmsg);
 
 private:
+    std::bitset<128> noteOnState;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiFilterProcessor)
 };
 

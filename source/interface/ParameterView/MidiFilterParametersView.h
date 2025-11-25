@@ -26,8 +26,15 @@ public:
 
     void resized() override;
 
-    std::unique_ptr<SynthButton> mf_button;
-    std::unique_ptr<chowdsp::ButtonAttachment> mf_button_attachment;
+    std::unique_ptr<SynthButton> invert_button;
+    std::unique_ptr<chowdsp::ButtonAttachment> invert_button_attachment;
+
+    std::unique_ptr<SynthButton> ignoreNoteOff_button;
+    std::unique_ptr<chowdsp::ButtonAttachment> ignoreNoteOff_button_attachment;
+
+    // place to store all the toggles for this prep, with their attachments for tracking/updating values
+    std::vector<std::unique_ptr<SynthButton>> _paramToggles;
+    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> _paramToggles_attachments;
 
     MidiFilterParams& params;
 

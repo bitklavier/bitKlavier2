@@ -8,10 +8,8 @@ MidiFilterProcessor::MidiFilterProcessor (
      SynthBase& parent,const juce::ValueTree& v) :
              PluginBase (parent, v, nullptr, midiFilterBusLayout())
 {
-
+    noteOnState.reset();
 }
-
-
 
 void MidiFilterProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -20,34 +18,68 @@ void MidiFilterProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      * all the preparation parameter targeting and noteOn/Off/Both happens here now
      *
      * other processes that could/should happen here:
-     * Invert NoteOn/Off
      * Trigger All Notes Off
      * Ignore Sustain Pedal
      * Use as Sustain Pedal
-     * Toggle Keys
      * Sostenuto Mode
-     * Ignore NoteOff
      *
      */
 
     juce::MidiBuffer saveMidi (midiMessages);
     midiMessages.clear();
 
-    // this could surely be optimized, though i'm not sure how important that is ./dlt
-    // i'm also not 100% this properly retain the samplePosition, but again, it's not clear how important
-    // that is when noteOn and noteOff are inverted... might be important for other MIDI processing, however
-    bool invertNoteOnNoteOff = true; // for now
-    if (invertNoteOnNoteOff)
+    for (auto mi : saveMidi)
     {
-        for (auto mi : saveMidi)
+        auto message = mi.getMessage();
+
+        if(*state.params.toggleNoteMessages)
         {
-            auto message = mi.getMessage();
-            if (message.isNoteOn() || message.isNoteOff())
-                midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
-            else
-                midiMessages.addEvent (message, mi.samplePosition);
+            if (message.isNoteOn())
+            {
+                if (!noteOnState.test(message.getNoteNumber()))
+                {
+                    midiMessages.addEvent (message, mi.samplePosition);
+                    noteOnState.set(message.getNoteNumber(), true);
+                }
+                else
+                {
+                    midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
+                    noteOnState.set(message.getNoteNumber(), false);
+                }
+            }
+        }
+
+        else
+        {
+            if (message.isNoteOn() && !*state.params.ignoreNoteOn)
+            {
+                if (*state.params.invertNoteOnOff)
+                    midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
+                else
+                    midiMessages.addEvent (message, mi.samplePosition);
+            }
+
+            if (message.isNoteOff() && !*state.params.ignoreNoteOff)
+            {
+                if (*state.params.invertNoteOnOff)
+                    midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
+                else
+                    midiMessages.addEvent (message, mi.samplePosition);
+            }
         }
     }
+
+//    if (*state.params.invertNoteOnOff)
+//    {
+//        for (auto mi : saveMidi)
+//        {
+//            auto message = mi.getMessage();
+//            if (message.isNoteOn() || message.isNoteOff())
+//                midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
+//            else
+//                midiMessages.addEvent (message, mi.samplePosition);
+//        }
+//    }
 }
 
 // turns noteOn messages into noteOff messages, and vice versa
