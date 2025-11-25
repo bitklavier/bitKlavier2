@@ -125,14 +125,29 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 #endif
 }
 
-void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
-    juce::MidiBuffer& midiMessages)
+void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ignoreUnused (midiMessages);
-
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    if( wrapperType == wrapperType_AudioUnit ||
+        wrapperType == wrapperType_VST ||
+        wrapperType == wrapperType_VST3) //check this on setup; if(isPlugIn) {...
+    {
+        playHead = this->getPlayHead();
+        playHead->getPosition ();
+        hostTempo = currentPositionInfo.bpm;
+
+        // hostTempo
+//        Tempo::PtrArr allTempoPreps = gallery->getAllTempo();
+//        for (auto p : allTempoPreps)
+//        {
+//            p->prep->setHostTempo(hostTempo);
+//        }
+        DBG("DAW bpm = " + juce::String(currentPositionInfo.bpm));
+    }
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
