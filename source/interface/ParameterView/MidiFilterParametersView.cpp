@@ -11,16 +11,6 @@ MidiFilterParametersView::MidiFilterParametersView(chowdsp::PluginState& pluginS
 
     auto& listeners = pluginState.getParameterListeners();
 
-    /**
-     * todo:
-     *      - if toggleNoteMessages is set to true, the grey out other toggles, and similarly
-     *          grey out toggleNoteMessages if any of the others are true
-    *       - with allNotesOff, don't grey out ignoreNoteON or ignoreNoteOff, but grey out the rest
-     *      - sostenuto mode should turn off ignoreSustainPedal mode
-     *      - treat notes as sustain or sostenuto should turn off other funcationality
-     *
-     */
-
     for (auto& param_ : *params.getBoolParams())
     {
         // create and add each button
@@ -32,7 +22,88 @@ MidiFilterParametersView::MidiFilterParametersView(chowdsp::PluginState& pluginS
         _paramToggles_attachments.emplace_back (std::move (attachment));
         _paramToggles.emplace_back (std::move (button));
     }
+
+    midiFilterCallbacks += {listeners.addParameterListener(
+        params.toggleNoteMessages,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            for (auto& pt : _paramToggles)
+            {
+                if(pt->getName() != "toggleNoteMessages")
+                {
+                    if (*params.toggleNoteMessages) pt->setEnabled(false);
+                    else pt->setEnabled(true);
+                }
+            }
+        })
+    };
+
+    midiFilterCallbacks += {listeners.addParameterListener(
+        params.allNotesOff,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            for (auto& pt : _paramToggles)
+            {
+                if( pt->getName() != "allNotesOff" &&
+                    pt->getName() != "ignoreNoteOn" &&
+                    pt->getName() != "ignoreNoteOff" &&
+                    pt->getName() != "ignoreSustainPedal")
+                {
+                    if (*params.allNotesOff) pt->setEnabled(false);
+                    else pt->setEnabled(true);
+                }
+            }
+        })
+    };
+
+    midiFilterCallbacks += {listeners.addParameterListener(
+        params.notesAreSustainPedal,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            for (auto& pt : _paramToggles)
+            {
+                if( pt->getName() != "notesAreSustainPedal" &&
+                    pt->getName() != "ignoreSustainPedal")
+                {
+                    if (*params.notesAreSustainPedal) pt->setEnabled(false);
+                    else pt->setEnabled(true);
+                }
+            }
+        })
+    };
+
+    midiFilterCallbacks += {listeners.addParameterListener(
+        params.notesAreSostenutoPedal,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            for (auto& pt : _paramToggles)
+            {
+                if( pt->getName() != "notesAreSostenutoPedal"&&
+                    pt->getName() != "ignoreSustainPedal")
+                {
+                    if (*params.notesAreSostenutoPedal) pt->setEnabled(false);
+                    else pt->setEnabled(true);
+                }
+            }
+        })
+    };
+
+    midiFilterCallbacks += {listeners.addParameterListener(
+        params.sostenutoMode,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            for (auto& pt : _paramToggles)
+            {
+                if( pt->getName() == "ignoreSustainPedal")
+                {
+                    if (*params.sostenutoMode) pt->setEnabled(false);
+                    else pt->setEnabled(true);
+                }
+            }
+        })
+    };
 }
+
 
 void MidiFilterParametersView::resized()
 {
@@ -42,7 +113,7 @@ void MidiFilterParametersView::resized()
     int comboboxheight = findValue(Skin::kComboMenuHeight);
     int title_width = getTitleWidth();
     area.reduce(title_width, 0);
-    int column_width = area.getWidth() / 4.;
+    int column_width = area.getWidth() / 3.;
     juce::Rectangle<int> buttonsColumn = area.removeFromLeft(column_width);
     buttonsColumn.reduce(smallpadding, smallpadding);
 

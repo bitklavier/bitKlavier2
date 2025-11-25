@@ -71,7 +71,7 @@ struct MidiFilterParams : chowdsp::ParamHolder
 
     chowdsp::BoolParameter::Ptr sostenutoMode {
         juce::ParameterID { "sostenutoMode", 100},
-        "sustain pedal in sostenuto mode",
+        "treat sustain pedal like sostenuto pedal",
         false
     };
 

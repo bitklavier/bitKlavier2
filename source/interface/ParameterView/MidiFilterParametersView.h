@@ -10,7 +10,7 @@
 #include "synth_slider.h"
 #include "open_gl_combo_box.h"
 
-class MidiFilterParametersView : public SynthSection
+class MidiFilterParametersView : public SynthSection, juce::Button::Listener
 {
 public:
     MidiFilterParametersView(chowdsp::PluginState& pluginState, MidiFilterParams& param, juce::String name, OpenGlWrapper *open_gl);
@@ -37,6 +37,9 @@ public:
     std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> _paramToggles_attachments;
 
     MidiFilterParams& params;
+    chowdsp::ScopedCallbackList midiFilterCallbacks;
+
+    void buttonClicked (juce::Button*) override {}
 
 };
 
