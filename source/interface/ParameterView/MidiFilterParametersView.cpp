@@ -12,8 +12,13 @@ MidiFilterParametersView::MidiFilterParametersView(chowdsp::PluginState& pluginS
     auto& listeners = pluginState.getParameterListeners();
 
     /**
-     * todo: if toggleNoteMessages is set to true, the grey out other toggles, and similarly
+     * todo:
+     *      - if toggleNoteMessages is set to true, the grey out other toggles, and similarly
      *          grey out toggleNoteMessages if any of the others are true
+    *       - with allNotesOff, don't grey out ignoreNoteON or ignoreNoteOff, but grey out the rest
+     *      - sostenuto mode should turn off ignoreSustainPedal mode
+     *      - treat notes as sustain or sostenuto should turn off other funcationality
+     *
      */
 
     for (auto& param_ : *params.getBoolParams())

@@ -17,10 +17,15 @@ struct MidiFilterParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     MidiFilterParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("midifilter")
     {
-        add (ignoreNoteOn,
-             ignoreNoteOff,
-             invertNoteOnOff,
-             toggleNoteMessages);
+        add (allNotesOff,
+            toggleNoteMessages,
+            ignoreNoteOn,
+            ignoreNoteOff,
+            invertNoteOnOff,
+            ignoreSustainPedal,
+            sostenutoMode,
+            notesAreSustainPedal,
+            notesAreSostenutoPedal);
     }
 
     chowdsp::BoolParameter::Ptr ignoreNoteOn {
@@ -41,6 +46,12 @@ struct MidiFilterParams : chowdsp::ParamHolder
         false
     };
 
+    chowdsp::BoolParameter::Ptr allNotesOff {
+        juce::ParameterID { "allNotesOff", 100},
+        "all notes off!",
+        false
+    };
+
     /*
      * turn each key into a toggle
      * - if note is not playing, noteOn will play, and noteOff will be ignored
@@ -52,6 +63,29 @@ struct MidiFilterParams : chowdsp::ParamHolder
         false
     };
 
+    chowdsp::BoolParameter::Ptr ignoreSustainPedal {
+        juce::ParameterID { "ignoreSustainPedal", 100},
+        "ignore sustain pedal",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr sostenutoMode {
+        juce::ParameterID { "sostenutoMode", 100},
+        "sustain pedal in sostenuto mode",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr notesAreSustainPedal {
+        juce::ParameterID { "notesAreSustainPedal", 100},
+        "treat keys like sustain pedal",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr notesAreSostenutoPedal {
+        juce::ParameterID { "notesAreSostenutoPedal", 100},
+        "treat keys like sostenuto pedal",
+        false
+    };
 
     /*
      * serializers are used for more complex params
