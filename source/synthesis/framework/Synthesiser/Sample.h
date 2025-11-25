@@ -889,7 +889,8 @@ public:
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
         loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
 
-        currentSamplePos = startTimeMS * getSampleRate() * .001;
+        // need to account for sampleIncrement when setting start time; otherwise faster played samples might end before others, for instance
+        currentSamplePos = startTimeMS * getSampleRate() * .001 * sampleIncrement.getTargetValue();
         currentDirection = startDirection;
 
         tailOff = 0.0;
