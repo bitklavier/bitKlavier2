@@ -373,6 +373,9 @@ template<typename T>
 class BKSamplerSound :  public BKSamplerSoundBase
 {
 public:
+    /*
+     * for regular bK-style sample libraries
+     */
     BKSamplerSound( const juce::String& soundName,
                     std::shared_ptr<Sample<T>> samp,
                     const juce::BigInteger& midiNotes,
@@ -397,10 +400,11 @@ public:
         dBFSLevel = sample->getRMS();
     }
 
-    BKSamplerSound(const juce::String& soundName,
-                      std::shared_ptr<Sample<T>> samp)
-           requires (std::is_same_v<T, SFZRegion>)
-           : sample(std::move(samp))
+    /*
+     * for SoundFont libraries
+     */
+    BKSamplerSound(const juce::String& soundName, std::shared_ptr<Sample<T>> samp)
+           requires (std::is_same_v<T, SFZRegion>) : sample(std::move(samp))
     {
         // very important: you expose region via Sample<SFZRegion>
         SFZRegion& region = sample->getSourceRegion();
@@ -444,21 +448,17 @@ public:
         // ---------------------------
         // Calculate RMS
         // ---------------------------
-        dBFSLevel = sample->getRMS();
-        //dBFSBelow = region.volume;   // or sfz "volume" mapping
         /*
-         * estimate dBFSBelow for SoundFonts for now, based on width of current velocity region
-         * - in the future, we may want to rework this for SoundFonts, either actually doing
-         *      the dBFSBelow measurements or just not doing it with dBFS measurements
+         * not applicable for now for SoundFonts
          */
-        dBFSBelow = dBFSLevel - 50.0f * (region.hivel - region.lovel + 1) / 128.;
+        //dBFSLevel = sample->getRMS();
+        //dBFSBelow = region.volume;   // or sfz "volume" mapping
 
         // ---------------------------
         // CENTER FREQUENCY
         // ---------------------------
         setCentreFrequencyInHz(mtof(rootMidiNote));
     }
-
 
     //==============================================================================
     bool appliesToNote (int midiNoteNumber)  {
@@ -486,9 +486,7 @@ public:
 
     void setLoopPointsInSeconds (juce::Range<double> value)
     {
-        loopPoints = sample == nullptr ? value
-                                       : juce::Range<double> (0, sample->getLength() / sample->getSampleRate())
-                             .constrainRange (value);
+        loopPoints = sample == nullptr ? value : juce::Range<double> (0, sample->getLength() / sample->getSampleRate()).constrainRange (value);
     }
 
     juce::Range<double> getLoopPointsInSeconds() const

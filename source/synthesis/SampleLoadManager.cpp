@@ -769,7 +769,7 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile)
     // --- Load each region into BKSamplerSound ---
     for (int i =0; i <sound->num_regions(); i++)
     {
-    auto region = sound->region_at(i);
+        auto region = sound->region_at(i);
         if (region == nullptr || region->sample == nullptr)
             continue;
 
@@ -799,7 +799,7 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile)
         // --- Create BKSamplerSound ---
         auto* newSound = new BKSamplerSound<SFZRegion>(
             region->sample->short_name(),
-           sample
+            sample
         );
 
         // --- Apply loop information ---
@@ -823,6 +823,7 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile)
             " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
             " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
     }
+
     samplerLoader.soundfonts.push_back(std::move(sound));
     DBG("loadSoundFont: Finished loading " + sfzFile.getFileNameWithoutExtension());
     return true;
