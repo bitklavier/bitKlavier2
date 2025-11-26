@@ -66,11 +66,9 @@ template<typename ReaderType>
 class Sample
 {
 public:
-    Sample(ReaderType& source, double maxSampleLengthSecs)
-        : m_sourceSampleRate(source.sampleRate),
-        m_length(juce::jmin(int(source.lengthInSamples),
-            int(maxSampleLengthSecs* m_sourceSampleRate))),
-        m_data(juce::jmin(2, int(source.numChannels)), m_length + 4), m_source(source)
+    Sample(ReaderType& source, double maxSampleLengthSecs) :  m_sourceSampleRate(source.sampleRate),
+                                                              m_length(juce::jmin(int(source.lengthInSamples), int(maxSampleLengthSecs* m_sourceSampleRate))),
+                                                              m_data(juce::jmin(2, int(source.numChannels)), m_length + 4), m_source(source)
     {
         if (m_length == 0)
             throw std::runtime_error("Unable to load sample");

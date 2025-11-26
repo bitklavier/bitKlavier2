@@ -697,8 +697,6 @@ bool SampleLoadJob::loadMainSamplesByPitch()
     while (true)
     {
         auto [reader, filename] = sampleReader->make (*manager);
-
-
         if (!reader)
             break; // Break the loop if the reader is null
         auto sample = new Sample (*(reader.get()), 90);
