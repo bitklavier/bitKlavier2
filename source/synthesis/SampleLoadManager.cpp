@@ -28,8 +28,6 @@ SampleLoadManager::SampleLoadManager (SynthBase* parent, std::shared_ptr<UserPre
             allPitches.add (noteOctave);
         }
     }
-
-
 }
 
 SampleLoadManager::~SampleLoadManager()
@@ -46,6 +44,7 @@ void SampleLoadManager::clearAllSamples() {
 //    globalSoundset = nullptr;
     samplerSoundset.clear();
 }
+
 void SampleLoadManager::handleAsyncUpdate()
 {
     if (sampleLoader.getNumJobs() > 0)
@@ -62,7 +61,6 @@ void SampleLoadManager::handleAsyncUpdate()
         }
     }
     parent->finishedSampleLoading();
-
 }
 
 // sort array of sample files into arrays of velocities by pitch
@@ -180,10 +178,9 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets()
         for (auto& f : sfFiles)
             sampleSets.push_back(f.getFileName().toStdString());
     }
-
-
     return sampleSets;
 }
+
 bool SampleLoadManager::loadSamples(std::string sample_name) {
     juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
     MyComparator sorter;
@@ -221,8 +218,6 @@ bool SampleLoadManager::loadSamples(std::string sample_name) {
         return true;
     }
 
-
-
     loadSamples_sub (bitklavier::utils::BKPianoMain,sample_name);
     loadSamples_sub (bitklavier::utils::BKPianoHammer,sample_name);
     loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance,sample_name);
@@ -252,7 +247,6 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::V
             return true;
         }
     }
-
 
     samplePath.append (soundsets[selection], 1000); // change to "orig" to test that way
     //samplePath.append("/orig", 10);
@@ -310,7 +304,6 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
     else if (thisSampleType == BKPianoPedal)
         soundsetName = name + "Pedals";
 
-
     juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
     samplePath.append("/" + juce::String(name), 1000);
     samplePath.append(BKPianoSampleType_string[thisSampleType], 1000); // subfolders need to be named accordingly
@@ -327,6 +320,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
                                 *this), true);
         return;
     }
+
     // sort alphabetically
     MyComparator sorter;
     allSamples.sort(sorter);
@@ -348,7 +342,6 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
             if (allKeysWithSamples.addIfNotAlreadyThere(noteNameToRoot(noteName))) {
                 DBG(noteName + " " + juce::String(noteNameToRoot(noteName)));
             }
-
         }
     }
     allKeysWithSamples.sort();
@@ -427,12 +420,7 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
         newPitchSamples.sampleReaderArray = std::make_unique<FileArrayAudioFormatReaderFactory>(onePitchSamples);
         pitchesVector.push_back(std::move(newPitchSamples));
     }
-    /*
-     *  juce::AudioFormatManager* manager,
-        std::vector<PitchSamplesInfo>&& srvector,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
-        juce::AsyncUpdater* loadManager
-     */
+
     int totalUnits = 0;
     for (auto& ps : pitchesVector)
         totalUnits += std::max(1, ps.numLayers);
@@ -590,7 +578,7 @@ bool SampleLoadJob::loadHammerSamples()
         stringArray.addTokens (filename, "l", "");
         int midiNote = stringArray[1].getIntValue() + 20;
 
-//            DBG ("**** loading hammer sample: " + filename + " " + juce::String (midiNote));
+        //DBG ("**** loading hammer sample: " + filename + " " + juce::String (midiNote));
 
         // hammers are only assigned to their one key (rel1 => A0 only, etc...)
         juce::BigInteger midiNoteRange;
@@ -640,8 +628,8 @@ bool SampleLoadJob::loadReleaseResonanceSamples()
 
         dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
 
-//            DBG ("**** loading resonance sample: " + filename);
-//            DBG ("");
+        //DBG ("**** loading resonance sample: " + filename);
+        //DBG ("");
         if (shouldExit())
             return false;
     }
@@ -674,7 +662,7 @@ bool SampleLoadJob::loadPedalSamples()
         else if (filename.contains ("U"))
             midiNote = 66;
 
-//            DBG ("**** loading pedal sample: " + filename + " " + juce::String (midiNote));
+        //DBG ("**** loading pedal sample: " + filename + " " + juce::String (midiNote));
 
         // pedals set to single keys: 65 for pedalDown, 66 for pedalUp
         juce::BigInteger midiNoteRange;
@@ -683,7 +671,7 @@ bool SampleLoadJob::loadPedalSamples()
         auto [begin, end] = ranges.getUnchecked (currentVelLayer++);
         juce::BigInteger velRange;
         velRange.setRange (begin, end - begin, true);
-//            DBG ("pedal vel range = " + juce::String (begin) + " to " + juce::String (end) + " for " + filename);
+        //DBG ("pedal vel range = " + juce::String (begin) + " to " + juce::String (end) + " for " + filename);
 
         auto sound = soundset->add (new BKSamplerSound (filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), midiNoteRange, midiNote, 0, velRange, 1, dBFSBelow));
         if (shouldExit())
@@ -728,14 +716,12 @@ bool SampleLoadJob::loadMainSamplesByPitch()
 
         dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
 
-//        DBG ("**** loading sample: " + filename);
-//        DBG ("");
+        //DBG ("**** loading sample: " + filename);
+        //DBG ("");
         if (shouldExit()) {
             velLayerContinue = currentVelLayer++;
             return false;
         }
-
-
         //DBG ("done loading main samples for " + filename);
     }
 
@@ -779,10 +765,10 @@ bool SampleLoadJob::loadSoundFont(
     sound->load_regions();
     sound->load_samples();
 
-
-
-
-
+    /*
+     * possibly rework this dBFS stuff for SoundFonts in the future
+     * see dBFSBelow calculations for SoundFonts in Sample.h for the current crude fix
+     */
     float dBFSBelow = -100.0f;
     int regionIndex = 0;
 
@@ -838,10 +824,10 @@ bool SampleLoadJob::loadSoundFont(
         soundset->add(newSound);
 
         // --- Debug output ---
-        DBG("Loaded region " + juce::String(regionIndex++) +
-            ": " + region->sample->short_name() +
-            " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
-            " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
+//        DBG("Loaded region " + juce::String(regionIndex++) +
+//            ": " + region->sample->short_name() +
+//            " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
+//            " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
     }
     samplerLoader.soundfonts.push_back(std::move(sound));
     DBG("loadSoundFont: Finished loading " + sfzFile.getFileNameWithoutExtension());

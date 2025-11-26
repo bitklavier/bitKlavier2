@@ -117,12 +117,6 @@ public:
                                m_data.getNumChannels() > 1 ? m_data.getReadPointer(1,m_startSample)
                                : m_data.getReadPointer(0,m_startSample));
     }
-//    template<T>
-//    const juce::AudioBuffer<float>& getBuffer(int startSamp, int numSamples)
-//    {
-//        source.read(&m_data, startSamp, numSamples + 4, 0, true, true);
-//    }
-
 
 private:
     double m_sourceSampleRate;
@@ -155,7 +149,6 @@ private:
         m_temp_data.clear();
     }
 };
-
 
 template <NonLoadImmediate ReaderType>
 class Sample<ReaderType>
@@ -318,7 +311,8 @@ private:
     int m_numSamps   = 0;
 
     juce::AudioBuffer<float> m_data;
-};;
+};
+
 enum class SoundSampleType {
     Unknown,
     WAV,
@@ -326,6 +320,7 @@ enum class SoundSampleType {
     Buffered,
     SFZ
 };
+
 class BKSamplerSoundBase;
 class  BKSynthesiserSound    : public juce::ReferenceCountedObject
 {
@@ -362,9 +357,9 @@ public:
     virtual BKSamplerSoundBase* getSamplerSoundBase() noexcept { return nullptr; }
 
 private:
-    //==============================================================================
     JUCE_LEAK_DETECTOR (BKSynthesiserSound)
 };
+
 class BKSamplerSoundBase : public BKSynthesiserSound
 {
 public:
@@ -373,6 +368,7 @@ public:
     // Returning `this` allows a safe static_cast later
     virtual BKSamplerSoundBase* getSamplerSoundBase() noexcept override { return this; }
 };
+
 template<typename T>
 class BKSamplerSound :  public BKSamplerSoundBase
 {
@@ -397,22 +393,10 @@ public:
                     sample(std::move(samp))
     {
         dBFSBelow = dBFSBelo;
-//        // Print the class name and action
-//        DBG("Create BKSamplerSound");
-
         setCentreFrequencyInHz(mtof(rootMidiNote));
         dBFSLevel = sample->getRMS();
-
-        // Print the highest bit and bit count for midiNotes
-//        int midiNotesHighestBit = midiNotes.getHighestBit();
-//        int midiNotesBitCount = midiNotes.countNumberOfSetBits();
-
-        // Print the highest bit and bit count for midiVelocities
-        //int midiVelocitiesHighestBit = midiVelocities.getHighestBit();
-        //int midiVelocitiesBitCount = midiVelocities.countNumberOfSetBits();
-
-
     }
+
     BKSamplerSound(const juce::String& soundName,
                       std::shared_ptr<Sample<T>> samp)
            requires (std::is_same_v<T, SFZRegion>)
@@ -461,7 +445,13 @@ public:
         // Calculate RMS
         // ---------------------------
         dBFSLevel = sample->getRMS();
-        dBFSBelow = region.volume;   // or sfz "volume" mapping
+        //dBFSBelow = region.volume;   // or sfz "volume" mapping
+        /*
+         * estimate dBFSBelow for SoundFonts for now, based on width of current velocity region
+         * - in the future, we may want to rework this for SoundFonts, either actually doing
+         *      the dBFSBelow measurements or just not doing it with dBFS measurements
+         */
+        dBFSBelow = dBFSLevel - 50.0f * (region.hivel - region.lovel + 1) / 128.;
 
         // ---------------------------
         // CENTER FREQUENCY
@@ -1263,8 +1253,6 @@ private:
     double currentSamplePos { 0 };
     double tailOff { 0 };
     Direction currentDirection{ Direction::forward };
-
-
     juce::uint64 currentSustainTime_samples = 0;
 
     juce::AudioBuffer<float> m_Buffer;
