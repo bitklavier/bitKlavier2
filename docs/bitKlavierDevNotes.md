@@ -215,6 +215,7 @@ etc...
 - [ ] what is `isBusesLayoutSupported`? in DirectProcessor, it just returns true.
 - [ ] Blendrónic audio in: Dan working on this
 - [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
+  - this seems not to be the place; doing work here impacts parts of the UI that are not blurry and leaves the blurry stuff unchanged
 - [ ] opening multiple sample libs, assigning to individual preps!
   - ConstructionSite::moduleAdded, should be doable there.
 

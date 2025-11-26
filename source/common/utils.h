@@ -188,8 +188,28 @@ static constexpr int MaxMidiNotes = 128;
       return kCentsPerNote * frequencyToMidiNote(frequency);
     }
 
-    force_inline int nextPowerOfTwo(float value) {
-      return roundf(powf(2.0f, ceilf(logf(value) * kInvLogOf2)));
+//    force_inline int nextPowerOfTwo(float value) {
+//      return roundf(powf(2.0f, ceilf(logf(value) * kInvLogOf2)));
+//    }
+
+    force_inline unsigned int nextPowerOfTwo(unsigned int n)
+    {
+        // Handle the case where n is already a power of two
+        if (n == 0) return 1; // Or handle as an error, depending on requirements
+        if ((n & (n - 1)) == 0) return n;
+
+        // This block efficiently "smears" the bits of n
+        // until all bits less significant than the highest set bit are also set.
+        n--;
+        n |= n >> 1;
+        n |= n >> 2;
+        n |= n >> 4;
+        n |= n >> 8;
+        n |= n >> 16;
+
+        // Incrementing the result gives the next power of two.
+        n++;
+        return n;
     }
 
     force_inline bool isSilent(const float* buffer, int length) {
