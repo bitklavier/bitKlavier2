@@ -216,12 +216,13 @@ public:
     SampleLoadJob (juce::File sfzFile,
            juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
            juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress ,SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
-                                              soundset (soundset),
-                                              loadManager (loadManager),
-       progress(progress),
-    totalUnits(0),
-             samplerLoader(sampleLoad),sfzFile(sfzFile)
+                                                soundset (soundset),
+                                                loadManager (loadManager),
+                                                progress(progress),
+                                                totalUnits(0),
+                                                samplerLoader(sampleLoad),sfzFile(sfzFile)
     {};
+
     ~SampleLoadJob() {
         if (progress)
         {
@@ -232,10 +233,9 @@ public:
         }
         loadManager->triggerAsyncUpdate();
     }
-    JobStatus runJob() override;
-    bool loadSoundFont(
-                      juce::File sfzFile);
 
+    JobStatus runJob() override;
+    bool loadSoundFont(juce::File sfzFile);
     bool loadSamples(); // calls one of the following, depending on context
     bool loadMainSamplesByPitch();
     bool loadHammerSamples();
@@ -252,7 +252,8 @@ public:
     juce::File sfzFile;
     juce::AudioFormatManager* manager;
     juce::AsyncUpdater* loadManager;
-//progressbar stuff
+
+    //progressbar stuff
     std::shared_ptr<SampleSetProgress> progress;
     const int totalUnits;
     std::atomic<int> completedUnits { 0 };

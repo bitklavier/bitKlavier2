@@ -531,6 +531,12 @@ public:
         return juce::Decibels::decibelsToGain(dbOffset);
     }
 
+    float getGainMultiplierFromVelocity(float velocity, float dbRange) // velocity [0, 127]
+    {
+        float dbOffset = dbRange * (velocity - 128) / 128.f;
+        return juce::Decibels::decibelsToGain(dbOffset);
+    }
+
     void setEnvelopeParameters (BKADSR::Parameters parametersToUse)    { params = parametersToUse; }
     /** The class is reference-counted, so this is a handy pointer class for it. */
     //typedef juce::ReferenceCountedObjectPtr<BKSamplerSound<T>> Ptr;
@@ -542,6 +548,7 @@ public:
     SoundSampleType getSoundSampleType() const override {
         return sampleType;
     }
+
 private:
     std::shared_ptr<Sample<T>> sample;
     double centreFrequencyInHz { 440.0 };
@@ -723,15 +730,15 @@ public:
         return isVoiceActive() && ! (isKeyDown() || isSostenutoPedalDown() || isSustainPedalDown());
     }
 
-
     virtual void startNote (int midiNoteNumber,
-float velocity,
-float transposition,
-bool tune_transpositions,
-BKSynthesiserSound * _sound,
-int currentPitchWheelPosition,
-float startTimeMS=0.f,
-Direction startDirection= Direction::forward) = 0;
+        float velocity,
+        float transposition,
+        bool tune_transpositions,
+        BKSynthesiserSound * _sound,
+        int currentPitchWheelPosition,
+        float startTimeMS=0.f,
+        Direction startDirection= Direction::forward) = 0;
+
     /** Returns true if this voice started playing its current note before the other voice did. */
     bool wasStartedBefore (const BKSynthesiserVoice& other) const noexcept;
     double currentSampleRate = 44100.0;
@@ -744,22 +751,27 @@ Direction startDirection= Direction::forward) = 0;
         ampEnv.setParameters(parameters);
         // todo: update mod amount
     }
+
     void copyAmpEnv(BKADSR::Parameters parameters)
     {
         updateAmpEnv(parameters);
     }
+
     void setTargetSustainTime(float sustainTimeMS)
     {
         targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
     }
+
     void setGain(float g)
     {
         voiceGain = g;
     }
+
     /*
- * for situations where we specify a sustain time at noteOn, we want to ignore noteOff messages
- */
+    * for situations where we specify a sustain time at noteOn, we want to ignore noteOff messages
+    */
     bool ignoreNoteOff = false;
+
 protected:
     int64_t targetSustainTime_samples = -1;
     float voiceGain {1.};
@@ -835,6 +847,7 @@ public:
         ampEnv.setSampleRate(newRate);
         ampEnv.setParameters(ampEnv.getParameters());
     }
+
     void startNote (int midiNoteNumber,
          float velocity,
          float transposition,
@@ -848,7 +861,6 @@ public:
         myStartNote(midiNoteNumber,velocity,transposition,tune_transpositions,sampler,
             currentPitchWheelPosition,startTimeMS,startDirection);
     }
-
 
     void myStartNote (int midiNoteNumber,
         float velocity,
@@ -897,6 +909,9 @@ public:
         {
             auto& region = samplerSound->getSample()->getSourceRegion();
             ampeg.start_note(&region.ampeg, velocity, samplerSound->getSample()->getSampleRate(), &region.ampeg_veltrack);
+
+            // need to override dBFS approach with SoundFonts
+            level.setTargetValue(samplerSound->getGainMultiplierFromVelocity(velocity, 24.f) * voiceGain);
 
             // -----------------------
             // Offset / End

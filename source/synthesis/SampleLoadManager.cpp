@@ -728,10 +728,7 @@ bool SampleLoadJob::loadMainSamplesByPitch()
     return true;
 }
 
-bool SampleLoadJob::loadSoundFont(
-                   juce::File sfzFile)
-
-
+bool SampleLoadJob::loadSoundFont(juce::File sfzFile)
 {
     // --- Validation ---
     if (soundset == nullptr)
@@ -765,10 +762,7 @@ bool SampleLoadJob::loadSoundFont(
     sound->load_regions();
     sound->load_samples();
 
-    /*
-     * possibly rework this dBFS stuff for SoundFonts in the future
-     * see dBFSBelow calculations for SoundFonts in Sample.h for the current crude fix
-     */
+    // dBFS stuff not currently relevant for soundfonts
     float dBFSBelow = -100.0f;
     int regionIndex = 0;
 
@@ -824,10 +818,10 @@ bool SampleLoadJob::loadSoundFont(
         soundset->add(newSound);
 
         // --- Debug output ---
-//        DBG("Loaded region " + juce::String(regionIndex++) +
-//            ": " + region->sample->short_name() +
-//            " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
-//            " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
+        DBG("Loaded region " + juce::String(regionIndex++) +
+            ": " + region->sample->short_name() +
+            " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
+            " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
     }
     samplerLoader.soundfonts.push_back(std::move(sound));
     DBG("loadSoundFont: Finished loading " + sfzFile.getFileNameWithoutExtension());
