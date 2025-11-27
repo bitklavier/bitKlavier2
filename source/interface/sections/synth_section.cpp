@@ -103,6 +103,49 @@ void SynthSection::paintSidewaysHeadingText(juce::Graphics &g) {
     g.restoreState();
 }
 
+//void SynthSection::paintSidewaysHeadingText(juce::Graphics &g) {
+//    // 1. Get the current scale factor from the drawing context.
+//    float pixel_scale = juce::Desktop::getInstance()
+//                            .getDisplays()
+//                            .getDisplayForRect(getScreenBounds())
+//                            ->scale;
+//
+//    // These are your logical, unscaled dimensions
+//    int logical_title_width = findValue(Skin::kTitleWidth);
+//    int logical_height = getHeight();
+//
+//    g.setColour(findColour(Skin::kHeadingText, true));
+//    juce::Font font = Fonts::instance()->proportional_light().withPointHeight(14.0f);
+//    g.setFont(font);
+//    g.saveState();
+//
+//    // 2. SCALE THE ORIGIN AND DRAWING RECTANGLE DIMENSIONS
+//    // You must multiply all translation and dimension values by the pixel_scale
+//    // because the 'g' context is already scaled 2x from redrawImage.
+//
+//    // A. Apply Origin Transform using SCALED coordinates
+//    // If logical_height is 100, the origin must be set to (0, 200) on the 2x buffer.
+//    g.setOrigin(juce::Point<int>(0, (int)(logical_height * pixel_scale)));
+//
+//    // B. Apply Rotation (rotation is unit-independent, so this is fine)
+//    g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f));
+//
+//    // C. Scale the Drawing Rectangle dimensions
+//    int scaled_height = (int)(logical_height * pixel_scale);
+//    int scaled_title_width = (int)(logical_title_width * pixel_scale);
+//
+//    if (activator_)
+//        scaled_height = (int)((logical_height - logical_title_width / 2) * pixel_scale);
+//
+//    // 3. DRAW using the SCALED rectangle dimensions
+//    // X, Y are 0, 0 in the new rotated/translated coordinate system.
+//    // The width/height are the scaled values.
+//    g.drawText(getName(), juce::Rectangle<int>(0, 0, scaled_height, scaled_title_width),
+//        juce::Justification::centred, false);
+//
+//    g.restoreState();
+//}
+
 void SynthSection::paintHeadingText(juce::Graphics &g) {
     if (sideways_heading_) {
         paintSidewaysHeadingText(g);
@@ -993,6 +1036,44 @@ void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectang
     g.drawText(text, component_bounds.getX(), background_bounds.getY(),
                component_bounds.getWidth(), background_bounds.getHeight(), juce::Justification::centred, false);
 }
+//void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectangle<int> component_bounds,
+//    bool text_component) {
+//    if (component_bounds.getWidth() <= 0 || component_bounds.getHeight() <= 0)
+//        return;
+//
+//    float pixel_scale = juce::Desktop::getInstance()
+//                            .getDisplays()
+//                            .getDisplayForRect(getScreenBounds())
+//                            ->scale;
+//
+//    g.saveState();
+//
+//    drawLabelBackground(g, component_bounds, text_component);
+//
+//    g.setColour(findColour(Skin::kBodyText, true));
+//
+//    // 1. Get the logical background bounds
+//    juce::Rectangle<int> background_bounds = getLabelBackgroundBounds(component_bounds, text_component);
+//
+//    // 2. Create the SCALED Drawing Rectangle
+//    // Since the Graphics context 'g' is already scaled by 'pixel_scale',
+//    // we must draw into a rectangle that is scaled up by the same factor.
+//    juce::Rectangle<int> scaled_draw_rect = juce::Rectangle<int>(
+//        (int)(component_bounds.getX()),
+//        (int)(background_bounds.getY()),
+//        (int)(component_bounds.getWidth() * pixel_scale),
+//        (int)(background_bounds.getHeight() * pixel_scale)
+//    );
+//
+//    // If you explicitly set a font, make sure its point height is correctly sized.
+//    // However, if the font point size is fixed (e.g., 14.0f), JUCE usually handles
+//    // the Hi-DPI scaling for the glyphs correctly when the graphics context is scaled.
+//
+//    // 3. DRAW using the SCALED rectangle
+//    g.drawText(text, scaled_draw_rect, juce::Justification::centred, false);
+//
+//    g.restoreState();
+//}
 
 void SynthSection::drawTextBelowComponent(juce::Graphics &g, juce::String text, juce::Component *component, int space,
                                           int padding) {
