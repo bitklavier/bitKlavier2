@@ -1036,11 +1036,39 @@ void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectang
     drawLabelBackground(g, component_bounds, text_component);
     g.setColour(findColour(Skin::kBodyText, true));
     juce::Rectangle<int> background_bounds = getLabelBackgroundBounds(component_bounds, text_component);
-//    float logicalFontSize = 14.0f; // Use your desired logical point size here
-//    g.setFont(juce::Font (logicalFontSize, juce::Font::plain));
     g.drawText(text, component_bounds.getX(), background_bounds.getY(),
                component_bounds.getWidth(), background_bounds.getHeight(), juce::Justification::centred, false);
 }
+
+//void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectangle<int> component_bounds,
+//    bool text_component) {
+//    if (component_bounds.getWidth() <= 0 || component_bounds.getHeight() <= 0)
+//        return;
+//
+//    g.saveState();
+//
+//    drawLabelBackground(g, component_bounds, text_component);
+//
+//    g.setColour(findColour(Skin::kBodyText, true));
+//
+//    // 1. Get the logical background bounds (unscaled)
+//    juce::Rectangle<int> background_bounds = getLabelBackgroundBounds(component_bounds, text_component);
+//
+//    // 2. EXPLICITLY SET THE FONT with the LOGICAL (unscaled) point size.
+//    // JUCE's Font class handles the Hi-DPI scaling internally based on the
+//    // current transform of the Graphics context 'g'.
+//    float logicalFontSize = 14.0f; // Use your desired logical point size here
+//    g.setFont(juce::Font (logicalFontSize, juce::Font::plain));
+//
+//    // 3. DRAW using the UN-SCALED logical background_bounds
+//    // Since 'g' is already scaled for Hi-DPI, drawing into the logical
+//    // bounds will result in the text being drawn at the correct
+//    // screen size with high-resolution glyphs.
+//    g.drawText(text, background_bounds, juce::Justification::centred, false);
+//
+//    g.restoreState();
+//}
+
 //void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectangle<int> component_bounds,
 //    bool text_component) {
 //    if (component_bounds.getWidth() <= 0 || component_bounds.getHeight() <= 0)
