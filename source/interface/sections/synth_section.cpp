@@ -1025,6 +1025,9 @@ juce::Rectangle<int> SynthSection::getLabelBackgroundBounds(juce::Rectangle<int>
     return juce::Rectangle<int>(bounds.getX(), background_y, bounds.getWidth(), background_height);
 }
 
+/*
+ * todo: this one draws blurry fonts. in envelopeSection, DirectParametersView, etc...
+ */
 void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectangle<int> component_bounds,
                              bool text_component) {
     if (component_bounds.getWidth() <= 0 || component_bounds.getHeight() <= 0)
@@ -1033,6 +1036,8 @@ void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectang
     drawLabelBackground(g, component_bounds, text_component);
     g.setColour(findColour(Skin::kBodyText, true));
     juce::Rectangle<int> background_bounds = getLabelBackgroundBounds(component_bounds, text_component);
+//    float logicalFontSize = 14.0f; // Use your desired logical point size here
+//    g.setFont(juce::Font (logicalFontSize, juce::Font::plain));
     g.drawText(text, component_bounds.getX(), background_bounds.getY(),
                component_bounds.getWidth(), background_bounds.getHeight(), juce::Justification::centred, false);
 }
