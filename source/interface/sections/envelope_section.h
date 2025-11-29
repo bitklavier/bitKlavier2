@@ -20,6 +20,7 @@
 #include "synth_section.h"
 #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
 #include "EnvParams.h"
+#include "OpenGL_LabeledBorder.h"
 
 class EnvelopeEditor;
 class SynthSlider;
@@ -93,6 +94,7 @@ public:
     std::shared_ptr<PlainTextComponent> sustain_label;
     std::shared_ptr<PlainTextComponent> release_label;
 
+    std::shared_ptr<OpenGL_LabeledBorder> envelopeBorder;
     juce::GroupComponent envelopeSectionBorder;
     EnvParams& _params;
 

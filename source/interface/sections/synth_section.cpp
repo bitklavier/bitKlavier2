@@ -15,15 +15,16 @@
  */
 
 #include "synth_section.h"
-#include "look_and_feel/skin.h"
-#include "look_and_feel/fonts.h"
 #include "FullInterface.h"
+#include "Identifiers.h"
+#include "OpenGL_LabeledBorder.h"
+#include "look_and_feel/fonts.h"
+#include "look_and_feel/skin.h"
+#include "modulation_button.h"
+#include "open_gl_combo_box.h"
 #include "open_gl_component.h"
 #include "synth_gui_interface.h"
 #include "synth_slider.h"
-#include "modulation_button.h"
-#include "Identifiers.h"
-#include "open_gl_combo_box.h"
 
 SynthSection::SynthSection(const juce::String &name) : juce::Component(name), parent_(nullptr), activator_(nullptr),
                                                        preset_selector_(nullptr), preset_selector_half_width_(false),
@@ -565,6 +566,12 @@ void SynthSection::addButton(OpenGlShapeButton *button, bool show) {
     addToggleButton(button, show);
     addOpenGlComponent(button->getGlComponent());
 }
+
+void SynthSection::addBorder(OpenGL_LabeledBorder *border, bool show) {
+    if (show) addAndMakeVisible(border);
+    addOpenGlComponent(border->getImageComponent());
+}
+
 //only need to use to this funciton for modulatable combo boxes
 void SynthSection::addComboBox(OpenGLComboBox *box, bool show, bool isModulatable) {
     box->setComponentID(this->getComponentID().toStdString() + "_" + box->getComponentID().toStdString());

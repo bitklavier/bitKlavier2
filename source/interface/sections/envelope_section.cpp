@@ -188,10 +188,15 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     release_label->setTextSize (12.0f);
     release_label->setJustification(juce::Justification::centred);
 
-    envelopeSectionBorder.setName("envelope border");
-    envelopeSectionBorder.setText(_params.idPrepend+" Envelope");
-    envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
-    addAndMakeVisible(envelopeSectionBorder);
+    envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", "Envelope");
+    addBorder(envelopeBorder.get());
+    // addAndMakeVisible (envelopeBorder.get());
+    // addOpenGlComponent(envelopeBorder->getImageComponent());
+
+    // envelopeSectionBorder.setName("envelope border");
+    // envelopeSectionBorder.setText(_params.idPrepend+" Envelope");
+    // envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
+    //addAndMakeVisible(envelopeSectionBorder);
 //    setLookAndFeel(DefaultLookAndFeel::instance());
 }
 
@@ -214,7 +219,7 @@ void EnvelopeSection::paintBackground(juce::Graphics& g) {
   paintKnobShadows(g);
   paintChildrenBackgrounds(g);
 
-  envelopeSectionBorder.paint(g);
+  //envelopeSectionBorder.paint(g);
 }
 
 void EnvelopeSection::notifyParentOfValueChange()
@@ -228,7 +233,9 @@ void EnvelopeSection::resized() {
     int labelsectionheight = findValue(Skin::kLabelHeight);
 
     juce::Rectangle<int> area (getLocalBounds());
-    envelopeSectionBorder.setBounds(area);
+    envelopeBorder->setBounds(area);
+    //envelopeSectionBorder.setBounds(area);
+
     area.removeFromTop(17);
     area.reduce(10, 0);
 

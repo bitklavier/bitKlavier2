@@ -33,8 +33,9 @@
 #include <map>
 #include <set>
 #include "StateModulatedComponent.h"
+//#include "OpenGL_LabeledBorder.h"
 
-
+class OpenGL_LabeledBorder;
 class OpenGLComboBox;
 class ModulationButton;
 class OpenGlComponent;
@@ -240,6 +241,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void setSliderHasHzAlternateDisplay(SynthSlider* slider);
     void setSidewaysHeading(bool sideways) { sideways_heading_ = sideways; }
     void addToggleButton(juce::ToggleButton* button, bool show);
+    void addBorder(OpenGL_LabeledBorder* border, bool show = true);
 
     void addButton(OpenGlShapeButton* button, bool show = true);
     void addSynthButton(SynthButton* button, bool show = true, bool isModulatable = false);
