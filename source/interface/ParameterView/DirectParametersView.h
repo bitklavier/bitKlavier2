@@ -27,6 +27,13 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         setComponentID(name);
 
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setTextSize (24.0f);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto &listeners = pluginState.getParameterListeners();
@@ -140,7 +147,7 @@ public:
     void paintBackground(juce::Graphics &g) override {
         setLabelFont(g);
         SynthSection::paintContainer(g);
-        paintHeadingText(g);
+        //paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
 
@@ -150,6 +157,8 @@ public:
 
         paintChildrenBackgrounds(g);
     }
+
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
@@ -163,6 +172,8 @@ public:
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
+
+    // std::shared_ptr<PlainTextComponent> prepTitle;
 
     chowdsp::ScopedCallbackList disableSliderCallback;
 

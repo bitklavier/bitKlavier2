@@ -46,6 +46,13 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setTextSize (24.0f);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
         // menus
         if (auto* synchronicParams = dynamic_cast<SynchronicParams*>(&params)) {
             pulseTriggeredBy_combo_box = std::make_unique<OpenGLComboBox>(synchronicParams->pulseTriggeredBy->paramID.toStdString());
@@ -265,7 +272,7 @@ public:
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        paintHeadingText (g);
+        //paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
 
@@ -278,6 +285,8 @@ public:
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
+
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     // combo box menus
     std::unique_ptr<OpenGLComboBox> pulseTriggeredBy_combo_box;

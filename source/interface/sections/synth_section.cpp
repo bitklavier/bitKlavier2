@@ -30,7 +30,6 @@ SynthSection::SynthSection(const juce::String &name) : juce::Component(name), pa
                                                        skin_override_(Skin::kNone), size_ratio_(1.0f),
                                                        active_(true), sideways_heading_(true), background_(nullptr) {
     //setWantsKeyboardFocus(true);
-
 }
 
 SynthSection::SynthSection(const juce::String &name, const juce::String &id) : juce::Component(name), parent_(nullptr), activator_(nullptr),
@@ -51,6 +50,7 @@ SynthSection::SynthSection(const juce::String &name, OpenGlWrapper *open_gl) : j
                                                                                active_(true), sideways_heading_(true),
                                                                                background_(nullptr), open_gl(open_gl) {
     //setWantsKeyboardFocus(true);
+    DBG("SynthSection constructor 3 called");
 }
 
 float SynthSection::findValue(Skin::ValueId value_id) const {

@@ -230,14 +230,46 @@ class PlainTextComponent : public OpenGlImageComponent {
 
       juce::Graphics::ScopedSaveState state(g); // Save current graphics state
 
-      // Apply rotation to the graphics context
-      g.addTransform(juce::AffineTransform::rotation(
-          juce::degreesToRadians(rotation_degrees_),
-          getWidth() / 2.0f, getHeight() / 2.0f // Pivot point (center of component)
-          ));
+        // Apply rotation to the graphics context
+        if (rotation_degrees_ != 0.)
+        {
+          g.addTransform(juce::AffineTransform::rotation(
+             juce::degreesToRadians(rotation_degrees_),
+             getWidth() / 2.0f, getHeight() / 2.0f // Pivot point (center of component)
+             ));
 
-      g.drawFittedText(text_, buffer_, 0, component->getWidth() - 2 * buffer_,
-                       component->getHeight(), justification_, false);
+            // Corrected Bounding Box for 90-degree rotation:
+            // The text's 'width' in the rotated space is the component's original height.
+            // The text's 'height' in the rotated space is the component's original width.
+
+            // const int rotated_x = 0;
+            // const int rotated_y = 0;
+            // const int rotated_width = component->getHeight(); // Use height for the width of the text area
+            // const int rotated_height = component->getWidth(); // Use width for the height of the text area
+            //
+            // // Use the corrected dimensions for the drawing area
+            // g.drawFittedText(text_,
+            //                  rotated_x + buffer_,
+            //                  rotated_y + buffer_,
+            //                  rotated_width - 2 * buffer_, // Use rotated_width
+            //                  rotated_height - 2 * buffer_, // Use rotated_height
+            //                  justification_,
+            //                  false,
+            //                  2);
+
+            /*
+             * temporary hack to get the prep titles to draw properly
+             */
+            // g.drawFittedText(text_, buffer_, 0, component->getWidth() * 2 - 2 * buffer_,
+            //                  component->getHeight(), justification_, false);
+            g.drawFittedText(text_, buffer_, 0, component->getHeight(),
+                 component->getHeight(), justification_, false);
+        }
+        else
+        {
+            g.drawFittedText(text_, buffer_, 0, component->getWidth() - 2 * buffer_,
+                           component->getHeight(), justification_, false);
+        }
     }
 
     void setTextSize(float size) {

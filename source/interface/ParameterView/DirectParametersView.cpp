@@ -15,6 +15,9 @@ void DirectParametersView::resized()
     int knob_section_height = getKnobSectionHeight();
     int labelsectionheight = findValue(Skin::kLabelHeight);
 
+    juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
+    prepTitle->setBounds(titleArea);
+
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft(title_width);
