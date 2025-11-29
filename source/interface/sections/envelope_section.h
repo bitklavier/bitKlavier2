@@ -88,6 +88,11 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> release_attachment;
     std::unique_ptr<chowdsp::SliderAttachment> releasePower_attachment;
 
+    std::shared_ptr<PlainTextComponent> attack_label;
+    std::shared_ptr<PlainTextComponent> decay_label;
+    std::shared_ptr<PlainTextComponent> sustain_label;
+    std::shared_ptr<PlainTextComponent> release_label;
+
     juce::GroupComponent envelopeSectionBorder;
     EnvParams& _params;
 

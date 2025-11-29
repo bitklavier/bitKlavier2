@@ -80,7 +80,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     delay_->parentHierarchyChanged();
     delay_->setVisible(false);
 
-    attack_ = std::make_unique<SynthSlider>("attack", params.attackParam->getModParam());
+    attack_ = std::make_unique<SynthSlider>(params.attackParam->getName(20), params.attackParam->getModParam());
     addSlider(attack_.get());
     attack_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     attack_->setPopupPlacement(juce::BubbleComponent::below);
@@ -100,7 +100,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     hold_->parentHierarchyChanged();
     hold_->setVisible(false);
 
-    decay_ = std::make_unique<SynthSlider>( "decay", params.decayParam->getModParam());
+    decay_ = std::make_unique<SynthSlider>( params.decayParam->getName(20), params.decayParam->getModParam());
     addSlider(decay_.get());
     decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     decay_->setPopupPlacement(juce::BubbleComponent::below);
@@ -112,7 +112,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     decay_power_->setRange(-10., 10.);
     decay_power_->setVisible(false);
 
-    release_ = std::make_unique<SynthSlider>("release",params.releaseParam->getModParam());
+    release_ = std::make_unique<SynthSlider>(params.releaseParam->getName(20),params.releaseParam->getModParam());
     addSlider(release_.get());
     release_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     release_->setPopupPlacement(juce::BubbleComponent::below);
@@ -124,7 +124,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     release_power_->setRange(-10., 10.);
     release_power_->setVisible(false);
 
-    sustain_ = std::make_unique<SynthSlider>("sustain", params.sustainParam->getModParam());
+    sustain_ = std::make_unique<SynthSlider>(params.sustainParam->getName(20), params.sustainParam->getModParam());
     addSlider(sustain_.get());
     sustain_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     sustain_->setPopupPlacement(juce::BubbleComponent::below);
@@ -168,6 +168,26 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     sustain_->addAttachment(sustain_attachment.get());
     release_->addAttachment(release_attachment.get());
 
+    attack_label = std::make_shared<PlainTextComponent>(attack_->getName(), attack_->getName());
+    addOpenGlComponent(attack_label);
+    attack_label->setTextSize (12.0f);
+    attack_label->setJustification(juce::Justification::centred);
+
+    decay_label = std::make_shared<PlainTextComponent>(decay_->getName(), decay_->getName());
+    addOpenGlComponent(decay_label);
+    decay_label->setTextSize (12.0f);
+    decay_label->setJustification(juce::Justification::centred);
+
+    sustain_label = std::make_shared<PlainTextComponent>(sustain_->getName(), sustain_->getName());
+    addOpenGlComponent(sustain_label);
+    sustain_label->setTextSize (12.0f);
+    sustain_label->setJustification(juce::Justification::centred);
+
+    release_label = std::make_shared<PlainTextComponent>(release_->getName(), release_->getName());
+    addOpenGlComponent(release_label);
+    release_label->setTextSize (12.0f);
+    release_label->setJustification(juce::Justification::centred);
+
     envelopeSectionBorder.setName("envelope border");
     envelopeSectionBorder.setText(_params.idPrepend+" Envelope");
     envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
@@ -184,12 +204,12 @@ void EnvelopeSection::mouseUp(const juce::MouseEvent& e) {
 
 void EnvelopeSection::paintBackground(juce::Graphics& g) {
   setLabelFont(g);
-  drawLabelForComponent(g, TRANS("DELAY"), delay_.get());
-  drawLabelForComponent(g, TRANS("Attack"), attack_.get());
-  drawLabelForComponent(g, TRANS("HOLD"), hold_.get());
-  drawLabelForComponent(g, TRANS("Decay"), decay_.get());
-  drawLabelForComponent(g, TRANS("Sustain"), sustain_.get());
-  drawLabelForComponent(g, TRANS("Release"), release_.get());
+  // drawLabelForComponent(g, TRANS("DELAY"), delay_.get());
+  // drawLabelForComponent(g, TRANS("Attack"), attack_.get());
+  // drawLabelForComponent(g, TRANS("HOLD"), hold_.get());
+  // drawLabelForComponent(g, TRANS("Decay"), decay_.get());
+  // drawLabelForComponent(g, TRANS("Sustain"), sustain_.get());
+  // drawLabelForComponent(g, TRANS("Release"), release_.get());
 
   paintKnobShadows(g);
   paintChildrenBackgrounds(g);
@@ -205,6 +225,8 @@ void EnvelopeSection::notifyParentOfValueChange()
 
 void EnvelopeSection::resized() {
 
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+
     juce::Rectangle<int> area (getLocalBounds());
     envelopeSectionBorder.setBounds(area);
     area.removeFromTop(17);
@@ -216,13 +238,21 @@ void EnvelopeSection::resized() {
     juce::Rectangle<int> knobs_area = area.removeFromTop(getKnobSectionHeight());
     placeKnobsInArea(knobs_area, { attack_.get(), decay_.get(), sustain_.get(), release_.get() }, true);
 
+    juce::Rectangle<int> attack_label_rect (attack_->getX(), attack_->getBottom() - 10, attack_->getWidth(), labelsectionheight );
+    attack_label->setBounds(attack_label_rect);
+    juce::Rectangle<int> decay_label_rect (decay_->getX(), decay_->getBottom() - 10, decay_->getWidth(), labelsectionheight );
+    decay_label->setBounds(decay_label_rect);
+    juce::Rectangle<int> sustain_label_rect (sustain_->getX(), sustain_->getBottom() - 10, sustain_->getWidth(), labelsectionheight );
+    sustain_label->setBounds(sustain_label_rect);
+    juce::Rectangle<int> release_label_rect (release_->getX(), release_->getBottom() - 10, release_->getWidth(), labelsectionheight );
+    release_label->setBounds(release_label_rect);
+
     envelope_->setSizeRatio(getSizeRatio());
 
     static constexpr float kMagnifyingHeightRatio = 0.2f;
     int magnify_height = envelope_->getHeight() * kMagnifyingHeightRatio;
     drag_magnifying_glass_->setBounds(envelope_->getRight() - magnify_height, envelope_->getY(),
                                     magnify_height, magnify_height);
-
     envelope_->magnifyReset();
 
     SynthSection::resized();

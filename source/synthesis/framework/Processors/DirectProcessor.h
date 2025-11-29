@@ -70,7 +70,7 @@ struct DirectParams : chowdsp::ParamHolder {
     // Gain param
     chowdsp::GainDBParameter::Ptr gainParam{
         juce::ParameterID{"Main", 100},
-        "Main",
+        "MAIN",
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
         true, // true => audio rate modulatable (continuously),
@@ -80,7 +80,7 @@ struct DirectParams : chowdsp::ParamHolder {
     // Hammer param
     chowdsp::GainDBParameter::Ptr hammerParam{
         juce::ParameterID{"Hammers", 100},
-        "Hammer",
+        "HAMMERS",
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         -24.0f,
         true,
@@ -90,7 +90,7 @@ struct DirectParams : chowdsp::ParamHolder {
     // Resonance param
     chowdsp::GainDBParameter::Ptr releaseResonanceParam{
         juce::ParameterID{"Resonance", 100},
-        "Release Resonance",
+        "RESONANCE",
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
         true,
@@ -100,7 +100,7 @@ struct DirectParams : chowdsp::ParamHolder {
     // Pedal param
     chowdsp::GainDBParameter::Ptr pedalParam{
         juce::ParameterID{"Pedal", 100},
-        "Pedal",
+        "PEDAL",
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         -6.0f,
         true,

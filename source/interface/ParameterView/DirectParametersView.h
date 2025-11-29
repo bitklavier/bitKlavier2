@@ -42,7 +42,7 @@ public:
                 param_->paramID == "Resonance" ||
                 param_->paramID == "Pedal"
                 ) {
-                auto slider = std::make_unique<SynthSlider>(param_->paramID, param_->getModParam());
+                auto slider = std::make_unique<SynthSlider>(param_->getName(20), param_->getModParam());
                 if (param_->paramID == "Hammers")
                     slider->setDisabled(!*this->params.hammerLoaded);
                 if (param_->paramID == "Resonance")
@@ -55,9 +55,13 @@ public:
                 addSlider(slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
+                auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), slider->getName());
+                addOpenGlComponent(slider_label);
+                slider_label->setTextSize (12.0f);
+                slider_label->setJustification(juce::Justification::centred);
+                slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back(std::move(attachment));
                 _sliders.emplace_back(std::move(slider));
-
 
             }
         }
@@ -140,14 +144,12 @@ public:
         paintBorder(g);
         paintKnobShadows(g);
 
-        for (auto &slider: _sliders) {
-            drawLabelForComponent(g, slider->getName(), slider.get());
-        }
+        // for (auto &slider: _sliders) {
+        //     drawLabelForComponent(g, slider->getName(), slider.get());
+        // }
 
         paintChildrenBackgrounds(g);
     }
-
-
 
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
@@ -156,6 +158,7 @@ public:
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider> > _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > floatAttachments;
+    std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
 
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;

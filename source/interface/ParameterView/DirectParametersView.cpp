@@ -13,6 +13,7 @@ void DirectParametersView::resized()
 
     // height for most of these components
     int knob_section_height = getKnobSectionHeight();
+    int labelsectionheight = findValue(Skin::kLabelHeight);
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
@@ -35,6 +36,15 @@ void DirectParametersView::resized()
     bounds.removeFromTop(bufferSpaceForEach);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, true);
+
+    // juce::Rectangle<int> attack_label_rect (attack_->getX(), attack_->getBottom() - 10, attack_->getWidth(), labelsectionheight );
+    // attack_label->setBounds(attack_label_rect);
+    int sl_counter = 0;
+    for (auto& slider : _sliders)
+    {
+        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
+        slider_labels[sl_counter++]->setBounds(sl_label_rect);
+    }
 
     // add the adsr below that
     bounds.removeFromTop(bufferSpaceForEach);
