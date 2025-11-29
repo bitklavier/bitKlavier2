@@ -10,6 +10,7 @@
 #include "SemiToneWidthParams.h"
 #include "open_gl_combo_box.h"
 #include "synth_slider.h"
+#include "OpenGL_LabeledBorder.h"
 
 class SemitoneWidthSection : public SynthSection
 {
@@ -34,7 +35,8 @@ private:
     std::unique_ptr<OpenGLComboBox> octaveComboBox;
     std::unique_ptr<chowdsp::ComboBoxAttachment> octaveComboBoxAttachment;
 
-    juce::GroupComponent sectionBorder;
+    std::shared_ptr<PlainTextComponent> width_label;
+    std::shared_ptr<OpenGL_LabeledBorder> sectionBorder;
 };
 
 #endif //BITKLAVIER0_SEMITONEWIDTHSECTION_H

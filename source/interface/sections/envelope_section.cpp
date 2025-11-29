@@ -190,14 +190,6 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
 
     envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", "Envelope");
     addBorder(envelopeBorder.get());
-    // addAndMakeVisible (envelopeBorder.get());
-    // addOpenGlComponent(envelopeBorder->getImageComponent());
-
-    // envelopeSectionBorder.setName("envelope border");
-    // envelopeSectionBorder.setText(_params.idPrepend+" Envelope");
-    // envelopeSectionBorder.setTextLabelPosition(juce::Justification::centred);
-    //addAndMakeVisible(envelopeSectionBorder);
-//    setLookAndFeel(DefaultLookAndFeel::instance());
 }
 
 EnvelopeSection::~EnvelopeSection() { }
@@ -209,17 +201,8 @@ void EnvelopeSection::mouseUp(const juce::MouseEvent& e) {
 
 void EnvelopeSection::paintBackground(juce::Graphics& g) {
   setLabelFont(g);
-  // drawLabelForComponent(g, TRANS("DELAY"), delay_.get());
-  // drawLabelForComponent(g, TRANS("Attack"), attack_.get());
-  // drawLabelForComponent(g, TRANS("HOLD"), hold_.get());
-  // drawLabelForComponent(g, TRANS("Decay"), decay_.get());
-  // drawLabelForComponent(g, TRANS("Sustain"), sustain_.get());
-  // drawLabelForComponent(g, TRANS("Release"), release_.get());
-
   paintKnobShadows(g);
   paintChildrenBackgrounds(g);
-
-  //envelopeSectionBorder.paint(g);
 }
 
 void EnvelopeSection::notifyParentOfValueChange()
@@ -234,7 +217,6 @@ void EnvelopeSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());
     envelopeBorder->setBounds(area);
-    //envelopeSectionBorder.setBounds(area);
 
     area.removeFromTop(17);
     area.reduce(10, 0);

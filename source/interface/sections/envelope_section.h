@@ -95,7 +95,6 @@ public:
     std::shared_ptr<PlainTextComponent> release_label;
 
     std::shared_ptr<OpenGL_LabeledBorder> envelopeBorder;
-    juce::GroupComponent envelopeSectionBorder;
     EnvParams& _params;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeSection)

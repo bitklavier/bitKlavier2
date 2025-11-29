@@ -11,6 +11,7 @@
 #include "open_gl_combo_box.h"
 #include "synth_slider.h"
 #include "TuningUtils.h"
+#include "OpenGL_LabeledBorder.h"
 
 class SpringTuningSection : public SynthSection
 {
@@ -32,6 +33,7 @@ private:
     //holds the 6 float params
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+    std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
 
     // interval spring length scale selection menus
     std::unique_ptr<OpenGLComboBox> scaleId_ComboBox;
@@ -50,12 +52,13 @@ private:
     // individual interval weight knobs
     std::vector<std::unique_ptr<SynthSlider>> intervalWeightSliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> intervalWeightsSliders_sliderAttachments;
+    std::vector<std::shared_ptr<PlainTextComponent> > intervalWeights_labels;
 
     // toggles for setting springMode for each interval weight
     std::vector<std::unique_ptr<SynthButton>> useLocalOrFundamentalToggles;
     std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> useLocalOrFundamentalToggles_sliderAttachments;
 
-    juce::GroupComponent sectionBorder;
+    std::shared_ptr<OpenGL_LabeledBorder> sectionBorder;
 };
 
 #endif //BITKLAVIER0_SPRINGTUNINGSECTION_H

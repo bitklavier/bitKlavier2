@@ -42,6 +42,7 @@ public:
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+        setInterceptsMouseClicks(false, false);
     }
 
     virtual void resized() override {

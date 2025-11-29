@@ -18,7 +18,7 @@ struct SemitoneWidthParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr semitoneWidthSliderParam {
         juce::ParameterID { "semitonewidth", 100 },
-        "Semitone Width",
+        "CENTS",
         chowdsp::ParamUtils::createNormalisableRange (-100.0f, 200.0f, 100.0f),
         100.0f,
         &chowdsp::ParamUtils::floatValToString,

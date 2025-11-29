@@ -25,7 +25,7 @@ public:
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
-        paintHeadingText(g);
+        //paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
@@ -44,6 +44,8 @@ public:
     void drawSpiral(juce::Graphics& g);
 
     void resized() override;
+
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;

@@ -173,8 +173,6 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
-    // std::shared_ptr<PlainTextComponent> prepTitle;
-
     chowdsp::ScopedCallbackList disableSliderCallback;
 
     void resized() override;

@@ -12,7 +12,7 @@ SemitoneWidthSection::SemitoneWidthSection (
 {
     setComponentID(parent.getComponentID());
 
-    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->paramID,params.semitoneWidthSliderParam->getModParam());
+    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->getName(20),params.semitoneWidthSliderParam->getModParam());
     addSlider(widthSlider_.get());
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
@@ -27,22 +27,23 @@ SemitoneWidthSection::SemitoneWidthSection (
     octaveComboBox = std::make_unique<OpenGLComboBox>(params.octave->paramID.toStdString());
     octaveComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.octave, listeners, *octaveComboBox, nullptr);
     addComboBox(octaveComboBox.get(),true,true);
-    sectionBorder.setName("semitonewidth");
-    sectionBorder.setText("Semitone Width");
-    sectionBorder.setTextLabelPosition(juce::Justification::centred);
-    addAndMakeVisible(sectionBorder);
+
+    width_label = std::make_shared<PlainTextComponent>(widthSlider_->getName(), widthSlider_->getName());
+    addOpenGlComponent(width_label);
+    width_label->setTextSize (10.0f);
+    width_label->setJustification(juce::Justification::centred);
+
+    sectionBorder = std::make_shared<OpenGL_LabeledBorder>("semitonewidth", "Semitone Width");
+    addBorder(sectionBorder.get());
 }
 
 SemitoneWidthSection::~SemitoneWidthSection() { }
 
-void SemitoneWidthSection::paintBackground(juce::Graphics& g) {
-
+void SemitoneWidthSection::paintBackground(juce::Graphics& g)
+{
     setLabelFont(g);
-    drawLabelForComponent(g, TRANS("cents"), widthSlider_.get());
-
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
-    sectionBorder.paint(g);
 }
 
 void SemitoneWidthSection::setAlpha(float newAlpha)
@@ -58,7 +59,7 @@ void SemitoneWidthSection::setAlpha(float newAlpha)
 void SemitoneWidthSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());
-    sectionBorder.setBounds(area);
+    sectionBorder->setBounds(area);
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
@@ -66,6 +67,9 @@ void SemitoneWidthSection::resized() {
 
     juce::Rectangle<int> widthKnobArea = area.removeFromLeft(getKnobSectionHeight());
     widthSlider_->setBounds(widthKnobArea);
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+    juce::Rectangle<int> label_rect (widthSlider_->getX(), widthSlider_->getBottom() - 10, widthSlider_->getWidth(), labelsectionheight );
+    width_label->setBounds(label_rect);
 
     area.removeFromLeft(largepadding);
     area.removeFromTop(largepadding);
