@@ -70,7 +70,6 @@ void DragMagnifyingGlass::mouseDoubleClick(const juce::MouseEvent& e) {
 
 EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection("envsection"), _params(params)
 {
-
     setComponentID(parent.getComponentID());
 
     delay_ = std::make_unique<SynthSlider>("delay", params.delayParam->getModParam());
@@ -170,25 +169,25 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
 
     attack_label = std::make_shared<PlainTextComponent>(attack_->getName(), attack_->getName());
     addOpenGlComponent(attack_label);
-    attack_label->setTextSize (12.0f);
+    attack_label->setTextSize (10.0f);
     attack_label->setJustification(juce::Justification::centred);
 
     decay_label = std::make_shared<PlainTextComponent>(decay_->getName(), decay_->getName());
     addOpenGlComponent(decay_label);
-    decay_label->setTextSize (12.0f);
+    decay_label->setTextSize (10.0f);
     decay_label->setJustification(juce::Justification::centred);
 
     sustain_label = std::make_shared<PlainTextComponent>(sustain_->getName(), sustain_->getName());
     addOpenGlComponent(sustain_label);
-    sustain_label->setTextSize (12.0f);
+    sustain_label->setTextSize (10.0f);
     sustain_label->setJustification(juce::Justification::centred);
 
     release_label = std::make_shared<PlainTextComponent>(release_->getName(), release_->getName());
     addOpenGlComponent(release_label);
-    release_label->setTextSize (12.0f);
+    release_label->setTextSize (10.0f);
     release_label->setJustification(juce::Justification::centred);
 
-    envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", "Envelope");
+    envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", params.label);
     addBorder(envelopeBorder.get());
 }
 

@@ -33,19 +33,28 @@ void NostalgicParametersView::resized()
     bounds.removeFromRight(largepadding);
 
     // wave section goes on the bottom
+    bounds.removeFromBottom (largepadding);
     waveSlider->setBounds(bounds.removeFromBottom (Skin::kKnobSectionHeight*8));
+    bounds.removeFromBottom (largepadding);
+
+    // middle row to divide into columns
+    juce::Rectangle<int> middleRow = bounds.removeFromBottom (Skin::kKnobSectionHeight*11 + largepadding);
 
     // left column for transposition slider, hold time slider, and reverse adsr
-    juce::Rectangle<int> leftColumn = bounds.removeFromLeft(bounds.getWidth() / 2);
+    juce::Rectangle<int> leftColumn = middleRow.removeFromLeft(bounds.getWidth() / 2);
     leftColumn.removeFromRight (smallpadding);
     reverseEnvSection->setBounds(leftColumn.removeFromBottom (Skin::kKnobSectionHeight*8));
     leftColumn.removeFromBottom (largepadding);
     holdTimeMinMaxSlider->setBounds(leftColumn.removeFromBottom (Skin::kKnobSectionHeight*3));
 
     // knobs and knob labels
-    leftColumn.removeFromBottom (largepadding);
-    leftColumn.removeFromTop (Skin::kKnobSectionHeight);
-    placeKnobsInArea(leftColumn, { clusterMin_knob.get(), clusterThreshold_knob.get(), noteLengthMult_knob.get() }, false);
+    bounds.removeFromBottom (largepadding);
+    juce::Rectangle<int> topRow = bounds.removeFromBottom (Skin::kKnobSectionHeight * 3 + largepadding);
+    variousControlsBorder->setBounds (topRow);
+    topRow.reduce(0, largepadding);
+    juce::Rectangle<int> knobsRect = topRow.removeFromLeft (topRow.getWidth() * 0.5);
+    //leftColumn.removeFromTop (Skin::kKnobSectionHeight);
+    placeKnobsInArea(knobsRect, { clusterMin_knob.get(), clusterThreshold_knob.get(), noteLengthMult_knob.get() }, false);
     beatsToSkip_knob->setBounds(noteLengthMult_knob->getBounds());
     juce::Rectangle<int> cm_label_rect (clusterMin_knob->getX(), clusterMin_knob->getBottom() - 10, clusterMin_knob->getWidth(), labelsectionheight );
     clusterMin_knob_label->setBounds(cm_label_rect);
@@ -56,14 +65,19 @@ void NostalgicParametersView::resized()
     juce::Rectangle<int> bts_label_rect (beatsToSkip_knob->getX(), beatsToSkip_knob->getBottom() - 10, beatsToSkip_knob->getWidth(), labelsectionheight );
     beatsToSkip_knob_label->setBounds(bts_label_rect);
 
+    topRow.reduce(0, Skin::kKnobSectionHeight * 0.7);
+    juce::Rectangle<int> nostalgicTriggeredBy_rect = topRow.removeFromLeft(topRow.getWidth() / 2);
+    nostalgicTriggeredBy_rect.reduce(nostalgicTriggeredBy_rect.getWidth() * 0.2, 0);
+    nostalgicTriggeredBy_combo_box->setBounds(nostalgicTriggeredBy_rect);
+    topRow.reduce(topRow.getWidth() * 0.25, 0);
+    keyOnReset->setBounds(topRow);
+
     // right column for knobs and undertow adsr
-    bounds.removeFromLeft (smallpadding);
-    undertowEnvSection->setBounds(bounds.removeFromBottom (Skin::kKnobSectionHeight*8));
-    bounds.removeFromBottom (largepadding);
-    transpositionSlider->setBounds(bounds.removeFromBottom(Skin::kKnobSectionHeight*3));
-    bounds.removeFromBottom (largepadding);
-    nostalgicTriggeredBy_combo_box->setBounds(bounds.removeFromRight(bounds.getWidth() / 3).removeFromBottom (Skin::kComboMenuHeight));
-    keyOnReset->setBounds(bounds.removeFromRight(bounds.getWidth() / 3).removeFromBottom (Skin::kComboMenuHeight));
+    middleRow.removeFromLeft (smallpadding);
+    undertowEnvSection->setBounds(middleRow.removeFromBottom (Skin::kKnobSectionHeight*8));
+    middleRow.removeFromBottom (largepadding);
+    transpositionSlider->setBounds(middleRow.removeFromBottom(Skin::kKnobSectionHeight*3));
+    middleRow.removeFromBottom (largepadding);
 
     SynthSection::resized();
 }

@@ -126,6 +126,9 @@ public:
         clusterThreshold_knob_label->setTextSize (10.0f);
         clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
+        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "");
+        addBorder(variousControlsBorder.get());
+
         // hold time min/max slider
         holdTimeMinMaxSlider = std::make_unique<OpenGL_HoldTimeMinMaxSlider>(&params.holdTimeMinMaxParams, listeners);
         holdTimeMinMaxSlider->setComponentID ("holdtime_min_max");
@@ -133,8 +136,10 @@ public:
 
         // envelope/ADSR controller UI
         reverseEnvSection = std::make_unique<EnvelopeSection>(params.reverseEnv, listeners, *this);
+        reverseEnvSection->setName(params.reverseEnv.label);
         addSubSection (reverseEnvSection.get());
         undertowEnvSection = std::make_unique<EnvelopeSection>(params.undertowEnv, listeners, *this);
+        undertowEnvSection->setName(params.undertowEnv.label);
         addSubSection (undertowEnvSection.get());
 
         // sequence of ADSRs
@@ -238,6 +243,9 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> clusterMin_knob_attachment;
     std::unique_ptr<SynthSlider> clusterThreshold_knob;
     std::unique_ptr<chowdsp::SliderAttachment> clusterThreshold_knob_attachment;
+
+    // border for knobs and combobox and reset toggle
+    std::shared_ptr<OpenGL_LabeledBorder> variousControlsBorder;
 
     // knob labels
     std::shared_ptr<PlainTextComponent> noteLengthMult_knob_label;

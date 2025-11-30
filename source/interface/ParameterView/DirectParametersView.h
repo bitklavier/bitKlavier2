@@ -146,17 +146,12 @@ public:
     void paintBackground(juce::Graphics &g) override {
         setLabelFont(g);
         SynthSection::paintContainer(g);
-        //paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
-
-        // for (auto &slider: _sliders) {
-        //     drawLabelForComponent(g, slider->getName(), slider.get());
-        // }
-
         paintChildrenBackgrounds(g);
     }
 
+    // prep title, vertical, left side
     std::shared_ptr<PlainTextComponent> prepTitle;
 
     // complex UI elements in this prep

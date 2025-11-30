@@ -93,9 +93,9 @@ struct NostalgicParams : chowdsp::ParamHolder
     HoldTimeMinMaxParams holdTimeMinMaxParams;
 
     // Reverse and Undertow ADSRs and params
-    EnvParams reverseEnv{"Reverse"};
+    EnvParams reverseEnv{"Reverse", "Approaching Wave"};
     // EnvelopeSequenceParams reverseEnvSequence;
-    EnvParams undertowEnv{"Undertow"};
+    EnvParams undertowEnv{"Undertow", "Receding Wave"};
     // undertowEnv.idPrepend = "1";
     // EnvelopeSequenceParams undertowEnvSequence;
 

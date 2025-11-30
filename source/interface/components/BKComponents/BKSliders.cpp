@@ -1324,6 +1324,11 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
 
     float skewFactor = 0.7;
 
+    sliderBorder.setName("waveDistanceUndertowSlider");
+    //sliderBorder.setText("Wave Distance <=> Undertow");
+    sliderBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(sliderBorder);
+
     sampleImageComponent.setImage(juce::ImageCache::getFromMemory(BinaryData::samplePic_png, BinaryData::samplePic_pngSize));
     sampleImageComponent.setImagePlacement(juce::RectanglePlacement(juce::RectanglePlacement::stretchToFit));
     sampleImageComponent.setTooltip("Provides real-time visualization of each independent Nostalgic wave");
@@ -1437,6 +1442,10 @@ void BKWaveDistanceUndertowSlider::updateSliderPositions(juce::Array<int> newpos
 void BKWaveDistanceUndertowSlider::resized()
 {
     juce::Rectangle<int> area (getLocalBounds());
+    sliderBorder.setBounds(area);
+    area.removeFromTop(10);
+    area.removeFromBottom(2);
+    area.reduce(8, 2);
 
     wavedistanceSlider.setBounds(area.removeFromTop(getHeight() * 0.1));
     undertowSlider.setBounds(area.removeFromBottom(getHeight() * 0.1));
@@ -1545,7 +1554,7 @@ void BKWaveDistanceUndertowSlider::setWaveDistance(int newwavedist, juce::Notifi
 {
     wavedistanceSlider.setValue(newwavedist, notify);
 
-    int xpos = wavedistanceSlider.getPositionOfValue(wavedistanceSlider.getValue());
+    int xpos = wavedistanceSlider.getPositionOfValue(wavedistanceSlider.getValue()) + 6;
     undertowSlider.setBounds(xpos, undertowSlider.getY(), getWidth() - xpos, undertowSlider.getHeight());
     double max = sliderMax - wavedistanceSlider.getValue();
     if (max <= sliderMin) max = sliderMin + 0.0001;

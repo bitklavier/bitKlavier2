@@ -735,6 +735,8 @@ public:
     }
 
 private:
+    juce::GroupComponent sliderBorder;
+
     double sliderMin, sliderMax;
     double sliderDefaultMin, sliderDefaultMax;
     double sliderDefault;

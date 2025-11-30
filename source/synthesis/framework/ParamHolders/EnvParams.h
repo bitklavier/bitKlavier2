@@ -10,7 +10,10 @@
 
 struct EnvParams : public chowdsp::ParamHolder
 {
-    EnvParams(juce::String idPrepen="") : chowdsp::ParamHolder("ENV"),idPrepend(idPrepen)
+    EnvParams(juce::String idPrepen="", juce::String nlabel="Envelope") :
+    chowdsp::ParamHolder("ENV"),
+    idPrepend(idPrepen),
+    label(nlabel)
     {
         add(
             attackParam,
@@ -26,6 +29,7 @@ struct EnvParams : public chowdsp::ParamHolder
             );
     }
     juce::String idPrepend;
+    juce::String label;
 
     /**
      * note: we are not currently using delay or hold but need to add
