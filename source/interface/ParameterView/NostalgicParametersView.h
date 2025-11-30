@@ -27,6 +27,13 @@ public:
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setTextSize (24.0f);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
@@ -67,7 +74,7 @@ public:
         // nostalgicTriggeredBy_label->setJustification(juce::Justification::right);
 
         // knobs
-        noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID, params.noteLengthMultParam->getModParam());
+        noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->getName(20), params.noteLengthMultParam->getModParam());
         addSlider(noteLengthMult_knob.get());
         noteLengthMult_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         noteLengthMult_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -75,7 +82,12 @@ public:
         noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, nullptr);
         noteLengthMult_knob->addAttachment(noteLengthMult_knob_attachment.get());
 
-        beatsToSkip_knob = std::make_unique<SynthSlider>(params.beatsToSkipParam->paramID, params.beatsToSkipParam->getModParam());
+        noteLengthMult_knob_label = std::make_shared<PlainTextComponent>(noteLengthMult_knob->getName(), noteLengthMult_knob->getName());
+        addOpenGlComponent(noteLengthMult_knob_label);
+        noteLengthMult_knob_label->setTextSize (10.0f);
+        noteLengthMult_knob_label->setJustification(juce::Justification::centred);
+
+        beatsToSkip_knob = std::make_unique<SynthSlider>(params.beatsToSkipParam->getName(20), params.beatsToSkipParam->getModParam());
         addSlider(beatsToSkip_knob.get());
         beatsToSkip_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         beatsToSkip_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -83,7 +95,12 @@ public:
         beatsToSkip_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.beatsToSkipParam, listeners, *beatsToSkip_knob, nullptr);
         beatsToSkip_knob->addAttachment(beatsToSkip_knob_attachment.get());
 
-        clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->paramID, params.clusterMinParam->getModParam());
+        beatsToSkip_knob_label = std::make_shared<PlainTextComponent>(beatsToSkip_knob->getName(), beatsToSkip_knob->getName());
+        addOpenGlComponent(beatsToSkip_knob_label);
+        beatsToSkip_knob_label->setTextSize (10.0f);
+        beatsToSkip_knob_label->setJustification(juce::Justification::centred);
+
+        clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->getName(20), params.clusterMinParam->getModParam());
         addSlider(clusterMin_knob.get());
         clusterMin_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterMin_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -91,13 +108,23 @@ public:
         clusterMin_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterMinParam, listeners, *clusterMin_knob, nullptr);
         clusterMin_knob->addAttachment(clusterMin_knob_attachment.get());
 
-        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->paramID, params.clusterThreshParam->getModParam());
+        clusterMin_knob_label = std::make_shared<PlainTextComponent>(clusterMin_knob->getName(), clusterMin_knob->getName());
+        addOpenGlComponent(clusterMin_knob_label);
+        clusterMin_knob_label->setTextSize (10.0f);
+        clusterMin_knob_label->setJustification(juce::Justification::centred);
+
+        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->getName(20), params.clusterThreshParam->getModParam());
         addSlider(clusterThreshold_knob.get());
         clusterThreshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);
         clusterThreshold_knob->setShowPopupOnHover(true);
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshParam, listeners, *clusterThreshold_knob, nullptr);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
+
+        clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), clusterThreshold_knob->getName());
+        addOpenGlComponent(clusterThreshold_knob_label);
+        clusterThreshold_knob_label->setTextSize (10.0f);
+        clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
         // hold time min/max slider
         holdTimeMinMaxSlider = std::make_unique<OpenGL_HoldTimeMinMaxSlider>(&params.holdTimeMinMaxParams, listeners);
@@ -133,16 +160,7 @@ public:
         addSubSection(sendLevelMeter.get());
 
         // draw note length multiplier or beats to skip depending on selected option from combo box
-        if (nparams_.nostalgicTriggeredBy->get() != NostalgicComboBox::Note_Length)
-        {
-            beatsToSkip_knob->setVisible(true);
-            noteLengthMult_knob->setVisible(false);
-        }
-        else
-        {
-            noteLengthMult_knob->setVisible(true);
-            beatsToSkip_knob->setVisible(false);
-        }
+        showAppropriateKnobs();
 
         // this draws the correct parameter as soon as a new option is selected
         nostalgicTriggerByCallback = {listeners.addParameterListener (params.nostalgicTriggeredBy,
@@ -150,16 +168,7 @@ public:
             [this]() {
                 auto* interface = findParentComponentOfClass<SynthGuiInterface>();
                 juce::ScopedLock{*interface->getOpenGlCriticalSection()};
-                if (nparams_.nostalgicTriggeredBy->get() != NostalgicComboBox::Note_Length)
-                {
-                    beatsToSkip_knob->setVisible(true);
-                    noteLengthMult_knob->setVisible(false);
-                }
-                else
-                {
-                    noteLengthMult_knob->setVisible(true);
-                    beatsToSkip_knob->setVisible(false);
-                }
+                showAppropriateKnobs();
                 auto* prep_popup = findParentComponentOfClass<PreparationPopup>();
                 prep_popup->repaintPrepBackground();
             })};
@@ -170,23 +179,34 @@ public:
 
     void timerCallback() override;
 
+    void showAppropriateKnobs()
+    {
+        if (nparams_.nostalgicTriggeredBy->get() != NostalgicComboBox::Note_Length)
+        {
+            beatsToSkip_knob->setVisible(true);
+            beatsToSkip_knob_label->setVisible(true);
+            noteLengthMult_knob->setVisible(false);
+            noteLengthMult_knob_label->setVisible(false);
+        }
+        else
+        {
+            noteLengthMult_knob->setVisible(true);
+            noteLengthMult_knob_label->setVisible(true);
+            beatsToSkip_knob->setVisible(false);
+            beatsToSkip_knob_label->setVisible(false);
+        }
+    }
+
     void paintBackground (juce::Graphics& g) override
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
-        if (noteLengthMult_knob->isVisible())
-            drawLabelForComponent(g, TRANS("note length multiplier"), noteLengthMult_knob.get());
-        if (beatsToSkip_knob->isVisible())
-            drawLabelForComponent(g, TRANS("beats to skip"), beatsToSkip_knob.get());
-        drawLabelForComponent(g, TRANS("cluster min"), clusterMin_knob.get());
-        drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
-
         paintChildrenBackgrounds (g);
     }
 
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
 
@@ -205,8 +225,6 @@ public:
     // combo box menus
     std::unique_ptr<OpenGLComboBox> nostalgicTriggeredBy_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> nostalgicTriggeredBy_attachment;
-    // std::shared_ptr<PlainTextComponent> nostalgicTriggeredBy_label;
-
 
     // range slider
     std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> holdTimeMinMaxSlider;
@@ -220,6 +238,12 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> clusterMin_knob_attachment;
     std::unique_ptr<SynthSlider> clusterThreshold_knob;
     std::unique_ptr<chowdsp::SliderAttachment> clusterThreshold_knob_attachment;
+
+    // knob labels
+    std::shared_ptr<PlainTextComponent> noteLengthMult_knob_label;
+    std::shared_ptr<PlainTextComponent> beatsToSkip_knob_label;
+    std::shared_ptr<PlainTextComponent> clusterMin_knob_label;
+    std::shared_ptr<PlainTextComponent> clusterThreshold_knob_label;
 
     // ADSR controller: for setting the parameters of each ADSR
     std::unique_ptr<EnvelopeSection> reverseEnvSection;

@@ -25,7 +25,6 @@ public:
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
-        //paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);

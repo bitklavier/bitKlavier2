@@ -218,7 +218,10 @@ class PlainTextComponent : public OpenGlImageComponent {
       g.setColour(juce::Colours::white);
 
       if (font_type_ == kTitle)
-        g.setFont(Fonts::instance()->proportional_title().withPointHeight(text_size_));
+      {
+          g.setFont(Fonts::instance()->proportional_title().withPointHeight(text_size_));
+          g.setColour(juce::Colours::goldenrod);
+      }
       else if (font_type_ == kLight)
         g.setFont(Fonts::instance()->proportional_light().withPointHeight(text_size_));
       else if (font_type_ == kRegular)

@@ -69,7 +69,6 @@ public:
                 slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back(std::move(attachment));
                 _sliders.emplace_back(std::move(slider));
-
             }
         }
 

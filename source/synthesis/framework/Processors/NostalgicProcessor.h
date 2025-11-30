@@ -142,7 +142,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Note Length Multiplier param
     chowdsp::FloatParameter::Ptr noteLengthMultParam {
         juce::ParameterID { "NoteLengthMultiplier", 100 },
-        "Note Length Multiplier",
+        "NOTE LENGTH X",
         juce::NormalisableRange { 0.0f, 10.00f, 0.0f, skewFactor, false },
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -153,7 +153,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Beats To Skip param
     chowdsp::FloatParameter::Ptr beatsToSkipParam {
         juce::ParameterID { "BeatsToSkip", 100 },
-        "Beats To Skip",
+        "BEATS TO SKIP",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.f, 5.f, 1.f),
         0.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -164,7 +164,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Cluster Minimum param
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
-        "Cluster Min",
+        "CLUSTER MIN",
         chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -175,7 +175,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Cluster Threshold param
     chowdsp::FloatParameter::Ptr clusterThreshParam {
         juce::ParameterID { "ClusterThresh", 100 },
-        "Cluster Threshold",
+        "CLUSTER THRESHOLD",
         juce::NormalisableRange { 0.0f, 1000.0f, 0.0f, skewFactor, false },
         150.0f,
         &chowdsp::ParamUtils::floatValToString,
