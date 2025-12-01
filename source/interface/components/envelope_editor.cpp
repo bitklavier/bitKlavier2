@@ -845,7 +845,8 @@ void EnvelopeEditor::render(OpenGlWrapper& open_gl, bool animate) {
     setFillBoostAmount(0.0f);
     resetEnvelopeLine(-1);
 
-    setFill(true);
+    //setFill(true);
+    setFill(false); // turn off fill
     setColor(line_right_color_);
     setFillColors(envelope_graph_fill_stereo_fade, envelope_graph_fill_stereo);
     drawLines(open_gl, false);

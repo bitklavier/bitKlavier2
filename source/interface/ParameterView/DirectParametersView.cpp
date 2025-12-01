@@ -10,6 +10,7 @@ void DirectParametersView::resized()
     // width of the title at left, used in all preparations
     int title_width = getTitleWidth();
     int smallpadding = findValue(Skin::kPadding);
+    int largepadding = findValue(Skin::kLargePadding);
 
     // height for most of these components
     int knob_section_height = getKnobSectionHeight();
@@ -37,8 +38,10 @@ void DirectParametersView::resized()
 
     // start at the top, add the output knobs (main gain, hammers, resonance, etc..., and send)
     bounds.removeFromTop(bufferSpaceForEach);
-    juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height);
-    placeKnobsInArea(outputKnobsArea, _sliders, true);
+    juce::Rectangle<int> outputKnobsArea = bounds.removeFromTop(knob_section_height * 1.25);
+    mixKnobsBorder->setBounds (outputKnobsArea);
+    outputKnobsArea.reduce(0, largepadding);
+    placeKnobsInArea(outputKnobsArea, _sliders, false);
 
     // juce::Rectangle<int> attack_label_rect (attack_->getX(), attack_->getBottom() - 10, attack_->getWidth(), labelsectionheight );
     // attack_label->setBounds(attack_label_rect);

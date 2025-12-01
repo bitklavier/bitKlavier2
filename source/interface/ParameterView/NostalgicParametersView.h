@@ -126,7 +126,7 @@ public:
         clusterThreshold_knob_label->setTextSize (10.0f);
         clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
-        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "");
+        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "Various Parameters");
         addBorder(variousControlsBorder.get());
 
         // hold time min/max slider

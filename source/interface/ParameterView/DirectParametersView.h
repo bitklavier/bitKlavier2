@@ -34,6 +34,9 @@ public:
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
 
+        mixKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("mix controls border", "Submix Controls");
+        addBorder(mixKnobsBorder.get());
+
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto &listeners = pluginState.getParameterListeners();
@@ -153,6 +156,9 @@ public:
 
     // prep title, vertical, left side
     std::shared_ptr<PlainTextComponent> prepTitle;
+
+    // for the mixer knobs
+    std::shared_ptr<OpenGL_LabeledBorder> mixKnobsBorder;
 
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
