@@ -34,7 +34,7 @@ public:
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
 
-        mixKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("mix controls border", "Submix Controls");
+        mixKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("mix controls border", "Piano Parts");
         addBorder(mixKnobsBorder.get());
 
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
@@ -52,7 +52,7 @@ public:
                 param_->paramID == "Resonance" ||
                 param_->paramID == "Pedal"
                 ) {
-                auto slider = std::make_unique<SynthSlider>(param_->getName(20), param_->getModParam());
+                auto slider = std::make_unique<SynthSlider>(param_->paramID, param_->getModParam());
                 if (param_->paramID == "Hammers")
                     slider->setDisabled(!*this->params.hammerLoaded);
                 if (param_->paramID == "Resonance")
@@ -65,7 +65,7 @@ public:
                 addSlider(slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
-                auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), slider->getName());
+                auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), param_->getName(20));
                 addOpenGlComponent(slider_label);
                 slider_label->setTextSize (12.0f);
                 slider_label->setJustification(juce::Justification::centred);

@@ -12,7 +12,7 @@ SemitoneWidthSection::SemitoneWidthSection (
 {
     setComponentID(parent.getComponentID());
 
-    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->getName(20),params.semitoneWidthSliderParam->getModParam());
+    widthSlider_ = std::make_unique<SynthSlider>(params.semitoneWidthSliderParam->paramID,params.semitoneWidthSliderParam->getModParam());
     addSlider(widthSlider_.get());
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
@@ -28,7 +28,7 @@ SemitoneWidthSection::SemitoneWidthSection (
     octaveComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.octave, listeners, *octaveComboBox, nullptr);
     addComboBox(octaveComboBox.get(),true,true);
 
-    width_label = std::make_shared<PlainTextComponent>(widthSlider_->getName(), widthSlider_->getName());
+    width_label = std::make_shared<PlainTextComponent>(widthSlider_->getName(), params.semitoneWidthSliderParam->getName(20));
     addOpenGlComponent(width_label);
     width_label->setTextSize (10.0f);
     width_label->setJustification(juce::Justification::centred);

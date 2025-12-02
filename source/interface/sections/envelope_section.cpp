@@ -79,7 +79,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     delay_->parentHierarchyChanged();
     delay_->setVisible(false);
 
-    attack_ = std::make_unique<SynthSlider>(params.attackParam->getName(20), params.attackParam->getModParam());
+    attack_ = std::make_unique<SynthSlider>(params.attackParam->paramID, params.attackParam->getModParam());
     addSlider(attack_.get());
     attack_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     attack_->setPopupPlacement(juce::BubbleComponent::below);
@@ -99,7 +99,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     hold_->parentHierarchyChanged();
     hold_->setVisible(false);
 
-    decay_ = std::make_unique<SynthSlider>( params.decayParam->getName(20), params.decayParam->getModParam());
+    decay_ = std::make_unique<SynthSlider>( params.decayParam->paramID, params.decayParam->getModParam());
     addSlider(decay_.get());
     decay_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     decay_->setPopupPlacement(juce::BubbleComponent::below);
@@ -111,7 +111,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     decay_power_->setRange(-10., 10.);
     decay_power_->setVisible(false);
 
-    release_ = std::make_unique<SynthSlider>(params.releaseParam->getName(20),params.releaseParam->getModParam());
+    release_ = std::make_unique<SynthSlider>(params.releaseParam->paramID,params.releaseParam->getModParam());
     addSlider(release_.get());
     release_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     release_->setPopupPlacement(juce::BubbleComponent::below);
@@ -123,7 +123,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     release_power_->setRange(-10., 10.);
     release_power_->setVisible(false);
 
-    sustain_ = std::make_unique<SynthSlider>(params.sustainParam->getName(20), params.sustainParam->getModParam());
+    sustain_ = std::make_unique<SynthSlider>(params.sustainParam->paramID, params.sustainParam->getModParam());
     addSlider(sustain_.get());
     sustain_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     sustain_->setPopupPlacement(juce::BubbleComponent::below);
@@ -167,22 +167,22 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     sustain_->addAttachment(sustain_attachment.get());
     release_->addAttachment(release_attachment.get());
 
-    attack_label = std::make_shared<PlainTextComponent>(attack_->getName(), attack_->getName());
+    attack_label = std::make_shared<PlainTextComponent>(attack_->getName(), params.attackParam->getName(20));
     addOpenGlComponent(attack_label);
     attack_label->setTextSize (10.0f);
     attack_label->setJustification(juce::Justification::centred);
 
-    decay_label = std::make_shared<PlainTextComponent>(decay_->getName(), decay_->getName());
+    decay_label = std::make_shared<PlainTextComponent>(decay_->getName(), params.decayParam->getName(20));
     addOpenGlComponent(decay_label);
     decay_label->setTextSize (10.0f);
     decay_label->setJustification(juce::Justification::centred);
 
-    sustain_label = std::make_shared<PlainTextComponent>(sustain_->getName(), sustain_->getName());
+    sustain_label = std::make_shared<PlainTextComponent>(sustain_->getName(), params.sustainParam->getName(20));
     addOpenGlComponent(sustain_label);
     sustain_label->setTextSize (10.0f);
     sustain_label->setJustification(juce::Justification::centred);
 
-    release_label = std::make_shared<PlainTextComponent>(release_->getName(), release_->getName());
+    release_label = std::make_shared<PlainTextComponent>(release_->getName(), params.releaseParam->getName(20));
     addOpenGlComponent(release_label);
     release_label->setTextSize (10.0f);
     release_label->setJustification(juce::Justification::centred);

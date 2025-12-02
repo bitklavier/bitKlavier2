@@ -19,7 +19,7 @@ public:
         {
             setComponentID(parent.getComponentID());
 
-            offsetKnob = std::make_unique<SynthSlider>(params.offSet->getName(20),params.offSet->getModParam());
+            offsetKnob = std::make_unique<SynthSlider>(params.offSet->paramID,params.offSet->getModParam());
             addSlider(offsetKnob.get());
             offsetKnob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             offsetKnob->setPopupPlacement(juce::BubbleComponent::below);
@@ -27,7 +27,7 @@ public:
             offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSet, listeners, *offsetKnob, nullptr);
             offsetKnob->addAttachment(offsetKnobAttachment.get()); // for modulations
 
-            offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), offsetKnob->getName());
+            offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), params.offSet->getName(20));
             addOpenGlComponent(offset_label);
             offset_label->setTextSize (10.0f);
             offset_label->setJustification(juce::Justification::centred);

@@ -30,7 +30,8 @@ struct DirectParams : chowdsp::ParamHolder {
     // std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Direct Processor
-    DirectParams(const juce::ValueTree &vt) : chowdsp::ParamHolder("direct"), v(vt) {
+    DirectParams(const juce::ValueTree &vt) : chowdsp::ParamHolder("direct"), v(vt)
+    {
         add(gainParam,
             hammerParam,
             releaseResonanceParam,
@@ -45,7 +46,8 @@ struct DirectParams : chowdsp::ParamHolder {
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
-        doForAllParameters([this](auto &param, size_t) {
+        doForAllParameters([this](auto &param, size_t)
+        {
             if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *>(&param))
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back(sliderParam);
@@ -74,7 +76,7 @@ struct DirectParams : chowdsp::ParamHolder {
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
         true, // true => audio rate modulatable (continuously),
-        v.getChildWithProperty("parameter", "Main")
+        //v.getChildWithProperty("parameter", "Main")
     };
 
     // Hammer param
@@ -84,7 +86,7 @@ struct DirectParams : chowdsp::ParamHolder {
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         -24.0f,
         true,
-        v.getChildWithProperty("parameter", "Hammers")
+        //v.getChildWithProperty("parameter", "Hammers")
     };
 
     // Resonance param
@@ -94,7 +96,7 @@ struct DirectParams : chowdsp::ParamHolder {
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         0.0f,
         true,
-        v.getChildWithProperty("parameter", "Resonance")
+        //v.getChildWithProperty("parameter", "Resonance")
     };
 
     // Pedal param
@@ -104,7 +106,7 @@ struct DirectParams : chowdsp::ParamHolder {
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
         -6.0f,
         true,
-        v.getChildWithProperty("parameter", "Pedal")
+        //v.getChildWithProperty("parameter", "Pedal")
     };
 
     // Gain for output send (for blendronic, VSTs, etc...)

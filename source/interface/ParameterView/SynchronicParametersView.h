@@ -110,6 +110,26 @@ public:
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshold, listeners, *clusterThreshold_knob, nullptr);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
+        numPulses_knob_label = std::make_shared<PlainTextComponent>(numPulses_knob->getName(), params.numPulses->getName(20));
+        addOpenGlComponent(numPulses_knob_label);
+        numPulses_knob_label->setTextSize (10.0f);
+        numPulses_knob_label->setJustification(juce::Justification::centred);
+
+        numLayers_knob_label = std::make_shared<PlainTextComponent>(numLayers_knob->getName(), params.numLayers->getName(20));
+        addOpenGlComponent(numLayers_knob_label);
+        numLayers_knob_label->setTextSize (10.0f);
+        numLayers_knob_label->setJustification(juce::Justification::centred);
+
+        clusterThickness_knob_label = std::make_shared<PlainTextComponent>(clusterThickness_knob->getName(), params.clusterThickness->getName(20));
+        addOpenGlComponent(clusterThickness_knob_label);
+        clusterThickness_knob_label->setTextSize (10.0f);
+        clusterThickness_knob_label->setJustification(juce::Justification::centred);
+
+        clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), params.clusterThreshold->getName(20));
+        addOpenGlComponent(clusterThreshold_knob_label);
+        clusterThreshold_knob_label->setTextSize (10.0f);
+        clusterThreshold_knob_label->setJustification(juce::Justification::centred);
+
         // multisliders
         transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions_", &params.transpositions, listeners);
         transpositionsSlider->setComponentID ("transpositions_");
@@ -276,10 +296,10 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
 
-        drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
-        drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
-        drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
-        drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
+        // drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
+        // drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
+        // drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
+        // drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
 
         paintChildrenBackgrounds (g);
     }
@@ -321,6 +341,12 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> clusterThickness_knob_attachment;
     std::unique_ptr<SynthSlider> clusterThreshold_knob;
     std::unique_ptr<chowdsp::SliderAttachment> clusterThreshold_knob_attachment;
+
+    // knob labels
+    std::shared_ptr<PlainTextComponent> numPulses_knob_label;
+    std::shared_ptr<PlainTextComponent> numLayers_knob_label;
+    std::shared_ptr<PlainTextComponent> clusterThickness_knob_label;
+    std::shared_ptr<PlainTextComponent> clusterThreshold_knob_label;
 
     // ADSR controller: for setting the parameters of each ADSR
     std::unique_ptr<EnvelopeSection> envSection;

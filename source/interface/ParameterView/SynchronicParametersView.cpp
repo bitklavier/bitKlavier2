@@ -40,6 +40,7 @@ void SynchronicParametersView::resized()
     // height for most of these components
     int knob_section_height = getKnobSectionHeight();
     int menu_section_height = findValue(Skin::kComboMenuHeight);
+    int labelsectionheight = findValue(Skin::kLabelHeight);
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
@@ -91,12 +92,20 @@ void SynchronicParametersView::resized()
     juce::Rectangle knobRow = leftColumn.removeFromTop(knob_section_height);
     numPulses_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2).reduced(largepadding, 0));
     numLayers_knob->setBounds(knobRow.reduced(largepadding, 0));
+    juce::Rectangle<int> np_label_rect (numPulses_knob->getX(), numPulses_knob->getBottom() - 10, numPulses_knob->getWidth(), labelsectionheight );
+    numPulses_knob_label->setBounds(np_label_rect);
+    juce::Rectangle<int> nl_label_rect (numLayers_knob->getX(), numLayers_knob->getBottom() - 10, numLayers_knob->getWidth(), labelsectionheight );
+    numLayers_knob_label->setBounds(nl_label_rect);
 
     leftColumn.removeFromTop(smallpadding);
 
     knobRow = leftColumn.removeFromTop(knob_section_height);
     clusterThickness_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2).reduced(largepadding, 0));
     clusterThreshold_knob->setBounds(knobRow.reduced(largepadding, 0));
+    juce::Rectangle<int> ctn_label_rect (clusterThickness_knob->getX(), clusterThickness_knob->getBottom() - 10, clusterThickness_knob->getWidth(), labelsectionheight );
+    clusterThickness_knob_label->setBounds(ctn_label_rect);
+    juce::Rectangle<int> cnl_label_rect (clusterThreshold_knob->getX(), clusterThreshold_knob->getBottom() - 10, clusterThreshold_knob->getWidth(), labelsectionheight );
+    clusterThreshold_knob_label->setBounds(cnl_label_rect);
 
     leftColumn.removeFromTop(largepadding);
 
@@ -107,7 +116,6 @@ void SynchronicParametersView::resized()
     leftColumn.removeFromTop(largepadding);
 
     envSection->setBounds(leftColumn);
-
 
     //
     // *** now on to the right section for the multisliders

@@ -93,7 +93,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters([this](auto& param, size_t)
-                           {
+        {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back ( sliderParam);
@@ -105,7 +105,7 @@ struct SynchronicParams : chowdsp::ParamHolder
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back ( sliderParam); });
-    }
+        }
 
     // primary multislider params
     /**
@@ -179,7 +179,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr numPulses{
         juce::ParameterID{"numPulses", 100},
-        "pulses",
+        "PULSES",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 100.f, 50.f, 1.f),
         20.f,
         &chowdsp::ParamUtils::floatValToString,
@@ -188,7 +188,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr numLayers{
         juce::ParameterID{"numLayers", 100},
-        "layers",
+        "LAYERS",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 10.f, 5.f, 1.f),
         1.f,
         &chowdsp::ParamUtils::floatValToString,
@@ -197,7 +197,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr clusterThickness{
         juce::ParameterID{"clusterThickness", 100},
-        "cluster thickness",
+        "CLUSTER THICKNESS",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 20.f, 10.f, 1.f),
         8.f,
         &chowdsp::ParamUtils::floatValToString,
@@ -206,7 +206,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::TimeMsParameter::Ptr clusterThreshold{
         juce::ParameterID{"clusterThreshold", 100},
-        "cluster threshold",
+        "CLUSTER THRESHOLD",
         chowdsp::ParamUtils::createNormalisableRange(20.0f, 2000.f, 1000.f),
         500.f,
         true};

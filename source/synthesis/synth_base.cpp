@@ -650,11 +650,11 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     //this requires you to add the Parameter ID to the value tree as a MODULATABLE_PARAM see DirectProcessor Constructor for an example
     /**
      *todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
-* DAVIS : no this assert is to say that you are missing a REQUIRED step in the setup of parameters.
-* That is to say you have dragged a mod across the UI and crossed some parameter that is in a half-setup state
-* mods are created anytime a parameter is dragged over a knob so that it can show the modulatable param circle
-* this isnt a requiremnt but more of a nice UI feature where you get the snap as it crosses over without having to
-* drop the modulation.
+    * DAVIS : no this assert is to say that you are missing a REQUIRED step in the setup of parameters.
+    * That is to say you have dragged a mod across the UI and crossed some parameter that is in a half-setup state
+    * mods are created anytime a parameter is dragged over a knob so that it can show the modulatable param circle
+    * this isnt a requiremnt but more of a nice UI feature where you get the snap as it crosses over without having to
+    * drop the modulation.
     */
 
     //determine where this would actually output in the modulationprocessor
