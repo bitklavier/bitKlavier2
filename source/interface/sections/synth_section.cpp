@@ -193,11 +193,16 @@ void SynthSection::paintContainer(juce::Graphics &g) {
     if (sideways_heading_) {
         int title_width = findValue(Skin::kTitleWidth);
         g.reduceClipRegion(0, 0, title_width, getHeight());
-        g.setColour(findColour(Skin::kBodyHeading, true));
+        //g.setColour(findColour(Skin::kBodyHeading, true));
+        /*
+         * todo: again, not the best way to set colours
+         */
+        g.setColour(juce::Colours::transparentBlack);
         g.fillRoundedRectangle(0, 0, title_width * 2, getHeight(), findValue(Skin::kBodyRounding));
     } else {
         g.reduceClipRegion(0, 0, getWidth(), getTitleWidth());
-        g.setColour(findColour(Skin::kBodyHeading, true));
+        //g.setColour(findColour(Skin::kBodyHeading, true));
+        g.setColour(juce::Colours::transparentBlack);
         g.fillRoundedRectangle(0, 0, getWidth(), getHeight(), findValue(Skin::kBodyRounding));
     }
 
@@ -205,7 +210,16 @@ void SynthSection::paintContainer(juce::Graphics &g) {
 }
 
 void SynthSection::paintBody(juce::Graphics &g, juce::Rectangle<int> bounds) {
-    g.setColour(findColour(Skin::kBody, true));
+    // g.setColour(findColour(Skin::kBody, true));
+    /*
+     * todo: i don't think this is the best place to do this
+     */
+    g.setColour(juce::Colours::transparentBlack);
+    g.fillRoundedRectangle(bounds.toFloat(), findValue(Skin::kBodyRounding));
+}
+
+void SynthSection::paintBody(juce::Graphics &g, juce::Rectangle<int> bounds, juce::Colour newColour) {
+    g.setColour (newColour);
     g.fillRoundedRectangle(bounds.toFloat(), findValue(Skin::kBodyRounding));
 }
 

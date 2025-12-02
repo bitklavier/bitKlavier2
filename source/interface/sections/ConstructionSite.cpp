@@ -430,8 +430,6 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 
-
-
     //cleanup opengl
     {
         juce::ScopedLock lock(open_gl_critical_section_);
@@ -452,7 +450,11 @@ ConstructionSite::~ConstructionSite(void) {
 }
 
 void ConstructionSite::paintBackground(juce::Graphics &g) {
-    paintBody(g);
+    //paintBody(g);
+    /*
+     * todo: setup color setting better, or document how/where to set these colors
+     */
+    paintBody(g, getLocalBounds(), juce::Colours::burlywood.withMultipliedBrightness(0.4));
     paintChildrenBackgrounds(g);
 }
 

@@ -26,6 +26,13 @@ public:
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setTextSize (24.0f);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
@@ -113,12 +120,15 @@ public:
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        paintHeadingText (g);
+        //paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
 
         paintChildrenBackgrounds (g);
     }
+
+    // prep title, vertical, left side
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
 

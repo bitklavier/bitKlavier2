@@ -145,6 +145,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     virtual std::string getFileAuthor() { return ""; }
     virtual void paintContainer(juce::Graphics& g);
     virtual void paintBody(juce::Graphics& g, juce::Rectangle<int> bounds);
+    virtual void paintBody(juce::Graphics &g, juce::Rectangle<int> bounds, juce::Colour newColour);
     virtual void paintBorder(juce::Graphics& g, juce::Rectangle<int> bounds);
     virtual void paintBody(juce::Graphics& g);
     virtual void paintBorder(juce::Graphics& g);

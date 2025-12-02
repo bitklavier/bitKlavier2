@@ -43,6 +43,9 @@ void BlendronicParametersView::resized()
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
 
+    juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
+    prepTitle->setBounds(titleArea);
+
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft(title_width);
@@ -59,7 +62,7 @@ void BlendronicParametersView::resized()
     bounds.reduce(largepadding, largepadding);
 
     // how much vertical space will we need for all the components?
-    int verticalAreaNeeded = knob_section_height * 4;
+    int verticalAreaNeeded = knob_section_height * 4 * 1.5;
 
     /*
      * todo: better spacing for these...
