@@ -43,8 +43,6 @@ void DirectParametersView::resized()
     outputKnobsArea.reduce(0, largepadding);
     placeKnobsInArea(outputKnobsArea, _sliders, false);
 
-    // juce::Rectangle<int> attack_label_rect (attack_->getX(), attack_->getBottom() - 10, attack_->getWidth(), labelsectionheight );
-    // attack_label->setBounds(attack_label_rect);
     int sl_counter = 0;
     for (auto& slider : _sliders)
     {

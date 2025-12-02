@@ -11,6 +11,10 @@ void TempoParametersView::resized()
 
     // height for most of these components
     int knob_section_height = getKnobSectionHeight();
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+
+    juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
+    prepTitle->setBounds(titleArea);
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
@@ -33,6 +37,13 @@ void TempoParametersView::resized()
     for (auto& slider : _sliders)
     {
         slider->setBounds (slidersArea.removeFromTop(sliderHeight));
+    }
+
+    int sl_counter = 0;
+    for (auto& slider : _sliders)
+    {
+        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
+        slider_labels[sl_counter++]->setBounds(sl_label_rect);
     }
     // DBG(" output knob area" + juce::String(outputKnobsArea.getWidth()) + " " + juce::String(outputKnobsArea.getHeight()));
 
