@@ -32,6 +32,13 @@ public:
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setTextSize (24.0f);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
         setSkinOverride(Skin::kDirect);
 
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
@@ -53,6 +60,11 @@ public:
                 addSlider (slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
+                auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), param_->getName(20));
+                addOpenGlComponent(slider_label);
+                slider_label->setTextSize (12.0f);
+                slider_label->setJustification(juce::Justification::centred);
+                slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
             }
@@ -75,7 +87,7 @@ public:
         closestKeyboard->setAvailableRange(0, numKeys);
         closestKeyboard->setOctaveForMiddleC(5);
 
-        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "partials");
+        closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "Keys for Closest Partials");
         addOpenGlComponent(closestKeyboard_label);
         closestKeyboard_label->setTextSize (12.0f);
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
@@ -152,19 +164,19 @@ public:
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        paintHeadingText (g);
+        //paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
 
-        for (auto& slider : _sliders)
-        {
-            //drawLabelForComponent (g, slider->getName(), slider.get());
-            if (slider->getName() == "rsustain") drawLabelForComponent(g, TRANS("Sustain"), slider.get());
-            if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Sensitivity"), slider.get());
-            if (slider->getName() == "rpresence") drawLabelForComponent(g, TRANS("Presence"), slider.get());
-            if (slider->getName() == "rstretch") drawLabelForComponent(g, TRANS("Stretch"), slider.get());
-            //if (slider->getName() == "rsmoothness") drawLabelForComponent(g, TRANS("Smoothness"), slider.get());
-        }
+        // for (auto& slider : _sliders)
+        // {
+        //     //drawLabelForComponent (g, slider->getName(), slider.get());
+        //     if (slider->getName() == "rsustain") drawLabelForComponent(g, TRANS("Sustain"), slider.get());
+        //     if (slider->getName() == "rvariance") drawLabelForComponent(g, TRANS("Overlap Sensitivity"), slider.get());
+        //     if (slider->getName() == "rpresence") drawLabelForComponent(g, TRANS("Presence"), slider.get());
+        //     if (slider->getName() == "rstretch") drawLabelForComponent(g, TRANS("Stretch"), slider.get());
+        //     //if (slider->getName() == "rsmoothness") drawLabelForComponent(g, TRANS("Smoothness"), slider.get());
+        // }
 
         paintChildrenBackgrounds (g);
     }
@@ -176,6 +188,9 @@ public:
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
+
+    // prep title, vertical, left side
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     std::unique_ptr<OpenGLKeymapKeyboardComponent> fundamentalKeyboard;
     std::unique_ptr<OpenGLKeymapKeyboardComponent> closestKeyboard;
@@ -198,6 +213,7 @@ public:
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+    std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
 
     std::unique_ptr<OpenGLComboBox> spectrum_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> spectrum_attachment;

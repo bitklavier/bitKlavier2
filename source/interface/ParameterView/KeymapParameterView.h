@@ -205,7 +205,7 @@ public:
 
     void paintBackground(juce::Graphics &g) override {
         SynthSection::paintContainer(g);
-        paintHeadingText(g);
+        //paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
@@ -230,6 +230,10 @@ private:
 
     KeymapParams& params;
     KeymapProcessor &proc;
+
+    // prep title, vertical, left side
+    std::shared_ptr<PlainTextComponent> prepTitle;
+
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlMidiSelector> midi_selector_;
 

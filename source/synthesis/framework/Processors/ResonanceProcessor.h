@@ -224,7 +224,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     // presence maps to start time, inverted
     chowdsp::FloatParameter::Ptr presence {
         juce::ParameterID { "rpresence", 100 },
-        "presence",
+        "PRESENCE",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.75f),
         0.75f,
         &chowdsp::ParamUtils::floatValToString,
@@ -235,7 +235,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     // maps to sustain time
     chowdsp::FloatParameter::Ptr sustain {
         juce::ParameterID { "rsustain", 100 },
-        "sustain",
+        "SUSTAIN",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
@@ -257,7 +257,7 @@ struct ResonanceParams : chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr variance {
         juce::ParameterID { "rvariance", 100 },
-        "variance",
+        "OVERLAP SENSITIVITY",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.1f),
         0.1f,
         &chowdsp::ParamUtils::floatValToString,
@@ -291,7 +291,7 @@ struct ResonanceParams : chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr stretch {
         juce::ParameterID { "rstretch", 100 },
-        "stretch",
+        "STRETCH",
         chowdsp::ParamUtils::createNormalisableRange (-1.0f, 1.0f, 0.0f),
         0.0f,
         &chowdsp::ParamUtils::floatValToString,

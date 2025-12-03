@@ -24,6 +24,9 @@ void ResonanceParametersView::resized()
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
 
+    juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(getTitleWidth());
+    prepTitle->setBounds(titleArea);
+
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft(title_width);
@@ -76,8 +79,12 @@ void ResonanceParametersView::resized()
     bounds.removeFromBottom(largepadding);
     juce::Rectangle<int> outputKnobsArea = bounds.removeFromBottom(knob_section_height);
     placeKnobsInArea(outputKnobsArea, _sliders, false);
-
-
+    int sl_counter = 0;
+    for (auto& slider : _sliders)
+    {
+        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
+        slider_labels[sl_counter++]->setBounds(sl_label_rect);
+    }
 
     SynthSection::resized();
 }

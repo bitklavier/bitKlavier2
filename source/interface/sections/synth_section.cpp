@@ -72,6 +72,7 @@ void SynthSection::reset() {
 }
 
 void SynthSection::resized() {
+
     juce::Component::resized();
     if (off_overlay_) {
         off_overlay_->setBounds(getLocalBounds());

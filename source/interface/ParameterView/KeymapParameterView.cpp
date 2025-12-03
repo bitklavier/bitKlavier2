@@ -14,7 +14,14 @@ KeymapParameterView::KeymapParameterView (
      setLookAndFeel(DefaultLookAndFeel::instance());
      setComponentID(name);
 
-    setSkinOverride(Skin::kDirect);
+    prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+    addOpenGlComponent(prepTitle);
+    prepTitle->setTextSize (24.0f);
+    prepTitle->setJustification(juce::Justification::centredLeft);
+    prepTitle->setFontType (PlainTextComponent::kTitle);
+    prepTitle->setRotation (-90);
+
+     setSkinOverride(Skin::kDirect);
 
      auto& listeners = proc.getState().getParameterListeners();
 
@@ -80,6 +87,9 @@ void KeymapParameterView::resized()
     int comboboxheight = findValue(Skin::kComboMenuHeight);
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     int labelsectionheight = findValue(Skin::kLabelHeight);
+
+    juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(getTitleWidth());
+    prepTitle->setBounds(titleArea);
 
     area.removeFromLeft(kTitleWidth);
     area.removeFromRight(kTitleWidth);
