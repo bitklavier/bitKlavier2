@@ -104,49 +104,6 @@ void SynthSection::paintSidewaysHeadingText(juce::Graphics &g) {
     g.restoreState();
 }
 
-//void SynthSection::paintSidewaysHeadingText(juce::Graphics &g) {
-//    // 1. Get the current scale factor from the drawing context.
-//    float pixel_scale = juce::Desktop::getInstance()
-//                            .getDisplays()
-//                            .getDisplayForRect(getScreenBounds())
-//                            ->scale;
-//
-//    // These are your logical, unscaled dimensions
-//    int logical_title_width = findValue(Skin::kTitleWidth);
-//    int logical_height = getHeight();
-//
-//    g.setColour(findColour(Skin::kHeadingText, true));
-//    juce::Font font = Fonts::instance()->proportional_light().withPointHeight(14.0f);
-//    g.setFont(font);
-//    g.saveState();
-//
-//    // 2. SCALE THE ORIGIN AND DRAWING RECTANGLE DIMENSIONS
-//    // You must multiply all translation and dimension values by the pixel_scale
-//    // because the 'g' context is already scaled 2x from redrawImage.
-//
-//    // A. Apply Origin Transform using SCALED coordinates
-//    // If logical_height is 100, the origin must be set to (0, 200) on the 2x buffer.
-//    g.setOrigin(juce::Point<int>(0, (int)(logical_height * pixel_scale)));
-//
-//    // B. Apply Rotation (rotation is unit-independent, so this is fine)
-//    g.addTransform(juce::AffineTransform::rotation(-bitklavier::kPi / 2.0f));
-//
-//    // C. Scale the Drawing Rectangle dimensions
-//    int scaled_height = (int)(logical_height * pixel_scale);
-//    int scaled_title_width = (int)(logical_title_width * pixel_scale);
-//
-//    if (activator_)
-//        scaled_height = (int)((logical_height - logical_title_width / 2) * pixel_scale);
-//
-//    // 3. DRAW using the SCALED rectangle dimensions
-//    // X, Y are 0, 0 in the new rotated/translated coordinate system.
-//    // The width/height are the scaled values.
-//    g.drawText(getName(), juce::Rectangle<int>(0, 0, scaled_height, scaled_title_width),
-//        juce::Justification::centred, false);
-//
-//    g.restoreState();
-//}
-
 void SynthSection::paintHeadingText(juce::Graphics &g) {
     if (sideways_heading_) {
         paintSidewaysHeadingText(g);

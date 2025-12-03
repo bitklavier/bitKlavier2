@@ -53,6 +53,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     header_->addListener (this);
 
     prep_popup = std::make_unique<PreparationPopup> (false);
+    //prep_popup->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
     addSubSection (prep_popup.get());
     prep_popup->setVisible (false);
     prep_popup->setAlwaysOnTop (true);
@@ -69,18 +70,21 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     popup_selector_->setVisible (false);
     popup_selector_->setAlwaysOnTop (true);
     popup_selector_->setWantsKeyboardFocus (true);
+    //popup_selector_->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
 
     popup_display_1_ = std::make_unique<PopupDisplay>();
     addSubSection (popup_display_1_.get());
     popup_display_1_->setVisible (false);
     popup_display_1_->setAlwaysOnTop (true);
     popup_display_1_->setWantsKeyboardFocus (false);
+    //popup_display_1_->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
 
     popup_display_2_ = std::make_unique<PopupDisplay>();
     addSubSection (popup_display_2_.get());
     popup_display_2_->setVisible (false);
     popup_display_2_->setAlwaysOnTop (true);
     popup_display_2_->setWantsKeyboardFocus (false);
+    //popup_display_2_->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
 
     about_section_ = std::make_unique<AboutSection> ("about");
     addSubSection (about_section_.get(), false);

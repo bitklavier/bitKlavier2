@@ -5,9 +5,7 @@
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #include "DirectProcessor.h"
-#include "OpenGL_VelocityMinMaxSlider.h"
 #include "TranspositionSliderSection.h"
-#include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
 #include "peak_meter_section.h"
 #include "synth_section.h"
@@ -26,6 +24,8 @@ public:
         //  we probably want to merge these in the future, but ok for now
         setLookAndFeel(DefaultLookAndFeel::instance());
         setComponentID(name);
+
+        setSkinOverride(Skin::kDirect);
 
         prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
         addOpenGlComponent(prepTitle);
@@ -96,8 +96,6 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
-        setSkinOverride(Skin::kDirect);
-
         disableSliderCallback += {
             listeners.addParameterListener(
                 params.resonanceLoaded,
@@ -142,8 +140,6 @@ public:
                 }
             ),
         };
-
-
     }
 
     void paintBackground(juce::Graphics &g) override {

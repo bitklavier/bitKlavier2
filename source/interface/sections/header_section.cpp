@@ -32,7 +32,6 @@ LogoSection::LogoSection() : SynthSection("logo_section") {
     logo_button_->addListener(this);
 #endif
 
-
     setSkinOverride(Skin::kLogo);
 }
 
@@ -67,9 +66,9 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     logo_section_->setAlwaysOnTop(true);
     logo_section_->addListener(this);
     addSubSection(logo_section_.get());
+
     sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
                                                          juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
-
     addAndMakeVisible(sampleSelector.get());
     sampleSelector->addListener(this);
     sampleSelector->setTriggeredOnMouseDown(true);
@@ -147,19 +146,26 @@ void HeaderSection::resized() {
 
     body_->setBounds(getLocalBounds());
     body_->setRounding(findValue(Skin::kBodyRounding));
-    body_->setColor(findColour(Skin::kBody, true));
+
+    //body_->setColor(findColour(Skin::kBody, true));
+    /*
+     * todo: color organization
+     */
+    body_->setColor(juce::Colours::black);
     int widget_margin = findValue(Skin::kWidgetMargin);
     int large_padding = findValue(Skin::kLargePadding);
 
     int logo_width = findValue(Skin::kModulationButtonWidth);
     int label_height = findValue(Skin::kLabelBackgroundHeight);
     logo_section_->setBounds(0, -10, logo_width, height);
+
     sampleSelector->setBounds(logo_width + widget_margin, logo_section_->getBottom() / 2, 100, label_height);
     sampleSelectText->setBounds(sampleSelector->getBounds());
 
     pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(),
                              label_height);
     pianoSelectText->setBounds(pianoSelector->getBounds());
+
     float label_text_height = findValue(Skin::kLabelHeight);
     sampleSelectText->setTextSize(label_text_height);
     pianoSelectText->setTextSize(label_text_height);
@@ -175,10 +181,9 @@ void HeaderSection::reset() {
     //    //synth_preset_selector_->resetText();
 }
 
-
 void HeaderSection::buttonClicked(juce::Button *clicked_button) {
-    if (clicked_button == exit_temporary_button_.get()) {
-    } else if (clicked_button == addPianoButton.get()) {
+    if (clicked_button == exit_temporary_button_.get()) {}
+    else if (clicked_button == addPianoButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         // interface->addPiano(
         // create new piano with active parameter true or 1
@@ -199,7 +204,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 vt.setProperty(IDs::isActive, 0, nullptr);
             }
         }
-
         gallery.appendChild(piano, nullptr);
         pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
         interface->allNotesOff();
@@ -210,9 +214,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         auto string_names = parent->getSampleLoadManager()->getAllSampleSets();
         for (int i = 0; i < string_names.size(); i++) {
             options.addItem(i, string_names[i]);
-
         }
-
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
             SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -245,8 +247,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                     break;
                 }
             }
-
-
             resized();
         });
     } else if (clicked_button == loadButton.get()) {
@@ -258,7 +258,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else
         SynthSection::buttonClicked(clicked_button);
 }
-
 void HeaderSection::sliderValueChanged(juce::Slider *slider) {
     //  if (slider == tab_selector_.get()) {
     //    int index = tab_selector_->getValue();

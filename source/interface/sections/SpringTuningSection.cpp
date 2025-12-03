@@ -13,6 +13,7 @@ SpringTuningSection::SpringTuningSection (
     setComponentID(parent.getComponentID());
     setName("springtuning");
     setLookAndFeel(DefaultLookAndFeel::instance());
+    setSkinOverride(Skin::kDirect);
 
     for ( auto &param_ : *params.getFloatParams())
     {

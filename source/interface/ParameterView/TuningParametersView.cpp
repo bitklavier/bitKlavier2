@@ -14,6 +14,8 @@ TuningParametersView::TuningParametersView(
     setLookAndFeel(DefaultLookAndFeel::instance());
     setComponentID(name);
 
+    setSkinOverride(Skin::kDirect);
+
     prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
     addOpenGlComponent(prepTitle);
     prepTitle->setTextSize (24.0f);
