@@ -14,6 +14,8 @@ KeymapParameterView::KeymapParameterView (
      setLookAndFeel(DefaultLookAndFeel::instance());
      setComponentID(name);
 
+    setSkinOverride(Skin::kDirect);
+
      auto& listeners = proc.getState().getParameterListeners();
 
      keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params.keyboard_state);
