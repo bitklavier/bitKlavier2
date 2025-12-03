@@ -427,6 +427,8 @@ BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulat
     // draw them! ready to go....
     drawSliders(juce::dontSendNotification);
 
+    addAndMakeVisible(sliderBorder);
+
 }
 
 BKMultiSlider::~BKMultiSlider() {}
@@ -1058,6 +1060,13 @@ void BKMultiSlider::resized()
     juce::Rectangle<float> area (getLocalBounds().toFloat());
     juce::Rectangle<float> bounds = area;
 
+    sliderBorder.setBounds(getLocalBounds());
+    area.removeFromTop(5);
+    area.reduce(10, 10);
+
+    juce::Rectangle<float> rotateButtonBounds (area.getBottomLeft(), area.getBottomLeft().translated(displaySliderWidth*0.2, -displaySliderWidth*0.2));
+    rotateButton->setBounds(rotateButtonBounds.toNearestInt());
+
     displaySlider->setBounds(area.removeFromLeft(displaySliderWidth).toNearestInt());
     editValsTextField->setBounds(area.toNearestInt());
     editValsTextField->setVisible(false);
@@ -1083,9 +1092,6 @@ void BKMultiSlider::resized()
             }
         }
     }
-
-    juce::Rectangle<float> rotateButtonBounds (bounds.getBottomLeft(), bounds.getBottomLeft().translated(displaySliderWidth*0.2, -displaySliderWidth*0.2));
-    rotateButton->setBounds(rotateButtonBounds.toNearestInt());
 
     bigInvisibleSlider->toFront(false);
 }

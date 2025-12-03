@@ -282,6 +282,8 @@ public:
     std::unique_ptr<juce::ImageButton> rotateButton;
 //    std::unique_ptr<OpenGlShapeButton> rotateButton;
 
+    juce::GroupComponent sliderBorder;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKMultiSlider)
 };
 
