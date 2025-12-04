@@ -1073,7 +1073,7 @@ void BKMultiSlider::resized()
 
     juce::Rectangle<float> nameSlab (area);
     nameSlab.removeFromTop(gYSpacing / 2.).removeFromRight(gXSpacing);
-    showName.setBounds(nameSlab.toNearestInt());
+    //showName.setBounds(nameSlab.toNearestInt());
     showName.setJustificationType(juce::Justification::topRight);
 
     bigInvisibleSlider->setBounds(area.toNearestInt());

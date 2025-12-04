@@ -133,6 +133,9 @@ public:
         clusterThreshold_knob_label->setTextSize (10.0f);
         clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
+        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "Synchronic Stuff");
+        addBorder(variousControlsBorder.get());
+
         // multisliders
         transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions_", &params.transpositions, listeners);
         transpositionsSlider->setComponentID ("transpositions_");
@@ -350,6 +353,9 @@ public:
     std::shared_ptr<PlainTextComponent> numLayers_knob_label;
     std::shared_ptr<PlainTextComponent> clusterThickness_knob_label;
     std::shared_ptr<PlainTextComponent> clusterThreshold_knob_label;
+
+    // for the mixer knobs
+    std::shared_ptr<OpenGL_LabeledBorder> variousControlsBorder;
 
     // ADSR controller: for setting the parameters of each ADSR
     std::unique_ptr<EnvelopeSection> envSection;

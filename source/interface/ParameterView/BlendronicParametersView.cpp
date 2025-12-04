@@ -62,7 +62,8 @@ void BlendronicParametersView::resized()
     bounds.reduce(largepadding, largepadding);
 
     // how much vertical space will we need for all the components?
-    int verticalAreaNeeded = knob_section_height * 4 * 1.5;
+    float sliderHeightScale = 2.;
+    int verticalAreaNeeded = knob_section_height * 4 * sliderHeightScale;
 
     /*
      * todo: better spacing for these...
@@ -73,13 +74,13 @@ void BlendronicParametersView::resized()
 
     bounds.removeFromTop(bufferSpaceForEach);
 
-    beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    beatLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * sliderHeightScale));
     bounds.removeFromTop(bufferSpaceForEach);
-    delayLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    delayLengthsSlider->setBounds(bounds.removeFromTop(knob_section_height * sliderHeightScale));
     bounds.removeFromTop(bufferSpaceForEach);
-    smoothingTimesSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    smoothingTimesSlider->setBounds(bounds.removeFromTop(knob_section_height * sliderHeightScale));
     bounds.removeFromTop(bufferSpaceForEach);
-    feedbackCoeffsSlider->setBounds(bounds.removeFromTop(knob_section_height * 1.5));
+    feedbackCoeffsSlider->setBounds(bounds.removeFromTop(knob_section_height * sliderHeightScale));
 
     SynthSection::resized();
 }

@@ -100,6 +100,8 @@ public:
     void setName(juce::String newName){
         sliderName = newName;
         showName.setText(sliderName, juce::dontSendNotification);
+        sliderBorder.setText (sliderName);
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
     juce::String getName() { return sliderName; }
     void setToolTipString(juce::String newTip) { showName.setTooltip(newTip); bigInvisibleSlider->setTooltip(newTip); }
