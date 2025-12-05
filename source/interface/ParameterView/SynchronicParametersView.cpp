@@ -42,12 +42,20 @@ void SynchronicParametersView::resized()
     int knob_section_height = getKnobSectionHeight();
     int menu_section_height = findValue(Skin::kComboMenuHeight);
     int labelsectionheight = findValue(Skin::kLabelHeight);
-
+    auto knobLabelSize = findValue(Skin::kKnobLabelSizeSmall);
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
+    auto menuLabelSize = findValue(Skin::kButtonFontSize);
+
+    DBG("largepadding = " << largepadding);
+    DBG("smallpadding = " << smallpadding);
+
+    pulseTriggeredBy_label->setTextSize (menuLabelSize);
+    determinesCluster_label->setTextSize (menuLabelSize);
 
     juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
     prepTitle->setBounds(titleArea);
+    prepTitle->setTextSize (findValue(Skin::kPrepTitleSize));
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
@@ -82,26 +90,33 @@ void SynchronicParametersView::resized()
     variousControlsBorder->setBounds(leftColumn);
     leftColumn.removeFromBottom(largepadding);
     leftColumn.removeFromTop(largepadding);
-    leftColumn.reduce(0, 10);
+    leftColumn.reduce(0, largepadding);
 
     juce::Rectangle knobRow = leftColumn.removeFromBottom(knob_section_height);
     clusterThickness_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2).reduced(largepadding, 0));
     clusterThreshold_knob->setBounds(knobRow.reduced(largepadding, 0));
-    juce::Rectangle<int> ctn_label_rect (clusterThickness_knob->getX(), clusterThickness_knob->getBottom() - 10, clusterThickness_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> ctn_label_rect (clusterThickness_knob->getX(), clusterThickness_knob->getBottom() - largepadding, clusterThickness_knob->getWidth(), labelsectionheight );
     clusterThickness_knob_label->setBounds(ctn_label_rect);
-    juce::Rectangle<int> cnl_label_rect (clusterThreshold_knob->getX(), clusterThreshold_knob->getBottom() - 10, clusterThreshold_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> cnl_label_rect (clusterThreshold_knob->getX(), clusterThreshold_knob->getBottom() - largepadding, clusterThreshold_knob->getWidth(), labelsectionheight );
     clusterThreshold_knob_label->setBounds(cnl_label_rect);
 
     knobRow = leftColumn.removeFromBottom(knob_section_height);
+
     numPulses_knob->setBounds(knobRow.removeFromLeft(knobRow.getWidth() / 2).reduced(largepadding, 0));
     numLayers_knob->setBounds(knobRow.reduced(largepadding, 0));
-    juce::Rectangle<int> np_label_rect (numPulses_knob->getX(), numPulses_knob->getBottom() - 10, numPulses_knob->getWidth(), labelsectionheight );
+
+    juce::Rectangle<int> np_label_rect (numPulses_knob->getX(), numPulses_knob->getBottom() - largepadding, numPulses_knob->getWidth(), labelsectionheight );
     numPulses_knob_label->setBounds(np_label_rect);
-    juce::Rectangle<int> nl_label_rect (numLayers_knob->getX(), numLayers_knob->getBottom() - 10, numLayers_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> nl_label_rect (numLayers_knob->getX(), numLayers_knob->getBottom() - largepadding, numLayers_knob->getWidth(), labelsectionheight );
     numLayers_knob_label->setBounds(nl_label_rect);
 
+    clusterThreshold_knob_label->setTextSize (knobLabelSize);
+    clusterThickness_knob_label->setTextSize (knobLabelSize);
+    numPulses_knob_label->setTextSize (knobLabelSize);
+    numLayers_knob_label->setTextSize (knobLabelSize);
+
     leftColumn.removeFromBottom(largepadding);
-    leftColumn.reduce (20, 0);
+    leftColumn.reduce (largepadding * 2, 0);
     int remainingSpace = leftColumn.getHeight() - (menu_section_height * 2 + smallpadding * 2);
     leftColumn.removeFromBottom(remainingSpace / 3);
     juce::Rectangle comboBoxRow = leftColumn.removeFromBottom(menu_section_height);
@@ -141,7 +156,7 @@ void SynchronicParametersView::resized()
 
     int useTuningWidth = 100;
     int useTuningHeight = 20;
-    useTuning->setBounds(transpositionsSlider->getRight() - useTuningWidth - 4, transpositionsSlider->getBottom() - useTuningHeight - 4, useTuningWidth, useTuningHeight);
+    useTuning->setBounds(transpositionsSlider->getRight() - useTuningWidth - smallpadding, transpositionsSlider->getBottom() - useTuningHeight - smallpadding, useTuningWidth, useTuningHeight);
     useTuning->toFront(false);
 
     SynthSection::resized();

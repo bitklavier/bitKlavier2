@@ -50,7 +50,6 @@ public:
 
         prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
         addOpenGlComponent(prepTitle);
-        prepTitle->setTextSize (24.0f);
         prepTitle->setJustification(juce::Justification::centredLeft);
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
@@ -71,12 +70,10 @@ public:
         // menu labels
         pulseTriggeredBy_label = std::make_shared<PlainTextComponent>("ptb", "trigger:");
         addOpenGlComponent(pulseTriggeredBy_label);
-        pulseTriggeredBy_label->setTextSize (12.0f);
         pulseTriggeredBy_label->setJustification(juce::Justification::right);
 
         determinesCluster_label = std::make_shared<PlainTextComponent>("dtl", "cluster:");
         addOpenGlComponent(determinesCluster_label);
-        determinesCluster_label->setTextSize (12.0f);
         determinesCluster_label->setJustification(juce::Justification::right);
 
         // knobs
@@ -114,22 +111,18 @@ public:
 
         numPulses_knob_label = std::make_shared<PlainTextComponent>(numPulses_knob->getName(), params.numPulses->getName(20));
         addOpenGlComponent(numPulses_knob_label);
-        numPulses_knob_label->setTextSize (10.0f);
         numPulses_knob_label->setJustification(juce::Justification::centred);
 
         numLayers_knob_label = std::make_shared<PlainTextComponent>(numLayers_knob->getName(), params.numLayers->getName(20));
         addOpenGlComponent(numLayers_knob_label);
-        numLayers_knob_label->setTextSize (10.0f);
         numLayers_knob_label->setJustification(juce::Justification::centred);
 
         clusterThickness_knob_label = std::make_shared<PlainTextComponent>(clusterThickness_knob->getName(), params.clusterThickness->getName(20));
         addOpenGlComponent(clusterThickness_knob_label);
-        clusterThickness_knob_label->setTextSize (10.0f);
         clusterThickness_knob_label->setJustification(juce::Justification::centred);
 
         clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), params.clusterThreshold->getName(20));
         addOpenGlComponent(clusterThreshold_knob_label);
-        clusterThreshold_knob_label->setTextSize (10.0f);
         clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
         variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "General Stuff");
