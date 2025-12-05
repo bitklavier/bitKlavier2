@@ -29,7 +29,6 @@ public:
 
         prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
         addOpenGlComponent(prepTitle);
-        prepTitle->setTextSize (24.0f);
         prepTitle->setJustification(juce::Justification::centredLeft);
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
@@ -67,7 +66,6 @@ public:
                 slider->setShowPopupOnHover(true);
                 auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), param_->getName(20));
                 addOpenGlComponent(slider_label);
-                slider_label->setTextSize (12.0f);
                 slider_label->setJustification(juce::Justification::centred);
                 slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back(std::move(attachment));
