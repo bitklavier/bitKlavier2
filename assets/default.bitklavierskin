@@ -19,6 +19,7 @@
         "Knob Arc Thickness": 2.4000000953674316,
         "Knob Body Size": 40.0,
         "Knob Handle Length": 0.5,
+        "Knob Label Small": 10.0,
         "Knob Mod Amount Arc Size": 40.0,
         "Knob Mod Amount Arc Thickness": 0.5,
         "Knob Mod Meter Arc Size": 39.0,
@@ -54,6 +55,7 @@
         "Popup Selector Background": "ff2c3033",
         "Power Button Off": "ff606265",
         "Power Button On": "ffaa88ff",
+        "Preparation Title Size": 24.0,
         "Preset Text": "ffffffff",
         "Rotary Arc": "ffaa88ff",
         "Rotary Arc Disabled": "ff848789",
@@ -108,6 +110,7 @@
         "Widget Secondary 1": "669f88ff",
         "Widget Secondary 2": "669f88ff",
         "Widget Secondary Disabled": "22666666",
+
     "overrides": {
         "All": null,
         "Header": {

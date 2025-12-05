@@ -11,9 +11,9 @@
 #include "synth_button.h"
 #include "default_look_and_feel.h"
 #include "OpenGL_KeymapKeyboard.h"
-#include "open_gl_combo_box.h"
 #include "OpenGL_VelocityMinMaxSlider.h"
 #include "VelocityMinMaxParams.h"
+#include "OpenGL_LabeledBorder.h"
 
 
 class MidiInputSelectorComponentListBox : public juce::ListBox, private juce::ListBoxModel, private juce::ChangeListener
@@ -205,16 +205,9 @@ public:
 
     void paintBackground(juce::Graphics &g) override {
         SynthSection::paintContainer(g);
-        //paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
-
-        drawLabelForComponent(g, TRANS("center warp"), asymmetricalWarp_knob.get());
-        drawLabelForComponent(g, TRANS("sides warp"), symmetricalWarp_knob.get());
-        drawLabelForComponent(g, TRANS("scale"), scale_knob.get());
-        drawLabelForComponent(g, TRANS("offset"), offset_knob.get());
-
         drawVelocityCurve(g);
     }
 
@@ -254,6 +247,21 @@ private:
     std::unique_ptr<chowdsp::ButtonAttachment> invert_attachment;
 
     juce::Rectangle<int> velocityCurveBox;
+    std::shared_ptr<PlainTextComponent> asymmetricalWarp_knob_label;
+    std::shared_ptr<PlainTextComponent> symmetricalWarp_knob_label;
+    std::shared_ptr<PlainTextComponent> scale_knob_label;
+    std::shared_ptr<PlainTextComponent> offset_knob_label;
+    std::shared_ptr<OpenGL_LabeledBorder> velocityCurveControls;
+
+    std::shared_ptr<PlainTextComponent> velocityInLabel;
+    std::shared_ptr<PlainTextComponent> velocityOutLabel;
+
+    // pad values for curve drawing
+    int leftPadding = 25;        // space for "velocity out" label
+    int rightPadding = 4;       // space for the graph's right edge to fully display
+    int topPadding = 6;         // space for the dot and graph's top edge to fully display
+    int bottomPadding = 25;      // space for "velocity in" label
+    int leftAdditional = 40;    // additional space for number labels on left
 
     // min/max filter slider
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;

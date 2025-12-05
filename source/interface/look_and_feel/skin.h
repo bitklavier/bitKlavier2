@@ -92,6 +92,8 @@ public:
         kWavetableWaveHeight,
         kWavetableYOffset,
         kComboMenuHeight,
+        kKnobLabelSizeSmall,
+        kPrepTitleSize,
         kNumSkinValueIds,
         kFrequencyDisplay = kNumSkinValueIds,
         kNumAllValueIds,
