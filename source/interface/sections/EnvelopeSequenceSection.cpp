@@ -18,6 +18,7 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
             button->setComponentID(param_->paramID);
             addSynthButton(button.get(), true);
             button->setButtonText(juce::String(getEnvelopeIndex(param_->paramID) + 1)); // +1 for more human-centered labeling!
+            button->setColour(juce::TextButton::buttonOnColourId, juce::Colours::goldenrod);
             button->setHelpText("activate this envelope");
 
             _envActiveButtons_toggleAttachments.emplace_back(std::move(button_ToggleAttachment));
@@ -25,6 +26,7 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
 
             auto editbutton = std::make_unique<SynthButton>("edit_" + param_->paramID);
             editbutton->setPowerButton();
+            editbutton->setColour(juce::TextButton::buttonOnColourId, juce::Colours::goldenrod);
             addSynthButton(editbutton.get(), true);
             _envEditButtons.emplace_back(std::move(editbutton));
 
@@ -39,6 +41,9 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
     // turn on the edit button for the most recently edited envelope (one edit button should be on at all times)
     auto currentEnvelopeBeingEdited = static_cast<int>(_params.currentlyEditing->getCurrentValue());
     _envEditButtons[currentEnvelopeBeingEdited]->setToggleState(true, juce::NotificationType::dontSendNotification);
+
+    envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", "Envelope Sequence");
+    addBorder(envelopeBorder.get());
 }
 
 int EnvelopeSequenceSection::getEnvelopeIndex(const juce::String& s)
@@ -118,6 +123,11 @@ void EnvelopeSequenceSection::resized() {
     int comboboxheight = findValue(Skin::kComboMenuHeight);
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     int labelsectionheight = findValue(Skin::kLabelHeight);
+
+    envelopeBorder->setBounds(area);
+
+    area.removeFromTop(17);
+    area.reduce(10, 0);
 
     int heightSave = area.getHeight();
     int envButtonWidth = area.getWidth()/_envActiveButtons.size();

@@ -44,7 +44,6 @@ public:
 
         setSkinOverride(Skin::kDirect);
 
-
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
@@ -133,7 +132,7 @@ public:
         clusterThreshold_knob_label->setTextSize (10.0f);
         clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
-        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "Synchronic Stuff");
+        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "General Stuff");
         addBorder(variousControlsBorder.get());
 
         // multisliders
@@ -298,15 +297,8 @@ public:
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        //paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
-
-        // drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
-        // drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
-        // drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
-        // drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
-
         paintChildrenBackgrounds (g);
     }
 
