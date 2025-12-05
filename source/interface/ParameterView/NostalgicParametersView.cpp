@@ -63,13 +63,13 @@ void NostalgicParametersView::resized()
     //leftColumn.removeFromTop (Skin::kKnobSectionHeight);
     placeKnobsInArea(knobsRect, { clusterMin_knob.get(), clusterThreshold_knob.get(), noteLengthMult_knob.get() }, false);
     beatsToSkip_knob->setBounds(noteLengthMult_knob->getBounds());
-    juce::Rectangle<int> cm_label_rect (clusterMin_knob->getX(), clusterMin_knob->getBottom() - 10, clusterMin_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> cm_label_rect (clusterMin_knob->getX(), clusterMin_knob->getBottom() - largepadding, clusterMin_knob->getWidth(), labelsectionheight );
     clusterMin_knob_label->setBounds(cm_label_rect);
-    juce::Rectangle<int> cts_label_rect (clusterThreshold_knob->getX(), clusterThreshold_knob->getBottom() - 10, clusterThreshold_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> cts_label_rect (clusterThreshold_knob->getX(), clusterThreshold_knob->getBottom() - largepadding, clusterThreshold_knob->getWidth(), labelsectionheight );
     clusterThreshold_knob_label->setBounds(cts_label_rect);
-    juce::Rectangle<int> nlm_label_rect (noteLengthMult_knob->getX(), noteLengthMult_knob->getBottom() - 10, noteLengthMult_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> nlm_label_rect (noteLengthMult_knob->getX(), noteLengthMult_knob->getBottom() - largepadding, noteLengthMult_knob->getWidth(), labelsectionheight );
     noteLengthMult_knob_label->setBounds(nlm_label_rect);
-    juce::Rectangle<int> bts_label_rect (beatsToSkip_knob->getX(), beatsToSkip_knob->getBottom() - 10, beatsToSkip_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> bts_label_rect (beatsToSkip_knob->getX(), beatsToSkip_knob->getBottom() - largepadding, beatsToSkip_knob->getWidth(), labelsectionheight );
     beatsToSkip_knob_label->setBounds(bts_label_rect);
 
     topRow.reduce(0, Skin::kKnobSectionHeight * 0.7);

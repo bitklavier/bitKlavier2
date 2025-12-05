@@ -133,17 +133,6 @@ public:
         undertowEnvSection->setName(params.undertowEnv.label);
         addSubSection (undertowEnvSection.get());
 
-        // sequence of ADSRs
-        // envSequenceSection = std::make_unique<EnvelopeSequenceSection>(name, params.reverseEnvSequence, listeners, *this);
-        // addSubSection(envSequenceSection.get());
-
-        // // toggles
-        // useTuning = std::make_unique<SynthButton>(params.transpositionUsesTuning->paramID);
-        // useTuning_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.transpositionUsesTuning, listeners, *useTuning, nullptr);
-        // useTuning->setComponentID(params.transpositionUsesTuning->paramID);
-        // addSynthButton(useTuning.get(), true);
-        // useTuning->setText("use Tuning?");
-
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
