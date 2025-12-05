@@ -16,9 +16,16 @@ void NostalgicParametersView::resized()
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
     int labelsectionheight = findValue(Skin::kLabelHeight);
+    auto knobLabelSize = findValue(Skin::kKnobLabelSizeSmall);
 
     juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
     prepTitle->setBounds(titleArea);
+    prepTitle->setTextSize (findValue(Skin::kPrepTitleSize));
+
+    beatsToSkip_knob_label->setTextSize (knobLabelSize);
+    clusterMin_knob_label->setTextSize (knobLabelSize);
+    clusterThreshold_knob_label->setTextSize (knobLabelSize);
+    noteLengthMult_knob_label->setTextSize (knobLabelSize);
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();

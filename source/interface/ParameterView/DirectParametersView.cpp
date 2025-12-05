@@ -48,7 +48,7 @@ void DirectParametersView::resized()
     int sl_counter = 0;
     for (auto& slider : _sliders)
     {
-        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
+        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - largepadding, slider->getWidth(), labelsectionheight );
         slider_labels[sl_counter]->setTextSize (knobLabelSize);
         slider_labels[sl_counter++]->setBounds(sl_label_rect);
     }

@@ -31,7 +31,6 @@ public:
 
         prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
         addOpenGlComponent(prepTitle);
-        prepTitle->setTextSize (24.0f);
         prepTitle->setJustification(juce::Justification::centredLeft);
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
@@ -69,12 +68,6 @@ public:
         addSynthButton(keyOnReset.get(), true);
         keyOnReset->setText("key-on reset?");
 
-        // menu label
-        // nostalgicTriggeredBy_label = std::make_shared<PlainTextComponent>("ptb", "trigger:");
-        // addOpenGlComponent(nostalgicTriggeredBy_label);
-        // nostalgicTriggeredBy_label->setTextSize (12.0f);
-        // nostalgicTriggeredBy_label->setJustification(juce::Justification::right);
-
         // knobs
         noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->getName(20), params.noteLengthMultParam->getModParam());
         addSlider(noteLengthMult_knob.get());
@@ -86,7 +79,6 @@ public:
 
         noteLengthMult_knob_label = std::make_shared<PlainTextComponent>(noteLengthMult_knob->getName(), noteLengthMult_knob->getName());
         addOpenGlComponent(noteLengthMult_knob_label);
-        noteLengthMult_knob_label->setTextSize (10.0f);
         noteLengthMult_knob_label->setJustification(juce::Justification::centred);
 
         beatsToSkip_knob = std::make_unique<SynthSlider>(params.beatsToSkipParam->getName(20), params.beatsToSkipParam->getModParam());
@@ -99,7 +91,6 @@ public:
 
         beatsToSkip_knob_label = std::make_shared<PlainTextComponent>(beatsToSkip_knob->getName(), beatsToSkip_knob->getName());
         addOpenGlComponent(beatsToSkip_knob_label);
-        beatsToSkip_knob_label->setTextSize (10.0f);
         beatsToSkip_knob_label->setJustification(juce::Justification::centred);
 
         clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->getName(20), params.clusterMinParam->getModParam());
@@ -112,7 +103,6 @@ public:
 
         clusterMin_knob_label = std::make_shared<PlainTextComponent>(clusterMin_knob->getName(), clusterMin_knob->getName());
         addOpenGlComponent(clusterMin_knob_label);
-        clusterMin_knob_label->setTextSize (10.0f);
         clusterMin_knob_label->setJustification(juce::Justification::centred);
 
         clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->getName(20), params.clusterThreshParam->getModParam());
@@ -125,7 +115,6 @@ public:
 
         clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), clusterThreshold_knob->getName());
         addOpenGlComponent(clusterThreshold_knob_label);
-        clusterThreshold_knob_label->setTextSize (10.0f);
         clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
         variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "Various Parameters");
