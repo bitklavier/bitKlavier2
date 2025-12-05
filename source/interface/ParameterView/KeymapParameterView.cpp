@@ -140,8 +140,7 @@ void KeymapParameterView::resized()
     if (parent && midi_selector_ == nullptr) {
         juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
         if (device_manager) {
-            midi_selector_ = std::make_unique<OpenGlMidiSelector>
-                    (proc.v);
+            midi_selector_ = std::make_unique<OpenGlMidiSelector>(proc.v);
             addAndMakeVisible(midi_selector_.get());
             addOpenGlComponent(midi_selector_->getImageComponent());
             parent->getGui()->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext& context)
@@ -154,6 +153,7 @@ void KeymapParameterView::resized()
     if (midi_selector_) {
         juce::Rectangle midiSelectorRect = area.removeFromLeft(200);
         midiSelectorRect.removeFromTop(20);
+        midiSelectorRect.removeFromLeft(largepadding);
         midi_selector_->setBounds(midiSelectorRect.removeFromTop (getHeight()));
         midi_selector_->redoImage();
         midi_selector_->setRowHeight(22);

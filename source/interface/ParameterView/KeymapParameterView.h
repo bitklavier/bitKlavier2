@@ -66,9 +66,6 @@ public:
             auto item = items[row];
             bool _enabled = isMidiInputDeviceEnabled(item.identifier);
 
-
-
-
             auto x = getTickX();
             auto tickW = (float) height * 0.75f;
 
@@ -99,6 +96,9 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+        setColour(backgroundColourId, juce::Colours::transparentBlack);
+        setColour(outlineColourId, juce::Colours::transparentBlack);
+
         juce::ListBox::paint (g);
 
         if (items.isEmpty())
