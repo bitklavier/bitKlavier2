@@ -19,13 +19,14 @@ public:
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
-        paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
     }
 
     void resized() override;
+
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     // place to store all the toggles for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthButton>> _paramToggles;

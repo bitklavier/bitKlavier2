@@ -45,6 +45,7 @@ void BlendronicParametersView::resized()
 
     juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
     prepTitle->setBounds(titleArea);
+    prepTitle->setTextSize (findValue(Skin::kPrepTitleSize));
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();

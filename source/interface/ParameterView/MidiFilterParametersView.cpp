@@ -9,6 +9,12 @@ MidiFilterParametersView::MidiFilterParametersView(chowdsp::PluginState& pluginS
     setLookAndFeel (DefaultLookAndFeel::instance());
     setComponentID (name);
 
+    prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+    addOpenGlComponent(prepTitle);
+    prepTitle->setJustification(juce::Justification::centredLeft);
+    prepTitle->setFontType (PlainTextComponent::kTitle);
+    prepTitle->setRotation (-90);
+
     auto& listeners = pluginState.getParameterListeners();
 
     for (auto& param_ : *params.getBoolParams())
@@ -112,6 +118,11 @@ void MidiFilterParametersView::resized()
     int largepadding = findValue(Skin::kLargePadding);
     int comboboxheight = findValue(Skin::kComboMenuHeight);
     int title_width = getTitleWidth();
+
+    juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
+    prepTitle->setBounds(titleArea);
+    prepTitle->setTextSize (findValue(Skin::kPrepTitleSize));
+
     area.reduce(title_width, 0);
     int column_width = area.getWidth() / 3.;
     juce::Rectangle<int> buttonsColumn = area.removeFromLeft(column_width);

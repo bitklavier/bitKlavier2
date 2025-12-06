@@ -30,7 +30,6 @@ public:
 
         prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
         addOpenGlComponent(prepTitle);
-        prepTitle->setTextSize (24.0f);
         prepTitle->setJustification(juce::Justification::centredLeft);
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
@@ -122,7 +121,6 @@ public:
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        //paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
 

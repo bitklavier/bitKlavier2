@@ -18,13 +18,14 @@ public:
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
-        paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
     }
 
     void resized() override;
+
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     std::unique_ptr<SynthButton> invert_button;
     std::unique_ptr<chowdsp::ButtonAttachment> invert_button_attachment;
