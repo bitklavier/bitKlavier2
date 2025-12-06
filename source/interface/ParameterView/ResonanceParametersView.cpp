@@ -57,6 +57,9 @@ void ResonanceParametersView::resized()
     spectrumMenuArea.reduce(spectrumMenuArea.getWidth() * 0.25, 0);
     spectrum_combo_box->setBounds(spectrumMenuArea);
 
+    /*
+     * todo: scale keyboard height; add to Skin
+     */
     int keyboardHeight = 100;
     int labelsectionheight = findValue(Skin::kLabelHeight);
     int kpadding = (keyboardsRect.getHeight() - 4. * (keyboardHeight + labelsectionheight)) / 3.;

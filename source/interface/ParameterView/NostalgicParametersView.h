@@ -69,7 +69,7 @@ public:
         keyOnReset->setText("key-on reset?");
 
         // knobs
-        noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->getName(20), params.noteLengthMultParam->getModParam());
+        noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID, params.noteLengthMultParam->getModParam());
         addSlider(noteLengthMult_knob.get());
         noteLengthMult_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         noteLengthMult_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -77,11 +77,11 @@ public:
         noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, nullptr);
         noteLengthMult_knob->addAttachment(noteLengthMult_knob_attachment.get());
 
-        noteLengthMult_knob_label = std::make_shared<PlainTextComponent>(noteLengthMult_knob->getName(), noteLengthMult_knob->getName());
+        noteLengthMult_knob_label = std::make_shared<PlainTextComponent>(noteLengthMult_knob->getName(), params.noteLengthMultParam->getName(20));
         addOpenGlComponent(noteLengthMult_knob_label);
         noteLengthMult_knob_label->setJustification(juce::Justification::centred);
 
-        beatsToSkip_knob = std::make_unique<SynthSlider>(params.beatsToSkipParam->getName(20), params.beatsToSkipParam->getModParam());
+        beatsToSkip_knob = std::make_unique<SynthSlider>(params.beatsToSkipParam->paramID, params.beatsToSkipParam->getModParam());
         addSlider(beatsToSkip_knob.get());
         beatsToSkip_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         beatsToSkip_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -89,11 +89,11 @@ public:
         beatsToSkip_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.beatsToSkipParam, listeners, *beatsToSkip_knob, nullptr);
         beatsToSkip_knob->addAttachment(beatsToSkip_knob_attachment.get());
 
-        beatsToSkip_knob_label = std::make_shared<PlainTextComponent>(beatsToSkip_knob->getName(), beatsToSkip_knob->getName());
+        beatsToSkip_knob_label = std::make_shared<PlainTextComponent>(beatsToSkip_knob->getName(), params.beatsToSkipParam->getName(20));
         addOpenGlComponent(beatsToSkip_knob_label);
         beatsToSkip_knob_label->setJustification(juce::Justification::centred);
 
-        clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->getName(20), params.clusterMinParam->getModParam());
+        clusterMin_knob = std::make_unique<SynthSlider>(params.clusterMinParam->paramID, params.clusterMinParam->getModParam());
         addSlider(clusterMin_knob.get());
         clusterMin_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterMin_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -101,11 +101,11 @@ public:
         clusterMin_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterMinParam, listeners, *clusterMin_knob, nullptr);
         clusterMin_knob->addAttachment(clusterMin_knob_attachment.get());
 
-        clusterMin_knob_label = std::make_shared<PlainTextComponent>(clusterMin_knob->getName(), clusterMin_knob->getName());
+        clusterMin_knob_label = std::make_shared<PlainTextComponent>(clusterMin_knob->getName(), params.clusterMinParam->getName(20));
         addOpenGlComponent(clusterMin_knob_label);
         clusterMin_knob_label->setJustification(juce::Justification::centred);
 
-        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->getName(20), params.clusterThreshParam->getModParam());
+        clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshParam->paramID, params.clusterThreshParam->getModParam());
         addSlider(clusterThreshold_knob.get());
         clusterThreshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);
@@ -113,7 +113,7 @@ public:
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshParam, listeners, *clusterThreshold_knob, nullptr);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
-        clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), clusterThreshold_knob->getName());
+        clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), params.clusterThreshParam->getName(20));
         addOpenGlComponent(clusterThreshold_knob_label);
         clusterThreshold_knob_label->setJustification(juce::Justification::centred);
 
