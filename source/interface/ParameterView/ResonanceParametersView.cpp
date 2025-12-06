@@ -17,15 +17,16 @@ void ResonanceParametersView::resized()
     // width of the title at left, used in all preparations
     int title_width = getTitleWidth();
 
-    // height for most of these components
-    int knob_section_height = getKnobSectionHeight();
-    int menu_section_height = findValue(Skin::kComboMenuHeight);
-
-    int smallpadding = findValue(Skin::kPadding);
-    int largepadding = findValue(Skin::kLargePadding);
+    // scaled sizes
+    auto knob_section_height = getKnobSectionHeight();
+    auto menu_section_height = findValue(Skin::kComboMenuHeight);
+    auto smallpadding = findValue(Skin::kPadding);
+    auto largepadding = findValue(Skin::kLargePadding);
+    auto knobLabelSize = findValue(Skin::kKnobLabelSizeMedium);
 
     juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(getTitleWidth());
     prepTitle->setBounds(titleArea);
+    prepTitle->setTextSize (findValue(Skin::kPrepTitleSize));
 
     // get the prep area, with left/right border for title
     juce::Rectangle<int> bounds = getLocalBounds();
@@ -41,6 +42,11 @@ void ResonanceParametersView::resized()
     //
     // *** done with meters placement section
     //
+
+    fundamentalKeyboard_label->setTextSize (knobLabelSize);
+    offsetsKeyboard_label->setTextSize (knobLabelSize);
+    gainsKeyboard_label->setTextSize (knobLabelSize);
+    closestKeyboard_label->setTextSize (knobLabelSize);
 
     heldKeysKeyboard->setBounds(bounds.removeFromBottom(120));
 
@@ -77,10 +83,22 @@ void ResonanceParametersView::resized()
 
     // knobs
     bounds.removeFromBottom(largepadding);
-    juce::Rectangle<int> outputKnobsArea = bounds.removeFromBottom(knob_section_height);
-    placeKnobsInArea(outputKnobsArea, _sliders, false);
+    variousControlsBorder->setBounds(bounds);
+    auto reduceBy = bounds.getHeight() - (knob_section_height * 2.0 + largepadding);
+    bounds.reduce(0, reduceBy * 0.5);
+
+    //juce::Rectangle<int> outputKnobsArea = bounds.removeFromBottom(knob_section_height);
+    placeKnobsInArea(bounds.removeFromBottom(knob_section_height), _sliders_row1, false);
+    bounds.removeFromBottom(largepadding);
+    placeKnobsInArea(bounds.removeFromBottom(knob_section_height), _sliders_row2, false);
+
     int sl_counter = 0;
-    for (auto& slider : _sliders)
+    for (auto& slider : _sliders_row1)
+    {
+        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
+        slider_labels[sl_counter++]->setBounds(sl_label_rect);
+    }
+    for (auto& slider : _sliders_row2)
     {
         juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
         slider_labels[sl_counter++]->setBounds(sl_label_rect);

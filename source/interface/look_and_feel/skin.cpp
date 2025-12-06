@@ -89,6 +89,8 @@ namespace {
             "Wavetable Y Offset",
             "Combo Menu Height",
             "Knob Label Small",
+            "Knob Label Medium",
+            "Knob Label Large",
             "Preparation Title Size"
     };
 

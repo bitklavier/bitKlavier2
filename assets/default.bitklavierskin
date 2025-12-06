@@ -20,6 +20,8 @@
         "Knob Body Size": 40.0,
         "Knob Handle Length": 0.5,
         "Knob Label Small": 10.0,
+        "Knob Label Medium": 12.0,
+        "Knob Label Large": 14.0,
         "Knob Mod Amount Arc Size": 40.0,
         "Knob Mod Amount Arc Thickness": 0.5,
         "Knob Mod Meter Arc Size": 39.0,

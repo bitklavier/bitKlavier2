@@ -93,6 +93,8 @@ public:
         kWavetableYOffset,
         kComboMenuHeight,
         kKnobLabelSizeSmall,
+        kKnobLabelSizeMedium,
+        kKnobLabelSizeLarge,
         kPrepTitleSize,
         kNumSkinValueIds,
         kFrequencyDisplay = kNumSkinValueIds,

@@ -34,7 +34,6 @@ public:
 
         prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
         addOpenGlComponent(prepTitle);
-        prepTitle->setTextSize (24.0f);
         prepTitle->setJustification(juce::Justification::centredLeft);
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
@@ -66,9 +65,22 @@ public:
                 slider_label->setJustification(juce::Justification::centred);
                 slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back (std::move (attachment));
-                _sliders.emplace_back (std::move (slider));
+                if ( // make group of params to display together
+                param_->paramID == "rpresence" ||
+                param_->paramID == "rsustain")
+                {
+                    _sliders_row1.emplace_back (std::move (slider));
+                }
+                else
+                {
+                    _sliders_row2.emplace_back (std::move (slider));
+                }
+
             }
         }
+
+        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "Resonance Controls");
+        addBorder(variousControlsBorder.get());
 
         fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true);
         addStateModulatedComponent(fundamentalKeyboard.get());
@@ -78,7 +90,6 @@ public:
 
         fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Fundamental");
         addOpenGlComponent(fundamentalKeyboard_label);
-        fundamentalKeyboard_label->setTextSize (12.0f);
         fundamentalKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap, false);
@@ -89,7 +100,6 @@ public:
 
         closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "Keys for Closest Partials");
         addOpenGlComponent(closestKeyboard_label);
-        closestKeyboard_label->setTextSize (12.0f);
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         heldKeysKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.heldKeymap, false);
@@ -105,7 +115,6 @@ public:
 
         offsetsKeyboard_label = std::make_shared<PlainTextComponent>("offsets", "Offsets from ET (cents) for Partials");
         addOpenGlComponent(offsetsKeyboard_label);
-        offsetsKeyboard_label->setTextSize (12.0f);
         offsetsKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         gainsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->gainsKeyboardState);
@@ -117,7 +126,6 @@ public:
 
         gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
         addOpenGlComponent(gainsKeyboard_label);
-        gainsKeyboard_label->setTextSize (12.0f);
         gainsKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         // ADSR
@@ -211,9 +219,13 @@ public:
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
-    std::vector<std::unique_ptr<SynthSlider>> _sliders;
+    std::vector<std::unique_ptr<SynthSlider>> _sliders_row1;
+    std::vector<std::unique_ptr<SynthSlider>> _sliders_row2;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
     std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
+
+    // for knobs
+    std::shared_ptr<OpenGL_LabeledBorder> variousControlsBorder;
 
     std::unique_ptr<OpenGLComboBox> spectrum_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> spectrum_attachment;
