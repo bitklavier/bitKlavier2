@@ -93,11 +93,8 @@ struct NostalgicParams : chowdsp::ParamHolder
     HoldTimeMinMaxParams holdTimeMinMaxParams;
 
     // Reverse and Undertow ADSRs and params
-    EnvParams reverseEnv{"Reverse", "Approaching Wave"};
-    // EnvelopeSequenceParams reverseEnvSequence;
-    EnvParams undertowEnv{"Undertow", "Receding Wave"};
-    // undertowEnv.idPrepend = "1";
-    // EnvelopeSequenceParams undertowEnvSequence;
+    EnvParams reverseEnv{"Reverse", "Approaching Wave Envelope"};
+    EnvParams undertowEnv{"Undertow", "Receding Wave Envelope"};
 
     // Transposition Uses Tuning param
     chowdsp::BoolParameter::Ptr transpositionUsesTuning {
