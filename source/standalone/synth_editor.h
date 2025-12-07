@@ -16,7 +16,6 @@
 
 #pragma once
 
-
 #include "synth_base.h"
 #include "synth_gui_interface.h"
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -55,7 +54,6 @@ public:
 
 private:
     juce::ApplicationCommandManager &commandManager;
-
 
 };
 

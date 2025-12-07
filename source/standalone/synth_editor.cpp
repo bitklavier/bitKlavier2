@@ -14,10 +14,6 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
-
-
 #include "synth_editor.h"
 
 #include "default_look_and_feel.h"
@@ -27,7 +23,6 @@
 #include "startup.h"
 #include "utils.h"
 #include <memory>
-
 
 SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), SynthBase(&deviceManager) {
   static constexpr int kHeightBuffer = 50;
@@ -109,13 +104,13 @@ SynthEditor::~SynthEditor() {
   juce::MenuBarModel::setMacMainMenu(nullptr);
   engine_->shutdown();
 }
+
 void SynthEditor::prepareToPlay(int buffer_size, double sample_rate) {
   //engine_->setSampleRate(sample_rate);
   engine_->prepareToPlay(sample_rate, buffer_size);
   midi_manager_->setSampleRate(sample_rate);
-
-
 }
+
 /*commented out the code to create an internal buffer size
 // would need to update our code internally to pass buffers properly sized
 // may not be feasible since we use a basic processblock that and our midi-receivers i.e.
@@ -188,6 +183,7 @@ void SynthEditor::animate(bool animate) {
   if (gui_)
     gui_->animate(animate);
 }
+
 void SynthEditor::pauseProcessing(bool pause) {
   DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     DBG(juce::String(int(pause)));
