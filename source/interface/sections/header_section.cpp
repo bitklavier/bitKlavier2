@@ -216,6 +216,11 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             options.addItem(i, string_names[i]);
         }
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
+
+        /*
+         * todo: it looks like the global sample set if being set with the gallery, but it should
+         *          be set (saved and restored) with each piano
+         */
         showPopupSelector(this, position, options, [=](int selection, int) {
             SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
             _parent->getSampleLoadManager()->loadSamples(selection, true, _parent->getSynth()->getValueTree());

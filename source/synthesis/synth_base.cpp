@@ -56,6 +56,17 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     tree = juce::ValueTree (IDs::GALLERY);
     sampleLoadManager->setValueTree(tree);
 
+    /*
+     * todo: soundset should be saved with piano, not gallery
+     *        - same with instruments within soundfont
+     *        - can we do that by simply doing `piano.setProperty (IDs::soundset, "Default", nullptr);1 ??
+     *        - and/or I suppose `sampleLoadManager->setValueTree(piano);`
+     *       but postfx (EQ and Compressor on 2bus) should be saved with gallery
+     *        - we don't want to have to set/save them for individual pianos within a gallery
+     *              - if someone wants to do that, they can do it manually by routing the main outs of all the preps to whatever they want
+     *        - would this be `tree.appendChild (posteq, nullptr)` and `tree.appendChild (postcompressor, nullptr)` ??
+     *       also General Settings, saved with Gallery
+     */
     tree.setProperty (IDs::soundset, "Default", nullptr);
     juce::ValueTree piano (IDs::PIANO);
     juce::ValueTree preparations (IDs::PREPARATIONS);
@@ -181,6 +192,7 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
             getGuiInterface()->notifyModulationsChanged();
     }
 }
+
 void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenRemoved,
     int indexFromWhichChildWasRemoved)
@@ -360,6 +372,7 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
         return true;
     return false;
 }
+
 void SynthBase::clearAllBackend() {
 
     this->mod_connections_.clear();
@@ -495,7 +508,6 @@ juce::UndoManager& SynthBase::getUndoManager()
     return um;
 }
 
-
 //modulations
 std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (const std::string& source) const
 {
@@ -507,15 +519,16 @@ std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (
     }
     return connections;
 }
+
 void SynthBase::finishedSampleLoading() {
     if(getGuiInterface() && getGuiInterface()->getGui())
         getGuiInterface()->getGui()->hideLoadingSection();
 }
+
 void SynthBase::startSampleLoading() {
     if(getGuiInterface() && getGuiInterface()->getGui())
         getGuiInterface()->getGui()->showLoadingSection();
 }
-
 
 std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnections (
     const std::string& destination) const
@@ -770,6 +783,7 @@ void SynthBase::disconnectModulation (const std::string& source, const std::stri
     if (connection)
         disconnectModulation (connection);
 }
+
 bool SynthBase::disconnectModulation (const juce::ValueTree& v)
 {
     bitklavier::ModulationConnection* connection = getConnection (v.getProperty (IDs::src).toString().toStdString(),
