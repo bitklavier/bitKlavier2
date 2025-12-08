@@ -92,20 +92,12 @@ public:
     }
 
     void addListener(Listener *listener) { listeners_.push_back(listener); }
-
     std::vector<Listener *> listeners_;
 
-
-
     BKPort *createNewObject(const juce::ValueTree &v) override;
-
     void deleteObject(BKPort *at) override;
-
-
     void reset() override;
-
     void newObjectAdded(BKPort *) override;
-
     void objectRemoved(BKPort *) override { resized(); }//resized(); }
     void objectOrderChanged() override { resized(); }//resized(); }
     // void valueTreeParentChanged (juce::ValueTree&) override;
@@ -122,7 +114,6 @@ public:
     bool isSuitableType(const juce::ValueTree &v) const override {
         return v.hasType(IDs::PORT);
     }
-
 
     void changeListenerCallback(juce::ChangeBroadcaster *source) {
         if (selectedSet->isSelected(this)) {
@@ -145,7 +136,9 @@ public:
         item->setColor(findColour(Skin::kWidgetPrimary1, true));
         item->redoImage();
     }
+
     void moved() override;
+
     // Public function definitions, which override base class (SynthSection) virtual functions
     void setSizeRatio(float ratio) override {
         size_ratio_ = ratio;
@@ -175,8 +168,8 @@ public:
     }
 
     ///drraganddrop for line view and modulator
-//should be using this function probably instead of if in itemdropped. but i want all preps to go back to
-// original pos if dropped over another prep and this is my current solution
+    //should be using this function probably instead of if in itemdropped. but i want all preps to go back to
+    // original pos if dropped over another prep and this is my current solution
     bool isInterestedInDragSource(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) override {
         return true;
     }

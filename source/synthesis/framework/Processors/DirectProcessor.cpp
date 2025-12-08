@@ -133,15 +133,15 @@ void DirectProcessor::tuningStateInvalidated() {
 void DirectProcessor::processContinuousModulations (juce::AudioBuffer<float>& buffer)
 {
     // this for debugging
-    //    auto mod_Bus = getBus(true,1);
-    //    auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
-    //    int i = index;
-    //    // melatonin::printSparkline(buffer);
-    //    for(auto param: state.params.modulatableParams){
-    //        // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
-    //        // DBG(a.getProperty(IDs::parameter).toString());
-    //        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
-    //    }
+       auto mod_Bus = getBus(true,1);
+       auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
+       int i = index;
+       // melatonin::printSparkline(buffer);
+       for(auto param: state.params.modulatableParams){
+           // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
+           // DBG(a.getProperty(IDs::parameter).toString());
+           bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
+       }
 
     const auto& modBus = getBusBuffer (buffer, true, 1); // true = input, bus index 0 = mod
 

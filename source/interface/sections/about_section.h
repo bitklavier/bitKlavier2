@@ -91,10 +91,6 @@ class AboutSection : public Overlay {
     void fullScreen();
     juce::ValueTree preferences;
     std::unique_ptr<OpenGlDeviceSelector> device_selector_;
-
-
-
-
     std::shared_ptr<OpenGlQuad> body_;
     //std::unique_ptr<AppLogo> logo_;
     std::shared_ptr<PlainTextComponent> name_text_;

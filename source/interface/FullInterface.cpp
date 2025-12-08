@@ -94,7 +94,6 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     loading_section->setAlwaysOnTop(true);
     addChildComponent (loading_section.get());
 
-
     addSubSection (modulation_manager.get());
 
     about_section_->toFront (true);

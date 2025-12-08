@@ -159,6 +159,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
     /*
      * todo: prepScale should be settable by the user, and saved
      *          - it should also scale distances between preps
+     *          - not sure if this is the right place to set this overall, but it scales the prep sizes at least
      */
     float prepScale = 0.6;
 
