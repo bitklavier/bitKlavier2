@@ -33,7 +33,8 @@ Typing as I do MidiFilter and Resonance
   - need to add a path() call in `paths.h`
   - some drawing stuff happens in `BKItem.h`
   - might not need an image, can just draw a path()
-  - icon size is set in `ConstructionSite::perform`
+  - icon size is set in `ConstructionSite::perform`?
+  - border width is set by `kMeterPixel` in BKItem.h
 - preparation icon size is set in `ConstructionSite::perform`?
 - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 ---------

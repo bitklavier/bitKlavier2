@@ -37,6 +37,7 @@ struct TuningListener
 {
     virtual void tuningStateInvalidated() = 0;
 };
+
 struct TuningState : bitklavier::StateChangeableParameter
 {
     void setKeyOffset (int midiNoteNumber, float val);
@@ -200,8 +201,6 @@ struct TuningParams : chowdsp::ParamHolder
         });
     }
 
-
-
     /**
      * todo:
      * params to add:
@@ -237,11 +236,13 @@ class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
 {
 public:
     TuningProcessor (SynthBase& parent, const juce::ValueTree& v);
-~TuningProcessor() {
-    parent.pauseProcessing(true);
-    listeners.call ([] (TuningListener& l) { l.tuningStateInvalidated(); });
-    parent.pauseProcessing(false);
-}
+
+    ~TuningProcessor() {
+        parent.pauseProcessing(true);
+        listeners.call ([] (TuningListener& l) { l.tuningStateInvalidated(); });
+        parent.pauseProcessing(false);
+    }
+
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
@@ -262,11 +263,12 @@ public:
                 .withInput ("Input", juce::AudioChannelSet::stereo(), false)
                 .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(25),true)
                 .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
-
     }
+
     void addListener (TuningListener* l)  { listeners.add (l); }
     void removeListener (TuningListener* l) { listeners.remove (l); }
     juce::ListenerList<TuningListener> listeners;
+
 private:
     chowdsp::Gain<float> gain;
 

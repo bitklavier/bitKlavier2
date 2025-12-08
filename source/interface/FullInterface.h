@@ -21,12 +21,15 @@ struct SynthGuiData;
 class HeaderSection;
 class ModulationPreparation;
 class ModulationManager;
-namespace bitklavier{
+
+namespace bitklavier
+{
     constexpr int kMinWindowWidth = 350;
     constexpr int kMinWindowHeight = 205;
     constexpr int kDefaultWindowWidth = 1400;
     constexpr int kDefaultWindowHeight = 820;
 }
+
 class FullInterface : public SynthSection, public juce::OpenGLRenderer, public HeaderSection::Listener,
                    juce::DragAndDropContainer, private juce::Timer
 {
@@ -91,7 +94,8 @@ public :
     std::unique_ptr<PreparationPopup> mod_popup;
     std::unique_ptr<PopupDisplay> popup_display_1_;
     std::unique_ptr<PopupDisplay> popup_display_2_;
-        SynthSection* full_screen_section_;
+
+    SynthSection* full_screen_section_;
     std::unique_ptr<AboutSection> about_section_;
     std::unique_ptr<LoadingSection> loading_section;
     std::unique_ptr<MainSection> main_;
@@ -118,7 +122,6 @@ public :
     juce::ValueTree vt;
 private :
 
-
 //std::unique_ptr<TestSection> test_;
     juce::ApplicationCommandManager& commandManager;
     int width_;
@@ -129,7 +132,6 @@ private :
     bool enable_redo_background_{};
     float display_scale_;
     int pixel_multiple_;
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FullInterface)
 };

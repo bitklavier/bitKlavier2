@@ -31,8 +31,10 @@ SynchronicPreparation::SynchronicPreparation (
     setSkinOverride (Skin::kSynchronic);
     juce::MemoryBlock data;
 
-    width = 245;
-    height = 125;
+    width = state.getProperty(IDs::width);
+    height = state.getProperty(IDs::height);
+    // width = 245;
+    // height = 125;
 }
 
 std::unique_ptr<SynthSection> SynchronicPreparation::getPrepPopup()

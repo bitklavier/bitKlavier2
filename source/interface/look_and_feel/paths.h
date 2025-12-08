@@ -60,6 +60,7 @@ class Paths {
 
         return arr;
     }
+
     // Returns the paths for a nostalgic preparation window
     static juce::Array<juce::Path> nostalgicPaths()
     {
@@ -85,32 +86,6 @@ class Paths {
     // Returns the paths for a synchronic preparation window
     static juce::Array<juce::Path> synchronicPaths()
     {
-        /*
-         * this attempt to scale the icons does not work, at least not by itself
-         */
-//        float scaleFactor = 0.75;
-//
-//        juce::Array<juce::Path> arr;
-//
-//        juce::Path path1 = fromSvgData((const void*)BinaryData::Layer_1_synchronic_svg, BinaryData::Layer_1_synchronic_svgSize);
-//        juce::Path path2 = fromSvgData((const void*)BinaryData::Layer_2_synchronic_svg, BinaryData::Layer_2_synchronic_svgSize);
-//        juce::Path path3 = fromSvgData((const void*)BinaryData::Layer_3_synchronic_svg, BinaryData::Layer_3_synchronic_svgSize);
-//
-//        // Create an affine transform for scaling
-//        juce::AffineTransform scaleTransform = juce::AffineTransform::scale(scaleFactor);
-//
-//        // Apply the transform to each path in-place
-//        path1.applyTransform(scaleTransform);
-//        path2.applyTransform(scaleTransform);
-//        path3.applyTransform(scaleTransform);
-//
-//        // Add the scaled paths to the array
-//        arr.add(path1);
-//        arr.add(path2);
-//        arr.add(path3);
-//
-//        return arr;
-
         juce::Array<juce::Path> arr;
         arr.add(fromSvgData((const void*)BinaryData::Layer_1_synchronic_svg,BinaryData::Layer_1_synchronic_svgSize));
         arr.add(fromSvgData((const void*)BinaryData::Layer_2_synchronic_svg,BinaryData::Layer_2_synchronic_svgSize));

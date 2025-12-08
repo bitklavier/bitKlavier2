@@ -31,11 +31,13 @@ TempoPreparation::TempoPreparation (
         false);
 
     addAndMakeVisible (item.get());
-    setSkinOverride (Skin::kTempo);
+    setSkinOverride (Skin::kDirect);
     juce::MemoryBlock data;
 
-    width = 100;
-    height = 180;
+    width = state.getProperty(IDs::width);
+    height = state.getProperty(IDs::height);
+    // width = 100;
+    // height = 180;
 }
 
 std::unique_ptr<SynthSection> TempoPreparation::getPrepPopup()

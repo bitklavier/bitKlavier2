@@ -439,9 +439,7 @@ void SynthSection::destroyOpenGlComponents(OpenGlWrapper &open_gl) {
 
             for (auto &sub_section: sub_sections_) {
                 sub_section->destroyOpenGlComponents(open_gl);
-
             }
-
 
             if (background_)
                 background_->destroy(open_gl);
