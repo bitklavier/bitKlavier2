@@ -5,13 +5,9 @@
 #include "BKPort.h"
 #include "paths.h"
 #include "Identifiers.h"
-
 #include "look_and_feel/default_look_and_feel.h"
-BKPort::BKPort( juce::ValueTree v) :
-juce::Button("port"),
-state(v),
-image_component_(new OpenGlImageComponent())
 
+BKPort::BKPort( juce::ValueTree v) : juce::Button("port"), state(v), image_component_(new OpenGlImageComponent())
 {
     setLookAndFeel(DefaultLookAndFeel::instance());
     pin = juce::AudioProcessorGraph::NodeAndChannel{juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getParent().getProperty(IDs::nodeID)), v.getProperty(IDs::chIdx)};
@@ -21,7 +17,6 @@ image_component_(new OpenGlImageComponent())
     setAlwaysOnTop(true);
     image_component_->setComponent(this);
     auto path = Paths::portPaths();
-
 }
 
 void BKPort::mouseDown (const juce::MouseEvent& e)
@@ -34,7 +29,6 @@ void BKPort::mouseDown (const juce::MouseEvent& e)
                                  isInput ? pin : dummy,
                                  e);
     }
-
 }
 
 void BKPort::mouseDrag (const juce::MouseEvent& e)

@@ -4,7 +4,6 @@
 
 #include "PreparationSection.h"
 #include "synth_gui_interface.h"
-
 #include "ConstructionSite.h"
 #include "FullInterface.h"
 #include "ModulationPreparation.h"
@@ -42,9 +41,6 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
         addAndMakeVisible(object);
         object->redoImage();
     }
-
-
-
 }
 
 juce::AudioProcessor *PreparationSection::getProcessor() const {
@@ -64,17 +60,12 @@ void PreparationSection::paintBackground(juce::Graphics &g) {
     for (auto object: objects) {
         object->redoImage();
     }
-
-
     //    g.restoreState();
 }
-
 
 void PreparationSection::setNodeInfo() {
     if (auto interface = findParentComponentOfClass<SynthGuiInterface>()) {
         if (auto *node = interface->getSynth()->getNodeForId(pluginID)) {
-
-
             this->state.setProperty(IDs::nodeID,
                                     juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
                                     nullptr);
@@ -90,39 +81,20 @@ void PreparationSection::setNodeInfo() {
 }
 
 void PreparationSection::setPortInfo() {
+    if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
     {
-        if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
-            if (auto *node = parent->getSynth()->getNodeForId(pluginID)) {
-                auto processor = node->getProcessor();
-                //check if main audio input bus/ is enabled
-                if (processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
-                    for (int i = 0; i < processor->getMainBusNumInputChannels(); i+=2) {
-                        juce::ValueTree v{IDs::PORT};
-                        v.setProperty(IDs::nodeID,
-                                      juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                                      nullptr);
-                        v.setProperty(IDs::chIdx, i, nullptr);
-                        v.setProperty(IDs::isIn, true, nullptr);
-                        bool add = true;
-                        for (auto vt: state) {
-                            if (vt.isEquivalentTo(v)) {
-                                add = false;
-                            }
-                        }
-                        if (add) {
-                            state.addChild(v, -1, nullptr);
-                        }
-                        numIns = numIns + 1;
-                    }
-                }
+        if (auto *node = parent->getSynth()->getNodeForId(pluginID))
+        {
+            auto processor = node->getProcessor();
 
-
-                if (processor->acceptsMidi()) {
+            //check if main audio input bus/ is enabled
+            if (processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
+                for (int i = 0; i < processor->getMainBusNumInputChannels(); i+=2) {
                     juce::ValueTree v{IDs::PORT};
                     v.setProperty(IDs::nodeID,
                                   juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
                                   nullptr);
-                    v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
+                    v.setProperty(IDs::chIdx, i, nullptr);
                     v.setProperty(IDs::isIn, true, nullptr);
                     bool add = true;
                     for (auto vt: state) {
@@ -133,61 +105,38 @@ void PreparationSection::setPortInfo() {
                     if (add) {
                         state.addChild(v, -1, nullptr);
                     }
-
-
                     numIns = numIns + 1;
                 }
+            }
 
-                //check if main audio output bus is enabled
-                if (processor->getBus(false, 0) != nullptr && getProcessor()->getBus(false, 0)->isEnabled()) {
-                    for (int i = 0; i < processor->getMainBusNumOutputChannels(); i+=2) {
-                        auto chIdx = processor->getBus(false,0)->getChannelIndexInProcessBlockBuffer(i);
-                        juce::ValueTree v{IDs::PORT};
-                        v.setProperty(IDs::nodeID,
-                                      juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                                      nullptr);
-                        v.setProperty(IDs::chIdx, chIdx, nullptr);
-                        v.setProperty(IDs::isIn, false, nullptr);
-                        bool add = true;
-                        for (auto vt: state) {
-                            if (vt.isEquivalentTo(v)) {
-                                add = false;
-                            }
-                        }
-                        if (add) {
-                            state.addChild(v, -1, nullptr);
-                        }
-                        numOuts = numOuts + 1;
+            if (processor->acceptsMidi()) {
+                juce::ValueTree v{IDs::PORT};
+                v.setProperty(IDs::nodeID,
+                              juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
+                              nullptr);
+                v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
+                v.setProperty(IDs::isIn, true, nullptr);
+                bool add = true;
+                for (auto vt: state) {
+                    if (vt.isEquivalentTo(v)) {
+                        add = false;
                     }
                 }
-                //check if send audio output bus is enabled
-                if (processor->getBus(false, 2) != nullptr && getProcessor()->getBus(false, 2)->isEnabled()) {
-                    for (int i = 0; i < processor->getBus(false,2)->getNumberOfChannels(); i+=2) {
-                        auto chIdx = processor->getBus(false,2)->getChannelIndexInProcessBlockBuffer(i);
-                        juce::ValueTree v{IDs::PORT};
-                        v.setProperty(IDs::nodeID,
-                                      juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
-                                      nullptr);
-                        v.setProperty(IDs::chIdx, chIdx, nullptr);
-                        v.setProperty(IDs::isIn, false, nullptr);
-                        bool add = true;
-                        for (auto vt: state) {
-                            if (vt.isEquivalentTo(v)) {
-                                add = false;
-                            }
-                        }
-                        if (add) {
-                            state.addChild(v, -1, nullptr);
-                        }
-                        numOuts = numOuts + 1;
-                    }
+                if (add) {
+                    state.addChild(v, -1, nullptr);
                 }
-                if (processor->producesMidi()) {
+                numIns = numIns + 1;
+            }
+
+            //check if main audio output bus is enabled
+            if (processor->getBus(false, 0) != nullptr && getProcessor()->getBus(false, 0)->isEnabled()) {
+                for (int i = 0; i < processor->getMainBusNumOutputChannels(); i+=2) {
+                    auto chIdx = processor->getBus(false,0)->getChannelIndexInProcessBlockBuffer(i);
                     juce::ValueTree v{IDs::PORT};
                     v.setProperty(IDs::nodeID,
                                   juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
                                   nullptr);
-                    v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
+                    v.setProperty(IDs::chIdx, chIdx, nullptr);
                     v.setProperty(IDs::isIn, false, nullptr);
                     bool add = true;
                     for (auto vt: state) {
@@ -201,6 +150,49 @@ void PreparationSection::setPortInfo() {
                     numOuts = numOuts + 1;
                 }
             }
+
+            //check if send audio output bus is enabled
+            if (processor->getBus(false, 2) != nullptr && getProcessor()->getBus(false, 2)->isEnabled()) {
+                for (int i = 0; i < processor->getBus(false,2)->getNumberOfChannels(); i+=2) {
+                    auto chIdx = processor->getBus(false,2)->getChannelIndexInProcessBlockBuffer(i);
+                    juce::ValueTree v{IDs::PORT};
+                    v.setProperty(IDs::nodeID,
+                                  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
+                                  nullptr);
+                    v.setProperty(IDs::chIdx, chIdx, nullptr);
+                    v.setProperty(IDs::isIn, false, nullptr);
+                    bool add = true;
+                    for (auto vt: state) {
+                        if (vt.isEquivalentTo(v)) {
+                            add = false;
+                        }
+                    }
+                    if (add) {
+                        state.addChild(v, -1, nullptr);
+                    }
+                    numOuts = numOuts + 1;
+                }
+            }
+
+            if (processor->producesMidi()) {
+                juce::ValueTree v{IDs::PORT};
+                v.setProperty(IDs::nodeID,
+                              juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
+                              nullptr);
+                v.setProperty(IDs::chIdx, juce::AudioProcessorGraph::midiChannelIndex, nullptr);
+                v.setProperty(IDs::isIn, false, nullptr);
+                bool add = true;
+                for (auto vt: state) {
+                    if (vt.isEquivalentTo(v)) {
+                        add = false;
+                    }
+                }
+                if (add) {
+                    state.addChild(v, -1, nullptr);
+                }
+                numOuts = numOuts + 1;
+            }
+        }
     }
 }
 
@@ -286,7 +278,6 @@ void PreparationSection::resized() {
     }
 
     SynthSection::resized();
-
 }
 
 PreparationSection::~PreparationSection() {
@@ -296,7 +287,7 @@ PreparationSection::~PreparationSection() {
 BKPort *PreparationSection::createNewObject(const juce::ValueTree &v) {
     return new BKPort(v);
 }
-#include"FullInterface.h"
+
 void PreparationSection::deleteObject(BKPort *at) {
     if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
         SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -306,8 +297,7 @@ void PreparationSection::deleteObject(BKPort *at) {
                                                                    //this->destroyOpenGlComponent()
                                                                },
                                                                false);
-    } else
-        delete at;
+    } else delete at;
 }
 
 void PreparationSection::reset() {
@@ -327,9 +317,7 @@ void PreparationSection::newObjectAdded(BKPort *object) {
     }, false);
 }
 
-void PreparationSection::valueTreeRedirected(juce::ValueTree &) {
-}
-
+void PreparationSection::valueTreeRedirected(juce::ValueTree &) {}
 
 void PreparationSection::mouseDrag(const juce::MouseEvent &e) {
     for (auto listener: listeners_) {

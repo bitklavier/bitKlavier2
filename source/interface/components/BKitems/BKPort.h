@@ -7,6 +7,7 @@
 #include "valuetree_utils/VariantConverters.h"
 #include "open_gl_image_component.h"
 #include "common.h"
+
 class SynthGuiInterface;
 class BKPort : public juce::Button
 {
@@ -78,8 +79,5 @@ public:
     std::shared_ptr<OpenGlImageComponent> image_component_;
     juce::ValueTree state;
 };
-
-
-
 
 #endif //BITKLAVIER2_BKPORT_H
