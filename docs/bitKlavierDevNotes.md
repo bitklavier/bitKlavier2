@@ -6,7 +6,21 @@
 - perhaps the column with the mods should be top to bottom, in addition to having the scroll
   - I also think it could be narrower
   - and maybe it should just always be there
-- 
+- "Ramp" should be "Knob and Slider Modification", and should direct set the target value, not be an offset value.
+  - I also would like the mod knob to have the same orientation and angular offsets as the target knobs
+- "State" perhaps should be "Menu and Multislider Modification" and whatever else it might apply to.
+  - The titles should indicate what they can modify, to make it easier for people to identify how to do what they want
+- and then "LFO" should be "Knob and Slider Oscillator"
+- these can all be in a pulldown menu at top of the Modifications panel at the right
+
+## Mod Dev
+- `ModulationAmountKnob::setDestinationSlider` in modulation_manager.cpp is where the range of the mod knob is set
+- `setScalingValue` in ModulationConnection.h is where the mapping from the mod knob to the target/destination knob is set
+- there is a LOT of code here, from Tytel mostly; can it be reduced or simplified? do we need it all?
+- in any case, we need some overview documentation of the core files, where particular things are setup and handled, and so on
+  - for instance, where is the panel on the right created?
+  - and the submodules within that panel that set ramp time and so on?
+- `ModulationModuleSection::handlePopupResult` in ModulationModuleSection.cpp is where the various mods are added to the Modifications panel
 
 ---------
 ## Creating a New Preparation
