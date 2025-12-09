@@ -2,7 +2,6 @@
 // Created by Davis Polito on 11/19/24.
 //
 
-
 #include "ModulationModuleSection.h"
 #include "synth_gui_interface.h"
 #include "ModulationSection.h"
@@ -12,6 +11,7 @@
 #include "ModulationProcessor.h"
 #include "tracktion_ValueTreeUtilities.h"
 #include "ModulationList.h"
+
 ModulationModuleSection::ModulationModuleSection(ModulationList* modulationProcessor,juce::ValueTree &v, ModulationManager *m, juce::UndoManager &um) :
 ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
 {
@@ -37,6 +37,7 @@ ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
 //    factory.registerType<FilterModuleProcessor, juce::ValueTree, LEAF*>("filt");
     addListener(m);
 }
+
 void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 {
 //    auto obj = tracktion::engine::getObjectFor(*modulation_list_, v);
@@ -72,8 +73,6 @@ void ModulationModuleSection::removeModulator (ModulatorBase* base)
         }
     }
     if (index == -1) jassertfalse;
-
-    //
 
     //cleanup opengl
     {
@@ -126,7 +125,6 @@ void ModulationModuleSection::handlePopupResult(int result) {
     }
 }
 
-
 void ModulationModuleSection::setEffectPositions() {
     if (getWidth() <= 0 || getHeight() <= 0)
         return;
@@ -159,6 +157,7 @@ void ModulationModuleSection::setEffectPositions() {
 
     repaintBackground();
 }
+
 PopupItems ModulationModuleSection::createPopupMenu()
 {
     PopupItems options;
@@ -167,7 +166,6 @@ PopupItems ModulationModuleSection::createPopupMenu()
     options.addItem(3, "add lfo");
     return options;
 }
-
 
 std::map<std::string, SynthSlider*> ModulationModuleSection::getAllSliders()
 {

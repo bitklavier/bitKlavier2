@@ -189,7 +189,7 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 
 void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bool bipolar) {
   float range = destination_->getMaximum() - destination_->getMinimum();
- float knob_percent = destination_->getNormalisableRange().convertTo0to1(destination_->getValue());
+  float knob_percent = destination_->getNormalisableRange().convertTo0to1(destination_->getValue());
   //float knob_percent = (destination->valueToProportionOfLength(destination_->getValue()) - destination_->getMinimum()) / range;
 
   float min_percent = std::min(knob_percent + amount, knob_percent);
@@ -203,11 +203,13 @@ void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bo
   }
 
   if (rotary_) {
-    if (&destination_->getLookAndFeel() == TextLookAndFeel::instance()) {
+    if (&destination_->getLookAndFeel() == TextLookAndFeel::instance())
+    {
       min_percent = bitklavier::utils::interpolate(-bitklavier::kPi, 0.0f, min_percent);
       max_percent = bitklavier::utils::interpolate(-bitklavier::kPi, 0.0f, max_percent);
     }
-    else {
+    else
+    {
       float angle = SynthSlider::kRotaryAngle;
       min_percent = bitklavier::utils::interpolate(-angle, angle, min_percent);
       max_percent = bitklavier::utils::interpolate(-angle, angle, max_percent);

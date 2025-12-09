@@ -48,8 +48,6 @@ namespace bitklavier
         return kBipolarModulationSourcePrefixes.count(prefix) > 0;
     }
 
-
-
     ModulationConnectionBank::ModulationConnectionBank ()
     {
         for (int i = 0; i < kMaxModulationConnections; ++i)
@@ -60,7 +58,6 @@ namespace bitklavier
     }
 
     ModulationConnectionBank::~ModulationConnectionBank() {}
-
 
     ModulationConnection* ModulationConnectionBank::createConnection (const std::string& from, const std::string& to)
     {
