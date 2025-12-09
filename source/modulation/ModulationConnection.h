@@ -130,13 +130,6 @@ class ModulationProcessor;
             else
             {
                 // Mod is actual target val
-                // float targetNorm = 0;
-                // if (modVal > sliderVal) targetNorm = range.convertTo0to1(std::min(modVal, end));
-                // else targetNorm = range.convertTo0to1(std::max(modVal, start));
-                // DBG("targetNorm = " << targetNorm << " " << range.convertFrom0to1(targetNorm));
-                //
-                // modRangeNorm = targetNorm;
-
                 if(modVal > sliderVal)
                 {
                     float targetNorm = range.convertTo0to1(std::min(modVal, end));
