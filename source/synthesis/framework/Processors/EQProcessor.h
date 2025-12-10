@@ -5,6 +5,7 @@
 #pragma once
 #include "Identifiers.h"
 #include "PluginBase.h"
+#include "EQFilterParams.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_sources/chowdsp_sources.h>
@@ -17,8 +18,37 @@ struct EQParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Nostalgic Processor
     EQParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("eq")
     {
-            // add();
+            add(activeEq,
+                resetEq,
+                loCutFilterParams,
+                peak1FilterParams,
+                peak2FilterParams,
+                peak3FilterParams,
+                hiCutFilterParams);
     }
+
+    // bypass bool
+    chowdsp::BoolParameter::Ptr activeEq {
+        juce::ParameterID { "activeEq", 100 },
+        "activeEq",
+        true
+    };
+
+    // reset bool
+    chowdsp::BoolParameter::Ptr resetEq {
+        juce::ParameterID { "resetEq", 100},
+        "reset",
+        false
+    };
+
+    // filters
+    EQCutFilterParams loCutFilterParams{"loCut"};
+    EQPeakFilterParams peak1FilterParams{"peak1"};
+    EQPeakFilterParams peak2FilterParams{"peak2"};
+    EQPeakFilterParams peak3FilterParams{"peak3"};
+    EQCutFilterParams hiCutFilterParams{"hiCut"};
+
+    juce::Array<bool> activeFilters = {false, false, false, false, false};
 };
 
 /****************************************************************************************/
@@ -55,6 +85,10 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override{};
 
+    // Called upon initializiation and whenever a user changes parameters with a slider
+    void updateCoefficients();
+    // Return the magnitude corresponding to this frequency based off the current parameters of this equalizer
+    double magForFreq(double freq);
 
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
@@ -85,9 +119,35 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
-
-
-
 private:
+    // DSP stuff
+    using Filter = juce::dsp::IIR::Filter<float>;
+    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+    using Chain = juce::dsp::ProcessorChain<CutFilter, Filter, Filter, Filter, CutFilter>;
+    using Chain = juce::dsp::ProcessorChain<
+        state.params.loCutFilterParams.filter->get(),
+        state.params.peak1FilterParams.filter->get(),
+        state.params.peak2FilterParams.filter->get(),
+        state.params.peak3FilterParams.filter->get(),
+        state.params.hiCutFilterParams.filter->get()>;
+
+
+    Chain leftChain;
+    Chain rightChain;
+
+    enum ChainPositions {
+        LowCut,
+        Peak1,
+        Peak2,
+        Peak3,
+        HighCut
+    };
+
+    enum Slope {
+        S12,
+        S24,
+        S36,
+        S48
+    };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EQProcessor)
 };

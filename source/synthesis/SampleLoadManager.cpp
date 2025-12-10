@@ -661,46 +661,46 @@ bool SampleLoadJob::loadPedalSamples()
 // load all the velocity layers samples for a particular pitch/key
 bool SampleLoadJob::loadMainSamplesByPitch()
 {
-    auto ranges = getVelLayers (velocityLayers);
-    int layers = ranges.size();
-    int currentVelLayer = velLayerContinue;
-
-    //for v1 samples, to define bottom threshold.
-    //  quietest Yamaha sample is about -41dbFS, so -50 seems safe and reasonable
-    float dBFSBelow = dbfsBelowContinue;
-    // DBG ("**** loading sample: " );
-    while (true)
-    {
-        auto [reader, filename] = sampleReader->make (*manager);
-
-
-        if (!reader)
-            break; // Break the loop if the reader is null
-        auto sample = new Sample (*(reader.get()), 90);
-        juce::StringArray stringArray;
-        stringArray.addTokens (filename, "v", "");
-        juce::String noteName = stringArray[0];
-        juce::String velLayer = stringArray[1];
-        int midiNote = noteNameToRoot (noteName);
-        // DBG(velLayer + "= " +  juce::String(currentVelLayer));
-        auto [begin, end] = ranges.getUnchecked (currentVelLayer++);
-        juce::BigInteger velRange;
-        velRange.setRange (begin, end - begin, true);
-
-        auto sound = soundset->add (new BKSamplerSound <juce::AudioFormatReader>(filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), thisMidiRange, midiNote, 0, velRange, layers, dBFSBelow));
-
-        dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
-
-//        DBG ("**** loading sample: " + filename);
-//        DBG ("");
-        if (shouldExit()) {
-            velLayerContinue = currentVelLayer++;
-            return false;
-        }
-
+//     auto ranges = getVelLayers (velocityLayers);
+//     int layers = ranges.size();
+//     int currentVelLayer = velLayerContinue;
+//
+//     //for v1 samples, to define bottom threshold.
+//     //  quietest Yamaha sample is about -41dbFS, so -50 seems safe and reasonable
+//     float dBFSBelow = dbfsBelowContinue;
+//     // DBG ("**** loading sample: " );
+//     while (true)
+//     {
+//         auto [reader, filename] = sampleReader->make (*manager);
+//
+//
+//         if (!reader)
+//             break; // Break the loop if the reader is null
+//         auto sample = new Sample (*(reader.get()), 90);
+//         juce::StringArray stringArray;
+//         stringArray.addTokens (filename, "v", "");
+//         juce::String noteName = stringArray[0];
+//         juce::String velLayer = stringArray[1];
+//         int midiNote = noteNameToRoot (noteName);
+//         // DBG(velLayer + "= " +  juce::String(currentVelLayer));
+//         auto [begin, end] = ranges.getUnchecked (currentVelLayer++);
+//         juce::BigInteger velRange;
+//         velRange.setRange (begin, end - begin, true);
+//
+//         auto sound = soundset->add (new BKSamplerSound <juce::AudioFormatReader>(filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), thisMidiRange, midiNote, 0, velRange, layers, dBFSBelow));
+//
+//         dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
+//
+// //        DBG ("**** loading sample: " + filename);
+// //        DBG ("");
+//         if (shouldExit()) {
+//             velLayerContinue = currentVelLayer++;
+//             return false;
+//         }
+//
 
         //DBG ("done loading main samples for " + filename);
-    }
+    // }
 
     return true;
 }
