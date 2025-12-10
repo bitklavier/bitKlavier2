@@ -26,7 +26,7 @@ void RampModulatorProcessor::prepareToPlay (int samplesPerBlock, double sampleRa
 void RampModulatorProcessor::setTarget( float target )
 {
     target_ = target;
-    if ( value_ != target_ ) state_ = 1;
+    //if ( value_ != target_ ) state_ = 1;
 }
 
 void RampModulatorProcessor::setTime( float time )
@@ -63,8 +63,10 @@ float RampModulatorProcessor::getNextSample()
 void RampModulatorProcessor::triggerModulation()
 {
     DBG("RampModulatorProcessor::triggerModulation()");
+    setTime(*_state.params.time);
     trigger = true;
-    startRamp();
+    target_ = 1.;
+    state_ = 1;
 }
 
 void RampModulatorProcessor::triggerReset()
@@ -75,7 +77,6 @@ void RampModulatorProcessor::triggerReset()
 }
 
 void RampModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,juce::MidiBuffer& midiMessages) {
-    setTime(*_state.params.time);
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
         float rampVal = getNextSample();
