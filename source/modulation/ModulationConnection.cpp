@@ -8,21 +8,21 @@
 #include "ModulationProcessor.h"
 namespace bitklavier
 {
-    namespace
-    {
-        const std::string kModulationSourceDelimiter = "_";
-        const std::set<std::string> kBipolarModulationSourcePrefixes = {
-            "lfo",
-            "random",
-            "pitch",
-            "audio"
-        };
+    //namespace
+    //{
+    const std::string kModulationSourceDelimiter = "_";
+    const std::set<std::string> kBipolarModulationSourcePrefixes = {
+        "lfo",
+        "random",
+        "pitch",
+        "audio"
+    };
 
-        force_inline bool isConnectionAvailable (ModulationConnection* connection)
-        {
-            return connection->source_name.empty() && connection->destination_name.empty();
-        }
+    force_inline bool isConnectionAvailable (ModulationConnection* connection)
+    {
+        return connection->source_name.empty() && connection->destination_name.empty();
     }
+    //}
 
     //    ModulationConnection::ModulationConnection(int index, std::string from, std::string to) :
     //                                                                                               source_name(std::move(from)), destination_name(std::move(to)) {
@@ -75,6 +75,7 @@ namespace bitklavier
 
         return nullptr;
     }
+
     force_inline bool isConnectionAvailable (StateConnection* connection)
     {
         return connection->source_name.empty() && connection->destination_name.empty();
@@ -90,7 +91,6 @@ namespace bitklavier
     }
 
     StateConnectionBank::~StateConnectionBank() {}
-
 
     StateConnection* StateConnectionBank::createConnection (const std::string& from, const std::string& to)
     {

@@ -6,6 +6,7 @@
 #include "ModulatorBase.h"
 #include "ModulationConnection.h"
 #include "ModulationList.h"
+
 bitklavier::ModulationProcessor::ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt) :
        juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
        .withOutput("disabled",juce::AudioChannelSet::mono(),false)
@@ -37,9 +38,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         }
     }
 
-
     buffer.clear();
-
 
     for (auto msg : midiMessages)
     {
@@ -52,8 +51,8 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     for (int i = 0; i <modulators_.size();i++)
     {
-        if (modulators_[i] == nullptr)
-            continue;
+        if (modulators_[i] == nullptr) continue;
+
         //process the modulation into a scratch buffer.
         modulators_[i]->getNextAudioBlock(tmp_buffers[i], midiMessages);
 
@@ -61,9 +60,18 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         {
             for (auto connection : mod_routing[i].mod_connections)
             {
-                if(modulators_[i]->isDefaultBipolar && connection->isBipolar() || (!modulators_[i]->isDefaultBipolar && !connection->isBipolar())) {
-                    buffer.copyFrom(connection->modulation_output_bus_index, 0,tmp_buffers[i].getReadPointer(0,0),buffer.getNumSamples(), connection->getScaling());
-                } else if (modulators_[i]->isDefaultBipolar && !connection->isBipolar()){
+                if(modulators_[i]->isDefaultBipolar && connection->isBipolar() || (!modulators_[i]->isDefaultBipolar && !connection->isBipolar()))
+                {
+                    // this is where it's all happening right now, both for ramps and LFOs
+                    buffer.copyFrom(
+                        connection->modulation_output_bus_index,
+                        0,
+                        tmp_buffers[i].getReadPointer(0,0),
+                        buffer.getNumSamples(),
+                        connection->getScaling());
+                }
+                else if (modulators_[i]->isDefaultBipolar && !connection->isBipolar())
+                {
                     // Remap [-1, 1] → [0, 1] → then scale by unipolar amount
                     auto* src  = tmp_buffers[i].getReadPointer(0);
                     auto* dest = buffer.getWritePointer(connection->modulation_output_bus_index);
@@ -82,7 +90,6 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         //output the modulation to the correct output buffers with scaling
     }
     // melatonin::printSparkline(buffer);
-    //melatonin::printSparkline(buffer);
 }
 
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
@@ -113,6 +120,7 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
     }
     mod_routing[index] = {}; // default construct routing entry
 }
+
 void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
 
     auto it  = std::find(modulators_.begin(), modulators_.end(), mod);
@@ -153,16 +161,12 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
     }
 }
 
-void bitklavier::ModulationProcessor::addModulationConnection(StateConnection* connection){
+void bitklavier::ModulationProcessor::addModulationConnection(StateConnection* connection) {
     all_state_connections_.push_back(connection);
-
-
 
    // auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
     //size_t index = std::distance(modulators_.begin(), it);
-
     //mod_routing[index].mod_connections.push_back(connection);
-
 }
 
 void bitklavier::ModulationProcessor::removeModulationConnection(StateConnection* connection)
@@ -171,6 +175,7 @@ void bitklavier::ModulationProcessor::removeModulationConnection(StateConnection
   all_state_connections_.erase(end, all_state_connections_.end());
 
 };
+
 int bitklavier::ModulationProcessor::createNewModIndex()
 {
 
@@ -188,9 +193,9 @@ int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavie
            return  _connection->modulation_output_bus_index;
        }
    }
-
-        return createNewModIndex();
+    return createNewModIndex();
 }
+
 int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavier::StateConnection& connection)
 {
     for(auto _connection : all_state_connections_) {
@@ -199,7 +204,6 @@ int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavie
             return  _connection->modulation_output_bus_index;
         }
     }
-
     return -1;
 }
 
@@ -213,5 +217,4 @@ ModulatorBase* bitklavier::ModulationProcessor::getModulatorBase(std::string& uu
         }
     }
     return nullptr;
-
 }

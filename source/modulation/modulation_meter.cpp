@@ -26,7 +26,7 @@
 
 ModulationMeter::ModulationMeter(
 SynthSlider* slider, OpenGlMultiQuad* quads, int index) :
-         destination_(slider),
+        destination_(slider),
         quads_(quads), index_(index), current_value_(0.0), mod_percent_(0.0) {
 
   rotary_ = destination_->isRotary() && !destination_->isTextOrCurve();

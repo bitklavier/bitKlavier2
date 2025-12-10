@@ -15,14 +15,11 @@
  */
 #include "synth_base.h"
 #include "SampleLoadManager.h"
-
 #include "FullInterface.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
 #include "synth_gui_interface.h"
-
 #include "sound_engine.h"
 #include "startup.h"
-
 #include "../common/ObjectLists/PreparationList.h"
 #include "Identifiers.h"
 #include "LFOModulator.h"

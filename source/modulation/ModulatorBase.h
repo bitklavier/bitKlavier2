@@ -108,29 +108,33 @@ public:
     std::vector<juce::ValueTree> connections_;
     virtual void getStateInformation (juce::MemoryBlock &destData)=0;
     virtual void setStateInformation (const void *data, int sizeInBytes)=0;
-     bool isDefaultBipolar = false;
+    bool isDefaultBipolar = false;
 };
 
 
 template <typename PluginStateType>
-class ModulatorStateBase : public ModulatorBase{
+class ModulatorStateBase : public ModulatorBase
+{
 public :
 
-    ModulatorStateBase( juce::ValueTree& tree, juce::UndoManager* um = nullptr)
-    : ModulatorBase( tree, um)
-
+    ModulatorStateBase( juce::ValueTree& tree, juce::UndoManager* um = nullptr) : ModulatorBase( tree, um)
     {
-
-                  if(tree.isValid())
-                    chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(tree.createXml(),_state);
+      if(tree.isValid())
+        chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(tree.createXml(),_state);
     }
-    void getStateInformation(juce::MemoryBlock &destData) override {
-    _state.serialize(destData);
-}
-    void setStateInformation (const void *data, int sizeInBytes) override {
-    _state.deserialize (juce::MemoryBlock { data, (size_t) sizeInBytes });
-}
-    ~ModulatorStateBase() override{}
+
+    void getStateInformation(juce::MemoryBlock &destData) override
+    {
+        _state.serialize(destData);
+    }
+
+    void setStateInformation (const void *data, int sizeInBytes) override
+    {
+        _state.deserialize (juce::MemoryBlock { data, (size_t) sizeInBytes });
+    }
+
+    ~ModulatorStateBase() override {}
+
     PluginStateType _state;
 };
 

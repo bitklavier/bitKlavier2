@@ -16,7 +16,6 @@
 
 #include "sound_engine.h"
 #include <juce_audio_processors/juce_audio_processors.h>
-
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 
@@ -90,7 +89,5 @@ namespace bitklavier {
 
         }
     }
-
-
 
 } // namespace bitklavier

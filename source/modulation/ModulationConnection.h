@@ -116,16 +116,9 @@ class ModulationProcessor;
             else if (isOffset())
             {
                 // Unipolar modulation (e.g., 0 to +modVal)
-                // float targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
-                //
-                // modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
-
-                // this one should do sliderVal +/- modVal
-                float targetNorm = 0;
-                if (modVal > sliderVal) targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
-                else targetNorm = range.convertTo0to1(std::max(sliderVal - modVal, start));
-
-                modRangeNorm = targetNorm;
+                //  - currently not used in bK
+                float targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
+                modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
             }
             else
             {
@@ -133,7 +126,7 @@ class ModulationProcessor;
                 if(modVal > sliderVal)
                 {
                     float targetNorm = range.convertTo0to1(std::min(modVal, end));
-                    modRangeNorm = targetNorm - sliderNorm;
+                    modRangeNorm = targetNorm - sliderNorm; // mod system expects value that is offset from sliderNorm
                 }
                 else
                 {

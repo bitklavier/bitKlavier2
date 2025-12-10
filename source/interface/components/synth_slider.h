@@ -350,7 +350,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
 
     //SynthSlider(juce::String name, chowdsp::FloatParameter& param);
     SynthSlider(juce::String name,const juce::ValueTree & vt_to_listen_to);
-  ~SynthSlider();
+    ~SynthSlider();
     virtual void mouseDown(const juce::MouseEvent& e) override;
     virtual void mouseDrag(const juce::MouseEvent& e) override;
     virtual void mouseEnter(const juce::MouseEvent& e) override;
@@ -403,7 +403,6 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
       setScrollWheelEnabled(enabled);
     }
     const std::string* getStringLookup() const { return string_lookup_; }
-
 
     juce::String formatValue(float value);
 
@@ -480,7 +479,6 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
       return OpenGlSlider::findValue(value_id);
     }
 
-
   void addAttachment(chowdsp::SliderAttachment* at){attachment = at;}
 
   float getLiveModulation() const {
@@ -542,11 +540,8 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
     juce::Point<int> last_modulation_edit_position_;
     juce::Point<int> mouse_down_position_;
 
-
     float display_multiply_;
     float display_exponential_base_;
-
-
 
     const std::string* string_lookup_;
 

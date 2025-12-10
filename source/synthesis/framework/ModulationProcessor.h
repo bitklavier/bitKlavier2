@@ -46,11 +46,11 @@ class StateConnection;
         {
 
         }
+
         double getTailLengthSeconds() const override
         {
 
         }
-
 
         void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
 
@@ -60,6 +60,7 @@ class StateConnection;
         {
            return  nullptr;
         }
+
         int getNumPrograms() override
         {
             return 1;
@@ -68,7 +69,6 @@ class StateConnection;
         int getCurrentProgram() override
         {
             return 1;
-
         }
 
         void setCurrentProgram(int index) override
@@ -95,11 +95,13 @@ class StateConnection;
         {
             return true;
         }
+
         const juce::String getProgramName(int index) override
         {
             return "";
         }
-         void addModulationConnection(ModulationConnection*);
+
+        void addModulationConnection(ModulationConnection*);
         void addModulationConnection(StateConnection*);
         void removeModulationConnection(ModulationConnection*);
         void removeModulationConnection(StateConnection*);
@@ -114,8 +116,8 @@ class StateConnection;
         std::vector<ModulationConnection*> all_modulation_connections_;
         std::vector<StateConnection*> all_state_connections_;
 //        std::unordered_map<ModulatorBase*,> outchannel_to_mods_;
-int blockSize_ =0;
-int sampleRate_ = 0;
+        int blockSize_ =0;
+        int sampleRate_ = 0;
         ModulatorBase* getModulatorBase(std::string& uuid);
         juce::ValueTree state;
         /** Calls an action on the main thread via chowdsp::DeferredAction */
@@ -125,14 +127,12 @@ int sampleRate_ = 0;
             mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
         }
         std::unique_ptr<ModulationList >mod_list;
+
     private :
         //could create new bus may need to happen on audio threafd?
         int createNewModIndex();
         chowdsp::DeferredAction mainThreadAction;
-
     };
-
-
 } // bitklavier
 
 #endif //BITKLAVIER2_MODULATIONPROCESSOR_H

@@ -25,8 +25,10 @@ ResetPreparation::ResetPreparation (juce::ValueTree v, OpenGlWrapper& open_gl, j
     addAndMakeVisible (item.get());
     juce::MemoryBlock data;
 
-    width = 245;
-    height = 125;
+    width = state.getProperty(IDs::width);
+    height = state.getProperty(IDs::height);
+    // width = 245;
+    // height = 125;
 }
 
 std::unique_ptr<SynthSection> ResetPreparation::getPrepPopup()

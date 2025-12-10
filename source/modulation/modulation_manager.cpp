@@ -227,6 +227,11 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationDestination)
 };
 
+/*
+ *
+ * ModulationAmountKnob stuff
+ *
+ */
 ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const juce::ValueTree &vt) : SynthSlider(name,juce::ValueTree{}),
     color_component_(nullptr), index_(index), state(vt) {
     setModulationKnob();
@@ -245,6 +250,14 @@ ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const j
     hovering_ = false;
     current_modulator_ = false;
     setRange(0.f, 1.f, 0.f);
+
+    // trying to have mod amount knob mirror destination knob, but so far unsuccessful!
+    // if (!offset_)
+    // {
+    //     DBG("ModulationAmountKnob: overriding rotary params");
+    //     float kRotaryAngle_ = 0.8f * bitklavier::kPi;
+    //     setRotaryParameters(2.0f * bitklavier::kPi - kRotaryAngle, 2.0f * bitklavier::kPi + kRotaryAngle, true);
+    // }
 }
 
 void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
@@ -391,7 +404,6 @@ void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
     else // mod val is actual target val
         this->setRange(dest->getMinimum(), dest->getMaximum(), 0.f);
 
-    DBG("mod knob range = " << dest->getNormalisableRange().getRange().getLength());
     this->textFromValueFunction = dest->attachment->getParameter()->getStringFromValueFunction();
 }
 
@@ -406,6 +418,11 @@ void ModulationAmountKnob::setSource(const std::string &name) {
     repaint();
 }
 
+/*
+ *
+ * ModulationIndicator stuff
+ *
+ */
 void ModulationIndicator::setSource(const std::string &name) {
     repaint();
 }
@@ -449,6 +466,11 @@ void ModulationIndicator::setCurrentModulator(bool current) {
     current_modulator_ = current;
 }
 
+/*
+ *
+ * ModulationManager stuff
+ *
+ */
 ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase *base
 ) : SynthSection("modulation_manager"),
     drag_quad_(Shaders::kRingFragment),
@@ -1193,7 +1215,6 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     if (!hasFreeConnection())
         return;
-
 
     mouse_drag_position_ = getLocalPoint(source, e.getPosition());
     current_source_ = source;

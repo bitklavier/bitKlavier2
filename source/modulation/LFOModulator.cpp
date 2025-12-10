@@ -27,11 +27,8 @@ void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,j
         }
     }
     // melatonin::printSparkline(buffer);
-
-
 }
+
 SynthSection *LFOModulatorProcessor::createEditor() {
-
-        return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
-
+    return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
 }

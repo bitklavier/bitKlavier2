@@ -99,7 +99,7 @@ class ModulationAmountKnob : public SynthSlider {
     bool isBypass() { return bypass_; }
     bool isStereo() { return stereo_; }
     bool isBipolar() { return bipolar_; }
-    bool isOffsetMod() { return offset_; }
+    bool isOffsetMod() { return offset_; } // mod amount becomes offset from slider val when offset_ = true; otherwise mod amount is literal target
     bool enteringValue() { return text_entry_ && text_entry_->isVisible(); }
     bool isCurrentModulator() { return current_modulator_; }
     int index() { return index_; }

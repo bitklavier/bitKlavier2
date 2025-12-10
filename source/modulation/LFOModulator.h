@@ -8,6 +8,7 @@
 #include "ModulatorBase.h"
 #include "PreparationStateImpl.h"
 #include "Identifiers.h"
+
 struct LFOParams : public chowdsp::ParamHolder {
     LFOParams(const juce::ValueTree& v) : chowdsp::ParamHolder("lfo")
     {
@@ -15,21 +16,20 @@ struct LFOParams : public chowdsp::ParamHolder {
     }
 
     chowdsp::FreqHzParameter::Ptr freq
-            {
+    {
         juce::ParameterID{"lfofreq",100},
         "Freq",
         juce::NormalisableRange{0.001f,10.f,.001f},
         0.001f
-            };
+    };
 };
+
 class LFOModulatorProcessor : public ModulatorStateBase<bitklavier::PreparationStateImpl<LFOParams>> {
 
 public :
     LFOModulatorProcessor(juce::ValueTree&);
-    ~LFOModulatorProcessor()
-    {
+    ~LFOModulatorProcessor() {}
 
-    }
     void process() override{};
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;
     void prepareToPlay (int samplesPerBlock, double sampleRate ) override {
@@ -38,6 +38,7 @@ public :
         setFrequency(_state.params.freq->getCurrentValue()); // 1 Hz LFO
         setDepth(1.f);     // Half modulation depth
     }
+
     void releaseResources() override {}
     SynthSection* createEditor() override;
 
@@ -46,6 +47,7 @@ public :
         trigger = true;
     }
     bool trigger = false;
+
     static constexpr ModulatorType type = ModulatorType::AUDIO;
 
     void prepare(const juce::dsp::ProcessSpec& spec)
@@ -88,6 +90,5 @@ private:
     float phase = 0.0f;
     float phaseIncrement = 0.0f;
 };
-
 
 #endif //BITKLAVIER2_LFOMODULATOR_H

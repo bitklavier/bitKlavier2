@@ -14,34 +14,47 @@ struct RampParams : public chowdsp::ParamHolder {
         add(time);
     }
 
-    chowdsp::TimeMsParameter::Ptr time
-            {
+    chowdsp::TimeMsParameter::Ptr time //ms
+    {
         juce::ParameterID{"Time",100},
         "Time",
         juce::NormalisableRange{10.f,10000.f,1.f,2.f,false},
         10.f
-            };
+    };
 };
+
 class RampModulatorProcessor : public ModulatorStateBase<bitklavier::PreparationStateImpl<RampParams>> {
 
 public :
     RampModulatorProcessor(juce::ValueTree&);
-    ~RampModulatorProcessor()
-    {
+    ~RampModulatorProcessor() {}
+    void prepareToPlay (int samplesPerBlock, double sampleRate ) override;
 
-    }
+    void setTarget(float target);
+    void setTime(float time);
+    void setRate(float rate);
+    float getNextSample();
+    float getValue() { return value_; }
+    void startRamp() { state_ = 1; }
+    void stopRamp() { state_ = 0; }
+
     void process() override{};
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;
-    void prepareToPlay (int samplesPerBlock, double sampleRate ) override {}
+
     void releaseResources() override {}
     SynthSection* createEditor() override;
+    void triggerModulation() override;
+    void triggerReset() override;
 
-    void triggerModulation() override
-    {
-        trigger = true;
-    }
-    bool trigger = false;
     static constexpr ModulatorType type = ModulatorType::AUDIO;
+
+    bool trigger = false;
+    float value_;
+    float target_;
+    float rate_;
+    int state_;
+
+    float sampleRate;
 
 };
 

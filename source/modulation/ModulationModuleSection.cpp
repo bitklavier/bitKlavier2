@@ -23,13 +23,12 @@ ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
     scroll_bar_->addListener(this);
     modulation_sections_.reserve(modulation_list_->objects.size());
 
-
      for (auto& mod : modulation_list_->objects)
      {
          auto *module_section = new ModulationSection(mod->state, (mod->createEditor()), undo);
-        container_->addSubSection(module_section);
-        module_section->setInterceptsMouseClicks(false,true);
-        modulation_sections_.emplace_back(std::move(module_section));
+         container_->addSubSection(module_section);
+         module_section->setInterceptsMouseClicks(false,true);
+         modulation_sections_.emplace_back(std::move(module_section));
      }
      parent = modulation_list_->getValueTree();
      modulation_list_->addListener(this);
