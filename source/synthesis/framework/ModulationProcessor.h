@@ -33,6 +33,7 @@ class StateConnection;
         }
 
         void prepareToPlay(double sampleRate, int samplesPerBlock) override {
+            DBG("ModulationProcessor::prepareToPlay");
             setRateAndBufferSizeDetails(sampleRate,samplesPerBlock);
             for(auto& buffer : tmp_buffers)
             {
@@ -40,6 +41,10 @@ class StateConnection;
             }
             sampleRate_ = sampleRate;
             blockSize_ = samplesPerBlock;
+            for (int i = 0; i <modulators_.size();i++)
+            {
+                modulators_[i]->prepareToPlay(sampleRate,samplesPerBlock);
+            }
         }
 
         void releaseResources() override

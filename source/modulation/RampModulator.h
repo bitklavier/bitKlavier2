@@ -31,7 +31,7 @@ public :
     void prepareToPlay (int samplesPerBlock, double sampleRate ) override;
 
     void setTarget(float target);
-    void setTime(float time);
+    void setTime(float timeToDest);
     void setRate(float rate);
     float getNextSample();
     float getValue() { return value_; }
