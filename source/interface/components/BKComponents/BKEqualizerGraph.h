@@ -12,7 +12,7 @@
 class BKEqualizerGraph  : public juce::Component
 {
 public:
-    BKEqualizerGraph(EQProcessor &eqProcessor) : eq(eqProcessor){}
+    BKEqualizerGraph(EQParams *_params) : params(_params){}
     ~BKEqualizerGraph() override {}
 
     class Listener
@@ -55,7 +55,7 @@ public:
         mags.resize(w);
         for (int i = 0; i < w; i++) {
             auto freq = juce::mapToLog10(double(i) / double(w), 20.0, 20000.0);
-            double mag = eq.magForFreq(freq);
+            double mag = params->magForFreq(freq);
 
             mags[i] = juce::Decibels::gainToDecibels(mag);
         }
@@ -96,11 +96,7 @@ public:
     // hmmmm is there a thread safety issue here?
     // void setSampleRate(double sr) { eq.setSampleRate(sr); }
     // void updateEQ(EQProcessor& newEQ) { eq = newEQ; }
-
+    EQParams *params;
 private:
-    EQProcessor& eq;
-
-
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKEqualizerGraph)
 };

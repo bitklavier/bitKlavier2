@@ -10,8 +10,8 @@
 class OpenGL_EqualizerGraph : public OpenGlAutoImageComponent<BKEqualizerGraph>, BKEqualizerGraph::Listener
 {
     public:
-    OpenGL_EqualizerGraph (EQProcessor &eqProcessor, chowdsp::ParameterListeners &listeners) :
-        OpenGlAutoImageComponent<BKEqualizerGraph>(eqProcessor)
+    OpenGL_EqualizerGraph (EQParams *params, chowdsp::ParameterListeners &listeners) :
+        OpenGlAutoImageComponent<BKEqualizerGraph>(params)
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());

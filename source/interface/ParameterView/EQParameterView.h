@@ -43,11 +43,11 @@ public:
 
         // EQ Graph
         // equalizerGraph = std::static_pointer_cast<OpenGlComponent>(
-        //     std::make_shared<OpenGL_EqualizerGraph>(&this, listeners)
+        //     std::make_shared<OpenGL_EqualizerGraph>(&params, listeners)
         // );
         // addOpenGlComponent (equalizerGraph);
-        // equalizerGraph = std::make_unique<OpenGL_EqualizerGraph>(&this, listeners);
-        // addOpenGlComponent (equalizerGraph);
+        equalizerGraph = std::make_unique<OpenGL_EqualizerGraph> (&params, listeners);
+        addOpenGlComponent (equalizerGraph->getImageComponent());
 
 
         // eq filter sections
@@ -134,7 +134,7 @@ public:
     std::unique_ptr<chowdsp::ButtonAttachment> reset_button_attachment;
 
     // equalizer graph
-    std::unique_ptr<OpenGL_EqualizerGraph> equalizerGraph;
+    std::shared_ptr<OpenGL_EqualizerGraph> equalizerGraph;
 
     // EQ Filter Sections
     std::unique_ptr<EQCutFilterSection> loCutSection;

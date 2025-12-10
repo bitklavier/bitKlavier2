@@ -74,9 +74,6 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
         true
     };
 
-    // Filter Coefficients
-    juce::dsp::IIR::Filter<float> filter;
-
     void resetToDefault()
     {
         filterFreq->setParameterValue(filterFreq->getDefaultValue());
@@ -129,10 +126,6 @@ struct EQCutFilterParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal,
         true
     };
-
-    // Filter
-    using Filter = juce::dsp::IIR::Filter<float>;
-    juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter> filter;
 
     void resetToDefault()
     {

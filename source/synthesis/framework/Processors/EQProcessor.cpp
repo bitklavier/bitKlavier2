@@ -11,13 +11,14 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
     : PluginBase (parent, vt, nullptr, eqBusLayout())
 {
     parent.getValueTree().addListener(this);
+    // state.params.sampleRate = getSampleRate();
 }
 
 void EQProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
-    leftChain.prepare(spec);
-    rightChain.prepare(spec);
+    state.params.leftChain.prepare(spec);
+    state.params.rightChain.prepare(spec);
     updateCoefficients();
 }
 
@@ -28,6 +29,8 @@ bool EQProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayou
 
 void EQProcessor::updateCoefficients()
 {
+    // state.params.sampleRate = getSampleRate();
+
     auto peak1Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(),
         state.params.peak1FilterParams.filterFreq->getCurrentValue(),
         state.params.peak1FilterParams.filterQ->getCurrentValue(),
@@ -41,19 +44,19 @@ void EQProcessor::updateCoefficients()
         state.params.peak3FilterParams.filterQ->getCurrentValue(),
         state.params.peak3FilterParams.filterGain->getCurrentValue());
 
-    *leftChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
-    *leftChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
-    *leftChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
-    *rightChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
-    *rightChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
-    *rightChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
+    *state.params.leftChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
+    *state.params.leftChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
+    *state.params.leftChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
+    *state.params.rightChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
+    *state.params.rightChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
+    *state.params.rightChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
 
-    leftChain.setBypassed<ChainPositions::Peak1>(!state.params.peak1FilterParams.filterActive->get());
-    leftChain.setBypassed<ChainPositions::Peak2>(!state.params.peak2FilterParams.filterActive->get());
-    leftChain.setBypassed<ChainPositions::Peak3>(!state.params.peak3FilterParams.filterActive->get());
-    rightChain.setBypassed<ChainPositions::Peak1>(!state.params.peak1FilterParams.filterActive->get());
-    rightChain.setBypassed<ChainPositions::Peak2>(!state.params.peak2FilterParams.filterActive->get());
-    rightChain.setBypassed<ChainPositions::Peak3>(!state.params.peak3FilterParams.filterActive->get());
+    state.params.leftChain.setBypassed<ChainPositions::Peak1>(!state.params.peak1FilterParams.filterActive->get());
+    state.params.leftChain.setBypassed<ChainPositions::Peak2>(!state.params.peak2FilterParams.filterActive->get());
+    state.params.leftChain.setBypassed<ChainPositions::Peak3>(!state.params.peak3FilterParams.filterActive->get());
+    state.params.rightChain.setBypassed<ChainPositions::Peak1>(!state.params.peak1FilterParams.filterActive->get());
+    state.params.rightChain.setBypassed<ChainPositions::Peak2>(!state.params.peak2FilterParams.filterActive->get());
+    state.params.rightChain.setBypassed<ChainPositions::Peak3>(!state.params.peak3FilterParams.filterActive->get());
 
     // calculate and set low cut filter coefficients
     int lowCutSlope = state.params.loCutFilterParams.filterSlope->getCurrentValue();
@@ -62,12 +65,12 @@ void EQProcessor::updateCoefficients()
         getSampleRate(),
         lowCutSlope / 6);
 
-    auto& leftLowCutChain = leftChain.get<ChainPositions::LowCut>();
+    auto& leftLowCutChain = state.params.leftChain.get<ChainPositions::LowCut>();
     leftLowCutChain.setBypassed<Slope::S12>(true);
     leftLowCutChain.setBypassed<Slope::S24>(true);
     leftLowCutChain.setBypassed<Slope::S36>(true);
     leftLowCutChain.setBypassed<Slope::S48>(true);
-    auto& rightLowCutChain = rightChain.get<ChainPositions::LowCut>();
+    auto& rightLowCutChain = state.params.rightChain.get<ChainPositions::LowCut>();
     rightLowCutChain.setBypassed<Slope::S12>(true);
     rightLowCutChain.setBypassed<Slope::S24>(true);
     rightLowCutChain.setBypassed<Slope::S36>(true);
@@ -116,12 +119,12 @@ void EQProcessor::updateCoefficients()
         getSampleRate(),
         highCutSlope / 6);
 
-    auto& leftHighCutChain = leftChain.get<ChainPositions::HighCut>();
+    auto& leftHighCutChain = state.params.leftChain.get<ChainPositions::HighCut>();
     leftHighCutChain.setBypassed<Slope::S12>(true);
     leftHighCutChain.setBypassed<Slope::S24>(true);
     leftHighCutChain.setBypassed<Slope::S36>(true);
     leftHighCutChain.setBypassed<Slope::S48>(true);
-    auto& rightHighCutChain = rightChain.get<ChainPositions::HighCut>();
+    auto& rightHighCutChain = state.params.rightChain.get<ChainPositions::HighCut>();
     rightHighCutChain.setBypassed<Slope::S12>(true);
     rightHighCutChain.setBypassed<Slope::S24>(true);
     rightHighCutChain.setBypassed<Slope::S36>(true);
@@ -166,54 +169,11 @@ void EQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuff
     juce::dsp::AudioBlock<float> block(buffer);
     auto leftBlock = block.getSingleChannelBlock(0);
     juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-    leftChain.process(leftContext);
+    state.params.leftChain.process(leftContext);
     if (buffer.getNumChannels() > 1)
     {
         auto rightBlock = block.getSingleChannelBlock(1);
         juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-        rightChain.process(rightContext);
+        state.params.rightChain.process(rightContext);
     }
-}
-
-double EQProcessor::magForFreq(double freq) {
-    double mag = 1.f;
-
-    // Since leftChain and rightChain use the same coefficients, it's fine to just get them from left
-    if (!leftChain.isBypassed<ChainPositions::Peak1>())
-        mag *= leftChain.get<ChainPositions::Peak1>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if (!leftChain.isBypassed<ChainPositions::Peak2>())
-        mag *= leftChain.get<ChainPositions::Peak2>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if (!leftChain.isBypassed<ChainPositions::Peak3>())
-        mag *= leftChain.get<ChainPositions::Peak3>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-
-    if(!leftChain.get<ChainPositions::LowCut>().isBypassed<0>())
-        mag *= leftChain.get<ChainPositions::LowCut>().get<0>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if(!leftChain.get<ChainPositions::LowCut>().isBypassed<1>())
-        mag *= leftChain.get<ChainPositions::LowCut>().get<1>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if(!leftChain.get<ChainPositions::LowCut>().isBypassed<2>())
-        mag *= leftChain.get<ChainPositions::LowCut>().get<2>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if(!leftChain.get<ChainPositions::LowCut>().isBypassed<3>())
-        mag *= leftChain.get<ChainPositions::LowCut>().get<3>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-
-    if(!leftChain.get<ChainPositions::HighCut>().isBypassed<0>())
-        mag *= leftChain.get<ChainPositions::HighCut>().get<0>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if(!leftChain.get<ChainPositions::HighCut>().isBypassed<1>())
-        mag *= leftChain.get<ChainPositions::HighCut>().get<1>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if(!leftChain.get<ChainPositions::HighCut>().isBypassed<2>())
-        mag *= leftChain.get<ChainPositions::HighCut>().get<2>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-    if(!leftChain.get<ChainPositions::HighCut>().isBypassed<3>())
-        mag *= leftChain.get<ChainPositions::HighCut>().get<3>()
-        .coefficients->getMagnitudeForFrequency(freq, getSampleRate());
-
-    return mag;
 }

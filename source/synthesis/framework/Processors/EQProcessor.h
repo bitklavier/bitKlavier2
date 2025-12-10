@@ -49,6 +49,66 @@ struct EQParams : chowdsp::ParamHolder
     EQCutFilterParams hiCutFilterParams{"hiCut"};
 
     juce::Array<bool> activeFilters = {false, false, false, false, false};
+
+    // DSP stuff
+    using Filter = juce::dsp::IIR::Filter<float>;
+    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+    using Chain = juce::dsp::ProcessorChain<CutFilter, Filter, Filter, Filter, CutFilter>;
+    Chain leftChain;
+    Chain rightChain;
+    
+    double sampleRate = 44100;
+
+    double magForFreq(double freq) {
+        double mag = 1.f;
+
+        // Since leftChain and state.params.rightChain use the same coefficients, it's fine to just get them from left
+        if (!leftChain.isBypassed<ChainPositions::Peak1>())
+            mag *= leftChain.get<ChainPositions::Peak1>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!leftChain.isBypassed<ChainPositions::Peak2>())
+            mag *= leftChain.get<ChainPositions::Peak2>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!leftChain.isBypassed<ChainPositions::Peak3>())
+            mag *= leftChain.get<ChainPositions::Peak3>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+
+        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<0>())
+            mag *= leftChain.get<ChainPositions::LowCut>().get<0>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<1>())
+            mag *= leftChain.get<ChainPositions::LowCut>().get<1>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<2>())
+            mag *= leftChain.get<ChainPositions::LowCut>().get<2>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<3>())
+            mag *= leftChain.get<ChainPositions::LowCut>().get<3>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+
+        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<0>())
+            mag *= leftChain.get<ChainPositions::HighCut>().get<0>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<1>())
+            mag *= leftChain.get<ChainPositions::HighCut>().get<1>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<2>())
+            mag *= leftChain.get<ChainPositions::HighCut>().get<2>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<3>())
+            mag *= leftChain.get<ChainPositions::HighCut>().get<3>()
+            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+
+        return mag;
+    }
+
+    enum ChainPositions {
+        LowCut,
+        Peak1,
+        Peak2,
+        Peak3,
+        HighCut
+    };
 };
 
 /****************************************************************************************/
@@ -120,20 +180,6 @@ public:
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
 private:
-    // DSP stuff
-    using Filter = juce::dsp::IIR::Filter<float>;
-    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-    using Chain = juce::dsp::ProcessorChain<CutFilter, Filter, Filter, Filter, CutFilter>;
-    using Chain = juce::dsp::ProcessorChain<
-        state.params.loCutFilterParams.filter->get(),
-        state.params.peak1FilterParams.filter->get(),
-        state.params.peak2FilterParams.filter->get(),
-        state.params.peak3FilterParams.filter->get(),
-        state.params.hiCutFilterParams.filter->get()>;
-
-
-    Chain leftChain;
-    Chain rightChain;
 
     enum ChainPositions {
         LowCut,

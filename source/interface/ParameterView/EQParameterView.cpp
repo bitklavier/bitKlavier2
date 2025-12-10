@@ -21,7 +21,7 @@ void EQParameterView::resized()
     bounds.removeFromRight(sidePadding);
 
     auto topHalf = bounds.removeFromTop (bounds.getHeight()/2);
-    // equalizerGraph->setBounds(topHalf);
+    equalizerGraph->setBounds(topHalf);
     activeEq_toggle->setBounds (activeBounds);
     reset_button->setBounds(resetBounds);
 
