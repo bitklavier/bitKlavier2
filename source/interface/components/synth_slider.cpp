@@ -108,11 +108,61 @@ void OpenGlSlider::redoImage(bool skip_image) {
         float t = valueToProportionOfLength(getValue());
         slider_quad_->setThumbColor(thumb_color_);
 
+        /*
+        * modified here, to try to achieve 7-5 o'clock behavior
+        */
+        // slider_quad_->setShaderValue(0, std::abs(t)); // send magnitude only (0..1)
+        // if (t > 0.0f) {
+        //     slider_quad_->setColor(unselected_color_);
+        //     slider_quad_->setAltColor(selected_color_);
+        // } else {
+        //     slider_quad_->setColor(selected_color_);
+        //     slider_quad_->setAltColor(unselected_color_);
+        // }
+
+        /*
+         * original here
+         */
         if (t > 0.0f) {
-            slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(bitklavier::kPi, -bitklavier::kPi, t));
+            auto interpolatedShaderVal = bitklavier::utils::interpolate(bitklavier::kPi, -bitklavier::kPi, t);
+            /*
+             * mapping:
+             * - if t is between 0 and 0.5, shader val should be between -0.8 and -twoPi
+             * - if t is between 0.5 and 1, shader val should be between twoPi and 0.8
+             */
+            // if (t < 0.5f)
+            // {
+            //     interpolatedShaderVal = bitklavier::utils::interpolate(-0.8f, -bitklavier::kPi * 2.0f, t);
+            //     slider_quad_->setColor(selected_color_);
+            //     slider_quad_->setAltColor(unselected_color_);
+            // }
+            // else
+            // {
+            //     interpolatedShaderVal = bitklavier::utils::interpolate(bitklavier::kPi * 2.0f, 0.8f, t);
+            //     slider_quad_->setColor(unselected_color_);
+            //     slider_quad_->setAltColor(selected_color_);
+            // }
+
+            // if (t < 0.5f)
+            // {
+            //     slider_quad_->setColor(unselected_color_);
+            //     slider_quad_->setAltColor(selected_color_);
+            //
+            // }
+            // else
+            // {
+            //     slider_quad_->setColor(selected_color_);
+            //     slider_quad_->setAltColor(unselected_color_);
+            // }
+
+            DBG("shader val = " << interpolatedShaderVal << " t = " << t);
+            slider_quad_->setShaderValue(0, interpolatedShaderVal);
+            // orig:
             slider_quad_->setColor(unselected_color_);
             slider_quad_->setAltColor(selected_color_);
         } else {
+            // we don't seem to ever hit this at the moment
+            DBG("shader val 2 = " << bitklavier::utils::interpolate(-bitklavier::kPi, bitklavier::kPi, -t) << " t = " << t);
             slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(-bitklavier::kPi, bitklavier::kPi, -t));
             slider_quad_->setColor(selected_color_);
             slider_quad_->setAltColor(unselected_color_);
