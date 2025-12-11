@@ -91,6 +91,8 @@ public:
     void scrollBarMoved(juce::ScrollBar* scroll_bar, double range_start) override;
     virtual void setScrollBarRange();
 
+    void buttonClicked(juce::Button* clicked_button) override;
+
     void addListener(Listener* listener) { listeners_.push_back(listener); }
     void effectsScrolled(int position) override {
         setScrollBarRange();
@@ -102,6 +104,7 @@ public:
 
     virtual PopupItems createPopupMenu() = 0;
     virtual void handlePopupResult(int result) = 0;
+
 protected:
     std::vector<Listener*> listeners_;
     EffectsViewport viewport_;
@@ -110,8 +113,8 @@ protected:
     juce::CriticalSection open_gl_critical_section_;
     std::vector<std::unique_ptr<ModulationSection>> modulation_sections_;
     std::unique_ptr<OpenGlScrollBar> scroll_bar_;
-
-
+    std::unique_ptr<OpenGlTextButton> addModButton;
+    std::shared_ptr<PlainTextComponent> modListTitle;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulesInterface)
 };

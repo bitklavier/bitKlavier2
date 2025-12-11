@@ -34,7 +34,7 @@ ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
      modulation_list_->addListener(this);
 //    factory.registerType<OscillatorModuleProcessor, juce::ValueTree, LEAF*>("osc");
 //    factory.registerType<FilterModuleProcessor, juce::ValueTree, LEAF*>("filt");
-    addListener(m);
+     addListener(m);
 }
 
 void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
@@ -106,19 +106,20 @@ void ModulationModuleSection::handlePopupResult(int result) {
         undo.beginNewTransaction();
         parent.appendChild(t,&undo);
 
-    } else if (result == 2)
+    }
+    else if (result == 2)
     {
         juce::ValueTree t(IDs::modulationproc);
-        t.setProperty(IDs::type, "state", nullptr);
-        t.setProperty(IDs::isState, true, nullptr);
+        t.setProperty(IDs::type, "lfo", nullptr);
+        t.setProperty(IDs::isState, false, nullptr);
         undo.beginNewTransaction();
         parent.appendChild(t,&undo);
     }
     else if (result == 3)
     {
         juce::ValueTree t(IDs::modulationproc);
-        t.setProperty(IDs::type, "lfo", nullptr);
-        t.setProperty(IDs::isState, false, nullptr);
+        t.setProperty(IDs::type, "state", nullptr);
+        t.setProperty(IDs::isState, true, nullptr);
         undo.beginNewTransaction();
         parent.appendChild(t,&undo);
     }
@@ -141,8 +142,14 @@ void ModulationModuleSection::setEffectPositions() {
     juce::Point<int> position = viewport_.getViewPosition();
     for(auto& section : modulation_sections_)
     {
-        section->setBounds(shadow_width, y, effect_width, effect_height);
-        y += effect_height + padding;
+        int effect_height_temp = effect_height;
+        if (section->state.getProperty(IDs::isState))
+        {
+            // state mods don't need as much space since they don't have a knob
+            effect_height_temp *= 0.85;
+        }
+        section->setBounds(shadow_width, y, effect_width, effect_height_temp);
+        y += effect_height_temp + padding;
     }
 
     container_->setBounds(0, 0, viewport_.getWidth(), y - padding);
@@ -165,9 +172,9 @@ void ModulationModuleSection::setEffectPositions() {
 PopupItems ModulationModuleSection::createPopupMenu()
 {
     PopupItems options;
-    options.addItem(1, "add ramp" );
-    options.addItem(2, "add state");
-    options.addItem(3, "add lfo");
+    options.addItem(1, "value (smoothed)" );
+    options.addItem(2, "oscillator (lfo)");
+    options.addItem(3, "state");
     return options;
 }
 

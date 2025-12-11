@@ -1215,7 +1215,8 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button)
     if (clicked_button == exit_button_.get())
     {
         reset();
-    } else if (clicked_button == sampleSelector.get()) {
+    }
+    else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         auto string_names = parent->getSynth()->sampleLoadManager->getAllSampleSets();

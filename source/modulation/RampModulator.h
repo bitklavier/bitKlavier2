@@ -9,14 +9,14 @@
 #include "PreparationStateImpl.h"
 #include "Identifiers.h"
 struct RampParams : public chowdsp::ParamHolder {
-    RampParams(const juce::ValueTree& v) : chowdsp::ParamHolder("ramp")
+    RampParams(const juce::ValueTree& v) : chowdsp::ParamHolder("value")
     {
         add(time);
     }
 
     chowdsp::TimeMsParameter::Ptr time //ms
     {
-        juce::ParameterID{"Time",100},
+        juce::ParameterID{"Smooth Time",100},
         "Time",
         juce::NormalisableRange{10.f,10000.f,1.f,2.f,false},
         10.f

@@ -2,8 +2,8 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "open_gl_background.h"
-
 #include "envelope_section.h"
+
 namespace bitklavier {
     namespace parameters_view_detail {
 

@@ -17,7 +17,8 @@ struct LFOParams : public chowdsp::ParamHolder {
 
     chowdsp::FreqHzParameter::Ptr freq
     {
-        juce::ParameterID{"lfofreq",100},
+        // juce::ParameterID{"lfofreq",100},
+        juce::ParameterID{"LFO Frequency",100},
         "Freq",
         juce::NormalisableRange{0.001f,10.f,.001f},
         0.001f

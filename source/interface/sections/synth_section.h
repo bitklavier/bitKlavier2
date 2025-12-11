@@ -42,6 +42,7 @@ class OpenGlComponent;
 class PresetSelector;
 class SynthSlider;
 class OpenGlBackground;
+
 struct PopupItems {
   int id;
   std::string name;
@@ -238,6 +239,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     float getDisplayScale() const;
     void addOpenGlComponent(std::shared_ptr<OpenGlComponent> open_gl_component, bool to_beginning = false, bool makeVisible = true);
     void addButton(OpenGlToggleButton* button, bool show = true);
+
   protected:
     void setSliderHasHzAlternateDisplay(SynthSlider* slider);
     void setSidewaysHeading(bool sideways) { sideways_heading_ = sideways; }
