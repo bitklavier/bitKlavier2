@@ -43,7 +43,7 @@ class StateConnection;
             blockSize_ = samplesPerBlock;
             for (int i = 0; i <modulators_.size();i++)
             {
-                modulators_[i]->prepareToPlay(sampleRate,samplesPerBlock);
+                modulators_[i]->prepareToPlay(sampleRate, samplesPerBlock);
             }
         }
 

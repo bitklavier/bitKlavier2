@@ -95,7 +95,7 @@ public:
     juce::String name;
     virtual void process() =0;
     virtual void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages)  {}
-    virtual void prepareToPlay (int samplesPerBlock, double sampleRate )  {}
+    virtual void prepareToPlay (double sampleRate, int samplesPerBlock)  {}
     virtual void releaseResources() {}
     virtual SynthSection* createEditor() = 0;
     bitklavier::ModulationProcessor* parent_;

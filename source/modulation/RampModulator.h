@@ -28,7 +28,7 @@ class RampModulatorProcessor : public ModulatorStateBase<bitklavier::Preparation
 public :
     RampModulatorProcessor(juce::ValueTree&);
     ~RampModulatorProcessor() {}
-    void prepareToPlay (int samplesPerBlock, double sampleRate ) override;
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
 
     void setTarget(float target);
     void setTime(float timeToDest);
@@ -48,7 +48,6 @@ public :
 
     static constexpr ModulatorType type = ModulatorType::AUDIO;
 
-    bool trigger = false;
     float value_;
     float target_;
     float rate_;

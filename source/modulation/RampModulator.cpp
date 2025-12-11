@@ -15,9 +15,9 @@ RampModulatorProcessor::RampModulatorProcessor(juce::ValueTree& vt) : ModulatorS
     state_ = 0;
 }
 
-void RampModulatorProcessor::prepareToPlay (int samplesPerBlock, double sampleRate_ )
+void RampModulatorProcessor::prepareToPlay (double sampleRate_, int samplesPerBlock)
 {
-    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32>(samplesPerBlock), 1};
+    juce::dsp::ProcessSpec spec { sampleRate_, static_cast<juce::uint32>(samplesPerBlock), 1};
     //sampleRate = spec.sampleRate;
     sampleRate = sampleRate_;
     DBG("RampModulator sample rate = " << sampleRate);
@@ -38,6 +38,7 @@ void RampModulatorProcessor::setTime( float timeToDest )
     }
 
     rate_ = fabs(target_ - value_) / ( timeToDest * sampleRate * 0.001 );
+    DBG("rate = " << rate_ << " timeToDest = " << timeToDest << " value_ = " << value_ << " target_ = " << target_ << "");
 }
 
 float RampModulatorProcessor::getNextSample()
@@ -65,16 +66,14 @@ float RampModulatorProcessor::getNextSample()
 
 void RampModulatorProcessor::triggerModulation()
 {
-    DBG("RampModulatorProcessor::triggerModulation()");
-    setTime(*_state.params.time);
-    trigger = true;
+    DBG("RampModulatorProcessor::triggerModulation(), time = " << *_state.params.time);
     target_ = 1.;
     state_ = 1;
+    setTime(*_state.params.time);
 }
 
 void RampModulatorProcessor::triggerReset()
 {
-    trigger = false;
     value_ = 0;
     state_ = 0;
 }

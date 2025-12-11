@@ -32,7 +32,7 @@ public :
 
     void process() override{};
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;
-    void prepareToPlay (int samplesPerBlock, double sampleRate ) override {
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override {
         juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32>(samplesPerBlock), 1};
         prepare(spec);
         setFrequency(_state.params.freq->getCurrentValue()); // 1 Hz LFO
