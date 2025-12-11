@@ -119,7 +119,7 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
     }
     mod_routing[index] = {}; // default construct routing entry
 
-    mod->prepareToPlay(blockSize_, sampleRate_);
+    mod->prepareToPlay(sampleRate_, blockSize_);
 }
 
 void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {

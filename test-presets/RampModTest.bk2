@@ -5,7 +5,7 @@
     <PREPARATIONS>
       <direct type="0" width="147.0" height="75.0" x_y="411, 322" uuid="801d572980744466a2638cfcef65b5a0"
               soundset="syncglobal" nodeID="2149406505" numIns="1" numOuts="2"
-              Main="0.000" Hammers="-24.000" Resonance="0.000" Pedal="-6.000"
+              Main="-27.407" Hammers="-24.000" Resonance="0.000" Pedal="-6.000"
               Send="0.000" OutputGain="0.000" resonanceLoaded="1" hammerLoaded="1"
               pedalLoaded="1" attack="3.000" decay="10.000" sustain="1.000"
               release="50.000" attackpower="0.000" decaypower="0.000" releasepower="0.000"
@@ -35,7 +35,9 @@
                   numIns="1">
         <PORT nodeID="601041651" chIdx="4096" isIn="1"/>
         <modulationproc type="ramp" isState="0" uuid="5b85bff8dd374422bf5f32075623bf97"
-                        Time="4131.000"/>
+                        Time="4960.000"/>
+        <modulationproc type="ramp" isState="0" uuid="8209e13462f04f66a2aa3e668f9280b0"
+                        Time="1490.000"/>
       </modulation>
       <keymap type="7" width="111.0000076293945" height="63.00000381469727"
               x_y="532, 590" uuid="960c50b1184c440691dd2bbaf07a4a13" soundset="syncglobal"
@@ -83,8 +85,10 @@
       <MODCONNECTION isMod="1" src="601041651" dest="2149406505">
         <ModulationConnection uuid="28a0847c160743ff823c76360e01aea0" isState="0" dest="801d572980744466a2638cfcef65b5a0_Hammers"
                               src="23d32af3b9da496db8656c0be0f95d69_ramp-5b85bff8dd374422bf5f32075623bf97_mod"
-                              sliderval="-23.99999809265137" mod0to1="-0.1552374660968781"
-                              modAmt="-35.41453170776367"/>
+                              sliderval="-24.0" mod0to1="-0.1699948906898499" modAmt="-36.65581893920898"/>
+        <ModulationConnection uuid="bef62ae7aa7a42fba8a5dad9c2890a40" isState="0" dest="801d572980744466a2638cfcef65b5a0_Main"
+                              src="23d32af3b9da496db8656c0be0f95d69_ramp-8209e13462f04f66a2aa3e668f9280b0_mod"
+                              sliderval="-27.40728759765625" mod0to1="0.5236197113990784" modAmt="1.478123903274536"/>
       </MODCONNECTION>
       <RESETCONNECTION isMod="1" src="2538387067" dest="601041651"/>
     </MODCONNECTIONS>

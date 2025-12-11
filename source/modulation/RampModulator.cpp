@@ -1,9 +1,11 @@
 //
 // Created by Davis Polito on 2/7/25.
+// --ramp code partially derived from Envelope in STK
 //
 
 #include "RampModulator.h"
 #include "ParameterView/ParametersView.h"
+
 RampModulatorProcessor::RampModulatorProcessor(juce::ValueTree& vt) : ModulatorStateBase<bitklavier::PreparationStateImpl<RampParams>>(vt)
 {
 //    vt.setProperty(IDs::uuid, state.params.processor.processorUniqueID, nullptr);
@@ -28,7 +30,6 @@ void RampModulatorProcessor::prepareToPlay (double sampleRate_, int samplesPerBl
 void RampModulatorProcessor::setTarget( float target )
 {
     target_ = target;
-    //if ( value_ != target_ ) state_ = 1;
 }
 
 void RampModulatorProcessor::setTime( float timeToDest )
@@ -38,7 +39,7 @@ void RampModulatorProcessor::setTime( float timeToDest )
     }
 
     rate_ = fabs(target_ - value_) / ( timeToDest * sampleRate * 0.001 );
-    DBG("rate = " << rate_ << " timeToDest = " << timeToDest << " value_ = " << value_ << " target_ = " << target_ << "");
+    DBG("rate = " << rate_ << " timeToDest = " << timeToDest << " value_ = " << value_ << " target_ = " << target_ << " sampleRate = " << sampleRate << "");
 }
 
 float RampModulatorProcessor::getNextSample()
