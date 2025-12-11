@@ -6,12 +6,12 @@
 #define BITKLAVIER_MODULATIONCONNECTION_H
 #include "open_gl_component.h"
 #include "valuetree_utils/VariantConverters.h"
-
 #include <juce_data_structures/juce_data_structures.h>
 #include "Identifiers.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <chowdsp_parameters/chowdsp_parameters.h>
 #include "StateModulator.h"
+
 class ModulatorBase;
 namespace bitklavier {
 class ModulationProcessor;
@@ -27,6 +27,7 @@ class ModulationProcessor;
             setDestination(to);
             setSource(from);
         }
+
         ~ModulationConnection()
         {
             //count--;
@@ -241,13 +242,13 @@ struct StateConnection : public ModulatorBase::Listener{
             index_in_all_mods = index;
             setSource(source_name);
             setDestination(destination_name);
-
         }
 
         ~StateConnection()
         {
             //count--;
         }
+
         void setSource(const std::string& from)
         {
             state.setProperty(IDs::src, juce::String(from), nullptr);
@@ -257,14 +258,18 @@ struct StateConnection : public ModulatorBase::Listener{
         {
             state.setProperty(IDs::dest, juce::String(uuid_to), nullptr);
         }
+
         void setModulationAmount(float amt)
         {
             state.setProperty(IDs::modAmt, amt, nullptr);
         }
+
         void setChangeBuffer(ParameterChangeBuffer* buf) {
             changeBuffer = buf;
         }
+
         void setChange(const juce::ValueTree& _change) {change = _change;}
+
         void resetConnection(const std::string& from, const std::string& to) {
             source_name = from;
             destination_name = to;
@@ -305,6 +310,7 @@ struct StateConnection : public ModulatorBase::Listener{
         ModulatorBase* processor;
         int modulation_output_bus_index;
         ParameterChangeBuffer* changeBuffer = nullptr;
+
     private:
        // std::atomic<float> scalingValue_;
 //        std::atomic<float>* bipolarOffset;

@@ -124,8 +124,7 @@ class ModulationAmountKnob : public SynthSlider {
     void addModulationAmountListener(Listener* listener) { listeners_.push_back(listener); }
     void setDestinationSlider(SynthSlider* dest);
     SynthSlider *destination = nullptr;
-    float get0to1value()
-    {return my0to1amt;}
+    float get0to1value() { return my0to1amt; }
     float my0to1amt;
 
   private:

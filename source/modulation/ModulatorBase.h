@@ -4,7 +4,6 @@
 
 #ifndef ELECTROSYNTH_MODULATORBASE_H
 #define ELECTROSYNTH_MODULATORBASE_H
-// #include "ParameterView/ParametersView.h"
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
@@ -14,6 +13,7 @@
 #include <iostream>
 #include <any>
 #include "bk_XMLSerializer.h"
+
 class SynthSection;
 template <class Base>
 class SimpleFactory {
@@ -47,15 +47,17 @@ public:
 private:
     std::map<std::string, CreateFunction> creators;
 };
-namespace bitklavier{
 
+namespace bitklavier{
     class ModulationProcessor;
 }
+
 enum class ModulatorType{
     NONE,
     STATE,
     AUDIO
-} ;
+};
+
 class ModulatorBase
 {
 public:

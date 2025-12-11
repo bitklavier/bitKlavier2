@@ -195,7 +195,7 @@ SynthSlider::SynthSlider(juce::String name, const juce::ValueTree &_vt) : OpenGl
                                                                           popup_placement_(
                                                                               juce::BubbleComponent::below),
                                                                           modulation_control_placement_(
-                                                                              juce::BubbleComponent::below),
+                                                                              juce::BubbleComponent::above),
                                                                           max_display_characters_(kDefaultFormatLength),
                                                                           max_decimal_places_(
                                                                               kDefaultFormatDecimalPlaces),

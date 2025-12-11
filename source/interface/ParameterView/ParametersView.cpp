@@ -194,58 +194,67 @@ namespace bitklavier {
 
     }
     ParametersView::ParametersView(chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params,juce::String name,bool isDefaultInit)
-            :  SynthSection(params.getName(),name) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/{
-//        auto *viewport = pimpl->view.getViewport();
+            :  SynthSection(params.getName(),name) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/
+    {
 
-if(isDefaultInit) {
-    params.doForAllParameterContainers(
-            [this, &paramListeners](auto &paramVec) {
-                for (auto &param: paramVec) {
-                    comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+        if(isDefaultInit)
+        {
+            params.doForAllParameterContainers
+            (
+                [this, &paramListeners](auto &paramVec)
+                {
+                    for (auto &param: paramVec)
+                    {
+                        comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+                    }
+                },
+                [this, &paramListeners](auto &paramHolder)
+                {
+                    auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
+                    addSubSection(section.get());
+                    paramHolderComps.push_back(std::move(section));
+
+                    // addSubSection();
                 }
-            },
-            [this, &paramListeners](auto &paramHolder) {
-
-                auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
-                addSubSection(section.get());
-                paramHolderComps.push_back(std::move(section));
-
-                // addSubSection();
-            });
-}
+            );
+        }
         setLookAndFeel(DefaultLookAndFeel::instance());
         setOpaque(true);
-//        addAndMakeVisible(pimpl->view);
-//        viewport->setScrollBarsShown (true, false);
-//        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
-//                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
+        //        addAndMakeVisible(pimpl->view);
+        //        viewport->setScrollBarsShown (true, false);
+        //        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
+        //                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
     }
 
     ParametersView::ParametersView(chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl,bool isDefaultInit )
-            :  SynthSection(params.getName(), open_gl) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/{
-//        auto *viewport = pimpl->view.getViewport();
-if (isDefaultInit) {
-    params.doForAllParameterContainers(
-            [this, &paramListeners](auto &paramVec) {
-                for (auto &param: paramVec) {
-                    comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+            :  SynthSection(params.getName(), open_gl) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/
+    {
+        if (isDefaultInit)
+        {
+            params.doForAllParameterContainers
+            (
+                [this, &paramListeners](auto &paramVec)
+                {
+                    for (auto &param: paramVec) {
+                        comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+                    }
+                },
+                [this, &paramListeners](auto &paramHolder)
+                {
+                    auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
+                    addSubSection(section.get());
+                    paramHolderComps.push_back(std::move(section));
+
+                    // addSubSection();
                 }
-            },
-            [this, &paramListeners](auto &paramHolder) {
-
-                auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
-                addSubSection(section.get());
-                paramHolderComps.push_back(std::move(section));
-
-                // addSubSection();
-            });
-}
+            );
+        }
         setLookAndFeel(DefaultLookAndFeel::instance());
         setOpaque(true);
-//        addAndMakeVisible(pimpl->view);
-//        viewport->setScrollBarsShown (true, false);
-//        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
-//                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
+        //        addAndMakeVisible(pimpl->view);
+        //        viewport->setScrollBarsShown (true, false);
+        //        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
+        //                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
     }
 
     ParametersView::~ParametersView() {
