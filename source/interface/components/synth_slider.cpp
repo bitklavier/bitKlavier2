@@ -155,14 +155,14 @@ void OpenGlSlider::redoImage(bool skip_image) {
             //     slider_quad_->setAltColor(unselected_color_);
             // }
 
-            DBG("shader val = " << interpolatedShaderVal << " t = " << t);
+            //DBG("shader val = " << interpolatedShaderVal << " t = " << t);
             slider_quad_->setShaderValue(0, interpolatedShaderVal);
             // orig:
             slider_quad_->setColor(unselected_color_);
             slider_quad_->setAltColor(selected_color_);
         } else {
             // we don't seem to ever hit this at the moment
-            DBG("shader val 2 = " << bitklavier::utils::interpolate(-bitklavier::kPi, bitklavier::kPi, -t) << " t = " << t);
+            //DBG("shader val 2 = " << bitklavier::utils::interpolate(-bitklavier::kPi, bitklavier::kPi, -t) << " t = " << t);
             slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(-bitklavier::kPi, bitklavier::kPi, -t));
             slider_quad_->setColor(selected_color_);
             slider_quad_->setAltColor(unselected_color_);

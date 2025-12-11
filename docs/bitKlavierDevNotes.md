@@ -24,6 +24,8 @@
 - trying to adjust the range of the mod amount sliders to they go from 7 o'clock to 5 o'clock:
   - done with shaders in shaders.cpp, and `kModulationKnobFragmentShader`
   - i did a little trying to modify this, but it didn't work, so i'm going to leave it for now
+- size of modulation prep window is set in `FullInterface::resized()` in FullInterface.cpp, as a fraction of the full window size; `mod_pop` is the section
+
 ---------
 ## Creating a New Preparation
 Typing as I do MidiFilter and Resonance

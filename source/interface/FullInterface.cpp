@@ -222,6 +222,9 @@ void FullInterface::resized()
     juce::Rectangle<int> bounds (0, 0, width, height);
     modulation_manager->setBounds (bounds);
 
+    /*
+     * not sure we need this ratio stuff if we're usign findValue and the skin?
+     */
     float width_ratio = getWidth() / (1.0f * bitklavier::kDefaultWindowWidth);
     float ratio = width_ratio * display_scale_;
     float height_ratio = getHeight() / (1.0f * bitklavier::kDefaultWindowHeight);
@@ -247,8 +250,9 @@ void FullInterface::resized()
     header_->setBounds (left, top, width, top_height);
     juce::Rectangle<int> new_bounds (0, 0, width, height);
     main_->setBounds (new_bounds);
-    prep_popup->setBounds (voice_padding * 2, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.2 * display_scale_));
-    mod_popup->setBounds (bounds.getRight() - 200 * ratio, header_->getBottom(), 200, 400);
+    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.2 * display_scale_));
+    //mod_popup->setBounds (bounds.getRight() - 200 * ratio, header_->getBottom(), 200, 400);
+    mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.2 * display_scale_));
     about_section_->setBounds (new_bounds);
     loading_section->setBounds (new_bounds);
     if (getWidth() && getHeight())
