@@ -21,7 +21,9 @@
   - for instance, where is the panel on the right created?
   - and the submodules within that panel that set ramp time and so on?
 - `ModulationModuleSection::handlePopupResult` in ModulationModuleSection.cpp is where the various mods are added to the Modifications panel
-
+- trying to adjust the range of the mod amount sliders to they go from 7 o'clock to 5 o'clock:
+  - done with shaders in shaders.cpp, and `kModulationKnobFragmentShader`
+  - i did a little trying to modify this, but it didn't work, so i'm going to leave it for now
 ---------
 ## Creating a New Preparation
 Typing as I do MidiFilter and Resonance

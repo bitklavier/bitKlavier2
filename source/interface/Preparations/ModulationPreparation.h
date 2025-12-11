@@ -5,17 +5,11 @@
 #ifndef BITKLAVIER2_MODULATIONPREPARATION_H
 #define BITKLAVIER2_MODULATIONPREPARATION_H
 
-
-/************************************************************************************/
-/*                 Created by Davis Polito                   */
-/************************************************************************************/
-
 #include "ModulationProcessor.h"
 #include "PreparationSection.h"
 #include "popup_browser.h"
 #include "FullInterface.h"
-// #include "envelope_section.h"
-// #include "ModulationList.h"
+
 class ModulationModuleSection;
 /************************************************************************************/
 /*             CLASS: ModulationPreparation, inherits from PreparationSection           */

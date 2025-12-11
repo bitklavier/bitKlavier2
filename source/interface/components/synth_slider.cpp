@@ -15,16 +15,13 @@
  */
 
 #include "synth_slider.h"
-
 #include <cmath>
-
 #include "FullInterface.h"
 #include "ModulationConnection.h"
 #include "curve_look_and_feel.h"
 #include "fonts.h"
 #include "skin.h"
 #include "synth_base.h"
-
 #include "chowdsp_parameters/ParamUtils/chowdsp_ParameterTypes.h"
 #include "chowdsp_plugin_state/Backend/chowdsp_PluginState.h"
 #include "synth_gui_interface.h"
@@ -235,7 +232,6 @@ SynthSlider::SynthSlider(juce::String name, const juce::ValueTree &_vt) : OpenGl
     setVelocityBasedMode(false);
     setVelocityModeParameters(1.0, 0, 0.0, false, juce::ModifierKeys::ctrlAltCommandModifiers);
 }
-
 
 SynthSlider::~SynthSlider() {
     if (vt.isValid())

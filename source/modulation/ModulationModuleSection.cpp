@@ -157,6 +157,11 @@ void ModulationModuleSection::setEffectPositions() {
     repaintBackground();
 }
 
+/*
+ * todo: change this so it's part of the section, perhaps as a menu
+ *          - reorder: ramp, lfo, state
+ *          - rename?: smooth, oscillate, state
+ */
 PopupItems ModulationModuleSection::createPopupMenu()
 {
     PopupItems options;

@@ -144,7 +144,17 @@ class ModulationAmountKnob : public SynthSlider {
     bool bypass_;
     bool stereo_;
     bool bipolar_;
-    bool offset_ = false; // mod value is offset from sliderVal, otherwise, mod value is literal target val; false is the only mode for now, for ramp mods
+
+    /*
+     * offset_
+     *  true => mod value is offset from sliderVal, otherwise,
+     *  false => mod value is literal target val.
+     *
+     *  false is the only mode for now, for ramp mods, and has no impact on lfo mods
+     *  - might want to clean this up at some point, but works for now
+     */
+    bool offset_ = false;
+
     bool draw_background_;
     juce::ValueTree state;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationAmountKnob)

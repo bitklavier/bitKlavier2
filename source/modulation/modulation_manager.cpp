@@ -250,51 +250,49 @@ ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const j
     hovering_ = false;
     current_modulator_ = false;
     setRange(0.f, 1.f, 0.f);
-
-    // trying to have mod amount knob mirror destination knob, but so far unsuccessful!
-    // if (!offset_)
-    // {
-    //     DBG("ModulationAmountKnob: overriding rotary params");
-    //     float kRotaryAngle_ = 0.8f * bitklavier::kPi;
-    //     setRotaryParameters(2.0f * bitklavier::kPi - kRotaryAngle, 2.0f * bitklavier::kPi + kRotaryAngle, true);
-    // }
 }
 
 void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
-    if (e.mods.isMiddleButtonDown())
-        toggleBypass();
+    /*
+     * removing the bypass popup and so on, for now
+     * - most of the options don't seem to actually do anything, and i'm not sure this is a feature we'd want to add at this point anyhow...
+     */
 
-    if (e.mods.isPopupMenu()) {
-        SynthSlider::mouseExit(e);
-
-        PopupItems options;
-        options.addItem(kDisconnect, "Remove");
-        options.addItem(kToggleBypass, bypass_ ? "Unbypass" : "Bypass");
-        options.addItem(kToggleBipolar, bipolar_ ? "Make Unipolar" : "Make Bipolar");
-        options.addItem(kToggleStereo, stereo_ ? "Make Mono" : "Make Stereo");
-        options.addItem(-1, "");
-
-        //    if (has_parameter_assignment_)
-        //      options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
-        //
-        //    if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getComponentID().toStdString()))
-        //      options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
-
-        options.addItem(kManualEntry, "Enter juce::Value");
-
-        hovering_ = false;
-        redoImage();
-
-        auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
-        auto cancel = [=]() {
-            for (SliderListener *listener: slider_listeners_)
-                listener->menuFinished(this);
-        };
-        parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
-
-        for (SliderListener *listener: slider_listeners_)
-            listener->mouseDown(this);
-    } else {
+    // if (e.mods.isMiddleButtonDown())
+    //     toggleBypass();
+    //
+    // if (e.mods.isPopupMenu()) {
+    //     SynthSlider::mouseExit(e);
+    //
+    //     PopupItems options;
+    //     options.addItem(kDisconnect, "Remove");
+    //     options.addItem(kToggleBypass, bypass_ ? "Unbypass" : "Bypass");
+    //     options.addItem(kToggleBipolar, bipolar_ ? "Make Unipolar" : "Make Bipolar");
+    //     options.addItem(kToggleStereo, stereo_ ? "Make Mono" : "Make Stereo");
+    //     options.addItem(-1, "");
+    //
+    //     //    if (has_parameter_assignment_)
+    //     //      options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
+    //     //
+    //     //    if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getComponentID().toStdString()))
+    //     //      options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
+    //
+    //     options.addItem(kManualEntry, "Enter juce::Value");
+    //
+    //     hovering_ = false;
+    //     redoImage();
+    //
+    //     auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
+    //     auto cancel = [=]() {
+    //         for (SliderListener *listener: slider_listeners_)
+    //             listener->menuFinished(this);
+    //     };
+    //     parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
+    //
+    //     for (SliderListener *listener: slider_listeners_)
+    //         listener->mouseDown(this);
+    // } else
+    {
         SynthSlider::mouseDown(e);
         juce::MouseInputSource source = e.source;
 
