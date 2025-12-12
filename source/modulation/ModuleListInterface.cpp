@@ -79,7 +79,7 @@ void ModulesInterface::resized() {
 
     juce::Rectangle<int> titleArea = getLocalBounds();
     titleArea.removeFromTop(small_padding);
-    modListTitle->setBounds(titleArea.removeFromTop(labelsectionheight));
+    //modListTitle->setBounds(titleArea.removeFromTop(labelsectionheight));
     modListTitle->setTextSize (findValue(Skin::kKnobLabelSizeMedium));
 
     int viewport_x = 0 + large_padding - shadow_width;
@@ -109,7 +109,7 @@ void ModulesInterface::mouseDown (const juce::MouseEvent& e)
 void ModulesInterface::buttonClicked(juce::Button* clicked_button)
 {
     PopupItems options = createPopupMenu();
-    showPopupSelector(this, getLocalBounds().getBottomRight(), options, [=](int selection,int) { handlePopupResult(selection); });
+    showPopupSelector(this, getLocalBounds().getTopRight(), options, [=](int selection,int) { handlePopupResult(selection); });
     SynthSection::buttonClicked(clicked_button);
 }
 
@@ -162,6 +162,7 @@ void ModulesInterface::scrollBarMoved(juce::ScrollBar* scroll_bar, double range_
 }
 
 void ModulesInterface::setScrollBarRange() {
-    scroll_bar_->setRangeLimits(0.0, container_->getHeight());
-    scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), viewport_.getHeight(),juce::dontSendNotification);
+    //scroll_bar_->setRangeLimits(0.0, container_->getHeight());
+    scroll_bar_->setRangeLimits(addModButton->getBottom() + 40, getHeight());
+    scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), viewport_.getHeight(), juce::dontSendNotification);
 }

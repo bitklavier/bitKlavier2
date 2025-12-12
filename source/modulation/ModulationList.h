@@ -31,8 +31,6 @@ public:
     void valueTreeParentChanged (juce::ValueTree&) override{};
 
     void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
-
-
     void valueTreeRedirected (juce::ValueTree&) override{
         deleteAllObjects();
         rebuildObjects();
@@ -52,9 +50,6 @@ public:
         return parent;
     }
     void deleteObject(ModulatorBase*);
-
-
-
 
     bitklavier::ModulationProcessor *proc_;
     SynthBase* parent_;

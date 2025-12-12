@@ -137,7 +137,7 @@ void ModulationModuleSection::setEffectPositions() {
     int knob_section_height = getKnobSectionHeight();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int effect_height = 2 * knob_section_height - widget_margin;
-    int y = large_padding * 2;
+    int y = large_padding * 4; // make space for add modulation button
 
     juce::Point<int> position = viewport_.getViewPosition();
     for(auto& section : modulation_sections_)
