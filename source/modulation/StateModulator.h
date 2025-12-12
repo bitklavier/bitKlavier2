@@ -9,20 +9,7 @@
 #include "ModulatorBase.h"
 #include "PreparationStateImpl.h"
 #include "Identifiers.h"
-//struct StateParams : public chowdsp::ParamHolder {
-//    RampParams() : chowdsp::ParamHolder("ramp")
-//    {
-//        add(time);
-//    }
-//
-//    chowdsp::TimeMsParameter::Ptr time
-//            {
-//                    juce::ParameterID{"Time",100},
-//                    "Time",
-//                    juce::NormalisableRange{10.f,10000.f,1.f,2.f,false},
-//                    10.f
-//            };
-//};
+
 class StateModulatorProcessor : public ModulatorBase {
 
 public :

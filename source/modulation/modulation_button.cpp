@@ -28,7 +28,7 @@
 ModulationButton:: ModulationButton(juce::String name) : PlainShapeComponent(name), parent_(nullptr),
                                                   mouse_state_(kNone), selected_(false), connect_right_(false),
                                                   draw_border_(false), active_modulation_(false), font_size_(12.0f),
-                                                  show_drag_drop_(false), drag_drop_alpha_(0.0f),initialized(false), state_modulation(false) {
+                                                  show_drag_drop_(false), drag_drop_alpha_(0.0f), initialized(false), state_modulation(false) {
   setWantsKeyboardFocus(true);
   setComponentID(name);
   juce::Path shape = Paths::dragDropArrows();

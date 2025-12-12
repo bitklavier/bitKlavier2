@@ -159,9 +159,35 @@ void ModulesInterface::destroyOpenGlComponents(OpenGlWrapper& open_gl) {
 
 void ModulesInterface::scrollBarMoved(juce::ScrollBar* scroll_bar, double range_start) {
     viewport_.setViewPosition(juce::Point<int>(0, range_start));
+
+    auto scrollOffset = scroll_bar_->getCurrentRangeStart();
+
+    /*
+     * this isn't perfect yet, as there can still be ghost UI elements outside the viewport, but
+     * multiple efforts to get setVisible to make everything visible again after hiding have failed
+     * so i'm going to leave it for now...
+     */
+    for(auto& section : modulation_sections_)
+    {
+        //DBG(section->getName() << " " << section->getY() << " " << section->getBottom() << " " << scrollOffset << " " << viewport_.getY() << " " << viewport_.getBottom());
+        if (section->getY() - scrollOffset < viewport_.getY())
+        {
+            section->setVisible(false);
+        }
+        else if (section->getBottom() - scrollOffset > viewport_.getBottom())
+        {
+            section->setVisible(false);
+        }
+        else
+        {
+            section->setVisible(true);
+        }
+    }
+    DBG ("\n");
 }
 
-void ModulesInterface::setScrollBarRange() {
+void ModulesInterface::setScrollBarRange()
+{
     scroll_bar_->setRangeLimits(0.0, container_->getHeight());
     scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), viewport_.getHeight(), juce::dontSendNotification);
 }
