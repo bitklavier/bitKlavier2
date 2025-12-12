@@ -4,6 +4,7 @@
 
 #ifndef BITKLAVIER2_MODULELISTINTERFACE_H
 #define BITKLAVIER2_MODULELISTINTERFACE_H
+
 #include "synth_section.h"
 #include "Identifiers.h"
 #include "tracktion_ValueTreeUtilities.h"
@@ -12,12 +13,16 @@
 #include <string>
 #include <iostream>
 #include "ModulationList.h"
-class ModulationSection;
+
+class OpenGL_LabeledBorder;
+class ModulationSection
+;
 class ModulesContainer : public SynthSection {
 public:
     ModulesContainer(juce::String name) : SynthSection(name) {
         setInterceptsMouseClicks(false,true);
     }
+
     ~ModulesContainer()
     {
         //sub sections get added here
@@ -25,6 +30,7 @@ public:
         //ownership
         sub_sections_.clear();
     }
+
     void paintBackground(juce::Graphics& g) override {
         g.fillAll(findColour(Skin::kBackground, true));
         paintChildrenShadows(g);
@@ -65,12 +71,6 @@ public:
         virtual void added() =0;
         virtual void removed() = 0;
     };
-//    T* createNewObject(const juce::ValueTree& v) override;
-//    void deleteObject (ModuleSection* at) override;
-
-
-    // void reset() override;
-
 
     ModulesInterface(juce::ValueTree &);
     virtual ~ModulesInterface();

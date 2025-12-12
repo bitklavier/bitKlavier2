@@ -118,7 +118,7 @@ void SynthSection::paintHeadingText(juce::Graphics &g) {
 
 void SynthSection::paintBackground(juce::Graphics &g) {
     paintContainer(g);
-    paintHeadingText(g);
+    //paintHeadingText(g);
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);

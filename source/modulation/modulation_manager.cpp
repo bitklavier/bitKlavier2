@@ -119,18 +119,18 @@ public:
     ModulationDestination(SynthSlider *source) :  margin_(0), index_(0),
                                                  size_multiple_(1.0f),
                                                  active_(false), rectangle_(false), rotary_(true),
-                                                destination(source) {
+                                                 destination(source) {
         setComponentID(source->getComponentID());
     }
 
     ModulationDestination(SynthButton *source) : margin_(0), index_(0),
-                                                size_multiple_(1.0f), active_(false),
+                                                 size_multiple_(1.0f), active_(false),
                                                  rectangle_(true), rotary_(false), destination(source) {
         setComponentID(source->getComponentID());
     }
 
     ModulationDestination(StateModulatedComponent *source) : margin_(0), index_(0),
-                                                            size_multiple_(1.0f),
+                                                             size_multiple_(1.0f),
                                                              active_(false),
                                                              rectangle_(true), rotary_(false),
                                                              destination(source) {
@@ -1101,7 +1101,7 @@ void ModulationManager::componentAdded() {
 
         //init the overlay parameters
         for (auto &rotary_meters: num_rotary_meters) {
-            DBG("num rotary" + juce::String (rotary_meters.second));
+            //DBG("num rotary" + juce::String (rotary_meters.second));
             rotary_destinations_[rotary_meters.first] = std::make_unique<OpenGlMultiQuad>(rotary_meters.second,
                 Shaders::kCircleFragment);
             rotary_destinations_[rotary_meters.first]->setTargetComponent(this);
@@ -1145,7 +1145,6 @@ void ModulationManager::componentAdded() {
             slider.second->addSliderListener(this);
             createModulationSlider(name, slider.second, false);
         }
-
 
         for (auto [name,comp] : combo_box_lookup) {
             auto viewport = comp->findParentComponentOfClass<juce::Viewport>();

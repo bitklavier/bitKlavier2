@@ -137,7 +137,7 @@ void ModulationModuleSection::setEffectPositions() {
     int knob_section_height = getKnobSectionHeight();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int effect_height = 2 * knob_section_height - widget_margin;
-    int y = 0;
+    int y = large_padding * 2;
 
     juce::Point<int> position = viewport_.getViewPosition();
     for(auto& section : modulation_sections_)
@@ -146,7 +146,7 @@ void ModulationModuleSection::setEffectPositions() {
         if (section->state.getProperty(IDs::isState))
         {
             // state mods don't need as much space since they don't have a knob
-            effect_height_temp *= 0.85;
+            effect_height_temp *= 0.5;
         }
         section->setBounds(shadow_width, y, effect_width, effect_height_temp);
         y += effect_height_temp + padding;
@@ -164,11 +164,6 @@ void ModulationModuleSection::setEffectPositions() {
     repaintBackground();
 }
 
-/*
- * todo: change this so it's part of the section, perhaps as a menu
- *          - reorder: ramp, lfo, state
- *          - rename?: smooth, oscillate, state
- */
 PopupItems ModulationModuleSection::createPopupMenu()
 {
     PopupItems options;

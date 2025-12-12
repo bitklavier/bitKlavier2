@@ -39,7 +39,7 @@ void RampModulatorProcessor::setTime( float timeToDest )
     }
 
     rate_ = fabs(target_ - value_) / ( timeToDest * sampleRate * 0.001 );
-    DBG("rate = " << rate_ << " timeToDest = " << timeToDest << " value_ = " << value_ << " target_ = " << target_ << " sampleRate = " << sampleRate << "");
+    //DBG("rate = " << rate_ << " timeToDest = " << timeToDest << " value_ = " << value_ << " target_ = " << target_ << " sampleRate = " << sampleRate << "");
 }
 
 float RampModulatorProcessor::getNextSample()
@@ -67,7 +67,7 @@ float RampModulatorProcessor::getNextSample()
 
 void RampModulatorProcessor::triggerModulation()
 {
-    DBG("RampModulatorProcessor::triggerModulation(), time = " << *_state.params.time);
+    //DBG("RampModulatorProcessor::triggerModulation(), time = " << *_state.params.time);
     target_ = 1.;
     state_ = 1;
     setTime(*_state.params.time);

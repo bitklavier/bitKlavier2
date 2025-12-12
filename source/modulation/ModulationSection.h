@@ -22,12 +22,21 @@ public:
     juce::ValueTree state;
     void addModButtonListener(ModulationManager*);
     void buttonClicked(juce::Button* button) override;
+    void paintBackground(juce::Graphics& g) override
+    {
+        paintContainer(g);
+        paintKnobShadows(g);
+        paintChildrenBackgrounds(g);
+        paintBorder(g);
+    };
 
 private:
     std::unique_ptr<OpenGlShapeButton> exit_button_;
     std::unique_ptr<SynthSection> _view;
     std::shared_ptr<ModulationButton> mod_button;
     juce::UndoManager& undo;
+
+    std::shared_ptr<OpenGL_LabeledBorder> modBorder;
 };
 
 #endif //BITKLAVIER_MODULATIONSECTION_H

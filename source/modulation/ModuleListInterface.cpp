@@ -4,6 +4,8 @@
 
 #include "ModuleListInterface.h"
 #include "ModulationSection.h"
+#include "OpenGL_LabeledBorder.h"
+
 ModulesInterface::ModulesInterface(juce::ValueTree &v) : SynthSection("modules") {
     container_ = std::make_unique<ModulesContainer>("container");
 
@@ -88,7 +90,8 @@ void ModulesInterface::resized() {
     scroll_bar_->setBounds(getWidth() - large_padding + 1, 0, large_padding - 2, getHeight());
     scroll_bar_->setColor(findColour(Skin::kLightenScreen, true));
 
-    addModButton->setBounds(getLocalBounds().reduced(large_padding, small_padding).removeFromBottom(findValue(Skin::kComboMenuHeight)));
+    //addModButton->setBounds(getLocalBounds().reduced(large_padding, small_padding).removeFromBottom(findValue(Skin::kComboMenuHeight)));
+    addModButton->setBounds(getLocalBounds().reduced(large_padding, small_padding).removeFromTop(findValue(Skin::kComboMenuHeight)));
 
     SynthSection::resized();
 }

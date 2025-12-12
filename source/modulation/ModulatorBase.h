@@ -61,11 +61,10 @@ enum class ModulatorType{
 class ModulatorBase
 {
 public:
-    explicit ModulatorBase(juce::ValueTree& tree, juce::UndoManager* um = nullptr) :
-        state(tree),parent_(nullptr)
+    explicit ModulatorBase(juce::ValueTree& tree, juce::UndoManager* um = nullptr) : state(tree), parent_(nullptr)
     {
-
     }
+
     //https://stackoverflow.com/questions/461203/when-to-use-virtual-destructors
     virtual ~ModulatorBase(){}
     juce::ValueTree state;
@@ -74,6 +73,7 @@ public:
         virtual void resetTriggered() = 0;
 
     };
+
     virtual void triggerModulation()
     {
         for (auto list: listeners_)
@@ -112,7 +112,6 @@ public:
     virtual void setStateInformation (const void *data, int sizeInBytes)=0;
     bool isDefaultBipolar = false;
 };
-
 
 template <typename PluginStateType>
 class ModulatorStateBase : public ModulatorBase

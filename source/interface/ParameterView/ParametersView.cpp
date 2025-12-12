@@ -72,6 +72,8 @@ namespace bitklavier {
             SliderParameterComponent(chowdsp::FloatParameter &param, chowdsp::ParameterListeners& listeners, SynthSection &parent)
                     : slider(std::make_shared<SynthSlider>(param.paramID,param.getModParam())), attachment(param, listeners, *slider, nullptr) {
                 setName(param.paramID);
+                slider->setTitle (param.getName(20));
+                DBG("SliderParameterComponent slider name = " << param.getName(20));
                 setLookAndFeel(DefaultLookAndFeel::instance());
                 slider->setScrollWheelEnabled(false);
                 addAndMakeVisible(*slider);

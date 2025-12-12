@@ -25,7 +25,7 @@ namespace bitklavier {
         void paintBackground(juce::Graphics& g) override
         {
             SynthSection::paintContainer(g);
-            paintHeadingText(g);
+            //paintHeadingText(g);
             paintBorder(g);
             paintKnobShadows(g);
             for (auto slider : all_sliders_v) {

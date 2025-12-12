@@ -15,7 +15,6 @@
  */
 
 #include "open_gl_component.h"
-
 #include "open_gl_multi_quad.h"
 #include "fullInterface.h"
 

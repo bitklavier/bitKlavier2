@@ -280,6 +280,7 @@ class OpenGlSlider : public juce::Slider {
   protected:
     SynthSection* parent_;
     float knob_size_scale_;
+
   private:
     juce::Colour thumb_color_;
     juce::Colour selected_color_;
