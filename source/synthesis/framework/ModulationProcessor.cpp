@@ -43,6 +43,9 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
     {
         if (msg.getMessage().isNoteOn())
         {
+            /*
+             * todo: had a crash here when triggering mods after deleting one; mod: NULL inside this loop.
+             */
             for (auto mod : modulators_)
                 mod->triggerModulation();
         }

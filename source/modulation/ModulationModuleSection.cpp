@@ -59,6 +59,10 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 
 }
 
+/*
+ * todo: don't we also have to remove from the modulators_ vector in ModulationProcessor?
+ *          - got a crash with a NULL modulator_ in ModulationProcessor when triggering after deleting a mod
+ */
 void ModulationModuleSection::removeModulator (ModulatorBase* base)
 {
     // find preparation section with the same id as the one we're removing
@@ -87,7 +91,6 @@ void ModulationModuleSection::removeModulator (ModulatorBase* base)
         listener->removed();
     DBG("moduleRemoved");
     resized();
-
 }
 
 ModulationModuleSection::~ModulationModuleSection()
