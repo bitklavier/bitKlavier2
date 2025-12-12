@@ -133,13 +133,12 @@ void ModulationModuleSection::setEffectPositions() {
     int large_padding = findValue(Skin::kLargePadding);
     int shadow_width = getComponentShadowWidth();
     int start_x = 0;
-    int effect_width = getWidth() - start_x - large_padding * 1.5;
+    int effect_width = getWidth() - start_x - large_padding * 1.5 - 2;
     int knob_section_height = getKnobSectionHeight();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int effect_height = 2 * knob_section_height - widget_margin;
     int y = large_padding * 4; // make space for add modulation button
 
-    juce::Point<int> position = viewport_.getViewPosition();
     for(auto& section : modulation_sections_)
     {
         int effect_height_temp = effect_height;
@@ -153,12 +152,14 @@ void ModulationModuleSection::setEffectPositions() {
     }
 
     container_->setBounds(0, 0, viewport_.getWidth(), y - padding);
-    viewport_.setViewPosition(position);
+
+    //update scroll position so we can see the most recently added mod
+    // juce::Point<int> position(0, y);
+    // viewport_.setViewPosition(position);
 
     for (Listener* listener : listeners_)
         listener->effectsMoved();
 
-    container_->setScrollWheelEnabled(container_->getHeight() <= viewport_.getHeight());
     setScrollBarRange();
 
     repaintBackground();

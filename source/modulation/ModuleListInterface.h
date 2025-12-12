@@ -50,9 +50,16 @@ public:
     void visibleAreaChanged(const juce::Rectangle<int>& visible_area) override {
         for (Listener* listener : listeners_)
             listener->effectsScrolled(visible_area.getY());
-
+        DBG("EffectsViewport::visibleAreaChanged " << visible_area.getY() << " " << visible_area.getHeight());
         Viewport::visibleAreaChanged(visible_area);
     }
+
+    // void paint (juce::Graphics& g) override
+    // {
+    //     // 1. Fill the background with a specific colour
+    //     g.fillAll (juce::Colours::transparentBlack);
+    //     juce::Viewport::paint(g);
+    // }
 
 private:
     std::vector<Listener*> listeners_;

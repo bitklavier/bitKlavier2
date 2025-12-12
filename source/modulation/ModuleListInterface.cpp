@@ -14,7 +14,7 @@ ModulesInterface::ModulesInterface(juce::ValueTree &v) : SynthSection("modules")
     viewport_.addListener(this);
     viewport_.setScrollBarsShown(false, false, true, false);
     viewport_.setInterceptsMouseClicks(false,true);
-    //breaks sacling if true
+    //breaks scaling if true
     addSubSection(container_.get(), false);
 
     container_->toFront(true);
@@ -83,7 +83,7 @@ void ModulesInterface::resized() {
     modListTitle->setTextSize (findValue(Skin::kKnobLabelSizeMedium));
 
     int viewport_x = 0 + large_padding - shadow_width;
-    int viewport_width = getWidth() - viewport_x - large_padding + 2 * shadow_width;
+    int viewport_width = getWidth() - viewport_x - large_padding - 2 + 2 * shadow_width;
     viewport_.setBounds(viewport_x, 0, viewport_width, getHeight());
     setEffectPositions();
 
@@ -162,8 +162,6 @@ void ModulesInterface::scrollBarMoved(juce::ScrollBar* scroll_bar, double range_
 }
 
 void ModulesInterface::setScrollBarRange() {
-    //scroll_bar_->setRangeLimits(0.0, container_->getHeight());
-    scroll_bar_->setRangeLimits(addModButton->getBottom() + 40, viewport_.getHeight() - (addModButton->getBottom() + 40));
-    //scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), viewport_.getHeight(), juce::dontSendNotification);
-    scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), scroll_bar_->getCurrentRangeSize(), juce::dontSendNotification);
+    scroll_bar_->setRangeLimits(0.0, container_->getHeight());
+    scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), viewport_.getHeight(), juce::dontSendNotification);
 }
