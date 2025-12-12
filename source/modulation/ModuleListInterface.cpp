@@ -163,6 +163,7 @@ void ModulesInterface::scrollBarMoved(juce::ScrollBar* scroll_bar, double range_
 
 void ModulesInterface::setScrollBarRange() {
     //scroll_bar_->setRangeLimits(0.0, container_->getHeight());
-    scroll_bar_->setRangeLimits(addModButton->getBottom() + 40, getHeight());
-    scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), viewport_.getHeight(), juce::dontSendNotification);
+    scroll_bar_->setRangeLimits(addModButton->getBottom() + 40, viewport_.getHeight() - (addModButton->getBottom() + 40));
+    //scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), viewport_.getHeight(), juce::dontSendNotification);
+    scroll_bar_->setCurrentRange(scroll_bar_->getCurrentRangeStart(), scroll_bar_->getCurrentRangeSize(), juce::dontSendNotification);
 }

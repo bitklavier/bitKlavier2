@@ -133,7 +133,7 @@ void ModulationModuleSection::setEffectPositions() {
     int large_padding = findValue(Skin::kLargePadding);
     int shadow_width = getComponentShadowWidth();
     int start_x = 0;
-    int effect_width = getWidth() - start_x - large_padding;
+    int effect_width = getWidth() - start_x - large_padding * 1.5;
     int knob_section_height = getKnobSectionHeight();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int effect_height = 2 * knob_section_height - widget_margin;
