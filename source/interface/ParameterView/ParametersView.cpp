@@ -290,7 +290,6 @@ namespace bitklavier {
 
             area.reduce(widget_margin, widget_margin);
             button->setBounds(area.removeFromBottom(button_height));
-
         }
     }
 

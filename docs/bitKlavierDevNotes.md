@@ -25,6 +25,9 @@
   - done with shaders in shaders.cpp, and `kModulationKnobFragmentShader`
   - i did a little trying to modify this, but it didn't work, so i'm going to leave it for now
 - size of modulation prep window is set in `FullInterface::resized()` in FullInterface.cpp, as a fraction of the full window size; `mod_pop` is the section
+- layout view for individual mods in `ParametersView::resized()` at the moment. 
+  - currently LFO layout is hardcoded as the one having two elements, a knob and button; will want to generalize all this in the future
+  - no other classes use ParametersView, so we might want to rename this if is just for mods
 
 ---------
 ## Creating a New Preparation
