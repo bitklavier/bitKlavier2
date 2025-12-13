@@ -31,6 +31,8 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
+        //image_component_->setUseAlpha(false);
+
         isModulated_ = true;
         addMyListener(this);
 
@@ -213,6 +215,17 @@ public:
         hovering_ = false;
     }
 
+    /*
+     * this is for makig the modulation UI view opaque
+     */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKStackedSlider::paint(g);
+        }
+    }
+
     TransposeParams *params;
 
 private :
@@ -234,9 +247,15 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+        image_component_->setUseAlpha(false);
 
         isModulation_ = true;
         addMyListener(this);
+
+        /*
+         * this is so the modulation UI view has a distinctive colored border
+         */
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
     }
 
     bool mouseInteraction = false;

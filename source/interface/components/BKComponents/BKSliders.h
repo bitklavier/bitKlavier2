@@ -416,8 +416,9 @@ public:
     juce::Array<float> getAllActiveValues();
     bool isEditing;
 
-private
-    :
+    juce::GroupComponent sliderBorder;
+
+private:
     chowdsp::SliderAttachment attachment;
     std::unique_ptr<juce::Slider> topSlider; //user interacts with this
     juce::Array<bool> activeSliders;
@@ -447,8 +448,6 @@ private
     void showModifyPopupMenu();
 
     static void sliderModifyMenuCallback (const int result, BKStackedSlider* ss);
-
-    juce::GroupComponent sliderBorder;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKStackedSlider)
 };
