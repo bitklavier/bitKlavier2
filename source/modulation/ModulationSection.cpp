@@ -56,18 +56,16 @@ void ModulationSection::resized()
     bounds.removeFromRight(small_padding);
     modBorder->setBounds(bounds);
 
-   // juce::Rectangle<int> bounds = getLocalBounds().withLeft(title_width);
-
     bounds.reduce(large_padding, large_padding);
     bounds.removeFromTop(small_padding);
     _view->setBounds(bounds);
-    //_view->setBounds(getLocalBounds().reduced(large_padding));
 
+    /*
+     * todo: add a Skin value for these sizes
+     */
     juce::Rectangle<int> buttonsRect = bounds.removeFromTop(40);
     mod_button->setBounds(buttonsRect.removeFromLeft(40));
     exit_button_->setBounds(buttonsRect.removeFromRight(40));
-    // mod_button->setBounds(0, 0,40,40);
-    // exit_button_->setBounds(_view->getWidth()-40, 0,40,40);
 
     SynthSection::resized();
 }

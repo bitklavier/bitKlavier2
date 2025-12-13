@@ -1,3 +1,8 @@
+/*
+ *  Currently using this only for Modulation Parameters
+ *   - might need to modify if used elsewhere
+ */
+
 #pragma once
 
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>

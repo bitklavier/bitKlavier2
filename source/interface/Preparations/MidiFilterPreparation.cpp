@@ -6,7 +6,7 @@
 #include "BKitems/BKItem.h"
 #include "MidiFilterParametersView.h"
 #include "synth_button.h"
-#include "ParametersView.h"
+// #include "ParametersView.h"
 
 MidiFilterPreparation::MidiFilterPreparation(
     juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface* interface):

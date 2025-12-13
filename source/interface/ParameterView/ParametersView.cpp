@@ -268,9 +268,31 @@ namespace bitklavier {
     }
 
     void ParametersView::resized() {
-        placeKnobsInArea(getLocalBounds(), comps);
-    }
+        if (comps.size() != 2)
+            placeKnobsInArea(getLocalBounds(), comps);
+        else if (comps.size() == 2)
+        {
+            /*
+             * so we can fuss around with the placement of a knob and a button in the LFO mod
+             *  - we might want to generalize this in the future, if we make other mods with different params
+             *      but for now....
+             */
+            juce::Rectangle<int> area = getLocalBounds();
+            int widget_margin = findValue(Skin::kWidgetMargin);
+            int button_height = findValue(Skin::kComboMenuHeight);
 
+            auto& knob = comps[0];
+            auto& button = comps[1];
+
+            juce::Rectangle<int> knob_area = area.removeFromLeft(area.getWidth() / 2 - knob->getWidth() / 2).removeFromBottom(area.getHeight() / 1.25);
+            knob_area.reduce(widget_margin, widget_margin);
+            knob->setBounds(knob_area);
+
+            area.reduce(widget_margin, widget_margin);
+            button->setBounds(area.removeFromBottom(button_height));
+
+        }
+    }
 
     void ParametersView::init_()
     {

@@ -12,7 +12,7 @@
 struct LFOParams : public chowdsp::ParamHolder {
     LFOParams(const juce::ValueTree& v) : chowdsp::ParamHolder("lfo")
     {
-        add(freq);
+        add(freq, automaticStart);
     }
 
     chowdsp::FreqHzParameter::Ptr freq
@@ -22,6 +22,13 @@ struct LFOParams : public chowdsp::ParamHolder {
         "LFO Frequency",
         juce::NormalisableRange{0.001f,10.f,.001f},
         0.001f
+    };
+
+    chowdsp::BoolParameter::Ptr automaticStart
+    {
+        juce::ParameterID { "automaticStart", 100 },
+        "auto",
+        false
     };
 };
 
@@ -45,9 +52,17 @@ public :
 
     void triggerModulation() override
     {
-        trigger = true;
+        // turn the lfo on/off
+        // - starts/stops in place.
+        // - use Reset prep if you want to reset the phase as well
+        if (lfo_on) lfo_on = false;
+        else lfo_on = true;
     }
-    bool trigger = false;
+
+    void triggerReset() override
+    {
+        reset(); //just reset the phase of the LFO
+    }
 
     static constexpr ModulatorType type = ModulatorType::AUDIO;
 
@@ -90,6 +105,7 @@ private:
     float depth = 1.0f;
     float phase = 0.0f;
     float phaseIncrement = 0.0f;
+    bool lfo_on = false;
 };
 
 #endif //BITKLAVIER2_LFOMODULATOR_H
