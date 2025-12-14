@@ -23,10 +23,8 @@ public :
     SynthSection* createEditor() override;
 
     static constexpr ModulatorType type = ModulatorType::STATE;
-    void getStateInformation(juce::MemoryBlock &destData) override {
-    }
-    void setStateInformation (const void *data, int sizeInBytes) override {
-    }
+    void getStateInformation(juce::MemoryBlock &destData) override {}
+    void setStateInformation (const void *data, int sizeInBytes) override {}
 };
 
 

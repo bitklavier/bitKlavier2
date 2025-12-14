@@ -135,7 +135,7 @@ public:
         return new OpenGL_TranspositionSlider();
     }
 
-    /*
+    /**
      * this is called whenever the transposition slider "isModulated_" is edited by the user
      * OR when the modulation transposition slider "isModulation_" is edited by the user
      * this is NOT called when an actual state modulation is executed
@@ -184,6 +184,7 @@ public:
     }
 
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
+
     /**
      * syncToValueTree() is called in ModulationManager::modulationClicked and
      * is used to set the mod view of the parameter to the most recent mod values

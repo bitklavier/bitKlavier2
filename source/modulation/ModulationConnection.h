@@ -284,11 +284,13 @@ struct StateConnection : public ModulatorBase::Listener{
 
         void modulationTriggered() //listener funciton
         {
+            DBG("StateConnection::modulationTriggered()");
             changeBuffer->changeState.emplace_back(0,change);
         }
 
         void resetTriggered()
         {
+            DBG("StateConnection::resetTriggered()");
             changeBuffer->changeState.emplace_back(0,changeBuffer->defaultState);
         }
 
@@ -298,8 +300,7 @@ struct StateConnection : public ModulatorBase::Listener{
         }
 
         std::string source_name;
-        std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
-        // if i'll be using this for that or not
+        std::string destination_name; //must be named state to be picked up by valuetreeobjectlist - dont know if i'll be using this for that or not
         juce::ValueTree state;
         int index_in_all_mods;
         int index_in_mapping;
@@ -312,8 +313,6 @@ struct StateConnection : public ModulatorBase::Listener{
         ParameterChangeBuffer* changeBuffer = nullptr;
 
     private:
-       // std::atomic<float> scalingValue_;
-//        std::atomic<float>* bipolarOffset;
         juce::ValueTree change;
     };
 

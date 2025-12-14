@@ -267,6 +267,9 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
+        clusterMinMaxParams.processStateChanges();
+        holdTimeMinMaxParams.processStateChanges();
+
         transpositions.processStateChanges();
         accents.processStateChanges();
         sustainLengthMultipliers.processStateChanges();

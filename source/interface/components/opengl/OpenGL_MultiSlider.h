@@ -157,7 +157,6 @@ public:
              *
              * we just write strings of the arrays to modulationState properties
              */
-
             modulationState.setProperty(IDs::multislider_vals, valsStr, nullptr);
             modulationState.setProperty(IDs::multislider_size, values.size(), nullptr);
             modulationState.setProperty(IDs::multislider_states, activeStr, nullptr);
