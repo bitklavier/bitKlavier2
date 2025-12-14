@@ -28,7 +28,9 @@
 - layout view for individual mods in `ParametersView::resized()` at the moment. 
   - currently LFO layout is hardcoded as the one having two elements, a knob and button; will want to generalize all this in the future
   - no other classes use ParametersView, so we might want to rename this if is just for mods
-
+- State mods are initialized in `ModulationManager::modulationClicked`. 
+  - in particular, note the `editing_state_component_ = comp->clone();` call
+  - location of the modulation popup editor window is set `editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(), comp->getWidth(), comp->getHeight());`
 ---------
 ## Creating a New Preparation
 Typing as I do MidiFilter and Resonance

@@ -630,10 +630,10 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
             int center_x = destination_bounds.getCentreX();
             int left = destination_bounds.getX();
             int right = destination_bounds.getRight();
-
             int bottom = destination_bounds.getBottom();
             int top = destination_bounds.getY();
             int center_y = destination_bounds.getCentreY();
+
             if (editing_state_component_ != nullptr && editing_state_component_->getComponentID() != juce::String(
                     connection->destination_name)) {
                 auto *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -658,8 +658,16 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
 
                 addAndMakeVisible(editing_state_component_);
                 addOpenGlComponent(editing_state_component_->getImageComponent());
-                editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight() ,
-                                                    comp->getWidth(), comp->getHeight());
+
+                int mod_offset = 0;
+                if (top > comp->getHeight()) mod_offset = comp->getHeight(); // enough space to put it above the destination component
+                else mod_offset = -comp->getHeight(); // otherwise, put it below
+                editing_state_component_->setBounds(
+                    center_x - comp->getWidth() / 2,
+                    top - mod_offset ,
+                    comp->getWidth(),
+                    comp->getHeight());
+
                 editing_state_component_->addListener(this);
                 editing_state_component_->setComponentID(juce::String(connection->destination_name));
             }

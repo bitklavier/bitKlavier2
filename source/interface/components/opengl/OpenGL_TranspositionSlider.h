@@ -31,8 +31,6 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
-        //image_component_->setUseAlpha(false);
-
         isModulated_ = true;
         addMyListener(this);
 
@@ -216,7 +214,7 @@ public:
     }
 
     /*
-     * this is for makig the modulation UI view opaque
+     * this is for making the modulation UI view opaque
      */
     void paint(juce::Graphics& g) override {
         if (isModulation_)
@@ -256,6 +254,9 @@ private :
          * this is so the modulation UI view has a distinctive colored border
          */
         sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("Modifications");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
 
     bool mouseInteraction = false;

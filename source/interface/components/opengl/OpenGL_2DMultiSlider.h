@@ -11,14 +11,6 @@
 #include "synth_slider.h"
 #include "juce_data_structures/juce_data_structures.h"
 
-/**
- * current problem: when you add a second transposition, it won't actually save unless you drag it around
- *  - simple: add second transposition, don't move it, close the Synchronic prep view, reopen it, and the second transposition will be gone
- *
- * then: need to actually implement the multiple transpositions on the back end
- *  - right now it's just loading the first value
- */
-
 class OpenGL_2DMultiSlider: public OpenGlAutoImageComponent<BKMultiSlider>, BKMultiSlider::Listener
 {
 public:
@@ -343,6 +335,17 @@ public:
         hovering_ = false;
     }
 
+    /*
+    * this is for making the modulation UI view opaque
+    */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKMultiSlider::paint(g);
+        }
+    }
+
     juce::String name_;
     MultiSlider2DState *params;
 
@@ -355,9 +358,15 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+        image_component_->setUseAlpha(false);
 
         isModulation_ = true;
         addMyListener(this);
+
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("Modifications");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
 
     bool mouseInteraction = false;
