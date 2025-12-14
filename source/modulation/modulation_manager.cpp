@@ -653,21 +653,22 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
 
             if (editing_state_component_ == nullptr) {
                 editing_state_component_ = comp->clone();
-
                 editing_state_component_->modulationState = connection->state;
-
                 addAndMakeVisible(editing_state_component_);
                 addOpenGlComponent(editing_state_component_->getImageComponent());
 
-                int mod_offset = 0;
-                if (top > comp->getHeight()) mod_offset = comp->getHeight(); // enough space to put it above the destination component
-                else mod_offset = -comp->getHeight(); // otherwise, put it below
-                editing_state_component_->setBounds(
-                    center_x - comp->getWidth() / 2,
-                    top - mod_offset ,
-                    comp->getWidth(),
-                    comp->getHeight());
+                // //code for putting the editing/mod component above or below the destination component
+                // int mod_offset = 0;
+                // if (top > comp->getHeight()) mod_offset = comp->getHeight(); // enough space to put it above the destination component
+                // else mod_offset = -comp->getHeight(); // otherwise, put it below
+                // editing_state_component_->setBounds(
+                //     center_x - comp->getWidth() / 2,
+                //     top - mod_offset ,
+                //     comp->getWidth(),
+                //     comp->getHeight());
 
+                //or just put it directly on top?
+                editing_state_component_->setBounds(destination_bounds);
                 editing_state_component_->addListener(this);
                 editing_state_component_->setComponentID(juce::String(connection->destination_name));
             }
@@ -696,7 +697,6 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
             static juce::var nullVar;
             if(editing_comboBox_mod.modulation.getProperty(editing_comboBox_mod.paramID)!=nullVar) {
                 int ticked  = static_cast <int>(editing_comboBox_mod.modulation.getProperty(editing_comboBox_mod.paramID)) + 1;
-                // editing_comboBox_mod.popup_menu.s
                 for (juce::PopupMenu::MenuItemIterator iterator (*editing_comboBox_mod.popup_menu, true); iterator.next();)
                 {
                     auto& item = iterator.getItem();

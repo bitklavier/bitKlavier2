@@ -225,14 +225,20 @@ public:
          * create string representations of the multislider vals/states
          */
         //juce::String valsStr = getFirstValueFromSubarrays(values);
-        juce::String valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
-        juce::String activeStr = arrayBoolToString(states);
+        // juce::String valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
+        // juce::String activeStr = arrayBoolToString(states);
+
+        juce::String valsStr;
+        juce::String activeStr;
 
         if (isModulated_)
         {
             /*
              * we are manipulating the actual multislider: need to update param vals and defaultState vals
              */
+
+            valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
+            activeStr = arrayBoolToString(states);
 
 //            updateSliderValsFromUI(
 //                const juce::Array<juce::Array<float>>& userMultiSliderValues,
@@ -271,6 +277,9 @@ public:
              * we just write strings of the arrays to modulationState properties
              */
 
+            // valsStr = sliderValsToString(values, values.size(), params->sliderDepths);
+            // activeStr = arrayBoolToString(states);
+
             modulationState.setProperty(IDs::multislider_vals, valsStr, nullptr);
             modulationState.setProperty(IDs::multislider_size, values.size(), nullptr);
             modulationState.setProperty(IDs::multislider_states, activeStr, nullptr);
@@ -285,6 +294,7 @@ public:
      */
     void syncToValueTree() override {
 
+        DBG("2D syncToValueTree");
         auto msvals = modulationState.getProperty(IDs::multislider_vals);
         auto msvals_size = int(modulationState.getProperty(IDs::multislider_size));
         auto msavals = modulationState.getProperty(IDs::multislider_states);
@@ -365,7 +375,7 @@ private :
 
         sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
         sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
-        sliderBorder.setText ("Modifications");
+        sliderBorder.setText ("MODIFIED");
         sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
 

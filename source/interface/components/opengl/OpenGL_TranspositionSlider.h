@@ -255,7 +255,7 @@ private :
          */
         sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
         sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
-        sliderBorder.setText ("Modifications");
+        sliderBorder.setText ("MODIFIED");
         sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
 
