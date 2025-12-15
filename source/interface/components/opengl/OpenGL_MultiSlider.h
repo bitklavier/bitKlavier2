@@ -109,13 +109,6 @@ public:
 
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
-        /**
-         * todo: confirm we can remove this mouseInteraction stuff, now that we have notifications settings differently
-         * depending on what the values are changes
-         */
-//        if (!mouseInteraction)
-//            return;
-
         /*
          * create string representations of the multislider vals/states
          */
@@ -175,23 +168,6 @@ public:
         auto msvals_size = int(modulationState.getProperty(IDs::multislider_size));
         auto msavals = modulationState.getProperty(IDs::multislider_states);
         auto msavals_size = int(modulationState.getProperty(IDs::multislider_states_size));
-
-        if (!modulationState.hasProperty(IDs::multislider_vals))
-        {
-            DBG("using defaultState since we don't have a modulationState yet");
-
-            /**
-             * todo: not working...
-             * we don't seem to have a defaultState either, probably because we are using the clone
-             * not a huge deal, since can copy-paste from main slider, so leave for now
-             */
-             msvals = defaultState.getProperty(IDs::multislider_vals);
-             msvals_size = int(defaultState.getProperty(IDs::multislider_size));
-             msavals = defaultState.getProperty(IDs::multislider_states);
-             msavals_size = int(defaultState.getProperty(IDs::multislider_states_size));
-
-            return;
-        }
 
         std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> dispvals;
         stringToAtomicArray(dispvals, msvals, 0.);

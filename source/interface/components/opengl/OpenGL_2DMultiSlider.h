@@ -75,7 +75,6 @@ public:
     void updateFromParams(juce::NotificationType notify = juce::sendNotification)
     {
         setToOnlyActive(
-            //atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
             getUIValuesFromSliderVals(params->sliderVals, params->sliderVals_size, params->sliderDepths),
             atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),
             notify);
@@ -237,30 +236,26 @@ public:
              * we are manipulating the actual multislider: need to update param vals and defaultState vals
              */
 
-            valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
-            activeStr = arrayBoolToString(states);
-
-//            updateSliderValsFromUI(
-//                const juce::Array<juce::Array<float>>& userMultiSliderValues,
-//                std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH>& sliderVals,
-//                std::atomic<int>& sliderVals_size,
-//                std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH>& sliderDepths)
-
+            /*
+             * first, update the parameter values from the slider values
+             * - since these parameters are serialized and not handled internally like the simpler chowdsp params,
+             *      we have to update them manually here
+             */
             updateSliderValsFromUI(values, params->sliderVals, params->sliderVals_size, params->sliderDepths);
-            // just copy the direct UI representations to the param arrays; the prep should know how to use them
+
             int valCtr = 0;
-//            for (auto sval : values)
-//            {
-//                params->sliderVals[valCtr].store(values[valCtr++][0]); // 1d for now
-//            }
-//            params->sliderVals_size.store (values.size()); // how many active slider values do we have
-//
-//            valCtr = 0;
             for (auto sval : states)
             {
                 params->activeSliders[valCtr].store(states[valCtr++]);
             }
             params->activeVals_size.store (states.size()); // full array of slider states, including inactive ones (false)
+
+            /*
+             * then, create the strings for storing as defaultState properties
+             *  and store
+             */
+            valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
+            activeStr = arrayBoolToString(states);
 
             // then update defaultState, with string representation of the multislider arrays
             defaultState.setProperty(IDs::multislider_vals, valsStr, nullptr);
@@ -277,9 +272,19 @@ public:
              * we just write strings of the arrays to modulationState properties
              */
 
-            // valsStr = sliderValsToString(values, values.size(), params->sliderDepths);
-            // activeStr = arrayBoolToString(states);
+            // create some dummy param holders, so we can update them from the UI and then convert them to strings for property storage
+            std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH> sliderVals_temp;
+            std::atomic<int> sliderVals_size_temp;
+            std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH> sliderDepths_temp;
 
+            // update the dummy values from the actual modulator slider values
+            updateSliderValsFromUI(values, sliderVals_temp, sliderVals_size_temp, sliderDepths_temp);
+
+            // convert those values to strings
+            valsStr = sliderValsToString(sliderVals_temp, sliderVals_size_temp, sliderDepths_temp);
+            activeStr = arrayBoolToString(states);
+
+            // store those strings to the appropriate properties
             modulationState.setProperty(IDs::multislider_vals, valsStr, nullptr);
             modulationState.setProperty(IDs::multislider_size, values.size(), nullptr);
             modulationState.setProperty(IDs::multislider_states, activeStr, nullptr);
@@ -294,45 +299,24 @@ public:
      */
     void syncToValueTree() override {
 
-        DBG("2D syncToValueTree");
+        // get the property strings for this mod
         auto msvals = modulationState.getProperty(IDs::multislider_vals);
-        auto msvals_size = int(modulationState.getProperty(IDs::multislider_size));
+        auto msvals_size = int(modulationState.getProperty(IDs::multislider_size)); // looks like we don't need this?
         auto msavals = modulationState.getProperty(IDs::multislider_states);
         auto msavals_size = int(modulationState.getProperty(IDs::multislider_states_size));
 
-        if (!modulationState.hasProperty(IDs::multislider_vals))
-        {
-            DBG("using defaultState since we don't have a modulationState yet");
-
-            /**
-             * todo: not working...
-             * we don't seem to have a defaultState either, probably because we are using the clone
-             * not a huge deal, since can copy-paste from main slider, so leave for now
-             */
-            msvals = defaultState.getProperty(IDs::multislider_vals);
-            msvals_size = int(defaultState.getProperty(IDs::multislider_size));
-            msavals = defaultState.getProperty(IDs::multislider_states);
-            msavals_size = int(defaultState.getProperty(IDs::multislider_states_size));
-
-            return;
-        }
-
-        /**
-         * todo: need to update this to include 2D vals
-         */
-//        std::array<std::atomic<float>, MAXMULTISLIDER2DLENGTH> dispvals;
-//        stringToAtomicArray(dispvals, msvals, 0.);
+        // make some dummy param holders, and fill them based on the mod strings above
+        std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH> dispvals;
+        std::atomic<int> sliderVals_size_temp;
+        std::array<std::atomic<int>, MAXMULTISLIDER2DLENGTH> sliderDepths_temp;
+        stringToSliderVals (msvals, dispvals, sliderVals_size_temp, sliderDepths_temp);
 
         std::array<std::atomic<bool>, MAXMULTISLIDER2DLENGTH> dispstates;
         stringToAtomicBoolArray(dispstates, msavals, false);
 
-        /**
-         * todo: need to update this to include 2D vals
-         */
+        // send to the multislider
         setToOnlyActive(
-            //atomicArrayToJuceArrayLimited(dispvals, msvals_size),
-            // i don't think this will do it, need to be getting these args from defaultState.getProperty, no?
-            getUIValuesFromSliderVals(params->sliderVals, params->sliderVals_size, params->sliderDepths),
+            getUIValuesFromSliderVals(dispvals, sliderVals_size_temp, sliderDepths_temp),
             atomicBoolArrayToJuceArrayLimited(dispstates, msavals_size),
             juce::sendNotification);
     }

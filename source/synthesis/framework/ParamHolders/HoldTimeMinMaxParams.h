@@ -23,7 +23,7 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
         juce::ParameterID { "holdTimeMinParam", 100 },
         "Hold Time Min",
         chowdsp::ParamUtils::createNormalisableRange (holdTimeMinMax_rangeMin, holdTimeMinMax_rangeMax, holdTimeMinMax_rangeMid),
-        0.0f // these are state modulatable, so not true for last arg
+        0.0f // these are state modulatable, so not true for last arg, which is for continuous mod
     };
 
     chowdsp::TimeMsParameter::Ptr holdTimeMaxParam {
