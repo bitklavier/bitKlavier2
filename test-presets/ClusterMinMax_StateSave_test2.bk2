@@ -9,8 +9,8 @@
                   numLayers="1.000" clusterThickness="8.000" clusterThreshold="500.000"
                   Send="0.000" OutputGain="0.000" noteOnGain="0.000" pulseTriggeredBy="0"
                   determinesCluster="0" skipFirst="1" UseTuning="0" updateUIState="0"
-                  clustermin="1.0" clustermax="12.0" LastCluster="1.000" holdTimeMinParam="3219.000"
-                  holdTimeMaxParam="6089.000" lastHoldTimeParam="0.000" attack="3.000"
+                  clustermin="1.0" clustermax="12.0" LastCluster="1.000" holdTimeMinParam="3139.000"
+                  holdTimeMaxParam="5205.000" lastHoldTimeParam="0.000" attack="3.000"
                   decay="10.000" sustain="1.000" release="50.000" attackpower="0.000"
                   decaypower="0.000" releasepower="0.000" hold="0.000" delay="0.000"
                   notify="0" currentlyEditing="0.000" envelope_0="1" envelope_1="0"
@@ -55,7 +55,7 @@
                   x_y="498, 540" uuid="e191d83244c745ae92ea2c663eda35d0" nodeID="3784431666"
                   numIns="1">
         <PORT nodeID="3784431666" chIdx="4096" isIn="1"/>
-        <modulationproc type="state" isState="1" uuid="24d1be37984b4068a7e23ed3e337450a"/>
+        <modulationproc type="state" isState="1" uuid="decb89a7fe4744c6b6bae2c271396b24"/>
       </modulation>
       <keymap type="7" width="111.0000076293945" height="63.00000381469727"
               x_y="447, 683" uuid="b114ee326c0449e6b936f6dc621a3f11" soundset="syncglobal"
@@ -101,12 +101,12 @@
     </CONNECTIONS>
     <MODCONNECTIONS>
       <MODCONNECTION isMod="1" src="3784431666" dest="3510867309">
-        <ModulationConnection uuid="8ff9e4672999496097e04f73e1b9d13c" isState="1" src="e191d83244c745ae92ea2c663eda35d0_state-24d1be37984b4068a7e23ed3e337450a_mod"
-                              dest="d143956d15684ff59bbb44c52214375a_cluster_min_max" clustermin="6.0"
+        <ModulationConnection uuid="08cca0123c9645dc826069c2ccc1beb3" isState="1" src="e191d83244c745ae92ea2c663eda35d0_state-decb89a7fe4744c6b6bae2c271396b24_mod"
+                              dest="d143956d15684ff59bbb44c52214375a_cluster_min_max" clustermin="5.0"
                               clustermax="9.0"/>
-        <ModulationConnection uuid="d03e42065397434099d62b5f12b0fcb2" isState="1" src="e191d83244c745ae92ea2c663eda35d0_state-24d1be37984b4068a7e23ed3e337450a_mod"
-                              dest="d143956d15684ff59bbb44c52214375a_holdtime_min_max" holdtimemin="3219.0"
-                              holdtimemax="6089.0"/>
+        <ModulationConnection uuid="34baf010819c424499ce01242548e871" isState="1" src="e191d83244c745ae92ea2c663eda35d0_state-decb89a7fe4744c6b6bae2c271396b24_mod"
+                              dest="d143956d15684ff59bbb44c52214375a_holdtime_min_max" holdtimemin="3139.0"
+                              holdtimemax="5205.0"/>
       </MODCONNECTION>
       <RESETCONNECTION isMod="1" src="1367141696" dest="3784431666"/>
     </MODCONNECTIONS>

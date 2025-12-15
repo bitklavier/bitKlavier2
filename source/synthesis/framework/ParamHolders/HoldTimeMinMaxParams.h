@@ -23,14 +23,14 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
         juce::ParameterID { "holdTimeMinParam", 100 },
         "Hold Time Min",
         chowdsp::ParamUtils::createNormalisableRange (holdTimeMinMax_rangeMin, holdTimeMinMax_rangeMax, holdTimeMinMax_rangeMid),
-        0.0f, true
+        0.0f // these are state modulatable, so not true for last arg
     };
 
     chowdsp::TimeMsParameter::Ptr holdTimeMaxParam {
         juce::ParameterID { "holdTimeMaxParam", 100 },
         "Hold Time Max",
         chowdsp::ParamUtils::createNormalisableRange (holdTimeMinMax_rangeMin, holdTimeMinMax_rangeMax, holdTimeMinMax_rangeMid),
-        12000.0f, true
+        12000.0f
     };
 
     // Last velocity param
@@ -47,7 +47,7 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
         juce::ParameterID { "lastHoldTimeParam", 100 },
         "lastHoldTimeParam",
         chowdsp::ParamUtils::createNormalisableRange (holdTimeMinMax_rangeMin, holdTimeMinMax_rangeMax, holdTimeMinMax_rangeMid),
-        0.0f, true
+        0.0f
     };
 
     /**
@@ -56,7 +56,7 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
-        auto float_params = getFloatParams();
+        //auto float_params = getFloatParams();
         for(auto [index, change] : stateChanges.changeState)
         {
             auto vminval = change.getProperty("holdtimemin");

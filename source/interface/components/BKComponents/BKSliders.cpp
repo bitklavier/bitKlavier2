@@ -2152,7 +2152,6 @@ void BKRangeSlider::setSkew(float newskew)
     minSlider.setSkewFactor(newskew);
     maxSlider.setSkewFactor(newskew);
     displaySlider->setSkewFactor(newskew);
-
 }
 
 void BKRangeSlider::setDim(float alphaVal)

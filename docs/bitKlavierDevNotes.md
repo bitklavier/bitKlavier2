@@ -32,7 +32,7 @@
   - in particular, note the `editing_state_component_ = comp->clone();` call
   - location of the modulation popup editor window is set `editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(), comp->getWidth(), comp->getHeight());`
 - State mods are triggered in `StateConnection::modulationTriggered()` in ModulationConnection.cpp
-- Make sure that processStateChanges() is called in the processBlock for the prep that is being modulated; for instance, `clusterMinMaxParams.processStateChanges();` in `DirectProcessor::processBlock`
+- Make sure that processStateChanges() is called in the processBlock for the prep that is being modulated; for instance, `clusterMinMaxParams.processStateChanges();` in `SynchronicProcessor::processBlock`
 
 ---------
 ## Creating a New Preparation

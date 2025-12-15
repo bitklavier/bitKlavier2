@@ -23,6 +23,10 @@
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 
+static float clusterMinMax_rangeMin = 1.f;
+static float clusterMinMax_rangeMax = 12.f;
+static float clusterMinMax_rangeMid = 6.f;
+
 struct ClusterMinMaxParams : chowdsp::ParamHolder
 {
     ClusterMinMaxParams() : chowdsp::ParamHolder("Cluster")
@@ -33,7 +37,7 @@ struct ClusterMinMaxParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "clustermin", 100 },
         "Cluster Min",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 12.0f, 6.0f),
+        chowdsp::ParamUtils::createNormalisableRange (clusterMinMax_rangeMin, clusterMinMax_rangeMax, clusterMinMax_rangeMid),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
@@ -42,7 +46,7 @@ struct ClusterMinMaxParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr clusterMaxParam {
         juce::ParameterID { "clustermax", 100 },
         "Cluster Max",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 12.0f, 6.0f),
+        chowdsp::ParamUtils::createNormalisableRange (clusterMinMax_rangeMin, clusterMinMax_rangeMax, clusterMinMax_rangeMid),
         12.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
@@ -61,7 +65,7 @@ struct ClusterMinMaxParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr lastClusterParam {
         juce::ParameterID { "LastCluster", 100 },
         "LastCluster",
-        chowdsp::ParamUtils::createNormalisableRange (1.0f, 12.0f, 6.f),
+        chowdsp::ParamUtils::createNormalisableRange (clusterMinMax_rangeMin, clusterMinMax_rangeMax, clusterMinMax_rangeMid),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal
@@ -73,7 +77,7 @@ struct ClusterMinMaxParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
-        auto float_params = getFloatParams();
+        //auto float_params = getFloatParams();
         for(auto [index, change] : stateChanges.changeState)
         {
             auto vminval = change.getProperty("clustermin");
