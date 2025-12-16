@@ -594,6 +594,12 @@ void BKMultiSlider::setMinMaxDefaultInc(std::vector<float> newvals)
     bigInvisibleSlider->setSkewFromMidpoint(skewFromMidpoint);
 }
 
+std::vector<float> BKMultiSlider::getMinMaxDefaultInc()
+{
+    std::vector<float> rangeVals = {static_cast<float>(sliderMin), static_cast<float>(sliderMax), static_cast<float>(sliderDefault), static_cast<float>(sliderIncrement)};
+    return rangeVals;
+}
+
 void BKMultiSlider::setSkewFromMidpoint(bool sfm)
 {
     skewFromMidpoint = sfm;
