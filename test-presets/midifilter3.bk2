@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY soundset="Default">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <midiFilter type="9" width="45.0" height="45.0" x_y="344, 348" uuid="19a70680f4154abeab09d743ede8f0ba"
+                  soundset="syncglobal" nodeID="430376576" numIns="1" numOuts="1"
+                  allNotesOff="0" toggleNoteMessages="0" ignoreNoteOn="0" ignoreNoteOff="1"
+                  invertNoteOnOff="0" ignoreSustainPedal="1" sostenutoMode="0"
+                  notesAreSustainPedal="0" notesAreSostenutoPedal="0">
+        <MODULATABLE_PARAMS/>
+        <PORT nodeID="430376576" chIdx="4096" isIn="1"/>
+        <PORT nodeID="430376576" chIdx="4096" isIn="0"/>
+      </midiFilter>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

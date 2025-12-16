@@ -10,7 +10,25 @@
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
 #include "tracktion_ValueTreeUtilities.h"
-
+// width, height — indexed by (selection - 1)
+static constexpr std::array<
+    std::pair<float, float>,
+    static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST) - 1
+> prepSizes = {{
+    /* 1 Direct      */ { 245.0f, 125.0f },
+    /* 2 Nostalgic   */ { 245.0f, 125.0f },
+    /* 3 Keymap      */ { 185.0f, 105.0f },
+    /* 4 Resonance   */ { 245.0f, 125.0f },
+    /* 5 Synchronic  */ { 260.0f, 132.0f },
+    /* 6 Blendronic  */ { 245.0f, 125.0f }, // default
+    /* 7 Tempo       */ { 132.0f, 260.0f },
+    /* 8 Tuning      */ { 125.0f, 245.0f },
+    /* 9 MidiFilter  */ { 75.0f,  75.0f  },
+    /* 10 MidiTarget */ { 75.0f,  75.0f  },
+    /* 11 PianoMap   */ { 150.0f, 120.0f },
+    /* 12 Modulation */ { 100.0f, 100.0f },
+    /* 13 Reset      */ { 100.0f, 100.0f },
+}};
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data, juce::ApplicationCommandManager &_manager)
                                                         : SynthSection("Construction Site"),
@@ -39,20 +57,20 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     prep_list->addListener(this);
 
     // prep_list->addChangeListener(this);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,ResetPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeResonance, ResonancePreparation::create);
+    nodeFactory.Register(IDs::direct, DirectPreparation::create);
+    nodeFactory.Register(IDs::blendronic, BlendronicPreparation::create);
+    nodeFactory.Register(IDs::synchronic, SynchronicPreparation::create);
+    nodeFactory.Register(IDs::keymap, KeymapPreparation::create);
+    nodeFactory.Register(IDs::vst, PluginPreparation::create);
+    nodeFactory.Register(IDs::modulation, ModulationPreparation::create);
+    nodeFactory.Register(IDs::tuning,TuningPreparation::create);
+    nodeFactory.Register(IDs::reset,ResetPreparation::create);
+    nodeFactory.Register(IDs::midiFilter, MidiFilterPreparation::create);
+    nodeFactory.Register(IDs::midiTarget, MidiTargetPreparation::create);
+    nodeFactory.Register(IDs::pianoMap, PianoSwitchPreparation::create);
+    nodeFactory.Register(IDs::tempo, TempoPreparation::create);
+    nodeFactory.Register(IDs::nostalgic, NostalgicPreparation::create);
+    nodeFactory.Register(IDs::resonance, ResonancePreparation::create);
 
 }
 
@@ -425,7 +443,7 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
 
 void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     auto * interface = findParentComponentOfClass<SynthGuiInterface>();
-    auto s = nodeFactory.CreateObject(wrapper->state.getProperty(IDs::type), wrapper->state,interface );
+    auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state,interface );
     {
         juce::ScopedLock lock(open_gl_critical_section_);
         addSubSection (s.get());
@@ -617,23 +635,41 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
 
 void ConstructionSite::handlePluginPopup(int selection, int index) {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    float prepScale = 0.6;
+
     if (selection < bitklavier::BKPreparationType::PreparationTypeVST) {
-        juce::ValueTree t(IDs::PREPARATION);
-        t.setProperty(IDs::type, static_cast<bitklavier::BKPreparationType>(selection), nullptr);
-        t.setProperty(IDs::width, 132, nullptr);
-        t.setProperty(IDs::height, 260, nullptr);
-        // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        // prep_list->appendChild(t,  interface->getUndoManager());
+        const auto idx = static_cast<size_t>(selection - 1);
+        jassert (idx < prepSizes.size());
+
+        const auto [baseW, baseH] = prepSizes[idx];
+
+        const float prepWidth  = baseW * prepScale;
+        const float prepHeight = baseH * prepScale;
+
+        juce::ValueTree t(preparationIDs[idx]);
+        t.setProperty(IDs::type,
+                      static_cast<bitklavier::BKPreparationType>(selection),
+                      nullptr);
+        t.setProperty(IDs::width,  prepWidth,  nullptr);
+        t.setProperty(IDs::height, prepHeight, nullptr);
+
+        t.setProperty(IDs::x_y,
+            juce::VariantConverter<juce::Point<int>>::toVar(
+                juce::Point<int>(lastX - prepWidth  / 2.0f,
+                                 lastY - prepHeight / 2.0f)),
+            nullptr);
         prep_list->appendChild(t,  &undo);
     }
     else {
+        const float prepWidth  = 245.f * prepScale;
+        const float prepHeight = 125.f * prepScale;
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::PREPARATION);
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
-        t.setProperty(IDs::width, 245, nullptr);
-        t.setProperty(IDs::height, 125, nullptr);
-        // t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+        t.setProperty(IDs::width, prepWidth, nullptr);
+        t.setProperty(IDs::height, prepHeight, nullptr);
+        t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
+        //t.setProperty(IDs::x_y,juce::VariantConverter<juce::Point<int>>::toVar( juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
         // t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
 
         auto desc = _parent->getSynth()->user_prefs->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];

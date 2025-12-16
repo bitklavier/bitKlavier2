@@ -208,19 +208,3 @@ juce::MidiMessage MidiFilterProcessor::swapNoteOnNoteOff (juce::MidiMessage inms
 
     return inmsg;
 }
-
-/*
- * for saving/loading
- */
-template <typename Serializer>
-typename Serializer::SerializedType MidiFilterParams::serialize (const MidiFilterParams& paramHolder)
-{
-    auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
-    return ser;
-}
-
-template <typename Serializer>
-void MidiFilterParams::deserialize (typename Serializer::DeserializedType deserial, MidiFilterParams& paramHolder)
-{
-    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
-}

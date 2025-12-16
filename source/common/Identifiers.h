@@ -131,7 +131,21 @@ namespace IDs
     DECLARE_ID(globalsoundset)
     DECLARE_ID(syncglobal)
 }
-
+static const std::array<juce::Identifier, 13> preparationIDs {
+    IDs::direct,
+    IDs::nostalgic,
+    IDs::keymap,
+    IDs::resonance,
+    IDs::synchronic,
+    IDs::blendronic,
+    IDs::tempo,
+    IDs::tuning,
+    IDs::midiFilter,
+    IDs::midiTarget,
+    IDs::pianoMap,
+    IDs::modulation,
+    IDs::reset
+};
 #undef DECLARE_ID
 inline juce::ValueTree createUuidProperty (juce::ValueTree& v)
 {

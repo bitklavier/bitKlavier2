@@ -438,14 +438,6 @@ struct MidiTargetParams : chowdsp::ParamHolder
 
     juce::Identifier connectedPrep = IDs::noConnection;
 
-    /* Custom serializer */
-    template <typename Serializer>
-    static typename Serializer::SerializedType serialize (const MidiTargetParams& paramHolder);
-
-    /* Custom deserializer */
-    template <typename Serializer>
-    static void deserialize (typename Serializer::DeserializedType deserial, MidiTargetParams& paramHolder);
-
 };
 
 struct MidiTargetNonParameterState : chowdsp::NonParamState

@@ -1129,8 +1129,7 @@ void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> p
 void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,const juce::ValueTree &v, bitklavier::BKPreparationType type) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent) {
-        if (type ==
-            bitklavier::BKPreparationType::PreparationTypeModulation) {
+        if (v.getType() == IDs::modulation) {
             parent->modDisplay(std::move(prep),v);
         } else {
             parent->prepDisplay(std::move(prep),v);

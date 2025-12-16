@@ -87,16 +87,6 @@ struct MidiFilterParams : chowdsp::ParamHolder
         false
     };
 
-    /*
-     * serializers are used for more complex params
-     */
-    /* Custom serializer */
-    template <typename Serializer>
-    static typename Serializer::SerializedType serialize (const MidiFilterParams& paramHolder);
-
-    /* Custom deserializer */
-    template <typename Serializer>
-    static void deserialize (typename Serializer::DeserializedType deserial, MidiFilterParams& paramHolder);
 };
 
 struct MidiFilterNonParameterState : chowdsp::NonParamState
@@ -135,8 +125,6 @@ public:
 
     void setCurrentProgram(int index) override {}
     void changeProgramName(int index, const juce::String &newName) override {}
-    void getStateInformation(juce::MemoryBlock &destData) override {}
-    void setStateInformation(const void *data, int sizeInBytes) override {}
 
     /**
      * Midi Processing Functions

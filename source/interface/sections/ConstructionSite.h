@@ -7,13 +7,12 @@
 #include "CableView.h"
 #include "ModulationLineView.h"
 #include "PluginWindow.h"
-#include "../../common/ObjectLists/PreparationList.h"
 #include "PreparationSelector.h"
 #include "common.h"
 #include "templates/Factory.h"
 class OpenGlLine;
 class SynthGuiInterface;
-typedef Loki::Factory<std::unique_ptr<PreparationSection>, int, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
+typedef Loki::Factory<std::unique_ptr<PreparationSection>, juce::Identifier, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
 class ConstructionSite : public SynthSection,
 
                          public juce::DragAndDropContainer,
