@@ -62,6 +62,8 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
             auto aval = change.getProperty (IDs::multislider_states);
             auto avalsize = change.getProperty (IDs::multislider_states_size);
 
+            DBG("MultiSliderState::processStateChanges " << sval.toString());
+
             if (sval != nullVar) {
                 stringToAtomicArray(sliderVals, sval.toString(), 1.);
             }

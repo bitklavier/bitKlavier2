@@ -215,19 +215,7 @@ public:
 
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
-        /**
-         * todo: confirm we can remove this mouseInteraction stuff, now that we have notifications settings differently
-         * depending on what the values are changes
-         */
-//        if (!mouseInteraction)
-//            return;
-
-        /*
-         * create string representations of the multislider vals/states
-         */
-        //juce::String valsStr = getFirstValueFromSubarrays(values);
-        // juce::String valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
-        // juce::String activeStr = arrayBoolToString(states);
+        if (!mouseInteraction) return;
 
         juce::String valsStr;
         juce::String activeStr;
