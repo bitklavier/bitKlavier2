@@ -51,6 +51,7 @@ struct StateModulatedComponent : juce::Component
     bool isModulated_ = false;
 
     virtual StateModulatedComponent* clone() = 0;
+
     //should be replaced by valuetree wrapper or something along those lines
     virtual void syncToValueTree() = 0;
     juce::ValueTree modulationState;

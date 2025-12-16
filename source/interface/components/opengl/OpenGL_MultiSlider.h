@@ -98,7 +98,9 @@ public:
     }
 
     OpenGL_MultiSlider* clone() {
-        return new OpenGL_MultiSlider();
+        auto sliderClone = new OpenGL_MultiSlider();
+        sliderClone->setMinMaxDefaultInc (getMinMaxDefaultInc());
+        return sliderClone;;
     }
 
     void multiSliderValueChanged(juce::String name, int whichSlider, juce::Array<float> values) override
@@ -109,6 +111,8 @@ public:
 
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
+        if (!mouseInteraction) return;
+
         /*
          * create string representations of the multislider vals/states
          */
@@ -136,6 +140,7 @@ public:
             }
             params->activeVals_size.store (states.size()); // full array of slider states, including inactive ones (false)
 
+            DBG("resetting defaultState in Multislider");
             // then update defaultState, with string representation of the multislider arrays
             defaultState.setProperty(IDs::multislider_vals, valsStr, nullptr);
             defaultState.setProperty(IDs::multislider_size, values.size(), nullptr);

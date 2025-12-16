@@ -140,7 +140,9 @@ public:
     }
 
     OpenGL_2DMultiSlider* clone() {
-        return new OpenGL_2DMultiSlider();
+        auto sliderClone = new OpenGL_2DMultiSlider();
+        sliderClone->setMinMaxDefaultInc (getMinMaxDefaultInc());
+        return sliderClone;
     }
 
     void updateSliderValsFromUI(
@@ -213,19 +215,7 @@ public:
 
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
-        /**
-         * todo: confirm we can remove this mouseInteraction stuff, now that we have notifications settings differently
-         * depending on what the values are changes
-         */
-//        if (!mouseInteraction)
-//            return;
-
-        /*
-         * create string representations of the multislider vals/states
-         */
-        //juce::String valsStr = getFirstValueFromSubarrays(values);
-        // juce::String valsStr = sliderValsToString(params->sliderVals, params->sliderVals_size, params->sliderDepths);
-        // juce::String activeStr = arrayBoolToString(states);
+        if (!mouseInteraction) return;
 
         juce::String valsStr;
         juce::String activeStr;
@@ -353,6 +343,8 @@ private :
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         image_component_->setUseAlpha(false);
+
+        allowSubSliders = true; //2D
 
         isModulation_ = true;
         addMyListener(this);
