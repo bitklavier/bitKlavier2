@@ -49,23 +49,13 @@ void ModulationList::deleteObject(ModulatorBase * base)
 
     if (parent_ && parent_->getGuiInterface())
     {
-        parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
-            [this, base] {
-                if (base->parent_ != nullptr) {
+        for (const auto& vt : base->connections_)
+        {
+            vt.getParent().removeChild (vt,nullptr);
+        }
+        base->parent_->removeModulator(base);
+        delete base;
 
-                    base->parent_->removeModulator(base);
-                    base->parent_->callOnMainThread ([this, base] {
-                        for (auto vt : base->connections_)
-                        {
-                            vt.getParent().removeChild (vt,nullptr);
-                        }
-                        delete base;
-
-                    });
-                    // delete base;
-                }
-
-            });
     } else
     {
         // should only ever be called on shutdown

@@ -674,12 +674,11 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     //populate connection class with backend information
     connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
-    connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
+    // connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
     connection->processor = connection->parent_processor->getModulatorBase (internal_modulator_uuid);
+    connection->parent_processor->addModulationConnection (connection);
 
-    DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
-    jassert (connection->modulation_output_bus_index != -1);
-    //determine mod bus channel modulatable param reads modulation from
+
 
     auto param_index =  parameter_tree.getParent().indexOf(parameter_tree);// parameter_tree.getProperty (IDs::channel, -1);
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, connection->modulation_output_bus_index); //1 is mod
@@ -697,17 +696,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
         um.beginNewTransaction();
         mod_connection.appendChild (connection->state, &um);
-        // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        //todo: ensure thread safety of operation
-        // this could be unsafe because it can change what is going to get called
-        // but probably won't cause a crash, could cause clicks or pops maybe?
-        // modulations are typically not triggered immediately after an add
-        // Might be a problem for a continuous lfo or something that isn't triggered though
-        getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-            connection->parent_processor->addModulationConnection (connection);
-        });
 
-        //this is threadsafe because processorgraph will trigger rebuild on main thead
         bool connectionAdded = engine_->addConnection (connection->connection_);
 
     }
@@ -816,16 +805,16 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
 {
     if (mod_connections_.count (connection) == 0)
         return;
+    auto destination_name = connection->destination_name;
     connection->source_name = "";
     connection->destination_name = "";
-    mod_connections_.remove (connection);
-    engine_->removeConnection (connection->connection_);
 
-    getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        connection->connection_ = {};
-        connection->parent_processor->removeModulationConnection (connection);
-    });
-    engine_->removeConnection (connection->connection_);
+    mod_connections_.remove (connection);
+
+
+
+    connection->parent_processor->removeModulationConnection (connection, destination_name);
+    connection->connection_ = {};
     um.beginNewTransaction();
     connection->state.getParent().removeChild (connection->state, nullptr);
 }

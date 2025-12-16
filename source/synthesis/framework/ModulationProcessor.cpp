@@ -6,6 +6,7 @@
 #include "ModulatorBase.h"
 #include "ModulationConnection.h"
 #include "ModulationList.h"
+#include "sound_engine.h"
 
 bitklavier::ModulationProcessor::ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt) :
        juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
@@ -13,7 +14,7 @@ bitklavier::ModulationProcessor::ModulationProcessor(SynthBase& parent,const juc
        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true)
        .withInput("Reset",juce::AudioChannelSet::discreteChannels(1),true)), state(vt),
-mod_list(std::make_unique<ModulationList>(state,&parent,this))
+mod_list(std::make_unique<ModulationList>(state,&parent,this)), parent(parent)
 {
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
@@ -22,6 +23,13 @@ mod_list(std::make_unique<ModulationList>(state,&parent,this))
 void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     // DBG("mod");
+    // Read the current snapshot pointer
+    auto* snap = snapshotAtomic.load(std::memory_order_acquire);
+    if (snap == nullptr)
+    {
+        buffer.clear();
+        return;
+    }
     auto reset_in = getBusBuffer(buffer,true,2);
     auto sample = buffer.getSample(0,0);
     auto sample1 = buffer.getSample(1,0);
@@ -32,9 +40,11 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         if (reset_in.getSample(0,0) == 1)
         {
             DBG("ModulationProcessor::processBlock received reset " + juce::String(reset_in.getSample(0,0)));
-            for (auto mod : modulators_)
-                mod->triggerReset();
+            for (auto& e : snap->mods)
+                if (e.mod != nullptr )e.mod->triggerReset();
+
         }
+
     }
 
     buffer.clear();
@@ -42,127 +52,149 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
     for (auto msg : midiMessages)
     {
         if (msg.getMessage().isNoteOn())
-        {
-            /*
-             * todo: had a crash here when triggering mods after deleting one; mod: NULL inside this loop.
-             */
-            for (auto mod : modulators_)
-                mod->triggerModulation();
-        }
+            if (msg.getMessage().isNoteOn())
+                for (auto& e : snap->mods)
+                    if (e.mod != nullptr)
+                        e.mod->triggerModulation();
     }
 
-    for (int i = 0; i <modulators_.size();i++)
+    // Main render
+    for (auto& e : snap->mods)
     {
-        if (modulators_[i] == nullptr) continue;
+        auto* mod = e.mod;
+        if (mod == nullptr)
+            continue;
 
-        //process the modulation into a scratch buffer.
-        modulators_[i]->getNextAudioBlock(tmp_buffers[i], midiMessages);
+        // This buffer is owned by snapshot, so safe
+        mod->getNextAudioBlock(e.tmp, midiMessages);
 
-        if (modulators_[i]->type == ModulatorType::AUDIO)
+        if (mod->type != ModulatorType::AUDIO)
+            continue;
+
+        for (auto* connection : e.connections)
         {
-            for (auto connection : mod_routing[i].mod_connections)
-            {
-                if(modulators_[i]->isDefaultBipolar && connection->isBipolar() || (!modulators_[i]->isDefaultBipolar && !connection->isBipolar()))
-                {
-                    // this is where it's all happening right now, both for ramps and LFOs
-                    buffer.copyFrom(
-                        connection->modulation_output_bus_index,
-                        0,
-                        tmp_buffers[i].getReadPointer(0,0),
-                        buffer.getNumSamples(),
-                        connection->getScaling());
-                }
-                else if (modulators_[i]->isDefaultBipolar && !connection->isBipolar())
-                {
-                    // Remap [-1, 1] → [0, 1] → then scale by unipolar amount
-                    auto* src  = tmp_buffers[i].getReadPointer(0);
-                    auto* dest = buffer.getWritePointer(connection->modulation_output_bus_index);
+            if (connection == nullptr) continue;
 
-                    float scale = connection->getScaling();
-                    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-                    {
-                        float unipolar = 0.5f * (src[sample] + 1.0f); // maps [-1,1] to [0,1]
-                        dest[sample] += unipolar * scale;
-                    }
+            const int outCh = connection->modulation_output_bus_index;
+            if (outCh < 0 || outCh >= buffer.getNumChannels())
+                continue; // prevents writing past bus size if something mismatches
+
+            if ((mod->isDefaultBipolar && connection->isBipolar())
+                || (!mod->isDefaultBipolar && !connection->isBipolar()))
+            {
+                buffer.addFrom(outCh, 0,
+                                e.tmp.getReadPointer(0),
+                                buffer.getNumSamples(),
+                                connection->getScaling());
+            }
+            else if (mod->isDefaultBipolar && !connection->isBipolar())
+            {
+                auto* src  = e.tmp.getReadPointer(0);
+                auto* dest = buffer.getWritePointer(outCh);
+                const float scale = connection->getScaling();
+
+                for (int s = 0; s < buffer.getNumSamples(); ++s)
+                {
+                    const float unipolar = 0.5f * (src[s] + 1.0f);
+                    dest[s] += unipolar * scale;
                 }
             }
         }
-
-        //mod_routing[i]
-        //output the modulation to the correct output buffers with scaling
     }
-    // melatonin::printSparkline(buffer);
 }
 
+
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase* mod) {
-//update to search for any null locations
-    mod->parent_ = this;
-    // modulators_.push_back(mod);
-    // Replace nullptrs with new instances
-    // Add modulator to first nullptr slot or append at the end
-    auto it = std::find(modulators_.begin(), modulators_.end(), nullptr);
-    std::size_t index;
+    // callOnMainThread([this, mod]
+    //    {
+           mod->parent_ = this;
 
-    if (it != modulators_.end()) {
-        index = std::distance(modulators_.begin(), it);
-        *it = mod; // replace nullptr with new modulator
-    } else {
-        index = modulators_.size();
-        modulators_.push_back(mod); // add to end
-    }
+           auto it = std::find(modulators_.begin(), modulators_.end(), nullptr);
+           std::size_t index = 0;
 
-    // Ensure the auxiliary vectors are sized correctly
-    if (tmp_buffers.size() <= index) {
-        tmp_buffers.resize(index + 1);
-    }
-    tmp_buffers[index] = juce::AudioBuffer<float>(1, blockSize_); // or whatever buffer type
+           if (it != modulators_.end()) { index = std::distance(modulators_.begin(), it); *it = mod; }
+           else { index = modulators_.size();
+               modulators_.push_back(mod); }
 
-    if (mod_routing.size() <= index) {
-        mod_routing.resize(index + 1);
-    }
-    mod_routing[index] = {}; // default construct routing entry
 
-    mod->prepareToPlay(sampleRate_, blockSize_);
+           if (tmp_buffers.size() <= index) tmp_buffers.resize(index + 1);
+           if (mod_routing.size() <= index) mod_routing.resize(index + 1);
+
+           tmp_buffers[index].setSize(1, blockSize_);
+           mod_routing[index] = {};
+
+           if (blockSize_ > 0 && sampleRate_ > 0.0)
+               mod->prepareToPlay(sampleRate_, blockSize_);
+
+           rebuildAndPublishSnapshot();
+       // }, true);
 }
 
 void bitklavier::ModulationProcessor::removeModulator(ModulatorBase* mod) {
 
-    auto it  = std::find(modulators_.begin(), modulators_.end(), mod);
-    if(it != modulators_.end()) {
-        int index = std::distance(modulators_.begin(), it);
+    // callOnMainThread([this, mod]
+      // {
+          auto it = std::find(modulators_.begin(), modulators_.end(), mod);
+          if (it == modulators_.end()) return;
 
-        //set to null so that deallocation doesn't happen on audio thread
-        modulators_[index] = nullptr;
-        tmp_buffers[index] = {};
-        mod_routing[index] = {};
-    }
+          const auto index = (size_t) std::distance(modulators_.begin(), it);
+
+          modulators_[index] = nullptr;
+          tmp_buffers[index] = {};
+          mod_routing[index] = {};
+
+          rebuildAndPublishSnapshot();
+      // }, true);
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnection* connection){
-    all_modulation_connections_.push_back(connection);
+    // callOnMainThread([this, connection]
+     // {
+        // Allocate / reuse output channel
+        connection->modulation_output_bus_index =
+            allocateModulationChannel(connection->destination_name);
+         all_modulation_connections_.push_back(connection);
 
-    auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
-    size_t index = std::distance(modulators_.begin(), it);
+         auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
+         if (it == modulators_.end() || *it == nullptr) return;
 
-    mod_routing[index].mod_connections.push_back(connection);
-    modulators_[index]->connections_.push_back(connection->state);
+         const auto index = (size_t) std::distance(modulators_.begin(), it);
+         if (index >= mod_routing.size()) return;
+
+         mod_routing[index].mod_connections.push_back(connection);
+         (*it)->connections_.push_back(connection->state);
+
+         rebuildAndPublishSnapshot();
+     // }, true);
 }
 
-void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConnection* connection){
-    auto end = std::remove(all_modulation_connections_.begin(), all_modulation_connections_.end(), connection);
-    all_modulation_connections_.erase(end, all_modulation_connections_.end());
+void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConnection* connection,std::string destination_name){
+    // callOnMainThread([this, connection]
+      // {
+          {
+              auto end = std::remove(all_modulation_connections_.begin(),
+                                     all_modulation_connections_.end(),
+                                     connection);
+              all_modulation_connections_.erase(end, all_modulation_connections_.end());
+          }
 
-    auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
-
-    if (it != modulators_.end())
-    {
-        size_t index = std::distance(modulators_.begin(), it);
-        if (mod_routing[index].mod_connections.size() != 0)
-        {
-            auto it_ = std::remove(mod_routing[index].mod_connections.begin(), mod_routing[index].mod_connections.end(), connection);
-            mod_routing[index].mod_connections.erase(it_, mod_routing[index].mod_connections.end());
+          auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
+          if (it != modulators_.end())
+          {
+              const auto index = (size_t) std::distance(modulators_.begin(), it);
+              if (index < mod_routing.size())
+              {
+                  auto& v = mod_routing[index].mod_connections;
+                  auto end = std::remove(v.begin(), v.end(), connection);
+                  v.erase(end, v.end());
+              }
+          }
+        if(  releaseModulationChannel(destination_name)) {
+            parent.getEngine()->removeConnection (connection->connection_);
         }
-    }
+          rebuildAndPublishSnapshot();
+      // }, true);
+
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(StateConnection* connection) {
@@ -186,7 +218,7 @@ int bitklavier::ModulationProcessor::createNewModIndex()
    getBus(false,1)->setNumberOfChannels(getBus(false,1)->getNumberOfChannels()+1);
     // state.setProperty(IDs::numModChans, getBus(false,1)->getNumberOfChannels(),nullptr);
     DBG("createnewmodindex " + juce::String(getBus(false,1)->getNumberOfChannels()));
-   return (getBus(false,1)->getNumberOfChannels()-1)-1; //(old number of channels) -1 to get 0 based
+   return (getBus(false,1)->getNumberOfChannels()-1); //(old number of channels) -1 to get 0 based
 }
 
 int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavier::ModulationConnection& connection)
@@ -215,10 +247,115 @@ ModulatorBase* bitklavier::ModulationProcessor::getModulatorBase(std::string& uu
 {
     for (auto mod : modulators_)
     {
+        if (mod == nullptr) continue;
         if(mod->state.getProperty(IDs::uuid).toString() == juce::String(uuid))
         {
             return mod;
         }
     }
     return nullptr;
+}
+void bitklavier::ModulationProcessor::rebuildAndPublishSnapshot()
+{
+    // MESSAGE THREAD ONLY
+
+    auto newSnap = new RoutingSnapshot();
+    newSnap->blockSize = blockSize_;
+    newSnap->sampleRate = sampleRate_;
+
+    newSnap->mods.reserve(modulators_.size());
+
+    for (size_t i = 0; i < modulators_.size(); ++i)
+    {
+        auto* mod = modulators_[i];
+        if (mod == nullptr)
+            continue;
+
+        RoutingSnapshot::ModEntry entry;
+        entry.mod = mod;
+
+        // Snapshot-owned temp buffer so audio thread never touches shared buffers
+        entry.tmp.setSize(1, blockSize_, false, false, true);
+
+        // Copy the routing list for this mod (stable snapshot!)
+        if (i < mod_routing.size())
+            entry.connections = mod_routing[i].mod_connections;
+
+        newSnap->mods.push_back(std::move(entry));
+    }
+
+    // Publish: swap owner + atomic pointer under a *tiny* lock
+    {
+        juce::SpinLock::ScopedLockType sl (snapshotPublishLock);
+
+        snapshotOwner = newSnap; // refcount holds it
+        snapshotAtomic.store(snapshotOwner.get(), std::memory_order_release);
+    }
+}
+
+int bitklavier::ModulationProcessor::allocateModulationChannel (const std::string& destination)
+{
+    auto& info = destChannelMap[destination];
+
+    // Already allocated → reuse
+    if (info.refCount > 0)
+    {
+        ++info.refCount;
+        return info.channel;
+    }
+
+    // Find first free bit
+    int channel = -1;
+    for (int i = 0; i < kMaxModulationChannels; ++i)
+    {
+        if (! modChannelUsed.test(i))
+        {
+            channel = i;
+            break;
+        }
+    }
+
+    jassert(channel >= 0); // ran out of channels
+
+    modChannelUsed.set(channel);
+    info.channel = channel;
+    info.refCount = 1;
+
+    // Grow bus if needed (grow-only, safe)
+    if (channel >= maxAllocatedChannel)
+    {
+        const int newBusSize = channel + 1;
+        maxAllocatedChannel = newBusSize;
+
+        // IMPORTANT: message thread only
+        ScopedSuspendProcessing suspend (*this);
+        getBus(false, 1)->setNumberOfChannels(newBusSize);
+    }
+
+    return channel;
+}
+bool bitklavier::ModulationProcessor::releaseModulationChannel (const std::string& destination)
+{
+    auto it = destChannelMap.find(destination);
+    if (it == destChannelMap.end())
+        return false;
+
+    auto& info = it->second;
+
+    jassert(info.refCount > 0);
+    --info.refCount;
+
+    if (info.refCount == 0)
+    {
+        jassert(info.channel >= 0 && info.channel < kMaxModulationChannels);
+        modChannelUsed.reset(info.channel);
+        destChannelMap.erase(it);
+
+        return true;
+        // NOTE:
+        // We deliberately do NOT shrink the bus here.
+        // Shrinking buses during runtime causes host instability
+        // and is unnecessary since channels are now reusable.
+    }
+    return false;
 }

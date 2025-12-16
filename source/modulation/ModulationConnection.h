@@ -108,8 +108,8 @@ class ModulationProcessor;
             if (isBipolar())
             {
                 // Symmetric modulation up and down
-                float plusNorm  = range.convertTo0to1(std::min(sliderVal + modVal,end));
-                float minusNorm = range.convertTo0to1(std::max(sliderVal - modVal,start));
+                float plusNorm  = range.convertTo0to1(std::min(sliderVal + std::abs(modVal),end));
+                float minusNorm = range.convertTo0to1(std::max(sliderVal - std::abs(modVal),start));
 
                 // Half the total range (from center to one side)
                 modRangeNorm = 0.5f * std::abs(plusNorm - minusNorm);
