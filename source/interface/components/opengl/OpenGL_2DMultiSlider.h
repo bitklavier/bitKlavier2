@@ -140,7 +140,9 @@ public:
     }
 
     OpenGL_2DMultiSlider* clone() {
-        return new OpenGL_2DMultiSlider();
+        auto sliderClone = new OpenGL_2DMultiSlider();
+        sliderClone->setMinMaxDefaultInc (getMinMaxDefaultInc());
+        return sliderClone;
     }
 
     void updateSliderValsFromUI(
@@ -353,6 +355,8 @@ private :
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         image_component_->setUseAlpha(false);
+
+        allowSubSliders = true; //2D
 
         isModulation_ = true;
         addMyListener(this);

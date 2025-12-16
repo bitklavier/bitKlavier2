@@ -98,7 +98,9 @@ public:
     }
 
     OpenGL_MultiSlider* clone() {
-        return new OpenGL_MultiSlider();
+        auto sliderClone = new OpenGL_MultiSlider();
+        sliderClone->setMinMaxDefaultInc (getMinMaxDefaultInc());
+        return sliderClone;;
     }
 
     void multiSliderValueChanged(juce::String name, int whichSlider, juce::Array<float> values) override

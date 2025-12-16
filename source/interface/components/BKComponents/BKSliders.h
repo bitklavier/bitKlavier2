@@ -108,6 +108,7 @@ public:
 
     // slider range and skew
     void setMinMaxDefaultInc(std::vector<float> newvals);
+    std::vector<float> getMinMaxDefaultInc();
     void setSkewFromMidpoint(bool sfm);
 
     // highlight whichever slider is currently active in bK
