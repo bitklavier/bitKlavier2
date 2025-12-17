@@ -9,6 +9,8 @@
 #include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_sources/chowdsp_sources.h>
+#include "chowdsp_parameters/ParamUtils/chowdsp_ParameterTypes.h"
+
 // ********************************************************************************************* //
 // ****************************  EQParams  ********************************************* //
 // ********************************************************************************************* //
@@ -25,6 +27,16 @@ struct EQParams : chowdsp::ParamHolder
                 peak2FilterParams,
                 peak3FilterParams,
                 hiCutFilterParams);
+
+        doForAllParameters ([this] (auto& param, size_t) {
+            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.emplace_back(sliderParam);
+
+            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.emplace_back(sliderParam);
+        });
     }
 
     // bypass bool
@@ -102,6 +114,143 @@ struct EQParams : chowdsp::ParamHolder
         return mag;
     }
 
+    void updateCoefficients()
+    {
+        // state.params.sampleRate = getSampleRate();
+        auto peak1Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
+            peak1FilterParams.filterFreq->getCurrentValue(),
+            peak1FilterParams.filterQ->getCurrentValue(),
+            peak1FilterParams.filterGain->getCurrentValue());
+        auto peak2Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
+            peak2FilterParams.filterFreq->getCurrentValue(),
+            peak2FilterParams.filterQ->getCurrentValue(),
+            peak2FilterParams.filterGain->getCurrentValue());
+        auto peak3Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
+            peak3FilterParams.filterFreq->getCurrentValue(),
+            peak3FilterParams.filterQ->getCurrentValue(),
+            peak3FilterParams.filterGain->getCurrentValue());
+
+        *leftChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
+        *leftChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
+        *leftChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
+        *rightChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
+        *rightChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
+        *rightChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
+
+        leftChain.setBypassed<ChainPositions::Peak1>(!peak1FilterParams.filterActive->get());
+        leftChain.setBypassed<ChainPositions::Peak2>(!peak2FilterParams.filterActive->get());
+        leftChain.setBypassed<ChainPositions::Peak3>(!peak3FilterParams.filterActive->get());
+        rightChain.setBypassed<ChainPositions::Peak1>(!peak1FilterParams.filterActive->get());
+        rightChain.setBypassed<ChainPositions::Peak2>(!peak2FilterParams.filterActive->get());
+        rightChain.setBypassed<ChainPositions::Peak3>(!peak3FilterParams.filterActive->get());
+
+        // calculate and set low cut filter coefficients
+        int lowCutSlope = loCutFilterParams.filterSlope->getCurrentValue();
+        auto lowCutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(
+            loCutFilterParams.filterFreq->getCurrentValue(),
+            44100,
+            lowCutSlope / 6);
+
+        auto& leftLowCutChain = leftChain.get<ChainPositions::LowCut>();
+        leftLowCutChain.setBypassed<Slope::S12>(true);
+        leftLowCutChain.setBypassed<Slope::S24>(true);
+        leftLowCutChain.setBypassed<Slope::S36>(true);
+        leftLowCutChain.setBypassed<Slope::S48>(true);
+        auto& rightLowCutChain = rightChain.get<ChainPositions::LowCut>();
+        rightLowCutChain.setBypassed<Slope::S12>(true);
+        rightLowCutChain.setBypassed<Slope::S24>(true);
+        rightLowCutChain.setBypassed<Slope::S36>(true);
+        rightLowCutChain.setBypassed<Slope::S48>(true);
+
+        // breaks omitted on purpose to facilitate fall through
+        switch(lowCutSlope) {
+            case 48: {
+                *leftLowCutChain.get<Slope::S48>().coefficients =
+                *lowCutCoefficients[Slope::S48];
+                leftLowCutChain.setBypassed<Slope::S48>(!loCutFilterParams.filterActive->get());
+                *rightLowCutChain.get<Slope::S48>().coefficients =
+                *lowCutCoefficients[Slope::S48];
+                rightLowCutChain.setBypassed<Slope::S48>(!loCutFilterParams.filterActive->get());
+            }
+            case 36: {
+                *leftLowCutChain.get<Slope::S36>().coefficients =
+                *lowCutCoefficients[Slope::S36];
+                leftLowCutChain.setBypassed<Slope::S36>(!loCutFilterParams.filterActive->get());
+                *rightLowCutChain.get<Slope::S36>().coefficients =
+                *lowCutCoefficients[Slope::S36];
+                rightLowCutChain.setBypassed<Slope::S36>(!loCutFilterParams.filterActive->get());
+            }
+            case 24: {
+                *leftLowCutChain.get<Slope::S24>().coefficients =
+                *lowCutCoefficients[Slope::S24];
+                leftLowCutChain.setBypassed<Slope::S24>(!loCutFilterParams.filterActive->get());
+                *rightLowCutChain.get<Slope::S24>().coefficients =
+                *lowCutCoefficients[Slope::S24];
+                rightLowCutChain.setBypassed<Slope::S24>(!loCutFilterParams.filterActive->get());
+            }
+            case 12: {
+                *leftLowCutChain.get<Slope::S12>().coefficients =
+                *lowCutCoefficients[Slope::S12];
+                leftLowCutChain.setBypassed<Slope::S12>(!loCutFilterParams.filterActive->get());
+                *rightLowCutChain.get<Slope::S12>().coefficients =
+                *lowCutCoefficients[Slope::S12];
+                rightLowCutChain.setBypassed<Slope::S12>(!loCutFilterParams.filterActive->get());
+            }
+        }
+
+        // calculate and set high cut filter coefficients
+        int highCutSlope = hiCutFilterParams.filterSlope->getCurrentValue();
+        auto highCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(
+            hiCutFilterParams.filterFreq->getCurrentValue(),
+            44100,
+            highCutSlope / 6);
+
+        auto& leftHighCutChain = leftChain.get<ChainPositions::HighCut>();
+        leftHighCutChain.setBypassed<Slope::S12>(true);
+        leftHighCutChain.setBypassed<Slope::S24>(true);
+        leftHighCutChain.setBypassed<Slope::S36>(true);
+        leftHighCutChain.setBypassed<Slope::S48>(true);
+        auto& rightHighCutChain = rightChain.get<ChainPositions::HighCut>();
+        rightHighCutChain.setBypassed<Slope::S12>(true);
+        rightHighCutChain.setBypassed<Slope::S24>(true);
+        rightHighCutChain.setBypassed<Slope::S36>(true);
+        rightHighCutChain.setBypassed<Slope::S48>(true);
+
+        // breaks omitted on purpose to facilitate fall through
+        switch(highCutSlope) {
+            case 48: {
+                *leftHighCutChain.get<Slope::S48>().coefficients = *highCutCoefficients[Slope::S48];
+                leftHighCutChain.setBypassed<Slope::S48>(!hiCutFilterParams.filterActive->get());
+                *rightHighCutChain.get<Slope::S48>().coefficients = *highCutCoefficients[Slope::S48];
+                rightHighCutChain.setBypassed<Slope::S48>(!hiCutFilterParams.filterActive->get());
+            }
+            case 36: {
+                *leftHighCutChain.get<Slope::S36>().coefficients = *highCutCoefficients[Slope::S36];
+                leftHighCutChain.setBypassed<Slope::S36>(!hiCutFilterParams.filterActive->get());
+                *rightHighCutChain.get<Slope::S36>().coefficients = *highCutCoefficients[Slope::S36];
+                rightHighCutChain.setBypassed<Slope::S36>(!hiCutFilterParams.filterActive->get());
+            }
+            case 24: {
+                *leftHighCutChain.get<Slope::S24>().coefficients = *highCutCoefficients[Slope::S24];
+                leftHighCutChain.setBypassed<Slope::S24>(!hiCutFilterParams.filterActive->get());
+                *rightHighCutChain.get<Slope::S24>().coefficients = *highCutCoefficients[Slope::S24];
+                rightHighCutChain.setBypassed<Slope::S24>(!hiCutFilterParams.filterActive->get());
+            }
+            case 12: {
+                *leftHighCutChain.get<Slope::S12>().coefficients = *highCutCoefficients[Slope::S12];
+                leftHighCutChain.setBypassed<Slope::S12>(!hiCutFilterParams.filterActive->get());
+                *rightHighCutChain.get<Slope::S12>().coefficients = *highCutCoefficients[Slope::S12];
+                rightHighCutChain.setBypassed<Slope::S12>(!hiCutFilterParams.filterActive->get());
+            }
+        }
+        // DBG(leftHighCutChain.get<Slope::S12>().coefficients->getMagnitudeForFrequency(1000, 48000));
+    }
+    enum Slope {
+        S12,
+        S24,
+        S36,
+        S48
+    };
     enum ChainPositions {
         LowCut,
         Peak1,
@@ -146,9 +295,10 @@ public:
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override{};
 
     // Called upon initializiation and whenever a user changes parameters with a slider
-    void updateCoefficients();
+    // void updateCoefficients();
     // Return the magnitude corresponding to this frequency based off the current parameters of this equalizer
-    double magForFreq(double freq);
+    // double magForFreq(double freq);
+
 
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
@@ -180,20 +330,5 @@ public:
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
 private:
-
-    enum ChainPositions {
-        LowCut,
-        Peak1,
-        Peak2,
-        Peak3,
-        HighCut
-    };
-
-    enum Slope {
-        S12,
-        S24,
-        S36,
-        S48
-    };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EQProcessor)
 };

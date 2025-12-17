@@ -62,6 +62,17 @@ public:
         hiCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.hiCutFilterParams, listeners, *this);
         addSubSection(hiCutSection.get());
 
+        // recalculate coefficients
+        eqparams_.doForAllParameters ([this, &listeners] (auto& param, size_t) {
+            eqCallbacks += {listeners.addParameterListener(
+                param,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this]() {
+                        eqparams_.updateCoefficients();
+                })
+            };
+        });
+
         // to catch presses of the reset button
         eqCallbacks += {listeners.addParameterListener(
             eqparams_.resetEq,

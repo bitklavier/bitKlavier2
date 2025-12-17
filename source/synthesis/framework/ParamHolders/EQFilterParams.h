@@ -36,8 +36,8 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr filterFreq {
         juce::ParameterID { idPrepend + "Freq", 100 },
         idPrepend + "Freq",
-        juce::NormalisableRange { 0.0f, 10.00f, 0.0f, skewFactor, false },
-        1.0f,
+        juce::NormalisableRange { 20.0f, 20000.00f, 0.0f, skewFactor, false },
+        1000.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
@@ -47,7 +47,7 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr filterQ {
         juce::ParameterID { idPrepend + "Q", 100 },
         idPrepend + "Q",
-        juce::NormalisableRange { 0.0f, 10.00f, 0.0f, skewFactor, false },
+        juce::NormalisableRange { 0.1f, 10.00f, 0.0f, skewFactor, false },
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
@@ -58,8 +58,8 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
     chowdsp::GainDBParameter::Ptr filterGain {
         juce::ParameterID { idPrepend + "Gain", 100 },
         idPrepend + "Gain",
-        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
-        0.0f,
+        juce::NormalisableRange { -24.f, 24.f, 0.0f, skewFactor, false },
+        0.1f,
         true
     };
 
@@ -109,8 +109,8 @@ struct EQCutFilterParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr filterFreq {
         juce::ParameterID { idPrepend + "Freq", 100 },
         idPrepend + "Freq",
-        juce::NormalisableRange { 0.0f, 10.00f, 0.0f, skewFactor, false },
-        1.0f,
+        juce::NormalisableRange { 20.0f, 20000.00f, 0.0f, skewFactor, false },
+        20.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true

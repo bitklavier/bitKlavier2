@@ -64,14 +64,20 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     juce::ValueTree preparations (IDs::PREPARATIONS);
     juce::ValueTree connections (IDs::CONNECTIONS);
     juce::ValueTree modconnections (IDs::MODCONNECTIONS);
+    juce::ValueTree buseq (IDs::BUSEQ);
+    juce::ValueTree buscompressor (IDs::BUSCOMPRESSOR);
 
     piano.appendChild (preparations, nullptr);
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
     piano.setProperty (IDs::isActive, 1, nullptr);
     piano.setProperty (IDs::name, "default", nullptr);
+    buseq.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
+    buscompressor.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
     tree.appendChild (piano, nullptr);
     tree.addListener (this);
+    tree.appendChild (buseq, nullptr);
+    tree.appendChild (buscompressor, nullptr);
 
     //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
     modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree> ("ramp");
@@ -90,8 +96,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
     engine_ = std::make_unique<bitklavier::SoundEngine>();
     gainProcessor = std::make_unique<GainProcessor>(*this,tree);
-    compressorProcessor = std::make_unique<CompressorProcessor>(*this,tree);
-    eqProcessor = std::make_unique<EQProcessor>(*this,tree);
+    compressorProcessor = std::make_unique<CompressorProcessor>(*this,buscompressor);
+    eqProcessor = std::make_unique<EQProcessor>(*this,buseq);
 }
 
 SynthBase::~SynthBase()
@@ -432,7 +438,7 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
     gainProcessor->processBlock (audio_buffer, midi_buffer);
     eqProcessor->processBlock (audio_buffer, midi_buffer);
-    compressorProcessor->processBlock (audio_buffer, midi_buffer);
+    // compressorProcessor->processBlock (audio_buffer, midi_buffer);
     sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }
