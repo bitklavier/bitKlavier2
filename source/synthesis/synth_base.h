@@ -211,6 +211,11 @@ public:
     void startSampleLoading();
     void clearAllGuiListeners();
 protected:
+    // Holds the parsed preset tree until samples finish loading
+    juce::ValueTree pendingPresetTree;
+    std::atomic<bool> samplesLoading { false };
+    // True while we’re waiting to apply pendingPresetTree
+    std::atomic<bool> presetPending { false };
     chowdsp::DeferredAction mainThreadAction;
     //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;

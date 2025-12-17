@@ -59,7 +59,6 @@ void LogoSection::buttonClicked(juce::Button *clicked_button) {
 HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_section"), tab_offset_(0),
                                                            body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
                                                            gallery(gal) {
-
     jassert(gal.hasType(IDs::GALLERY));
     addOpenGlComponent(body_);
     logo_section_ = std::make_unique<LogoSection>();
@@ -271,6 +270,17 @@ void HeaderSection::sliderValueChanged(juce::Slider *slider) {
     //  }
     //  else
     SynthSection::sliderValueChanged(slider);
+}
+void HeaderSection::notifyChange() {
+
+}
+
+void HeaderSection::notifyFresh() {
+    if (gallery.isValid()) {
+        pianoSelectText->setText(gallery.getProperty("soundset"));
+        resized();
+    }
+
 }
 
 //void HeaderSection::setPresetBrowserVisibility(bool visible) {

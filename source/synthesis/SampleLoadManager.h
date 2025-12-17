@@ -130,12 +130,20 @@ public:
 
     juce::ThreadPool sampleLoader;
     std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>> samplerSoundset;
-
+    bool loadSamples (const juce::String& soundsetName,
+                                         const juce::ValueTree& targetTree);
     bool loadSamples (int selection, bool isGlobal,const juce::ValueTree &v);
     bool loadSamples (std::string);
     void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType,std::string);
     juce::Array<juce::File> samplesByPitch (juce::String whichPitch, juce::Array<juce::File> inFiles);
-
+    bool isSoundsetLoaded (const juce::String& baseName) const
+    {
+        const auto b = baseName.toStdString();
+        return samplerSoundset.contains (b)
+            || samplerSoundset.contains (b + "Hammers")
+            || samplerSoundset.contains (b + "Pedals")
+            || samplerSoundset.contains (b + "ReleaseResonance");
+    }
     const std::vector<std::string> getAllSampleSets();
     std::shared_ptr<UserPreferencesWrapper> preferences;
     void handleAsyncUpdate() override;

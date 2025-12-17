@@ -224,6 +224,84 @@ bool SampleLoadManager::loadSamples(std::string sample_name) {
     loadSamples_sub (bitklavier::utils::BKPianoPedal,sample_name);
     return true;
 }
+// Helper: decide if this tree represents the "global/gallery" target.
+static bool isGalleryTree (const juce::ValueTree& vt)
+{
+    return vt.isValid() && vt.hasType (IDs::GALLERY); // change IDs::gallery if needed
+}
+
+bool SampleLoadManager::loadSamples (const juce::String& soundsetName,
+                                     const juce::ValueTree& targetTree)
+{
+    allKeysWithSamples.clear();
+
+    // Decide where the soundset property should be written:
+    // - Gallery/global -> write into `t` (your global ValueTree)
+    // - otherwise -> write into the passed-in tree
+    const bool targetIsGallery = isGalleryTree (targetTree);
+
+    juce::ValueTree vtToWrite = targetIsGallery ? t : targetTree; // NOTE: both are handles
+
+    // If already loaded, just set the property and return
+    // (Adjust this condition if your samplerSoundset keys are not exactly the base name.)
+    if (samplerSoundset.contains (soundsetName.toStdString()))
+    {
+        if (vtToWrite.isValid())
+            vtToWrite.setProperty (IDs::soundset, soundsetName, nullptr);
+
+        return true;
+    }
+
+    // Build directory for this soundset
+    juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+
+    juce::File baseDir (
+        preferences->userPreferences->tree.getProperty ("default_sample_path").toString()
+    );
+
+    juce::File directory = baseDir.getChildFile (soundsetName);    DBG ("sample path = " + samplePath);
+
+
+    if (! directory.exists())
+    {
+        DBG ("Soundset dir does not exist: " + directory.getFullPathName());
+        return false;
+    }
+
+    // (Optional debug listing)
+    {
+        MyComparator sorter;
+        auto allSamples = directory.findChildFiles (juce::File::findFiles, false, "*.wav");
+        allSamples.sort (sorter);
+
+        int i = 0;
+        for (auto file : allSamples)
+            DBG (file.getFullPathName() + " " + juce::String (++i));
+    }
+
+    // Progress entry
+    auto& progressPtr = soundsetProgressMap[soundsetName.toStdString()];
+    if (!progressPtr)
+        progressPtr = std::make_shared<SampleSetProgress>();
+
+    progressPtr->soundsetName = soundsetName.toStdString();
+    progressPtr->targetTree   = vtToWrite; // store where to write soundset / completion callbacks
+
+    parent->startSampleLoading();
+
+    const juce::String ext = directory.getFileExtension().toLowerCase();
+    if (ext == ".sfz" || ext == ".sf2")
+    {
+        loadSamples_sub (bitklavier::utils::BKPianoSoundFont, soundsetName.toStdString());
+        return true;
+    }
+
+    loadSamples_sub (bitklavier::utils::BKPianoMain,             soundsetName.toStdString());
+    loadSamples_sub (bitklavier::utils::BKPianoHammer,           soundsetName.toStdString());
+    loadSamples_sub (bitklavier::utils::BKPianoReleaseResonance, soundsetName.toStdString());
+    loadSamples_sub (bitklavier::utils::BKPianoPedal,            soundsetName.toStdString());
+    return true;
+}
 
 bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::ValueTree& prep_tree)
 {
@@ -699,7 +777,7 @@ bool SampleLoadJob::loadMainSamplesByPitch()
         auto [reader, filename] = sampleReader->make (*manager);
         if (!reader)
             break; // Break the loop if the reader is null
-        auto sample = new Sample (*(reader.get()), 90);
+        auto sample = std::make_shared<Sample<juce::AudioFormatReader>>(*(reader.get()), 10);
         juce::StringArray stringArray;
         stringArray.addTokens (filename, "v", "");
         juce::String noteName = stringArray[0];
@@ -710,7 +788,7 @@ bool SampleLoadJob::loadMainSamplesByPitch()
         juce::BigInteger velRange;
         velRange.setRange (begin, end - begin, true);
 
-        auto sound = soundset->add (new BKSamplerSound <juce::AudioFormatReader>(filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), thisMidiRange, midiNote, 0, velRange, layers, dBFSBelow));
+        auto sound = soundset->add (new BKSamplerSound <juce::AudioFormatReader>(filename, sample, thisMidiRange, midiNote, 0, velRange, layers, dBFSBelow));
 
         dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
 

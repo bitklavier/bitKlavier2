@@ -410,14 +410,14 @@ void FullInterface::setFocus()
 
 void FullInterface::notifyChange()
 {
-    //   if (header_)
-    //       header_->notifyChange();
+    if (header_)
+        header_->notifyChange();
 }
 
 void FullInterface::notifyFresh()
 {
-    //   if (header_)
-    //       header_->notifyFresh();
+    if (header_)
+        header_->notifyFresh();
 }
 
 void FullInterface::showFullScreenSection (SynthSection* full_screen)

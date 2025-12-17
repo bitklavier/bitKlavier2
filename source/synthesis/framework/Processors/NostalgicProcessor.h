@@ -370,12 +370,7 @@ public:
     void updateAllMidiNoteTranspositions();
     void handleMidiTargetMessages(int channel);
     bool acceptsMidi() const override { return true; }
-    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-    {
-        ptrToSamples = s;
-    }
-
-    void addSoundSet (
+      void addSoundSet (
         juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
@@ -428,9 +423,9 @@ public:
         if (property == IDs::soundset && t == parent.getValueTree()) {
             juce::String a = t.getProperty(IDs::soundset, "");
             addSoundSet(&(*parent.getSamples())[a],
-                        &(*parent.getSamples())[a+"Hammers"],
-                        &(*parent.getSamples())[a+"ReleaseResonance"],
-                        &(*parent.getSamples())[a+"Pedals"]);
+                      nullptr,
+                      nullptr,
+                        nullptr);
         }
     }
 
@@ -441,15 +436,15 @@ public:
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
 
             addSoundSet(&(*parent.getSamples())[soundset],
-                     &(*parent.getSamples())[soundset + "Hammers"],
-                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                     &(*parent.getSamples())[soundset + "Pedals"]);
+            nullptr,
+              nullptr,
+                nullptr);
         }else {
             //otherwise set the piano
             addSoundSet(&(*parent.getSamples())[soundset],
-                        &(*parent.getSamples())[soundset + "Hammers"],
-                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                        &(*parent.getSamples())[soundset + "Pedals"]);
+            nullptr,
+             nullptr,
+               nullptr);
         }
     }
 
@@ -483,7 +478,6 @@ private:
     bool doClear = false;
 
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NostalgicProcessor)
 };

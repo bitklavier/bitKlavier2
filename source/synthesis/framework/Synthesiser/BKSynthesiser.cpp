@@ -78,7 +78,7 @@ void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>
     const juce::ScopedLock sl (lock);
 
     voices.clearQuick (false);
-    if (s != nullptr)
+    if (s->getFirst() != nullptr)
     {
         for (int i = 0; i < 300; i++)
         {

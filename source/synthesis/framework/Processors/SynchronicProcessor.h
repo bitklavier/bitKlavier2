@@ -549,9 +549,9 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
             addSoundSet(
                 samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
-                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
-                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
-                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+             nullptr,
+             nullptr,
+             nullptr
             );
         }
     }
@@ -576,17 +576,18 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         if (soundset == IDs::syncglobal.toString()) {
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
-
-            addSoundSet(&(*parent.getSamples())[soundset],
-                &(*parent.getSamples())[soundset + "Hammers"],
-                &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+            addSoundSet( samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+             nullptr,
+             nullptr,
+             nullptr);
         }else {
             //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset],
-                &(*parent.getSamples())[soundset + "Hammers"],
-                &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+            addSoundSet(samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+             nullptr,
+             nullptr,
+             nullptr);
         }
     }
 

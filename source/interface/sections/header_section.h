@@ -221,7 +221,7 @@ class LogoSection : public SynthSection {
     std::unique_ptr<LogoButton> logo_button_;
 };
 
-class HeaderSection : public SynthSection, public LogoSection::Listener {
+class HeaderSection : public SynthSection, public LogoSection::Listener{
   public:
     class Listener {
       public:
