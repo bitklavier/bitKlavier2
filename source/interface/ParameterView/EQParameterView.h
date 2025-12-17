@@ -48,7 +48,7 @@ public:
         // addOpenGlComponent (equalizerGraph);
         equalizerGraph = std::make_unique<OpenGL_EqualizerGraph> (&params, listeners);
         addOpenGlComponent (equalizerGraph->getImageComponent());
-
+        addAndMakeVisible(equalizerGraph.get());
 
         // eq filter sections
         loCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.loCutFilterParams, listeners, *this);
@@ -64,66 +64,17 @@ public:
 
         // recalculate coefficients
         eqparams_.doForAllParameters ([this, &listeners] (auto& param, size_t) {
-            eqCallbacks += {listeners.addParameterListener(
+
+            eqRedoImageCallbacks += {listeners.addParameterListener(
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this]() {
-                        eqparams_.updateCoefficients();
+                    this->equalizerGraph->redoImage();
                 })
             };
         });
 
-        // to catch presses of the reset button
-        eqCallbacks += {listeners.addParameterListener(
-            eqparams_.resetEq,
-            chowdsp::ParameterListenerThread::MessageThread,
-            [this]() {
-                if (eqparams_.resetEq.get()->get()) {
-                    // todo make this a function or just set all parameters here?
-                    // resetToDefault() doesn't do anything about activeFilters
-                    eqparams_.loCutFilterParams.resetToDefault();
-                    eqparams_.peak1FilterParams.resetToDefault();
-                    eqparams_.peak2FilterParams.resetToDefault();
-                    eqparams_.peak3FilterParams.resetToDefault();
-                    eqparams_.hiCutFilterParams.resetToDefault();
-                    eqparams_.resetEq->setParameterValue(false);
-                }
-            })
-        };
 
-        // to catch presses of the eq power button
-        eqCallbacks += {listeners.addParameterListener(
-            eqparams_.activeEq,
-            chowdsp::ParameterListenerThread::MessageThread,
-            [this]() {
-                // if EQ is off, filters should be off but save which filters were on
-                if (!eqparams_.activeEq.get()->get()) {
-                    // todo: is this threadsafe?
-                    eqparams_.activeFilters = {
-                        eqparams_.loCutFilterParams.filterActive->get(),
-                        eqparams_.peak1FilterParams.filterActive->get(),
-                        eqparams_.peak2FilterParams.filterActive->get(),
-                        eqparams_.peak3FilterParams.filterActive->get(),
-                        eqparams_.hiCutFilterParams.filterActive->get()
-                    };
-
-                    eqparams_.loCutFilterParams.filterActive->setParameterValue(false);
-                    eqparams_.peak1FilterParams.filterActive->setParameterValue(false);
-                    eqparams_.peak2FilterParams.filterActive->setParameterValue(false);
-                    eqparams_.peak3FilterParams.filterActive->setParameterValue(false);
-                    eqparams_.hiCutFilterParams.filterActive->setParameterValue(false);
-                }
-                // if EQ is on, turn on the filters that were on previously
-                if (eqparams_.activeEq.get()->get()) {
-                    // todo: is this threadsafe? i shouldn't hardcode the numbers
-                    if (eqparams_.activeFilters.getUnchecked (0)) eqparams_.loCutFilterParams.filterActive->setParameterValue(true);
-                    if (eqparams_.activeFilters.getUnchecked (1)) eqparams_.peak1FilterParams.filterActive->setParameterValue(true);
-                    if (eqparams_.activeFilters.getUnchecked (2)) eqparams_.peak2FilterParams.filterActive->setParameterValue(true);
-                    if (eqparams_.activeFilters.getUnchecked (3)) eqparams_.peak3FilterParams.filterActive->setParameterValue(true);
-                    if (eqparams_.activeFilters.getUnchecked (4)) eqparams_.hiCutFilterParams.filterActive->setParameterValue(true);
-                }
-            })
-        };
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -136,7 +87,7 @@ public:
         paintChildrenBackgrounds (g);
     }
 
-    chowdsp::ScopedCallbackList eqCallbacks;
+    chowdsp::ScopedCallbackList eqRedoImageCallbacks;
 
     // active eq & reset buttons
     std::unique_ptr<SynthButton> activeEq_toggle;

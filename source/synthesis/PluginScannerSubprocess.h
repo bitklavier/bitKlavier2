@@ -14,7 +14,8 @@ class PluginScannerSubprocess final : private juce::ChildProcessWorker,
 public:
     PluginScannerSubprocess()
     {
-        formatManager.addDefaultFormats();
+        addDefaultFormatsToManager(formatManager);
+
     }
 
     using ChildProcessWorker::initialiseFromCommandLine;

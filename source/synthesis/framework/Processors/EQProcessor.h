@@ -120,15 +120,15 @@ struct EQParams : chowdsp::ParamHolder
         auto peak1Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
             peak1FilterParams.filterFreq->getCurrentValue(),
             peak1FilterParams.filterQ->getCurrentValue(),
-            peak1FilterParams.filterGain->getCurrentValue());
+            juce::Decibels::decibelsToGain(peak1FilterParams.filterGain->getCurrentValue()));
         auto peak2Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
             peak2FilterParams.filterFreq->getCurrentValue(),
             peak2FilterParams.filterQ->getCurrentValue(),
-            peak2FilterParams.filterGain->getCurrentValue());
+            juce::Decibels::decibelsToGain(peak2FilterParams.filterGain->getCurrentValue()));
         auto peak3Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
             peak3FilterParams.filterFreq->getCurrentValue(),
             peak3FilterParams.filterQ->getCurrentValue(),
-            peak3FilterParams.filterGain->getCurrentValue());
+            juce::Decibels::decibelsToGain(peak3FilterParams.filterGain->getCurrentValue()));
 
         *leftChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
         *leftChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
@@ -330,5 +330,6 @@ public:
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
 private:
+    chowdsp::ScopedCallbackList eqCallbacks;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EQProcessor)
 };

@@ -54,8 +54,12 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
     }
   }
 
-  current_midi_ins_ = juce::StringArray(juce::MidiInput::getDevices());
-
+  auto midiInputs = juce::MidiInput::getAvailableDevices();
+  current_midi_ins_.clearQuick();
+  for (auto& info : midiInputs)
+  {
+    current_midi_ins_.add (info.name);
+  }
   for (const juce::String& midi_in : current_midi_ins_)
     deviceManager.setMidiInputDeviceEnabled(midi_in, true);
 
@@ -155,7 +159,16 @@ void SynthEditor::resized() {
 }
 
 void SynthEditor::timerCallback() {
-  juce::StringArray midi_ins(juce::MidiInput::getDevices());
+  /*
+     * todo: confirm this fix is correct, since getDevices() has been removed from JUCE
+     */
+  //juce::StringArray midi_ins(juce::MidiInput::getDevices());
+  auto midiInputs = juce::MidiInput::getAvailableDevices();
+  juce::StringArray midi_ins;
+  for (auto& info : midiInputs)
+  {
+    midi_ins.add (info.name);
+  }
 
   for (int i = 0; i < midi_ins.size(); ++i) {
     if (!current_midi_ins_.contains(midi_ins[i]))

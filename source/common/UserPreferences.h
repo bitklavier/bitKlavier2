@@ -47,7 +47,7 @@ public:
         pluginSortMethod = static_cast<juce::KnownPluginList::SortMethod>(val);
         knownPluginList.setCustomScanner (std::make_unique<CustomPluginScanner>(tree));
         knownPluginList.addChangeListener(this);
-        formatManager.addDefaultFormats();
+        addDefaultFormatsToManager(formatManager);
     }
     void changeListenerCallback(juce::ChangeBroadcaster *source) override {
         if (tree.getChildWithName("KNOWNPLUGINS").isValid()) {
