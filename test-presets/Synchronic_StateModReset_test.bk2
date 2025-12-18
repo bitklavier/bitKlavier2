@@ -39,7 +39,7 @@
           <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="noteOnGain" start="-80.0" end="6.0" skew="2.0"/>
-          <MODULATABLE_PARAM parameter="attack" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="attack" start="0.0" end="10000.0" skew="0.2313782125711441"/
           <MODULATABLE_PARAM parameter="decay" start="0.0" end="1000.0" skew="1.0"/>
           <MODULATABLE_PARAM parameter="sustain" start="0.0" end="1.0" skew="1.0"/>
           <MODULATABLE_PARAM parameter="release" start="0.0" end="10000.0" skew="0.2313782125711441"/>

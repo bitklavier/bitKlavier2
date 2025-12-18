@@ -91,10 +91,6 @@ namespace IDs
     DECLARE_ID(numModChans)
     DECLARE_ID(sliderval)
 
-    DECLARE_ID(multislider_vals)
-    DECLARE_ID(multislider_size)
-    DECLARE_ID(multislider_states)
-    DECLARE_ID(multislider_states_size)
 
     DECLARE_ID(adsr_attack)
     DECLARE_ID(adsr_decay)

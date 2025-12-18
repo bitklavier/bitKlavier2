@@ -51,7 +51,10 @@ struct MultiSlider2DState : bitklavier::StateChangeableParameter
 {
     std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH> sliderVals = {1.f};
     std::array<std::atomic<bool>, MAXMULTISLIDER2DLENGTH> activeSliders = {true}; // could change to std::bitset
+    MultiSlider2DState(std::string &&_name) : name(_name){};
 
+
+    juce::String name;
     /*
      * how many sliders is the user actually working with (int)
      *      - there will always be at least 1
@@ -73,10 +76,11 @@ struct MultiSlider2DState : bitklavier::StateChangeableParameter
         {
             static juce::var nullVar;
 
-            auto sval = change.getProperty (IDs::multislider_vals);
-            auto svalsize = change.getProperty (IDs::multislider_size);
-            auto aval = change.getProperty (IDs::multislider_states);
-            auto avalsize = change.getProperty (IDs::multislider_states_size);
+            auto sval = change.getProperty (name + "_vals");
+            auto svalsize = change.getProperty (name + "_size");
+            auto aval = change.getProperty (name +"_states");
+            auto avalsize = change.getProperty (name + "_states_size");
+            DBG("MultiSliderState::processStateChanges " << sval.toString());
 
             if (sval != nullVar) {
                 //stringToAtomicArray(sliderVals, sval.toString(), 1.);

@@ -129,15 +129,15 @@ public:
         addBorder(variousControlsBorder.get());
 
         // multisliders
-        transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions_", &params.transpositions, listeners);
-        transpositionsSlider->setComponentID ("transpositions_");
+        transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions", &params.transpositions, listeners);
+        transpositionsSlider->setComponentID ("transpositions");
         transpositionsSlider->setMinMaxDefaultInc({-12., 12, 0., 0.001});
         transpositionsSlider->setName("Transpositions");
         addStateModulatedComponent (transpositionsSlider.get());
         transpositionsSlider->updateFromParams(juce::dontSendNotification);
 
-        accentsSlider = std::make_unique<OpenGL_MultiSlider>("accents_", &params.accents, listeners);
-        accentsSlider->setComponentID ("accents_");
+        accentsSlider = std::make_unique<OpenGL_MultiSlider>("accents", &params.accents, listeners);
+        accentsSlider->setComponentID ("accents");
         accentsSlider->setMinMaxDefaultInc({0., 2, 1., 0.1});
         accentsSlider->setName("Accents");
         addStateModulatedComponent (accentsSlider.get());

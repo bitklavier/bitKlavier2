@@ -98,8 +98,18 @@ public:
     }
 
     OpenGL_MultiSlider* clone() {
+        // auto msvals = modulationState.getProperty(name_ + "_vals");
+        // auto msvals_size = int(modulationState.getProperty(name_  + "_size"));
+        // auto msavals = modulationState.getProperty(name_ + "_states");
+        // auto msavals_size = int(modulationState.getProperty(name_ + "_states_size"));
+        // defaultState.setProperty( name_ + "_vals", msvals, nullptr);
+        // defaultState.setProperty( name_ + "_size", msvals_size, nullptr);
+        // defaultState.setProperty(name_ + "_states", msavals, nullptr);
+        // defaultState.setProperty(name_ + "_states_size", msavals_size, nullptr);
         auto sliderClone = new OpenGL_MultiSlider();
         sliderClone->setMinMaxDefaultInc (getMinMaxDefaultInc());
+        sliderClone->name_ = name_;
+        // sliderClone->setName(name_);
         return sliderClone;;
     }
 
@@ -142,10 +152,10 @@ public:
 
             DBG("resetting defaultState in Multislider");
             // then update defaultState, with string representation of the multislider arrays
-            defaultState.setProperty(IDs::multislider_vals, valsStr, nullptr);
-            defaultState.setProperty(IDs::multislider_size, values.size(), nullptr);
-            defaultState.setProperty(IDs::multislider_states, activeStr, nullptr);
-            defaultState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
+            defaultState.setProperty( name_ + "_vals", valsStr, nullptr);
+            defaultState.setProperty( name_ + "_size", values.size(), nullptr);
+            defaultState.setProperty(name_ + "_states", activeStr, nullptr);
+            defaultState.setProperty(name_ + "_states_size", states.size(), nullptr);
         }
         else if (isModulation_)
         {
@@ -155,10 +165,10 @@ public:
              *
              * we just write strings of the arrays to modulationState properties
              */
-            modulationState.setProperty(IDs::multislider_vals, valsStr, nullptr);
-            modulationState.setProperty(IDs::multislider_size, values.size(), nullptr);
-            modulationState.setProperty(IDs::multislider_states, activeStr, nullptr);
-            modulationState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
+            modulationState.setProperty(name_ + "_vals", valsStr, nullptr);
+            modulationState.setProperty(name_ + "_size", values.size(), nullptr);
+            modulationState.setProperty(name_ +"_states", activeStr, nullptr);
+            modulationState.setProperty(name_ + "_states_size", states.size(), nullptr);
         }
     }
 
@@ -169,10 +179,10 @@ public:
      */
     void syncToValueTree() override {
 
-        auto msvals = modulationState.getProperty(IDs::multislider_vals);
-        auto msvals_size = int(modulationState.getProperty(IDs::multislider_size));
-        auto msavals = modulationState.getProperty(IDs::multislider_states);
-        auto msavals_size = int(modulationState.getProperty(IDs::multislider_states_size));
+        auto msvals = modulationState.getProperty(name_ + "_vals");
+        auto msvals_size = int(modulationState.getProperty(name_  + "_size"));
+        auto msavals = modulationState.getProperty(name_ + "_states");
+        auto msavals_size = int(modulationState.getProperty(name_ + "_states_size"));
 
         std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> dispvals;
         stringToAtomicArray(dispvals, msvals, 0.);

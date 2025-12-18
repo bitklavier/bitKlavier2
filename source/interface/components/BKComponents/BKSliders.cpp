@@ -899,7 +899,7 @@ void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
 // mouseUp: on shift-click, slider will be set to default value
 void BKMultiSlider::mouseUp (const juce::MouseEvent &event)
 {
-    if(event.mouseWasClicked())
+    if(!event.mouseWasClicked())
     {
         if(event.mods.isShiftDown())
         {

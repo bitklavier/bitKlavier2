@@ -111,10 +111,10 @@ struct SynchronicParams : chowdsp::ParamHolder
     /**
      * todo: make transpositions 2D
      */
-    MultiSlider2DState transpositions;
-    MultiSliderState accents;
-    MultiSliderState sustainLengthMultipliers;
-    MultiSliderState beatLengthMultipliers;
+    MultiSlider2DState transpositions {"transpositions"};
+    MultiSliderState accents {"accents"};
+    MultiSliderState sustainLengthMultipliers{"sustain_length_multipliers"};
+    MultiSliderState beatLengthMultipliers{"beat_length_multipliers"};
 
     /*
      * for keeping track of the current multislider lengths

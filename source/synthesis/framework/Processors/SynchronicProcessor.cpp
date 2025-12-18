@@ -53,10 +53,10 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     state.params.beatLengthMultipliers.stateChanges.defaultState        = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
     parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpositions_",
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "transpositions",
         &(state.params.transpositions.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "accents_",
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "accents",
         &(state.params.accents.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "sustain_length_multipliers",
@@ -995,8 +995,8 @@ typename Serializer::SerializedType SynchronicParams::serialize (const Synchroni
     /*
      * then serialize the more complex params
      */
-    serializeMultiSliderParam<Serializer> (ser, paramHolder.transpositions, "transpositions_");
-    serializeMultiSliderParam<Serializer> (ser, paramHolder.accents, "accents_");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.transpositions, "transpositions");
+    serializeMultiSliderParam<Serializer> (ser, paramHolder.accents, "accents");
     serializeMultiSliderParam<Serializer> (ser, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
     serializeMultiSliderParam<Serializer> (ser, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
 
@@ -1016,8 +1016,8 @@ void SynchronicParams::deserialize (typename Serializer::DeserializedType deseri
     /*
      * then the more complex params
      */
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions_", 0.f); // 0 offset for transpositions
-    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents_"); // 1. multiplier for the rest
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.transpositions, "transpositions", 0.f); // 0 offset for transpositions
+    deserializeMultiSliderParam<Serializer> (deserial, paramHolder.accents, "accents"); // 1. multiplier for the rest
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.sustainLengthMultipliers, "sustain_length_multipliers");
     deserializeMultiSliderParam<Serializer> (deserial, paramHolder.beatLengthMultipliers, "beat_length_multipliers");
 
