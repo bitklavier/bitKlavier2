@@ -78,7 +78,7 @@ juce_add_plugin("${PROJECT_NAME}"
     # Change me!
     # A four-character plugin id
     # First character MUST be uppercase for AU formats
-    PLUGIN_MANUFACTURER_CODE Bitk 
+    PLUGIN_MANUFACTURER_CODE Bitk
 
     # Change me!
     # A unique four-character plugin id
@@ -111,7 +111,15 @@ target_sources(SharedCode INTERFACE ${SourceFiles})
 
 # Adds a BinaryData target for embedding assets into the binary
 include(Assets)
-
+# Adds address sanitizer
+#target_compile_options(SharedCode INTERFACE
+#        -fsanitize=address
+#        -fno-omit-frame-pointer
+#)
+#
+#target_link_options(SharedCode INTERFACE
+#        -fsanitize=address
+#)
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
 target_include_directories(SharedCode

@@ -359,8 +359,8 @@ void SynthBase::removeConnection (const juce::AudioProcessorGraph::Connection& c
 
 bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
 {
-    pauseProcessing (true);
     //engine_->allSoundsOff();
+    pauseProcessing(true);
     tree.copyPropertiesAndChildrenFrom (state, nullptr);
 
     pauseProcessing (false);
@@ -380,6 +380,7 @@ void SynthBase::clearAllBackend() {
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
+    this->engine_->initialiseGraph();
 }
 struct SoundsetRef
 {
@@ -511,11 +512,15 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         }
     }
 
-    // ---------- Reset backend BEFORE applying preset ----------
-    clearAllBackend();
 
+    // ---------- Reset backend BEFORE applying preset ----------
     if (auto* gui = getGuiInterface())
         gui->removeAllGuiListeners();
+    pauseProcessing(true);
+    clearAllBackend();
+    pauseProcessing(false);
+
+
 
     engine_->resetEngine();
 

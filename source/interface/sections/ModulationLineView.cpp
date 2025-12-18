@@ -50,7 +50,10 @@ void ModulationLineView::renderOpenGlComponents (OpenGlWrapper& open_gl, bool an
     juce::ScopedLock lock (open_gl_lock);
     for (auto line : objects)
     {
-        if (line != nullptr && line - isVisible())
+        if (line != nullptr && !line->line->isInit()) {
+            line->line->init(open_gl);
+        }
+        if (line != nullptr && line->isVisible())
             line->line->render (open_gl, animate);
     }
 }
@@ -212,11 +215,11 @@ void ModulationLineView::_update()
 
 void ModulationLineView::modConnectionAdded (bitklavier::ModConnection* c)
 {
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    juce::ScopedLock{*interface->getOpenGlCriticalSection()};
     auto* line = new ModulationLine (&site, this, c->state);
+    addAndMakeVisible(line);
     objects.add (line);
-    //right now this doesn't need to do anything since this function mainly is used to alert the audio thread
-    // that some thing has change.
-    // in our case a new line does not cause any audio thread behaviour to occur
 }
 
 void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
@@ -251,7 +254,8 @@ void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
     }
     DBG ("delete line object");
     {
-        juce::ScopedLock lock (open_gl_lock);
+        auto interface = findParentComponentOfClass<SynthGuiInterface>();
+        juce::ScopedLock{*interface->getOpenGlCriticalSection()};
         objects.remove (index);
     }
     delete at;

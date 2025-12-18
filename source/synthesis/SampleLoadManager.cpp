@@ -182,13 +182,22 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets()
 }
 
 bool SampleLoadManager::loadSamples(std::string sample_name) {
-    juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+    // juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+    DBG ("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
+
     MyComparator sorter;
-    samplePath.append (sample_name, 1000); // change to "orig" to test that way
+    // samplePath.append (sample_name, 1000); // change to "orig" to test that way
+    juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
+
+    juce::File baseDir (
+        preferences->userPreferences->tree.getProperty ("default_sample_path").toString()
+    );
+
+    juce::File directory = baseDir.getChildFile (sample_name);
     //samplePath.append("/orig", 10);
-    DBG ("sample path = " + samplePath);
-    juce::File directory (samplePath);
-    DBG (samplePath);
+    DBG ("sample path = " + directory.getFullPathName());
+    // juce::File directory (samplePath);
+    // DBG (samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles (juce::File::TypesOfFileToFind::findFiles, false, "*.wav");
     allSamples.sort (sorter);
 
@@ -233,6 +242,8 @@ static bool isGalleryTree (const juce::ValueTree& vt)
 bool SampleLoadManager::loadSamples (const juce::String& soundsetName,
                                      const juce::ValueTree& targetTree)
 {
+    DBG ("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
+
     allKeysWithSamples.clear();
 
     // Decide where the soundset property should be written:
@@ -259,7 +270,8 @@ bool SampleLoadManager::loadSamples (const juce::String& soundsetName,
         preferences->userPreferences->tree.getProperty ("default_sample_path").toString()
     );
 
-    juce::File directory = baseDir.getChildFile (soundsetName);    DBG ("sample path = " + samplePath);
+    juce::File directory = baseDir.getChildFile (soundsetName);
+    DBG ("sample path = " + directory.getFullPathName());
 
 
     if (! directory.exists())
@@ -305,6 +317,8 @@ bool SampleLoadManager::loadSamples (const juce::String& soundsetName,
 
 bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::ValueTree& prep_tree)
 {
+    DBG ("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
+
     allKeysWithSamples.clear();
 
     temp_prep_tree = prep_tree;
@@ -325,12 +339,18 @@ bool SampleLoadManager::loadSamples (int selection, bool isGlobal, const juce::V
             return true;
         }
     }
+ // juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
 
-    samplePath.append (soundsets[selection], 1000); // change to "orig" to test that way
+    juce::File baseDir (
+        preferences->userPreferences->tree.getProperty ("default_sample_path").toString()
+    );
+
+    juce::File directory = baseDir.getChildFile (soundsets[selection]);
+    // samplePath.append (soundsets[selection], 1000); // change to "orig" to test that way
     //samplePath.append("/orig", 10);
-    DBG ("sample path = " + samplePath);
-    juce::File directory (samplePath);
-    DBG (samplePath);
+    DBG ("sample path = " + directory.getFullPathName());
+    // juce::File directory (samplePath);
+    // DBG (samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles (juce::File::TypesOfFileToFind::findFiles, false, "*.wav");
     allSamples.sort (sorter);
 

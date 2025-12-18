@@ -14,18 +14,21 @@ bitklavier::ModulationProcessor::ModulationProcessor(SynthBase& parent,const juc
        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true)
        .withInput("Reset",juce::AudioChannelSet::discreteChannels(1),true)), state(vt),
-mod_list(std::make_unique<ModulationList>(state,&parent,this)), parent(parent)
+ parent(parent)
 {
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
+    mod_list = std::make_unique<ModulationList>(state,&parent,this);
 }
 
 void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     // DBG("mod");
     // Read the current snapshot pointer
-    auto* snap = snapshotAtomic.load(std::memory_order_acquire);
-    if (snap == nullptr)
+    const int idx = activeSnapshotIndex.load(std::memory_order_acquire);
+    auto& snap = snapshots[idx];
+
+    if (snap.mods.empty())
     {
         buffer.clear();
         return;
@@ -40,7 +43,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
         if (reset_in.getSample(0,0) == 1)
         {
             DBG("ModulationProcessor::processBlock received reset " + juce::String(reset_in.getSample(0,0)));
-            for (auto& e : snap->mods)
+            for (auto& e : snap.mods)
                 if (e.mod != nullptr )e.mod->triggerReset();
 
         }
@@ -53,13 +56,13 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
     {
         if (msg.getMessage().isNoteOn())
             if (msg.getMessage().isNoteOn())
-                for (auto& e : snap->mods)
+                for (auto& e : snap.mods)
                     if (e.mod != nullptr)
                         e.mod->triggerModulation();
     }
 
     // Main render
-    for (auto& e : snap->mods)
+    for (auto& e : snap.mods)
     {
         auto* mod = e.mod;
         if (mod == nullptr)
@@ -258,39 +261,39 @@ ModulatorBase* bitklavier::ModulationProcessor::getModulatorBase(std::string& uu
 void bitklavier::ModulationProcessor::rebuildAndPublishSnapshot()
 {
     // MESSAGE THREAD ONLY
-
-    auto newSnap = new RoutingSnapshot();
-    newSnap->blockSize = blockSize_;
-    newSnap->sampleRate = sampleRate_;
-
-    newSnap->mods.reserve(modulators_.size());
+    JUCE_ASSERT_MESSAGE_THREAD
+    const int cur = activeSnapshotIndex.load(std::memory_order_relaxed);
+    const int next = 1 - cur;
+     auto& dst = snapshots[next];
+    dst.clearForRebuild();
+    dst.blockSize  = blockSize_;
+    dst.sampleRate = sampleRate_;
+    if (modulators_.empty())
+        return;
+    dst.mods.reserve(modulators_.size());
 
     for (size_t i = 0; i < modulators_.size(); ++i)
     {
         auto* mod = modulators_[i];
-        if (mod == nullptr)
-            continue;
+        if (!mod) continue;
+        // 1) add an element (value) first
+        dst.mods.emplace_back();
 
-        RoutingSnapshot::ModEntry entry;
+        // 2) mutate the newly-added element in place
+        auto& entry = dst.mods.back();
         entry.mod = mod;
 
-        // Snapshot-owned temp buffer so audio thread never touches shared buffers
-        entry.tmp.setSize(1, blockSize_, false, false, true);
+        // Allocate/resize tmp buffer (message thread ok)
+        entry.tmp.setSize (1, blockSize_, false, false, true);
 
-        // Copy the routing list for this mod (stable snapshot!)
+        // Copy pointer list into snapshot (don’t alias shared vectors)
+        entry.connections.clear();
         if (i < mod_routing.size())
             entry.connections = mod_routing[i].mod_connections;
-
-        newSnap->mods.push_back(std::move(entry));
     }
 
-    // Publish: swap owner + atomic pointer under a *tiny* lock
-    {
-        juce::SpinLock::ScopedLockType sl (snapshotPublishLock);
-
-        snapshotOwner = newSnap; // refcount holds it
-        snapshotAtomic.store(snapshotOwner.get(), std::memory_order_release);
-    }
+    // Publish: one atomic store
+    activeSnapshotIndex.store(next, std::memory_order_release);
 }
 
 int bitklavier::ModulationProcessor::allocateModulationChannel (const std::string& destination)

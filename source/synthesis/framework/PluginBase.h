@@ -292,7 +292,8 @@ namespace bitklavier {
         if (!v.hasProperty(IDs::soundset)) {
             v.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
         } else {
-            _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString().toStdString());
+            if(v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
+                _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString().toStdString());
         }
         /*
      * modulations and state changes

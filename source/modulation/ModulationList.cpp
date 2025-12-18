@@ -68,15 +68,7 @@ ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
 
     try {
         auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),args);
-        if (!isInit) {
-            parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
-                    [this, proc] {
-                        this->proc_->addModulator(proc);
-                    });
-        }
-        else {
-            this->proc_->addModulator(proc);
-        }
+        this->proc_->addModulator(proc);
         return proc;
     } catch (const std::bad_any_cast& e) {
         std::cerr << "Error during object creation: " << e.what() << std::endl;

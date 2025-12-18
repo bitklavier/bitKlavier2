@@ -21,9 +21,13 @@ class StateConnection;
     public:
         ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt);
         ~ModulationProcessor() {
-            juce::SpinLock::ScopedLockType sl (snapshotPublishLock);
-            snapshotAtomic.store(nullptr, std::memory_order_release);
-            snapshotOwner = nullptr;
+            // Stop audio callbacks ASAP (host-dependent, but this is the right signal)
+            suspendProcessing(true);
+
+            // Publish empty snapshot (no locks)
+            snapshots[0].mods.clear();
+            snapshots[1].mods.clear();
+            activeSnapshotIndex.store(0, std::memory_order_release);
         }
         bool acceptsMidi() const override {
             return true;
@@ -135,7 +139,6 @@ class StateConnection;
         {
             mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
         }
-        std::unique_ptr<ModulationList >mod_list;
 
     private :
         // ===== Snapshot types =====
@@ -153,15 +156,15 @@ class StateConnection;
         std::vector<ModEntry> mods;
         int blockSize = 0;
         double sampleRate = 0.0;
+        void clearForRebuild()
+        {
+            mods.clear();
+        }
     };
 
-        // ===== Published to audio thread =====
-        std::atomic<RoutingSnapshot*> snapshotAtomic { nullptr };
-
-        // ===== Only touched on message thread =====
-        RoutingSnapshot::Ptr snapshotOwner; // keeps current snapshot alive
-        juce::SpinLock snapshotPublishLock; // short lock only for pointer swap
-
+        // Double buffer
+        RoutingSnapshot snapshots[2];
+        std::atomic<int> activeSnapshotIndex { 0 }; // audio reads this
         // Call this whenever graph changes (message thread only)
         void rebuildAndPublishSnapshot();
 
@@ -190,7 +193,11 @@ class StateConnection;
         int createNewModIndex();
         chowdsp::DeferredAction mainThreadAction;
         SynthBase &parent;
+    public :
+        std::unique_ptr<ModulationList >mod_list;
+
     };
+
 
 } // bitklavier
 
