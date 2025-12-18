@@ -94,6 +94,9 @@ public:
     void addListener(ModulatorBase::Listener* listener) {
         listeners_.push_back(listener);
     }
+    void removeListener(ModulatorBase::Listener* listener) {
+        std::erase(listeners_, listener); // C++20
+    }
     juce::String name;
     virtual void process() =0;
     virtual void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages)  {}

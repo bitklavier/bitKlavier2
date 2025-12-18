@@ -666,7 +666,7 @@ juce::UndoManager& SynthBase::getUndoManager()
 std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (const std::string& source) const
 {
     std::vector<bitklavier::StateConnection*> connections;
-    for (auto& connection : state_connections_)
+    for (auto connection : state_connections_)
     {
         if (connection->source_name == source)
             connections.push_back (connection);
@@ -679,7 +679,7 @@ std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnecti
     const std::string& destination) const
 {
     std::vector<bitklavier::StateConnection*> connections;
-    for (auto& connection : state_connections_)
+    for (auto connection : state_connections_)
     {
         if (connection->destination_name == destination) {
             // check if already in vector
@@ -693,7 +693,7 @@ std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnecti
 std::vector<bitklavier::ModulationConnection*> SynthBase::getSourceConnections (const std::string& source) const
 {
     std::vector<bitklavier::ModulationConnection*> connections;
-    for (auto& connection : mod_connections_)
+    for (auto connection : mod_connections_)
     {
         if (connection->source_name == source)
             connections.push_back (connection);
@@ -705,7 +705,7 @@ std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnecti
     const std::string& destination) const
 {
     std::vector<bitklavier::ModulationConnection*> connections;
-    for (auto& connection : mod_connections_)
+    for (auto connection : mod_connections_)
     {
         if (connection->destination_name == destination) {
             // check if already in vector
@@ -719,7 +719,7 @@ std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnecti
 bitklavier::ModulationConnection* SynthBase::getConnection (const std::string& source,
     const std::string& destination) const
 {
-    for (auto& connection : mod_connections_)
+    for (auto connection : mod_connections_)
     {
         if (connection->source_name == source && connection->destination_name == destination)
             return connection;
@@ -730,7 +730,7 @@ bitklavier::ModulationConnection* SynthBase::getConnection (const std::string& s
 bitklavier::StateConnection* SynthBase::getStateConnection (const std::string& source,
     const std::string& destination) const
 {
-    for (auto& connection : state_connections_)
+    for (auto connection : state_connections_)
     {
         if (connection->source_name == source && connection->destination_name == destination)
             return connection;
@@ -940,6 +940,8 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
         return;
     connection->source_name = "";
     connection->destination_name = "";
+    DBG("state connection listener being removed");
+    connection->processor->removeListener (connection);
     state_connections_.remove (connection);
     engine_->removeConnection (connection->connection_);
     getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
@@ -1006,7 +1008,6 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
     // bus output
-    //////i dont think any of this is threadsafe
     connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
     connection->processor = connection->parent_processor->getModulatorBase (juse_uuid);
     DBG("state connection listener being added");
@@ -1020,9 +1021,9 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     //    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer(true,1,param_index);
     //this is safe since we know that every source will be a modulationprocessor
 
-    state_connections_.push_back (connection);
+
     connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
-    state_connection.appendChild (connection->state, nullptr);
+
     // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
     engine_->addConnection (connection->connection_);
     // });
@@ -1030,14 +1031,40 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
 
 bool SynthBase::connectStateModulation (const std::string& source, const std::string& destination)
 {
+    std::stringstream ss (source);
+    std::string uuid;
+    std::getline (ss, uuid, '_');
+
+    auto mod_src = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
+    std::stringstream dst_stream (destination);
+    std::string dst_uuid;
+    std::getline (dst_stream, dst_uuid, '_');
+    std::string src_modulator_uuid_and_name;
+    std::getline (ss, src_modulator_uuid_and_name, '_');
+    auto pos = src_modulator_uuid_and_name.find_first_of ("-");
+    std::string juse_uuid = src_modulator_uuid_and_name.substr (pos + 1, src_modulator_uuid_and_name.size());
+    //DBG (juse_uuid);
+    //   auto it = std::find_if(src_modulator_uuid_and_name.begin(),src_modulator_uuid_and_name.end(),::isdigit);
+    //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
+    //DBG (src_modulator_uuid_and_name);
+
+    auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+
+    auto mod_connections = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS);
+
+    auto state_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
+    //    connection->state.removeFromParent();
+
     bitklavier::StateConnection* connection = getStateConnection (source, destination);
     bool create = connection == nullptr;
+
     if (create)
     {
         connection = getStateBank().createConnection (source, destination);
-        //        tree.appendChild(connection->state, nullptr);
+        state_connections_.push_back (connection);
+        state_connection.appendChild (connection->state, nullptr);
     }
-    if (connection)
-        connectStateModulation (connection);
+    // if (connection)
+    //     connectStateModulation (connection);
     return create;
 }

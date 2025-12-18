@@ -1139,13 +1139,9 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, cons
 
     if(prep_view.get() != nullptr )
     {
+        SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+        prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper());
         removeSubSection(prep_view.get());
-        if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
-            SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-            _parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {
-                prep_view->destroyOpenGlComponents(*this->prep_view->open_gl);
-            }, true);
-        }
     }
 
     prep_view.reset();

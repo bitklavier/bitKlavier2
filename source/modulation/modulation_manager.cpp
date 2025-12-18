@@ -1271,7 +1271,7 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
             } else if (state_model_lookup_[destination.first]) {
                 auto *state = state_model_lookup_[destination.first];
                 bool show = current_source_->getComponentID() != juce::String(destination.first) && current_source_->
-                            isStateModulation();
+                            isStateModulation() && destination.second->isShowing() && !destination.second->isActive();
                 juce::Viewport *viewport = state->findParentComponentOfClass<juce::Viewport>();
                 destination.second->setVisible(show);
                 destination.second->setActive(active_destinations.count(destination.first));
@@ -1429,8 +1429,10 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
              if (ptr == nullptr)
                  return;
 
-             if constexpr (std::is_same_v<T, SynthSlider*>)
+             if constexpr (std::is_same_v<T, SynthSlider*> )
              {
+                 if (source_name.contains("state"))
+                     return;
                  if (getConnection(source_name, name) == nullptr)
                  {
                      float percent = ptr->valueToProportionOfLength(ptr->getValue());
@@ -1471,6 +1473,8 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
              }
              else if constexpr (std::is_same_v<T, SynthButton*>)
              {
+                 if (!source_name.contains("state"))
+                     return;
                  if (getStateConnection(source_name, name) == nullptr)
                  {
                      temporarily_set_destination_ = destination;
@@ -1483,8 +1487,11 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                      modulationsChanged(name);
                  }
              }
-             else if constexpr (std::is_same_v<T, StateModulatedComponent*>)
+             else if constexpr (std::is_same_v<T, StateModulatedComponent*> )
+
              {
+                 if (!source_name.contains("state"))
+                     return;
                  if (getStateConnection(source_name, name) == nullptr)
                  {
                      temporarily_set_destination_      = destination;
@@ -1500,6 +1507,8 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
              }
              else if constexpr (std::is_same_v<T, OpenGLComboBox*>)
              {
+                 if (!source_name.contains("state"))
+                     return;
                  if (getStateConnection(source_name, name) == nullptr)
                  {
                      temporarily_set_destination_     = destination;

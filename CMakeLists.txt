@@ -112,14 +112,12 @@ target_sources(SharedCode INTERFACE ${SourceFiles})
 # Adds a BinaryData target for embedding assets into the binary
 include(Assets)
 # Adds address sanitizer
-#target_compile_options(SharedCode INTERFACE
-#        -fsanitize=address
-#        -fno-omit-frame-pointer
-#)
-#
-#target_link_options(SharedCode INTERFACE
-#        -fsanitize=address
-#)
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+
+if (ENABLE_ASAN)
+    target_compile_options(SharedCode INTERFACE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(SharedCode INTERFACE -fsanitize=address)
+endif()
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
 target_include_directories(SharedCode
@@ -200,10 +198,18 @@ set(JUCE_DEPENDENCIES
         juce_gui_extra
         juce_opengl
         juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 
 )
+# Enable LTO only for Release-ish builds
+if (CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo|MinSizeRel")
+    list(APPEND JUCE_DEPENDENCIES juce::juce_recommended_lto_flags)
+endif()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-O0 -g3 -fno-omit-frame-pointer)
+    add_link_options(-O0)
+endif()
 target_link_libraries(SharedCode
     INTERFACE
     Assets

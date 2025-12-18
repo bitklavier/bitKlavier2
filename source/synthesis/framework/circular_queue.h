@@ -153,6 +153,9 @@ namespace bitklavier {
       force_inline void push_back(T entry) {
         data_[end_] = std::move(entry);
         end_ = (end_ + 1) % capacity_;
+        DBG("end_ " + juce::String(end_));
+        DBG("end_ " + juce::String(start_));
+
         _ASSERT(end_ != start_);
       }
 
