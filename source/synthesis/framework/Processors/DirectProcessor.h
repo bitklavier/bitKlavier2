@@ -266,10 +266,10 @@ public:
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
-                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
-                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
-                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+                samples->contains(soundset + "Hammers") ? (*samples)[soundset + "Hammers"] : nullptr,
+                samples->contains(soundset + "ReleaseResonance") ? (*samples)[soundset + "ReleaseResonance"] : nullptr,
+                samples->contains(soundset + "Pedals") ? (*samples)[soundset + "Pedals"] : nullptr
             );
         }
     }
@@ -283,20 +283,20 @@ public:
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
-                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
-                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
-                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+                samples->contains(soundset + "Hammers") ? (*samples)[soundset + "Hammers"] : nullptr,
+                samples->contains(soundset + "ReleaseResonance") ? (*samples)[soundset + "ReleaseResonance"] : nullptr,
+                samples->contains(soundset + "Pedals") ? (*samples)[soundset + "Pedals"] : nullptr
             );
         }else {
             //otherwise set the piano
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
-                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
-                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
-                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+                samples->contains(soundset + "Hammers") ? (*samples)[soundset + "Hammers"] : nullptr,
+                samples->contains(soundset + "ReleaseResonance") ? (*samples)[soundset + "ReleaseResonance"] : nullptr,
+                samples->contains(soundset + "Pedals") ? (*samples)[soundset + "Pedals"] : nullptr
             );
         }
     }

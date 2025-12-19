@@ -126,6 +126,7 @@ namespace IDs
     DECLARE_ID(soundset)
     DECLARE_ID(globalsoundset)
     DECLARE_ID(syncglobal)
+    DECLARE_ID(soundfont_preset)
 }
 static const std::array<juce::Identifier, 13> preparationIDs {
     IDs::direct,

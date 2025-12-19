@@ -548,7 +548,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
              nullptr,
              nullptr,
              nullptr
@@ -577,14 +577,14 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
             auto* samples = parent.getSamples();
-            addSoundSet( samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+            addSoundSet( samples->contains(soundset) ? (*samples)[soundset] : nullptr,
              nullptr,
              nullptr,
              nullptr);
         }else {
             //otherwise set the piano
             auto* samples = parent.getSamples();
-            addSoundSet(samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+            addSoundSet(samples->contains(soundset) ? (*samples)[soundset] : nullptr,
              nullptr,
              nullptr,
              nullptr);

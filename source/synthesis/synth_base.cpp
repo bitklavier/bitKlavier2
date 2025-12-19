@@ -102,7 +102,9 @@ SynthBase::~SynthBase()
     um.clearUndoHistory();
 }
 
-std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > >*SynthBase::getSamples() {
+std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > *>*SynthBase::getSamples() {
+    for (const auto &[key, val] : sampleLoadManager->samplerSoundset)
+            DBG(key);
     return &sampleLoadManager->samplerSoundset;
 }
 
@@ -575,8 +577,10 @@ void SynthBase::finishedSampleLoading()
         }
         pendingPresetTree = juce::ValueTree{};
     }
-    if(getGuiInterface() && getGuiInterface()->getGui())
+    if(getGuiInterface() && getGuiInterface()->getGui()) {
         getGuiInterface()->getGui()->hideLoadingSection();
+       getGuiInterface()->getGui()->notifyFresh();
+    }
     samplesLoading.store (false);
 
 }

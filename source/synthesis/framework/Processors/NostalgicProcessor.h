@@ -422,7 +422,7 @@ public:
             return;
         if (property == IDs::soundset && t == parent.getValueTree()) {
             juce::String a = t.getProperty(IDs::soundset, "");
-            addSoundSet(&(*parent.getSamples())[a],
+            addSoundSet((*parent.getSamples())[a],
                       nullptr,
                       nullptr,
                         nullptr);
@@ -435,13 +435,13 @@ public:
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
 
-            addSoundSet(&(*parent.getSamples())[soundset],
+            addSoundSet((*parent.getSamples())[soundset],
             nullptr,
               nullptr,
                 nullptr);
         }else {
             //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset],
+            addSoundSet((*parent.getSamples())[soundset],
             nullptr,
              nullptr,
                nullptr);

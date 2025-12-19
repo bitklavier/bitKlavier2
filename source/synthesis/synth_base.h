@@ -108,7 +108,7 @@ public:
 
 
 
-    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>> * getSamples();
+    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> * getSamples();
 
 
     //all connection code

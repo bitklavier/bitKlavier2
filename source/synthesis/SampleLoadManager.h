@@ -48,12 +48,14 @@ struct SampleSetProgress
 
     juce::ValueTree targetTree;       // tree to update when loading completes
     juce::String soundsetName;        // actual sample set name to set into the tree
+    juce::String presetName;
+    juce::ReferenceCountedArray<BKSynthesiserSound>* soundset = nullptr;
 
-    void markComplete()
-    {
-        if (targetTree.isValid())
-            targetTree.setProperty (IDs::soundset, soundsetName, nullptr);
-    }
+    SampleLoadManager* load_manager = nullptr;
+
+    bool isSoundFont {false};
+    void markComplete();
+
 };
 
 inline std::unique_ptr<juce::AudioFormatReader> makeAudioFormatReader (juce::AudioFormatManager& manager,
@@ -128,8 +130,7 @@ public:
 
         );
 
-    juce::ThreadPool sampleLoader;
-    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>> samplerSoundset;
+
     bool loadSamples (const juce::String& soundsetName,
                                          const juce::ValueTree& targetTree);
     bool loadSamples (int selection, bool isGlobal,const juce::ValueTree &v);
@@ -149,7 +150,8 @@ public:
     void handleAsyncUpdate() override;
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<AudioFormatReaderFactory> readerFactory;
-
+    juce::ThreadPool sampleLoader;
+    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> samplerSoundset;
     // perhaps these should be moved to utils or something
     juce::Array<juce::String> allPitches;
     juce::Array<juce::String> allPitchClasses = { "A", "A#", "Bb", "B", "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab" };
@@ -167,10 +169,35 @@ public:
             return it->second->currentProgress.load();
         return -1.0f;
     }
+    // struct SFZBank
+    // {
+    //     juce::String sfzName;      // key
+    //     juce::File sfzFile;        // actual file
+    //     std::vector<juce::String> presetNames;
+    //
+    //     int indexOfPreset (const juce::String& name) const
+    //     {
+    //         for (int i = 0; i < (int)presetNames.size(); ++i)
+    //             if (presetNames[(size_t)i] == name) return i;
+    //         return -1;
+    //     }
+    //
+    //     bool hasPresets() const { return !presetNames.empty(); }
+    // };
 
-    std::vector<std::unique_ptr<SFZSound>> soundfonts;
-
+    std::unordered_map<juce::String, std::unique_ptr<SFZSound>> sfzBanks; // key = sfzName.toStdString()
+    // std::vector<std::unique_ptr<SFZSound>> soundfonts;
+    // Given an SFZ soundset name, return all preset/subsound names
+    juce::StringArray getSFZPresetNames (const juce::String& sfzName) const;
+    juce::String getSelectedSFZPreset (const juce::String& sfzName) const;
+    bool sfzHasPresets (const juce::String& sfzName) const;
+    bool selectSFZPreset (const juce::String& sfzName,
+                          const juce::String& presetName);
+    bool changeSFZPresetAndUpdateTree (const juce::String& currentSfzKey,
+                                  int newPresetIndex,
+                                 juce::ValueTree& targetTree);
 private:
+    SFZSound* findSFZSoundByName (const juce::String& sfzName) const;
     SynthBase* parent;
     std::promise<void> loadPromise;
     juce::ValueTree temp_prep_tree;
@@ -188,25 +215,25 @@ private:
 class SampleLoadJob : public juce::ThreadPoolJob
 {
 public:
-    SampleLoadJob (
-        int sampleType,
-        int numLayers,
-        juce::BigInteger newMidiRange,
-        std::unique_ptr<AudioFormatReaderFactory> ptr,
-        juce::AudioFormatManager* manager,
-        juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
-        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits, SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
-                                           soundset (soundset),
-                                           loadManager (loadManager),
-                                           sampleReader (std::move (ptr)),
-                                           manager (manager),samplerLoader(sampleLoad),
-    progress(progress),
-         totalUnits(totalUnits)
-    {
-        thisSampleType = sampleType;
-        velocityLayers = numLayers;
-        thisMidiRange = newMidiRange;
-    };
+    // SampleLoadJob (
+    //     int sampleType,
+    //     int numLayers,
+    //     juce::BigInteger newMidiRange,
+    //     std::unique_ptr<AudioFormatReaderFactory> ptr,
+    //     juce::AudioFormatManager* manager,
+    //     juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
+    //     juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits, SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
+    //                                        soundset (soundset),
+    //                                        loadManager (loadManager),
+    //                                        sampleReader (std::move (ptr)),
+    //                                        manager (manager),samplerLoader(sampleLoad),
+    // progress(progress),
+    //      totalUnits(totalUnits)
+    // {
+    //     thisSampleType = sampleType;
+    //     velocityLayers = numLayers;
+    //     thisMidiRange = newMidiRange;
+    // };
 
     SampleLoadJob (
         juce::AudioFormatManager* manager,
@@ -222,9 +249,9 @@ public:
     {};
 
     SampleLoadJob (juce::File sfzFile,
-           juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
+
            juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress ,SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
-                                                soundset (soundset),
+                                                soundset (progress->soundset),
                                                 loadManager (loadManager),
                                                 progress(progress),
                                                 totalUnits(0),
@@ -235,8 +262,8 @@ public:
         if (progress)
         {
             int done = ++progress->completedJobs;
-            if (done >= progress->totalJobs)
-                progress->markComplete();  // safely updates ValueTree
+            // if (done >= progress->totalJobs)
+
             // DBG(sampleReaderVector
         }
         loadManager->triggerAsyncUpdate();

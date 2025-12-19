@@ -75,6 +75,8 @@ void BKSynthesiser::removeVoice (const int index)
 
 void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>* s)
 {
+    if(s == nullptr)
+        return;
     const juce::ScopedLock sl (lock);
 
     voices.clearQuick (false);

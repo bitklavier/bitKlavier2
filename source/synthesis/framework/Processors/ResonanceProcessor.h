@@ -542,7 +542,7 @@ public:
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
                 nullptr,
                 nullptr,
                 nullptr
@@ -574,7 +574,7 @@ public:
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
                 nullptr,
                 nullptr,
                 nullptr
@@ -583,7 +583,7 @@ public:
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
                 nullptr,
                 nullptr,
                 nullptr

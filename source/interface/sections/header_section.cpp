@@ -76,6 +76,17 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     sampleSelectText = std::make_shared<PlainTextComponent>("Sample Select Text", "---");
     addOpenGlComponent(sampleSelectText);
 
+    soundfontPresetSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
+                                                                  juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addChildComponent(soundfontPresetSelector.get());
+    soundfontPresetSelector->addListener(this);
+    soundfontPresetSelector->setTriggeredOnMouseDown(true);
+    soundfontPresetSelector->setShape(juce::Path(), true, true, true);
+    currentSoundfontPreset = 0;
+    soundfontPresetSelectText = std::make_shared<PlainTextComponent>("Preset Select Text", "---");
+    addOpenGlComponent(soundfontPresetSelectText);
+    soundfontPresetSelectText->setVisible(false);
+
     pianoSelectText = std::make_shared<PlainTextComponent>("Piano", "---");
     addOpenGlComponent(pianoSelectText);
     pianoSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
@@ -138,6 +149,7 @@ void HeaderSection::resized() {
     juce::Colour body_text = findColour(Skin::kBodyText, true);
     sampleSelectText->setColor(body_text);
     pianoSelectText->setColor(body_text);
+    soundfontPresetSelectText->setColor(body_text);
     //  oscilloscope_->setColour(Skin::kBody, findColour(Skin::kBackground, true));
     //  spectrogram_->setColour(Skin::kBody, findColour(Skin::kBackground, true));
     int height = getHeight();
@@ -164,12 +176,14 @@ void HeaderSection::resized() {
     pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(),
                              label_height);
     pianoSelectText->setBounds(pianoSelector->getBounds());
-
+    soundfontPresetSelector->setBounds(pianoSelector->getRight() + 10, pianoSelector->getY(), pianoSelector->getWidth(),
+                                       label_height);
+    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
     float label_text_height = findValue(Skin::kLabelHeight);
     sampleSelectText->setTextSize(label_text_height);
     pianoSelectText->setTextSize(label_text_height);
-
-    addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() -label_height,
+    soundfontPresetSelectText->setTextSize(label_text_height);
+    addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() - label_height,
                               sampleSelector->getWidth(), label_height);
 
     SynthSection::resized();
@@ -181,8 +195,8 @@ void HeaderSection::reset() {
 }
 
 void HeaderSection::buttonClicked(juce::Button *clicked_button) {
-    if (clicked_button == exit_temporary_button_.get()) {}
-    else if (clicked_button == addPianoButton.get()) {
+    if (clicked_button == exit_temporary_button_.get()) {
+    } else if (clicked_button == addPianoButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         // interface->addPiano(
         // create new piano with active parameter true or 1
@@ -253,6 +267,43 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             }
             resized();
         });
+    } else if (clicked_button == soundfontPresetSelector.get()) {
+        const juce::String sfzName = gallery.getProperty("soundset").toString();
+        auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+        auto* slm = parent->getSampleLoadManager();
+        // No presets → nothing to show
+        if (!slm->sfzHasPresets(sfzName))
+            return;
+
+        PopupItems options;
+
+        const auto presetNames = slm->getSFZPresetNames(sfzName);
+        const auto selectedPreset = slm->getSelectedSFZPreset(sfzName);
+
+        for (int i = 0; i < presetNames.size(); ++i)
+            options.addItem(i, presetNames.getReference(i).toStdString());
+
+        juce::Point<int> position(soundfontPresetSelector->getX(),
+                                  soundfontPresetSelector->getBottom());
+
+        showPopupSelector(this, position, options,
+                          [this, presetNames, sfzName](int selection, int) {
+                              if (selection < 0 || selection >= presetNames.size())
+                                  return;
+                              SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+
+                              // Update UI
+                              soundfontPresetSelectText->setText(presetNames[selection]);
+                              resized();
+
+                              // // Persist per-piano (ValueTree-driven)
+                              // if (gallery.isValid())
+                              //     gallery.setProperty(IDs::soundfont_preset,
+                              //                         presetNames[selection],
+                              //                         nullptr);
+
+                              parent->getSampleLoadManager()->changeSFZPresetAndUpdateTree(sfzName, selection,gallery);
+                          });
     } else if (clicked_button == loadButton.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         parent->openLoadDialog();
@@ -262,6 +313,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else
         SynthSection::buttonClicked(clicked_button);
 }
+
 void HeaderSection::sliderValueChanged(juce::Slider *slider) {
     //  if (slider == tab_selector_.get()) {
     //    int index = tab_selector_->getValue();
@@ -271,16 +323,33 @@ void HeaderSection::sliderValueChanged(juce::Slider *slider) {
     //  else
     SynthSection::sliderValueChanged(slider);
 }
-void HeaderSection::notifyChange() {
 
+void HeaderSection::notifyChange() {
 }
 
 void HeaderSection::notifyFresh() {
-    if (gallery.isValid()) {
-        pianoSelectText->setText(gallery.getProperty("soundset"));
-        resized();
+    if (!gallery.isValid())
+        return;
+    // gallery.getProperty("soundset").upToFirstOccurrenceOf("||", false, false);
+    sampleSelectText->setText(    gallery.getProperty(IDs::soundset).toString().upToFirstOccurrenceOf("||", false, false));
+    resized();
+    auto sfzName = gallery.getProperty(IDs::soundset).toString();
+    auto parent = findParentComponentOfClass<SynthGuiInterface>();
+    if (parent->getSampleLoadManager()->sfzHasPresets(gallery.getProperty(IDs::soundset).toString())) {
+        soundfontPresetSelector->setVisible(true);
+        soundfontPresetSelectText->setVisible(true);
+    } else {
+        soundfontPresetSelector->setVisible(false);
+        soundfontPresetSelectText->setVisible(false);
     }
-
+    static juce::var nullVar;
+    // auto val = gallery.getProperty(IDs::soundfont_preset);
+    auto val = gallery.getProperty(IDs::soundset).toString().
+    fromFirstOccurrenceOf("||", false, false);
+    if (val.isNotEmpty()) {
+        // const auto presetName = val.toString();
+        soundfontPresetSelectText->setText(val);
+    }
 }
 
 //void HeaderSection::setPresetBrowserVisibility(bool visible) {

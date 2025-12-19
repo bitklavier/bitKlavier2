@@ -272,6 +272,9 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
     int currentSampleType;
     std::shared_ptr<PlainTextComponent> sampleSelectText;
     std::unique_ptr<juce::ShapeButton> sampleSelector ;
+    int currentSoundfontPreset;
+    std::shared_ptr<PlainTextComponent> soundfontPresetSelectText;
+    std::unique_ptr<juce::ShapeButton> soundfontPresetSelector ;
 
     int currentPianoIndex;
     std::shared_ptr<PlainTextComponent> pianoSelectText;
