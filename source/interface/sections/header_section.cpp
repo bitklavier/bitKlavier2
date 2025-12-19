@@ -277,9 +277,12 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         PopupItems options;
 
-        const auto presetNames = slm->getSFZPresetNames(sfzName);
+        auto presetNames = slm->getSFZPresetNames(sfzName);
         const auto selectedPreset = slm->getSelectedSFZPreset(sfzName);
+        const juce::juce_wchar bellChar = 7; // '\a'
 
+        for (auto& s : presetNames)
+            s = s.removeCharacters (juce::String::charToString (bellChar));
         for (int i = 0; i < presetNames.size(); ++i)
             options.addItem(i, presetNames.getReference(i).toStdString());
 

@@ -647,12 +647,12 @@ bool SampleLoadManager::changeSFZPresetAndUpdateTree(const juce::String &current
     const auto oldKeyStd = currentSfzKey.toStdString();
     const auto newKeyStd = newKey.toStdString();
 
-    if (samplerSoundset.contains(oldKeyStd)) {
+    if (!samplerSoundset.contains(newKeyStd)) {
         // If destination exists, overwrite it
-        if (samplerSoundset.contains(newKeyStd))
-            jassertfalse;
+        // if (samplerSoundset.contains(newKeyStd))
+        //     jassertfalse;
         // samplerSoundset.erase (newKeyStd);
-
+        samplerSoundset[newKeyStd] = new juce::ReferenceCountedArray<BKSynthesiserSound>();
         // --- Load each region into BKSamplerSound ---
         for (int i = 0; i < sound.num_regions(); i++) {
             auto region = sound.region_at(i);
