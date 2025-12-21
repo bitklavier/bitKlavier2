@@ -978,6 +978,10 @@ public:
             currentSamplePos = region.offset;
             //sample_end = region.sample->num_samples;
 
+            currentSamplePos += startTimeMS * getSampleRate() * .001;
+            if (currentDirection == Direction::backward)
+                currentSamplePos *= sampleIncrement.getTargetValue();
+
             //if (region.end > 0 && region.end < sample_end)
                 //sample_end = region.end + 1;
 
