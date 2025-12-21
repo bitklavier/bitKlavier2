@@ -80,6 +80,29 @@ void NostalgicProcessor::tuningStateInvalidated() {
 
 void NostalgicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
 {
+    // this for debugging
+    //    auto mod_Bus = getBus(true,1);
+    //    auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
+    //    int i = index;
+    //    // melatonin::printSparkline(buffer);
+    //    for(auto param: state.params.modulatableParams){
+    //        // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
+    //        // DBG(a.getProperty(IDs::parameter).toString());
+    //        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
+    //    }
+
+    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
+
+    int numInputChannels = modBus.getNumChannels();
+    for (int channel = 0; channel < numInputChannels; ++channel)
+    {
+        const float* in = modBus.getReadPointer(channel);
+        std::visit([in](auto* p)->void
+            {
+                p->applyMonophonicModulation(*in);
+            },
+            state.params.modulatableParams[channel]);
+    }
 }
 
 void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
@@ -338,11 +361,12 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     // set up the block
-    buffer.clear();
     state.getParameterListeners().callAudioThreadBroadcasters();
     processContinuousModulations(buffer);
     state.params.processStateChanges();
     int numSamples = buffer.getNumSamples();
+
+    buffer.clear();
 
     // do all the MIDI handling; this is where the main work happens
     juce::MidiBuffer outMidi;

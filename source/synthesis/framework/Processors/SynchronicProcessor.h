@@ -108,9 +108,6 @@ struct SynchronicParams : chowdsp::ParamHolder
         }
 
     // primary multislider params
-    /**
-     * todo: make transpositions 2D
-     */
     MultiSlider2DState transpositions {"transpositions"};
     MultiSliderState accents {"accents"};
     MultiSliderState sustainLengthMultipliers{"sustain_length_multipliers"};
@@ -615,9 +612,9 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
-             *              for direct, we have 10:
+             *              for synchronic, we have 10:
              *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
-             *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
+             *                  - the main params: numPulses, numLayers, clusterThickness, clusterThreshold, OutputSendParam, outputGain,
              */
             .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(), false)             // Modulation send channel; disabled for all but Modulation preps!

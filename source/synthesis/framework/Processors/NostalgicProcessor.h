@@ -390,20 +390,37 @@ public:
      */
     juce::AudioProcessor::BusesProperties nostalgicBusLayout()
     {
+        // waveDistUndertowParams,
+        // outputSendGain,
+        // outputGain,
+        // noteLengthMultParam,
+        // beatsToSkipParam,
+        // clusterMinParam,
+        // clusterThreshParam,
+        // holdTimeMinMaxParams,
+        // transpositionUsesTuning,
+        // noteOnGain,
+        // keyOnReset,
+        // nostalgicTriggeredBy,
+        // reverseEnv,
+        // undertowEnv
+
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
             .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
-             *              for nostalgic, we have 10:
-             *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
-             *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
+             *              for nostalgic, we have 14:
+             *                  - the ADSR params x 2 (8): attackParam, decayParam, sustainParam, releaseParam, and
+             *                  - the gain params: OutputSendParam, outputGain,
+             *                  - other params: noteLengthMultParam, beatsToSkipParam, clusterMinParam, clusterThreshParam
+             *                  - what about waveDistUndertowParams?
              */
              /**
               * todo: check the number of discrete channels to match needs here
               */
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (14), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
     }

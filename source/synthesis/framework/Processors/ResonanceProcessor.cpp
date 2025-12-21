@@ -784,9 +784,6 @@ void ResonanceProcessor::handleMidiTargetMessages(int noteNumber, int velocity, 
 
 void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    // this is a synth, so we want an empty audio buffer to start
-    buffer.clear();
-
     /*
      * this updates all the AudioThread callbacks we might have in place
      * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
@@ -809,6 +806,9 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
     // process any mod changes to the multisliders
     state.params.processStateChanges();
+
+    // this is a synth, so we want an empty audio buffer to start
+    buffer.clear();
 
     /*
      * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer

@@ -136,12 +136,14 @@ void SynchronicProcessor::processContinuousModulations(juce::AudioBuffer<float>&
     const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
 
     int numInputChannels = modBus.getNumChannels();
-    for (int channel = 0; channel < numInputChannels; ++channel) {
+    for (int channel = 0; channel < numInputChannels; ++channel)
+    {
         const float* in = modBus.getReadPointer(channel);
         std::visit([in](auto* p)->void
             {
                 p->applyMonophonicModulation(*in);
-            },  state.params.modulatableParams[channel]);
+            },
+            state.params.modulatableParams[channel]);
     }
 }
 
@@ -472,9 +474,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
 void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    // this is a synth, so we want an empty audio buffer to start
-    buffer.clear();
-
     /*
      * this updates all the AudioThread callbacks we might have in place
      * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
@@ -497,6 +496,9 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
     // process any mod changes to the multisliders
     state.params.processStateChanges();
+
+    // this is a synth, so we want an empty audio buffer to start
+    buffer.clear();
 
     /*
      * do the MIDI stuff here
