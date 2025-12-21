@@ -5,19 +5,11 @@
 #ifndef BITKLAVIER2_MODULATIONPREPARATION_H
 #define BITKLAVIER2_MODULATIONPREPARATION_H
 
-
-/************************************************************************************/
-/*                 Created by Davis Polito                   */
-/************************************************************************************/
-
 #include "ModulationProcessor.h"
 #include "PreparationSection.h"
 #include "popup_browser.h"
-
 #include "FullInterface.h"
 
-#include "envelope_section.h"
-#include "ModulationList.h"
 class ModulationModuleSection;
 /************************************************************************************/
 /*             CLASS: ModulationPreparation, inherits from PreparationSection           */
@@ -38,20 +30,18 @@ public:
 
         return std::make_unique<ModulationPreparation> (v, interface->getGui()->open_gl_,juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty(IDs::nodeID)),interface);
     }
+
     void mouseDoubleClick(const juce::MouseEvent &event) override {
 
         showPrepPopup(std::move(this->getPrepPopup()),state,bitklavier::BKPreparationType::PreparationTypeModulation);
     }
 
-
     std::unique_ptr<SynthSection> getPrepPopup() override;
     void resized() override;
     void paintBackground(juce::Graphics &g);
 
-
 private:
     juce::UndoManager& undo;
-
 
 };
 

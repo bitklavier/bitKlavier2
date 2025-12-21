@@ -39,7 +39,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     main_ = std::make_unique<MainSection> (synth_data->tree, synth_data->um, open_gl_, synth_data, commandManager);
     addSubSection (main_.get());
     main_->addListener (this);
-    valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);
+    // valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);
     modulation_manager = std::make_unique<ModulationManager> (synth_data->tree.getChildWithName(IDs::PIANO), synth_data->synth);
     modulation_manager->setOpaque (false);
     modulation_manager->setAlwaysOnTop (true);
@@ -57,6 +57,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     footer_->addListener (this);
 
     prep_popup = std::make_unique<PreparationPopup> (false);
+    //prep_popup->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
     addSubSection (prep_popup.get());
     prep_popup->setVisible (false);
     prep_popup->setAlwaysOnTop (true);
@@ -73,18 +74,21 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     popup_selector_->setVisible (false);
     popup_selector_->setAlwaysOnTop (true);
     popup_selector_->setWantsKeyboardFocus (true);
+    //popup_selector_->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
 
     popup_display_1_ = std::make_unique<PopupDisplay>();
     addSubSection (popup_display_1_.get());
     popup_display_1_->setVisible (false);
     popup_display_1_->setAlwaysOnTop (true);
     popup_display_1_->setWantsKeyboardFocus (false);
+    //popup_display_1_->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
 
     popup_display_2_ = std::make_unique<PopupDisplay>();
     addSubSection (popup_display_2_.get());
     popup_display_2_->setVisible (false);
     popup_display_2_->setAlwaysOnTop (true);
     popup_display_2_->setWantsKeyboardFocus (false);
+    //popup_display_2_->setColour(juce::PopupMenu::backgroundColourId, juce::Colours::black);
 
     about_section_ = std::make_unique<AboutSection> ("about");
     addSubSection (about_section_.get(), false);
@@ -93,7 +97,6 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     addSubSection (loading_section.get(), false);
     loading_section->setAlwaysOnTop(true);
     addChildComponent (loading_section.get());
-
 
     addSubSection (modulation_manager.get());
 
@@ -223,6 +226,9 @@ void FullInterface::resized()
     juce::Rectangle<int> bounds (0, 0, width, height);
     modulation_manager->setBounds (bounds);
 
+    /*
+     * not sure we need this ratio stuff if we're usign findValue and the skin?
+     */
     float width_ratio = getWidth() / (1.0f * bitklavier::kDefaultWindowWidth);
     float ratio = width_ratio * display_scale_;
     float height_ratio = getHeight() / (1.0f * bitklavier::kDefaultWindowHeight);
@@ -241,7 +247,6 @@ void FullInterface::resized()
 
     setSizeRatio (ratio);
     int voice_padding = findValue (Skin::kLargePadding);
-
     int top_height = kTopHeight * ratio;
 
     header_->setTabOffset (2 * voice_padding);
@@ -249,8 +254,8 @@ void FullInterface::resized()
     footer_->setBounds (left, height - 100, width, 100);
     juce::Rectangle<int> new_bounds (0, 0, width, height);
     main_->setBounds (new_bounds);
-    prep_popup->setBounds (voice_padding * 2, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.2 * display_scale_));
-    mod_popup->setBounds (bounds.getRight() - 200 * ratio, header_->getBottom(), 200, 400);
+    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.2 * display_scale_));
+    mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.2 * display_scale_));
     about_section_->setBounds (new_bounds);
     loading_section->setBounds (new_bounds);
     if (getWidth() && getHeight())
@@ -412,14 +417,14 @@ void FullInterface::setFocus()
 
 void FullInterface::notifyChange()
 {
-    //   if (header_)
-    //       header_->notifyChange();
+    if (header_)
+        header_->notifyChange();
 }
 
 void FullInterface::notifyFresh()
 {
-    //   if (header_)
-    //       header_->notifyFresh();
+    if (header_)
+        header_->notifyFresh();
 }
 
 void FullInterface::showFullScreenSection (SynthSection* full_screen)

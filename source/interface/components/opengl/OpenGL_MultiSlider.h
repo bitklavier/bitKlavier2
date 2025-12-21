@@ -98,7 +98,19 @@ public:
     }
 
     OpenGL_MultiSlider* clone() {
-        return new OpenGL_MultiSlider();
+        // auto msvals = modulationState.getProperty(name_ + "_vals");
+        // auto msvals_size = int(modulationState.getProperty(name_  + "_size"));
+        // auto msavals = modulationState.getProperty(name_ + "_states");
+        // auto msavals_size = int(modulationState.getProperty(name_ + "_states_size"));
+        // defaultState.setProperty( name_ + "_vals", msvals, nullptr);
+        // defaultState.setProperty( name_ + "_size", msvals_size, nullptr);
+        // defaultState.setProperty(name_ + "_states", msavals, nullptr);
+        // defaultState.setProperty(name_ + "_states_size", msavals_size, nullptr);
+        auto sliderClone = new OpenGL_MultiSlider();
+        sliderClone->setMinMaxDefaultInc (getMinMaxDefaultInc());
+        sliderClone->name_ = name_;
+        // sliderClone->setName(name_);
+        return sliderClone;;
     }
 
     void multiSliderValueChanged(juce::String name, int whichSlider, juce::Array<float> values) override
@@ -109,12 +121,7 @@ public:
 
     void multiSliderAllValuesChanged(juce::String name, juce::Array<juce::Array<float>> values, juce::Array<bool> states) override
     {
-        /**
-         * todo: confirm we can remove this mouseInteraction stuff, now that we have notifications settings differently
-         * depending on what the values are changes
-         */
-//        if (!mouseInteraction)
-//            return;
+        if (!mouseInteraction) return;
 
         /*
          * create string representations of the multislider vals/states
@@ -143,11 +150,12 @@ public:
             }
             params->activeVals_size.store (states.size()); // full array of slider states, including inactive ones (false)
 
+            DBG("resetting defaultState in Multislider");
             // then update defaultState, with string representation of the multislider arrays
-            defaultState.setProperty(IDs::multislider_vals, valsStr, nullptr);
-            defaultState.setProperty(IDs::multislider_size, values.size(), nullptr);
-            defaultState.setProperty(IDs::multislider_states, activeStr, nullptr);
-            defaultState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
+            defaultState.setProperty( name_ + "_vals", valsStr, nullptr);
+            defaultState.setProperty( name_ + "_size", values.size(), nullptr);
+            defaultState.setProperty(name_ + "_states", activeStr, nullptr);
+            defaultState.setProperty(name_ + "_states_size", states.size(), nullptr);
         }
         else if (isModulation_)
         {
@@ -157,11 +165,10 @@ public:
              *
              * we just write strings of the arrays to modulationState properties
              */
-
-            modulationState.setProperty(IDs::multislider_vals, valsStr, nullptr);
-            modulationState.setProperty(IDs::multislider_size, values.size(), nullptr);
-            modulationState.setProperty(IDs::multislider_states, activeStr, nullptr);
-            modulationState.setProperty(IDs::multislider_states_size, states.size(), nullptr);
+            modulationState.setProperty(name_ + "_vals", valsStr, nullptr);
+            modulationState.setProperty(name_ + "_size", values.size(), nullptr);
+            modulationState.setProperty(name_ +"_states", activeStr, nullptr);
+            modulationState.setProperty(name_ + "_states_size", states.size(), nullptr);
         }
     }
 
@@ -172,27 +179,10 @@ public:
      */
     void syncToValueTree() override {
 
-        auto msvals = modulationState.getProperty(IDs::multislider_vals);
-        auto msvals_size = int(modulationState.getProperty(IDs::multislider_size));
-        auto msavals = modulationState.getProperty(IDs::multislider_states);
-        auto msavals_size = int(modulationState.getProperty(IDs::multislider_states_size));
-
-        if (!modulationState.hasProperty(IDs::multislider_vals))
-        {
-            DBG("using defaultState since we don't have a modulationState yet");
-
-            /**
-             * todo: not working...
-             * we don't seem to have a defaultState either, probably because we are using the clone
-             * not a huge deal, since can copy-paste from main slider, so leave for now
-             */
-             msvals = defaultState.getProperty(IDs::multislider_vals);
-             msvals_size = int(defaultState.getProperty(IDs::multislider_size));
-             msavals = defaultState.getProperty(IDs::multislider_states);
-             msavals_size = int(defaultState.getProperty(IDs::multislider_states_size));
-
-            return;
-        }
+        auto msvals = modulationState.getProperty(name_ + "_vals");
+        auto msvals_size = int(modulationState.getProperty(name_  + "_size"));
+        auto msavals = modulationState.getProperty(name_ + "_states");
+        auto msavals_size = int(modulationState.getProperty(name_ + "_states_size"));
 
         std::array<std::atomic<float>, MAXMULTISLIDERLENGTH> dispvals;
         stringToAtomicArray(dispvals, msvals, 0.);
@@ -214,6 +204,17 @@ public:
         hovering_ = false;
     }
 
+    /*
+    * this is for making the modulation UI view opaque
+    */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKMultiSlider::paint(g);
+        }
+    }
+
     juce::String name_;
     MultiSliderState *params;
 
@@ -226,9 +227,18 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+        image_component_->setUseAlpha(false);
 
         isModulation_ = true;
         addMyListener(this);
+
+        /*
+         * this is so the modulation UI view has a distinctive colored border
+         */
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("MODIFIED");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
 
     bool mouseInteraction = false;

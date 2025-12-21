@@ -41,10 +41,10 @@ namespace bitklavier {
         }
 
         virtual void addSoundSet(
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *s, // main samples
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *h, // hammer samples
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *r, // release samples
-            juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > *p) {
+        juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+      juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+      juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+      juce::ReferenceCountedArray<BKSynthesiserSound > *p) {
         } // pedal samples;
 
         juce::ValueTree v;
@@ -292,7 +292,8 @@ namespace bitklavier {
         if (!v.hasProperty(IDs::soundset)) {
             v.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
         } else {
-            _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString().toStdString());
+            if(v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
+                _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString().toStdString());
         }
         /*
      * modulations and state changes

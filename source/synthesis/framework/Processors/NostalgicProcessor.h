@@ -93,11 +93,8 @@ struct NostalgicParams : chowdsp::ParamHolder
     HoldTimeMinMaxParams holdTimeMinMaxParams;
 
     // Reverse and Undertow ADSRs and params
-    EnvParams reverseEnv{"Reverse"};
-    // EnvelopeSequenceParams reverseEnvSequence;
-    EnvParams undertowEnv{"Undertow"};
-    // undertowEnv.idPrepend = "1";
-    // EnvelopeSequenceParams undertowEnvSequence;
+    EnvParams reverseEnv{"Reverse", "Approaching Wave Envelope"};
+    EnvParams undertowEnv{"Undertow", "Receding Wave Envelope"};
 
     // Transposition Uses Tuning param
     chowdsp::BoolParameter::Ptr transpositionUsesTuning {
@@ -142,7 +139,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Note Length Multiplier param
     chowdsp::FloatParameter::Ptr noteLengthMultParam {
         juce::ParameterID { "NoteLengthMultiplier", 100 },
-        "Note Length Multiplier",
+        "NOTE LENGTH X",
         juce::NormalisableRange { 0.0f, 10.00f, 0.0f, skewFactor, false },
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -153,7 +150,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Beats To Skip param
     chowdsp::FloatParameter::Ptr beatsToSkipParam {
         juce::ParameterID { "BeatsToSkip", 100 },
-        "Beats To Skip",
+        "BEATS TO SKIP",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.f, 5.f, 1.f),
         0.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -164,7 +161,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Cluster Minimum param
     chowdsp::FloatParameter::Ptr clusterMinParam {
         juce::ParameterID { "ClusterMin", 100 },
-        "Cluster Min",
+        "CLUSTER MIN",
         chowdsp::ParamUtils::createNormalisableRange (1.0f, 10.f, 5.f, 1.f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -175,7 +172,7 @@ struct NostalgicParams : chowdsp::ParamHolder
     // Cluster Threshold param
     chowdsp::FloatParameter::Ptr clusterThreshParam {
         juce::ParameterID { "ClusterThresh", 100 },
-        "Cluster Threshold",
+        "CLUSTER THRESHOLD",
         juce::NormalisableRange { 0.0f, 1000.0f, 0.0f, skewFactor, false },
         150.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -277,7 +274,6 @@ struct NostalgicNoteData
  is created after the keys related to this note have been released, so
  we need to store that information to use when the undertow note is created.
  */
-
 class NostalgicNoteStuff
 {
 public:
@@ -374,16 +370,11 @@ public:
     void updateAllMidiNoteTranspositions();
     void handleMidiTargetMessages(int channel);
     bool acceptsMidi() const override { return true; }
-    void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-    {
-        ptrToSamples = s;
-    }
-
-    void addSoundSet (
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
+      void addSoundSet (
+        juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
         nostalgicSynth->addSoundSet (s);
     }
@@ -431,10 +422,10 @@ public:
             return;
         if (property == IDs::soundset && t == parent.getValueTree()) {
             juce::String a = t.getProperty(IDs::soundset, "");
-            addSoundSet(&(*parent.getSamples())[a],
-                        &(*parent.getSamples())[a+"Hammers"],
-                        &(*parent.getSamples())[a+"ReleaseResonance"],
-                        &(*parent.getSamples())[a+"Pedals"]);
+            addSoundSet((*parent.getSamples())[a],
+                      nullptr,
+                      nullptr,
+                        nullptr);
         }
     }
 
@@ -444,16 +435,16 @@ public:
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
 
-            addSoundSet(&(*parent.getSamples())[soundset],
-                     &(*parent.getSamples())[soundset + "Hammers"],
-                     &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                     &(*parent.getSamples())[soundset + "Pedals"]);
+            addSoundSet((*parent.getSamples())[soundset],
+            nullptr,
+              nullptr,
+                nullptr);
         }else {
             //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset],
-                        &(*parent.getSamples())[soundset + "Hammers"],
-                        &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                        &(*parent.getSamples())[soundset + "Pedals"]);
+            addSoundSet((*parent.getSamples())[soundset],
+            nullptr,
+             nullptr,
+               nullptr);
         }
     }
 
@@ -487,7 +478,6 @@ private:
     bool doClear = false;
 
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* ptrToSamples;
     BKSynthesizerState lastSynthState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NostalgicProcessor)
 };

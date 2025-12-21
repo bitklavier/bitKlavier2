@@ -19,7 +19,6 @@ ModulationPreparation::ModulationPreparation ( juce::ValueTree v, OpenGlWrapper 
         undo (*interface->getUndoManager())
 
 {
-
     item = std::make_unique<ModulationItem> (); // Initializes member variable `item` of PreparationSection class
     addOpenGlComponent (item->getImageComponent(),true); // Calls member function of SynthSection (parent class to PreparationSection)
     _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
@@ -29,7 +28,6 @@ ModulationPreparation::ModulationPreparation ( juce::ValueTree v, OpenGlWrapper 
     addAndMakeVisible (item.get());
     setSkinOverride (Skin::kModulation);
     juce::MemoryBlock data;
-
 }
 
 std::unique_ptr<SynthSection> ModulationPreparation::getPrepPopup()
@@ -37,27 +35,23 @@ std::unique_ptr<SynthSection> ModulationPreparation::getPrepPopup()
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
         if (auto *proc = dynamic_cast<bitklavier::ModulationProcessor*>(getProcessor()))
             return std::make_unique<ModulationModuleSection>(
-           proc->mod_list.get(),
-                                                      state,
-                                                      findParentComponentOfClass<SynthGuiInterface>()->getGui()->modulation_manager.get(),
-                                                      undo);
+                proc->mod_list.get(),
+                state,
+                findParentComponentOfClass<SynthGuiInterface>()->getGui()->modulation_manager.get(),
+                undo);
 
     return nullptr;
-
 }
-
 
 void ModulationPreparation::resized()
 {
     PreparationSection::resized();
 }
 
-ModulationPreparation::~ModulationPreparation()
+ModulationPreparation::~ModulationPreparation() {}
+
+void ModulationPreparation::paintBackground(juce::Graphics &g)
 {
-}
-
-
-void ModulationPreparation::paintBackground(juce::Graphics &g)  {
     for (auto * port: objects)
         port->redoImage();
     PreparationSection::paintBackground(g);

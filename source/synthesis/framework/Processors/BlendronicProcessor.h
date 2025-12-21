@@ -95,10 +95,10 @@ struct BlendronicParams : chowdsp::ParamHolder
     }
 
     // primary multislider params
-    MultiSliderState beatLengths;
-    MultiSliderState delayLengths;
-    MultiSliderState smoothingTimes;
-    MultiSliderState feedbackCoeffs;
+    MultiSliderState beatLengths {"beat_lengths"};
+    MultiSliderState delayLengths {"delay_lengths"};
+    MultiSliderState smoothingTimes {"smoothing_times"};
+    MultiSliderState feedbackCoeffs {"feedback_coeffs"};
 
     // used internally to notify UI to redraw sliders
     chowdsp::BoolParameter::Ptr updateUIState {

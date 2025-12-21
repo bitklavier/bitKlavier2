@@ -26,12 +26,15 @@
 
 ModulationMeter::ModulationMeter(
 SynthSlider* slider, OpenGlMultiQuad* quads, int index) :
-         destination_(slider),
+        destination_(slider),
         quads_(quads), index_(index), current_value_(0.0), mod_percent_(0.0) {
 
-  rotary_ = destination_->isRotary() && !destination_->isTextOrCurve();
+  if (destination_ != nullptr)
+    rotary_ = destination_->isRotary() && !destination_->isTextOrCurve();
+  else
+    rotary_ = false;
 
-  if (destination_->getSliderStyle() == juce::Slider::LinearBarVertical || destination_->isTextOrCurve())
+  if (destination_ != nullptr && (destination_->getSliderStyle() == juce::Slider::LinearBarVertical || destination_->isTextOrCurve()))
     quads->setRotatedCoordinates(index, -1.0f, -1.0f, 2.0f, 2.0f);
 
   setInterceptsMouseClicks(false, false);
@@ -64,9 +67,12 @@ void ModulationMeter::setActive(bool active) {
 juce::Rectangle<float> ModulationMeter::getMeterBounds() {
   float width = getWidth();
   float height = getHeight();
+  if (destination_ == nullptr)
+    return getLocalBounds().toFloat();
+
   if (!destination_->isRotary() && !destination_->isTextOrCurve()) {
     SynthSection* parent = findParentComponentOfClass<SynthSection>();
-    int widget_margin = parent->getWidgetMargin();
+    int widget_margin = parent ? parent->getWidgetMargin() : 0;
 
     int total_width = destination_->isHorizontal() ? destination_->getHeight() : destination_->getWidth();
     int extra = total_width % 2;
@@ -97,7 +103,16 @@ juce::Rectangle<float> ModulationMeter::getMeterBounds() {
 }
 
 void ModulationMeter::setVertices() {
-  juce::Rectangle<int> parent_bounds = getParentComponent()->getBounds();
+  if (destination_ == nullptr) {
+    collapseVertices();
+    return;
+  }
+  auto* parentComp = getParentComponent();
+  if (parentComp == nullptr) {
+    collapseVertices();
+    return;
+  }
+  juce::Rectangle<int> parent_bounds = parentComp->getBounds();
   juce::Rectangle<int> bounds = getBounds();
   juce::Rectangle<float> meter_bounds = getMeterBounds();
   float left = bounds.getX() + meter_bounds.getX();
@@ -120,6 +135,9 @@ void ModulationMeter::collapseVertices() {
 }
 
 void ModulationMeter::setAmountQuadVertices(OpenGlQuad& quad) {
+  if (destination_ == nullptr) {
+    return;
+  }
   juce::Rectangle<float> meter_bounds = getMeterBounds();
   if (rotary_)
     meter_bounds.expand(2.0f, 2.0f);
@@ -149,6 +167,10 @@ void ModulationMeter::setAmountQuadVertices(OpenGlQuad& quad) {
 }
 
 void ModulationMeter::updateDrawing(bool use_poly) {
+  if (destination_ == nullptr) {
+    mod_percent_ = 0.0f;
+    return;
+  }
 //  if (mono_total_) {
 //    current_value_ = mono_total_->trigger_value;
 //    if (poly_total_ && use_poly)
@@ -188,8 +210,11 @@ void ModulationMeter::updateDrawing(bool use_poly) {
 }
 
 void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bool bipolar) {
+  if (destination_ == nullptr) {
+    return;
+  }
   float range = destination_->getMaximum() - destination_->getMinimum();
- float knob_percent = destination_->getNormalisableRange().convertTo0to1(destination_->getValue());
+  float knob_percent = destination_->getNormalisableRange().convertTo0to1(destination_->getValue());
   //float knob_percent = (destination->valueToProportionOfLength(destination_->getValue()) - destination_->getMinimum()) / range;
 
   float min_percent = std::min(knob_percent + amount, knob_percent);
@@ -203,11 +228,13 @@ void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bo
   }
 
   if (rotary_) {
-    if (&destination_->getLookAndFeel() == TextLookAndFeel::instance()) {
+    if (&destination_->getLookAndFeel() == TextLookAndFeel::instance())
+    {
       min_percent = bitklavier::utils::interpolate(-bitklavier::kPi, 0.0f, min_percent);
       max_percent = bitklavier::utils::interpolate(-bitklavier::kPi, 0.0f, max_percent);
     }
-    else {
+    else
+    {
       float angle = SynthSlider::kRotaryAngle;
       min_percent = bitklavier::utils::interpolate(-angle, angle, min_percent);
       max_percent = bitklavier::utils::interpolate(-angle, angle, max_percent);

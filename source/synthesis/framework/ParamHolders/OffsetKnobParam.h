@@ -21,7 +21,7 @@ struct OffsetKnobParam : chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr offSet {
         juce::ParameterID { "offSet", 100 },
-        "Offset",
+        "CENTS",
         chowdsp::ParamUtils::createNormalisableRange (-100.0f, 100.0f, 0.0f),
         0.0f,
         &chowdsp::ParamUtils::floatValToString,

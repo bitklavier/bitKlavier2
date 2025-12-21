@@ -427,6 +427,8 @@ BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulat
     // draw them! ready to go....
     drawSliders(juce::dontSendNotification);
 
+    addAndMakeVisible(sliderBorder);
+
 }
 
 BKMultiSlider::~BKMultiSlider() {}
@@ -590,6 +592,12 @@ void BKMultiSlider::setMinMaxDefaultInc(std::vector<float> newvals)
     bigInvisibleSlider->setMinMaxDefaultInc(newvals);
     displaySlider->setSkewFromMidpoint(skewFromMidpoint);
     bigInvisibleSlider->setSkewFromMidpoint(skewFromMidpoint);
+}
+
+std::vector<float> BKMultiSlider::getMinMaxDefaultInc()
+{
+    std::vector<float> rangeVals = {static_cast<float>(sliderMin), static_cast<float>(sliderMax), static_cast<float>(sliderDefault), static_cast<float>(sliderIncrement)};
+    return rangeVals;
 }
 
 void BKMultiSlider::setSkewFromMidpoint(bool sfm)
@@ -891,7 +899,7 @@ void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
 // mouseUp: on shift-click, slider will be set to default value
 void BKMultiSlider::mouseUp (const juce::MouseEvent &event)
 {
-    if(event.mouseWasClicked())
+    if(!event.mouseWasClicked())
     {
         if(event.mods.isShiftDown())
         {
@@ -1058,13 +1066,20 @@ void BKMultiSlider::resized()
     juce::Rectangle<float> area (getLocalBounds().toFloat());
     juce::Rectangle<float> bounds = area;
 
+    sliderBorder.setBounds(getLocalBounds());
+    area.removeFromTop(5);
+    area.reduce(10, 10);
+
+    juce::Rectangle<float> rotateButtonBounds (area.getBottomLeft(), area.getBottomLeft().translated(displaySliderWidth*0.2, -displaySliderWidth*0.2));
+    rotateButton->setBounds(rotateButtonBounds.toNearestInt());
+
     displaySlider->setBounds(area.removeFromLeft(displaySliderWidth).toNearestInt());
     editValsTextField->setBounds(area.toNearestInt());
     editValsTextField->setVisible(false);
 
     juce::Rectangle<float> nameSlab (area);
     nameSlab.removeFromTop(gYSpacing / 2.).removeFromRight(gXSpacing);
-    showName.setBounds(nameSlab.toNearestInt());
+    //showName.setBounds(nameSlab.toNearestInt());
     showName.setJustificationType(juce::Justification::topRight);
 
     bigInvisibleSlider->setBounds(area.toNearestInt());
@@ -1083,9 +1098,6 @@ void BKMultiSlider::resized()
             }
         }
     }
-
-    juce::Rectangle<float> rotateButtonBounds (bounds.getBottomLeft(), bounds.getBottomLeft().translated(displaySliderWidth*0.2, -displaySliderWidth*0.2));
-    rotateButton->setBounds(rotateButtonBounds.toNearestInt());
 
     bigInvisibleSlider->toFront(false);
 }
@@ -1324,6 +1336,11 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
 
     float skewFactor = 0.7;
 
+    sliderBorder.setName("waveDistanceUndertowSlider");
+    //sliderBorder.setText("Wave Distance <=> Undertow");
+    sliderBorder.setTextLabelPosition(juce::Justification::centred);
+    addAndMakeVisible(sliderBorder);
+
     sampleImageComponent.setImage(juce::ImageCache::getFromMemory(BinaryData::samplePic_png, BinaryData::samplePic_pngSize));
     sampleImageComponent.setImagePlacement(juce::RectanglePlacement(juce::RectanglePlacement::stretchToFit));
     sampleImageComponent.setTooltip("Provides real-time visualization of each independent Nostalgic wave");
@@ -1437,6 +1454,10 @@ void BKWaveDistanceUndertowSlider::updateSliderPositions(juce::Array<int> newpos
 void BKWaveDistanceUndertowSlider::resized()
 {
     juce::Rectangle<int> area (getLocalBounds());
+    sliderBorder.setBounds(area);
+    area.removeFromTop(10);
+    area.removeFromBottom(2);
+    area.reduce(8, 2);
 
     wavedistanceSlider.setBounds(area.removeFromTop(getHeight() * 0.1));
     undertowSlider.setBounds(area.removeFromBottom(getHeight() * 0.1));
@@ -1545,7 +1566,7 @@ void BKWaveDistanceUndertowSlider::setWaveDistance(int newwavedist, juce::Notifi
 {
     wavedistanceSlider.setValue(newwavedist, notify);
 
-    int xpos = wavedistanceSlider.getPositionOfValue(wavedistanceSlider.getValue());
+    int xpos = wavedistanceSlider.getPositionOfValue(wavedistanceSlider.getValue()) + 6;
     undertowSlider.setBounds(xpos, undertowSlider.getY(), getWidth() - xpos, undertowSlider.getHeight());
     double max = sliderMax - wavedistanceSlider.getValue();
     if (max <= sliderMin) max = sliderMin + 0.0001;
@@ -2137,7 +2158,6 @@ void BKRangeSlider::setSkew(float newskew)
     minSlider.setSkewFactor(newskew);
     maxSlider.setSkewFactor(newskew);
     displaySlider->setSkewFactor(newskew);
-
 }
 
 void BKRangeSlider::setDim(float alphaVal)

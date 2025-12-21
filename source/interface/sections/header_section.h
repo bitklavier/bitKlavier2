@@ -33,9 +33,7 @@ public:
         layer_5_ = paths.getUnchecked(4);
     }
 
-
     void resized() override {
-
 
         const juce::DropShadow shadow(juce::Colours::white, 5,juce::Point<int>(0, 0));
 
@@ -60,7 +58,6 @@ public:
 
         // Ascertains the current section size
         juce::Rectangle<float> bounds = getLocalBounds().toFloat();
-
 
         // Ascertains the appropriate location for layer_1 based on the section
         // size
@@ -148,7 +145,6 @@ public:
         g.fillPath(layer_4_);
         g.fillPath(layer_5_);
 
-
         if (hover) {
             g.setColour(findColour(Skin::kLightenScreen, true));
             g.fillEllipse(getLocalBounds().toFloat());
@@ -225,7 +221,7 @@ class LogoSection : public SynthSection {
     std::unique_ptr<LogoButton> logo_button_;
 };
 
-class HeaderSection : public SynthSection, public LogoSection::Listener {
+class HeaderSection : public SynthSection, public LogoSection::Listener{
   public:
     class Listener {
       public:
@@ -242,7 +238,6 @@ class HeaderSection : public SynthSection, public LogoSection::Listener {
 
     void buttonClicked(juce::Button* clicked_button) override;
     void sliderValueChanged(juce::Slider* slider) override;
-
 
     void setTemporaryTab(juce::String name);
 
@@ -263,7 +258,6 @@ class HeaderSection : public SynthSection, public LogoSection::Listener {
     }
     void addListener(Listener* listener) { listeners_.push_back(listener); }
 
-
   private:
     const juce::ValueTree& getActivePiano();
     std::vector<std::string> getAllPianoNames();
@@ -278,7 +272,9 @@ class HeaderSection : public SynthSection, public LogoSection::Listener {
     int currentSampleType;
     std::shared_ptr<PlainTextComponent> sampleSelectText;
     std::unique_ptr<juce::ShapeButton> sampleSelector ;
-
+    int currentSoundfontPreset;
+    std::shared_ptr<PlainTextComponent> soundfontPresetSelectText;
+    std::unique_ptr<juce::ShapeButton> soundfontPresetSelector ;
 
     int currentPianoIndex;
     std::shared_ptr<PlainTextComponent> pianoSelectText;

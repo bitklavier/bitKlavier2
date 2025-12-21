@@ -18,10 +18,6 @@
 	url = git@github.com:davispolito/chowdsp_utilsPrinceton.git
 	branch = bitklavier
 	update = merge
-[submodule "third_party/sfzq"]
-	path = third_party/sfzq
-	url = git@github.com:stevefolta/sfzq.git
-	update = merge
 [submodule "modules/melatonin_audio_sparklines"]
 	path = modules/melatonin_audio_sparklines
 	url = https://github.com/sudara/melatonin_audio_sparklines
@@ -35,3 +31,6 @@
 	path = modules/clap-juce-extensions
 	url = https://github.com/free-audio/clap-juce-extensions.git
 	branch = main
+[submodule "third_party/sfzq"]
+	path = third_party/sfzq
+	url = git@github.com:davispolito/sfzq.git

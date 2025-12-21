@@ -135,7 +135,7 @@ public:
         return new OpenGL_TranspositionSlider();
     }
 
-    /*
+    /**
      * this is called whenever the transposition slider "isModulated_" is edited by the user
      * OR when the modulation transposition slider "isModulation_" is edited by the user
      * this is NOT called when an actual state modulation is executed
@@ -184,6 +184,7 @@ public:
     }
 
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > attachmentVec;
+
     /**
      * syncToValueTree() is called in ModulationManager::modulationClicked and
      * is used to set the mod view of the parameter to the most recent mod values
@@ -213,6 +214,17 @@ public:
         hovering_ = false;
     }
 
+    /*
+     * this is for making the modulation UI view opaque
+     */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKStackedSlider::paint(g);
+        }
+    }
+
     TransposeParams *params;
 
 private :
@@ -234,9 +246,18 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+        image_component_->setUseAlpha(false);
 
         isModulation_ = true;
         addMyListener(this);
+
+        /*
+         * this is so the modulation UI view has a distinctive colored border
+         */
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("MODIFIED");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
 
     bool mouseInteraction = false;

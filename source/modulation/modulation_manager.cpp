@@ -15,20 +15,15 @@
  */
 
 #include "modulation_manager.h"
-#include "valuetree_utils/VariantConverters.h"
 #include "ModulationModuleSection.h"
 #include "bar_renderer.h"
 #include "skin.h"
-//#include "modulation_connection_processor.h"
-//#include "modulation_matrix.h"
 #include "modulation_meter.h"
 #include "shaders.h"
 #include "synth_gui_interface.h"
-//#include "constants.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "ModulationConnection.h"
 #include "FullInterface.h"
-#include "ModulationConnection.h"
 #include "open_gl_combo_box.h"
 #include "synth_base.h"
 #include "StateModulatedComponent.h"
@@ -124,18 +119,18 @@ public:
     ModulationDestination(SynthSlider *source) :  margin_(0), index_(0),
                                                  size_multiple_(1.0f),
                                                  active_(false), rectangle_(false), rotary_(true),
-                                                destination(source) {
+                                                 destination(source) {
         setComponentID(source->getComponentID());
     }
 
     ModulationDestination(SynthButton *source) : margin_(0), index_(0),
-                                                size_multiple_(1.0f), active_(false),
+                                                 size_multiple_(1.0f), active_(false),
                                                  rectangle_(true), rotary_(false), destination(source) {
         setComponentID(source->getComponentID());
     }
 
     ModulationDestination(StateModulatedComponent *source) : margin_(0), index_(0),
-                                                            size_multiple_(1.0f),
+                                                             size_multiple_(1.0f),
                                                              active_(false),
                                                              rectangle_(true), rotary_(false),
                                                              destination(source) {
@@ -154,9 +149,7 @@ public:
     //    {
     //        //DBG("mosueenetere moddest");
     //    }
-    virtual ~ModulationDestination() {
-    }
-
+    virtual ~ModulationDestination() {}
 
     void setActive(bool active) { active_ = active; }
 
@@ -195,7 +188,9 @@ public:
                     return juce::Rectangle<float>(margin_, y, width - 2 * margin_, glow_height);
                 }
             }
-        }        float x = width * 0.5f * (1.0f - SynthSlider::kLinearWidthPercent);
+        }
+
+        float x = width * 0.5f * (1.0f - SynthSlider::kLinearWidthPercent);
         float glow_width = width * SynthSlider::kLinearWidthPercent;
         x -= 2.0f * glow_width * kBufferPercent;
         glow_width += 4.0f * kBufferPercent * glow_width;
@@ -232,6 +227,11 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationDestination)
 };
 
+/*
+ *
+ * ModulationAmountKnob stuff
+ *
+ */
 ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const juce::ValueTree &vt) : SynthSlider(name,juce::ValueTree{}),
     color_component_(nullptr), index_(index), state(vt) {
     setModulationKnob();
@@ -253,40 +253,46 @@ ModulationAmountKnob::ModulationAmountKnob(juce::String name, int index, const j
 }
 
 void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
-    if (e.mods.isMiddleButtonDown())
-        toggleBypass();
+    /*
+     * removing the bypass popup and so on, for now
+     * - most of the options don't seem to actually do anything, and i'm not sure this is a feature we'd want to add at this point anyhow...
+     */
 
-    if (e.mods.isPopupMenu()) {
-        SynthSlider::mouseExit(e);
-
-        PopupItems options;
-        options.addItem(kDisconnect, "Remove");
-        options.addItem(kToggleBypass, bypass_ ? "Unbypass" : "Bypass");
-        options.addItem(kToggleBipolar, bipolar_ ? "Make Unipolar" : "Make Bipolar");
-        options.addItem(kToggleStereo, stereo_ ? "Make Mono" : "Make Stereo");
-        options.addItem(-1, "");
-
-        //    if (has_parameter_assignment_)
-        //      options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
-        //
-        //    if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getComponentID().toStdString()))
-        //      options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
-
-        options.addItem(kManualEntry, "Enter juce::Value");
-
-        hovering_ = false;
-        redoImage();
-
-        auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
-        auto cancel = [=]() {
-            for (SliderListener *listener: slider_listeners_)
-                listener->menuFinished(this);
-        };
-        parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
-
-        for (SliderListener *listener: slider_listeners_)
-            listener->mouseDown(this);
-    } else {
+    // if (e.mods.isMiddleButtonDown())
+    //     toggleBypass();
+    //
+    // if (e.mods.isPopupMenu()) {
+    //     SynthSlider::mouseExit(e);
+    //
+    //     PopupItems options;
+    //     options.addItem(kDisconnect, "Remove");
+    //     options.addItem(kToggleBypass, bypass_ ? "Unbypass" : "Bypass");
+    //     options.addItem(kToggleBipolar, bipolar_ ? "Make Unipolar" : "Make Bipolar");
+    //     options.addItem(kToggleStereo, stereo_ ? "Make Mono" : "Make Stereo");
+    //     options.addItem(-1, "");
+    //
+    //     //    if (has_parameter_assignment_)
+    //     //      options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
+    //     //
+    //     //    if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getComponentID().toStdString()))
+    //     //      options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
+    //
+    //     options.addItem(kManualEntry, "Enter juce::Value");
+    //
+    //     hovering_ = false;
+    //     redoImage();
+    //
+    //     auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
+    //     auto cancel = [=]() {
+    //         for (SliderListener *listener: slider_listeners_)
+    //             listener->menuFinished(this);
+    //     };
+    //     parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
+    //
+    //     for (SliderListener *listener: slider_listeners_)
+    //         listener->mouseDown(this);
+    // } else
+    {
         SynthSlider::mouseDown(e);
         juce::MouseInputSource source = e.source;
 
@@ -390,13 +396,14 @@ void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
     destination = dest;
     if(destination == nullptr)
         return;
-    this->setRange(0, dest->getNormalisableRange().getRange().getLength(), 0.f);
-    DBG(dest->getNormalisableRange().getRange().getLength());
-    //this->setNormalisableRange(dest->getNormalisableRange());
-    // this->valueFromTextFunction = dest->attachment->getParameter()->getStringFromValueFunction();
+
+    if (isBipolar() || isOffsetMod())
+        this->setRange(0, dest->getNormalisableRange().getRange().getLength(), 0.f);
+    else // mod val is actual target val
+        this->setRange(dest->getMinimum(), dest->getMaximum(), 0.f);
+
     this->textFromValueFunction = dest->attachment->getParameter()->getStringFromValueFunction();
 }
-
 
 juce::Colour ModulationAmountKnob::getInternalColor() {
     if (color_component_)
@@ -409,6 +416,11 @@ void ModulationAmountKnob::setSource(const std::string &name) {
     repaint();
 }
 
+/*
+ *
+ * ModulationIndicator stuff
+ *
+ */
 void ModulationIndicator::setSource(const std::string &name) {
     repaint();
 }
@@ -424,20 +436,18 @@ void ModulationIndicator::mouseDown(const juce::MouseEvent &e) {
 
         hovering_ = false;
 
-
         auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
-        auto cancel = [=]() {
-        };
+        auto cancel = [=]() {};
         parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
-    } else {
+    }
+    else {
         DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
         for (auto l: listeners_)
             l->modulationClicked(this);
     }
 }
 
-void ModulationIndicator::setDestination(const std::string &name) {
-}
+void ModulationIndicator::setDestination(const std::string &name) {}
 
 void ModulationIndicator::handleModulationMenuCallback(int result) {
     if (result == kDisconnect) {
@@ -454,6 +464,11 @@ void ModulationIndicator::setCurrentModulator(bool current) {
     current_modulator_ = current;
 }
 
+/*
+ *
+ * ModulationManager stuff
+ *
+ */
 ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase *base
 ) : SynthSection("modulation_manager"),
     drag_quad_(Shaders::kRingFragment),
@@ -492,7 +507,6 @@ ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase *bas
 
     modulation_destinations_ = std::make_unique<juce::Component>();
     modulation_destinations_->setInterceptsMouseClicks(false, true);
-
 
     for (auto &slider: slider_model_lookup_) {
         std::string name = slider.first;
@@ -589,9 +603,8 @@ ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase *bas
     }
 }
 
-
-void ModulationManager::createModulationMeter(
-    SynthSlider *slider, OpenGlMultiQuad *quads, int index) {
+void ModulationManager::createModulationMeter( SynthSlider *slider, OpenGlMultiQuad *quads, int index)
+{
     std::string name = slider->getComponentID().toStdString();
 
     std::unique_ptr<ModulationMeter> meter = std::make_unique<ModulationMeter>(
@@ -602,7 +615,8 @@ void ModulationManager::createModulationMeter(
     meter_lookup_[name] = std::move(meter);
 }
 
-void ModulationManager::modulationClicked(ModulationIndicator *indicator) {
+void ModulationManager::modulationClicked(ModulationIndicator *indicator)
+{
     int index = getIndexForModulationIndicator(indicator);
 
     bitklavier::StateConnection *connection = getStateConnection(index);
@@ -616,10 +630,10 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator) {
             int center_x = destination_bounds.getCentreX();
             int left = destination_bounds.getX();
             int right = destination_bounds.getRight();
-
             int bottom = destination_bounds.getBottom();
             int top = destination_bounds.getY();
             int center_y = destination_bounds.getCentreY();
+
             if (editing_state_component_ != nullptr && editing_state_component_->getComponentID() != juce::String(
                     connection->destination_name)) {
                 auto *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -639,13 +653,22 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator) {
 
             if (editing_state_component_ == nullptr) {
                 editing_state_component_ = comp->clone();
-
                 editing_state_component_->modulationState = connection->state;
-
                 addAndMakeVisible(editing_state_component_);
                 addOpenGlComponent(editing_state_component_->getImageComponent());
-                editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight() ,
-                                                    comp->getWidth(), comp->getHeight());
+
+                // //code for putting the editing/mod component above or below the destination component
+                // int mod_offset = 0;
+                // if (top > comp->getHeight()) mod_offset = comp->getHeight(); // enough space to put it above the destination component
+                // else mod_offset = -comp->getHeight(); // otherwise, put it below
+                // editing_state_component_->setBounds(
+                //     center_x - comp->getWidth() / 2,
+                //     top - mod_offset ,
+                //     comp->getWidth(),
+                //     comp->getHeight());
+
+                //or just put it directly on top?
+                editing_state_component_->setBounds(destination_bounds);
                 editing_state_component_->addListener(this);
                 editing_state_component_->setComponentID(juce::String(connection->destination_name));
             }
@@ -674,7 +697,6 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator) {
             static juce::var nullVar;
             if(editing_comboBox_mod.modulation.getProperty(editing_comboBox_mod.paramID)!=nullVar) {
                 int ticked  = static_cast <int>(editing_comboBox_mod.modulation.getProperty(editing_comboBox_mod.paramID)) + 1;
-                // editing_comboBox_mod.popup_menu.s
                 for (juce::PopupMenu::MenuItemIterator iterator (*editing_comboBox_mod.popup_menu, true); iterator.next();)
                 {
                     auto& item = iterator.getItem();
@@ -695,48 +717,45 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator) {
         }
     }
 
-        for (auto [name,comp] : button_model_lookup_) {
-            if (name == connection->destination_name) {
-                if(comp == nullptr) {
-                    break;
+    for (auto [name,comp] : button_model_lookup_) {
+        if (name == connection->destination_name) {
+            if(comp == nullptr) {
+                break;
+            }
+            auto destination_bounds = getLocalArea(comp, comp->getLocalBounds());
+            int center_x = destination_bounds.getCentreX();
+            int left = destination_bounds.getX();
+            int right = destination_bounds.getRight();
+
+            int bottom = destination_bounds.getBottom();
+            int top = destination_bounds.getY();
+            int center_y = destination_bounds.getCentreY();
+            editing_button_mod.popup_menu = new juce::PopupMenu();
+            editing_button_mod.popup_menu->addItem(1,"Off",true,false);
+            editing_button_mod.popup_menu->addItem(2,"On",true,false);
+            editing_button_mod.modulation = connection->state;
+            editing_button_mod.paramID = comp->getComponentID().fromLastOccurrenceOf("_", false, false);
+            static juce::var nullVar;
+            if(editing_button_mod.modulation.getProperty(editing_button_mod.paramID)!=nullVar) {
+                int ticked  = static_cast <int>(editing_button_mod.modulation.getProperty(editing_button_mod.paramID)) + 1;
+                // editing_comboBox_mod.popup_menu.s
+                for (juce::PopupMenu::MenuItemIterator iterator (*editing_button_mod.popup_menu, true); iterator.next();)
+                {
+                    auto& item = iterator.getItem();
+
+                    if (item.itemID != 0)
+                        item.isTicked = (item.itemID == ticked);
                 }
-                auto destination_bounds = getLocalArea(comp, comp->getLocalBounds());
-                int center_x = destination_bounds.getCentreX();
-                int left = destination_bounds.getX();
-                int right = destination_bounds.getRight();
-
-                int bottom = destination_bounds.getBottom();
-                int top = destination_bounds.getY();
-                int center_y = destination_bounds.getCentreY();
-                editing_button_mod.popup_menu = new juce::PopupMenu();
-                editing_button_mod.popup_menu->addItem(1,"Off",true,false);
-                editing_button_mod.popup_menu->addItem(2,"On",true,false);
-                editing_button_mod.modulation = connection->state;
-                editing_button_mod.paramID = comp->getComponentID().fromLastOccurrenceOf("_", false, false);
-                static juce::var nullVar;
-                if(editing_button_mod.modulation.getProperty(editing_button_mod.paramID)!=nullVar) {
-                    int ticked  = static_cast <int>(editing_button_mod.modulation.getProperty(editing_button_mod.paramID)) + 1;
-                    // editing_comboBox_mod.popup_menu.s
-                    for (juce::PopupMenu::MenuItemIterator iterator (*editing_button_mod.popup_menu, true); iterator.next();)
-                    {
-                        auto& item = iterator.getItem();
-
-                        if (item.itemID != 0)
-                            item.isTicked = (item.itemID == ticked);
-                    }
-
-                }
-                setStateModulationValues(connection->source_name, connection->destination_name, connection->state);
-               editing_button_mod.popup_menu->showMenuAsync(juce::PopupMenu::Options().withTargetComponent (comp), [this](int idx) {
-                        if(idx == 0) return;
-                        editing_button_mod.modulation.setProperty(editing_button_mod.paramID, idx-1,nullptr);
-
-                });
-
 
             }
-        }
+            setStateModulationValues(connection->source_name, connection->destination_name, connection->state);
+           editing_button_mod.popup_menu->showMenuAsync(juce::PopupMenu::Options().withTargetComponent (comp), [this](int idx) {
+                    if(idx == 0) return;
+                    editing_button_mod.modulation.setProperty(editing_button_mod.paramID, idx-1,nullptr);
 
+            });
+        }
+    }
 }
 
 void ModulationManager::createModulationSlider(std::string name, SynthSlider *slider, bool poly) {
@@ -1036,9 +1055,7 @@ void ModulationManager::componentAdded() {
         modulation_callout_buttons_.clear();
         meter_lookup_.clear();
 
-
         //count things up
-
         modulation_buttons_ = mod_buttons;
         for (auto &modulation_button: modulation_buttons_) {
             modulation_button.second->addListener(this);
@@ -1092,7 +1109,7 @@ void ModulationManager::componentAdded() {
 
         //init the overlay parameters
         for (auto &rotary_meters: num_rotary_meters) {
-            DBG("num rotary" + juce::String (rotary_meters.second));
+            //DBG("num rotary" + juce::String (rotary_meters.second));
             rotary_destinations_[rotary_meters.first] = std::make_unique<OpenGlMultiQuad>(rotary_meters.second,
                 Shaders::kCircleFragment);
             rotary_destinations_[rotary_meters.first]->setTargetComponent(this);
@@ -1136,7 +1153,6 @@ void ModulationManager::componentAdded() {
             slider.second->addSliderListener(this);
             createModulationSlider(name, slider.second, false);
         }
-
 
         for (auto [name,comp] : combo_box_lookup) {
             auto viewport = comp->findParentComponentOfClass<juce::Viewport>();
@@ -1205,7 +1221,6 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
     if (!hasFreeConnection())
         return;
 
-
     mouse_drag_position_ = getLocalPoint(source, e.getPosition());
     current_source_ = source;
     dragging_ = true;
@@ -1256,7 +1271,7 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
             } else if (state_model_lookup_[destination.first]) {
                 auto *state = state_model_lookup_[destination.first];
                 bool show = current_source_->getComponentID() != juce::String(destination.first) && current_source_->
-                            isStateModulation();
+                            isStateModulation() && destination.second->isShowing() && !destination.second->isActive();
                 juce::Viewport *viewport = state->findParentComponentOfClass<juce::Viewport>();
                 destination.second->setVisible(show);
                 destination.second->setActive(active_destinations.count(destination.first));
@@ -1414,8 +1429,10 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
              if (ptr == nullptr)
                  return;
 
-             if constexpr (std::is_same_v<T, SynthSlider*>)
+             if constexpr (std::is_same_v<T, SynthSlider*> )
              {
+                 if (source_name.contains("state"))
+                     return;
                  if (getConnection(source_name, name) == nullptr)
                  {
                      float percent = ptr->valueToProportionOfLength(ptr->getValue());
@@ -1456,6 +1473,8 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
              }
              else if constexpr (std::is_same_v<T, SynthButton*>)
              {
+                 if (!source_name.contains("state"))
+                     return;
                  if (getStateConnection(source_name, name) == nullptr)
                  {
                      temporarily_set_destination_ = destination;
@@ -1468,8 +1487,11 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                      modulationsChanged(name);
                  }
              }
-             else if constexpr (std::is_same_v<T, StateModulatedComponent*>)
+             else if constexpr (std::is_same_v<T, StateModulatedComponent*> )
+
              {
+                 if (!source_name.contains("state"))
+                     return;
                  if (getStateConnection(source_name, name) == nullptr)
                  {
                      temporarily_set_destination_      = destination;
@@ -1485,6 +1507,8 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
              }
              else if constexpr (std::is_same_v<T, OpenGLComboBox*>)
              {
+                 if (!source_name.contains("state"))
+                     return;
                  if (getStateConnection(source_name, name) == nullptr)
                  {
                      temporarily_set_destination_     = destination;
@@ -1498,10 +1522,8 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                      modulationsChanged(name);
                  }
              }
-
          }, destination->destination);
      }
-
 }
 
 void ModulationManager::setTemporaryModulationBipolar(juce::Component *component, bool bipolar) {
@@ -1559,7 +1581,7 @@ void ModulationManager::clearTemporaryHoverModulation() {
 }
 
 void ModulationManager::modulationDragged(const juce::MouseEvent &e) {
-    //    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
+    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     if (!dragging_)
         return;
 
@@ -2294,24 +2316,28 @@ void ModulationManager::sliderValueChanged(juce::Slider *slider) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     ModulationAmountKnob *amount_knob = dynamic_cast<ModulationAmountKnob *>(slider);
     auto *destination = dynamic_cast<SynthSlider *>(slider);
+
     if (amount_knob == nullptr && destination != nullptr) {
         std::string name = destination->getComponentID().toStdString();
         if (slider_model_lookup_[name] != destination)
             return;
+
         auto parent = findParentComponentOfClass<SynthGuiInterface>();
         std::vector<bitklavier::ModulationConnection *> connections = parent->getSynth()->
                 getDestinationConnections(name);
+
         for (bitklavier::ModulationConnection *connection: connections) {
             connection->setScalingValue(connection->getCurrentBaseValue(),destination->getValue());
         }
+
         changing_hover_modulation_ = false;
         hideModulationAmountOverlay();
     }
+
     if (amount_knob == nullptr)
         return;
 
     float value = slider->getValue();
-
     int index = getIndexForModulationSlider(slider);
     float scale = getAuxMultiplier(index);
     float scaled_value = value * scale;
@@ -2325,12 +2351,13 @@ void ModulationManager::sliderValueChanged(juce::Slider *slider) {
     if (amount_knob->destination)
         connection->setScalingValue(value,amount_knob->destination->getValue());
     else
-        connection->setScalingValue(value,connection->currentDestinationSliderVal);
-    DBG(juce::String(value) +"," + juce::String(connection->getScaling()));
+        connection->setScalingValue(value, connection->currentDestinationSliderVal);
+
+    DBG("ModulationManager::sliderValueChanged " + juce::String(value) +", " + juce::String(connection->getScaling()));
     setModulationValues(connection->source_name, connection->destination_name, value, bipolar, stereo, bypass);
     amount_knob->my0to1amt = connection->getScaling();
     showModulationAmountOverlay(amount_knob);
-    //
+
     SynthSection::sliderValueChanged(modulation_amount_sliders_[index].get());
 }
 
@@ -2552,7 +2579,7 @@ void ModulationManager::setModulationValues(std::string source, std::string dest
     setModulationAmounts();
     setModulationSliderValues(index, amount);
     setModulationSliderBipolar(index, bipolar);
-    //
+
     modifying_ = false;
 }
 
@@ -2824,7 +2851,6 @@ void ModulationManager::makeModulationsVisible(OpenGLComboBox* destination, bool
         indicator->setSource(connection->source_name);
     }
 
-
     int hover_indicator_width = size_ratio_ * 24.0f;
     if (current_modulation_showing) {
         auto position = modulation_hover_indicators.begin() + (modulation_hover_indicators.size() + 1) / 2;
@@ -2847,7 +2873,6 @@ void ModulationManager::makeModulationsVisible(OpenGLComboBox* destination, bool
         x = destination_bounds.getCentreX() - beginning_offset;
         delta_x = hover_indicator_width;
     }
-
 
     std::unordered_set<ModulationIndicator *> lookup(modulation_hover_indicators.begin(),
                                                      modulation_hover_indicators.end());
@@ -2890,7 +2915,6 @@ void ModulationManager::makeModulationsVisible(StateModulatedComponent *destinat
             modulation_hover_indicators.push_back(indicator);
         indicator->setSource(connection->source_name);
     }
-
 
     int hover_indicator_width = size_ratio_ * 24.0f;
     if (current_modulation_showing) {
@@ -2971,7 +2995,6 @@ void ModulationManager::makeModulationsVisible(SynthButton *destination, bool vi
             modulation_hover_indicators.push_back(indicator);
         indicator->setSource(connection->source_name);
     }
-
 
     int hover_indicator_width = size_ratio_ * 24.0f;
 
@@ -3135,7 +3158,6 @@ void ModulationManager::positionModulationAmountSlidersInside(const std::string 
             slider->setDestinationComponent(nullptr, name);
             // slider->setDestinationSlider(nullptr);
         }
-
 
         slider->setMouseClickGrabsKeyboardFocus(true);
         slider->redoImage();

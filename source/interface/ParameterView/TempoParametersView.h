@@ -29,6 +29,14 @@ public:
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
+        setSkinOverride(Skin::kDirect);
+
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
@@ -47,37 +55,34 @@ public:
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
-//                slider->setSliderStyle (juce::Slider::LinearHorizontal);
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
+                auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), param_->getName(20));
+                addOpenGlComponent(slider_label);
+                slider_label->setJustification(juce::Justification::centred);
+                slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back (std::move (attachment));
                 _sliders.emplace_back (std::move (slider));
             }
         }
-
-        // setSkinOverride(Skin::kTempo);
     }
 
     void paintBackground (juce::Graphics& g) override
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
-
-        for (auto& slider : _sliders)
-        {
-            drawLabelForComponent (g, slider->getName(), slider.get());
-        }
-
         paintChildrenBackgrounds (g);
     }
 
+    // prep title, vertical, left side
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
+    std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
 
     void resized() override;
 };

@@ -18,9 +18,9 @@ public:
                                                       "Accepted Hold Time Range", // slider name
                                                       0.f, // min
                                                       12000.f, // max
-                                                      0.f, // default min
-                                                      12000.f, // default max
-                                                      1 ,//increment
+                                                      defmin = 0.f, // default min
+                                                      defmax = 12000.f, // default max
+                                                      1, //increment
                                                       _params->stateChanges.defaultState
                                                       ),
                                                   params(_params)
@@ -57,6 +57,14 @@ public:
 
         minValueTF.setText(juce::String(minSlider.getValue()),juce::dontSendNotification);
         maxValueTF.setText(juce::String(maxSlider.getValue()),juce::dontSendNotification);
+
+        /*
+         * make sure we have defaultStates for the two params, so the user doesn't have to twiddle with the sliders to get defaults saved
+         */
+        if (!defaultState.hasProperty("holdtimemin"))
+            defaultState.setProperty("holdtimemin", params->holdTimeMinParam->getNormalisableRange().start, nullptr);
+        if (!defaultState.hasProperty("holdtimemax"))
+            defaultState.setProperty("holdtimemax", params->holdTimeMaxParam->getNormalisableRange().end, nullptr);
 
         /**
          * this list of callbacks is handled by the chowdsp system.
@@ -108,6 +116,17 @@ public:
     virtual void resized() override {
         OpenGlAutoImageComponent<BKRangeSlider>::resized();
         redoImage();
+    }
+
+    /*
+    * this is for making the modulation UI view opaque
+    */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKRangeSlider::paint(g);
+        }
     }
 
     virtual void mouseDrag(const juce::MouseEvent &e) override {
@@ -188,11 +207,25 @@ public:
      */
     void syncToValueTree() override
     {
-        auto minval = modulationState.getProperty("holdtimemin");
-        setMinValue(minval, juce::sendNotification);
+        if (modulationState.hasProperty ("holdtimemin"))
+        {
+            auto minval = modulationState.getProperty("holdtimemin");
+            setMinValue(minval, juce::sendNotification);
+        }
+        else
+        {
+            setMinValue(defmin, juce::sendNotification);
+        }
 
-        auto maxval = modulationState.getProperty("holdtimemax");
-        setMaxValue(maxval, juce::sendNotification);
+        if (modulationState.hasProperty ("holdtimemax"))
+        {
+            auto maxval = modulationState.getProperty("holdtimemax");
+            setMaxValue(maxval, juce::sendNotification);
+        }
+        else
+        {
+            setMaxValue(defmax, juce::sendNotification);
+        }
     }
 
     HoldTimeMinMaxParams *params;
@@ -201,11 +234,12 @@ public:
 private :
     OpenGL_HoldTimeMinMaxSlider() : OpenGlAutoImageComponent<BKRangeSlider>(
                                        "HoldTimeRange", // slider name
-                                       0, // min
-                                       12000, // max
-                                       0, // default min
-                                       12000, // default max
-                                       1, juce::ValueTree{}) // increment
+                                       0.f, // min
+                                       12000.f, // max
+                                       defmin = 0.f, // default min
+                                       defmax = 12000.f, // default max
+                                       1.f, // increment
+                                       juce::ValueTree{})
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -213,7 +247,22 @@ private :
 
         isModulation_ = true;
         addMyListener(this);
+
+        /*
+         * this is so the modulation UI view has a distinctive colored border
+         */
+        rangeSliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        rangeSliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        rangeSliderBorder.setText ("MODIFIED");
+        rangeSliderBorder.setTextLabelPosition (juce::Justification::centred);
+
+        invisibleSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
+        minSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
+        maxSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
     }
+
+    int defmin, defmax;
+
     bool mouseInteraction = false;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };

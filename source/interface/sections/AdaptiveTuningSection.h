@@ -10,6 +10,8 @@
 #include "AdaptiveTuningParams.h"
 #include "open_gl_combo_box.h"
 #include "synth_slider.h"
+#include "synth_button.h"
+#include "OpenGL_LabeledBorder.h"
 
 class AdaptiveTuningSection : public SynthSection
 {
@@ -33,6 +35,9 @@ private:
     std::unique_ptr<SynthSlider> history_Slider;
     std::unique_ptr<chowdsp::SliderAttachment> history_SliderAttachment;
 
+    std::shared_ptr<PlainTextComponent> clusterThreshold_label;
+    std::shared_ptr<PlainTextComponent> history_label;
+
     std::unique_ptr<OpenGLComboBox> adaptiveIntervalScale_ComboBox;
     std::unique_ptr<chowdsp::ComboBoxAttachment> adaptiveIntervalScale_ComboBoxAttachment;
     std::unique_ptr<OpenGLComboBox> adaptiveAnchorScale_ComboBox;
@@ -48,7 +53,7 @@ private:
     std::shared_ptr<PlainTextComponent> intervalsLabel;
     std::shared_ptr<PlainTextComponent> anchorsLabel;
 
-    juce::GroupComponent sectionBorder;
+    std::shared_ptr<OpenGL_LabeledBorder> sectionBorder;
 };
 
 #endif //BITKLAVIER0_ADAPTIVETUNINGSECTION_H

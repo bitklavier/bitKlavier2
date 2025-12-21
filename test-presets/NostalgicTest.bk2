@@ -16,10 +16,10 @@
                  Reversesustain="1.000" Reverserelease="100.000" Reverseattackpower="0.000"
                  Reversedecaypower="0.000" Reversereleasepower="0.000" Reversehold="0.000"
                  Reversedelay="0.000" Reversenotify="0" Undertowattack="100.000"
-                 Undertowdecay="10.000" Undertowsustain="1.000" Undertowrelease="50.000"
+                 Undertowdecay="10.000" Undertowsustain="1.000" Undertowrelease="1000.000"
                  Undertowattackpower="0.000" Undertowdecaypower="0.000" Undertowreleasepower="0.000"
                  Undertowhold="0.000" Undertowdelay="0.000" Undertownotify="0"
-                 wavedist="242.0">
+                 wavedist="242.0" BeatsToSkip="0.000">
         <MODULATABLE_PARAMS>
           <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
           <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>

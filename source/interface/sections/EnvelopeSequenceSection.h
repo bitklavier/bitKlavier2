@@ -8,6 +8,7 @@
 #include "synth_section.h"
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include "EnvelopeSequenceParams.h"
+#include "OpenGL_LabeledBorder.h"
 #include "synth_button.h"
 
 class EnvelopeSequenceSection : public SynthSection
@@ -33,6 +34,8 @@ private:
 
     std::vector<std::unique_ptr<SynthButton>> _envEditButtons;
     std::vector<std::unique_ptr<SynthButton>> _envPlayingButtons; // to display which one is actually playing right now
+
+    std::shared_ptr<OpenGL_LabeledBorder> envelopeBorder;
 
     int getEnvelopeIndex(const juce::String& s);
     EnvelopeSequenceParams& _params;

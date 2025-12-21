@@ -19,7 +19,7 @@ public:
     LoadingSection(const juce::String& name): Overlay(name), body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)) {
         addOpenGlComponent (body_);
         setInterceptsMouseClicks(true,false);
-        sample_loading_text_ = std::make_shared<PlainTextComponent> ("plugin name", "Samples Loading");
+        sample_loading_text_ = std::make_shared<PlainTextComponent> ("plugin name", "SAMPLES LOADING...");
         addOpenGlComponent (sample_loading_text_);
     }
         // logo_ = std::make_unique<AppLogo>("logo");
@@ -56,12 +56,15 @@ public:
         juce::Rectangle<int> info_rect = getInfoRect();
         body_->setBounds(info_rect);
         body_->setRounding(findValue(Skin::kBodyRounding));
-        body_->setColor(findColour(Skin::kBody, true));
+        //body_->setColor(findColour(Skin::kBody, true));
+        body_->setColor(juce::Colours::black);
         juce::Colour body_text = findColour(Skin::kBodyText, true);
         sample_loading_text_->setColor(body_text);
         int name_x = (kLogoWidth + kLeftLogoBuffer) * size_ratio_;
-        sample_loading_text_->setBounds(info_rect.getX(), info_rect.getY() + padding_y + 40 * size_ratio_,
-        info_rect.getWidth()- kNameRightBuffer * size_ratio_, 40 * size_ratio_);
+        info_rect.reduce(20, 20);
+        sample_loading_text_->setBounds(info_rect);
+        //sample_loading_text_->setBounds(info_rect.getX(), info_rect.getY() + padding_y + 40 * size_ratio_,
+        //info_rect.getWidth()- kNameRightBuffer * size_ratio_, 40 * size_ratio_);
         sample_loading_text_->setTextSize(40.0f * size_ratio_);
         Overlay::resized();
     }

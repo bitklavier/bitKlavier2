@@ -14,24 +14,25 @@ LFOModulatorProcessor::LFOModulatorProcessor(juce::ValueTree& vt) : ModulatorSta
 }
 
 void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,juce::MidiBuffer& midiMessages) {
-    setFrequency(_state.params.freq->getCurrentValue());
-    // DBG(buffer.getNumSamples());
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-    {
-        float lfoValue = getNextSample(); // Ranges -depth to +depth
 
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    if (*_state.params.automaticStart || lfo_on)
+    {
+        setFrequency(_state.params.freq->getCurrentValue());
+
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
-            float* channelData = buffer.getWritePointer(channel);
-            channelData[sample] = (lfoValue);
+            float lfoValue = getNextSample(); // Ranges -depth to +depth
+
+            for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            {
+                float* channelData = buffer.getWritePointer(channel);
+                channelData[sample] = (lfoValue);
+            }
         }
     }
     // melatonin::printSparkline(buffer);
-
-
 }
+
 SynthSection *LFOModulatorProcessor::createEditor() {
-
-        return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
-
+    return new bitklavier::ParametersView(_state, _state.params, state.getProperty(IDs::type).toString() + "-" + state.getProperty(IDs::uuid).toString());
 }

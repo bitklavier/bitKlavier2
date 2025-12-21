@@ -1,3 +1,8 @@
+/*
+ *  Currently using this only for Modulation Parameters
+ *   - might need to modify if used elsewhere
+ */
+
 #pragma once
 
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
@@ -25,7 +30,7 @@ namespace bitklavier {
         void paintBackground(juce::Graphics& g) override
         {
             SynthSection::paintContainer(g);
-            paintHeadingText(g);
+            //paintHeadingText(g);
             paintBorder(g);
             paintKnobShadows(g);
             for (auto slider : all_sliders_v) {

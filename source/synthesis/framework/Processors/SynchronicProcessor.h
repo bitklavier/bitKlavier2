@@ -93,7 +93,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters([this](auto& param, size_t)
-                           {
+        {
             if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back ( sliderParam);
@@ -105,16 +105,16 @@ struct SynchronicParams : chowdsp::ParamHolder
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
                     modulatableParams.push_back ( sliderParam); });
-    }
+        }
 
     // primary multislider params
     /**
      * todo: make transpositions 2D
      */
-    MultiSlider2DState transpositions;
-    MultiSliderState accents;
-    MultiSliderState sustainLengthMultipliers;
-    MultiSliderState beatLengthMultipliers;
+    MultiSlider2DState transpositions {"transpositions"};
+    MultiSliderState accents {"accents"};
+    MultiSliderState sustainLengthMultipliers{"sustain_length_multipliers"};
+    MultiSliderState beatLengthMultipliers{"beat_length_multipliers"};
 
     /*
      * for keeping track of the current multislider lengths
@@ -179,7 +179,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr numPulses{
         juce::ParameterID{"numPulses", 100},
-        "pulses",
+        "PULSES",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 100.f, 50.f, 1.f),
         20.f,
         &chowdsp::ParamUtils::floatValToString,
@@ -188,7 +188,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr numLayers{
         juce::ParameterID{"numLayers", 100},
-        "layers",
+        "LAYERS",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 10.f, 5.f, 1.f),
         1.f,
         &chowdsp::ParamUtils::floatValToString,
@@ -197,7 +197,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr clusterThickness{
         juce::ParameterID{"clusterThickness", 100},
-        "cluster thickness",
+        "CLUSTER THICKNESS",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 20.f, 10.f, 1.f),
         8.f,
         &chowdsp::ParamUtils::floatValToString,
@@ -206,7 +206,7 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     chowdsp::TimeMsParameter::Ptr clusterThreshold{
         juce::ParameterID{"clusterThreshold", 100},
-        "cluster threshold",
+        "CLUSTER THRESHOLD",
         chowdsp::ParamUtils::createNormalisableRange(20.0f, 2000.f, 1000.f),
         500.f,
         true};
@@ -236,7 +236,7 @@ struct SynchronicParams : chowdsp::ParamHolder
             //"envelope_10"
             if (_ep->getParameterID() == "envelope_" + juce::String(which))
             {
-                return _ep->get();
+                return *_ep;
             }
         }
     }
@@ -267,6 +267,9 @@ struct SynchronicParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
+        clusterMinMaxParams.processStateChanges();
+        holdTimeMinMaxParams.processStateChanges();
+
         transpositions.processStateChanges();
         accents.processStateChanges();
         sustainLengthMultipliers.processStateChanges();
@@ -280,7 +283,7 @@ struct SynchronicParams : chowdsp::ParamHolder
              * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
              * so we switch it everything we one of the sliders gets modded.
              */
-            if (updateUIState->get())
+            if (*updateUIState)
                 updateUIState->setValueNotifyingHost(false);
             else
                 updateUIState->setValueNotifyingHost(true);
@@ -387,13 +390,13 @@ class SynchronicCluster
          *      this is a special case, but should behave as expected
          */
         auto sMode = _sparams->pulseTriggeredBy->get();
-        if (beatCounter > 0 || (sMode == Any_NoteOn || sMode == First_NoteOn) || _sparams->skipFirst->get())
+        if (beatCounter > 0 || (sMode == Any_NoteOn || sMode == First_NoteOn) || *_sparams->skipFirst)
         {
             if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size)
                 beatMultiplierCounter = 0;
         }
 
-        if (++beatCounter >= _sparams->numPulses->getCurrentValue())
+        if (++beatCounter >= *_sparams->numPulses)
         {
             shouldPlay = false;
         }
@@ -501,10 +504,10 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 //    }
 
     void addSoundSet (
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
+    juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+     juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+     juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+     juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
         synchronicSynth->addSoundSet (s);
     }
@@ -545,10 +548,10 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
-                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
-                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
-                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+             nullptr,
+             nullptr,
+             nullptr
             );
         }
     }
@@ -573,17 +576,18 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         if (soundset == IDs::syncglobal.toString()) {
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
-
-            addSoundSet(&(*parent.getSamples())[soundset],
-                &(*parent.getSamples())[soundset + "Hammers"],
-                &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+            addSoundSet( samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+             nullptr,
+             nullptr,
+             nullptr);
         }else {
             //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset],
-                &(*parent.getSamples())[soundset + "Hammers"],
-                &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+            addSoundSet(samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+             nullptr,
+             nullptr,
+             nullptr);
         }
     }
 
@@ -593,7 +597,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     float getBeatThresholdSeconds()
     {
         if (tempo != nullptr)
-            return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
+            return 60.f / (*tempo->getState().params.tempoParam * *tempo->getState().params.subdivisionsParam);
         else
             return 0.5; // 120bpm by default
     }

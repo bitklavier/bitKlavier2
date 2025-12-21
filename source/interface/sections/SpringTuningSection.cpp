@@ -13,6 +13,7 @@ SpringTuningSection::SpringTuningSection (
     setComponentID(parent.getComponentID());
     setName("springtuning");
     setLookAndFeel(DefaultLookAndFeel::instance());
+    setSkinOverride(Skin::kDirect);
 
     for ( auto &param_ : *params.getFloatParams())
     {
@@ -31,10 +32,20 @@ SpringTuningSection::SpringTuningSection (
          */
         if(param_->paramID.startsWith("intervalWeight"))
         {
+            auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), slider->getName());
+            addOpenGlComponent(slider_label);
+            slider_label->setTextSize (10.0f);
+            slider_label->setJustification(juce::Justification::centred);
+            intervalWeights_labels.emplace_back(slider_label);
             intervalWeightsSliders_sliderAttachments.emplace_back(std::move(attachment));
             intervalWeightSliders.emplace_back(std::move(slider));
         }
         else {
+            auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), slider->getName());
+            addOpenGlComponent(slider_label);
+            slider_label->setTextSize (10.0f);
+            slider_label->setJustification(juce::Justification::centred);
+            slider_labels.emplace_back(slider_label);
             floatAttachments.emplace_back(std::move(attachment));
             _sliders.emplace_back(std::move(slider));
         }
@@ -123,10 +134,8 @@ SpringTuningSection::SpringTuningSection (
     anchorsLabel->setTextSize (12.0f);
     anchorsLabel->setJustification(juce::Justification::centred);
 
-    sectionBorder.setName("springtuning");
-    sectionBorder.setText("Spring Tuning");
-    sectionBorder.setTextLabelPosition(juce::Justification::centred);
-    addAndMakeVisible(sectionBorder);
+    sectionBorder = std::make_shared<OpenGL_LabeledBorder>("springtuning", "Spring Tuning");
+    addBorder(sectionBorder.get());
 }
 
 SpringTuningSection::~SpringTuningSection() {}
@@ -135,26 +144,24 @@ void SpringTuningSection::paintBackground(juce::Graphics& g) {
 
     setLabelFont(g);
 
-    for (auto& slider : _sliders)
-    {
-        drawLabelForComponent (g, slider->getName(), slider.get());
-    }
+    // for (auto& slider : _sliders)
+    // {
+    //     drawLabelForComponent (g, slider->getName(), slider.get());
+    // }
 
-    for (auto& slider : intervalWeightSliders)
-    {
-        drawLabelForComponent (g, slider->getName(), slider.get());
-    }
+    // for (auto& slider : intervalWeightSliders)
+    // {
+    //     drawLabelForComponent (g, slider->getName(), slider.get());
+    // }
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
-
-    sectionBorder.paint(g);
 }
 
 void SpringTuningSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());
-    sectionBorder.setBounds(area);
+    sectionBorder->setBounds(area);
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
@@ -188,10 +195,25 @@ void SpringTuningSection::resized() {
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight);
     placeKnobsInArea(knobsBox, _sliders, false);
 
+    int sl_counter = 0;
+    for (auto& slider : _sliders)
+    {
+        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
+        slider_labels[sl_counter++]->setBounds(sl_label_rect);
+    }
+
     area.removeFromTop(smallpadding);
 
     juce::Rectangle<int> intervalknobsBox = area.removeFromTop(knobsectionheight);
     placeKnobsInArea(intervalknobsBox, intervalWeightSliders);
+
+    sl_counter = 0;
+    for (auto& slider : intervalWeightSliders)
+    {
+        juce::Rectangle<int> sl_label_rect (slider->getX(), slider->getBottom() - 10, slider->getWidth(), labelsectionheight );
+        intervalWeights_labels[sl_counter++]->setBounds(sl_label_rect);
+    }
+
     juce::Rectangle<int> fundamentalToggles = area.removeFromTop(comboboxheight);
     placeButtonsInArea(fundamentalToggles, useLocalOrFundamentalToggles);
 

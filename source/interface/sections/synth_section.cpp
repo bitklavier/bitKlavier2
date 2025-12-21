@@ -15,22 +15,22 @@
  */
 
 #include "synth_section.h"
-#include "look_and_feel/skin.h"
-#include "look_and_feel/fonts.h"
 #include "FullInterface.h"
+#include "Identifiers.h"
+#include "OpenGL_LabeledBorder.h"
+#include "look_and_feel/fonts.h"
+#include "look_and_feel/skin.h"
+#include "modulation_button.h"
+#include "open_gl_combo_box.h"
 #include "open_gl_component.h"
 #include "synth_gui_interface.h"
 #include "synth_slider.h"
-#include "modulation_button.h"
-#include "Identifiers.h"
-#include "open_gl_combo_box.h"
 
 SynthSection::SynthSection(const juce::String &name) : juce::Component(name), parent_(nullptr), activator_(nullptr),
                                                        preset_selector_(nullptr), preset_selector_half_width_(false),
                                                        skin_override_(Skin::kNone), size_ratio_(1.0f),
                                                        active_(true), sideways_heading_(true), background_(nullptr) {
     //setWantsKeyboardFocus(true);
-
 }
 
 SynthSection::SynthSection(const juce::String &name, const juce::String &id) : juce::Component(name), parent_(nullptr), activator_(nullptr),
@@ -51,6 +51,7 @@ SynthSection::SynthSection(const juce::String &name, OpenGlWrapper *open_gl) : j
                                                                                active_(true), sideways_heading_(true),
                                                                                background_(nullptr), open_gl(open_gl) {
     //setWantsKeyboardFocus(true);
+    DBG("SynthSection constructor 3 called");
 }
 
 float SynthSection::findValue(Skin::ValueId value_id) const {
@@ -71,6 +72,7 @@ void SynthSection::reset() {
 }
 
 void SynthSection::resized() {
+
     juce::Component::resized();
     if (off_overlay_) {
         off_overlay_->setBounds(getLocalBounds());
@@ -116,7 +118,7 @@ void SynthSection::paintHeadingText(juce::Graphics &g) {
 
 void SynthSection::paintBackground(juce::Graphics &g) {
     paintContainer(g);
-    paintHeadingText(g);
+    //paintHeadingText(g);
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
@@ -149,11 +151,16 @@ void SynthSection::paintContainer(juce::Graphics &g) {
     if (sideways_heading_) {
         int title_width = findValue(Skin::kTitleWidth);
         g.reduceClipRegion(0, 0, title_width, getHeight());
-        g.setColour(findColour(Skin::kBodyHeading, true));
+        //g.setColour(findColour(Skin::kBodyHeading, true));
+        /*
+         * todo: again, not the best way to set colours
+         */
+        g.setColour(juce::Colours::transparentBlack);
         g.fillRoundedRectangle(0, 0, title_width * 2, getHeight(), findValue(Skin::kBodyRounding));
     } else {
         g.reduceClipRegion(0, 0, getWidth(), getTitleWidth());
-        g.setColour(findColour(Skin::kBodyHeading, true));
+        //g.setColour(findColour(Skin::kBodyHeading, true));
+        g.setColour(juce::Colours::transparentBlack);
         g.fillRoundedRectangle(0, 0, getWidth(), getHeight(), findValue(Skin::kBodyRounding));
     }
 
@@ -161,7 +168,16 @@ void SynthSection::paintContainer(juce::Graphics &g) {
 }
 
 void SynthSection::paintBody(juce::Graphics &g, juce::Rectangle<int> bounds) {
-    g.setColour(findColour(Skin::kBody, true));
+    // g.setColour(findColour(Skin::kBody, true));
+    /*
+     * todo: i don't think this is the best place to do this
+     */
+    g.setColour(juce::Colours::transparentBlack);
+    g.fillRoundedRectangle(bounds.toFloat(), findValue(Skin::kBodyRounding));
+}
+
+void SynthSection::paintBody(juce::Graphics &g, juce::Rectangle<int> bounds, juce::Colour newColour) {
+    g.setColour (newColour);
     g.fillRoundedRectangle(bounds.toFloat(), findValue(Skin::kBodyRounding));
 }
 
@@ -423,9 +439,7 @@ void SynthSection::destroyOpenGlComponents(OpenGlWrapper &open_gl) {
 
             for (auto &sub_section: sub_sections_) {
                 sub_section->destroyOpenGlComponents(open_gl);
-
             }
-
 
             if (background_)
                 background_->destroy(open_gl);
@@ -522,6 +536,12 @@ void SynthSection::addButton(OpenGlShapeButton *button, bool show) {
     addToggleButton(button, show);
     addOpenGlComponent(button->getGlComponent());
 }
+
+void SynthSection::addBorder(OpenGL_LabeledBorder *border, bool show) {
+    if (show) addAndMakeVisible(border);
+    addOpenGlComponent(border->getImageComponent());
+}
+
 //only need to use to this funciton for modulatable combo boxes
 void SynthSection::addComboBox(OpenGLComboBox *box, bool show, bool isModulatable) {
     box->setComponentID(this->getComponentID().toStdString() + "_" + box->getComponentID().toStdString());
@@ -720,18 +740,16 @@ void SynthSection::paintJointControl(juce::Graphics &g, int x, int y, int width,
 
 void SynthSection::placeKnobsInArea(juce::Rectangle<int> area, std::vector<std::unique_ptr<juce::Component>> &knobs) {
     int widget_margin = findValue(Skin::kWidgetMargin);
-    //kKnobSectionHeight
     float component_width = (area.getWidth() - (knobs.size() + 1) * widget_margin) / (1.0f * knobs.size());
 
     int y = area.getY();
     //int height = area.getHeight() - widget_margin;
     int height = std::min<int>(area.getHeight(), component_width) - widget_margin;
     float x = area.getX() + widget_margin;
-    for (const auto &knob: knobs) {
 
+    for (const auto &knob: knobs) {
         int left = std::round(x);
         int right = std::round(x + component_width);
-        //DBG("knob " + juce::String(left));
         if (knob)
             knob->setBounds(left, y, right - left, height);
         x += component_width + widget_margin;
@@ -982,6 +1000,9 @@ juce::Rectangle<int> SynthSection::getLabelBackgroundBounds(juce::Rectangle<int>
     return juce::Rectangle<int>(bounds.getX(), background_y, bounds.getWidth(), background_height);
 }
 
+/*
+ * todo: this one draws blurry fonts. in envelopeSection, DirectParametersView, etc...
+ */
 void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectangle<int> component_bounds,
                              bool text_component) {
     if (component_bounds.getWidth() <= 0 || component_bounds.getHeight() <= 0)
@@ -993,6 +1014,74 @@ void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectang
     g.drawText(text, component_bounds.getX(), background_bounds.getY(),
                component_bounds.getWidth(), background_bounds.getHeight(), juce::Justification::centred, false);
 }
+
+//void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectangle<int> component_bounds,
+//    bool text_component) {
+//    if (component_bounds.getWidth() <= 0 || component_bounds.getHeight() <= 0)
+//        return;
+//
+//    g.saveState();
+//
+//    drawLabelBackground(g, component_bounds, text_component);
+//
+//    g.setColour(findColour(Skin::kBodyText, true));
+//
+//    // 1. Get the logical background bounds (unscaled)
+//    juce::Rectangle<int> background_bounds = getLabelBackgroundBounds(component_bounds, text_component);
+//
+//    // 2. EXPLICITLY SET THE FONT with the LOGICAL (unscaled) point size.
+//    // JUCE's Font class handles the Hi-DPI scaling internally based on the
+//    // current transform of the Graphics context 'g'.
+//    float logicalFontSize = 14.0f; // Use your desired logical point size here
+//    g.setFont(juce::Font (logicalFontSize, juce::Font::plain));
+//
+//    // 3. DRAW using the UN-SCALED logical background_bounds
+//    // Since 'g' is already scaled for Hi-DPI, drawing into the logical
+//    // bounds will result in the text being drawn at the correct
+//    // screen size with high-resolution glyphs.
+//    g.drawText(text, background_bounds, juce::Justification::centred, false);
+//
+//    g.restoreState();
+//}
+
+//void SynthSection::drawLabel(juce::Graphics &g, juce::String text, juce::Rectangle<int> component_bounds,
+//    bool text_component) {
+//    if (component_bounds.getWidth() <= 0 || component_bounds.getHeight() <= 0)
+//        return;
+//
+//    float pixel_scale = juce::Desktop::getInstance()
+//                            .getDisplays()
+//                            .getDisplayForRect(getScreenBounds())
+//                            ->scale;
+//
+//    g.saveState();
+//
+//    drawLabelBackground(g, component_bounds, text_component);
+//
+//    g.setColour(findColour(Skin::kBodyText, true));
+//
+//    // 1. Get the logical background bounds
+//    juce::Rectangle<int> background_bounds = getLabelBackgroundBounds(component_bounds, text_component);
+//
+//    // 2. Create the SCALED Drawing Rectangle
+//    // Since the Graphics context 'g' is already scaled by 'pixel_scale',
+//    // we must draw into a rectangle that is scaled up by the same factor.
+//    juce::Rectangle<int> scaled_draw_rect = juce::Rectangle<int>(
+//        (int)(component_bounds.getX()),
+//        (int)(background_bounds.getY()),
+//        (int)(component_bounds.getWidth() * pixel_scale),
+//        (int)(background_bounds.getHeight() * pixel_scale)
+//    );
+//
+//    // If you explicitly set a font, make sure its point height is correctly sized.
+//    // However, if the font point size is fixed (e.g., 14.0f), JUCE usually handles
+//    // the Hi-DPI scaling for the glyphs correctly when the graphics context is scaled.
+//
+//    // 3. DRAW using the SCALED rectangle
+//    g.drawText(text, scaled_draw_rect, juce::Justification::centred, false);
+//
+//    g.restoreState();
+//}
 
 void SynthSection::drawTextBelowComponent(juce::Graphics &g, juce::String text, juce::Component *component, int space,
                                           int padding) {
@@ -1040,8 +1129,7 @@ void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> p
 void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,const juce::ValueTree &v, bitklavier::BKPreparationType type) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent) {
-        if (type ==
-            bitklavier::BKPreparationType::PreparationTypeModulation) {
+        if (v.getType() == IDs::modulation) {
             parent->modDisplay(std::move(prep),v);
         } else {
             parent->prepDisplay(std::move(prep),v);

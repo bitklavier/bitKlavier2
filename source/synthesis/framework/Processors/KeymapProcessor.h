@@ -50,7 +50,7 @@ struct KeymapParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr velocityCurve_asymWarp {
         juce::ParameterID { "velocityCurve_asymWarp", 100 },
-        "Asymmetrical Warp",
+        "CENTER WARP",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.0f, 1.0f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -60,7 +60,7 @@ struct KeymapParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr velocityCurve_symWarp {
         juce::ParameterID { "velocityCurve_symWarp", 100 },
-        "Symmetrical Warp",
+        "SIDES WARP",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 5.0f, 1.0f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -70,7 +70,7 @@ struct KeymapParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr velocityCurve_scale {
         juce::ParameterID { "velocityCurve_scale", 100 },
-        "Scale",
+        "SCALE",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.0f, 1.0f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -80,7 +80,7 @@ struct KeymapParams : chowdsp::ParamHolder
 
     chowdsp::FloatParameter::Ptr velocityCurve_offset {
         juce::ParameterID { "velocityCurve_offset", 100 },
-        "Offset",
+        "OFFSET",
         chowdsp::ParamUtils::createNormalisableRange (-1.0f, 1.0f, 0.0f),
         0.0f,
         &chowdsp::ParamUtils::floatValToString,

@@ -15,24 +15,23 @@
  */
 
 #include "synth_slider.h"
-
 #include <cmath>
-
 #include "FullInterface.h"
 #include "ModulationConnection.h"
 #include "curve_look_and_feel.h"
 #include "fonts.h"
 #include "skin.h"
 #include "synth_base.h"
-
 #include "chowdsp_parameters/ParamUtils/chowdsp_ParameterTypes.h"
 #include "chowdsp_plugin_state/Backend/chowdsp_PluginState.h"
 #include "synth_gui_interface.h"
 #include "synth_section.h"
 
 void OpenGlSliderQuad::init(OpenGlWrapper &open_gl) {
+    // setFragmentShader(Shaders::kModulationKnobFragment);
+
     if (slider_->isModulationKnob())
-        setFragmentShader(Shaders::kModulationKnobFragment);
+        setFragmentShader(Shaders::kRotarySliderFragment);
     else if (slider_->isRotaryQuad())
         setFragmentShader(Shaders::kRotarySliderFragment);
     else if (slider_->isHorizontalQuad())
@@ -108,19 +107,23 @@ void OpenGlSlider::redoImage(bool skip_image) {
 
     if (isModulationKnob()) {
         slider_quad_->setActive(true);
-        float t = valueToProportionOfLength(getValue());
+        float t = getValue();
         slider_quad_->setThumbColor(thumb_color_);
-
-        if (t > 0.0f) {
-            slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(bitklavier::kPi, -bitklavier::kPi, t));
-            slider_quad_->setColor(unselected_color_);
-            slider_quad_->setAltColor(selected_color_);
-        } else {
-            slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(-bitklavier::kPi, bitklavier::kPi, -t));
+        //
+        // if (t > 0.0f) {
+        //     // slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(bitklavier::kPi, -bitklavier::kPi, t));
+        //     slider_quad_->setColor(unselected_color_);
+        //     slider_quad_->setAltColor(selected_color_);
+        // }
+        // else {
+            // slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(-bitklavier::kPi, bitklavier::kPi, -t));
             slider_quad_->setColor(selected_color_);
             slider_quad_->setAltColor(unselected_color_);
-        }
-
+        // }
+        float arc = slider_quad_->getMaxArc();
+        t = valueToProportionOfLength(getValue());
+        slider_quad_->setShaderValue(0, bitklavier::utils::interpolate(-arc, arc, t));
+        slider_quad_->setStartPos(bipolar_ ? 0.0f : -bitklavier::kPi);
         if (isMouseOverOrDragging())
             slider_quad_->setThickness(1.8f);
         else
@@ -195,7 +198,7 @@ SynthSlider::SynthSlider(juce::String name, const juce::ValueTree &_vt) : OpenGl
                                                                           popup_placement_(
                                                                               juce::BubbleComponent::below),
                                                                           modulation_control_placement_(
-                                                                              juce::BubbleComponent::below),
+                                                                              juce::BubbleComponent::above),
                                                                           max_display_characters_(kDefaultFormatLength),
                                                                           max_decimal_places_(
                                                                               kDefaultFormatDecimalPlaces),
@@ -235,7 +238,6 @@ SynthSlider::SynthSlider(juce::String name, const juce::ValueTree &_vt) : OpenGl
     setVelocityBasedMode(false);
     setVelocityModeParameters(1.0, 0, 0.0, false, juce::ModifierKeys::ctrlAltCommandModifiers);
 }
-
 
 SynthSlider::~SynthSlider() {
     if (vt.isValid())

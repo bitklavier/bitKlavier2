@@ -100,12 +100,15 @@ public:
     void setName(juce::String newName){
         sliderName = newName;
         showName.setText(sliderName, juce::dontSendNotification);
+        sliderBorder.setText (sliderName);
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
     juce::String getName() { return sliderName; }
     void setToolTipString(juce::String newTip) { showName.setTooltip(newTip); bigInvisibleSlider->setTooltip(newTip); }
 
     // slider range and skew
     void setMinMaxDefaultInc(std::vector<float> newvals);
+    std::vector<float> getMinMaxDefaultInc();
     void setSkewFromMidpoint(bool sfm);
 
     // highlight whichever slider is currently active in bK
@@ -282,6 +285,8 @@ public:
     std::unique_ptr<juce::ImageButton> rotateButton;
 //    std::unique_ptr<OpenGlShapeButton> rotateButton;
 
+    juce::GroupComponent sliderBorder;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKMultiSlider)
 };
 
@@ -412,8 +417,9 @@ public:
     juce::Array<float> getAllActiveValues();
     bool isEditing;
 
-private
-    :
+    juce::GroupComponent sliderBorder;
+
+private:
     chowdsp::SliderAttachment attachment;
     std::unique_ptr<juce::Slider> topSlider; //user interacts with this
     juce::Array<bool> activeSliders;
@@ -443,8 +449,6 @@ private
     void showModifyPopupMenu();
 
     static void sliderModifyMenuCallback (const int result, BKStackedSlider* ss);
-
-    juce::GroupComponent sliderBorder;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKStackedSlider)
 };
@@ -735,6 +739,8 @@ public:
     }
 
 private:
+    juce::GroupComponent sliderBorder;
+
     double sliderMin, sliderMax;
     double sliderDefaultMin, sliderDefaultMax;
     double sliderDefault;

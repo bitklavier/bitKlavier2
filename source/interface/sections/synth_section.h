@@ -33,14 +33,16 @@
 #include <map>
 #include <set>
 #include "StateModulatedComponent.h"
+//#include "OpenGL_LabeledBorder.h"
 
-
+class OpenGL_LabeledBorder;
 class OpenGLComboBox;
 class ModulationButton;
 class OpenGlComponent;
 class PresetSelector;
 class SynthSlider;
 class OpenGlBackground;
+
 struct PopupItems {
   int id;
   std::string name;
@@ -144,6 +146,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     virtual std::string getFileAuthor() { return ""; }
     virtual void paintContainer(juce::Graphics& g);
     virtual void paintBody(juce::Graphics& g, juce::Rectangle<int> bounds);
+    virtual void paintBody(juce::Graphics &g, juce::Rectangle<int> bounds, juce::Colour newColour);
     virtual void paintBorder(juce::Graphics& g, juce::Rectangle<int> bounds);
     virtual void paintBody(juce::Graphics& g);
     virtual void paintBorder(juce::Graphics& g);
@@ -202,7 +205,6 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     bool isActive() const { return active_; }
     virtual void animate(bool animate);
 
-
     void addModulationButton(std::shared_ptr<ModulationButton> button, bool show = true);
     void addSubSection(SynthSection* section, bool show = true);
     void removeSubSection(SynthSection* section);
@@ -236,10 +238,12 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     float getDisplayScale() const;
     void addOpenGlComponent(std::shared_ptr<OpenGlComponent> open_gl_component, bool to_beginning = false, bool makeVisible = true);
     void addButton(OpenGlToggleButton* button, bool show = true);
+
   protected:
     void setSliderHasHzAlternateDisplay(SynthSlider* slider);
     void setSidewaysHeading(bool sideways) { sideways_heading_ = sideways; }
     void addToggleButton(juce::ToggleButton* button, bool show);
+    void addBorder(OpenGL_LabeledBorder* border, bool show = true);
 
     void addButton(OpenGlShapeButton* button, bool show = true);
     void addSynthButton(SynthButton* button, bool show = true, bool isModulatable = false);

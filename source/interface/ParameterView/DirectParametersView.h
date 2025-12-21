@@ -5,9 +5,7 @@
 #ifndef BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #define BITKLAVIER2_DIRECTPARAMETERSVIEW_H
 #include "DirectProcessor.h"
-#include "OpenGL_VelocityMinMaxSlider.h"
 #include "TranspositionSliderSection.h"
-#include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
 #include "peak_meter_section.h"
 #include "synth_section.h"
@@ -26,6 +24,17 @@ public:
         //  we probably want to merge these in the future, but ok for now
         setLookAndFeel(DefaultLookAndFeel::instance());
         setComponentID(name);
+
+        setSkinOverride(Skin::kDirect);
+
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
+        mixKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("mix controls border", "Piano Parts");
+        addBorder(mixKnobsBorder.get());
 
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
@@ -55,10 +64,12 @@ public:
                 addSlider(slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
+                auto slider_label = std::make_shared<PlainTextComponent>(slider->getName(), param_->getName(20));
+                addOpenGlComponent(slider_label);
+                slider_label->setJustification(juce::Justification::centred);
+                slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back(std::move(attachment));
                 _sliders.emplace_back(std::move(slider));
-
-
             }
         }
 
@@ -82,8 +93,6 @@ public:
             PeakMeterSection>(name, params.outputSendParam, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
-
-        setSkinOverride(Skin::kDirect);
 
         disableSliderCallback += {
             listeners.addParameterListener(
@@ -129,25 +138,21 @@ public:
                 }
             ),
         };
-
-
     }
 
     void paintBackground(juce::Graphics &g) override {
         setLabelFont(g);
         SynthSection::paintContainer(g);
-        paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
-
-        for (auto &slider: _sliders) {
-            drawLabelForComponent(g, slider->getName(), slider.get());
-        }
-
         paintChildrenBackgrounds(g);
     }
 
+    // prep title, vertical, left side
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
+    // for the mixer knobs
+    std::shared_ptr<OpenGL_LabeledBorder> mixKnobsBorder;
 
     // complex UI elements in this prep
     std::unique_ptr<TranspositionSliderSection> transpositionSlider;
@@ -156,6 +161,7 @@ public:
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider> > _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment> > floatAttachments;
+    std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
 
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;

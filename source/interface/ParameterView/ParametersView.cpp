@@ -2,8 +2,8 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "open_gl_background.h"
-
 #include "envelope_section.h"
+
 namespace bitklavier {
     namespace parameters_view_detail {
 
@@ -72,6 +72,8 @@ namespace bitklavier {
             SliderParameterComponent(chowdsp::FloatParameter &param, chowdsp::ParameterListeners& listeners, SynthSection &parent)
                     : slider(std::make_shared<SynthSlider>(param.paramID,param.getModParam())), attachment(param, listeners, *slider, nullptr) {
                 setName(param.paramID);
+                slider->setTitle (param.getName(20));
+                DBG("SliderParameterComponent slider name = " << param.getName(20));
                 setLookAndFeel(DefaultLookAndFeel::instance());
                 slider->setScrollWheelEnabled(false);
                 addAndMakeVisible(*slider);
@@ -194,58 +196,67 @@ namespace bitklavier {
 
     }
     ParametersView::ParametersView(chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params,juce::String name,bool isDefaultInit)
-            :  SynthSection(params.getName(),name) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/{
-//        auto *viewport = pimpl->view.getViewport();
+            :  SynthSection(params.getName(),name) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/
+    {
 
-if(isDefaultInit) {
-    params.doForAllParameterContainers(
-            [this, &paramListeners](auto &paramVec) {
-                for (auto &param: paramVec) {
-                    comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+        if(isDefaultInit)
+        {
+            params.doForAllParameterContainers
+            (
+                [this, &paramListeners](auto &paramVec)
+                {
+                    for (auto &param: paramVec)
+                    {
+                        comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+                    }
+                },
+                [this, &paramListeners](auto &paramHolder)
+                {
+                    auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
+                    addSubSection(section.get());
+                    paramHolderComps.push_back(std::move(section));
+
+                    // addSubSection();
                 }
-            },
-            [this, &paramListeners](auto &paramHolder) {
-
-                auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
-                addSubSection(section.get());
-                paramHolderComps.push_back(std::move(section));
-
-                // addSubSection();
-            });
-}
+            );
+        }
         setLookAndFeel(DefaultLookAndFeel::instance());
         setOpaque(true);
-//        addAndMakeVisible(pimpl->view);
-//        viewport->setScrollBarsShown (true, false);
-//        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
-//                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
+        //        addAndMakeVisible(pimpl->view);
+        //        viewport->setScrollBarsShown (true, false);
+        //        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
+        //                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
     }
 
     ParametersView::ParametersView(chowdsp::ParameterListeners& paramListeners, chowdsp::ParamHolder& params, OpenGlWrapper *open_gl,bool isDefaultInit )
-            :  SynthSection(params.getName(), open_gl) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/{
-//        auto *viewport = pimpl->view.getViewport();
-if (isDefaultInit) {
-    params.doForAllParameterContainers(
-            [this, &paramListeners](auto &paramVec) {
-                for (auto &param: paramVec) {
-                    comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+            :  SynthSection(params.getName(), open_gl) /*pimpl(std::make_unique<Pimpl>(params, paramListeners, *this))*/
+    {
+        if (isDefaultInit)
+        {
+            params.doForAllParameterContainers
+            (
+                [this, &paramListeners](auto &paramVec)
+                {
+                    for (auto &param: paramVec) {
+                        comps.push_back(parameters_view_detail::createParameterComp(paramListeners, param, *this));
+                    }
+                },
+                [this, &paramListeners](auto &paramHolder)
+                {
+                    auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
+                    addSubSection(section.get());
+                    paramHolderComps.push_back(std::move(section));
+
+                    // addSubSection();
                 }
-            },
-            [this, &paramListeners](auto &paramHolder) {
-
-                auto section = parameters_view_detail::createEditorSection(paramHolder, paramListeners, *this);
-                addSubSection(section.get());
-                paramHolderComps.push_back(std::move(section));
-
-                // addSubSection();
-            });
-}
+            );
+        }
         setLookAndFeel(DefaultLookAndFeel::instance());
         setOpaque(true);
-//        addAndMakeVisible(pimpl->view);
-//        viewport->setScrollBarsShown (true, false);
-//        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
-//                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
+        //        addAndMakeVisible(pimpl->view);
+        //        viewport->setScrollBarsShown (true, false);
+        //        setSize(viewport->getViewedComponent()->getWidth() + viewport->getVerticalScrollBar().getWidth(),
+        //                juce::jlimit(125, 700, viewport->getViewedComponent()->getHeight()));
     }
 
     ParametersView::~ParametersView() {
@@ -257,9 +268,30 @@ if (isDefaultInit) {
     }
 
     void ParametersView::resized() {
-        placeKnobsInArea(getLocalBounds(), comps);
-    }
+        if (comps.size() != 2)
+            placeKnobsInArea(getLocalBounds(), comps);
+        else if (comps.size() == 2)
+        {
+            /*
+             * so we can fuss around with the placement of a knob and a button in the LFO mod
+             *  - we might want to generalize this in the future, if we make other mods with different params
+             *      but for now....
+             */
+            juce::Rectangle<int> area = getLocalBounds();
+            int widget_margin = findValue(Skin::kWidgetMargin);
+            int button_height = findValue(Skin::kComboMenuHeight);
 
+            auto& knob = comps[0];
+            auto& button = comps[1];
+
+            juce::Rectangle<int> knob_area = area.removeFromLeft(area.getWidth() / 2 - knob->getWidth() / 2).removeFromBottom(area.getHeight() / 1.25);
+            knob_area.reduce(widget_margin, widget_margin);
+            knob->setBounds(knob_area);
+
+            area.reduce(widget_margin, widget_margin);
+            button->setBounds(area.removeFromBottom(button_height));
+        }
+    }
 
     void ParametersView::init_()
     {

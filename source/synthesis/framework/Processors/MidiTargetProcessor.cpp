@@ -130,15 +130,3 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 }
 
 
-template <typename Serializer>
-typename Serializer::SerializedType MidiTargetParams::serialize (const MidiTargetParams& paramHolder)
-{
-    auto ser = chowdsp::ParamHolder::serialize<Serializer> (paramHolder);
-    return ser;
-}
-
-template <typename Serializer>
-void MidiTargetParams::deserialize (typename Serializer::DeserializedType deserial, MidiTargetParams& paramHolder)
-{
-    chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
-}

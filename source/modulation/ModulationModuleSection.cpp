@@ -2,7 +2,6 @@
 // Created by Davis Polito on 11/19/24.
 //
 
-
 #include "ModulationModuleSection.h"
 #include "synth_gui_interface.h"
 #include "ModulationSection.h"
@@ -12,6 +11,7 @@
 #include "ModulationProcessor.h"
 #include "tracktion_ValueTreeUtilities.h"
 #include "ModulationList.h"
+
 ModulationModuleSection::ModulationModuleSection(ModulationList* modulationProcessor,juce::ValueTree &v, ModulationManager *m, juce::UndoManager &um) :
 ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
 {
@@ -23,20 +23,20 @@ ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
     scroll_bar_->addListener(this);
     modulation_sections_.reserve(modulation_list_->objects.size());
 
-
      for (auto& mod : modulation_list_->objects)
      {
          auto *module_section = new ModulationSection(mod->state, (mod->createEditor()), undo);
-        container_->addSubSection(module_section);
-        module_section->setInterceptsMouseClicks(false,true);
-        modulation_sections_.emplace_back(std::move(module_section));
+         container_->addSubSection(module_section);
+         module_section->setInterceptsMouseClicks(false,true);
+         modulation_sections_.emplace_back(std::move(module_section));
      }
      parent = modulation_list_->getValueTree();
      modulation_list_->addListener(this);
 //    factory.registerType<OscillatorModuleProcessor, juce::ValueTree, LEAF*>("osc");
 //    factory.registerType<FilterModuleProcessor, juce::ValueTree, LEAF*>("filt");
-    addListener(m);
+     addListener(m);
 }
+
 void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 {
 //    auto obj = tracktion::engine::getObjectFor(*modulation_list_, v);
@@ -59,6 +59,10 @@ void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 
 }
 
+/*
+ * todo: don't we also have to remove from the modulators_ vector in ModulationProcessor?
+ *          - got a crash with a NULL modulator_ in ModulationProcessor when triggering after deleting a mod
+ */
 void ModulationModuleSection::removeModulator (ModulatorBase* base)
 {
     // find preparation section with the same id as the one we're removing
@@ -72,8 +76,6 @@ void ModulationModuleSection::removeModulator (ModulatorBase* base)
         }
     }
     if (index == -1) jassertfalse;
-
-    //
 
     //cleanup opengl
     {
@@ -89,7 +91,6 @@ void ModulationModuleSection::removeModulator (ModulatorBase* base)
         listener->removed();
     DBG("moduleRemoved");
     resized();
-
 }
 
 ModulationModuleSection::~ModulationModuleSection()
@@ -108,15 +109,8 @@ void ModulationModuleSection::handlePopupResult(int result) {
         undo.beginNewTransaction();
         parent.appendChild(t,&undo);
 
-    } else if (result == 2)
-    {
-        juce::ValueTree t(IDs::modulationproc);
-        t.setProperty(IDs::type, "state", nullptr);
-        t.setProperty(IDs::isState, true, nullptr);
-        undo.beginNewTransaction();
-        parent.appendChild(t,&undo);
     }
-    else if (result == 3)
+    else if (result == 2)
     {
         juce::ValueTree t(IDs::modulationproc);
         t.setProperty(IDs::type, "lfo", nullptr);
@@ -124,8 +118,15 @@ void ModulationModuleSection::handlePopupResult(int result) {
         undo.beginNewTransaction();
         parent.appendChild(t,&undo);
     }
+    else if (result == 3)
+    {
+        juce::ValueTree t(IDs::modulationproc);
+        t.setProperty(IDs::type, "state", nullptr);
+        t.setProperty(IDs::isState, true, nullptr);
+        undo.beginNewTransaction();
+        parent.appendChild(t,&undo);
+    }
 }
-
 
 void ModulationModuleSection::setEffectPositions() {
     if (getWidth() <= 0 || getHeight() <= 0)
@@ -135,39 +136,46 @@ void ModulationModuleSection::setEffectPositions() {
     int large_padding = findValue(Skin::kLargePadding);
     int shadow_width = getComponentShadowWidth();
     int start_x = 0;
-    int effect_width = getWidth() - start_x - large_padding;
+    int effect_width = getWidth() - start_x - large_padding * 1.5 - 2;
     int knob_section_height = getKnobSectionHeight();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int effect_height = 2 * knob_section_height - widget_margin;
-    int y = 0;
+    int y = large_padding * 4; // make space for add modulation button
 
-    juce::Point<int> position = viewport_.getViewPosition();
     for(auto& section : modulation_sections_)
     {
-        section->setBounds(shadow_width, y, effect_width, effect_height);
-        y += effect_height + padding;
+        int effect_height_temp = effect_height;
+        if (section->state.getProperty(IDs::isState))
+        {
+            // state mods don't need as much space since they don't have a knob
+            effect_height_temp *= 0.5;
+        }
+        section->setBounds(shadow_width, y, effect_width, effect_height_temp);
+        y += effect_height_temp + padding;
     }
 
     container_->setBounds(0, 0, viewport_.getWidth(), y - padding);
+
+    //update scroll position so we can see the most recently added mod
+    juce::Point<int> position(0, y);
     viewport_.setViewPosition(position);
 
     for (Listener* listener : listeners_)
         listener->effectsMoved();
 
-    container_->setScrollWheelEnabled(container_->getHeight() <= viewport_.getHeight());
     setScrollBarRange();
 
     repaintBackground();
 }
+
 PopupItems ModulationModuleSection::createPopupMenu()
 {
     PopupItems options;
-    options.addItem(1, "add ramp" );
-    options.addItem(2, "add state");
-    options.addItem(3, "add lfo");
+    options.addItem(1, "value (smoothed)" );
+    options.addItem(2, "oscillator (lfo)");
+    options.addItem(3, "state");
     return options;
 }
-
 
 std::map<std::string, SynthSlider*> ModulationModuleSection::getAllSliders()
 {

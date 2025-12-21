@@ -53,6 +53,8 @@ juce_add_module(modules/melatonin_audio_sparklines)
 # Add any other modules you want modules here, before the juce_add_plugin call
 message("-- Adding external libraries" )
 add_subdirectory(third_party/chowdsp_utils)
+add_subdirectory(third_party/sfzq/SFZPlayer
+)
 
 # Add CLAP format
 
@@ -76,7 +78,7 @@ juce_add_plugin("${PROJECT_NAME}"
     # Change me!
     # A four-character plugin id
     # First character MUST be uppercase for AU formats
-    PLUGIN_MANUFACTURER_CODE Bitk 
+    PLUGIN_MANUFACTURER_CODE Bitk
 
     # Change me!
     # A unique four-character plugin id
@@ -109,7 +111,13 @@ target_sources(SharedCode INTERFACE ${SourceFiles})
 
 # Adds a BinaryData target for embedding assets into the binary
 include(Assets)
+# Adds address sanitizer
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 
+if (ENABLE_ASAN)
+    target_compile_options(SharedCode INTERFACE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(SharedCode INTERFACE -fsanitize=address)
+endif()
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
 target_include_directories(SharedCode
@@ -190,10 +198,18 @@ set(JUCE_DEPENDENCIES
         juce_gui_extra
         juce_opengl
         juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 
 )
+# Enable LTO only for Release-ish builds
+if (CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo|MinSizeRel")
+    list(APPEND JUCE_DEPENDENCIES juce::juce_recommended_lto_flags)
+endif()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-O0 -g3 -fno-omit-frame-pointer)
+    add_link_options(-O0)
+endif()
 target_link_libraries(SharedCode
     INTERFACE
     Assets
@@ -201,6 +217,7 @@ target_link_libraries(SharedCode
     ${CHOWDSP_DEPENDENCIES}
     ${JUCE_DEPENDENCIES}
     melatonin_audio_sparklines
+        sfzero
 )
 
 

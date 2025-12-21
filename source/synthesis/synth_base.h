@@ -26,7 +26,6 @@
 #include "circular_queue.h"
 #include "ModulatorBase.h"
 #include "../common/ObjectLists/PreparationList.h"
-// #include "../synthesis/framework/Processors/GainProcessor.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
@@ -37,6 +36,7 @@ class CompressorProcessor;
 class EQProcessor;
 
 
+class BKSynthesiserSound;
 namespace bitklavier {
     class ConnectionList;
     class ModConnectionList;
@@ -113,7 +113,7 @@ public:
 
 
 
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> * getSamples();
+    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> * getSamples();
 
 
     //all connection code
@@ -216,6 +216,11 @@ public:
     void startSampleLoading();
     void clearAllGuiListeners();
 protected:
+    // Holds the parsed preset tree until samples finish loading
+    juce::ValueTree pendingPresetTree;
+    std::atomic<bool> samplesLoading { false };
+    // True while we’re waiting to apply pendingPresetTree
+    std::atomic<bool> presetPending { false };
     chowdsp::DeferredAction mainThreadAction;
     //    bool isInvalidConnection(const electrosynth::mapping_change & change) {return false;}
     juce::ValueTree tree;

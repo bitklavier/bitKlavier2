@@ -74,30 +74,35 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     anchorsLabel->setTextSize (12.0f);
     anchorsLabel->setJustification(juce::Justification::centred);
 
-    sectionBorder.setName("adaptivetuning");
-    sectionBorder.setText("Adaptive Tuning");
-    sectionBorder.setTextLabelPosition(juce::Justification::centred);
-    addAndMakeVisible(sectionBorder);
+    clusterThreshold_label = std::make_shared<PlainTextComponent>("clusterthresholdlabel", "CLUSTER THRESHOLD (ms)");
+    addOpenGlComponent(clusterThreshold_label);
+    clusterThreshold_label->setTextSize (10.0f);
+    clusterThreshold_label->setJustification(juce::Justification::centred);
 
+    history_label = std::make_shared<PlainTextComponent>("historylabel", "HISTORY (notes)");
+    addOpenGlComponent(history_label);
+    history_label->setTextSize (10.0f);
+    history_label->setJustification(juce::Justification::centred);
+
+    sectionBorder = std::make_shared<OpenGL_LabeledBorder>("adaptivetuning", "Adaptive Tuning");
+    addBorder(sectionBorder.get());
 }
 
 AdaptiveTuningSection::~AdaptiveTuningSection() { }
 
 void AdaptiveTuningSection::paintBackground(juce::Graphics& g) {
     setLabelFont(g);
-    drawLabelForComponent(g, TRANS("Cluster Threshold (ms)"), clusterThreshold_Slider.get());
-    drawLabelForComponent(g, TRANS("History (notes)"), history_Slider.get());
+    // drawLabelForComponent(g, TRANS("Cluster Threshold (ms)"), clusterThreshold_Slider.get());
+    // drawLabelForComponent(g, TRANS("History (notes)"), history_Slider.get());
 
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
-
-    sectionBorder.paint(g);
 }
 
 void AdaptiveTuningSection::resized() {
 
     juce::Rectangle<int> area (getLocalBounds());
-    sectionBorder.setBounds(area);
+    sectionBorder->setBounds(area);
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
@@ -126,9 +131,14 @@ void AdaptiveTuningSection::resized() {
 
     juce::Rectangle<int> knobsBox = area.removeFromTop(knobsectionheight * 0.85);
     clusterThreshold_Slider->setBounds(knobsBox.removeFromLeft(knobsBox.getWidth() * 0.5));
-    history_Slider->setBounds(knobsBox);
+    juce::Rectangle<int> clusterthreshold_label_rect (clusterThreshold_Slider->getX(), clusterThreshold_Slider->getBottom() - 10, clusterThreshold_Slider->getWidth(), labelsectionheight );
+    clusterThreshold_label->setBounds(clusterthreshold_label_rect);
 
-    area.removeFromTop(smallpadding);
+    history_Slider->setBounds(knobsBox);
+    juce::Rectangle<int> historyslider_label_rect (history_Slider->getX(), history_Slider->getBottom() - 10, history_Slider->getWidth(), labelsectionheight );
+    history_label->setBounds(historyslider_label_rect);
+
+    area.removeFromTop(largepadding);
 
     juce::Rectangle<int> resetBox = area.removeFromTop(comboboxheight);
     resetButton->setBounds(resetBox.removeFromLeft(resetBox.getWidth() * 0.5));

@@ -10,7 +10,7 @@
 #include "synth_slider.h"
 #include "open_gl_combo_box.h"
 
-class MidiFilterParametersView : public SynthSection
+class MidiFilterParametersView : public SynthSection, juce::Button::Listener
 {
 public:
     MidiFilterParametersView(chowdsp::PluginState& pluginState, MidiFilterParams& param, juce::String name, OpenGlWrapper *open_gl);
@@ -18,7 +18,6 @@ public:
     void paintBackground(juce::Graphics& g) override
     {
         SynthSection::paintContainer(g);
-        paintHeadingText(g);
         paintBorder(g);
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
@@ -26,10 +25,22 @@ public:
 
     void resized() override;
 
-    std::unique_ptr<SynthButton> mf_button;
-    std::unique_ptr<chowdsp::ButtonAttachment> mf_button_attachment;
+    std::shared_ptr<PlainTextComponent> prepTitle;
+
+    std::unique_ptr<SynthButton> invert_button;
+    std::unique_ptr<chowdsp::ButtonAttachment> invert_button_attachment;
+
+    std::unique_ptr<SynthButton> ignoreNoteOff_button;
+    std::unique_ptr<chowdsp::ButtonAttachment> ignoreNoteOff_button_attachment;
+
+    // place to store all the toggles for this prep, with their attachments for tracking/updating values
+    std::vector<std::unique_ptr<SynthButton>> _paramToggles;
+    std::vector<std::unique_ptr<chowdsp::ButtonAttachment>> _paramToggles_attachments;
 
     MidiFilterParams& params;
+    chowdsp::ScopedCallbackList midiFilterCallbacks;
+
+    void buttonClicked (juce::Button*) override {}
 
 };
 

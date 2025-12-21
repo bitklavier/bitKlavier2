@@ -10,7 +10,25 @@
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
 #include "tracktion_ValueTreeUtilities.h"
-
+// width, height — indexed by (selection - 1)
+static constexpr std::array<
+    std::pair<float, float>,
+    static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST) - 1
+> prepSizes = {{
+    /* 1 Direct      */ { 245.0f, 125.0f },
+    /* 2 Nostalgic   */ { 245.0f, 125.0f },
+    /* 3 Keymap      */ { 185.0f, 105.0f },
+    /* 4 Resonance   */ { 245.0f, 125.0f },
+    /* 5 Synchronic  */ { 260.0f, 132.0f },
+    /* 6 Blendronic  */ { 245.0f, 125.0f }, // default
+    /* 7 Tempo       */ { 132.0f, 260.0f },
+    /* 8 Tuning      */ { 125.0f, 245.0f },
+    /* 9 MidiFilter  */ { 75.0f,  75.0f  },
+    /* 10 MidiTarget */ { 75.0f,  75.0f  },
+    /* 11 PianoMap   */ { 150.0f, 120.0f },
+    /* 12 Modulation */ { 100.0f, 100.0f },
+    /* 13 Reset      */ { 100.0f, 100.0f },
+}};
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data, juce::ApplicationCommandManager &_manager)
                                                         : SynthSection("Construction Site"),
@@ -24,8 +42,6 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
     commandManager.registerAllCommandsForTarget (this);
-
-
 
     setWantsKeyboardFocus(true);
     //addKeyListener(this);
@@ -42,20 +58,20 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     prep_list->addListener(this);
 
     // prep_list->addChangeListener(this);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeDirect, DirectPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeBlendronic, BlendronicPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeSynchronic, SynchronicPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeKeymap, KeymapPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeVST, PluginPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeModulation, ModulationPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTuning,TuningPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeReset,ResetPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiFilter, MidiFilterPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeMidiTarget, MidiTargetPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypePianoMap, PianoSwitchPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeTempo, TempoPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeNostalgic, NostalgicPreparation::create);
-    nodeFactory.Register(bitklavier::BKPreparationType::PreparationTypeResonance, ResonancePreparation::create);
+    nodeFactory.Register(IDs::direct, DirectPreparation::create);
+    nodeFactory.Register(IDs::blendronic, BlendronicPreparation::create);
+    nodeFactory.Register(IDs::synchronic, SynchronicPreparation::create);
+    nodeFactory.Register(IDs::keymap, KeymapPreparation::create);
+    nodeFactory.Register(IDs::vst, PluginPreparation::create);
+    nodeFactory.Register(IDs::modulation, ModulationPreparation::create);
+    nodeFactory.Register(IDs::tuning,TuningPreparation::create);
+    nodeFactory.Register(IDs::reset,ResetPreparation::create);
+    nodeFactory.Register(IDs::midiFilter, MidiFilterPreparation::create);
+    nodeFactory.Register(IDs::midiTarget, MidiTargetPreparation::create);
+    nodeFactory.Register(IDs::pianoMap, PianoSwitchPreparation::create);
+    nodeFactory.Register(IDs::tempo, TempoPreparation::create);
+    nodeFactory.Register(IDs::nostalgic, NostalgicPreparation::create);
+    nodeFactory.Register(IDs::resonance, ResonancePreparation::create);
 
 }
 
@@ -78,8 +94,23 @@ enum CommandIDs {
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
-    commands.addArray({direct, nostalgic, keymap, resonance, synchronic, tuning, blendronic, tempo, modulation, deletion, resetMod, midifilter, miditarget, pianoswitch});
+    commands.addArray({
+        direct,
+        nostalgic,
+        keymap,
+        resonance,
+        synchronic,
+        tuning,
+        blendronic,
+        tempo,
+        modulation,
+        deletion,
+        resetMod,
+        midifilter,
+        miditarget,
+        pianoswitch});
 }
+
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
 {
     switch (id) {
@@ -143,15 +174,27 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
 }
 
 bool ConstructionSite::perform(const InvocationInfo &info) {
+
+    /*
+     * todo: prepScale should be settable by the user, and saved
+     *          - it should also scale distances between preps
+     *          - not sure if this is the right place to set this overall, but it scales the prep sizes at least
+     */
+    float prepScale = 0.6;
+
+    float prepWidth = 245.0f;
+    float prepHeight = 125.0f;
+    prepWidth *= prepScale;
+    prepHeight *= prepScale;
+
         switch (info.commandID) {
             case direct:
             {
                 juce::ValueTree t(IDs::direct);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
-                t.setProperty(IDs::width, 245, nullptr);
-                t.setProperty(IDs::height, 125, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
-                //t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -159,20 +202,23 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             {
                 juce::ValueTree t(IDs::nostalgic);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
-                t.setProperty(IDs::width, 245, nullptr);
-                t.setProperty(IDs::height, 125, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
             case keymap:
             {
+                prepWidth = 185.0f;
+                prepHeight = 105.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::keymap);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
-                t.setProperty(IDs::width, 185, nullptr);
-                t.setProperty(IDs::height, 105, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2., lastY -  roundToInt(t.getProperty(IDs::height))/ 2.)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -180,40 +226,51 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             {
                 juce::ValueTree t(IDs::resonance);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
-                t.setProperty(IDs::width, 245, nullptr);
-                t.setProperty(IDs::height, 125, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2,lastY - prepHeight / 2)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
             case synchronic:
             {
-                 juce::ValueTree t(IDs::synchronic);
+                prepWidth = 260.0f;
+                prepHeight = 132.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
 
+                 juce::ValueTree t(IDs::synchronic);
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
-                 t.setProperty(IDs::width, 260, nullptr);
-                 t.setProperty(IDs::height, 132, nullptr);
-                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+                 t.setProperty(IDs::width, prepWidth, nullptr);
+                 t.setProperty(IDs::height, prepHeight, nullptr);
+                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
                  prep_list->appendChild(t,  &undo);
                  return true;
             }
             case blendronic:
             {
+                prepWidth = 245.0f;
+                prepHeight = 125.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                  juce::ValueTree t(IDs::blendronic);
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
-                 t.setProperty(IDs::width, 245, nullptr);
-                 t.setProperty(IDs::height, 125, nullptr);
+                 t.setProperty(IDs::width, prepWidth, nullptr);
+                 t.setProperty(IDs::height, prepHeight, nullptr);
                  t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
                  prep_list->appendChild(t,  &undo);
                  return true;
             }
             case tempo:
             {
+                prepWidth = 132.0f;
+                prepHeight = 260.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::tempo);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTempo, nullptr);
-                t.setProperty(IDs::width, 132, nullptr);
-                t.setProperty(IDs::height, 260, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
                 prep_list->appendChild(t,  &undo);
@@ -221,11 +278,14 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case tuning:
             {
+                prepWidth = 125.0f;
+                prepHeight = 245.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::tuning);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeTuning, nullptr);
-                t.setProperty(IDs::width, 125, nullptr);
-                t.setProperty(IDs::height, 245, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
@@ -236,11 +296,14 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case midifilter:
             {
+                prepWidth = 75.0f;
+                prepHeight = 75.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiFilter);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiFilter, nullptr);
-                t.setProperty(IDs::width, 75, nullptr);
-                t.setProperty(IDs::height, 75, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
@@ -249,11 +312,14 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case miditarget:
             {
+                prepWidth = 75.0f;
+                prepHeight = 75.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiTarget);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeMidiTarget, nullptr);
-                t.setProperty(IDs::width, 75, nullptr);
-                t.setProperty(IDs::height, 75, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
@@ -262,11 +328,14 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case pianoswitch:
             {
+                prepWidth = 150.0f;
+                prepHeight = 120.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::pianoMap);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypePianoMap, nullptr);
-                t.setProperty(IDs::width, 150, nullptr);
-                t.setProperty(IDs::height, 120, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                                              juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
@@ -275,11 +344,14 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case modulation:
             {
+                prepWidth = 100.0f;
+                prepHeight = 100.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::modulation);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeModulation, nullptr);
-                t.setProperty(IDs::width, 100, nullptr);
-                t.setProperty(IDs::height, 100, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
@@ -289,11 +361,14 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 return true;
             }
             case resetMod: {
+                prepWidth = 100.0f;
+                prepHeight = 100.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
                 juce::ValueTree t(IDs::reset);
-
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeReset, nullptr);
-                t.setProperty(IDs::width, 100, nullptr);
-                t.setProperty(IDs::height, 100, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
 
@@ -304,7 +379,6 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case deletion:
             {
-
                 auto& lasso = preparationSelector.getLassoSelection();
                 auto lassoCopy  = lasso;
                 lasso.deselectAll();
@@ -312,7 +386,6 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 {
                     prep_list->removeChild(prep->state, &undo);
                 }
-
                 return true;
             }
             default:
@@ -347,7 +420,6 @@ PreparationSection *ConstructionSite::getComponentForPlugin(juce::AudioProcessor
     }
 }
 
-
 void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) {
     jassert (node != nullptr);
 
@@ -364,19 +436,15 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
         if (auto* plugin = dynamic_cast<juce::AudioPluginInstance*> (processor))
         {
             auto description = plugin->getPluginDescription();
-
-
-
             auto window = activePluginWindows.add (new PluginWindow (node, type, activePluginWindows));
             window->toFront(true);
         }
     }
-
 }
 
 void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     auto * interface = findParentComponentOfClass<SynthGuiInterface>();
-    auto s = nodeFactory.CreateObject(wrapper->state.getProperty(IDs::type), wrapper->state,interface );
+    auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state,interface );
     {
         juce::ScopedLock lock(open_gl_critical_section_);
         addSubSection (s.get());
@@ -431,8 +499,6 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 
-
-
     //cleanup opengl
     {
         juce::ScopedLock lock(open_gl_critical_section_);
@@ -453,7 +519,11 @@ ConstructionSite::~ConstructionSite(void) {
 }
 
 void ConstructionSite::paintBackground(juce::Graphics &g) {
-    paintBody(g);
+    //paintBody(g);
+    /*
+     * todo: setup color setting better, or document how/where to set these colors
+     */
+    paintBody(g, getLocalBounds(), juce::Colours::burlywood.withMultipliedBrightness(0.4));
     paintChildrenBackgrounds(g);
 }
 
@@ -560,46 +630,59 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     // Stop trying to make a connection on blank space click
     connect = false;
 }
+
 void ConstructionSite::handlePluginPopup(int selection, int index) {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    float prepScale = 0.6;
+
     if (selection < bitklavier::BKPreparationType::PreparationTypeVST) {
-        juce::ValueTree t(IDs::PREPARATION);
-        t.setProperty(IDs::type, static_cast<bitklavier::BKPreparationType>(selection), nullptr);
-        t.setProperty(IDs::width, 132, nullptr);
-        t.setProperty(IDs::height, 260, nullptr);
-        // t.setProperty(IDs::x, lastX - 132 / 2, nullptr);
-        // t.setProperty(IDs::y, lastY - 260 / 2, nullptr);
-        // prep_list->appendChild(t,  interface->getUndoManager());
+        const auto idx = static_cast<size_t>(selection - 1);
+        jassert (idx < prepSizes.size());
+
+        const auto [baseW, baseH] = prepSizes[idx];
+
+        const float prepWidth  = baseW * prepScale;
+        const float prepHeight = baseH * prepScale;
+
+        juce::ValueTree t(preparationIDs[idx]);
+        t.setProperty(IDs::type,
+                      static_cast<bitklavier::BKPreparationType>(selection),
+                      nullptr);
+        t.setProperty(IDs::width,  prepWidth,  nullptr);
+        t.setProperty(IDs::height, prepHeight, nullptr);
+
+        t.setProperty(IDs::x_y,
+            juce::VariantConverter<juce::Point<int>>::toVar(
+                juce::Point<int>(lastX - prepWidth  / 2.0f,
+                                 lastY - prepHeight / 2.0f)),
+            nullptr);
         prep_list->appendChild(t,  &undo);
-    } else {
+    }
+    else {
+        const float prepWidth  = 245.f * prepScale;
+        const float prepHeight = 125.f * prepScale;
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::PREPARATION);
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
-        t.setProperty(IDs::width, 245, nullptr);
-        t.setProperty(IDs::height, 125, nullptr);
-        // t.setProperty(IDs::x, lastX - 245 / 2, nullptr);
+        t.setProperty(IDs::width, prepWidth, nullptr);
+        t.setProperty(IDs::height, prepHeight, nullptr);
+        t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
+        //t.setProperty(IDs::x_y,juce::VariantConverter<juce::Point<int>>::toVar( juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
         // t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
 
         auto desc = _parent->getSynth()->user_prefs->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
         t.addChild(plugin,-1, &undo);
         prep_list->addPlugin(desc.pluginDescription,t);
-
     }
-
-
 }
-
 
 void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     //inLasso = false;
     //    DBG ("mouseupconst");
     selectorLasso.endLasso();
     removeChildComponent(&selectorLasso);
-    if (edittingComment)
-        return;
-
-
+    if (edittingComment) return;
 
     juce::MouseEvent e = eo.getEventRelativeTo(this);
     cableView.mouseUp(e);

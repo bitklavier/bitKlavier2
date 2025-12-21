@@ -43,7 +43,7 @@ class ModulationMeter : public juce::Component {
     void setModulated(bool modulated) { modulated_ = modulated; }
     float getModPercent() { return mod_percent_; }
 
-    const SynthSlider* destination() { return destination_; }
+    const SynthSlider* destination() { return destination_.getComponent(); }
 
   private:
     ModulationMeter() = delete;
@@ -54,7 +54,7 @@ class ModulationMeter : public juce::Component {
 
     const vital::Output* mono_total_;
     const vital::Output* poly_total_;
-     SynthSlider* destination_;
+    juce::Component::SafePointer<SynthSlider> destination_;
 
     OpenGlMultiQuad* quads_;
     int index_;

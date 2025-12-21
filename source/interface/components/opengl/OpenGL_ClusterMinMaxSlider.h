@@ -18,9 +18,9 @@ public:
                                                       "Accepted Cluster Range", // slider name
                                                       1.f, // min
                                                       12.f, // max
-                                                      1.f, // default min
-                                                      12.f, // default max
-                                                      1 ,//increment
+                                                      defmin = 1.f, // default min
+                                                      defmax = 12.f, // default max
+                                                      1, //increment
                                                       _params->stateChanges.defaultState
                                                       ),
                                                   params(_params)
@@ -33,6 +33,7 @@ public:
         addMyListener(this);
 
         rangeSliderBorder.setText("Cluster Min/Max");
+        invisibleSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
 
         /**
          * these SliderAttachments contain the listeners for each slider, and so will be notified when the slider is manipulated
@@ -55,6 +56,14 @@ public:
 
         minValueTF.setText(juce::String(minSlider.getValue()),juce::dontSendNotification);
         maxValueTF.setText(juce::String(maxSlider.getValue()),juce::dontSendNotification);
+
+        /*
+         * make sure we have defaultStates for the two params, so the user doesn't have to twiddle with the sliders to get defaults saved
+         */
+        if (!defaultState.hasProperty("clustermin"))
+            defaultState.setProperty("clustermin", params->clusterMinParam->getNormalisableRange().start, nullptr);
+        if (!defaultState.hasProperty("clustermax"))
+            defaultState.setProperty("clustermax", params->clusterMaxParam->getNormalisableRange().end, nullptr);
 
         /**
          * this list of callbacks is handled by the chowdsp system.
@@ -106,6 +115,17 @@ public:
     virtual void resized() override {
         OpenGlAutoImageComponent<BKRangeSlider>::resized();
         redoImage();
+    }
+
+    /*
+    * this is for making the modulation UI view opaque
+    */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKRangeSlider::paint(g);
+        }
     }
 
     virtual void mouseDrag(const juce::MouseEvent &e) override {
@@ -186,11 +206,25 @@ public:
      */
     void syncToValueTree() override
     {
-        auto minval = modulationState.getProperty("clustermin");
-        setMinValue(minval, juce::sendNotification);
+        if (modulationState.hasProperty ("clustermin"))
+        {
+            auto minval = modulationState.getProperty("clustermin");
+            setMinValue(minval, juce::sendNotification);
+        }
+        else
+        {
+            setMinValue(defmin, juce::sendNotification);
+        }
 
-        auto maxval = modulationState.getProperty("clustermax");
-        setMaxValue(maxval, juce::sendNotification);
+        if (modulationState.hasProperty ("clustermax"))
+        {
+            auto maxval = modulationState.getProperty("clustermax");
+            setMaxValue(maxval, juce::sendNotification);
+        }
+        else
+        {
+            setMaxValue(defmax, juce::sendNotification);
+        }
     }
 
     ClusterMinMaxParams *params;
@@ -199,11 +233,12 @@ public:
 private :
     OpenGL_ClusterMinMaxSlider() : OpenGlAutoImageComponent<BKRangeSlider>(
                                         "ClusterRange", // slider name
-                                        1, // min
-                                        12, // max
-                                        1, // default min
-                                        12, // default max
-                                        1, juce::ValueTree{}) // increment
+                                        1.f, // min
+                                        12.f, // max
+                                        defmin = 1.f, // default min
+                                        defmax = 12.f, // default max
+                                        1, // increment
+                                        juce::ValueTree{})
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -211,7 +246,22 @@ private :
 
         isModulation_ = true;
         addMyListener(this);
+
+        /*
+         * this is so the modulation UI view has a distinctive colored border
+         */
+        rangeSliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        rangeSliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        rangeSliderBorder.setText ("MODIFIED");
+        rangeSliderBorder.setTextLabelPosition (juce::Justification::centred);
+
+        invisibleSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
+        minSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
+        maxSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
     }
+
+    int defmin, defmax;
+
     bool mouseInteraction = false;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };

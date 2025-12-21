@@ -672,6 +672,9 @@ namespace {
       "    gl_FragColor = gl_FragColor * (1.0 - thumb_alpha) + thumb_color * thumb_alpha ;\n"
       "}\n";
 
+    /*
+     * original shader
+     */
   const char* kRotaryModulationFragmentShader =
       "varying " MEDIUMP " vec2 coordinates_out;\n"
       "varying " MEDIUMP " vec2 dimensions_out;\n"
@@ -706,6 +709,46 @@ namespace {
       "    out_color.a = max(alpha, alpha_stereo) * alpha_mult * dist_amp;\n"
       "    gl_FragColor = out_color;\n"
       "}\n";
+
+    /*
+     * modified shader to try to get 7 - 5 o'clock behavior, not working, along with kModulationKnobFragmentShader below
+     */
+    // const char* kRotaryModulationFragmentShader =
+    // "varying " MEDIUMP " vec2 coordinates_out;\n"
+    // "varying " MEDIUMP " vec2 dimensions_out;\n"
+    // "varying " MEDIUMP " vec4 shader_values_out;\n"
+    // "uniform " MEDIUMP " float thickness;\n"
+    // "uniform " MEDIUMP " vec4 color;\n"
+    // "uniform " MEDIUMP " vec4 alt_color;\n"
+    // "uniform " MEDIUMP " vec4 mod_color;\n"
+    // "uniform " MEDIUMP " float alpha_mult;\n"
+    // "uniform " MEDIUMP " float start_pos;\n"
+    // "const " MEDIUMP " float kPi = 3.14159265359;\n" \
+    // "\n"
+    // "void main() {\n"
+    // "    " MEDIUMP " float full_radius = dimensions_out.x * 0.5;\n"
+    // "    " MEDIUMP " float dist = length(coordinates_out) * full_radius;\n"
+    // "    " MEDIUMP " float inner_radius = full_radius - thickness;\n"
+    // "    " MEDIUMP " float dist_outer_amp = clamp((full_radius - dist) * 0.5 + 0.5, 0.0, 1.0);\n"
+    // "    " MEDIUMP " float dist_amp = dist_outer_amp * clamp((dist - inner_radius) * 0.5 + 0.5, 0.0, 1.0);\n"
+    // "    " MEDIUMP " float rads = mod(atan(coordinates_out.x, coordinates_out.y) + kPi + start_pos, 2.0 * kPi) - kPi;\n"
+    // // --- MODIFICATION: 0.5 changed to 0.125 (0.5 / 4.0) for both main and stereo arcs ---\n"
+    // "    " MEDIUMP " float rads_amp_low = clamp(full_radius * 0.125 * (rads - shader_values_out.x) + 1.0, 0.0, 1.0);\n"
+    // "    " MEDIUMP " float rads_amp_high = clamp(full_radius * 0.125 * (shader_values_out.y - rads) + 1.0, 0.0, 1.0);\n"
+    // "    " MEDIUMP " float rads_amp_low_stereo = clamp(full_radius * 0.125 * (rads - shader_values_out.z) + 0.5, 0.0, 1.0);\n"
+    // "    " MEDIUMP " float rads_amp_high_stereo = clamp(full_radius * 0.125 * (shader_values_out.a - rads) + 0.5, 0.0, 1.0);\n"
+    // // ----------------------------------------------------------------------------------\n"
+    // "    " MEDIUMP " float alpha = rads_amp_low * rads_amp_high;\n"
+    // "    " MEDIUMP " float alpha_stereo = rads_amp_low_stereo * rads_amp_high_stereo;\n"
+    // "    " MEDIUMP " float alpha_center = min(alpha, alpha_stereo);\n"
+    // "    " MEDIUMP " vec4 color_left = (alpha - alpha_center) * color;\n"
+    // "    " MEDIUMP " vec4 color_right = (alpha_stereo - alpha_center) * alt_color;\n"
+    // "    " MEDIUMP " vec4 color_center = alpha_center * mod_color;\n"
+    // "    " MEDIUMP " vec4 out_color = color * (1.0 - alpha_stereo) + alt_color * alpha_stereo;\n"
+    // "    out_color = out_color * (1.0 - alpha_center) + color_center * alpha_center;\n"
+    // "    out_color.a = max(alpha, alpha_stereo) * alpha_mult * dist_amp;\n"
+    // "    gl_FragColor = out_color;\n"
+    // "}\n";
 
   const char* kHorizontalSliderFragmentShader =
       "uniform " MEDIUMP " vec4 color;\n"
@@ -789,6 +832,9 @@ namespace {
       "    gl_FragColor = color;\n"
       "}\n";
 
+    /*
+     * this is the original shader that draws the mod knobs with noon-to-midnight range behavior
+     */
   const char* kModulationKnobFragmentShader =
       "uniform " MEDIUMP " vec4 color;\n"
       "uniform " MEDIUMP " vec4 alt_color;\n"
@@ -801,7 +847,8 @@ namespace {
       "varying " MEDIUMP " vec4 shader_values_out;\n"
       "varying " MEDIUMP " vec2 coordinates_out;\n"
       "void main() {\n"
-      "    float rads = atan(coordinates_out.x, -coordinates_out.y);\n"
+      "    float rads = atan(coordinates_out.x, -coordinates_out.y);\n" // orig
+      //"    float rads = atan(coordinates_out.x, -coordinates_out.y) + 3.14159265;\n" // rotated
       "    float full_radius = 0.5 * dimensions_out.x;\n"
       "    float delta_center = length(coordinates_out) * full_radius;\n"
       "    float circle_alpha = clamp(full_radius - delta_center, 0.0, 1.0);\n"
@@ -820,6 +867,146 @@ namespace {
       "    gl_FragColor = gl_FragColor * (1.0 - mod_alpha2) + mod_color * mod_alpha2;\n"
       "    gl_FragColor.a = gl_FragColor.a * alpha_mult;\n"
       "}\n";
+
+    /*
+     * modified version using Junie
+     */
+    // const char* kModulationKnobFragmentShader =
+    // "uniform " MEDIUMP " vec4 color;\n"
+    // "uniform " MEDIUMP " vec4 alt_color;\n"
+    // "uniform " MEDIUMP " vec4 mod_color;\n"
+    // "uniform " MEDIUMP " vec4 background_color;\n"
+    // "uniform " MEDIUMP " vec4 thumb_color;\n"
+    // "varying " MEDIUMP " vec2 dimensions_out;\n"
+    // "uniform " MEDIUMP " float thickness;\n"
+    // "uniform " MEDIUMP " float alpha_mult;\n"
+    // "varying " MEDIUMP " vec4 shader_values_out;\n"
+    // "varying " MEDIUMP " vec2 coordinates_out;\n"
+    // "void main() {\n"
+    // "    float kPi = 3.14159265358979323846;\n"
+    // "    float start = -5.0 * kPi / 6.0;       // 7 o'clock\n"
+    // "    float sweep =  5.0 * kPi / 3.0;       // 300 degrees\n"
+    // "\n"
+    // "    float rads = atan(coordinates_out.x, -coordinates_out.y);\n"
+    // "    float full_radius = 0.5 * dimensions_out.x;\n"
+    // "    float delta_center = length(coordinates_out) * full_radius;\n"
+    // "    float circle_alpha = clamp(full_radius - delta_center, 0.0, 1.0);\n"
+    // "\n"
+    // "    // shader_values_out.x now holds amount a in [0,1]\n"
+    // "    float target = start + shader_values_out.x * sweep;\n"
+    // "\n"
+    // "    // Shortest signed angle difference (wrap to [-pi, pi])\n"
+    // "    float d = rads - target;\n"
+    // "    d = mod(d + kPi, 2.0 * kPi) - kPi;\n"
+    // "\n"
+    // "    float color_amount = clamp(d * max(delta_center, 1.0) * 1.6, 0.0, 1.0);\n"
+    // "    gl_FragColor = alt_color * color_amount + color * (1.0 - color_amount);\n"
+    // "    gl_FragColor.a = gl_FragColor.a * circle_alpha;\n"
+    // "\n"
+    // "    float center_arc = full_radius - thickness * 0.5 - 0.5;\n"
+    // "    float delta_arc = delta_center - center_arc;\n"
+    // "    float distance_arc = abs(delta_arc);\n"
+    // "    float thumb_alpha = clamp(thickness * 0.5 - distance_arc + 0.5, 0.0, 1.0);\n"
+    // "    gl_FragColor = gl_FragColor * (1.0 - thumb_alpha) + thumb_color * thumb_alpha;\n"
+    // "\n"
+    // "    float mod_alpha1 = clamp(full_radius * 0.48 - delta_center, 0.0, 1.0) * mod_color.a;\n"
+    // "    float mod_alpha2 = clamp(full_radius * 0.35 - delta_center, 0.0, 1.0) * mod_color.a;\n"
+    // "    gl_FragColor = gl_FragColor * (1.0 - mod_alpha1) + background_color * mod_alpha1;\n"
+    // "    gl_FragColor = gl_FragColor * (1.0 - mod_alpha2) + mod_color * mod_alpha2;\n"
+    // "    gl_FragColor.a = gl_FragColor.a * alpha_mult;\n"
+    // "}\n";
+
+    /*
+     * this is a modified shader that attempts to draw mod knobs with 7 o'clock to 5 o'clock range
+     *  - but doesn't work. created with Gemini, iterated a few times, and then abandoned for now
+     */
+    // const char* kModulationKnobFragmentShader =
+    // "uniform " MEDIUMP " vec4 color;\n"
+    // "uniform " MEDIUMP " vec4 alt_color;\n"
+    // "uniform " MEDIUMP " vec4 mod_color;\n"
+    // "uniform " MEDIUMP " vec4 background_color;\n"
+    // "uniform " MEDIUMP " vec4 thumb_color;\n"
+    // "varying " MEDIUMP " vec2 dimensions_out;\n"
+    // "uniform " MEDIUMP " float thickness;\n"
+    // "uniform " MEDIUMP " float alpha_mult;\n"
+    // "varying " MEDIUMP " vec4 shader_values_out;\n"
+    // "varying " MEDIUMP " vec2 coordinates_out;\n"
+    // "void main() {\n"
+    // "    // --- ALL NEW VARIABLES DECLARED AT THE TOP OF main() FOR COMPLIANCE ---\n"
+    // "    float PI = 3.1415926535; // PI constant\n"
+    // "    const float MIN_RADS_OFFSET = 2.617993878; // 5*PI/6 rads for 7 o'clock offset\n"
+    // "    const float MAX_SWEEP_RADS = 5.235987756; // 5*PI/3 rads for 300 degree sweep\n"
+    // "    const float SENSITIVITY_CORRECTION = 0.4; // 1.6 / 4.0 = 0.4\n" // <--- NEW CONSTANT\n"
+    // "    \n"
+    // "    float rads; \n"
+    // "    float full_radius;\n"
+    // "    float delta_center;\n"
+    // "    float circle_alpha;\n"
+    // "    float adjusted_rads; // Angle rotated to 7 o'clock = 0\n"
+    // "    float scaled_knob_rads; // 0.0-1.0 knob value scaled to 300 deg radians\n"
+    // "    float delta_rads_fill; // Angular difference for the fill calculation\n"
+    // "    float color_amount; // Fill level 0.0 to 1.0 \n"
+    // "    float center_arc;\n"
+    // "    float delta_arc;\n"
+    // "    float distance_arc;\n"
+    // "    float thumb_alpha; \n"
+    // "    float delta_rads_thumb; // Angular difference to thumb\n"
+    // "    float thumb_proximity;\n"
+    // "    float mod_alpha1;\n"
+    // "    float mod_alpha2;\n"
+    // "    \n"
+    // "    // --- BEGIN EXECUTION LOGIC ---\n"
+    // "    rads = atan(coordinates_out.x, -coordinates_out.y);\n"
+    // "    full_radius = 0.5 * dimensions_out.x;\n"
+    // "    delta_center = length(coordinates_out) * full_radius;\n"
+    // "    circle_alpha = clamp(full_radius - delta_center, 0.0, 1.0);\n"
+    // "    \n"
+    // "    // 1. Rotate the coordinate system so the 7 o'clock MIN position is the new reference.\n"
+    // "    adjusted_rads = rads - MIN_RADS_OFFSET;\n"
+    // "    // Ensure the angle difference calculation uses a 0 to 2*PI range\n"
+    // "    adjusted_rads = mod(adjusted_rads + 3.0 * PI, 2.0 * PI);\n"
+    // "    \n"
+    // "    // 2. Scale the 0.0-1.0 knob value to the full 300-degree arc in radians.\n"
+    // "    scaled_knob_rads = shader_values_out.x * MAX_SWEEP_RADS;\n" // Now a 0 to ~5.236 radian sweep\n"
+    // "    \n"
+    // "    // 3. Calculate the difference between the fragment's angle and the knob's angle.\n"
+    // "    delta_rads_fill = adjusted_rads - scaled_knob_rads;\n"
+    // "    \n"
+    // "    // 4. Use the original sharp-transition logic, but fix the angular scaling.\n"
+    // "    // The original factor of 1.6 is divided by 4.0 to correct the sensitivity.\n"
+    // "    // The max(delta_center, 1.0) is kept for the distance-based scaling.\n"
+    // "    color_amount = clamp(delta_rads_fill * max(delta_center, 1.0) * SENSITIVITY_CORRECTION, 0.0, 1.0);\n"
+    // "    \n"
+    // "    gl_FragColor = alt_color * color_amount + color * (1.0 - color_amount);\n"
+    // "    gl_FragColor.a = gl_FragColor.a * circle_alpha;\n"
+    // "    \n"
+    // "    // --- THUMB VISUALIZATION (Thumb position is scaled by MAX_SWEEP_RADS) ---\n"
+    // "    center_arc = full_radius - thickness * 0.5 - 0.5;\n"
+    // "    delta_arc = delta_center - center_arc;\n"
+    // "    distance_arc = abs(delta_arc);\n"
+    // "    thumb_alpha = clamp(thickness * 0.5 - distance_arc + 0.5, 0.0, 1.0);\n"
+    // "    \n"
+    // "    // The difference between the fragment's angle and the thumb's angle (scaled_knob_rads).\n"
+    // "    delta_rads_thumb = abs(adjusted_rads - scaled_knob_rads);\n"
+    // "    // Wrap-around: use the shortest path (full circle is 2*PI)\n"
+    // "    delta_rads_thumb = min(delta_rads_thumb, 2.0 * PI - delta_rads_thumb);\n"
+    // "    \n"
+    // "    // No need for the 4.0 factor here anymore, as the angular scale (delta_rads_thumb) is now correct.\n"
+    // "    // Use a conservative factor (e.g., 1.0) for the proximity blend.\n"
+    // "    if (adjusted_rads < MAX_SWEEP_RADS + 0.01) {\n"
+    // "        thumb_proximity = clamp(0.5 - delta_rads_thumb * full_radius * 1.0, 0.0, 1.0);\n"
+    // "        thumb_alpha = max(thumb_alpha, thumb_proximity);\n"
+    // "    }\n"
+    // "    \n"
+    // "    gl_FragColor = gl_FragColor * (1.0 - thumb_alpha) + thumb_color * thumb_alpha;\n"
+    // "    \n"
+    // "    // --- ORIGINAL LOGIC REMAINDER ---\n"
+    // "    mod_alpha1 = clamp(full_radius * 0.48 - delta_center, 0.0, 1.0) * mod_color.a;\n"
+    // "    mod_alpha2 = clamp(full_radius * 0.35 - delta_center, 0.0, 1.0) * mod_color.a;\n"
+    // "    gl_FragColor = gl_FragColor * (1.0 - mod_alpha1) + background_color * mod_alpha1;\n"
+    // "    gl_FragColor = gl_FragColor * (1.0 - mod_alpha2) + mod_color * mod_alpha2;\n"
+    // "    gl_FragColor.a = gl_FragColor.a * alpha_mult;\n"
+    // "}\n";
 
   const char* kFilterFragmentShader =
       "uniform " MEDIUMP " vec4 color_from;\n"
@@ -1096,8 +1283,8 @@ const char* Shaders::getFragmentShader(FragmentShader shader) {
       return kLinearModulationFragmentShader;
     case kModulationKnobFragment:
       return kModulationKnobFragmentShader;
-      case kBlackFragment:
-          return kBlackFragmentShader;
+    case kBlackFragment:
+        return kBlackFragmentShader;
     default:
       _ASSERT(false);
       return nullptr;

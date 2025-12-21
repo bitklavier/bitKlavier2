@@ -17,25 +17,76 @@ struct MidiFilterParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     MidiFilterParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("midifilter")
     {
-        add (mftoggle);
+        add (allNotesOff,
+            toggleNoteMessages,
+            ignoreNoteOn,
+            ignoreNoteOff,
+            invertNoteOnOff,
+            ignoreSustainPedal,
+            sostenutoMode,
+            notesAreSustainPedal,
+            notesAreSostenutoPedal);
     }
 
-    chowdsp::BoolParameter::Ptr mftoggle {
-        juce::ParameterID { "mftoggle", 100},
-        "some toggle",
+    chowdsp::BoolParameter::Ptr ignoreNoteOn {
+        juce::ParameterID { "ignoreNoteOn", 100},
+        "ignore noteOn",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr ignoreNoteOff {
+        juce::ParameterID { "ignoreNoteOff", 100},
+        "ignore noteOff",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr invertNoteOnOff {
+        juce::ParameterID { "invertNoteOnOff", 100},
+        "invert noteOn/Off",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr allNotesOff {
+        juce::ParameterID { "allNotesOff", 100},
+        "all notes off!",
         false
     };
 
     /*
-     * serializers are used for more complex params
+     * turn each key into a toggle
+     * - if note is not playing, noteOn will play, and noteOff will be ignored
+     * - if note is already playing, then noteOn will trigger noteOff to turn it off
      */
-    /* Custom serializer */
-    template <typename Serializer>
-    static typename Serializer::SerializedType serialize (const MidiFilterParams& paramHolder);
+    chowdsp::BoolParameter::Ptr toggleNoteMessages {
+        juce::ParameterID { "toggleNoteMessages", 100},
+        "toggle noteOn/Off",
+        false
+    };
 
-    /* Custom deserializer */
-    template <typename Serializer>
-    static void deserialize (typename Serializer::DeserializedType deserial, MidiFilterParams& paramHolder);
+    chowdsp::BoolParameter::Ptr ignoreSustainPedal {
+        juce::ParameterID { "ignoreSustainPedal", 100},
+        "ignore sustain pedal",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr sostenutoMode {
+        juce::ParameterID { "sostenutoMode", 100},
+        "treat sustain pedal like sostenuto pedal",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr notesAreSustainPedal {
+        juce::ParameterID { "notesAreSustainPedal", 100},
+        "treat keys like sustain pedal",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr notesAreSostenutoPedal {
+        juce::ParameterID { "notesAreSostenutoPedal", 100},
+        "treat keys like sostenuto pedal",
+        false
+    };
+
 };
 
 struct MidiFilterNonParameterState : chowdsp::NonParamState
@@ -74,8 +125,6 @@ public:
 
     void setCurrentProgram(int index) override {}
     void changeProgramName(int index, const juce::String &newName) override {}
-    void getStateInformation(juce::MemoryBlock &destData) override {}
-    void setStateInformation(const void *data, int sizeInBytes) override {}
 
     /**
      * Midi Processing Functions
@@ -83,6 +132,8 @@ public:
     juce::MidiMessage swapNoteOnNoteOff (juce::MidiMessage inmsg);
 
 private:
+    std::bitset<128> noteOnState;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiFilterProcessor)
 };
 

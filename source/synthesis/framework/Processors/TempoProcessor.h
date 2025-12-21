@@ -46,7 +46,7 @@ struct TempoParams : chowdsp::ParamHolder
     // Tempo param
     chowdsp::FloatParameter::Ptr tempoParam {
         juce::ParameterID { "tempo", 100 },
-        "Tempo",
+        "TEMPO",
         chowdsp::ParamUtils::createNormalisableRange (40.0f, 208.0f, 124.0f),
         120.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -57,7 +57,7 @@ struct TempoParams : chowdsp::ParamHolder
     // Subdivision param
     chowdsp::FloatParameter::Ptr subdivisionsParam {
         juce::ParameterID { "subdivisions", 100 },
-        "Subdivisions",
+        "SUBDIVISIONS",
         chowdsp::ParamUtils::createNormalisableRange (0.01f, 32.0f, 16.0f),
         1.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -94,40 +94,17 @@ public:
     // void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     bool acceptsMidi() const override { return true; }
-    // void addSoundSet (std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>>* s)
-    // {
-    //     ptrToSamples = s;
-    // }
-    //
-    // void addSoundSet (
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
-    //     juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
-    // {
-    //     mainSynth->addSoundSet (s);
-    //     hammerSynth->addSoundSet (h);
-    //     releaseResonanceSynth->addSoundSet (r);
-    //     pedalSynth->addSoundSet (p);
-    // }
 
-    // void setTuning (TuningProcessor*) override;
-
-    /*
-     * this is where we define the buses for audio in/out, including the param modulation channels
-     *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have
-     *      so if you add new params, might need to increase that number
-     */
     juce::AudioProcessor::BusesProperties tempoBusLayout()
     {
         return BusesProperties()
-            .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
+            .withOutput("Output", juce::AudioChannelSet::stereo(), false) // Main Output
             .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
             .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
     }
-    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
 
+    bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 

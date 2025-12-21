@@ -20,6 +20,7 @@
 #include "synth_section.h"
 #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
 #include "EnvParams.h"
+#include "OpenGL_LabeledBorder.h"
 
 class EnvelopeEditor;
 class SynthSlider;
@@ -88,7 +89,12 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> release_attachment;
     std::unique_ptr<chowdsp::SliderAttachment> releasePower_attachment;
 
-    juce::GroupComponent envelopeSectionBorder;
+    std::shared_ptr<PlainTextComponent> attack_label;
+    std::shared_ptr<PlainTextComponent> decay_label;
+    std::shared_ptr<PlainTextComponent> sustain_label;
+    std::shared_ptr<PlainTextComponent> release_label;
+
+    std::shared_ptr<OpenGL_LabeledBorder> envelopeBorder;
     EnvParams& _params;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeSection)

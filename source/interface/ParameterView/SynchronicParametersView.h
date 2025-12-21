@@ -42,9 +42,17 @@ public:
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
+        setSkinOverride(Skin::kSynchronic);
+
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
+
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
 
         // menus
         if (auto* synchronicParams = dynamic_cast<SynchronicParams*>(&params)) {
@@ -62,12 +70,10 @@ public:
         // menu labels
         pulseTriggeredBy_label = std::make_shared<PlainTextComponent>("ptb", "trigger:");
         addOpenGlComponent(pulseTriggeredBy_label);
-        pulseTriggeredBy_label->setTextSize (12.0f);
         pulseTriggeredBy_label->setJustification(juce::Justification::right);
 
         determinesCluster_label = std::make_shared<PlainTextComponent>("dtl", "cluster:");
         addOpenGlComponent(determinesCluster_label);
-        determinesCluster_label->setTextSize (12.0f);
         determinesCluster_label->setJustification(juce::Justification::right);
 
         // knobs
@@ -103,16 +109,35 @@ public:
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshold, listeners, *clusterThreshold_knob, nullptr);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
+        numPulses_knob_label = std::make_shared<PlainTextComponent>(numPulses_knob->getName(), params.numPulses->getName(20));
+        addOpenGlComponent(numPulses_knob_label);
+        numPulses_knob_label->setJustification(juce::Justification::centred);
+
+        numLayers_knob_label = std::make_shared<PlainTextComponent>(numLayers_knob->getName(), params.numLayers->getName(20));
+        addOpenGlComponent(numLayers_knob_label);
+        numLayers_knob_label->setJustification(juce::Justification::centred);
+
+        clusterThickness_knob_label = std::make_shared<PlainTextComponent>(clusterThickness_knob->getName(), params.clusterThickness->getName(20));
+        addOpenGlComponent(clusterThickness_knob_label);
+        clusterThickness_knob_label->setJustification(juce::Justification::centred);
+
+        clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), params.clusterThreshold->getName(20));
+        addOpenGlComponent(clusterThreshold_knob_label);
+        clusterThreshold_knob_label->setJustification(juce::Justification::centred);
+
+        variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "General Stuff");
+        addBorder(variousControlsBorder.get());
+
         // multisliders
-        transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions_", &params.transpositions, listeners);
-        transpositionsSlider->setComponentID ("transpositions_");
+        transpositionsSlider = std::make_unique<OpenGL_2DMultiSlider>("transpositions", &params.transpositions, listeners);
+        transpositionsSlider->setComponentID ("transpositions");
         transpositionsSlider->setMinMaxDefaultInc({-12., 12, 0., 0.001});
         transpositionsSlider->setName("Transpositions");
         addStateModulatedComponent (transpositionsSlider.get());
         transpositionsSlider->updateFromParams(juce::dontSendNotification);
 
-        accentsSlider = std::make_unique<OpenGL_MultiSlider>("accents_", &params.accents, listeners);
-        accentsSlider->setComponentID ("accents_");
+        accentsSlider = std::make_unique<OpenGL_MultiSlider>("accents", &params.accents, listeners);
+        accentsSlider->setComponentID ("accents");
         accentsSlider->setMinMaxDefaultInc({0., 2, 1., 0.1});
         accentsSlider->setName("Accents");
         addStateModulatedComponent (accentsSlider.get());
@@ -236,32 +261,20 @@ public:
 
     void copyEnvEditorValsToEnvSequence()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
+        int currentEnv = *sparams_.envelopeSequence.currentlyEditing;
+        sparams_.envelopeSequence.envStates.attacks[currentEnv].store(*sparams_.env.attackParam);
+        sparams_.envelopeSequence.envStates.decays[currentEnv].store(*sparams_.env.decayParam);
+        sparams_.envelopeSequence.envStates.sustains[currentEnv].store(*sparams_.env.sustainParam);
+        sparams_.envelopeSequence.envStates.releases[currentEnv].store(*sparams_.env.releaseParam);
 
-        DBG("copyEnvEditorValsToEnvSequence " + juce::String(currentEnv));
-        sparams_.envelopeSequence.envStates.attacks[currentEnv]         = sparams_.env.attackParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.decays[currentEnv]          = sparams_.env.decayParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.sustains[currentEnv]        = sparams_.env.sustainParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.releases[currentEnv]        = sparams_.env.releaseParam->getCurrentValue();
-
-        sparams_.envelopeSequence.envStates.attackPowers[currentEnv]    = sparams_.env.attackPowerParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.decayPowers[currentEnv]     = sparams_.env.decayPowerParam->getCurrentValue();
-        sparams_.envelopeSequence.envStates.releasePowers[currentEnv]   = sparams_.env.releasePowerParam->getCurrentValue();
-
-        DBG(juce::String(sparams_.envelopeSequence.envStates.attacks[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.decays[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.sustains[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.releases[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.attackPowers[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.decayPowers[currentEnv]));
-        DBG(juce::String(sparams_.envelopeSequence.envStates.releasePowers[currentEnv]));
+        sparams_.envelopeSequence.envStates.attackPowers[currentEnv].store(*sparams_.env.attackPowerParam);
+        sparams_.envelopeSequence.envStates.decayPowers[currentEnv].store(*sparams_.env.decayPowerParam);
+        sparams_.envelopeSequence.envStates.releasePowers[currentEnv].store(*sparams_.env.releasePowerParam);
     }
 
     void displayEnvSequenceValsInEnvEditor()
     {
-        int currentEnv = static_cast<int>(sparams_.envelopeSequence.currentlyEditing.get()->getCurrentValue());
-
-        DBG("displayEnvSequenceValsInEnvEditor " + juce::String(currentEnv));
+        int currentEnv = *sparams_.envelopeSequence.currentlyEditing;
         envSection->setADSRVals(
             sparams_.envelopeSequence.envStates.attacks[currentEnv],
             sparams_.envelopeSequence.envStates.decays[currentEnv],
@@ -277,19 +290,14 @@ public:
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
-
-        drawLabelForComponent(g, TRANS("pulses"), numPulses_knob.get());
-        drawLabelForComponent(g, TRANS("layers"), numLayers_knob.get());
-        drawLabelForComponent(g, TRANS("cluster thickness"), clusterThickness_knob.get());
-        drawLabelForComponent(g, TRANS("cluster threshold"), clusterThreshold_knob.get());
-
         paintChildrenBackgrounds (g);
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;
+
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     // combo box menus
     std::unique_ptr<OpenGLComboBox> pulseTriggeredBy_combo_box;
@@ -324,6 +332,15 @@ public:
     std::unique_ptr<chowdsp::SliderAttachment> clusterThickness_knob_attachment;
     std::unique_ptr<SynthSlider> clusterThreshold_knob;
     std::unique_ptr<chowdsp::SliderAttachment> clusterThreshold_knob_attachment;
+
+    // knob labels
+    std::shared_ptr<PlainTextComponent> numPulses_knob_label;
+    std::shared_ptr<PlainTextComponent> numLayers_knob_label;
+    std::shared_ptr<PlainTextComponent> clusterThickness_knob_label;
+    std::shared_ptr<PlainTextComponent> clusterThreshold_knob_label;
+
+    // for the mixer knobs
+    std::shared_ptr<OpenGL_LabeledBorder> variousControlsBorder;
 
     // ADSR controller: for setting the parameters of each ADSR
     std::unique_ptr<EnvelopeSection> envSection;

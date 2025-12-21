@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY soundset="Default">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <midiTarget type="9" width="147.0" height="75.0" x_y="368, 202" uuid="628d4d1abc4548e8a12946c7b831a678"
+                  soundset="syncglobal" nodeID="1653427482" numIns="1" numOuts="1"
+                  bTargetPatternSync_noteMode="0" bTargetBeatSync_noteMode="0"
+                  bTargetClear_noteMode="0" bTargetPausePlay_noteMode="0" bTargetInput_noteMode="0"
+                  bTargetOutput_noteMode="0" sTargetDefault_noteMode="2" sTargetPatternSync_noteMode="0"
+                  sTargetBeatSync_noteMode="0" sTargetAddNotes_noteMode="0" sTargetClear_noteMode="0"
+                  sTargetPausePlay_noteMode="0" rTargetDefault_noteMode="2" rTargetRing_noteMode="0"
+                  rTargetAdd_noteMode="0" nTargetDefault_noteMode="2" nTargetClear_noteMode="0"
+                  bTargetPatternSync="0" bTargetBeatSync="0" bTargetClear="0" bTargetPausePlay="0"
+                  bTargetInput="0" bTargetOutput="0" sTargetDefault="0" sTargetPatternSync="0"
+                  sTargetBeatSync="0" sTargetAddNotes="0" sTargetClear="0" sTargetPausePlay="0"
+                  rTargetDefault="0" rTargetRing="0" rTargetAdd="0" nTargetDefault="0"
+                  nTargetClear="0">
+        <MODULATABLE_PARAMS/>
+        <PORT nodeID="1653427482" chIdx="4096" isIn="1"/>
+        <PORT nodeID="1653427482" chIdx="4096" isIn="0"/>
+      </midiTarget>
+    </PREPARATIONS>
+    <CONNECTIONS/>
+    <MODCONNECTIONS/>
+  </PIANO>
+</GALLERY>

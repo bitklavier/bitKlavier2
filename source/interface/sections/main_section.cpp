@@ -28,6 +28,7 @@ void MainSection::removeAllGuiListeners()
 {
    constructionSite_->removeAllGuiListeners();
 }
+
 void MainSection::paintBackground(juce::Graphics& g)
 {
     paintContainer(g);
@@ -35,21 +36,21 @@ void MainSection::paintBackground(juce::Graphics& g)
     g.setColour(findColour(Skin::kBody, true));
     paintChildrenBackgrounds(g);
 
-    g.saveState();
-
-    g.restoreState();
-
-
+    // g.saveState();
+    //
+    // g.restoreState();
 }
 
 void MainSection::resized()
 {
     constructionSite_->setColour(Skin::kBody,juce::Colours::antiquewhite);
+    //constructionSite_->setColour(Skin::kBody, juce::Colours::burlywood.withMultipliedBrightness(0.4));
     int height = getHeight();
     int width = getWidth();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int large_padding = findValue(Skin::kLargePadding);
-    constructionSite_->setBounds(large_padding, 0,  width, height);
+    constructionSite_->setBounds(0, 0,  width, height);
+    //constructionSite_->setBounds(large_padding, 0,  width, height);
     //constructionPort.setBounds(large_padding, 0,getDisplayScale()* width, getDisplayScale() * height);
     //constructionPort.setBounds(large_padding, 0,width, height);
     SynthSection::resized();

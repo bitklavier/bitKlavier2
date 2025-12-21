@@ -9,7 +9,7 @@
 #include "common.h"
 #include "Paths.h"
 
-class BKItem : /*public DraggableComponent,*/ public juce::Button{
+class BKItem : /*public DraggableComponent,*/ public juce::Button {
 public:
 
 BKItem (bitklavier::BKPreparationType type);
@@ -42,7 +42,7 @@ BKItem (bitklavier::BKPreparationType type);
         int width = getWidth();
         int height = getHeight();
         hit_test_bounds = bounds;
-        shadow_ = juce::Image(juce::Image::SingleChannel,width, height, true);
+        shadow_ = juce::Image(juce::Image::SingleChannel, width, height, true);
         juce::Rectangle<float> fullBounds = getLocalBounds().toFloat(); // The full area you're drawing into
         juce::Rectangle<float> targetArea = fullBounds.reduced(kMeterPixel);   // 5px margin
         juce::Rectangle<float> pathBounds = layer_1_.getBounds();
@@ -90,6 +90,7 @@ BKItem (bitklavier::BKPreparationType type);
     {
         prep_color_ = col;
     }
+
     bool hitTest(int x, int y) override {
         layer_1_.contains(x, y);
     }
@@ -99,7 +100,11 @@ BKItem (bitklavier::BKPreparationType type);
     juce::Path layer_1_;
     juce::Rectangle<float> hit_test_bounds;
     juce::Image shadow_;
-    static constexpr float kMeterPixel = 5.0f;
+
+    /*
+     * todo: should be able to scale this with everything else, from ConstructionSite
+     */
+    static constexpr float kMeterPixel = 2.0f;
 
 protected:
     //void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
@@ -113,7 +118,6 @@ protected:
     juce::Path layer_4_;
     juce::Colour prep_color_;
     bool wasJustDragged;
-
 };
 
 class KeymapItem : public BKItem

@@ -6,7 +6,7 @@
 #include "MidiTargetParametersView.h"
 #include "BKitems/BKItem.h"
 #include "synth_button.h"
-#include "ParametersView.h"
+// #include "ParametersView.h"
 
 MidiTargetPreparation::MidiTargetPreparation(
     juce::ValueTree v, OpenGlWrapper& open_gl, juce::AudioProcessorGraph::NodeID node, SynthGuiInterface* interface):

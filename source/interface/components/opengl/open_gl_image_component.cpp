@@ -58,18 +58,41 @@ void OpenGlImageComponent::redrawImage(bool force, bool clear) {
 
    float gl_width = bitklavier::utils::nextPowerOfTwo(width);
    float gl_height = bitklavier::utils::nextPowerOfTwo(height);
-   float width_ratio = gl_width / width;
-   float height_ratio = gl_height / height;
-   /**
-    * todo: see if we can fix this resizing
-    */
+//   float width_ratio = gl_width / width;
+//   float height_ratio = gl_height / height;
+//   /**
+//    * todo: see if we can fix this resizing
+//    */
 //
 //    float right = -1.0f + 2.0f * width_ratio;
 //    float bottom = 1.0f - 2.0f * height_ratio;
 //    image_.setTopRight(right, 1.0f);
 //    image_.setBottomLeft(-1.0f, bottom);
 //    image_.setBottomRight(right, bottom);
-    image_.unlock();
+
+   // You are calculating the inverse of what's typically needed for the ratio
+   // FIX 1: INVERT THE RATIOS
+   float width_ratio = (float)width / gl_width;
+   float height_ratio = (float)height / gl_height;
+
+   // FIX 2: UNCOMMENT AND USE THE CORRECT FORMULA
+   // Normalized Device Coordinates (NDC) range from -1.0 to 1.0.
+   // We map the texture's used portion (width_ratio, height_ratio)
+   // to the NDC space.
+
+   // 1.0f on the right/top of the NDC space corresponds to the
+   // full screen size. We need to map width_ratio/height_ratio to this.
+
+   // The right edge in NDC is calculated as: -1.0 + 2.0 * width_ratio
+   float right = -1.0f + 2.0f * width_ratio;
+
+   // The bottom edge in NDC is calculated as: 1.0 - 2.0 * height_ratio
+   // (Assuming a common OpenGL setup where 1.0 is top and -1.0 is bottom)
+   float bottom = 1.0f - 2.0f * height_ratio;
+
+//   image_.setTopRight(right, 1.0f);
+//   image_.setBottomLeft(-1.0f, bottom);
+//   image_.setBottomRight(right, bottom);
    image_.unlock();
 }
 

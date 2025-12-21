@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY soundset="Default">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <synchronic type="1" width="156.0" height="79.20000457763672" x_y="518, 287"
+                  uuid="9b9de2e6cce3444894c2627cddd29587" soundset="syncglobal"
+                  nodeID="2610815718" numIns="1" numOuts="2" numPulses="20.000"
+                  numLayers="1.000" clusterThickness="8.000" clusterThreshold="500.000"
+                  Send="0.000" OutputGain="0.000" noteOnGain="0.000" pulseTriggeredBy="0"
+                  determinesCluster="0" skipFirst="1" UseTuning="0" updateUIState="0"
+                  clustermin="1.0" clustermax="12.0" LastCluster="1.000" holdTimeMinParam="2514.000"
+                  holdTimeMaxParam="9907.001" lastHoldTimeParam="0.000" attack="3.000"
+                  decay="10.000" sustain="1.000" release="50.000" attackpower="0.000"
+                  decaypower="0.000" releasepower="0.000" hold="0.000" delay="0.000"
+                  notify="0" currentlyEditing="0.000" envelope_0="1" envelope_1="0"
+                  envelope_2="0" envelope_3="0" envelope_4="0" envelope_5="0" envelope_6="0"
+                  envelope_7="0" envelope_8="0" envelope_9="0" envelope_10="0"
+                  envelope_11="0" transpositions__sliderVals_size="0" transpositions__sliderVals=""
+                  transpositions__activeVals_size="0" transpositions__activeVals=""
+                  accents__sliderVals_size="0" accents__sliderVals="" accents__activeVals_size="0"
+                  accents__activeVals="" sustain_length_multipliers_sliderVals_size="0"
+                  sustain_length_multipliers_sliderVals="" sustain_length_multipliers_activeVals_size="0"
+                  sustain_length_multipliers_activeVals="" beat_length_multipliers_sliderVals_size="0"
+                  beat_length_multipliers_sliderVals="" beat_length_multipliers_activeVals_size="0"
+                  beat_length_multipliers_activeVals="" envelope_sequence_attacks="3 3 3 3 3 3 3 3 3 3 3 3 "
+                  envelope_sequence_decays="10 10 10 10 10 10 10 10 10 10 10 10 "
+                  envelope_sequence_sustains="1 1 1 1 1 1 1 1 1 1 1 1 " envelope_sequence_releases="50 50 50 50 50 50 50 50 50 50 50 50 "
+                  envelope_sequence_attackPowers="0 0 0 0 0 0 0 0 0 0 0 0 " envelope_sequence_decayPowers="0 0 0 0 0 0 0 0 0 0 0 0 "
+                  envelope_sequence_releasePowers="0 0 0 0 0 0 0 0 0 0 0 0 " holdtimemin="0.0"
+                  holdtimemax="12000.0">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="numPulses" start="1.0" end="100.0" skew="0.9855645895004272"/>
+          <MODULATABLE_PARAM parameter="numLayers" start="1.0" end="10.0" skew="0.854755699634552"/>
+          <MODULATABLE_PARAM parameter="clusterThickness" start="1.0" end="20.0" skew="0.9276416301727295"/>
+          <MODULATABLE_PARAM parameter="clusterThreshold" start="20.0" end="2000.0" skew="0.9855645895004272"/>
+          <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="noteOnGain" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="lastHoldTimeParam" start="0.0" end="12000.0" skew="0.3333333432674408"/>
+          <MODULATABLE_PARAM parameter="attack" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="decay" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="delay" start="0.0" end="1000.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT clustermin="1.0" clustermax="12.0" holdtimemin="0.0" holdtimemax="12000.0"/>
+        <PORT nodeID="2610815718" chIdx="4096" isIn="1"/>
+        <PORT nodeID="2610815718" chIdx="0" isIn="0"/>
+        <PORT nodeID="2610815718" chIdx="2" isIn="0"/>
+      </synchronic>
+      <modulation type="8" width="60.00000381469727" height="60.00000381469727"
+                  x_y="565, 414" uuid="487e2ff9aa6d4dc48f427e48a489b33b" nodeID="1216229369"
+                  numIns="1">
+        <PORT nodeID="1216229369" chIdx="4096" isIn="1"/>
+        <modulationproc type="state" isState="1" uuid="3f83f245e1fd48a8b1d8860e6e33f907"/>
+      </modulation>
+      <keymap type="7" width="111.0000076293945" height="63.00000381469727"
+              x_y="513, 550" uuid="5f002b9c8e174d0db7d3ce06ecf222ad" soundset="syncglobal"
+              nodeID="1593846684" numOuts="1" velocityCurve_asymWarp="1.000"
+              velocityCurve_symWarp="1.000" velocityCurve_scale="1.000" velocityCurve_offset="0.000"
+              velocityCurve_invert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="108">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurve_asymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_symWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_scale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_offset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="1593846684" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
+      </keymap>
+      <reset type="12" width="60.00000381469727" height="60.00000381469727"
+             x_y="412, 405" uuid="89ea76fed444425785a7360ad4b674de" nodeID="2313844478"
+             numIns="1">
+        <PORT nodeID="2313844478" chIdx="4096" isIn="1"/>
+      </reset>
+      <keymap type="7" width="111.0000076293945" height="63.00000381469727"
+              x_y="358, 548" uuid="46694b26c4fd403595e22a77e6b1d6d7" soundset="syncglobal"
+              nodeID="1181305638" numOuts="1" velocityCurve_asymWarp="1.000"
+              velocityCurve_symWarp="1.000" velocityCurve_scale="1.000" velocityCurve_offset="0.000"
+              velocityCurve_invert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="21">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurve_asymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_symWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_scale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurve_offset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="1181305638" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
+      </keymap>
+    </PREPARATIONS>
+    <CONNECTIONS>
+      <CONNECTION isMod="0" src="1593846684" srcIdx="4096" dest="1216229369" destIdx="4096"/>
+      <CONNECTION isMod="0" src="1181305638" srcIdx="4096" dest="2313844478" destIdx="4096"/>
+    </CONNECTIONS>
+    <MODCONNECTIONS>
+      <MODCONNECTION isMod="1" src="1216229369" dest="2610815718">
+        <ModulationConnection uuid="36a3f49430734cf8b18eadfb87164130" isState="1" src="487e2ff9aa6d4dc48f427e48a489b33b_state-3f83f245e1fd48a8b1d8860e6e33f907_mod"
+                              dest="9b9de2e6cce3444894c2627cddd29587_cluster_min_max" clustermin="6.0"
+                              clustermax="7.0"/>
+        <ModulationConnection uuid="dc2f47809bf24b9d8e803dc5e1a89da3" isState="1" src="487e2ff9aa6d4dc48f427e48a489b33b_state-3f83f245e1fd48a8b1d8860e6e33f907_mod"
+                              dest="9b9de2e6cce3444894c2627cddd29587_holdtime_min_max" holdtimemin="2514.0"
+                              holdtimemax="9907.0"/>
+      </MODCONNECTION>
+      <RESETCONNECTION isMod="1" src="2313844478" dest="1216229369"/>
+    </MODCONNECTIONS>
+  </PIANO>
+</GALLERY>

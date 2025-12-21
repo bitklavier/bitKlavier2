@@ -14,10 +14,6 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
-
-
 #include "synth_editor.h"
 
 #include "default_look_and_feel.h"
@@ -27,7 +23,6 @@
 #include "startup.h"
 #include "utils.h"
 #include <memory>
-
 
 SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), SynthBase(&deviceManager) {
   static constexpr int kHeightBuffer = 50;
@@ -54,12 +49,17 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
     }
   }
 
-  auto midiInputs = juce::MidiInput::getAvailableDevices();
-  current_midi_ins_.clearQuick();
-  for (auto& info : midiInputs)
-  {
-    current_midi_ins_.add (info.name);
-  }
+    /*
+     * todo: confirm this fix is correct, since getDevices() has been removed from JUCE
+     */
+    //current_midi_ins_ = juce::StringArray(juce::MidiInput::getDevices());
+    auto midiInputs = juce::MidiInput::getAvailableDevices();
+    current_midi_ins_.clearQuick();
+    for (auto& info : midiInputs)
+    {
+        current_midi_ins_.add (info.name);
+    }
+
   for (const juce::String& midi_in : current_midi_ins_)
     deviceManager.setMidiInputDeviceEnabled(midi_in, true);
 
@@ -104,13 +104,13 @@ SynthEditor::~SynthEditor() {
   juce::MenuBarModel::setMacMainMenu(nullptr);
   engine_->shutdown();
 }
+
 void SynthEditor::prepareToPlay(int buffer_size, double sample_rate) {
   //engine_->setSampleRate(sample_rate);
   engine_->prepareToPlay(sample_rate, buffer_size);
   midi_manager_->setSampleRate(sample_rate);
-
-
 }
+
 /*commented out the code to create an internal buffer size
 // would need to update our code internally to pass buffers properly sized
 // may not be feasible since we use a basic processblock that and our midi-receivers i.e.
@@ -159,16 +159,17 @@ void SynthEditor::resized() {
 }
 
 void SynthEditor::timerCallback() {
-  /*
+
+    /*
      * todo: confirm this fix is correct, since getDevices() has been removed from JUCE
      */
-  //juce::StringArray midi_ins(juce::MidiInput::getDevices());
-  auto midiInputs = juce::MidiInput::getAvailableDevices();
-  juce::StringArray midi_ins;
-  for (auto& info : midiInputs)
-  {
-    midi_ins.add (info.name);
-  }
+    //juce::StringArray midi_ins(juce::MidiInput::getDevices());
+    auto midiInputs = juce::MidiInput::getAvailableDevices();
+    juce::StringArray midi_ins;
+    for (auto& info : midiInputs)
+    {
+        midi_ins.add (info.name);
+    }
 
   for (int i = 0; i < midi_ins.size(); ++i) {
     if (!current_midi_ins_.contains(midi_ins[i]))
@@ -182,6 +183,7 @@ void SynthEditor::animate(bool animate) {
   if (gui_)
     gui_->animate(animate);
 }
+
 void SynthEditor::pauseProcessing(bool pause) {
   DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
     DBG(juce::String(int(pause)));

@@ -20,7 +20,6 @@
 #include "EQParameterView.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
-
 #include "PreparationSection.h"
 #include "load_save.h"
 #include "modulation_manager.h"
@@ -58,8 +57,8 @@ void SynthGuiInterface::setGuiSize (float scale) {}
     #include "../interface/fullInterface.h"
     #include "../interface/look_and_feel/default_look_and_feel.h"
     #include <memory>
-
     #include "PluginList.h"
+
 SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (synth)
 
 {
@@ -82,13 +81,12 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         if (defaultIndex >= 0)
             gui_->header_->setSampleSelectText(sets[defaultIndex]);
     }
-
-
 }
 
 SampleLoadManager* SynthGuiInterface::getSampleLoadManager() {
     return getSynth()->sampleLoadManager.get();
 }
+
 bool SynthGuiInterface::perform(const InvocationInfo & info) {
     {
         switch (info.commandID) {
@@ -123,7 +121,6 @@ SynthGuiInterface::~SynthGuiInterface() {
     synth_->clearAllGuiListeners();
 }
 
-
 void SynthGuiInterface::updateFullGui() {
     if (gui_ == nullptr)
         return;
@@ -134,10 +131,12 @@ void SynthGuiInterface::updateFullGui() {
 OpenGlWrapper *SynthGuiInterface::getOpenGlWrapper() {
     return &gui_->open_gl_;
 }
+
 juce::CriticalSection* SynthGuiInterface::getOpenGlCriticalSection()
 {
     return &gui_->open_gl_critical_section_;
 }
+
 void SynthGuiInterface::updateGuiControl(const std::string &name, float value) {
     if (gui_ == nullptr)
         return;
@@ -148,10 +147,10 @@ void SynthGuiInterface::updateGuiControl(const std::string &name, float value) {
 void SynthGuiInterface::notifyModulationsChanged() {
     gui_->modulationChanged();
 }
+
 void SynthGuiInterface::notifyPrepPopupMoved() {
     gui_->modulation_manager->resized();
 }
-
 
 void SynthGuiInterface::connectStateModulation(std::string source, std::string destination) {
     bool created = synth_->connectStateModulation(source, destination);
@@ -195,6 +194,7 @@ bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
 juce::UndoManager *SynthGuiInterface::getUndoManager() {
     return &getSynth()->getUndoManager();
 }
+
 void SynthGuiInterface::tryEnqueueProcessorInitQueue(juce::FixedSizeFunction<64, void()> callback) {
     if (loading) {
         callback();
@@ -351,7 +351,9 @@ void SynthGuiInterface::openSaveDialog()
             }
         });
 }
-    #include "ConstructionSite.h"
+
+#include "ConstructionSite.h"
+
 void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
 {
     JUCE_ASSERT_MESSAGE_THREAD
@@ -359,6 +361,7 @@ void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
         synth_->setActivePiano (v, synth_->switch_trigger_thread);
     gui_->main_->constructionSite_->setActivePiano();
 }
+
 std::vector<std::string> SynthGuiInterface::getAllPianoNames()
 {
     std::vector<std::string> names;
@@ -371,14 +374,17 @@ std::vector<std::string> SynthGuiInterface::getAllPianoNames()
     }
     return names;
 }
+
 void SynthGuiInterface::allNotesOff()
 {
     synth_->getEngine()->allNotesOff();
 }
+
 void SynthGuiInterface::setPianoSwitchTriggerThreadMessage()
 {
     synth_->switch_trigger_thread = SwitchTriggerThread::MessageThread;
 }
+
 void SynthGuiInterface::removeAllGuiListeners()
 {
     if (gui_ == nullptr)
@@ -386,6 +392,7 @@ void SynthGuiInterface::removeAllGuiListeners()
 
     gui_->removeAllGuiListeners();
 }
+
 void SynthGuiInterface::addPiano (const juce::String& piano_name)
 {
 }
@@ -410,6 +417,7 @@ static bool containsDuplicateNames (const juce::Array<juce::PluginDescription>& 
 
     return false;
 }
+
 static constexpr int menuIDBase = bitklavier::BKPreparationType::PreparationTypeVST;
 static void addToMenu (const juce::KnownPluginList::PluginTree& tree,
     PopupItems& m,
@@ -449,6 +457,7 @@ static void addToMenu (const juce::KnownPluginList::PluginTree& tree,
     #endif
     }
 }
+
 PopupItems SynthGuiInterface::getPluginPopupItems()
 {
     PopupItems popup;

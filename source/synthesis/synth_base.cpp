@@ -18,15 +18,12 @@
 #include "CompressorProcessor.h"
 #include "EQProcessor.h"
 #include "SampleLoadManager.h"
-
 #include "FullInterface.h"
 #include "GainProcessor.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
 #include "synth_gui_interface.h"
-
 #include "sound_engine.h"
 #include "startup.h"
-
 #include "../common/ObjectLists/PreparationList.h"
 #include "Identifiers.h"
 #include "LFOModulator.h"
@@ -59,6 +56,17 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     tree = juce::ValueTree (IDs::GALLERY);
     sampleLoadManager->setValueTree(tree);
 
+    /*
+     * todo: soundset should be saved with piano, not gallery
+     *        - same with instruments within soundfont
+     *        - can we do that by simply doing `piano.setProperty (IDs::soundset, "Default", nullptr);1 ??
+     *        - and/or I suppose `sampleLoadManager->setValueTree(piano);`
+     *       but postfx (EQ and Compressor on 2bus) should be saved with gallery
+     *        - we don't want to have to set/save them for individual pianos within a gallery
+     *              - if someone wants to do that, they can do it manually by routing the main outs of all the preps to whatever they want
+     *        - would this be `tree.appendChild (posteq, nullptr)` and `tree.appendChild (postcompressor, nullptr)` ??
+     *       also General Settings, saved with Gallery
+     */
     tree.setProperty (IDs::soundset, "Default", nullptr);
     juce::ValueTree piano (IDs::PIANO);
     juce::ValueTree preparations (IDs::PREPARATIONS);
@@ -106,7 +114,9 @@ SynthBase::~SynthBase()
     um.clearUndoHistory();
 }
 
-std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader> > > *SynthBase::getSamples() {
+std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > *>*SynthBase::getSamples() {
+    for (const auto &[key, val] : sampleLoadManager->samplerSoundset)
+            DBG(key);
     return &sampleLoadManager->samplerSoundset;
 }
 
@@ -193,6 +203,7 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
             getGuiInterface()->notifyModulationsChanged();
     }
 }
+
 void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenRemoved,
     int indexFromWhichChildWasRemoved)
@@ -362,16 +373,16 @@ void SynthBase::removeConnection (const juce::AudioProcessorGraph::Connection& c
 
 bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
 {
-    pauseProcessing (true);
     //engine_->allSoundsOff();
+    pauseProcessing(true);
     tree.copyPropertiesAndChildrenFrom (state, nullptr);
 
-    tree.getProperty(IDs::PREPARATIONS);
     pauseProcessing (false);
     if (tree.isValid())
         return true;
     return false;
 }
+
 void SynthBase::clearAllBackend() {
 
     this->mod_connections_.clear();
@@ -383,9 +394,99 @@ void SynthBase::clearAllBackend() {
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
+    this->engine_->initialiseGraph();
 }
+struct SoundsetRef
+{
+    juce::String   name;
+    juce::ValueTree target; // node to write IDs::soundset into (or used for later completion)
+};
 
-bool SynthBase::loadFromFile (juce::File preset, std::string& error)
+static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
+                                         juce::Array<SoundsetRef>& out)
+{
+    if (!node.isValid())
+        return;
+
+    if (node.hasProperty (IDs::soundset))
+    {
+        auto ss = node.getProperty (IDs::soundset).toString().trim();
+        if (ss.isNotEmpty() && ss != IDs::syncglobal.toString() )
+        {
+            out.add ({ ss, node });
+        }
+    }
+
+    for (int i = 0; i < node.getNumChildren(); ++i)
+        collectSoundsetRefsRecursive (node.getChild(i), out);
+}
+// bool SynthBase::loadFromFile (juce::File preset, std::string& error)
+// {
+//     if (!preset.exists())
+//         return false;
+//
+//     auto xml = juce::parseXML (preset);
+//     if (xml == nullptr)
+//     {
+//         error = "Error loading preset";
+//         return false;
+//     }
+//     auto parsed_value_tree = juce::ValueTree::fromXml (*xml);
+//     if (!parsed_value_tree.isValid())
+//     {
+//         error = "Error converting XML to juce::ValueTree";
+//         return false;
+//     }
+//
+//     clearAllBackend();
+//     SynthGuiInterface* gui_interface = getGuiInterface();
+//     if (gui_interface)
+//     {
+//         gui_interface->removeAllGuiListeners();
+//     }
+//     engine_->resetEngine();
+//     if (!loadFromValueTree (parsed_value_tree))
+//     {
+//         error = "Error Initializing juce::ValueTree";
+//         return false;
+//     }
+//
+//     //setPresetName(preset.getFileNameWithoutExtension());
+//     if (gui_interface)
+//     {
+//         gui_interface->updateFullGui();
+//         gui_interface->notifyFresh();
+//     }
+//
+//     // load samples
+//     juce::Array<SoundsetRef> refs;
+//     collectSoundsetRefsRecursive (parsed_value_tree, refs);
+//
+//     // Dedup by soundset name (but still allow multiple target nodes to be updated)
+//     juce::StringArray uniqueSoundsets;
+//     uniqueSoundsets.ensureStorageAllocated (refs.size());
+//
+//     for (auto& r : refs)
+//         uniqueSoundsets.addIfNotAlreadyThere (r.name);
+//
+//     // Kick off loads FIRST
+//     if (sampleLoadManager != nullptr)
+//     {
+//         for (auto& r : refs)
+//             sampleLoadManager->loadSamples (r.name, r.target);
+//
+//         // Optional: make sure each referencing node has the property normalized
+//         // (useful if you want to enforce Gallery/global routing at read-time)
+//         // for (auto& r : refs)
+//         // {
+//         //     // If your loadSamples(ss, target) sets IDs::soundset appropriately when already-loaded,
+//         //     // you can call that instead of direct setProperty.
+//         //     r.target.setProperty (IDs::soundset, r.name, nullptr);
+//         // }
+//     }
+//     return true;
+// }
+bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 {
     if (!preset.exists())
         return false;
@@ -396,34 +497,104 @@ bool SynthBase::loadFromFile (juce::File preset, std::string& error)
         error = "Error loading preset";
         return false;
     }
-    auto parsed_value_tree = juce::ValueTree::fromXml (*xml);
-    if (!parsed_value_tree.isValid())
+
+    auto parsed = juce::ValueTree::fromXml (*xml);
+    if (!parsed.isValid())
     {
         error = "Error converting XML to juce::ValueTree";
         return false;
     }
 
-    clearAllBackend();
-    SynthGuiInterface* gui_interface = getGuiInterface();
-    if (gui_interface)
+    // ---------- PREPASS: collect all soundset references ----------
+    juce::Array<SoundsetRef> soundsetRefs;
+    collectSoundsetRefsRecursive (parsed, soundsetRefs);
+
+    bool needsAsyncLoads = false;
+
+    // ---------- Queue sample loads ----------
+    if (sampleLoadManager != nullptr)
     {
-        gui_interface->removeAllGuiListeners();
+        for (auto& ref : soundsetRefs)
+        {
+            if (! sampleLoadManager->isSoundsetLoaded (ref.name))
+            {
+                needsAsyncLoads = true;
+
+
+                sampleLoadManager->loadSamples (ref.name, ref.target);
+            }
+        }
     }
+
+
+    // ---------- Reset backend BEFORE applying preset ----------
+    if (auto* gui = getGuiInterface())
+        gui->removeAllGuiListeners();
+    pauseProcessing(true);
+    clearAllBackend();
+    pauseProcessing(false);
+
+
+
     engine_->resetEngine();
-    if (!loadFromValueTree (parsed_value_tree))
+
+    // ---------- Defer preset application if samples are loading ----------
+    if (needsAsyncLoads)
+    {
+        pendingPresetTree = parsed;
+        presetPending.store (true);
+
+        startSampleLoading(); // spinner / disable audio etc.
+        return true;
+    }
+
+    // ---------- Otherwise apply immediately ----------
+    if (! loadFromValueTree (parsed))
     {
         error = "Error Initializing juce::ValueTree";
         return false;
     }
 
-    //setPresetName(preset.getFileNameWithoutExtension());
-    if (gui_interface)
+    if (auto* gui = getGuiInterface())
     {
-        gui_interface->updateFullGui();
-        gui_interface->notifyFresh();
+        gui->updateFullGui();
+        gui->notifyFresh();
     }
 
     return true;
+}
+void SynthBase::startSampleLoading()
+{
+    samplesLoading.store (true);
+
+    // Optional but common:
+    // engine_->suspendProcessing (true);
+
+    if(getGuiInterface() && getGuiInterface()->getGui())
+        getGuiInterface()->getGui()->showLoadingSection();
+}
+void SynthBase::finishedSampleLoading()
+{
+    if (presetPending.load()) {
+        presetPending.store (false);
+
+        if (! loadFromValueTree (pendingPresetTree))
+        {
+            DBG ("Failed to apply preset after samples loaded");
+        }
+        else if (auto* gui = getGuiInterface())
+        {
+            gui->updateFullGui();
+            gui->notifyFresh();
+        }
+        pendingPresetTree = juce::ValueTree{};
+    }
+    if(getGuiInterface() && getGuiInterface()->getGui()) {
+        getGuiInterface()->getGui()->hideLoadingSection();
+       getGuiInterface()->getGui()->notifyFresh();
+    }
+    samplesLoading.store (false);
+
 }
 
 void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
@@ -510,25 +681,16 @@ juce::UndoManager& SynthBase::getUndoManager()
     return um;
 }
 
-
 //modulations
 std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (const std::string& source) const
 {
     std::vector<bitklavier::StateConnection*> connections;
-    for (auto& connection : state_connections_)
+    for (auto connection : state_connections_)
     {
         if (connection->source_name == source)
             connections.push_back (connection);
     }
     return connections;
-}
-void SynthBase::finishedSampleLoading() {
-    if(getGuiInterface() && getGuiInterface()->getGui())
-        getGuiInterface()->getGui()->hideLoadingSection();
-}
-void SynthBase::startSampleLoading() {
-    if(getGuiInterface() && getGuiInterface()->getGui())
-        getGuiInterface()->getGui()->showLoadingSection();
 }
 
 
@@ -536,7 +698,7 @@ std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnecti
     const std::string& destination) const
 {
     std::vector<bitklavier::StateConnection*> connections;
-    for (auto& connection : state_connections_)
+    for (auto connection : state_connections_)
     {
         if (connection->destination_name == destination) {
             // check if already in vector
@@ -550,7 +712,7 @@ std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnecti
 std::vector<bitklavier::ModulationConnection*> SynthBase::getSourceConnections (const std::string& source) const
 {
     std::vector<bitklavier::ModulationConnection*> connections;
-    for (auto& connection : mod_connections_)
+    for (auto connection : mod_connections_)
     {
         if (connection->source_name == source)
             connections.push_back (connection);
@@ -562,7 +724,7 @@ std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnecti
     const std::string& destination) const
 {
     std::vector<bitklavier::ModulationConnection*> connections;
-    for (auto& connection : mod_connections_)
+    for (auto connection : mod_connections_)
     {
         if (connection->destination_name == destination) {
             // check if already in vector
@@ -576,7 +738,7 @@ std::vector<bitklavier::ModulationConnection*> SynthBase::getDestinationConnecti
 bitklavier::ModulationConnection* SynthBase::getConnection (const std::string& source,
     const std::string& destination) const
 {
-    for (auto& connection : mod_connections_)
+    for (auto connection : mod_connections_)
     {
         if (connection->source_name == source && connection->destination_name == destination)
             return connection;
@@ -587,7 +749,7 @@ bitklavier::ModulationConnection* SynthBase::getConnection (const std::string& s
 bitklavier::StateConnection* SynthBase::getStateConnection (const std::string& source,
     const std::string& destination) const
 {
-    for (auto& connection : state_connections_)
+    for (auto connection : state_connections_)
     {
         if (connection->source_name == source && connection->destination_name == destination)
             return connection;
@@ -665,11 +827,11 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     //this requires you to add the Parameter ID to the value tree as a MODULATABLE_PARAM see DirectProcessor Constructor for an example
     /**
      *todo: shouldn't we just ignore it then? I've hit this when just dragging a mod across the UI
-* DAVIS : no this assert is to say that you are missing a REQUIRED step in the setup of parameters.
-* That is to say you have dragged a mod across the UI and crossed some parameter that is in a half-setup state
-* mods are created anytime a parameter is dragged over a knob so that it can show the modulatable param circle
-* this isnt a requiremnt but more of a nice UI feature where you get the snap as it crosses over without having to
-* drop the modulation.
+    * DAVIS : no this assert is to say that you are missing a REQUIRED step in the setup of parameters.
+    * That is to say you have dragged a mod across the UI and crossed some parameter that is in a half-setup state
+    * mods are created anytime a parameter is dragged over a knob so that it can show the modulatable param circle
+    * this isnt a requiremnt but more of a nice UI feature where you get the snap as it crosses over without having to
+    * drop the modulation.
     */
 
     //determine where this would actually output in the modulationprocessor
@@ -679,12 +841,11 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     //populate connection class with backend information
     connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
-    connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
+    // connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
     connection->processor = connection->parent_processor->getModulatorBase (internal_modulator_uuid);
+    connection->parent_processor->addModulationConnection (connection);
 
-    DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
-    jassert (connection->modulation_output_bus_index != -1);
-    //determine mod bus channel modulatable param reads modulation from
+
 
     auto param_index =  parameter_tree.getParent().indexOf(parameter_tree);// parameter_tree.getProperty (IDs::channel, -1);
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, connection->modulation_output_bus_index); //1 is mod
@@ -702,17 +863,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
         um.beginNewTransaction();
         mod_connection.appendChild (connection->state, &um);
-        // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        //todo: ensure thread safety of operation
-        // this could be unsafe because it can change what is going to get called
-        // but probably won't cause a crash, could cause clicks or pops maybe?
-        // modulations are typically not triggered immediately after an add
-        // Might be a problem for a continuous lfo or something that isn't triggered though
-        getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-            connection->parent_processor->addModulationConnection (connection);
-        });
 
-        //this is threadsafe because processorgraph will trigger rebuild on main thead
         bool connectionAdded = engine_->addConnection (connection->connection_);
 
     }
@@ -785,6 +936,7 @@ void SynthBase::disconnectModulation (const std::string& source, const std::stri
     if (connection)
         disconnectModulation (connection);
 }
+
 bool SynthBase::disconnectModulation (const juce::ValueTree& v)
 {
     bitklavier::ModulationConnection* connection = getConnection (v.getProperty (IDs::src).toString().toStdString(),
@@ -807,6 +959,8 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
         return;
     connection->source_name = "";
     connection->destination_name = "";
+    DBG("state connection listener being removed");
+    connection->processor->removeListener (connection);
     state_connections_.remove (connection);
     engine_->removeConnection (connection->connection_);
     getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
@@ -820,16 +974,16 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
 {
     if (mod_connections_.count (connection) == 0)
         return;
+    auto destination_name = connection->destination_name;
     connection->source_name = "";
     connection->destination_name = "";
-    mod_connections_.remove (connection);
-    engine_->removeConnection (connection->connection_);
 
-    getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
-        connection->connection_ = {};
-        connection->parent_processor->removeModulationConnection (connection);
-    });
-    engine_->removeConnection (connection->connection_);
+    mod_connections_.remove (connection);
+
+
+
+    connection->parent_processor->removeModulationConnection (connection, destination_name);
+    connection->connection_ = {};
     um.beginNewTransaction();
     connection->state.getParent().removeChild (connection->state, nullptr);
 }
@@ -873,9 +1027,9 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
     // bus output
-    //////i dont think any of this is threadsafe
     connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
     connection->processor = connection->parent_processor->getModulatorBase (juse_uuid);
+    DBG("state connection listener being added");
     connection->processor->addListener (connection);
     connection->parent_processor->addModulationConnection (connection);
     //    jassert(connection->modulation_output_bus_index != -1);
@@ -886,9 +1040,9 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     //    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer(true,1,param_index);
     //this is safe since we know that every source will be a modulationprocessor
 
-    state_connections_.push_back (connection);
+
     connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
-    state_connection.appendChild (connection->state, nullptr);
+
     // getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
     engine_->addConnection (connection->connection_);
     // });
@@ -896,15 +1050,41 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
 
 bool SynthBase::connectStateModulation (const std::string& source, const std::string& destination)
 {
+    std::stringstream ss (source);
+    std::string uuid;
+    std::getline (ss, uuid, '_');
+
+    auto mod_src = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
+    std::stringstream dst_stream (destination);
+    std::string dst_uuid;
+    std::getline (dst_stream, dst_uuid, '_');
+    std::string src_modulator_uuid_and_name;
+    std::getline (ss, src_modulator_uuid_and_name, '_');
+    auto pos = src_modulator_uuid_and_name.find_first_of ("-");
+    std::string juse_uuid = src_modulator_uuid_and_name.substr (pos + 1, src_modulator_uuid_and_name.size());
+    //DBG (juse_uuid);
+    //   auto it = std::find_if(src_modulator_uuid_and_name.begin(),src_modulator_uuid_and_name.end(),::isdigit);
+    //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
+    //DBG (src_modulator_uuid_and_name);
+
+    auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+
+    auto mod_connections = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS);
+
+    auto state_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
+    //    connection->state.removeFromParent();
+
     bitklavier::StateConnection* connection = getStateConnection (source, destination);
     bool create = connection == nullptr;
+
     if (create)
     {
         connection = getStateBank().createConnection (source, destination);
-        //        tree.appendChild(connection->state, nullptr);
+        state_connections_.push_back (connection);
+        state_connection.appendChild (connection->state, nullptr);
     }
-    if (connection)
-        connectStateModulation (connection);
+    // if (connection)
+    //     connectStateModulation (connection);
     return create;
 }
 

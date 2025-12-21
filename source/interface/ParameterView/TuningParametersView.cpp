@@ -14,6 +14,15 @@ TuningParametersView::TuningParametersView(
     setLookAndFeel(DefaultLookAndFeel::instance());
     setComponentID(name);
 
+    setSkinOverride(Skin::kDirect);
+
+    prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+    addOpenGlComponent(prepTitle);
+    prepTitle->setTextSize (24.0f);
+    prepTitle->setJustification(juce::Justification::centredLeft);
+    prepTitle->setFontType (PlainTextComponent::kTitle);
+    prepTitle->setRotation (-90);
+
     auto& listeners = pluginState.getParameterListeners();
 
     /**
@@ -449,6 +458,7 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
 
 void TuningParametersView::resized()
 {
+
     juce::Rectangle<int> area (getLocalBounds());
 
     int smallpadding = findValue(Skin::kPadding);
@@ -461,6 +471,9 @@ void TuningParametersView::resized()
     int circularKeyboardTargetWidth = 350;
     int semitoneBoxTargetHeight = 81; // scale these...
     int semitoneBoxTargetWidth = 176;
+
+    juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
+    prepTitle->setBounds(titleArea);
 
     area.removeFromLeft(title_width);
     juce::Rectangle leftHalf = area.removeFromLeft(area.getWidth() * 0.5);

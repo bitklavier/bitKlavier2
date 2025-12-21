@@ -4,6 +4,7 @@
 
 #ifndef BITKLAVIER2_MODULELISTINTERFACE_H
 #define BITKLAVIER2_MODULELISTINTERFACE_H
+
 #include "synth_section.h"
 #include "Identifiers.h"
 #include "tracktion_ValueTreeUtilities.h"
@@ -12,12 +13,16 @@
 #include <string>
 #include <iostream>
 #include "ModulationList.h"
-class ModulationSection;
+
+class OpenGL_LabeledBorder;
+class ModulationSection
+;
 class ModulesContainer : public SynthSection {
 public:
     ModulesContainer(juce::String name) : SynthSection(name) {
         setInterceptsMouseClicks(false,true);
     }
+
     ~ModulesContainer()
     {
         //sub sections get added here
@@ -25,6 +30,7 @@ public:
         //ownership
         sub_sections_.clear();
     }
+
     void paintBackground(juce::Graphics& g) override {
         g.fillAll(findColour(Skin::kBackground, true));
         paintChildrenShadows(g);
@@ -44,9 +50,16 @@ public:
     void visibleAreaChanged(const juce::Rectangle<int>& visible_area) override {
         for (Listener* listener : listeners_)
             listener->effectsScrolled(visible_area.getY());
-
+        DBG("EffectsViewport::visibleAreaChanged " << visible_area.getY() << " " << visible_area.getHeight());
         Viewport::visibleAreaChanged(visible_area);
     }
+
+    // void paint (juce::Graphics& g) override
+    // {
+    //     // 1. Fill the background with a specific colour
+    //     g.fillAll (juce::Colours::transparentBlack);
+    //     juce::Viewport::paint(g);
+    // }
 
 private:
     std::vector<Listener*> listeners_;
@@ -65,12 +78,6 @@ public:
         virtual void added() =0;
         virtual void removed() = 0;
     };
-//    T* createNewObject(const juce::ValueTree& v) override;
-//    void deleteObject (ModuleSection* at) override;
-
-
-    // void reset() override;
-
 
     ModulesInterface(juce::ValueTree &);
     virtual ~ModulesInterface();
@@ -91,6 +98,8 @@ public:
     void scrollBarMoved(juce::ScrollBar* scroll_bar, double range_start) override;
     virtual void setScrollBarRange();
 
+    void buttonClicked(juce::Button* clicked_button) override;
+
     void addListener(Listener* listener) { listeners_.push_back(listener); }
     void effectsScrolled(int position) override {
         setScrollBarRange();
@@ -102,6 +111,7 @@ public:
 
     virtual PopupItems createPopupMenu() = 0;
     virtual void handlePopupResult(int result) = 0;
+
 protected:
     std::vector<Listener*> listeners_;
     EffectsViewport viewport_;
@@ -110,8 +120,8 @@ protected:
     juce::CriticalSection open_gl_critical_section_;
     std::vector<std::unique_ptr<ModulationSection>> modulation_sections_;
     std::unique_ptr<OpenGlScrollBar> scroll_bar_;
-
-
+    std::unique_ptr<OpenGlTextButton> addModButton;
+    std::shared_ptr<PlainTextComponent> modListTitle;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulesInterface)
 };

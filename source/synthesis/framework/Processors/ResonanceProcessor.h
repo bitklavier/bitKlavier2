@@ -224,7 +224,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     // presence maps to start time, inverted
     chowdsp::FloatParameter::Ptr presence {
         juce::ParameterID { "rpresence", 100 },
-        "presence",
+        "PRESENCE",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.75f),
         0.75f,
         &chowdsp::ParamUtils::floatValToString,
@@ -235,7 +235,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     // maps to sustain time
     chowdsp::FloatParameter::Ptr sustain {
         juce::ParameterID { "rsustain", 100 },
-        "sustain",
+        "SUSTAIN",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
         0.5f,
         &chowdsp::ParamUtils::floatValToString,
@@ -257,7 +257,7 @@ struct ResonanceParams : chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr variance {
         juce::ParameterID { "rvariance", 100 },
-        "variance",
+        "OVERLAP SENSITIVITY",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.1f),
         0.1f,
         &chowdsp::ParamUtils::floatValToString,
@@ -291,7 +291,7 @@ struct ResonanceParams : chowdsp::ParamHolder
      */
     chowdsp::FloatParameter::Ptr stretch {
         juce::ParameterID { "rstretch", 100 },
-        "stretch",
+        "STRETCH",
         chowdsp::ParamUtils::createNormalisableRange (-1.0f, 1.0f, 0.0f),
         0.0f,
         &chowdsp::ParamUtils::floatValToString,
@@ -498,10 +498,10 @@ public:
 //    }
 
     void addSoundSet (
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s, // main samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* h, // hammer samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* r, // release samples
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* p) // pedal samples
+    juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+   juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+   juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+   juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
         resonanceSynth->addSoundSet (s);
     }
@@ -542,10 +542,10 @@ public:
             auto* samples = parent.getSamples();
 
             addSoundSet(
-                samples->contains(soundset) ? &(*samples)[soundset] : nullptr,
-                samples->contains(soundset + "Hammers") ? &(*samples)[soundset + "Hammers"] : nullptr,
-                samples->contains(soundset + "ReleaseResonance") ? &(*samples)[soundset + "ReleaseResonance"] : nullptr,
-                samples->contains(soundset + "Pedals") ? &(*samples)[soundset + "Pedals"] : nullptr
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+                nullptr,
+                nullptr,
+                nullptr
             );
         }
     }
@@ -571,16 +571,23 @@ public:
             //if global sync read soundset from global valuetree
             soundset = parent.getValueTree().getProperty(IDs::soundset, "");
 
-            addSoundSet(&(*parent.getSamples())[soundset],
-                &(*parent.getSamples())[soundset + "Hammers"],
-                &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+
+            addSoundSet(
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+                nullptr,
+                nullptr,
+                nullptr
+            );
         }else {
-            //otherwise set the piano
-            addSoundSet(&(*parent.getSamples())[soundset],
-                &(*parent.getSamples())[soundset + "Hammers"],
-                &(*parent.getSamples())[soundset + "ReleaseResonance"],
-                &(*parent.getSamples())[soundset + "Pedals"]);
+            auto* samples = parent.getSamples();
+
+            addSoundSet(
+                samples->contains(soundset) ? (*samples)[soundset] : nullptr,
+                nullptr,
+                nullptr,
+                nullptr
+            );
         }
     }
 

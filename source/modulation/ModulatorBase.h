@@ -4,7 +4,6 @@
 
 #ifndef ELECTROSYNTH_MODULATORBASE_H
 #define ELECTROSYNTH_MODULATORBASE_H
-// #include "ParameterView/ParametersView.h"
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <chowdsp_serialization/chowdsp_serialization.h>
@@ -14,6 +13,7 @@
 #include <iostream>
 #include <any>
 #include "bk_XMLSerializer.h"
+
 class SynthSection;
 template <class Base>
 class SimpleFactory {
@@ -47,23 +47,24 @@ public:
 private:
     std::map<std::string, CreateFunction> creators;
 };
-namespace bitklavier{
 
+namespace bitklavier{
     class ModulationProcessor;
 }
+
 enum class ModulatorType{
     NONE,
     STATE,
     AUDIO
-} ;
+};
+
 class ModulatorBase
 {
 public:
-    explicit ModulatorBase(juce::ValueTree& tree, juce::UndoManager* um = nullptr) :
-        state(tree),parent_(nullptr)
+    explicit ModulatorBase(juce::ValueTree& tree, juce::UndoManager* um = nullptr) : state(tree), parent_(nullptr)
     {
-
     }
+
     //https://stackoverflow.com/questions/461203/when-to-use-virtual-destructors
     virtual ~ModulatorBase(){}
     juce::ValueTree state;
@@ -72,6 +73,7 @@ public:
         virtual void resetTriggered() = 0;
 
     };
+
     virtual void triggerModulation()
     {
         for (auto list: listeners_)
@@ -92,10 +94,13 @@ public:
     void addListener(ModulatorBase::Listener* listener) {
         listeners_.push_back(listener);
     }
+    void removeListener(ModulatorBase::Listener* listener) {
+        std::erase(listeners_, listener); // C++20
+    }
     juce::String name;
     virtual void process() =0;
     virtual void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages)  {}
-    virtual void prepareToPlay (int samplesPerBlock, double sampleRate )  {}
+    virtual void prepareToPlay (double sampleRate, int samplesPerBlock)  {}
     virtual void releaseResources() {}
     virtual SynthSection* createEditor() = 0;
     bitklavier::ModulationProcessor* parent_;
@@ -108,29 +113,32 @@ public:
     std::vector<juce::ValueTree> connections_;
     virtual void getStateInformation (juce::MemoryBlock &destData)=0;
     virtual void setStateInformation (const void *data, int sizeInBytes)=0;
-     bool isDefaultBipolar = false;
+    bool isDefaultBipolar = false;
 };
 
-
 template <typename PluginStateType>
-class ModulatorStateBase : public ModulatorBase{
+class ModulatorStateBase : public ModulatorBase
+{
 public :
 
-    ModulatorStateBase( juce::ValueTree& tree, juce::UndoManager* um = nullptr)
-    : ModulatorBase( tree, um)
-
+    ModulatorStateBase( juce::ValueTree& tree, juce::UndoManager* um = nullptr) : ModulatorBase( tree, um)
     {
-
-                  if(tree.isValid())
-                    chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(tree.createXml(),_state);
+      if(tree.isValid())
+        chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(tree.createXml(),_state);
     }
-    void getStateInformation(juce::MemoryBlock &destData) override {
-    _state.serialize(destData);
-}
-    void setStateInformation (const void *data, int sizeInBytes) override {
-    _state.deserialize (juce::MemoryBlock { data, (size_t) sizeInBytes });
-}
-    ~ModulatorStateBase() override{}
+
+    void getStateInformation(juce::MemoryBlock &destData) override
+    {
+        _state.serialize(destData);
+    }
+
+    void setStateInformation (const void *data, int sizeInBytes) override
+    {
+        _state.deserialize (juce::MemoryBlock { data, (size_t) sizeInBytes });
+    }
+
+    ~ModulatorStateBase() override {}
+
     PluginStateType _state;
 };
 

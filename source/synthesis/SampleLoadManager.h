@@ -10,6 +10,8 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_events/juce_events.h>
 #include "overlay.h"
+#include "SFZSound.h"
+class BKSynthesiserSound;
 template <typename T>
 class BKSamplerSound;
 
@@ -46,12 +48,14 @@ struct SampleSetProgress
 
     juce::ValueTree targetTree;       // tree to update when loading completes
     juce::String soundsetName;        // actual sample set name to set into the tree
+    juce::String presetName;
+    juce::ReferenceCountedArray<BKSynthesiserSound>* soundset = nullptr;
 
-    void markComplete()
-    {
-        if (targetTree.isValid())
-            targetTree.setProperty (IDs::soundset, soundsetName, nullptr);
-    }
+    SampleLoadManager* load_manager = nullptr;
+
+    bool isSoundFont {false};
+    void markComplete();
+
 };
 
 inline std::unique_ptr<juce::AudioFormatReader> makeAudioFormatReader (juce::AudioFormatManager& manager,
@@ -126,20 +130,28 @@ public:
 
         );
 
-    juce::ThreadPool sampleLoader;
-    std::map<juce::String, juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>> samplerSoundset;
 
+    bool loadSamples (const juce::String& soundsetName,
+                                         const juce::ValueTree& targetTree);
     bool loadSamples (int selection, bool isGlobal,const juce::ValueTree &v);
     bool loadSamples (std::string);
     void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType,std::string);
     juce::Array<juce::File> samplesByPitch (juce::String whichPitch, juce::Array<juce::File> inFiles);
-
+    bool isSoundsetLoaded (const juce::String& baseName) const
+    {
+        const auto b = baseName.toStdString();
+        return samplerSoundset.contains (b)
+            || samplerSoundset.contains (b + "Hammers")
+            || samplerSoundset.contains (b + "Pedals")
+            || samplerSoundset.contains (b + "ReleaseResonance");
+    }
     const std::vector<std::string> getAllSampleSets();
     std::shared_ptr<UserPreferencesWrapper> preferences;
     void handleAsyncUpdate() override;
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<AudioFormatReaderFactory> readerFactory;
-
+    juce::ThreadPool sampleLoader;
+    std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> samplerSoundset;
     // perhaps these should be moved to utils or something
     juce::Array<juce::String> allPitches;
     juce::Array<juce::String> allPitchClasses = { "A", "A#", "Bb", "B", "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab" };
@@ -157,8 +169,35 @@ public:
             return it->second->currentProgress.load();
         return -1.0f;
     }
+    // struct SFZBank
+    // {
+    //     juce::String sfzName;      // key
+    //     juce::File sfzFile;        // actual file
+    //     std::vector<juce::String> presetNames;
+    //
+    //     int indexOfPreset (const juce::String& name) const
+    //     {
+    //         for (int i = 0; i < (int)presetNames.size(); ++i)
+    //             if (presetNames[(size_t)i] == name) return i;
+    //         return -1;
+    //     }
+    //
+    //     bool hasPresets() const { return !presetNames.empty(); }
+    // };
 
+    std::unordered_map<juce::String, std::unique_ptr<SFZSound>> sfzBanks; // key = sfzName.toStdString()
+    // std::vector<std::unique_ptr<SFZSound>> soundfonts;
+    // Given an SFZ soundset name, return all preset/subsound names
+    juce::StringArray getSFZPresetNames (const juce::String& sfzName) const;
+    juce::String getSelectedSFZPreset (const juce::String& sfzName) const;
+    bool sfzHasPresets (const juce::String& sfzName) const;
+    bool selectSFZPreset (const juce::String& sfzName,
+                          const juce::String& presetName);
+    bool changeSFZPresetAndUpdateTree (const juce::String& currentSfzKey,
+                                  int newPresetIndex,
+                                 juce::ValueTree& targetTree);
 private:
+    SFZSound* findSFZSoundByName (const juce::String& sfzName) const;
     SynthBase* parent;
     std::promise<void> loadPromise;
     juce::ValueTree temp_prep_tree;
@@ -176,51 +215,62 @@ private:
 class SampleLoadJob : public juce::ThreadPoolJob
 {
 public:
-    SampleLoadJob (
-        int sampleType,
-        int numLayers,
-        juce::BigInteger newMidiRange,
-        std::unique_ptr<AudioFormatReaderFactory> ptr,
-        juce::AudioFormatManager* manager,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
-        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits) : juce::ThreadPoolJob ("sample_loader"),
-                                           soundset (soundset),
-                                           loadManager (loadManager),
-                                           sampleReader (std::move (ptr)),
-                                           manager (manager),
-    progress(progress),
-         totalUnits(totalUnits)
-    {
-        thisSampleType = sampleType;
-        velocityLayers = numLayers;
-        thisMidiRange = newMidiRange;
-    };
+    // SampleLoadJob (
+    //     int sampleType,
+    //     int numLayers,
+    //     juce::BigInteger newMidiRange,
+    //     std::unique_ptr<AudioFormatReaderFactory> ptr,
+    //     juce::AudioFormatManager* manager,
+    //     juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
+    //     juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits, SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
+    //                                        soundset (soundset),
+    //                                        loadManager (loadManager),
+    //                                        sampleReader (std::move (ptr)),
+    //                                        manager (manager),samplerLoader(sampleLoad),
+    // progress(progress),
+    //      totalUnits(totalUnits)
+    // {
+    //     thisSampleType = sampleType;
+    //     velocityLayers = numLayers;
+    //     thisMidiRange = newMidiRange;
+    // };
 
     SampleLoadJob (
         juce::AudioFormatManager* manager,
         std::vector<PitchSamplesInfo>&& srvector,
-        juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset,
-        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits) : juce::ThreadPoolJob ("sample_loader"),
+        juce::ReferenceCountedArray<BKSynthesiserSound>* soundset,
+        juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress, int totalUnits, SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
                                            sampleReaderVector (std::move(srvector)),
                                            soundset (soundset),
                                            loadManager (loadManager),
                                            manager (manager),
     progress(progress),
-         totalUnits(totalUnits)
+         totalUnits(totalUnits), samplerLoader(sampleLoad)
+    {};
+
+    SampleLoadJob (juce::File sfzFile,
+
+           juce::AsyncUpdater* loadManager,std::shared_ptr<SampleSetProgress> progress ,SampleLoadManager& sampleLoad) : juce::ThreadPoolJob ("sample_loader"),
+                                                soundset (progress->soundset),
+                                                loadManager (loadManager),
+                                                progress(progress),
+                                                totalUnits(0),
+                                                samplerLoader(sampleLoad),sfzFile(sfzFile)
     {};
 
     ~SampleLoadJob() {
         if (progress)
         {
             int done = ++progress->completedJobs;
-            if (done >= progress->totalJobs)
-                progress->markComplete();  // safely updates ValueTree
+            // if (done >= progress->totalJobs)
+
             // DBG(sampleReaderVector
         }
         loadManager->triggerAsyncUpdate();
     }
-    JobStatus runJob() override;
 
+    JobStatus runJob() override;
+    bool loadSoundFont(juce::File sfzFile);
     bool loadSamples(); // calls one of the following, depending on context
     bool loadMainSamplesByPitch();
     bool loadHammerSamples();
@@ -232,12 +282,13 @@ public:
     juce::BigInteger thisMidiRange;
     juce::Array<std::tuple<int, int>> getVelLayers (int howmany);
 
-    juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* soundset;
+    juce::ReferenceCountedArray<BKSynthesiserSound>* soundset;
     std::unique_ptr<AudioFormatReaderFactory> sampleReader;
-
+    juce::File sfzFile;
     juce::AudioFormatManager* manager;
     juce::AsyncUpdater* loadManager;
-//progressbar stuff
+
+    //progressbar stuff
     std::shared_ptr<SampleSetProgress> progress;
     const int totalUnits;
     std::atomic<int> completedUnits { 0 };
@@ -259,6 +310,7 @@ public:
      * a vector of all the pitches with relevant sample info, so the samples can be loaded
      */
     std::vector<PitchSamplesInfo> sampleReaderVector;
+    SampleLoadManager& samplerLoader;
 };
 
 

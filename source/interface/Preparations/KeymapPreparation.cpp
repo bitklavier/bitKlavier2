@@ -16,11 +16,11 @@ KeymapPreparation::KeymapPreparation (const juce::ValueTree& v, OpenGlWrapper &o
                                         {item->getImageComponent()->init(_open_gl); },false);
     addAndMakeVisible (item.get());
 
+    width = state.getProperty(IDs::width);
+    height = state.getProperty(IDs::height);
     setSkinOverride (Skin::kKeymap);
-    state.setProperty(IDs::width, 185, nullptr);
-    state.setProperty(IDs::height, 105, nullptr);
-
-
+    // state.setProperty(IDs::width, 185, nullptr);
+    // state.setProperty(IDs::height, 105, nullptr);
 }
 
 KeymapPreparation::~KeymapPreparation()

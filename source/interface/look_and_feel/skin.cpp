@@ -87,7 +87,11 @@ namespace {
             "Wavetable Draw Width",
             "Wavetable Draw Height",
             "Wavetable Y Offset",
-            "Combo Menu Height"
+            "Combo Menu Height",
+            "Knob Label Small",
+            "Knob Label Medium",
+            "Knob Label Large",
+            "Preparation Title Size"
     };
 
     const std::string kColorNames[Skin::kNumColors] = {

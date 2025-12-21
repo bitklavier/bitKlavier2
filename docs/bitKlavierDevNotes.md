@@ -6,7 +6,33 @@
 - perhaps the column with the mods should be top to bottom, in addition to having the scroll
   - I also think it could be narrower
   - and maybe it should just always be there
-- 
+- "Ramp" should be "Knob and Slider Modification", and should direct set the target value, not be an offset value.
+  - I also would like the mod knob to have the same orientation and angular offsets as the target knobs
+- "State" perhaps should be "Menu and Multislider Modification" and whatever else it might apply to.
+  - The titles should indicate what they can modify, to make it easier for people to identify how to do what they want
+- and then "LFO" should be "Knob and Slider Oscillator"
+- these can all be in a pulldown menu at top of the Modifications panel at the right
+
+## Mod Dev
+- `ModulationAmountKnob::setDestinationSlider` in modulation_manager.cpp is where the range of the mod knob is set
+- `setScalingValue` in ModulationConnection.h is where the mapping from the mod knob to the target/destination knob is set
+- there is a LOT of code here, from Tytel mostly; can it be reduced or simplified? do we need it all?
+- in any case, we need some overview documentation of the core files, where particular things are setup and handled, and so on
+  - for instance, where is the panel on the right created?
+  - and the submodules within that panel that set ramp time and so on?
+- `ModulationModuleSection::handlePopupResult` in ModulationModuleSection.cpp is where the various mods are added to the Modifications panel
+- trying to adjust the range of the mod amount sliders to they go from 7 o'clock to 5 o'clock:
+  - done with shaders in shaders.cpp, and `kModulationKnobFragmentShader`
+  - i did a little trying to modify this, but it didn't work, so i'm going to leave it for now
+- size of modulation prep window is set in `FullInterface::resized()` in FullInterface.cpp, as a fraction of the full window size; `mod_pop` is the section
+- layout view for individual mods in `ParametersView::resized()` at the moment. 
+  - currently LFO layout is hardcoded as the one having two elements, a knob and button; will want to generalize all this in the future
+  - no other classes use ParametersView, so we might want to rename this if is just for mods
+- State mods are initialized in `ModulationManager::modulationClicked`. 
+  - in particular, note the `editing_state_component_ = comp->clone();` call
+  - location of the modulation popup editor window is set `editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(), comp->getWidth(), comp->getHeight());`
+- State mods are triggered in `StateConnection::modulationTriggered()` in ModulationConnection.cpp
+- Make sure that processStateChanges() is called in the processBlock for the prep that is being modulated; for instance, `clusterMinMaxParams.processStateChanges();` in `SynchronicProcessor::processBlock`
 
 ---------
 ## Creating a New Preparation
@@ -33,7 +59,8 @@ Typing as I do MidiFilter and Resonance
   - need to add a path() call in `paths.h`
   - some drawing stuff happens in `BKItem.h`
   - might not need an image, can just draw a path()
-  - icon size is set in `ConstructionSite::perform`
+  - icon size is set in `ConstructionSite::perform`?
+  - border width is set by `kMeterPixel` in BKItem.h
 - preparation icon size is set in `ConstructionSite::perform`?
 - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
 ---------
@@ -215,6 +242,7 @@ etc...
 - [ ] what is `isBusesLayoutSupported`? in DirectProcessor, it just returns true.
 - [ ] Blendrónic audio in: Dan working on this
 - [ ] Blurry fonts ;--} look at `OpenGlImageComponent` in open_gl_image_component.cpp
+  - this seems not to be the place; doing work here impacts parts of the UI that are not blurry and leaves the blurry stuff unchanged
 - [ ] opening multiple sample libs, assigning to individual preps!
   - ConstructionSite::moduleAdded, should be doable there.
 

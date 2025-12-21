@@ -24,7 +24,6 @@ ModulationList::~ModulationList()
 {
     shutdown = true;
     freeObjects();
-
 }
 
 void ModulationList::deleteObject(ModulatorBase * base)
@@ -35,7 +34,9 @@ void ModulationList::deleteObject(ModulatorBase * base)
     {
         listener->removeModulator(base);
     }
-    if(shutdown) {
+
+    if(shutdown)
+    {
         base->parent_->removeModulator(base);
         for (auto vt : base->connections_)
         {
@@ -45,52 +46,33 @@ void ModulationList::deleteObject(ModulatorBase * base)
         delete base;
         return;
     }
-    if (parent_ && parent_->getGuiInterface()) {
-        parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
-            [this, base] {
-                if (base->parent_ != nullptr) {
 
-                    base->parent_->removeModulator(base);
-                    base->parent_->callOnMainThread ([this, base] {
-                        for (auto vt : base->connections_)
-                        {
-                            vt.getParent().removeChild (vt,nullptr);
-                        }
-                        delete base;
+    if (parent_ && parent_->getGuiInterface())
+    {
+        for (const auto& vt : base->connections_)
+        {
+            vt.getParent().removeChild (vt,nullptr);
+        }
+        base->parent_->removeModulator(base);
+        delete base;
 
-                    });
-                    // delete base;
-                }
-
-            });
-
-    } else {// should only ever be called on shutdown
-
+    } else
+    {
+        // should only ever be called on shutdown
     }
-
-
-
 }
+
 ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
 //LEAF* leaf = parent->getLEAF();
     std::any args = std::make_tuple( v );
 
     try {
         auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),args);
-        if (!isInit) {
-            parent_->getGuiInterface()->tryEnqueueProcessorInitQueue(
-                    [this, proc] {
-                        this->proc_->addModulator(proc);
-                    });
-        }
-        else {
-            this->proc_->addModulator(proc);
-        }
+        this->proc_->addModulator(proc);
         return proc;
     } catch (const std::bad_any_cast& e) {
         std::cerr << "Error during object creation: " << e.what() << std::endl;
     }
-
 
     return nullptr;
 }
@@ -121,10 +103,7 @@ void ModulationList:: valueTreePropertyChanged (juce::ValueTree& v, const juce::
 
                     obj->state.setProperty(propName, value, nullptr); // Overwrite or add
                 }
-
             }
-
-
         }
         v.removeProperty(IDs::sync, nullptr);
     }

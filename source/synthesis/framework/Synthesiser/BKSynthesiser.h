@@ -56,7 +56,7 @@ class BKSynthesiser
                 int getNumVoices() const noexcept { return voices.size(); }
 
                 /** Returns one of the voices that have been added. */
-                 BKSamplerVoice* getVoice (int index) const;
+                 BKSynthesiserVoice* getVoice (int index) const;
 
                 /** Adds a new voice to the mainSynth.
             
@@ -66,7 +66,7 @@ class BKSynthesiser
                     it later on when no longer needed. The caller should not retain a pointer to the
                     voice.
                 */
-                BKSamplerVoice* addVoice (BKSamplerVoice* newVoice);
+                BKSynthesiserVoice* addVoice (BKSynthesiserVoice* newVoice);
 
                 /** Deletes one of the voices. */
                 void removeVoice (int index);
@@ -80,7 +80,7 @@ class BKSynthesiser
                 int getNumSounds() const noexcept { return sounds->size(); }
 
                 /** Returns one of the sounds. */
-                BKSamplerSound<juce::AudioFormatReader>::Ptr getSound (int index) const noexcept { return (*sounds)[index]; }
+                BKSynthesiserSound::Ptr getSound (int index) const noexcept { return (*sounds)[index]; }
 
                 /** Adds a new sound to the BKSynthesiser.
             
@@ -91,7 +91,7 @@ class BKSynthesiser
                 /** Removes and deletes one of the sounds. */
 //                void removeSound (int index);
 
-                void addSoundSet(juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>*);
+                void addSoundSet(juce::ReferenceCountedArray<BKSynthesiserSound>*);
                 //==============================================================================
                 /** If set to true, then the mainSynth will try to take over an existing voice if
                     it runs out and needs to play another note.
@@ -360,10 +360,11 @@ protected:
                 /** This is used to control access to the rendering callback and the note trigger methods. */
                 juce::CriticalSection lock;
 
-                juce::OwnedArray< BKSamplerVoice> voices;
+                juce::OwnedArray< BKSynthesiserVoice> voices;
 
-                juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* sounds;
+                juce::ReferenceCountedArray<BKSynthesiserSound>* sounds;
 
+                // juce::ReferenceCountedArray<BKSamplerSound<SFZRegion>>* soundfont_sounds;
                 /** The last pitch-wheel values for each midi channel. */
                 int lastPitchWheelValues [16];
 
@@ -383,7 +384,7 @@ protected:
                     To implement a custom note-stealing algorithm, you can either override this
                     method, or (preferably) override findVoiceToSteal().
                 */
-                virtual  BKSamplerVoice* findFreeVoice (BKSamplerSound<juce::AudioFormatReader>* soundToPlay,
+                virtual  BKSynthesiserVoice* findFreeVoice (BKSynthesiserSound* soundToPlay,
                 int midiChannel,
                 int midiNoteNumber,
                 bool stealIfNoneAvailable) const;
@@ -393,7 +394,7 @@ protected:
                     bottom or top note being played. If that's not suitable for your mainSynth,
                     you can override this method and do something more cunning instead.
                 */
-                virtual  BKSamplerVoice* findVoiceToSteal (BKSamplerSound<juce::AudioFormatReader>* soundToPlay,
+                virtual  BKSynthesiserVoice* findVoiceToSteal (BKSynthesiserSound* soundToPlay,
                 int midiChannel,
                 int midiNoteNumber) const;
 
@@ -402,8 +403,8 @@ protected:
                     may be needed by subclasses for custom behaviours.
                 */
                 void startVoice (
-                    BKSamplerVoice* voice,
-                    BKSamplerSound<juce::AudioFormatReader>* sound,
+                    BKSynthesiserVoice* voice,
+                    BKSynthesiserSound* sound,
                     int midiChannel,
                     int midiNoteNumber,
                     float velocity,
@@ -414,7 +415,7 @@ protected:
                     in case it's useful for some custom subclasses. It basically just calls through to
                     BKSamplerVoice::stopNote(), and has some assertions to sanity-check a few things.
                 */
-                void stopVoice ( BKSamplerVoice*, float velocity, bool allowTailOff);
+                void stopVoice ( BKSynthesiserVoice*, float velocity, bool allowTailOff);
 
                 /** Can be overridden to do custom handling of incoming midi events. */
                 virtual void handleMidiEvent (const juce::MidiMessage&);
@@ -428,7 +429,7 @@ private:
                 bool shouldStealNotes = true;
                 juce::BigInteger sustainPedalsDown;
                 mutable juce::CriticalSection stealLock;
-                mutable juce::Array<BKSamplerVoice*> usableVoicesToStealArray;
+                mutable juce::Array<BKSynthesiserVoice*> usableVoicesToStealArray;
 
                 bool keyReleaseSynth = false;           // by default, synths play on keyPress (noteOn), not the opposite!
                 bool pedalSynth = false;                // for sustain pedal sounds; will ignore noteOn messages
@@ -457,7 +458,7 @@ private:
                 bool tuneTranspositions = false;
 
                 // Array of current voices playing for a particular midiNoteNumber, for each channel
-                std::array<juce::Array<juce::Array<BKSamplerVoice*>>, 16> playingVoicesByNote;
+                std::array<juce::Array<juce::Array<BKSynthesiserVoice*>>, 16> playingVoicesByNote;
                 std::bitset<MaxMidiNotes> activeNotes;
 
                 //std::map<int, NoteOnSpec> noteOnSpecs;

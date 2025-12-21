@@ -16,29 +16,28 @@
 
 #pragma once
 
-
-
 #include "bar_renderer.h"
 #include "modulation_button.h"
 #include "open_gl_component.h"
 #include "open_gl_multi_quad.h"
-
 #include "synth_section.h"
 #include "synth_slider.h"
 #include <tracktion_ValueTreeUtilities.h>
-#include <set>
 #include "ModuleListInterface.h"
 #include "open_gl_combo_box.h"
+
 class ModulationSection;
 class ExpandModulationButton;
 class ModulationMatrix;
 class ModulationMeter;
 class ModulationDestination;
 class SynthBase;
-namespace bitklavier{
+
+namespace bitklavier {
     class ModulationConnectionBank;
     class StateConnection;
 }
+
 class ModulationAmountKnob : public SynthSlider {
   public:
     enum MenuOptions {
@@ -100,6 +99,7 @@ class ModulationAmountKnob : public SynthSlider {
     bool isBypass() { return bypass_; }
     bool isStereo() { return stereo_; }
     bool isBipolar() { return bipolar_; }
+    bool isOffsetMod() { return offset_; } // mod amount becomes offset from slider val when offset_ = true; otherwise mod amount is literal target
     bool enteringValue() { return text_entry_ && text_entry_->isVisible(); }
     bool isCurrentModulator() { return current_modulator_; }
     int index() { return index_; }
@@ -124,8 +124,7 @@ class ModulationAmountKnob : public SynthSlider {
     void addModulationAmountListener(Listener* listener) { listeners_.push_back(listener); }
     void setDestinationSlider(SynthSlider* dest);
     SynthSlider *destination = nullptr;
-    float get0to1value()
-    {return my0to1amt;}
+    float get0to1value() { return my0to1amt; }
     float my0to1amt;
 
   private:
@@ -145,6 +144,17 @@ class ModulationAmountKnob : public SynthSlider {
     bool bypass_;
     bool stereo_;
     bool bipolar_;
+
+    /*
+     * offset_
+     *  true => mod value is offset from sliderVal, otherwise,
+     *  false => mod value is literal target val.
+     *
+     *  false is the only mode for now, for ramp mods, and has no impact on lfo mods
+     *  - might want to clean this up at some point, but works for now
+     */
+    bool offset_ = false;
+
     bool draw_background_;
     juce::ValueTree state;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulationAmountKnob)
@@ -300,10 +310,7 @@ public OpenGLComboBox::Listener
     }
 
     void preparationClosed(bool isModulation);
-
-
     void clearModulationSource();
-
     void disconnectModulation(ModulationIndicator* modulation_knob) override;
     void disconnectModulation(ModulationAmountKnob* modulation_knob) override;
     void setModulationSettings(ModulationAmountKnob* modulation_knob);
@@ -321,7 +328,6 @@ public OpenGLComboBox::Listener
     void updateSmoothModValues();
     void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
     void paintBackground(juce::Graphics& g) override { positionModulationAmountSliders(); }
-
 
     void modulationClicked(ModulationIndicator*);
     void setModulationAmounts();
@@ -420,14 +426,13 @@ public OpenGLComboBox::Listener
     OpenGlQuad editing_rotary_amount_quad_;
     OpenGlQuad editing_linear_amount_quad_;
     StateModulatedComponent* editing_state_component_ = nullptr;
+
     typedef struct comboBoxMod {
         juce::PopupMenu* popup_menu = nullptr;
         juce::ValueTree modulation;
         juce::String paramID;
-    }comboBoxMod;
-
+    } comboBoxMod;
     comboBoxMod editing_button_mod;
-
     comboBoxMod editing_comboBox_mod;
 
     std::map<juce::Viewport*, std::shared_ptr<OpenGlMultiQuad>> rotary_destinations_;
@@ -465,7 +470,6 @@ public OpenGLComboBox::Listener
     std::unique_ptr<ModulationAmountKnob> modulation_amount_sliders_[bitklavier::kMaxModulationConnections];
     std::unique_ptr<ModulationAmountKnob> modulation_hover_sliders_[bitklavier::kMaxModulationConnections];
     std::unique_ptr<ModulationAmountKnob> selected_modulation_sliders_[bitklavier::kMaxModulationConnections];
-
 
     std::unique_ptr<ModulationIndicator> modulation_indicators_[bitklavier::kMaxStateConnections];
     std::unique_ptr<ModulationIndicator> modulation_hover_indicators_[bitklavier::kMaxStateConnections];

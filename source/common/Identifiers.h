@@ -64,6 +64,7 @@ namespace IDs
 
     DECLARE_ID (modAmt)
     DECLARE_ID (isBipolar)
+    DECLARE_ID (isOffsetMod)
     DECLARE_ID (isMod)
     DECLARE_ID (parameter)
     DECLARE_ID (MODULATABLE_PARAMS)
@@ -92,10 +93,6 @@ namespace IDs
     DECLARE_ID(numModChans)
     DECLARE_ID(sliderval)
 
-    DECLARE_ID(multislider_vals)
-    DECLARE_ID(multislider_size)
-    DECLARE_ID(multislider_states)
-    DECLARE_ID(multislider_states_size)
 
     DECLARE_ID(adsr_attack)
     DECLARE_ID(adsr_decay)
@@ -131,8 +128,23 @@ namespace IDs
     DECLARE_ID(soundset)
     DECLARE_ID(globalsoundset)
     DECLARE_ID(syncglobal)
+    DECLARE_ID(soundfont_preset)
 }
-
+static const std::array<juce::Identifier, 13> preparationIDs {
+    IDs::direct,
+    IDs::nostalgic,
+    IDs::keymap,
+    IDs::resonance,
+    IDs::synchronic,
+    IDs::blendronic,
+    IDs::tempo,
+    IDs::tuning,
+    IDs::midiFilter,
+    IDs::midiTarget,
+    IDs::pianoMap,
+    IDs::modulation,
+    IDs::reset
+};
 #undef DECLARE_ID
 inline juce::ValueTree createUuidProperty (juce::ValueTree& v)
 {

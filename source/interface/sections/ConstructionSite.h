@@ -14,7 +14,7 @@
 
 class OpenGlLine;
 class SynthGuiInterface;
-typedef Loki::Factory<std::unique_ptr<PreparationSection>, int, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
+typedef Loki::Factory<std::unique_ptr<PreparationSection>, juce::Identifier, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
 class ConstructionSite : public SynthSection,
 
                          public juce::DragAndDropContainer,
@@ -79,12 +79,14 @@ public:
     {
         return parent;
     }
+
     void setActivePiano();
 
     void copyValueTree (const juce::ValueTree& vt)
     {
         parent.copyPropertiesFrom (vt, nullptr);
     }
+
     void dragOperationStarted (const juce::DragAndDropTarget::SourceDetails&)
     {
         //wsetMouseCursor(juce::MouseCursor::DraggingHandCursor);
@@ -116,6 +118,7 @@ public:
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
     void removeAllGuiListeners();
+
 private:
     PreparationList* prep_list;
     juce::ApplicationCommandManager& commandManager;
@@ -135,9 +138,7 @@ private:
     ModulationLineView modulationLineView;
 
     bool connect;
-
     int lastX, lastY;
-
     bool multiple;
     bool held;
 
