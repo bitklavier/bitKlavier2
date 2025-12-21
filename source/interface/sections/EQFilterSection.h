@@ -7,11 +7,12 @@
 
 #pragma once
 
-#include "synth_section.h"
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include "EQFilterParams.h"
+#include "filter_button.h"
 #include "open_gl_combo_box.h"
+#include "synth_section.h"
 #include "synth_slider.h"
+#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 
 class EQPeakFilterSection : public SynthSection
 {
@@ -27,7 +28,7 @@ public:
     void resized() override;
 
 private:
-    std::unique_ptr<SynthButton> active_toggle;
+    std::unique_ptr<filter_button> peak_filter_button;
     std::unique_ptr<chowdsp::ButtonAttachment> filter_active_attachment;
 
     std::unique_ptr<SynthSlider> freq_knob;
@@ -54,7 +55,7 @@ public:
     void resized() override;
 
 private:
-    std::unique_ptr<SynthButton> active_toggle;
+    std::unique_ptr<filter_button> cut_filter_button;
     std::unique_ptr<chowdsp::ButtonAttachment> filter_active_attachment;
 
     std::unique_ptr<SynthSlider> freq_knob;

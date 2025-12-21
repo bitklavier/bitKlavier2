@@ -42,10 +42,6 @@ public:
         reset_button->setText("reset EQ");
 
         // EQ Graph
-        // equalizerGraph = std::static_pointer_cast<OpenGlComponent>(
-        //     std::make_shared<OpenGL_EqualizerGraph>(&params, listeners)
-        // );
-        // addOpenGlComponent (equalizerGraph);
         equalizerGraph = std::make_unique<OpenGL_EqualizerGraph> (&params, listeners);
         addOpenGlComponent (equalizerGraph->getImageComponent());
         addAndMakeVisible(equalizerGraph.get());
@@ -62,13 +58,14 @@ public:
         hiCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.hiCutFilterParams, listeners, *this);
         addSubSection(hiCutSection.get());
 
-        // recalculate coefficients
+        // redraw eq graph
         eqparams_.doForAllParameters ([this, &listeners] (auto& param, size_t) {
-
             eqRedoImageCallbacks += {listeners.addParameterListener(
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this]() {
+                    DBG("MessageThread:: redoimage eqparams");
+                    this->eqparams_.updateCoefficients();
                     this->equalizerGraph->redoImage();
                 })
             };

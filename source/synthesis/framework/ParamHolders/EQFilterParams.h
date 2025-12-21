@@ -12,7 +12,7 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
     // gain slider params, for all gain-type knobs
     float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
-    float skewFactor = 2.0f;
+    float skewFactor = 0.2f;
 
     EQPeakFilterParams(juce::String idPrepen) : chowdsp::ParamHolder("EQPEAKFILTER"), idPrepend(idPrepen)
     {
@@ -59,7 +59,7 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
         juce::ParameterID { idPrepend + "Gain", 100 },
         idPrepend + "Gain",
         juce::NormalisableRange { -24.f, 24.f, 0.0f, skewFactor, false },
-        0.1f,
+        15.f,
         true
     };
 
@@ -67,7 +67,7 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr filterSlope {
         juce::ParameterID { idPrepend + "Slope", 100 },
         idPrepend + "Slope",
-        chowdsp::ParamUtils::createNormalisableRange (12.0f, 48.f, 24.f, 12.f),
+        chowdsp::ParamUtils::createNormalisableRange (12.0f, 48.f, 30.f, 12.f),
         12.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
@@ -76,21 +76,23 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
 
     void resetToDefault()
     {
-        filterFreq->setParameterValue(filterFreq->getDefaultValue());
-        filterGain->setParameterValue(filterGain->getDefaultValue());
-        filterQ->setParameterValue(filterQ->getDefaultValue());
+        filterActive->setValueNotifyingHost (false);
+        filterFreq->setValueNotifyingHost(filterFreq->getDefaultValue());
+        filterGain->setValueNotifyingHost(filterGain->getDefaultValue());
+        filterQ->setValueNotifyingHost(filterQ->getDefaultValue());
     }
 };
 
 struct EQCutFilterParams : chowdsp::ParamHolder
 {
+    float skewFactor;
+    float defaultVal;
 
-    // gain slider params, for all gain-type knobs
-    float rangeStart = -80.0f;
-    float rangeEnd = 6.0f;
-    float skewFactor = 2.0f;
-
-    EQCutFilterParams(juce::String idPrepen) : chowdsp::ParamHolder("EQFILTER"), idPrepend(idPrepen)
+    EQCutFilterParams(juce::String idPrepen) :
+        chowdsp::ParamHolder("EQFILTER"),
+        idPrepend(idPrepen),
+        skewFactor (idPrepen == "loCut" ? 0.2f : 0.6f),
+        defaultVal (idPrepen == "loCut" ? 20.0f : 20000.0f)
     {
       add(filterActive,
           filterFreq,
@@ -110,7 +112,7 @@ struct EQCutFilterParams : chowdsp::ParamHolder
         juce::ParameterID { idPrepend + "Freq", 100 },
         idPrepend + "Freq",
         juce::NormalisableRange { 20.0f, 20000.00f, 0.0f, skewFactor, false },
-        20.0f,
+        defaultVal,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
@@ -120,7 +122,7 @@ struct EQCutFilterParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr filterSlope {
         juce::ParameterID { idPrepend + "Slope", 100 },
         idPrepend + "Slope",
-        chowdsp::ParamUtils::createNormalisableRange (12.0f, 48.f, 24.f, 12.f),
+        chowdsp::ParamUtils::createNormalisableRange (12.0f, 48.f, 30.f, 12.f),
         12.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
@@ -129,8 +131,9 @@ struct EQCutFilterParams : chowdsp::ParamHolder
 
     void resetToDefault()
     {
-        filterFreq->setParameterValue(filterFreq->getDefaultValue());
-        filterSlope->setParameterValue(filterSlope->getDefaultValue());
+        filterActive->setValueNotifyingHost (false);
+        filterFreq->setValueNotifyingHost(filterFreq->getDefaultValue());
+        filterSlope->setValueNotifyingHost(filterSlope->getDefaultValue());
     }
 };
 #endif //BITKLAVIER0_EQFILTERPARAMS_H

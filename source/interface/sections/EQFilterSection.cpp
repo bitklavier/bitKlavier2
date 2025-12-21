@@ -14,11 +14,14 @@ EQPeakFilterSection::EQPeakFilterSection (
     setName("eqpeakfilter");
     setLookAndFeel(DefaultLookAndFeel::instance());
 
-    active_toggle = std::make_unique<SynthButton>(params.filterActive->paramID);
-    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*active_toggle,nullptr);
-    active_toggle->setComponentID(params.filterActive->paramID);
-    addSynthButton(active_toggle.get(), true);
-    active_toggle->setPowerButton();
+    auto peakImage = juce::ImageCache::getFromMemory(
+    BinaryData::peak_png,
+    BinaryData::peak_pngSize);
+
+    peak_filter_button = std::make_unique<filter_button>(peakImage);
+    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*peak_filter_button,nullptr);
+    addOpenGlComponent (peak_filter_button->getImageComponent());
+    addAndMakeVisible(peak_filter_button.get());
 
     freq_knob = std::make_unique<SynthSlider>(params.filterFreq->paramID, params.filterFreq->getModParam());
     addSlider(freq_knob.get());
@@ -67,14 +70,8 @@ void EQPeakFilterSection::resized()
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     int knobsectionwidth = 50;
 
-    bounds.removeFromTop(knobsectionheight*1.2);
-    bounds.removeFromTop (smallpadding);
-
-    auto toggleArea = bounds.withWidth(30).withHeight(30)
-               .withX(bounds.getX() + (bounds.getWidth() - 30)/2);
-
-    active_toggle->setBounds(toggleArea);
-    bounds.removeFromTop (25);
+    bounds.removeFromTop (smallpadding*3);
+    peak_filter_button->setBounds (bounds.removeFromTop(knobsectionheight*1.2).withWidth (100).withX(bounds.getX() + (bounds.getWidth() - 100)/2));
     bounds = bounds.withWidth(knobsectionwidth)
            .withX(bounds.getX() + (bounds.getWidth() - knobsectionwidth)/2);
     freq_knob->setBounds(bounds.removeFromTop(knobsectionheight *.85));
@@ -96,11 +93,21 @@ EQCutFilterSection::EQCutFilterSection (
     setName("eqcutfilter");
     setLookAndFeel(DefaultLookAndFeel::instance());
 
-    active_toggle = std::make_unique<SynthButton>(params.filterActive->paramID);
-    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*active_toggle,nullptr);
-    active_toggle->setComponentID(params.filterActive->paramID);
-    addSynthButton(active_toggle.get(), true);
-    active_toggle->setPowerButton();
+    auto locutImage = juce::ImageCache::getFromMemory(
+        BinaryData::locut_png,
+        BinaryData::locut_pngSize);
+    auto hicutImage = juce::ImageCache::getFromMemory(
+        BinaryData::hi_cut_png,
+        BinaryData::hi_cut_pngSize);
+    if (params.idPrepend == "loCut")
+    {
+        cut_filter_button = std::make_unique<filter_button>(locutImage);
+    }
+    else cut_filter_button = std::make_unique<filter_button>(hicutImage);
+
+    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*cut_filter_button,nullptr);
+    addOpenGlComponent (cut_filter_button->getImageComponent());
+    addAndMakeVisible(cut_filter_button.get());
 
     freq_knob = std::make_unique<SynthSlider>(params.filterFreq->paramID, params.filterFreq->getModParam());
     addSlider(freq_knob.get());
@@ -140,14 +147,9 @@ void EQCutFilterSection::resized()
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     int knobsectionwidth = 50;
 
-    bounds.removeFromTop(knobsectionheight*1.2);
-    bounds.removeFromTop (smallpadding);
+    bounds.removeFromTop (smallpadding*3);
+    cut_filter_button->setBounds (bounds.removeFromTop(knobsectionheight*1.2).withWidth (100).withX(bounds.getX() + (bounds.getWidth() - 100)/2));
 
-    auto toggleArea = bounds.withWidth(30).withHeight(30)
-               .withX(bounds.getX() + (bounds.getWidth() - 30)/2);
-
-    active_toggle->setBounds(toggleArea);
-    bounds.removeFromTop (25);
     bounds = bounds.withWidth(knobsectionwidth)
            .withX(bounds.getX() + (bounds.getWidth() - knobsectionwidth)/2);
     freq_knob->setBounds(bounds.removeFromTop(knobsectionheight *.85));

@@ -18,6 +18,7 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
             param,
             chowdsp::ParameterListenerThread::AudioThread,
             [this]() {
+                     DBG("ProcessorThread::updateCoefficients");
                     this->state.params.updateCoefficients();
             })
         };
@@ -27,6 +28,8 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
             state.params.resetEq,
             chowdsp::ParameterListenerThread::AudioThread,
             [this]() {
+                     DBG("ProcessorThread::resetEQ");
+
                 if (state.params.resetEq.get()->get()) {
                     // todo make this a function or just set all parameters here?
                     // resetToDefault() doesn't do anything about activeFilters
@@ -46,6 +49,8 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
             chowdsp::ParameterListenerThread::AudioThread,
             [this]() {
                 // if EQ is off, filters should be off but save which filters were on
+                     DBG("ProcessorThread::resetEQ");
+
                 if (!state.params.activeEq.get()->get()) {
                     // todo: is this threadsafe?
                     state.params.activeFilters = {

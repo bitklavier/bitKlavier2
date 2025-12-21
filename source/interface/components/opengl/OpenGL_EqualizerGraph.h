@@ -20,12 +20,12 @@ class OpenGL_EqualizerGraph : public OpenGlAutoImageComponent<BKEqualizerGraph>,
 
     void resized() override {
         OpenGlAutoImageComponent<BKEqualizerGraph>::resized();
-        redoImage();
+        // redoImage();
     }
 
     void paintBackground(juce::Graphics& g) {
         OpenGlAutoImageComponent<BKEqualizerGraph>::paint(g);
-        redoImage();
+        // redoImage();
     }
 };
 
