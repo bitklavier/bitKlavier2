@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<GALLERY soundset="Blanchet-1720.sf2||Roland Harpsichord ">
+<GALLERY soundset="Blanchet-1720.sf2">
   <PIANO isActive="1" name="default">
     <PREPARATIONS>
       <direct type="0" width="147.0" height="75.0" x_y="263, 306" uuid="2c7017481d8f4c87837e08095b62e728"

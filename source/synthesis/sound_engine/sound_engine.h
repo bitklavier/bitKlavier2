@@ -144,34 +144,34 @@ namespace bitklavier
 
         bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
+            if(processorGraph == nullptr)
+                return false;
+
             if(connection.source.channelIndex == 0 or connection.source.channelIndex == 1
                 && connection.destination.nodeID != audioOutputNode->nodeID) {
                 processorGraph->removeConnection({{connection.source.nodeID, 0},{audioOutputNode->nodeID,0}});
                 processorGraph->removeConnection({{connection.source.nodeID, 1},{audioOutputNode->nodeID,1}});
-                DBG("[Graph] Removed previous stereo connections from node "
-         + juce::String(connection.source.nodeID.uid)
-         + " to audio output node "
-         + juce::String(audioOutputNode->nodeID.uid));
+                DBG("[Graph] Removed previous stereo connections from node " + juce::String(connection.source.nodeID.uid)
+                    + " to audio output node " + juce::String(audioOutputNode->nodeID.uid));
             }
 
-            if(processorGraph) {
-                if (!connection.source.isMIDI())
-                    processorGraph->addConnection({{connection.source.nodeID, connection.source.channelIndex+1},
-                        {connection.destination.nodeID,connection.destination.channelIndex+1}});
-                return processorGraph->addConnection (connection);
-            }
+            if (!connection.source.isMIDI())
+                processorGraph->addConnection({{connection.source.nodeID, connection.source.channelIndex+1},
+                    {connection.destination.nodeID,connection.destination.channelIndex+1}});
 
-            return false;
+            return processorGraph->addConnection (connection);
         }
 
         void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
         {
-            if(processorGraph) {
-                if (!connection.source.isMIDI())
-                    processorGraph->removeConnection({{connection.source.nodeID, connection.source.channelIndex+1},
-                       {connection.destination.nodeID,connection.destination.channelIndex+1}});
-                processorGraph->removeConnection (connection);
-            }
+            if(processorGraph == nullptr)
+                return;
+
+            if (!connection.source.isMIDI())
+                processorGraph->removeConnection({{connection.source.nodeID, connection.source.channelIndex+1},
+                   {connection.destination.nodeID,connection.destination.channelIndex+1}});
+
+            processorGraph->removeConnection (connection);
 
             if(connection.source.channelIndex == 0 or connection.source.channelIndex == 1
              && connection.destination.nodeID != audioOutputNode->nodeID) {
@@ -182,7 +182,6 @@ namespace bitklavier
                  + juce::String(connection.source.nodeID.uid) + "  to audio output node "
                  + juce::String(audioOutputNode->nodeID.uid));
                 }
-
              }
         }
 
@@ -190,12 +189,14 @@ namespace bitklavier
         {
             if(processorGraph)
                 return processorGraph->isConnected (connection);
+            return false;
         }
 
         bool isConnected (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
         {
             if(processorGraph)
-            return processorGraph->isConnected (src, dest);
+                return processorGraph->isConnected (src, dest);
+            return false;
         }
 
         void addChangeListener (juce::ChangeListener* listener)

@@ -398,7 +398,7 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
 
     if (node.hasProperty (IDs::soundset))
     {
-        auto ss = node.getProperty (IDs::soundset).toString().trim();
+        auto ss = node.getProperty (IDs::soundset).toString();
         if (ss.isNotEmpty() && ss != IDs::syncglobal.toString() )
         {
             out.add ({ ss, node });
