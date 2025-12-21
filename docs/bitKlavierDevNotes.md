@@ -33,6 +33,7 @@
   - location of the modulation popup editor window is set `editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(), comp->getWidth(), comp->getHeight());`
 - State mods are triggered in `StateConnection::modulationTriggered()` in ModulationConnection.cpp
 - Make sure that processStateChanges() is called in the processBlock for the prep that is being modulated; for instance, `clusterMinMaxParams.processStateChanges();` in `SynchronicProcessor::processBlock`
+- the OpenGL shaders for the knobs are set in `OpenGlSliderQuad::init` in synth_slider.cpp
 
 ---------
 ## Creating a New Preparation

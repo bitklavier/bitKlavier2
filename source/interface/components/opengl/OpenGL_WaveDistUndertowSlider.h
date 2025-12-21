@@ -55,6 +55,17 @@ public:
         redoImage();
     }
 
+    /*
+    * this is for making the modulation UI view opaque
+    */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKWaveDistanceUndertowSlider::paint(g);
+        }
+    }
+
     virtual void mouseDrag(const juce::MouseEvent &e) override {
         mouseInteraction = true;
         OpenGlAutoImageComponent<BKWaveDistanceUndertowSlider>::mouseDrag(e);
@@ -190,6 +201,14 @@ private :
 
         isModulation_ = true;
         addMyListener(this);
+
+        /*
+         * this is so the modulation UI view has a distinctive colored border
+         */
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("MODIFIED");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
 
     bool mouseInteraction = false;
