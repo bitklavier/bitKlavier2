@@ -208,66 +208,7 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets() {
     return sampleSets;
 }
 
-bool SampleLoadManager::loadSamples(std::string sample_name) {
-    // juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
-    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
 
-    MyComparator sorter;
-    // samplePath.append (sample_name, 1000); // change to "orig" to test that way
-    juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
-
-    juce::File baseDir(
-        preferences->userPreferences->tree.getProperty("default_sample_path").toString()
-    );
-
-    juce::File directory = baseDir.getChildFile(sample_name);
-    //samplePath.append("/orig", 10);
-    DBG("sample path = " + directory.getFullPathName());
-    // juce::File directory (samplePath);
-    // DBG (samplePath);
-    juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false,
-                                                                  "*.wav");
-    allSamples.sort(sorter);
-
-    // look for how many of each type there are: 3 A0 samples, 7 C3 samples, 0 D# samples, 1 C# sample, etc...
-    // divide up the velocity range depending on how many there are, and/or using dBFS
-    // load accordingly
-    int i = 0;
-    for (auto file: allSamples) {
-        DBG(file.getFullPathName() + " " + juce::String (++i));
-    }
-    std::shared_ptr<SampleSetProgress> progress;
-
-    // Create or fetch the progress entry
-    if (!soundsetProgressMap.contains(sample_name))
-        soundsetProgressMap[sample_name] = std::make_shared<SampleSetProgress>();
-
-    progress = soundsetProgressMap[sample_name];
-    // progress->soundset = new juce::ReferenceCountedArray<BKSynthesiserSound>();
-    progress->load_manager = this;
-    // Attach ValueTree + property info for later completion
-    progress->soundsetName = sample_name;
-    progress->targetTree = juce::ValueTree{};
-
-    const juce::String ext = directory.getFileExtension().toLowerCase();
-    if (ext == ".sfz" || ext == ".sf2") {
-        // progressPtr->totalJobs++; // one job per sample type
-        progress->isSoundFont = true;
-        progress->soundset = new juce::ReferenceCountedArray<BKSynthesiserSound>();
-        sampleLoader.addJob(new SampleLoadJob(directory,
-
-                                              this, progress,
-                                              *this), true);
-
-        return true;
-    }
-
-    loadSamples_sub(bitklavier::utils::BKPianoMain, sample_name);
-    loadSamples_sub(bitklavier::utils::BKPianoHammer, sample_name);
-    loadSamples_sub(bitklavier::utils::BKPianoReleaseResonance, sample_name);
-    loadSamples_sub(bitklavier::utils::BKPianoPedal, sample_name);
-    return true;
-}
 
 // Helper: decide if this tree represents the "global/gallery" target.
 static bool isGalleryTree(const juce::ValueTree &vt) {
@@ -303,34 +244,23 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
         preferences->userPreferences->tree.getProperty("default_sample_path").toString()
     );
 
-    juce::File directory = baseDir.getChildFile(soundsetName);
+    // need this to remove the || containing the preset number from soundfonts
+    juce::String setName = soundsetName;
+    if (soundsetName.contains(".sf2") or soundsetName.contains(".sfz"))
+        setName = sfzBaseFromKey(soundsetName);
+
+    juce::File directory = baseDir.getChildFile(setName);
+
     DBG("sample path = " + directory.getFullPathName());
-
-
-    if (!directory.exists()) {
-        DBG("Soundset dir does not exist: " + directory.getFullPathName());
-        return false;
-    }
-
-    // (Optional debug listing)
-    {
-        MyComparator sorter;
-        auto allSamples = directory.findChildFiles(juce::File::findFiles, false, "*.wav");
-        allSamples.sort(sorter);
-
-        int i = 0;
-        for (auto file: allSamples)
-            DBG(file.getFullPathName() + " " + juce::String (++i));
-    }
-
     // Progress entry
+    //but we want that || in the actual name used to match in the soundsetProgressMap, samplerSoundsets, and sfzBank map
     auto &progressPtr = soundsetProgressMap[soundsetName.toStdString()];
     if (!progressPtr)
         progressPtr = std::make_shared<SampleSetProgress>();
 
     progressPtr->soundsetName = soundsetName.toStdString();
     progressPtr->targetTree = vtToWrite; // store where to write soundset / completion callbacks
-
+    progressPtr->load_manager = this;
     parent->startSampleLoading();
 
     const juce::String ext = directory.getFileExtension().toLowerCase();
@@ -346,6 +276,23 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
         return true;
     }
 
+
+    ///todo: add warning popup and call to  notify the hideloadingsection
+    /// function so it never hangs
+    if (!directory.exists()) {
+        DBG("Soundset dir does not exist: " + directory.getFullPathName());
+        return false;
+    }
+    // (Optional debug listing)
+    {
+        MyComparator sorter;
+        auto allSamples = directory.findChildFiles(juce::File::findFiles, false, "*.wav");
+        allSamples.sort(sorter);
+
+        int i = 0;
+        for (auto file: allSamples)
+            DBG(file.getFullPathName() + " " + juce::String (++i));
+    }
     loadSamples_sub(bitklavier::utils::BKPianoMain, soundsetName.toStdString());
     loadSamples_sub(bitklavier::utils::BKPianoHammer, soundsetName.toStdString());
     loadSamples_sub(bitklavier::utils::BKPianoReleaseResonance, soundsetName.toStdString());
@@ -353,84 +300,6 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     return true;
 }
 
-bool SampleLoadManager::loadSamples(int selection, bool isGlobal, const juce::ValueTree &prep_tree) {
-    DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
-
-    allKeysWithSamples.clear();
-
-    temp_prep_tree = prep_tree;
-    MyComparator sorter;
-    juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
-    auto soundsets = getAllSampleSets();
-    // save this set as the global set
-    if (isGlobal) {
-        if (samplerSoundset.contains(soundsets[selection])) {
-            t.setProperty(IDs::soundset, juce::String(soundsets[selection]), nullptr);
-            return true;
-        }
-    }
-    if (temp_prep_tree.isValid()) {
-        if (samplerSoundset.contains(soundsets[selection])) {
-            temp_prep_tree.setProperty(IDs::soundset, juce::String(soundsets[selection]), nullptr);
-            return true;
-        }
-    }
-    // juce::String samplePath = preferences->userPreferences->tree.getProperty ("default_sample_path");
-
-    juce::File baseDir(
-        preferences->userPreferences->tree.getProperty("default_sample_path").toString()
-    );
-
-    juce::File directory = baseDir.getChildFile(soundsets[selection]);
-    // samplePath.append (soundsets[selection], 1000); // change to "orig" to test that way
-    //samplePath.append("/orig", 10);
-    DBG("sample path = " + directory.getFullPathName());
-    // juce::File directory (samplePath);
-    // DBG (samplePath);
-    juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false,
-                                                                  "*.wav");
-    allSamples.sort(sorter);
-
-    // look for how many of each type there are: 3 A0 samples, 7 C3 samples, 0 D# samples, 1 C# sample, etc...
-    // divide up the velocity range depending on how many there are, and/or using dBFS
-    // load accordingly
-    int i = 0;
-    for (auto file: allSamples) {
-        DBG(file.getFullPathName() + " " + juce::String (++i));
-    }
-
-    std::shared_ptr<SampleSetProgress> progress;
-
-    // Create or fetch the progress entry
-    if (!soundsetProgressMap.contains(soundsets[selection]))
-        soundsetProgressMap[soundsets[selection]] = std::make_shared<SampleSetProgress>();
-
-    progress = soundsetProgressMap[soundsets[selection]];
-
-    progress->load_manager = this;
-    // Attach ValueTree + property info for later completion
-    progress->soundsetName = soundsets[selection];
-    progress->targetTree = prep_tree;
-
-    parent->startSampleLoading();
-    const juce::String ext = directory.getFileExtension().toLowerCase();
-    if (ext == ".sfz" || ext == ".sf2") {
-        progress->totalJobs++; // one job per sample type
-        progress->isSoundFont = true;
-        progress->soundset = new juce::ReferenceCountedArray<BKSynthesiserSound>();
-        sampleLoader.addJob(new SampleLoadJob(directory,
-
-                                              this, progress,
-                                              *this), true);
-
-        return true;
-    }
-    loadSamples_sub(bitklavier::utils::BKPianoMain, soundsets[selection]);
-    loadSamples_sub(bitklavier::utils::BKPianoHammer, soundsets[selection]);
-    loadSamples_sub(bitklavier::utils::BKPianoReleaseResonance, soundsets[selection]);
-    loadSamples_sub(bitklavier::utils::BKPianoPedal, soundsets[selection]);
-    return true;
-}
 
 void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thisSampleType, std::string name) {
     using namespace bitklavier::utils;
@@ -999,7 +868,19 @@ bool SampleLoadJob::loadMainSamplesByPitch() {
 
     return true;
 }
-
+int subsoundIndexForName ( SFZSound& sound,
+                                        const juce::String& name)
+{
+    const int n = sound.num_subsounds();
+    for (int i = 0; i < n; ++i)
+    {
+        DBG("**" + name + "**");
+        DBG("**" + sound.subsound_name(i) + "**");
+        if (sound.subsound_name(i) == name)
+            return i;
+    }
+    return -1;
+}
 bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
     // --- Validation ---
     if (soundset == nullptr) {
@@ -1030,6 +911,11 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
     sound->load_regions();
     sound->load_samples();
 
+    auto preset = sfzPresetFromKey(progress->soundsetName);
+    if (preset.isNotEmpty()) {
+        int index = subsoundIndexForName(*sound,preset);
+        sound->use_subsound(index);
+    }
     // dBFS stuff not currently relevant for soundfonts
     float dBFSBelow = -100.0f;
     int regionIndex = 0;
@@ -1090,9 +976,9 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
             " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
             " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
     }
-    if (sound->num_subsounds() > 0) {
+    if (sound->num_subsounds() > 0 && preset.isEmpty()) {
         progress->presetName = sound->subsound_name(0);
-        samplerLoader.sfzBanks[makeSFZKey(progress->soundsetName ,sound->subsound_name(0))] = std::move(sound);
+        samplerLoader.sfzBanks[makeSFZKey(progress->soundsetName,progress->presetName) ] = std::move(sound);
     }
     else
         samplerLoader.sfzBanks[progress->soundsetName] = std::move(sound);
