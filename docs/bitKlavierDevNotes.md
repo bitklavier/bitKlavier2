@@ -34,7 +34,7 @@
 - State mods are triggered in `StateConnection::modulationTriggered()` in ModulationConnection.cpp
 - Make sure that processStateChanges() is called in the processBlock for the prep that is being modulated; for instance, `clusterMinMaxParams.processStateChanges();` in `SynchronicProcessor::processBlock`
 - the OpenGL shaders for the knobs are set in `OpenGlSliderQuad::init` in synth_slider.cpp
-
+- mod amount knob placement settings in `ModulationManager::makeCurrentModulatorAmountsVisible()` and `ModulationManager::makeModulationsVisible` and `SynthSlider::SynthSlider` constructor
 ---------
 ## Creating a New Preparation
 Typing as I do MidiFilter and Resonance

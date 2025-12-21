@@ -20,11 +20,8 @@
 
 /**
  * todo:
- *  - Transpositions 2D slider (with "use tuning") implementation
  *  - when Key Off "determines cluster", grey out Note-On options in "pulse triggered by"
  *  - grey out hold min/max slider when it's not relevant (most of the note-on options)
- *  - active buttons in the envelope sequencer need to be more obvious when toggled on:
- *      - larger font, and/or different color
  */
 
 class SynchronicParametersView : public SynthSection, public juce::Timer

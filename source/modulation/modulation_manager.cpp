@@ -400,7 +400,8 @@ void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
     if (isBipolar() || isOffsetMod())
         this->setRange(0, dest->getNormalisableRange().getRange().getLength(), 0.f);
     else // mod val is actual target val
-        this->setRange(dest->getMinimum(), dest->getMaximum(), 0.f);
+        this->setNormalisableRange (dest->getNormalisableRange());
+        //this->setRange(dest->getMinimum(), dest->getMaximum(), 0.f);
 
     this->textFromValueFunction = dest->attachment->getParameter()->getStringFromValueFunction();
 }
@@ -2749,7 +2750,8 @@ void ModulationManager::makeCurrentModulatorAmountsVisible() {
         if (placement == juce::BubbleComponent::below)
             selected_slider->setBounds(center_x - width / 2, bottom, width, width);
         else if (placement == juce::BubbleComponent::above)
-            selected_slider->setBounds(center_x - width / 2, top - width, width, width);
+            selected_slider->setBounds(center_x - width / 2, center_y - width * 2, width, width);
+            //selected_slider->setBounds(center_x - width / 2, top - width, width, width);
         else if (placement == juce::BubbleComponent::left)
             selected_slider->setBounds(left - width, center_y - width / 2, width, width);
         else
@@ -3090,7 +3092,8 @@ void ModulationManager::makeModulationsVisible(SynthSlider *destination, bool vi
         delta_x = hover_slider_width;
     } else if (placement == juce::BubbleComponent::above) {
         x = destination_bounds.getCentreX() - beginning_offset;
-        y = destination_bounds.getY() - hover_slider_width;
+        //y = destination_bounds.getY() - hover_slider_width;
+        y = destination_bounds.getCentreY() - hover_slider_width * 2;
         delta_x = hover_slider_width;
     } else if (placement == juce::BubbleComponent::left) {
         x = destination_bounds.getX() - hover_slider_width;
