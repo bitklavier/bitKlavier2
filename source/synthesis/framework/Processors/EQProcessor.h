@@ -17,11 +17,19 @@
 
 struct EQParams : chowdsp::ParamHolder
 {
+    // gain slider params, for all gain-type knobs
+    float rangeStart = -80.0f;
+    float rangeEnd = 6.0f;
+    float skewFactor = 2.0f;
+
     // Adds the appropriate parameters to the Nostalgic Processor
     EQParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("eq")
     {
             add(activeEq,
                 resetEq,
+                inputGain,
+                outputSend,
+                outputGain,
                 loCutFilterParams,
                 peak1FilterParams,
                 peak2FilterParams,
@@ -52,6 +60,43 @@ struct EQParams : chowdsp::ParamHolder
         "reset",
         false
     };
+
+    // To adjust the gain of signals coming in to blendronic
+    chowdsp::GainDBParameter::Ptr inputGain {
+        juce::ParameterID { "InputGain", 100 },
+        "Input Gain",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
+   };
+
+    // Gain for output send (for other blendronics, VSTs, etc...)
+    chowdsp::GainDBParameter::Ptr outputSend {
+        juce::ParameterID { "Send", 100 },
+        "Send",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
+    };
+
+    // for the output gain slider, final gain stage for this prep (meter slider on right side of prep)
+    chowdsp::GainDBParameter::Ptr outputGain {
+        juce::ParameterID { "OutputGain", 100 },
+        "Output Gain",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        0.0f,
+        true
+    };
+
+    /*
+     * for storing outputLevels of this preparation for display
+     *  because we are using an OpenGL slider for the level meter, we don't use the chowdsp params for this
+     *      we simply update this in the processBlock() call
+     *      and then the level meter will update its values during the OpenGL cycle
+     */
+    std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
 
     // filters
     EQCutFilterParams loCutFilterParams{"loCut"};

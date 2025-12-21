@@ -25,8 +25,6 @@ public:
     void addListener(Listener* listener) { listeners_.push_back(listener); }
 
   private:
-    // EQPreparation EQPrep;
-    // CompressorPreparation CompressorPrep;
     std::shared_ptr<PeakMeterSection> levelMeter;
 
     KeymapKeyboardState keymap_;

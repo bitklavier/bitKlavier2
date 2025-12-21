@@ -47,15 +47,24 @@ EQPeakFilterSection::EQPeakFilterSection (
     q_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterQ, listeners, *q_knob, nullptr);
     q_knob->addAttachment(q_knob_attachment.get());
 
+    freq_knob_label = std::make_shared<PlainTextComponent>(freq_knob->getName(), "FREQ");
+    addOpenGlComponent(freq_knob_label);
+    freq_knob_label->setJustification(juce::Justification::centred);
+
+    gain_knob_label = std::make_shared<PlainTextComponent>(gain_knob->getName(), "GAIN");
+    addOpenGlComponent(gain_knob_label);
+    gain_knob_label->setJustification(juce::Justification::centred);
+
+    q_knob_label = std::make_shared<PlainTextComponent>(q_knob->getName(), "Q");
+    addOpenGlComponent(q_knob_label);
+    q_knob_label->setJustification(juce::Justification::centred);
+
     sectionBorder.setName("eqfilterborder");
     addAndMakeVisible(sectionBorder);
 }
 
 void EQPeakFilterSection::paintBackground(juce::Graphics& g) {
     setLabelFont(g);
-    drawLabelForComponent (g, "freq", freq_knob.get());
-    drawLabelForComponent (g, "gain", gain_knob.get());
-    drawLabelForComponent (g, "q", q_knob.get());
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
     sectionBorder.paint(g);
@@ -69,6 +78,9 @@ void EQPeakFilterSection::resized()
     int smallpadding = findValue(Skin::kPadding);
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     int knobsectionwidth = 50;
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+    int largepadding = findValue(Skin::kLargePadding);
+    auto knobLabelSize = findValue(Skin::kKnobLabelSizeSmall);
 
     bounds.removeFromTop (smallpadding*3);
     peak_filter_button->setBounds (bounds.removeFromTop(knobsectionheight*1.2).withWidth (100).withX(bounds.getX() + (bounds.getWidth() - 100)/2));
@@ -79,6 +91,18 @@ void EQPeakFilterSection::resized()
     gain_knob->setBounds(bounds.removeFromTop(knobsectionheight *.85));
     bounds.removeFromTop (smallpadding);
     q_knob->setBounds(bounds.removeFromTop(knobsectionheight *.85));
+
+    juce::Rectangle<int> freq_label_rect (freq_knob->getX(), freq_knob->getBottom() - largepadding, freq_knob->getWidth(), labelsectionheight );
+    freq_knob_label->setBounds(freq_label_rect);
+    juce::Rectangle<int> gain_label_rect (gain_knob->getX(), gain_knob->getBottom() - largepadding, gain_knob->getWidth(), labelsectionheight );
+    gain_knob_label->setBounds(gain_label_rect);
+    juce::Rectangle<int> q_label_rect (q_knob->getX(), q_knob->getBottom() - largepadding, q_knob->getWidth(), labelsectionheight );
+    q_knob_label->setBounds(q_label_rect);
+
+    freq_knob_label->setTextSize (knobLabelSize);
+    gain_knob_label->setTextSize (knobLabelSize);
+    q_knob_label->setTextSize (knobLabelSize);
+
 
     SynthSection::resized();
 }
@@ -125,14 +149,20 @@ EQCutFilterSection::EQCutFilterSection (
     slope_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterSlope, listeners, *slope_knob, nullptr);
     slope_knob->addAttachment(slope_knob_attachment.get());
 
+    freq_knob_label = std::make_shared<PlainTextComponent>(freq_knob->getName(), "FREQ");
+    addOpenGlComponent(freq_knob_label);
+    freq_knob_label->setJustification(juce::Justification::centred);
+
+    slope_knob_label = std::make_shared<PlainTextComponent>(slope_knob->getName(), "SLOPE");
+    addOpenGlComponent(slope_knob_label);
+    slope_knob_label->setJustification(juce::Justification::centred);
+
     sectionBorder.setName("eqfilterborder");
     addAndMakeVisible(sectionBorder);
 }
 
 void EQCutFilterSection::paintBackground(juce::Graphics& g) {
     setLabelFont(g);
-    drawLabelForComponent (g, "freq", freq_knob.get());
-    drawLabelForComponent (g, "slope", slope_knob.get());
     paintKnobShadows(g);
     paintChildrenBackgrounds(g);
     sectionBorder.paint(g);
@@ -146,6 +176,9 @@ void EQCutFilterSection::resized()
     int smallpadding = findValue(Skin::kPadding);
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     int knobsectionwidth = 50;
+    int labelsectionheight = findValue(Skin::kLabelHeight);
+    int largepadding = findValue(Skin::kLargePadding);
+    auto knobLabelSize = findValue(Skin::kKnobLabelSizeSmall);
 
     bounds.removeFromTop (smallpadding*3);
     cut_filter_button->setBounds (bounds.removeFromTop(knobsectionheight*1.2).withWidth (100).withX(bounds.getX() + (bounds.getWidth() - 100)/2));
@@ -155,5 +188,12 @@ void EQCutFilterSection::resized()
     freq_knob->setBounds(bounds.removeFromTop(knobsectionheight *.85));
     bounds.removeFromTop (smallpadding);
     slope_knob->setBounds(bounds.removeFromTop(knobsectionheight *.85));
+    juce::Rectangle<int> freq_label_rect (freq_knob->getX(), freq_knob->getBottom() - largepadding, freq_knob->getWidth(), labelsectionheight );
+    freq_knob_label->setBounds(freq_label_rect);
+    juce::Rectangle<int> slope_label_rect (slope_knob->getX(), slope_knob->getBottom() - largepadding, slope_knob->getWidth(), labelsectionheight );
+    slope_knob_label->setBounds(slope_label_rect);
+
+    freq_knob_label->setTextSize (knobLabelSize);
+    slope_knob_label->setTextSize (knobLabelSize);
     SynthSection::resized();
 }

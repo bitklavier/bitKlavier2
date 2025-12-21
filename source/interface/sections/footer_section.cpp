@@ -12,8 +12,8 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
 {
 
     jassert(gallery.hasType(IDs::GALLERY));
+    body_->setBounds(getLocalBounds());
     addOpenGlComponent(body_);
-
 
     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(keymap_, false);
     addStateModulatedComponent(keyboard_component_.get());
@@ -51,29 +51,23 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
 
 void FooterSection::paintBackground(juce::Graphics &g) {
     paintContainer(g);
+    g.setColour(juce::Colours::black);
+    g.fillRect(getLocalBounds());
     paintChildrenBackgrounds(g);
     g.setColour(findColour(Skin::kBody, true));
-    int logo_section_width = 32.0 + getPadding();
-    g.fillRect(0, 0, logo_section_width, getHeight());
-
-    g.setColour(juce::Colours::white);
-    g.fillRect(100, 50, 100, 100);
-    paintKnobShadows(g);
+    // int logo_section_width = 32.0 + getPadding();
+    // g.fillRect(0, 0, logo_section_width, getHeight());
+    // paintKnobShadows(g);
 }
 
 void FooterSection::resized() {
-    // body_->setBounds(getLocalBounds());
-    // body_->setRounding(findValue(Skin::kBodyRounding));
-    // body_->setColor(findColour(Skin::kBody, true));
-
-    // the level meter and output gain slider
-    // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
-
-
     auto bounds = getLocalBounds();
     const int keySelectorWidth = 1000;
     const int buttonWidth      = 120;
     const int padding          = findValue(Skin::kLargePadding);
+
+    // body_->setRounding(findValue(Skin::kBodyRounding));
+    // body_->setColor(juce::Colours::black);
 
     auto keyboardBounds = bounds.removeFromLeft(keySelectorWidth);
     keyboard_component_->setBounds(keyboardBounds);

@@ -27,6 +27,12 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
+        prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
+        addOpenGlComponent(prepTitle);
+        prepTitle->setJustification(juce::Justification::centredLeft);
+        prepTitle->setFontType (PlainTextComponent::kTitle);
+        prepTitle->setRotation (-90);
+
         // bypass EQ button
         activeEq_toggle = std::make_unique<SynthButton>(eqparams_.activeEq->paramID);
         activeEq_attachment = std::make_unique<chowdsp::ButtonAttachment>(eqparams_.activeEq, listeners, *activeEq_toggle, nullptr);
@@ -58,13 +64,28 @@ public:
         hiCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.hiCutFilterParams, listeners, *this);
         addSubSection(hiCutSection.get());
 
+        // the level meter and output gain slider (right side of preparation popup)
+        // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
+        levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
+        levelMeter->setLabel("Main");
+        addSubSection(levelMeter.get());
+
+        // similar for send level meter/slider
+        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
+        sendLevelMeter->setLabel("Send");
+        addSubSection(sendLevelMeter.get());
+
+        // and for input level meter/slider
+        inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
+        inLevelMeter->setLabel("Input");
+        addSubSection(inLevelMeter.get());
+
         // redraw eq graph
         eqparams_.doForAllParameters ([this, &listeners] (auto& param, size_t) {
             eqRedoImageCallbacks += {listeners.addParameterListener(
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this]() {
-                    DBG("MessageThread:: redoimage eqparams");
                     this->eqparams_.updateCoefficients();
                     this->equalizerGraph->redoImage();
                 })
@@ -78,11 +99,13 @@ public:
     {
         setLabelFont(g);
         SynthSection::paintContainer (g);
-        paintHeadingText (g);
         paintBorder (g);
         paintKnobShadows (g);
         paintChildrenBackgrounds (g);
     }
+
+    // prep title, vertical, left side
+    std::shared_ptr<PlainTextComponent> prepTitle;
 
     chowdsp::ScopedCallbackList eqRedoImageCallbacks;
 

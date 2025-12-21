@@ -38,6 +38,12 @@ private:
     std ::unique_ptr<SynthSlider> q_knob;
     std::unique_ptr<chowdsp::SliderAttachment> q_knob_attachment;
 
+    // knob labels
+    std::shared_ptr<PlainTextComponent> freq_knob_label;
+    std::shared_ptr<PlainTextComponent> gain_knob_label;
+    std::shared_ptr<PlainTextComponent> q_knob_label;
+
+
     juce::GroupComponent sectionBorder;
 };
 
@@ -62,6 +68,10 @@ private:
     std::unique_ptr<chowdsp::SliderAttachment> freq_knob_attachment;
     std::unique_ptr<SynthSlider> slope_knob;
     std::unique_ptr<chowdsp::SliderAttachment> slope_knob_attachment;
+
+    // knob labels
+    std::shared_ptr<PlainTextComponent> freq_knob_label;
+    std::shared_ptr<PlainTextComponent> slope_knob_label;
 
     juce::GroupComponent sectionBorder;
 };
