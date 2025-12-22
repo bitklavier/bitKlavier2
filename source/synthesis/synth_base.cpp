@@ -516,12 +516,12 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 
 
     // ---------- Reset backend BEFORE applying preset ----------
-    if (auto* gui = getGuiInterface())
-        gui->removeAllGuiListeners();
+
     pauseProcessing(true);
     clearAllBackend();
     pauseProcessing(false);
-
+    if (auto* gui = getGuiInterface())
+        gui->removeAllGuiListeners();
 
 
     engine_->resetEngine();
