@@ -54,10 +54,7 @@ namespace bitklavier {
         void addListener (Listener* l) { listeners_.push_back (l); }
         void clearListeners(){listeners_.clear();}
 
-        void removeListener (Listener* l) {listeners_.erase(
-                    std::remove(listeners_.begin(), listeners_.end(), l),
-                    listeners_.end());
-        }
+        void removeListener (Listener* l) {std::erase(listeners_,l);}
         ModConnection* createNewObject(const juce::ValueTree&) override;
         void deleteObject (ModConnection*) override;
         void newObjectAdded (ModConnection*) override;

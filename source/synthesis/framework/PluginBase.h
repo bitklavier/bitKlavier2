@@ -391,7 +391,18 @@ namespace bitklavier {
         //        xml.writeTo (out, juce::XmlElement::TextFormat().singleLine());
         //        out.writeByte (0);
         //    }
+        const auto& param_default = v.getChildWithName(IDs::PARAM_DEFAULT);
 
+        if (!param_default.isValid() || !v.isValid())
+            return;
+
+        // Copy every property in `from` onto `to` (overwrites same-name props, leaves others untouched)
+        for (int i = 0; i < param_default.getNumProperties(); ++i)
+        {
+            const juce::Identifier name = param_default.getPropertyName(i);
+            const juce::var value = param_default.getProperty(name);
+            v.setProperty(name, value, nullptr);
+        }
         state.serialize(data);
     }
 

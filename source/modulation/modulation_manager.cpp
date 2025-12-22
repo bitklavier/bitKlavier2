@@ -1821,6 +1821,9 @@ void ModulationManager::renderOpenGlComponents(OpenGlWrapper &open_gl, bool anim
     //  updateSmoothModValues();
     //
 
+
+
+    SynthSection::renderOpenGlComponents(open_gl, animate);
     for (auto &ind: modulation_indicators_) {
         if (ind->isVisible())
             ind->render(open_gl, animate);
@@ -1835,9 +1838,6 @@ void ModulationManager::renderOpenGlComponents(OpenGlWrapper &open_gl, bool anim
     }
     editing_rotary_amount_quad_.render(open_gl, animate);
     editing_linear_amount_quad_.render(open_gl, animate);
-
-    SynthSection::renderOpenGlComponents(open_gl, animate);
-
     drawDraggingModulation(open_gl);
 }
 
@@ -2774,9 +2774,9 @@ void ModulationManager::makeCurrentStateModulatorsVisible() {
         return;
 
     std::string source_name = current_modulator_->getComponentID().toStdString();
+    DBG("source_name" + source_name);
     std::vector<bitklavier::StateConnection *> connections = parent->getSynth()->getSourceStateConnections(source_name);
     std::set<ModulationIndicator *> selected_modulation_indicators;
-
     int width = size_ratio_ * 24.0f;
     for (bitklavier::StateConnection *connection: connections) {
         int index = connection->index_in_all_mods;

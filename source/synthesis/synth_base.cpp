@@ -670,8 +670,11 @@ juce::UndoManager& SynthBase::getUndoManager()
 std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (const std::string& source) const
 {
     std::vector<bitklavier::StateConnection*> connections;
+
     for (auto connection : state_connections_)
     {
+        DBG(connection->source_name);
+
         if (connection->source_name == source)
             connections.push_back (connection);
     }
@@ -883,6 +886,7 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
             connection = getStateBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
             connection->state = v;
             connection->setChange (v);
+            state_connections_.push_back (connection);
         }
         if (connection)
             connectStateModulation (connection);
