@@ -113,7 +113,10 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ExpandModulationButton)
 };
-
+using SliderPtr   = juce::Component::SafePointer<SynthSlider>;
+using ButtonPtr   = juce::Component::SafePointer<SynthButton>;
+using ComboPtr    = juce::Component::SafePointer<OpenGLComboBox>;
+using StatePtr    = juce::Component::SafePointer<StateModulatedComponent>;
 class ModulationDestination : public juce::Component {
 public:
     ModulationDestination(SynthSlider *source) :  margin_(0), index_(0),
@@ -165,8 +168,8 @@ public:
         float height = getHeight();
 
         if (!rectangle_ && rotary_) {
-            float offset = std::get<SynthSlider*>(destination)->findValue(Skin::kKnobOffset);
-            float rotary_width = size_multiple_ *std::get<SynthSlider*>(destination)->findValue(Skin::kKnobModMeterArcSize);
+            float offset = std::get<SliderPtr>(destination)->findValue(Skin::kKnobOffset);
+            float rotary_width = size_multiple_ *std::get<SliderPtr>(destination)->findValue(Skin::kKnobModMeterArcSize);
             float x = (width - rotary_width) / 2.0f;
             float y = offset + (height - rotary_width) / 2.0f;
             return juce::Rectangle<float>(x, y, rotary_width, rotary_width);
@@ -175,7 +178,7 @@ public:
         if (rectangle_)
             return getLocalBounds().toFloat();
 
-        if (auto* slider = std::get_if<SynthSlider*>(&destination)) {
+        if (auto* slider = std::get_if<SliderPtr>(&destination)) {
             if (*slider != nullptr) {
                 if ((*slider)->getSliderStyle() == juce::Slider::LinearBar)
                 {
@@ -203,16 +206,16 @@ public:
     void setIndex(int index) { index_ = index; }
 
     bool hasExtraModulationTarget() {
-        return std::holds_alternative<SynthSlider*>(destination) && std::get<SynthSlider*>(destination)->getExtraModulationTarget() != nullptr;
+        return std::holds_alternative<SliderPtr>(destination) && std::get<SliderPtr>(destination)->getExtraModulationTarget() != nullptr;
     }
 
     bool isRotary() { return !rectangle_ && rotary_; }
     bool isRectangle() { return rectangle_; }
-    bool isStateModulated() { return std::holds_alternative<StateModulatedComponent*>(destination) || std::holds_alternative<OpenGLComboBox*>(destination); }
+    bool isStateModulated() { return std::holds_alternative<StatePtr>(destination) || std::holds_alternative<ComboPtr>(destination); }
 
     bool isActive() { return active_; }
     int getIndex() { return index_; }
-    std::variant<SynthSlider*, SynthButton*, OpenGLComboBox*, StateModulatedComponent*> destination;
+    std::variant<juce::Component::SafePointer<SynthSlider>, juce::Component::SafePointer<SynthButton>, juce::Component::SafePointer<OpenGLComboBox>, juce::Component::SafePointer<StateModulatedComponent>> destination;
 
 private:
     juce::Component *viewport_container_;
@@ -1370,9 +1373,9 @@ void ModulationManager::setDestinationQuadBounds(ModulationDestination *destinat
 
     float offset = destination->isActive() ? -2.0f : 0.0f;
     juce::Viewport *viewport;
-    std::visit([&](auto* ptr)
+    std::visit([&]<typename T0>(const T0& ptr)
  {
-     using T = std::decay_t<decltype(ptr)>;
+     using T = std::decay_t<T0>;
 
      DBG("destination holds: " << typeid(T).name());
 
@@ -1423,19 +1426,23 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
          ModulationDestination* destination = destination_lookup_[name];
          std::string source_name = current_modulator_->getComponentID().toStdString();
 
-         std::visit([&](auto ptr)
+         std::visit([&]<typename T0>(const T0& ptr)
          {
-             using T = std::decay_t<decltype(ptr)>;
+             using T = std::decay_t<T0>;
 
              if (ptr == nullptr)
                  return;
 
-             if constexpr (std::is_same_v<T, SynthSlider*> )
+             if constexpr (std::is_same_v<T, SliderPtr> )
              {
                  if (source_name.contains("state"))
                      return;
                  if (getConnection(source_name, name) == nullptr)
                  {
+                     // if (auto sp = std::get_if<SliderPtr>(&destination)) {
+                     //     if (sp->get() == nullptr) return; // component gone
+                     //     auto* slider = sp->get();
+                     // }
                      float percent = ptr->valueToProportionOfLength(ptr->getValue());
                      float modulation_amount = 1.0f - percent;
                      if (bipolar)
@@ -1472,7 +1479,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                      modulationsChanged(name);
                  }
              }
-             else if constexpr (std::is_same_v<T, SynthButton*>)
+             else if constexpr (std::is_same_v<T, ButtonPtr>)
              {
                  if (!source_name.contains("state"))
                      return;
@@ -1488,7 +1495,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                      modulationsChanged(name);
                  }
              }
-             else if constexpr (std::is_same_v<T, StateModulatedComponent*> )
+             else if constexpr (std::is_same_v<T, StatePtr> )
 
              {
                  if (!source_name.contains("state"))
@@ -1506,7 +1513,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                      modulationsChanged(name);
                  }
              }
-             else if constexpr (std::is_same_v<T, OpenGLComboBox*>)
+             else if constexpr (std::is_same_v<T, ComboPtr>)
              {
                  if (!source_name.contains("state"))
                      return;
@@ -1535,18 +1542,25 @@ void ModulationManager::setTemporaryModulationBipolar(juce::Component *component
     std::string source_name = current_modulator_->getComponentID().toStdString();
     std::string name = component->getComponentID().toStdString();
     ModulationDestination *destination = destination_lookup_[name];
-    SynthSlider *slider =std::get<SynthSlider*>( destination->destination);
+    // SynthSlider *slider =std::get<SynthSlider*>( destination->destination);
+    if (auto sp = std::get_if<SliderPtr>(&destination->destination)) {
+        if (sp->getComponent() == nullptr) return; // component gone
+        auto* slider = sp->getComponent();
+        const float percent = slider->valueToProportionOfLength(slider->getValue());
+        float modulation_amount = 1.0f - percent;
+        if (bipolar)
+            modulation_amount = std::min(modulation_amount, percent) * 2.0f;
+        modulation_amount = std::max(modulation_amount, kDefaultModulationRatio);
+        int index = getModulationIndex(source_name, name);
+        setModulationValues(source_name, name, modulation_amount, bipolar, false, false);
+        temporarily_set_bipolar_ = bipolar;
+        showModulationAmountOverlay(selected_modulation_sliders_[index].get());
+    }
 
-    float percent = slider->valueToProportionOfLength(slider->getValue());
-    float modulation_amount = 1.0f - percent;
-    if (bipolar)
-        modulation_amount = std::min(modulation_amount, percent) * 2.0f;
-    modulation_amount = std::max(modulation_amount, kDefaultModulationRatio);
 
-    int index = getModulationIndex(source_name, name);
-    setModulationValues(source_name, name, modulation_amount, bipolar, false, false);
-    temporarily_set_bipolar_ = bipolar;
-    showModulationAmountOverlay(selected_modulation_sliders_[index].get());
+
+
+
 }
 
 void ModulationManager::clearTemporaryModulation() {
@@ -2136,7 +2150,7 @@ void ModulationManager::modulationsChanged(const std::string &destination_str) {
     }
     else
     {
-        std::visit([this](auto* ptr)
+        std::visit([this](const auto& ptr)
         {
             if (ptr != nullptr)
                 makeModulationsVisible(ptr, ptr->isShowing());
