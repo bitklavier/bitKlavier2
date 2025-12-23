@@ -75,6 +75,14 @@
                               dest="fe5d66b8269645abb148e105ec796a84_accents" accents_vals="1 0.5 1.4 1.6 1 1"
                               accents_size="6" accents_states="true false true false false false false true true true true false"
                               accents_states_size="12"/>
+        <ModulationConnection uuid="f3405d10c4e141848da284c4da5238f5" isState="1" src="793a6fb611c6492a95d05c76f9f4ef68_state-9036f2fb8be448ee9b78737f0340810c_mod"
+                              dest="fe5d66b8269645abb148e105ec796a84_transpositions" transpositions_vals="0.000000/-6.187000/-3.589000/0.270001/2.986001/"
+                              transpositions_size="5" transpositions_states="true false false false false false true true true true false false"
+                              transpositions_states_size="12"/>
+        <ModulationConnection uuid="42958647cbbc4804b553a517904e455f" isState="1" src="793a6fb611c6492a95d05c76f9f4ef68_state-9036f2fb8be448ee9b78737f0340810c_mod"
+                              dest="fe5d66b8269645abb148e105ec796a84_accents" accents_vals="1 0.7 0.4 0.4"
+                              accents_size="4" accents_states="true false true true true false false false false false false false"
+                              accents_states_size="12"/>
       </MODCONNECTION>
     </MODCONNECTIONS>
   </PIANO>
