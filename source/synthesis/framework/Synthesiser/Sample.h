@@ -546,6 +546,11 @@ public:
         return sample.get();
     }
 
+    /**
+     * this actually sets a range for the full sample, from the beginning of the sample to the end
+     * - it does NOT set the loop points for the loop markers in a sustaining SFZ sample
+     * @param value
+     */
     void setLoopPointsInSeconds (juce::Range<double> value)
     {
         loopPoints = sample == nullptr ? value : juce::Range<double> (0, sample->getLength() / sample->getSampleRate()).constrainRange (value);
@@ -820,6 +825,7 @@ public:
     void setTargetSustainTime(float sustainTimeMS)
     {
         targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
+        DBG("targetSustainTime_samples set to (sec) " << targetSustainTime_samples / getSampleRate());
     }
 
     void setGain(float g)
@@ -915,11 +921,19 @@ public:
          BKSynthesiserSound * _sound,
          int currentPitchWheelPosition,
          float startTimeMS = 0.f,
-         Direction startDirection = Direction::forward) {
+         Direction startDirection = Direction::forward)
+    {
         auto* sampler = static_cast<BKSamplerSound<T>*>(_sound->getSamplerSoundBase());
         jassert(sampler != nullptr);
-        myStartNote(midiNoteNumber,velocity,transposition,tune_transpositions,sampler,
-            currentPitchWheelPosition,startTimeMS,startDirection);
+        myStartNote(
+            midiNoteNumber,
+            velocity,
+            transposition,
+            tune_transpositions,
+            sampler,
+            currentPitchWheelPosition,
+            startTimeMS,
+            startDirection);
     }
 
     void myStartNote (int midiNoteNumber,
@@ -947,6 +961,9 @@ public:
          */
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
+        /*
+         * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
+         */
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
         loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
@@ -962,9 +979,9 @@ public:
             currentSamplePos *= sampleIncrement.getTargetValue();
 
         tailOff = 0.0;
-
         currentSustainTime_samples = 0;
         ampEnv.noteOn();
+
         if constexpr (std::is_same_v<T, SFZRegion>)
         {
             auto& region = samplerSound->getSample()->getSourceRegion();
@@ -983,7 +1000,12 @@ public:
 
             currentSamplePos += startTimeMS * getSampleRate() * .001;
             if (currentDirection == Direction::backward)
-                currentSamplePos *= sampleIncrement.getTargetValue();
+            {
+                // since these soundfonts might be all stored in one file, we need to remove the offset before scaling by sampleIncrement
+                auto currentSamplePos_noOffset = currentSamplePos - currentSampleStart;
+                currentSamplePos_noOffset *= sampleIncrement.getTargetValue();
+                currentSamplePos = currentSamplePos_noOffset + currentSampleStart;
+            }
 
             //if (region.end > 0 && region.end < sample_end)
                 //sample_end = region.end + 1;
@@ -1016,6 +1038,24 @@ public:
                 {
                     loop_start = region.sample->loop_start;
                     loop_end   = region.sample->loop_end;
+                }
+            }
+
+            if (loop_mode == SFZRegion::LoopMode::loop_continuous)
+            {
+                if (loop_start < loop_end)
+                {
+                    DBG("playing sustained sample sample, "
+                        "loop_start: " << (loop_start - currentSampleStart) / currentSampleRate <<
+                        " loop_end: " << (loop_end - currentSampleStart) / currentSampleRate <<
+                        " currentSamplePos: " << (currentSamplePos - currentSampleStart) / currentSampleRate);
+
+                    if (currentDirection == Direction::backward)
+                    {
+                        if (currentSamplePos > loop_end) currentSamplePos = loop_end;
+                        loopingForSustain = true;
+                        DBG("changing currentSamplePos to " << (currentSamplePos - currentSampleStart) / currentSampleRate);
+                    }
                 }
             }
 
@@ -1053,7 +1093,7 @@ public:
             tailOff = 1.0;
         else
             stopNote();
-            */
+        */
     }
 
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
@@ -1093,9 +1133,13 @@ private:
         // otherwise just return ET
         else sampleIncrement.setTargetValue (mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
+        /*
+         * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
+         */
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
         loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
         loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
+
         auto outL = outputBuffer.getWritePointer(0, startSample);
         if (outL == nullptr)
             return;
@@ -1112,8 +1156,6 @@ private:
         }
         else {
             auto [inL, inR] = samplerSound->getSample()->getBuffer();
-
-
             while (--numSamples >= 0 && renderNextSample(inL, inR, outL, outR, writePos))
                 writePos += 1;
         }
@@ -1134,17 +1176,18 @@ private:
                            Element* outR,
                            size_t writePos)
     {
-        auto currentLoopBegin  = loopBegin.getNextValue();
-        auto currentLoopEnd    = loopEnd.getNextValue();
-        auto currentIncrement  = sampleIncrement.getNextValue();
+        /*
+         * loopBegin/End are actually sample start and end points
+         */
+        auto current_sample_begin  = loopBegin.getNextValue();
+        auto current_sample_end    = loopEnd.getNextValue();
+        auto currentIncrement    = sampleIncrement.getNextValue();
 
-        if (currentDirection == Direction::backward
-            //&& currentSamplePos > samplerSound->getSample()->getLength())
-            && currentSamplePos > currentSampleEnd)
+        // write 0s if we are starting beyond the end of the sample
+        // - unless this is a sustained looping sample, in which case loop_end will be > loop_start, and this will be ignored
+        if (currentDirection == Direction::backward && currentSamplePos > currentSampleEnd && loop_end <= loop_start)
         {
-            std::tie (currentSamplePos, currentDirection)
-                = getNextState (currentIncrement, currentLoopBegin, currentLoopEnd);
-
+            std::tie (currentSamplePos, currentDirection) = getNextState (currentIncrement, currentSampleStart, currentSampleEnd);
             outL[writePos] += (Element) 0;
             if (outR) outR[writePos] += (Element) 0;
             return true;
@@ -1163,6 +1206,7 @@ private:
         const Element ia  = (Element) (1.0f - a);
 
         // handle looping wrap for interpolation (use your loop_start/loop_end ints)
+        // - do the same for backwards playing samples?
         if (loop_start < loop_end && nextPos > loop_end)
             nextPos = loop_start;
 
@@ -1174,13 +1218,12 @@ private:
                     : l;
 
         // Apply SFZ ampeg (your existing state vars)
-        float ampeg_gain  = ampeg.level;
-        float ampeg_slope = ampeg.slope;
-        long  samples_until_next_amp_segment = ampeg.samples_until_next_segment;
-        bool  amp_segment_is_exponential     = ampeg.segment_is_exponential;
-
-        l *= ampeg_gain;
-        r *= ampeg_gain;
+        // float ampeg_gain  = ampeg.level;
+        // float ampeg_slope = ampeg.slope;
+        // long  samples_until_next_amp_segment = ampeg.samples_until_next_segment;
+        // bool  amp_segment_is_exponential     = ampeg.segment_is_exponential;
+        // l *= ampeg_gain;
+        // r *= ampeg_gain;
 
         m_Buffer.setSample (0, 0, l);
         m_Buffer.setSample (1, 0, r);
@@ -1199,43 +1242,76 @@ private:
             outL[writePos] += (m_Buffer.getSample (0, 0) + m_Buffer.getSample (1, 0)) * 0.5f;
         }
 
-        std::tie (currentSamplePos, currentDirection)
-            = getNextState (currentIncrement, currentLoopBegin, currentLoopEnd);
+        std::tie (currentSamplePos, currentDirection) = getNextState (currentIncrement, currentSampleStart, currentSampleEnd);
 
-        // Loop maintenance
-        if (loop_start < loop_end && currentSamplePos > loop_end)
+        /*
+         * loop maintenance for samples with loop-point markers, for sustained sample libraries
+         * - this will only be true if loop_end is > loop_start, otherwise we have a one-shot sample
+         */
+        if (loop_start < loop_end)
         {
-            currentSamplePos = loop_start;
-            num_loops += 1;
+            if (currentDirection == Direction::forward && currentSamplePos > loop_end)
+            {
+                currentSamplePos = loop_start; // -= loop_length?
+                num_loops += 1;
+            }
+
+            if (currentDirection == Direction::backward)
+            {
+                if (currentSamplePos < loop_start && // we have moved to before the loop start point
+                (targetSustainTime_samples - currentSustainTime_samples) > loop_start - currentSampleStart && // we have more than enough sustain time to keep looping
+                loopingForSustain) // we are in the initial looping for sustain mode from when the sample started
+                {
+                    /* checking if currentSustainTime_samples > loop_start ensures that we won't get stuck here
+                     * - note that this is all setup to work for Nostalgic/Synchronic reverse notes that have fixed durations on noteOn
+                     *      and is not generalized for backwards play in other circumstances
+                     */
+                    currentSamplePos = loop_end;
+                    num_loops += 1;
+                }
+
+                // if we reach this point without resetting currentSamplePos to loop_end, then we have left the looping phase and are playing back to the beginning of the sample
+                if (currentSamplePos < loop_start && loopingForSustain)
+                {
+                    loopingForSustain = false;
+                }
+            }
         }
 
+        /*
+         * I think that I don't want this fading-sustained-notes stuff from SVZ. Commenting out, at least for now
+         */
         // Update ampeg (restore your exact logic)
-        if (amp_segment_is_exponential) ampeg_gain *= ampeg_slope;
-        else                           ampeg_gain += ampeg_slope;
-
-        if (--samples_until_next_amp_segment < 0)
-        {
-            ampeg.level = ampeg_gain;
-            ampeg.next_segment();
-            ampeg_gain  = ampeg.level;
-            ampeg_slope = ampeg.slope;
-            samples_until_next_amp_segment = ampeg.samples_until_next_segment;
-            amp_segment_is_exponential     = ampeg.segment_is_exponential;
-        }
-
-        ampeg.level = ampeg_gain;
-        ampeg.samples_until_next_segment = samples_until_next_amp_segment;
+        // if (amp_segment_is_exponential) ampeg_gain *= ampeg_slope;
+        // else                           ampeg_gain += ampeg_slope;
+        //
+        // if (--samples_until_next_amp_segment < 0)
+        // {
+        //     ampeg.level = ampeg_gain;
+        //     ampeg.next_segment();
+        //     ampeg_gain  = ampeg.level;
+        //     ampeg_slope = ampeg.slope;
+        //     samples_until_next_amp_segment = ampeg.samples_until_next_segment;
+        //     amp_segment_is_exponential     = ampeg.segment_is_exponential;
+        // }
+        //
+        // ampeg.level = ampeg_gain;
+        // ampeg.samples_until_next_segment = samples_until_next_amp_segment;
 
         //if (currentSamplePos > samplerSound->getSample()->getLength())
         if (currentSamplePos > currentSampleEnd || currentSamplePos < currentSampleStart)
         {
+            //DBG("stopping note");
             stopNote();
             return false;
         }
 
         currentSustainTime_samples++;
         if (targetSustainTime_samples > 0 && currentSustainTime_samples > targetSustainTime_samples)
+        {
+            //DBG("stopping note 2");
             stopNote (64, true);
+        }
 
         return true;
     }
@@ -1467,14 +1543,15 @@ private:
     juce::SmoothedValue<double> loopBegin;
     juce::SmoothedValue<double> loopEnd;
     juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions
-    float loop_end;
-    float loop_start;
+    double loop_end;
+    double loop_start;
     float num_loops;
+    bool loopingForSustain = false;
     SFZEG ampeg;
     double currentSamplePos { 0 };
     double currentSampleEnd { 0 };
     double currentSampleStart { 0 };
-    double targetSustainTime_samples { 0 };
+    //double targetSustainTime_samples { 0 };
     double tailOff { 0 };
     Direction currentDirection{ Direction::forward };
     juce::uint64 currentSustainTime_samples = 0;
