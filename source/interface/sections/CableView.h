@@ -96,6 +96,8 @@ public:
     void removeAllGuiListeners();
     void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
 private:
+    OpenGlComponent* objectToDelete = nullptr;
+
     juce::CriticalSection open_gl_critical_section_;
     bitklavier::ConnectionList* connection_list;
     //    void timerCallback() override;

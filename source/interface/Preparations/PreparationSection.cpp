@@ -16,7 +16,7 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
     pluginID(node), undo(um)
 {
     //_parent = findParentComponentOfClass<SynthGuiInterface>();
-    setInterceptsMouseClicks(true, false);
+    // setInterceptsMouseClicks(true, false);
     //make this undoable
     curr_point.referTo(state,IDs::x_y,&undo);
     // x.referTo(state, IDs::x, &undo);
@@ -198,10 +198,10 @@ void PreparationSection::setPortInfo() {
 
 void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
+    juce::Logger::writeToLog ("prep mousedown");
+
     //todo investigate need for this only in release build
-    if (e.getNumberOfClicks() == 2) {
-        mouseDoubleClick(e);
-    }
+
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {

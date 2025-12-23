@@ -66,23 +66,24 @@ BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem")
     layer_2_ = paths.getUnchecked(1);
     if (paths.size() > 2)
         layer_3_ = paths.getUnchecked(2);
+    // setInterceptsMouseClicks (false, false);
 }
 
 
-//void BKItem::mouseDown(const juce::MouseEvent& e)
-//{
-//    getParentComponent()->mouseDown(e);
-//}
-//
-//void BKItem::mouseDrag(const juce::MouseEvent& e)
-//{
-//    getParentComponent()->mouseDrag(e);
-//}
-//
-//void BKItem::mouseDoubleClick(const juce::MouseEvent& e)
-//{
-//    getParentComponent()->mouseDoubleClick(e);
-//}
-//void BKItem::mouseUp(const juce::MouseEvent &e) {
-//    getParentComponent()->mouseUp(e);
-//}
+void BKItem::mouseDown(const juce::MouseEvent& e)
+{
+    getParentComponent()->mouseDown(e);
+}
+
+void BKItem::mouseDrag(const juce::MouseEvent& e)
+{
+    getParentComponent()->mouseDrag(e);
+}
+
+void BKItem::mouseDoubleClick(const juce::MouseEvent& e)
+{juce::Logger::writeToLog ("bkitemdoubelclick");
+    getParentComponent()->mouseDoubleClick(e);
+}
+void BKItem::mouseUp(const juce::MouseEvent &e) {
+    getParentComponent()->mouseUp(e);
+}

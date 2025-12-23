@@ -139,7 +139,6 @@ public:
             editor_->setFocus();
         }
         SynthEditor* editor_;
-
     private:
         void loadFileAsyncUpdate()
         {
@@ -197,6 +196,22 @@ public:
     const juce::String getApplicationName() override { return "bitklavier2"; } //ProjectInfo::projectName; }
     const juce::String getApplicationVersion() override { return "0.0.1"; }
     bool moreThanOneInstanceAllowed() override { return true; }
+    void initLogger()
+    {
+        auto logDir = juce::File::getSpecialLocation (
+            juce::File::userDocumentsDirectory);
+
+        auto logFile = logDir.getChildFile ("bitKlavier_release.log");
+
+        logger.reset (juce::FileLogger::createDefaultAppLogger (
+            logDir.getFullPathName(),
+            logFile.getFileName(),
+            "=== app start ==="));
+
+        juce::Logger::setCurrentLogger (logger.get());
+    }
+
+
 
     void initialise (const juce::String& command_line) override
     {
@@ -257,6 +272,7 @@ public:
 
                 last_arg_was_option = arg[0] == '-' && arg != "--headless";
             }
+            initLogger();
         }
     }
 
@@ -288,7 +304,8 @@ public:
         loadFromCommandLine (command_line);
     }
 
-private:
+    private:
+        std::unique_ptr<juce::FileLogger> logger;
     void updateContent()
     {
         //      auto* content = new MainContentComponent (*this);

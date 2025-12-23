@@ -1139,18 +1139,21 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, cons
     SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
     if(_parent == nullptr)
         return;
-    if(prep_view != nullptr )
-    {
-
-        prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper());
-        juce::ScopedLock glock{*_parent->getOpenGlCriticalSection()};
-
-        removeSubSection(prep_view.get());
+    if (prep_view != nullptr) {
+        return;
     }
+    // if(prep_view != nullptr )
+    // {
+    //
+    //     prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper());
+    //     juce::ScopedLock glock{*_parent->getOpenGlCriticalSection()};
+    //
+    //     removeSubSection(prep_view.get());
+    //     prep_view.reset(nullptr);
+    // }
     {
         juce::ScopedLock glock{*_parent->getOpenGlCriticalSection()};
 
-        prep_view.reset();
         prep_view = std::move(prep_pop);
         addSubSection(prep_view.get());
     }
@@ -1186,12 +1189,17 @@ void PreparationPopup::reset() {
 //            resized();
 //            repaintPrepBackground();
 //        }
-
+        DBG("delete and set prep_view to nullptr");
         prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
-        juce::ScopedLock lock(*parent->getOpenGlCriticalSection());
-        removeSubSection(prep_view.get());
-        //do not use ->reset that is a synthsection function. i want to reset the actual ptr
-        prep_view.reset();
+        {
+            juce::ScopedLock lock(*parent->getOpenGlCriticalSection());
+            removeSubSection(prep_view.get());
+        }
+        // //do not use ->reset that is a synthsection function. i want to reset the actual ptr
+        // parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {
+        // },true);
+        prep_view.reset(nullptr);
+
         setVisible(false);
     }
     parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
@@ -1202,7 +1210,7 @@ void PreparationPopup::repaintPrepBackground() {
         background_image_ = juce::Image(juce::Image::RGB, getWidth(),getHeight(), true);
         juce::Graphics g(background_image_);
     paintContainer(g);
-        if (prep_view.get() != nullptr)
+        if (prep_view != nullptr)
             paintChildBackground(g, prep_view.get());
 
         background_->updateBackgroundImage(background_image_);

@@ -67,10 +67,11 @@ float RampModulatorProcessor::getNextSample()
 
 void RampModulatorProcessor::triggerModulation()
 {
-    //DBG("RampModulatorProcessor::triggerModulation(), time = " << *_state.params.time);
+    DBG("RampModulatorProcessor::triggerModulation(), time = " << *_state.params.time);
     target_ = 1.;
     state_ = 1;
     setTime(*_state.params.time);
+    ModulatorBase::triggerModulation();
 }
 
 void RampModulatorProcessor::triggerReset()

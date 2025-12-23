@@ -835,13 +835,16 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     connection->processor = connection->parent_processor->getModulatorBase (internal_modulator_uuid);
     connection->parent_processor->addModulationConnection (connection);
 
+    connection->processor->addListener (connection);
 
 
     auto param_index =  parameter_tree.getParent().indexOf(parameter_tree);// parameter_tree.getProperty (IDs::channel, -1);
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, connection->modulation_output_bus_index); //1 is mod
     auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index);
-    if(connection->isContinuousMod)
-        dest_index  =  dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index * 2);
+    if(connection->isContinuousMod) {
+        auto numInputChannels = dest_node->getProcessor()->getChannelCountOfBus(true,1) / 2;
+        dest_index  =  dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index + numInputChannels);
+    }
     //do the final backend adding
     if (!parameter_tree.isValid() || !mod_src.isValid())
     {
@@ -850,6 +853,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     }
     else if (mod_connections_.count (connection) == 0)
     {
+        connection->setDestParamIndex(getParamOffsetBank().getIndexIfExists(connection->destination_name));
         mod_connections_.push_back (connection);
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
         um.beginNewTransaction();
@@ -903,6 +907,7 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
     {
         connection = getModulationBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
         connection->setStateValueTree (v);
+
     }
     if (connection)
         connectModulation (connection);

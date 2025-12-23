@@ -79,7 +79,6 @@ class ModulationProcessor;
             {
                 state.getParent().removeChild(state,nullptr);
             }
-            // destParamIndex
         }
 
         float getCurrentBaseValue()
@@ -264,7 +263,9 @@ class ModulationProcessor;
         int getDestParamIndex() {
             return destParamIndex;
         }
-
+        int setDestParamIndex(int index) {
+            destParamIndex = index;
+        }
        void updateScalingAudioThread(float knobValueParamUnits) noexcept {
             // Don’t change once the mod has started
             if (scalingLocked_.load (std::memory_order_acquire))

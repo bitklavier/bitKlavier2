@@ -304,7 +304,6 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     bool preset_selector_half_width_;
     std::shared_ptr<OffOverlay> off_overlay_;
     Skin::SectionOverride skin_override_;
-    OpenGlComponent* objectToDelete;
     float size_ratio_;
     bool active_;
     bool sideways_heading_;
