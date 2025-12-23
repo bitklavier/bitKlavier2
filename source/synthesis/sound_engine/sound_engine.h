@@ -144,11 +144,42 @@ namespace bitklavier
             return processorGraph->getNodeForId (id);
         }
 
+        static void dbgPrintConnectionsForNode (const juce::AudioProcessorGraph& graph,
+                                        juce::AudioProcessorGraph::NodeID nodeID)
+        {
+            const auto connections = graph.getConnections();
+
+            DBG ("=== Connections for node " +  juce::String(nodeID.uid ) + " ===");
+
+            for (const auto& c : connections)
+            {
+                const bool isSource = (c.source.nodeID == nodeID);
+                const bool isDest   = (c.destination.nodeID == nodeID);
+
+                if (!isSource && !isDest)
+                    continue;
+
+                auto chanToString = [] (juce::AudioProcessorGraph::NodeAndChannel nc)
+                {
+                    if (nc.channelIndex == juce::AudioProcessorGraph::midiChannelIndex)
+                        return juce::String ("MIDI");
+
+                    return juce::String ("ch ") + juce::String (nc.channelIndex);
+                };
+
+                DBG (juce::String (isSource ? "OUT " : "IN  ")
+                     + " node " + juce::String ( c.source.nodeID.uid)
+                     + " [" + chanToString (c.source) + "]  ->  "
+                     + "node " + juce::String ( c.destination.nodeID.uid)
+                     + " [" + chanToString (c.destination) + "]");
+            }
+        }
         bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
+
             if(processorGraph == nullptr)
                 return false;
-
+            dbgPrintConnectionsForNode(*processorGraph, connection.source.nodeID);
             if(connection.source.channelIndex == 0 or connection.source.channelIndex == 1
                 && connection.destination.nodeID != audioOutputNode->nodeID) {
                 processorGraph->removeConnection({{connection.source.nodeID, 0},{audioOutputNode->nodeID,0}});

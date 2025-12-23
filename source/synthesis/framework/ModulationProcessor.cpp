@@ -30,7 +30,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     if (snap.mods.empty())
     {
-        buffer.clear();
+        // buffer.clear();
         return;
     }
     auto reset_in = getBusBuffer(buffer,true,2);
@@ -50,7 +50,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     }
 
-    buffer.clear();
+    // buffer.clear();
 
     for (auto msg : midiMessages)
     {

@@ -1498,7 +1498,6 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                  }
              }
              else if constexpr (std::is_same_v<T, StatePtr> )
-
              {
                  if (!source_name.contains("state"))
                      return;

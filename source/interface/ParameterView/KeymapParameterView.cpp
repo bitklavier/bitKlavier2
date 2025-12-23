@@ -4,23 +4,22 @@
 #include "KeymapParameterView.h"
 #include "FullInterface.h"
 
-KeymapParameterView::KeymapParameterView (
-    KeymapProcessor& _proc,
-    KeymapParams& kparams,
+KeymapParameterView::KeymapParameterView(
+    KeymapProcessor &_proc,
+    KeymapParams &kparams,
     juce::String name,
-    OpenGlWrapper *open_gl) : proc(_proc), params(kparams), SynthSection("")
- {
-     setName("keymap");
-     setLookAndFeel(DefaultLookAndFeel::instance());
-     setComponentID(name);
+    OpenGlWrapper *open_gl) : proc(_proc), params(kparams), SynthSection("") {
+    setName("keymap");
+    setLookAndFeel(DefaultLookAndFeel::instance());
+    setComponentID(name);
 
     setSkinOverride(Skin::kDirect);
 
     prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
     addOpenGlComponent(prepTitle);
     prepTitle->setJustification(juce::Justification::centredLeft);
-    prepTitle->setFontType (PlainTextComponent::kTitle);
-    prepTitle->setRotation (-90);
+    prepTitle->setFontType(PlainTextComponent::kTitle);
+    prepTitle->setRotation(-90);
 
     velocityInLabel = std::make_shared<PlainTextComponent>("velocityIn", "VELOCITY  IN");
     addOpenGlComponent(velocityInLabel);
@@ -30,85 +29,147 @@ KeymapParameterView::KeymapParameterView (
     velocityOutLabel = std::make_shared<PlainTextComponent>("velocityOut", "VELOCITY  OUT");
     addOpenGlComponent(velocityOutLabel);
     velocityOutLabel->setJustification(juce::Justification::centredLeft);
-    velocityOutLabel->setRotation (-90);
+    velocityOutLabel->setRotation(-90);
 
-     auto& listeners = proc.getState().getParameterListeners();
+    auto &listeners = proc.getState().getParameterListeners();
 
-     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params.keyboard_state);
-     addStateModulatedComponent(keyboard_component_.get());
-     addAndMakeVisible(keyboard_component_.get());
+    keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params.keyboard_state);
+    addStateModulatedComponent(keyboard_component_.get());
+    addAndMakeVisible(keyboard_component_.get());
 
-     velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
-     velocityMinMaxSlider->setComponentID ("keymap_velocity_min_max");
-     addStateModulatedComponent (velocityMinMaxSlider.get());
+    velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
+    velocityMinMaxSlider->setComponentID("keymap_velocity_min_max");
+    addStateModulatedComponent(velocityMinMaxSlider.get());
 
-     // knobs
-     asymmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_asymWarp->paramID,params.velocityCurve_asymWarp->getModParam());
-     addSlider(asymmetricalWarp_knob.get());
-     asymmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-     asymmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
-     asymmetricalWarp_knob->setShowPopupOnHover(true);
-     asymmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_asymWarp, listeners, *asymmetricalWarp_knob, nullptr);
-     asymmetricalWarp_knob->addAttachment(asymmetricalWarp_knob_attach.get());
+    // knobs
+    asymmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_asymWarp->paramID,
+                                                          params.velocityCurve_asymWarp->getModParam());
+    addSlider(asymmetricalWarp_knob.get());
+    asymmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    asymmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
+    asymmetricalWarp_knob->setShowPopupOnHover(true);
+    asymmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(
+        params.velocityCurve_asymWarp, listeners, *asymmetricalWarp_knob, nullptr);
+    asymmetricalWarp_knob->addAttachment(asymmetricalWarp_knob_attach.get());
 
-     symmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_symWarp->paramID,params.velocityCurve_symWarp->getModParam());
-     addSlider(symmetricalWarp_knob.get());
-     symmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-     symmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
-     symmetricalWarp_knob->setShowPopupOnHover(true);
-     symmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_symWarp, listeners, *symmetricalWarp_knob, nullptr);
-     symmetricalWarp_knob->addAttachment(symmetricalWarp_knob_attach.get());
+    symmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_symWarp->paramID,
+                                                         params.velocityCurve_symWarp->getModParam());
+    addSlider(symmetricalWarp_knob.get());
+    symmetricalWarp_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    symmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
+    symmetricalWarp_knob->setShowPopupOnHover(true);
+    symmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(
+        params.velocityCurve_symWarp, listeners, *symmetricalWarp_knob, nullptr);
+    symmetricalWarp_knob->addAttachment(symmetricalWarp_knob_attach.get());
 
-     scale_knob = std::make_unique<SynthSlider>(params.velocityCurve_scale->paramID,params.velocityCurve_scale->getModParam());
-     addSlider(scale_knob.get());
-     scale_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-     scale_knob->setPopupPlacement(juce::BubbleComponent::below);
-     scale_knob->setShowPopupOnHover(true);
-     scale_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_scale, listeners, *scale_knob, nullptr);
-     scale_knob->addAttachment(scale_knob_attach.get());
+    scale_knob = std::make_unique<SynthSlider>(params.velocityCurve_scale->paramID,
+                                               params.velocityCurve_scale->getModParam());
+    addSlider(scale_knob.get());
+    scale_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    scale_knob->setPopupPlacement(juce::BubbleComponent::below);
+    scale_knob->setShowPopupOnHover(true);
+    scale_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_scale, listeners, *scale_knob,
+                                                                    nullptr);
+    scale_knob->addAttachment(scale_knob_attach.get());
 
-     offset_knob = std::make_unique<SynthSlider>(params.velocityCurve_offset->paramID,params.velocityCurve_offset->getModParam());
-     addSlider(offset_knob.get());
-     offset_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-     offset_knob->setPopupPlacement(juce::BubbleComponent::below);
-     offset_knob->setShowPopupOnHover(true);
-     offset_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_offset, listeners, *offset_knob, nullptr);
-     offset_knob->addAttachment(offset_knob_attach.get());
+    offset_knob = std::make_unique<SynthSlider>(params.velocityCurve_offset->paramID,
+                                                params.velocityCurve_offset->getModParam());
+    addSlider(offset_knob.get());
+    offset_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    offset_knob->setPopupPlacement(juce::BubbleComponent::below);
+    offset_knob->setShowPopupOnHover(true);
+    offset_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_offset, listeners,
+                                                                     *offset_knob, nullptr);
+    offset_knob->addAttachment(offset_knob_attach.get());
 
-     invert = std::make_unique<SynthButton>(params.velocityCurve_invert->paramID);
-     invert_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.velocityCurve_invert, listeners, *invert, nullptr);
-     invert->setComponentID(params.velocityCurve_invert->paramID);
-     addSynthButton(invert.get(), true, true);
-     invert->setText("invert?");
+    invert = std::make_unique<SynthButton>(params.velocityCurve_invert->paramID);
+    invert_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.velocityCurve_invert, listeners, *invert,
+                                                                    nullptr);
+    invert->setComponentID(params.velocityCurve_invert->paramID);
+    addSynthButton(invert.get(), true, true);
+    invert->setText("invert?");
 
-    asymmetricalWarp_knob_label = std::make_shared<PlainTextComponent>(asymmetricalWarp_knob->getName(), params.velocityCurve_asymWarp->getName(20));
+    asymmetricalWarp_knob_label = std::make_shared<PlainTextComponent>(asymmetricalWarp_knob->getName(),
+                                                                       params.velocityCurve_asymWarp->getName(20));
     addOpenGlComponent(asymmetricalWarp_knob_label);
     asymmetricalWarp_knob_label->setJustification(juce::Justification::centred);
 
-    symmetricalWarp_knob_label = std::make_shared<PlainTextComponent>(symmetricalWarp_knob->getName(), params.velocityCurve_symWarp->getName(20));
+    symmetricalWarp_knob_label = std::make_shared<PlainTextComponent>(symmetricalWarp_knob->getName(),
+                                                                      params.velocityCurve_symWarp->getName(20));
     addOpenGlComponent(symmetricalWarp_knob_label);
     symmetricalWarp_knob_label->setJustification(juce::Justification::centred);
 
-    scale_knob_label = std::make_shared<PlainTextComponent>(scale_knob->getName(), params.velocityCurve_scale->getName(20));
+    scale_knob_label = std::make_shared<PlainTextComponent>(scale_knob->getName(),
+                                                            params.velocityCurve_scale->getName(20));
     addOpenGlComponent(scale_knob_label);
     scale_knob_label->setJustification(juce::Justification::centred);
 
-    offset_knob_label = std::make_shared<PlainTextComponent>(offset_knob->getName(), params.velocityCurve_offset->getName(20));
+    offset_knob_label = std::make_shared<PlainTextComponent>(offset_knob->getName(),
+                                                             params.velocityCurve_offset->getName(20));
     addOpenGlComponent(offset_knob_label);
     offset_knob_label->setJustification(juce::Justification::centred);
 
     velocityCurveControls = std::make_shared<OpenGL_LabeledBorder>("velocitycurveborder", "Velocity Curve Controls");
     addBorder(velocityCurveControls.get());
+    drawCalls += {
+        {
+            listeners.addParameterListener(
+                params.velocityCurve_invert,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this] {
+                    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+                    interface->getGui()->prep_popup->repaintPrepBackground();
+                })
+        },
+        {
+            listeners.addParameterListener(
+                params.velocityCurve_offset,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this] {
+                    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+                    interface->getGui()->prep_popup->repaintPrepBackground();
+                })
+        },
 
-     startTimer(50);
+        {
+            listeners.addParameterListener(
+                params.velocityCurve_scale,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this] {
+                    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+                    interface->getGui()->prep_popup->repaintPrepBackground();
+                })
+        },
+        {
+            listeners.addParameterListener(
+                params.velocityCurve_asymWarp,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this] {
+                    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+                    interface->getGui()->prep_popup->repaintPrepBackground();
+                })
+        },
+        {
+            listeners.addParameterListener(
+                params.velocityCurve_symWarp,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this] {
+                    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+                    interface->getGui()->prep_popup->repaintPrepBackground();
+                })
+        },
+    };
+
+    startTimer(50);
 }
 
-KeymapParameterView::~KeymapParameterView(){}
+KeymapParameterView::~KeymapParameterView() {
+    stopTimer();
+}
 
-void KeymapParameterView::resized()
-{
+void KeymapParameterView::resized() {
     const auto kTitleWidth = findValue(Skin::kTitleWidth);
-    juce::Rectangle<int> area (getLocalBounds());
+    juce::Rectangle<int> area(getLocalBounds());
 
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
@@ -117,16 +178,16 @@ void KeymapParameterView::resized()
     int labelsectionheight = findValue(Skin::kLabelHeight);
     auto knobLabelSize = findValue(Skin::kKnobLabelSizeSmall);
 
-    asymmetricalWarp_knob_label->setTextSize (knobLabelSize);
-    symmetricalWarp_knob_label->setTextSize (knobLabelSize);
-    scale_knob_label->setTextSize (knobLabelSize);
-    offset_knob_label->setTextSize (knobLabelSize);
-    velocityInLabel->setTextSize (knobLabelSize);
-    velocityOutLabel->setTextSize (knobLabelSize);
+    asymmetricalWarp_knob_label->setTextSize(knobLabelSize);
+    symmetricalWarp_knob_label->setTextSize(knobLabelSize);
+    scale_knob_label->setTextSize(knobLabelSize);
+    offset_knob_label->setTextSize(knobLabelSize);
+    velocityInLabel->setTextSize(knobLabelSize);
+    velocityOutLabel->setTextSize(knobLabelSize);
 
     juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(getTitleWidth());
     prepTitle->setBounds(titleArea);
-    prepTitle->setTextSize (findValue(Skin::kPrepTitleSize));
+    prepTitle->setTextSize(findValue(Skin::kPrepTitleSize));
 
     area.removeFromLeft(kTitleWidth);
     area.removeFromRight(kTitleWidth);
@@ -136,17 +197,17 @@ void KeymapParameterView::resized()
 
     area.removeFromBottom(smallpadding);
 
-    SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
+    SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent && midi_selector_ == nullptr) {
-        juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
+        juce::AudioDeviceManager *device_manager = parent->getAudioDeviceManager();
         if (device_manager) {
             midi_selector_ = std::make_unique<OpenGlMidiSelector>(proc.v);
             addAndMakeVisible(midi_selector_.get());
             addOpenGlComponent(midi_selector_->getImageComponent());
-            parent->getGui()->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext& context)
-                                               {
-                SynthGuiInterface* parent = this->findParentComponentOfClass<SynthGuiInterface>();
-                midi_selector_->getImageComponent()->init(parent->getGui()->open_gl_); },false);
+            parent->getGui()->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext &context) {
+                SynthGuiInterface *parent = this->findParentComponentOfClass<SynthGuiInterface>();
+                midi_selector_->getImageComponent()->init(parent->getGui()->open_gl_);
+            }, false);
         }
     }
 
@@ -154,7 +215,7 @@ void KeymapParameterView::resized()
         juce::Rectangle midiSelectorRect = area.removeFromLeft(200);
         midiSelectorRect.removeFromTop(20);
         midiSelectorRect.removeFromLeft(largepadding);
-        midi_selector_->setBounds(midiSelectorRect.removeFromTop (getHeight()));
+        midi_selector_->setBounds(midiSelectorRect.removeFromTop(getHeight()));
         midi_selector_->redoImage();
         midi_selector_->setRowHeight(22);
 
@@ -171,7 +232,8 @@ void KeymapParameterView::resized()
     juce::Rectangle velocityControlsRect = area.removeFromLeft(area.getWidth() * 0.5);
     velocityControlsRect.reduce(velocityControlsRect.getWidth() * 0.2, velocityControlsRect.getHeight() * 0.2);
 
-    juce::Rectangle velocityKnobsRect = velocityControlsRect.removeFromTop (knobsectionheight * 2 + comboboxheight + largepadding * 5);
+    juce::Rectangle velocityKnobsRect = velocityControlsRect.removeFromTop(
+        knobsectionheight * 2 + comboboxheight + largepadding * 5);
     velocityKnobsRect.removeFromBottom(largepadding);
     velocityCurveControls->setBounds(velocityKnobsRect);
     velocityKnobsRect.reduce(largepadding, largepadding);
@@ -192,22 +254,28 @@ void KeymapParameterView::resized()
 
     velocityKnobsRect.removeFromTop(largepadding);
 
-    velocityMinMaxSlider->setBounds(velocityControlsRect.removeFromTop (knobsectionheight));
+    velocityMinMaxSlider->setBounds(velocityControlsRect.removeFromTop(knobsectionheight));
 
-    juce::Rectangle<int> label_rect1 (asymmetricalWarp_knob->getX(), asymmetricalWarp_knob->getBottom() - 10, asymmetricalWarp_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> label_rect1(asymmetricalWarp_knob->getX(), asymmetricalWarp_knob->getBottom() - 10,
+                                     asymmetricalWarp_knob->getWidth(), labelsectionheight);
     asymmetricalWarp_knob_label->setBounds(label_rect1);
-    juce::Rectangle<int> label_rect2 (symmetricalWarp_knob->getX(), symmetricalWarp_knob->getBottom() - 10, symmetricalWarp_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> label_rect2(symmetricalWarp_knob->getX(), symmetricalWarp_knob->getBottom() - 10,
+                                     symmetricalWarp_knob->getWidth(), labelsectionheight);
     symmetricalWarp_knob_label->setBounds(label_rect2);
-    juce::Rectangle<int> label_rect3 (scale_knob->getX(), scale_knob->getBottom() - 10, scale_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> label_rect3(scale_knob->getX(), scale_knob->getBottom() - 10, scale_knob->getWidth(),
+                                     labelsectionheight);
     scale_knob_label->setBounds(label_rect3);
-    juce::Rectangle<int> label_rect4 (offset_knob->getX(), offset_knob->getBottom() - 10, offset_knob->getWidth(), labelsectionheight );
+    juce::Rectangle<int> label_rect4(offset_knob->getX(), offset_knob->getBottom() - 10, offset_knob->getWidth(),
+                                     labelsectionheight);
     offset_knob_label->setBounds(label_rect4);
 
     area.reduce(0, 40);
     juce::Rectangle<int> outLabelArea = area.removeFromLeft(labelsectionheight);
-    outLabelArea.removeFromTop(bottomPadding + topPadding); //31 = bottomPadding + topPadding from drawVelocityCurve(); rewrite so not to hardwire, to fix label centering
+    outLabelArea.removeFromTop(bottomPadding + topPadding);
+    //31 = bottomPadding + topPadding from drawVelocityCurve(); rewrite so not to hardwire, to fix label centering
     juce::Rectangle<int> inLabelArea = area.removeFromBottom(labelsectionheight);
-    inLabelArea.removeFromLeft(leftPadding + rightPadding - labelsectionheight); //29 = leftPadding + rightPadding from drawVelocityCurve()
+    inLabelArea.removeFromLeft(leftPadding + rightPadding - labelsectionheight);
+    //29 = leftPadding + rightPadding from drawVelocityCurve()
     velocityInLabel->setBounds(inLabelArea);
     velocityOutLabel->setBounds(outLabelArea);
     velocityCurveBox = area;
@@ -216,22 +284,18 @@ void KeymapParameterView::resized()
 /**
  * called for drawing the velocity curve
  */
-void KeymapParameterView::timerCallback(void)
-{
-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    interface->getGui()->prep_popup->repaintPrepBackground();
-
+void KeymapParameterView::timerCallback(void) {
+    //
     velocityMinMaxSlider->setDisplayValue(params.velocityMinMax.lastVelocityParam);
     velocityMinMaxSlider->redoImage();
 }
 
-void KeymapParameterView::drawVelocityCurve(juce::Graphics &g)
-{
-    float asym_k            = params.velocityCurve_asymWarp->getCurrentValue();
-    float sym_k             = params.velocityCurve_symWarp->getCurrentValue();
-    float scale             = params.velocityCurve_scale->getCurrentValue();
-    float offset            = params.velocityCurve_offset->getCurrentValue();
-    bool velocityInvert     = params.velocityCurve_invert->get();
+void KeymapParameterView::drawVelocityCurve(juce::Graphics &g) {
+    float asym_k = params.velocityCurve_asymWarp->getCurrentValue();
+    float sym_k = params.velocityCurve_symWarp->getCurrentValue();
+    float scale = params.velocityCurve_scale->getCurrentValue();
+    float offset = params.velocityCurve_offset->getCurrentValue();
+    bool velocityInvert = params.velocityCurve_invert->get();
 
     // int leftPadding = 25;        // space for "velocity out" label
     // int rightPadding = 4;       // space for the graph's right edge to fully display
@@ -247,7 +311,7 @@ void KeymapParameterView::drawVelocityCurve(juce::Graphics &g)
         velocityCurveBox.getHeight() - bottomPadding - topPadding);
 
     // graph background setup
-    g.setColour (juce::Colours::grey);
+    g.setColour(juce::Colours::grey);
     g.drawRect(graphArea);
     int graphHeight = graphArea.getHeight();
     int graphWidth = graphArea.getWidth();
@@ -311,17 +375,16 @@ void KeymapParameterView::drawVelocityCurve(juce::Graphics &g)
     // go pixel by pixel, adding each point to plot
     for (int i = 0; i <= graphWidth; i++) {
         juce::Point<float> toAdd;
-        if(!velocityInvert)
-        {
-            toAdd = juce::Point<float> (
+        if (!velocityInvert) {
+            toAdd = juce::Point<float>(
                 graphX + i,
-                (graphY + graphHeight) - graphHeight * bitklavier::utils::dt_warpscale((float) i / graphWidth, asym_k, sym_k, scale, offset));
-        }
-        else
-        {
-            toAdd = juce::Point<float> (
+                (graphY + graphHeight) - graphHeight * bitklavier::utils::dt_warpscale(
+                    (float) i / graphWidth, asym_k, sym_k, scale, offset));
+        } else {
+            toAdd = juce::Point<float>(
                 graphX + i,
-                graphY + graphHeight * bitklavier::utils::dt_warpscale((float) i / graphWidth, asym_k, sym_k, scale, offset));
+                graphY + graphHeight * bitklavier::utils::dt_warpscale((float) i / graphWidth, asym_k, sym_k, scale,
+                                                                       offset));
         }
 
         if (toAdd.getY() < graphY) toAdd.setY(graphY);
