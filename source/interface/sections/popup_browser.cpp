@@ -1136,19 +1136,24 @@ sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0x
 }
 void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, const juce::ValueTree& v)
 {
-
+    SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+    if(_parent == nullptr)
+        return;
     if(prep_view != nullptr )
     {
-        SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-        if(_parent == nullptr)
-            return;
+
         prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper());
+        juce::ScopedLock glock{*_parent->getOpenGlCriticalSection()};
+
         removeSubSection(prep_view.get());
     }
+    {
+        juce::ScopedLock glock{*_parent->getOpenGlCriticalSection()};
 
-    prep_view.reset();
-    prep_view = std::move(prep_pop);
-    addSubSection(prep_view.get());
+        prep_view.reset();
+        prep_view = std::move(prep_pop);
+        addSubSection(prep_view.get());
+    }
     Skin default_skin;
 
     prep_view->setSkinValues(default_skin,false);
@@ -1163,10 +1168,6 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, cons
     repaintPrepBackground();
 }
 
-void PreparationPopup::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
-    juce::ScopedLock lock(mylock);
-    SynthSection::renderOpenGlComponents(open_gl,animate);
-}
 
 void PreparationPopup::reset() {
 
@@ -1187,7 +1188,7 @@ void PreparationPopup::reset() {
 //        }
 
         prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
-        juce::ScopedLock lock(mylock);
+        juce::ScopedLock lock(*parent->getOpenGlCriticalSection());
         removeSubSection(prep_view.get());
         //do not use ->reset that is a synthsection function. i want to reset the actual ptr
         prep_view.reset();

@@ -954,6 +954,8 @@ void ModulationManager::componentAdded() {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
 
     FullInterface *full = findParentComponentOfClass<FullInterface>();
+    if(full == nullptr)
+        return;
     auto sliders = full->getAllSliders();
     auto modulatable_buttons = full->getAllButtons();
     auto mod_buttons = full->getAllModulationButtons();
@@ -1044,7 +1046,7 @@ void ModulationManager::componentAdded() {
                                                  }
                                              },
                                              true); {
-        juce::ScopedLock lock(open_gl_critical_section_);
+        juce::ScopedLock lock(full->open_gl_critical_section_);
         rotary_destinations_.clear();
         rotary_meters_.clear();
         linear_destinations_.clear();
@@ -1813,7 +1815,7 @@ void ModulationManager::drawDraggingModulation(OpenGlWrapper &open_gl) {
 void ModulationManager::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
     if (!animate)
         return;
-    juce::ScopedLock lock(open_gl_critical_section_);
+    // juce::ScopedLock lock(open_gl_critical_section_);
     drawCurrentModulator(open_gl);
     for (auto &callout_button: modulation_callout_buttons_) {
         if (callout_button.second->isVisible() && !callout_button.second->isInit())
@@ -1859,7 +1861,7 @@ void ModulationManager::renderMeters(OpenGlWrapper &open_gl, bool animate) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     if (!animate)
         return;
-    juce::ScopedLock lock(open_gl_critical_section_);
+    // juce::ScopedLock lock(open_gl_critical_section_);
     int num_voices = 1;
     //  if (num_voices_readout_)
     //    num_voices = std::max<float>(0.0f, num_voices_readout_->value()[0]);

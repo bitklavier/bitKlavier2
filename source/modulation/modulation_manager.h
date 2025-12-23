@@ -221,7 +221,7 @@ class ModulationExpansionBox : public OpenGlQuad {
     class Listener {
       public:
         virtual ~Listener() { }
-      
+
         virtual void expansionFocusLost() = 0;
     };
 
@@ -406,7 +406,7 @@ public OpenGLComboBox::Listener
     void hideModulationAmountOverlay();
     void componentAdded();
 
-    juce::CriticalSection open_gl_critical_section_;
+    // juce::CriticalSection open_gl_critical_section_;
     std::unique_ptr<juce::Component> modulation_destinations_;
     std::map<juce::Viewport*, int> num_rotary_meters;
     std::map<juce::Viewport*, int> num_linear_meters;
