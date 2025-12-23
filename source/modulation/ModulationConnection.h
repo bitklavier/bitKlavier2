@@ -15,7 +15,7 @@
 class ModulatorBase;
 namespace bitklavier {
 class ModulationProcessor;
-    struct ModulationConnection {
+    struct ModulationConnection : ModulatorBase::Listener {
         ModulationConnection(const std::string& from, const std::string& to, int index)
             : source_name(from), destination_name(to),state(IDs::ModulationConnection)
         {
@@ -43,9 +43,12 @@ class ModulationProcessor;
         {
             state.setProperty(IDs::dest, juce::String(uuid_to), nullptr);
         }
+        std::atomic<float> modAmt_ { 0.0f }; // whatever “modVal” means in your system
 
         void setModulationAmount(float amt)
         {
+            modAmt_.store (amt, std::memory_order_relaxed);
+
             state.setProperty(IDs::modAmt, amt, nullptr);
         }
 
@@ -70,6 +73,7 @@ class ModulationProcessor;
             {
                 state.getParent().removeChild(state,nullptr);
             }
+            // destParamIndex
         }
 
         float getCurrentBaseValue()
@@ -77,71 +81,7 @@ class ModulationProcessor;
                 return state.getProperty(IDs::modAmt,  0.f);
         }
 
-        void setScalingValue(float modVal, float sliderVal)
-        {
-            float start = static_cast<float>(param_tree.getProperty(IDs::start));
-            float end   = static_cast<float>(param_tree.getProperty(IDs::end));
-            float skew  = static_cast<float>(param_tree.getProperty(IDs::skew));
 
-            /*
-             * don't rescale parameter range if mod exceeds it
-             */
-            // if (sliderVal + modVal > end)
-            // {
-            //     end = sliderVal + modVal;
-            //     param_tree.setProperty(IDs::end,end,nullptr);
-            // }
-            // else if (sliderVal - modVal < start)
-            // {
-            //     start = sliderVal - modVal;
-            //     param_tree.setProperty(IDs::start,start,nullptr);
-            // }
-
-            juce::NormalisableRange<float> range(start, end, 0.0f, skew);
-            DBG("setScalingValue min/max/modVal/sliderVal = " << start << " " << end << " " << modVal << " " << sliderVal);
-
-            // Convert current slider value to normalized
-            float sliderNorm = range.convertTo0to1(sliderVal);
-
-            float modRangeNorm = 0.0f;
-
-            if (isBipolar())
-            {
-                // Symmetric modulation up and down
-                float plusNorm  = range.convertTo0to1(std::min(sliderVal + std::abs(modVal),end));
-                float minusNorm = range.convertTo0to1(std::max(sliderVal - std::abs(modVal),start));
-
-                // Half the total range (from center to one side)
-                modRangeNorm = 0.5f * std::abs(plusNorm - minusNorm);
-            }
-            else if (isOffset())
-            {
-                // Unipolar modulation (e.g., 0 to +modVal)
-                //  - currently not used in bK
-                float targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
-                modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
-            }
-            else
-            {
-                // Mod is actual target val
-                if(modVal > sliderVal)
-                {
-                    float targetNorm = range.convertTo0to1(std::min(modVal, end));
-                    modRangeNorm = targetNorm - sliderNorm; // mod system expects value that is offset from sliderNorm
-                }
-                else
-                {
-                    float targetNorm = range.convertTo0to1(std::max(modVal, start));
-                    modRangeNorm = (sliderNorm - targetNorm) * -1.f;
-                }
-            }
-
-            state.setProperty(IDs::sliderval,sliderVal,nullptr);
-            scalingValue_.store(modRangeNorm);
-            state.setProperty(IDs::mod0to1, scalingValue_.load(),nullptr);
-            currentDestinationSliderVal  = sliderVal;
-            setModulationAmount(modVal);
-        }
 
         void setBypass(bool bypass) {}
         void setStereo(bool stereo) {}
@@ -196,10 +136,179 @@ class ModulationProcessor;
             scalingValue_ = state.getProperty(IDs::mod0to1);
         }
         juce::ValueTree state;
+        void setScalingValue (float modVal, float sliderVal)
+        {
+            // compute modRangeNorm exactly as you do now...
+            // (this is your pre-trigger authoring step)
 
+            rangeStart_ = static_cast<float>(param_tree.getProperty(IDs::start));
+            rangeEnd_   = static_cast<float>(param_tree.getProperty(IDs::end));
+            rangeSkew_  = static_cast<float>(param_tree.getProperty(IDs::skew));
+            const float start = rangeStart_.load (std::memory_order_relaxed);
+            const float end   = rangeEnd_.load   (std::memory_order_relaxed);
+            const float skew  = rangeSkew_.load  (std::memory_order_relaxed);
+
+            /*
+             * don't rescale parameter range if mod exceeds it
+             */
+            // if (sliderVal + modVal > end)
+            // {
+            //     end = sliderVal + modVal;
+            //     param_tree.setProperty(IDs::end,end,nullptr);
+            // }
+            // else if (sliderVal - modVal < start)
+            // {
+            //     start = sliderVal - modVal;
+            //     param_tree.setProperty(IDs::start,start,nullptr);
+            // }
+
+            range =  juce::NormalisableRange<float> (start, end, 0.0f, skew);
+            DBG("setScalingValue min/max/modVal/sliderVal = " << start << " " << end << " " << modVal << " " << sliderVal);
+            // currentSliderVal = sliderVal;
+            // Convert current slider value to normalized
+            float sliderNorm = range.convertTo0to1(sliderVal);
+
+            float modRangeNorm = 0.0f;
+
+            if (isBipolar())
+            {
+                // Symmetric modulation up and down
+                float plusNorm  = range.convertTo0to1(std::min(sliderVal + std::abs(modVal),end));
+                float minusNorm = range.convertTo0to1(std::max(sliderVal - std::abs(modVal),start));
+
+                // Half the total range (from center to one side)
+                modRangeNorm = 0.5f * std::abs(plusNorm - minusNorm);
+            }
+            else if (isOffset())
+            {
+                // Unipolar modulation (e.g., 0 to +modVal)
+                //  - currently not used in bK
+                float targetNorm = range.convertTo0to1(std::min(sliderVal + modVal, end));
+                modRangeNorm = std::max(0.0f, targetNorm - sliderNorm);
+            }
+            else
+            {
+                // Mod is actual target val
+                if(modVal > sliderVal)
+                {
+                    float targetNorm = range.convertTo0to1(std::min(modVal, end));
+                    modRangeNorm = targetNorm - sliderNorm; // mod system expects value that is offset from sliderNorm
+                }
+                else
+                {
+                    float targetNorm = range.convertTo0to1(std::max(modVal, start));
+                    modRangeNorm = (sliderNorm - targetNorm) * -1.f;
+                }
+            }
+
+            state.setProperty(IDs::sliderval,sliderVal,nullptr);
+            scalingValue_.store(modRangeNorm);
+            state.setProperty(IDs::mod0to1, scalingValue_.load(),nullptr);
+            currentDestinationSliderVal  = sliderVal;
+            setModulationAmount(modVal);
+
+            scalingValue_.store (modRangeNorm, std::memory_order_relaxed);
+
+            state.setProperty(IDs::mod0to1, modRangeNorm, nullptr);
+            state.setProperty(IDs::sliderval, sliderVal, nullptr);
+            // state.setProperty(IDs::modAmt, modVal, nullptr);
+        }
+
+        // called when the modulator is actually triggered (audio thread)
+        void lockScaling() noexcept
+        {
+            // lock only once
+            bool expected = false;
+            if (scalingLocked_.compare_exchange_strong (expected, true,
+                                                       std::memory_order_acq_rel))
+            {
+                lockedScaling_.store (scalingValue_.load(std::memory_order_relaxed),
+                                      std::memory_order_release);
+            }
+        }
+
+        // called when modulation ends / reset (message thread or audio thread)
+        void unlockScaling() noexcept
+        {
+            scalingLocked_.store (false, std::memory_order_release);
+        }
+
+        // this is what the audio thread should use
+        float getScalingForDSP() const noexcept
+        {
+            if (scalingLocked_.load (std::memory_order_acquire))
+                return lockedScaling_.load (std::memory_order_relaxed);
+
+            return scalingValue_.load (std::memory_order_relaxed);
+        }
+        void modulationTriggered() //listener funciton
+               {
+            updateScalingAudioThread(currentTotalBaseValue);
+            DBG("ModulationConnection::modulationTriggered()");
+            // changeBuffer->changeState.emplace_back(0,change);
+            lockScaling();
+               }
+
+        void resetTriggered()
+        {
+            DBG("ModulationConnection::resetTriggered()");
+            unlockScaling();
+            // changeBuffer->changeState.emplace_back(0,changeBuffer->defaultState);
+        }
+        int getDestParamIndex() {
+            return destParamIndex;
+        }
+
+       void updateScalingAudioThread(float knobValueParamUnits) noexcept {
+            // Don’t change once the mod has started
+            if (scalingLocked_.load (std::memory_order_acquire))
+                return;
+            // Pull the current amount (modVal) from atomic
+            const float modVal = modAmt_.load (std::memory_order_relaxed);
+            const float start = rangeStart_.load (std::memory_order_relaxed);
+            const float end   = rangeEnd_.load   (std::memory_order_relaxed);
+            const float skew  = rangeSkew_.load  (std::memory_order_relaxed);
+
+
+            const float base = juce::jlimit (start, end, knobValueParamUnits);
+            const float baseNorm = range.convertTo0to1 (base);
+            float scaleNorm = 0.0f;
+            if (isBipolar())
+            {
+                const float d = std::abs (modVal);
+                const float plusNorm  = range.convertTo0to1 (juce::jmin (base + d, end));
+                const float minusNorm = range.convertTo0to1 (juce::jmax (base - d, start));
+                scaleNorm = 0.5f * std::abs (plusNorm - minusNorm);
+            }
+            else if (isOffset())
+            {
+                const float targetNorm = range.convertTo0to1 (juce::jmin (base + modVal, end));
+                scaleNorm = juce::jmax (0.0f, targetNorm - baseNorm);
+            }
+            else
+            {
+                // Your existing “target value” semantics branch:
+                // here modVal is interpreted as the *target value* in param units.
+                const float target = juce::jlimit (start, end, modVal);
+                const float targetNorm = range.convertTo0to1 (target);
+                scaleNorm = targetNorm - baseNorm;
+            }
+            scalingValue_.store (scaleNorm, std::memory_order_relaxed);
+        }
+        float setCurrentTotalBaseValue(float basevalue) {
+            currentTotalBaseValue = basevalue;
+        }
     private:
+        float currentTotalBaseValue;
+        std::atomic<float> scalingValue_   { 0.0f }; // editable pre-trigger
+        std::atomic<float> lockedScaling_  { 0.0f }; // frozen at trigger time
+        std::atomic<bool>  scalingLocked_  { false };
+        // RT-safe cached range
+        std::atomic<float> rangeStart_ { 0.0f }, rangeEnd_{ 1.0f }, rangeSkew_{ 1.0f };
+        int destParamIndex;
+        // std::atomic<float> currentSliderVal {0.0f};
+        juce::NormalisableRange<float> range;
         juce::ValueTree param_tree;
-        std::atomic<float> scalingValue_;
 //        std::atomic<float>* bipolarOffset;
     };
 
@@ -261,6 +370,8 @@ struct StateConnection : public ModulatorBase::Listener{
 
         void setModulationAmount(float amt)
         {
+
+
             state.setProperty(IDs::modAmt, amt, nullptr);
         }
 
@@ -280,6 +391,7 @@ struct StateConnection : public ModulatorBase::Listener{
                 state.getParent().removeChild(state,nullptr);
             }
             changeBuffer = nullptr;
+
         }
 
         void modulationTriggered() //listener funciton
@@ -335,6 +447,95 @@ struct StateConnection : public ModulatorBase::Listener{
         std::map<std::string,ParameterChangeBuffer*> parameter_map;
         std::vector<std::unique_ptr<StateConnection>> all_connections_;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StateConnectionBank)
+    };
+
+
+    class ParamOffsetBank {
+    public:
+        // ParamOffsetBank();
+        // ~ParamOffsetBank();
+        // MESSAGE THREAD: register (or find) an index for this param key
+        int getOrAddIndex (const std::string& key)
+        {
+            JUCE_ASSERT_MESSAGE_THREAD
+
+            if (auto it = index_bank.find (key); it != index_bank.end())
+                return it->second;
+
+            const int newIndex = (int) audio_thread_offset_bank.size();
+
+            // grow only on message thread
+            audio_thread_offset_bank.resize ((size_t) newIndex + 1);
+
+            // init atomics explicitly
+            audio_thread_offset_bank[(size_t) newIndex] = 0.f; //.store (0.0f, std::memory_order_relaxed);
+
+            index_bank.emplace (key, newIndex);
+            return newIndex;
+        }
+        // MESSAGE THREAD: register a param and return its index
+        int addParam (std::pair<std::string, float>&& p)
+        {
+            JUCE_ASSERT_MESSAGE_THREAD;
+
+            const auto& key = p.first;
+
+            // already exists
+            if (auto it = index_bank.find (key); it != index_bank.end())
+                return it->second;
+
+            const int newIndex = (int) audio_thread_offset_bank.size();
+
+            audio_thread_offset_bank.resize ((size_t) newIndex + 1);
+            audio_thread_offset_bank[(size_t) newIndex] = p.second;//.store (p.second, std::memory_order_relaxed);
+
+            index_bank.emplace (key, newIndex);
+            return newIndex;
+        }
+        // MESSAGE THREAD: query only (no insert)
+        int getIndexIfExists (const std::string& key) const
+        {
+            JUCE_ASSERT_MESSAGE_THREAD
+
+            if (auto it = index_bank.find (key); it != index_bank.end())
+                return it->second;
+
+            return -1;
+        }
+        // Write the current offset (overwrites)
+        void setOffset (int index, float value) noexcept
+        {
+            if ( index >=  audio_thread_offset_bank.size())
+                return;
+
+            audio_thread_offset_bank[(size_t) index] = value;//.store (value, std::memory_order_relaxed);
+        }
+        float getOffset (int index) const noexcept
+        {
+            if ( index >=audio_thread_offset_bank.size())
+                return 0.0f;
+
+            return audio_thread_offset_bank[(size_t) index];// = value.load (std::memory_order_relaxed);
+        }
+        // Convenience: build "<uuid>_<paramName>" and add it.
+        // v is expected to have IDs::uuid
+        int addParam (const juce::ValueTree& v, const juce::String& paramName, float initialValue = 0.0f)
+        {
+            JUCE_ASSERT_MESSAGE_THREAD;
+
+            const std::string key =
+                v.getProperty (IDs::uuid).toString().toStdString()
+                + "_"
+                + paramName.toStdString();
+
+            auto val = addParam ({ key, initialValue });
+            DBG("adding param " + juce::String(key)  + "with index " + juce::String(val));
+            return val;
+        }
+
+        private:
+        std::map<std::string,int> index_bank;
+        std::vector<float> audio_thread_offset_bank;
     };
 }
 

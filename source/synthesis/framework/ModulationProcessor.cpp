@@ -81,20 +81,20 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
             const int outCh = connection->modulation_output_bus_index;
             if (outCh < 0 || outCh >= buffer.getNumChannels())
                 continue; // prevents writing past bus size if something mismatches
-
+            connection->setCurrentTotalBaseValue(parent.getParamOffsetBank().getOffset(connection->getDestParamIndex()));
             if ((mod->isDefaultBipolar && connection->isBipolar())
                 || (!mod->isDefaultBipolar && !connection->isBipolar()))
             {
                 buffer.addFrom(outCh, 0,
                                 e.tmp.getReadPointer(0),
                                 buffer.getNumSamples(),
-                                connection->getScaling());
+                                connection->getScalingForDSP());
             }
             else if (mod->isDefaultBipolar && !connection->isBipolar())
             {
                 auto* src  = e.tmp.getReadPointer(0);
                 auto* dest = buffer.getWritePointer(outCh);
-                const float scale = connection->getScaling();
+                const float scale = connection->getScalingForDSP();
 
                 for (int s = 0; s < buffer.getNumSamples(); ++s)
                 {

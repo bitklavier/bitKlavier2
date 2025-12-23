@@ -223,7 +223,6 @@ public:
     void handleMidiTargetMessages(juce::MidiBuffer& midiMessages);
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     juce::AudioProcessor::BusesProperties blendronicBusLayout()
     {

@@ -365,7 +365,6 @@ public:
     void updateNoteVisualization();
     void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
     void handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages);
-    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();
     void handleMidiTargetMessages(int channel);

@@ -492,7 +492,6 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
-    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     bool acceptsMidi() const override { return true; }
 
 //    void addSoundSet(juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)

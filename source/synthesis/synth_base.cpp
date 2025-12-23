@@ -765,7 +765,9 @@ bitklavier::StateConnectionBank& SynthBase::getStateBank()
 {
     return engine_->getStateBank();
 }
-
+bitklavier::ParamOffsetBank& SynthBase::getParamOffsetBank() {
+    return engine_->getParamOffsetBank();
+}
 bool SynthBase::isSourceConnected (const std::string& source)
 {
     for (auto* connection : mod_connections_)
@@ -886,6 +888,7 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
             connection = getStateBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
             connection->state = v;
             connection->setChange (v);
+
             state_connections_.push_back (connection);
         }
         if (connection)
