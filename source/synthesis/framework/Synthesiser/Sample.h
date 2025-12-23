@@ -1229,6 +1229,10 @@ private:
             outL[writePos] += (m_Buffer.getSample (0, 0) + m_Buffer.getSample (1, 0)) * 0.5f;
         }
 
+        /*
+         * todo: explore pingpong looping mode to see if that improves sustain with, say, jrhodes sound font and others
+         *          - i tried a bit and it just made things worse, but could be worth a further look
+         */
         std::tie (currentSamplePos, currentDirection) = getNextState (currentIncrement, currentSampleStart, currentSampleEnd);
 
         /*
