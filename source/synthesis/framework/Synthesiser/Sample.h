@@ -168,7 +168,6 @@ class Sample<ReaderType>
 //    double getSampleRate() const { return m_sourceSampleRate; }
 //    int getLength() const { return m_length; }
 
-
     void setStartSample(int startSample){m_startSample = startSample;}
     void setNumSamps(int numSamps) {m_numSamps = numSamps;}
     //const juce::AudioBuffer<float>& getBuffer() { return m_data; }
@@ -273,6 +272,8 @@ public:
 
     void setStartSample(int start) { m_startSample = juce::jlimit(0, m_length, start); }
     void setNumSamps(int num)      { m_numSamps   = juce::jlimit(0, m_length, num); }
+    int getStartSample()           { return m_startSample; }
+    int getEndSample()             { return m_startSample + m_numSamps; }
 
     std::tuple<const float*, const float*> getBuffer() const
     {
@@ -307,7 +308,7 @@ public:
         const SampleBuffer* buffer = nullptr;
 
         // Cached from SampleBuffer for faster access
-      decltype(std::declval<SampleBuffer>().read_sample) read_sample = nullptr;
+        decltype(std::declval<SampleBuffer>().read_sample) read_sample = nullptr;
         int stride = 0;
         int num_channels = 0;
 
@@ -545,6 +546,11 @@ public:
         return sample.get();
     }
 
+    /**
+     * this actually sets a range for the full sample, from the beginning of the sample to the end
+     * - it does NOT set the loop points for the loop markers in a sustaining SFZ sample
+     * @param value
+     */
     void setLoopPointsInSeconds (juce::Range<double> value)
     {
         loopPoints = sample == nullptr ? value : juce::Range<double> (0, sample->getLength() / sample->getSampleRate()).constrainRange (value);
@@ -819,6 +825,7 @@ public:
     void setTargetSustainTime(float sustainTimeMS)
     {
         targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
+        DBG("targetSustainTime_samples set to (sec) " << targetSustainTime_samples / getSampleRate());
     }
 
     void setGain(float g)
@@ -914,11 +921,19 @@ public:
          BKSynthesiserSound * _sound,
          int currentPitchWheelPosition,
          float startTimeMS = 0.f,
-         Direction startDirection = Direction::forward) {
+         Direction startDirection = Direction::forward)
+    {
         auto* sampler = static_cast<BKSamplerSound<T>*>(_sound->getSamplerSoundBase());
         jassert(sampler != nullptr);
-        myStartNote(midiNoteNumber,velocity,transposition,tune_transpositions,sampler,
-            currentPitchWheelPosition,startTimeMS,startDirection);
+        myStartNote(
+            midiNoteNumber,
+            velocity,
+            transposition,
+            tune_transpositions,
+            sampler,
+            currentPitchWheelPosition,
+            startTimeMS,
+            startDirection);
     }
 
     void myStartNote (int midiNoteNumber,
@@ -946,12 +961,17 @@ public:
          */
         sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
+        /*
+         * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
+         */
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
-        loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
-        loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
+        sampleBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
+        sampleEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
 
         currentDirection = startDirection;
         currentSamplePos = startTimeMS * getSampleRate() * .001;
+        startTimeOffset =  currentSamplePos - targetSustainTime_samples;
+        DBG("startTimeOffset (sec) = " << startTimeOffset / getSampleRate());
 
         /*
          * need to account for sampleIncrement when setting start time
@@ -961,9 +981,9 @@ public:
             currentSamplePos *= sampleIncrement.getTargetValue();
 
         tailOff = 0.0;
-
         currentSustainTime_samples = 0;
         ampEnv.noteOn();
+
         if constexpr (std::is_same_v<T, SFZRegion>)
         {
             auto& region = samplerSound->getSample()->getSourceRegion();
@@ -976,11 +996,18 @@ public:
             // Offset / End
             // -----------------------
             currentSamplePos = region.offset;
+            currentSampleStart = region.offset;
+            currentSampleEnd = region.end;
             //sample_end = region.sample->num_samples;
 
             currentSamplePos += startTimeMS * getSampleRate() * .001;
             if (currentDirection == Direction::backward)
-                currentSamplePos *= sampleIncrement.getTargetValue();
+            {
+                // since these soundfonts might be all stored in one file, we need to remove the offset before scaling by sampleIncrement
+                auto currentSamplePos_noOffset = currentSamplePos - currentSampleStart;
+                currentSamplePos_noOffset *= sampleIncrement.getTargetValue();
+                currentSamplePos = currentSamplePos_noOffset + currentSampleStart;
+            }
 
             //if (region.end > 0 && region.end < sample_end)
                 //sample_end = region.end + 1;
@@ -1016,7 +1043,23 @@ public:
                 }
             }
 
-            num_loops = 0;
+            if (loop_mode == SFZRegion::LoopMode::loop_continuous)
+            {
+                if (loop_start < loop_end)
+                {
+                    DBG("playing sustained sample sample, "
+                        "loop_start: " << (loop_start - currentSampleStart) / currentSampleRate <<
+                        " loop_end: " << (loop_end - currentSampleStart) / currentSampleRate <<
+                        " currentSamplePos: " << (currentSamplePos - currentSampleStart) / currentSampleRate);
+
+                    if (currentDirection == Direction::backward)
+                    {
+                        if (currentSamplePos > loop_end) currentSamplePos = loop_end;
+                        loopingForSustain = true;
+                        DBG("changing currentSamplePos to " << (currentSamplePos - currentSampleStart) / currentSampleRate);
+                    }
+                }
+            }
         }
     }
 
@@ -1050,7 +1093,7 @@ public:
             tailOff = 1.0;
         else
             stopNote();
-            */
+        */
     }
 
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
@@ -1090,9 +1133,13 @@ private:
         // otherwise just return ET
         else sampleIncrement.setTargetValue (mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
 
+        /*
+         * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
+         */
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
-        loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
-        loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
+        sampleBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
+        sampleEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
+
         auto outL = outputBuffer.getWritePointer(0, startSample);
         if (outL == nullptr)
             return;
@@ -1109,122 +1156,140 @@ private:
         }
         else {
             auto [inL, inR] = samplerSound->getSample()->getBuffer();
-
-
             while (--numSamples >= 0 && renderNextSample(inL, inR, outL, outR, writePos))
                 writePos += 1;
         }
     }
-template <typename Element>
-bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
-                       Element* outL,
-                       Element* outR,
-                       size_t writePos)
-{
-    auto currentLoopBegin  = loopBegin.getNextValue();
-    auto currentLoopEnd    = loopEnd.getNextValue();
-    auto currentIncrement  = sampleIncrement.getNextValue();
 
-    if (currentDirection == Direction::backward
-        && currentSamplePos > samplerSound->getSample()->getLength())
+    /**
+     * SoundFont sample render (one-shot and sustained with looping)
+     * @tparam Element
+     * @param reader
+     * @param outL
+     * @param outR
+     * @param writePos
+     * @return
+     */
+    template <typename Element>
+    bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
+                           Element* outL,
+                           Element* outR,
+                           size_t writePos)
     {
-        std::tie (currentSamplePos, currentDirection)
-            = getNextState (currentIncrement, currentLoopBegin, currentLoopEnd);
+        auto currentIncrement    = sampleIncrement.getNextValue();
 
-        outL[writePos] += (Element) 0;
-        if (outR) outR[writePos] += (Element) 0;
+        // write 0s if we are starting beyond the end of the sample
+        // - unless this is a sustained looping sample, in which case loop_end will be > loop_start, and this will be ignored
+        if (currentDirection == Direction::backward && currentSamplePos > currentSampleEnd && loop_end <= loop_start)
+        {
+            std::tie (currentSamplePos, currentDirection) = getNextState (currentIncrement, currentSampleStart, currentSampleEnd);
+            outL[writePos] += (Element) 0;
+            if (outR) outR[writePos] += (Element) 0;
+            return true;
+        }
+
+        // update the ADSR
+        float ampEnvLast = ampEnv.getNextSample();
+        if (ampEnv.isActive() && isTailingOff() && ampEnvLast < 0.001f)
+        {
+            stopNote();
+            return false;
+        }
+
+        // interpolation
+        const int pos     = (int) currentSamplePos;
+        int nextPos       = pos + 1;
+        const Element a   = (Element) (currentSamplePos - pos);
+        const Element ia  = (Element) (1.0f - a);
+
+        // handle looping wrap for interpolation (use your loop_start/loop_end ints)
+        // - do the same for backwards playing samples?
+        if (loop_start < loop_end && nextPos > loop_end)
+            nextPos = loop_start;
+
+        // Read samples via Reader (no buffer copies)
+        float l = reader.readAt (0, pos) * (float) ia + reader.readAt (0, nextPos) * (float) a;
+        float r = (reader.num_channels > 1 && reader.ch1 != nullptr)
+                    ? (reader.readAt (1, pos) * (float) ia + reader.readAt (1, nextPos) * (float) a) : l;
+
+        m_Buffer.setSample (0, 0, l);
+        m_Buffer.setSample (1, 0, r);
+
+        m_Buffer.applyGain (level.getTargetValue());
+        if (ampEnv.isActive())
+            m_Buffer.applyGain (ampEnvLast);
+
+        if (outR != nullptr)
+        {
+            outL[writePos] += m_Buffer.getSample (0, 0);
+            outR[writePos] += m_Buffer.getSample (1, 0);
+        }
+        else
+        {
+            outL[writePos] += (m_Buffer.getSample (0, 0) + m_Buffer.getSample (1, 0)) * 0.5f;
+        }
+
+        std::tie (currentSamplePos, currentDirection) = getNextState (currentIncrement, currentSampleStart, currentSampleEnd);
+
+        /*
+         * loop maintenance for samples with loop-point markers, for sustained sample libraries
+         * - this will only be true if loop_end > loop_start, otherwise we have a one-shot sample
+         */
+        if (loop_start < loop_end)
+        {
+            if (currentDirection == Direction::forward && currentSamplePos > loop_end)
+            {
+                currentSamplePos = loop_start; // -= loop_length?
+            }
+
+            if (currentDirection == Direction::backward)
+            {
+                if (currentSamplePos < loop_start && // we have moved to before the loop start point
+                (targetSustainTime_samples - currentSustainTime_samples) + startTimeOffset > (loop_start - currentSampleStart) && // we have more than enough sustain time to keep looping
+                loopingForSustain) // we are in the initial looping for sustain mode from when the sample started
+                {
+                    /*
+                     * checking if currentSustainTime_samples - currentSustainTime_samples > loop_start ensures that we won't get stuck looping here
+                     * - the startTimeOffset factor is to take into account things like waveDistance; we need to loop here longer if there is an offset like that
+                     * - note that this is all setup to work for Nostalgic/Synchronic reverse notes that have fixed durations on noteOn
+                     *      and is not generalized for backwards play in other circumstances
+                     */
+                    currentSamplePos = loop_end;
+                }
+
+                // if we reach this point without resetting currentSamplePos to loop_end, then we have left the looping phase and are playing back to the beginning of the sample
+                if (currentSamplePos < loop_start && loopingForSustain)
+                {
+                    loopingForSustain = false;
+                }
+            }
+        }
+
+        if (currentSamplePos > currentSampleEnd || currentSamplePos < currentSampleStart)
+        {
+            stopNote();
+            return false;
+        }
+
+        currentSustainTime_samples++;
+        if (targetSustainTime_samples > 0 && currentSustainTime_samples > targetSustainTime_samples)
+        {
+            stopNote (64, true);
+        }
+
         return true;
     }
 
-    float ampEnvLast = ampEnv.getNextSample();
-    if (ampEnv.isActive() && isTailingOff() && ampEnvLast < 0.001f)
-    {
-        stopNote();
-        return false;
-    }
-
-    const int pos     = (int) currentSamplePos;
-    int nextPos       = pos + 1;
-    const Element a   = (Element) (currentSamplePos - pos);
-    const Element ia  = (Element) (1.0f - a);
-
-    // handle looping wrap for interpolation (use your loop_start/loop_end ints)
-    if (loop_start < loop_end && nextPos > loop_end)
-        nextPos = loop_start;
-
-    // Read samples via Reader (no buffer copies)
-    float l = reader.readAt (0, pos) * (float) ia + reader.readAt (0, nextPos) * (float) a;
-
-    float r = (reader.num_channels > 1 && reader.ch1 != nullptr)
-                ? (reader.readAt (1, pos) * (float) ia + reader.readAt (1, nextPos) * (float) a)
-                : l;
-
-    // Apply SFZ ampeg (your existing state vars)
-    float ampeg_gain  = ampeg.level;
-    float ampeg_slope = ampeg.slope;
-    long  samples_until_next_amp_segment = ampeg.samples_until_next_segment;
-    bool  amp_segment_is_exponential     = ampeg.segment_is_exponential;
-
-    l *= ampeg_gain;
-    r *= ampeg_gain;
-
-    m_Buffer.setSample (0, 0, l);
-    m_Buffer.setSample (1, 0, r);
-
-    m_Buffer.applyGain (level.getTargetValue());
-    if (ampEnv.isActive())
-        m_Buffer.applyGain (ampEnvLast);
-
-    if (outR != nullptr)
-    {
-        outL[writePos] += m_Buffer.getSample (0, 0);
-        outR[writePos] += m_Buffer.getSample (1, 0);
-    }
-    else
-    {
-        outL[writePos] += (m_Buffer.getSample (0, 0) + m_Buffer.getSample (1, 0)) * 0.5f;
-    }
-
-    std::tie (currentSamplePos, currentDirection)
-        = getNextState (currentIncrement, currentLoopBegin, currentLoopEnd);
-
-    // Loop maintenance
-    if (loop_start < loop_end && currentSamplePos > loop_end)
-    {
-        currentSamplePos = loop_start;
-        num_loops += 1;
-    }
-
-    // Update ampeg (restore your exact logic)
-    if (amp_segment_is_exponential) ampeg_gain *= ampeg_slope;
-    else                           ampeg_gain += ampeg_slope;
-
-    if (--samples_until_next_amp_segment < 0)
-    {
-        ampeg.level = ampeg_gain;
-        ampeg.next_segment();
-        ampeg_gain  = ampeg.level;
-        ampeg_slope = ampeg.slope;
-        samples_until_next_amp_segment = ampeg.samples_until_next_segment;
-        amp_segment_is_exponential     = ampeg.segment_is_exponential;
-    }
-
-    ampeg.level = ampeg_gain;
-    ampeg.samples_until_next_segment = samples_until_next_amp_segment;
-
-    if (currentSamplePos > samplerSound->getSample()->getLength())
-    {
-        stopNote();
-        return false;
-    }
-
-    currentSustainTime_samples++;
-    if (targetSustainTime_samples > 0 && currentSustainTime_samples > targetSustainTime_samples)
-        stopNote (64, true);
-
-    return true;
-}
-
+    /**
+     * Regular bK Format sample render (one-shot only)
+     * @tparam Element
+     * @param inL
+     * @param inR
+     * @param outL
+     * @param outR
+     * @param writePos
+     * @return
+     */
     template <typename Element>
     bool renderNextSample(const float* inL,
                           const float* inR,
@@ -1232,8 +1297,8 @@ bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
                           Element* outR,
                           size_t writePos)
     {
-        auto currentLoopBegin = loopBegin.getNextValue();
-        auto currentLoopEnd = loopEnd.getNextValue();
+        auto currentSampleBegin = sampleBegin.getNextValue();
+        auto currentSampleEnd = sampleEnd.getNextValue();
         auto currentIncrement = sampleIncrement.getNextValue();
 
         /*
@@ -1242,7 +1307,7 @@ bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
          */
         if(currentDirection == Direction::backward && currentSamplePos > samplerSound->getSample()->getLength())
         {
-            std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentLoopBegin, currentLoopEnd);
+            std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentSampleBegin, currentSampleEnd);
 
             if (outR != nullptr)
             {
@@ -1271,37 +1336,12 @@ bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
         auto nextPos = pos + 1;
         auto alpha = (Element)(currentSamplePos - pos);
         auto invAlpha = 1.0f - alpha;
-        float l,r, ampeg_gain,ampeg_slope;
-        long samples_until_next_amp_segment = ampeg.samples_until_next_segment;
-        bool amp_segment_is_exponential = ampeg.segment_is_exponential;
-        // if constexpr (std::is_same_v<T, SFZRegion>) {
-        //     auto& region = samplerSound->getSample()->getSourceRegion();
-        //     SampleBuffer* in_buffer = region.sample->buffer;
-        //     auto in_l = in_buffer->channel_start(0);
-        //     auto in_r = in_buffer->num_channels > 1 ? in_buffer->channel_start(1) : nullptr;
-        //     auto in_read = in_buffer->read_sample;
-        //     if (loop_start < loop_end && nextPos > loop_end)
-        //         nextPos = loop_start;
-        //     // Simple linear interpolation.
-        //     auto stride = in_buffer->stride;
-        //     l =
-        //         in_read(in_l + pos * stride) * invAlpha + in_read(in_l + nextPos * stride) * alpha;
-        //     r =
-        //         in_r ?
-        //         (in_read(in_r + pos * stride) * invAlpha + in_read(in_r + nextPos * stride) * alpha) :
-        //         l;
-        //      ampeg_gain = ampeg.level;
-        //     ampeg_slope = ampeg.slope;
-        //     float gain_left = ampeg_gain;
-        //     float gain_right = ampeg_gain;
-        //     l *= gain_left;
-        //     r *= gain_right;
-        // } else {
-            // Very simple linear interpolation here because the Sampler class should have already upsampled.
-            l = static_cast<Element> ((inL[pos] * invAlpha + inL[nextPos] * alpha));
-            r = static_cast<Element> ((inR != nullptr) ? (inR[pos] * invAlpha + inR[nextPos] * alpha)
-                                                            : l);
-        // }
+        float l,r;
+
+        // Very simple linear interpolation here because the Sampler class should have already upsampled.
+        l = static_cast<Element> ((inL[pos] * invAlpha + inL[nextPos] * alpha));
+        r = static_cast<Element> ((inR != nullptr) ? (inR[pos] * invAlpha + inR[nextPos] * alpha) : l);
+
         m_Buffer.setSample(0, 0, l);
         m_Buffer.setSample(1, 0, r);
 
@@ -1323,28 +1363,8 @@ bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
             outL[writePos] += (m_Buffer.getSample(0, 0) + m_Buffer.getSample(1, 0)) * 0.5f;
         }
 
-        std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentLoopBegin, currentLoopEnd);
-        // if constexpr (std::is_same_v<T, SFZRegion>) {
-        //     if (loop_start < loop_end && currentSamplePos > loop_end) {
-        //         currentSamplePos = loop_start;
-        //         num_loops += 1;
-        //     }
-        //     // Update EG.
-        //     if (amp_segment_is_exponential)
-        //         ampeg_gain *= ampeg_slope;
-        //     else
-        //         ampeg_gain += ampeg_slope;
-        //     if (--samples_until_next_amp_segment < 0) {
-        //         ampeg.level = ampeg_gain;
-        //         ampeg.next_segment();
-        //         ampeg_gain = ampeg.level;
-        //         ampeg_slope = ampeg.slope;
-        //         samples_until_next_amp_segment = ampeg.samples_until_next_segment;
-        //         amp_segment_is_exponential = ampeg.segment_is_exponential;
-        //     }
-        //     ampeg.level = ampeg_gain;
-        //     ampeg.samples_until_next_segment = samples_until_next_amp_segment;
-        // }
+        std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentSampleBegin, currentSampleEnd);
+
         if (currentSamplePos > samplerSound->getSample()->getLength())
         {
             stopNote();
@@ -1373,9 +1393,7 @@ bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
 
     void stopNote()
     {
-        // todo: are these necessary?
         ampEnv.reset();
-
         clearCurrentNote();
         currentSamplePos = 0.0;
     }
@@ -1439,14 +1457,18 @@ bool renderNextSample (const typename Sample<SFZRegion>::Reader& reader,
     bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the current tuning system (in TuningState)
 
     juce::SmoothedValue<double> level { 0 };
-    juce::SmoothedValue<double> loopBegin;
-    juce::SmoothedValue<double> loopEnd;
+    juce::SmoothedValue<double> sampleBegin;
+    juce::SmoothedValue<double> sampleEnd;
     juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions
-    float loop_end;
-    float loop_start;
-    float num_loops;
+    double loop_end;
+    double loop_start;
+    bool loopingForSustain = false;
     SFZEG ampeg;
     double currentSamplePos { 0 };
+    double currentSampleEnd { 0 };
+    double currentSampleStart { 0 };
+    double startTimeOffset { 0 }; // waveDistance, for instance
+
     double tailOff { 0 };
     Direction currentDirection{ Direction::forward };
     juce::uint64 currentSustainTime_samples = 0;
