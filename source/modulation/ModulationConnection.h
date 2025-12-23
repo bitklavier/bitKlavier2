@@ -13,6 +13,7 @@
 #include "StateModulator.h"
 
 class ModulatorBase;
+
 namespace bitklavier {
 class ModulationProcessor;
     struct ModulationConnection : ModulatorBase::Listener {
@@ -36,6 +37,11 @@ class ModulationProcessor;
         static bool isModulationSourceDefaultBipolar(const std::string& source);
         void setSource(const std::string& from)
         {
+            if(from.contains("lfo")) {
+                isContinuousMod = true;
+            } else {
+                isContinuousMod = false;
+            }
             state.setProperty(IDs::src, juce::String(from), nullptr);
         }
 
@@ -298,6 +304,8 @@ class ModulationProcessor;
         float setCurrentTotalBaseValue(float basevalue) {
             currentTotalBaseValue = basevalue;
         }
+        std::atomic<bool> isContinuousMod{false};
+
     private:
         float currentTotalBaseValue;
         std::atomic<float> scalingValue_   { 0.0f }; // editable pre-trigger

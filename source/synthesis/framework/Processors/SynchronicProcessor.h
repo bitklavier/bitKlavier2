@@ -615,7 +615,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
              *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
              *                  - the main params: numPulses, numLayers, clusterThickness, clusterThreshold, OutputSendParam, outputGain,
              */
-            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10 * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(), false)             // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send", juce::AudioChannelSet::stereo(), true);                 // Send channel (right outputs)
     }

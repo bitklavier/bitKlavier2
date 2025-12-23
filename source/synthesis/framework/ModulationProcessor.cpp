@@ -154,8 +154,9 @@ void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnecti
     // callOnMainThread([this, connection]
      // {
         // Allocate / reuse output channel
+        auto mystring = connection->isContinuousMod ? connection->destination_name + "cont" : connection->destination_name;
         connection->modulation_output_bus_index =
-            allocateModulationChannel(connection->destination_name);
+            allocateModulationChannel(mystring);
          all_modulation_connections_.push_back(connection);
 
          auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
@@ -192,7 +193,8 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
                   v.erase(end, v.end());
               }
           }
-        if(  releaseModulationChannel(destination_name)) {
+     auto mystring = connection->isContinuousMod ? destination_name + "cont" : destination_name;
+        if(  releaseModulationChannel(mystring)) {
             parent.getEngine()->removeConnection (connection->connection_);
         }
           rebuildAndPublishSnapshot();

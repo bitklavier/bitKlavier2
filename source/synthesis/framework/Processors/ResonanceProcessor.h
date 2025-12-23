@@ -483,7 +483,7 @@ public:
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
              *              for Resonance, we have 7: sendGain and outputGain, + the 5 "qualities"
              */
-            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (7), true)  // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput ("Modulation",   juce::AudioChannelSet::discreteChannels (7 * 2), true)  // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation",   juce::AudioChannelSet::mono(), false)               // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",         juce::AudioChannelSet::stereo(), true);             // Send channel (right outputs)
     }

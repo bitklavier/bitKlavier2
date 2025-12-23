@@ -840,7 +840,8 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     auto param_index =  parameter_tree.getParent().indexOf(parameter_tree);// parameter_tree.getProperty (IDs::channel, -1);
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, connection->modulation_output_bus_index); //1 is mod
     auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index);
-
+    if(connection->isContinuousMod)
+        dest_index  =  dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index * 2);
     //do the final backend adding
     if (!parameter_tree.isValid() || !mod_src.isValid())
     {

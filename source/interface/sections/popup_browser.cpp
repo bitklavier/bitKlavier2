@@ -1137,9 +1137,11 @@ sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0x
 void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, const juce::ValueTree& v)
 {
 
-    if(prep_view.get() != nullptr )
+    if(prep_view != nullptr )
     {
         SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+        if(_parent == nullptr)
+            return;
         prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper());
         removeSubSection(prep_view.get());
     }

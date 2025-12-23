@@ -223,7 +223,7 @@ public:
                  *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, andramp
                  *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
                  */
-                .withInput("Modulation", juce::AudioChannelSet::discreteChannels(11), true)
+                .withInput("Modulation", juce::AudioChannelSet::discreteChannels(11 * 2), true)
                 // Mod inputs; numChannels for the number of mods we want to enable
                 .withOutput("Modulation", juce::AudioChannelSet::mono(), false)
                 // Modulation send channel; disabled for all but Modulation preps!
