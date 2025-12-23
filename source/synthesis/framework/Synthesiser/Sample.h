@@ -965,8 +965,8 @@ public:
          * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
          */
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
-        loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
-        loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
+        sampleBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
+        sampleEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
 
         currentDirection = startDirection;
         currentSamplePos = startTimeMS * getSampleRate() * .001;
@@ -1060,8 +1060,6 @@ public:
                     }
                 }
             }
-
-            num_loops = 0;
         }
     }
 
@@ -1139,8 +1137,8 @@ private:
          * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
          */
         auto loopPoints = samplerSound->getLoopPointsInSeconds();
-        loopBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
-        loopEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
+        sampleBegin.setTargetValue(loopPoints.getStart() * samplerSound->getSample()->getSampleRate());
+        sampleEnd.setTargetValue(loopPoints.getEnd() * samplerSound->getSample()->getSampleRate());
 
         auto outL = outputBuffer.getWritePointer(0, startSample);
         if (outL == nullptr)
@@ -1242,7 +1240,6 @@ private:
             if (currentDirection == Direction::forward && currentSamplePos > loop_end)
             {
                 currentSamplePos = loop_start; // -= loop_length?
-                num_loops += 1;
             }
 
             if (currentDirection == Direction::backward)
@@ -1258,7 +1255,6 @@ private:
                      *      and is not generalized for backwards play in other circumstances
                      */
                     currentSamplePos = loop_end;
-                    num_loops += 1;
                 }
 
                 // if we reach this point without resetting currentSamplePos to loop_end, then we have left the looping phase and are playing back to the beginning of the sample
@@ -1301,8 +1297,8 @@ private:
                           Element* outR,
                           size_t writePos)
     {
-        auto currentLoopBegin = loopBegin.getNextValue();
-        auto currentLoopEnd = loopEnd.getNextValue();
+        auto currentSampleBegin = sampleBegin.getNextValue();
+        auto currentSampleEnd = sampleEnd.getNextValue();
         auto currentIncrement = sampleIncrement.getNextValue();
 
         /*
@@ -1311,7 +1307,7 @@ private:
          */
         if(currentDirection == Direction::backward && currentSamplePos > samplerSound->getSample()->getLength())
         {
-            std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentLoopBegin, currentLoopEnd);
+            std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentSampleBegin, currentSampleEnd);
 
             if (outR != nullptr)
             {
@@ -1367,7 +1363,7 @@ private:
             outL[writePos] += (m_Buffer.getSample(0, 0) + m_Buffer.getSample(1, 0)) * 0.5f;
         }
 
-        std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentLoopBegin, currentLoopEnd);
+        std::tie(currentSamplePos, currentDirection) = getNextState(currentIncrement, currentSampleBegin, currentSampleEnd);
 
         if (currentSamplePos > samplerSound->getSample()->getLength())
         {
@@ -1397,9 +1393,7 @@ private:
 
     void stopNote()
     {
-        // todo: are these necessary?
         ampEnv.reset();
-
         clearCurrentNote();
         currentSamplePos = 0.0;
     }
@@ -1463,12 +1457,11 @@ private:
     bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the current tuning system (in TuningState)
 
     juce::SmoothedValue<double> level { 0 };
-    juce::SmoothedValue<double> loopBegin;
-    juce::SmoothedValue<double> loopEnd;
+    juce::SmoothedValue<double> sampleBegin;
+    juce::SmoothedValue<double> sampleEnd;
     juce::SmoothedValue<double> sampleIncrement { 0. }; // how far to move through sample, to effect transpositions
     double loop_end;
     double loop_start;
-    float num_loops;
     bool loopingForSustain = false;
     SFZEG ampeg;
     double currentSamplePos { 0 };
