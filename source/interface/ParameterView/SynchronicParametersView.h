@@ -353,6 +353,9 @@ public:
     SynchronicParams& sparams_;
 
     void resized() override;
+    void stopAllTimers()override {
+        stopTimer();
+    }
 };
 
 #endif //BITKLAVIER0_SYNCHRONICPARAMETERSVIEW_H

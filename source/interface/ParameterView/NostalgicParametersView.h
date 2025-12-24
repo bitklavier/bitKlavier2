@@ -245,6 +245,9 @@ public:
 
     chowdsp::ScopedCallback nostalgicTriggerByCallback;
     void resized() override;
+    void stopAllTimers()override {
+        stopTimer();
+    }
 };
 
 #endif //BITKLAVIER2_NOSTALGICPARAMETERSVIEW_H

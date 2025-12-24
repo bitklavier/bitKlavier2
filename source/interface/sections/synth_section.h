@@ -156,6 +156,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     virtual void paintBackgroundShadow(juce::Graphics& g) { }
     virtual void setSizeRatio(float ratio);
     void paintKnobShadows(juce::Graphics& g);
+    virtual void stopAllTimers()  {}
     juce::Font getLabelFont();
     void setLabelFont(juce::Graphics& g);
     void drawLabelConnectionForComponents(juce::Graphics& g, juce::Component* left, juce::Component* right);
