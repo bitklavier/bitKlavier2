@@ -825,7 +825,7 @@ public:
     void setTargetSustainTime(float sustainTimeMS)
     {
         targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
-        DBG("targetSustainTime_samples set to (sec) " << targetSustainTime_samples / getSampleRate());
+        //DBG("targetSustainTime_samples set to (sec) " << targetSustainTime_samples / getSampleRate());
     }
 
     void setGain(float g)
@@ -972,7 +972,7 @@ public:
         currentDirection = startDirection;
         currentSamplePos = startTimeMS * getSampleRate() * .001;
         startTimeOffset =  currentSamplePos - targetSustainTime_samples;
-        DBG("startTimeOffset (sec) = " << startTimeOffset / getSampleRate());
+        //DBG("startTimeOffset (sec) = " << startTimeOffset / getSampleRate());
 
         /*
          * need to account for sampleIncrement when setting start time

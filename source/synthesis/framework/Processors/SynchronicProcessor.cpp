@@ -227,7 +227,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
-
         if(message.isNoteOn())
             keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
         else if(message.isNoteOff())
@@ -259,6 +258,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
      * - gathers notes into a single cluster that is played metronomically
     */
     thresholdSamples = *state.params.clusterThreshold * getSampleRate() * .001;
+
     if (inCluster)
     {
         //moved beyond clusterThreshold time, done with cluster
@@ -436,11 +436,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             }
 
             // update current slider val for UI
-            state.params.transpositions_current.store(cluster->transpCounter);
-            state.params.accents_current.store(cluster->accentMultiplierCounter);
-            state.params.sustainLengthMultipliers_current.store(cluster->lengthMultiplierCounter);
-            state.params.beatLengthMultipliers_current.store(cluster->beatMultiplierCounter);
-            state.params.envelopes_current.store(cluster->envelopeCounter);
+            state.params.transpositionsCurrent.store(cluster->transpCounter);
+            state.params.accentsCurrent.store(cluster->accentMultiplierCounter);
+            state.params.sustainLengthMultipliersCurrent.store(cluster->lengthMultiplierCounter);
+            state.params.beatLengthMultipliersCurrent.store(cluster->beatMultiplierCounter);
+            state.params.envelopesCurrent.store(cluster->envelopeCounter);
         }
 
         //pass time until next beat, increment phasor/timers
