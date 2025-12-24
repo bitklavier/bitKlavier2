@@ -530,6 +530,38 @@ void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
     /**
      * todo: handle noteOffs, otherwise nothing?
      */
+    processContinuousModulations(buffer);
+
+    // this is a synth, so we want an empty audio buffer to start (AFTER processing continuous mods)
+    buffer.clear();
+
+    /*
+     * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer
+     *  to send to BKSynth
+     */
+    int numSamples = buffer.getNumSamples();
+    juce::MidiBuffer outMidi;
+    //ProcessMIDIBlock(midiMessages, outMidi, numSamples);
+
+    /*
+     * then the synthesizer process blocks
+     */
+    if (synchronicSynth->hasSamples())
+    {
+        //synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
+        synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
+    }
+
+    // handle the send
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    float sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendGain);
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+
+    // final output gain stage, from rightmost slider in DirectParametersView
+    float outputgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputGain);
+    buffer.applyGain(0, 0, numSamples, outputgainmult);
+    buffer.applyGain(1, 0, numSamples, outputgainmult);
 }
 
 bool SynchronicProcessor::holdCheck(int noteNumber)

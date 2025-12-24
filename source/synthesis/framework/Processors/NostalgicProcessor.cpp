@@ -351,7 +351,7 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     // send the MIDI messages to the synth
     if (nostalgicSynth->hasSamples())
     {
-        nostalgicSynth->setBypassed (false);
+        //nostalgicSynth->setBypassed (false);
         nostalgicSynth->setNoteOnSpecMap(noteOnSpecMap);
         nostalgicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
