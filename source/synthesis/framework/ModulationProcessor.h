@@ -148,6 +148,7 @@ class StateConnection;
 
         struct ModEntry
         {
+            float lastRaw0 = 0.0f; // last raw sample0 from previous block (audio thread only)
             ModulatorBase* mod = nullptr; // not owning
             juce::AudioBuffer<float> tmp; // owned by snapshot
             std::vector<ModulationConnection*> connections; // not owning

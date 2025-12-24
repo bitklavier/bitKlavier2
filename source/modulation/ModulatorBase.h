@@ -92,7 +92,17 @@ public:
 
     std::vector<Listener*> listeners_;
     void addListener(ModulatorBase::Listener* listener) {
-        listeners_.push_back(listener);
+        auto it = std::find(listeners_.begin(), listeners_.end(), listener);
+
+        if (it == listeners_.end()) {
+            // Not found, so it's safe to add
+            listeners_.push_back(listener);
+            // std::cout << "Listener added." << std::endl;
+        } else {
+            // Found, do not add duplicate
+            // std::cout << "Listener already exists. Not adding." << std::endl;
+        }
+        // listeners_.push_back(listener);
     }
     void removeListener(ModulatorBase::Listener* listener) {
         std::erase(listeners_, listener); // C++20
@@ -103,6 +113,10 @@ public:
     virtual void prepareToPlay (double sampleRate, int samplesPerBlock)  {}
     virtual void releaseResources() {}
     virtual SynthSection* createEditor() = 0;
+    virtual void retriggerFrom (float currentOutput){}
+    std::atomic<bool> pendingRetrigger { false };
+    void requestRetrigger() noexcept { pendingRetrigger.store(true, std::memory_order_release); }
+
     bitklavier::ModulationProcessor* parent_;
     static constexpr ModulatorType type = ModulatorType::AUDIO;
 //    std::vector<bitklavier::ModulationConnection*> connections;

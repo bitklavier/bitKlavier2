@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY soundset="Default">
+  <PIANO isActive="1" name="default">
+    <PREPARATIONS>
+      <modulation type="8" width="60.00000381469727" height="60.00000381469727"
+                  x_y="768, 302" uuid="64d2e56e2b1f4ddaa71c0a4cab016b07" nodeID="1691542894"
+                  numIns="1">
+        <PORT nodeID="1691542894" chIdx="4096" isIn="1"/>
+        <modulationproc type="ramp" isState="0" uuid="866541416edc494ab0ccd601a00292a5"
+                        Time="10.000"/>
+      </modulation>
+      <direct type="0" width="147.0" height="75.0" x_y="194, 266" uuid="cb0418f14b18483a8ff06bcd4f30065d"
+              soundset="syncglobal" nodeID="3406043377" numIns="1" numOuts="2"
+              Main="0.000" Hammers="-24.000" Resonance="0.000" Pedal="-6.000"
+              Send="0.000" OutputGain="0.000" resonanceLoaded="1" hammerLoaded="1"
+              pedalLoaded="1" attack="3.000" decay="10.000" sustain="1.000"
+              release="50.000" attackpower="0.000" decaypower="0.000" releasepower="0.000"
+              hold="0.000" delay="0.000" notify="0" t0="0.000" t1="0.000" t2="0.000"
+              t3="0.000" t4="0.000" t5="0.000" t6="0.000" t7="0.000" t8="0.000"
+              t9="0.000" t10="0.000" t11="0.000" sliderValsSize="1.000" UseTuning="0">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="Main" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Hammers" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Resonance" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Pedal" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="attack" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="decay" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="delay" start="0.0" end="1000.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="3406043377" chIdx="4096" isIn="1"/>
+        <PORT nodeID="3406043377" chIdx="0" isIn="0"/>
+        <PORT nodeID="3406043377" chIdx="2" isIn="0"/>
+      </direct>
+      <modulation type="8" width="60.00000381469727" height="60.00000381469727"
+                  x_y="583, 287" uuid="56fb8a8c61f04ee29e812220063d6e6a" nodeID="1459325580"
+                  numIns="1">
+        <PORT nodeID="1459325580" chIdx="4096" isIn="1"/>
+        <modulationproc type="ramp" isState="0" uuid="663b90d7302442a19e98202f08cd5213"
+                        Time="10.000"/>
+      </modulation>
+      <keymap type="7" width="111.0000076293945" height="63.00000381469727"
+              x_y="572, 410" uuid="5f5ed9a7a07242b0bee4d161e162513f" soundset="syncglobal"
+              nodeID="1600051623" numOuts="1" velocityCurveAsymWarp="1.000"
+              velocityCurveSymWarp="1.000" velocityCurveScale="1.000" velocityCurveOffset="0.000"
+              velocityCurveInvert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="60">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurveAsymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveSymWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurveScale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveOffset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="1600051623" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="-501250933"/>
+      </keymap>
+      <keymap type="7" width="111.0000076293945" height="63.00000381469727"
+              x_y="701, 395" uuid="666065aab69b4fb3bcdf35b3526f808d" soundset="syncglobal"
+              nodeID="1717593514" numOuts="1" velocityCurveAsymWarp="1.000"
+              velocityCurveSymWarp="1.000" velocityCurveScale="1.000" velocityCurveOffset="0.000"
+              velocityCurveInvert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="62">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurveAsymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveSymWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurveScale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveOffset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="1717593514" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="-501250933"/>
+      </keymap>
+    </PREPARATIONS>
+    <CONNECTIONS>
+      <CONNECTION isMod="0" src="1717593514" srcIdx="4096" dest="1691542894" destIdx="4096"/>
+      <CONNECTION isMod="0" src="1600051623" srcIdx="4096" dest="1459325580" destIdx="4096"/>
+    </CONNECTIONS>
+    <MODCONNECTIONS>
+      <MODCONNECTION isMod="1" src="1459325580" dest="3406043377">
+        <ModulationConnection uuid="1f01f6fa02f746f1a0728e0706fdc892" isState="0" dest="cb0418f14b18483a8ff06bcd4f30065d_Pedal"
+                              src="64d2e56e2b1f4ddaa71c0a4cab016b07_ramp-866541416edc494ab0ccd601a00292a5_mod"
+                              sliderval="-6.000000476837158" mod0to1="-0.3442081809043884"
+                              modAmt="-25.86834335327148"/>
+        <ModulationConnection uuid="9a241f12e9c243df82a12337f534b799" isState="0" dest="cb0418f14b18483a8ff06bcd4f30065d_Pedal"
+                              src="56fb8a8c61f04ee29e812220063d6e6a_ramp-663b90d7302442a19e98202f08cd5213_mod"
+                              sliderval="-6.000000476837158" mod0to1="0.2595998048782349" modAmt="6.0"/>
+      </MODCONNECTION>
+      <MODCONNECTION isMod="1" src="1691542894" dest="3406043377"/>
+    </MODCONNECTIONS>
+  </PIANO>
+</GALLERY>

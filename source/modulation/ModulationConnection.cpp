@@ -118,5 +118,73 @@ namespace bitklavier
     // }
 
 
+    void ModulationConnection::updateScalingAudioThread (float currentTotalParamUnits, float raw0) noexcept
+{
+    if (scalingLocked_.load (std::memory_order_acquire))
+        return;
+
+    const float start = rangeStart_.load (std::memory_order_relaxed);
+    const float end   = rangeEnd_.load   (std::memory_order_relaxed);
+
+    // 1) Current value WITH ALL MODS -> normalized absolute position [0..1]
+    const float curClamped = juce::jlimit (start, end, currentTotalParamUnits);
+    const float curNormAbs = range.convertTo0to1 (curClamped);
+
+    // 2) This connection’s current contribution in normalized-delta units
+    // (matches your DSP formula: (1-r)*carry + r*scale)
+    const float scaleNorm = scalingValue_.load (std::memory_order_relaxed);
+
+    float selfNorm = 0.0f;
+    if (carryActive_.load (std::memory_order_acquire))
+    {
+        const float carryNorm = carryApplied_.load (std::memory_order_relaxed);
+        selfNorm = (1.0f - raw0) * carryNorm + raw0 * scaleNorm;
+    }
+    else
+    {
+        selfNorm = raw0 * scaleNorm;
+    }
+
+    // 3) Anchor = everything except THIS connection, in normalized absolute units
+    const float anchorNormAbs = juce::jlimit (0.0f, 1.0f, curNormAbs - selfNorm);
+    const float anchorParam   = range.convertFrom0to1 (anchorNormAbs);
+
+    // 4) Recompute scaling from ANCHOR (your existing semantics)
+    const float modVal = modAmt_.load (std::memory_order_relaxed);
+
+    const float base = juce::jlimit (start, end, anchorParam);
+    const float baseNormAbs = range.convertTo0to1 (base);
+
+    float newScaleNorm = 0.0f;
+
+    // (you said ignore bipolar issues; keep your branches as-is)
+    if (isOffset())
+    {
+        const float targetNormAbs = range.convertTo0to1 (juce::jmin (base + modVal, end));
+        newScaleNorm = juce::jmax (0.0f, targetNormAbs - baseNormAbs);
+    }
+    else
+    {
+        // "target value" semantics fallback (unchanged)
+        const float target = juce::jlimit (start, end, modVal);
+        const float targetNormAbs = range.convertTo0to1 (target);
+        newScaleNorm = targetNormAbs - baseNormAbs;
+    }
+
+    scalingValue_.store (newScaleNorm, std::memory_order_relaxed);
+
+    // 5) Update carryApplied_ so the output is continuous at retrigger.
+    // We want: selfNorm (at this raw0) to stay the same after scaling changes.
+    //
+    // selfNorm = (1-r)*carry + r*scale  => carry = (selfNorm - r*scale) / (1-r)
+    //
+    // Only meaningful when r != 1 (at end of ramp carry is irrelevant).
+    constexpr float eps = 1.0e-5f;
+    const float denom = juce::jmax (eps, 1.0f - raw0);
+    const float newCarryNorm = (selfNorm - raw0 * newScaleNorm) / denom;
+
+    carryApplied_.store (newCarryNorm, std::memory_order_relaxed);
+    carryActive_.store  (true,         std::memory_order_release);
+}
 
 }

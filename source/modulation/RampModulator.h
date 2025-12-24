@@ -37,7 +37,7 @@ public :
     float getValue() { return value_; }
     void startRamp() { state_ = 1; }
     void stopRamp() { state_ = 0; }
-
+    void retriggerFrom(float) override;
     void process() override{};
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;
 
@@ -48,10 +48,10 @@ public :
 
     static constexpr ModulatorType type = ModulatorType::AUDIO;
 
-    float value_;
-    float target_;
-    float rate_;
-    int state_;
+    float value_ {0.f};
+    float target_{0.f};
+    float rate_ {0.001f};
+    int state_{0};
 
     float sampleRate;
 

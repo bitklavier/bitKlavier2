@@ -12,7 +12,7 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
 {
     for ( auto &param_ : *params.getBoolParams())
     {
-        if(param_->paramID.startsWith("envelope_")){
+        if(param_->paramID.startsWith("envelope")){
             auto button = std::make_unique<SynthButton>(param_->paramID);
             auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, nullptr);
             button->setComponentID(param_->paramID);

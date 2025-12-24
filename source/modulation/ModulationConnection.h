@@ -134,12 +134,16 @@ class ModulationProcessor;
         void setParamTree(const juce::ValueTree& v) {
             param_tree = v;
             currentDestinationSliderVal = param_tree.getProperty(IDs::sliderval);
+            setScalingValue(modAmt_, currentDestinationSliderVal);
         }
+
         void setStateValueTree(const juce::ValueTree&v) {
             state = v;
             //setScalingValue()
             scalingValue_ = state.getProperty(IDs::mod0to1);
+            modAmt_ = state.getProperty(IDs::modAmt);
         }
+
         juce::ValueTree state;
         void setScalingValue (float modVal, float sliderVal)
         {
@@ -248,10 +252,10 @@ class ModulationProcessor;
         }
         void modulationTriggered() //listener funciton
                {
-            updateScalingAudioThread(currentTotalBaseValue);
-            DBG("ModulationConnection::modulationTriggered()");
+
+            DBG("ModulationConnection::modulationTriggered() for dest :" + destination_name + "src: "  + source_name);
             // changeBuffer->changeState.emplace_back(0,change);
-            lockScaling();
+            // lockScaling();
                }
 
         void resetTriggered()
@@ -302,12 +306,27 @@ class ModulationProcessor;
             }
             scalingValue_.store (scaleNorm, std::memory_order_relaxed);
         }
+        void updateScalingAudioThread (float currentValueParamUnits, float m /* this connection’s current mod sample */) noexcept;
+
         float setCurrentTotalBaseValue(float basevalue) {
             currentTotalBaseValue = basevalue;
         }
+        void setCarryActive(float carry) {
+            if (isContinuousMod)
+                return;
+            // carryApplied_.store(carry, std::memory_order_relaxed);
+            carryActive_.store(true, std::memory_order_release); // only enable for ramp
+        }
         std::atomic<bool> isContinuousMod{false};
+        bool requestRetrigger;
+        // std::atomic<float> lastApplied_ { 0.0f };  // in mod-bus units (normalized contribution)
+        std::atomic<float> carryApplied_ { 0.0f };   // scaled contribution captured at retrigger
+        std::atomic<bool>  carryActive_  { false };
+        // std::atomic<float> lastAppliedPrev_ { 0.0f };
+        juce::NormalisableRange<float> range;
 
     private:
+
         float currentTotalBaseValue;
         std::atomic<float> scalingValue_   { 0.0f }; // editable pre-trigger
         std::atomic<float> lockedScaling_  { 0.0f }; // frozen at trigger time
@@ -316,7 +335,6 @@ class ModulationProcessor;
         std::atomic<float> rangeStart_ { 0.0f }, rangeEnd_{ 1.0f }, rangeSkew_{ 1.0f };
         int destParamIndex;
         // std::atomic<float> currentSliderVal {0.0f};
-        juce::NormalisableRange<float> range;
         juce::ValueTree param_tree;
 //        std::atomic<float>* bipolarOffset;
     };
