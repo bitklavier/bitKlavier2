@@ -106,7 +106,7 @@ void PopupDisplay::setContent(const std::string &text, juce::Rectangle<int> boun
     juce::Font font = Fonts::instance()->proportional_light().withPointHeight(height * 0.5f);
     int padding = height / 4;
     int buffer = padding * 2 + 2;
-    int width = ((font.getStringWidth(text) /mult) + buffer);
+    int width = ((font.getStringWidth(text) / mult) + buffer);
 
     int middle_x = bounds.getX() + bounds.getWidth() / 2;
     int middle_y = bounds.getY() + bounds.getHeight() / 2;
@@ -188,8 +188,9 @@ int PopupList::getBrowseWidth() {
     for (int i = 0; i < selections_.size(); ++i)
         max_width = std::max(
             max_width,
-            static_cast<int>(juce::GlyphArrangement::getStringWidthInt(font,selections_.items[i].name) / juce::Desktop::getInstance().getDisplays().
-                   getDisplayForRect(getScreenBounds())->scale) + buffer);
+            static_cast<int>(juce::GlyphArrangement::getStringWidthInt(font, selections_.items[i].name) /
+                             juce::Desktop::getInstance().getDisplays().
+                             getDisplayForRect(getScreenBounds())->scale) + buffer);
 
     return max_width;
 }
@@ -258,6 +259,7 @@ void PopupList::initOpenGlComponents(OpenGlWrapper &open_gl) {
     hover_->init(open_gl);
     SynthSection::initOpenGlComponents(open_gl);
 }
+
 //font drawing
 void PopupList::redoImage() {
     if (getWidth() <= 0 || getHeight() <= 0)
@@ -265,9 +267,9 @@ void PopupList::redoImage() {
 
     int mult = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale;
 
-    int row_height = getRowHeight() * mult;// * 2 / juce::Desktop::getInstance().getDisplays().
-                     //getDisplayForRect(getScreenBounds())->scale;
-    int image_width = getWidth()*mult;
+    int row_height = getRowHeight() * mult; // * 2 / juce::Desktop::getInstance().getDisplays().
+    //getDisplayForRect(getScreenBounds())->scale;
+    int image_width = getWidth() * mult;
 
     DBG("PopupList::redoImage - Row Height: " << row_height); // Debug row height
     DBG("PopupList::redoImage - Image Width: " << image_width); // Debug image width
@@ -310,8 +312,11 @@ void PopupList::moveQuadToRow(OpenGlQuad &quad, int row) {
 juce::Font PopupList::getFont() {
     auto font = Fonts::instance()->proportional_light();
     font.setHeightWithoutChangingWidth(getRowHeight() * 0.8f);
-    return Fonts::instance()->proportional_light().withHeight(getRowHeight() * 0.55f *  juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale);
+    return Fonts::instance()->proportional_light().withHeight(
+        getRowHeight() * 0.55f * juce::Desktop::getInstance().getDisplays().getDisplayForRect(
+            getScreenBounds())->scale);
 }
+
 //font drawing
 void PopupList::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
     juce::Rectangle<int> view_bounds(getLocalBounds());
@@ -325,9 +330,9 @@ void PopupList::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
     float y_offset = 2.0f * getViewPosition() / getHeight();
 
     rows_->setTopLeft(-1.0f, 1.0f + y_offset);
-    rows_->setTopRight(2.f*width_ratio - 1.0f, 1.0f + y_offset);
-    rows_->setBottomLeft(-1.0f, 1.0f + y_offset - 2.f*height_ratio);
-    rows_->setBottomRight(2.f*width_ratio - 1.0f, 1.0f + y_offset - 2.f*height_ratio);
+    rows_->setTopRight(2.f * width_ratio - 1.0f, 1.0f + y_offset);
+    rows_->setBottomLeft(-1.0f, 1.0f + y_offset - 2.f * height_ratio);
+    rows_->setBottomRight(2.f * width_ratio - 1.0f, 1.0f + y_offset - 2.f * height_ratio);
     rows_->drawImage(open_gl);
 
     if (hovered_ >= 0) {
@@ -985,10 +990,10 @@ void SinglePopupSelector::resized() {
 
     juce::Rectangle<int> bounds = getLocalBounds();
     int rounding = findValue(Skin::kBodyRounding);
-    popup_list_->setBounds(1, rounding, getWidth()/2 - 2, getHeight() - 2 * rounding);
-    popup_list_1->setBounds(popup_list_->getWidth(), rounding, getWidth()/2 - 2, getHeight() - 2 * rounding);
+    popup_list_->setBounds(1, rounding, getWidth() / 2 - 2, getHeight() - 2 * rounding);
+    popup_list_1->setBounds(popup_list_->getWidth(), rounding, getWidth() / 2 - 2, getHeight() - 2 * rounding);
 
-    bounds = bounds.removeFromLeft(bounds.getWidth()/2);
+    bounds = bounds.removeFromLeft(bounds.getWidth() / 2);
     body_->setBounds(bounds);
     body_->setRounding(findValue(Skin::kBodyRounding));
     body_->setColor(findColour(Skin::kBody, true));
@@ -1084,7 +1089,7 @@ void DualPopupSelector::setPosition(juce::Point<int> position, int width, juce::
     setBounds(x, y, width, height);
 }
 
-void DualPopupSelector::newSelection(PopupList* list, int id, int index) {
+void DualPopupSelector::newSelection(PopupList *list, int id, int index) {
     if (list == left_list_.get()) {
         PopupItems right_items = left_list_->getSelectionItems(index);
         if (right_items.size() == 0) {
@@ -1101,20 +1106,17 @@ void DualPopupSelector::newSelection(PopupList* list, int id, int index) {
 
         right_list_->setSelections(right_items);
         right_list_->select(right_selection);
-    }
-    else
+    } else
         callback_(id);
 }
 
 
-
 PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
-                                       body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
-                                       border_(new OpenGlQuad(Shaders::kRoundedRectangleBorderFragment)),
-                                       exit_button_(new OpenGlShapeButton("Exit")),
-                                       background_(new OpenGlBackground()), is_modulation_(ismod)
-{
-sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
+                                                 body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
+                                                 border_(new OpenGlQuad(Shaders::kRoundedRectangleBorderFragment)),
+                                                 exit_button_(new OpenGlShapeButton("Exit")),
+                                                 background_(new OpenGlBackground()), is_modulation_(ismod) {
+    sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
                                                          juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
 
     addAndMakeVisible(sampleSelector.get());
@@ -1132,15 +1134,35 @@ sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0x
     addOpenGlComponent(exit_button_->getGlComponent());
     exit_button_->addListener(this);
     exit_button_->setShape(Paths::exitX());
-    constrainer.setMinimumOnscreenAmounts(0xffffff,0xffffff,0xffffff,0xffffff);
+    constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
 }
-void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, const juce::ValueTree& v)
-{
+
+void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, const juce::ValueTree &v) {
     SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-    if(_parent == nullptr)
+    if (_parent == nullptr)
         return;
+    // if (prep_view != nullptr) {
+    //     return;
+    // }
     if (prep_view != nullptr) {
-        return;
+        /* needed to solve weird button drawn crash*/
+        //        if (auto *a = dynamic_cast<TuningParametersView*>(prep_view.get())) {
+        //            a->springTuningSection->setVisible(true);
+        //            a->adaptiveSection->setVisible(true);
+        //            resized();
+        //            repaintPrepBackground();
+        //        }
+        DBG("delete and set prep_view to nullptr");
+        prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper()); {
+            juce::ScopedLock lock(*_parent->getOpenGlCriticalSection());
+            removeSubSection(prep_view.get());
+        }
+        // //do not use ->reset that is a synthsection function. i want to reset the actual ptr
+        // parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {
+        // },true);
+        prep_view.reset(nullptr);
+
+        setVisible(false);
     }
     // if(prep_view != nullptr )
     // {
@@ -1159,105 +1181,82 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection>&& prep_pop, cons
     }
     Skin default_skin;
 
-    prep_view->setSkinValues(default_skin,false);
+    prep_view->setSkinValues(default_skin, false);
     prep_view->setAlwaysOnTop(true);
 
     curr_vt = v;
     if (curr_vt.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
         sampleSelectText->setText("Sync Global");
     else
-        sampleSelectText->setText(juce::String(curr_vt.getProperty(IDs::soundset)).upToFirstOccurrenceOf("||", false, false));
+        sampleSelectText->setText(
+            juce::String(curr_vt.getProperty(IDs::soundset)).upToFirstOccurrenceOf("||", false, false));
     resized();
     repaintPrepBackground();
 }
 
 
 void PreparationPopup::reset() {
-
-    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+    auto *parent = findParentComponentOfClass<SynthGuiInterface>();
     all_synth_buttons_.clear();
     all_sliders_.clear();
     all_modulation_buttons_.clear();
     all_state_modulated_components.clear();
     all_combo_box_.clear();
-    if (prep_view != nullptr)
-    {
-        /* needed to solve weird button drawn crash*/
-//        if (auto *a = dynamic_cast<TuningParametersView*>(prep_view.get())) {
-//            a->springTuningSection->setVisible(true);
-//            a->adaptiveSection->setVisible(true);
-//            resized();
-//            repaintPrepBackground();
-//        }
-        DBG("delete and set prep_view to nullptr");
-        prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
-        {
-            juce::ScopedLock lock(*parent->getOpenGlCriticalSection());
-            removeSubSection(prep_view.get());
-        }
-        // //do not use ->reset that is a synthsection function. i want to reset the actual ptr
-        // parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {
-        // },true);
-        prep_view.reset(nullptr);
-
-        setVisible(false);
-    }
+    setVisible(false);
     parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
     // repaintPrepBackground();
 }
-void PreparationPopup::repaintPrepBackground() {
-        background_->lock();
-        background_image_ = juce::Image(juce::Image::RGB, getWidth(),getHeight(), true);
-        juce::Graphics g(background_image_);
-    paintContainer(g);
-        if (prep_view != nullptr)
-            paintChildBackground(g, prep_view.get());
 
-        background_->updateBackgroundImage(background_image_);
-        background_->unlock();
+void PreparationPopup::repaintPrepBackground() {
+    background_->lock();
+    background_image_ = juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
+    juce::Graphics g(background_image_);
+    paintContainer(g);
+    if (prep_view != nullptr)
+        paintChildBackground(g, prep_view.get());
+
+    background_->updateBackgroundImage(background_image_);
+    background_->unlock();
 }
 
-void PreparationPopup::buttonClicked(juce::Button *clicked_button)
-{
-    if (clicked_button == exit_button_.get())
-    {
+void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
+    if (clicked_button == exit_button_.get()) {
         reset();
-    }
-    else if (clicked_button == sampleSelector.get()) {
+    } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         auto string_names = parent->getSynth()->sampleLoadManager->getAllSampleSets();
-        options.addItem(0,"Sync Global");
+        options.addItem(0, "Sync Global");
         for (int i = 1; i < string_names.size() + 1; i++) {
-            options.addItem(i, string_names[i-1]);
-
+            options.addItem(i, string_names[i - 1]);
         }
 
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            if(selection == 0) {
+            if (selection == 0) {
                 // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 // parent->getSampleLoadManager()
-                curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(),nullptr);
+                curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
                 sampleSelectText->setText("Sync Global");
-            }
-            else {
+            } else {
                 SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-                parent->getSampleLoadManager()->loadSamples(parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
-                sampleSelectText->setText(juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).upToFirstOccurrenceOf("||", false, false));
+                parent->getSampleLoadManager()->loadSamples(
+                    parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
+                sampleSelectText->setText(
+                    juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
+                    upToFirstOccurrenceOf("||", false, false));
             }
 
 
             resized();
         });
     }
-
 }
-PreparationPopup::~PreparationPopup()
-{
-//    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
-//    prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
-//    prep_view.reset();
+
+PreparationPopup::~PreparationPopup() {
+    //    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+    //    prep_view->destroyOpenGlComponents(*parent->getOpenGlWrapper());
+    //    prep_view.reset();
 }
 
 void PreparationPopup::resized() {
@@ -1267,55 +1266,53 @@ void PreparationPopup::resized() {
     auto header_bounds = bounds.removeFromTop(35);
     exit_button_->setBounds(header_bounds.removeFromLeft(35).reduced(5));
     header_bounds.removeFromLeft(10);
-    if(!is_modulation_) {
+    if (!is_modulation_) {
         int label_height = findValue(Skin::kLabelBackgroundHeight);
-        sampleSelector->setBounds(exit_button_->getRight() + 10, exit_button_->getY(),100,label_height);
+        sampleSelector->setBounds(exit_button_->getRight() + 10, exit_button_->getY(), 100, label_height);
         sampleSelectText->setBounds(sampleSelector->getBounds());
 
         float label_text_height = findValue(Skin::kLabelHeight);
         sampleSelectText->setTextSize(label_text_height);
-
     }
 
-    if(prep_view != nullptr)
-    {
+    if (prep_view != nullptr) {
         prep_view->setBounds(bounds);
     }
     repaintPrepBackground();
 }
 
 std::map<std::string, OpenGLComboBox *> PreparationPopup::getAllComboBox() {
-    if(prep_view!= nullptr)
+    if (prep_view != nullptr and isVisible())
         return prep_view->getAllComboBox();
-    return {};//SynthSection::getAllSliders();
-
+    return {}; //SynthSection::getAllSliders();
 }
 
 std::map<std::string, SynthSlider *> PreparationPopup::getAllSliders() {
-    if(prep_view!= nullptr)
+    if (prep_view != nullptr and isVisible())
         return prep_view->getAllSliders();
-    return {};//SynthSection::getAllSliders();
+    return {}; //SynthSection::getAllSliders();
 }
 
 std::map<std::string, ModulationButton *> PreparationPopup::getAllModulationButtons() {
-    if(prep_view!= nullptr)
+    if (prep_view != nullptr and isVisible())
         return prep_view->getAllModulationButtons();
-    return {};//SynthSection::getAllModulationButtons();
+    return {}; //SynthSection::getAllModulationButtons();
 }
+
 std::map<std::string, SynthButton *> PreparationPopup::getAllButtons() {
-    if(prep_view!= nullptr)
+    if (prep_view != nullptr and isVisible())
         return prep_view->getAllButtons();
     return SynthSection::getAllButtons();
 }
 
-std::map<std::string, StateModulatedComponent*> PreparationPopup::getAllStateModulatedComponents()
-{
-    if (prep_view!= nullptr)
+std::map<std::string, StateModulatedComponent *> PreparationPopup::getAllStateModulatedComponents() {
+    if (prep_view != nullptr and isVisible())
         return prep_view->getAllStateModulatedComponents();
     return SynthSection::getAllStateModulatedComponents();
 }
+
 void PreparationPopup::moved() {
-    if(auto *interface = findParentComponentOfClass<SynthGuiInterface>()) {
+    if (auto *interface = findParentComponentOfClass<SynthGuiInterface>()) {
         interface->notifyPrepPopupMoved();
     }
 }
