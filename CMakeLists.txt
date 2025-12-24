@@ -120,7 +120,7 @@ endforeach()
 add_custom_target(check_parameterid_underscores ALL
         COMMAND ${CMAKE_COMMAND}
         -DINPUT_LIST_FILE=${PARAMID_SCAN_LIST}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckParameterIDUnderscores.cmake
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/mycmake/CheckParameterIDUnderscores.cmake
         VERBATIM
 )
 
