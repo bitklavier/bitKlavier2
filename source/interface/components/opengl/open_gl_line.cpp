@@ -11,14 +11,14 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
           fragment_shader_(shader)
 {
     // Check that components are valid
-    if (!start_component_ || !end_component_ || !target_component_) {
+    if (start_component_ == nullptr || end_component_ == nullptr || target_component_ == nullptr) {
         DBG("Error: Invalid components supplied to OpenGlLine");
         return;
     }
 
     // Calculate the clip-space coordinates for the start and end components
-    juce::Point<float> startClip = getClipSpaceCoordinates(start_component_, target_component_);
-    juce::Point<float> endClip = getClipSpaceCoordinates(end_component_, target_component_);
+    juce::Point<float> startClip = getClipSpaceCoordinates((juce::Component*) start_component_, (juce::Component*) target_component_);
+    juce::Point<float> endClip = getClipSpaceCoordinates((juce::Component*) end_component_, (juce::Component*) target_component_);
 
     // Debug outputs to verify the calculated coordinates
     DBG("------------ OpenGlLine Created ------------");
@@ -129,7 +129,7 @@ void OpenGlLine::init(OpenGlWrapper& open_gl) {
 
 // Rendering logic for the OpenGL line
 void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
-    juce::Component *component = target_component_ ? target_component_ : this;
+    juce::Component *component = (target_component_ != nullptr ? (juce::Component*) target_component_ : this);
     if (!active_ || (!draw_when_not_visible_ && !component->isVisible()) || !setViewPort(component, open_gl))
         return;
     if (shader_ == nullptr)
@@ -138,8 +138,10 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
     {
         dirty_ = false;
   // Calculate updated clip-space coordinates for start and end components
-        juce::Point<float> startClip = getClipSpaceCoordinates(start_component_, target_component_);
-        juce::Point<float> endClip = getClipSpaceCoordinates(end_component_, target_component_);
+        if (start_component_ == nullptr || end_component_ == nullptr || target_component_ == nullptr)
+            return;
+        juce::Point<float> startClip = getClipSpaceCoordinates((juce::Component*) start_component_, (juce::Component*) target_component_);
+        juce::Point<float> endClip = getClipSpaceCoordinates((juce::Component*) end_component_, (juce::Component*) target_component_);
 
         // Update the vertex buffer's data
         GLfloat updatedVertices[] = {

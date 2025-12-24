@@ -275,8 +275,8 @@ public:
   void setDrawWhenNotVisible(bool draw) { draw_when_not_visible_ = draw; }
 
 protected:
-  juce::Component *target_component_;
-  juce::Component *scissor_component_;
+  juce::Component::SafePointer<juce::Component> target_component_;
+  juce::Component::SafePointer<juce::Component> scissor_component_;
   Shaders::FragmentShader fragment_shader_;
   int max_quads_;
   int num_quads_;

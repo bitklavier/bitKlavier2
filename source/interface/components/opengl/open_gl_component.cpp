@@ -20,20 +20,27 @@
 
 
 namespace {
+  // Walk up the hierarchy accumulating bounds until we reach the FullInterface (top level for GL rendering)
   juce::Rectangle<int> getGlobalBounds(juce::Component* component, juce::Rectangle<int> bounds) {
+    if (component == nullptr)
+      return bounds;
+
     juce::Component* parent = component->getParentComponent();
-    while (parent && dynamic_cast<FullInterface*>(component) == nullptr) {
+    while (parent != nullptr && dynamic_cast<FullInterface*>(parent) == nullptr) {
       bounds = bounds + component->getPosition();
       component = parent;
       parent = component->getParentComponent();
     }
 
-    return bounds;
+    return bounds + component->getPosition();
   }
 
   juce::Rectangle<int> getGlobalVisibleBounds(juce::Component* component, juce::Rectangle<int> visible_bounds) {
+    if (component == nullptr)
+      return visible_bounds;
+
     juce::Component* parent = component->getParentComponent();
-    while (parent && dynamic_cast<FullInterface*>(parent) == nullptr) {
+    while (parent != nullptr && dynamic_cast<FullInterface*>(parent) == nullptr) {
       visible_bounds = visible_bounds + component->getPosition();
       parent->getLocalBounds().intersectRectangle(visible_bounds);
       component = parent;
@@ -57,17 +64,21 @@ OpenGlComponent::~OpenGlComponent() {
 
 bool OpenGlComponent::setViewPort(juce::Component* component, juce::Rectangle<int> bounds, OpenGlWrapper& open_gl) {
 
-  if(component == nullptr)
+  // Defensive: component may have been deleted or detached on the message thread
+  if (component == nullptr)
     return false;
-    FullInterface* top_level = component->findParentComponentOfClass<FullInterface>();
+  // If the component is detached, bail out early to avoid walking an invalid hierarchy
+  if (component->getParentComponent() == nullptr && dynamic_cast<FullInterface*>(component) == nullptr)
+    return false;
+  FullInterface* top_level = component->findParentComponentOfClass<FullInterface>();
 //    juce::String componentName = component != nullptr ? component->getName() : "Unnamed Component";
 //    juce::String highlightedName = "------------ " + componentName + " ------------";
 //
 //    // Add debug prints for individual components of glViewport
 //    DBG(highlightedName); // Highlight the component name
 
-  if(top_level == nullptr)
-      return false;
+  if (top_level == nullptr)
+    return false;
   float scale = open_gl.display_scale;
   float resize_scale = top_level->getResizingScale();
   float render_scale = 1.0f;
@@ -79,7 +90,7 @@ bool OpenGlComponent::setViewPort(juce::Component* component, juce::Rectangle<in
   juce::Rectangle<int> top_level_bounds = top_level->getBounds();
   juce::Rectangle<int> global_bounds = getGlobalBounds(component, bounds);
   juce::Rectangle<int> visible_bounds = getGlobalVisibleBounds(component, bounds);
-    float comp_scale = Component::getApproximateScaleFactorForComponent(component);
+  float comp_scale = Component::getApproximateScaleFactorForComponent(component);
 //    // Add debug prints for individual components of glViewport
 //    DBG("scale: " + juce::String(scale));
 //    DBG("resize_scale: " + juce::String(resize_scale));

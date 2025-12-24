@@ -141,7 +141,7 @@ void OpenGlMultiQuad::destroy(OpenGlWrapper &open_gl)
 
 void OpenGlMultiQuad::render(OpenGlWrapper &open_gl, bool animate)
 {
-  juce::Component *component = target_component_ ? target_component_ : this;
+  juce::Component *component = (target_component_ != nullptr ? (juce::Component*) target_component_ : this);
   if (!active_ || (!draw_when_not_visible_ && !component->isVisible()) || !setViewPort(component, open_gl))
     return;
 
