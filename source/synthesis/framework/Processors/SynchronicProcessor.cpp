@@ -399,6 +399,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
                                                              * getBeatThresholdSeconds() * 1000;
 
+                        DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + "");
+
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                         {
@@ -491,8 +493,8 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      */
 
     // use these to display buffer info to bufferDebugger
-    bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
-    bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
     /*
      * then the synthesizer process blocks
@@ -501,7 +503,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     {
         synchronicSynth->setBypassed (false);
         synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
-        synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
+        synchronicSynth->renderNextBlock (buffer, outMidi, 0, numSamples);
     }
 
     // handle the send
@@ -527,17 +529,16 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
 void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    /**
-     * todo: handle noteOffs, otherwise nothing?
-     */
     processContinuousModulations(buffer);
 
     // this is a synth, so we want an empty audio buffer to start (AFTER processing continuous mods)
     buffer.clear();
 
     /*
-     * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer
-     *  to send to BKSynth
+     * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer to send to BKSynth
+     *      - since we are bypassed, we should be able to completely ignore MIDI messages
+     *      - currently sounding Synchronic notes will automatically turn themselves off at the right time in renderNextBlock
+     *          since their durations are set at noteOn
      */
     int numSamples = buffer.getNumSamples();
     juce::MidiBuffer outMidi;
@@ -549,7 +550,7 @@ void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
     if (synchronicSynth->hasSamples())
     {
         //synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
-        synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
+        synchronicSynth->renderNextBlock (buffer, outMidi, 0, numSamples);
     }
 
     // handle the send

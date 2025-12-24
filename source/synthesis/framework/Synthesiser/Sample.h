@@ -839,7 +839,8 @@ public:
     bool ignoreNoteOff = false;
 
 protected:
-    int64_t targetSustainTime_samples = -1;
+    //int64_t targetSustainTime_samples = -1;
+    double targetSustainTime_samples = -1;
     float voiceGain {1.};
 
     BKADSR ampEnv;
@@ -1475,7 +1476,8 @@ private:
 
     double tailOff { 0 };
     Direction currentDirection{ Direction::forward };
-    juce::uint64 currentSustainTime_samples = 0;
+    //juce::uint64 currentSustainTime_samples = 0;
+    double currentSustainTime_samples = 0;
 
     juce::AudioBuffer<float> m_Buffer;
 };
