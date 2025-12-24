@@ -74,7 +74,7 @@ struct TransposeParams : chowdsp::ParamHolder
     };
 
     chowdsp::FloatParameter::Ptr numActiveSliders{
-        juce::ParameterID{"sliderVals_size", 100},
+        juce::ParameterID{"sliderValsSize", 100},
         "sliderVals_size",
         chowdsp::ParamUtils::createNormalisableRange(0.0f, 12.0f, 6.0f),
         1.f,

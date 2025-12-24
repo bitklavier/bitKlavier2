@@ -108,6 +108,29 @@ include(SharedCodeDefaults)
 # set(SourceFiles Source/PluginEditor.h Source/PluginProcessor.h Source/PluginEditor.cpp Source/PluginProcessor.cpp)
 file(GLOB_RECURSE SourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/source/*.h")
 target_sources(SharedCode INTERFACE ${SourceFiles})
+# --- Fail build if juce::ParameterID strings contain '_' (Ninja-safe) ---
+
+# Write list of files at *configure time* (avoid huge fragile Ninja command lines)
+set(PARAMID_SCAN_LIST "${CMAKE_BINARY_DIR}/check_parameterid_files.txt")
+file(WRITE "${PARAMID_SCAN_LIST}" "")
+foreach(f IN LISTS SourceFiles)
+    file(APPEND "${PARAMID_SCAN_LIST}" "${f}\n")
+endforeach()
+
+add_custom_target(check_parameterid_underscores ALL
+        COMMAND ${CMAKE_COMMAND}
+        -DINPUT_LIST_FILE=${PARAMID_SCAN_LIST}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckParameterIDUnderscores.cmake
+        VERBATIM
+)
+
+message(STATUS "ParameterID underscore scan list: ${PARAMID_SCAN_LIST}")
+
+if(NOT EXISTS "${PARAMID_SCAN_LIST}")
+    message(FATAL_ERROR "Failed to create scan list at configure time: ${PARAMID_SCAN_LIST}")
+endif()
+
+add_dependencies("${PROJECT_NAME}" check_parameterid_underscores)
 
 # Adds a BinaryData target for embedding assets into the binary
 include(Assets)
@@ -221,7 +244,21 @@ target_link_libraries(SharedCode
 )
 
 
-
+## --- Fail build if juce::ParameterID strings contain '_' ---
+#set(PARAMID_UNDERSCORE_REGEX
+#        "juce::ParameterID[ \t\r\n]*\\{[ \t\r\n]*\"[^\"]*_[^\"]*\"[ \t\r\n]*,[ \t\r\n]*[0-9]+[ \t\r\n]*\\}"
+#)
+#
+#add_custom_target(check_parameterid_underscores ALL
+#        COMMAND ${CMAKE_COMMAND}
+#        -DINPUT_FILES="$<JOIN:${SourceFiles},;>"
+#        -DREGEX="${PARAMID_UNDERSCORE_REGEX}"
+#        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckParameterIDUnderscores.cmake"
+#        VERBATIM
+#)
+#
+## Ensure it runs before the plugin target builds
+#add_dependencies("${PROJECT_NAME}" check_parameterid_underscores)
 include (FetchContent)
 
 #FetchContent_Declare (melatonin_perfetto

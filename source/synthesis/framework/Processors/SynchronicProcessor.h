@@ -110,8 +110,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     // primary multislider params
     MultiSlider2DState transpositions {"transpositions"};
     MultiSliderState accents {"accents"};
-    MultiSliderState sustainLengthMultipliers{"sustain_length_multipliers"};
-    MultiSliderState beatLengthMultipliers{"beat_length_multipliers"};
+    MultiSliderState sustainLengthMultipliers{"SustainLengthMultipliers"};
+    MultiSliderState beatLengthMultipliers{"beatLengthMultipliers"};
 
     /*
      * for keeping track of the current multislider lengths

@@ -191,42 +191,42 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetPatternSync_noteMode {
-        juce::ParameterID{"bTargetPatternSync_noteMode", 100},
+        juce::ParameterID{"bTargetPatternSyncNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetBeatSync_noteMode {
-        juce::ParameterID{"bTargetBeatSync_noteMode", 100},
+        juce::ParameterID{"bTargetBeatSyncNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetClear_noteMode {
-        juce::ParameterID{"bTargetClear_noteMode", 100},
+        juce::ParameterID{"bTargetClearNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetPausePlay_noteMode {
-        juce::ParameterID{"bTargetPausePlay_noteMode", 100},
+        juce::ParameterID{"bTargetPausePlayNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetInput_noteMode {
-        juce::ParameterID{"bTargetInput_noteMode", 100},
+        juce::ParameterID{"bTargetInputNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetOutput_noteMode {
-        juce::ParameterID{"bTargetOutput_noteMode", 100},
+        juce::ParameterID{"bTargetOutputNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -244,7 +244,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDefault_noteMode {
-        juce::ParameterID{"sTargetDefault_noteMode", 100},
+        juce::ParameterID{"sTargetDefaultNoteMode", 100},
         "Note Mode",
         TriggerType::_Both,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -257,7 +257,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetPatternSync_noteMode {
-        juce::ParameterID{"sTargetPatternSync_noteMode", 100},
+        juce::ParameterID{"sTargetPatternSyncNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -270,7 +270,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetBeatSync_noteMode {
-        juce::ParameterID{"sTargetBeatSync_noteMode", 100},
+        juce::ParameterID{"sTargetBeatSyncNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -283,7 +283,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetAddNotes_noteMode {
-        juce::ParameterID{"sTargetAddNotes_noteMode", 100},
+        juce::ParameterID{"sTargetAddNotesNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -296,7 +296,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetClear_noteMode {
-        juce::ParameterID{"sTargetClear_noteMode", 100},
+        juce::ParameterID{"sTargetClearNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -309,7 +309,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetPausePlay_noteMode {
-        juce::ParameterID{"sTargetPausePlay_noteMode", 100},
+        juce::ParameterID{"sTargetPausePlayNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -321,12 +321,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
 //        false
 //    };
 //
-//    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteOldest_noteMode {
-//        juce::ParameterID{"sTargetDeleteOldest_noteMode", 100},
-//        "Note Mode",
-//        TriggerType::_NoteOn,
-//        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
-//    };
+
 //
 //    chowdsp::BoolParameter::Ptr synchronicTargetDeleteNewest {
 //        juce::ParameterID { "sTargetDeleteNewest", 100},
@@ -334,12 +329,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
 //        false
 //    };
 //
-//    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetDeleteNewest_noteMode {
-//        juce::ParameterID{"sTargetDeleteNewest_noteMode", 100},
-//        "Note Mode",
-//        TriggerType::_NoteOn,
-//        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
-//    };
+
 //
 //    chowdsp::BoolParameter::Ptr synchronicTargetRotate {
 //        juce::ParameterID { "sTargetRotate", 100},
@@ -347,13 +337,6 @@ struct MidiTargetParams : chowdsp::ParamHolder
 //        false
 //    };
 //
-//    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetRotate_noteMode {
-//        juce::ParameterID{"sTargetRotate_noteMode", 100},
-//        "Note Mode",
-//        TriggerType::_NoteOn,
-//        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
-//    };
-
     /*
      * Resonance Targets
      */
@@ -366,7 +349,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetDefault_noteMode {
-        juce::ParameterID{"rTargetDefault_noteMode", 100},
+        juce::ParameterID{"rTargetDefaultNoteMode", 100},
         "Note Mode",
         TriggerType::_Both,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -379,7 +362,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetRing_noteMode {
-        juce::ParameterID{"rTargetRing_noteMode", 100},
+        juce::ParameterID{"rTargetRingNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -392,14 +375,14 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetAdd_noteMode {
-        juce::ParameterID{"rTargetAdd_noteMode", 100},
+        juce::ParameterID{"rTargetAddNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr nostalgicTargetClear_noteMode {
-        juce::ParameterID{"nTargetClear_noteMode", 100},
+        juce::ParameterID{"nTargetClearNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
@@ -423,7 +406,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr nostalgicTargetDefault_noteMode {
-        juce::ParameterID{"nTargetDefault_noteMode", 100},
+        juce::ParameterID{"nTargetDefaultNoteMode", 100},
         "Note Mode",
         TriggerType::_Both,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }

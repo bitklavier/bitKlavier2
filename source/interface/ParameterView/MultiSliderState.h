@@ -58,10 +58,10 @@ struct MultiSliderState : bitklavier::StateChangeableParameter
         {
             static juce::var nullVar;
 
-            auto sval = change.getProperty (name + "_vals");
-            auto svalsize = change.getProperty (name + "_size");
-            auto aval = change.getProperty (name +"_states");
-            auto avalsize = change.getProperty (name + "_states_size");
+            auto sval = change.getProperty (name + "Vals");
+            auto svalsize = change.getProperty (name + "Size");
+            auto aval = change.getProperty (name +"States");
+            auto avalsize = change.getProperty (name + "StatesSize");
 
             DBG("MultiSliderState::processStateChanges " << sval.toString());
 
@@ -105,14 +105,14 @@ void serializeMultiSliderParam(
     const juce::String& thisSliderID)
 {
     // Define the specific string IDs for serialization
-    juce::String thisSlider_sizeID = thisSliderID + "_sliderVals_size";
-    juce::String activeSlidersID = thisSliderID + "_activeVals";
-    juce::String activeSliders_sizeID = activeSlidersID + "_size";
+    juce::String thisSlider_sizeID = thisSliderID + "SliderValsSize";
+    juce::String activeSlidersID = thisSliderID + "ActiveVals";
+    juce::String activeSliders_sizeID = activeSlidersID + "Size";
 
     // Serialize the float slider values
     juce::String sliderVals_str = atomicArrayToStringLimited(msliderParam.sliderVals, msliderParam.sliderVals_size);
     Serializer::addChildElement(ser, thisSlider_sizeID, juce::String(msliderParam.sliderVals_size));
-    Serializer::addChildElement(ser, thisSliderID+"_sliderVals", sliderVals_str);
+    Serializer::addChildElement(ser, thisSliderID+"SliderVals", sliderVals_str);
 
     // Serialize the boolean active sliders
     juce::String activeSliders_str = atomicArrayToStringLimited(msliderParam.activeSliders, msliderParam.activeVals_size);
@@ -140,14 +140,14 @@ void deserializeMultiSliderParam(
     float defaultVal = 1.f)
 {
     // Reconstruct the attribute names using the base ID
-    juce::String thisSlider_sizeID = thisSliderID + "_sliderVals_size";
-    juce::String activeSlidersID = thisSliderID + "_activeVals";
-    juce::String activeSliders_sizeID = activeSlidersID + "_size";
+    juce::String thisSlider_sizeID = thisSliderID + "SliderValsSize";
+    juce::String activeSlidersID = thisSliderID + "ActiveVals";
+    juce::String activeSliders_sizeID = activeSlidersID + "Size";
 
     // Deserialize the slider values
     auto myStr = deserial->getStringAttribute(thisSlider_sizeID);
     msliderParam.sliderVals_size = myStr.getIntValue();
-    myStr = deserial->getStringAttribute(thisSliderID+"_sliderVals");
+    myStr = deserial->getStringAttribute(thisSliderID+"SliderVals");
     std::vector<float> sliderVals_vec = parseStringToVector<float>(myStr);
     populateAtomicArrayFromVector(msliderParam.sliderVals, defaultVal, sliderVals_vec);
 

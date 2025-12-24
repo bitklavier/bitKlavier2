@@ -1,0 +1,1002 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "bitKlavier0_artefacts/Debug/VST3/bitKlavier0.vst3/Contents/MacOS/bitKlavier0"
+		}
+	],
+	"backtrace" : 4,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"_juce_link_plugin_wrapper",
+			"_juce_configure_plugin_targets",
+			"juce_add_plugin",
+			"target_link_libraries",
+			"_juce_link_frameworks",
+			"juce_add_module",
+			"juce_add_modules",
+			"add_custom_command",
+			"juce_enable_vst3_manifest_step",
+			"_juce_set_plugin_target_properties",
+			"add_compile_options",
+			"target_include_directories",
+			"target_sources",
+			"_juce_generate_icon",
+			"_juce_configure_bundle"
+		],
+		"files" : 
+		[
+			"JUCE/extras/Build/CMake/JUCEUtils.cmake",
+			"CMakeLists.txt",
+			"JUCE/extras/Build/CMake/JUCEModuleSupport.cmake",
+			"JUCE/modules/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 67,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 2199,
+				"parent" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1603,
+				"parent" : 2
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1419,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1432,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 235,
+				"parent" : 0
+			},
+			{
+				"file" : 3
+			},
+			{
+				"command" : 7,
+				"file" : 3,
+				"line" : 33,
+				"parent" : 7
+			},
+			{
+				"command" : 6,
+				"file" : 2,
+				"line" : 686,
+				"parent" : 8
+			},
+			{
+				"command" : 5,
+				"file" : 2,
+				"line" : 619,
+				"parent" : 9
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 341,
+				"parent" : 10
+			},
+			{
+				"command" : 5,
+				"file" : 2,
+				"line" : 619,
+				"parent" : 9
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 341,
+				"parent" : 12
+			},
+			{
+				"command" : 10,
+				"file" : 0,
+				"line" : 1466,
+				"parent" : 3
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 1248,
+				"parent" : 14
+			},
+			{
+				"command" : 8,
+				"file" : 0,
+				"line" : 1124,
+				"parent" : 15
+			},
+			{
+				"command" : 11,
+				"file" : 1,
+				"line" : 9,
+				"parent" : 0
+			},
+			{
+				"command" : 12,
+				"file" : 0,
+				"line" : 1429,
+				"parent" : 3
+			},
+			{
+				"command" : 15,
+				"file" : 0,
+				"line" : 1461,
+				"parent" : 3
+			},
+			{
+				"command" : 14,
+				"file" : 0,
+				"line" : 730,
+				"parent" : 19
+			},
+			{
+				"command" : 13,
+				"file" : 0,
+				"line" : 703,
+				"parent" : 20
+			},
+			{
+				"command" : 13,
+				"file" : 0,
+				"line" : 757,
+				"parent" : 19
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -std=gnu++17 -arch arm64 -mmacosx-version-min=10.13 -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -fcolor-diagnostics"
+				},
+				{
+					"backtrace" : 17,
+					"fragment" : "-w"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 5,
+					"define" : "CMAKE_BUILD_TYPE=\"Debug\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DEBUG=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_buffers=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_core=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_data_structures=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_dsp_data_structures=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_dsp_utils=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_filters=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_gui=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_json=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_listeners=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_math=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_parameters=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_plugin_base=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_plugin_state=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_plugin_utils=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_reflection=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_serialization=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_simd=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_sources=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_chowdsp_version=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_audio_basics=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_audio_devices=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_audio_formats=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_audio_plugin_client=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_audio_processors=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_audio_utils=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_core=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_data_structures=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_dsp=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_events=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_graphics=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_gui_basics=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_gui_extra=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_juce_opengl=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_MODULE_AVAILABLE_melatonin_audio_sparklines=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_OPENGL3=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_PLUGINHOST_VST3=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_STANDALONE_APPLICATION=JucePlugin_Build_Standalone"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_TARGET_HAS_BINARY_DATA=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_USE_CURL=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_VST3_CAN_REPLACE_VST2=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JUCE_WEB_BROWSER=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AAXCategory=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AAXDisableBypass=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AAXDisableMultiMono=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AAXIdentifier=com.manyarrowsmusic.bitklavier"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AAXManufacturerCode=JucePlugin_ManufacturerCode"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AAXProductId=JucePlugin_PluginCode"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ARACompatibleArchiveIDs=\"\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ARAContentTypes=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ARADocumentArchiveID=\"com.manyarrowsmusic.bitklavier.aradocumentarchive.1\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ARAFactoryID=\"com.manyarrowsmusic.bitklavier.arafactory.0.0.1\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ARATransformationFlags=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AUExportPrefix=bitKlavier0AU"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AUExportPrefixQuoted=\"bitKlavier0AU\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AUMainType='aufx'"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AUManufacturerCode=JucePlugin_ManufacturerCode"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_AUSubType=JucePlugin_PluginCode"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_AAX=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_AU=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_AUv3=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_LV2=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_Standalone=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_Unity=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_VST3=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Build_VST=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_CFBundleIdentifier=com.manyarrowsmusic.bitklavier"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Desc=\"bitKlavier0\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_EditorRequiresKeyboardFocus=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Enable_ARA=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_IsMidiEffect=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_IsSynth=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Manufacturer=\"Many Arrows Music\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ManufacturerCode=0x4269746b"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ManufacturerEmail=\"\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ManufacturerWebsite=\"\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Name=\"bitKlavier0\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_PluginCode=0x42323032"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_ProducesMidiOutput=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_VSTCategory=kPlugCategEffect"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_VSTNumMidiInputs=16"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_VSTNumMidiOutputs=16"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_VSTUniqueID=JucePlugin_PluginCode"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Version=0.0.1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_VersionCode=0x1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_VersionString=\"0.0.1\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_Vst3Category=\"Fx\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "JucePlugin_WantsMidiInput=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "PRODUCT_NAME_WITHOUT_VERSION=\"bitKlavier2\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "VERSION=\"0.0.1\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "_DEBUG=1"
+				},
+				{
+					"define" : "bitKlavier0_VST3_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/cmake-build-asan/bitKlavier0_artefacts/JuceLibraryCode"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/VST3_SDK"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK/lv2"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK/serd"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK/sord"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK/sord/src"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK/sratom"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK/lilv"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/JUCE/modules/juce_audio_processors_headless/format_types/LV2_SDK/lilv/src"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/common"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/synthesis/sound_engine"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/synthesis"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/synthesis/framework"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/synthesis/framework/Processors"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/synthesis/framework/ParamHolders"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/synthesis/framework/Synthesiser"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/components"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/components/BKitems"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/components/Cable"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/components/opengl"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/sections"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/Preparations"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/ParameterView"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/interface/look_and_feel"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/source/modulation"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/third_party/tracktion_engine"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/cmake-build-asan/juce_binarydata_Assets/JuceLibraryCode"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/third_party/chowdsp_utils/modules/plugin"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/third_party/chowdsp_utils/modules/common"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/third_party/chowdsp_utils/modules/dsp"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/third_party/chowdsp_utils/modules/gui"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/modules"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/third_party/sfzq/SFZPlayer"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/Users/dp9443/Documents/Princeton/bit2/third_party/sfzq/SFZPlayer/vendor/surge"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					5
+				],
+				"standard" : "17"
+			},
+			"sourceIndexes" : 
+			[
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 5,
+			"id" : "bitKlavier0::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 16,
+			"id" : "bitKlavier0_vst3_helper::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "SharedCode::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "Assets::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "sfzero::@dd87b221c216f7760fe9"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "Targets"
+	},
+	"id" : "bitKlavier0_VST3::@6890427a1f51a3e7e1df",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-bundle -Wl,-headerpad_max_install_names",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-L/opt/homebrew/opt/llvm/lib",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "-fsanitize=address",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "bitKlavier0_artefacts/Debug/libbitKlavier0_SharedCode.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 6,
+				"fragment" : "libAssets.a",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework CoreAudioKit",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework DiscRecording",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 11,
+				"fragment" : "-weak_framework Metal",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 13,
+				"fragment" : "-weak_framework MetalKit",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework WebKit",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework OpenGL",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework Cocoa",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework Foundation",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework IOKit",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework Security",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework QuartzCore",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework CoreAudio",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework CoreMIDI",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework AudioToolbox",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-framework Accelerate",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 6,
+				"fragment" : "third_party/sfzq/SFZPlayer/libsfzero.a",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "bitKlavier0_VST3",
+	"nameOnDisk" : "bitKlavier0.vst3/Contents/MacOS/bitKlavier0",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				2
+			]
+		},
+		{
+			"name" : "JUCE Modules\\juce_audio_plugin_client",
+			"sourceIndexes" : 
+			[
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 21,
+			"path" : "cmake-build-asan/bitKlavier0_artefacts/JuceLibraryCode/Icon.icns",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 22,
+			"isGenerated" : true,
+			"path" : "cmake-build-asan/bitKlavier0_artefacts/JuceLibraryCode/bitKlavier0_VST3/PkgInfo",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "cmake-build-asan/bitKlavier0_artefacts/JuceLibraryCode/bitKlavier0_VST3/PkgInfo.rule",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_AAX_utils.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_ARA.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_Standalone.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_Unity.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_AAX.mm",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_AU_1.mm",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_AU_2.mm",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_AUv3.mm",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_LV2.mm",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_VST2.mm",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_VST3.mm",
+			"sourceGroupIndex" : 2
+		}
+	],
+	"type" : "MODULE_LIBRARY"
+}

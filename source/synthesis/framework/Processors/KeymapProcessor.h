@@ -49,7 +49,7 @@ struct KeymapParams : chowdsp::ParamHolder
     }
 
     chowdsp::FloatParameter::Ptr velocityCurve_asymWarp {
-        juce::ParameterID { "velocityCurve_asymWarp", 100 },
+        juce::ParameterID { "velocityCurveAsymWarp", 100 },
         "CENTER WARP",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.0f, 1.0f),
         1.0f,
@@ -59,7 +59,7 @@ struct KeymapParams : chowdsp::ParamHolder
     };
 
     chowdsp::FloatParameter::Ptr velocityCurve_symWarp {
-        juce::ParameterID { "velocityCurve_symWarp", 100 },
+        juce::ParameterID { "velocityCurveSymWarp", 100 },
         "SIDES WARP",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 5.0f, 1.0f),
         1.0f,
@@ -69,7 +69,7 @@ struct KeymapParams : chowdsp::ParamHolder
     };
 
     chowdsp::FloatParameter::Ptr velocityCurve_scale {
-        juce::ParameterID { "velocityCurve_scale", 100 },
+        juce::ParameterID { "velocityCurveScale", 100 },
         "SCALE",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 10.0f, 1.0f),
         1.0f,
@@ -79,7 +79,7 @@ struct KeymapParams : chowdsp::ParamHolder
     };
 
     chowdsp::FloatParameter::Ptr velocityCurve_offset {
-        juce::ParameterID { "velocityCurve_offset", 100 },
+        juce::ParameterID { "velocityCurveOffset", 100 },
         "OFFSET",
         chowdsp::ParamUtils::createNormalisableRange (-1.0f, 1.0f, 0.0f),
         0.0f,
@@ -89,7 +89,7 @@ struct KeymapParams : chowdsp::ParamHolder
     };
 
     chowdsp::BoolParameter::Ptr velocityCurve_invert {
-        juce::ParameterID { "velocityCurve_invert", 100 },
+        juce::ParameterID { "velocityCurveInvert", 100 },
         "velocityCurve_invert",
         false
     };
@@ -131,7 +131,15 @@ public:
     bool isMidiEffect() const override { return false; }
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-    juce::AudioProcessor::BusesProperties  keymapBusLayout() { return BusesProperties();}
+    juce::AudioProcessor::BusesProperties  keymapBusLayout() { return BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+
+            /**
+             * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
+             *              for synchronic, we have 10:
+             *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
+             *                  - the main params: numPulses, numLayers, clusterThickness, clusterThreshold, OutputSendParam, outputGain,
+             */
+            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(4 * 2), true);}
     bool setMidiDevice(juce::AudioDeviceManager& deviceManager, juce::String identifier) { deviceManager.addMidiInputDeviceCallback(identifier, static_cast<juce::MidiInputCallback*>(_midi.get()));}
     void allNotesOff();
     std::unique_ptr<MidiManager> _midi;

@@ -1,0 +1,603 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						5,
+						6,
+						7
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.14"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						32,
+						33,
+						34,
+						35,
+						36,
+						37,
+						38,
+						39,
+						40
+					]
+				},
+				{
+					"build" : "JUCE",
+					"childIndexes" : 
+					[
+						2,
+						3
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-JUCE-Debug-f2a0c9fe82e697c6bf35.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "JUCE"
+				},
+				{
+					"build" : "JUCE/modules",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-JUCE.modules-Debug-0a994b0379cf773f28f2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "JUCE/modules"
+				},
+				{
+					"build" : "JUCE/extras/Build",
+					"childIndexes" : 
+					[
+						4
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-JUCE.extras.Build-Debug-da8f8edfa979b2c5464a.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "JUCE/extras/Build"
+				},
+				{
+					"build" : "JUCE/extras/Build/juceaide",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-JUCE.extras.Build.juceaide-Debug-151f32029aa85dea2e51.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 1,
+					"source" : "JUCE/extras/Build/juceaide"
+				},
+				{
+					"build" : "third_party/chowdsp_utils",
+					"jsonFile" : "directory-third_party.chowdsp_utils-Debug-855d389629bd71e123ca.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "third_party/chowdsp_utils",
+					"targetIndexes" : 
+					[
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19,
+						20,
+						21,
+						22,
+						23,
+						24,
+						25,
+						26,
+						27,
+						28,
+						29,
+						30,
+						31
+					]
+				},
+				{
+					"build" : "third_party/sfzq/SFZPlayer",
+					"jsonFile" : "directory-third_party.sfzq.SFZPlayer-Debug-f1847a58cc64f9b54dfa.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "third_party/sfzq/SFZPlayer",
+					"targetIndexes" : 
+					[
+						41
+					]
+				},
+				{
+					"build" : "_deps/catch2-build",
+					"childIndexes" : 
+					[
+						8
+					],
+					"jsonFile" : "directory-_deps.catch2-build-Debug-dba8e6a841e40aacba51.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 4,
+					"source" : "cmake-build-asan/_deps/catch2-src"
+				},
+				{
+					"build" : "_deps/catch2-build/src",
+					"jsonFile" : "directory-_deps.catch2-build.src-Debug-249e545868007ca198f4.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 7,
+					"projectIndex" : 4,
+					"source" : "cmake-build-asan/_deps/catch2-src/src",
+					"targetIndexes" : 
+					[
+						2,
+						3
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "bitKlavier0",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						32,
+						33,
+						34,
+						35,
+						36,
+						37,
+						38,
+						39,
+						40
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1,
+						2,
+						3,
+						4
+					],
+					"name" : "JUCE",
+					"parentIndex" : 0
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "chowdsp_utils",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19,
+						20,
+						21,
+						22,
+						23,
+						24,
+						25,
+						26,
+						27,
+						28,
+						29,
+						30,
+						31
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "sfzero",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						41
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						7,
+						8
+					],
+					"name" : "Catch2",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "Assets::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Assets-Debug-2db1df9be51d87a17c63.json",
+					"name" : "Assets",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Benchmarks::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Benchmarks-Debug-0ec288ad9b8fd63afc25.json",
+					"name" : "Benchmarks",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "Catch2::@fa92aa50e9bf5e1a7206",
+					"jsonFile" : "target-Catch2-Debug-6bceb63483c593e39dc2.json",
+					"name" : "Catch2",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "Catch2WithMain::@fa92aa50e9bf5e1a7206",
+					"jsonFile" : "target-Catch2WithMain-Debug-a525f99d196eaf6a7fc1.json",
+					"name" : "Catch2WithMain",
+					"projectIndex" : 4
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Continuous::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-Continuous-Debug-4d06ed0218c260e7659f.json",
+					"name" : "Continuous",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousBuild::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousBuild-Debug-687a2b892eb5f910f3fe.json",
+					"name" : "ContinuousBuild",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousConfigure::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousConfigure-Debug-cbfe9dc0a2667275d30f.json",
+					"name" : "ContinuousConfigure",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousCoverage::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousCoverage-Debug-78b9013e4168a6a6c1af.json",
+					"name" : "ContinuousCoverage",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousMemCheck::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousMemCheck-Debug-d5a479b07c53285ed820.json",
+					"name" : "ContinuousMemCheck",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousStart::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousStart-Debug-49e9a079d3192caa9f49.json",
+					"name" : "ContinuousStart",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousSubmit::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousSubmit-Debug-d20086a06df9eeaf4576.json",
+					"name" : "ContinuousSubmit",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousTest::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousTest-Debug-d70c0a28cf314e0f3166.json",
+					"name" : "ContinuousTest",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ContinuousUpdate::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ContinuousUpdate-Debug-4debb1c638536cff0f97.json",
+					"name" : "ContinuousUpdate",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Experimental::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-Experimental-Debug-7452a7b3100a02483bc1.json",
+					"name" : "Experimental",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalBuild::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalBuild-Debug-16ea2c9aa75d9c825208.json",
+					"name" : "ExperimentalBuild",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalConfigure::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalConfigure-Debug-d6e4d3c5b1a600ef669e.json",
+					"name" : "ExperimentalConfigure",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalCoverage::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalCoverage-Debug-4f13b37f74f6935ba207.json",
+					"name" : "ExperimentalCoverage",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalMemCheck::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalMemCheck-Debug-0cc330f5e7e31eb58a2d.json",
+					"name" : "ExperimentalMemCheck",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalStart::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalStart-Debug-59bd4cd9ace3e3f8264c.json",
+					"name" : "ExperimentalStart",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalSubmit::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalSubmit-Debug-e6ce5510f6fc6d01bfdc.json",
+					"name" : "ExperimentalSubmit",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalTest::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalTest-Debug-aab5de24f7217befce3e.json",
+					"name" : "ExperimentalTest",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "ExperimentalUpdate::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-ExperimentalUpdate-Debug-0c46adae960fea70dfc7.json",
+					"name" : "ExperimentalUpdate",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "Nightly::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-Nightly-Debug-9a53df44836f5b0dee0b.json",
+					"name" : "Nightly",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyBuild::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyBuild-Debug-0b73076b0862c42c7a1c.json",
+					"name" : "NightlyBuild",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyConfigure::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyConfigure-Debug-0ec217e0da8edf123b94.json",
+					"name" : "NightlyConfigure",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyCoverage::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyCoverage-Debug-a8a40697bddcb79b6167.json",
+					"name" : "NightlyCoverage",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyMemCheck::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyMemCheck-Debug-c7d71cca235fdeb731fd.json",
+					"name" : "NightlyMemCheck",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyMemoryCheck::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyMemoryCheck-Debug-02e9a1c024845c57fb0f.json",
+					"name" : "NightlyMemoryCheck",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyStart::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyStart-Debug-027c54ba165772993b08.json",
+					"name" : "NightlyStart",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlySubmit::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlySubmit-Debug-2e93c60b09a0f150aac9.json",
+					"name" : "NightlySubmit",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyTest::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyTest-Debug-7a7fd7cb2c7d93ee918c.json",
+					"name" : "NightlyTest",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "NightlyUpdate::@af2e9da99cf68acbe7d4",
+					"jsonFile" : "target-NightlyUpdate-Debug-77081501dbedf931b776.json",
+					"name" : "NightlyUpdate",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SharedCode::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SharedCode-Debug-0f43db77b80f6b219726.json",
+					"name" : "SharedCode",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Tests::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Tests-Debug-409a6fd7a560486e72f6.json",
+					"name" : "Tests",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "bitKlavier0::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bitKlavier0-Debug-00ceb4dd73b7f173ec8f.json",
+					"name" : "bitKlavier0",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "bitKlavier0_AU::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bitKlavier0_AU-Debug-0aeb0058c0632cba41e1.json",
+					"name" : "bitKlavier0_AU",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "bitKlavier0_All::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bitKlavier0_All-Debug-fc532b9d12ac56a4dd91.json",
+					"name" : "bitKlavier0_All",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "bitKlavier0_Standalone::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bitKlavier0_Standalone-Debug-20da05f315fdebd505d8.json",
+					"name" : "bitKlavier0_Standalone",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "bitKlavier0_VST3::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bitKlavier0_VST3-Debug-27e519888e6046776fa2.json",
+					"name" : "bitKlavier0_VST3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "bitKlavier0_vst3_helper::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bitKlavier0_vst3_helper-Debug-3c95cc96ba8a07cfd0ca.json",
+					"name" : "bitKlavier0_vst3_helper",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "check_parameterid_underscores::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-check_parameterid_underscores-Debug-33b4ddb6716bb4f0280c.json",
+					"name" : "check_parameterid_underscores",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "sfzero::@dd87b221c216f7760fe9",
+					"jsonFile" : "target-sfzero-Debug-af8df4bd866011e4708d.json",
+					"name" : "sfzero",
+					"projectIndex" : 3
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/Users/dp9443/Documents/Princeton/bit2/cmake-build-asan",
+		"source" : "/Users/dp9443/Documents/Princeton/bit2"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 8
+	}
+}

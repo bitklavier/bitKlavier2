@@ -258,10 +258,10 @@ public:
             activeStr = arrayBoolToString(states);
 
             // then update defaultState, with string representation of the multislider arrays
-            defaultState.setProperty( name_ + "_vals", valsStr, nullptr);
-            defaultState.setProperty( name_ + "_size", values.size(), nullptr);
-            defaultState.setProperty(name_ + "_states", activeStr, nullptr);
-            defaultState.setProperty(name_ + "_states_size", states.size(), nullptr);
+            defaultState.setProperty( name_ + "Vals", valsStr, nullptr);
+            defaultState.setProperty( name_ + "Size", values.size(), nullptr);
+            defaultState.setProperty(name_ + "States", activeStr, nullptr);
+            defaultState.setProperty(name_ + "StatesSize", states.size(), nullptr);
         }
         else if (isModulation_)
         {
@@ -285,10 +285,10 @@ public:
             activeStr = arrayBoolToString(states);
 
             // store those strings to the appropriate properties
-            modulationState.setProperty(name_ + "_vals", valsStr, nullptr);
-            modulationState.setProperty(name_ + "_size", values.size(), nullptr);
-            modulationState.setProperty(name_ +"_states", activeStr, nullptr);
-            modulationState.setProperty(name_ + "_states_size", states.size(), nullptr);
+            modulationState.setProperty(name_ + "Vals", valsStr, nullptr);
+            modulationState.setProperty(name_ + "Size", values.size(), nullptr);
+            modulationState.setProperty(name_ +"States", activeStr, nullptr);
+            modulationState.setProperty(name_ + "StatesSize", states.size(), nullptr);
         }
     }
 
@@ -300,10 +300,10 @@ public:
     void syncToValueTree() override {
 
         // get the property strings for this mod
-        auto msvals = modulationState.getProperty(name_ + "_vals");
-        auto msvals_size = int(modulationState.getProperty(name_  + "_size"));
-        auto msavals = modulationState.getProperty(name_ + "_states");
-        auto msavals_size = int(modulationState.getProperty(name_ + "_states_size"));
+        auto msvals = modulationState.getProperty(name_ + "Vals");
+        auto msvals_size = int(modulationState.getProperty(name_  + "Size"));
+        auto msavals = modulationState.getProperty(name_ + "States");
+        auto msavals_size = int(modulationState.getProperty(name_ + "StatesSize"));
 
         // make some dummy param holders, and fill them based on the mod strings above
         std::array<std::array<std::atomic<float>, MAXMULTISLIDER2DVALS>, MAXMULTISLIDER2DLENGTH> dispvals;
