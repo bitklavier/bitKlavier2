@@ -364,7 +364,7 @@ class SynchronicCluster
         // skip the inactive envelopes
         while (!_sparams->isEnvelopeActive(envelopeCounter)) // skip untoggled envelopes
         {
-            DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
+            //DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
             envelopeCounter++;
             if (envelopeCounter >= _sparams->numEnvelopes)
                 envelopeCounter = 0;
