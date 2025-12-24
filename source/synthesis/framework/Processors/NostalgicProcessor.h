@@ -492,6 +492,7 @@ public:
 private:
     bool doDefault = false;
     bool doClear = false;
+    bool bypassed = false; // set by graph; when bypassed == true, this preparation is in an inactive Piano within the Gallery
 
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     BKSynthesizerState lastSynthState;

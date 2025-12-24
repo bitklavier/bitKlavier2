@@ -223,10 +223,6 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, buffer.getNumSamples());
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, buffer.getNumSamples());
 
-    /**
-     * todo: create an output send level meter?
-     */
-
     /*
      * Q: is all this thread-safe?
      *      - outputLevels above is std::atomic
@@ -283,8 +279,16 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
+    // handle the send
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
+    buffer.copyFrom (sendBufferIndex, 0, buffer.getReadPointer (0), buffer.getNumSamples(), sendgainmult);
+    buffer.copyFrom (sendBufferIndex + 1, 0, buffer.getReadPointer (1), buffer.getNumSamples(), sendgainmult);
+
+    // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain (outputgainmult);
+    buffer.applyGain (0, 0, buffer.getNumSamples(), outputgainmult);
+    buffer.applyGain (1, 0, buffer.getNumSamples(), outputgainmult);
 
     /**
      * todo: include send buffer copy stuff here?
