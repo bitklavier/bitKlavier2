@@ -1205,6 +1205,8 @@ void PreparationPopup::reset() {
     setVisible(false);
     parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
     // repaintPrepBackground();
+    if (prep_view)
+        prep_view->stopAllTimers();
 }
 
 void PreparationPopup::repaintPrepBackground() {
