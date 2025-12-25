@@ -875,8 +875,6 @@ float SynthSection::getSliderWidth() {
     return findValue(Skin::kSliderWidth);
 }
 
-
-
 //float SynthSection::getSliderOverlapWithSpace() {
 //  return getSliderOverlap() - (int)getWidgetMargin();
 //}
@@ -885,7 +883,6 @@ float SynthSection::getTextComponentHeight() {
     return findValue(Skin::kTextComponentHeight);
 }
 
-
 float SynthSection::getPadding() {
     return findValue(Skin::kPadding);
 }
@@ -893,8 +890,6 @@ float SynthSection::getPadding() {
 //float SynthSection::getTextSectionYOffset() {
 //  return (getKnobSectionHeight() - getTextComponentHeight()) / 2.0f;
 //}
-
-
 
 float SynthSection::getWidgetMargin() {
     return findValue(Skin::kWidgetMargin);
@@ -1135,6 +1130,32 @@ void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,const juce::
             parent->prepDisplay(std::move(prep),v);
         }
     }
+}
+
+/**
+ * Find all occurrences of a particular type in the entire ValueTree
+ * @param tree
+ * @param prepType
+ * @param results
+ */
+void SynthSection::findAllOccurrencesOfPrepTypeInVT(const juce::ValueTree& tree,
+                        const juce::Identifier& prepType,
+                        juce::Array<juce::ValueTree>& results)
+{
+    // Check if the current node has the type
+    if (tree.hasType(prepType))
+        results.add(tree);
+
+    // Recurse through children
+    for (int i = 0; i < tree.getNumChildren(); ++i)
+        findAllOccurrencesOfPrepTypeInVT(tree.getChild(i), prepType, results);
+}
+
+int SynthSection::howManyOfThisPrepTypeInVT(const juce::ValueTree& tree, const juce::Identifier& prepType)
+{
+    juce::Array<juce::ValueTree> results;
+    findAllOccurrencesOfPrepTypeInVT(tree, prepType, results);
+    return results.size();
 }
 
 SynthSection::SynthSection() {}

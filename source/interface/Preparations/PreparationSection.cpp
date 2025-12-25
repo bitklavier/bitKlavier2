@@ -41,6 +41,14 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
         addAndMakeVisible(object);
         object->redoImage();
     }
+
+    // give default name to this prep, numbered by how many of this prep exist in the full gallery
+    // - will need to check to see if the name exists already, so we don't overwrite
+    if (!state.hasProperty (IDs::name))
+    {
+        int numThisPrep = howManyOfThisPrepTypeInVT(state.getRoot(), state.getType());
+        state.setProperty(IDs::name, state.getType().toString() + " " + juce::String(numThisPrep), nullptr);
+    }
 }
 
 juce::AudioProcessor *PreparationSection::getProcessor() const {

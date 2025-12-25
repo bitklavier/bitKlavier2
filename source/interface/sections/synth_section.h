@@ -240,6 +240,12 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     void addOpenGlComponent(std::shared_ptr<OpenGlComponent> open_gl_component, bool to_beginning = false, bool makeVisible = true);
     void addButton(OpenGlToggleButton* button, bool show = true);
 
+    void findAllOccurrencesOfPrepTypeInVT(const juce::ValueTree& tree,
+                    const juce::Identifier& prepType,
+                    juce::Array<juce::ValueTree>& results);
+
+    int howManyOfThisPrepTypeInVT(const juce::ValueTree& tree, const juce::Identifier& prepType);
+
   protected:
     void setSliderHasHzAlternateDisplay(SynthSlider* slider);
     void setSidewaysHeading(bool sideways) { sideways_heading_ = sideways; }

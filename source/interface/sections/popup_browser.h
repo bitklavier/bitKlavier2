@@ -19,12 +19,12 @@
 
 #include "open_gl_image.h"
 #include "open_gl_image_component.h"
-#include "open_gl_multi_image.h"
 #include "open_gl_multi_quad.h"
 #include "overlay.h"
 #include "synth_section.h"
 #include "open_gl_background.h"
 #include "default_look_and_feel.h"
+
 class PopupDisplay : public SynthSection {
 public:
     PopupDisplay();
@@ -101,6 +101,10 @@ public:
     std::map<std::string, SynthButton*> getAllButtons() override;
     std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() override;
     // void addListener(Listener* listener) {listeners_.push_back(listener);}
+
+    // void findAllOccurrences(const juce::ValueTree& tree,
+    //                     const juce::Identifier& propertyName,
+    //                     juce::Array<juce::ValueTree>& results);
 
 private:
 juce::ValueTree curr_vt;

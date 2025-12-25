@@ -1,5 +1,8 @@
 # Notes about how to do stuff in the bK codebase
 ---------
+## Value Tree Notes
+- comment/uncomment this line `valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);` in FullInterface.cpp to make the VT debugger window visible when needed
+
 ## Mod Notes
 - i think there should be an add menu, in addition to being able to control-click
   - let's put LFO below ramp and before state, since state is really quite different than LFO/ramp

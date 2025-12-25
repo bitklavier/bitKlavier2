@@ -15,8 +15,6 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     // for testing
     bufferDebugger = new BufferDebugger();
 
-
-
     for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};

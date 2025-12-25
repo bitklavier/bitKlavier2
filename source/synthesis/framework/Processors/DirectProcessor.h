@@ -10,14 +10,11 @@
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
-#include "VelocityMinMaxParams.h"
 #include "buffer_debugger.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
-#include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-
 #include "SampleLoadManager.h"
 
 struct DirectParams : chowdsp::ParamHolder {
@@ -25,9 +22,6 @@ struct DirectParams : chowdsp::ParamHolder {
     float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
-
-    // using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    // std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Direct Processor
     DirectParams(const juce::ValueTree &vt) : chowdsp::ParamHolder("direct"), v(vt)

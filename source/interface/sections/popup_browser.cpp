@@ -1186,13 +1186,27 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
 
     curr_vt = v;
     if (curr_vt.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
-        sampleSelectText->setText("Sync Global");
+        sampleSelectText->setText("Global Samples");
     else
         sampleSelectText->setText(
             juce::String(curr_vt.getProperty(IDs::soundset)).upToFirstOccurrenceOf("||", false, false));
+
+    /*
+     * looking for all the other preps of this same type in the full gallery
+     * so we can populate a menu for the user to choose from, should they
+     * want to change/link this prep to itself in a different Piano
+     */
+    juce::Array<juce::ValueTree> allSimilarPreps;
+    findAllOccurrencesOfPrepTypeInVT(v.getRoot(), curr_vt.getType(), allSimilarPreps);
+    for (auto& prep : allSimilarPreps)
+    {
+        DBG("preps of same type as this in complete gallery " << prep.getProperty(IDs::uuid).toString() << " " << prep.getProperty(IDs::name).toString());
+    }
+
     resized();
     repaintPrepBackground();
 }
+
 
 
 void PreparationPopup::reset() {
@@ -1228,7 +1242,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         auto string_names = parent->getSynth()->sampleLoadManager->getAllSampleSets();
-        options.addItem(0, "Sync Global");
+        options.addItem(0, "Global Samples");
         for (int i = 1; i < string_names.size() + 1; i++) {
             options.addItem(i, string_names[i - 1]);
         }
@@ -1239,7 +1253,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
                 // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 // parent->getSampleLoadManager()
                 curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
-                sampleSelectText->setText("Sync Global");
+                sampleSelectText->setText("Global Samples");
             } else {
                 SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 parent->getSampleLoadManager()->loadSamples(
@@ -1248,7 +1262,6 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
                     juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
                     upToFirstOccurrenceOf("||", false, false));
             }
-
 
             resized();
         });
@@ -1272,7 +1285,6 @@ void PreparationPopup::resized() {
         int label_height = findValue(Skin::kLabelBackgroundHeight);
         sampleSelector->setBounds(exit_button_->getRight() + 10, exit_button_->getY(), 100, label_height);
         sampleSelectText->setBounds(sampleSelector->getBounds());
-
         float label_text_height = findValue(Skin::kLabelHeight);
         sampleSelectText->setTextSize(label_text_height);
     }
