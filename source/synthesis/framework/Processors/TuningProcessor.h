@@ -248,6 +248,7 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     bool acceptsMidi() const override { return true; }
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override {};
     void handleMidiEvent (const juce::MidiMessage& m);
     void noteOn (int midiChannel,int midiNoteNumber,float velocity);
     void noteOff (int midiChannel,int midiNoteNumber,float velocity);

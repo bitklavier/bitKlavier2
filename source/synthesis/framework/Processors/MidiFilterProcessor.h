@@ -105,6 +105,7 @@ public:
     void releaseResources() override {}
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override  {};
+    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override {};
 
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return true; }
