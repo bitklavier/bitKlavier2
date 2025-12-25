@@ -521,12 +521,15 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             keyReleased(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
     }
 
-    firstNoteOn = true;
-    for (auto mi : inMidiMessages)
+    if (!bypassed)
     {
-        auto message = mi.getMessage();
-        if(message.isNoteOn())
-            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
+        firstNoteOn = true;
+        for (auto mi : inMidiMessages)
+        {
+            auto message = mi.getMessage();
+            if(message.isNoteOn())
+                keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
+        }
     }
 
     /*
@@ -759,6 +762,8 @@ void ResonanceProcessor::handleMidiTargetMessages(int noteNumber, int velocity, 
 
 void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    bypassed = false;
+
     /*
      * this updates all the AudioThread callbacks we might have in place
      * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
@@ -798,7 +803,7 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
      */
     if (resonanceSynth->hasSamples())
     {
-        resonanceSynth->setBypassed (false);
+        // resonanceSynth->setBypassed (false);
         resonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
         resonanceSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
@@ -826,9 +831,42 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
 void ResonanceProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    /**
-     * todo: handle noteOffs, otherwise nothing?
+    bypassed = true;
+
+    // process continuous modulations (gain level sliders)
+    processContinuousModulations(buffer);
+
+    // this is a synth, so we want an empty audio buffer to start
+    buffer.clear();
+
+    /*
+     * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer
+     *  to send to BKSynth
      */
+    int numSamples = buffer.getNumSamples();
+    juce::MidiBuffer outMidi;
+    ProcessMIDIBlock(midiMessages, outMidi, numSamples);
+
+    /*
+     * Then the Audio Stuff
+     */
+    if (resonanceSynth->hasSamples())
+    {
+        // resonanceSynth->setBypassed (false);
+        resonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
+        resonanceSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
+    }
+
+    // handle the send
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+
+    // final output gain stage, from rightmost slider in DirectParametersView
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain(0, 0, numSamples, outputgainmult);
+    buffer.applyGain(1, 0, numSamples, outputgainmult);
 }
 
 /**

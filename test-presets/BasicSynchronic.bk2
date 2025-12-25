@@ -46,7 +46,7 @@
         <PORT nodeID="3681038424" chIdx="2" isIn="0"/>
       </direct>
       <tuning type="5" width="75.0" height="147.0" x_y="499, 82" uuid="f5ab9850452e404686ca59ef521e5af0"
-              soundset="syncglobal" nodeID="4121663568" numIns="1" lastNote="53.000"
+              soundset="syncglobal" nodeID="4121663568" numIns="1" lastNote="47.000"
               tuningSystem="0" fundamental="0" tuningType="0" semitonewidth="100.000"
               reffundamental="0" octave="4" tAdaptiveClusterThresh="0.000"
               tAdaptiveHistory="1.000" tAdaptiveIntervalScale="1" tAdaptiveAnchorScale="0"
@@ -93,9 +93,9 @@
         <PARAM_DEFAULT/>
         <PORT nodeID="4121663568" chIdx="4096" isIn="1"/>
       </tuning>
-      <synchronic type="1" width="156.0" height="79.20000457763672" x_y="627, 263"
-                  uuid="11c8a644db10466892ce0669dfcbbfe0" soundset="syncglobal"
-                  nodeID="298362436" numIns="1" numOuts="2" numPulses="20.000"
+      <synchronic type="1" width="156.0" height="79.20000457763672" x_y="627, 261"
+                  uuid="41c36171c0534d489b2bfb8a26c8d7a8" soundset="syncglobal"
+                  nodeID="1103323505" numIns="1" numOuts="2" numPulses="20.000"
                   numLayers="1.000" clusterThickness="8.000" clusterThreshold="500.000"
                   Send="0.000" OutputGain="0.000" noteOnGain="0.000" pulseTriggeredBy="0"
                   determinesCluster="0" skipFirst="1" UseTuning="0" updateUIState="0"
@@ -133,18 +133,29 @@
           <MODULATABLE_PARAM parameter="delay" start="0.0" end="1000.0" skew="1.0"/>
         </MODULATABLE_PARAMS>
         <PARAM_DEFAULT/>
-        <PORT nodeID="298362436" chIdx="4096" isIn="1"/>
-        <PORT nodeID="298362436" chIdx="0" isIn="0"/>
-        <PORT nodeID="298362436" chIdx="2" isIn="0"/>
+        <PORT nodeID="1103323505" chIdx="4096" isIn="1"/>
+        <PORT nodeID="1103323505" chIdx="0" isIn="0"/>
+        <PORT nodeID="1103323505" chIdx="2" isIn="0"/>
       </synchronic>
+      <tempo type="6" width="79.20000457763672" height="156.0" x_y="828, 121"
+             uuid="a21ec8e9e4b04d4eac49b9f5fb271de6" soundset="syncglobal"
+             nodeID="2719926505" numIns="1">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="tempo" start="40.0" end="208.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="subdivisions" start="0.009999999776482582" end="32.0"
+                             skew="0.9995490908622742"/>
+        </MODULATABLE_PARAMS>
+        <PORT nodeID="2719926505" chIdx="4096" isIn="1"/>
+      </tempo>
     </PREPARATIONS>
     <CONNECTIONS>
       <CONNECTION isMod="0" src="59796730" srcIdx="4096" dest="3681038424" destIdx="4096"/>
-      <CONNECTION isMod="0" src="59796730" srcIdx="4096" dest="298362436" destIdx="4096"/>
+      <CONNECTION isMod="0" src="59796730" srcIdx="4096" dest="1103323505" destIdx="4096"/>
     </CONNECTIONS>
     <MODCONNECTIONS>
       <TUNINGCONNECTION isMod="0" src="4121663568" dest="3681038424"/>
-      <TUNINGCONNECTION isMod="0" src="4121663568" dest="298362436"/>
+      <TEMPOCONNECTION isMod="0" src="2719926505" dest="1103323505"/>
+      <TUNINGCONNECTION isMod="0" src="4121663568" dest="1103323505"/>
     </MODCONNECTIONS>
   </PIANO>
 </GALLERY>
