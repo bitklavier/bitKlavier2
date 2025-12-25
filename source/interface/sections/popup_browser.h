@@ -102,15 +102,15 @@ public:
     std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() override;
     // void addListener(Listener* listener) {listeners_.push_back(listener);}
 
-    // void findAllOccurrences(const juce::ValueTree& tree,
-    //                     const juce::Identifier& propertyName,
-    //                     juce::Array<juce::ValueTree>& results);
-
 private:
 juce::ValueTree curr_vt;
     int currentSampleType;
     std::shared_ptr<PlainTextComponent> sampleSelectText;
     std::unique_ptr<juce::ShapeButton> sampleSelector ;
+
+    int currentPrepNum;
+    std::shared_ptr<PlainTextComponent> prepSelectText;
+    std::unique_ptr<juce::ShapeButton> prepSelector ;
 
     bool is_modulation_;
     // std::vector<Listener*> listeners_;

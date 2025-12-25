@@ -1115,8 +1115,13 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
                                                  body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
                                                  border_(new OpenGlQuad(Shaders::kRoundedRectangleBorderFragment)),
                                                  exit_button_(new OpenGlShapeButton("Exit")),
-                                                 background_(new OpenGlBackground()), is_modulation_(ismod) {
+                                                 background_(new OpenGlBackground()), is_modulation_(ismod)
+{
+
     sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
+                                                         juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+
+    prepSelector = std::make_unique<juce::ShapeButton>("PrepSelector", juce::Colour(0xff666666),
                                                          juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
 
     addAndMakeVisible(sampleSelector.get());
@@ -1126,8 +1131,17 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
     currentSampleType = 0;
     sampleSelectText = std::make_shared<PlainTextComponent>("Sample Select Text", "---");
     addOpenGlComponent(sampleSelectText);
+
     addBackgroundComponent(background_.get());
     background_->setComponent(this);
+
+    addAndMakeVisible(prepSelector.get());
+    prepSelector->addListener(this);
+    prepSelector->setTriggeredOnMouseDown(true);
+    prepSelector->setShape(juce::Path(), true, true, true);
+    currentPrepNum = 0;
+    prepSelectText = std::make_shared<PlainTextComponent>("Prep Select Text", "---");
+    addOpenGlComponent(prepSelectText);
 
     exit_button_ = std::make_shared<OpenGlShapeButton>("Exit");
     addAndMakeVisible(exit_button_.get());
@@ -1266,6 +1280,35 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
             resized();
         });
     }
+    else if (clicked_button == prepSelector.get())
+    {
+        DBG("prep selector clicked");
+        PopupItems options;
+        auto prep_names = namesOfAllOccurrencesOfPrepTypeInVT(curr_vt.getRoot(), curr_vt.getType());
+        int nameCtr = 0;
+        for (auto name : prep_names) {
+            options.addItem(nameCtr++, name.toStdString());
+        }
+
+        juce::Point<int> position(prepSelector->getX(), prepSelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            // if (selection == 0) {
+            //     // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+            //     // parent->getSampleLoadManager()
+            //     curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
+            //     sampleSelectText->setText("Global Samples");
+            // } else {
+            //     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+            //     parent->getSampleLoadManager()->loadSamples(
+            //         parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
+            //     sampleSelectText->setText(
+            //         juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
+            //         upToFirstOccurrenceOf("||", false, false));
+            // }
+
+            resized();
+        });
+    }
 }
 
 PreparationPopup::~PreparationPopup() {
@@ -1283,10 +1326,17 @@ void PreparationPopup::resized() {
     header_bounds.removeFromLeft(10);
     if (!is_modulation_) {
         int label_height = findValue(Skin::kLabelBackgroundHeight);
-        sampleSelector->setBounds(exit_button_->getRight() + 10, exit_button_->getY(), 100, label_height);
-        sampleSelectText->setBounds(sampleSelector->getBounds());
         float label_text_height = findValue(Skin::kLabelHeight);
+
+        //sampleSelector->setBounds(exit_button_->getRight() + 10, exit_button_->getY(), 100, label_height);
+        sampleSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));
+        sampleSelectText->setBounds(sampleSelector->getBounds());
         sampleSelectText->setTextSize(label_text_height);
+
+        prepSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));
+        prepSelectText->setBounds(prepSelector->getBounds());
+        prepSelectText->setTextSize(label_text_height);
+
     }
 
     if (prep_view != nullptr) {

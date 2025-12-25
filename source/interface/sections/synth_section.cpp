@@ -1158,4 +1158,16 @@ int SynthSection::howManyOfThisPrepTypeInVT(const juce::ValueTree& tree, const j
     return results.size();
 }
 
+const std::vector<juce::String> SynthSection::namesOfAllOccurrencesOfPrepTypeInVT(const juce::ValueTree& tree,
+                const juce::Identifier& prepType)
+{
+    std::vector<juce::String> names;
+    juce::Array<juce::ValueTree> results;
+    findAllOccurrencesOfPrepTypeInVT(tree, prepType, results);
+    for (auto& prep : results) {
+        names.push_back(prep.getProperty(IDs::name).toString());
+    }
+    return names;
+}
+
 SynthSection::SynthSection() {}

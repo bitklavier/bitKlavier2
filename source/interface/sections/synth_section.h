@@ -245,6 +245,8 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
                     juce::Array<juce::ValueTree>& results);
 
     int howManyOfThisPrepTypeInVT(const juce::ValueTree& tree, const juce::Identifier& prepType);
+    const std::vector<juce::String> namesOfAllOccurrencesOfPrepTypeInVT(const juce::ValueTree& tree,
+                    const juce::Identifier& prepType);
 
   protected:
     void setSliderHasHzAlternateDisplay(SynthSlider* slider);
