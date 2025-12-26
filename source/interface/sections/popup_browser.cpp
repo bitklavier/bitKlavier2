@@ -1205,17 +1205,19 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
         sampleSelectText->setText(
             juce::String(curr_vt.getProperty(IDs::soundset)).upToFirstOccurrenceOf("||", false, false));
 
+    prepSelectText->setText(curr_vt.getProperty(IDs::name).toString());
+
     /*
      * looking for all the other preps of this same type in the full gallery
      * so we can populate a menu for the user to choose from, should they
      * want to change/link this prep to itself in a different Piano
      */
-    juce::Array<juce::ValueTree> allSimilarPreps;
-    findAllOccurrencesOfPrepTypeInVT(v.getRoot(), curr_vt.getType(), allSimilarPreps);
-    for (auto& prep : allSimilarPreps)
-    {
-        DBG("preps of same type as this in complete gallery " << prep.getProperty(IDs::uuid).toString() << " " << prep.getProperty(IDs::name).toString());
-    }
+    // juce::Array<juce::ValueTree> allSimilarPreps;
+    // findAllOccurrencesOfPrepTypeInVT(v.getRoot(), curr_vt.getType(), allSimilarPreps);
+    // for (auto& prep : allSimilarPreps)
+    // {
+    //     DBG("preps of same type as this in complete gallery " << prep.getProperty(IDs::uuid).toString() << " " << prep.getProperty(IDs::name).toString());
+    // }
 
     resized();
     repaintPrepBackground();
@@ -1282,16 +1284,23 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
     }
     else if (clicked_button == prepSelector.get())
     {
-        DBG("prep selector clicked");
+        /*
+         * looking for all the other preps of this same type in the full gallery
+         * so we can populate a menu for the user to choose from, should they
+         * want to change/link this prep to itself in a different Piano
+         */
+        juce::Array<juce::ValueTree> allSimilarPreps;
+        findAllOccurrencesOfPrepTypeInVT(curr_vt.getRoot(), curr_vt.getType(), allSimilarPreps);
+
         PopupItems options;
-        auto prep_names = namesOfAllOccurrencesOfPrepTypeInVT(curr_vt.getRoot(), curr_vt.getType());
         int nameCtr = 0;
-        for (auto name : prep_names) {
-            options.addItem(nameCtr++, name.toStdString());
+        for (auto prep : allSimilarPreps) {
+            options.addItem(nameCtr++, prep.getProperty ((IDs::name)).toString().toStdString());
         }
 
         juce::Point<int> position(prepSelector->getX(), prepSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
+            DBG("selected " << allSimilarPreps[selection].getProperty ((IDs::name)).toString());
             // if (selection == 0) {
             //     // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
             //     // parent->getSampleLoadManager()
