@@ -47,13 +47,10 @@ public:
 //    }
 
     void getPoints(juce::Point<int> &p1, juce::Point<int> &p2) const;
-
-      juce::ValueTree state;
-
+    juce::ValueTree state;
     std::shared_ptr<OpenGlLine> line;
     juce::CachedValue<juce::AudioProcessorGraph::NodeID> src_id;
     juce::CachedValue<juce::AudioProcessorGraph::NodeID> dest_id;
-
 
 private:
     using AtomicPoint = std::atomic<juce::Point<int>>;

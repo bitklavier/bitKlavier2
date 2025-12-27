@@ -95,10 +95,10 @@ struct BlendronicParams : chowdsp::ParamHolder
     }
 
     // primary multislider params
-    MultiSliderState beatLengths {"beat_lengths"};
-    MultiSliderState delayLengths {"delay_lengths"};
-    MultiSliderState smoothingTimes {"smoothing_times"};
-    MultiSliderState feedbackCoeffs {"feedback_coeffs"};
+    MultiSliderState beatLengths {"beatLengths"};
+    MultiSliderState delayLengths {"delayLengths"};
+    MultiSliderState smoothingTimes {"smoothingTimes"};
+    MultiSliderState feedbackCoeffs {"feedbackCoeffs"};
 
     // used internally to notify UI to redraw sliders
     chowdsp::BoolParameter::Ptr updateUIState {
@@ -223,7 +223,6 @@ public:
     void handleMidiTargetMessages(juce::MidiBuffer& midiMessages);
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
 
     juce::AudioProcessor::BusesProperties blendronicBusLayout()
     {

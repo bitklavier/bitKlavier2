@@ -13,10 +13,10 @@ class BKItem : /*public DraggableComponent,*/ public juce::Button {
 public:
 
 BKItem (bitklavier::BKPreparationType type);
-//    void mouseDown (const juce::MouseEvent& e) override;
-//    void mouseUp (const juce::MouseEvent& e) override;
-//    void mouseDoubleClick (const juce::MouseEvent& e) override;
-//    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseDown (const juce::MouseEvent& e) override;
+    void mouseUp (const juce::MouseEvent& e) override;
+    void mouseDoubleClick (const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
 
     // void paint(juce::Graphics& g) override;
     void setIcons (const juce::Path& layer_1, const juce::Path& layer_2, const juce::Path& layer_3)
@@ -105,7 +105,7 @@ BKItem (bitklavier::BKPreparationType type);
      * todo: should be able to scale this with everything else, from ConstructionSite
      */
     static constexpr float kMeterPixel = 2.0f;
-
+    // void mouseDoubleClick(const juce::MouseEvent &event) override;
 protected:
     //void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
     //    juce::ValueTree &state;

@@ -18,12 +18,12 @@ Cable::Cable (ConstructionSite* site, CableView& cableView) : juce::Component (C
     //cableView = cableView;
     setAlwaysOnTop(true);
     image_component_->setComponent(this);
-    startColour = juce::Colours::black;
-    endColour = juce::Colours::black;
+    startColour = juce::Colours::lightgoldenrodyellow;
+    endColour = juce::Colours::goldenrod;
     cableThickness = getCableThickness();
     // src_id.referTo(state, IDs::src, nullptr);
     // dest_id.referTo(state, IDs::dest, nullptr);
- DBG("create cable");
+    DBG("create cable");
 }
 
 
@@ -70,7 +70,6 @@ void Cable::updateStartPoint (bool repaintIfMoved)
 
 }
 
-
 void Cable::mouseDrag (const juce::MouseEvent& e)
 {
     if (dragging)
@@ -104,6 +103,7 @@ void Cable::mouseUp (const juce::MouseEvent& e)
 void Cable::updateEndPoint (bool repaintIfMoved) {
 
 }
+
 juce::Path Cable::createCablePath (juce::Point<float> start, juce::Point<float> end, float sf)
 {
     const auto pointOff = portOffset + sf;

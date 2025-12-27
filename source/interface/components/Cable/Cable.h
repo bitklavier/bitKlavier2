@@ -14,8 +14,8 @@ class CableView;
 namespace CableConstants
 {
     const juce::Colour cableColour (0xFFD0592C); // currently only used for "glow"
-    constexpr float minCableThickness = 5.0f;
-    constexpr float portCircleThickness = 1.5f;
+    constexpr float minCableThickness = 2.0f;
+    constexpr float portCircleThickness = 1.2f;
 
     constexpr int getPortDistanceLimit (float scaleFactor) { return int (20.0f * scaleFactor); }
     constexpr auto portOffset = 50.0f;
@@ -92,7 +92,6 @@ public:
 
     juce::ValueTree getValueTree();
 
-
     void resizeToFit()
     {
         juce::Point<float> p1, p2;
@@ -107,6 +106,7 @@ public:
 
         repaint();
     }
+
     void getPoints (juce::Point<float>& p1, juce::Point<float>& p2) const;
     juce::AudioProcessorGraph::Connection connection { { {}, 0 }, { {}, 0 } };
     bool hitTest (int x, int y) override
@@ -132,10 +132,7 @@ public:
 
     void mouseDrag (const juce::MouseEvent& e) override;
 
-
-
     void mouseUp (const juce::MouseEvent& e) override;
-
 
     void resized() override
     {

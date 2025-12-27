@@ -1,5 +1,8 @@
 # Notes about how to do stuff in the bK codebase
 ---------
+## Value Tree Notes
+- comment/uncomment this line `valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);` in FullInterface.cpp to make the VT debugger window visible when needed
+
 ## Mod Notes
 - i think there should be an add menu, in addition to being able to control-click
   - let's put LFO below ramp and before state, since state is really quite different than LFO/ramp
@@ -33,7 +36,8 @@
   - location of the modulation popup editor window is set `editing_state_component_->setBounds(center_x - comp->getWidth() / 2, top - comp->getHeight(), comp->getWidth(), comp->getHeight());`
 - State mods are triggered in `StateConnection::modulationTriggered()` in ModulationConnection.cpp
 - Make sure that processStateChanges() is called in the processBlock for the prep that is being modulated; for instance, `clusterMinMaxParams.processStateChanges();` in `SynchronicProcessor::processBlock`
-
+- the OpenGL shaders for the knobs are set in `OpenGlSliderQuad::init` in synth_slider.cpp
+- mod amount knob placement settings in `ModulationManager::makeCurrentModulatorAmountsVisible()` and `ModulationManager::makeModulationsVisible` and `SynthSlider::SynthSlider` constructor
 ---------
 ## Creating a New Preparation
 Typing as I do MidiFilter and Resonance

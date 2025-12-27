@@ -19,12 +19,12 @@
 
 #include "open_gl_image.h"
 #include "open_gl_image_component.h"
-#include "open_gl_multi_image.h"
 #include "open_gl_multi_quad.h"
 #include "overlay.h"
 #include "synth_section.h"
 #include "open_gl_background.h"
 #include "default_look_and_feel.h"
+
 class PopupDisplay : public SynthSection {
 public:
     PopupDisplay();
@@ -72,7 +72,6 @@ public:
     void paintBackground(juce::Graphics& g) override {}
 
     void paintBackgroundShadow(juce::Graphics& g) override {}
-    void renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) override;
     void repaintPrepBackground();
 
     void resized() override;
@@ -96,7 +95,6 @@ public:
     void repaintBackground() override
     {
     }
-    juce::CriticalSection mylock;
     std::map<std::string, OpenGLComboBox*> getAllComboBox() override;
     std::map<std::string, SynthSlider *> getAllSliders() override;
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
@@ -109,6 +107,10 @@ juce::ValueTree curr_vt;
     int currentSampleType;
     std::shared_ptr<PlainTextComponent> sampleSelectText;
     std::unique_ptr<juce::ShapeButton> sampleSelector ;
+
+    int currentPrepNum;
+    std::shared_ptr<PlainTextComponent> prepSelectText;
+    std::unique_ptr<juce::ShapeButton> prepSelector ;
 
     bool is_modulation_;
     // std::vector<Listener*> listeners_;

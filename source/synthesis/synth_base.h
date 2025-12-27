@@ -75,7 +75,7 @@ public:
     bitklavier::ModulationConnectionBank &getModulationBank();
 
     bitklavier::StateConnectionBank &getStateBank();
-
+    bitklavier::ParamOffsetBank &getParamOffsetBank();
 
     bool loadFromFile(juce::File preset, std::string &error);
     //unused but could be useful for future mpe and or midi mapping functionality

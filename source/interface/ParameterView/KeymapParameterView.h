@@ -255,7 +255,7 @@ private:
 
     std::shared_ptr<PlainTextComponent> velocityInLabel;
     std::shared_ptr<PlainTextComponent> velocityOutLabel;
-
+    chowdsp::ScopedCallbackList drawCalls;
     // pad values for curve drawing
     int leftPadding = 25;        // space for "velocity out" label
     int rightPadding = 4;       // space for the graph's right edge to fully display
@@ -265,5 +265,8 @@ private:
 
     // min/max filter slider
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
+    void stopAllTimers()override {
+        stopTimer();
+    }
 };
 #endif //KEYMAPPARAMETERVIEW_H

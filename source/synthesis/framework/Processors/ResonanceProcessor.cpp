@@ -474,31 +474,6 @@ void ResonanceProcessor::tuningStateInvalidated() {
     }
 }
 
-void ResonanceProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
-{
-    // this for debugging
-    //    auto mod_Bus = getBus(true,1);
-    //    auto index = mod_Bus->getChannelIndexInProcessBlockBuffer(0);
-    //    int i = index;
-    //    // melatonin::printSparkline(buffer);
-    //    for(auto param: state.params.modulatableParams){
-    //        // auto a = v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i);
-    //        // DBG(a.getProperty(IDs::parameter).toString());
-    //        bufferDebugger->capture(v.getChildWithName(IDs::MODULATABLE_PARAMS).getChild(i).getProperty(IDs::parameter).toString(), buffer.getReadPointer(i++), buffer.getNumSamples(), -1.f, 1.f);
-    //    }
-
-    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
-
-    int numInputChannels = modBus.getNumChannels();
-    for (int channel = 0; channel < numInputChannels; ++channel) {
-        const float* in = modBus.getReadPointer(channel);
-        std::visit([in](auto* p)->void
-            {
-                p->applyMonophonicModulation(*in);
-            },  state.params.modulatableParams[channel]);
-    }
-}
-
 void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
@@ -546,12 +521,15 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             keyReleased(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
     }
 
-    firstNoteOn = true;
-    for (auto mi : inMidiMessages)
+    if (!bypassed)
     {
-        auto message = mi.getMessage();
-        if(message.isNoteOn())
-            keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
+        firstNoteOn = true;
+        for (auto mi : inMidiMessages)
+        {
+            auto message = mi.getMessage();
+            if(message.isNoteOn())
+                keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
+        }
     }
 
     /*
@@ -784,8 +762,7 @@ void ResonanceProcessor::handleMidiTargetMessages(int noteNumber, int velocity, 
 
 void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    // this is a synth, so we want an empty audio buffer to start
-    buffer.clear();
+    bypassed = false;
 
     /*
      * this updates all the AudioThread callbacks we might have in place
@@ -810,6 +787,9 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     // process any mod changes to the multisliders
     state.params.processStateChanges();
 
+    // this is a synth, so we want an empty audio buffer to start
+    buffer.clear();
+
     /*
      * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer
      *  to send to BKSynth
@@ -823,7 +803,7 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
      */
     if (resonanceSynth->hasSamples())
     {
-        resonanceSynth->setBypassed (false);
+        // resonanceSynth->setBypassed (false);
         resonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
         resonanceSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
@@ -851,9 +831,42 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
 void ResonanceProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    /**
-     * todo: handle noteOffs, otherwise nothing?
+    bypassed = true;
+
+    // process continuous modulations (gain level sliders)
+    processContinuousModulations(buffer);
+
+    // this is a synth, so we want an empty audio buffer to start
+    buffer.clear();
+
+    /*
+     * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer
+     *  to send to BKSynth
      */
+    int numSamples = buffer.getNumSamples();
+    juce::MidiBuffer outMidi;
+    ProcessMIDIBlock(midiMessages, outMidi, numSamples);
+
+    /*
+     * Then the Audio Stuff
+     */
+    if (resonanceSynth->hasSamples())
+    {
+        // resonanceSynth->setBypassed (false);
+        resonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
+        resonanceSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
+    }
+
+    // handle the send
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+
+    // final output gain stage, from rightmost slider in DirectParametersView
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain(0, 0, numSamples, outputgainmult);
+    buffer.applyGain(1, 0, numSamples, outputgainmult);
 }
 
 /**

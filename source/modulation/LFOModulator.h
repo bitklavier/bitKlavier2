@@ -57,6 +57,7 @@ public :
         // - use Reset prep if you want to reset the phase as well
         if (lfo_on) lfo_on = false;
         else lfo_on = true;
+        ModulatorBase::triggerModulation();
     }
 
     void triggerReset() override

@@ -6,7 +6,8 @@
 
 void NostalgicParametersView::timerCallback()
 {
-    waveSlider->updateSliderPositionsGL (nparams_.waveDistUndertowParams.displaySliderPositions);
+    if(isVisible())
+        waveSlider->updateSliderPositionsGL (nparams_.waveDistUndertowParams.displaySliderPositions);
 }
 
 void NostalgicParametersView::resized()

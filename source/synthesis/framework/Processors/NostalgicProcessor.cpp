@@ -78,9 +78,6 @@ void NostalgicProcessor::tuningStateInvalidated() {
     nostalgicSynth->setTuning(nullptr);
 }
 
-void NostalgicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
-{
-}
 
 void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 {
@@ -300,7 +297,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         if (doDefault)
         {
             // TODO: we can make it an option for noteOn velocity to set noteOff velocity
-            if (message.isNoteOn ())
+            if (message.isNoteOn () && !bypassed) // we don't want to create new nostalgic notes if we are bypassed
             {
                 // store the velocity and note duration from the note on message
                 velocities.set(message.getNoteNumber(), message.getVelocity());
@@ -316,7 +313,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             // if there's a note off message and hold time is in specified range,
             // check cluster and play the associated reverse note
             if (message.isNoteOff() && holdCheck(message.getNoteNumber()) &&
-                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown)
+                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown) // we DO want to track noteOff messages if we are bypassed
             {
                 handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
             }
@@ -337,12 +334,15 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
 void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    bypassed = false;
+
     // set up the block
-    buffer.clear();
     state.getParameterListeners().callAudioThreadBroadcasters();
     processContinuousModulations(buffer);
     state.params.processStateChanges();
     int numSamples = buffer.getNumSamples();
+
+    buffer.clear();
 
     // do all the MIDI handling; this is where the main work happens
     juce::MidiBuffer outMidi;
@@ -351,7 +351,7 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     // send the MIDI messages to the synth
     if (nostalgicSynth->hasSamples())
     {
-        nostalgicSynth->setBypassed (false);
+        //nostalgicSynth->setBypassed (false);
         nostalgicSynth->setNoteOnSpecMap(noteOnSpecMap);
         nostalgicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
@@ -379,6 +379,34 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
 
 void NostalgicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    bypassed = true;
+
+    processContinuousModulations(buffer);
+    int numSamples = buffer.getNumSamples();
+
+    buffer.clear();
+
+    // do all the MIDI handling; this is where the main work happens
+    juce::MidiBuffer outMidi;
+    ProcessMIDIBlock(midiMessages, outMidi, numSamples);
+
+    // send the MIDI messages to the synth
+    if (nostalgicSynth->hasSamples())
+    {
+        nostalgicSynth->setNoteOnSpecMap(noteOnSpecMap);
+        nostalgicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
+    }
+
+    // handle the send
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+
+    // final output gain stage, from rightmost slider in DirectParametersView
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain(0, 0, numSamples, outputgainmult);
+    buffer.applyGain(1, 0, numSamples, outputgainmult);
 }
 
 bool NostalgicProcessor::holdCheck(int noteNumber)

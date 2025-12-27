@@ -107,6 +107,17 @@ public:
         redoImage();
     }
 
+    /*
+    * this is for making the modulation UI view opaque
+    */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKRangeSlider::paint(g);
+        }
+    }
+
     virtual void mouseDrag(const juce::MouseEvent &e) override {
         mouseInteraction = true;
         OpenGlAutoImageComponent<BKRangeSlider>::mouseDrag(e);
@@ -210,7 +221,16 @@ private :
 
         isModulation_ = true;
         addMyListener(this);
+
+        /*
+        * this is so the modulation UI view has a distinctive colored border
+        */
+        rangeSliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        rangeSliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        rangeSliderBorder.setText ("MODIFIED");
+        rangeSliderBorder.setTextLabelPosition (juce::Justification::centred);
     }
+
     bool mouseInteraction = false;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };

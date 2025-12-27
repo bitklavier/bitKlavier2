@@ -255,19 +255,7 @@ void BlendronicProcessor::handleMidiTargetMessages(juce::MidiBuffer& midiMessage
     }
 }
 
-void BlendronicProcessor::processContinuousModulations(juce::AudioBuffer<float>& buffer)
-{
-    const auto&  modBus = getBusBuffer(buffer, true, 1);  // true = input, bus index 0 = mod
 
-    int numInputChannels = modBus.getNumChannels();
-    for (int channel = 0; channel < numInputChannels; ++channel) {
-        const float* in = modBus.getReadPointer(channel);
-        std::visit([in](auto* p)->void
-            {
-                p->applyMonophonicModulation(*in);
-            },  state.params.modulatableParams[channel]);
-    }
-}
 
 void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -282,8 +270,6 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     pulseLength = getPulseLength();
     pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
 
-    // process continuous modulations (gain level sliders)
-    processContinuousModulations(buffer);
 
     // process any mod changes to the multisliders
     state.params.processStateChanges();
@@ -299,8 +285,8 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     int numSamples = buffer.getNumSamples();
 
     // use these to display buffer info to bufferDebugger
-    bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
-    bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
@@ -358,8 +344,8 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     /**
-     * todo: perhaps have a fadeout param, followed by a buffer clear?
-     * - these could be user settable, perhaps...
+     * I think for now at least Blendronic just doesn't produce sound if it is bypassed
+     * - if the user wants it present across piano changes, they should use a Linked version
      */
 }
 

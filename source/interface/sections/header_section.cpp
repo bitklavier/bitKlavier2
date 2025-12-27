@@ -236,7 +236,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
          */
         showPopupSelector(this, position, options, [=](int selection, int) {
             SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-            _parent->getSampleLoadManager()->loadSamples(selection, true, _parent->getSynth()->getValueTree());
+            _parent->getSampleLoadManager()->loadSamples(_parent->getSampleLoadManager()->getAllSampleSets()[selection], _parent->getSynth()->getValueTree());
             sampleSelectText->setText(_parent->getSampleLoadManager()->getAllSampleSets()[selection]);
             resized();
         });

@@ -410,7 +410,7 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
 
     if (node.hasProperty (IDs::soundset))
     {
-        auto ss = node.getProperty (IDs::soundset).toString().trim();
+        auto ss = node.getProperty (IDs::soundset).toString();
         if (ss.isNotEmpty() && ss != IDs::syncglobal.toString() )
         {
             out.add ({ ss, node });
@@ -528,12 +528,12 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 
 
     // ---------- Reset backend BEFORE applying preset ----------
-    if (auto* gui = getGuiInterface())
-        gui->removeAllGuiListeners();
+
     pauseProcessing(true);
     clearAllBackend();
     pauseProcessing(false);
-
+    if (auto* gui = getGuiInterface())
+        gui->removeAllGuiListeners();
 
 
     engine_->resetEngine();
@@ -685,8 +685,11 @@ juce::UndoManager& SynthBase::getUndoManager()
 std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (const std::string& source) const
 {
     std::vector<bitklavier::StateConnection*> connections;
+
     for (auto connection : state_connections_)
     {
+        DBG(connection->source_name);
+
         if (connection->source_name == source)
             connections.push_back (connection);
     }
@@ -777,7 +780,9 @@ bitklavier::StateConnectionBank& SynthBase::getStateBank()
 {
     return engine_->getStateBank();
 }
-
+bitklavier::ParamOffsetBank& SynthBase::getParamOffsetBank() {
+    return engine_->getParamOffsetBank();
+}
 bool SynthBase::isSourceConnected (const std::string& source)
 {
     for (auto* connection : mod_connections_)
@@ -845,12 +850,16 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     connection->processor = connection->parent_processor->getModulatorBase (internal_modulator_uuid);
     connection->parent_processor->addModulationConnection (connection);
 
+    connection->processor->addListener (connection);
 
 
     auto param_index =  parameter_tree.getParent().indexOf(parameter_tree);// parameter_tree.getProperty (IDs::channel, -1);
     auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, connection->modulation_output_bus_index); //1 is mod
     auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index);
-
+    if(connection->isContinuousMod) {
+        auto numInputChannels = dest_node->getProcessor()->getChannelCountOfBus(true,1) / 2;
+        dest_index  =  dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index + numInputChannels);
+    }
     //do the final backend adding
     if (!parameter_tree.isValid() || !mod_src.isValid())
     {
@@ -859,6 +868,7 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     }
     else if (mod_connections_.count (connection) == 0)
     {
+        connection->setDestParamIndex(getParamOffsetBank().getIndexIfExists(connection->destination_name));
         mod_connections_.push_back (connection);
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
         um.beginNewTransaction();
@@ -898,6 +908,8 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
             connection = getStateBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
             connection->state = v;
             connection->setChange (v);
+
+            state_connections_.push_back (connection);
         }
         if (connection)
             connectStateModulation (connection);
@@ -910,6 +922,7 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
     {
         connection = getModulationBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
         connection->setStateValueTree (v);
+
     }
     if (connection)
         connectModulation (connection);

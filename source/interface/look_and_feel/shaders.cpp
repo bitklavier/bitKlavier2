@@ -634,43 +634,109 @@ namespace {
       "    gl_FragColor.a = color.a * alpha_mult * alpha;\n"
       "}\n";
 
-  const char* kRotarySliderFragmentShader =
-      "uniform " MEDIUMP " vec4 color;\n"
-      "uniform " MEDIUMP " vec4 alt_color;\n"
-      "uniform " MEDIUMP " vec4 thumb_color;\n"
-      "varying " MEDIUMP " vec2 dimensions_out;\n"
-      "uniform " MEDIUMP " float thickness;\n"
-      "uniform " MEDIUMP " float thumb_amount;\n"
-      "uniform " MEDIUMP " float start_pos;\n"
-      "uniform " MEDIUMP " float max_arc;\n"
-      "varying " MEDIUMP " vec4 shader_values_out;\n"
-      "varying " MEDIUMP " vec2 coordinates_out;\n"
-      "void main() {\n"
-      "    " MEDIUMP " float rads = atan(coordinates_out.x, coordinates_out.y);\n"
-      "    float full_radius = 0.5 * dimensions_out.x;\n"
-      "    float delta_center = length(coordinates_out) * full_radius;\n"
-      "    float center_arc = full_radius - thickness * 0.5 - 0.5;\n"
-      "    float delta_arc = delta_center - center_arc;\n"
-      "    float distance_arc = abs(delta_arc);\n"
-      "    float dist_curve_left = max(center_arc * (rads - max_arc), 0.0);\n"
-      "    float dist_curve = max(center_arc * (-rads - max_arc), dist_curve_left);\n"
-      "    float alpha = clamp(thickness * 0.5 - length(vec2(distance_arc, dist_curve)) + 0.5, 0.0, 1.0);\n"
-      "    float delta_rads = rads - shader_values_out.x;\n"
-      "    float color_step1 = step(0.0, delta_rads);\n"
-      "    float color_step2 = step(0.0, start_pos - rads);\n"
-      "    float color_step = abs(color_step2 - color_step1);\n"
-      "    gl_FragColor = alt_color * color_step + color * (1.0 - color_step);\n"
-      "    gl_FragColor.a = gl_FragColor.a * alpha;\n"
-      "    float thumb_length = full_radius * thumb_amount;\n"
-      "    float thumb_x = sin(delta_rads) * delta_center;\n"
-      "    float thumb_y = cos(delta_rads) * delta_center - center_arc;\n"
-      "    float adjusted_thumb_y = min(thumb_y + thumb_length, 0.0);\n"
-      "    float outside_arc_step = step(0.0, thumb_y);\n"
-      "    float thumb_y_distance = thumb_y * outside_arc_step + adjusted_thumb_y * (1.0 - outside_arc_step);\n"
-      "    float thumb_distance = length(vec2(thumb_x, thumb_y_distance));\n"
-      "    float thumb_alpha = clamp(thickness * 0.5 - thumb_distance + 0.5, 0.0, 1.0);\n"
-      "    gl_FragColor = gl_FragColor * (1.0 - thumb_alpha) + thumb_color * thumb_alpha ;\n"
-      "}\n";
+    /*
+     * original shader, which has a transparent background
+     */
+  // const char* kRotarySliderFragmentShader =
+  //     "uniform " MEDIUMP " vec4 color;\n"
+  //     "uniform " MEDIUMP " vec4 alt_color;\n"
+  //     "uniform " MEDIUMP " vec4 thumb_color;\n"
+  //     "varying " MEDIUMP " vec2 dimensions_out;\n"
+  //     "uniform " MEDIUMP " float thickness;\n"
+  //     "uniform " MEDIUMP " float thumb_amount;\n"
+  //     "uniform " MEDIUMP " float start_pos;\n"
+  //     "uniform " MEDIUMP " float max_arc;\n"
+  //     "varying " MEDIUMP " vec4 shader_values_out;\n"
+  //     "varying " MEDIUMP " vec2 coordinates_out;\n"
+  //     "void main() {\n"
+  //     "    " MEDIUMP " float rads = atan(coordinates_out.x, coordinates_out.y);\n"
+  //     "    float full_radius = 0.5 * dimensions_out.x;\n"
+  //     "    float delta_center = length(coordinates_out) * full_radius;\n"
+  //     "    float center_arc = full_radius - thickness * 0.5 - 0.5;\n"
+  //     "    float delta_arc = delta_center - center_arc;\n"
+  //     "    float distance_arc = abs(delta_arc);\n"
+  //     "    float dist_curve_left = max(center_arc * (rads - max_arc), 0.0);\n"
+  //     "    float dist_curve = max(center_arc * (-rads - max_arc), dist_curve_left);\n"
+  //     "    float alpha = clamp(thickness * 0.5 - length(vec2(distance_arc, dist_curve)) + 0.5, 0.0, 1.0);\n"
+  //     "    float delta_rads = rads - shader_values_out.x;\n"
+  //     "    float color_step1 = step(0.0, delta_rads);\n"
+  //     "    float color_step2 = step(0.0, start_pos - rads);\n"
+  //     "    float color_step = abs(color_step2 - color_step1);\n"
+  //     "    gl_FragColor = alt_color * color_step + color * (1.0 - color_step);\n"
+  //     "    gl_FragColor.a = gl_FragColor.a * alpha;\n"
+  //     "    float thumb_length = full_radius * thumb_amount;\n"
+  //     "    float thumb_x = sin(delta_rads) * delta_center;\n"
+  //     "    float thumb_y = cos(delta_rads) * delta_center - center_arc;\n"
+  //     "    float adjusted_thumb_y = min(thumb_y + thumb_length, 0.0);\n"
+  //     "    float outside_arc_step = step(0.0, thumb_y);\n"
+  //     "    float thumb_y_distance = thumb_y * outside_arc_step + adjusted_thumb_y * (1.0 - outside_arc_step);\n"
+  //     "    float thumb_distance = length(vec2(thumb_x, thumb_y_distance));\n"
+  //     "    float thumb_alpha = clamp(thickness * 0.5 - thumb_distance + 0.5, 0.0, 1.0);\n"
+  //     "    gl_FragColor = gl_FragColor * (1.0 - thumb_alpha) + thumb_color * thumb_alpha ;\n"
+  //     "}\n";
+
+
+    /*
+     * modified shader, with a circular, black, opaque background
+     */
+    const char* kRotarySliderFragmentShader =
+        "uniform " MEDIUMP " vec4 color;\n"
+        "uniform " MEDIUMP " vec4 alt_color;\n"
+        "uniform " MEDIUMP " vec4 thumb_color;\n"
+        "varying " MEDIUMP " vec2 dimensions_out;\n"
+        "uniform " MEDIUMP " float thickness;\n"
+        "uniform " MEDIUMP " float thumb_amount;\n"
+        "uniform " MEDIUMP " float start_pos;\n"
+        "uniform " MEDIUMP " float max_arc;\n"
+        "varying " MEDIUMP " vec4 shader_values_out;\n"
+        "varying " MEDIUMP " vec2 coordinates_out;\n"
+
+        "void main() {\n"
+            // 1. Setup Coordinates and Distances
+        "    " MEDIUMP " float rads = atan(coordinates_out.x, coordinates_out.y);\n"
+        "    " MEDIUMP " float full_radius = 0.5 * dimensions_out.x;\n"
+        "    " MEDIUMP " float delta_center = length(coordinates_out) * full_radius;\n"
+        "    " MEDIUMP " float center_arc = full_radius - thickness * 0.5 - 0.5;\n"
+        "    " MEDIUMP " float delta_arc = delta_center - center_arc;\n"
+        "    " MEDIUMP " float distance_arc = abs(delta_arc);\n"
+
+            // 2. Arc Geometry Calculations
+        "    " MEDIUMP " float dist_curve_left = max(center_arc * (rads - max_arc), 0.0);\n"
+        "    " MEDIUMP " float dist_curve = max(center_arc * (-rads - max_arc), dist_curve_left);\n"
+        "    " MEDIUMP " float alpha = clamp(thickness * 0.5 - length(vec2(distance_arc, dist_curve)) + 0.5, 0.0, 1.0);\n"
+
+            // 3. Color Selection Logic
+        "    " MEDIUMP " float delta_rads = rads - shader_values_out.x;\n"
+        "    " MEDIUMP " float color_step1 = step(0.0, delta_rads);\n"
+        "    " MEDIUMP " float color_step2 = step(0.0, start_pos - rads);\n"
+        "    " MEDIUMP " float color_step = abs(color_step2 - color_step1);\n"
+        "    " MEDIUMP " vec4 arc_color = alt_color * color_step + color * (1.0 - color_step);\n"
+
+            // 4. Thumb Indicator Geometry
+        "    " MEDIUMP " float thumb_length = full_radius * thumb_amount;\n"
+        "    " MEDIUMP " float thumb_x = sin(delta_rads) * delta_center;\n"
+        "    " MEDIUMP " float thumb_y = cos(delta_rads) * delta_center - center_arc;\n"
+        "    " MEDIUMP " float adjusted_thumb_y = min(thumb_y + thumb_length, 0.0);\n"
+        "    " MEDIUMP " float outside_arc_step = step(0.0, thumb_y);\n"
+        "    " MEDIUMP " float thumb_y_distance = thumb_y * outside_arc_step + adjusted_thumb_y * (1.0 - outside_arc_step);\n"
+        "    " MEDIUMP " float thumb_distance = length(vec2(thumb_x, thumb_y_distance));\n"
+        "    " MEDIUMP " float thumb_alpha = clamp(thickness * 0.5 - thumb_distance + 0.5, 0.0, 1.0);\n"
+
+            // 5. Background Circular Masking
+            // This calculates a mask that is 1.0 inside the knob and 0.0 in the square corners
+        "    " MEDIUMP " float dist_from_center = length(coordinates_out) * full_radius;\n"
+        "    " MEDIUMP " float circle_mask = clamp(full_radius - dist_from_center + 0.5, 0.0, 1.0);\n"
+
+            // 6. Final Composition
+        "    " MEDIUMP " vec3 element_rgb = mix(arc_color.rgb, thumb_color.rgb, thumb_alpha);\n"
+        "    " MEDIUMP " float element_mask = max(alpha, thumb_alpha);\n"
+
+            // We mix the colored elements over a black background (0,0,0)
+        "    " MEDIUMP " vec3 final_rgb = element_rgb * element_mask;\n"
+
+            // The Alpha channel uses our circle_mask to keep the edges of the knob circular
+        "    gl_FragColor = vec4(final_rgb, circle_mask);\n"
+        "}\n";
 
     /*
      * original shader

@@ -20,11 +20,8 @@
 
 /**
  * todo:
- *  - Transpositions 2D slider (with "use tuning") implementation
  *  - when Key Off "determines cluster", grey out Note-On options in "pulse triggered by"
  *  - grey out hold min/max slider when it's not relevant (most of the note-on options)
- *  - active buttons in the envelope sequencer need to be more obvious when toggled on:
- *      - larger font, and/or different color
  */
 
 class SynchronicParametersView : public SynthSection, public juce::Timer
@@ -42,7 +39,8 @@ public:
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
 
-        setSkinOverride(Skin::kSynchronic);
+        setSkinOverride(Skin::kDirect);
+        //setSkinOverride(Skin::kSynchronic);
 
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
@@ -355,6 +353,9 @@ public:
     SynchronicParams& sparams_;
 
     void resized() override;
+    void stopAllTimers()override {
+        stopTimer();
+    }
 };
 
 #endif //BITKLAVIER0_SYNCHRONICPARAMETERSVIEW_H

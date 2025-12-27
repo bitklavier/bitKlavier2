@@ -114,5 +114,6 @@ void OpenGlImageComponent::render(OpenGlWrapper& open_gl, bool animate) {
 }
 
 void OpenGlImageComponent::destroy(OpenGlWrapper& open_gl) {
+  setActive(false);
    image_.destroy(open_gl);
 }

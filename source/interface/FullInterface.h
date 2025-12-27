@@ -5,8 +5,6 @@
 #ifndef BITKLAVIER2_FULLINTERFACE_H
 #define BITKLAVIER2_FULLINTERFACE_H
 
-
-//#include "open_gl_background.h"
 #include "sections/header_section.h"
 #include "sections/footer_section.h"
 #include "sections/main_section.h"

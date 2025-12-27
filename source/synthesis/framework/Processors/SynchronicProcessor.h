@@ -108,23 +108,20 @@ struct SynchronicParams : chowdsp::ParamHolder
         }
 
     // primary multislider params
-    /**
-     * todo: make transpositions 2D
-     */
     MultiSlider2DState transpositions {"transpositions"};
     MultiSliderState accents {"accents"};
-    MultiSliderState sustainLengthMultipliers{"sustain_length_multipliers"};
-    MultiSliderState beatLengthMultipliers{"beat_length_multipliers"};
+    MultiSliderState sustainLengthMultipliers{"SustainLengthMultipliers"};
+    MultiSliderState beatLengthMultipliers{"beatLengthMultipliers"};
 
     /*
      * for keeping track of the current multislider lengths
      * being used by blendrónic, so we can update the UI accordingly
      */
-    std::atomic<int> transpositions_current = 0;
-    std::atomic<int> accents_current = 0;
-    std::atomic<int> sustainLengthMultipliers_current = 0;
-    std::atomic<int> beatLengthMultipliers_current = 0;
-    std::atomic<int> envelopes_current = 0;
+    std::atomic<int> transpositionsCurrent = 0;
+    std::atomic<int> accentsCurrent = 0;
+    std::atomic<int> sustainLengthMultipliersCurrent = 0;
+    std::atomic<int> beatLengthMultipliersCurrent = 0;
+    std::atomic<int> envelopesCurrent = 0;
 
     /*
      * the state of all the adsrs, for the row of 12 sequenced adsrs
@@ -233,8 +230,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     {
         for (auto& _ep : *envelopeSequence.getBoolParams())
         {
-            //"envelope_10"
-            if (_ep->getParameterID() == "envelope_" + juce::String(which))
+            //"envelope10"
+            if (_ep->getParameterID() == "envelope" + juce::String(which))
             {
                 return *_ep;
             }
@@ -367,6 +364,7 @@ class SynchronicCluster
         // skip the inactive envelopes
         while (!_sparams->isEnvelopeActive(envelopeCounter)) // skip untoggled envelopes
         {
+            //DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
             envelopeCounter++;
             if (envelopeCounter >= _sparams->numEnvelopes)
                 envelopeCounter = 0;
@@ -432,7 +430,7 @@ class SynchronicCluster
 
     inline void addNote(int note)
     {
-        // DBG("adding note: " + String(note));
+        DBG("synchronic cluster adding note: " + juce::String(note));
         cluster.insert(0, note);
     }
 
@@ -495,7 +493,6 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples);
-    void processContinuousModulations(juce::AudioBuffer<float>& buffer);
     bool acceptsMidi() const override { return true; }
 
 //    void addSoundSet(juce::ReferenceCountedArray<BKSamplerSound<juce::AudioFormatReader>>* s)
@@ -615,11 +612,11 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
-             *              for direct, we have 10:
+             *              for synchronic, we have 10:
              *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
-             *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
+             *                  - the main params: numPulses, numLayers, clusterThickness, clusterThreshold, OutputSendParam, outputGain,
              */
-            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10 * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(), false)             // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send", juce::AudioChannelSet::stereo(), true);                 // Send channel (right outputs)
     }

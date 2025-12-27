@@ -17,18 +17,18 @@ struct EnvelopeSequenceParams : public chowdsp::ParamHolder
     EnvelopeSequenceParams() : chowdsp::ParamHolder("ENVELOPESEQUENCE")
     {
         add(currentlyEditing,
-            envelope_0,
-            envelope_1,
-            envelope_2,
-            envelope_3,
-            envelope_4,
-            envelope_5,
-            envelope_6,
-            envelope_7,
-            envelope_8,
-            envelope_9,
-            envelope_10,
-            envelope_11
+            envelope0,
+            envelope1,
+            envelope2,
+            envelope3,
+            envelope4,
+            envelope5,
+            envelope6,
+            envelope7,
+            envelope8,
+            envelope9,
+            envelope10,
+            envelope11
         );
     }
 
@@ -43,74 +43,74 @@ struct EnvelopeSequenceParams : public chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    chowdsp::BoolParameter::Ptr envelope_0 {
-        juce::ParameterID { "envelope_0", 100},
+    chowdsp::BoolParameter::Ptr envelope0 {
+        juce::ParameterID { "envelope0", 100},
         "0",
         true
     };
 
-    chowdsp::BoolParameter::Ptr envelope_1 {
-        juce::ParameterID { "envelope_1", 100},
+    chowdsp::BoolParameter::Ptr envelope1 {
+        juce::ParameterID { "envelope1", 100},
         "1",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_2 {
-        juce::ParameterID { "envelope_2", 100},
+    chowdsp::BoolParameter::Ptr envelope2 {
+        juce::ParameterID { "envelope2", 100},
         "2",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_3 {
-        juce::ParameterID { "envelope_3", 100},
+    chowdsp::BoolParameter::Ptr envelope3 {
+        juce::ParameterID { "envelope3", 100},
         "3",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_4 {
-        juce::ParameterID { "envelope_4", 100},
+    chowdsp::BoolParameter::Ptr envelope4 {
+        juce::ParameterID { "envelope4", 100},
         "4",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_5 {
-        juce::ParameterID { "envelope_5", 100},
+    chowdsp::BoolParameter::Ptr envelope5 {
+        juce::ParameterID { "envelope5", 100},
         "5",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_6 {
-        juce::ParameterID { "envelope_6", 100},
+    chowdsp::BoolParameter::Ptr envelope6 {
+        juce::ParameterID { "envelope6", 100},
         "6",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_7 {
-        juce::ParameterID { "envelope_7", 100},
+    chowdsp::BoolParameter::Ptr envelope7 {
+        juce::ParameterID { "envelope7", 100},
         "7",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_8 {
-        juce::ParameterID { "envelope_8", 100},
+    chowdsp::BoolParameter::Ptr envelope8 {
+        juce::ParameterID { "envelope8", 100},
         "8",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_9 {
-        juce::ParameterID { "envelope_9", 100},
+    chowdsp::BoolParameter::Ptr envelope9 {
+        juce::ParameterID { "envelope9", 100},
         "9",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_10 {
-        juce::ParameterID { "envelope_10", 100},
+    chowdsp::BoolParameter::Ptr envelope10 {
+        juce::ParameterID { "envelope10", 100},
         "10",
         false
     };
 
-    chowdsp::BoolParameter::Ptr envelope_11 {
-        juce::ParameterID { "envelope_11", 100},
+    chowdsp::BoolParameter::Ptr envelope11 {
+        juce::ParameterID { "envelope11", 100},
         "11",
         false
     };

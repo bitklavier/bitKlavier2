@@ -30,7 +30,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     if (snap.mods.empty())
     {
-        buffer.clear();
+        // buffer.clear();
         return;
     }
     auto reset_in = getBusBuffer(buffer,true,2);
@@ -50,7 +50,7 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     }
 
-    buffer.clear();
+    // buffer.clear();
 
     for (auto msg : midiMessages)
     {
@@ -81,20 +81,20 @@ void bitklavier::ModulationProcessor::processBlock (juce::AudioBuffer<float>& bu
             const int outCh = connection->modulation_output_bus_index;
             if (outCh < 0 || outCh >= buffer.getNumChannels())
                 continue; // prevents writing past bus size if something mismatches
-
+            connection->setCurrentTotalBaseValue(parent.getParamOffsetBank().getOffset(connection->getDestParamIndex()));
             if ((mod->isDefaultBipolar && connection->isBipolar())
                 || (!mod->isDefaultBipolar && !connection->isBipolar()))
             {
                 buffer.addFrom(outCh, 0,
                                 e.tmp.getReadPointer(0),
                                 buffer.getNumSamples(),
-                                connection->getScaling());
+                                connection->getScalingForDSP());
             }
             else if (mod->isDefaultBipolar && !connection->isBipolar())
             {
                 auto* src  = e.tmp.getReadPointer(0);
                 auto* dest = buffer.getWritePointer(outCh);
-                const float scale = connection->getScaling();
+                const float scale = connection->getScalingForDSP();
 
                 for (int s = 0; s < buffer.getNumSamples(); ++s)
                 {
@@ -154,8 +154,9 @@ void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnecti
     // callOnMainThread([this, connection]
      // {
         // Allocate / reuse output channel
+        auto mystring = connection->isContinuousMod ? connection->destination_name + "cont" : connection->destination_name;
         connection->modulation_output_bus_index =
-            allocateModulationChannel(connection->destination_name);
+            allocateModulationChannel(mystring);
          all_modulation_connections_.push_back(connection);
 
          auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
@@ -192,7 +193,8 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
                   v.erase(end, v.end());
               }
           }
-        if(  releaseModulationChannel(destination_name)) {
+     auto mystring = connection->isContinuousMod ? destination_name + "cont" : destination_name;
+        if(  releaseModulationChannel(mystring)) {
             parent.getEngine()->removeConnection (connection->connection_);
         }
           rebuildAndPublishSnapshot();

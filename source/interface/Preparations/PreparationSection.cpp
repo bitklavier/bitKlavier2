@@ -16,7 +16,7 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
     pluginID(node), undo(um)
 {
     //_parent = findParentComponentOfClass<SynthGuiInterface>();
-    setInterceptsMouseClicks(true, false);
+    // setInterceptsMouseClicks(true, false);
     //make this undoable
     curr_point.referTo(state,IDs::x_y,&undo);
     // x.referTo(state, IDs::x, &undo);
@@ -40,6 +40,14 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
         object->addListener(this);
         addAndMakeVisible(object);
         object->redoImage();
+    }
+
+    // give default name to this prep, numbered by how many of this prep exist in the full gallery
+    // - will need to check to see if the name exists already, so we don't overwrite
+    if (!state.hasProperty (IDs::name))
+    {
+        int numThisPrep = howManyOfThisPrepTypeInVT(state.getRoot(), state.getType());
+        state.setProperty(IDs::name, state.getType().toString() + " " + juce::String(numThisPrep), nullptr);
     }
 }
 
@@ -198,10 +206,10 @@ void PreparationSection::setPortInfo() {
 
 void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
+    juce::Logger::writeToLog ("prep mousedown");
+
     //todo investigate need for this only in release build
-    if (e.getNumberOfClicks() == 2) {
-        mouseDoubleClick(e);
-    }
+
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {

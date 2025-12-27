@@ -130,11 +130,7 @@ public:
 
         );
 
-
-    bool loadSamples (const juce::String& soundsetName,
-                                         const juce::ValueTree& targetTree);
-    bool loadSamples (int selection, bool isGlobal,const juce::ValueTree &v);
-    bool loadSamples (std::string);
+    bool loadSamples (const juce::String& soundsetName, const juce::ValueTree& targetTreee = juce::ValueTree{});
     void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType,std::string);
     juce::Array<juce::File> samplesByPitch (juce::String whichPitch, juce::Array<juce::File> inFiles);
     bool isSoundsetLoaded (const juce::String& baseName) const
@@ -151,7 +147,13 @@ public:
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<AudioFormatReaderFactory> readerFactory;
     juce::ThreadPool sampleLoader;
+    //maps used for matching against soundfont names
+    //for custom sample libraries this is the name of the folder
+    //for soundfonts this is the SFZ/SF2 file || the preset name
+    //for example "mysoundfont.sf2||mypreset"
     std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> samplerSoundset;
+    std::map<std::string, std::shared_ptr<SampleSetProgress>> soundsetProgressMap;
+    std::unordered_map<juce::String, std::unique_ptr<SFZSound>> sfzBanks; // key = sfzName.toStdString()
     // perhaps these should be moved to utils or something
     juce::Array<juce::String> allPitches;
     juce::Array<juce::String> allPitchClasses = { "A", "A#", "Bb", "B", "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab" };
@@ -162,7 +164,6 @@ public:
     void setValueTree(const juce::ValueTree& v) {
         t = v;
     }
-    std::map<std::string, std::shared_ptr<SampleSetProgress>> soundsetProgressMap;
     float  getSoundsetProgress(const std::string& name)
     {
         if (auto it = soundsetProgressMap.find(name); it != soundsetProgressMap.end())
@@ -185,7 +186,6 @@ public:
     //     bool hasPresets() const { return !presetNames.empty(); }
     // };
 
-    std::unordered_map<juce::String, std::unique_ptr<SFZSound>> sfzBanks; // key = sfzName.toStdString()
     // std::vector<std::unique_ptr<SFZSound>> soundfonts;
     // Given an SFZ soundset name, return all preset/subsound names
     juce::StringArray getSFZPresetNames (const juce::String& sfzName) const;

@@ -112,4 +112,11 @@ namespace bitklavier
     void StateConnectionBank::addParam(std::pair<std::string, bitklavier::ParameterChangeBuffer *> && pair) {
         parameter_map.insert(pair);
     }
+
+    // ParamOffsetBank::ParamOffsetBank() {
+    //     parameter_map.r
+    // }
+
+
+
 }

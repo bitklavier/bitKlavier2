@@ -69,7 +69,7 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         ? static_cast<int>(std::distance(sets.begin(), it))
         : -1;
     if (defaultIndex >= 0) {
-        synth_->sampleLoadManager->loadSamples(defaultIndex, true,synth_->getValueTree());
+        synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
 
     }
     if (use_gui) {

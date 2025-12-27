@@ -57,6 +57,8 @@ OpenGlComponent::~OpenGlComponent() {
 
 bool OpenGlComponent::setViewPort(juce::Component* component, juce::Rectangle<int> bounds, OpenGlWrapper& open_gl) {
 
+  if(component == nullptr)
+    return false;
     FullInterface* top_level = component->findParentComponentOfClass<FullInterface>();
 //    juce::String componentName = component != nullptr ? component->getName() : "Unnamed Component";
 //    juce::String highlightedName = "------------ " + componentName + " ------------";

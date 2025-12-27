@@ -41,10 +41,10 @@ namespace bitklavier {
         }
 
         virtual void addSoundSet(
-        juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
-      juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
-      juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
-      juce::ReferenceCountedArray<BKSynthesiserSound > *p) {
+            juce::ReferenceCountedArray<BKSynthesiserSound> *s, // main samples
+            juce::ReferenceCountedArray<BKSynthesiserSound> *h, // hammer samples
+            juce::ReferenceCountedArray<BKSynthesiserSound> *r, // release samples
+            juce::ReferenceCountedArray<BKSynthesiserSound> *p) {
         } // pedal samples;
 
         juce::ValueTree v;
@@ -169,6 +169,22 @@ namespace bitklavier {
 
         bool supportsParameterModulation() const;
 
+        void processContinuousModulations(juce::AudioBuffer<float> &buffer) {
+            const auto &modBus = getBusBuffer(buffer, true, 1); // true = input, bus index 0 = mod
+
+            int numInputChannels = modBus.getNumChannels();
+            for (int channel = 0; channel < numInputChannels / 2; ++channel) {
+                const float *in = modBus.getReadPointer(channel);
+                const float *in_continous = modBus.getReadPointer(channel + (numInputChannels/2));
+                std::visit([this,in, in_continous](auto *p) -> void {
+                               p->applyMonophonicModulation(*in);
+                               parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
+                                p->applyMonophonicModulation(*in + *in_continous);
+                           },
+                           state.params.modulatableParams[channel]);
+            }
+        }
+
         /**
          * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
          *      from a modification preparation
@@ -199,6 +215,11 @@ namespace bitklavier {
                                },
                                param);
                     mod_params.appendChild(modChan, nullptr);
+                    ////for setting up audio modulations in order to set via absolute value
+                    const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
+                    std::visit([&](auto *p) {
+                        p->setParamOffsetIndex(offsetIdx);
+                    }, param);
                 }
             } else {
                 for (auto param: state.params.modulatableParams) {
@@ -231,8 +252,14 @@ namespace bitklavier {
                                    p->setParameterValue(val);
                                },
                                param);
+                    ////for setting up audio modulations in order to set via absolute value
+                    const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
+                    std::visit([&](auto *p) {
+                        p->setParamOffsetIndex(offsetIdx);
+                    }, param);
                 }
             }
+            parent.getParamOffsetBank();
         }
 
     protected:
@@ -292,8 +319,8 @@ namespace bitklavier {
         if (!v.hasProperty(IDs::soundset)) {
             v.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
         } else {
-            if(v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
-                _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString().toStdString());
+            if (v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
+                _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString());
         }
         /*
      * modulations and state changes
@@ -376,7 +403,7 @@ namespace bitklavier {
         state.getParameterListeners().callAudioThreadBroadcasters();
 #endif
 
-        processAudioBlock(buffer);
+        // processAudioBlock(buffer);
     }
 
     // magic number to identify memory blocks that we've stored as XML
@@ -391,7 +418,17 @@ namespace bitklavier {
         //        xml.writeTo (out, juce::XmlElement::TextFormat().singleLine());
         //        out.writeByte (0);
         //    }
+        const auto &param_default = v.getChildWithName(IDs::PARAM_DEFAULT);
 
+        if (!param_default.isValid() || !v.isValid())
+            return;
+
+        // Copy every property in `from` onto `to` (overwrites same-name props, leaves others untouched)
+        for (int i = 0; i < param_default.getNumProperties(); ++i) {
+            const juce::Identifier name = param_default.getPropertyName(i);
+            const juce::var value = param_default.getProperty(name);
+            v.setProperty(name, value, nullptr);
+        }
         state.serialize(data);
     }
 

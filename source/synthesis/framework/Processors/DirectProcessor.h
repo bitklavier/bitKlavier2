@@ -10,14 +10,11 @@
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
-#include "VelocityMinMaxParams.h"
 #include "buffer_debugger.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
-#include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
-
 #include "SampleLoadManager.h"
 
 struct DirectParams : chowdsp::ParamHolder {
@@ -25,9 +22,6 @@ struct DirectParams : chowdsp::ParamHolder {
     float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
-
-    // using ParamPtrVariant = std::variant<chowdsp::FloatParameter*, chowdsp::ChoiceParameter*, chowdsp::BoolParameter*>;
-    // std::vector<ParamPtrVariant> modulatableParams;
 
     // Adds the appropriate parameters to the Direct Processor
     DirectParams(const juce::ValueTree &vt) : chowdsp::ParamHolder("direct"), v(vt)
@@ -187,7 +181,6 @@ public:
 
     void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
     void processBlockBypassed(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
-    void processContinuousModulations(juce::AudioBuffer<float> &buffer);
     bool acceptsMidi() const override { return true; }
 
     void addSoundSet(
@@ -224,7 +217,7 @@ public:
                  *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, andramp
                  *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
                  */
-                .withInput("Modulation", juce::AudioChannelSet::discreteChannels(11), true)
+                .withInput("Modulation", juce::AudioChannelSet::discreteChannels(11 * 2), true)
                 // Mod inputs; numChannels for the number of mods we want to enable
                 .withOutput("Modulation", juce::AudioChannelSet::mono(), false)
                 // Modulation send channel; disabled for all but Modulation preps!
