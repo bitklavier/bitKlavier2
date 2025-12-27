@@ -1121,9 +1121,6 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
     sampleSelector = std::make_unique<juce::ShapeButton>("Selector", juce::Colour(0xff666666),
                                                          juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
 
-    prepSelector = std::make_unique<juce::ShapeButton>("PrepSelector", juce::Colour(0xff666666),
-                                                         juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
-
     addAndMakeVisible(sampleSelector.get());
     sampleSelector->addListener(this);
     sampleSelector->setTriggeredOnMouseDown(true);
@@ -1135,13 +1132,20 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
     addBackgroundComponent(background_.get());
     background_->setComponent(this);
 
-    addAndMakeVisible(prepSelector.get());
-    prepSelector->addListener(this);
-    prepSelector->setTriggeredOnMouseDown(true);
-    prepSelector->setShape(juce::Path(), true, true, true);
-    currentPrepNum = 0;
-    prepSelectText = std::make_shared<PlainTextComponent>("Prep Select Text", "---");
-    addOpenGlComponent(prepSelectText);
+    /*
+     * omit the prepSelector for now, until we develop a more robust "linked" prep setup
+     */
+    // prepSelector = std::make_unique<juce::ShapeButton>("PrepSelector", juce::Colour(0xff666666),
+    //                                                  juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    //
+    //
+    // addAndMakeVisible(prepSelector.get());
+    // prepSelector->addListener(this);
+    // prepSelector->setTriggeredOnMouseDown(true);
+    // prepSelector->setShape(juce::Path(), true, true, true);
+    // currentPrepNum = 0;
+    // prepSelectText = std::make_shared<PlainTextComponent>("Prep Select Text", "---");
+    // addOpenGlComponent(prepSelectText);
 
     exit_button_ = std::make_shared<OpenGlShapeButton>("Exit");
     addAndMakeVisible(exit_button_.get());
@@ -1205,7 +1209,7 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
         sampleSelectText->setText(
             juce::String(curr_vt.getProperty(IDs::soundset)).upToFirstOccurrenceOf("||", false, false));
 
-    prepSelectText->setText(curr_vt.getProperty(IDs::name).toString());
+    //prepSelectText->setText(curr_vt.getProperty(IDs::name).toString());
 
     /*
      * looking for all the other preps of this same type in the full gallery
@@ -1282,42 +1286,47 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
             resized();
         });
     }
-    else if (clicked_button == prepSelector.get())
-    {
-        /*
-         * looking for all the other preps of this same type in the full gallery
-         * so we can populate a menu for the user to choose from, should they
-         * want to change/link this prep to itself in a different Piano
-         */
-        juce::Array<juce::ValueTree> allSimilarPreps;
-        findAllOccurrencesOfPrepTypeInVT(curr_vt.getRoot(), curr_vt.getType(), allSimilarPreps);
 
-        PopupItems options;
-        int nameCtr = 0;
-        for (auto prep : allSimilarPreps) {
-            options.addItem(nameCtr++, prep.getProperty ((IDs::name)).toString().toStdString());
-        }
-
-        juce::Point<int> position(prepSelector->getX(), prepSelector->getBottom());
-        showPopupSelector(this, position, options, [=](int selection, int) {
-            DBG("selected " << allSimilarPreps[selection].getProperty ((IDs::name)).toString());
-            // if (selection == 0) {
-            //     // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-            //     // parent->getSampleLoadManager()
-            //     curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
-            //     sampleSelectText->setText("Global Samples");
-            // } else {
-            //     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-            //     parent->getSampleLoadManager()->loadSamples(
-            //         parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
-            //     sampleSelectText->setText(
-            //         juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
-            //         upToFirstOccurrenceOf("||", false, false));
-            // }
-
-            resized();
-        });
-    }
+    /*
+     * omit the prepSelector for now, until we develop a more robust "linked" prep setup
+     * but keep this code around!
+     */
+    // else if (clicked_button == prepSelector.get())
+    // {
+    //     /*
+    //      * looking for all the other preps of this same type in the full gallery
+    //      * so we can populate a menu for the user to choose from, should they
+    //      * want to change/link this prep to itself in a different Piano
+    //      */
+    //     juce::Array<juce::ValueTree> allSimilarPreps;
+    //     findAllOccurrencesOfPrepTypeInVT(curr_vt.getRoot(), curr_vt.getType(), allSimilarPreps);
+    //
+    //     PopupItems options;
+    //     int nameCtr = 0;
+    //     for (auto prep : allSimilarPreps) {
+    //         options.addItem(nameCtr++, prep.getProperty ((IDs::name)).toString().toStdString());
+    //     }
+    //
+    //     juce::Point<int> position(prepSelector->getX(), prepSelector->getBottom());
+    //     showPopupSelector(this, position, options, [=](int selection, int) {
+    //         DBG("selected " << allSimilarPreps[selection].getProperty ((IDs::name)).toString());
+    //         // if (selection == 0) {
+    //         //     // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+    //         //     // parent->getSampleLoadManager()
+    //         //     curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
+    //         //     sampleSelectText->setText("Global Samples");
+    //         // } else {
+    //         //     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+    //         //     parent->getSampleLoadManager()->loadSamples(
+    //         //         parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
+    //         //     sampleSelectText->setText(
+    //         //         juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
+    //         //         upToFirstOccurrenceOf("||", false, false));
+    //         // }
+    //
+    //         resized();
+    //     });
+    // }
 }
 
 PreparationPopup::~PreparationPopup() {
@@ -1342,9 +1351,12 @@ void PreparationPopup::resized() {
         sampleSelectText->setBounds(sampleSelector->getBounds());
         sampleSelectText->setTextSize(label_text_height);
 
-        prepSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));
-        prepSelectText->setBounds(prepSelector->getBounds());
-        prepSelectText->setTextSize(label_text_height);
+        /*
+         * omit the prepSelector for now, until we develop a more robust "linked" prep setup
+         */
+        // prepSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));
+        // prepSelectText->setBounds(prepSelector->getBounds());
+        // prepSelectText->setTextSize(label_text_height);
 
     }
 
