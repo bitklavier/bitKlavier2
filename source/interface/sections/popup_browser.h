@@ -108,9 +108,12 @@ juce::ValueTree curr_vt;
     std::shared_ptr<PlainTextComponent> sampleSelectText;
     std::unique_ptr<juce::ShapeButton> sampleSelector ;
 
-    int currentPrepNum;
-    std::shared_ptr<PlainTextComponent> prepSelectText;
-    std::unique_ptr<juce::ShapeButton> prepSelector ;
+    /*
+     * omit prepSelector for now
+     */
+    // int currentPrepNum;
+    // std::shared_ptr<PlainTextComponent> prepSelectText;
+    // std::unique_ptr<juce::ShapeButton> prepSelector ;
 
     bool is_modulation_;
     // std::vector<Listener*> listeners_;
