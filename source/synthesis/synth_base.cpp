@@ -72,20 +72,17 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     juce::ValueTree preparations (IDs::PREPARATIONS);
     juce::ValueTree connections (IDs::CONNECTIONS);
     juce::ValueTree modconnections (IDs::MODCONNECTIONS);
-    juce::ValueTree buseq (IDs::BUSEQ);
-    juce::ValueTree buscompressor (IDs::BUSCOMPRESSOR);
+
 
     piano.appendChild (preparations, nullptr);
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
     piano.setProperty (IDs::isActive, 1, nullptr);
     piano.setProperty (IDs::name, "default", nullptr);
-    buseq.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
-    buscompressor.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
+
     tree.appendChild (piano, nullptr);
     tree.addListener (this);
-    tree.appendChild (buseq, nullptr);
-    tree.appendChild (buscompressor, nullptr);
+
 
     //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
     modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree> ("ramp");
@@ -102,7 +99,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     mod_connection_lists_.emplace_back (
         std::make_unique<bitklavier::ModConnectionList> (
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
-    engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree, buscompressor, buseq);
+    engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
+    engine_->addDefaultChain(*this,tree);
 }
 
 SynthBase::~SynthBase()
@@ -770,14 +768,20 @@ int SynthBase::getNumModulations (const std::string& destination)
 
 bitklavier::ModulationConnectionBank& SynthBase::getModulationBank()
 {
+    jassert(engine_ != nullptr); // will fire during construction if you hit it too early
+
     return engine_->getModulationBank();
 }
 
 bitklavier::StateConnectionBank& SynthBase::getStateBank()
 {
+    jassert(engine_ != nullptr); // will fire during construction if you hit it too early
+
     return engine_->getStateBank();
 }
 bitklavier::ParamOffsetBank& SynthBase::getParamOffsetBank() {
+    jassert(engine_ != nullptr); // will fire during construction if you hit it too early
+
     return engine_->getParamOffsetBank();
 }
 bool SynthBase::isSourceConnected (const std::string& source)

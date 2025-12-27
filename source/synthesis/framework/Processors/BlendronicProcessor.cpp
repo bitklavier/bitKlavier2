@@ -32,7 +32,7 @@
 BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, blendronicBusLayout())
 {
     // for testing
-    bufferDebugger = new BufferDebugger();
+    // bufferDebugger = new BufferDebugger();
 
     // note: we are setting the buffer size to 10 seconds max here (delayBufferSize)
     delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, getSampleRate());

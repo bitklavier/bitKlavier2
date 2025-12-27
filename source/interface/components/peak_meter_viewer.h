@@ -26,7 +26,6 @@ class PeakMeterViewer : public OpenGlComponent {
     virtual ~PeakMeterViewer();
 
     void resized() override;
-
     void init(OpenGlWrapper& open_gl) override;
     void render(OpenGlWrapper& open_gl, bool animate) override;
     void draw(OpenGlWrapper& open_gl);

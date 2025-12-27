@@ -38,7 +38,7 @@ namespace bitklavier
         static constexpr int kDefaultOversamplingAmount = 2;
         static constexpr int kDefaultSampleRate = 44100;
 
-        SoundEngine(SynthBase& parent, const juce::ValueTree& gain_tree, const juce::ValueTree& compressor_tree, const juce::ValueTree& eq_tree);
+        SoundEngine(SynthBase& , juce::ValueTree &);
         virtual ~SoundEngine();
 
         //      void process(int num_samples, juce::AudioSampleBuffer& buffer);
@@ -94,6 +94,7 @@ namespace bitklavier
             connectMidiNodes();
 
         }
+        void addDefaultChain(SynthBase& parent, juce::ValueTree& tree);
 
         juce::AudioProcessorGraph::NodeID lastUID;
 
@@ -266,9 +267,7 @@ namespace bitklavier
             return gainProcessor.get();
         };
 
-        std::unique_ptr<GainProcessor> gainProcessor ;
-        std::unique_ptr<CompressorProcessor> compressorProcessor ;
-        std::unique_ptr<EQProcessor> eqProcessor ;
+
 
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);
@@ -285,6 +284,9 @@ namespace bitklavier
         ModulationConnectionBank modulation_bank_;
         StateConnectionBank state_bank_;
         ParamOffsetBank param_offset_bank_;
+        std::unique_ptr<GainProcessor> gainProcessor ;
+        std::unique_ptr<CompressorProcessor> compressorProcessor ;
+        std::unique_ptr<EQProcessor> eqProcessor ;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SoundEngine)
     };
 } // namespace vital

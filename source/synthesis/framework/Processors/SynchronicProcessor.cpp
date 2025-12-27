@@ -20,7 +20,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
       synchronicSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
     // for testing
-    bufferDebugger = new BufferDebugger();
+    // bufferDebugger = new BufferDebugger();
 
 
     /*

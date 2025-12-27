@@ -21,14 +21,15 @@
 
 namespace bitklavier {
 
-    SoundEngine::SoundEngine(SynthBase& parent, const juce::ValueTree& gain_tree, const juce::ValueTree& compressor_tree, const juce::ValueTree& eq_tree) : /*voice_handler_(nullptr),*/
+    SoundEngine::SoundEngine(SynthBase& parent, juce::ValueTree& tree) :
+    /*voice_handler_(nullptr),*/
             last_oversampling_amount_(-1), last_sample_rate_(-1),
-            processorGraph(std::make_unique<juce::AudioProcessorGraph>()) {
+            processorGraph(std::make_unique<juce::AudioProcessorGraph>())
+        {
         initialiseGraph();
         processorGraph->enableAllBuses();
-        gainProcessor = std::make_unique<GainProcessor>(parent,gain_tree);
-        compressorProcessor = std::make_unique<CompressorProcessor>(parent,compressor_tree);
-        eqProcessor = std::make_unique<EQProcessor>(parent,eq_tree);
+
+
     }
 
     SoundEngine::~SoundEngine() {}
@@ -93,4 +94,20 @@ namespace bitklavier {
         }
     }
 
+    void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {
+        if (gainProcessor || compressorProcessor || eqProcessor)
+            return;
+        juce::ValueTree buseq (IDs::BUSEQ);
+        juce::ValueTree buscompressor (IDs::BUSCOMPRESSOR);
+        tree.appendChild (buseq, nullptr);
+        tree.appendChild (buscompressor, nullptr);
+        buseq.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
+        buscompressor.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
+        gainProcessor = std::make_unique<GainProcessor>(parent,tree);
+        compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
+        eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
+        gainProcessor       = std::make_unique<GainProcessor>(parent, tree);
+        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq);
+        eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor);
+    }
 } // namespace bitklavier

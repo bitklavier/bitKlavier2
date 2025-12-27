@@ -125,6 +125,7 @@ private:
   int id;
   static int nID;
 
+  bool initialized;
   int generateID()
   {
     nID++;

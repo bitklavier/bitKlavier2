@@ -259,7 +259,6 @@ namespace bitklavier {
                     }, param);
                 }
             }
-            parent.getParamOffsetBank();
         }
 
     protected:

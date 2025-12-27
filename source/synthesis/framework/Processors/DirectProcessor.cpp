@@ -13,7 +13,7 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) 
                                                                                   pedalSynth (new BKSynthesiser (state.params.env, state.params.pedalParam))
 {
     // for testing
-    bufferDebugger = new BufferDebugger();
+    // bufferDebugger = new BufferDebugger();
 
     for (int i = 0; i < MaxMidiNotes; ++i)
     {
