@@ -609,7 +609,7 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
     gainProcessor->processBlock (audio_buffer, midi_buffer);
     eqProcessor->processBlock (audio_buffer, midi_buffer);
-    // compressorProcessor->processBlock (audio_buffer, midi_buffer);
+    compressorProcessor->processBlock (audio_buffer, midi_buffer);
     sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }

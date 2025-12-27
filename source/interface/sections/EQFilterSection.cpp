@@ -13,6 +13,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     setComponentID(parent.getComponentID());
     setName("eqpeakfilter");
     setLookAndFeel(DefaultLookAndFeel::instance());
+    setSkinOverride(Skin::kDirect);
 
     auto peakImage = juce::ImageCache::getFromMemory(
     BinaryData::peak_png,
@@ -116,6 +117,7 @@ EQCutFilterSection::EQCutFilterSection (
     setComponentID(parent.getComponentID());
     setName("eqcutfilter");
     setLookAndFeel(DefaultLookAndFeel::instance());
+    setSkinOverride(Skin::kDirect);
 
     auto locutImage = juce::ImageCache::getFromMemory(
         BinaryData::locut_png,

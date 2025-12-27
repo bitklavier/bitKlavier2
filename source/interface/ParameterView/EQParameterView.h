@@ -22,6 +22,7 @@ public:
         setName ("eq");
         setLookAndFeel (DefaultLookAndFeel::instance());
         setComponentID (name);
+        setSkinOverride(Skin::kDirect);
 
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
@@ -38,14 +39,14 @@ public:
         activeEq_attachment = std::make_unique<chowdsp::ButtonAttachment>(eqparams_.activeEq, listeners, *activeEq_toggle, nullptr);
         activeEq_toggle->setComponentID(eqparams_.activeEq->paramID);
         addSynthButton(activeEq_toggle.get(), true);
-        activeEq_toggle->setPowerButton();
+        activeEq_toggle->setText("power");
 
         // reset EQ button
         reset_button = std::make_unique<SynthButton>("reset");
         reset_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.resetEq,listeners,*reset_button,nullptr);
         reset_button->setComponentID("reset");
         addSynthButton(reset_button.get(), true);
-        reset_button->setText("reset EQ");
+        reset_button->setText("reset");
 
         // EQ Graph
         equalizerGraph = std::make_unique<OpenGL_EqualizerGraph> (&params, listeners);
@@ -71,9 +72,9 @@ public:
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
-        sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
-        sendLevelMeter->setLabel("Send");
-        addSubSection(sendLevelMeter.get());
+        // sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
+        // sendLevelMeter->setLabel("Send");
+        // addSubSection(sendLevelMeter.get());
 
         // and for input level meter/slider
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);

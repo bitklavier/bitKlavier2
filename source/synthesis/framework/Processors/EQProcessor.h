@@ -47,7 +47,7 @@ struct EQParams : chowdsp::ParamHolder
         });
     }
 
-    // bypass bool
+    // active bool
     chowdsp::BoolParameter::Ptr activeEq {
         juce::ParameterID { "activeEq", 100 },
         "activeEq",

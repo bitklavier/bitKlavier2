@@ -8,13 +8,23 @@
 
 struct EQPeakFilterParams : chowdsp::ParamHolder
 {
+    static float getDefaultFreq (const juce::String& id)
+    {
+        if (id == "peak1") return 200.0f;
+        else if (id == "peak3") return 5000.0f;
+        else return 1000.0f;
+    }
 
     // gain slider params, for all gain-type knobs
     float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 0.2f;
+    float defaultFreq = 1000.f;
 
-    EQPeakFilterParams(juce::String idPrepen) : chowdsp::ParamHolder("EQPEAKFILTER"), idPrepend(idPrepen)
+    EQPeakFilterParams(juce::String idPrepen):
+        chowdsp::ParamHolder("EQPEAKFILTER"),
+        idPrepend(idPrepen),
+        defaultFreq (getDefaultFreq (idPrepen))
     {
       add(filterActive,
           filterFreq,
@@ -37,7 +47,7 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
         juce::ParameterID { idPrepend + "Freq", 100 },
         idPrepend + "Freq",
         juce::NormalisableRange { 20.0f, 20000.00f, 0.0f, skewFactor, false },
-        1000.0f,
+        defaultFreq,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
