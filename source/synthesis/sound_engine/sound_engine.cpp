@@ -21,11 +21,14 @@
 
 namespace bitklavier {
 
-    SoundEngine::SoundEngine() : /*voice_handler_(nullptr),*/
+    SoundEngine::SoundEngine(SynthBase& parent, const juce::ValueTree& gain_tree, const juce::ValueTree& compressor_tree, const juce::ValueTree& eq_tree) : /*voice_handler_(nullptr),*/
             last_oversampling_amount_(-1), last_sample_rate_(-1),
             processorGraph(std::make_unique<juce::AudioProcessorGraph>()) {
         initialiseGraph();
         processorGraph->enableAllBuses();
+        gainProcessor = std::make_unique<GainProcessor>(parent,gain_tree);
+        compressorProcessor = std::make_unique<CompressorProcessor>(parent,compressor_tree);
+        eqProcessor = std::make_unique<EQProcessor>(parent,eq_tree);
     }
 
     SoundEngine::~SoundEngine() {}

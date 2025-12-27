@@ -485,12 +485,12 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
 }
 
 std::unique_ptr<SynthSection> SynthGuiInterface::getCompressorPopup() {
-    auto proc = synth_->getCompressorProcessor();
+    auto proc = synth_->getEngine()->getCompressorProcessor();
     return std::make_unique<CompressorParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper());
 }
 
 std::unique_ptr<SynthSection> SynthGuiInterface::getEQPopup() {
-    auto proc = synth_->getEQProcessor();
+    auto proc = synth_->getEngine()->getEQProcessor();
     return std::make_unique<EQParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper());
 }
 

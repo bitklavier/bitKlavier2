@@ -102,10 +102,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     mod_connection_lists_.emplace_back (
         std::make_unique<bitklavier::ModConnectionList> (
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
-    engine_ = std::make_unique<bitklavier::SoundEngine>();
-    gainProcessor = std::make_unique<GainProcessor>(*this,tree);
-    compressorProcessor = std::make_unique<CompressorProcessor>(*this,buscompressor);
-    eqProcessor = std::make_unique<EQProcessor>(*this,buseq);
+    engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree, buscompressor, buseq);
 }
 
 SynthBase::~SynthBase()
@@ -607,9 +604,9 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
         action();
 
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
-    gainProcessor->processBlock (audio_buffer, midi_buffer);
-    eqProcessor->processBlock (audio_buffer, midi_buffer);
-    compressorProcessor->processBlock (audio_buffer, midi_buffer);
+    engine_->getMainVolumeProcessor()->processBlock (audio_buffer, midi_buffer);
+    engine_->getEQProcessor()->processBlock (audio_buffer, midi_buffer);
+    engine_->getCompressorProcessor()->processBlock (audio_buffer, midi_buffer);
     sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }
@@ -1099,17 +1096,5 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     // if (connection)
     //     connectStateModulation (connection);
     return create;
-}
-
-CompressorProcessor *SynthBase::getCompressorProcessor() {
-    return compressorProcessor.get();
-}
-
-EQProcessor *SynthBase::getEQProcessor() {
-    return eqProcessor.get();
-}
-
-GainProcessor *SynthBase::getMainVolumeProcessor() {
-    return gainProcessor.get();
 }
 

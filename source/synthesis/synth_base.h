@@ -31,9 +31,6 @@ template<typename T>
 class BKSamplerSound;
 class PreparationList;
 class SampleLoadManager;
-class GainProcessor;
-class CompressorProcessor;
-class EQProcessor;
 
 
 class BKSynthesiserSound;
@@ -264,9 +261,6 @@ public:
     bitklavier::ModConnectionList *getActiveModConnectionList();
 
     juce::ValueTree activePiano;
-    CompressorProcessor* getCompressorProcessor();
-    EQProcessor* getEQProcessor();
-    GainProcessor* getMainVolumeProcessor();
     SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
     int sample_index_of_switch;
     //ensure prep list is deleted before mod connection and connection
@@ -274,12 +268,6 @@ public:
     std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;
     std::vector<std::unique_ptr<bitklavier::ModConnectionList> > mod_connection_lists_;
     std::vector<std::unique_ptr<PreparationList> > preparationLists;
-
-
-    std::unique_ptr<GainProcessor> gainProcessor ;
-    std::unique_ptr<CompressorProcessor> compressorProcessor ;
-    std::unique_ptr<EQProcessor> eqProcessor ;
-
 
 private:
 

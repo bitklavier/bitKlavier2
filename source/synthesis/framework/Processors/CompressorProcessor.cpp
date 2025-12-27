@@ -220,7 +220,7 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         // Get max l/r amplitude values and fill sidechain signal
         juce::FloatVectorOperations::abs(rawSidechainSignal, buffer.getReadPointer(0), numSamples);
         juce::FloatVectorOperations::max(rawSidechainSignal, rawSidechainSignal, buffer.getReadPointer(1), numSamples);
-        melatonin::printSparkline (buffer);
+        // melatonin::printSparkline (buffer);
 
         // Calculate crest factor on max. amplitude values of input buffer
         processCrestFactor(rawSidechainSignal, numSamples);

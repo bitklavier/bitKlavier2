@@ -3,9 +3,10 @@
 //
 
 #include "footer_section.h"
-#include "text_look_and_feel.h"
-#include "synth_base.h"
 #include "GainProcessor.h"
+#include "sound_engine.h"
+#include "synth_base.h"
+#include "text_look_and_feel.h"
 FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"),
                                                            body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
                                                             gallery(data->tree)
@@ -33,7 +34,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     compressorButton->setLookAndFeel(TextLookAndFeel::instance());
     compressorButton->setButtonText("Compressor");
 
-    auto gainProcessor = data->synth->getMainVolumeProcessor();
+    auto gainProcessor = data->synth->getEngine()->getMainVolumeProcessor();
     auto& gainParams = gainProcessor->getState().params;
     auto& listeners  = gainProcessor->getState().getParameterListeners();
     levelMeter = std::make_unique<PeakMeterSection>(

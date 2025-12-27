@@ -18,18 +18,27 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "ModulationConnection.h"
+#include "synth_base.h"
+#include "CompressorProcessor.h"
+#include "EQProcessor.h"
+#include "GainProcessor.h"
+
 namespace bitklavier
 {
     class ModulationProcessor;
     using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
     using Node = juce::AudioProcessorGraph::Node;
+    // class GainProcessor;
+    // class CompressorProcessor;
+    // class EQProcessor;
+
     class SoundEngine
     {
     public:
         static constexpr int kDefaultOversamplingAmount = 2;
         static constexpr int kDefaultSampleRate = 44100;
 
-        SoundEngine();
+        SoundEngine(SynthBase& parent, const juce::ValueTree& gain_tree, const juce::ValueTree& compressor_tree, const juce::ValueTree& eq_tree);
         virtual ~SoundEngine();
 
         //      void process(int num_samples, juce::AudioSampleBuffer& buffer);
@@ -41,6 +50,9 @@ namespace bitklavier
             setSampleRate (sampleRate);
             setBufferSize (samplesPerBlock);
             processorGraph->prepareToPlay (sampleRate, samplesPerBlock);
+            gainProcessor->prepareToPlay (sampleRate, samplesPerBlock);
+            eqProcessor->prepareToPlay (sampleRate, samplesPerBlock);
+            compressorProcessor->prepareToPlay (sampleRate, samplesPerBlock);
         }
 
         int getDefaultSampleRate() { return kDefaultSampleRate; }
@@ -240,6 +252,23 @@ namespace bitklavier
 
         void allNotesOff();
         void shutdown();
+
+        CompressorProcessor* getCompressorProcessor()
+        {
+            return compressorProcessor.get();
+        };
+        EQProcessor* getEQProcessor()
+        {
+            return eqProcessor.get();
+        };
+        GainProcessor* getMainVolumeProcessor()
+        {
+            return gainProcessor.get();
+        };
+
+        std::unique_ptr<GainProcessor> gainProcessor ;
+        std::unique_ptr<CompressorProcessor> compressorProcessor ;
+        std::unique_ptr<EQProcessor> eqProcessor ;
 
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);
