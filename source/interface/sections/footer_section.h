@@ -24,6 +24,9 @@ public:
     void sliderValueChanged(juce::Slider* slider) override;
     void addListener(SynthSection::Listener* listener) { listeners_.push_back(listener); }
 
+    /*
+     * for playback from virtual keyboard
+     */
     virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override
     {
         DBG("Footer::BKKeymapKeyboardChanged called");

@@ -7,8 +7,8 @@
 #pragma once
 
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
-#include "../../common/synth_gui_interface.h"
-#include "../../../synthesis/synth_base.h"
+// #include "../../common/synth_gui_interface.h"
+// #include "../../../synthesis/synth_base.h"
 #include "../../../synthesis/sound_engine/sound_engine.h"
 
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent>, BKKeymapKeyboardComponent::Listener {
@@ -19,8 +19,6 @@ public:
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
-
-        //addMyListener(this);
     }
 
     ~OpenGLKeymapKeyboardComponent(){}
@@ -72,30 +70,7 @@ public:
 
     virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override {}
 
-    // virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override
-    // {
-    //     DBG("BKKeymapKeyboardChanged called");
-    //
-    //     if (shouldPlay)
-    //     {
-    //         // keys reflects the current state after the change: if bit is set, it's a key down
-    //         const bool isDown = (lastKey >= 0 && lastKey < 128) ? keys.test ((size_t) lastKey) : false;
-    //         if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
-    //             if (auto* synth = iface->getSynth())
-    //                 if (auto* eng = synth->getEngine())
-    //                 {
-    //                     if (isDown)
-    //                         eng->postUINoteOn (lastKey, 1.0f, 1);
-    //                     else
-    //                         eng->postUINoteOff (lastKey, 0.0f, 1);
-    //                 }
-    //     }
-    //
-    //     else BKKeymapKeyboardChanged("", keys, lastKey);
-    // }
-
     KeymapKeyboardState& _params;
-    // bool shouldPlay = false; // set to true if this keyboard should send noteOn/Off messages to Keymaps
 };
 
 #endif //BITKLAVIER0_OPENGL_KEYMAPKEYBOARD_H
