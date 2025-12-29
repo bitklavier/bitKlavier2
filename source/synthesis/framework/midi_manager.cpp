@@ -101,6 +101,14 @@ void MidiManager::midiInput(int midi_id, float value) {
 //  }
 }
 
+void MidiManager::postExternalMidi (const juce::MidiMessage& msg)
+{
+  auto m = msg;
+  if (m.getTimeStamp() == 0)
+    m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+  midi_collector_.addMessageToQueue (m);
+}
+
 bool MidiManager::isMidiMapped(const std::string& name) const {
   for (auto& controls : midi_learn_map_) {
     if (controls.second.count(name))

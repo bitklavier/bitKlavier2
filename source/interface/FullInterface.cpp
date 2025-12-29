@@ -250,11 +250,11 @@ void FullInterface::resized()
 
     header_->setTabOffset (2 * voice_padding);
     header_->setBounds (left, top, width, top_height);
-    footer_->setBounds (left, height - 100, width, 100);
+    footer_->setBounds (left, height - 90, width, 90);
     juce::Rectangle<int> new_bounds (0, 0, width, height);
     main_->setBounds (new_bounds);
-    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.2 * display_scale_));
-    mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.2 * display_scale_));
+    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.24 * display_scale_));
+    mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.24 * display_scale_));
     about_section_->setBounds (new_bounds);
     loading_section->setBounds (new_bounds);
     if (getWidth() && getHeight())

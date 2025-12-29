@@ -94,6 +94,34 @@ namespace bitklavier {
         }
     }
 
+    void SoundEngine::postUINoteOn (int midiNote, float velocity01, int channel)
+    {
+        const auto ts = juce::Time::getMillisecondCounterHiRes() * 0.001;
+        juce::MidiMessage msg = juce::MidiMessage::noteOn (channel,
+                                                           midiNote,
+                                                           (juce::uint8) juce::jlimit (0, 127, (int) std::lround (velocity01 * 127.0f)));
+        msg.setTimeStamp (ts);
+
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                kp->postExternalMidi (msg);
+    }
+
+    void SoundEngine::postUINoteOff (int midiNote, float velocity01, int channel)
+    {
+        const auto ts = juce::Time::getMillisecondCounterHiRes() * 0.001;
+        juce::MidiMessage msg = juce::MidiMessage::noteOff (channel,
+                                                            midiNote,
+                                                            (juce::uint8) juce::jlimit (0, 127, (int) std::lround (velocity01 * 127.0f)));
+        msg.setTimeStamp (ts);
+
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                kp->postExternalMidi (msg);
+    }
+
     void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {
         if (gainProcessor || compressorProcessor || eqProcessor)
             return;

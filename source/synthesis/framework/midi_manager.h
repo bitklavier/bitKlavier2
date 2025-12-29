@@ -104,6 +104,8 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     MidiManager( juce::MidiKeyboardState* keyboard_state, juce::AudioDeviceManager *manager, const juce::ValueTree &v={},
                  Listener* listener = nullptr);
     virtual ~MidiManager() override;
+    // Enqueue an external MIDI message (e.g., from UI) to be consumed on the audio thread
+    void postExternalMidi (const juce::MidiMessage& msg);
     bitklavier::MidiDeviceWrapper* createNewObject(const juce::ValueTree& v) override
     {
         return new bitklavier::MidiDeviceWrapper(v);

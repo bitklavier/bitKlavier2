@@ -205,9 +205,16 @@ void KeymapProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
 {
     processBlock (buffer, midiMessages);
 }
+
 void KeymapProcessor::allNotesOff()
 {
     _midi->allNotesOff();
+}
+
+void KeymapProcessor::postExternalMidi (const juce::MidiMessage& msg)
+{
+    if (_midi)
+        _midi->postExternalMidi (msg);
 }
 
 template <typename Serializer>

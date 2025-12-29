@@ -47,6 +47,8 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     addSubSection(levelMeter.get());
     // setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
+
+    keyboard_component_->addMyListener(this);
 }
 
 
@@ -98,6 +100,7 @@ void FooterSection::reset() {
 
 
 void FooterSection::buttonClicked(juce::Button *clicked_button) {
+    DBG("FooterSection::buttonClicked");
     if (clicked_button == compressorButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         showPrepPopup(interface->getCompressorPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);
