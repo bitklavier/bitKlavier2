@@ -16,7 +16,6 @@
 
 #include "midi_manager.h"
 
-
 namespace {
   constexpr int kMidiControlBits = 7;
   constexpr float kHighResolutionMax = (1 << (2 * kMidiControlBits)) - 1.0f;
@@ -57,6 +56,17 @@ MidiManager::MidiManager(juce::MidiKeyboardState* keyboard_state, juce::AudioDev
 MidiManager::~MidiManager() {
   freeObjects();
 }
+
+// midi_manager.h
+class LiveMidiListener {
+public:
+    virtual ~LiveMidiListener() = default;
+    virtual void midiNoteChanged (int note, bool isDown, int channel, float velocity01) = 0;
+};
+
+// MidiManager members
+void addLiveMidiListener (LiveMidiListener* l);
+void removeLiveMidiListener (LiveMidiListener* l);
 
 void MidiManager::armMidiLearn(std::string name) {
   current_bank_ = -1;
@@ -107,6 +117,16 @@ void MidiManager::postExternalMidi (const juce::MidiMessage& msg)
   if (m.getTimeStamp() == 0)
     m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
   midi_collector_.addMessageToQueue (m);
+}
+
+void MidiManager::addLiveMidiListener (LiveMidiListener* l)
+{
+  live_listeners_.add (l);
+}
+
+void MidiManager::removeLiveMidiListener (LiveMidiListener* l)
+{
+  live_listeners_.remove (l);
 }
 
 bool MidiManager::isMidiMapped(const std::string& name) const {
@@ -327,17 +347,27 @@ void MidiManager::processMidiMessage(const juce::MidiMessage& midi_message, int 
   }
 }
 
-
-
-
-
 //add messages from actual device callback
 void MidiManager::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage &midi_message) {
-  midi_collector_.addMessageToQueue(midi_message);
+    // Notify UI listeners (on message thread) for note on/off for visualisation only
+    if (midi_message.isNoteOnOrOff())
+    {
+        const int note = midi_message.getNoteNumber();
+        const bool down = midi_message.isNoteOn();
+        const int ch = midi_message.getChannel();
+        const float v01 = down ? (midi_message.getVelocity() / 127.0f) : 0.0f;
+        juce::MessageManager::callAsync ([this, note, down, ch, v01]
+        {
+            live_listeners_.call (&LiveMidiListener::midiNoteChanged, note, down, ch, v01);
+        });
+    }
+
+    // Still enqueue to the audio thread collector
+    midi_collector_.addMessageToQueue(midi_message);
 }
 
 //be sure that this would be filled with the correct start and numsamples
 //for an internal block size different from the external block size
 void MidiManager::replaceKeyboardMessages(juce::MidiBuffer& buffer, int num_samples) {
-  keyboard_state_->processNextMidiBuffer(buffer, 0, num_samples, true);
+    keyboard_state_->processNextMidiBuffer(buffer, 0, num_samples, true);
 }

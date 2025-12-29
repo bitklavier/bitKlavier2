@@ -41,6 +41,25 @@ public:
     void drawKeyboardBackground(juce::Graphics &g, juce::Rectangle<float> area) override;
     int mouseOverNote = -1;
     std::atomic<std::bitset<128>> &keys;
+
+    // Live MIDI overlay (display-only) — separate from selection bitset
+    void setLiveKeyState (int midiNoteNumber, bool isDown)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128)
+        {
+            liveKeys.set ((size_t) midiNoteNumber, isDown);
+            repaint();
+        }
+    }
+
+    void clearAllLiveKeys()
+    {
+        liveKeys.reset();
+        repaint();
+    }
+
+private:
+    std::bitset<128> liveKeys;
 };
 
 

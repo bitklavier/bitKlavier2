@@ -18,10 +18,12 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "ModulationConnection.h"
+#include "midi_manager.h"
 #include "synth_base.h"
 #include "CompressorProcessor.h"
 #include "EQProcessor.h"
 #include "GainProcessor.h"
+#include <vector>
 
 namespace bitklavier
 {
@@ -100,7 +102,17 @@ namespace bitklavier
         void postUINoteOn  (int midiNote, float velocity01, int channel = 1);
         void postUINoteOff (int midiNote, float velocity01 = 0.0f, int channel = 1);
 
+        // UI live MIDI visualisation registration: forwards to all KeymapProcessors' MidiManagers
+        void addMidiLiveListener (MidiManager::LiveMidiListener* l);
+        void removeMidiLiveListener (MidiManager::LiveMidiListener* l);
+
+        // Register all stored UI listeners onto a specific MidiManager (used by processors on construction)
+        void registerLiveListenersTo (MidiManager* midiMgr);
+
         juce::AudioProcessorGraph::NodeID lastUID;
+
+        // Registry of UI live MIDI listeners to attach to future MidiManagers
+        std::vector<MidiManager::LiveMidiListener*> live_ui_listeners_;
 
         juce::AudioProcessorGraph::NodeID getNextUID() noexcept
         {

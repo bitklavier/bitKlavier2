@@ -179,6 +179,17 @@ public:
     juce::PopupMenu getPitchClassMenu(int offset);
     void keysMenuCallback(int result, BKKeymapKeyboardComponent* vc);
 
+    // Display-only live MIDI overlay controls (do not affect selection bitset)
+    void setLiveKeyState (int midiNoteNumber, bool isDown)
+    {
+        keyboard_.setLiveKeyState (midiNoteNumber, isDown);
+    }
+
+    void clearAllLiveKeys()
+    {
+        keyboard_.clearAllLiveKeys();
+    }
+
     void setWhite(bool action);
     void setBlack(bool action);
     void setChord(KeySet set, PitchClass root);

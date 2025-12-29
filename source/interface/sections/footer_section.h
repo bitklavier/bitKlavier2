@@ -24,25 +24,10 @@ public:
     void sliderValueChanged(juce::Slider* slider) override;
     void addListener(SynthSection::Listener* listener) { listeners_.push_back(listener); }
 
-    /*
+    /**
      * for playback from virtual keyboard
      */
-    virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override
-    {
-        DBG("Footer::BKKeymapKeyboardChanged called");
-
-        // keys reflects the current state after the change: if bit is set, it's a key down
-        const bool isDown = (lastKey >= 0 && lastKey < 128) ? keys.test ((size_t) lastKey) : false;
-        if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
-            if (auto* synth = iface->getSynth())
-                if (auto* eng = synth->getEngine())
-                {
-                    if (isDown)
-                        eng->postUINoteOn (lastKey, 1.0f, 1);
-                    else
-                        eng->postUINoteOff (lastKey, 0.0f, 1);
-                }
-    }
+    virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override;
 
   private:
     std::shared_ptr<PeakMeterSection> levelMeter;

@@ -19,10 +19,9 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include "common.h"
-
 #include <map>
-
 #include <string>
+
 #if !defined(JUCE_AUDIO_DEVICES_H_INCLUDED)
 
 class juce::MidiInput {};
@@ -42,10 +41,9 @@ class juce::MidiMessageCollector {
 };
 
 #endif
+
 #include "valuetree_utils/VariantConverters.h"
-
 #include "tracktion_ValueTreeUtilities.h"
-
 #include <juce_data_structures/juce_data_structures.h>
 #include "Identifiers.h"
 
@@ -101,11 +99,23 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
         virtual void presetChangedThroughMidi(juce::File preset) = 0;
     };
 
+    // Lightweight live MIDI listener for UI visualisation (note on/off only)
+    class LiveMidiListener {
+      public:
+        virtual ~LiveMidiListener() = default;
+        virtual void midiNoteChanged (int note, bool isDown, int channel, float velocity01) = 0;
+    };
+
     MidiManager( juce::MidiKeyboardState* keyboard_state, juce::AudioDeviceManager *manager, const juce::ValueTree &v={},
                  Listener* listener = nullptr);
     virtual ~MidiManager() override;
+
     // Enqueue an external MIDI message (e.g., from UI) to be consumed on the audio thread
     void postExternalMidi (const juce::MidiMessage& msg);
+
+    // Register/unregister live MIDI listeners (UI thread safe via callAsync in implementation)
+    void addLiveMidiListener (LiveMidiListener* l);
+    void removeLiveMidiListener (LiveMidiListener* l);
     bitklavier::MidiDeviceWrapper* createNewObject(const juce::ValueTree& v) override
     {
         return new bitklavier::MidiDeviceWrapper(v);
@@ -189,8 +199,6 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
 //    bitklavier::SoundEngine* engine_;
     juce::MidiKeyboardState* keyboard_state_;
 
-
-
     std::map<std::string, juce::String>* gui_state_;
     Listener* listener_;
     int current_bank_;
@@ -208,6 +216,9 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     bool mpe_enabled_;
     juce::MPEZoneLayout mpe_zone_layout_;
     juce::MidiRPNDetector rpn_detector_;
+
+    // UI live listeners, notified on the message thread via callAsync
+    juce::ListenerList<LiveMidiListener> live_listeners_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiManager)
 };

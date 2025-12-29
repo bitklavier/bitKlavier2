@@ -18,6 +18,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
+#include <algorithm>
 
 namespace bitklavier {
 
@@ -120,6 +121,42 @@ namespace bitklavier {
         for (auto* node : nodes)
             if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
                 kp->postExternalMidi (msg);
+    }
+
+    void SoundEngine::addMidiLiveListener (MidiManager::LiveMidiListener* l)
+    {
+        // Store for future processors and attach to all current ones
+        if (l)
+        {
+            // prevent duplicates
+            if (std::find(live_ui_listeners_.begin(), live_ui_listeners_.end(), l) == live_ui_listeners_.end())
+                live_ui_listeners_.push_back(l);
+
+            auto nodes = processorGraph->getNodes();
+            for (auto* node : nodes)
+                if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                    if (kp->_midi)
+                        kp->_midi->addLiveMidiListener (l);
+        }
+    }
+
+    void SoundEngine::removeMidiLiveListener (MidiManager::LiveMidiListener* l)
+    {
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                if (kp->_midi)
+                    kp->_midi->removeLiveMidiListener (l);
+
+        // remove from registry
+        live_ui_listeners_.erase(std::remove(live_ui_listeners_.begin(), live_ui_listeners_.end(), l), live_ui_listeners_.end());
+    }
+
+    void SoundEngine::registerLiveListenersTo (MidiManager* midiMgr)
+    {
+        if (!midiMgr) return;
+        for (auto* l : live_ui_listeners_)
+            midiMgr->addLiveMidiListener(l);
     }
 
     void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {

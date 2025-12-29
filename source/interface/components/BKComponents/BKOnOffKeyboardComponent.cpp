@@ -64,7 +64,8 @@ void BKOnOffKeyboardComponent::drawKeyboardBackground(juce::Graphics & g, juce::
 void BKOnOffKeyboardComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) {
 
     juce::Colour c (juce::Colours::black);
-    if (keys.load().test(midiNoteNumber)) c = findColour(keyDownOverlayColourId);
+    if (keys.load().test(midiNoteNumber) || liveKeys.test((size_t)midiNoteNumber))
+        c = findColour(keyDownOverlayColourId);
     if (mouseOverNote == midiNoteNumber) c = c.overlaidWith (findColour (mouseOverKeyOverlayColourId));
 
     g.setColour (c);
@@ -89,7 +90,8 @@ void BKOnOffKeyboardComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &
 void BKOnOffKeyboardComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) {
 
     auto c = juce::Colours::transparentWhite;
-    if (keys.load().test(midiNoteNumber)) c = findColour(keyDownOverlayColourId).withAlpha(0.5f);
+    if (keys.load().test(midiNoteNumber) || liveKeys.test((size_t)midiNoteNumber))
+        c = findColour(keyDownOverlayColourId).withAlpha(0.5f);
     if (mouseOverNote == midiNoteNumber) c = c.overlaidWith (findColour (mouseOverKeyOverlayColourId));
     int w = area.getWidth();
     int h = area.getHeight();

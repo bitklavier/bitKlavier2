@@ -6,6 +6,7 @@
 #include "array_to_string.h"
 #include "common.h"
 #include "synth_base.h"
+#include "sound_engine/sound_engine.h"
 
 KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (
                                                                                      parent,
@@ -19,6 +20,11 @@ KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocityminmax",
         &(state.params.velocityMinMax.stateChanges)));
+
+    // Ensure any UI components already registered with the SoundEngine as live MIDI listeners
+    // are attached to this processor's MidiManager as soon as it is constructed.
+    if (auto* eng = parent.getEngine())
+        eng->registerLiveListenersTo(_midi.get());
 }
 
 static juce::String getMidiMessageDescription (const juce::MidiMessage& m)
