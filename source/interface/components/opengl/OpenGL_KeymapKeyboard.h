@@ -70,6 +70,8 @@ public:
         redoImage();
     }
 
+    virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override {}
+
     // virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override
     // {
     //     DBG("BKKeymapKeyboardChanged called");
