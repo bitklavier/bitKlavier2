@@ -11,7 +11,7 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
           fragment_shader_(shader)
 {
     // Check that components are valid
-    if (!start_component_ || !end_component_ || !target_component_) {
+    if (start_component_ == nullptr || end_component_ == nullptr || target_component_ == nullptr) {
         DBG("Error: Invalid components supplied to OpenGlLine");
         return;
     }
@@ -129,8 +129,10 @@ void OpenGlLine::init(OpenGlWrapper& open_gl) {
 
 // Rendering logic for the OpenGL line
 void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
-    juce::Component *component = target_component_ ? target_component_ : this;
-    if (!active_ || (!draw_when_not_visible_ && !component->isVisible()) || !setViewPort(component, open_gl))
+    juce::Component* component = (target_component_ == nullptr ? this : static_cast<juce::Component*>(target_component_));
+    if (component == nullptr)
+        return;
+    if (!active_ || (!draw_when_not_visible_ && !component->isVisible()) || component->getTopLevelComponent() == nullptr || !setViewPort(component, open_gl))
         return;
     if (shader_ == nullptr)
         init(open_gl);
@@ -138,8 +140,13 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
     {
         dirty_ = false;
   // Calculate updated clip-space coordinates for start and end components
-        juce::Point<float> startClip = getClipSpaceCoordinates(start_component_, target_component_);
-        juce::Point<float> endClip = getClipSpaceCoordinates(end_component_, target_component_);
+        auto* startComp = static_cast<juce::Component*>(start_component_);
+        auto* endComp = static_cast<juce::Component*>(end_component_);
+        auto* targetComp = static_cast<juce::Component*>(target_component_);
+        if (startComp == nullptr || endComp == nullptr || targetComp == nullptr)
+            return;
+        juce::Point<float> startClip = getClipSpaceCoordinates(startComp, targetComp);
+        juce::Point<float> endClip = getClipSpaceCoordinates(endComp, targetComp);
 
         // Update the vertex buffer's data
         GLfloat updatedVertices[] = {

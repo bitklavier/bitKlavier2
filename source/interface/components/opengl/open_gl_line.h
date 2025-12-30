@@ -32,10 +32,10 @@ private:
     GLuint indices_buffer_;
     std::unique_ptr<float[]> data_;
 
-    juce::Component* target_component_;
-    juce::Component* scissor_component_;
-    juce::Component* start_component_;
-    juce::Component* end_component_;
+    juce::Component::SafePointer<juce::Component> target_component_;
+    juce::Component::SafePointer<juce::Component> scissor_component_;
+    juce::Component::SafePointer<juce::Component> start_component_;
+    juce::Component::SafePointer<juce::Component> end_component_;
 };
 
 #endif // BITKLAVIER2_OPEN_GL_INSTANCED_LINES_H

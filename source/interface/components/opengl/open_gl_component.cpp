@@ -22,12 +22,16 @@
 namespace {
   juce::Rectangle<int> getGlobalBounds(juce::Component* component, juce::Rectangle<int> bounds) {
     juce::Component* parent = component->getParentComponent();
+    // Revert to original traversal semantics: climb while the CURRENT component
+    // is not a FullInterface (matching historical behaviour used by viewport math)
     while (parent && dynamic_cast<FullInterface*>(component) == nullptr) {
       bounds = bounds + component->getPosition();
       component = parent;
       parent = component->getParentComponent();
     }
 
+    // Return accumulated bounds relative to the immediate child of FullInterface
+    // (do not add the last component position here)
     return bounds;
   }
 
@@ -58,17 +62,25 @@ OpenGlComponent::~OpenGlComponent() {
 
 bool OpenGlComponent::setViewPort(juce::Component* component, juce::Rectangle<int> bounds, OpenGlWrapper& open_gl) {
 
-  if(component == nullptr)
+  if (component == nullptr)
     return false;
-    FullInterface* top_level = component->findParentComponentOfClass<FullInterface>();
+
+  // Basic safety guards to avoid walking invalid/hidden component trees
+  if (!component->isShowing())
+    return false;
+
+  if (component->getTopLevelComponent() == nullptr)
+    return false;
+
+  FullInterface* top_level = component->findParentComponentOfClass<FullInterface>();
 //    juce::String componentName = component != nullptr ? component->getName() : "Unnamed Component";
 //    juce::String highlightedName = "------------ " + componentName + " ------------";
 //
 //    // Add debug prints for individual components of glViewport
 //    DBG(highlightedName); // Highlight the component name
 
-  if(top_level == nullptr)
-      return false;
+  if (top_level == nullptr)
+    return false;
   float scale = open_gl.display_scale;
   float resize_scale = top_level->getResizingScale();
   float render_scale = 1.0f;
@@ -130,7 +142,15 @@ void OpenGlComponent::setScissorBounds(juce::Component* component, juce::Rectang
   if (component == nullptr)
     return;
 
+  if (!component->isShowing())
+    return;
+
+  if (component->getTopLevelComponent() == nullptr)
+    return;
+
   FullInterface* top_level = component->findParentComponentOfClass<FullInterface>();
+  if (top_level == nullptr)
+    return;
   float scale = open_gl.display_scale;
   float resize_scale = top_level->getResizingScale();
   float render_scale = 1.0f;
