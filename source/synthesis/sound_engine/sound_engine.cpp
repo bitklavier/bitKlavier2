@@ -168,9 +168,9 @@ namespace bitklavier {
         tree.appendChild (buscompressor, nullptr);
         buseq.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
         buscompressor.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
-        gainProcessor = std::make_unique<GainProcessor>(parent,tree);
-        compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
-        eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
+        // gainProcessor = std::make_unique<GainProcessor>(parent,tree);
+        // compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
+        // eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
         gainProcessor       = std::make_unique<GainProcessor>(parent, tree);
         compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq);
         eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor);

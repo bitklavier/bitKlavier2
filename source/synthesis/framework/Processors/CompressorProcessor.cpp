@@ -172,6 +172,10 @@ void CompressorProcessor::processCrestFactor(const float* src, const int numSamp
 
 float CompressorProcessor::applyCompression(float& input)
 {
+    /*
+     * todo: slope, kneeHalf, and threshold calculate/reads should be moved to applyCompressionToBuffer, outside
+     * the loop so we aren't doing these every sample
+     */
     const float slope = 1.0f / state.params.ratio->getCurrentValue() - 1.0f;
     const float kneeHalf = state.params.knee->getCurrentValue() / 2.0f;
     const float overshoot = input - state.params.threshold->getCurrentValue();
