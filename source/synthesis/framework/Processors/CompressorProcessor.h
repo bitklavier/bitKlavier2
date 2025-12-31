@@ -246,8 +246,8 @@ public:
     void processCrestFactor(const float* src, const int numSamples);
     float applyCompression(float& input);
     void applyCompressionToBuffer(float* src, int numSamples);
-
-
+    void applyBallistics(float* src, int numSamples);
+    float processPeakBranched(const float& in);
 
 private:
     juce::AudioBuffer<float> originalSignal;

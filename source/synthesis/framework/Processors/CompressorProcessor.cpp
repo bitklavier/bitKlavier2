@@ -197,6 +197,24 @@ void CompressorProcessor::applyCompressionToBuffer(float* src, int numSamples)
     }
 }
 
+float CompressorProcessor::processPeakBranched(const float& in)
+{
+    //Smooth branched peak detector
+    if (in < state01)
+        state01 = alphaAttack * state01 + (1 - alphaAttack) * in;
+    else
+        state01 = alphaRelease * state01 + (1 - alphaRelease) * in;
+
+    return static_cast<float>(state01); //y_L
+}
+
+void CompressorProcessor::applyBallistics(float* src, int numSamples)
+{
+    // Apply ballistics to src buffer
+    for (int i = 0; i < numSamples; ++i)
+        src[i] = processPeakBranched(src[i]);
+}
+
 void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
@@ -233,7 +251,7 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         applyCompressionToBuffer(rawSidechainSignal, numSamples);
 
         // Smooth attenuation - still logarithmic
-        // ballistics.applyBallistics(rawSidechainSignal, numSamples);
+        applyBallistics(rawSidechainSignal, numSamples);
 
         // Get minimum = max. gain reduction from side chain buffer
         state.params.maxGainReduction = juce::FloatVectorOperations::findMinimum(rawSidechainSignal, numSamples);
