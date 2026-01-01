@@ -15,7 +15,6 @@ void CompressorParameterView::resized()
     int title_width = getTitleWidth();
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);
-    int knobsectionwidth = 50;
     int labelsectionheight = findValue(Skin::kLabelHeight);
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     auto knobLabelSize = findValue(Skin::kKnobLabelSizeSmall);

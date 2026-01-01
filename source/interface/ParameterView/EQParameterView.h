@@ -6,6 +6,7 @@
 #define BITKLAVIER2_EQPARAMETERVIEW_H
 #include "EQProcessor.h"
 #include "EQFilterSection.h"
+#include "OpenGL_LabeledBorder.h"
 #include "synth_section.h"
 #include "peak_meter_section.h"
 #include "synth_slider.h"
@@ -33,6 +34,14 @@ public:
         prepTitle->setJustification(juce::Justification::centredLeft);
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
+
+        // menus
+        if (auto* eqParams = dynamic_cast<EQParams*>(&params)) {
+            presets_combo_box = std::make_unique<OpenGLComboBox>(eqParams->presets->paramID.toStdString());
+            presets_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*eqParams->presets.get(), listeners, *presets_combo_box, nullptr);
+            addAndMakeVisible(presets_combo_box.get());
+            addOpenGlComponent(presets_combo_box->getImageComponent());
+        }
 
         // bypass EQ button
         activeEq_toggle = std::make_unique<SynthButton>(eqparams_.activeEq->paramID);
@@ -81,6 +90,9 @@ public:
         inLevelMeter->setLabel("In");
         addSubSection(inLevelMeter.get());
 
+        presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Power and Presets");
+        addBorder(presetsBorder.get());
+
         // redraw eq graph
         eqparams_.doForAllParameters ([this, &listeners] (auto& param, size_t) {
             eqRedoImageCallbacks += {listeners.addParameterListener(
@@ -92,8 +104,6 @@ public:
                 })
             };
         });
-
-
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -116,6 +126,10 @@ public:
     std::unique_ptr<SynthButton> reset_button;
     std::unique_ptr<chowdsp::ButtonAttachment> reset_button_attachment;
 
+    // preset combo box menu
+    std::unique_ptr<OpenGLComboBox> presets_combo_box;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> presets_attachment;
+
     // equalizer graph
     std::shared_ptr<OpenGL_EqualizerGraph> equalizerGraph;
 
@@ -130,6 +144,8 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
     std::shared_ptr<PeakMeterSection> inLevelMeter;
+
+    std::shared_ptr<OpenGL_LabeledBorder> presetsBorder;
 
     EQParams& eqparams_;
     void resized() override;

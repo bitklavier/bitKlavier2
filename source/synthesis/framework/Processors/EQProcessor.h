@@ -11,6 +11,12 @@
 #include <chowdsp_sources/chowdsp_sources.h>
 #include "chowdsp_parameters/ParamUtils/chowdsp_ParameterTypes.h"
 
+enum EqPresetComboBox {
+    EqOff = 1 << 0,
+    Highshelf = 1 << 1,
+    Lowshelf = 1 << 2,
+};
+
 // ********************************************************************************************* //
 // ****************************  EQParams  ********************************************* //
 // ********************************************************************************************* //
@@ -34,7 +40,8 @@ struct EQParams : chowdsp::ParamHolder
                 peak1FilterParams,
                 peak2FilterParams,
                 peak3FilterParams,
-                hiCutFilterParams);
+                hiCutFilterParams,
+                presets);
 
         doForAllParameters ([this] (auto& param, size_t) {
             if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
@@ -86,6 +93,14 @@ struct EQParams : chowdsp::ParamHolder
         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
         0.0f,
         true
+    };
+
+    // combo box
+    chowdsp::EnumChoiceParameter<EqPresetComboBox>::Ptr presets {
+        juce::ParameterID { "eqPresets", 100 },
+        "eqPresets",
+        EqPresetComboBox::EqOff,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     /*
@@ -373,6 +388,17 @@ public:
 
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
+
+    void resetToDefaults()
+    {
+        state.params.activeEq->setParameterValue(false);
+        state.params.loCutFilterParams.resetToDefault();
+        state.params.peak1FilterParams.resetToDefault();
+        state.params.peak2FilterParams.resetToDefault();
+        state.params.peak3FilterParams.resetToDefault();
+        state.params.hiCutFilterParams.resetToDefault();
+        state.params.resetEq->setParameterValue(false);
+    }
 
 private:
     chowdsp::ScopedCallbackList eqCallbacks;

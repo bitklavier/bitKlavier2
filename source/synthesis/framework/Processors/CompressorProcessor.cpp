@@ -92,7 +92,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
                 case CompressorPresetComboBox::Brick_Wall:
                 {
                     state.params.activeCompressor->setParameterValue(true);
-                    state.params.attack->setParameterValue (0);
+                    state.params.attack->setParameterValue (2);
                     state.params.release->setParameterValue (5);
                     state.params.threshold->setParameterValue (-3);
                     state.params.makeup->setParameterValue (0);
@@ -103,7 +103,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
                 case CompressorPresetComboBox::Aggressive:
                 {
                     state.params.activeCompressor->setParameterValue(true);
-                    state.params.attack->setParameterValue (0);
+                    state.params.attack->setParameterValue (2);
                     state.params.release->setParameterValue (5);
                     state.params.threshold->setParameterValue (-10);
                     state.params.makeup->setParameterValue (0);

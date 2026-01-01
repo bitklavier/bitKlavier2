@@ -181,6 +181,10 @@ public:
         paintKnobShadows (g);
         paintChildrenBackgrounds (g);
 
+        /*
+         * update needle position here
+         * - not getting paint() calls inside the compressorMeter, so doing it out here
+         */
         const auto bounds = compressorMeter->getBounds().toFloat();
         const float centreX = bounds.getX() + bounds.getWidth() * 0.5f;
         const float centreY = bounds.getY() + bounds.getHeight();
