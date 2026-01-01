@@ -29,33 +29,22 @@ void CompressorParameterView::resized()
     bounds.removeFromLeft(title_width);
     bounds.removeFromLeft(smallpadding);
 
-    auto activeBounds = juce::Rectangle<int>(bounds.getWidth()-40, 0, 65, 20);
-    auto resetBounds = juce::Rectangle<int>(bounds.getWidth()-40, 30, 65, 20);
-    activeCompressor_toggle->setBounds (activeBounds);
-    reset_button->setBounds(resetBounds);
-    bounds.removeFromTop (60);
-
     inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
-
     bounds.removeFromRight(title_width*.85);
     levelMeter->setBounds(bounds.removeFromRight(title_width));
 
-    // bounds.removeFromRight(smallpadding);
-    // sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
+    bounds.removeFromTop (largepadding * 6);
+    bounds.reduce(largepadding * 6, largepadding);
 
-    bounds.reduce(largepadding, largepadding);
-
-    bounds.removeFromLeft (title_width*3);
-    bounds.removeFromRight (title_width*3);
-
-    auto presets_rect = bounds.removeFromTop (knobsectionheight*1.2);
-    presets_rect.removeFromLeft (300);
-    presets_rect.removeFromRight (300);
+    auto presets_rect = bounds.removeFromTop (knobsectionheight * 1.);
+    presets_rect.reduce(presets_rect.getWidth() / 5., 0);
     presetsBorder->setBounds (presets_rect);
-    presets_rect.removeFromTop (knobsectionheight/3.);
-    presets_rect.removeFromBottom (knobsectionheight/4.);
-    presets_rect.removeFromLeft (knobsectionwidth);
-    presets_rect.removeFromRight (knobsectionwidth);
+    presets_rect.reduce(largepadding, largepadding * 1.5);
+    presets_rect.removeFromTop (largepadding);
+
+    activeCompressor_toggle->setBounds(presets_rect.removeFromLeft(presets_rect.getWidth() / 3.));
+    reset_button->setBounds(presets_rect.removeFromRight(presets_rect.getWidth() / 2.));
+    presets_rect.reduce(largepadding, 0);
     presets_combo_box->setBounds(presets_rect);
 
     bounds.removeFromTop (largepadding);

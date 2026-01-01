@@ -164,7 +164,7 @@ public:
 
         compressorControlsBorder = std::make_shared<OpenGL_LabeledBorder>("compressor controls border", "Compressor Parameters");
         addBorder(compressorControlsBorder.get());
-        presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Presets");
+        presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Power and Presets");
         addBorder(presetsBorder.get());
 
         // for updating the compressorMeter
@@ -239,7 +239,6 @@ public:
     std::shared_ptr<OpenGL_LabeledBorder> compressorControlsBorder;
     std::shared_ptr<OpenGL_LabeledBorder> presetsBorder;
 
-    
     CompressorParams& compressorParams_;
     void resized() override;
 };
