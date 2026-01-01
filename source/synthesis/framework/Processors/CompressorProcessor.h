@@ -51,7 +51,7 @@ struct CompressorParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr activeCompressor {
         juce::ParameterID { "activeCompressor", 100 },
         "activeCompressor",
-        true
+        false
     };
 
     // reset bool

@@ -58,6 +58,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
             {
                 case CompressorPresetComboBox::Default:
                 {
+                    state.params.activeCompressor->setParameterValue(false);
                     state.params.attack->setParameterValue (state.params.attack->getDefaultValue());
                     state.params.release->setParameterValue (state.params.release->getDefaultValue());
                     state.params.threshold->setParameterValue (state.params.threshold->getDefaultValue());
@@ -68,6 +69,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
                 }
                 case CompressorPresetComboBox::Piano:
                 {
+                    state.params.activeCompressor->setParameterValue(true);
                     state.params.attack->setParameterValue (20);
                     state.params.release->setParameterValue (50);
                     state.params.threshold->setParameterValue (-20);
@@ -78,6 +80,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
                 }
                 case CompressorPresetComboBox::Piano_2:
                 {
+                    state.params.activeCompressor->setParameterValue(true);
                     state.params.attack->setParameterValue (90);
                     state.params.release->setParameterValue (50);
                     state.params.threshold->setParameterValue (-22);
@@ -88,6 +91,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
                 }
                 case CompressorPresetComboBox::Brick_Wall:
                 {
+                    state.params.activeCompressor->setParameterValue(true);
                     state.params.attack->setParameterValue (0);
                     state.params.release->setParameterValue (5);
                     state.params.threshold->setParameterValue (-3);
@@ -98,6 +102,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
                 }
                 case CompressorPresetComboBox::Aggressive:
                 {
+                    state.params.activeCompressor->setParameterValue(true);
                     state.params.attack->setParameterValue (0);
                     state.params.release->setParameterValue (5);
                     state.params.threshold->setParameterValue (-10);

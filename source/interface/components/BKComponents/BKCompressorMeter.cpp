@@ -23,7 +23,7 @@ params(_params)
 void BKCompressorMeter::paint(juce::Graphics& g)
 {
     g.setColour(backgroundDarkGrey);
-    g.fillRoundedRectangle(getLocalBounds().toFloat(), 3);
+    //g.fillRoundedRectangle(getLocalBounds().toFloat(), 3);
 }
 
 void BKCompressorMeter::resized()
@@ -39,6 +39,8 @@ void BKCompressorMeter::update(const float& val)
     {
         needle.update(val);
     }
+
+    triggerAsyncUpdate();
 }
 
 float BKCompressorMeter::getValue()

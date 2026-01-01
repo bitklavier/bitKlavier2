@@ -63,7 +63,7 @@ public:
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-        levelMeter->setLabel("Output");
+        levelMeter->setLabel("Out");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
@@ -73,7 +73,7 @@ public:
 
         // and for input level meter/slider
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
-        inLevelMeter->setLabel("Input");
+        inLevelMeter->setLabel("In");
         addSubSection(inLevelMeter.get());
 
         // knobs
@@ -180,6 +180,13 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
         paintChildrenBackgrounds (g);
+
+        const auto bounds = compressorMeter->getBounds().toFloat();
+        const float centreX = bounds.getX() + bounds.getWidth() * 0.5f;
+        const float centreY = bounds.getY() + bounds.getHeight();
+        const float needleLength = juce::jmin(bounds.getWidth() * 0.7f, bounds.getHeight() * 0.7f);
+        g.setColour(compressorMeter->needle.needleColour);
+        compressorMeter->needle.redrawNeedle (g, centreX, centreY, needleLength);
     }
     
     // prep title, vertical, left side

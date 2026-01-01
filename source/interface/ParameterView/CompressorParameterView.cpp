@@ -20,7 +20,6 @@ void CompressorParameterView::resized()
     int knobsectionheight = findValue(Skin::kKnobSectionHeight);
     auto knobLabelSize = findValue(Skin::kKnobLabelSizeSmall);
 
-
     juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft(title_width);
     prepTitle->setBounds(titleArea);
     prepTitle->setTextSize (findValue(Skin::kPrepTitleSize));

@@ -68,7 +68,7 @@ public:
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-        levelMeter->setLabel("Main");
+        levelMeter->setLabel("Out");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
@@ -78,7 +78,7 @@ public:
 
         // and for input level meter/slider
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
-        inLevelMeter->setLabel("Input");
+        inLevelMeter->setLabel("In");
         addSubSection(inLevelMeter.get());
 
         // redraw eq graph

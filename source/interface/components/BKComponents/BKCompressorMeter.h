@@ -8,7 +8,7 @@
 #include "CompressorProcessor.h"
 
 // valueInDecibel = params.
-class MeterNeedle : public juce::Component, public juce::AsyncUpdater
+class MeterNeedle : public juce::Component
 {
 public:
     MeterNeedle()
@@ -27,18 +27,7 @@ public:
         eAngle = e;
     };
 
-    void paint(juce::Graphics& g) override
-    {
-        DBG("MeterNeedle::paint");
-
-        const auto bounds = area.toFloat();
-        const float centreX = bounds.getX() + bounds.getWidth() * 0.5f;
-        const float centreY = bounds.getY() + bounds.getHeight();
-        const float needleLength = juce::jmin(bounds.getWidth() * 0.75f, bounds.getHeight() * 0.75f);
-
-        g.setColour(needleColour);
-        redrawNeedle(g, centreX, centreY, needleLength);
-    };
+    // void paint(juce::Graphics& g) override {};
 
     void resized() override
     {
@@ -50,21 +39,12 @@ public:
     {
         if (val != valueInDecibel)
         {
-            DBG("needle showing=" << (int) isShowing()
-            << " visible=" << (int) isVisible()
-            << " bounds=" << getBounds().toString());
-
             valueInDecibel = val;
         }
-
-        repaint();
-        DBG("update needle, dB = " << val);
-        triggerAsyncUpdate();
     };
 
     void redrawNeedle(juce::Graphics& g, float centreX, float centreY, float length)
     {
-        DBG("redraw needle");
         float val = std::clamp(valueInDecibel, static_cast<float>(minValue), static_cast<float>(maxValue));
         float mapped = juce::jmap(val, static_cast<float>(minValue), static_cast<float>(maxValue), sAngle, eAngle);
         mapped -= mapped > 2 * juce::MathConstants<float>::pi ? juce::MathConstants<float>::twoPi : 0.0f;
@@ -81,32 +61,15 @@ public:
         repaint();
     };
 
+    juce::Colour needleColour;
+
 private:
 
-    void handleAsyncUpdate() override
-    {
-        DBG("MeterNeedle::handleAsyncUpdate repaint chain");
-        if (auto* p = getParentComponent())
-        {
-            p->repaint (getBounds());
-            if (auto* gp = p->getParentComponent())
-                gp->repaint (p->getBounds());
-        }
-
-        repaint();
-
-        if (auto* peer = getPeer())
-            peer->performAnyPendingRepaintsNow(); // force the OS peer to paint immediately
-
-    }
-
     juce::Rectangle<int> area;
-    juce::Colour needleColour;
     float valueInDecibel;
     int minValue, maxValue;
     float sAngle, eAngle;
     uint32_t statusOutline{0xff00838f};
-
 };
 
 class MeterBackground : public juce::Component
@@ -122,13 +85,15 @@ public:
         step = 5;
         indicatorColour = juce::Colour(bg_LightGrey);
         backgroundApp = juce::Colour(bg_App);
-        //setBufferedToImage(true);
+        setBufferedToImage(true);
     };
+
     void prepare(const float& s, const float& e)
     {
         sAngle = s;
         eAngle = e;
     };
+
     void paint(juce::Graphics& g) override
     {
         const auto bounds = meterArea.toFloat();
@@ -137,16 +102,18 @@ public:
         const float needleLength = juce::jmin(bounds.getWidth() * 0.7f, bounds.getHeight() * 0.7f);
 
         g.setColour(backgroundApp);
-        g.fillRoundedRectangle(meterArea.toFloat(), 1);
+        //g.fillRoundedRectangle(meterArea.toFloat(), 1);
 
         g.setColour(indicatorColour);
         drawIndicators(g, centreX, centreY, needleLength);
     };
+
     void resized() override
     {
         meterArea = getLocalBounds().reduced(3);
         repaint();
     };
+
     void drawIndicators(juce::Graphics& g, float centreX, float centreY, float length)
     {
         const auto indices = (abs(maxValue - minValue) / step) + 1;
@@ -185,6 +152,7 @@ public:
     uint32_t bg_DarkGrey{0xff212121};
     uint32_t bg_MidGrey{0xff616161};
     uint32_t bg_LightGrey{0xff9e9e9e};
+
 private:
     juce::Rectangle<int> meterArea;
     juce::Colour indicatorColour;
@@ -194,7 +162,7 @@ private:
     int step;
 };
 
-class BKCompressorMeter : public juce::Component {
+class BKCompressorMeter : public juce::Component, public juce::AsyncUpdater{
 public:
     // enum Mode { IN = 1, OUT, GR };
 
@@ -211,9 +179,17 @@ public:
     juce::Rectangle<int> boxArea;
 
     CompressorParams *params;
-private:
-    MeterBackground meterBg;
     MeterNeedle needle;
+
+private:
+    void handleAsyncUpdate() override
+    {
+        auto interface = findParentComponentOfClass<SynthGuiInterface>();
+        interface->getGui()->prep_popup->repaintPrepBackground();
+    }
+
+    MeterBackground meterBg;
+
     // juce::ComboBox modeBox;
     juce::ComboBox *selectBox;
     juce::Colour backgroundDarkGrey;

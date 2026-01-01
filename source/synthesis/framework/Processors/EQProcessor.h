@@ -51,7 +51,7 @@ struct EQParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr activeEq {
         juce::ParameterID { "activeEq", 100 },
         "activeEq",
-        true
+        false
     };
 
     // reset bool
