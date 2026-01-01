@@ -12,7 +12,6 @@
 #include "synth_slider.h"
 #include "OpenGL_CompressorMeter.h"
 
-
 class CompressorParameterView : public SynthSection, public juce::Timer
 {
 public:
@@ -64,7 +63,7 @@ public:
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-        levelMeter->setLabel("Main");
+        levelMeter->setLabel("Output");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider

@@ -8,7 +8,7 @@
 #include "CompressorProcessor.h"
 
 // valueInDecibel = params.
-class MeterNeedle : public juce::Component
+class MeterNeedle : public juce::Component, public juce::AsyncUpdater
 {
 public:
     MeterNeedle()
@@ -29,6 +29,8 @@ public:
 
     void paint(juce::Graphics& g) override
     {
+        DBG("MeterNeedle::paint");
+
         const auto bounds = area.toFloat();
         const float centreX = bounds.getX() + bounds.getWidth() * 0.5f;
         const float centreY = bounds.getY() + bounds.getHeight();
@@ -48,13 +50,21 @@ public:
     {
         if (val != valueInDecibel)
         {
+            DBG("needle showing=" << (int) isShowing()
+            << " visible=" << (int) isVisible()
+            << " bounds=" << getBounds().toString());
+
             valueInDecibel = val;
-            repaint();
         }
+
+        repaint();
+        DBG("update needle, dB = " << val);
+        triggerAsyncUpdate();
     };
 
     void redrawNeedle(juce::Graphics& g, float centreX, float centreY, float length)
     {
+        DBG("redraw needle");
         float val = std::clamp(valueInDecibel, static_cast<float>(minValue), static_cast<float>(maxValue));
         float mapped = juce::jmap(val, static_cast<float>(minValue), static_cast<float>(maxValue), sAngle, eAngle);
         mapped -= mapped > 2 * juce::MathConstants<float>::pi ? juce::MathConstants<float>::twoPi : 0.0f;
@@ -70,7 +80,26 @@ public:
                    : juce::Colour(statusOutline).withAlpha(0.35f);
         repaint();
     };
+
 private:
+
+    void handleAsyncUpdate() override
+    {
+        DBG("MeterNeedle::handleAsyncUpdate repaint chain");
+        if (auto* p = getParentComponent())
+        {
+            p->repaint (getBounds());
+            if (auto* gp = p->getParentComponent())
+                gp->repaint (p->getBounds());
+        }
+
+        repaint();
+
+        if (auto* peer = getPeer())
+            peer->performAnyPendingRepaintsNow(); // force the OS peer to paint immediately
+
+    }
+
     juce::Rectangle<int> area;
     juce::Colour needleColour;
     float valueInDecibel;
@@ -93,7 +122,7 @@ public:
         step = 5;
         indicatorColour = juce::Colour(bg_LightGrey);
         backgroundApp = juce::Colour(bg_App);
-        setBufferedToImage(true);
+        //setBufferedToImage(true);
     };
     void prepare(const float& s, const float& e)
     {

@@ -6,7 +6,7 @@
 
 void CompressorParameterView::timerCallback()
 {
-    compressorMeter->update (compressorParams_.maxGainReduction);
+    compressorMeter->update (compressorParams_.maxGainReduction.load());
 }
 
 void CompressorParameterView::resized()

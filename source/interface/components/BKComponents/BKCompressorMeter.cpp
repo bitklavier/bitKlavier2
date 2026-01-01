@@ -38,7 +38,6 @@ void BKCompressorMeter::update(const float& val)
     if (val != valueInDecibel)
     {
         needle.update(val);
-        DBG("maxgainreduction: "+ juce::String(val));
     }
 }
 

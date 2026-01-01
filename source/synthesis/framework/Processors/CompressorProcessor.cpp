@@ -3,9 +3,7 @@
 //
 
 #include "CompressorProcessor.h"
-
 #include "Synthesiser/Sample.h"
-#include "common.h"
 #include "synth_base.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <simd/common.h>
@@ -36,7 +34,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
         state.params.attack,
         chowdsp::ParameterListenerThread::AudioThread,
         [this]() {
-            attackTimeInSeconds = state.params.attack->getCurrentValue() * 0.001f;
+            attackTimeInSeconds = *state.params.attack * 0.001f;
             alphaAttack = exp(-1.0 / (sampleRate * attackTimeInSeconds));
         })
     };
@@ -46,7 +44,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
         state.params.release,
         chowdsp::ParameterListenerThread::AudioThread,
         [this]() {
-            releaseTimeInSeconds = state.params.release->getCurrentValue() * 0.001f;
+            releaseTimeInSeconds = *state.params.release * 0.001f;
             alphaRelease = exp(-1.0 / (sampleRate * releaseTimeInSeconds));
         })
     };
@@ -109,13 +107,23 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
                     break;
                 }
             }
+
+            DBG("Compressor settings are:");
+            DBG("  attack       = " << *state.params.attack);
+            DBG("  release      = " << *state.params.release);
+            DBG("  threshold    = " << *state.params.threshold);
+            DBG("  makeup       = " << *state.params.makeup);
+            DBG("  ratio        = " << *state.params.ratio);
+            DBG("  knee         = " << *state.params.knee);
         })
     };
 }
 
-void CompressorProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void CompressorProcessor::prepareToPlay (double sampleRate_, int samplesPerBlock)
 {
-    const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
+    const auto spec = juce::dsp::ProcessSpec { sampleRate_, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
+    sampleRate = sampleRate_;
+    DBG("compressor sample rate: " << sampleRate);
     originalSignal.setSize(2, spec.maximumBlockSize);
     sidechainSignal.resize(spec.maximumBlockSize, 0.0f);
     rawSidechainSignal = sidechainSignal.data();
@@ -172,23 +180,21 @@ void CompressorProcessor::processCrestFactor(const float* src, const int numSamp
 
 float CompressorProcessor::applyCompression(float& input)
 {
-    /*
-     * todo: slope, kneeHalf, and threshold calculate/reads should be moved to applyCompressionToBuffer, outside
-     * the loop so we aren't doing these every sample
-     */
-    const float slope = 1.0f / state.params.ratio->getCurrentValue() - 1.0f;
-    const float kneeHalf = state.params.knee->getCurrentValue() / 2.0f;
-    const float overshoot = input - state.params.threshold->getCurrentValue();
+
+    overshoot = input - *state.params.threshold;
     if (overshoot <= -kneeHalf)
         return 0.0f;
     if (overshoot > -kneeHalf && overshoot <= kneeHalf)
-        return 0.5f * slope * ((overshoot + kneeHalf) * (overshoot + kneeHalf)) / state.params.knee->getCurrentValue();
+        return 0.5f * slope * ((overshoot + kneeHalf) * (overshoot + kneeHalf)) / *state.params.knee;
 
     return slope * overshoot;
 }
 
 void CompressorProcessor::applyCompressionToBuffer(float* src, int numSamples)
 {
+    slope = 1.0f / *state.params.ratio - 1.0f;
+    kneeHalf = *state.params.knee / 2.0f;
+
     for (int i = 0; i < numSamples; ++i)
     {
         const float level = std::max(abs(src[i]), 1e-6f);
@@ -222,16 +228,15 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     int numSamples = buffer.getNumSamples();
     int numChannels = buffer.getNumChannels();
 
-    if (state.params.activeCompressor.get()->get())
+    if (*state.params.activeCompressor)
     {
-
         // Clear any old samples
         originalSignal.clear();
         juce::FloatVectorOperations::fill(rawSidechainSignal, 0.0f, numSamples);
         state.params.maxGainReduction = 0.0f;
 
         // Apply input gain
-        auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
+        auto inputgainmult = bitklavier::utils::dbToMagnitude (*state.params.inputGain);
         buffer.applyGain(0, 0, numSamples, inputgainmult);
         buffer.applyGain(1, 0, numSamples, inputgainmult);
 
@@ -254,14 +259,14 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         applyBallistics(rawSidechainSignal, numSamples);
 
         // Get minimum = max. gain reduction from side chain buffer
-        state.params.maxGainReduction = juce::FloatVectorOperations::findMinimum(rawSidechainSignal, numSamples);
+        state.params.maxGainReduction.store(juce::FloatVectorOperations::findMinimum(rawSidechainSignal, numSamples));
 
         // Calculate auto makeup
         // autoMakeup = calculateAutoMakeup(rawSidechainSignal, numSamples);
 
         // Add makeup gain and convert side-chain to linear domain
         for (int i = 0; i < numSamples; ++i)
-            sidechainSignal[i] = juce::Decibels::decibelsToGain(sidechainSignal[i] + state.params.makeup->getCurrentValue() /*+ autoMakeup*/);
+            sidechainSignal[i] = juce::Decibels::decibelsToGain(sidechainSignal[i] + *state.params.makeup /*+ autoMakeup*/);
 
         // Copy buffer to original signal
         for (int i = 0; i < numChannels; ++i)
@@ -281,7 +286,10 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     }
 
     // Update gain reduction metering
-    gainReduction.set(state.params.maxGainReduction);
+    /*
+     * todo: i don't think gainReduction actually gets used?
+     */
+    gainReduction.set(state.params.maxGainReduction.load());
 
     // handle the send
     // int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
@@ -294,7 +302,7 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     // std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
 
     // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputGain);
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
 

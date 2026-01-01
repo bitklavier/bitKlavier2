@@ -18,6 +18,7 @@
         <PARAM_DEFAULT/>
         <PORT nodeID="3519629075" chIdx="4096" isIn="0"/>
         <midiInput midiDeviceId="-1347885776"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
       </keymap>
       <direct type="0" width="147.0" height="75.0" x_y="541, 339" uuid="142ddf38e5c548989d6822ff6cba4e7f"
               soundset="syncglobal" nodeID="338550584" name="direct 1" numIns="1"
@@ -49,7 +50,7 @@
       </direct>
       <tuning type="5" width="75.0" height="147.0" x_y="566, 134" uuid="a125715a49974a6cb63727d24f117915"
               soundset="syncglobal" nodeID="2703585626" name="tuning 1" numIns="1"
-              lastNote="60.000" tuningSystem="0" fundamental="0" tuningType="0"
+              lastNote="0.000" tuningSystem="0" fundamental="0" tuningType="0"
               semitonewidth="100.000" reffundamental="0" octave="4" tAdaptiveClusterThresh="0.000"
               tAdaptiveHistory="1.000" tAdaptiveIntervalScale="1" tAdaptiveAnchorScale="0"
               tAdaptiveAnchorFundamental="0" tCurrentAdaptiveFundamental="0"
