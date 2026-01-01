@@ -43,7 +43,6 @@ private:
     std::shared_ptr<PlainTextComponent> gain_knob_label;
     std::shared_ptr<PlainTextComponent> q_knob_label;
 
-
     juce::GroupComponent sectionBorder;
 };
 
