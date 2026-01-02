@@ -113,6 +113,13 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     globalSoundset_label->setFontType (PlainTextComponent::kTitle);
     globalSoundset_label->setJustification(juce::Justification::centred);
 
+    soundfontPreset_label = std::make_shared<PlainTextComponent>("soundfontpreset", "Soundfont Preset");
+    addOpenGlComponent(soundfontPreset_label);
+    soundfontPreset_label->setTextSize (12.0f);
+    soundfontPreset_label->setFontType (PlainTextComponent::kTitle);
+    soundfontPreset_label->setJustification(juce::Justification::centred);
+    soundfontPreset_label->setVisible(false);
+
     setSkinOverride(Skin::kHeader);
 }
 
@@ -181,10 +188,14 @@ void HeaderSection::resized() {
     sampleSelectText->setTextSize(label_text_height);
     globalSoundset_label->setBounds(headerLabelArea.removeFromLeft(100));
 
+    headerArea.removeFromLeft(large_padding * 2);
+    headerLabelArea.removeFromLeft(large_padding * 2);
+
     //soundfontPresetSelector->setBounds(pianoSelector->getRight() + 10, pianoSelector->getY(), pianoSelector->getWidth(), label_height);
     soundfontPresetSelector->setBounds(headerArea.removeFromLeft(100));
     soundfontPresetSelectText->setTextSize(label_text_height);
     soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
+    soundfontPreset_label->setBounds(headerLabelArea.removeFromLeft(100));
 
     //pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(), label_height);
     pianoSelector->setBounds(headerArea.removeFromRight(100));
@@ -247,6 +258,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             _parent->getSampleLoadManager()->loadSamples(_parent->getSampleLoadManager()->getAllSampleSets()[selection], _parent->getSynth()->getValueTree());
             sampleSelectText->setText(_parent->getSampleLoadManager()->getAllSampleSets()[selection]);
             resized();
+            notifyFresh();
         });
     } else if (clicked_button == pianoSelector.get()) {
         PopupItems options;
@@ -342,16 +354,18 @@ void HeaderSection::notifyFresh() {
     if (!gallery.isValid())
         return;
     // gallery.getProperty("soundset").upToFirstOccurrenceOf("||", false, false);
-    sampleSelectText->setText(    gallery.getProperty(IDs::soundset).toString().upToFirstOccurrenceOf("||", false, false));
+    sampleSelectText->setText(gallery.getProperty(IDs::soundset).toString().upToFirstOccurrenceOf("||", false, false));
     resized();
     auto sfzName = gallery.getProperty(IDs::soundset).toString();
     auto parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent->getSampleLoadManager()->sfzHasPresets(gallery.getProperty(IDs::soundset).toString())) {
         soundfontPresetSelector->setVisible(true);
         soundfontPresetSelectText->setVisible(true);
+        soundfontPreset_label->setVisible (true);
     } else {
         soundfontPresetSelector->setVisible(false);
         soundfontPresetSelectText->setVisible(false);
+        soundfontPreset_label->setVisible (false);
     }
     static juce::var nullVar;
     // auto val = gallery.getProperty(IDs::soundfont_preset);
