@@ -67,7 +67,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
      *        - would this be `tree.appendChild (posteq, nullptr)` and `tree.appendChild (postcompressor, nullptr)` ??
      *       also General Settings, saved with Gallery
      */
-    tree.setProperty (IDs::soundset, "Default", nullptr);
+    tree.setProperty (IDs::soundset, "Yamaha_Default", nullptr);
+    // tree.setProperty (IDs::soundset, "Default", nullptr);
     juce::ValueTree piano (IDs::PIANO);
     juce::ValueTree preparations (IDs::PREPARATIONS);
     juce::ValueTree connections (IDs::CONNECTIONS);
@@ -78,7 +79,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
     piano.setProperty (IDs::isActive, 1, nullptr);
-    piano.setProperty (IDs::name, "default", nullptr);
+    piano.setProperty (IDs::name, "New Piano", nullptr);
 
     tree.appendChild (piano, nullptr);
     tree.addListener (this);

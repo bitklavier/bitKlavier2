@@ -146,45 +146,44 @@ void HeaderSection::paintBackground(juce::Graphics &g) {
 void HeaderSection::resized() {
     static constexpr float kTextHeightRatio = 0.3f;
     static constexpr float kPaddingLeft = 0.25f;
+    int widget_margin = findValue(Skin::kWidgetMargin);
+    int large_padding = findValue(Skin::kLargePadding);
+    float label_text_height = findValue(Skin::kLabelHeight);
+    int logo_width = findValue(Skin::kModulationButtonWidth);
+    int label_height = findValue(Skin::kLabelBackgroundHeight);
     juce::Colour body_text = findColour(Skin::kBodyText, true);
-    sampleSelectText->setColor(body_text);
-    pianoSelectText->setColor(body_text);
-    soundfontPresetSelectText->setColor(body_text);
-    //  oscilloscope_->setColour(Skin::kBody, findColour(Skin::kBackground, true));
-    //  spectrogram_->setColour(Skin::kBody, findColour(Skin::kBackground, true));
     int height = getHeight();
     int width = getWidth();
 
     body_->setBounds(getLocalBounds());
     body_->setRounding(findValue(Skin::kBodyRounding));
-
-    //body_->setColor(findColour(Skin::kBody, true));
-    /*
-     * todo: color organization
-     */
     body_->setColor(juce::Colours::black);
-    int widget_margin = findValue(Skin::kWidgetMargin);
-    int large_padding = findValue(Skin::kLargePadding);
-
-    int logo_width = findValue(Skin::kModulationButtonWidth);
-    int label_height = findValue(Skin::kLabelBackgroundHeight);
     logo_section_->setBounds(0, -10, logo_width, height);
 
-    sampleSelector->setBounds(logo_width + widget_margin, logo_section_->getBottom() / 2, 100, label_height);
-    sampleSelectText->setBounds(sampleSelector->getBounds());
+    juce::Rectangle<int> headerArea = getLocalBounds();
+    headerArea.removeFromLeft(logo_width + large_padding);
 
-    pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(),
-                             label_height);
-    pianoSelectText->setBounds(pianoSelector->getBounds());
-    soundfontPresetSelector->setBounds(pianoSelector->getRight() + 10, pianoSelector->getY(), pianoSelector->getWidth(),
-                                       label_height);
-    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
-    float label_text_height = findValue(Skin::kLabelHeight);
+    sampleSelectText->setColor(body_text);
+    pianoSelectText->setColor(body_text);
+    soundfontPresetSelectText->setColor(body_text);
+
+    //sampleSelector->setBounds(logo_width + widget_margin, logo_section_->getBottom() / 2, 100, label_height);
+    sampleSelector->setBounds(headerArea.removeFromLeft(100));
+    sampleSelectText->setBounds(sampleSelector->getBounds());
     sampleSelectText->setTextSize(label_text_height);
-    pianoSelectText->setTextSize(label_text_height);
+
+    //soundfontPresetSelector->setBounds(pianoSelector->getRight() + 10, pianoSelector->getY(), pianoSelector->getWidth(), label_height);
+    soundfontPresetSelector->setBounds(headerArea.removeFromLeft(100));
     soundfontPresetSelectText->setTextSize(label_text_height);
-    addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() - label_height,
-                              sampleSelector->getWidth(), label_height);
+    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
+
+    //pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(), label_height);
+    pianoSelector->setBounds(headerArea.removeFromRight(100));
+    pianoSelectText->setBounds(pianoSelector->getBounds());
+    pianoSelectText->setTextSize(label_text_height);
+
+    //addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() - label_height, sampleSelector->getWidth(), label_height);
+    addPianoButton->setBounds(headerArea.removeFromRight(100));
 
     SynthSection::resized();
 }

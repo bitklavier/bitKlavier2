@@ -1277,7 +1277,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
             } else {
                 SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 parent->getSampleLoadManager()->loadSamples(
-                    parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
+                    parent->getSampleLoadManager()->getAllSampleSets()[selection - 1], curr_vt);
                 sampleSelectText->setText(
                     juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
                     upToFirstOccurrenceOf("||", false, false));

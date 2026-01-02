@@ -60,17 +60,16 @@ void SynthGuiInterface::setGuiSize (float scale) {}
     #include "PluginList.h"
 
 SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (synth)
-
 {
     gallery = synth_->getValueTree();
     auto sets = synth->sampleLoadManager->getAllSampleSets();
-    auto it = std::find(sets.begin(), sets.end(), "Default");
+    // auto it = std::find(sets.begin(), sets.end(), "Default");
+    auto it = std::find(sets.begin(), sets.end(), "Yamaha_Default");
     int defaultIndex = (it != sets.end())
         ? static_cast<int>(std::distance(sets.begin(), it))
         : -1;
     if (defaultIndex >= 0) {
         synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
-
     }
     if (use_gui) {
         SynthGuiData synth_data (synth_);
