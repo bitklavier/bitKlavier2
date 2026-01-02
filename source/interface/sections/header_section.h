@@ -284,11 +284,15 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
     std::unique_ptr<OpenGlTextButton> loadButton;
     std::unique_ptr<juce::FileChooser> filechooser;
      std::unique_ptr<OpenGlTextButton> addPianoButton;
+
+    std::shared_ptr<PlainTextComponent> globalSoundset_label;
+
     //juce::Image background_image_;
     //std::unique_ptr<SynthButton> click_me;
    // juce::TextButton inspectButton { "Inspect the UI" };
     //std::unique_ptr<melatonin::Inspector> inspector;
     //std::unique_ptr<OpenGlToggleButton> inspectButton;
+
     juce::ValueTree gallery;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HeaderSection)
 };

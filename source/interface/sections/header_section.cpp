@@ -106,7 +106,13 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
 
     sampleSelectText->setText("---");
     pianoSelectText->setText(getAllPianoNames().at(0));
-    // setAlwaysOnTop(true);
+
+    globalSoundset_label = std::make_shared<PlainTextComponent>("globalsamples", "Global Soundset");
+    addOpenGlComponent(globalSoundset_label);
+    globalSoundset_label->setTextSize (12.0f);
+    globalSoundset_label->setFontType (PlainTextComponent::kTitle);
+    globalSoundset_label->setJustification(juce::Justification::centred);
+
     setSkinOverride(Skin::kHeader);
 }
 
@@ -144,10 +150,9 @@ void HeaderSection::paintBackground(juce::Graphics &g) {
 }
 
 void HeaderSection::resized() {
-    static constexpr float kTextHeightRatio = 0.3f;
-    static constexpr float kPaddingLeft = 0.25f;
     int widget_margin = findValue(Skin::kWidgetMargin);
     int large_padding = findValue(Skin::kLargePadding);
+    int small_padding = findValue(Skin::kPadding);
     float label_text_height = findValue(Skin::kLabelHeight);
     int logo_width = findValue(Skin::kModulationButtonWidth);
     int label_height = findValue(Skin::kLabelBackgroundHeight);
@@ -158,10 +163,13 @@ void HeaderSection::resized() {
     body_->setBounds(getLocalBounds());
     body_->setRounding(findValue(Skin::kBodyRounding));
     body_->setColor(juce::Colours::black);
-    logo_section_->setBounds(0, -10, logo_width, height);
+    //logo_section_->setBounds(0, -10, logo_width, height);
+    logo_section_->setBounds(0, -10, logo_width, height + 10);
 
     juce::Rectangle<int> headerArea = getLocalBounds();
     headerArea.removeFromLeft(logo_width + large_padding);
+    juce::Rectangle<int> headerLabelArea = headerArea.removeFromTop(label_height + small_padding);
+    headerLabelArea.removeFromTop(small_padding);
 
     sampleSelectText->setColor(body_text);
     pianoSelectText->setColor(body_text);
@@ -171,6 +179,7 @@ void HeaderSection::resized() {
     sampleSelector->setBounds(headerArea.removeFromLeft(100));
     sampleSelectText->setBounds(sampleSelector->getBounds());
     sampleSelectText->setTextSize(label_text_height);
+    globalSoundset_label->setBounds(headerLabelArea.removeFromLeft(100));
 
     //soundfontPresetSelector->setBounds(pianoSelector->getRight() + 10, pianoSelector->getY(), pianoSelector->getWidth(), label_height);
     soundfontPresetSelector->setBounds(headerArea.removeFromLeft(100));
