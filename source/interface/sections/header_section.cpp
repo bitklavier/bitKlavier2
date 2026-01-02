@@ -120,6 +120,12 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     soundfontPreset_label->setJustification(juce::Justification::centred);
     soundfontPreset_label->setVisible(false);
 
+    currentPiano_label = std::make_shared<PlainTextComponent>("currentpiano", "Current Piano");
+    addOpenGlComponent(currentPiano_label);
+    currentPiano_label->setTextSize (12.0f);
+    currentPiano_label->setFontType (PlainTextComponent::kTitle);
+    currentPiano_label->setJustification(juce::Justification::centred);
+
     setSkinOverride(Skin::kHeader);
 }
 
@@ -198,9 +204,12 @@ void HeaderSection::resized() {
     soundfontPreset_label->setBounds(headerLabelArea.removeFromLeft(100));
 
     //pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(), label_height);
-    pianoSelector->setBounds(headerArea.removeFromRight(100));
+    headerArea.removeFromLeft(large_padding * 2);
+    headerLabelArea.removeFromLeft(large_padding * 2);
+    pianoSelector->setBounds(headerArea.removeFromLeft(100));
     pianoSelectText->setBounds(pianoSelector->getBounds());
     pianoSelectText->setTextSize(label_text_height);
+    currentPiano_label->setBounds(headerLabelArea.removeFromLeft(100));
 
     //addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() - label_height, sampleSelector->getWidth(), label_height);
     addPianoButton->setBounds(headerArea.removeFromRight(100));

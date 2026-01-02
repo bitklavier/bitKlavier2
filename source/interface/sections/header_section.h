@@ -287,6 +287,7 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
     std::shared_ptr<PlainTextComponent> globalSoundset_label;
     std::shared_ptr<PlainTextComponent> soundfontPreset_label;
+    std::shared_ptr<PlainTextComponent> currentPiano_label;
 
     //juce::Image background_image_;
     //std::unique_ptr<SynthButton> click_me;
