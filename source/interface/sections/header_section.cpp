@@ -276,12 +276,20 @@ void HeaderSection::addPiano()
 void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
 {
     if (! pianoToCopy.isValid() || ! pianoToCopy.hasType(IDs::PIANO))
-        return; // or handle error/alert
+        return;
 
-    // Deep copy of the whole subtree (properties + children)
+    // 0) Flush live processor state into the ValueTree so the copy keeps current parameter values
+    if (auto preps = pianoToCopy.getChildWithName(IDs::PREPARATIONS); preps.isValid())
+    {
+        // Triggers PreparationList::valueTreePropertyChanged() to write back proc states
+        preps.setProperty(IDs::sync, 1, nullptr);
+    }
+
+    // 1) Deep copy the whole subtree and remap IDs & connections for the duplicate
     juce::ValueTree newPiano = pianoToCopy.createCopy();
+    remapPianoUUIDsAndConnections(newPiano);
 
-    // Make the copy active and give it a unique name
+    // 2) Make the copy active and give it a unique name
     newPiano.setProperty(IDs::isActive, true, nullptr);
 
     if (newPiano.hasProperty(IDs::name))
@@ -295,22 +303,152 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
         newPiano.setProperty(IDs::name, candidate, nullptr);
     }
 
+    // 3) Deactivate current pianos and append the duplicate
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     interface->setPianoSwitchTriggerThreadMessage();
 
-    // Deactivate all current pianos
     for (auto vt : gallery)
         if (vt.hasType(IDs::PIANO))
             vt.setProperty(IDs::isActive, 0, nullptr);
 
-    // Append the deep copy as a new child
     gallery.appendChild(newPiano, nullptr);
 
+    // 4) UI updates
     pianoSelectText->setText(newPiano.getProperty(IDs::name));
     interface->allNotesOff();
     resized();
+
+    // Optional: ensure lines are built after components exist
+    // juce::MessageManager::callAsync([safeInterface = juce::Component::SafePointer<SynthGuiInterface>(interface)]{
+    //     if (safeInterface != nullptr)
+    //     {
+    //         // If you have explicit rebuild hooks, call them here
+    //         // safeInterface->getGui()->connection_list->rebuildAllGui();
+    //         // safeInterface->getGui()->modulation_manager->added();
+    //     }
+    // });
 }
 
+void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
+{
+    auto preps = piano.getChildWithName(IDs::PREPARATIONS);
+    if (! preps.isValid()) return;
+
+    // Maps: oldUuid -> newUuid, and oldNodeID -> newNodeID
+    std::map<juce::String, juce::String> uuidMap;
+    std::map<juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID> nodeIdMap;
+
+    // 1) Generate new UUIDs & NodeIDs for preparations, record mappings
+    for (int i = 0; i < preps.getNumChildren(); ++i)
+    {
+        auto prep = preps.getChild(i);
+        if (! prep.isValid()) continue;
+
+        auto oldUuid = prep.getProperty(IDs::uuid).toString();
+        if (oldUuid.isEmpty())
+            continue; // skip if no UUID
+
+        auto newUuid = juce::Uuid().toString();
+        uuidMap[oldUuid] = newUuid;
+        prep.setProperty(IDs::uuid, newUuid, nullptr);
+
+        // NodeIDs are derived from UUIDs; build map even if IDs::nodeID was missing previously
+        auto oldNodeId = juce::AudioProcessorGraph::NodeID(juce::Uuid(oldUuid).getTimeLow());
+        auto newNodeId = juce::AudioProcessorGraph::NodeID(juce::Uuid(newUuid).getTimeLow());
+        nodeIdMap[oldNodeId] = newNodeId;
+
+        // Ensure the prep carries the new NodeID
+        prep.setProperty(
+            IDs::nodeID,
+            juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(newNodeId),
+            nullptr);
+    }
+
+    if (uuidMap.empty()) return; // nothing to remap
+
+    // 2) Remap audio connections (IDs::CONNECTIONS) by NodeID
+    if (auto conns = piano.getChildWithName(IDs::CONNECTIONS); conns.isValid())
+    {
+        for (int i = 0; i < conns.getNumChildren(); ++i)
+        {
+            auto c = conns.getChild(i);
+            if (! c.isValid()) continue;
+
+            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
+            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+
+            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            // Leave IDs::srcIdx / IDs::destIdx unchanged (they’re channel indices)
+        }
+    }
+
+    // 3) Remap modulation-related connections (IDs::MODCONNECTIONS)
+    if (auto mconns = piano.getChildWithName(IDs::MODCONNECTIONS); mconns.isValid())
+    {
+        for (int i = 0; i < mconns.getNumChildren(); ++i)
+        {
+            auto c = mconns.getChild(i);
+            if (! c.isValid()) continue;
+
+            if (c.hasType(IDs::MODCONNECTION))
+            {
+                // These use UUID strings
+                if (c.getProperty(IDs::src).isString())
+                {
+                    auto s = c.getProperty(IDs::src).toString();
+                    if (auto it = uuidMap.find(s); it != uuidMap.end())
+                        c.setProperty(IDs::src, it->second, nullptr);
+                }
+                if (c.getProperty(IDs::dest).isString())
+                {
+                    auto d = c.getProperty(IDs::dest).toString();
+                    if (auto it = uuidMap.find(d); it != uuidMap.end())
+                        c.setProperty(IDs::dest, it->second, nullptr);
+                }
+            }
+            else if (c.hasType(IDs::TUNINGCONNECTION) || c.hasType(IDs::TEMPOCONNECTION)
+                  || c.hasType(IDs::SYNCHRONICCONNECTION) || c.hasType(IDs::RESETCONNECTION))
+            {
+                // These use NodeID vars
+                auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
+                auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+
+                if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                    c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                    c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            }
+            else
+            {
+                // Future-proof: try both styles
+                auto srcVar = c.getProperty(IDs::src);
+                auto dstVar = c.getProperty(IDs::dest);
+
+                if (srcVar.isString() && dstVar.isString())
+                {
+                    auto s = srcVar.toString();
+                    auto d = dstVar.toString();
+                    if (auto it = uuidMap.find(s); it != uuidMap.end())
+                        c.setProperty(IDs::src, it->second, nullptr);
+                    if (auto it = uuidMap.find(d); it != uuidMap.end())
+                        c.setProperty(IDs::dest, it->second, nullptr);
+                }
+                else
+                {
+                    auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(srcVar);
+                    auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(dstVar);
+                    if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                        c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                    if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                        c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                }
+            }
+        }
+    }
+}
 void HeaderSection::deletePiano()
 {
     // Count pianos and locate the active one (by child index in gallery)

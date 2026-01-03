@@ -240,6 +240,7 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
     void addPiano();
     void duplicatePiano (const juce::ValueTree pianoToCopy);
+    static void remapPianoUUIDsAndConnections (juce::ValueTree& piano);
     void deletePiano();
 
     void setTemporaryTab(juce::String name);
