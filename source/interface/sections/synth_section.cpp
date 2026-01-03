@@ -1132,6 +1132,36 @@ void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,const juce::
     }
 }
 
+void SynthSection::showTextInputBox(const juce::String& title,
+                         const juce::String& message,
+                         const juce::String& defaultValue, // Add this parameter
+                         std::function<void(juce::String)> callback)
+{
+    auto alert = std::make_unique<juce::AlertWindow>(title, message, juce::MessageBoxIconType::NoIcon);
+
+    // The second argument is 'initialContents'
+    alert->addTextEditor("inputField", defaultValue, "Name:");
+
+    // Force select all text so the user can just start typing to replace it
+    if (auto* ed = alert->getTextEditor("inputField"))
+    {
+        ed->selectAll();
+    }
+
+    alert->addButton("OK", 1, juce::KeyPress(juce::KeyPress::returnKey));
+    alert->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
+
+    auto* alertPtr = alert.get();
+    alertPtr->enterModalState(true, juce::ModalCallbackFunction::create([alert = std::move(alert), callback](int result)
+    {
+        if (result == 1)
+        {
+            if (auto* textField = alert->getTextEditor("inputField"))
+                callback(textField->getText());
+        }
+    }));
+}
+
 /**
  * Find all occurrences of a particular type in the entire ValueTree
  * @param tree

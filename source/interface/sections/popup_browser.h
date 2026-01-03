@@ -70,7 +70,6 @@ public:
     void reset() override;
     void moved() override;
     void paintBackground(juce::Graphics& g) override {}
-
     void paintBackgroundShadow(juce::Graphics& g) override {}
     void repaintPrepBackground();
 
@@ -183,6 +182,7 @@ public:
     void showSelected(bool show) { show_selected_ = show; }
     void select(int select);
     int Ypos;
+
 private:
     int getViewPosition() {
         int view_height = getHeight();

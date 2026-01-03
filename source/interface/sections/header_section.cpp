@@ -147,6 +147,15 @@ std::vector<std::string> HeaderSection::getAllPianoNames() {
     return names;
 }
 
+void HeaderSection::renamePiano(juce::String newname)
+{
+    for (auto vt: gallery) {
+        if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::isActive)) {
+            vt.setProperty(IDs::name, newname, nullptr);
+        }
+    }
+}
+
 void HeaderSection::paintBackground(juce::Graphics &g) {
     paintContainer(g);
     paintChildrenBackgrounds(g);
@@ -182,7 +191,7 @@ void HeaderSection::resized() {
     juce::Rectangle<int> headerArea = getLocalBounds();
     headerArea.removeFromLeft(logo_width + large_padding);
     juce::Rectangle<int> headerLabelArea = headerArea.removeFromTop(label_height + small_padding);
-    headerLabelArea.removeFromTop(small_padding);
+    headerLabelArea.removeFromTop(small_padding * 2);
 
     sampleSelectText->setColor(body_text);
     pianoSelectText->setColor(body_text);
@@ -190,8 +199,8 @@ void HeaderSection::resized() {
 
     //sampleSelector->setBounds(logo_width + widget_margin, logo_section_->getBottom() / 2, 100, label_height);
     sampleSelector->setBounds(headerArea.removeFromLeft(100));
-    sampleSelectText->setBounds(sampleSelector->getBounds());
     sampleSelectText->setTextSize(label_text_height);
+    sampleSelectText->setBounds(sampleSelector->getBounds());
     globalSoundset_label->setBounds(headerLabelArea.removeFromLeft(100));
 
     headerArea.removeFromLeft(large_padding * 2);
@@ -206,6 +215,7 @@ void HeaderSection::resized() {
     //pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(), label_height);
     headerArea.removeFromLeft(large_padding * 2);
     headerLabelArea.removeFromLeft(large_padding * 2);
+
     pianoSelector->setBounds(headerArea.removeFromLeft(100));
     pianoSelectText->setBounds(pianoSelector->getBounds());
     pianoSelectText->setTextSize(label_text_height);
@@ -222,33 +232,39 @@ void HeaderSection::reset() {
     //    //synth_preset_selector_->resetText();
 }
 
+void HeaderSection::addPiano()
+{
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    // interface->addPiano(
+    // create new piano with active parameter true or 1
+    juce::ValueTree piano{IDs::PIANO};
+    piano.setProperty(IDs::isActive, true, nullptr);
+    juce::String pianoName = "piano " + juce::String(howManyOfThisPrepTypeInVT(gallery, IDs::PIANO) + 1);
+    piano.setProperty(IDs::name, pianoName, nullptr);
+    juce::ValueTree preparations(IDs::PREPARATIONS);
+    juce::ValueTree connections(IDs::CONNECTIONS);
+    juce::ValueTree modconnections(IDs::MODCONNECTIONS);
+
+    piano.appendChild(preparations, nullptr);
+    piano.appendChild(connections, nullptr);
+    piano.appendChild(modconnections, nullptr);
+    interface->setPianoSwitchTriggerThreadMessage();
+    //set all current pianos to be inactive or isActive parameter 0
+    for (auto vt: gallery) {
+        if (vt.hasType(IDs::PIANO)) {
+            vt.setProperty(IDs::isActive, 0, nullptr);
+        }
+    }
+    gallery.appendChild(piano, nullptr);
+    pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
+    interface->allNotesOff();
+    resized();
+}
+
 void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == exit_temporary_button_.get()) {
     } else if (clicked_button == addPianoButton.get()) {
-        auto interface = findParentComponentOfClass<SynthGuiInterface>();
-        // interface->addPiano(
-        // create new piano with active parameter true or 1
-        juce::ValueTree piano{IDs::PIANO};
-        piano.setProperty(IDs::isActive, true, nullptr);
-        piano.setProperty(IDs::name, "new piano", nullptr);
-        juce::ValueTree preparations(IDs::PREPARATIONS);
-        juce::ValueTree connections(IDs::CONNECTIONS);
-        juce::ValueTree modconnections(IDs::MODCONNECTIONS);
-
-        piano.appendChild(preparations, nullptr);
-        piano.appendChild(connections, nullptr);
-        piano.appendChild(modconnections, nullptr);
-        interface->setPianoSwitchTriggerThreadMessage();
-        //set all current pianos to be inactive or isActive parameter 0
-        for (auto vt: gallery) {
-            if (vt.hasType(IDs::PIANO)) {
-                vt.setProperty(IDs::isActive, 0, nullptr);
-            }
-        }
-        gallery.appendChild(piano, nullptr);
-        pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
-        interface->allNotesOff();
-        resized();
+        addPiano();
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -272,29 +288,76 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else if (clicked_button == pianoSelector.get()) {
         PopupItems options;
         auto names = getAllPianoNames();
+        int itemCounter = 0;
+        options.addItem(itemCounter++, "Add");
+        options.addItem(itemCounter++, "Rename");
+        options.addItem(itemCounter++, "Duplicate");
+        options.addItem(itemCounter++, "Delete");
+        options.addItem(itemCounter++, "-----------");
+
         for (int i = 0; i < names.size(); i++) {
-            options.addItem(i, names[i]);
+            options.addItem(itemCounter + i, names[i]);
         }
 
         juce::Point<int> position(pianoSelector->getX(), pianoSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            pianoSelectText->setText(names[selection]);
+            if (selection >= itemCounter)
+            {
+                pianoSelectText->setText(names[selection - itemCounter]);
+                auto interface = findParentComponentOfClass<SynthGuiInterface>();
+                interface->setPianoSwitchTriggerThreadMessage();
+                interface->allNotesOff();
+                for (auto vt: gallery) {
+                    if (vt.hasType(IDs::PIANO)) {
+                        vt.setProperty(IDs::isActive, 0, nullptr);
+                    }
+                }
+                for (auto vt: gallery) {
+                    if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::name) == pianoSelectText->getText()) {
+                        vt.setProperty(IDs::isActive, 1, nullptr);
+                        break;
+                    }
+                }
+                resized();
+            }
+            else
+            {
+                // get name of current piano
+                juce::String currentName;
+                for (auto vt: gallery) {
+                    if (vt.hasType(IDs::PIANO) && vt.getProperty (IDs::isActive).equals(1)) {
+                        currentName = vt.getProperty(IDs::name).toString();
+                    }
+                }
 
-            auto interface = findParentComponentOfClass<SynthGuiInterface>();
-            interface->setPianoSwitchTriggerThreadMessage();
-            interface->allNotesOff();
-            for (auto vt: gallery) {
-                if (vt.hasType(IDs::PIANO)) {
-                    vt.setProperty(IDs::isActive, 0, nullptr);
+                switch (selection)
+                {
+                    case 0:
+                        DBG("add piano");
+                        addPiano();
+                        break;
+                    case 1:
+                        DBG("rename piano");
+                        showTextInputBox("Piano Name", "", currentName, [this](juce::String userInput) {
+                            if (userInput.isNotEmpty()) {
+                                DBG("User entered: " + userInput);
+                                this->renamePiano(userInput);
+                                this->pianoSelectText->setText(userInput);
+                            }
+                        });
+                        break;
+                    case 2:
+                        DBG("duplicate piano");
+                        break;
+                    case 3:
+                        DBG("delete piano");
+                        break;
+                    default:
+                        DBG("no action");
                 }
             }
-            for (auto vt: gallery) {
-                if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::name) == pianoSelectText->getText()) {
-                    vt.setProperty(IDs::isActive, 1, nullptr);
-                    break;
-                }
-            }
-            resized();
+
+
         });
     } else if (clicked_button == soundfontPresetSelector.get()) {
         const juce::String sfzName = gallery.getProperty("soundset").toString();

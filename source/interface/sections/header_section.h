@@ -239,6 +239,8 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
     void buttonClicked(juce::Button* clicked_button) override;
     void sliderValueChanged(juce::Slider* slider) override;
 
+    void addPiano();
+
     void setTemporaryTab(juce::String name);
 
 //    void showAboutSection() override {
@@ -261,7 +263,9 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
   private:
     const juce::ValueTree& getActivePiano();
     std::vector<std::string> getAllPianoNames();
+    void renamePiano(juce::String newname);
     std::vector<Listener*> listeners_;
+
 
     int tab_offset_;
     std::unique_ptr<PlainTextComponent> temporary_tab_;

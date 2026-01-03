@@ -140,6 +140,10 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
                           juce::BubbleComponent::BubblePlacement placement, bool primary);
     void hidePopupDisplay(bool primary);
 
+    void showTextInputBox(const juce::String& title,
+                          const juce::String& message,
+                          const juce::String& defaultValue, // Add this parameter
+                          std::function<void(juce::String)> callback);
     virtual void loadFile(const juce::File& file) { }
     virtual juce::File getCurrentFile() { return juce::File(); }
     virtual std::string getFileName() { return ""; }
