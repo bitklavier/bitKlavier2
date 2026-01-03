@@ -16,7 +16,6 @@
 
 #pragma once
 
-
 #include "synth_section.h"
 #include "open_gl_background.h"
 
@@ -241,6 +240,7 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
     void addPiano();
     void duplicatePiano (const juce::ValueTree pianoToCopy);
+    void deletePiano();
 
     void setTemporaryTab(juce::String name);
 

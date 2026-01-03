@@ -15,10 +15,8 @@
  */
 
 #include "popup_browser.h"
-
 #include "skin.h"
 #include "fonts.h"
-
 #include "paths.h"
 #include "open_gl_component.h"
 #include "synth_section.h"

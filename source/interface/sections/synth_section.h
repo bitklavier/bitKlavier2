@@ -25,15 +25,11 @@
 #include "synth_button.h"
 #include "look_and_feel/fonts.h"
 #include "paths.h"
-//#include "open_gl_image_component.h"
-//#include "open_gl_multi_quad.h"
 #include "look_and_feel/shaders.h"
-
 #include <functional>
 #include <map>
 #include <set>
 #include "StateModulatedComponent.h"
-//#include "OpenGL_LabeledBorder.h"
 
 class OpenGL_LabeledBorder;
 class OpenGLComboBox;
@@ -44,26 +40,28 @@ class SynthSlider;
 class OpenGlBackground;
 
 struct PopupItems {
-  int id;
-  std::string name;
-  bool selected;
-  std::vector<PopupItems> items;
+    int id;
+    std::string name;
+    bool selected;
+    bool enabled = true;
+    std::vector<PopupItems> items;
 
-  PopupItems() : id(0), selected(false) { }
-  PopupItems(std::string name) : id(0), name(std::move(name)), selected(false) { }
+    PopupItems() : id(0), selected(false), enabled(true) { }
+    PopupItems(std::string name, bool enabled = true)
+        : id(0), name(std::move(name)), selected(false), enabled(enabled) { }
 
-  PopupItems(int id, std::string name, bool selected, std::vector<PopupItems> items) {
-    this->id = id;
-    this->selected = selected;
-    this->name = std::move(name);
-    this->items = std::move(items);
-  }
+    PopupItems(int id, std::string name, bool selected, std::vector<PopupItems> items) {
+        this->id = id;
+        this->selected = selected;
+        this->name = std::move(name);
+        this->items = std::move(items);
+    }
 
-  void addItem(int sub_id, const std::string& sub_name, bool sub_selected = false) {
-    items.emplace_back(sub_id, sub_name, sub_selected, std::vector<PopupItems>());
-  }
-  void addItem(const PopupItems& item) { items.push_back(item); }
-  int size() const { return static_cast<int>(items.size()); }
+    void addItem(int sub_id, const std::string& sub_name, bool sub_selected = false) {
+        items.emplace_back(sub_id, sub_name, sub_selected, std::vector<PopupItems>());
+    }
+    void addItem(const PopupItems& item) { items.push_back(item); }
+    int size() const { return static_cast<int>(items.size()); }
 };
 
 class SynthSection : public juce::Component, public juce::Slider::Listener,

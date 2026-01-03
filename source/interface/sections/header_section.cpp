@@ -311,6 +311,79 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
     resized();
 }
 
+void HeaderSection::deletePiano()
+{
+    // Count pianos and locate the active one (by child index in gallery)
+    int numPianos = 0;
+    int activeChildIdx = -1;
+
+    const int numChildren = gallery.getNumChildren();
+    for (int i = 0; i < numChildren; ++i)
+    {
+        auto child = gallery.getChild(i);
+        if (! child.hasType(IDs::PIANO))
+            continue;
+
+        ++numPianos;
+        if ((bool) child.getProperty(IDs::isActive))
+            activeChildIdx = i;
+    }
+
+    // Need at least 2 pianos to delete one, and we require a valid active piano
+    if (numPianos <= 1 || activeChildIdx < 0)
+        return;
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (interface != nullptr)
+        interface->setPianoSwitchTriggerThreadMessage();
+
+    // Choose which piano to activate after deletion: prefer next, otherwise previous
+    int targetChildIdx = -1;
+    for (int i = activeChildIdx + 1; i < numChildren; ++i)
+    {
+        auto c = gallery.getChild(i);
+        if (c.hasType(IDs::PIANO)) { targetChildIdx = i; break; }
+    }
+    if (targetChildIdx < 0)
+    {
+        for (int i = activeChildIdx - 1; i >= 0; --i)
+        {
+            auto c = gallery.getChild(i);
+            if (c.hasType(IDs::PIANO)) { targetChildIdx = i; break; }
+        }
+    }
+
+    // If we couldn't find another piano (shouldn’t happen because numPianos > 1), bail safely
+    if (targetChildIdx < 0)
+        return;
+
+    // Capture the node to activate BEFORE removal (indices are valid now)
+    juce::ValueTree pianoToActivate = gallery.getChild(targetChildIdx);
+
+    // Remove the active piano
+    gallery.removeChild(activeChildIdx, nullptr);
+
+    // Deactivate all pianos, then activate the target
+    for (int i = 0; i < gallery.getNumChildren(); ++i)
+    {
+        auto c = gallery.getChild(i);
+        if (! c.hasType(IDs::PIANO))
+            continue;
+
+        const bool setActive = (c == pianoToActivate);
+        c.setProperty(IDs::isActive, setActive ? 1 : 0, nullptr);
+    }
+
+    // Update UI text to reflect the new active piano
+    if (pianoToActivate.isValid())
+        pianoSelectText->setText(pianoToActivate.getProperty(IDs::name).toString());
+
+    if (interface != nullptr)
+        interface->allNotesOff();
+
+    resized();
+}
+
 void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == exit_temporary_button_.get()) {
     } else if (clicked_button == addPianoButton.get()) {
@@ -339,11 +412,16 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         PopupItems options;
         auto names = getAllPianoNames();
         int itemCounter = 0;
+
+        PopupItems disabledItem ("separator");
+        disabledItem.enabled = false; // This makes it non-selectable
+        disabledItem.id = -1; // will be a separator line
+
         options.addItem(itemCounter++, "Add");
         options.addItem(itemCounter++, "Rename");
         options.addItem(itemCounter++, "Duplicate");
         options.addItem(itemCounter++, "Delete");
-        options.addItem(itemCounter++, "-----------");
+        options.addItem(disabledItem); // create separator line
 
         for (int i = 0; i < names.size(); i++) {
             options.addItem(itemCounter + i, names[i]);
@@ -402,6 +480,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                         break;
                     case 3:
                         DBG("delete piano");
+                        deletePiano();
                         break;
                     default:
                         DBG("no action");
