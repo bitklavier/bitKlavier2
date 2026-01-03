@@ -222,7 +222,7 @@ void HeaderSection::resized() {
     currentPiano_label->setBounds(headerLabelArea.removeFromLeft(100));
 
     //addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() - label_height, sampleSelector->getWidth(), label_height);
-    addPianoButton->setBounds(headerArea.removeFromRight(100));
+    //addPianoButton->setBounds(headerArea.removeFromRight(100));
 
     SynthSection::resized();
 }

@@ -1138,20 +1138,12 @@ void SynthSection::showTextInputBox(const juce::String& title,
                          std::function<void(juce::String)> callback)
 {
     auto alert = std::make_unique<juce::AlertWindow>(title, message, juce::MessageBoxIconType::NoIcon);
-
-    // The second argument is 'initialContents'
     alert->addTextEditor("inputField", defaultValue, "Name:");
-
-    // Force select all text so the user can just start typing to replace it
-    if (auto* ed = alert->getTextEditor("inputField"))
-    {
-        ed->selectAll();
-    }
-
     alert->addButton("OK", 1, juce::KeyPress(juce::KeyPress::returnKey));
     alert->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
 
     auto* alertPtr = alert.get();
+
     alertPtr->enterModalState(true, juce::ModalCallbackFunction::create([alert = std::move(alert), callback](int result)
     {
         if (result == 1)
@@ -1160,6 +1152,21 @@ void SynthSection::showTextInputBox(const juce::String& title,
                 callback(textField->getText());
         }
     }));
+
+    // This gives JUCE one 'frame' to put the window on the desktop.
+    // By the time this runs, isShowing() will be true.
+    juce::Timer::callAfterDelay(50, [alertPtr]()
+    {
+        // Safety check: make sure the user didn't close it in 50ms!
+        if (Component::getCurrentlyModalComponent() == alertPtr)
+        {
+            if (auto* ed = alertPtr->getTextEditor("inputField"))
+            {
+                ed->grabKeyboardFocus();
+                ed->selectAll();
+            }
+        }
+    });
 }
 
 /**
