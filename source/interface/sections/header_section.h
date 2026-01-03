@@ -240,6 +240,7 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
     void sliderValueChanged(juce::Slider* slider) override;
 
     void addPiano();
+    void duplicatePiano (const juce::ValueTree pianoToCopy);
 
     void setTemporaryTab(juce::String name);
 
@@ -262,6 +263,7 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
   private:
     const juce::ValueTree& getActivePiano();
+    juce::ValueTree getActivePianoCopy();
     std::vector<std::string> getAllPianoNames();
     void renamePiano(juce::String newname);
     std::vector<Listener*> listeners_;

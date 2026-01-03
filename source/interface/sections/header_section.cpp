@@ -129,7 +129,8 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     setSkinOverride(Skin::kHeader);
 }
 
-const juce::ValueTree &HeaderSection::getActivePiano() {
+const juce::ValueTree &HeaderSection::getActivePiano()
+{
     for (const auto &vt: gallery) {
         if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::isActive)) {
             return vt;
@@ -137,7 +138,17 @@ const juce::ValueTree &HeaderSection::getActivePiano() {
     }
 }
 
-std::vector<std::string> HeaderSection::getAllPianoNames() {
+juce::ValueTree HeaderSection::getActivePianoCopy()
+{
+    for (auto vt : gallery) {
+        if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::isActive))
+            return vt; // returned by value (safe)
+    }
+    return {}; // invalid ValueTree if none active
+}
+
+std::vector<std::string> HeaderSection::getAllPianoNames()
+{
     std::vector<std::string> names;
     for (const auto &vt: gallery) {
         if (vt.hasType(IDs::PIANO)) {
@@ -234,9 +245,6 @@ void HeaderSection::reset() {
 
 void HeaderSection::addPiano()
 {
-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    // interface->addPiano(
-    // create new piano with active parameter true or 1
     juce::ValueTree piano{IDs::PIANO};
     piano.setProperty(IDs::isActive, true, nullptr);
     juce::String pianoName = "piano " + juce::String(howManyOfThisPrepTypeInVT(gallery, IDs::PIANO) + 1);
@@ -248,7 +256,10 @@ void HeaderSection::addPiano()
     piano.appendChild(preparations, nullptr);
     piano.appendChild(connections, nullptr);
     piano.appendChild(modconnections, nullptr);
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
     interface->setPianoSwitchTriggerThreadMessage();
+
     //set all current pianos to be inactive or isActive parameter 0
     for (auto vt: gallery) {
         if (vt.hasType(IDs::PIANO)) {
@@ -256,7 +267,46 @@ void HeaderSection::addPiano()
         }
     }
     gallery.appendChild(piano, nullptr);
+
     pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
+    interface->allNotesOff();
+    resized();
+}
+
+void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
+{
+    if (! pianoToCopy.isValid() || ! pianoToCopy.hasType(IDs::PIANO))
+        return; // or handle error/alert
+
+    // Deep copy of the whole subtree (properties + children)
+    juce::ValueTree newPiano = pianoToCopy.createCopy();
+
+    // Make the copy active and give it a unique name
+    newPiano.setProperty(IDs::isActive, true, nullptr);
+
+    if (newPiano.hasProperty(IDs::name))
+    {
+        juce::String baseName = pianoToCopy.getProperty(IDs::name).toString();
+        juce::String candidate = baseName;
+        int suffix = 2;
+        auto names = getAllPianoNames();
+        while (std::find(names.begin(), names.end(), candidate.toStdString()) != names.end())
+            candidate = baseName + " (" + juce::String(suffix++) + ")";
+        newPiano.setProperty(IDs::name, candidate, nullptr);
+    }
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->setPianoSwitchTriggerThreadMessage();
+
+    // Deactivate all current pianos
+    for (auto vt : gallery)
+        if (vt.hasType(IDs::PIANO))
+            vt.setProperty(IDs::isActive, 0, nullptr);
+
+    // Append the deep copy as a new child
+    gallery.appendChild(newPiano, nullptr);
+
+    pianoSelectText->setText(newPiano.getProperty(IDs::name));
     interface->allNotesOff();
     resized();
 }
@@ -348,6 +398,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                         break;
                     case 2:
                         DBG("duplicate piano");
+                        duplicatePiano(getActivePianoCopy());
                         break;
                     case 3:
                         DBG("delete piano");

@@ -1155,6 +1155,7 @@ void SynthSection::showTextInputBox(const juce::String& title,
 
     // This gives JUCE one 'frame' to put the window on the desktop.
     // By the time this runs, isShowing() will be true.
+    // now we can grab keyboard focus and select all so the user can immediately begin typing
     juce::Timer::callAfterDelay(50, [alertPtr]()
     {
         // Safety check: make sure the user didn't close it in 50ms!
