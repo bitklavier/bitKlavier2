@@ -54,6 +54,7 @@ void LogoSection::paintBackground(juce::Graphics &g) {
 }
 
 void LogoSection::buttonClicked(juce::Button *clicked_button) {
+    DBG("LogoSection::buttonClicked");
     for (Listener *listener: listeners_)
         listener->showAboutSection();
 }
