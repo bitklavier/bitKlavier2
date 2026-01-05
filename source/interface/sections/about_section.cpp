@@ -67,7 +67,8 @@ void AboutSection::resized() {
     juce::Rectangle<int> info_rect = getInfoRect();
     body_->setBounds(info_rect);
     body_->setRounding(findValue(Skin::kBodyRounding));
-    body_->setColor(findColour(Skin::kBackground, true));
+    // body_->setColor(findColour(Skin::kBackground, true));
+    body_->setColor(juce::Colours::black);
 
     int large_padding = findValue(Skin::kLargePadding);
     int small_padding = findValue(Skin::kPadding);
