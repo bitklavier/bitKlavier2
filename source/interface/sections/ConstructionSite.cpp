@@ -5,16 +5,15 @@
 
 #include "ConstructionSite.h"
 #include "Preparations.h"
-#include "SampleLoadManager.h"
+
 #include "sound_engine.h"
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
 #include "tracktion_ValueTreeUtilities.h"
-// width, height — indexed by (selection - 1)
-static constexpr std::array<
-    std::pair<float, float>,
-    static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST) - 1
-> prepSizes = {{
+
+static constexpr std::array<std::pair<float, float>,
+    static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST) - 1> prepSizes =
+{{
     /* 3 Keymap      */ { 185.0f, 105.0f },
     /* 1 Direct      */ { 245.0f, 125.0f },
     /* 5 Synchronic  */ { 260.0f, 132.0f },

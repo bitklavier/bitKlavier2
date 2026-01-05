@@ -285,9 +285,12 @@ void KeymapParameterView::resized() {
  * called for drawing the velocity curve
  */
 void KeymapParameterView::timerCallback(void) {
-    //
     velocityMinMaxSlider->setDisplayValue(params.velocityMinMax.lastVelocityParam);
     velocityMinMaxSlider->redoImage();
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (interface != NULL)
+        interface->getGui()->prep_popup->repaintPrepBackground();
 }
 
 void KeymapParameterView::drawVelocityCurve(juce::Graphics &g) {
