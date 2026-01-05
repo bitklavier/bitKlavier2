@@ -196,17 +196,21 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets()
 
         for (auto &d: dirs)
             sampleSets.push_back(d.getFileName().toStdString());
-
-        // 2. .sf2 and .sfz files
-        // juce::Array<juce::File> sfFiles = baseDir.findChildFiles(
-        //     juce::File::findFiles,
-        //     false,
-        //     "*.sf2;*.sfz" // JUCE supports ";"-separated patterns
-        // );
-        //
-        // for (auto &f: sfFiles)
-        //     sampleSets.push_back(f.getFileName().toStdString());
     }
+
+    // alphabetically sort sample sets, ignoring case
+    std::sort(sampleSets.begin(), sampleSets.end(), [](const std::string& a, const std::string& b) {
+        return std::lexicographical_compare(
+            a.begin(), a.end(),
+            b.begin(), b.end(),
+            [](unsigned char char1, unsigned char char2) {
+                return std::tolower(char1) < std::tolower(char2);
+            }
+        );
+    });
+
+    sampleSets.push_back("menuSeparator"); // to display separator between bK samplesets and soundfonts
+    size_t pivot_index = sampleSets.size(); // for sorting soundfonts
 
     samplePath = preferences->userPreferences->tree.getProperty("default_soundfonts_path");
     juce::File baseSFDir(samplePath);
@@ -223,6 +227,17 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets()
         for (auto &f: sfFiles)
             sampleSets.push_back(f.getFileName().toStdString());
     }
+
+    // alphabetically sort soundfonts, ignoring case
+    std::sort(sampleSets.begin() + pivot_index, sampleSets.end(), [](const std::string& a, const std::string& b) {
+        return std::lexicographical_compare(
+            a.begin(), a.end(),
+            b.begin(), b.end(),
+            [](unsigned char char1, unsigned char char2) {
+                return std::tolower(char1) < std::tolower(char2);
+            }
+        );
+    });
 
     return sampleSets;
 }
@@ -349,7 +364,6 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
     juce::File directory(samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false,
                                                                   "*.wav");
-
 
     // sort alphabetically
     MyComparator sorter;

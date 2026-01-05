@@ -509,6 +509,27 @@ PopupItems SynthGuiInterface::getVSTPopupItems()
     return popup;
 }
 
+const std::vector<std::string> SynthGuiInterface::getAllGalleries()
+{
+    std::vector<std::string> galleriesList;
+
+    auto galleriesPath = synth_->user_prefs->userPreferences->tree.getProperty ("default_galleries_path");
+    juce::File baseDir(galleriesPath);
+
+    if (baseDir.isDirectory()) {
+        // 1. Directories
+        juce::Array<juce::File> dirs = baseDir.findChildFiles(
+            juce::File::findDirectories,
+            false
+        );
+
+        for (auto &d: dirs)
+            galleriesList.push_back(d.getFileName().toStdString());
+    }
+
+    return galleriesList;
+}
+
 std::unique_ptr<SynthSection> SynthGuiInterface::getCompressorPopup() {
     auto proc = synth_->getEngine()->getCompressorProcessor();
     return std::make_unique<CompressorParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper());

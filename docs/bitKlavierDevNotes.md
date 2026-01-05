@@ -1,5 +1,7 @@
 # Notes about how to do stuff in the bK codebase
 ---------
+## Gui Layout Notes
+- FlexBox is nice. see `void HeaderSection::resized()`
 ## Value Tree Notes
 - comment/uncomment this line `valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);` in FullInterface.cpp to make the VT debugger window visible when needed
 

@@ -15,8 +15,6 @@
  */
 
 #include "header_section.h"
-
-#include "fonts.h"
 #include <memory>
 #include "text_look_and_feel.h"
 #include "load_save.h"
@@ -127,7 +125,7 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
 
     VSTSelectText = std::make_shared<PlainTextComponent>("VST", "add");
     addOpenGlComponent(VSTSelectText);
-    VSTSelector = std::make_unique<juce::ShapeButton>("vSTSelector", juce::Colour(0xff666666),
+    VSTSelector = std::make_unique<juce::ShapeButton>("VSTSelector", juce::Colour(0xff666666),
                                                         juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
     addAndMakeVisible(VSTSelector.get());
     VSTSelector->addListener(this);
@@ -228,20 +226,16 @@ void HeaderSection::paintBackground(juce::Graphics &g) {
 }
 
 void HeaderSection::resized() {
-    int widget_margin = findValue(Skin::kWidgetMargin);
     int large_padding = findValue(Skin::kLargePadding);
     int small_padding = findValue(Skin::kPadding);
     float label_text_height = findValue(Skin::kLabelHeight);
     int logo_width = findValue(Skin::kModulationButtonWidth);
     int label_height = findValue(Skin::kLabelBackgroundHeight);
-    juce::Colour body_text = findColour(Skin::kBodyText, true);
     int height = getHeight();
-    int width = getWidth();
 
     body_->setBounds(getLocalBounds());
     body_->setRounding(findValue(Skin::kBodyRounding));
     body_->setColor(juce::Colours::black);
-    //logo_section_->setBounds(0, -10, logo_width, height);
     logo_section_->setBounds(0, -10, logo_width, height + 10);
 
     juce::Rectangle<int> headerArea2 = getLocalBounds();
@@ -268,7 +262,7 @@ void HeaderSection::resized() {
     fbl.alignContent = juce::FlexBox::AlignContent::stretch;
     fbl.alignItems = juce::FlexBox::AlignItems::stretch;
 
-    // Adding items (A loop is much cleaner here!)
+    // doing this one with a loop, for fun...
     juce::Component* labels[] = {
         galleries_label.get(), currentPiano_label.get(), preparationSelect_label.get(),
         VSTSelect_label.get(), globalSoundset_label.get(), soundfontPreset_label.get()
@@ -534,14 +528,22 @@ void HeaderSection::deletePiano()
 
 void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == exit_temporary_button_.get()) {
-    } else if (clicked_button == addPianoButton.get()) {
-        addPiano();
+    // } else if (clicked_button == addPianoButton.get()) {
+    //     addPiano(); // currently not used here
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
+
+        PopupItems separator ("separator");
+        separator.enabled = false; // This makes it non-selectable
+        separator.id = -1; // will be a separator line
+
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         auto string_names = parent->getSampleLoadManager()->getAllSampleSets();
         for (int i = 0; i < string_names.size(); i++) {
-            options.addItem(i, string_names[i]);
+            if (string_names[i] == "menuSeparator")
+                options.addItem(separator);
+            else
+                options.addItem(i, string_names[i]);
         }
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
 
@@ -654,8 +656,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         for (int i = 0; i < presetNames.size(); ++i)
             options.addItem(i, presetNames.getReference(i).toStdString());
 
-        juce::Point<int> position(soundfontPresetSelector->getX(),
-                                  soundfontPresetSelector->getBottom());
+        //juce::Point<int> position(soundfontPresetSelector->getX(), soundfontPresetSelector->getBottom());
+        // for some reason, the placement of this right-most popup isn't working as expected; this kludge gets it in the right place
+        juce::Point<int> position(getLocalBounds().getRight() + 100, soundfontPresetSelector->getBottom());
 
         showPopupSelector(this, position, options,
                           [this, presetNames, sfzName](int selection, int) {
@@ -676,30 +679,122 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                               parent->getSampleLoadManager()->changeSFZPresetAndUpdateTree(sfzName, selection,gallery);
                           });
     } else if (clicked_button == gallerySelector.get()) {
+        // Build hierarchical popup of galleries under default_galleries_path
         PopupItems options;
 
+        // Top commands
+        PopupItems separator ("separator");
+        separator.enabled = false; // non-selectable separator line
+        separator.id = -1;
         options.addItem(0, "Load");
-        options.addItem(1, "Save");
+        options.addItem(1, "Save (not implemented yet)");
         options.addItem(2, "Save As");
+        options.addItem(separator);
+
+        // Build directories/files tree
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+
+        // Use a high base to avoid clashing with command IDs above
+        const int kGalleryIdBase = 1000;
+        // Mapping from menu id -> file
+        auto idToFile = std::make_shared<std::map<int, juce::File>>();
+        int nextId = kGalleryIdBase;
+
+        // Note: SinglePopupSelector supports only one submenu level, so we
+        // will show immediate subfolders under the base, and in each submenu
+        // only the immediate .bk2 files in that folder.
+
+        // Resolve the base galleries path (expand ~ to home if present)
+        auto galleriesPathVar = parent->getSynth()->user_prefs->userPreferences->tree.getProperty ("default_galleries_path");
+        juce::String galleriesPath = galleriesPathVar.toString();
+        if (galleriesPath.startsWithChar('~')) {
+            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory).getFullPathName();
+            if (galleriesPath == "~")
+                galleriesPath = home;
+            else if (galleriesPath.startsWith("~/"))
+                galleriesPath = home + galleriesPath.substring(1);
+        }
+        juce::File baseDir (galleriesPath);
+
+        bool foundAny = false;
+        if (baseDir.isDirectory()) {
+            // Add files in root first
+            juce::Array<juce::File> rootFiles = baseDir.findChildFiles(juce::File::findFiles, false, juce::String("*.") + bitklavier::kPresetExtension);
+            LoadSave::FileSorterAscending sorter;
+            rootFiles.sort(sorter);
+            for (auto &f : rootFiles) {
+                int thisId = nextId++;
+                (*idToFile)[thisId] = f;
+                options.addItem(thisId, f.getFileNameWithoutExtension().toStdString());
+                foundAny = true;
+            }
+
+            // add a separator between top-level galleries and subfolders
+            options.addItem(separator);
+
+            // Then add immediate subdirectories as single-level submenus showing
+            // only the files directly inside each subfolder.
+            juce::Array<juce::File> dirs = baseDir.findChildFiles(juce::File::findDirectories, false);
+            dirs.sort(sorter);
+            for (auto &d : dirs) {
+                PopupItems subMenu;
+                subMenu.name = d.getFileName().toStdString();
+
+                juce::Array<juce::File> folderFiles = d.findChildFiles(juce::File::findFiles, false, juce::String("*.") + bitklavier::kPresetExtension);
+                folderFiles.sort(sorter);
+
+                if (folderFiles.isEmpty()) {
+                    // Ensure the folder still appears by adding a disabled placeholder item.
+                    PopupItems emptyItem("(empty)", false);
+                    subMenu.addItem(emptyItem);
+                    options.addItem(subMenu);
+                    foundAny = true;
+                    continue;
+                }
+
+                for (auto &f : folderFiles) {
+                    int thisId = nextId++;
+                    (*idToFile)[thisId] = f;
+                    subMenu.addItem(thisId, f.getFileNameWithoutExtension().toStdString());
+                }
+
+                options.addItem(subMenu);
+                foundAny = true;
+            }
+        }
+
+        if (!foundAny) {
+            PopupItems none("(No galleries found)", false);
+            options.addItem(none);
+        }
 
         juce::Point<int> position(gallerySelector->getX(), gallerySelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            switch (selection)
-            {
-                case 0:
-                    DBG("load gallery");
-                    loadGallery();
-                    break;
-                case 1:
-                    DBG("save gallery: not yet implemented");
-                    // should overwrite currently active gallery
-                    break;
-                case 2:
-                    DBG("save gallery as");
-                    saveGallery();
-                    break;
-                default:
-                    DBG("no action");
+            // Handle command items first
+            if (selection == 0) {
+                DBG("load gallery");
+                loadGallery();
+                return;
+            }
+            if (selection == 1) {
+                DBG("save gallery: not yet implemented");
+                return;
+            }
+            if (selection == 2) {
+                DBG("save gallery as");
+                saveGallery();
+                return;
+            }
+
+            // Handle file selections
+            if (selection >= kGalleryIdBase) {
+                auto it = idToFile->find(selection);
+                if (it != idToFile->end()) {
+                    std::string error;
+                    if (!parent->loadFromFile(it->second, error)) {
+                        DBG(juce::String("Failed to load gallery: ") + error);
+                    }
+                }
             }
         });
     } else if (clicked_button == preparationsSelector.get()) {

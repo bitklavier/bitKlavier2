@@ -58,7 +58,9 @@ struct PopupItems {
     void addItem(int sub_id, const std::string& sub_name, bool sub_selected = false) {
         items.emplace_back(sub_id, sub_name, sub_selected, std::vector<PopupItems>());
     }
+
     void addItem(const PopupItems& item) { items.push_back(item); }
+
     int size() const { return static_cast<int>(items.size()); }
 };
 

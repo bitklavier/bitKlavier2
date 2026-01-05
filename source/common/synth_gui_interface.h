@@ -140,6 +140,8 @@ public:
     juce::ApplicationCommandManager commandManager;
     juce::ValueTree gallery;
 
+    const std::vector<std::string> getAllGalleries();
+
     juce::CriticalSection* getOpenGlCriticalSection();
     std::unique_ptr<SynthSection> getCompressorPopup();
     std::unique_ptr<SynthSection> getEQPopup();
