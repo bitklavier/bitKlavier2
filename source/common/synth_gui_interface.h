@@ -146,12 +146,13 @@ public:
     std::unique_ptr<SynthSection> getCompressorPopup();
     std::unique_ptr<SynthSection> getEQPopup();
 
+    // ok to be public?
+    std::unique_ptr<FullInterface> gui_;
+
   protected:
     std::atomic<bool> loading;
     std::unique_ptr<juce::FileChooser> filechooser;
     SynthBase* synth_;
-    std::unique_ptr<FullInterface> gui_;
-
   
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthGuiInterface)
 };

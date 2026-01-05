@@ -15,11 +15,15 @@
  */
 
 #include "header_section.h"
-#include <memory>
-#include "text_look_and_feel.h"
-#include "load_save.h"
+
+#include "ConstructionSite.h"
+#include "FullInterface.h"
 #include "SampleLoadManager.h"
+#include "load_save.h"
+#include "main_section.h"
 #include "synth_base.h"
+#include "text_look_and_feel.h"
+#include <memory>
 
 LogoSection::LogoSection() : SynthSection("logo_section") {
 #if !defined(NO_TEXT_ENTRY)
@@ -800,11 +804,11 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else if (clicked_button == preparationsSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         PopupItems options = parent->getPreparationPopupItems();
-        // PreparationList *csite = findParentComponentOfClass<PreparationList>();
 
         juce::Point<int> position(preparationsSelector->getX(), preparationsSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
             // figure out how to add preps here
+            parent->gui_->main_->constructionSite_->addItem(selection, true);
         });
     } else if (clicked_button == VSTSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();

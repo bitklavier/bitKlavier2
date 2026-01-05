@@ -476,22 +476,17 @@ PopupItems SynthGuiInterface::getPreparationPopupItems()
     separator.enabled = false; // This makes it non-selectable
     separator.id = -1; // will be a separator line
 
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeNostalgic,"Nostalgic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeSynchronic,"Synchronic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeBlendronic,"Blendronic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeResonance,"Resonance");
-    popup.addItem(separator);
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTempo,"Tempo");
-    popup.addItem(separator);
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiFilter,"MidiFilter");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiTarget,"MidiTarget");
-    popup.addItem(separator);
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modification");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeReset,"Reset");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypePianoMap,"PianoSwitch");
+    for (const auto& [type, name] : bitklavier::AllPrepInfo) {
+        // 'type' is the BKPreparationType
+        // 'name' is the std::string
+        printf("Type ID: %d | Display Name: %s\n", (int)type, name.c_str());
+        if (type < bitklavier::BKPreparationType::PreparationTypeComment) // leave out those above this for now
+            popup.addItem(type, name);
+        if (type == bitklavier::BKPreparationType::PreparationTypeResonance ||
+            type == bitklavier::BKPreparationType::PreparationTypeTempo ||
+            type == bitklavier::BKPreparationType::PreparationTypeMidiTarget)
+            popup.addItem(separator);
+    }
 
     return popup;
 }

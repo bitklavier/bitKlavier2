@@ -58,7 +58,6 @@ namespace IDs
     DECLARE_ID (active)
     DECLARE_ID (midiPrefs)
 
-
     DECLARE_ID (modulationproc)
     DECLARE_ID (ModulationConnection)
 
@@ -92,7 +91,6 @@ namespace IDs
 
     DECLARE_ID(numModChans)
     DECLARE_ID(sliderval)
-
 
     DECLARE_ID(adsr_attack)
     DECLARE_ID(adsr_decay)
@@ -130,20 +128,22 @@ namespace IDs
     DECLARE_ID(syncglobal)
     DECLARE_ID(soundfont_preset)
 }
+
+// order should match BKPreparationType in common.h
 static const std::array<juce::Identifier, 13> preparationIDs {
-    IDs::direct,
-    IDs::nostalgic,
     IDs::keymap,
-    IDs::resonance,
+    IDs::direct,
     IDs::synchronic,
+    IDs::nostalgic,
     IDs::blendronic,
-    IDs::tempo,
+    IDs::resonance,
     IDs::tuning,
+    IDs::tempo,
     IDs::midiFilter,
     IDs::midiTarget,
-    IDs::pianoMap,
     IDs::modulation,
-    IDs::reset
+    IDs::reset,
+    IDs::pianoMap
 };
 #undef DECLARE_ID
 inline juce::ValueTree createUuidProperty (juce::ValueTree& v)

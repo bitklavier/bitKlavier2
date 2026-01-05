@@ -15,20 +15,21 @@ static constexpr std::array<
     std::pair<float, float>,
     static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST) - 1
 > prepSizes = {{
-    /* 1 Direct      */ { 245.0f, 125.0f },
-    /* 2 Nostalgic   */ { 245.0f, 125.0f },
     /* 3 Keymap      */ { 185.0f, 105.0f },
-    /* 4 Resonance   */ { 245.0f, 125.0f },
+    /* 1 Direct      */ { 245.0f, 125.0f },
     /* 5 Synchronic  */ { 260.0f, 132.0f },
+    /* 2 Nostalgic   */ { 245.0f, 125.0f },
     /* 6 Blendronic  */ { 245.0f, 125.0f }, // default
-    /* 7 Tempo       */ { 132.0f, 260.0f },
+    /* 4 Resonance   */ { 245.0f, 125.0f },
     /* 8 Tuning      */ { 125.0f, 245.0f },
+    /* 7 Tempo       */ { 132.0f, 260.0f },
     /* 9 MidiFilter  */ { 75.0f,  75.0f  },
     /* 10 MidiTarget */ { 75.0f,  75.0f  },
-    /* 11 PianoMap   */ { 150.0f, 120.0f },
     /* 12 Modulation */ { 100.0f, 100.0f },
     /* 13 Reset      */ { 100.0f, 100.0f },
+    /* 11 PianoMap   */ { 150.0f, 120.0f },
 }};
+
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
                                    SynthGuiData *data, juce::ApplicationCommandManager &_manager)
                                                         : SynthSection("Construction Site"),
@@ -527,12 +528,8 @@ void ConstructionSite::paintBackground(juce::Graphics &g) {
     paintChildrenBackgrounds(g);
 }
 
-void ConstructionSite::resized() {
-    // Get the current local bounds of this component
-    auto bounds = getLocalBounds();
-    // Debug log the bounds
-    DBG("Local Bounds: " + bounds.toString());
-
+void ConstructionSite::resized()
+{
     cableView.setBounds(getLocalBounds());
     cableView.updateCablePositions();
     modulationLineView.setBounds(getLocalBounds());
@@ -625,18 +622,18 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     auto cancel = [=]() {
 
     };
-        showPopupSelector(this, e.getPosition(), _parent->getPluginPopupItems(),callback,cancel);
+        showPopupSelector(this, e.getPosition(), _parent->getPreparationPopupItems(),callback,cancel);
     }
     // Stop trying to make a connection on blank space click
     connect = false;
 }
 
-void ConstructionSite::handlePluginPopup(int selection, int index) {
-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+void ConstructionSite::addItem (int selection, bool center)
+{
     float prepScale = 0.6;
-
     if (selection < bitklavier::BKPreparationType::PreparationTypeVST) {
-        const auto idx = static_cast<size_t>(selection - 1);
+        //const auto idx = static_cast<size_t>(selection - 1);
+        const auto idx = static_cast<size_t>(selection);
         jassert (idx < prepSizes.size());
 
         const auto [baseW, baseH] = prepSizes[idx];
@@ -651,11 +648,21 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.setProperty(IDs::width,  prepWidth,  nullptr);
         t.setProperty(IDs::height, prepHeight, nullptr);
 
-        t.setProperty(IDs::x_y,
+        if (center)
+        {
+            t.setProperty(IDs::x_y,
             juce::VariantConverter<juce::Point<int>>::toVar(
-                juce::Point<int>(lastX - prepWidth  / 2.0f,
-                                 lastY - prepHeight / 2.0f)),
+                juce::Point<int>(getLocalBounds().getCentreX() * 0.25, getLocalBounds().getCentreY() * 0.25)),
             nullptr);
+        }
+        else
+        {
+            t.setProperty(IDs::x_y,
+               juce::VariantConverter<juce::Point<int>>::toVar(
+                   juce::Point<int>(lastX - prepWidth  / 2.0f, lastY - prepHeight / 2.0f)),
+               nullptr);
+        }
+
         prep_list->appendChild(t,  &undo);
     }
     else {
@@ -675,6 +682,53 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
         t.addChild(plugin,-1, &undo);
         prep_list->addPlugin(desc.pluginDescription,t);
     }
+}
+
+void ConstructionSite::handlePluginPopup(int selection, int index) {
+
+    addItem(selection, false);
+    // float prepScale = 0.6;
+    // if (selection < bitklavier::BKPreparationType::PreparationTypeVST) {
+    //     //const auto idx = static_cast<size_t>(selection - 1);
+    //     const auto idx = static_cast<size_t>(selection);
+    //     jassert (idx < prepSizes.size());
+    //
+    //     const auto [baseW, baseH] = prepSizes[idx];
+    //
+    //     const float prepWidth  = baseW * prepScale;
+    //     const float prepHeight = baseH * prepScale;
+    //
+    //     juce::ValueTree t(preparationIDs[idx]);
+    //     t.setProperty(IDs::type,
+    //                   static_cast<bitklavier::BKPreparationType>(selection),
+    //                   nullptr);
+    //     t.setProperty(IDs::width,  prepWidth,  nullptr);
+    //     t.setProperty(IDs::height, prepHeight, nullptr);
+    //
+    //     t.setProperty(IDs::x_y,
+    //         juce::VariantConverter<juce::Point<int>>::toVar(
+    //             juce::Point<int>(lastX - prepWidth  / 2.0f,
+    //                              lastY - prepHeight / 2.0f)),
+    //         nullptr);
+    //     prep_list->appendChild(t,  &undo);
+    // }
+    // else {
+    //     const float prepWidth  = 245.f * prepScale;
+    //     const float prepHeight = 125.f * prepScale;
+    //     _parent = findParentComponentOfClass<SynthGuiInterface>();
+    //     juce::ValueTree t(IDs::PREPARATION);
+    //     t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
+    //     t.setProperty(IDs::width, prepWidth, nullptr);
+    //     t.setProperty(IDs::height, prepHeight, nullptr);
+    //     t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
+    //     //t.setProperty(IDs::x_y,juce::VariantConverter<juce::Point<int>>::toVar( juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+    //     // t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+    //
+    //     auto desc = _parent->getSynth()->user_prefs->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
+    //     juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
+    //     t.addChild(plugin,-1, &undo);
+    //     prep_list->addPlugin(desc.pluginDescription,t);
+    // }
 }
 
 void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
