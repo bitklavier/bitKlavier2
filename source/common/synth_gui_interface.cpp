@@ -186,7 +186,9 @@ void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection *connec
 }
 
 bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
-    return getSynth()->loadFromFile(preset, error);
+    bool success = getSynth()->loadFromFile(preset, error);
+    if (success) gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
+    return success;
     //sampleLoadManager->loadSamples()
 }
 
@@ -282,7 +284,7 @@ juce::File SynthGuiInterface::getActiveFile()
 void SynthGuiInterface::openLoadDialog()
 {
     auto active_file = getActiveFile();
-    filechooser = std::make_unique<juce::FileChooser> ("Open Preset", active_file, juce::String ("*.") + bitklavier::kPresetExtension);
+    filechooser = std::make_unique<juce::FileChooser> ("Open Gallery", active_file, juce::String ("*.") + bitklavier::kPresetExtension);
 
     auto flags = juce::FileBrowserComponent::openMode
                  | juce::FileBrowserComponent::canSelectFiles;
@@ -297,14 +299,9 @@ void SynthGuiInterface::openLoadDialog()
         loading = true;
         if (!this->loadFromFile (choice, error))
         {
-            //            std::string name = ProjectInfo::projectName;
-            //            error = "There was an error open the preset. " + error;
-            //juce::AlertWindow::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "PRESET ERROR, ""Error opening preset", error);
             DBG (error);
         }
         loading = false;
-        //        else
-        //            parent->externalPresetLoaded(choice);
     });
 }
 
@@ -347,6 +344,7 @@ void SynthGuiInterface::openSaveDialog()
                 //                                             wo->flush();
                 //                                         }
                 output.flush();
+                gui_->header_->gallerySelectText->setText(file.getFileNameWithoutExtension());
             }
         });
 }
@@ -459,20 +457,48 @@ static void addToMenu (const juce::KnownPluginList::PluginTree& tree,
 
 PopupItems SynthGuiInterface::getPluginPopupItems()
 {
+    PopupItems popup = getPreparationPopupItems();
+
+    auto pluginDescriptions = synth_->user_prefs->userPreferences->knownPluginList.getTypes();
+
+    auto tree = juce::KnownPluginList::createTree (pluginDescriptions, synth_->user_prefs->userPreferences->pluginSortMethod);
+    synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference = {};
+    popup.addItem (-1, "");
+    addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
+    return popup;
+}
+
+PopupItems SynthGuiInterface::getPreparationPopupItems()
+{
     PopupItems popup;
 
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
+    PopupItems separator ("separator");
+    separator.enabled = false; // This makes it non-selectable
+    separator.id = -1; // will be a separator line
+
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeNostalgic,"Nostalgic");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeSynchronic,"Synchronic");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeBlendronic,"Blendronic");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeResonance,"Resonance");
+    popup.addItem(separator);
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeTempo,"Tempo");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeBlendronic,"Blendronic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeSynchronic,"Synchronic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeResonance,"Resonance");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
+    popup.addItem(separator);
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiFilter,"MidiFilter");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiTarget,"MidiTarget");
+    popup.addItem(separator);
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modification");
+    popup.addItem(bitklavier::BKPreparationType::PreparationTypeReset,"Reset");
     popup.addItem(bitklavier::BKPreparationType::PreparationTypePianoMap,"PianoSwitch");
+
+    return popup;
+}
+
+PopupItems SynthGuiInterface::getVSTPopupItems()
+{
+    PopupItems popup;
 
     auto pluginDescriptions = synth_->user_prefs->userPreferences->knownPluginList.getTypes();
 

@@ -97,6 +97,15 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     pianoSelector->setShape(juce::Path(), true, true, true);
     currentPianoIndex = 0;
 
+    preparationSelectText = std::make_shared<PlainTextComponent>("Preparation", "add");
+    addOpenGlComponent(preparationSelectText);
+    preparationsSelector = std::make_unique<juce::ShapeButton>("prepSelector", juce::Colour(0xff666666),
+                                                        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(preparationsSelector.get());
+    preparationsSelector->addListener(this);
+    preparationsSelector->setTriggeredOnMouseDown(true);
+    preparationsSelector->setShape(juce::Path(), true, true, true);
+
     addPianoButton = std::make_unique<OpenGlTextButton>("header_add_piano");
     addOpenGlComponent(addPianoButton->getGlComponent());
     addAndMakeVisible(addPianoButton.get());
@@ -106,6 +115,24 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
 
     sampleSelectText->setText("---");
     pianoSelectText->setText(getAllPianoNames().at(0));
+
+    gallerySelectText = std::make_shared<PlainTextComponent>("Gallery", "---");
+    addOpenGlComponent(gallerySelectText);
+    gallerySelector = std::make_unique<juce::ShapeButton>("gSelector", juce::Colour(0xff666666),
+                                                        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(gallerySelector.get());
+    gallerySelector->addListener(this);
+    gallerySelector->setTriggeredOnMouseDown(true);
+    gallerySelector->setShape(juce::Path(), true, true, true);
+
+    VSTSelectText = std::make_shared<PlainTextComponent>("VST", "add");
+    addOpenGlComponent(VSTSelectText);
+    VSTSelector = std::make_unique<juce::ShapeButton>("vSTSelector", juce::Colour(0xff666666),
+                                                        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(VSTSelector.get());
+    VSTSelector->addListener(this);
+    VSTSelector->setTriggeredOnMouseDown(true);
+    VSTSelector->setShape(juce::Path(), true, true, true);
 
     globalSoundset_label = std::make_shared<PlainTextComponent>("globalsamples", "Global Soundset");
     addOpenGlComponent(globalSoundset_label);
@@ -118,13 +145,31 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     soundfontPreset_label->setTextSize (12.0f);
     soundfontPreset_label->setFontType (PlainTextComponent::kTitle);
     soundfontPreset_label->setJustification(juce::Justification::centred);
-    soundfontPreset_label->setVisible(false);
+    soundfontPreset_label->setVisible(true);
 
-    currentPiano_label = std::make_shared<PlainTextComponent>("currentpiano", "Current Piano");
+    currentPiano_label = std::make_shared<PlainTextComponent>("currentpiano", "Piano");
     addOpenGlComponent(currentPiano_label);
     currentPiano_label->setTextSize (12.0f);
     currentPiano_label->setFontType (PlainTextComponent::kTitle);
     currentPiano_label->setJustification(juce::Justification::centred);
+
+    galleries_label = std::make_shared<PlainTextComponent>("currentgallery", "Gallery");
+    addOpenGlComponent(galleries_label);
+    galleries_label->setTextSize (12.0f);
+    galleries_label->setFontType (PlainTextComponent::kTitle);
+    galleries_label->setJustification(juce::Justification::centred);
+
+    preparationSelect_label = std::make_shared<PlainTextComponent>("addprep", "Preparation");
+    addOpenGlComponent(preparationSelect_label);
+    preparationSelect_label->setTextSize (12.0f);
+    preparationSelect_label->setFontType (PlainTextComponent::kTitle);
+    preparationSelect_label->setJustification(juce::Justification::centred);
+
+    VSTSelect_label = std::make_shared<PlainTextComponent>("addvst", "VST");
+    addOpenGlComponent(VSTSelect_label);
+    VSTSelect_label->setTextSize (12.0f);
+    VSTSelect_label->setFontType (PlainTextComponent::kTitle);
+    VSTSelect_label->setJustification(juce::Justification::centred);
 
     setSkinOverride(Skin::kHeader);
 }
@@ -199,41 +244,55 @@ void HeaderSection::resized() {
     //logo_section_->setBounds(0, -10, logo_width, height);
     logo_section_->setBounds(0, -10, logo_width, height + 10);
 
-    juce::Rectangle<int> headerArea = getLocalBounds();
-    headerArea.removeFromLeft(logo_width + large_padding);
-    juce::Rectangle<int> headerLabelArea = headerArea.removeFromTop(label_height + small_padding);
-    headerLabelArea.removeFromTop(small_padding * 2);
+    juce::Rectangle<int> headerArea2 = getLocalBounds();
+    headerArea2.removeFromLeft(logo_width + large_padding);
+    headerArea2.removeFromTop(small_padding * 2);
+    headerArea2.removeFromRight(large_padding * 2);
+    juce::Rectangle<int> headerArea_labels = headerArea2.removeFromTop(label_height + small_padding);
 
-    sampleSelectText->setColor(body_text);
-    pianoSelectText->setColor(body_text);
-    soundfontPresetSelectText->setColor(body_text);
+    juce::FlexBox fb;
+    fb.flexDirection = juce::FlexBox::Direction::row;
+    fb.alignContent = juce::FlexBox::AlignContent::stretch;
+    fb.alignItems = juce::FlexBox::AlignItems::stretch;
 
-    //sampleSelector->setBounds(logo_width + widget_margin, logo_section_->getBottom() / 2, 100, label_height);
-    sampleSelector->setBounds(headerArea.removeFromLeft(100));
-    sampleSelectText->setTextSize(label_text_height);
-    sampleSelectText->setBounds(sampleSelector->getBounds());
-    globalSoundset_label->setBounds(headerLabelArea.removeFromLeft(100));
+    fb.items.add(juce::FlexItem(*gallerySelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*pianoSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*preparationsSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*VSTSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*sampleSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*soundfontPresetSelector).withFlex(1.0f));
+    fb.performLayout(headerArea2);
 
-    headerArea.removeFromLeft(large_padding * 2);
-    headerLabelArea.removeFromLeft(large_padding * 2);
+    juce::FlexBox fbl;
+    fbl.flexDirection = juce::FlexBox::Direction::row;
+    fbl.alignContent = juce::FlexBox::AlignContent::stretch;
+    fbl.alignItems = juce::FlexBox::AlignItems::stretch;
 
-    //soundfontPresetSelector->setBounds(pianoSelector->getRight() + 10, pianoSelector->getY(), pianoSelector->getWidth(), label_height);
-    soundfontPresetSelector->setBounds(headerArea.removeFromLeft(100));
-    soundfontPresetSelectText->setTextSize(label_text_height);
-    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
-    soundfontPreset_label->setBounds(headerLabelArea.removeFromLeft(100));
+    // Adding items (A loop is much cleaner here!)
+    juce::Component* labels[] = {
+        galleries_label.get(), currentPiano_label.get(), preparationSelect_label.get(),
+        VSTSelect_label.get(), globalSoundset_label.get(), soundfontPreset_label.get()
+    };
 
-    //pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(), label_height);
-    headerArea.removeFromLeft(large_padding * 2);
-    headerLabelArea.removeFromLeft(large_padding * 2);
+    for (int i = 0; i < 6; ++i)
+    {
+        fbl.items.add(juce::FlexItem(*labels[i]).withFlex(1.0f));
+    }
 
-    pianoSelector->setBounds(headerArea.removeFromLeft(100));
+    fbl.performLayout(headerArea_labels);
+
+    gallerySelectText->setBounds(gallerySelector->getBounds());
+    gallerySelectText->setTextSize(label_text_height);
     pianoSelectText->setBounds(pianoSelector->getBounds());
     pianoSelectText->setTextSize(label_text_height);
-    currentPiano_label->setBounds(headerLabelArea.removeFromLeft(100));
-
-    //addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() - label_height, sampleSelector->getWidth(), label_height);
-    //addPianoButton->setBounds(headerArea.removeFromRight(100));
+    preparationSelectText->setBounds(preparationsSelector->getBounds());
+    preparationSelectText->setTextSize(label_text_height);
+    VSTSelectText->setBounds(VSTSelector->getBounds());
+    VSTSelectText->setTextSize(label_text_height);
+    sampleSelectText->setBounds(sampleSelector->getBounds());
+    sampleSelectText->setTextSize(label_text_height);
+    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
+    soundfontPresetSelectText->setTextSize(label_text_height);
 
     SynthSection::resized();
 }
@@ -575,8 +634,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                         DBG("no action");
                 }
             }
-
-
         });
     } else if (clicked_button == soundfontPresetSelector.get()) {
         const juce::String sfzName = gallery.getProperty("soundset").toString();
@@ -618,6 +675,50 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
                               parent->getSampleLoadManager()->changeSFZPresetAndUpdateTree(sfzName, selection,gallery);
                           });
+    } else if (clicked_button == gallerySelector.get()) {
+        PopupItems options;
+
+        options.addItem(0, "Load");
+        options.addItem(1, "Save");
+        options.addItem(2, "Save As");
+
+        juce::Point<int> position(gallerySelector->getX(), gallerySelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            switch (selection)
+            {
+                case 0:
+                    DBG("load gallery");
+                    loadGallery();
+                    break;
+                case 1:
+                    DBG("save gallery: not yet implemented");
+                    // should overwrite currently active gallery
+                    break;
+                case 2:
+                    DBG("save gallery as");
+                    saveGallery();
+                    break;
+                default:
+                    DBG("no action");
+            }
+        });
+    } else if (clicked_button == preparationsSelector.get()) {
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        PopupItems options = parent->getPreparationPopupItems();
+        // PreparationList *csite = findParentComponentOfClass<PreparationList>();
+
+        juce::Point<int> position(preparationsSelector->getX(), preparationsSelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            // figure out how to add preps here
+        });
+    } else if (clicked_button == VSTSelector.get()) {
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        PopupItems options = parent->getVSTPopupItems();
+
+        juce::Point<int> position(VSTSelector->getX(), VSTSelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            // figure out how to add VSTs here
+        });
     } else if (clicked_button == loadButton.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         parent->openLoadDialog();
@@ -628,13 +729,19 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         SynthSection::buttonClicked(clicked_button);
 }
 
+void HeaderSection::loadGallery()
+{
+    SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+    parent->openLoadDialog();
+}
+
+void HeaderSection::saveGallery()
+{
+    SynthGuiInterface *interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->openSaveDialog();
+}
+
 void HeaderSection::sliderValueChanged(juce::Slider *slider) {
-    //  if (slider == tab_selector_.get()) {
-    //    int index = tab_selector_->getValue();
-    //    for (Listener* listener : listeners_)
-    //      listener->tabSelected(index);
-    //  }
-    //  else
     SynthSection::sliderValueChanged(slider);
 }
 
@@ -652,11 +759,11 @@ void HeaderSection::notifyFresh() {
     if (parent->getSampleLoadManager()->sfzHasPresets(gallery.getProperty(IDs::soundset).toString())) {
         soundfontPresetSelector->setVisible(true);
         soundfontPresetSelectText->setVisible(true);
-        soundfontPreset_label->setVisible (true);
+        //soundfontPreset_label->setVisible (true);
     } else {
         soundfontPresetSelector->setVisible(false);
         soundfontPresetSelectText->setVisible(false);
-        soundfontPreset_label->setVisible (false);
+        //soundfontPreset_label->setVisible (false);
     }
     static juce::var nullVar;
     // auto val = gallery.getProperty(IDs::soundfont_preset);

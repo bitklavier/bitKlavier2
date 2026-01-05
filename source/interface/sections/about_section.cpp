@@ -15,11 +15,7 @@
  */
 
 #include "about_section.h"
-#include "UserPreferences.h"
 #include "skin.h"
-#include "fonts.h"
-
-#include "paths.h"
 #include "synth_base.h"
 #include "synth_gui_interface.h"
 #include "synth_section.h"

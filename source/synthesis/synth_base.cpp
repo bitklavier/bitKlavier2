@@ -40,11 +40,10 @@
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "valuetree_utils/VariantConverters.h"
 
-SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager),user_prefs (new UserPreferencesWrapper()),
-                                                                        sampleLoadManager (
-                                                                            new SampleLoadManager (this,
-                                                                                user_prefs
-                                                                                ))
+SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
+    expired_ (false),
+    manager (deviceManager),
+    user_prefs (new UserPreferencesWrapper()), sampleLoadManager (new SampleLoadManager (this, user_prefs))
 {
     self_reference_ = std::make_shared<SynthBase*>();
     *self_reference_ = this;
@@ -74,7 +73,6 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     juce::ValueTree connections (IDs::CONNECTIONS);
     juce::ValueTree modconnections (IDs::MODCONNECTIONS);
 
-
     piano.appendChild (preparations, nullptr);
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
@@ -83,7 +81,6 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
 
     tree.appendChild (piano, nullptr);
     tree.addListener (this);
-
 
     //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
     modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree> ("ramp");
@@ -102,6 +99,14 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
     engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
     engine_->addDefaultChain(*this,tree);
+
+    /*
+     * want to open default preset file, but this is not the right place to do it
+     */
+    // juce::File preset_file = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile("Application Support").getChildFile("bitklavier").getChildFile ("galleries").getChildFile ("Default Piano.bk2");
+    // DBG("default file = " + preset_file.getFullPathName());
+    // std::string error;
+    // loadFromFile(preset_file, error);
 }
 
 SynthBase::~SynthBase()
@@ -515,8 +520,6 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
             if (! sampleLoadManager->isSoundsetLoaded (ref.name))
             {
                 needsAsyncLoads = true;
-
-
                 sampleLoadManager->loadSamples (ref.name, ref.target);
             }
         }
@@ -530,7 +533,6 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     pauseProcessing(false);
     if (auto* gui = getGuiInterface())
         gui->removeAllGuiListeners();
-
 
     engine_->resetEngine();
 

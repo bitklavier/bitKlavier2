@@ -138,7 +138,8 @@ PopupList::PopupList() : SynthSection("Popup List"),
     scroll_bar_->addListener(this);
 }
 
-void PopupList::resized() {
+void PopupList::resized()
+{
     juce::Colour lighten = findColour(Skin::kLightenScreen, true);
     scroll_bar_->setColor(lighten);
 

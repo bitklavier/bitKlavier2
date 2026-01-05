@@ -23,12 +23,10 @@
 #pragma once
 
 #include "synth_button.h"
-#include "look_and_feel/fonts.h"
 #include "paths.h"
 #include "look_and_feel/shaders.h"
 #include <functional>
 #include <map>
-#include <set>
 #include "StateModulatedComponent.h"
 
 class OpenGL_LabeledBorder;

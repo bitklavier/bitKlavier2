@@ -39,6 +39,8 @@ public:
         tree.setProperty("default_sample_path", path_to_samples, nullptr);
         juce::String path_to_soundfonts = "~/Documents/bitKlavier/soundfonts";
         tree.setProperty("default_soundfonts_path", path_to_soundfonts, nullptr);
+        juce::String path_to_galleries = "~/Documents/bitKlavier/galleries";
+        tree.setProperty("default_galleries_path", path_to_galleries, nullptr);
 
         juce::ValueTree a (IDs::midiPrefs);
         if(!tree.getChildWithName(IDs::midiPrefs).isValid())

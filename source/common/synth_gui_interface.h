@@ -132,6 +132,8 @@ public:
 
    // std::unique_ptr<ApplicationCommandHandler> commandHandler;
     PopupItems getPluginPopupItems();
+    PopupItems getPreparationPopupItems();
+    PopupItems getVSTPopupItems();
     class PluginListWindow;
     std::unique_ptr<PluginListWindow> pluginListWindow;
    juce::ScopedMessageBox messageBox;

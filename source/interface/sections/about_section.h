@@ -21,7 +21,7 @@
 #include "open_gl_multi_quad.h"
 #include "open_gl_image_component.h"
 #include "default_look_and_feel.h"
-#include <juce_audio_utils/juce_audio_utils.h>
+#include "UserPreferences.h"
 #include "bitklavier_AudioDeviceSelectorComponent.h"
 
 class OpenGlDeviceSelector : public OpenGlAutoImageComponent<bitklavier::AudioDeviceSelectorComponent> {

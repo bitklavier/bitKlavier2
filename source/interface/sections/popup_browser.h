@@ -241,12 +241,10 @@ public:
                     callback_(id,index);
                     setVisible(false);
                 }
-
             }
             else
                 cancel_();
         } else if (list == popup_list_1.get()) {
-            DBG("asf");
             cancel_ = nullptr;
             callback_(id,index);
             setVisible(false);
