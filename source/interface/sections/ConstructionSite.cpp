@@ -665,6 +665,8 @@ void ConstructionSite::addItem (int selection, bool center)
         prep_list->appendChild(t,  &undo);
     }
     else {
+        DBG("adding VST? " + juce::String(selection) + "");
+
         const float prepWidth  = 245.f * prepScale;
         const float prepHeight = 125.f * prepScale;
         _parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -672,9 +674,24 @@ void ConstructionSite::addItem (int selection, bool center)
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
         t.setProperty(IDs::width, prepWidth, nullptr);
         t.setProperty(IDs::height, prepHeight, nullptr);
-        t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
+        //t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
         //t.setProperty(IDs::x_y,juce::VariantConverter<juce::Point<int>>::toVar( juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
         // t.setProperty(IDs::y, lastY - 125 / 2, nullptr);
+
+        if (center)
+        {
+            t.setProperty(IDs::x_y,
+            juce::VariantConverter<juce::Point<int>>::toVar(
+                juce::Point<int>(getLocalBounds().getCentreX() * 0.25, getLocalBounds().getCentreY() * 0.25)),
+            nullptr);
+        }
+        else
+        {
+            t.setProperty(IDs::x_y,
+               juce::VariantConverter<juce::Point<int>>::toVar(
+                   juce::Point<int>(lastX - prepWidth  / 2.0f, lastY - prepHeight / 2.0f)),
+               nullptr);
+        }
 
         auto desc = _parent->getSynth()->user_prefs->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());

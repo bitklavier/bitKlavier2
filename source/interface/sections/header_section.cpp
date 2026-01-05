@@ -808,7 +808,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         juce::Point<int> position(preparationsSelector->getX(), preparationsSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            // figure out how to add preps here
             parent->gui_->main_->constructionSite_->addItem(selection, true);
         });
     } else if (clicked_button == VSTSelector.get()) {
@@ -818,6 +817,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         juce::Point<int> position(VSTSelector->getX(), VSTSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
             // figure out how to add VSTs here
+            parent->gui_->main_->constructionSite_->addItem(selection + bitklavier::BKPreparationType::PreparationTypeVST, true);
         });
     } else if (clicked_button == loadButton.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
