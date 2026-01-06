@@ -15,6 +15,7 @@ bool BKSynthesiserVoice::isPlayingChannel (const int midiChannel) const
 
 void BKSynthesiserVoice::setCurrentPlaybackSampleRate (const double newRate)
 {
+    DBG ("BKSynthesiserVoice sample rate changed to " + juce::String (newRate));
     currentSampleRate = newRate;
 }
 

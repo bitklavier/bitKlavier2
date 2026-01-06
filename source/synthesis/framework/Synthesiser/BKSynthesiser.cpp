@@ -132,6 +132,7 @@ void BKSynthesiser::setMinimumRenderingSubdivisionSize (int numSamples, bool sho
 //==============================================================================
 void BKSynthesiser::setCurrentPlaybackSampleRate (const double newRate)
 {
+    DBG ("BKSynthesiser sample rate changed to " + juce::String (newRate));
     if (!juce::approximatelyEqual (sampleRate, newRate))
     {
         const juce::ScopedLock sl (lock);

@@ -907,12 +907,15 @@ public:
 
     void setCurrentPlaybackSampleRate(double newRate) override {
 
+        DBG("BKSamplerVoice::setCurrentPlaybackSampleRate " << newRate);
         if (newRate <= 0) {
             return;
         }
 
         ampEnv.setSampleRate(newRate);
         ampEnv.setParameters(ampEnv.getParameters());
+
+        BKSynthesiserVoice::setCurrentPlaybackSampleRate(newRate);
     }
 
     void startNote (int midiNoteNumber,
