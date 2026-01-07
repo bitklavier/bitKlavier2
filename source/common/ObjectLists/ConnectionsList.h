@@ -38,9 +38,11 @@ namespace bitklavier {
                 ConnectionList::newObjectAdded(object);
             }
         }
-        ~ConnectionList() {
+        ~ConnectionList()
+        {
             freeObjects();
-            }
+            listeners_.clear();
+        }
         class Listener {
         public:
             virtual ~Listener() {}

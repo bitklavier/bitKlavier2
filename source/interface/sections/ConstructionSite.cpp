@@ -862,8 +862,12 @@ void ConstructionSite::setActivePiano() {
 
 void ConstructionSite::removeAllGuiListeners()
 {
-    if(prep_list)
+    if (prep_list)
+    {
+        // Ensure existing GUI elements are removed before detaching
+        prep_list->deleteAllGui();
         prep_list->removeListener(this);
+    }
     prep_list = nullptr;
     cableView.removeAllGuiListeners();
     modulationLineView.removeAllGuiListeners();

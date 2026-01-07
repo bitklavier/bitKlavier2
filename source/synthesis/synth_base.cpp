@@ -536,11 +536,20 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 
     // ---------- Reset backend BEFORE applying preset ----------
 
-    pauseProcessing(true);
-    clearAllBackend();
-    pauseProcessing(false);
+    // pauseProcessing(true);
+    // clearAllBackend();
+    // pauseProcessing(false);
+    // if (auto* gui = getGuiInterface())
+    //     gui->removeAllGuiListeners();
+    //
+    // engine_->resetEngine();
+
     if (auto* gui = getGuiInterface())
-        gui->removeAllGuiListeners();
+        gui->removeAllGuiListeners(); // 1) detach GUI from backend FIRST
+
+    pauseProcessing(true);
+    clearAllBackend();               // 2) now it’s safe to destroy lists
+    pauseProcessing(false);
 
     engine_->resetEngine();
 
