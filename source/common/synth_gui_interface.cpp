@@ -15,12 +15,11 @@
  */
 
 #include "synth_gui_interface.h"
-
+#include "ConstructionSite.h"
 #include "CompressorParameterView.h"
 #include "EQParameterView.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
-#include "PreparationSection.h"
 #include "load_save.h"
 #include "modulation_manager.h"
 #include "sound_engine.h"
@@ -311,17 +310,6 @@ void SynthGuiInterface::openSaveDialog()
     filechooser->launchAsync (
         juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectDirectories,
         [this] (const juce::FileChooser& chooser) {
-            //sync all backend to valuetree
-            for (auto vt : getSynth()->getValueTree())
-            {
-                if (vt.hasType (IDs::PIANO))
-                    vt.getChildWithName (IDs::PREPARATIONS).setProperty ("sync", 1, nullptr);
-            }
-
-            juce::String mystr = (getSynth()->getValueTree().toXmlString());
-            auto xml = getSynth()->getValueTree().createXml();
-            juce::XmlElement xml_ = *xml;
-
             auto result = chooser.getURLResult();
             auto name = result.isEmpty()
                             ? juce::String()
@@ -331,25 +319,19 @@ void SynthGuiInterface::openSaveDialog()
             juce::File file (name);
             if (!result.isEmpty())
             {
-                juce::FileOutputStream output (file);
-                output.setPosition (0);
-                output.truncate();
-                output.writeText (xml_.toString(), false, false, {});
-                //                                         std::unique_ptr<juce::InputStream> wi (file.createInputStream());
-                //                                         std::unique_ptr<juce::OutputStream> wo (result.createOutputStream());
-                //
-                //                                         if (wi != nullptr && wo != nullptr)
-                //                                         {
-                //                                             //auto numWritten = wo->writeFromInputStream (*wi, -1);
-                //                                             wo->flush();
-                //                                         }
-                output.flush();
-                gui_->header_->gallerySelectText->setText(file.getFileNameWithoutExtension());
+                if (getSynth()->saveToFile(file))
+                {
+                    if (gui_ && gui_->header_ && gui_->header_->gallerySelectText)
+                        gui_->header_->gallerySelectText->setText(file.getFileNameWithoutExtension());
+                }
             }
         });
 }
 
-#include "ConstructionSite.h"
+void SynthGuiInterface::saveCurrentGallery()
+{
+    synth_->saveToFile(getActiveFile());
+}
 
 void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
 {

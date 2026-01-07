@@ -4,7 +4,14 @@
 - FlexBox is nice. see `void HeaderSection::resized()`
 ## Value Tree Notes
 - comment/uncomment this line `valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);` in FullInterface.cpp to make the VT debugger window visible when needed
-
+- for Gallery Settings, see `updateChangedGalleryState` in sound_engine.h 
+  - and `SynthBase::valueTreePropertyChanged` in synth_base.cpp 
+    - which will set bools like `a4Dirty` to true, using `eng->requestA4Update`, whenever the use sets those values
+    - then `updateChangedGalleryState` will see that these are dirty and call the appropriate functions in the relevant processors in the graph to update those params, at the beginning of each block in `SoundEngine::processAudioAndMidi`
+  - triggered in `HeaderSection::buttonClicked` in header_section.cpp
+- note that the Save/SaveAs/Load stuff for the top File menu is all handled in `getCommandInfo` and so on in main.cpp (not ApplicationCommandHandler; not sure why we have those classes/files)
+  - also `PopupMenu getMenuForIndex` in synth_editor.h, for adding the elements to that File menu and the others.
+    - so we'll want to add copy, paste, etc... there as well
 ## Mod Notes
 - i think there should be an add menu, in addition to being able to control-click
   - let's put LFO below ramp and before state, since state is really quite different than LFO/ramp

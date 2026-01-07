@@ -156,21 +156,23 @@ namespace bitklavier
 
         ModulationConnectionBank& getModulationBank() { return modulation_bank_; }
         StateConnectionBank& getStateBank() { return state_bank_; }
+        ParamOffsetBank& getParamOffsetBank() {return param_offset_bank_; }
 
-        ParamOffsetBank& getParamOffsetBank() {return param_offset_bank_;}
-
-        void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
+        /**
+         * Updates the processors of all relevant nodes in the graph when
+         * parameters in the Gallery Settings have been changed (marked "dirty")
+         * - Currently just for A440 and tempo multiplier settings
+         */
+        void updateChangedGalleryState ()
         {
-            // Apply A4 (and other globals) at a block boundary on the audio thread
             if (a4Dirty.exchange (false, std::memory_order_acq_rel))
             {
                 const double newA4 = pendingA4Hz.load (std::memory_order_relaxed);
 
-                // Walk all nodes and update any synth voices they own
+                // Walk all nodes and update their processors
                 auto nodes = processorGraph->getNodes();
                 for (auto* node : nodes)
                 {
-                    // If your synths live inside a known processor type, update through it
                     if (auto* kp = dynamic_cast<DirectProcessor*>(node->getProcessor()))
                     {
                         kp->setA4Frequency(newA4);
@@ -193,19 +195,25 @@ namespace bitklavier
                     }
                 }
             }
+
             if (tempoMultiplierDirty.exchange (false, std::memory_order_acq_rel))
             {
                 const double newTM = pendingTempoMultiplier.load (std::memory_order_relaxed);
                 auto nodes = processorGraph->getNodes();
                 for (auto* node : nodes)
                 {
-                    // If your synths live inside a known processor type, update through it
                     if (auto* kp = dynamic_cast<TempoProcessor*>(node->getProcessor()))
                     {
                         kp->setGlobalTempoMultiplier(newTM);
                     }
                 }
             }
+        }
+
+        void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
+        {
+            // update all the processors with any changes to params in Gallery Settings
+            updateChangedGalleryState ();
 
             //DBG ("------------------BEGIN BLOCK-------------------");
             processorGraph->processBlock (audio_buffer, midi_buffer);

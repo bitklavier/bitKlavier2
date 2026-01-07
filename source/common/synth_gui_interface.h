@@ -60,12 +60,13 @@ public:
         undo = 0x2000,
         redo,
         save,
+        saveAs,
         load,
         showPluginListEditor   = 0x30100
     };
 
     void getAllCommands(juce::Array<juce::CommandID> &commands) override {
-        commands.addArray({undo, redo,showPluginListEditor});
+        commands.addArray({undo, redo, showPluginListEditor});
     }
 
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override {
@@ -114,6 +115,7 @@ public:
     void notifyFresh();
     void openSaveDialog();
     void openLoadDialog();
+    void saveCurrentGallery();
     void externalPresetLoaded(juce::File preset);
     void setGuiSize(float scale);
     bool loadFromFile(juce::File preset, std::string& error);

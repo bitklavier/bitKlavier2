@@ -139,6 +139,7 @@ public:
             editor_->setFocus();
         }
         SynthEditor* editor_;
+
     private:
         void loadFileAsyncUpdate()
         {
@@ -158,6 +159,12 @@ public:
         {
             case SynthGuiInterface::CommandIDs::save:
             {
+                main_window_->editor_->getGuiInterface()->saveCurrentGallery();
+                return true;
+            }
+
+            case SynthGuiInterface::CommandIDs::saveAs:
+            {
                 main_window_->editor_->getGuiInterface()->openSaveDialog();
                 return true;
             }
@@ -171,6 +178,7 @@ public:
 
         return false;
     }
+
     void getCommandInfo (const juce::CommandID commandID, juce::ApplicationCommandInfo& info) override
     {
         switch (commandID)
@@ -179,15 +187,21 @@ public:
                 info.setInfo ("Save", "Save Current Preset", "File", 0);
                 info.addDefaultKeypress ('s', juce::ModifierKeys::commandModifier);
                 break;
+            case SynthGuiInterface::CommandIDs::saveAs:
+                info.setInfo("Save As...", "Save Current Preset to new file", "File", 0);
+                info.addDefaultKeypress('s', juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier);
+                break;
             case SynthGuiInterface::CommandIDs::load:
                 info.setInfo ("Load", "Load New Preset", "File", 0);
                 info.addDefaultKeypress ('l', juce::ModifierKeys::commandModifier);
                 break;
         }
     }
+
     void getAllCommands (juce::Array<juce::CommandID>& commands) override
     {
         commands.add (SynthGuiInterface::CommandIDs::save);
+        commands.add (SynthGuiInterface::CommandIDs::saveAs);
         commands.add (SynthGuiInterface::CommandIDs::load);
     }
 
@@ -210,8 +224,6 @@ public:
 
         juce::Logger::setCurrentLogger (logger.get());
     }
-
-
 
     void initialise (const juce::String& command_line) override
     {
@@ -253,7 +265,6 @@ public:
         else if (command.contains (" --tableimages "))
         {
         }
-
         else if (command.contains (" --window "))
         {
         }

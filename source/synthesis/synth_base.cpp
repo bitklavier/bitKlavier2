@@ -556,6 +556,8 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     // ---------- Defer preset application if samples are loading ----------
     if (needsAsyncLoads)
     {
+        // Set active file immediately so UI Save Current knows the target
+        active_file_ = preset;
         pendingPresetTree = parsed;
         presetPending.store (true);
 
@@ -570,6 +572,9 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         return false;
     }
 
+    // Successful immediate load: set active file
+    active_file_ = preset;
+
     if (auto* gui = getGuiInterface())
     {
         gui->updateFullGui();
@@ -577,6 +582,43 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     }
 
     return true;
+}
+
+bool SynthBase::saveToFile(juce::File preset)
+{
+    if (preset == juce::File())
+        return false;
+
+    // sync all backend to valuetree prior to writing
+    for (auto vt : getValueTree())
+    {
+        if (vt.hasType (IDs::PIANO))
+            vt.getChildWithName (IDs::PREPARATIONS).setProperty ("sync", 1, nullptr);
+    }
+
+    auto xml = getValueTree().createXml();
+    if (xml == nullptr)
+        return false;
+
+    juce::FileOutputStream output (preset);
+    if (! output.openedOk())
+        return false;
+
+    output.setPosition (0);
+    output.truncate();
+    output.writeText (xml->toString(), false, false, {});
+    output.flush();
+
+    // Update active file on successful save
+    active_file_ = preset;
+    return true;
+}
+
+bool SynthBase::saveToActiveFile()
+{
+    if (active_file_ == juce::File())
+        return false;
+    return saveToFile(active_file_);
 }
 void SynthBase::startSampleLoading()
 {
@@ -709,7 +751,6 @@ std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (
     }
     return connections;
 }
-
 
 std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnections (
     const std::string& destination) const

@@ -245,6 +245,7 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
     void loadGallery();
     void saveGallery();
+    void saveCurrentGallery();
 
     void setTemporaryTab(juce::String name);
 

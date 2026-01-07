@@ -690,7 +690,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         separator.enabled = false; // non-selectable separator line
         separator.id = -1;
         options.addItem(0, "Load");
-        options.addItem(1, "Save (not implemented yet)");
+        options.addItem(1, "Save");
         options.addItem(2, "Save As");
         options.addItem(3, "Gallery Settings");
         options.addItem(separator);
@@ -781,7 +781,8 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 return;
             }
             if (selection == 1) {
-                DBG("save gallery: not yet implemented");
+                DBG("save current gallery");
+                saveCurrentGallery();
                 return;
             }
             if (selection == 2) {
@@ -826,6 +827,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                             double newTempo = tempoText.getDoubleValue();
 
                             // Basic validation: keep previous values if parsing failed (value becomes 0.0 when invalid)
+                            // these changes to properties in the gallery will trigger listeners in SynthBase::valueTreePropertyChanged
                             auto a440Trim = a440Text.trim();
                             if (a440Trim.isNotEmpty() && a440Trim != "." && newA440 > 0.0)
                                 gallery.setProperty (IDs::global_A440, newA440, nullptr);
@@ -833,8 +835,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                             auto tempoTrim = tempoText.trim();
                             if (tempoTrim.isNotEmpty() && tempoTrim != "." && newTempo > 0.0)
                                 gallery.setProperty (IDs::global_tempo_multiplier, newTempo, nullptr);
-
-                            // notify all BKSynthesizers of this change in some way, so BKSynthesiserVoice::setCurrentA4Frequency can be called with the newA440?
                         }
                     }
                 }),
@@ -890,6 +890,28 @@ void HeaderSection::saveGallery()
 {
     SynthGuiInterface *interface = findParentComponentOfClass<SynthGuiInterface>();
     interface->openSaveDialog();
+}
+
+void HeaderSection::saveCurrentGallery()
+{
+    auto* interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (interface == nullptr)
+        return;
+
+    // If there is no active file, fall back to "Save As..."
+    auto activeFile = interface->getActiveFile();
+    if (activeFile == juce::File())
+    {
+        saveGallery();
+        return;
+    }
+
+    // Delegate save to backend helper which handles sync and file I/O
+    if (interface->getSynth()->saveToActiveFile())
+    {
+        if (gallerySelectText)
+            gallerySelectText->setText(activeFile.getFileNameWithoutExtension());
+    }
 }
 
 void HeaderSection::sliderValueChanged(juce::Slider *slider) {
