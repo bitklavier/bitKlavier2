@@ -165,7 +165,6 @@ namespace bitklavier
             if (a4Dirty.exchange (false, std::memory_order_acq_rel))
             {
                 const double newA4 = pendingA4Hz.load (std::memory_order_relaxed);
-                DBG("newA4 update received " + juce::String(newA4));
 
                 // Walk all nodes and update any synth voices they own
                 auto nodes = processorGraph->getNodes();
@@ -191,6 +190,19 @@ namespace bitklavier
                     else if (auto* kp = dynamic_cast<TuningProcessor*>(node->getProcessor()))
                     {
                         kp->setA4Frequency(newA4);
+                    }
+                }
+            }
+            if (tempoMultiplierDirty.exchange (false, std::memory_order_acq_rel))
+            {
+                const double newTM = pendingTempoMultiplier.load (std::memory_order_relaxed);
+                auto nodes = processorGraph->getNodes();
+                for (auto* node : nodes)
+                {
+                    // If your synths live inside a known processor type, update through it
+                    if (auto* kp = dynamic_cast<TempoProcessor*>(node->getProcessor()))
+                    {
+                        kp->setGlobalTempoMultiplier(newTM);
                     }
                 }
             }
@@ -325,6 +337,12 @@ namespace bitklavier
             a4Dirty.store (true, std::memory_order_release);
         }
 
+        void requestTempoMultiplierUpdate (double newTm) noexcept
+        {
+            pendingTempoMultiplier.store (newTm, std::memory_order_relaxed);
+            tempoMultiplierDirty.store (true, std::memory_order_release);
+        }
+
 
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);
@@ -335,6 +353,9 @@ namespace bitklavier
 
         std::atomic<double> pendingA4Hz { 440.0 };
         std::atomic<bool>   a4Dirty { false };
+
+        std::atomic<double> pendingTempoMultiplier { 1.0 };
+        std::atomic<bool>   tempoMultiplierDirty { false };
 
         std::unique_ptr<juce::AudioProcessorGraph> processorGraph;
 

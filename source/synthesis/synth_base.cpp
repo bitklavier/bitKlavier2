@@ -225,16 +225,18 @@ void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasC
         {
             getGuiInterface()->setActivePiano (treeWhosePropertyHasChanged);
         }
-        // else
-        // {
-        //     setActivePiano (treeWhosePropertyHasChanged);
-        // }
     }
-    if (property == IDs::global_A440)
+    else if (property == IDs::global_A440)
     {
         const double a4 = (double) treeWhosePropertyHasChanged.getProperty (IDs::global_A440, 440.0);
         if (auto* eng = getEngine())
             eng->requestA4Update (a4); // thread-safe: sets atomics only
+    }
+    else if (property == IDs::global_tempo_multiplier)
+    {
+        const double gTM = (double) treeWhosePropertyHasChanged.getProperty (IDs::global_tempo_multiplier, 1.0);
+        if (auto* eng = getEngine())
+            eng->requestTempoMultiplierUpdate (gTM); // thread-safe: sets atomics only
     }
 }
 
