@@ -8,16 +8,12 @@
 namespace bitklavier {
     void ConnectionList::deleteObject(Connection *c) {
         synth.removeConnection(c->connection);
-        for (auto listener: listeners_) {
-            listener->removeConnection(c);
-        }
+        listeners_.call([&](Listener& l){ l.removeConnection(c); });
     }
 
     void ConnectionList::newObjectAdded(Connection *c) {
         synth.addConnection(c->connection);
-        for (auto listener: listeners_) {
-            listener->connectionAdded(c);
-        }
+        listeners_.call([&](Listener& l){ l.connectionAdded(c); });
     }
 
     Connection *ConnectionList::createNewObject(const juce::ValueTree &v) {
@@ -32,9 +28,7 @@ namespace bitklavier {
         {
             newObjectAdded(object);
         }
-        for (auto listener : listeners_) {
-            listener->connectionListChanged();
-        }
+        listeners_.call([](Listener& l){ l.connectionListChanged(); });
     }
 
     void ConnectionList::valueTreeParentChanged(juce::ValueTree &) {

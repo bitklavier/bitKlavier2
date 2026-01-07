@@ -8,9 +8,7 @@
 namespace bitklavier {
     void ModConnectionList::deleteObject(ModConnection *c) {
         synth.removeConnection(c->connection);
-        for (auto listener: listeners_) {
-            listener->removeModConnection(c);
-        }
+        listeners_.call([&](Listener& l){ l.removeModConnection(c); });
     }
 
     void ModConnectionList::newObjectAdded(ModConnection *c) {
@@ -29,9 +27,7 @@ namespace bitklavier {
             synth.connectTempo(c->state);
         if (c->state.hasType (IDs::SYNCHRONICCONNECTION))
             synth.connectSynchronic(c->state);
-        for (auto listener: listeners_) {
-            listener->modConnectionAdded(c);
-        } 
+        listeners_.call([&](Listener& l){ l.modConnectionAdded(c); });
     }
 
     ModConnection *ModConnectionList::createNewObject(const juce::ValueTree &v) {
@@ -46,9 +42,7 @@ namespace bitklavier {
         {
             newObjectAdded(object);
         }
-        for (auto listener : listeners_) {
-            listener->modConnectionListChanged();
-        }
+        listeners_.call([](Listener& l){ l.modConnectionListChanged(); });
     }
 
     void ModConnectionList::valueTreeParentChanged(juce::ValueTree &) {

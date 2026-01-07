@@ -5,6 +5,8 @@
 #ifndef CONNECTIONSLIST_H
 #define CONNECTIONSLIST_H
 #include <juce_audio_processors/juce_audio_processors.h>
+// For juce::ListenerList
+#include <juce_core/juce_core.h>
 #include "Identifiers.h"
 #include "tracktion_ValueTreeUtilities.h"
 #include "synth_base.h"
@@ -50,16 +52,44 @@ namespace bitklavier {
             virtual void connectionAdded(Connection*) = 0;
             virtual void removeConnection(Connection*) = 0;
         };
+        // RAII subscription token that auto-unsubscribes on destruction/reset
+        class Subscription {
+        public:
+            Subscription() = default;
+            ~Subscription() { release(); }
+            Subscription(Subscription&& other) noexcept { moveFrom(other); }
+            Subscription& operator=(Subscription&& other) noexcept { if (this != &other) { release(); moveFrom(other); } return *this; }
+            Subscription(const Subscription&) = delete;
+            Subscription& operator=(const Subscription&) = delete;
+
+            void release() {
+                if (list_ != nullptr && listener_ != nullptr) {
+                    list_->removeListener(listener_);
+                }
+                list_ = nullptr;
+                listener_ = nullptr;
+            }
+        private:
+            friend class ConnectionList;
+            Subscription(ConnectionList* list, Listener* l) : list_(list), listener_(l) {}
+            void moveFrom(Subscription& other) {
+                list_ = other.list_;
+                listener_ = other.listener_;
+                other.list_ = nullptr;
+                other.listener_ = nullptr;
+            }
+            ConnectionList* list_ { nullptr };
+            Listener* listener_ { nullptr };
+        };
         bool isSuitableType (const juce::ValueTree& v) const override
         {
             return v.hasType (IDs::CONNECTION) || v.hasType(IDs::MODCONNECTION);
         }
-        void addListener (Listener* l) { listeners_.push_back (l); }
-        void clearListeners(){listeners_.clear();}
-
-        void removeListener (Listener* l) {
-            std::erase(listeners_,l);
-        }
+        void addListener (Listener* l) { listeners_.add(l); }
+        void removeListener (Listener* l) { listeners_.remove(l); }
+        void clearListeners() { listeners_.clear(); }
+        // Preferred: RAII subscribe
+        Subscription subscribe(Listener* l) { addListener(l); return Subscription(this, l); }
         Connection* createNewObject(const juce::ValueTree&) override;
         void deleteObject (Connection*) override;
         void newObjectAdded (Connection*) override;
@@ -71,13 +101,11 @@ namespace bitklavier {
 
         void deleteAllGui() {
             for (auto obj: objects)
-                for (auto listener: listeners_)
-                    listener->removeConnection(obj) ;
+                listeners_.call([&](Listener& l){ l.removeConnection(obj); });
         }
         void rebuildAllGui() {
             for (auto obj: objects)
-                for (auto listener: listeners_)
-                    listener->connectionAdded(obj);
+                listeners_.call([&](Listener& l){ l.connectionAdded(obj); });
         }
         const juce::ValueTree& getValueTree() const {
             return parent;
@@ -85,7 +113,7 @@ namespace bitklavier {
         void appendChild (const juce::ValueTree& child, juce::UndoManager* undoManager);
         void removeChild (juce::ValueTree& child, juce::UndoManager* undoManager);
     private:
-        std::vector<Listener*> listeners_;
+        juce::ListenerList<Listener> listeners_;
         SynthBase& synth;
     };
 }
