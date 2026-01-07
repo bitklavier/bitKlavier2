@@ -230,6 +230,12 @@ void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasC
         //     setActivePiano (treeWhosePropertyHasChanged);
         // }
     }
+    if (property == IDs::global_A440)
+    {
+        const double a4 = (double) treeWhosePropertyHasChanged.getProperty (IDs::global_A440, 440.0);
+        if (auto* eng = getEngine())
+            eng->requestA4Update (a4); // thread-safe: sets atomics only
+    }
 }
 
 PreparationList* SynthBase::getActivePreparationList()

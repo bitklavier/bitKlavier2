@@ -369,13 +369,18 @@ public:
     void updateAllMidiNoteTranspositions();
     void handleMidiTargetMessages(int channel);
     bool acceptsMidi() const override { return true; }
-      void addSoundSet (
+    void addSoundSet (
         juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
         nostalgicSynth->addSoundSet (s);
+    }
+
+    void setA4Frequency(double newA4)
+    {
+        nostalgicSynth->setA4Frequency(newA4);
     }
 
     void setSynchronic (SynchronicProcessor*) override;

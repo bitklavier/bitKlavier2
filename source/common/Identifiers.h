@@ -106,7 +106,6 @@ namespace IDs
     DECLARE_ID(tuningType)
     DECLARE_ID(tuningSystem)
 
-
     DECLARE_ID(direct)
     DECLARE_ID(blendronic)
     DECLARE_ID(reset)
@@ -127,6 +126,9 @@ namespace IDs
     DECLARE_ID(globalsoundset)
     DECLARE_ID(syncglobal)
     DECLARE_ID(soundfont_preset)
+
+    DECLARE_ID(global_A440)
+    DECLARE_ID(global_tempo_multiplier)
 }
 
 // order should match BKPreparationType in common.h
@@ -145,6 +147,7 @@ static const std::array<juce::Identifier, 13> preparationIDs {
     IDs::reset,
     IDs::pianoMap
 };
+
 #undef DECLARE_ID
 inline juce::ValueTree createUuidProperty (juce::ValueTree& v)
 {

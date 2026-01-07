@@ -355,6 +355,14 @@ class BKSynthesiser
                     return lastSynthState;
                 }
 
+                void setA4Frequency(double newA4)
+                {
+                    for (auto& sv : voices)
+                    {
+                        sv->setCurrentA4Frequency (newA4);
+                    }
+                }
+
 protected:
                 //==============================================================================
                 /** This is used to control access to the rendering callback and the note trigger methods. */

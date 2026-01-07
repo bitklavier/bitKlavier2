@@ -19,6 +19,12 @@ void BKSynthesiserVoice::setCurrentPlaybackSampleRate (const double newRate)
     currentSampleRate = newRate;
 }
 
+void BKSynthesiserVoice::setCurrentA4Frequency (const double newA4)
+{
+    DBG ("BKSynthesiserVoice A4 freq " + juce::String (newA4));
+    currentA4Freq = newA4;
+}
+
 bool BKSynthesiserVoice::isVoiceActive() const
 {
     return getCurrentlyPlayingNote() >= 0;

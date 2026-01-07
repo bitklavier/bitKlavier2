@@ -29,8 +29,6 @@ namespace bitklavier {
         {
         initialiseGraph();
         processorGraph->enableAllBuses();
-
-
     }
 
     SoundEngine::~SoundEngine() {}
@@ -40,6 +38,7 @@ namespace bitklavier {
         processorGraph->rebuild();
         processorGraph.reset();
     }
+
     void SoundEngine::setOversamplingAmount(int oversampling_amount, int sample_rate) {
         static constexpr int kBaseSampleRate = 44100;
 

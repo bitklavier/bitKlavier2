@@ -134,7 +134,6 @@ juce::Rectangle<int> AboutSection::getInfoRect() {
     int y = 75 * size_ratio_;
     info_height = getHeight() - 200;
 
-    DBG("info_width = " << info_width << ", info_height = " << info_height << ", size_ratio_ = " << size_ratio_);
     return juce::Rectangle<int>(x, y, info_width, info_height);
 }
 

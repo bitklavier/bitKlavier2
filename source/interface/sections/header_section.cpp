@@ -15,7 +15,6 @@
  */
 
 #include "header_section.h"
-
 #include "ConstructionSite.h"
 #include "FullInterface.h"
 #include "SampleLoadManager.h"
@@ -54,7 +53,6 @@ void LogoSection::paintBackground(juce::Graphics &g) {
 }
 
 void LogoSection::buttonClicked(juce::Button *clicked_button) {
-    DBG("LogoSection::buttonClicked");
     for (Listener *listener: listeners_)
         listener->showAboutSection();
 }
@@ -694,6 +692,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(0, "Load");
         options.addItem(1, "Save (not implemented yet)");
         options.addItem(2, "Save As");
+        options.addItem(3, "Gallery Settings");
         options.addItem(separator);
 
         // Build directories/files tree
@@ -788,6 +787,58 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             if (selection == 2) {
                 DBG("save gallery as");
                 saveGallery();
+                return;
+            }
+            if (selection == 3) {
+                DBG("open gallery settings");
+                // Open a simple dialog to edit global_A440 and global_tempo_multiplier
+                double currentA440 = (double) gallery.getProperty(IDs::global_A440, 440.0);
+                double currentTempoMult = (double) gallery.getProperty(IDs::global_tempo_multiplier, 1.0);
+
+                // Use async modal (runModalLoop is not available in newer JUCE)
+                auto* aw = new juce::AlertWindow ("Gallery Settings",
+                                                  "Edit global settings for this gallery",
+                                                  juce::AlertWindow::NoIcon);
+                aw->addTextEditor ("a440",
+                                   juce::String (currentA440, 6),
+                                   "A4 (Hz)");
+                aw->addTextEditor ("tempo",
+                                   juce::String (currentTempoMult, 6),
+                                   "Tempo Multiplier");
+                aw->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey));
+                aw->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+                aw->centreAroundComponent (getTopLevelComponent(), 420, 260);
+
+                // Keep a safe pointer to the window so we can read values in the callback
+                juce::Component::SafePointer<juce::AlertWindow> awPtr (aw);
+
+                aw->enterModalState (true,
+                    juce::ModalCallbackFunction::create ([this, awPtr] (int result)
+                {
+                    if (result == 1)
+                    {
+                        if (awPtr != nullptr)
+                        {
+                            auto a440Text  = awPtr->getTextEditorContents ("a440");
+                            auto tempoText = awPtr->getTextEditorContents ("tempo");
+
+                            double newA440 = a440Text.getDoubleValue();
+                            double newTempo = tempoText.getDoubleValue();
+
+                            // Basic validation: keep previous values if parsing failed (value becomes 0.0 when invalid)
+                            auto a440Trim = a440Text.trim();
+                            if (a440Trim.isNotEmpty() && a440Trim != "." && newA440 > 0.0)
+                                gallery.setProperty (IDs::global_A440, newA440, nullptr);
+
+                            auto tempoTrim = tempoText.trim();
+                            if (tempoTrim.isNotEmpty() && tempoTrim != "." && newTempo > 0.0)
+                                gallery.setProperty (IDs::global_tempo_multiplier, newTempo, nullptr);
+
+                            // notify all BKSynthesizers of this change in some way, so BKSynthesiserVoice::setCurrentA4Frequency can be called with the newA440?
+                        }
+                    }
+                }),
+                true);
                 return;
             }
 

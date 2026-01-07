@@ -189,7 +189,6 @@ public:
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     override {
-
         mainSynth->addSoundSet(s);
         state.params.hammerLoaded->setParameterValue( h != nullptr);
         hammerSynth->addSoundSet(h);
@@ -197,6 +196,12 @@ public:
         releaseResonanceSynth->addSoundSet(r);
         state.params.pedalLoaded->setParameterValue( p != nullptr);
         pedalSynth->addSoundSet(p);
+    }
+
+    void setA4Frequency(double newA4)
+    {
+        mainSynth->setA4Frequency(newA4);
+        releaseResonanceSynth->setA4Frequency(newA4);
     }
 
     void setTuning(TuningProcessor *) override;

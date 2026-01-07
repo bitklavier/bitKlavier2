@@ -17,12 +17,17 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include "CompressorProcessor.h"
+#include "DirectProcessor.h"
+#include "NostalgicProcessor.h"
+#include "SynchronicProcessor.h"
+#include "ResonanceProcessor.h"
+#include "TuningProcessor.h"
+#include "EQProcessor.h"
+#include "GainProcessor.h"
 #include "ModulationConnection.h"
 #include "midi_manager.h"
 #include "synth_base.h"
-#include "CompressorProcessor.h"
-#include "EQProcessor.h"
-#include "GainProcessor.h"
 #include <vector>
 
 namespace bitklavier
@@ -30,9 +35,6 @@ namespace bitklavier
     class ModulationProcessor;
     using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
     using Node = juce::AudioProcessorGraph::Node;
-    // class GainProcessor;
-    // class CompressorProcessor;
-    // class EQProcessor;
 
     class SoundEngine
     {
@@ -159,6 +161,40 @@ namespace bitklavier
 
         void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
         {
+            // Apply A4 (and other globals) at a block boundary on the audio thread
+            if (a4Dirty.exchange (false, std::memory_order_acq_rel))
+            {
+                const double newA4 = pendingA4Hz.load (std::memory_order_relaxed);
+                DBG("newA4 update received " + juce::String(newA4));
+
+                // Walk all nodes and update any synth voices they own
+                auto nodes = processorGraph->getNodes();
+                for (auto* node : nodes)
+                {
+                    // If your synths live inside a known processor type, update through it
+                    if (auto* kp = dynamic_cast<DirectProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<SynchronicProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<NostalgicProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<ResonanceProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<TuningProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                }
+            }
+
             //DBG ("------------------BEGIN BLOCK-------------------");
             processorGraph->processBlock (audio_buffer, midi_buffer);
         }
@@ -283,6 +319,11 @@ namespace bitklavier
             return gainProcessor.get();
         };
 
+        void requestA4Update (double newA4) noexcept
+        {
+            pendingA4Hz.store (newA4, std::memory_order_relaxed);
+            a4Dirty.store (true, std::memory_order_release);
+        }
 
 
     private:
@@ -291,6 +332,9 @@ namespace bitklavier
         int last_sample_rate_;
         int buffer_size;
         int curr_sample_rate;
+
+        std::atomic<double> pendingA4Hz { 440.0 };
+        std::atomic<bool>   a4Dirty { false };
 
         std::unique_ptr<juce::AudioProcessorGraph> processorGraph;
 

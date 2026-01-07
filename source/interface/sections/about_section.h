@@ -16,7 +16,6 @@
 
 #pragma once
 
-
 #include "overlay.h"
 #include "open_gl_multi_quad.h"
 #include "open_gl_image_component.h"

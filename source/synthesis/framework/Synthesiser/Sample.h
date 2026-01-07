@@ -753,6 +753,7 @@ public:
         the currentSampleRate member.
     */
     virtual void setCurrentPlaybackSampleRate (double newRate);
+    virtual void setCurrentA4Frequency (double newRate);
 
     /** Returns true if the voice is currently playing a sound which is mapped to the given
         midi channel.
@@ -807,6 +808,7 @@ public:
     /** Returns true if this voice started playing its current note before the other voice did. */
     bool wasStartedBefore (const BKSynthesiserVoice& other) const noexcept;
     double currentSampleRate = 44100.0;
+    double currentA4Freq = 440.0;
 
     juce::uint32 noteOnTime = 0; int currentlyPlayingNote = -1, currentPlayingMidiChannel = 0;
     BKSynthesiserSound::Ptr currentlyPlayingSound;
@@ -963,7 +965,11 @@ public:
         /* set the sample increment, based on the target frequency for this note
          *  - we will update this every block for spring and regular tunings, but not for tuningType tunings
          */
-        sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+        DBG("myStartNote: currentA4Freq = " << currentA4Freq);
+        sampleIncrement.setTargetValue (
+            getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
+            samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+            currentA4Freq / 440.);
 
         /*
          * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
@@ -1130,12 +1136,18 @@ private:
          */
         if(tuning != nullptr ) {
             if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring_Tuning)) {
-                sampleIncrement.setTargetValue ((getTargetFrequency() / samplerSound->getCentreFrequencyInHz()) * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+                sampleIncrement.setTargetValue (
+                    getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
+                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+                    currentA4Freq / 440.);
             }
             // skip for adaptive tunings
         }
         // otherwise just return ET
-        else sampleIncrement.setTargetValue (mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() * samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+        else sampleIncrement.setTargetValue (
+            mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() *
+            samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+            currentA4Freq / 440.);
 
         /*
          * these are actually the start and end points for the sample, not loop point markers for sustained sample looping

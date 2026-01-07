@@ -15,7 +15,6 @@
  */
 
 #include "load_save.h"
-
 #include "midi_manager.h"
 #include "UserPreferences.h"
 

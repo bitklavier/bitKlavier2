@@ -167,6 +167,7 @@ public:
                                   const juce::Identifier &property);
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
 
+
     //single consumer single produce queue (thread safe / non blocking)
     static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
     using AudioThreadAction = juce::dsp::FixedSizeFunction<actionSize, void()>;
@@ -207,7 +208,6 @@ protected:
     juce::UndoManager um;
 
     bool loadFromValueTree(const juce::ValueTree &state);
-
 
     void processAudio(juce::AudioSampleBuffer *buffer, int channels, int samples, int offset);
 
