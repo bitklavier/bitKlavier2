@@ -253,7 +253,7 @@ void FullInterface::resized()
     footer_->setBounds (left, height - 90, width, 90);
     juce::Rectangle<int> new_bounds (0, 0, width, height);
     main_->setBounds (new_bounds);
-    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() / (1.2 * display_scale_), new_bounds.getHeight() / (1.24 * display_scale_));
+    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() * prepScale_x / (1.2 * display_scale_), new_bounds.getHeight() * prepScale_y / (1.24 * display_scale_ ));
     mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.24 * display_scale_));
     about_section_->setBounds (new_bounds);
     loading_section->setBounds (new_bounds);
@@ -310,11 +310,31 @@ void FullInterface::popupDisplay (juce::Component* source, const std::string& te
     display->setVisible (true);
 }
 
+void FullInterface::hideSoundsetSelector()
+{
+    DBG("FullInterface::hideSoundsetSelector()");
+    prep_popup->hideSoundsetSelector();
+}
+
 void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, const juce::ValueTree &v)
 {
+    /*
+     * todo: setup this rescaling of different prepSizes better
+     */
+    float prepScale_x_save = prepScale_x;
+    float prepScale_y_save = prepScale_y;
+    prepScale_x = prepScale_y = 1.;
+    if (synth_section->getName() == "Tempo")
+    {
+        prepScale_x = 0.6;
+        prepScale_y = 0.5;
+    }
     prep_popup->setContent (std::move(synth_section),v);
     prep_popup->setVisible (true);
     modulation_manager->added();
+
+    if (prepScale_x_save != prepScale_x || prepScale_y_save != prepScale_y)
+        resized();
 }
 
 void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section,const juce::ValueTree &v)

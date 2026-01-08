@@ -4,15 +4,15 @@
 
 #ifndef TEMPOPARAMETERSVIEW_H
 #define TEMPOPARAMETERSVIEW_H
-#include "TempoProcessor.h"
+#include "OpenGL_HoldTimeMinMaxSlider.h"
 #include "OpenGL_VelocityMinMaxSlider.h"
+#include "TempoProcessor.h"
 #include "TranspositionSliderSection.h"
 #include "VelocityMinMaxParams.h"
 #include "envelope_section.h"
 #include "peak_meter_section.h"
 #include "synth_section.h"
 #include "synth_slider.h"
-
 
 class TempoParametersView : public SynthSection
 {
@@ -37,6 +37,10 @@ public:
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
 
+        FullInterface *parent = findParentComponentOfClass<FullInterface>();
+        if (parent)
+            parent->hideSoundsetSelector();
+
         // pluginState is really more like preparationState; the state holder for this preparation (not the whole app/plugin)
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
@@ -51,7 +55,7 @@ public:
                 param_->paramID == "tempo" ||
                 param_->paramID == "subdivisions")
             {
-                auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
+                auto slider = std::make_unique<SynthSlider> (param_->paramID, param_->getModParam());
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
@@ -65,6 +69,35 @@ public:
                 _sliders.emplace_back (std::move (slider));
             }
         }
+
+        if (auto* tempoParams = dynamic_cast<TempoParams*>(&params))
+        {
+            tempoMode = std::make_unique<OpenGLComboBox>(tempoParams->tempoModeOptions->paramID.toStdString());
+            tempoMode_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tempoParams->tempoModeOptions.get(), listeners, *tempoMode, nullptr);
+            addAndMakeVisible(tempoMode.get());
+            addOpenGlComponent(tempoMode->getImageComponent());
+        }
+
+        historySlider = std::make_unique<SynthSlider> (params.historyParam->paramID, params.historyParam->getModParam());
+        historyAttachment= std::make_unique<chowdsp::SliderAttachment> (*params.historyParam.get(), listeners, *historySlider.get(), nullptr);
+        historySlider->addAttachment(historyAttachment.get()); // necessary for mods to be able to display properly
+        addSlider (historySlider.get()); // adds the slider to the synthSection
+        historySlider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+        historySlider->setShowPopupOnHover(true);
+        historyLabel = std::make_shared<PlainTextComponent>(historySlider->getName(), params.historyParam->getName(20));
+        addOpenGlComponent(historyLabel);
+        historyLabel->setJustification(juce::Justification::centred);
+
+        timeWindowMinMaxSlider = std::make_unique<OpenGL_HoldTimeMinMaxSlider>(&params.timeWindowMinMaxParams, listeners);
+        timeWindowMinMaxSlider->setComponentID ("timewindow_min_max");
+        timeWindowMinMaxSlider->setTitletext ("Time Window min/max (ms)");
+        addStateModulatedComponent (timeWindowMinMaxSlider.get());
+
+        primaryKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("primary knobs border", "Primary Parameters");
+        addBorder(primaryKnobsBorder.get());
+
+        adaptiveKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("adaptive knobs border", "Adaptive Parameters");
+        addBorder(adaptiveKnobsBorder.get());
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -83,6 +116,17 @@ public:
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
     std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
+
+    std::unique_ptr<SynthSlider> historySlider;
+    std::unique_ptr<chowdsp::SliderAttachment> historyAttachment;
+    std::shared_ptr<PlainTextComponent> historyLabel;
+
+    std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> timeWindowMinMaxSlider;
+    std::unique_ptr<OpenGLComboBox> tempoMode;
+    std::unique_ptr<chowdsp::ComboBoxAttachment> tempoMode_attachment;
+
+    std::shared_ptr<OpenGL_LabeledBorder> primaryKnobsBorder;
+    std::shared_ptr<OpenGL_LabeledBorder> adaptiveKnobsBorder;
 
     void resized() override;
 };

@@ -88,6 +88,8 @@ public :
 
     void prepDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v );
     void modDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v);
+    void hideSoundsetSelector();
+
     std::unique_ptr<SinglePopupSelector> popup_selector_;
     std::unique_ptr<PreparationPopup> prep_popup;
     std::unique_ptr<PreparationPopup> mod_popup;
@@ -132,6 +134,9 @@ private :
     bool enable_redo_background_{};
     float display_scale_;
     int pixel_multiple_;
+
+    float prepScale_x = 1.;
+    float prepScale_y = 1.;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FullInterface)
 };

@@ -9,6 +9,10 @@
 
 TempoProcessor::TempoProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, tempoBusLayout())
 {
+    state.params.timeWindowMinMaxParams.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "timewindowminmax",
+        &(state.params.timeWindowMinMaxParams.stateChanges)));
 }
 
 void TempoProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

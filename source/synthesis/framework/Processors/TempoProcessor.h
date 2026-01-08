@@ -5,18 +5,22 @@
 #pragma once
 
 #include "EnvParams.h"
-#include "Identifiers.h"
+#include "HoldTimeMinMaxParams.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
-#include "VelocityMinMaxParams.h"
-#include "buffer_debugger.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
-#include <chowdsp_serialization/chowdsp_serialization.h>
 #include <chowdsp_sources/chowdsp_sources.h>
+
+enum TempoModeType
+{
+    Constant_Tempo = 1 << 0,
+    Time_Between_Notes = 1 << 1,
+    Sustain_Time = 1 << 2,
+};
 
 struct TempoParams : chowdsp::ParamHolder
 {
@@ -24,7 +28,10 @@ struct TempoParams : chowdsp::ParamHolder
     TempoParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("tempo")
     {
         add (tempoParam,
-            subdivisionsParam);
+            subdivisionsParam,
+            historyParam,
+            tempoModeOptions,
+            timeWindowMinMaxParams);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the DirectProcessor constructor
@@ -64,7 +71,30 @@ struct TempoParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal,
         true
     };
-    /****************************************************************************************/
+
+    // Subdivision param
+    chowdsp::FloatParameter::Ptr historyParam {
+        juce::ParameterID { "history", 100 },
+        "HISTORY",
+        chowdsp::ParamUtils::createNormalisableRange (1.f, 10.f, 5.f, 1.f),
+        1.0f,
+        &chowdsp::ParamUtils::floatValToString,
+        &chowdsp::ParamUtils::stringToFloatVal,
+        true
+    };
+
+    chowdsp::EnumChoiceParameter<TempoModeType>::Ptr tempoModeOptions{
+        juce::ParameterID{"determinesCluster", 100},
+        "determines cluster",
+        TempoModeType::Constant_Tempo,
+        std::initializer_list<std::pair<char, char>>{{'_', ' '}, {'1', '/'}, {'2', '-'}, {'3', '\''}, {'4', '#'}, {'5', 'b'}}};
+
+    HoldTimeMinMaxParams timeWindowMinMaxParams;
+
+    void processStateChanges() override
+    {
+        timeWindowMinMaxParams.processStateChanges();
+    }
 };
 
 struct TempoNonParameterState : chowdsp::NonParamState
