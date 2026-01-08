@@ -125,7 +125,7 @@ class SynthBase;
 class SampleLoadManager : public juce::AsyncUpdater
 {
 public:
-    SampleLoadManager (SynthBase* parent,std::shared_ptr<UserPreferencesWrapper> preferences);
+    SampleLoadManager (SynthBase* parent, std::shared_ptr<UserPreferencesWrapper> preferences);
     ~SampleLoadManager(
 
         );

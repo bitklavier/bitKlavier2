@@ -16,7 +16,6 @@
 
 #pragma once
 
-
 #include <chowdsp_dsp_data_structures/chowdsp_dsp_data_structures.h>
 #include <juce_dsp/juce_dsp.h>
 #include <set>
@@ -32,7 +31,6 @@ class BKSamplerSound;
 class PreparationList;
 class SampleLoadManager;
 
-
 class BKSynthesiserSound;
 namespace bitklavier {
     class ConnectionList;
@@ -45,6 +43,7 @@ enum class SwitchTriggerThread
     MessageThread,
     AudioThread,
 };
+
 class UserPreferencesWrapper;
 class SynthBase : public juce::ValueTree::Listener {
 public:
@@ -55,18 +54,13 @@ public:
 
     virtual ~SynthBase();
 
-
-
     bitklavier::SoundEngine *getEngine() { return engine_.get(); }
     juce::MidiKeyboardState *getKeyboardState() { return keyboard_state_.get(); }
 
     int getSampleRate();
-
     int getBufferSize();
 
-
     virtual const juce::CriticalSection &getCriticalSection() = 0;
-
     virtual void pauseProcessing(bool pause) = 0;
 
     bitklavier::ModulationConnectionBank &getModulationBank();
@@ -84,17 +78,12 @@ public:
 
     void clearActiveFile() { active_file_ = juce::File(); }
     juce::File getActiveFile() { return active_file_; }
-
     juce::ValueTree &getValueTree();
-
     juce::UndoManager &getUndoManager();
-
-
 
     //processor adding functions
     juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor,
                                                       juce::AudioProcessorGraph::NodeID id = {});
-
 
     juce::AudioProcessorGraph::Node::Ptr removeProcessor(juce::AudioProcessorGraph::NodeID id);
 
@@ -104,14 +93,7 @@ public:
                                                    PluginDescriptionAndPreference::UseARA useARA);
 
     juce::AudioProcessorGraph::Node *getNodeForId(juce::AudioProcessorGraph::NodeID id);
-
-
-
-
-
-
     std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> * getSamples();
-
 
     //all connection code
     void addConnection(juce::AudioProcessorGraph::Connection &connect);
@@ -185,6 +167,7 @@ public:
                                   const juce::Identifier &property);
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
 
+
     //single consumer single produce queue (thread safe / non blocking)
     static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
     using AudioThreadAction = juce::dsp::FixedSizeFunction<actionSize, void()>;
@@ -212,6 +195,7 @@ public:
     void finishedSampleLoading();
     void startSampleLoading();
     void clearAllGuiListeners();
+
 protected:
     // Holds the parsed preset tree until samples finish loading
     juce::ValueTree pendingPresetTree;
@@ -224,7 +208,6 @@ protected:
     juce::UndoManager um;
 
     bool loadFromValueTree(const juce::ValueTree &state);
-
 
     void processAudio(juce::AudioSampleBuffer *buffer, int channels, int samples, int offset);
 
@@ -250,8 +233,6 @@ protected:
     juce::File active_file_;
 
     bool expired_;
-
-
 
 public:
     PreparationList *getActivePreparationList();

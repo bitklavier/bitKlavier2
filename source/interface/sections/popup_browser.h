@@ -70,7 +70,6 @@ public:
     void reset() override;
     void moved() override;
     void paintBackground(juce::Graphics& g) override {}
-
     void paintBackgroundShadow(juce::Graphics& g) override {}
     void repaintPrepBackground();
 
@@ -183,6 +182,7 @@ public:
     void showSelected(bool show) { show_selected_ = show; }
     void select(int select);
     int Ypos;
+
 private:
     int getViewPosition() {
         int view_height = getHeight();
@@ -241,12 +241,10 @@ public:
                     callback_(id,index);
                     setVisible(false);
                 }
-
             }
             else
                 cancel_();
         } else if (list == popup_list_1.get()) {
-            DBG("asf");
             cancel_ = nullptr;
             callback_(id,index);
             setVisible(false);

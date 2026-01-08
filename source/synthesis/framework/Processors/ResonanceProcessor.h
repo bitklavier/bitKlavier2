@@ -497,12 +497,17 @@ public:
 //    }
 
     void addSoundSet (
-    juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
-   juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
-   juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
-   juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
         resonanceSynth->addSoundSet (s);
+    }
+
+    void setA4Frequency(float freq)
+    {
+        resonanceSynth->setA4Frequency(freq);
     }
 
 //    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)

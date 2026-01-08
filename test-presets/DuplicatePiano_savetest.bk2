@@ -95,12 +95,40 @@
         <PARAM_DEFAULT/>
         <PORT nodeID="2753206513" chIdx="4096" isIn="1"/>
       </tuning>
+      <modulation type="8" width="60.00000381469727" height="60.00000381469727"
+                  x_y="739, 310" uuid="abe2c697c12046b891344b61c7f60ef0" nodeID="2883765911"
+                  name="modulation 1" numIns="1">
+        <PORT nodeID="2883765911" chIdx="4096" isIn="1"/>
+        <modulationproc type="ramp" isState="0" uuid="9f0073082963447086f5ae21ce8629ed"
+                        Time="2158.000"/>
+      </modulation>
+      <keymap type="7" width="111.0000076293945" height="63.00000381469727"
+              x_y="734, 493" uuid="ec01ed140fea4c30ad88d3b85a8703b1" soundset="syncglobal"
+              nodeID="3959549204" name="keymap 2" numOuts="1" velocityCurveAsymWarp="1.000"
+              velocityCurveSymWarp="1.000" velocityCurveScale="1.000" velocityCurveOffset="0.000"
+              velocityCurveInvert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurveAsymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveSymWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurveScale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveOffset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="3959549204" chIdx="4096" isIn="0"/>
+      </keymap>
     </PREPARATIONS>
     <CONNECTIONS>
       <CONNECTION isMod="0" src="2940623226" srcIdx="4096" dest="376789821" destIdx="4096"/>
+      <CONNECTION isMod="0" src="3959549204" srcIdx="4096" dest="2883765911" destIdx="4096"/>
     </CONNECTIONS>
     <MODCONNECTIONS>
-      <TUNINGCONNECTION isMod="0" src="2753206513" dest="376789821"/>
+      <TUNINGCONNECTION isMod="0" src="2753206513" dest="376789821">
+        <ModulationConnection uuid="ee33e92a5ae94335ba08e288bdb1ade2" isState="0" dest="16755b3ddd974141a984b63959e5c5e0_Main"
+                              src="abe2c697c12046b891344b61c7f60ef0_ramp-9f0073082963447086f5ae21ce8629ed_mod"
+                              sliderval="0.0" mod0to1="-0.2454492449760437" modAmt="-12.28989887237549"/>
+      </TUNINGCONNECTION>
+      <MODCONNECTION isMod="1" src="2883765911" dest="376789821"/>
     </MODCONNECTIONS>
   </PIANO>
   <BUSEQ type="16" uuid="e93d7ffa78df49d8adc4ad6a9c2b464d" soundset="syncglobal">

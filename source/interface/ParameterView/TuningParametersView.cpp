@@ -338,7 +338,8 @@ void TuningParametersView::keyboardSliderChanged(juce::String name)
 void TuningParametersView::timerCallback(void)
 {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    interface->getGui()->prep_popup->repaintPrepBackground();
+    if (interface != NULL)
+        interface->getGui()->prep_popup->repaintPrepBackground();
 }
 
 /**

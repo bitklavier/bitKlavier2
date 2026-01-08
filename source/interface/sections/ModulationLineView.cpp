@@ -35,8 +35,12 @@ void ModulationLineView::reset()
 }
 void ModulationLineView::removeAllGuiListeners()
 {
-    if(connection_list)
+    if (connection_list)
+    {
+        // Ensure any existing GUI elements are removed before detaching
+        connection_list->deleteAllGui();
         connection_list->removeListener(this);
+    }
     connection_list = nullptr;
 }
 

@@ -87,21 +87,21 @@ namespace bitklavier {
         kNumVoiceEvents
     };
 
+    // order should match preparationIDs in Identifiers.h and AllPrepInfo below
     typedef enum BKPreparationType {
-        PreparationTypeDirect = 0,
+        PreparationTypeKeymap = 0,
+        PreparationTypeDirect,
         PreparationTypeSynchronic,
         PreparationTypeNostalgic,
         PreparationTypeBlendronic,
         PreparationTypeResonance,
         PreparationTypeTuning,
         PreparationTypeTempo,
-        PreparationTypeKeymap,
-        PreparationTypeModulation,
         PreparationTypeMidiFilter,
         PreparationTypeMidiTarget,
-        PreparationTypePianoMap,
+        PreparationTypeModulation,
         PreparationTypeReset,
-        PreparationTypePiano,
+        PreparationTypePianoMap,
         PreparationTypeComment,
         PreparationTypeCompressor,
         PreparationTypeEQ,
@@ -109,7 +109,33 @@ namespace bitklavier {
         BKPreparationTypeNil,
     } BKPreparationType;
 
+    struct PreparationTypeInfo {
+        BKPreparationType type;
+        std::string name;
+    };
+
+    static const std::vector<PreparationTypeInfo> AllPrepInfo = {
+        {PreparationTypeKeymap,     "Keymap"},
+        {PreparationTypeDirect,     "Direct"},
+        {PreparationTypeSynchronic, "Synchronic"},
+        {PreparationTypeNostalgic,  "Nostalgic"},
+        {PreparationTypeBlendronic, "Blendrónic"}, // unless special character 'ó' is an issue
+        {PreparationTypeResonance,  "Resonance"},
+        {PreparationTypeTuning,     "Tuning"},
+        {PreparationTypeTempo,      "Tempo"},
+        {PreparationTypeMidiFilter, "MIDI Filter"},
+        {PreparationTypeMidiTarget, "MIDI Target"},
+        {PreparationTypeModulation, "Modification"},
+        {PreparationTypeReset,      "Reset"},
+        {PreparationTypePianoMap,   "Piano Switch"},
+        {PreparationTypeComment,    "Comment"},
+        {PreparationTypeCompressor, "Compressor"},
+        {PreparationTypeEQ,         "EQ"},
+        {PreparationTypeVST,        "VST"}
+    };
+
 } // namespace bitKlavier
+
 
 enum class Direction
 {

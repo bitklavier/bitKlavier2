@@ -15,10 +15,8 @@
  */
 
 #include "popup_browser.h"
-
 #include "skin.h"
 #include "fonts.h"
-
 #include "paths.h"
 #include "open_gl_component.h"
 #include "synth_section.h"
@@ -140,7 +138,8 @@ PopupList::PopupList() : SynthSection("Popup List"),
     scroll_bar_->addListener(this);
 }
 
-void PopupList::resized() {
+void PopupList::resized()
+{
     juce::Colour lighten = findColour(Skin::kLightenScreen, true);
     scroll_bar_->setColor(lighten);
 
@@ -1204,7 +1203,7 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
 
     curr_vt = v;
     if (curr_vt.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
-        sampleSelectText->setText("Global Samples");
+        sampleSelectText->setText("use Global Soundset");
     else
         sampleSelectText->setText(
             juce::String(curr_vt.getProperty(IDs::soundset)).upToFirstOccurrenceOf("||", false, false));
@@ -1262,7 +1261,7 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         auto string_names = parent->getSynth()->sampleLoadManager->getAllSampleSets();
-        options.addItem(0, "Global Samples");
+        options.addItem(0, "use Global Soundset");
         for (int i = 1; i < string_names.size() + 1; i++) {
             options.addItem(i, string_names[i - 1]);
         }
@@ -1273,11 +1272,11 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
                 // SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 // parent->getSampleLoadManager()
                 curr_vt.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
-                sampleSelectText->setText("Global Samples");
+                sampleSelectText->setText("use Global Soundset");
             } else {
                 SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 parent->getSampleLoadManager()->loadSamples(
-                    parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
+                    parent->getSampleLoadManager()->getAllSampleSets()[selection - 1], curr_vt);
                 sampleSelectText->setText(
                     juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
                     upToFirstOccurrenceOf("||", false, false));

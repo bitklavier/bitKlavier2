@@ -37,10 +37,11 @@ public:
         if (menuName == "File") {
             menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::load);
             menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::save);
+            menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::saveAs);
         } else if (menuName == "Edit") {
-
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::undo);
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::redo);
+            // add copy and past commands here
         }
         else if (menuName == "Options") {
             menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::showPluginListEditor);

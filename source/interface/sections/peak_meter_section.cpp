@@ -105,8 +105,6 @@ PeakMeterSection::PeakMeterSection(
    volume_->setPopupPlacement(juce::BubbleComponent::right);
    volume_->setDoubleClickReturnValue(true, 0.0);
 
-
-
     if (horizontal_)
     {
         volume_->setSliderStyle(juce::Slider::LinearBar);
@@ -118,7 +116,7 @@ PeakMeterSection::PeakMeterSection(
         peak_meter_label = std::make_shared<PlainTextComponent>("peak_meter", "Gain");
         addOpenGlComponent(peak_meter_label);
         peak_meter_label->setTextSize (12.0f);
-        peak_meter_label->setJustification(juce::Justification::centred);
+        peak_meter_label->setJustification(juce::Justification::centredLeft);
         peak_meter_label->setRotation(-90);
     }
 }

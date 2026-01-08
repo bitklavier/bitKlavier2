@@ -33,9 +33,14 @@ public:
         if (!tree.isValid())
             tree = juce::ValueTree("Preferences");
         tree.addListener(this);
-        juce::String path_to_samples = "~/Library/Application Support/bitklavier/samples";
 
+        //juce::String path_to_samples = "~/Library/Application Support/bitklavier/samples";
+        juce::String path_to_samples = "~/Documents/bitKlavier/samples";
         tree.setProperty("default_sample_path", path_to_samples, nullptr);
+        juce::String path_to_soundfonts = "~/Documents/bitKlavier/soundfonts";
+        tree.setProperty("default_soundfonts_path", path_to_soundfonts, nullptr);
+        juce::String path_to_galleries = "~/Documents/bitKlavier/galleries";
+        tree.setProperty("default_galleries_path", path_to_galleries, nullptr);
 
         juce::ValueTree a (IDs::midiPrefs);
         if(!tree.getChildWithName(IDs::midiPrefs).isValid())
@@ -43,7 +48,7 @@ public:
         if ( tree.getChildWithName("KNOWNPLUGINS").isValid()) {
             knownPluginList.recreateFromXml(*tree.getChildWithName("KNOWNPLUGINS").createXml());
         }
-        auto val   =int(tree.getProperty("pluginSortMethod", juce::KnownPluginList::sortByManufacturer));
+        auto val = int(tree.getProperty("pluginSortMethod", juce::KnownPluginList::sortByManufacturer));
         pluginSortMethod = static_cast<juce::KnownPluginList::SortMethod>(val);
         knownPluginList.setCustomScanner (std::make_unique<CustomPluginScanner>(tree));
         knownPluginList.addChangeListener(this);
@@ -54,6 +59,7 @@ public:
         addDefaultFormatsToManager(formatManager);
         //formatManager.addDefaultFormats();
     }
+
     void changeListenerCallback(juce::ChangeBroadcaster *source) override {
         if (tree.getChildWithName("KNOWNPLUGINS").isValid()) {
             auto pluginList = tree.getChildWithName("KNOWNPLUGINS");
@@ -70,7 +76,6 @@ public:
     juce::KnownPluginList::SortMethod pluginSortMethod;
     juce::Array<PluginDescriptionAndPreference> pluginDescriptionsAndPreference;
 };
-
 
 class UserPreferencesWrapper : private juce::ValueTree::Listener
 {
@@ -93,10 +98,11 @@ private:
         //juce::NullCheckedInvocation::invoke(onSkinChange, skin);
     }
 };
+
 namespace ProjectInfo
 {
-    const char* const  projectName    = "bitKlavier2 Demo";
-    const char* const  companyName    = "bitKlavier2 Company";
+    const char* const  projectName    = "bitKlavier5";
+    const char* const  companyName    = "Many Arrows Music";
     const char* const  versionString  = "0.0.1";
     const int          versionNumber  =  0x1;
 }

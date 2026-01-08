@@ -27,7 +27,7 @@ struct CompressorParams : chowdsp::ParamHolder
     float rangeStart = -80.0f;
     float rangeEnd = 6.0f;
     float skewFactor = 2.0f;
-    float maxGainReduction = 0.0f;
+    std::atomic<float> maxGainReduction = 0.0f;
 
     // Adds the appropriate parameters to the Nostalgic Processor
     CompressorParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("compressor")
@@ -51,7 +51,7 @@ struct CompressorParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr activeCompressor {
         juce::ParameterID { "activeCompressor", 100 },
         "activeCompressor",
-        true
+        false
     };
 
     // reset bool
@@ -104,7 +104,7 @@ struct CompressorParams : chowdsp::ParamHolder
         juce::ParameterID{"compAttack",100},
         "compAttack",
         juce::NormalisableRange{0.00f,100.00f,0.01f,1.f,false},
-        0.f
+        5.f
     };
 
     // release 5 to 1500.00ms, center 750, default 5
@@ -113,7 +113,7 @@ struct CompressorParams : chowdsp::ParamHolder
         juce::ParameterID{"compRelease",100},
         "compRelease",
         juce::NormalisableRange{5.00f,1500.00f,0.01f,1.f,false},
-        5.00f
+        20.00f
     };
 
     // threshold -60.0 to 0 db, center -30, default 0
@@ -246,8 +246,8 @@ public:
     void processCrestFactor(const float* src, const int numSamples);
     float applyCompression(float& input);
     void applyCompressionToBuffer(float* src, int numSamples);
-
-
+    void applyBallistics(float* src, int numSamples);
+    float processPeakBranched(const float& in);
 
 private:
     juce::AudioBuffer<float> originalSignal;
@@ -267,6 +267,10 @@ private:
     double state01{0.0}, state02{0.0};
     double alphaAttack{0.0};
     double alphaRelease{0.0};
+
+    float slope;
+    float kneeHalf;
+    float overshoot;
 
     juce::Atomic<float> gainReduction;
     juce::Atomic<float> currentInput;

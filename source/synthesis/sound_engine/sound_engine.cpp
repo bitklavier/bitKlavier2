@@ -18,6 +18,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
+#include <algorithm>
 
 namespace bitklavier {
 
@@ -28,8 +29,6 @@ namespace bitklavier {
         {
         initialiseGraph();
         processorGraph->enableAllBuses();
-
-
     }
 
     SoundEngine::~SoundEngine() {}
@@ -39,6 +38,7 @@ namespace bitklavier {
         processorGraph->rebuild();
         processorGraph.reset();
     }
+
     void SoundEngine::setOversamplingAmount(int oversampling_amount, int sample_rate) {
         static constexpr int kBaseSampleRate = 44100;
 
@@ -94,6 +94,70 @@ namespace bitklavier {
         }
     }
 
+    void SoundEngine::postUINoteOn (int midiNote, float velocity01, int channel)
+    {
+        const auto ts = juce::Time::getMillisecondCounterHiRes() * 0.001;
+        juce::MidiMessage msg = juce::MidiMessage::noteOn (channel,
+                                                           midiNote,
+                                                           (juce::uint8) juce::jlimit (0, 127, (int) std::lround (velocity01 * 127.0f)));
+        msg.setTimeStamp (ts);
+
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                kp->postExternalMidi (msg);
+    }
+
+    void SoundEngine::postUINoteOff (int midiNote, float velocity01, int channel)
+    {
+        const auto ts = juce::Time::getMillisecondCounterHiRes() * 0.001;
+        juce::MidiMessage msg = juce::MidiMessage::noteOff (channel,
+                                                            midiNote,
+                                                            (juce::uint8) juce::jlimit (0, 127, (int) std::lround (velocity01 * 127.0f)));
+        msg.setTimeStamp (ts);
+
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                kp->postExternalMidi (msg);
+    }
+
+    void SoundEngine::addMidiLiveListener (MidiManager::LiveMidiListener* l)
+    {
+        // Store for future processors and attach to all current ones
+        if (l)
+        {
+            // prevent duplicates
+            if (std::find(live_ui_listeners_.begin(), live_ui_listeners_.end(), l) == live_ui_listeners_.end())
+                live_ui_listeners_.push_back(l);
+
+            auto nodes = processorGraph->getNodes();
+            for (auto* node : nodes)
+                if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                    if (kp->_midi)
+                        kp->_midi->addLiveMidiListener (l);
+        }
+    }
+
+    void SoundEngine::removeMidiLiveListener (MidiManager::LiveMidiListener* l)
+    {
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+                if (kp->_midi)
+                    kp->_midi->removeLiveMidiListener (l);
+
+        // remove from registry
+        live_ui_listeners_.erase(std::remove(live_ui_listeners_.begin(), live_ui_listeners_.end(), l), live_ui_listeners_.end());
+    }
+
+    void SoundEngine::registerLiveListenersTo (MidiManager* midiMgr)
+    {
+        if (!midiMgr) return;
+        for (auto* l : live_ui_listeners_)
+            midiMgr->addLiveMidiListener(l);
+    }
+
     void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {
         if (gainProcessor || compressorProcessor || eqProcessor)
             return;
@@ -103,9 +167,9 @@ namespace bitklavier {
         tree.appendChild (buscompressor, nullptr);
         buseq.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
         buscompressor.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
-        gainProcessor = std::make_unique<GainProcessor>(parent,tree);
-        compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
-        eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
+        // gainProcessor = std::make_unique<GainProcessor>(parent,tree);
+        // compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
+        // eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
         gainProcessor       = std::make_unique<GainProcessor>(parent, tree);
         compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq);
         eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor);

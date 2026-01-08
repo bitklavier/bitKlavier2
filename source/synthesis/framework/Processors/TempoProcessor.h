@@ -84,7 +84,6 @@ public:
     TempoProcessor (SynthBase& parent, const juce::ValueTree& v);
     ~TempoProcessor() {}
 
-
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
@@ -108,6 +107,13 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
+    void setGlobalTempoMultiplier(float gTM)
+    {
+        globalTempoMultiplier = gTM;
+        DBG("global tempo multiplier updated " << globalTempoMultiplier);
+    }
+    float getGlobalTempoMultiplier() { return globalTempoMultiplier; }
+    double globalTempoMultiplier = 1.;
 
     // void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
     // {

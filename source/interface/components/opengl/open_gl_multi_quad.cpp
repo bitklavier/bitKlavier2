@@ -141,12 +141,16 @@ void OpenGlMultiQuad::destroy(OpenGlWrapper &open_gl)
 
 void OpenGlMultiQuad::render(OpenGlWrapper &open_gl, bool animate)
 {
-  juce::Component *component = target_component_ ? target_component_ : this;
-  if (!active_ || (!draw_when_not_visible_ && !component->isVisible()) || !setViewPort(component, open_gl))
+  juce::Component* component = (target_component_ == nullptr ? this : static_cast<juce::Component*>(target_component_));
+  if (component == nullptr)
     return;
 
-  juce::Component *scissor_component = scissor_component_;
-  if (scissor_component)
+  // Extra safety: avoid rendering for hidden/detached components
+  if (!active_ || (!draw_when_not_visible_ && !component->isVisible()) || component->getTopLevelComponent() == nullptr || !setViewPort(component, open_gl))
+    return;
+
+  juce::Component* scissor_component = static_cast<juce::Component*>(scissor_component_);
+  if (scissor_component != nullptr)
     setScissor(scissor_component, open_gl);
 
   if (current_alpha_mult_ == 0.0f && alpha_mult_ == 0.0f)

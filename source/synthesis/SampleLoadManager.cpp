@@ -148,7 +148,8 @@ SampleLoadManager::getMidiRange
  need to fully test it though!
  */
 
-juce::BigInteger SampleLoadManager::getMidiRange(juce::String pitchName) {
+juce::BigInteger SampleLoadManager::getMidiRange(juce::String pitchName)
+{
     int pitchNum = noteNameToRoot(pitchName);
     int pitchIndex = allKeysWithSamples.indexOf(pitchNum);
 
@@ -179,7 +180,8 @@ juce::BigInteger SampleLoadManager::getMidiRange(juce::String pitchName) {
     return midirange;
 }
 
-const std::vector<std::string> SampleLoadManager::getAllSampleSets() {
+const std::vector<std::string> SampleLoadManager::getAllSampleSets()
+{
     std::vector<std::string> sampleSets;
 
     juce::String samplePath = preferences->userPreferences->tree.getProperty("default_sample_path");
@@ -194,9 +196,29 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets() {
 
         for (auto &d: dirs)
             sampleSets.push_back(d.getFileName().toStdString());
+    }
 
+    // alphabetically sort sample sets, ignoring case
+    std::sort(sampleSets.begin(), sampleSets.end(), [](const std::string& a, const std::string& b) {
+        return std::lexicographical_compare(
+            a.begin(), a.end(),
+            b.begin(), b.end(),
+            [](unsigned char char1, unsigned char char2) {
+                return std::tolower(char1) < std::tolower(char2);
+            }
+        );
+    });
+
+    sampleSets.push_back("menuSeparator"); // to display separator between bK samplesets and soundfonts
+    size_t pivot_index = sampleSets.size(); // for sorting soundfonts
+
+    samplePath = preferences->userPreferences->tree.getProperty("default_soundfonts_path");
+    juce::File baseSFDir(samplePath);
+
+    if (baseSFDir.isDirectory())
+    {
         // 2. .sf2 and .sfz files
-        juce::Array<juce::File> sfFiles = baseDir.findChildFiles(
+        juce::Array<juce::File> sfFiles = baseSFDir.findChildFiles(
             juce::File::findFiles,
             false,
             "*.sf2;*.sfz" // JUCE supports ";"-separated patterns
@@ -205,18 +227,30 @@ const std::vector<std::string> SampleLoadManager::getAllSampleSets() {
         for (auto &f: sfFiles)
             sampleSets.push_back(f.getFileName().toStdString());
     }
+
+    // alphabetically sort soundfonts, ignoring case
+    std::sort(sampleSets.begin() + pivot_index, sampleSets.end(), [](const std::string& a, const std::string& b) {
+        return std::lexicographical_compare(
+            a.begin(), a.end(),
+            b.begin(), b.end(),
+            [](unsigned char char1, unsigned char char2) {
+                return std::tolower(char1) < std::tolower(char2);
+            }
+        );
+    });
+
     return sampleSets;
 }
 
-
-
 // Helper: decide if this tree represents the "global/gallery" target.
-static bool isGalleryTree(const juce::ValueTree &vt) {
+static bool isGalleryTree(const juce::ValueTree &vt)
+{
     return vt.isValid() && vt.hasType(IDs::GALLERY); // change IDs::gallery if needed
 }
 
 bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
-                                    const juce::ValueTree &targetTree) {
+                                    const juce::ValueTree &targetTree)
+{
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
 
     allKeysWithSamples.clear();
@@ -247,7 +281,11 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     // need this to remove the || containing the preset number from soundfonts
     juce::String setName = soundsetName;
     if (soundsetName.contains(".sf2") or soundsetName.contains(".sfz"))
+    {
+        samplePath = preferences->userPreferences->tree.getProperty("default_soundfonts_path");
+        baseDir = preferences->userPreferences->tree.getProperty("default_soundfonts_path").toString();
         setName = sfzBaseFromKey(soundsetName);
+    }
 
     juce::File directory = baseDir.getChildFile(setName);
 
@@ -263,6 +301,9 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     progressPtr->load_manager = this;
     parent->startSampleLoading();
 
+    /*
+     * handle soundfonts, otherwise move on to regular bK sample types
+     */
     const juce::String ext = directory.getFileExtension().toLowerCase();
     if (ext == ".sfz" || ext == ".sf2") {
         progressPtr->totalJobs++; // one job per sample type
@@ -276,6 +317,9 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
         return true;
     }
 
+    /*
+     * not a soundfont, so loading regular bK sample type
+     */
 
     ///todo: add warning popup and call to  notify the hideloadingsection
     /// function so it never hangs
@@ -284,15 +328,15 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
         return false;
     }
     // (Optional debug listing)
-    {
-        MyComparator sorter;
-        auto allSamples = directory.findChildFiles(juce::File::findFiles, false, "*.wav");
-        allSamples.sort(sorter);
 
-        int i = 0;
-        for (auto file: allSamples)
-            DBG(file.getFullPathName() + " " + juce::String (++i));
-    }
+    MyComparator sorter;
+    auto allSamples = directory.findChildFiles(juce::File::findFiles, false, "*.wav");
+    allSamples.sort(sorter);
+
+    int i = 0;
+    for (auto file: allSamples)
+        DBG(file.getFullPathName() + " " + juce::String (++i));
+
     loadSamples_sub(bitklavier::utils::BKPianoMain, soundsetName.toStdString());
     loadSamples_sub(bitklavier::utils::BKPianoHammer, soundsetName.toStdString());
     loadSamples_sub(bitklavier::utils::BKPianoReleaseResonance, soundsetName.toStdString());
@@ -320,7 +364,6 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
     juce::File directory(samplePath);
     juce::Array<juce::File> allSamples = directory.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false,
                                                                   "*.wav");
-
 
     // sort alphabetically
     MyComparator sorter;

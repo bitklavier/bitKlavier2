@@ -12,7 +12,6 @@
 #include "synth_slider.h"
 #include "OpenGL_CompressorMeter.h"
 
-
 class CompressorParameterView : public SynthSection, public juce::Timer
 {
 public:
@@ -64,7 +63,7 @@ public:
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-        levelMeter->setLabel("Main");
+        levelMeter->setLabel("Out");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
@@ -74,7 +73,7 @@ public:
 
         // and for input level meter/slider
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
-        inLevelMeter->setLabel("Input");
+        inLevelMeter->setLabel("In");
         addSubSection(inLevelMeter.get());
 
         // knobs
@@ -165,7 +164,7 @@ public:
 
         compressorControlsBorder = std::make_shared<OpenGL_LabeledBorder>("compressor controls border", "Compressor Parameters");
         addBorder(compressorControlsBorder.get());
-        presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Presets");
+        presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Power and Presets");
         addBorder(presetsBorder.get());
 
         // for updating the compressorMeter
@@ -181,6 +180,17 @@ public:
         paintBorder (g);
         paintKnobShadows (g);
         paintChildrenBackgrounds (g);
+
+        /*
+         * update needle position here
+         * - not getting paint() calls inside the compressorMeter, so doing it out here
+         */
+        const auto bounds = compressorMeter->getBounds().toFloat();
+        const float centreX = bounds.getX() + bounds.getWidth() * 0.5f;
+        const float centreY = bounds.getY() + bounds.getHeight();
+        const float needleLength = juce::jmin(bounds.getWidth() * 0.7f, bounds.getHeight() * 0.7f);
+        g.setColour(compressorMeter->needle.needleColour);
+        compressorMeter->needle.redrawNeedle (g, centreX, centreY, needleLength);
     }
     
     // prep title, vertical, left side
@@ -233,7 +243,6 @@ public:
     std::shared_ptr<OpenGL_LabeledBorder> compressorControlsBorder;
     std::shared_ptr<OpenGL_LabeledBorder> presetsBorder;
 
-    
     CompressorParams& compressorParams_;
     void resized() override;
 };

@@ -67,6 +67,9 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::array<std::atomic<float>, 12> circularTuningOffset_custom = { 0.f };
 
     int oldFundamental = 0;
+    /*
+     * todo: remove all the A4frequency stuff, as it will be handled in BKSynthesizer
+     */
     float A4frequency = 440.;       // set this in gallery or app preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
@@ -147,6 +150,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     void adaptiveReset();
     void updateAdaptiveFundamentalValue(int newFund);
 
+    void setGlobalTuningReference(float newA4freq) { A4frequency = newA4freq; DBG("TuningState::setGlobalTuningReference"); };
     float getGlobalTuningReference() const { return A4frequency; };
     TuningType getTuningType() const { return tuningType->get(); }
 
@@ -156,7 +160,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     inline const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
     inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
     inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
-    //float intervalToRatio(float interval) const;
 
     /*
      * Adaptive vars
@@ -253,6 +256,7 @@ public:
     void noteOn (int midiChannel,int midiNoteNumber,float velocity);
     void noteOff (int midiChannel,int midiNoteNumber,float velocity);
 
+    void setA4Frequency(double A4new) { state.params.tuningState.setGlobalTuningReference(A4new);}
     void incrementClusterTime(long numSamples) { state.params.tuningState.clusterTimeMS += numSamples * 1000. / getSampleRate(); }
 
     bool hasEditor() const override { return false; }

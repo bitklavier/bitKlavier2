@@ -10,18 +10,18 @@ class ApplicationCommandHandler : public juce::ApplicationCommandTarget {
 public:
     ApplicationCommandHandler(SynthGuiInterface* parent);
 
-
     // Define your command IDs
     enum CommandIDs {
         undo = 0x2000,
         redo,
         save,
+        saveAs,
         load,
         showPluginListEditor   = 0x30100
     };
 
     void getAllCommands(juce::Array<juce::CommandID> &commands) override {
-        commands.addArray({undo, redo, save, load,showPluginListEditor});
+        commands.addArray({undo, redo, save, saveAs, load, showPluginListEditor});
     }
 
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override {
@@ -37,6 +37,10 @@ public:
             case save:
                 info.setInfo("Save", "Save Current Preset", "File", 0);
                 info.addDefaultKeypress('s', juce::ModifierKeys::commandModifier);
+                break;
+            case saveAs:
+                info.setInfo("Save As...", "Save Current Preset to new file", "File", 0);
+                info.addDefaultKeypress('s', juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier);
                 break;
             case load:
                 info.setInfo("Load", "Load New Preset", "File", 0);

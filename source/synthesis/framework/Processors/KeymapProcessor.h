@@ -142,6 +142,8 @@ public:
             .withInput("Modulation", juce::AudioChannelSet::discreteChannels(4 * 2), true);}
     bool setMidiDevice(juce::AudioDeviceManager& deviceManager, juce::String identifier) { deviceManager.addMidiInputDeviceCallback(identifier, static_cast<juce::MidiInputCallback*>(_midi.get()));}
     void allNotesOff();
+    // Enqueue an external MIDI message (e.g., from UI keyboard) into this processor's MIDI queue
+    void postExternalMidi (const juce::MidiMessage& msg);
     std::unique_ptr<MidiManager> _midi;
 
     float applyVelocityCurve(float velocity);

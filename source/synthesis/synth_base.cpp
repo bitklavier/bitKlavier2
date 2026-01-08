@@ -40,11 +40,10 @@
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "valuetree_utils/VariantConverters.h"
 
-SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false), manager (deviceManager),user_prefs (new UserPreferencesWrapper()),
-                                                                        sampleLoadManager (
-                                                                            new SampleLoadManager (this,
-                                                                                user_prefs
-                                                                                ))
+SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
+    expired_ (false),
+    manager (deviceManager),
+    user_prefs (new UserPreferencesWrapper()), sampleLoadManager (new SampleLoadManager (this, user_prefs))
 {
     self_reference_ = std::make_shared<SynthBase*>();
     *self_reference_ = this;
@@ -67,22 +66,21 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
      *        - would this be `tree.appendChild (posteq, nullptr)` and `tree.appendChild (postcompressor, nullptr)` ??
      *       also General Settings, saved with Gallery
      */
-    tree.setProperty (IDs::soundset, "Default", nullptr);
+    tree.setProperty (IDs::soundset, "Yamaha_Default", nullptr);
+    // tree.setProperty (IDs::soundset, "Default", nullptr);
     juce::ValueTree piano (IDs::PIANO);
     juce::ValueTree preparations (IDs::PREPARATIONS);
     juce::ValueTree connections (IDs::CONNECTIONS);
     juce::ValueTree modconnections (IDs::MODCONNECTIONS);
 
-
     piano.appendChild (preparations, nullptr);
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
     piano.setProperty (IDs::isActive, 1, nullptr);
-    piano.setProperty (IDs::name, "default", nullptr);
+    piano.setProperty (IDs::name, "New Piano", nullptr);
 
     tree.appendChild (piano, nullptr);
     tree.addListener (this);
-
 
     //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
     modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree> ("ramp");
@@ -101,6 +99,14 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
     engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
     engine_->addDefaultChain(*this,tree);
+
+    /*
+     * want to open default preset file, but this is not the right place to do it
+     */
+    // juce::File preset_file = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile("Application Support").getChildFile("bitklavier").getChildFile ("galleries").getChildFile ("Default Piano.bk2");
+    // DBG("default file = " + preset_file.getFullPathName());
+    // std::string error;
+    // loadFromFile(preset_file, error);
 }
 
 SynthBase::~SynthBase()
@@ -219,10 +225,18 @@ void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasC
         {
             getGuiInterface()->setActivePiano (treeWhosePropertyHasChanged);
         }
-        // else
-        // {
-        //     setActivePiano (treeWhosePropertyHasChanged);
-        // }
+    }
+    else if (property == IDs::global_A440)
+    {
+        const double a4 = (double) treeWhosePropertyHasChanged.getProperty (IDs::global_A440, 440.0);
+        if (auto* eng = getEngine())
+            eng->requestA4Update (a4); // thread-safe: sets atomics only
+    }
+    else if (property == IDs::global_tempo_multiplier)
+    {
+        const double gTM = (double) treeWhosePropertyHasChanged.getProperty (IDs::global_tempo_multiplier, 1.0);
+        if (auto* eng = getEngine())
+            eng->requestTempoMultiplierUpdate (gTM); // thread-safe: sets atomics only
     }
 }
 
@@ -514,8 +528,6 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
             if (! sampleLoadManager->isSoundsetLoaded (ref.name))
             {
                 needsAsyncLoads = true;
-
-
                 sampleLoadManager->loadSamples (ref.name, ref.target);
             }
         }
@@ -524,18 +536,28 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 
     // ---------- Reset backend BEFORE applying preset ----------
 
-    pauseProcessing(true);
-    clearAllBackend();
-    pauseProcessing(false);
-    if (auto* gui = getGuiInterface())
-        gui->removeAllGuiListeners();
+    // pauseProcessing(true);
+    // clearAllBackend();
+    // pauseProcessing(false);
+    // if (auto* gui = getGuiInterface())
+    //     gui->removeAllGuiListeners();
+    //
+    // engine_->resetEngine();
 
+    if (auto* gui = getGuiInterface())
+        gui->removeAllGuiListeners(); // 1) detach GUI from backend FIRST
+
+    pauseProcessing(true);
+    clearAllBackend();               // 2) now it’s safe to destroy lists
+    pauseProcessing(false);
 
     engine_->resetEngine();
 
     // ---------- Defer preset application if samples are loading ----------
     if (needsAsyncLoads)
     {
+        // Set active file immediately so UI Save Current knows the target
+        active_file_ = preset;
         pendingPresetTree = parsed;
         presetPending.store (true);
 
@@ -550,6 +572,9 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         return false;
     }
 
+    // Successful immediate load: set active file
+    active_file_ = preset;
+
     if (auto* gui = getGuiInterface())
     {
         gui->updateFullGui();
@@ -557,6 +582,43 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     }
 
     return true;
+}
+
+bool SynthBase::saveToFile(juce::File preset)
+{
+    if (preset == juce::File())
+        return false;
+
+    // sync all backend to valuetree prior to writing
+    for (auto vt : getValueTree())
+    {
+        if (vt.hasType (IDs::PIANO))
+            vt.getChildWithName (IDs::PREPARATIONS).setProperty ("sync", 1, nullptr);
+    }
+
+    auto xml = getValueTree().createXml();
+    if (xml == nullptr)
+        return false;
+
+    juce::FileOutputStream output (preset);
+    if (! output.openedOk())
+        return false;
+
+    output.setPosition (0);
+    output.truncate();
+    output.writeText (xml->toString(), false, false, {});
+    output.flush();
+
+    // Update active file on successful save
+    active_file_ = preset;
+    return true;
+}
+
+bool SynthBase::saveToActiveFile()
+{
+    if (active_file_ == juce::File())
+        return false;
+    return saveToFile(active_file_);
 }
 void SynthBase::startSampleLoading()
 {
@@ -589,7 +651,6 @@ void SynthBase::finishedSampleLoading()
        getGuiInterface()->getGui()->notifyFresh();
     }
     samplesLoading.store (false);
-
 }
 
 void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
@@ -602,9 +663,9 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
         action();
 
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
-    engine_->getMainVolumeProcessor()->processBlock (audio_buffer, midi_buffer);
     engine_->getEQProcessor()->processBlock (audio_buffer, midi_buffer);
     engine_->getCompressorProcessor()->processBlock (audio_buffer, midi_buffer);
+    engine_->getMainVolumeProcessor()->processBlock (audio_buffer, midi_buffer);
     sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }
@@ -690,7 +751,6 @@ std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (
     }
     return connections;
 }
-
 
 std::vector<bitklavier::StateConnection*> SynthBase::getDestinationStateConnections (
     const std::string& destination) const

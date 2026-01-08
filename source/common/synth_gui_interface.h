@@ -60,12 +60,13 @@ public:
         undo = 0x2000,
         redo,
         save,
+        saveAs,
         load,
         showPluginListEditor   = 0x30100
     };
 
     void getAllCommands(juce::Array<juce::CommandID> &commands) override {
-        commands.addArray({undo, redo,showPluginListEditor});
+        commands.addArray({undo, redo, showPluginListEditor});
     }
 
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override {
@@ -114,6 +115,7 @@ public:
     void notifyFresh();
     void openSaveDialog();
     void openLoadDialog();
+    void saveCurrentGallery();
     void externalPresetLoaded(juce::File preset);
     void setGuiSize(float scale);
     bool loadFromFile(juce::File preset, std::string& error);
@@ -132,22 +134,27 @@ public:
 
    // std::unique_ptr<ApplicationCommandHandler> commandHandler;
     PopupItems getPluginPopupItems();
+    PopupItems getPreparationPopupItems();
+    PopupItems getVSTPopupItems();
     class PluginListWindow;
     std::unique_ptr<PluginListWindow> pluginListWindow;
    juce::ScopedMessageBox messageBox;
     juce::ApplicationCommandManager commandManager;
     juce::ValueTree gallery;
 
+    const std::vector<std::string> getAllGalleries();
+
     juce::CriticalSection* getOpenGlCriticalSection();
     std::unique_ptr<SynthSection> getCompressorPopup();
     std::unique_ptr<SynthSection> getEQPopup();
+
+    // ok to be public?
+    std::unique_ptr<FullInterface> gui_;
 
   protected:
     std::atomic<bool> loading;
     std::unique_ptr<juce::FileChooser> filechooser;
     SynthBase* synth_;
-    std::unique_ptr<FullInterface> gui_;
-
   
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthGuiInterface)
 };

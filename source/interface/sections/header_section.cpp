@@ -15,13 +15,14 @@
  */
 
 #include "header_section.h"
-
-#include "fonts.h"
-#include <memory>
-#include "text_look_and_feel.h"
-#include "load_save.h"
+#include "ConstructionSite.h"
+#include "FullInterface.h"
 #include "SampleLoadManager.h"
+#include "load_save.h"
+#include "main_section.h"
 #include "synth_base.h"
+#include "text_look_and_feel.h"
+#include <memory>
 
 LogoSection::LogoSection() : SynthSection("logo_section") {
 #if !defined(NO_TEXT_ENTRY)
@@ -97,6 +98,15 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     pianoSelector->setShape(juce::Path(), true, true, true);
     currentPianoIndex = 0;
 
+    preparationSelectText = std::make_shared<PlainTextComponent>("Preparation", "add");
+    addOpenGlComponent(preparationSelectText);
+    preparationsSelector = std::make_unique<juce::ShapeButton>("prepSelector", juce::Colour(0xff666666),
+                                                        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(preparationsSelector.get());
+    preparationsSelector->addListener(this);
+    preparationsSelector->setTriggeredOnMouseDown(true);
+    preparationsSelector->setShape(juce::Path(), true, true, true);
+
     addPianoButton = std::make_unique<OpenGlTextButton>("header_add_piano");
     addOpenGlComponent(addPianoButton->getGlComponent());
     addAndMakeVisible(addPianoButton.get());
@@ -106,11 +116,67 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
 
     sampleSelectText->setText("---");
     pianoSelectText->setText(getAllPianoNames().at(0));
-    // setAlwaysOnTop(true);
+
+    gallerySelectText = std::make_shared<PlainTextComponent>("Gallery", "---");
+    addOpenGlComponent(gallerySelectText);
+    gallerySelector = std::make_unique<juce::ShapeButton>("gSelector", juce::Colour(0xff666666),
+                                                        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(gallerySelector.get());
+    gallerySelector->addListener(this);
+    gallerySelector->setTriggeredOnMouseDown(true);
+    gallerySelector->setShape(juce::Path(), true, true, true);
+
+    VSTSelectText = std::make_shared<PlainTextComponent>("VST", "add");
+    addOpenGlComponent(VSTSelectText);
+    VSTSelector = std::make_unique<juce::ShapeButton>("VSTSelector", juce::Colour(0xff666666),
+                                                        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(VSTSelector.get());
+    VSTSelector->addListener(this);
+    VSTSelector->setTriggeredOnMouseDown(true);
+    VSTSelector->setShape(juce::Path(), true, true, true);
+
+    globalSoundset_label = std::make_shared<PlainTextComponent>("globalsamples", "Global Soundset");
+    addOpenGlComponent(globalSoundset_label);
+    globalSoundset_label->setTextSize (12.0f);
+    globalSoundset_label->setFontType (PlainTextComponent::kTitle);
+    globalSoundset_label->setJustification(juce::Justification::centred);
+
+    soundfontPreset_label = std::make_shared<PlainTextComponent>("soundfontpreset", "Soundfont Preset");
+    addOpenGlComponent(soundfontPreset_label);
+    soundfontPreset_label->setTextSize (12.0f);
+    soundfontPreset_label->setFontType (PlainTextComponent::kTitle);
+    soundfontPreset_label->setJustification(juce::Justification::centred);
+    soundfontPreset_label->setVisible(true);
+
+    currentPiano_label = std::make_shared<PlainTextComponent>("currentpiano", "Piano");
+    addOpenGlComponent(currentPiano_label);
+    currentPiano_label->setTextSize (12.0f);
+    currentPiano_label->setFontType (PlainTextComponent::kTitle);
+    currentPiano_label->setJustification(juce::Justification::centred);
+
+    galleries_label = std::make_shared<PlainTextComponent>("currentgallery", "Gallery");
+    addOpenGlComponent(galleries_label);
+    galleries_label->setTextSize (12.0f);
+    galleries_label->setFontType (PlainTextComponent::kTitle);
+    galleries_label->setJustification(juce::Justification::centred);
+
+    preparationSelect_label = std::make_shared<PlainTextComponent>("addprep", "Preparation");
+    addOpenGlComponent(preparationSelect_label);
+    preparationSelect_label->setTextSize (12.0f);
+    preparationSelect_label->setFontType (PlainTextComponent::kTitle);
+    preparationSelect_label->setJustification(juce::Justification::centred);
+
+    VSTSelect_label = std::make_shared<PlainTextComponent>("addvst", "VST");
+    addOpenGlComponent(VSTSelect_label);
+    VSTSelect_label->setTextSize (12.0f);
+    VSTSelect_label->setFontType (PlainTextComponent::kTitle);
+    VSTSelect_label->setJustification(juce::Justification::centred);
+
     setSkinOverride(Skin::kHeader);
 }
 
-const juce::ValueTree &HeaderSection::getActivePiano() {
+const juce::ValueTree &HeaderSection::getActivePiano()
+{
     for (const auto &vt: gallery) {
         if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::isActive)) {
             return vt;
@@ -118,7 +184,17 @@ const juce::ValueTree &HeaderSection::getActivePiano() {
     }
 }
 
-std::vector<std::string> HeaderSection::getAllPianoNames() {
+juce::ValueTree HeaderSection::getActivePianoCopy()
+{
+    for (auto vt : gallery) {
+        if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::isActive))
+            return vt; // returned by value (safe)
+    }
+    return {}; // invalid ValueTree if none active
+}
+
+std::vector<std::string> HeaderSection::getAllPianoNames()
+{
     std::vector<std::string> names;
     for (const auto &vt: gallery) {
         if (vt.hasType(IDs::PIANO)) {
@@ -126,6 +202,15 @@ std::vector<std::string> HeaderSection::getAllPianoNames() {
         }
     }
     return names;
+}
+
+void HeaderSection::renamePiano(juce::String newname)
+{
+    for (auto vt: gallery) {
+        if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::isActive)) {
+            vt.setProperty(IDs::name, newname, nullptr);
+        }
+    }
 }
 
 void HeaderSection::paintBackground(juce::Graphics &g) {
@@ -144,47 +229,67 @@ void HeaderSection::paintBackground(juce::Graphics &g) {
 }
 
 void HeaderSection::resized() {
-    static constexpr float kTextHeightRatio = 0.3f;
-    static constexpr float kPaddingLeft = 0.25f;
-    juce::Colour body_text = findColour(Skin::kBodyText, true);
-    sampleSelectText->setColor(body_text);
-    pianoSelectText->setColor(body_text);
-    soundfontPresetSelectText->setColor(body_text);
-    //  oscilloscope_->setColour(Skin::kBody, findColour(Skin::kBackground, true));
-    //  spectrogram_->setColour(Skin::kBody, findColour(Skin::kBackground, true));
+    int large_padding = findValue(Skin::kLargePadding);
+    int small_padding = findValue(Skin::kPadding);
+    float label_text_height = findValue(Skin::kLabelHeight);
+    int logo_width = findValue(Skin::kModulationButtonWidth);
+    int label_height = findValue(Skin::kLabelBackgroundHeight);
     int height = getHeight();
-    int width = getWidth();
 
     body_->setBounds(getLocalBounds());
     body_->setRounding(findValue(Skin::kBodyRounding));
-
-    //body_->setColor(findColour(Skin::kBody, true));
-    /*
-     * todo: color organization
-     */
     body_->setColor(juce::Colours::black);
-    int widget_margin = findValue(Skin::kWidgetMargin);
-    int large_padding = findValue(Skin::kLargePadding);
+    logo_section_->setBounds(0, -10, logo_width, height + 10);
 
-    int logo_width = findValue(Skin::kModulationButtonWidth);
-    int label_height = findValue(Skin::kLabelBackgroundHeight);
-    logo_section_->setBounds(0, -10, logo_width, height);
+    juce::Rectangle<int> headerArea2 = getLocalBounds();
+    headerArea2.removeFromLeft(logo_width + large_padding);
+    headerArea2.removeFromTop(small_padding * 2);
+    headerArea2.removeFromRight(large_padding * 2);
+    juce::Rectangle<int> headerArea_labels = headerArea2.removeFromTop(label_height + small_padding);
 
-    sampleSelector->setBounds(logo_width + widget_margin, logo_section_->getBottom() / 2, 100, label_height);
-    sampleSelectText->setBounds(sampleSelector->getBounds());
+    juce::FlexBox fb;
+    fb.flexDirection = juce::FlexBox::Direction::row;
+    fb.alignContent = juce::FlexBox::AlignContent::stretch;
+    fb.alignItems = juce::FlexBox::AlignItems::stretch;
 
-    pianoSelector->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY(), sampleSelector->getWidth(),
-                             label_height);
+    fb.items.add(juce::FlexItem(*gallerySelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*pianoSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*preparationsSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*VSTSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*sampleSelector).withFlex(1.0f));
+    fb.items.add(juce::FlexItem(*soundfontPresetSelector).withFlex(1.0f));
+    fb.performLayout(headerArea2);
+
+    juce::FlexBox fbl;
+    fbl.flexDirection = juce::FlexBox::Direction::row;
+    fbl.alignContent = juce::FlexBox::AlignContent::stretch;
+    fbl.alignItems = juce::FlexBox::AlignItems::stretch;
+
+    // doing this one with a loop, for fun...
+    juce::Component* labels[] = {
+        galleries_label.get(), currentPiano_label.get(), preparationSelect_label.get(),
+        VSTSelect_label.get(), globalSoundset_label.get(), soundfontPreset_label.get()
+    };
+
+    for (int i = 0; i < 6; ++i)
+    {
+        fbl.items.add(juce::FlexItem(*labels[i]).withFlex(1.0f));
+    }
+
+    fbl.performLayout(headerArea_labels);
+
+    gallerySelectText->setBounds(gallerySelector->getBounds());
+    gallerySelectText->setTextSize(label_text_height);
     pianoSelectText->setBounds(pianoSelector->getBounds());
-    soundfontPresetSelector->setBounds(pianoSelector->getRight() + 10, pianoSelector->getY(), pianoSelector->getWidth(),
-                                       label_height);
-    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
-    float label_text_height = findValue(Skin::kLabelHeight);
-    sampleSelectText->setTextSize(label_text_height);
     pianoSelectText->setTextSize(label_text_height);
+    preparationSelectText->setBounds(preparationsSelector->getBounds());
+    preparationSelectText->setTextSize(label_text_height);
+    VSTSelectText->setBounds(VSTSelector->getBounds());
+    VSTSelectText->setTextSize(label_text_height);
+    sampleSelectText->setBounds(sampleSelector->getBounds());
+    sampleSelectText->setTextSize(label_text_height);
+    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
     soundfontPresetSelectText->setTextSize(label_text_height);
-    addPianoButton->setBounds(sampleSelector->getRight() + 10, sampleSelector->getY() - label_height,
-                              sampleSelector->getWidth(), label_height);
 
     SynthSection::resized();
 }
@@ -194,39 +299,254 @@ void HeaderSection::reset() {
     //    //synth_preset_selector_->resetText();
 }
 
+void HeaderSection::addPiano()
+{
+    juce::ValueTree piano{IDs::PIANO};
+    piano.setProperty(IDs::isActive, true, nullptr);
+    juce::String pianoName = "piano " + juce::String(howManyOfThisPrepTypeInVT(gallery, IDs::PIANO) + 1);
+    piano.setProperty(IDs::name, pianoName, nullptr);
+    juce::ValueTree preparations(IDs::PREPARATIONS);
+    juce::ValueTree connections(IDs::CONNECTIONS);
+    juce::ValueTree modconnections(IDs::MODCONNECTIONS);
+
+    piano.appendChild(preparations, nullptr);
+    piano.appendChild(connections, nullptr);
+    piano.appendChild(modconnections, nullptr);
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->setPianoSwitchTriggerThreadMessage();
+
+    //set all current pianos to be inactive or isActive parameter 0
+    for (auto vt: gallery) {
+        if (vt.hasType(IDs::PIANO)) {
+            vt.setProperty(IDs::isActive, 0, nullptr);
+        }
+    }
+    gallery.appendChild(piano, nullptr);
+
+    pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
+    interface->allNotesOff();
+    resized();
+}
+
+void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
+{
+    if (! pianoToCopy.isValid() || ! pianoToCopy.hasType(IDs::PIANO))
+        return;
+
+    // 0) Flush live processor state into the ValueTree so the copy keeps current parameter values
+    if (auto preps = pianoToCopy.getChildWithName(IDs::PREPARATIONS); preps.isValid())
+    {
+        // Triggers PreparationList::valueTreePropertyChanged() to write back proc states
+        preps.setProperty(IDs::sync, 1, nullptr);
+    }
+
+    // 1) Deep copy the whole subtree and remap IDs & connections for the duplicate
+    juce::ValueTree newPiano = pianoToCopy.createCopy();
+    remapPianoUUIDsAndConnections(newPiano);
+
+    // 2) Make the copy active and give it a unique name
+    newPiano.setProperty(IDs::isActive, true, nullptr);
+
+    if (newPiano.hasProperty(IDs::name))
+    {
+        juce::String baseName = pianoToCopy.getProperty(IDs::name).toString();
+        juce::String candidate = baseName;
+        int suffix = 2;
+        auto names = getAllPianoNames();
+        while (std::find(names.begin(), names.end(), candidate.toStdString()) != names.end())
+            candidate = baseName + " (" + juce::String(suffix++) + ")";
+        newPiano.setProperty(IDs::name, candidate, nullptr);
+    }
+
+    // 3) Deactivate current pianos and append the duplicate
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->setPianoSwitchTriggerThreadMessage();
+
+    for (auto vt : gallery)
+        if (vt.hasType(IDs::PIANO))
+            vt.setProperty(IDs::isActive, 0, nullptr);
+
+    gallery.appendChild(newPiano, nullptr);
+
+    // 4) UI updates
+    pianoSelectText->setText(newPiano.getProperty(IDs::name));
+    interface->allNotesOff();
+    resized();
+
+    // Optional: ensure lines are built after components exist
+    // juce::MessageManager::callAsync([safeInterface = juce::Component::SafePointer<SynthGuiInterface>(interface)]{
+    //     if (safeInterface != nullptr)
+    //     {
+    //         // If you have explicit rebuild hooks, call them here
+    //         // safeInterface->getGui()->connection_list->rebuildAllGui();
+    //         // safeInterface->getGui()->modulation_manager->added();
+    //     }
+    // });
+}
+
+void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
+{
+    auto preps = piano.getChildWithName(IDs::PREPARATIONS);
+    if (! preps.isValid()) return;
+
+    std::map<juce::String, juce::String> uuidMap;
+    std::map<juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID> nodeIdMap;
+
+    for (int i = 0; i < preps.getNumChildren(); ++i)
+    {
+        auto prep = preps.getChild(i);
+        if (! prep.isValid()) continue;
+
+        auto oldUuid = prep.getProperty(IDs::uuid).toString();
+        if (oldUuid.isEmpty()) continue;
+
+        auto newUuid = juce::Uuid().toString();
+        uuidMap[oldUuid] = newUuid;
+        prep.setProperty(IDs::uuid, newUuid, nullptr);
+
+        auto oldNodeId = juce::AudioProcessorGraph::NodeID(juce::Uuid(oldUuid).getTimeLow());
+        auto newNodeId = juce::AudioProcessorGraph::NodeID(juce::Uuid(newUuid).getTimeLow());
+        nodeIdMap[oldNodeId] = newNodeId;
+
+        prep.setProperty(IDs::nodeID,
+                         juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(newNodeId),
+                         nullptr);
+    }
+
+    if (uuidMap.empty()) return;
+
+    // CONNECTIONS remap (unchanged)
+    if (auto conns = piano.getChildWithName(IDs::CONNECTIONS); conns.isValid())
+    {
+        for (int i = 0; i < conns.getNumChildren(); ++i)
+        {
+            auto c = conns.getChild(i);
+            if (! c.isValid()) continue;
+
+            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
+            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+
+            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+        }
+    }
+
+    // MODCONNECTIONS remap (NodeID-only)
+    if (auto mconns = piano.getChildWithName(IDs::MODCONNECTIONS); mconns.isValid())
+    {
+        for (int i = 0; i < mconns.getNumChildren(); ++i)
+        {
+            auto c = mconns.getChild(i);
+            if (! c.isValid()) continue;
+
+            if (! c.hasProperty(IDs::src) || ! c.hasProperty(IDs::dest))
+                continue;
+
+            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
+            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+
+            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+        }
+    }
+}
+
+void HeaderSection::deletePiano()
+{
+    // Count pianos and locate the active one (by child index in gallery)
+    int numPianos = 0;
+    int activeChildIdx = -1;
+
+    const int numChildren = gallery.getNumChildren();
+    for (int i = 0; i < numChildren; ++i)
+    {
+        auto child = gallery.getChild(i);
+        if (! child.hasType(IDs::PIANO))
+            continue;
+
+        ++numPianos;
+        if ((bool) child.getProperty(IDs::isActive))
+            activeChildIdx = i;
+    }
+
+    // Need at least 2 pianos to delete one, and we require a valid active piano
+    if (numPianos <= 1 || activeChildIdx < 0)
+        return;
+
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (interface != nullptr)
+        interface->setPianoSwitchTriggerThreadMessage();
+
+    // Choose which piano to activate after deletion: prefer next, otherwise previous
+    int targetChildIdx = -1;
+    for (int i = activeChildIdx + 1; i < numChildren; ++i)
+    {
+        auto c = gallery.getChild(i);
+        if (c.hasType(IDs::PIANO)) { targetChildIdx = i; break; }
+    }
+    if (targetChildIdx < 0)
+    {
+        for (int i = activeChildIdx - 1; i >= 0; --i)
+        {
+            auto c = gallery.getChild(i);
+            if (c.hasType(IDs::PIANO)) { targetChildIdx = i; break; }
+        }
+    }
+
+    // If we couldn't find another piano (shouldn’t happen because numPianos > 1), bail safely
+    if (targetChildIdx < 0)
+        return;
+
+    // Capture the node to activate BEFORE removal (indices are valid now)
+    juce::ValueTree pianoToActivate = gallery.getChild(targetChildIdx);
+
+    // Remove the active piano
+    gallery.removeChild(activeChildIdx, nullptr);
+
+    // Deactivate all pianos, then activate the target
+    for (int i = 0; i < gallery.getNumChildren(); ++i)
+    {
+        auto c = gallery.getChild(i);
+        if (! c.hasType(IDs::PIANO))
+            continue;
+
+        const bool setActive = (c == pianoToActivate);
+        c.setProperty(IDs::isActive, setActive ? 1 : 0, nullptr);
+    }
+
+    // Update UI text to reflect the new active piano
+    if (pianoToActivate.isValid())
+        pianoSelectText->setText(pianoToActivate.getProperty(IDs::name).toString());
+
+    if (interface != nullptr)
+        interface->allNotesOff();
+
+    resized();
+}
+
 void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == exit_temporary_button_.get()) {
-    } else if (clicked_button == addPianoButton.get()) {
-        auto interface = findParentComponentOfClass<SynthGuiInterface>();
-        // interface->addPiano(
-        // create new piano with active parameter true or 1
-        juce::ValueTree piano{IDs::PIANO};
-        piano.setProperty(IDs::isActive, true, nullptr);
-        piano.setProperty(IDs::name, "new piano", nullptr);
-        juce::ValueTree preparations(IDs::PREPARATIONS);
-        juce::ValueTree connections(IDs::CONNECTIONS);
-        juce::ValueTree modconnections(IDs::MODCONNECTIONS);
-
-        piano.appendChild(preparations, nullptr);
-        piano.appendChild(connections, nullptr);
-        piano.appendChild(modconnections, nullptr);
-        interface->setPianoSwitchTriggerThreadMessage();
-        //set all current pianos to be inactive or isActive parameter 0
-        for (auto vt: gallery) {
-            if (vt.hasType(IDs::PIANO)) {
-                vt.setProperty(IDs::isActive, 0, nullptr);
-            }
-        }
-        gallery.appendChild(piano, nullptr);
-        pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
-        interface->allNotesOff();
-        resized();
+    // } else if (clicked_button == addPianoButton.get()) {
+    //     addPiano(); // currently not used here
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
+
+        PopupItems separator ("separator");
+        separator.enabled = false; // This makes it non-selectable
+        separator.id = -1; // will be a separator line
+
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         auto string_names = parent->getSampleLoadManager()->getAllSampleSets();
         for (int i = 0; i < string_names.size(); i++) {
-            options.addItem(i, string_names[i]);
+            if (string_names[i] == "menuSeparator")
+                options.addItem(separator);
+            else
+                options.addItem(i, string_names[i]);
         }
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
 
@@ -239,33 +559,86 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             _parent->getSampleLoadManager()->loadSamples(_parent->getSampleLoadManager()->getAllSampleSets()[selection], _parent->getSynth()->getValueTree());
             sampleSelectText->setText(_parent->getSampleLoadManager()->getAllSampleSets()[selection]);
             resized();
+            notifyFresh();
         });
     } else if (clicked_button == pianoSelector.get()) {
         PopupItems options;
         auto names = getAllPianoNames();
+        int itemCounter = 0;
+
+        PopupItems disabledItem ("separator");
+        disabledItem.enabled = false; // This makes it non-selectable
+        disabledItem.id = -1; // will be a separator line
+
+        options.addItem(itemCounter++, "Add");
+        options.addItem(itemCounter++, "Rename");
+        options.addItem(itemCounter++, "Duplicate");
+        options.addItem(itemCounter++, "Delete");
+        options.addItem(disabledItem); // create separator line
+
         for (int i = 0; i < names.size(); i++) {
-            options.addItem(i, names[i]);
+            options.addItem(itemCounter + i, names[i]);
         }
 
         juce::Point<int> position(pianoSelector->getX(), pianoSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            pianoSelectText->setText(names[selection]);
+            if (selection >= itemCounter)
+            {
+                pianoSelectText->setText(names[selection - itemCounter]);
+                auto interface = findParentComponentOfClass<SynthGuiInterface>();
+                interface->setPianoSwitchTriggerThreadMessage();
+                interface->allNotesOff();
+                for (auto vt: gallery) {
+                    if (vt.hasType(IDs::PIANO)) {
+                        vt.setProperty(IDs::isActive, 0, nullptr);
+                    }
+                }
+                for (auto vt: gallery) {
+                    if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::name) == pianoSelectText->getText()) {
+                        vt.setProperty(IDs::isActive, 1, nullptr);
+                        break;
+                    }
+                }
+                resized();
+            }
+            else
+            {
+                // get name of current piano
+                juce::String currentName;
+                for (auto vt: gallery) {
+                    if (vt.hasType(IDs::PIANO) && vt.getProperty (IDs::isActive).equals(1)) {
+                        currentName = vt.getProperty(IDs::name).toString();
+                    }
+                }
 
-            auto interface = findParentComponentOfClass<SynthGuiInterface>();
-            interface->setPianoSwitchTriggerThreadMessage();
-            interface->allNotesOff();
-            for (auto vt: gallery) {
-                if (vt.hasType(IDs::PIANO)) {
-                    vt.setProperty(IDs::isActive, 0, nullptr);
+                switch (selection)
+                {
+                    case 0:
+                        DBG("add piano");
+                        addPiano();
+                        break;
+                    case 1:
+                        DBG("rename piano");
+                        showTextInputBox("Piano Name", "", currentName, [this](juce::String userInput) {
+                            if (userInput.isNotEmpty()) {
+                                DBG("User entered: " + userInput);
+                                this->renamePiano(userInput);
+                                this->pianoSelectText->setText(userInput);
+                            }
+                        });
+                        break;
+                    case 2:
+                        DBG("duplicate piano");
+                        duplicatePiano(getActivePianoCopy());
+                        break;
+                    case 3:
+                        DBG("delete piano");
+                        deletePiano();
+                        break;
+                    default:
+                        DBG("no action");
                 }
             }
-            for (auto vt: gallery) {
-                if (vt.hasType(IDs::PIANO) && vt.getProperty(IDs::name) == pianoSelectText->getText()) {
-                    vt.setProperty(IDs::isActive, 1, nullptr);
-                    break;
-                }
-            }
-            resized();
         });
     } else if (clicked_button == soundfontPresetSelector.get()) {
         const juce::String sfzName = gallery.getProperty("soundset").toString();
@@ -286,8 +659,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         for (int i = 0; i < presetNames.size(); ++i)
             options.addItem(i, presetNames.getReference(i).toStdString());
 
-        juce::Point<int> position(soundfontPresetSelector->getX(),
-                                  soundfontPresetSelector->getBottom());
+        //juce::Point<int> position(soundfontPresetSelector->getX(), soundfontPresetSelector->getBottom());
+        // for some reason, the placement of this right-most popup isn't working as expected; this kludge gets it in the right place
+        juce::Point<int> position(getLocalBounds().getRight() + 100, soundfontPresetSelector->getBottom());
 
         showPopupSelector(this, position, options,
                           [this, presetNames, sfzName](int selection, int) {
@@ -307,6 +681,195 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
                               parent->getSampleLoadManager()->changeSFZPresetAndUpdateTree(sfzName, selection,gallery);
                           });
+    } else if (clicked_button == gallerySelector.get()) {
+        // Build hierarchical popup of galleries under default_galleries_path
+        PopupItems options;
+
+        // Top commands
+        PopupItems separator ("separator");
+        separator.enabled = false; // non-selectable separator line
+        separator.id = -1;
+        options.addItem(0, "Load");
+        options.addItem(1, "Save");
+        options.addItem(2, "Save As");
+        options.addItem(3, "Gallery Settings");
+        options.addItem(separator);
+
+        // Build directories/files tree
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+
+        // Use a high base to avoid clashing with command IDs above
+        const int kGalleryIdBase = 1000;
+        // Mapping from menu id -> file
+        auto idToFile = std::make_shared<std::map<int, juce::File>>();
+        int nextId = kGalleryIdBase;
+
+        // Note: SinglePopupSelector supports only one submenu level, so we
+        // will show immediate subfolders under the base, and in each submenu
+        // only the immediate .bk2 files in that folder.
+
+        // Resolve the base galleries path (expand ~ to home if present)
+        auto galleriesPathVar = parent->getSynth()->user_prefs->userPreferences->tree.getProperty ("default_galleries_path");
+        juce::String galleriesPath = galleriesPathVar.toString();
+        if (galleriesPath.startsWithChar('~')) {
+            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory).getFullPathName();
+            if (galleriesPath == "~")
+                galleriesPath = home;
+            else if (galleriesPath.startsWith("~/"))
+                galleriesPath = home + galleriesPath.substring(1);
+        }
+        juce::File baseDir (galleriesPath);
+
+        bool foundAny = false;
+        if (baseDir.isDirectory()) {
+            // Add files in root first
+            juce::Array<juce::File> rootFiles = baseDir.findChildFiles(juce::File::findFiles, false, juce::String("*.") + bitklavier::kPresetExtension);
+            LoadSave::FileSorterAscending sorter;
+            rootFiles.sort(sorter);
+            for (auto &f : rootFiles) {
+                int thisId = nextId++;
+                (*idToFile)[thisId] = f;
+                options.addItem(thisId, f.getFileNameWithoutExtension().toStdString());
+                foundAny = true;
+            }
+
+            // add a separator between top-level galleries and subfolders
+            options.addItem(separator);
+
+            // Then add immediate subdirectories as single-level submenus showing
+            // only the files directly inside each subfolder.
+            juce::Array<juce::File> dirs = baseDir.findChildFiles(juce::File::findDirectories, false);
+            dirs.sort(sorter);
+            for (auto &d : dirs) {
+                PopupItems subMenu;
+                subMenu.name = d.getFileName().toStdString();
+
+                juce::Array<juce::File> folderFiles = d.findChildFiles(juce::File::findFiles, false, juce::String("*.") + bitklavier::kPresetExtension);
+                folderFiles.sort(sorter);
+
+                if (folderFiles.isEmpty()) {
+                    // Ensure the folder still appears by adding a disabled placeholder item.
+                    PopupItems emptyItem("(empty)", false);
+                    subMenu.addItem(emptyItem);
+                    options.addItem(subMenu);
+                    foundAny = true;
+                    continue;
+                }
+
+                for (auto &f : folderFiles) {
+                    int thisId = nextId++;
+                    (*idToFile)[thisId] = f;
+                    subMenu.addItem(thisId, f.getFileNameWithoutExtension().toStdString());
+                }
+
+                options.addItem(subMenu);
+                foundAny = true;
+            }
+        }
+
+        if (!foundAny) {
+            PopupItems none("(No galleries found)", false);
+            options.addItem(none);
+        }
+
+        juce::Point<int> position(gallerySelector->getX(), gallerySelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            // Handle command items first
+            if (selection == 0) {
+                DBG("load gallery");
+                loadGallery();
+                return;
+            }
+            if (selection == 1) {
+                DBG("save current gallery");
+                saveCurrentGallery();
+                return;
+            }
+            if (selection == 2) {
+                DBG("save gallery as");
+                saveGallery();
+                return;
+            }
+            if (selection == 3) {
+                DBG("open gallery settings");
+                // Open a simple dialog to edit global_A440 and global_tempo_multiplier
+                double currentA440 = (double) gallery.getProperty(IDs::global_A440, 440.0);
+                double currentTempoMult = (double) gallery.getProperty(IDs::global_tempo_multiplier, 1.0);
+
+                // Use async modal (runModalLoop is not available in newer JUCE)
+                auto* aw = new juce::AlertWindow ("Gallery Settings",
+                                                  "Edit global settings for this gallery",
+                                                  juce::AlertWindow::NoIcon);
+                aw->addTextEditor ("a440",
+                                   juce::String (currentA440, 6),
+                                   "A4 (Hz)");
+                aw->addTextEditor ("tempo",
+                                   juce::String (currentTempoMult, 6),
+                                   "Tempo Multiplier");
+                aw->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey));
+                aw->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+                aw->centreAroundComponent (getTopLevelComponent(), 420, 260);
+
+                // Keep a safe pointer to the window so we can read values in the callback
+                juce::Component::SafePointer<juce::AlertWindow> awPtr (aw);
+
+                aw->enterModalState (true,
+                    juce::ModalCallbackFunction::create ([this, awPtr] (int result)
+                {
+                    if (result == 1)
+                    {
+                        if (awPtr != nullptr)
+                        {
+                            auto a440Text  = awPtr->getTextEditorContents ("a440");
+                            auto tempoText = awPtr->getTextEditorContents ("tempo");
+
+                            double newA440 = a440Text.getDoubleValue();
+                            double newTempo = tempoText.getDoubleValue();
+
+                            // Basic validation: keep previous values if parsing failed (value becomes 0.0 when invalid)
+                            // these changes to properties in the gallery will trigger listeners in SynthBase::valueTreePropertyChanged
+                            auto a440Trim = a440Text.trim();
+                            if (a440Trim.isNotEmpty() && a440Trim != "." && newA440 > 0.0)
+                                gallery.setProperty (IDs::global_A440, newA440, nullptr);
+
+                            auto tempoTrim = tempoText.trim();
+                            if (tempoTrim.isNotEmpty() && tempoTrim != "." && newTempo > 0.0)
+                                gallery.setProperty (IDs::global_tempo_multiplier, newTempo, nullptr);
+                        }
+                    }
+                }),
+                true);
+                return;
+            }
+
+            // Handle file selections
+            if (selection >= kGalleryIdBase) {
+                auto it = idToFile->find(selection);
+                if (it != idToFile->end()) {
+                    std::string error;
+                    if (!parent->loadFromFile(it->second, error)) {
+                        DBG(juce::String("Failed to load gallery: ") + error);
+                    }
+                }
+            }
+        });
+    } else if (clicked_button == preparationsSelector.get()) {
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        PopupItems options = parent->getPreparationPopupItems();
+
+        juce::Point<int> position(preparationsSelector->getX(), preparationsSelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            parent->gui_->main_->constructionSite_->addItem(selection, true);
+        });
+    } else if (clicked_button == VSTSelector.get()) {
+        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+        PopupItems options = parent->getVSTPopupItems();
+
+        juce::Point<int> position(VSTSelector->getX(), VSTSelector->getBottom());
+        showPopupSelector(this, position, options, [=](int selection, int) {
+            // figure out how to add VSTs here
+            parent->gui_->main_->constructionSite_->addItem(selection + bitklavier::BKPreparationType::PreparationTypeVST, true);
+        });
     } else if (clicked_button == loadButton.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         parent->openLoadDialog();
@@ -317,13 +880,41 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         SynthSection::buttonClicked(clicked_button);
 }
 
+void HeaderSection::loadGallery()
+{
+    SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+    parent->openLoadDialog();
+}
+
+void HeaderSection::saveGallery()
+{
+    SynthGuiInterface *interface = findParentComponentOfClass<SynthGuiInterface>();
+    interface->openSaveDialog();
+}
+
+void HeaderSection::saveCurrentGallery()
+{
+    auto* interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (interface == nullptr)
+        return;
+
+    // If there is no active file, fall back to "Save As..."
+    auto activeFile = interface->getActiveFile();
+    if (activeFile == juce::File())
+    {
+        saveGallery();
+        return;
+    }
+
+    // Delegate save to backend helper which handles sync and file I/O
+    if (interface->getSynth()->saveToActiveFile())
+    {
+        if (gallerySelectText)
+            gallerySelectText->setText(activeFile.getFileNameWithoutExtension());
+    }
+}
+
 void HeaderSection::sliderValueChanged(juce::Slider *slider) {
-    //  if (slider == tab_selector_.get()) {
-    //    int index = tab_selector_->getValue();
-    //    for (Listener* listener : listeners_)
-    //      listener->tabSelected(index);
-    //  }
-    //  else
     SynthSection::sliderValueChanged(slider);
 }
 
@@ -334,16 +925,18 @@ void HeaderSection::notifyFresh() {
     if (!gallery.isValid())
         return;
     // gallery.getProperty("soundset").upToFirstOccurrenceOf("||", false, false);
-    sampleSelectText->setText(    gallery.getProperty(IDs::soundset).toString().upToFirstOccurrenceOf("||", false, false));
+    sampleSelectText->setText(gallery.getProperty(IDs::soundset).toString().upToFirstOccurrenceOf("||", false, false));
     resized();
     auto sfzName = gallery.getProperty(IDs::soundset).toString();
     auto parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent->getSampleLoadManager()->sfzHasPresets(gallery.getProperty(IDs::soundset).toString())) {
         soundfontPresetSelector->setVisible(true);
         soundfontPresetSelectText->setVisible(true);
+        //soundfontPreset_label->setVisible (true);
     } else {
         soundfontPresetSelector->setVisible(false);
         soundfontPresetSelectText->setVisible(false);
+        //soundfontPreset_label->setVisible (false);
     }
     static juce::var nullVar;
     // auto val = gallery.getProperty(IDs::soundfont_preset);

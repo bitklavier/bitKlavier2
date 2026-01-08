@@ -15,12 +15,11 @@
  */
 
 #include "synth_gui_interface.h"
-
+#include "ConstructionSite.h"
 #include "CompressorParameterView.h"
 #include "EQParameterView.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
-#include "PreparationSection.h"
 #include "load_save.h"
 #include "modulation_manager.h"
 #include "sound_engine.h"
@@ -60,17 +59,16 @@ void SynthGuiInterface::setGuiSize (float scale) {}
     #include "PluginList.h"
 
 SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (synth)
-
 {
     gallery = synth_->getValueTree();
     auto sets = synth->sampleLoadManager->getAllSampleSets();
-    auto it = std::find(sets.begin(), sets.end(), "Default");
+    // auto it = std::find(sets.begin(), sets.end(), "Default");
+    auto it = std::find(sets.begin(), sets.end(), "Yamaha_Default");
     int defaultIndex = (it != sets.end())
         ? static_cast<int>(std::distance(sets.begin(), it))
         : -1;
     if (defaultIndex >= 0) {
         synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
-
     }
     if (use_gui) {
         SynthGuiData synth_data (synth_);
@@ -187,7 +185,9 @@ void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection *connec
 }
 
 bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
-    return getSynth()->loadFromFile(preset, error);
+    bool success = getSynth()->loadFromFile(preset, error);
+    if (success) gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
+    return success;
     //sampleLoadManager->loadSamples()
 }
 
@@ -283,7 +283,7 @@ juce::File SynthGuiInterface::getActiveFile()
 void SynthGuiInterface::openLoadDialog()
 {
     auto active_file = getActiveFile();
-    filechooser = std::make_unique<juce::FileChooser> ("Open Preset", active_file, juce::String ("*.") + bitklavier::kPresetExtension);
+    filechooser = std::make_unique<juce::FileChooser> ("Open Gallery", active_file, juce::String ("*.") + bitklavier::kPresetExtension);
 
     auto flags = juce::FileBrowserComponent::openMode
                  | juce::FileBrowserComponent::canSelectFiles;
@@ -298,14 +298,9 @@ void SynthGuiInterface::openLoadDialog()
         loading = true;
         if (!this->loadFromFile (choice, error))
         {
-            //            std::string name = ProjectInfo::projectName;
-            //            error = "There was an error open the preset. " + error;
-            //juce::AlertWindow::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "PRESET ERROR, ""Error opening preset", error);
             DBG (error);
         }
         loading = false;
-        //        else
-        //            parent->externalPresetLoaded(choice);
     });
 }
 
@@ -315,17 +310,6 @@ void SynthGuiInterface::openSaveDialog()
     filechooser->launchAsync (
         juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectDirectories,
         [this] (const juce::FileChooser& chooser) {
-            //sync all backend to valuetree
-            for (auto vt : getSynth()->getValueTree())
-            {
-                if (vt.hasType (IDs::PIANO))
-                    vt.getChildWithName (IDs::PREPARATIONS).setProperty ("sync", 1, nullptr);
-            }
-
-            juce::String mystr = (getSynth()->getValueTree().toXmlString());
-            auto xml = getSynth()->getValueTree().createXml();
-            juce::XmlElement xml_ = *xml;
-
             auto result = chooser.getURLResult();
             auto name = result.isEmpty()
                             ? juce::String()
@@ -335,24 +319,19 @@ void SynthGuiInterface::openSaveDialog()
             juce::File file (name);
             if (!result.isEmpty())
             {
-                juce::FileOutputStream output (file);
-                output.setPosition (0);
-                output.truncate();
-                output.writeText (xml_.toString(), false, false, {});
-                //                                         std::unique_ptr<juce::InputStream> wi (file.createInputStream());
-                //                                         std::unique_ptr<juce::OutputStream> wo (result.createOutputStream());
-                //
-                //                                         if (wi != nullptr && wo != nullptr)
-                //                                         {
-                //                                             //auto numWritten = wo->writeFromInputStream (*wi, -1);
-                //                                             wo->flush();
-                //                                         }
-                output.flush();
+                if (getSynth()->saveToFile(file))
+                {
+                    if (gui_ && gui_->header_ && gui_->header_->gallerySelectText)
+                        gui_->header_->gallerySelectText->setText(file.getFileNameWithoutExtension());
+                }
             }
         });
 }
 
-#include "ConstructionSite.h"
+void SynthGuiInterface::saveCurrentGallery()
+{
+    synth_->saveToFile(getActiveFile());
+}
 
 void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
 {
@@ -460,20 +439,7 @@ static void addToMenu (const juce::KnownPluginList::PluginTree& tree,
 
 PopupItems SynthGuiInterface::getPluginPopupItems()
 {
-    PopupItems popup;
-
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeDirect,"Direct");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeKeymap,"Keymap");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeNostalgic,"Nostalgic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTuning,"Tuning");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeTempo,"Tempo");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeBlendronic,"Blendronic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeSynchronic,"Synchronic");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeResonance,"Resonance");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeModulation,"Modulation");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiFilter,"MidiFilter");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypeMidiTarget,"MidiTarget");
-    popup.addItem(bitklavier::BKPreparationType::PreparationTypePianoMap,"PianoSwitch");
+    PopupItems popup = getPreparationPopupItems();
 
     auto pluginDescriptions = synth_->user_prefs->userPreferences->knownPluginList.getTypes();
 
@@ -482,6 +448,63 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
     popup.addItem (-1, "");
     addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
     return popup;
+}
+
+PopupItems SynthGuiInterface::getPreparationPopupItems()
+{
+    PopupItems popup;
+
+    PopupItems separator ("separator");
+    separator.enabled = false; // This makes it non-selectable
+    separator.id = -1; // will be a separator line
+
+    for (const auto& [type, name] : bitklavier::AllPrepInfo) {
+        // 'type' is the BKPreparationType
+        // 'name' is the std::string
+        printf("Type ID: %d | Display Name: %s\n", (int)type, name.c_str());
+        if (type < bitklavier::BKPreparationType::PreparationTypeComment) // leave out those above this for now
+            popup.addItem(type, name);
+        if (type == bitklavier::BKPreparationType::PreparationTypeResonance ||
+            type == bitklavier::BKPreparationType::PreparationTypeTempo ||
+            type == bitklavier::BKPreparationType::PreparationTypeMidiTarget)
+            popup.addItem(separator);
+    }
+
+    return popup;
+}
+
+PopupItems SynthGuiInterface::getVSTPopupItems()
+{
+    PopupItems popup;
+
+    auto pluginDescriptions = synth_->user_prefs->userPreferences->knownPluginList.getTypes();
+
+    auto tree = juce::KnownPluginList::createTree (pluginDescriptions, synth_->user_prefs->userPreferences->pluginSortMethod);
+    synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference = {};
+    popup.addItem (-1, "");
+    addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
+    return popup;
+}
+
+const std::vector<std::string> SynthGuiInterface::getAllGalleries()
+{
+    std::vector<std::string> galleriesList;
+
+    auto galleriesPath = synth_->user_prefs->userPreferences->tree.getProperty ("default_galleries_path");
+    juce::File baseDir(galleriesPath);
+
+    if (baseDir.isDirectory()) {
+        // 1. Directories
+        juce::Array<juce::File> dirs = baseDir.findChildFiles(
+            juce::File::findDirectories,
+            false
+        );
+
+        for (auto &d: dirs)
+            galleriesList.push_back(d.getFileName().toStdString());
+    }
+
+    return galleriesList;
 }
 
 std::unique_ptr<SynthSection> SynthGuiInterface::getCompressorPopup() {

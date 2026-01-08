@@ -1095,6 +1095,7 @@ namespace bitklavier
     {
         jassert (minOutputChannels >= 0 && minOutputChannels <= maxOutputChannels);
         jassert (minInputChannels >= 0 && minInputChannels <= maxInputChannels);
+
         for (auto device : juce::MidiInput::getAvailableDevices())
         {
             if (auto _child = state.getChildWithName("midiPrefs").getChildWithProperty("name", device.name); _child.isValid())
@@ -1112,8 +1113,8 @@ namespace bitklavier
                 deviceManager.setMidiInputDeviceEnabled (device.identifier, 0);
             }
         }
-        const juce::OwnedArray<juce::AudioIODeviceType>& types = deviceManager.getAvailableDeviceTypes();
 
+        const juce::OwnedArray<juce::AudioIODeviceType>& types = deviceManager.getAvailableDeviceTypes();
         if (types.size() > 1)
         {
             deviceTypeDropDown = std::make_unique<juce::ComboBox>();

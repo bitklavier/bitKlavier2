@@ -23,7 +23,7 @@ params(_params)
 void BKCompressorMeter::paint(juce::Graphics& g)
 {
     g.setColour(backgroundDarkGrey);
-    g.fillRoundedRectangle(getLocalBounds().toFloat(), 3);
+    //g.fillRoundedRectangle(getLocalBounds().toFloat(), 3);
 }
 
 void BKCompressorMeter::resized()
@@ -38,8 +38,9 @@ void BKCompressorMeter::update(const float& val)
     if (val != valueInDecibel)
     {
         needle.update(val);
-        DBG("maxgainreduction: "+ juce::String(val));
     }
+
+    triggerAsyncUpdate();
 }
 
 float BKCompressorMeter::getValue()

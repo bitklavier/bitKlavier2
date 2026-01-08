@@ -11,7 +11,6 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
                                                            body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
                                                             gallery(data->tree)
 {
-
     jassert(gallery.hasType(IDs::GALLERY));
     body_->setBounds(getLocalBounds());
     addOpenGlComponent(body_);
@@ -47,8 +46,26 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     addSubSection(levelMeter.get());
     // setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
+
+    keyboard_component_->addMyListener(this);
 }
 
+void FooterSection::BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey)
+{
+    DBG("Footer::BKKeymapKeyboardChanged called");
+
+    // keys reflects the current state after the change: if bit is set, it's a key down
+    const bool isDown = (lastKey >= 0 && lastKey < 128) ? keys.test ((size_t) lastKey) : false;
+    if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+        if (auto* synth = iface->getSynth())
+            if (auto* eng = synth->getEngine())
+            {
+                if (isDown)
+                    eng->postUINoteOn (lastKey, 1.0f, 1);
+                else
+                    eng->postUINoteOff (lastKey, 0.0f, 1);
+            }
+}
 
 void FooterSection::paintBackground(juce::Graphics &g) {
     paintContainer(g);
@@ -96,8 +113,8 @@ void FooterSection::reset() {
     //    //synth_preset_selector_->resetText();
 }
 
-
 void FooterSection::buttonClicked(juce::Button *clicked_button) {
+    DBG("FooterSection::buttonClicked");
     if (clicked_button == compressorButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         showPrepPopup(interface->getCompressorPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);

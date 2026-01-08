@@ -28,16 +28,46 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
             chowdsp::ParameterListenerThread::AudioThread,
             [this]() {
                 if (state.params.resetEq.get()->get()) {
-                    // todo make this a function or just set all parameters here?
-                    state.params.loCutFilterParams.resetToDefault();
-                    state.params.peak1FilterParams.resetToDefault();
-                    state.params.peak2FilterParams.resetToDefault();
-                    state.params.peak3FilterParams.resetToDefault();
-                    state.params.hiCutFilterParams.resetToDefault();
-                    state.params.resetEq->setParameterValue(false);
+                    resetToDefaults();
                 }
             })
         };
+
+        eqCallbacks += {state.getParameterListeners().addParameterListener(
+        state.params.presets,
+            chowdsp::ParameterListenerThread::AudioThread,
+            [this]()
+            {
+                switch (1 << state.params.presets->getIndex())
+                {
+                    case EqPresetComboBox::EqOff:
+                    {
+                        resetToDefaults();
+                        break;
+                    }
+                    case EqPresetComboBox::Lowshelf:
+                    {
+                        resetToDefaults();
+                        state.params.activeEq->setParameterValue(true);
+                        state.params.peak1FilterParams.filterFreq->setParameterValue(30);
+                        state.params.peak1FilterParams.filterGain->setParameterValue(-12);
+                        state.params.peak1FilterParams.filterQ->setParameterValue(0.1);
+                        state.params.peak1FilterParams.filterActive->setParameterValue(true);
+                        break;
+                    }
+                    case EqPresetComboBox::Highshelf:
+                    {
+                        resetToDefaults();
+                        state.params.activeEq->setParameterValue(true);
+                        state.params.peak3FilterParams.filterFreq->setParameterValue(12000);
+                        state.params.peak3FilterParams.filterGain->setParameterValue(12);
+                        state.params.peak3FilterParams.filterQ->setParameterValue(0.1);
+                        state.params.peak3FilterParams.filterActive->setParameterValue(true);
+                        break;
+                    }
+            }
+        })
+    };
 
         // to catch presses of the eq power button
         eqCallbacks += {state.getParameterListeners().addParameterListener(
@@ -72,7 +102,6 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
                 }
             })
         };
-
 }
 
 void EQProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

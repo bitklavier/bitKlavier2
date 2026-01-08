@@ -20,7 +20,6 @@ ApplicationCommandHandler::ApplicationCommandHandler(SynthGuiInterface* gui) : j
                 return true;
             }
 
-
             case redo:
             {
                 juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
@@ -28,6 +27,11 @@ ApplicationCommandHandler::ApplicationCommandHandler(SynthGuiInterface* gui) : j
             }
 
             case save: {
+                parent->saveCurrentGallery();
+                return true;
+            }
+
+            case saveAs: {
                 parent->openSaveDialog();
                 return true;
             }

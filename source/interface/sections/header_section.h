@@ -16,7 +16,6 @@
 
 #pragma once
 
-
 #include "synth_section.h"
 #include "open_gl_background.h"
 
@@ -239,6 +238,15 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
     void buttonClicked(juce::Button* clicked_button) override;
     void sliderValueChanged(juce::Slider* slider) override;
 
+    void addPiano();
+    void duplicatePiano (const juce::ValueTree pianoToCopy);
+    static void remapPianoUUIDsAndConnections (juce::ValueTree& piano);
+    void deletePiano();
+
+    void loadGallery();
+    void saveGallery();
+    void saveCurrentGallery();
+
     void setTemporaryTab(juce::String name);
 
 //    void showAboutSection() override {
@@ -258,9 +266,13 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
     }
     void addListener(Listener* listener) { listeners_.push_back(listener); }
 
+    std::shared_ptr<PlainTextComponent> gallerySelectText;
+
   private:
     const juce::ValueTree& getActivePiano();
+    juce::ValueTree getActivePianoCopy();
     std::vector<std::string> getAllPianoNames();
+    void renamePiano(juce::String newname);
     std::vector<Listener*> listeners_;
 
     int tab_offset_;
@@ -278,17 +290,34 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
     int currentPianoIndex;
     std::shared_ptr<PlainTextComponent> pianoSelectText;
-    std::unique_ptr<juce::ShapeButton> pianoSelector ;
+    std::unique_ptr<juce::ShapeButton> pianoSelector;
+    std::unique_ptr<juce::ShapeButton> gallerySelector;
+    std::shared_ptr<PlainTextComponent> preparationSelectText;
+    std::unique_ptr<juce::ShapeButton> preparationsSelector;
+    std::shared_ptr<PlainTextComponent> VSTSelectText;
+    std::unique_ptr<juce::ShapeButton> VSTSelector;
 
     std::unique_ptr<OpenGlTextButton> saveButton;
     std::unique_ptr<OpenGlTextButton> loadButton;
     std::unique_ptr<juce::FileChooser> filechooser;
-     std::unique_ptr<OpenGlTextButton> addPianoButton;
+    std::unique_ptr<OpenGlTextButton> addPianoButton;
+
+    // const std::vector<std::string> getAllGalleries();
+    std::shared_ptr<PlainTextComponent> globalSoundset_label;
+    std::shared_ptr<PlainTextComponent> soundfontPreset_label;
+    std::shared_ptr<PlainTextComponent> currentPiano_label;
+    std::shared_ptr<PlainTextComponent> galleries_label;
+    std::shared_ptr<PlainTextComponent> preparationSelect_label;
+    std::shared_ptr<PlainTextComponent> VSTSelect_label;
+
+    std::unique_ptr<juce::FileBrowserComponent> galleryBrowser;
+
     //juce::Image background_image_;
     //std::unique_ptr<SynthButton> click_me;
    // juce::TextButton inspectButton { "Inspect the UI" };
     //std::unique_ptr<melatonin::Inspector> inspector;
     //std::unique_ptr<OpenGlToggleButton> inspectButton;
+
     juce::ValueTree gallery;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HeaderSection)
 };

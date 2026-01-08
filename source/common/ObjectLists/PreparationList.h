@@ -212,8 +212,6 @@ public:
     PluginInstanceWrapper* createNewObject(const juce::ValueTree& v) override;
     void deleteObject (PluginInstanceWrapper* at) override;
 
-
-
     void appendChild (const juce::ValueTree& child, juce::UndoManager* undoManager)
     {
         undoManager->beginNewTransaction();

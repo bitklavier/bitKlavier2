@@ -623,7 +623,7 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "octave", &(state.params.tuningState.semitoneWidthParams.octave->stateChanges)));
 
-    state.params.tuningState.stateChanges.defaultState      = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.tuningSystem->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.tuningType->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -638,6 +638,10 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     state.params.tuningState.springTuningParams.intervalFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.springTuningParams.scaleId_tether->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.springTuningParams.tetherFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+
+    // float newA4 = vt.getRoot().getProperty(IDs::global_A440);
+    // state.params.tuningState.setGlobalTuningReference (newA4);
+
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

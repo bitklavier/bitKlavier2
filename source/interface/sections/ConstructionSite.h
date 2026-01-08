@@ -44,7 +44,7 @@ public:
 
     void paintBackground (juce::Graphics& g) override;
 
-    void addItem (bitklavier::BKPreparationType type, bool center = false);
+    void addItem (int selection, bool center = false);
 
     // void changeListenerCallback(juce::ChangeBroadcaster *source) override
     //

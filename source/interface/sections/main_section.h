@@ -25,9 +25,9 @@ public:
     void addListener(Listener* listener) { listeners_.push_back(listener); }
     std::unique_ptr<ConstructionSite> constructionSite_;
     void removeAllGuiListeners();
-private:
+    juce::UndoManager &um; // ok to be public?
 
-    juce::UndoManager &um;
+private:
     juce::ApplicationCommandManager& commandManager;
     juce::Viewport constructionPort;
 

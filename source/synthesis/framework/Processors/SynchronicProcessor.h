@@ -501,12 +501,17 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 //    }
 
     void addSoundSet (
-    juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
-     juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
-     juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
-     juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *s, // main samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *h, // hammer samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
+        juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
         synchronicSynth->addSoundSet (s);
+    }
+
+    void setA4Frequency(double newA4)
+    {
+        synchronicSynth->setA4Frequency(newA4);
     }
 
 //    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
@@ -594,7 +599,10 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     float getBeatThresholdSeconds()
     {
         if (tempo != nullptr)
-            return 60.f / (*tempo->getState().params.tempoParam * *tempo->getState().params.subdivisionsParam);
+            return 60.f /
+                (*tempo->getState().params.tempoParam *
+                *tempo->getState().params.subdivisionsParam *
+                tempo->getGlobalTempoMultiplier());
         else
             return 0.5; // 120bpm by default
     }

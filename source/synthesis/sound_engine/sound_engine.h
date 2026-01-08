@@ -17,20 +17,24 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "ModulationConnection.h"
-#include "synth_base.h"
 #include "CompressorProcessor.h"
+#include "DirectProcessor.h"
+#include "NostalgicProcessor.h"
+#include "SynchronicProcessor.h"
+#include "ResonanceProcessor.h"
+#include "TuningProcessor.h"
 #include "EQProcessor.h"
 #include "GainProcessor.h"
+#include "ModulationConnection.h"
+#include "midi_manager.h"
+#include "synth_base.h"
+#include <vector>
 
 namespace bitklavier
 {
     class ModulationProcessor;
     using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
     using Node = juce::AudioProcessorGraph::Node;
-    // class GainProcessor;
-    // class CompressorProcessor;
-    // class EQProcessor;
 
     class SoundEngine
     {
@@ -96,7 +100,21 @@ namespace bitklavier
         }
         void addDefaultChain(SynthBase& parent, juce::ValueTree& tree);
 
+        // Inject UI-generated MIDI to all KeymapProcessors in the graph
+        void postUINoteOn  (int midiNote, float velocity01, int channel = 1);
+        void postUINoteOff (int midiNote, float velocity01 = 0.0f, int channel = 1);
+
+        // UI live MIDI visualisation registration: forwards to all KeymapProcessors' MidiManagers
+        void addMidiLiveListener (MidiManager::LiveMidiListener* l);
+        void removeMidiLiveListener (MidiManager::LiveMidiListener* l);
+
+        // Register all stored UI listeners onto a specific MidiManager (used by processors on construction)
+        void registerLiveListenersTo (MidiManager* midiMgr);
+
         juce::AudioProcessorGraph::NodeID lastUID;
+
+        // Registry of UI live MIDI listeners to attach to future MidiManagers
+        std::vector<MidiManager::LiveMidiListener*> live_ui_listeners_;
 
         juce::AudioProcessorGraph::NodeID getNextUID() noexcept
         {
@@ -138,11 +156,65 @@ namespace bitklavier
 
         ModulationConnectionBank& getModulationBank() { return modulation_bank_; }
         StateConnectionBank& getStateBank() { return state_bank_; }
+        ParamOffsetBank& getParamOffsetBank() {return param_offset_bank_; }
 
-        ParamOffsetBank& getParamOffsetBank() {return param_offset_bank_;}
+        /**
+         * Updates the processors of all relevant nodes in the graph when
+         * parameters in the Gallery Settings have been changed (marked "dirty")
+         * - Currently just for A440 and tempo multiplier settings
+         */
+        void updateChangedGalleryState ()
+        {
+            if (a4Dirty.exchange (false, std::memory_order_acq_rel))
+            {
+                const double newA4 = pendingA4Hz.load (std::memory_order_relaxed);
+
+                // Walk all nodes and update their processors
+                auto nodes = processorGraph->getNodes();
+                for (auto* node : nodes)
+                {
+                    if (auto* kp = dynamic_cast<DirectProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<SynchronicProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<NostalgicProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<ResonanceProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                    else if (auto* kp = dynamic_cast<TuningProcessor*>(node->getProcessor()))
+                    {
+                        kp->setA4Frequency(newA4);
+                    }
+                }
+            }
+
+            if (tempoMultiplierDirty.exchange (false, std::memory_order_acq_rel))
+            {
+                const double newTM = pendingTempoMultiplier.load (std::memory_order_relaxed);
+                auto nodes = processorGraph->getNodes();
+                for (auto* node : nodes)
+                {
+                    if (auto* kp = dynamic_cast<TempoProcessor*>(node->getProcessor()))
+                    {
+                        kp->setGlobalTempoMultiplier(newTM);
+                    }
+                }
+            }
+        }
 
         void processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)
         {
+            // update all the processors with any changes to params in Gallery Settings
+            updateChangedGalleryState ();
+
             //DBG ("------------------BEGIN BLOCK-------------------");
             processorGraph->processBlock (audio_buffer, midi_buffer);
         }
@@ -267,6 +339,17 @@ namespace bitklavier
             return gainProcessor.get();
         };
 
+        void requestA4Update (double newA4) noexcept
+        {
+            pendingA4Hz.store (newA4, std::memory_order_relaxed);
+            a4Dirty.store (true, std::memory_order_release);
+        }
+
+        void requestTempoMultiplierUpdate (double newTm) noexcept
+        {
+            pendingTempoMultiplier.store (newTm, std::memory_order_relaxed);
+            tempoMultiplierDirty.store (true, std::memory_order_release);
+        }
 
 
     private:
@@ -275,6 +358,12 @@ namespace bitklavier
         int last_sample_rate_;
         int buffer_size;
         int curr_sample_rate;
+
+        std::atomic<double> pendingA4Hz { 440.0 };
+        std::atomic<bool>   a4Dirty { false };
+
+        std::atomic<double> pendingTempoMultiplier { 1.0 };
+        std::atomic<bool>   tempoMultiplierDirty { false };
 
         std::unique_ptr<juce::AudioProcessorGraph> processorGraph;
 

@@ -19,7 +19,8 @@ public:
         textLabelColourId               = 0x1005005,
         upDownButtonBackgroundColourId  = 0x1005006,
         upDownButtonArrowColourId       = 0x1005007,
-        shadowColourId                  = 0x1005008
+        shadowColourId                  = 0x1005008,
+        keyPlayed                       = 0x1005009
     };
     BKOnOffKeyboardComponent(Orientation o, std::atomic<std::bitset<128>> & keys) : juce::KeyboardComponentBase(o), keys(keys)
     {
@@ -32,6 +33,7 @@ public:
         setColour(upDownButtonBackgroundColourId, juce::Colours::grey);
         setColour(upDownButtonArrowColourId, juce::Colours::black);
         setColour(shadowColourId, juce::Colours::black.withAlpha(0.5f));
+        setColour(keyPlayed, juce::Colours::red);
     };
 
     ~BKOnOffKeyboardComponent() {
@@ -41,6 +43,25 @@ public:
     void drawKeyboardBackground(juce::Graphics &g, juce::Rectangle<float> area) override;
     int mouseOverNote = -1;
     std::atomic<std::bitset<128>> &keys;
+
+    // Live MIDI overlay (display-only) — separate from selection bitset
+    void setLiveKeyState (int midiNoteNumber, bool isDown)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128)
+        {
+            liveKeys.set ((size_t) midiNoteNumber, isDown);
+            repaint();
+        }
+    }
+
+    void clearAllLiveKeys()
+    {
+        liveKeys.reset();
+        repaint();
+    }
+
+private:
+    std::bitset<128> liveKeys;
 };
 
 
