@@ -121,12 +121,12 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
 
             if (polarityMatches) {
                 // Carry-crossfade only for ramps
-                if ( c->carryActive_.load(std::memory_order_acquire)) {
+                // if ( c->carryActive_.load(std::memory_order_acquire)) {
                     const float carry = c->carryApplied_.load(std::memory_order_relaxed);
 
                     for (int s = 0; s < buffer.getNumSamples(); ++s) {
                         const float r = src[s]; // ramp raw 0..1
-                        dest[s] += (1.0f - r) * carry + r * scale;
+                        dest[s] +=  carry + r * scale;
                         // dest[s] +=  carry + r * scale;
                     }
 
@@ -134,10 +134,10 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                         c->carryActive_.store(false, std::memory_order_release);
 
                     // c->lastApplied_.store(src[0] * scale, std::memory_order_relaxed);
-                } else {
-                    buffer.addFrom(outCh, 0, src, buffer.getNumSamples(), scale);
+                // } else {
+                    // buffer.addFrom(outCh, 0, src, buffer.getNumSamples(), scale);
                     // c->lastApplied_.store(src[0] * scale, std::memory_order_relaxed);
-                }
+                // }
             } else if (mod->isDefaultBipolar && !c->isBipolar()) {
                 // bipolar src -> unipolar dest
                 for (int s = 0; s < buffer.getNumSamples(); ++s) {
