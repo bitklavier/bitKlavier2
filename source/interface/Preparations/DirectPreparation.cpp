@@ -5,7 +5,6 @@
 #include "DirectPreparation.h"
 #include "BKitems/BKItem.h"
 #include "DirectParametersView.h"
-#include "synth_slider.h"
 
 // Definition for the DirectPreparation constructor.  It takes three parameters: a pointer to
 // a Direct Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
@@ -36,8 +35,9 @@ DirectPreparation::DirectPreparation (
 
     width = state.getProperty(IDs::width);
     height = state.getProperty(IDs::height);
-    // width = 245;
-    // height = 125;
+
+    // int numDirects = howManyOfThisPrepTypeInVT(v.getRoot(), v.getType());
+    // state.setProperty(IDs::name, v.getType().toString() + " " + juce::String(numDirects), nullptr);
 }
 
 std::unique_ptr<SynthSection> DirectPreparation::getPrepPopup()

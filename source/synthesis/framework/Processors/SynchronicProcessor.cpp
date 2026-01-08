@@ -20,7 +20,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
       synchronicSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
     // for testing
-    bufferDebugger = new BufferDebugger();
+    // bufferDebugger = new BufferDebugger();
 
 
     /*
@@ -227,7 +227,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
-
         if(message.isNoteOn())
             keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
         else if(message.isNoteOff())
@@ -259,6 +258,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
      * - gathers notes into a single cluster that is played metronomically
     */
     thresholdSamples = *state.params.clusterThreshold * getSampleRate() * .001;
+
     if (inCluster)
     {
         //moved beyond clusterThreshold time, done with cluster
@@ -399,6 +399,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
                                                              * getBeatThresholdSeconds() * 1000;
 
+                        DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + "");
+
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                         {
@@ -434,11 +436,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             }
 
             // update current slider val for UI
-            state.params.transpositions_current.store(cluster->transpCounter);
-            state.params.accents_current.store(cluster->accentMultiplierCounter);
-            state.params.sustainLengthMultipliers_current.store(cluster->lengthMultiplierCounter);
-            state.params.beatLengthMultipliers_current.store(cluster->beatMultiplierCounter);
-            state.params.envelopes_current.store(cluster->envelopeCounter);
+            state.params.transpositionsCurrent.store(cluster->transpCounter);
+            state.params.accentsCurrent.store(cluster->accentMultiplierCounter);
+            state.params.sustainLengthMultipliersCurrent.store(cluster->lengthMultiplierCounter);
+            state.params.beatLengthMultipliersCurrent.store(cluster->beatMultiplierCounter);
+            state.params.envelopesCurrent.store(cluster->envelopeCounter);
         }
 
         //pass time until next beat, increment phasor/timers
@@ -491,8 +493,8 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      */
 
     // use these to display buffer info to bufferDebugger
-    bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
-    bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
     /*
      * then the synthesizer process blocks
@@ -501,7 +503,7 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     {
         synchronicSynth->setBypassed (false);
         synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
-        synchronicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
+        synchronicSynth->renderNextBlock (buffer, outMidi, 0, numSamples);
     }
 
     // handle the send
@@ -527,9 +529,40 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
 void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    /**
-     * todo: handle noteOffs, otherwise nothing?
+    processContinuousModulations(buffer);
+
+    // this is a synth, so we want an empty audio buffer to start (AFTER processing continuous mods)
+    buffer.clear();
+
+    /*
+     * ProcessMIDIBlock takes all the input MIDI messages and writes to outMIDI buffer to send to BKSynth
+     *      - since we are bypassed, we should be able to completely ignore MIDI messages
+     *      - currently sounding Synchronic notes will automatically turn themselves off at the right time in renderNextBlock
+     *          since their durations are set at noteOn
      */
+    int numSamples = buffer.getNumSamples();
+    juce::MidiBuffer outMidi;
+    //ProcessMIDIBlock(midiMessages, outMidi, numSamples);
+
+    /*
+     * then the synthesizer process blocks
+     */
+    if (synchronicSynth->hasSamples())
+    {
+        //synchronicSynth->setNoteOnSpecMap(noteOnSpecMap);
+        synchronicSynth->renderNextBlock (buffer, outMidi, 0, numSamples);
+    }
+
+    // handle the send
+    int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+    float sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendGain);
+    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+
+    // final output gain stage, from rightmost slider in DirectParametersView
+    float outputgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputGain);
+    buffer.applyGain(0, 0, numSamples, outputgainmult);
+    buffer.applyGain(1, 0, numSamples, outputgainmult);
 }
 
 bool SynchronicProcessor::holdCheck(int noteNumber)

@@ -48,6 +48,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     setSkinOverride(Skin::kConstructionSite);
     setInterceptsMouseClicks(false, true);
     //data->synth->getEngine()->addChangeListener(this);
+    // data->synth->setGainProcessor(&gainProcessor);
 
     cableView.setAlwaysOnTop(true);
     addSubSection(&cableView);
@@ -529,15 +530,12 @@ void ConstructionSite::paintBackground(juce::Graphics &g) {
 void ConstructionSite::resized() {
     // Get the current local bounds of this component
     auto bounds = getLocalBounds();
-
     // Debug log the bounds
     DBG("Local Bounds: " + bounds.toString());
 
     cableView.setBounds(getLocalBounds());
     cableView.updateCablePositions();
     modulationLineView.setBounds(getLocalBounds());
-
-    // _line->setBounds(get);
 
     SynthSection::resized();
 }

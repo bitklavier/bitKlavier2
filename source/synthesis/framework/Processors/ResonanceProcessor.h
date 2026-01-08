@@ -630,6 +630,8 @@ private:
     std::array<std::unique_ptr<ResonantString>, MaxHeldKeys> resonantStringsArray;
     int currentHeldKey = 0;
 
+    bool bypassed = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonanceProcessor)
 };
 

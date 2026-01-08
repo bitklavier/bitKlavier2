@@ -11,26 +11,26 @@ void SynchronicParametersView::timerCallback()
      */
     if(!transpositionsSlider->hovering_)
     {
-        transpositionsSlider->setCurrentSlider (sparams_.transpositions_current.load());
+        transpositionsSlider->setCurrentSlider (sparams_.transpositionsCurrent.load());
         transpositionsSlider->redoImage();
     }
     if(!accentsSlider->hovering_)
     {
-        accentsSlider->setCurrentSlider (sparams_.accents_current.load());
+        accentsSlider->setCurrentSlider (sparams_.accentsCurrent.load());
         accentsSlider->redoImage();
     }
     if(!sustainLengthMultipliersSlider->hovering_)
     {
-        sustainLengthMultipliersSlider->setCurrentSlider (sparams_.sustainLengthMultipliers_current.load());
+        sustainLengthMultipliersSlider->setCurrentSlider (sparams_.sustainLengthMultipliersCurrent.load());
         sustainLengthMultipliersSlider->redoImage();
     }
     if(!beatLengthMultipliersSlider->hovering_)
     {
-        beatLengthMultipliersSlider->setCurrentSlider (sparams_.beatLengthMultipliers_current.load());
+        beatLengthMultipliersSlider->setCurrentSlider (sparams_.beatLengthMultipliersCurrent.load());
         beatLengthMultipliersSlider->redoImage();
     }
 
-    envSequenceSection->setCurrentlyPlayingEnvelope(sparams_.envelopes_current.load());
+    envSequenceSection->setCurrentlyPlayingEnvelope(sparams_.envelopesCurrent.load());
 }
 
 void SynchronicParametersView::resized()

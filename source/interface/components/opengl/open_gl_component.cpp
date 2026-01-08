@@ -16,7 +16,7 @@
 
 #include "open_gl_component.h"
 #include "open_gl_multi_quad.h"
-#include "fullInterface.h"
+#include "FullInterface.h"
 
 
 namespace {
@@ -50,6 +50,7 @@ OpenGlComponent::OpenGlComponent(juce::String name) : juce::Component(name), onl
                                                 {
   background_color_ = juce::Colours::transparentBlack;
   id = generateID();
+  DBG("create " + name + " id: " + juce::String(id));
 }
 
 OpenGlComponent::~OpenGlComponent() {
@@ -194,6 +195,7 @@ void OpenGlComponent::addBottomRoundedCorners() {
 void OpenGlComponent::init(OpenGlWrapper& open_gl) {
   if (corners_)
     corners_->init(open_gl);
+  initialized = true;
 }
 
 void OpenGlComponent::renderCorners(OpenGlWrapper& open_gl, bool animate, juce::Colour color, float rounding) {
@@ -219,6 +221,7 @@ void OpenGlComponent::destroy(OpenGlWrapper& open_gl) {
 bool OpenGlComponent::isInit() {
     if (corners_)
         return corners_->shader() != nullptr;
+    return initialized;
 }
 
 float OpenGlComponent::findValue(Skin::ValueId value_id) {

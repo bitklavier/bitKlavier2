@@ -32,7 +32,7 @@
 BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, blendronicBusLayout())
 {
     // for testing
-    bufferDebugger = new BufferDebugger();
+    // bufferDebugger = new BufferDebugger();
 
     // note: we are setting the buffer size to 10 seconds max here (delayBufferSize)
     delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, getSampleRate());
@@ -285,8 +285,8 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     int numSamples = buffer.getNumSamples();
 
     // use these to display buffer info to bufferDebugger
-    bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
-    bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
     // apply the input gain multiplier
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
@@ -344,8 +344,8 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 void BlendronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     /**
-     * todo: perhaps have a fadeout param, followed by a buffer clear?
-     * - these could be user settable, perhaps...
+     * I think for now at least Blendronic just doesn't produce sound if it is bypassed
+     * - if the user wants it present across piano changes, they should use a Linked version
      */
 }
 

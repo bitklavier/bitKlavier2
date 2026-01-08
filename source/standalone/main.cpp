@@ -291,6 +291,7 @@ public:
 
     void shutdown() override
     {
+        juce::Logger::setCurrentLogger (nullptr);
         main_window_ = nullptr;
     }
 

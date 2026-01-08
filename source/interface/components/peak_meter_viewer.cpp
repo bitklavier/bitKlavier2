@@ -26,9 +26,9 @@ namespace {
   constexpr float kMaxDb = 6.0f;
 } // namespace;
 
-PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels)
-    : shader_(nullptr), clamped_(0.0f), left_(left), peakOutput(outputLevels) {
-
+PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels, bool horizontal)
+    : shader_(nullptr), clamped_(0.0f), left_(left), peakOutput(outputLevels), horizontal_(horizontal)
+{
   float position_vertices[kNumPositions] = {
     -1.0f, 1.0f,    // left top
     -1.0f, -1.0f,   // left bottom
@@ -93,21 +93,20 @@ void PeakMeterViewer::updateVertices() {
   t *= t;
   float position = bitklavier::utils::interpolate(-1.0f, 1.0f, t);
 
-  /*
-   * horizontal meter
-   */
-//  position_vertices_[0] = -1.0f;
-//  position_vertices_[2] = -1.0f;
-//  position_vertices_[4] = position;
-//  position_vertices_[6] = position;
-
-  /*
-   * vertical meter
-   */
-    position_vertices_[1] = position;
-    position_vertices_[2] = -1.0f;
-    position_vertices_[4] = 1.0f;
-    position_vertices_[7] = position;
+    if (horizontal_)
+    {
+        position_vertices_[0] = -1.0f;
+        position_vertices_[2] = -1.0f;
+        position_vertices_[4] = position;
+        position_vertices_[6] = position;
+    }
+    else
+    {
+        position_vertices_[1] = position;
+        position_vertices_[2] = -1.0f;
+        position_vertices_[4] = 1.0f;
+        position_vertices_[7] = position;
+    }
 
 }
 

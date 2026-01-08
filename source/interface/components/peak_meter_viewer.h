@@ -22,11 +22,10 @@
 
 class PeakMeterViewer : public OpenGlComponent {
   public:
-    PeakMeterViewer(bool left, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels);
+    PeakMeterViewer(bool left, const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels, bool horizontal = false);
     virtual ~PeakMeterViewer();
 
     void resized() override;
-
     void init(OpenGlWrapper& open_gl) override;
     void render(OpenGlWrapper& open_gl, bool animate) override;
     void draw(OpenGlWrapper& open_gl);
@@ -34,6 +33,7 @@ class PeakMeterViewer : public OpenGlComponent {
     void paintBackground(juce::Graphics& g) override;
 
   private:
+    bool horizontal_;
     static constexpr int kNumPositions = 8;
     static constexpr int kNumTriangleIndices = 6;
     void updateVertices();

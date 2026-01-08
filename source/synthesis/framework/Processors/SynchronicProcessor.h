@@ -117,11 +117,11 @@ struct SynchronicParams : chowdsp::ParamHolder
      * for keeping track of the current multislider lengths
      * being used by blendrónic, so we can update the UI accordingly
      */
-    std::atomic<int> transpositions_current = 0;
-    std::atomic<int> accents_current = 0;
-    std::atomic<int> sustainLengthMultipliers_current = 0;
-    std::atomic<int> beatLengthMultipliers_current = 0;
-    std::atomic<int> envelopes_current = 0;
+    std::atomic<int> transpositionsCurrent = 0;
+    std::atomic<int> accentsCurrent = 0;
+    std::atomic<int> sustainLengthMultipliersCurrent = 0;
+    std::atomic<int> beatLengthMultipliersCurrent = 0;
+    std::atomic<int> envelopesCurrent = 0;
 
     /*
      * the state of all the adsrs, for the row of 12 sequenced adsrs
@@ -230,8 +230,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     {
         for (auto& _ep : *envelopeSequence.getBoolParams())
         {
-            //"envelope_10"
-            if (_ep->getParameterID() == "envelope_" + juce::String(which))
+            //"envelope10"
+            if (_ep->getParameterID() == "envelope" + juce::String(which))
             {
                 return *_ep;
             }
@@ -364,6 +364,7 @@ class SynchronicCluster
         // skip the inactive envelopes
         while (!_sparams->isEnvelopeActive(envelopeCounter)) // skip untoggled envelopes
         {
+            //DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
             envelopeCounter++;
             if (envelopeCounter >= _sparams->numEnvelopes)
                 envelopeCounter = 0;
@@ -429,7 +430,7 @@ class SynchronicCluster
 
     inline void addNote(int note)
     {
-        // DBG("adding note: " + String(note));
+        DBG("synchronic cluster adding note: " + juce::String(note));
         cluster.insert(0, note);
     }
 

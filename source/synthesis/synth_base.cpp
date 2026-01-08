@@ -14,8 +14,12 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "synth_base.h"
+
+#include "CompressorProcessor.h"
+#include "EQProcessor.h"
 #include "SampleLoadManager.h"
 #include "FullInterface.h"
+#include "GainProcessor.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
 #include "synth_gui_interface.h"
 #include "sound_engine.h"
@@ -46,8 +50,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     *self_reference_ = this;
 
     keyboard_state_ = std::make_unique<juce::MidiKeyboardState>();
-    juce::ValueTree v;
-    midi_manager_ = std::make_unique<MidiManager> (keyboard_state_.get(), manager, v);
+    midi_manager_ = std::make_unique<MidiManager> (keyboard_state_.get(), manager, juce::ValueTree{});
 
     Startup::doStartupChecks();
     tree = juce::ValueTree (IDs::GALLERY);
@@ -70,13 +73,16 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     juce::ValueTree connections (IDs::CONNECTIONS);
     juce::ValueTree modconnections (IDs::MODCONNECTIONS);
 
+
     piano.appendChild (preparations, nullptr);
     piano.appendChild (connections, nullptr);
     piano.appendChild (modconnections, nullptr);
     piano.setProperty (IDs::isActive, 1, nullptr);
     piano.setProperty (IDs::name, "default", nullptr);
+
     tree.appendChild (piano, nullptr);
     tree.addListener (this);
+
 
     //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
     modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree> ("ramp");
@@ -93,7 +99,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) : expired_ (false
     mod_connection_lists_.emplace_back (
         std::make_unique<bitklavier::ModConnectionList> (
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
-    engine_ = std::make_unique<bitklavier::SoundEngine>();
+    engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
+    engine_->addDefaultChain(*this,tree);
 }
 
 SynthBase::~SynthBase()
@@ -595,6 +602,9 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
         action();
 
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
+    engine_->getMainVolumeProcessor()->processBlock (audio_buffer, midi_buffer);
+    engine_->getEQProcessor()->processBlock (audio_buffer, midi_buffer);
+    engine_->getCompressorProcessor()->processBlock (audio_buffer, midi_buffer);
     sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }
@@ -758,14 +768,20 @@ int SynthBase::getNumModulations (const std::string& destination)
 
 bitklavier::ModulationConnectionBank& SynthBase::getModulationBank()
 {
+    jassert(engine_ != nullptr); // will fire during construction if you hit it too early
+
     return engine_->getModulationBank();
 }
 
 bitklavier::StateConnectionBank& SynthBase::getStateBank()
 {
+    jassert(engine_ != nullptr); // will fire during construction if you hit it too early
+
     return engine_->getStateBank();
 }
 bitklavier::ParamOffsetBank& SynthBase::getParamOffsetBank() {
+    jassert(engine_ != nullptr); // will fire during construction if you hit it too early
+
     return engine_->getParamOffsetBank();
 }
 bool SynthBase::isSourceConnected (const std::string& source)
@@ -1085,3 +1101,4 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     //     connectStateModulation (connection);
     return create;
 }
+

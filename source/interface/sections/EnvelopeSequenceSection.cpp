@@ -48,7 +48,8 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
 
 int EnvelopeSequenceSection::getEnvelopeIndex(const juce::String& s)
 {
-    return s.fromLastOccurrenceOf("_", false, false).getIntValue();
+    return s.fromLastOccurrenceOf("e", false, false).getIntValue();
+    //return s.fromLastOccurrenceOf("_", false, false).getIntValue();
 }
 
 void EnvelopeSequenceSection::buttonClicked (juce::Button* clicked_button)

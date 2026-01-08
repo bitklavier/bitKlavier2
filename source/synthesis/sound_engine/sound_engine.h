@@ -18,18 +18,27 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "ModulationConnection.h"
+#include "synth_base.h"
+#include "CompressorProcessor.h"
+#include "EQProcessor.h"
+#include "GainProcessor.h"
+
 namespace bitklavier
 {
     class ModulationProcessor;
     using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
     using Node = juce::AudioProcessorGraph::Node;
+    // class GainProcessor;
+    // class CompressorProcessor;
+    // class EQProcessor;
+
     class SoundEngine
     {
     public:
         static constexpr int kDefaultOversamplingAmount = 2;
         static constexpr int kDefaultSampleRate = 44100;
 
-        SoundEngine();
+        SoundEngine(SynthBase& , juce::ValueTree &);
         virtual ~SoundEngine();
 
         //      void process(int num_samples, juce::AudioSampleBuffer& buffer);
@@ -41,6 +50,9 @@ namespace bitklavier
             setSampleRate (sampleRate);
             setBufferSize (samplesPerBlock);
             processorGraph->prepareToPlay (sampleRate, samplesPerBlock);
+            gainProcessor->prepareToPlay (sampleRate, samplesPerBlock);
+            eqProcessor->prepareToPlay (sampleRate, samplesPerBlock);
+            compressorProcessor->prepareToPlay (sampleRate, samplesPerBlock);
         }
 
         int getDefaultSampleRate() { return kDefaultSampleRate; }
@@ -82,6 +94,7 @@ namespace bitklavier
             connectMidiNodes();
 
         }
+        void addDefaultChain(SynthBase& parent, juce::ValueTree& tree);
 
         juce::AudioProcessorGraph::NodeID lastUID;
 
@@ -241,6 +254,21 @@ namespace bitklavier
         void allNotesOff();
         void shutdown();
 
+        CompressorProcessor* getCompressorProcessor()
+        {
+            return compressorProcessor.get();
+        };
+        EQProcessor* getEQProcessor()
+        {
+            return eqProcessor.get();
+        };
+        GainProcessor* getMainVolumeProcessor()
+        {
+            return gainProcessor.get();
+        };
+
+
+
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);
         int last_oversampling_amount_;
@@ -256,6 +284,9 @@ namespace bitklavier
         ModulationConnectionBank modulation_bank_;
         StateConnectionBank state_bank_;
         ParamOffsetBank param_offset_bank_;
+        std::unique_ptr<GainProcessor> gainProcessor ;
+        std::unique_ptr<CompressorProcessor> compressorProcessor ;
+        std::unique_ptr<EQProcessor> eqProcessor ;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SoundEngine)
     };
 } // namespace vital

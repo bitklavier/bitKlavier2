@@ -259,7 +259,6 @@ namespace bitklavier {
                     }, param);
                 }
             }
-            parent.getParamOffsetBank();
         }
 
     protected:
@@ -318,10 +317,11 @@ namespace bitklavier {
         createUuidProperty(v);
         if (!v.hasProperty(IDs::soundset)) {
             v.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
-        } else {
-            if (v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
-                _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString());
         }
+        // else {
+        //     if (v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
+        //         _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString());
+        // }
         /*
      * modulations and state changes
      */

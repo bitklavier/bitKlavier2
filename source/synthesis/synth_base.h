@@ -31,6 +31,8 @@ template<typename T>
 class BKSamplerSound;
 class PreparationList;
 class SampleLoadManager;
+
+
 class BKSynthesiserSound;
 namespace bitklavier {
     class ConnectionList;
@@ -259,7 +261,6 @@ public:
     bitklavier::ModConnectionList *getActiveModConnectionList();
 
     juce::ValueTree activePiano;
-
     SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
     int sample_index_of_switch;
     //ensure prep list is deleted before mod connection and connection

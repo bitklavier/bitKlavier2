@@ -19,12 +19,12 @@
 
 #include "open_gl_image.h"
 #include "open_gl_image_component.h"
-#include "open_gl_multi_image.h"
 #include "open_gl_multi_quad.h"
 #include "overlay.h"
 #include "synth_section.h"
 #include "open_gl_background.h"
 #include "default_look_and_feel.h"
+
 class PopupDisplay : public SynthSection {
 public:
     PopupDisplay();
@@ -107,6 +107,13 @@ juce::ValueTree curr_vt;
     int currentSampleType;
     std::shared_ptr<PlainTextComponent> sampleSelectText;
     std::unique_ptr<juce::ShapeButton> sampleSelector ;
+
+    /*
+     * omit prepSelector for now
+     */
+    // int currentPrepNum;
+    // std::shared_ptr<PlainTextComponent> prepSelectText;
+    // std::unique_ptr<juce::ShapeButton> prepSelector ;
 
     bool is_modulation_;
     // std::vector<Listener*> listeners_;

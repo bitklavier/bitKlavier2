@@ -4,12 +4,14 @@
 
 #ifndef BITKLAVIER2_CONSTRUCTIONSITE_H
 #define BITKLAVIER2_CONSTRUCTIONSITE_H
+#include "../../common/ObjectLists/PreparationList.h"
 #include "CableView.h"
 #include "ModulationLineView.h"
 #include "PluginWindow.h"
 #include "PreparationSelector.h"
 #include "common.h"
 #include "templates/Factory.h"
+
 class OpenGlLine;
 class SynthGuiInterface;
 typedef Loki::Factory<std::unique_ptr<PreparationSection>, juce::Identifier, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;

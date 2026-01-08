@@ -134,13 +134,7 @@ add_dependencies("${PROJECT_NAME}" check_parameterid_underscores)
 
 # Adds a BinaryData target for embedding assets into the binary
 include(Assets)
-# Adds address sanitizer
-option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-
-if (ENABLE_ASAN)
-    target_compile_options(SharedCode INTERFACE -fsanitize=address -fno-omit-frame-pointer)
-    target_link_options(SharedCode INTERFACE -fsanitize=address)
-endif()
+include(cmake/Sanitizers.cmake)
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
 target_include_directories(SharedCode

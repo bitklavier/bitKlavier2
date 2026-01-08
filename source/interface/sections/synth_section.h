@@ -156,6 +156,7 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     virtual void paintBackgroundShadow(juce::Graphics& g) { }
     virtual void setSizeRatio(float ratio);
     void paintKnobShadows(juce::Graphics& g);
+    virtual void stopAllTimers()  {}
     juce::Font getLabelFont();
     void setLabelFont(juce::Graphics& g);
     void drawLabelConnectionForComponents(juce::Graphics& g, juce::Component* left, juce::Component* right);
@@ -238,6 +239,14 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
     float getDisplayScale() const;
     void addOpenGlComponent(std::shared_ptr<OpenGlComponent> open_gl_component, bool to_beginning = false, bool makeVisible = true);
     void addButton(OpenGlToggleButton* button, bool show = true);
+
+    void findAllOccurrencesOfPrepTypeInVT(const juce::ValueTree& tree,
+                    const juce::Identifier& prepType,
+                    juce::Array<juce::ValueTree>& results);
+
+    int howManyOfThisPrepTypeInVT(const juce::ValueTree& tree, const juce::Identifier& prepType);
+    const std::vector<juce::String> namesOfAllOccurrencesOfPrepTypeInVT(const juce::ValueTree& tree,
+                    const juce::Identifier& prepType);
 
   protected:
     void setSliderHasHzAlternateDisplay(SynthSlider* slider);

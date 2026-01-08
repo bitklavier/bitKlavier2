@@ -21,19 +21,22 @@ public:
     PeakMeterSection( juce::String name,
         chowdsp::FloatParameter& param,
         chowdsp::ParameterListeners& listeners,
-        const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels);
+        const std::tuple<std::atomic<float>, std::atomic<float>> *outputLevels,
+        bool horizontal = false);
     ~PeakMeterSection();
 
 //    int getMeterHeight();
     int getBuffer();
 
     void setLabel(juce::String newLabel);
+    void setColor(juce::Colour color);
     void resized() override;
     void paintBackground(juce::Graphics& g) override;
 
     std::shared_ptr<VolumeSlider> volume_;
 
 private:
+    bool horizontal_;
     std::shared_ptr<PeakMeterViewer> peak_meter_left_;
     std::shared_ptr<PeakMeterViewer> peak_meter_right_;
     std::unique_ptr<chowdsp::SliderAttachment> volumeAttach_;
