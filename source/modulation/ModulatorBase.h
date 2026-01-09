@@ -128,6 +128,7 @@ public:
     virtual void getStateInformation (juce::MemoryBlock &destData)=0;
     virtual void setStateInformation (const void *data, int sizeInBytes)=0;
     bool isDefaultBipolar = false;
+    virtual void continuousReset() {};
 };
 
 template <typename PluginStateType>

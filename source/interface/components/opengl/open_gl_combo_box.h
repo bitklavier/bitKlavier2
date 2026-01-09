@@ -14,8 +14,9 @@
 class OpenGLComboBox : public OpenGlAutoImageComponent<juce::ComboBox>{
 
 public:
-    OpenGLComboBox(std::string str) : OpenGlAutoImageComponent<juce::ComboBox> (str)
+    OpenGLComboBox(std::string str, const juce::ValueTree &defaultState = {}) : OpenGlAutoImageComponent<juce::ComboBox> (str)
     {
+        this->defaultState = defaultState;
         image_component_ = std::make_shared<OpenGlImageComponent> ();
         setLookAndFeel(&laf);
         image_component_->setComponent(this);
@@ -51,6 +52,11 @@ public:
     // }
     void valueChanged(juce::Value &value) override {
         OpenGlAutoImageComponent<juce::ComboBox>::valueChanged(value);
+        if(hovering_ == true && defaultState.isValid()) {
+            defaultState.setProperty(juce::String(paramID),value,nullptr);
+        }
+            // defaultState.get
+
         redoImage();
     }
     // void mouseDown(const juce::MouseEvent &event) override {
@@ -75,12 +81,14 @@ public:
 
     juce::PopupMenu* clone() {
        auto menu = this->getRootMenu();
+
         return menu;
     }
     std::string getParamID() {
         return paramID;
     }
     std::string paramID;
+    juce::ValueTree defaultState;
 };
 
 

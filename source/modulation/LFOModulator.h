@@ -99,7 +99,9 @@ public :
 
         return sample;
     }
-
+    void continuousReset() override {
+        triggerReset();
+    }
 private:
     float sampleRate = 44100.0f;
     float frequency = 1.0f;

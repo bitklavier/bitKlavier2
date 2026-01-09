@@ -52,17 +52,17 @@ TuningParametersView::TuningParametersView(
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
         auto index = tuningParams->tuningState.tuningSystem->getIndex();
-        tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString());
+        tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString(), tuningParams->tuningState.tuningSystem->stateChanges.defaultState);
         tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, nullptr);
         setupTuningSystemMenu(tuning_combo_box);
         addComboBox(tuning_combo_box.get(), true, true);
         tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
 
-        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString());
+        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(),tuningParams->tuningState.fundamental->stateChanges.defaultState);
         fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, nullptr);
         addComboBox(fundamental_combo_box.get(), true, true);
 
-        tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString());
+        tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString(),tuningParams->tuningState.tuningType->stateChanges.defaultState);
         tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, nullptr);
         addComboBox(tuningtype_combo_box.get(), true, true);
     }

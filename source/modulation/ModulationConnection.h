@@ -430,6 +430,7 @@ struct StateConnection : public ModulatorBase::Listener{
         void resetTriggered()
         {
             DBG("StateConnection::resetTriggered()");
+            DBG(changeBuffer->defaultState.toXmlString());
             changeBuffer->changeState.emplace_back(0,changeBuffer->defaultState);
         }
 

@@ -92,7 +92,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
             }
 
             // restart the ramp (or whatever mod) now
-            mod->triggerReset();
+            mod->continuousReset();
             mod->triggerModulation();
         }
 

@@ -52,7 +52,9 @@ public :
     float target_{0.f};
     float rate_ {0.001f};
     int state_{0};
-
+    void continuousReset() override {
+        triggerReset();
+    }
     float sampleRate;
 
 };

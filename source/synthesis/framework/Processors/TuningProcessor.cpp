@@ -638,8 +638,11 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
 
     state.params.tuningState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::fundamental, v.getProperty(IDs::fundamental,0),nullptr);
     state.params.tuningState.tuningSystem->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::tuningSystem, v.getProperty(IDs::tuningSystem,0),nullptr);
     state.params.tuningState.tuningType->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::tuningType, v.getProperty(IDs::tuningType,0),nullptr);
 
     //adaptive
     state.params.tuningState.adaptiveParams.tAdaptiveIntervalScale->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
