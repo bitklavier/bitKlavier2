@@ -171,6 +171,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     double lastFrequencyTarget = 440.;
 
     //std::atomic<bool> setFromAudioThread;
+
 };
 
 struct TuningParams : chowdsp::ParamHolder
@@ -275,6 +276,7 @@ public:
     juce::ListenerList<TuningListener> listeners;
 
 private:
+    chowdsp::ScopedCallbackList tuningCallbacks;
     chowdsp::Gain<float> gain;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TuningProcessor)

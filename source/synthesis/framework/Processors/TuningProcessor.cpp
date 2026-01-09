@@ -41,6 +41,7 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 
 void TuningState::processStateChanges()
 {
+
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
@@ -50,7 +51,7 @@ void TuningState::processStateChanges()
         {
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
         }
-       val = change.getProperty (IDs::circularTuning);
+        val = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
             parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
@@ -60,6 +61,11 @@ void TuningState::processStateChanges()
             int n = val;
             TuningSystem t = static_cast<TuningSystem> (1 << n);
             tuningSystem->setParameterValue(t);
+            setOffsetsFromTuningSystem(
+                tuningSystem->get(),
+                fundamental->getIndex(),
+                circularTuningOffset,
+                circularTuningOffset_custom);
         }
         val = change.getProperty(IDs::tuningType);
         if (val != nullVar) {
@@ -67,6 +73,13 @@ void TuningState::processStateChanges()
             TuningType t =static_cast<TuningType>(1<<n);
             tuningType->setParameterValue(t);
         }
+        val = change.getProperty(IDs::fundamental);
+        if (val != nullVar) {
+            int n = val;
+            Fundamental t = static_cast<Fundamental>(1<<n);
+            setFundamental(n);
+        }
+
 
 
     }
@@ -641,7 +654,14 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
 
     // float newA4 = vt.getRoot().getProperty(IDs::global_A440);
     // state.params.tuningState.setGlobalTuningReference (newA4);
+    tuningCallbacks += {state.getParameterListeners().addParameterListener(
+       state.params.tuningState.fundamental,
+       chowdsp::ParameterListenerThread::AudioThread,
+       [this]() {
 
+    state.params.tuningState.setFundamental(state.params.tuningState.fundamental->getIndex());
+       })
+   };
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -686,6 +706,7 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      */
     state.params.tuningState.processStateChanges();
     state.params.tuningState.fundamental->processStateChanges();
+    state.getParameterListeners().callAudioThreadBroadcasters();
 
     /*
      * increment timer for tuningType tuning cluster measurements.
