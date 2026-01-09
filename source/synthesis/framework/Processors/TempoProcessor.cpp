@@ -9,6 +9,10 @@
 
 TempoProcessor::TempoProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, tempoBusLayout())
 {
+    state.params.timeWindowMinMaxParams.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "timewindowminmax",
+        &(state.params.timeWindowMinMaxParams.stateChanges)));
 }
 
 void TempoProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -43,7 +47,8 @@ void TempoProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
      */
 
     // first, the continuous modulations (simple knobs/sliders...)
-    // processContinuousModulations(buffer);
+    //processContinuousModulations(buffer);
+    state.params.timeWindowMinMaxParams.processStateChanges();
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();

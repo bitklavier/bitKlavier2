@@ -113,6 +113,8 @@ public:
         };
     }
 
+    void setTitletext(juce::String newtext) { rangeSliderBorder.setText(newtext); }
+
     virtual void resized() override {
         OpenGlAutoImageComponent<BKRangeSlider>::resized();
         redoImage();

@@ -676,16 +676,16 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
     }
 }
 
-
 void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    processContinuousModulations(buffer);
+
     /*
      * update state modulated components:
      *      - the circular and absolute tuning arrays in this case
      */
     state.params.tuningState.processStateChanges();
     state.params.tuningState.fundamental->processStateChanges();
-
 
     /*
      * increment timer for tuningType tuning cluster measurements.

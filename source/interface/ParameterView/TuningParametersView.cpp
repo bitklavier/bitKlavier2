@@ -459,6 +459,9 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
 
 void TuningParametersView::resized()
 {
+    FullInterface *parent = findParentComponentOfClass<FullInterface>();
+    if (parent)
+        parent->hideSoundsetSelector();
 
     juce::Rectangle<int> area (getLocalBounds());
 

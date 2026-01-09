@@ -91,6 +91,12 @@ public:
     juce::ComponentDragger myDragger;
     juce::ComponentBoundsConstrainer constrainer;
 
+    void hideSoundsetSelector()
+    {
+        sampleSelector->setVisible(false);
+        sampleSelectText->setVisible(false);
+    }
+
     void repaintBackground() override
     {
     }
