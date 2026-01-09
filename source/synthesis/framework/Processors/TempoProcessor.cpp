@@ -47,7 +47,8 @@ void TempoProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
      */
 
     // first, the continuous modulations (simple knobs/sliders...)
-    // processContinuousModulations(buffer);
+    //processContinuousModulations(buffer);
+    state.params.timeWindowMinMaxParams.processStateChanges();
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();

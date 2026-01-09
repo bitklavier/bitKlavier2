@@ -18,8 +18,8 @@
 enum TempoModeType
 {
     Constant_Tempo = 1 << 0,
-    Time_Between_Notes = 1 << 1,
-    Sustain_Time = 1 << 2,
+    Adaptive2Time_Between_Notes = 1 << 1, // 2 => -, "Adaptive-Time Between Notes
+    Adaptive2Sustain_Time = 1 << 2,
 };
 
 struct TempoParams : chowdsp::ParamHolder
