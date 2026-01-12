@@ -42,6 +42,8 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 void TuningState::processStateChanges()
 {
 
+    fundamental->processStateChanges();
+
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
@@ -79,9 +81,6 @@ void TuningState::processStateChanges()
             Fundamental t = static_cast<Fundamental>(1<<n);
             setFundamental(n);
         }
-
-
-
     }
     stateChanges.changeState.clear();
 }
@@ -93,7 +92,13 @@ void TuningState::setFundamental (int fund)
     setOldFundamental(fund);
 
     int offset = fund - oldFund;
-    auto& vals = circularTuningOffset;
+    std::array<float, 12> vals;
+
+    for (size_t i = 0; i < circularTuningOffset.size(); ++i) {
+        // .load() explicitly converts the atomic to a float
+        vals[i] = circularTuningOffset[i].load(std::memory_order_relaxed);
+    }
+
     for (int i = 0; i < 12; i++)
     {
         int index = ((i - offset) + 12) % 12;
@@ -636,13 +641,14 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "octave", &(state.params.tuningState.semitoneWidthParams.octave->stateChanges)));
 
+    // primary combo boxes
     state.params.tuningState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::fundamental, v.getProperty(IDs::fundamental,0),nullptr);
     state.params.tuningState.tuningSystem->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::tuningSystem, v.getProperty(IDs::tuningSystem,0),nullptr);
+    state.params.tuningState.tuningSystem->stateChanges.defaultState.setProperty(IDs::tuningSystem, v.getProperty(IDs::tuningSystem,0),nullptr);
     state.params.tuningState.tuningType->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::tuningType, v.getProperty(IDs::tuningType,0),nullptr);
+    state.params.tuningState.tuningType->stateChanges.defaultState.setProperty(IDs::tuningType, v.getProperty(IDs::tuningType,0),nullptr);
 
     //adaptive
     state.params.tuningState.adaptiveParams.tAdaptiveIntervalScale->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -655,16 +661,14 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     state.params.tuningState.springTuningParams.scaleId_tether->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.springTuningParams.tetherFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
-    // float newA4 = vt.getRoot().getProperty(IDs::global_A440);
-    // state.params.tuningState.setGlobalTuningReference (newA4);
-    tuningCallbacks += {state.getParameterListeners().addParameterListener(
-       state.params.tuningState.fundamental,
-       chowdsp::ParameterListenerThread::AudioThread,
-       [this]() {
-
-    state.params.tuningState.setFundamental(state.params.tuningState.fundamental->getIndex());
-       })
-   };
+   //  tuningCallbacks += {state.getParameterListeners().addParameterListener(
+   //     state.params.tuningState.fundamental,
+   //     chowdsp::ParameterListenerThread::AudioThread,
+   //     [this]() {
+   //
+   //  state.params.tuningState.setFundamental(state.params.tuningState.fundamental->getIndex());
+   //     })
+   // };
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -708,7 +712,7 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      *      - the circular and absolute tuning arrays in this case
      */
     state.params.tuningState.processStateChanges();
-    state.params.tuningState.fundamental->processStateChanges();
+    //state.params.tuningState.fundamental->processStateChanges();
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     /*
