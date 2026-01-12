@@ -95,7 +95,7 @@ public:
     void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails& source)
     {
         //setMouseCursor(juce::MouseCursor::ParentCursor);
-        if (!item_dropped_on_prep_)
+        if (!item_dropped_on_prep_ || source.sourceComponent == getComponentAt(mouse_drag_position_))
         {
             for (auto& fc : plugin_components)
             {
