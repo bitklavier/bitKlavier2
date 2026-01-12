@@ -148,7 +148,7 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
     // if(modConnectionList) {
     auto size_ = modConnectionList->size();
     auto vt_ = modConnectionList->getValueTree();
-    for (int i = 0; i < size;)
+    for (int i = 0; i < size_;)
     {
         auto connection = vt_.getChild (i);
         if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
