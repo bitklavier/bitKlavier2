@@ -318,6 +318,7 @@ void FullInterface::hideSoundsetSelector()
 
 void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, const juce::ValueTree &v)
 {
+    prep_popup->reset();
     /*
      * todo: setup this rescaling of different prepSizes better
      */
