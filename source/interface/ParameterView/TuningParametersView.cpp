@@ -338,8 +338,14 @@ void TuningParametersView::keyboardSliderChanged(juce::String name)
 void TuningParametersView::timerCallback(void)
 {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    if (interface != NULL)
-        interface->getGui()->prep_popup->repaintPrepBackground();
+    if (interface != nullptr)
+    {
+        if (auto* gui = interface->getGui())
+        {
+            if (gui->prep_popup != nullptr)
+                gui->prep_popup->repaintPrepBackground();
+        }
+    }
 }
 
 /**
@@ -386,9 +392,17 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
     auto& allnotes = params.tuningState.spiralNotes;
     for (auto& p : allnotes)
     {
-        if (p.load() < 0) continue;
+        const float f = p.load();
+        if (!(f > 0.0f) || !std::isfinite(f))
+            continue;
 
-        midi = ftom(p.load(), params.tuningState.getGlobalTuningReference());
+        const float ref = params.tuningState.getGlobalTuningReference();
+        if (!(ref > 0.0f) || !std::isfinite(ref))
+            continue;
+
+        midi = ftom(f, ref);
+        if (!std::isfinite(midi))
+            continue;
         currentFreqs.emplace_back(midi); // keep track of all the current notes, for drawing lines between
 
         midiScale = midi / 60.;
@@ -396,6 +410,8 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
         radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
         cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
         cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+        if (!std::isfinite(cx) || !std::isfinite(cy))
+            continue;
 
         float hue = fmod(midi, 12.) / 12.;
         juce::Colour colour (hue, 0.5f, 0.5f, 0.9f);
@@ -403,10 +419,13 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
         g.setOpacity(0.75);
         g.fillEllipse(cx, cy, dimc, dimc);
 
-        int cents = (midi - round(midi)) * 100.0; // might need to update to show actual offset from anchor locations
-        g.setColour(juce::Colours::white);
-        g.setFont(14.0f);
-        g.drawText(juce::String(round(cents)), cx-dimc*0.25, cy+dimc*0.25, dimc * 1.5, dimc * 0.5, juce::Justification::centred);
+        const float centsF = (midi - std::round(midi)) * 100.0f; // might need to update to show actual offset from anchor locations
+        if (std::isfinite(centsF))
+        {
+            g.setColour(juce::Colours::white);
+            g.setFont(14.0f);
+            g.drawText(juce::String((int) std::round(centsF)), cx - dimc * 0.25f, cy + dimc * 0.25f, dimc * 1.5f, dimc * 0.5f, juce::Justification::centred);
+        }
     }
 
     /**
@@ -439,19 +458,24 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
             float cxb = centerx + cosf(radians) * radius * midiScale;
             float cyb = centery + sinf(radians) * radius * midiScale;
 
+            if (!std::isfinite(cxa) || !std::isfinite(cya) || !std::isfinite(cxb) || !std::isfinite(cyb))
+                continue;
+
             float hue = fmod((midi + midiSave)/2., 12.) / 12.;
             juce::Colour colour (hue, 0.5f, 0.5f, 0.25f);
             g.setColour(colour);
             g.drawLine(cxa, cya, cxb, cyb, 5);
 
             int h = 10, w = 35;
-            int midX = (cxa + cxb) / 2.0; //+ xoff;
-            int midY = (cya + cyb) / 2.0; //+ yoff;
+            float midX = (cxa + cxb) * 0.5f; //+ xoff;
+            float midY = (cya + cyb) * 0.5f; //+ yoff;
 
             g.setColour(juce::Colours::ghostwhite);
             g.setFont(12.0f);
             g.setOpacity(0.7);
-            g.drawText(juce::String((int)round(100.*(midi - midiSave))), midX-dimc*0.25, midY, w, h, juce::Justification::topLeft);
+            const float centsDelta = 100.0f * (midi - midiSave);
+            if (std::isfinite(centsDelta))
+                g.drawText(juce::String((int) std::round(centsDelta)), midX - dimc * 0.25f, midY, w, h, juce::Justification::topLeft);
 
         }
     }
