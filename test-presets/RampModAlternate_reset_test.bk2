@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GALLERY soundset="Yamaha_Default" uuid="730daebcb6e947778316413b6072a9bd">
+  <PIANO isActive="1" name="New Piano">
+    <PREPARATIONS>
+      <direct type="1" width="147.0" height="75.0" x_y="667, 330" uuid="4e450b7b828441fb9565980cd91c34e2"
+              soundset="syncglobal" nodeID="1313147771" name="direct 1" numIns="1"
+              numOuts="2" Main="-16.754" Hammers="-24.000" Resonance="0.000"
+              Pedal="-6.000" Send="0.000" OutputGain="0.000" resonanceLoaded="1"
+              hammerLoaded="1" pedalLoaded="1" attack="3.000" decay="10.000"
+              sustain="1.000" release="50.000" attackpower="0.000" decaypower="0.000"
+              releasepower="0.000" hold="0.000" delay="0.000" notify="0" t0="0.000"
+              t1="0.000" t2="0.000" t3="0.000" t4="0.000" t5="0.000" t6="0.000"
+              t7="0.000" t8="0.000" t9="0.000" t10="0.000" t11="0.000" sliderValsSize="1.000"
+              UseTuning="0">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="Main" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Hammers" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Resonance" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Pedal" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>
+          <MODULATABLE_PARAM parameter="attack" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="decay" start="0.0" end="1000.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="sustain" start="0.0" end="1.0" skew="1.0"/>
+          <MODULATABLE_PARAM parameter="release" start="0.0" end="10000.0" skew="0.2313782125711441"/>
+          <MODULATABLE_PARAM parameter="delay" start="0.0" end="1000.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="1313147771" chIdx="4096" isIn="1"/>
+        <PORT nodeID="1313147771" chIdx="0" isIn="0"/>
+        <PORT nodeID="1313147771" chIdx="2" isIn="0"/>
+      </direct>
+      <modulation type="10" width="60.00000381469727" height="60.00000381469727"
+                  x_y="802, 318" uuid="1cda4b4203294a74bb345197df0de9e7" nodeID="484068162"
+                  name="modulation 1" numIns="1">
+        <PORT nodeID="484068162" chIdx="4096" isIn="1"/>
+        <modulationproc type="ramp" isState="0" uuid="88b28b63542c48b4936f9845a76f38dc"
+                        Time="10.000"/>
+      </modulation>
+      <modulation type="10" width="60.00000381469727" height="60.00000381469727"
+                  x_y="392, 280" uuid="968e73b4c99c4bbdacc547b19397e2fe" nodeID="2525918132"
+                  name="modulation 2" numIns="1">
+        <PORT nodeID="2525918132" chIdx="4096" isIn="1"/>
+        <modulationproc type="ramp" isState="0" uuid="03ed786fcc5541d080365b375ab0b132"
+                        Time="10.000"/>
+      </modulation>
+      <keymap type="0" width="111.0000076293945" height="63.00000381469727"
+              x_y="439, 473" uuid="8169afb7d73347b199978dc3c5ab652e" soundset="syncglobal"
+              nodeID="2171187127" name="keymap 1" numOuts="1" velocityCurveAsymWarp="1.000"
+              velocityCurveSymWarp="1.000" velocityCurveScale="1.000" velocityCurveOffset="0.000"
+              velocityCurveInvert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="21">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurveAsymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveSymWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurveScale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveOffset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="2171187127" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
+      </keymap>
+      <keymap type="0" width="111.0000076293945" height="63.00000381469727"
+              x_y="823, 475" uuid="fe6810945bd444f58af415168306634b" soundset="syncglobal"
+              nodeID="4268232852" name="keymap 2" numOuts="1" velocityCurveAsymWarp="1.000"
+              velocityCurveSymWarp="1.000" velocityCurveScale="1.000" velocityCurveOffset="0.000"
+              velocityCurveInvert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="108">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurveAsymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveSymWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurveScale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveOffset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="4268232852" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
+      </keymap>
+      <reset type="11" width="60.00000381469727" height="60.00000381469727"
+             x_y="659, 474" uuid="0be354c34dc8403686b2dd9e4b4e4bed" nodeID="199447747"
+             name="reset 1" numIns="1">
+        <PORT nodeID="199447747" chIdx="4096" isIn="1"/>
+      </reset>
+      <keymap type="0" width="111.0000076293945" height="63.00000381469727"
+              x_y="666, 612" uuid="16629c97102c4b27aefe9f6780ecaa2e" soundset="syncglobal"
+              nodeID="375561367" name="keymap 3" numOuts="1" velocityCurveAsymWarp="1.000"
+              velocityCurveSymWarp="1.000" velocityCurveScale="1.000" velocityCurveOffset="0.000"
+              velocityCurveInvert="0" velocitymin="0.000" velocitymax="128.000"
+              keyOn="60">
+        <MODULATABLE_PARAMS>
+          <MODULATABLE_PARAM parameter="velocityCurveAsymWarp" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveSymWarp" start="0.0" end="5.0" skew="0.4306765496730804"/>
+          <MODULATABLE_PARAM parameter="velocityCurveScale" start="0.0" end="10.0" skew="0.3010299801826477"/>
+          <MODULATABLE_PARAM parameter="velocityCurveOffset" start="-1.0" end="1.0" skew="1.0"/>
+        </MODULATABLE_PARAMS>
+        <PARAM_DEFAULT/>
+        <PORT nodeID="375561367" chIdx="4096" isIn="0"/>
+        <midiInput midiDeviceId="812171291 116208109"/>
+      </keymap>
+    </PREPARATIONS>
+    <CONNECTIONS>
+      <CONNECTION isMod="0" src="2171187127" srcIdx="4096" dest="2525918132" destIdx="4096"/>
+      <CONNECTION isMod="0" src="4268232852" srcIdx="4096" dest="484068162" destIdx="4096"/>
+      <CONNECTION isMod="0" src="375561367" srcIdx="4096" dest="199447747" destIdx="4096"/>
+    </CONNECTIONS>
+    <MODCONNECTIONS>
+      <MODCONNECTION isMod="1" src="484068162" dest="1313147771">
+        <ModulationConnection uuid="bd7a793ab98b41aa929a747f6a6511ae" isState="0" dest="4e450b7b828441fb9565980cd91c34e2_Main"
+                              src="1cda4b4203294a74bb345197df0de9e7_ramp-88b28b63542c48b4936f9845a76f38dc_mod"
+                              sliderval="-16.75384521484375" mod0to1="0.2338839173316956" modAmt="-4.304012298583984"/>
+        <ModulationConnection uuid="97adaaea30a34b6cab190c445a4c7190" isState="0" dest="4e450b7b828441fb9565980cd91c34e2_Main"
+                              src="968e73b4c99c4bbdacc547b19397e2fe_ramp-03ed786fcc5541d080365b375ab0b132_mod"
+                              sliderval="-16.75384521484375" mod0to1="-0.2780104875564575"
+                              modAmt="-35.91019821166992"/>
+      </MODCONNECTION>
+      <MODCONNECTION isMod="1" src="2525918132" dest="1313147771"/>
+      <RESETCONNECTION isMod="1" src="199447747" dest="484068162"/>
+      <RESETCONNECTION isMod="1" src="199447747" dest="2525918132"/>
+    </MODCONNECTIONS>
+  </PIANO>
+  <BUSEQ type="15" uuid="f2bf296fb15241b2ba8c713e54eb8047" soundset="syncglobal">
+    <MODULATABLE_PARAMS/>
+  </BUSEQ>
+  <BUSCOMPRESSOR type="14" uuid="9055d59a9aea494e9cbf3594538cd787" soundset="syncglobal">
+    <MODULATABLE_PARAMS>
+      <MODULATABLE_PARAM parameter="InputGain" start="-80.0" end="6.0" skew="2.0"/>
+      <MODULATABLE_PARAM parameter="Send" start="-80.0" end="6.0" skew="2.0"/>
+      <MODULATABLE_PARAM parameter="OutputGain" start="-80.0" end="6.0" skew="2.0"/>
+      <MODULATABLE_PARAM parameter="loCutFreq" start="20.0" end="20000.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="loCutSlope" start="12.0" end="48.0" skew="1.0"/>
+      <MODULATABLE_PARAM parameter="peak1Freq" start="20.0" end="20000.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak1Gain" start="-24.0" end="24.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak1Q" start="0.1000000014901161" end="10.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak1Slope" start="12.0" end="48.0" skew="1.0"/>
+      <MODULATABLE_PARAM parameter="peak2Freq" start="20.0" end="20000.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak2Gain" start="-24.0" end="24.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak2Q" start="0.1000000014901161" end="10.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak2Slope" start="12.0" end="48.0" skew="1.0"/>
+      <MODULATABLE_PARAM parameter="peak3Freq" start="20.0" end="20000.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak3Gain" start="-24.0" end="24.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak3Q" start="0.1000000014901161" end="10.0" skew="0.2000000029802322"/>
+      <MODULATABLE_PARAM parameter="peak3Slope" start="12.0" end="48.0" skew="1.0"/>
+      <MODULATABLE_PARAM parameter="hiCutFreq" start="20.0" end="20000.0" skew="0.6000000238418579"/>
+      <MODULATABLE_PARAM parameter="hiCutSlope" start="12.0" end="48.0" skew="1.0"/>
+    </MODULATABLE_PARAMS>
+  </BUSCOMPRESSOR>
+  <MODULATABLE_PARAMS/>
+</GALLERY>
