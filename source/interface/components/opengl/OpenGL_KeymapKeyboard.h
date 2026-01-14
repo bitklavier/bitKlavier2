@@ -88,6 +88,8 @@ public:
     // UI selection changes -> broadcast to engine
     virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override
     {
+        if (! postUInotesToEngine_) return;
+
         // keys reflects the current state after the change: if bit is set, it's a key down
         const bool isDown = (lastKey >= 0 && lastKey < 128) ? keys.test ((size_t) lastKey) : false;
         if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
@@ -95,7 +97,7 @@ public:
                 if (auto* eng = synth->getEngine())
                 {
                     if (isDown)
-                        eng->postUINoteOn (lastKey, 1.0f, 1);
+                        eng->postUINoteOn (lastKey, 0.5f, 1);
                     else
                         eng->postUINoteOff (lastKey, 0.0f, 1);
                 }
@@ -107,6 +109,8 @@ public:
         setLiveKeyState (note, isDown);
         redoImage();
     }
+
+    bool postUInotesToEngine_ { false };
 
 private:
     void tryRegisterLiveListener()

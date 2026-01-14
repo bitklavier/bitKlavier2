@@ -61,7 +61,7 @@ void FooterSection::BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<
             if (auto* eng = synth->getEngine())
             {
                 if (isDown)
-                    eng->postUINoteOn (lastKey, 1.0f, 1);
+                    eng->postUINoteOn (lastKey, 0.5f, 1);
                 else
                     eng->postUINoteOff (lastKey, 0.0f, 1);
             }
