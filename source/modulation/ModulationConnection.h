@@ -250,13 +250,13 @@ class ModulationProcessor;
 
             return scalingValue_.load (std::memory_order_relaxed);
         }
-        void modulationTriggered() //listener funciton
-               {
 
-            DBG("ModulationConnection::modulationTriggered() for dest :" + destination_name + "src: "  + source_name);
-            // changeBuffer->changeState.emplace_back(0,change);
-            // lockScaling();
-               }
+        void modulationTriggered() //listener funciton
+        {
+        DBG("ModulationConnection::modulationTriggered() for dest :" + destination_name + "src: "  + source_name);
+        // changeBuffer->changeState.emplace_back(0,change);
+        // lockScaling();
+        }
 
         void resetTriggered()
         {
