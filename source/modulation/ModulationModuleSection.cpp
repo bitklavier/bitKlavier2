@@ -95,7 +95,17 @@ void ModulationModuleSection::removeModulator (ModulatorBase* base)
 
 ModulationModuleSection::~ModulationModuleSection()
 {
-   modulation_list_->removeListener(this);
+   if (modulation_list_ != nullptr)
+       modulation_list_->removeListener(this);
+}
+
+void ModulationModuleSection::listAboutToBeDeleted(ModulationList* list)
+{
+    if (modulation_list_ == list && modulation_list_ != nullptr)
+    {
+        modulation_list_->removeListener(this);
+        modulation_list_ = nullptr;
+    }
 }
 
 void ModulationModuleSection::handlePopupResult(int result) {

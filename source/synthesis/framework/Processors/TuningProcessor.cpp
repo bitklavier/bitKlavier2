@@ -41,10 +41,6 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 
 void TuningState::processStateChanges()
 {
-    if (!fundamental->stateChanges.changeState.empty())
-        DBG("TuningState::processStateChanges(), fundamental->stateChanges.size() = " << fundamental->stateChanges.changeState.size());
-
-    //state.params.tuningState.fundamental->stateChanges
 
     fundamental->processStateChanges();
     tuningSystem->processStateChanges();
@@ -53,8 +49,6 @@ void TuningState::processStateChanges()
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
-
-        DBG("TuningState::processStateChanges() = " << change.toXmlString());
 
         auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
@@ -67,32 +61,6 @@ void TuningState::processStateChanges()
         {
             parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
         }
-
-        // val = change.getProperty(IDs::tuningType);
-        // if (val != nullVar) {
-        //     int n = val;
-        //     TuningType t =static_cast<TuningType>(1<<n);
-        //     tuningType->setParameterValue(t);
-        // }
-
-        // val = change.getProperty(IDs::fundamental);
-        // if (val != nullVar) {
-        //     int n = val;
-        //     Fundamental t = static_cast<Fundamental>(1<<n);
-        //     setFundamental(n);
-        // }
-
-        // val = change.getProperty(IDs::tuningSystem);
-        // if (val != nullVar) {
-        //     int n = val;
-        //     TuningSystem t = static_cast<TuningSystem> (1 << n);
-        //     tuningSystem->setParameterValue(t);
-        //     setOffsetsFromTuningSystem(
-        //         tuningSystem->get(),
-        //         fundamental->getIndex(),
-        //         circularTuningOffset,
-        //         circularTuningOffset_custom);
-        // }
     }
 
     stateChanges.changeState.clear();
@@ -108,7 +76,6 @@ void TuningState::setFundamental (int fund)
     std::array<float, 12> vals;
 
     for (size_t i = 0; i < circularTuningOffset.size(); ++i) {
-        // .load() explicitly converts the atomic to a float
         vals[i] = circularTuningOffset[i].load(std::memory_order_relaxed);
     }
 

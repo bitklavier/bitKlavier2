@@ -20,6 +20,9 @@ public:
         virtual ~Listener(){}
         virtual void modulatorAdded( ModulatorBase*) = 0;
         virtual void removeModulator(ModulatorBase*) = 0;
+        // Optional: called while the list is still valid, right before destruction
+        // Default no-op so existing listeners don't need to implement it.
+        virtual void listAboutToBeDeleted(ModulationList*) {}
 //        virtual void modulationRemoved() = 0;
     };
     ModulationList(const juce::ValueTree&, SynthBase*, bitklavier::ModulationProcessor*);

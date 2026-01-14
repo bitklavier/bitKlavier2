@@ -22,6 +22,13 @@ ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier:
 
 ModulationList::~ModulationList()
 {
+    // Notify listeners (copy to allow self-unregistering safely)
+    {
+        auto listenersCopy = listeners_;
+        for (auto* l : listenersCopy)
+            if (l != nullptr)
+                l->listAboutToBeDeleted(this);
+    }
     shutdown = true;
     freeObjects();
 }

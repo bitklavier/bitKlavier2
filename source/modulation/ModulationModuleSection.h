@@ -18,6 +18,9 @@ public:
     explicit ModulationModuleSection(ModulationList *,juce::ValueTree &, ModulationManager* m, juce::UndoManager &um);
     virtual ~ModulationModuleSection();
 
+    // ModulationList::Listener override: notified before the list is destroyed
+    void listAboutToBeDeleted(ModulationList* list) override;
+
     void setEffectPositions() override;
 
     void modulatorAdded( ModulatorBase* ) override;

@@ -26,23 +26,12 @@ public:
     ~OpenGLComboBox() {
         setLookAndFeel(nullptr);
     }
+
     virtual void resized() override
     {
         OpenGlAutoImageComponent<juce::ComboBox>::resized();
         redoImage();
     }
-
-    // void mouseEnter(const juce::MouseEvent &event) override
-    // {
-    //     for (auto* listener : listeners_)
-    //         listener->hoverStarted(this);
-    // }
-    //
-    // void mouseExit(const juce::MouseEvent &event) override
-    // {
-    //     for (auto* listener : listeners_)
-    //         listener->hoverEnded(this);
-    // }
 
     void mouseDown(const juce::MouseEvent &event) override {
         OpenGlAutoImageComponent<juce::ComboBox>::mouseDown(event);
@@ -88,10 +77,7 @@ public:
     bool mouseInteraction = false;
 
     juce::PopupMenu* clone() {
-       auto menu = this->getRootMenu();
-
-        // DBG("OpenGLComboBox::clone");
-        // isModulation_ == true;
+        auto menu = this->getRootMenu();
         return menu;
     }
 
