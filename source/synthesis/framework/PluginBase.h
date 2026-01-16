@@ -170,6 +170,7 @@ namespace bitklavier {
         bool supportsParameterModulation() const;
 
         void resetContinuousModulations() {
+            DBG("PluginBase::resetContinuousModulations");
             parent.requestResetAllContinuousModsRT();
         }
 

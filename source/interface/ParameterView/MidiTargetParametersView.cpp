@@ -93,6 +93,9 @@ void MidiTargetParametersView::resized()
     targetOffset += 2;
     if (params.connectedPrep == IDs::nostalgic)
         arrange_parameter_toggles_and_menus(NostalgicTargetFirst, NostalgicTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
+    targetOffset += 2;
+    if (params.connectedPrep == IDs::direct)
+        arrange_parameter_toggles_and_menus(DirectTargetFirst, DirectTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
 
     SynthSection::resized();
 }

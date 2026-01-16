@@ -1164,5 +1164,6 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
 
 void SynthBase::requestResetAllContinuousModsRT()
 {
+    DBG("SynthBase::requestResetAllContinuousModsRT()");
     if (engine_) engine_->requestResetAllContinuousModsRT();
 }

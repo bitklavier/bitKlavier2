@@ -697,6 +697,10 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
             else doPausePlay = true;
             break;
 
+        case SynchronicTargetModReset:
+            resetContinuousModulations();
+            break;
+
 /*
  * these are currently unimplemented
  */

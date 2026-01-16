@@ -32,13 +32,16 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     // Consume external RT reset request
     if (pendingResetAll_.exchange(false, std::memory_order_acq_rel))
     {
+        DBG("ModulationProcessor::processBlock, pendingResetAll_ = true");
         for (auto& e : snap.mods)
             if (auto* mod = e.mod)
                 mod->continuousReset(); // For Ramp, this calls triggerReset()
     }
 
+    // from Audio Bus: i'm not sure this has a way to get called right now?
     auto reset_in = getBusBuffer(buffer, true, 2);
     if (reset_in.getSample(0, 0) == 1.0f) {
+        DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
         for (auto &e: snap.mods)
             if (e.mod != nullptr)
                 e.mod->triggerReset();
@@ -46,8 +49,13 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
 
     // MIDI note-on => request retrigger
     for (auto msg: midiMessages) {
-        if (msg.getMessage().isNoteOn()) if (msg.getMessage().isNoteOn()) for (auto &e: snap.mods) if (e.mod != nullptr)
-            e.mod->pendingRetrigger.store(true, std::memory_order_release);
+        if (msg.getMessage().isNoteOn())
+        {
+            DBG("ModulationProcessor::processBlock, reset from noteOn (attached Reset)");
+            for (auto &e: snap.mods)
+                if (e.mod != nullptr)
+                    e.mod->pendingRetrigger.store(true, std::memory_order_release);
+        }
     }
 
     // Main render/mix
@@ -61,14 +69,15 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
 
         const bool doRetrig = mod->pendingRetrigger.exchange(false, std::memory_order_acq_rel);
         if (doRetrig) {
+            DBG("doTrig == true");
             // capture per-connection carry + compute new scaling per connection
             for (auto *c: e.connections) {
                 if (!c) continue;
                 const float raw0 = e.lastRaw0;               // where the ramp was before retrigger
                 const float oldScale = c->getScalingForDSP();// locked/old scaling BEFORE you change it
                 float carry = 0.0f;
-                DBG("oldScale" + juce::String(oldScale));
-                DBG("lastRaw" + juce::String(raw0));
+                DBG("oldScale = " + juce::String(oldScale));
+                DBG("lastRaw = " + juce::String(raw0));
                 // handle polarity the same way you mix
                 const bool polarityMatches =
                     (mod->isDefaultBipolar && c->isBipolar()) ||

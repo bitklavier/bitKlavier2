@@ -72,7 +72,8 @@ void RampModulatorProcessor::triggerModulation()
 
 void RampModulatorProcessor::triggerReset()
 {
-    value_ = 0;
+    DBG("RampModulatorProcessor::triggerReset()");
+    value_ = 0.f;
     state_ = 0;
     ModulatorBase::triggerReset();
 }
@@ -96,8 +97,10 @@ SynthSection *RampModulatorProcessor::createEditor() {
 
 void RampModulatorProcessor::retriggerFrom(float current)
 {
+    DBG("RampModulatorProcessor::retriggerFrom = " << current);
     // Keep continuity: start from the current output level
     value_ = juce::jlimit (0.0f, 1.0f, current);
+    //value_ = 0.f; // try NOT keeping continuity, see if that gives simple behavior when switching between multiple mods
 
     // Retrigger means "ramp toward 1 again" (match triggerModulation semantics)
     target_ = 1.0f;

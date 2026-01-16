@@ -73,6 +73,7 @@ struct MidiTargetParams : chowdsp::ParamHolder
             nostalgicTargetDefault,
             nostalgicTargetClear,
             nostalgicTargetModReset,
+            directTargetModReset,
             blendronicTargetPatternSync_noteMode,
             blendronicTargetBeatSync_noteMode,
             blendronicTargetClear_noteMode,
@@ -93,7 +94,8 @@ struct MidiTargetParams : chowdsp::ParamHolder
             resonanceTargetModReset_noteMode,
             nostalgicTargetDefault_noteMode,
             nostalgicTargetClear_noteMode,
-            nostalgicTargetModReset_noteMode);
+            nostalgicTargetModReset_noteMode,
+            directTargetModReset_noteMode);
 //            synchronicTargetDeleteOldest_noteMode,
 //            synchronicTargetDeleteNewest_noteMode,
 //            synchronicTargetRotate_noteMode);
@@ -172,6 +174,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
 
         targetMapper[NostalgicTargetModReset]           = nostalgicTargetModReset.get();
         noteModeMapper[NostalgicTargetModReset]         = nostalgicTargetModReset_noteMode.get();
+
+        targetMapper[DirectTargetModReset]           = directTargetModReset.get();
+        noteModeMapper[DirectTargetModReset]         = directTargetModReset_noteMode.get();
     }
 
     chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
@@ -481,6 +486,19 @@ struct MidiTargetParams : chowdsp::ParamHolder
         juce::ParameterID{"nTargetDefaultNoteMode", 100},
         "Note Mode",
         TriggerType::_Both,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr directTargetModReset {
+        juce::ParameterID { "dTargetModReset", 100},
+        "Reset Mods",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr directTargetModReset_noteMode {
+        juce::ParameterID{"dTargetModResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 

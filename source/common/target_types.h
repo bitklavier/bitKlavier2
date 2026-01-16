@@ -42,7 +42,10 @@ typedef enum PreparationParameterTargetType {
     NostalgicTargetDefault,
     NostalgicTargetClear,
     NostalgicTargetModReset,
-    NostalgicTargetNil
+    NostalgicTargetNil,
+    DirectTargetFirst,
+    DirectTargetModReset,
+    DirectTargetNil,
 
 } PreparationParameterTargetType;
 

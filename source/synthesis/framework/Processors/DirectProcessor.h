@@ -16,6 +16,7 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 #include "SampleLoadManager.h"
+#include "target_types.h"
 
 struct DirectParams : chowdsp::ParamHolder {
     // gain slider params, for all gain-type knobs
@@ -325,6 +326,7 @@ private:
     juce::Array<float> midiNoteTranspositions;
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();
+    void handleMidiTargetMessages(juce::MidiBuffer& midiMessages);
 
     /*
      * noteOnSpecMap

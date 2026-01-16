@@ -349,7 +349,7 @@ class ModulationProcessor;
         }
 
         std::atomic<bool> isContinuousMod{false};
-        bool requestRetrigger;
+        // bool requestRetrigger;
         // std::atomic<float> lastApplied_ { 0.0f };  // in mod-bus units (normalized contribution)
         std::atomic<float> carryApplied_ { 0.0f };   // scaled contribution captured at retrigger
         std::atomic<bool>  carryActive_  { false };

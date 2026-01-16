@@ -152,7 +152,7 @@ void BKKeymapKeyboardComponent::keysMenuCallback(int result, BKKeymapKeyboardCom
 {
     int set = result / 12;
     int pc = result % 12;
-    DBG("set: " + juce::String(set) + " pc: " + juce::String(pc));
+    //DBG("set: " + juce::String(set) + " pc: " + juce::String(pc));
 
     switch (set) {
         case KeySetBlack :
@@ -343,7 +343,7 @@ juce::PopupMenu BKKeymapKeyboardComponent::getPitchClassMenu(int offset)
     for (int i = 0; i < 12; i++)
     {
         Id = offset + i;
-        DBG("ID: " + juce::String(Id));
+        //DBG("ID: " + juce::String(Id));
         menu.addItem(Id, pcs[i]);
     }
 

@@ -52,8 +52,6 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
 
 void FooterSection::BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey)
 {
-    DBG("Footer::BKKeymapKeyboardChanged called");
-
     // keys reflects the current state after the change: if bit is set, it's a key down
     const bool isDown = (lastKey >= 0 && lastKey < 128) ? keys.test ((size_t) lastKey) : false;
     if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
@@ -114,7 +112,6 @@ void FooterSection::reset() {
 }
 
 void FooterSection::buttonClicked(juce::Button *clicked_button) {
-    DBG("FooterSection::buttonClicked");
     if (clicked_button == compressorButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         showPrepPopup(interface->getCompressorPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);
