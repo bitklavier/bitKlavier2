@@ -43,12 +43,23 @@ MidiTargetParametersView::MidiTargetParametersView(chowdsp::PluginState& pluginS
     }
 }
 
+void MidiTargetParametersView::arrange_parameter_toggles_and_menus (int firstID, int endNilId, int smallpadding, int comboboxheight, int targetOffset, juce::Rectangle<int> noteMenuColumn, juce::Rectangle<int> toggleColumn)
+{
+    for (int i = (firstID - targetOffset) + 1; i < endNilId - targetOffset; i++)
+    {
+        _paramToggles[i]->setBounds (toggleColumn.removeFromTop (comboboxheight));
+        toggleColumn.removeFromTop (smallpadding);
+
+        _noteModeMenus[i]->setBounds (noteMenuColumn.removeFromTop (comboboxheight));
+        noteMenuColumn.removeFromTop (smallpadding);
+    }
+}
+
 void MidiTargetParametersView::resized()
 {
     juce::Rectangle<int> area (getLocalBounds());
 
     int smallpadding = findValue(Skin::kPadding);
-    int largepadding = findValue(Skin::kLargePadding);
     int comboboxheight = findValue(Skin::kComboMenuHeight);
     int title_width = getTitleWidth();
 
@@ -72,62 +83,16 @@ void MidiTargetParametersView::resized()
     noteMenuColumn.reduce(smallpadding, smallpadding);
 
     if (params.connectedPrep == IDs::blendronic)
-    {
-        // targetOffset = 1;
-        for(int i = (BlendronicTargetFirst - targetOffset) + 1; i<BlendronicTargetNil - targetOffset; i++)
-        {
-            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
-            toggleColumn.removeFromTop(smallpadding);
-
-            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
-            noteMenuColumn.removeFromTop(smallpadding);
-        }
-    }
-
+        arrange_parameter_toggles_and_menus(BlendronicTargetFirst, BlendronicTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-
     if (params.connectedPrep == IDs::synchronic)
-    {
-        // targetOffset = 3;
-        for(int i = (SynchronicTargetFirst - targetOffset) + 1; i<SynchronicTargetNil - targetOffset; i++)
-        {
-            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
-            toggleColumn.removeFromTop(smallpadding);
-
-            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
-            noteMenuColumn.removeFromTop(smallpadding);
-        }
-    }
-
+        arrange_parameter_toggles_and_menus(SynchronicTargetFirst, SynchronicTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-
     if (params.connectedPrep == IDs::resonance)
-    {
-        // targetOffset = 5;
-        for(int i = (ResonanceTargetFirst - targetOffset) + 1; i<ResonanceTargetNil - targetOffset; i++)
-        {
-            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
-            toggleColumn.removeFromTop(smallpadding);
-
-            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
-            noteMenuColumn.removeFromTop(smallpadding);
-        }
-    }
-
+        arrange_parameter_toggles_and_menus(ResonanceTargetFirst, ResonanceTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-
     if (params.connectedPrep == IDs::nostalgic)
-    {
-        // targetOffset = 7;
-        for(int i = (NostalgicTargetFirst - targetOffset) + 1; i<NostalgicTargetNil - targetOffset; i++)
-        {
-            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
-            toggleColumn.removeFromTop(smallpadding);
-
-            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
-            noteMenuColumn.removeFromTop(smallpadding);
-        }
-    }
+        arrange_parameter_toggles_and_menus(NostalgicTargetFirst, NostalgicTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
 
     SynthSection::resized();
 }

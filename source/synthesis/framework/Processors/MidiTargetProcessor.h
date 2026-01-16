@@ -55,36 +55,42 @@ struct MidiTargetParams : chowdsp::ParamHolder
             blendronicTargetPausePlay,
             blendronicTargetInput,
             blendronicTargetOutput,
+            blendronicTargetModReset,
             synchronicTargetDefault,
             synchronicTargetPatternSync,
             synchronicTargetBeatSync,
             synchronicTargetAddNotes,
             synchronicTargetClear,
             synchronicTargetPausePlay,
+            synchronicTargetModReset,
 //            synchronicTargetDeleteOldest,
 //            synchronicTargetDeleteNewest,
 //            synchronicTargetRotate,
+            resonanceTargetDefault,
+            resonanceTargetRing,
+            resonanceTargetAdd,
+            resonanceTargetModReset,
+            nostalgicTargetDefault,
+            nostalgicTargetClear,
+            nostalgicTargetModReset,
             blendronicTargetPatternSync_noteMode,
             blendronicTargetBeatSync_noteMode,
             blendronicTargetClear_noteMode,
             blendronicTargetPausePlay_noteMode,
             blendronicTargetInput_noteMode,
             blendronicTargetOutput_noteMode,
+            blendronicTargetModReset_noteMode,
             synchronicTargetDefault_noteMode,
             synchronicTargetPatternSync_noteMode,
             synchronicTargetBeatSync_noteMode,
             synchronicTargetAddNotes_noteMode,
             synchronicTargetClear_noteMode,
             synchronicTargetPausePlay_noteMode,
-            resonanceTargetDefault,
-            resonanceTargetRing,
-            resonanceTargetAdd,
+            synchronicTargetModReset_noteMode,
             resonanceTargetDefault_noteMode,
             resonanceTargetRing_noteMode,
             resonanceTargetAdd_noteMode,
-            nostalgicTargetDefault,
-            nostalgicTargetClear,
-            nostalgicTargetModReset,
+            resonanceTargetModReset_noteMode,
             nostalgicTargetDefault_noteMode,
             nostalgicTargetClear_noteMode,
             nostalgicTargetModReset_noteMode);
@@ -110,6 +116,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
         targetMapper[BlendronicTargetOutput]            = blendronicTargetOutput.get();
         noteModeMapper[BlendronicTargetOutput]          = blendronicTargetOutput_noteMode.get();
 
+        targetMapper[BlendronicTargetModReset]           = blendronicTargetModReset.get();
+        noteModeMapper[BlendronicTargetModReset]         = blendronicTargetModReset_noteMode.get();
+
         targetMapper[SynchronicTargetDefault]           = synchronicTargetDefault.get();
         noteModeMapper[SynchronicTargetDefault]         = synchronicTargetDefault_noteMode.get();
 
@@ -128,6 +137,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
         targetMapper[SynchronicTargetPausePlay]         = synchronicTargetPausePlay.get();
         noteModeMapper[SynchronicTargetPausePlay]       = synchronicTargetPausePlay_noteMode.get();
 
+        targetMapper[SynchronicTargetModReset]           = synchronicTargetModReset.get();
+        noteModeMapper[SynchronicTargetModReset]         = synchronicTargetModReset_noteMode.get();
+
         targetMapper[ResonanceTargetDefault]            = resonanceTargetDefault.get();
         noteModeMapper[ResonanceTargetDefault]          = resonanceTargetDefault_noteMode.get();
 
@@ -136,6 +148,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
 
         targetMapper[ResonanceTargetRing]                = resonanceTargetRing.get();
         noteModeMapper[ResonanceTargetRing]              = resonanceTargetRing_noteMode.get();
+
+        targetMapper[ResonanceTargetModReset]           = resonanceTargetModReset.get();
+        noteModeMapper[ResonanceTargetModReset]         = resonanceTargetModReset_noteMode.get();
 
 //        targetMapper[SynchronicTargetDeleteOldest]      = synchronicTargetDeleteOldest.get();
 //        noteModeMapper[SynchronicTargetDeleteOldest]    = synchronicTargetDeleteOldest_noteMode.get();
@@ -237,6 +252,19 @@ struct MidiTargetParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
+    chowdsp::BoolParameter::Ptr blendronicTargetModReset {
+        juce::ParameterID { "bTargetModReset", 100},
+        "Reset Mods",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr blendronicTargetModReset_noteMode {
+        juce::ParameterID{"bTargetModResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
     /*
      * Synchronic Targets
      */
@@ -320,6 +348,19 @@ struct MidiTargetParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
+    chowdsp::BoolParameter::Ptr synchronicTargetModReset {
+        juce::ParameterID { "sTargetModReset", 100},
+        "Reset Mods",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr synchronicTargetModReset_noteMode {
+        juce::ParameterID{"sTargetModResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
 //    chowdsp::BoolParameter::Ptr synchronicTargetDeleteOldest {
 //        juce::ParameterID { "sTargetDeleteOldest", 100},
 //        "Delete Oldest Layer",
@@ -377,6 +418,19 @@ struct MidiTargetParams : chowdsp::ParamHolder
         juce::ParameterID { "rTargetAdd", 100},
         "Add/Remove String",
         false
+    };
+
+    chowdsp::BoolParameter::Ptr resonanceTargetModReset {
+        juce::ParameterID { "rTargetModReset", 100},
+        "Reset Mods",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetModReset_noteMode {
+        juce::ParameterID{"rTargetModResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr resonanceTargetAdd_noteMode {
