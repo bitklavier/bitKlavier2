@@ -61,79 +61,71 @@ void MidiTargetParametersView::resized()
 
     /*
      * need to account for First and Nil targets, since toggles/menus don't get created for those
-     *  - will be different for each preparation type
+     *  - will be different for each preparation type; += 2 for each one
+     *  - make sure the preptypes remain in this order in target_types!!!
      */
-    int targetOffset = 0;
+    int targetOffset = 1;
+
+    juce::Rectangle<int> noteMenuColumn = area.removeFromLeft(column_width);
+    juce::Rectangle<int> toggleColumn = noteMenuColumn.removeFromLeft(noteMenuColumn.getWidth() / 2);
+    toggleColumn.reduce(smallpadding, smallpadding);
+    noteMenuColumn.reduce(smallpadding, smallpadding);
 
     if (params.connectedPrep == IDs::blendronic)
     {
-        juce::Rectangle<int> blendronicColumn = area.removeFromLeft(column_width);
-        juce::Rectangle<int> blendronicButtonsColumn = blendronicColumn.removeFromLeft(blendronicColumn.getWidth() / 2);
-        blendronicColumn.reduce(smallpadding, smallpadding);
-        blendronicButtonsColumn.reduce(smallpadding, smallpadding);
-
-        targetOffset = 1;
+        // targetOffset = 1;
         for(int i = (BlendronicTargetFirst - targetOffset) + 1; i<BlendronicTargetNil - targetOffset; i++)
         {
-            _paramToggles[i]->setBounds(blendronicButtonsColumn.removeFromTop(comboboxheight));
-            blendronicButtonsColumn.removeFromTop(smallpadding);
+            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
+            toggleColumn.removeFromTop(smallpadding);
 
-            _noteModeMenus[i]->setBounds(blendronicColumn.removeFromTop(comboboxheight));
-            blendronicColumn.removeFromTop(smallpadding);
+            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
+            noteMenuColumn.removeFromTop(smallpadding);
         }
     }
 
-    else if (params.connectedPrep == IDs::synchronic)
-    {
-        juce::Rectangle<int> synchronicColumn = area.removeFromLeft(column_width);
-        juce::Rectangle<int> synchronicButtonsColumn = synchronicColumn.removeFromLeft(synchronicColumn.getWidth() / 2);
-        synchronicColumn.reduce(smallpadding, smallpadding);
-        synchronicButtonsColumn.reduce(smallpadding, smallpadding);
+    targetOffset += 2;
 
-        targetOffset = 3;
+    if (params.connectedPrep == IDs::synchronic)
+    {
+        // targetOffset = 3;
         for(int i = (SynchronicTargetFirst - targetOffset) + 1; i<SynchronicTargetNil - targetOffset; i++)
         {
-            _paramToggles[i]->setBounds(synchronicButtonsColumn.removeFromTop(comboboxheight));
-            synchronicButtonsColumn.removeFromTop(smallpadding);
+            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
+            toggleColumn.removeFromTop(smallpadding);
 
-            _noteModeMenus[i]->setBounds(synchronicColumn.removeFromTop(comboboxheight));
-            synchronicColumn.removeFromTop(smallpadding);
+            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
+            noteMenuColumn.removeFromTop(smallpadding);
         }
     }
 
-    else if (params.connectedPrep == IDs::resonance)
-    {
-        juce::Rectangle<int> resonanceColumn = area.removeFromLeft(column_width);
-        juce::Rectangle<int> resonanceButtonsColumn = resonanceColumn.removeFromLeft(resonanceColumn.getWidth() / 2);
-        resonanceColumn.reduce(smallpadding, smallpadding);
-        resonanceButtonsColumn.reduce(smallpadding, smallpadding);
+    targetOffset += 2;
 
-        targetOffset = 5;
+    if (params.connectedPrep == IDs::resonance)
+    {
+        // targetOffset = 5;
         for(int i = (ResonanceTargetFirst - targetOffset) + 1; i<ResonanceTargetNil - targetOffset; i++)
         {
-            _paramToggles[i]->setBounds(resonanceButtonsColumn.removeFromTop(comboboxheight));
-            resonanceButtonsColumn.removeFromTop(smallpadding);
+            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
+            toggleColumn.removeFromTop(smallpadding);
 
-            _noteModeMenus[i]->setBounds(resonanceColumn.removeFromTop(comboboxheight));
-            resonanceColumn.removeFromTop(smallpadding);
+            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
+            noteMenuColumn.removeFromTop(smallpadding);
         }
     }
 
-    else if (params.connectedPrep == IDs::nostalgic)
-    {
-        juce::Rectangle<int> nostalgicColumn = area.removeFromLeft(column_width);
-        juce::Rectangle<int> nostalgicButtonsColumn = nostalgicColumn.removeFromLeft(nostalgicColumn.getWidth() / 2);
-        nostalgicColumn.reduce(smallpadding, smallpadding);
-        nostalgicButtonsColumn.reduce(smallpadding, smallpadding);
+    targetOffset += 2;
 
-        targetOffset = 7;
+    if (params.connectedPrep == IDs::nostalgic)
+    {
+        // targetOffset = 7;
         for(int i = (NostalgicTargetFirst - targetOffset) + 1; i<NostalgicTargetNil - targetOffset; i++)
         {
-            _paramToggles[i]->setBounds(nostalgicButtonsColumn.removeFromTop(comboboxheight));
-            nostalgicButtonsColumn.removeFromTop(smallpadding);
+            _paramToggles[i]->setBounds(toggleColumn.removeFromTop(comboboxheight));
+            toggleColumn.removeFromTop(smallpadding);
 
-            _noteModeMenus[i]->setBounds(nostalgicColumn.removeFromTop(comboboxheight));
-            nostalgicColumn.removeFromTop(smallpadding);
+            _noteModeMenus[i]->setBounds(noteMenuColumn.removeFromTop(comboboxheight));
+            noteMenuColumn.removeFromTop(smallpadding);
         }
     }
 

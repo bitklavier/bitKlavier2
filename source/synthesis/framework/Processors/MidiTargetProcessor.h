@@ -84,8 +84,10 @@ struct MidiTargetParams : chowdsp::ParamHolder
             resonanceTargetAdd_noteMode,
             nostalgicTargetDefault,
             nostalgicTargetClear,
+            nostalgicTargetModReset,
             nostalgicTargetDefault_noteMode,
-            nostalgicTargetClear_noteMode);
+            nostalgicTargetClear_noteMode,
+            nostalgicTargetModReset_noteMode);
 //            synchronicTargetDeleteOldest_noteMode,
 //            synchronicTargetDeleteNewest_noteMode,
 //            synchronicTargetRotate_noteMode);
@@ -152,6 +154,9 @@ struct MidiTargetParams : chowdsp::ParamHolder
 
         targetMapper[NostalgicTargetClear]           = nostalgicTargetClear.get();
         noteModeMapper[NostalgicTargetClear]         = nostalgicTargetClear_noteMode.get();
+
+        targetMapper[NostalgicTargetModReset]           = nostalgicTargetModReset.get();
+        noteModeMapper[NostalgicTargetModReset]         = nostalgicTargetModReset_noteMode.get();
     }
 
     chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
@@ -388,6 +393,13 @@ struct MidiTargetParams : chowdsp::ParamHolder
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr nostalgicTargetModReset_noteMode {
+        juce::ParameterID{"nTargetModResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
     /*
      * Nostalgic Targets
      */
@@ -402,6 +414,12 @@ struct MidiTargetParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr nostalgicTargetClear {
         juce::ParameterID { "nTargetClear", 100},
         "Clear",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr nostalgicTargetModReset {
+        juce::ParameterID { "nTargetModReset", 100},
+        "Reset Mods",
         false
     };
 
