@@ -169,6 +169,10 @@ namespace bitklavier {
 
         bool supportsParameterModulation() const;
 
+        void resetContinuousModulations() {
+            parent.requestResetAllContinuousModsRT();
+        }
+
         void processContinuousModulations(juce::AudioBuffer<float> &buffer) {
             const auto &modBus = getBusBuffer(buffer, true, 1); // true = input, bus index 0 = mod
 
@@ -176,9 +180,9 @@ namespace bitklavier {
             for (int channel = 0; channel < numInputChannels / 2; ++channel) {
                 const float *in = modBus.getReadPointer(channel);
                 const float *in_continous = modBus.getReadPointer(channel + (numInputChannels/2));
-                std::visit([this,in, in_continous](auto *p) -> void {
-                               p->applyMonophonicModulation(*in);
-                               parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
+                std::visit([this, in, in_continous](auto *p) -> void {
+                                p->applyMonophonicModulation(*in);
+                                parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
                                 p->applyMonophonicModulation(*in + *in_continous);
                            },
                            state.params.modulatableParams[channel]);
@@ -245,7 +249,6 @@ namespace bitklavier {
                                    p->setRangeToValueTree(vt);
                                },
                                param);
-
 
                     auto val = v.getProperty(name);
                     std::visit([&](auto *p) {

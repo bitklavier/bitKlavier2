@@ -18,6 +18,7 @@ typedef enum PreparationParameterTargetType {
     BlendronicTargetPausePlay,
     BlendronicTargetInput,
     BlendronicTargetOutput,
+    BlendronicTargetModReset,
     BlendronicTargetNil,
     SynchronicTargetFirst,
     SynchronicTargetDefault,
@@ -29,6 +30,7 @@ typedef enum PreparationParameterTargetType {
     //SynchronicTargetDeleteOldest,
     //SynchronicTargetDeleteNewest,
     //SynchronicTargetRotate,
+    SynchronicTargetModReset,
     SynchronicTargetNil,
     ResonanceTargetFirst,
     ResonanceTargetDefault,
@@ -38,6 +40,7 @@ typedef enum PreparationParameterTargetType {
     NostalgicTargetFirst,
     NostalgicTargetDefault,
     NostalgicTargetClear,
+    NostalgicTargetModReset,
     NostalgicTargetNil
 
 } PreparationParameterTargetType;

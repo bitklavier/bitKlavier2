@@ -85,6 +85,14 @@ namespace bitklavier {
         }
     }
 
+    void bitklavier::SoundEngine::requestResetAllContinuousModsRT()
+    {
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* mp = dynamic_cast<bitklavier::ModulationProcessor*>(node->getProcessor()))
+                mp->requestResetAllContinuousModsRT();
+    }
+
     void SoundEngine::allNotesOff() {
         auto nodes = processorGraph->getNodes();
         for (auto node : nodes) {

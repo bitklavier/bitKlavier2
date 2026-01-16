@@ -29,6 +29,13 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     if (snap.mods.empty())
         return;
 
+    // Consume external RT reset request
+    if (pendingResetAll_.exchange(false, std::memory_order_acq_rel))
+    {
+        for (auto& e : snap.mods)
+            if (auto* mod = e.mod)
+                mod->continuousReset(); // For Ramp, this calls triggerReset()
+    }
 
     auto reset_in = getBusBuffer(buffer, true, 2);
     if (reset_in.getSample(0, 0) == 1.0f) {
@@ -41,7 +48,9 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     for (auto msg: midiMessages) {
         if (msg.getMessage().isNoteOn()) if (msg.getMessage().isNoteOn()) for (auto &e: snap.mods) if (e.mod != nullptr)
             e.mod->pendingRetrigger.store(true, std::memory_order_release);
-    } // Main render/mix
+    }
+
+    // Main render/mix
     for (auto &e: snap.mods) {
         auto *mod = e.mod;
         if (mod == nullptr)
@@ -49,8 +58,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
 
         if (mod->type != ModulatorType::AUDIO)
             continue;
-
-
 
         const bool doRetrig = mod->pendingRetrigger.exchange(false, std::memory_order_acq_rel);
         if (doRetrig) {

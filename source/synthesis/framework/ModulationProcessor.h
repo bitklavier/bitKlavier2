@@ -140,7 +140,12 @@ class StateConnection;
             mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
         }
 
+        void requestResetAllContinuousModsRT() noexcept { pendingResetAll_.store(true, std::memory_order_release); }
+
+
     private :
+        std::atomic<bool> pendingResetAll_ { false };
+
         // ===== Snapshot types =====
     struct RoutingSnapshot : public juce::ReferenceCountedObject
     {
@@ -194,6 +199,7 @@ class StateConnection;
         int createNewModIndex();
         chowdsp::DeferredAction mainThreadAction;
         SynthBase &parent;
+
     public :
         std::unique_ptr<ModulationList >mod_list;
 

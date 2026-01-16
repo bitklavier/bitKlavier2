@@ -323,6 +323,8 @@ namespace bitklavier
                 processorGraph->addChangeListener (listener);
         }
 
+        void requestResetAllContinuousModsRT();
+
         void allNotesOff();
         void shutdown();
 

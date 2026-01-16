@@ -54,7 +54,6 @@ class ModulationProcessor;
         void setModulationAmount(float amt)
         {
             modAmt_.store (amt, std::memory_order_relaxed);
-
             state.setProperty(IDs::modAmt, amt, nullptr);
         }
 
@@ -86,8 +85,6 @@ class ModulationProcessor;
                 return state.getProperty(IDs::modAmt,  0.f);
         }
 
-
-
         void setBypass(bool bypass) {}
         void setStereo(bool stereo) {}
         bool isBipolar() const { return bipolar_; }
@@ -99,15 +96,19 @@ class ModulationProcessor;
             defaultBipolar = val;
             setBipolar(val);
         }
+
         bool isDefaultBipolar() {
             return defaultBipolar;
         }
+
         void setBipolar(bool bipolar) {
             bipolar_ = bipolar;
         }
+
         void setOffsetMode(bool isOffset) {
             offset_ = isOffset;
         }
+
         void reset() {
             source_name = "";
             destination_name = "";
@@ -115,6 +116,7 @@ class ModulationProcessor;
         float getScaling() {
             return scalingValue_.load();
         }
+
         std::string source_name;
         std::string destination_name;        //must be named state to be picked up by valuetreeobjectlist - dont know
         // if i'll be using this for that or not
@@ -131,6 +133,7 @@ class ModulationProcessor;
         ModulatorBase* processor;
         int modulation_output_bus_index;
         float currentDestinationSliderVal;
+
         void setParamTree(const juce::ValueTree& v) {
             param_tree = v;
             currentDestinationSliderVal = param_tree.getProperty(IDs::sliderval);
@@ -264,12 +267,15 @@ class ModulationProcessor;
             unlockScaling();
             // changeBuffer->changeState.emplace_back(0,changeBuffer->defaultState);
         }
+
         int getDestParamIndex() {
             return destParamIndex;
         }
+
         int setDestParamIndex(int index) {
             destParamIndex = index;
         }
+
        void updateScalingAudioThread(float knobValueParamUnits) noexcept {
             // Don’t change once the mod has started
             if (scalingLocked_.load (std::memory_order_acquire))
@@ -279,7 +285,6 @@ class ModulationProcessor;
             const float start = rangeStart_.load (std::memory_order_relaxed);
             const float end   = rangeEnd_.load   (std::memory_order_relaxed);
             const float skew  = rangeSkew_.load  (std::memory_order_relaxed);
-
 
             const float base = juce::jlimit (start, end, knobValueParamUnits);
             const float baseNorm = range.convertTo0to1 (base);
@@ -306,17 +311,20 @@ class ModulationProcessor;
             }
             scalingValue_.store (scaleNorm, std::memory_order_relaxed);
         }
+
         void updateScalingAudioThread (float currentValueParamUnits, float m /* this connection’s current mod sample */) noexcept;
 
         float setCurrentTotalBaseValue(float basevalue) {
             currentTotalBaseValue = basevalue;
         }
+
         void setCarryActive(float carry) {
             if (isContinuousMod)
                 return;
             // carryApplied_.store(carry, std::memory_order_relaxed);
             carryActive_.store(true, std::memory_order_release); // only enable for ramp
         }
+
         std::atomic<bool> isContinuousMod{false};
         bool requestRetrigger;
         // std::atomic<float> lastApplied_ { 0.0f };  // in mod-bus units (normalized contribution)
@@ -326,7 +334,6 @@ class ModulationProcessor;
         juce::NormalisableRange<float> range;
 
     private:
-
         float currentTotalBaseValue;
         std::atomic<float> scalingValue_   { 0.0f }; // editable pre-trigger
         std::atomic<float> lockedScaling_  { 0.0f }; // frozen at trigger time
@@ -397,8 +404,6 @@ struct StateConnection : public ModulatorBase::Listener{
 
         void setModulationAmount(float amt)
         {
-
-
             state.setProperty(IDs::modAmt, amt, nullptr);
         }
 
@@ -561,7 +566,7 @@ struct StateConnection : public ModulatorBase::Listener{
             return val;
         }
 
-        private:
+    private:
         std::map<std::string,int> index_bank;
         std::vector<float> audio_thread_offset_bank;
     };

@@ -2369,7 +2369,7 @@ void ModulationManager::sliderValueChanged(juce::Slider *slider) {
     else
         connection->setScalingValue(value, connection->currentDestinationSliderVal);
 
-    DBG("ModulationManager::sliderValueChanged " + juce::String(value) +", " + juce::String(connection->getScaling()));
+    //DBG("ModulationManager::sliderValueChanged " + juce::String(value) +", " + juce::String(connection->getScaling()));
     setModulationValues(connection->source_name, connection->destination_name, value, bipolar, stereo, bypass);
     amount_knob->my0to1amt = connection->getScaling();
     showModulationAmountOverlay(amount_knob);
