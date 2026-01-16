@@ -110,9 +110,31 @@ namespace bitklavier {
 
 
     void ModulationConnection::updateScalingAudioThread(float currentTotalParamUnits, float raw0) noexcept {
+
+        DBG("ModulationConnection::updateScalingAudioThread, raw0 = " + std::to_string(raw0));
+        if (raw0 > 0.)
+        {
+            /*
+             * doing this at least for now because:
+             * - triggering a mod twice in a row causes the resets to reset to that mod target value, rather than the expected stored knob value
+             * - now, you can trigger multiple different mods to a single param as much as you like
+             *      - and reset them with either
+             *          - the MIDITarget Reset message (which will reset the whole prep to its default values, eventually)
+             *              - Note that if any of these mods are attached to other preps, those other preps will also be affected!
+             *                  - i'm ok with this
+             *          - or with the Reset prep attached to an individual Mod prep, which will only reset that Mod
+             *
+             * one consequence at the moment is that retriggering is not continuous; param will go immediately back to its start value and then ramp again.
+             * - Will look into addressing that later, but at the moment aiming for basic MVP behavior
+             * It also doesn't seem to play well with an overlayed LFO, but it wasn't before either; another thing to look at later
+             */
+            DBG("ModulationConnection::updateScalingAudioThread, raw0 > 0, scalingLocked_ = true");
+            scalingLocked_.store(true, std::memory_order_release);
+        }
         if (scalingLocked_.load(std::memory_order_acquire))
             return;
 
+        DBG("ModulationConnection::updateScalingAudioThread, scalingLocked_ = false");
         const float start = rangeStart_.load(std::memory_order_relaxed);
         const float end = rangeEnd_.load(std::memory_order_relaxed);
 
