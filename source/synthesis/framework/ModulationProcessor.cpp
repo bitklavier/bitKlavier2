@@ -38,7 +38,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                 mod->continuousReset(); // For Ramp, this calls triggerReset()
     }
 
-    // from Audio Bus: i'm not sure this has a way to get called right now?
+    // from Audio Bus
     auto reset_in = getBusBuffer(buffer, true, 2);
     if (reset_in.getSample(0, 0) == 1.0f) {
         DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
@@ -93,9 +93,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     carry = unipolar0 * oldScale;
                 }
                 const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
-
-
-
 
                 // const float carry = c->lastAppliedPrev_.load(std::memory_order_relaxed);
                 // c->setCarryActive(carry);
@@ -189,7 +186,6 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase *mod) {
         index = modulators_.size();
         modulators_.push_back(mod);
     }
-
 
     if (tmp_buffers.size() <= index) tmp_buffers.resize(index + 1);
     if (mod_routing.size() <= index) mod_routing.resize(index + 1);

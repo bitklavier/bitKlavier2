@@ -18,10 +18,9 @@
 #include "SpringTuningParams.h"
 #include "OffsetKnobParam.h"
 #include "SpringTuning/SpringTuning.h"
-#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
+#include "target_types.h"
 
 /**
  * todo: maybe someday..
@@ -256,6 +255,8 @@ public:
     void handleMidiEvent (const juce::MidiMessage& m);
     void noteOn (int midiChannel,int midiNoteNumber,float velocity);
     void noteOff (int midiChannel,int midiNoteNumber,float velocity);
+
+    void resetStateModulations();
 
     void setA4Frequency(double A4new) { state.params.tuningState.setGlobalTuningReference(A4new);}
     void incrementClusterTime(long numSamples) { state.params.tuningState.clusterTimeMS += numSamples * 1000. / getSampleRate(); }

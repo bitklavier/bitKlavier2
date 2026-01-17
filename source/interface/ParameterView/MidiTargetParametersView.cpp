@@ -96,6 +96,9 @@ void MidiTargetParametersView::resized()
     targetOffset += 2;
     if (params.connectedPrep == IDs::direct)
         arrange_parameter_toggles_and_menus(DirectTargetFirst, DirectTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
+    targetOffset += 2;
+    if (params.connectedPrep == IDs::tuning)
+        arrange_parameter_toggles_and_menus(TuningTargetFirst, TuningTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
 
     SynthSection::resized();
 }

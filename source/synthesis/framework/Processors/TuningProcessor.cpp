@@ -64,6 +64,7 @@ void TuningState::processStateChanges()
     }
 
     stateChanges.changeState.clear();
+
 }
 
 void TuningState::setFundamental (int fund)
@@ -669,11 +670,24 @@ void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity
     state.params.tuningState.keyReleased(midiNoteNumber);
 }
 
+void TuningProcessor::resetStateModulations()
+{
+    state.params.tuningState.fundamental->stateChanges.changeState.emplace_back (0, state.params.tuningState.fundamental->stateChanges.defaultState);
+    state.params.tuningState.tuningSystem->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningSystem->stateChanges.defaultState);
+    state.params.tuningState.tuningType->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningType->stateChanges.defaultState);
+    state.params.tuningState.stateChanges.changeState.emplace_back(0, state.params.tuningState.stateChanges.defaultState);
+}
+
 void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
 {
     const int channel = m.getChannel();
 
-    if (m.isNoteOn())
+    if (channel + (TuningTargetFirst) == TuningTargetModReset)
+    {
+        resetContinuousModulations();
+        resetStateModulations();
+    }
+    else if (m.isNoteOn())
     {
         noteOn (channel, m.getNoteNumber(), m.getVelocity());
     }

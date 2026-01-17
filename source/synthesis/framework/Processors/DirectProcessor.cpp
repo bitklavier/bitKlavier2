@@ -179,19 +179,12 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     // then, the state-change modulations, for more complex params
     state.params.transpose.processStateChanges();
-    state.params.transpose.transpositionUsesTuning->processStateChanges();
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();
 
     // update transposition slider values
-    //updateMidiNoteTranspositions();
     updateAllMidiNoteTranspositions();
-    /**
-     * todo: need to include useTuningForTranspositions in noteOnSpecMap now...
-     *      - in place of synth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
-     */
-    bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples())
     {

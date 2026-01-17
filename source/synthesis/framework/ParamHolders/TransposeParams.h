@@ -99,6 +99,8 @@ struct TransposeParams : chowdsp::ParamHolder
      */
     void processStateChanges() override
     {
+        transpositionUsesTuning->processStateChanges();
+
         auto float_params = getFloatParams();
 
         int i = numActiveSliders->getCurrentValue();
