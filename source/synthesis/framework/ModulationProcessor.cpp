@@ -51,7 +51,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     for (auto msg: midiMessages) {
         if (msg.getMessage().isNoteOn())
         {
-            DBG("ModulationProcessor::processBlock, reset from noteOn (attached Reset)");
+            DBG("ModulationProcessor::processBlock, retrigger from noteOn");
             for (auto &e: snap.mods)
                 if (e.mod != nullptr)
                     e.mod->pendingRetrigger.store(true, std::memory_order_release);

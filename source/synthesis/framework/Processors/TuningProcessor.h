@@ -42,7 +42,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     void setKeyOffset (int midiNoteNumber, float val);
     void setCircularKeyOffset (int midiNoteNumber, float val);
     void setKeyOffset (int midiNoteNumber, float val, bool circular);
-    //static std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental);
     void processStateChanges() override;
 
     void setFundamental (int fund);
@@ -66,9 +65,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::array<std::atomic<float>, 12> circularTuningOffset_custom = { 0.f };
 
     int oldFundamental = 0;
-    /*
-     * todo: remove all the A4frequency stuff, as it will be handled in BKSynthesizer
-     */
     float A4frequency = 440.;       // set this in gallery or app preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
@@ -153,12 +149,12 @@ struct TuningState : bitklavier::StateChangeableParameter
     float getGlobalTuningReference() const { return A4frequency; };
     TuningType getTuningType() const { return tuningType->get(); }
 
-    inline const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
-    inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
-    inline const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
-    inline const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
-    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
-    inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
+    const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
+    const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
+    const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
+    const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
+    const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
+    const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
 
     /*
      * Adaptive vars
@@ -182,10 +178,10 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.fundamental,
             tuningState.tuningType,
             tuningState.semitoneWidthParams,
-            tuningState.lastNote,
             tuningState.adaptiveParams,
             tuningState.springTuningParams,
-            tuningState.offsetKnobParam);
+            tuningState.offsetKnobParam,
+            tuningState.lastNote);
 
         tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
 

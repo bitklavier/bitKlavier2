@@ -100,7 +100,7 @@ int TuningState::getSemitoneWidthFundamental()
 
 double TuningState::getSemitoneWidth()
 {
-    return semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
+    return *semitoneWidthParams.semitoneWidthSliderParam;
 }
 
 /**
@@ -162,7 +162,7 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
  * Get the tuning offset value, from "offset" slider
  * @return offset in fractional Midi note values
  */
-double TuningState::getOverallOffset() { return offsetKnobParam.offSet->getCurrentValue() * 0.01;}
+double TuningState::getOverallOffset() { return *offsetKnobParam.offSetSliderParam * 0.01;}
 
 /**
  * update the last frequency and the last interval, for use in the UI

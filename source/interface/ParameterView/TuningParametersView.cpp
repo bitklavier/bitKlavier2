@@ -37,16 +37,16 @@ TuningParametersView::TuningParametersView(
     addStateModulatedComponent(circular_keyboard.get());
     circular_keyboard->setName("circular");
 
-    semitoneSection = std::make_unique<SemitoneWidthSection>(name, params.tuningState.semitoneWidthParams, listeners, *this);
+    semitoneSection = std::make_unique<SemitoneWidthSection>(name + "_semitone", params.tuningState.semitoneWidthParams, listeners, *this);
     addSubSection(semitoneSection.get());
 
-    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name, params.tuningState.adaptiveParams, listeners, *this);
+    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name + "_adaptive", params.tuningState.adaptiveParams, listeners, *this);
     addSubSection(adaptiveSection.get());
 
-    springTuningSection = std::make_unique<SpringTuningSection>(name, params.tuningState.springTuningParams, listeners, *this);
+    springTuningSection = std::make_unique<SpringTuningSection>(name + "_spring", params.tuningState.springTuningParams, listeners, *this);
     addSubSection(springTuningSection.get());
 
-    offsetKnobSection = std::make_unique<OffsetKnobSection>(name, params.tuningState.offsetKnobParam, listeners, *this);
+    offsetKnobSection = std::make_unique<OffsetKnobSection>(name + "_offset", params.tuningState.offsetKnobParam, listeners, *this);
     addSubSection(offsetKnobSection.get());
 
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
