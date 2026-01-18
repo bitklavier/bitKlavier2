@@ -16,6 +16,7 @@ bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
         .withInput("Modulation", juce::AudioChannelSet::discreteChannels(1), true)
         .withInput("Reset", juce::AudioChannelSet::discreteChannels(1), true)), state(vt),
     parent(parent) {
+    bufferDebugger = new BufferDebugger();
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
     mod_list = std::make_unique<ModulationList>(state, &parent, this);
@@ -23,13 +24,19 @@ bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
 
 void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                                    juce::MidiBuffer &midiMessages) {
+
+    // use these to display buffer info to bufferDebugger
+    int numSamples = buffer.getNumSamples();
+    // bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
+    // bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
+
     const int idx = activeSnapshotIndex.load(std::memory_order_acquire);
     auto &snap = snapshots[idx];
 
     if (snap.mods.empty())
         return;
 
-    // Consume external RT reset request
+    // From MIDITarget Reset messages, which should trigger a reset of all mods to a the targeted prep
     if (pendingResetAll_.exchange(false, std::memory_order_acq_rel))
     {
         DBG("ModulationProcessor::processBlock, pendingResetAll_ = true");
@@ -140,7 +147,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     for (int s = 0; s < buffer.getNumSamples(); ++s) {
                         const float r = src[s]; // ramp raw 0..1
                         dest[s] +=  carry + r * scale;
-                        // dest[s] +=  carry + r * scale;
                     }
 
                     if (src[buffer.getNumSamples() - 1] >= 0.9999f)
@@ -163,6 +169,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                 // c->lastApplied_.store(unipolar0 * scale, std::memory_order_relaxed);
 
             }
+            bufferDebugger->capture("MOD" + juce::String(outCh), buffer.getReadPointer(outCh), numSamples, -2.f, 2.f);
             // c->lastAppliedPrev_.store(c->lastApplied_.load(std::memory_order_relaxed),
                           // std::memory_order_relaxed);
         }

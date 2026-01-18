@@ -127,8 +127,9 @@ namespace bitklavier {
         //      *
         //      * Eventually, we track down why the default value is getting overwritten by the mod target whn triggering it consecutively
         //      * - probably simple, but we need to streamline all of this and make it more readable; for now I want to get the basic behavior in place
+        //      * - or maybe it's just that one of the mods is still sending a nonzero value on the audio bus
         //      *
-        //      * OK, nvm: this breaks the alternating between mods
+        //      * Well, still doesn't work consistently
         //      */
         //     DBG("ModulationConnection::updateScalingAudioThread, raw0 > 0, scalingLocked_ = true");
         //     scalingLocked_.store(true, std::memory_order_release);

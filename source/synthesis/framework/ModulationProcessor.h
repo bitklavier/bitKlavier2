@@ -7,13 +7,14 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"
+#include "buffer_debugger.h"
 #include "ModulationList.h"
 class ModulatorBase;
 
 namespace bitklavier {
     static constexpr int kMaxModulationChannels = 256;
-   class ModulationConnection;
-class StateConnection;
+    class ModulationConnection;
+    class StateConnection;
     struct ModulatorRouting{
         std::vector<ModulationConnection*> mod_connections;
     };
@@ -201,6 +202,7 @@ class StateConnection;
         SynthBase &parent;
 
     public :
+        juce::ScopedPointer<BufferDebugger> bufferDebugger;
         std::unique_ptr<ModulationList >mod_list;
 
     };
