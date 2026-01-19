@@ -49,6 +49,8 @@
 - mod amount knob placement settings in `ModulationManager::makeCurrentModulatorAmountsVisible()` and `ModulationManager::makeModulationsVisible` and `SynthSlider::SynthSlider` constructor
 - lots of work to so on streamlining and clarifying this code
   - see `ModulationConnection::updateScalingAudioThread` for starters
+- the number of discrete channels for the mod bus needs to be set precisely, and x2 to allow for both ramp and LFO
+  - `juce::AudioProcessor::BusesProperties tuningBusLayout()`, for instance, we have 22 continuously modulatable params, so `22 * 2`
 ---------
 ## Creating a New Preparation
 Typing as I do MidiFilter and Resonance
