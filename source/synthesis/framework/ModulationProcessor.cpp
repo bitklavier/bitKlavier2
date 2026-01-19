@@ -40,6 +40,11 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
                     const float raw0 = e.lastRaw0;               // wh
                     c->calculateReset(currentTotal,raw0);
+
+                    // for full prep reset you want to set carryappliedto0
+                    //like so c->carryApplied_ = 0;
+                    //and set scalingvalueto0. which may be slightly more code due to trigger locks
+                    //c->setScalingValue(0.f);
                     parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
                 }
                 e.mod->triggerReset();
