@@ -174,4 +174,44 @@ namespace bitklavier {
         carryApplied_.store(selfNorm, std::memory_order_relaxed);
         carryActive_.store(true, std::memory_order_release);
     }
+
+    void ModulationConnection::calculateReset(float currentTotalParamUnits, float raw0){
+        if (scalingLocked_.load(std::memory_order_acquire))
+            return;
+
+        const float start = rangeStart_.load(std::memory_order_relaxed);
+        const float end = rangeEnd_.load(std::memory_order_relaxed);
+
+        const float curClamped = juce::jlimit(start, end, currentTotalParamUnits);
+        const float curNormAbs = range.convertTo0to1(curClamped);
+
+        const float scaleNorm = scalingValue_.load(std::memory_order_relaxed);
+
+        float selfNorm = 0.0f;
+        const float carryNorm = carryApplied_.load(std::memory_order_relaxed);
+        selfNorm = carryNorm + raw0 * scaleNorm;
+
+        const float anchorNormAbs = juce::jlimit(0.0f, 1.0f, abs(curNormAbs - selfNorm));
+        const float anchorParam = range.convertFrom0to1(anchorNormAbs);
+
+        const float modVal = modAmt_.load(std::memory_order_relaxed);
+
+        const float base = juce::jlimit(start, end, anchorParam);
+        const float baseNormAbs = range.convertTo0to1(base);
+
+        float newScaleNorm = 0.0f;
+
+        if (isOffset()) {
+            const float targetNormAbs = range.convertTo0to1(juce::jmin(currentDestinationSliderVal, end));
+            newScaleNorm = juce::jmax(0.0f, targetNormAbs - baseNormAbs);
+        } else {
+            // "target value" semantics fallback (unchanged)
+            const float target = juce::jlimit(start, end, currentDestinationSliderVal);
+            const float targetNormAbs = range.convertTo0to1(target);
+            newScaleNorm = targetNormAbs - curNormAbs;
+        }
+        //scalingValue_.store(newScaleNorm, std::memory_order_relaxed);
+        carryApplied_.store(newScaleNorm + selfNorm, std::memory_order_relaxed);
+        carryActive_.store(true, std::memory_order_release);
+    }
 }

@@ -16,7 +16,6 @@ bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
         .withInput("Modulation", juce::AudioChannelSet::discreteChannels(1), true)
         .withInput("Reset", juce::AudioChannelSet::discreteChannels(1), true)), state(vt),
     parent(parent) {
-    bufferDebugger = new BufferDebugger();
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
     mod_list = std::make_unique<ModulationList>(state, &parent, this);
@@ -24,12 +23,6 @@ bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
 
 void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                                    juce::MidiBuffer &midiMessages) {
-
-    // use these to display buffer info to bufferDebugger
-    int numSamples = buffer.getNumSamples();
-    // bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
-    // bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
-
     const int idx = activeSnapshotIndex.load(std::memory_order_acquire);
     auto &snap = snapshots[idx];
 
@@ -50,14 +43,23 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     if (reset_in.getSample(0, 0) == 1.0f) {
         DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
         for (auto &e: snap.mods)
-        {
-            if (e.mod != nullptr)
-            {
+            if (e.mod != nullptr) {
+                for (    auto c    :e.connections) {
+                    //calculate the carryapplied offset in order to return to slider
+                    //c->currentDestinationSliderVal;
+                    const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+                    const float raw0 = e.lastRaw0;               // wh
+                    c->calculateReset(currentTotal,raw0);
+
+                    // for full prep reset you want to set carryappliedto0
+                    //like so c->carryApplied_ = 0;
+                    //and set scalingvalueto0. which may be slightly more code due to trigger locks
+                    //c->setScalingValue(0.f);
+                    parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+                }
                 e.mod->triggerReset();
-                for (auto *c: e.connections)
-                    c->carryApplied_.store(0.0f, std::memory_order_relaxed);
+
             }
-        }
     }
 
     // MIDI note-on => request retrigger
@@ -79,6 +81,8 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
 
         if (mod->type != ModulatorType::AUDIO)
             continue;
+
+
 
         const bool doRetrig = mod->pendingRetrigger.exchange(false, std::memory_order_acq_rel);
         if (doRetrig) {
@@ -106,6 +110,9 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     carry = unipolar0 * oldScale;
                 }
                 const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+
+
+
 
                 // const float carry = c->lastAppliedPrev_.load(std::memory_order_relaxed);
                 // c->setCarryActive(carry);
@@ -153,6 +160,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     for (int s = 0; s < buffer.getNumSamples(); ++s) {
                         const float r = src[s]; // ramp raw 0..1
                         dest[s] +=  carry + r * scale;
+                        // dest[s] +=  carry + r * scale;
                     }
 
                     if (src[buffer.getNumSamples() - 1] >= 0.9999f)
@@ -175,7 +183,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                 // c->lastApplied_.store(unipolar0 * scale, std::memory_order_relaxed);
 
             }
-            bufferDebugger->capture("MOD" + juce::String(outCh), buffer.getReadPointer(outCh), numSamples, -2.f, 2.f);
             // c->lastAppliedPrev_.store(c->lastApplied_.load(std::memory_order_relaxed),
                           // std::memory_order_relaxed);
         }
@@ -199,6 +206,7 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase *mod) {
         index = modulators_.size();
         modulators_.push_back(mod);
     }
+
 
     if (tmp_buffers.size() <= index) tmp_buffers.resize(index + 1);
     if (mod_routing.size() <= index) mod_routing.resize(index + 1);
