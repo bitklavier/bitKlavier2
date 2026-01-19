@@ -50,8 +50,14 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     if (reset_in.getSample(0, 0) == 1.0f) {
         DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
         for (auto &e: snap.mods)
+        {
             if (e.mod != nullptr)
+            {
                 e.mod->triggerReset();
+                for (auto *c: e.connections)
+                    c->carryApplied_.store(0.0f, std::memory_order_relaxed);
+            }
+        }
     }
 
     // MIDI note-on => request retrigger
