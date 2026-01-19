@@ -34,8 +34,24 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     {
         DBG("ModulationProcessor::processBlock, pendingResetAll_ = true");
         for (auto& e : snap.mods)
-            if (auto* mod = e.mod)
-                mod->continuousReset(); // For Ramp, this calls triggerReset()
+            if (e.mod != nullptr) {
+                for (    auto c    :e.connections) {
+                    //calculate the carryapplied offset in order to return to slider
+                    //c->currentDestinationSliderVal;
+                    const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+                    const float raw0 = e.lastRaw0;               // wh
+                    c->calculateReset(currentTotal,raw0);
+
+                    // for full prep reset you want to set carryappliedto0
+                    //like so c->carryApplied_ = 0;
+                    //and set scalingvalueto0. which may be slightly more code due to trigger locks
+                    //c->setScalingValue(0.f);
+                    parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+                }
+                e.mod->triggerReset();
+            }
+            // if (auto* mod = e.mod)
+            //     mod->continuousReset(); // For Ramp, this calls triggerReset()
     }
 
     // from Audio Bus
