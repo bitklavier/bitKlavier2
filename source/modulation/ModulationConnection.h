@@ -324,7 +324,8 @@ class ModulationProcessor;
         std::atomic<bool>  carryActive_  { false };
         // std::atomic<float> lastAppliedPrev_ { 0.0f };
         juce::NormalisableRange<float> range;
-
+        //calculate number to return slider to default value based on all active mods
+        void calculateReset(float currentTotalParamUnits,float);
     private:
 
         float currentTotalBaseValue;

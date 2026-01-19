@@ -44,9 +44,9 @@ struct EQParams : chowdsp::ParamHolder
                 presets);
 
         doForAllParameters ([this] (auto& param, size_t) {
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.emplace_back(sliderParam);
+            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.emplace_back(sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -128,7 +128,7 @@ struct EQParams : chowdsp::ParamHolder
     using Chain = juce::dsp::ProcessorChain<CutFilter, Filter, Filter, Filter, CutFilter>;
     Chain leftChain;
     Chain rightChain;
-    
+
     double sampleRate = 44100;
 
     double magForFreq(double freq) {

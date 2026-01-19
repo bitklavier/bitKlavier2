@@ -33,8 +33,17 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     auto reset_in = getBusBuffer(buffer, true, 2);
     if (reset_in.getSample(0, 0) == 1.0f) {
         for (auto &e: snap.mods)
-            if (e.mod != nullptr)
+            if (e.mod != nullptr) {
+                for (    auto c    :e.connections) {
+                    //calculate the carryapplied offset in order to return to slider
+                    //c->currentDestinationSliderVal;
+                    const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+                    const float raw0 = e.lastRaw0;               // wh
+                    c->calculateReset(currentTotal,raw0);
+                }
                 e.mod->triggerReset();
+
+            }
     }
 
     // MIDI note-on => request retrigger
