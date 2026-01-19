@@ -178,15 +178,23 @@ namespace bitklavier {
             const auto &modBus = getBusBuffer(buffer, true, 1); // true = input, bus index 0 = mod
 
             int numInputChannels = modBus.getNumChannels();
-            for (int channel = 0; channel < numInputChannels / 2; ++channel) {
+            for (int channel = 0; channel < numInputChannels / 2; ++channel)
+            {
                 const float *in = modBus.getReadPointer(channel);
                 const float *in_continous = modBus.getReadPointer(channel + (numInputChannels/2));
-                std::visit([this, in, in_continous](auto *p) -> void {
-                                p->applyMonophonicModulation(*in);
-                                parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
-                                p->applyMonophonicModulation(*in + *in_continous);
-                           },
-                           state.params.modulatableParams[channel]);
+                std::visit
+                (
+                    [this, in, in_continous](auto *p) -> void
+                    {
+                        //if (p != nullptr)
+                        {
+                            p->applyMonophonicModulation(*in);
+                           parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
+                           p->applyMonophonicModulation(*in + *in_continous);
+                        }
+                    },
+                state.params.modulatableParams[channel]
+                );
             }
         }
 

@@ -264,7 +264,7 @@ public:
         return BusesProperties()
                 .withOutput("Output", juce::AudioChannelSet::stereo(), false)
                 .withInput ("Input", juce::AudioChannelSet::stereo(), false)
-                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(25),true)
+                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(22 * 2),true)
                 .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
     }
 

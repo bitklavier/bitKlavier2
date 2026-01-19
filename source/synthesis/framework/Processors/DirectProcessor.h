@@ -220,9 +220,11 @@ public:
                 /**
                  * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
                  *              for direct, we have 10:
-                 *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, andramp
+                 *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam,
                  *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
+                 *            also, needs to be *2, since ramp mods and LFO mods need separate channels
                  */
+                    // todo: why is this 11 * 2 and not 10 * 2?
                 .withInput("Modulation", juce::AudioChannelSet::discreteChannels(11 * 2), true)
                 // Mod inputs; numChannels for the number of mods we want to enable
                 .withOutput("Modulation", juce::AudioChannelSet::mono(), false)
