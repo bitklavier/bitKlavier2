@@ -41,10 +41,12 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 
 void TuningState::processStateChanges()
 {
-
     fundamental->processStateChanges();
     tuningSystem->processStateChanges();
     tuningType->processStateChanges();
+
+    bool touchedAbsolute = false;
+    bool touchedCircular = false;
 
     for (const auto& [index, change] : stateChanges.changeState)
     {
@@ -54,14 +56,22 @@ void TuningState::processStateChanges()
         if (val != nullVar)
         {
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
+            touchedAbsolute = true;
         }
 
         val = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
             parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
+            touchedCircular = true;
         }
     }
+
+    if (touchedAbsolute)
+        absoluteTuningDirty.store(true, std::memory_order_release);
+
+    if (touchedCircular)
+        circularTuningDirty.store(true, std::memory_order_release);
 
     stateChanges.changeState.clear();
 

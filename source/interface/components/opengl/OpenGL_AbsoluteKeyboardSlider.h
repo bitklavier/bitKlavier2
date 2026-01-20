@@ -134,7 +134,6 @@ public:
      * see the comparable one in OpenGL_TranspositionSlider.h
      */
     void syncToValueTree() override {
-        DBG("OpenGLAbsoluteKeyboardSlider::syncToValueTree " + modulationState.getProperty(IDs::absoluteTuning).toString());
         updateValuesFromString (modulationState.getProperty(IDs::absoluteTuning).toString(), false);
     }
 
@@ -264,7 +263,6 @@ public:
      */
     void syncToValueTree() override
     {
-        DBG("OpenGLCircularKeyboardSlider::syncToValueTree " + modulationState.getProperty(IDs::circularTuning).toString());
         updateValuesFromString (modulationState.getProperty(IDs::circularTuning).toString(), true);
     }
 

@@ -64,6 +64,10 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::array<std::atomic<float>, 12> circularTuningOffset = { 0.f };
     std::array<std::atomic<float>, 12> circularTuningOffset_custom = { 0.f };
 
+    // UI invalidation flags (set from audio thread, read on message thread)
+    std::atomic<bool> absoluteTuningDirty { false };
+    std::atomic<bool> circularTuningDirty { false };
+
     int oldFundamental = 0;
     float A4frequency = 440.;       // set this in gallery or app preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned

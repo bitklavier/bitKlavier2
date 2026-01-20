@@ -346,6 +346,25 @@ void TuningParametersView::timerCallback(void)
                 gui->prep_popup->repaintPrepBackground();
         }
     }
+
+    // Refresh keyboards if tuning offsets were updated by the audio thread
+    if (params.tuningState.absoluteTuningDirty.exchange(false, std::memory_order_acq_rel))
+    {
+        if (absolutekeyboard)
+        {
+            absolutekeyboard->redoImage();
+            absolutekeyboard->repaint();
+        }
+    }
+
+    if (params.tuningState.circularTuningDirty.exchange(false, std::memory_order_acq_rel))
+    {
+        if (circular_keyboard)
+        {
+            circular_keyboard->redoImage();
+            circular_keyboard->repaint();
+        }
+    }
 }
 
 /**

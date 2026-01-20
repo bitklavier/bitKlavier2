@@ -389,7 +389,7 @@ void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEd
     {
         if (isCircular) {
              auto   tempVals = parseFloatStringToArrayCircular<12>(keyboardValsTextField->getText().toStdString());
-            if (tempVals.size() == maxKey - 1) { // i'm not sure if this ever really works? shouldn't in be maxKey + 1? which is what works in updateValuesFromString() above
+            if (tempVals.size() == maxKey + 1) { // i'm not sure if this ever really works? shouldn't in be maxKey + 1? which is what works in updateValuesFromString() above
                 int offset;
                 if(keyboardState->getFundamental() <= 0) offset = 0;
                 else offset = keyboardState->getFundamental();
