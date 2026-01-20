@@ -670,7 +670,7 @@ void ConstructionSite::addItem (int selection, bool center)
         const float prepWidth  = 245.f * prepScale;
         const float prepHeight = 125.f * prepScale;
         _parent = findParentComponentOfClass<SynthGuiInterface>();
-        juce::ValueTree t(IDs::PREPARATION);
+        juce::ValueTree t(IDs::vst);
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
         t.setProperty(IDs::width, prepWidth, nullptr);
         t.setProperty(IDs::height, prepHeight, nullptr);

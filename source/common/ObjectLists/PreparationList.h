@@ -193,7 +193,7 @@ public:
 
     bool isSuitableType (const juce::ValueTree& v) const override
     {
-        return prepFactory.contains(v.getType().toString().toStdString());
+        return prepFactory.contains(v.getType().toString().toStdString()) || v.hasType(IDs::vst);
     }
     class Listener {
     public:
