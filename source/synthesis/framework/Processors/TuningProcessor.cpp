@@ -51,10 +51,11 @@ void TuningState::processStateChanges()
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
-
+        DBG("TuningState::processStateChanges() " + change.toXmlString ());
         auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
         {
+            DBG("absoluteTuning mod or reset triggered");
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
             touchedAbsolute = true;
         }
