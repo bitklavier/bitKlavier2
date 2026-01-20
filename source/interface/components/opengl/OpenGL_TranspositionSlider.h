@@ -22,7 +22,6 @@ public:
                                                                             12, // default max
                                                                             0, // default val
                                                                             0.01,
-//                                                                            _params->numActive,
                                                                 _params->numActiveSliders->getCurrentValue(),
                                                                     _params->stateChanges.defaultState), // increment
                                                                         params(_params)

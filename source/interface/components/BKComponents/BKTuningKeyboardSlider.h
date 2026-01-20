@@ -69,7 +69,7 @@ class BKTuningKeyboardSlider :
 {
 public:
 
-    BKTuningKeyboardSlider(TuningState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false);
+    BKTuningKeyboardSlider(TuningState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false, const juce::ValueTree& defaultState={});
     ~BKTuningKeyboardSlider()
     {
         keyboard = nullptr;

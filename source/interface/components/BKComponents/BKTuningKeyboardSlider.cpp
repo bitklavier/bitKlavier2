@@ -185,7 +185,7 @@ void KeyboardOffsetComponent::drawKeyboardBackground(juce::Graphics & g, juce::R
     }
 }
 
-BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningState* state, bool toggles, bool nos, bool isCircular): StateModulatedComponent(juce::ValueTree{}),
+BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningState* state, bool toggles, bool nos, bool isCircular, const juce::ValueTree& stateDefault) : StateModulatedComponent(stateDefault),
 needsOctaveSlider(nos),
 ratio(1.0),
 keyboardState(state), isCircular(isCircular)
