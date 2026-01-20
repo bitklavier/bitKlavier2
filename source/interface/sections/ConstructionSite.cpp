@@ -420,16 +420,20 @@ PreparationSection *ConstructionSite::getComponentForPlugin(juce::AudioProcessor
     }
 }
 
-void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) {
+void ConstructionSite::createWindow (juce::AudioProcessorGraph::Node* node, PluginWindow::Type type)
+{
     jassert (node != nullptr);
 
-#if JUCE_IOS || JUCE_ANDROID
+    #if JUCE_IOS || JUCE_ANDROID
     closeAnyOpenPluginWindows();
-#else
+    #else
     for (auto* w : activePluginWindows)
         if (w->node.get() == node && w->type == type)
-            w->toFront(true);
-#endif
+        {
+            w->toFront (true);
+            return; // <-- prevent creating a second editor for the same processor/type
+        }
+    #endif
 
     if (auto* processor = node->getProcessor())
     {
@@ -437,7 +441,7 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
         {
             auto description = plugin->getPluginDescription();
             auto window = activePluginWindows.add (new PluginWindow (node, type, activePluginWindows));
-            window->toFront(true);
+            window->toFront (true);
         }
     }
 }
@@ -670,7 +674,7 @@ void ConstructionSite::addItem (int selection, bool center)
         const float prepWidth  = 245.f * prepScale;
         const float prepHeight = 125.f * prepScale;
         _parent = findParentComponentOfClass<SynthGuiInterface>();
-        juce::ValueTree t(IDs::PREPARATION);
+        juce::ValueTree t(IDs::vst);
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
         t.setProperty(IDs::width, prepWidth, nullptr);
         t.setProperty(IDs::height, prepHeight, nullptr);

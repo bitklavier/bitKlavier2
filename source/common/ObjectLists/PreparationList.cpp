@@ -165,6 +165,7 @@ void PreparationList::addPlugin(const juce::PluginDescription &desc, const juce:
                                                                   TRANS("Couldn't create plugin"),
                                                                   err);
             //TODO show error
+            jassertfalse;
             //return nullptr;
             return;
         }
