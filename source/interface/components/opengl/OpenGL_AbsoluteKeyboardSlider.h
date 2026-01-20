@@ -134,7 +134,8 @@ public:
      * see the comparable one in OpenGL_TranspositionSlider.h
      */
     void syncToValueTree() override {
-//        modulationState = juce::ValueTree(IDs::absoluteTuning);
+        DBG("OpenGLAbsoluteKeyboardSlider::syncToValueTree " + modulationState.getProperty(IDs::absoluteTuning).toString());
+        updateValuesFromString (modulationState.getProperty(IDs::absoluteTuning).toString(), false);
     }
 
     inline static TuningState mod_key_state;
@@ -151,19 +152,47 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         setComponentID(IDs::circularTuning.toString());
+
+        isModulated_ = true;
+        isModulation_ = false;
     }
 
     OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state)
     {
+        isModulated_ = false;
         isModulation_ = true;
+
+        setName("");
+
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("MODIFIED");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
+
+        addAndMakeVisible(sliderBorder);
     }
 
     ~OpenGLCircularKeyboardSlider() {}
 
     virtual void resized() override {
+        if (isModulation_)
+        {
+            sliderBorder.setBounds(getLocalBounds());
+        }
+
         OpenGlAutoImageComponent::resized();
-        // if (isShowing())
         redoImage();
+    }
+
+    /*
+     * this is for making the modulation UI view opaque
+     */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKTuningKeyboardSlider::paint(g);
+        }
     }
 
     /**
@@ -204,6 +233,9 @@ public:
         if (isModulation_) {
             modulationState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
         }
+        else if (isModulated_) {
+            defaultState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
+        }
     }
 
     void textEditorFocusLost(juce::TextEditor &textEditor) override {
@@ -232,9 +264,11 @@ public:
      */
     void syncToValueTree() override
     {
-
+        DBG("OpenGLCircularKeyboardSlider::syncToValueTree " + modulationState.getProperty(IDs::circularTuning).toString());
+        updateValuesFromString (modulationState.getProperty(IDs::circularTuning).toString(), true);
     }
 
     inline static TuningState mod_key_state;
+    juce::GroupComponent sliderBorder;
 };
 #endif //OPENGL_ABSOLUTEKEYBOARDSLIDER_H
