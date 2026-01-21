@@ -1060,7 +1060,15 @@ void ModulationManager::componentAdded() {
         combo_box_lookup.clear();
         modulation_callout_buttons_.clear();
         meter_lookup_.clear();
-
+        destination_lookup_.clear();
+        all_destinations_.clear();
+        clearTemporaryModulation();
+        clearTemporaryHoverModulation();
+        temporarily_set_destination_ = nullptr;
+        temporarily_set_hover_slider_ = nullptr;
+        temporarily_set_synth_slider_ = nullptr;
+        temporarily_set_state_combo_box_ = nullptr;
+        modulationCleared();
         //count things up
         modulation_buttons_ = mod_buttons;
         for (auto &modulation_button: modulation_buttons_) {
@@ -3361,3 +3369,4 @@ void ModulationManager::setVisibleMeterBounds() {
         }
     }
 }
+

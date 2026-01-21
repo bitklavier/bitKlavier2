@@ -214,6 +214,12 @@ void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
         if (disconnectModulation (childWhichHasBeenRemoved))
             getGuiInterface()->notifyModulationsChanged();
     }
+    if (childWhichHasBeenRemoved.hasType(IDs::MODCONNECTION)) {
+        for (auto child : childWhichHasBeenRemoved) {
+            if (disconnectModulation (child))
+                getGuiInterface()->notifyModulationsChanged();
+        }
+    }
 }
 
 void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
@@ -238,6 +244,16 @@ void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasC
         if (auto* eng = getEngine())
             eng->requestTempoMultiplierUpdate (gTM); // thread-safe: sets atomics only
     }
+}
+juce::ValueTree SynthBase::getActivePreparationListValueTree()
+{
+    for (auto& preparation : preparationLists)
+    {
+        if (preparation->getValueTree().getParent().getProperty (IDs::isActive))
+            return preparation->getValueTree();
+    }
+    jassertfalse;
+    return {};
 }
 
 PreparationList* SynthBase::getActivePreparationList()
@@ -1013,6 +1029,7 @@ void SynthBase::disconnectModulation (const std::string& source, const std::stri
 
 bool SynthBase::disconnectModulation (const juce::ValueTree& v)
 {
+
     bitklavier::ModulationConnection* connection = getConnection (v.getProperty (IDs::src).toString().toStdString(),
         v.getProperty (IDs::dest).toString().toStdString());
     if (connection)

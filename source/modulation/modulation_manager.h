@@ -251,7 +251,7 @@ class ModulationManager : public SynthSection,
 public ModulationIndicator::Listener,
 public StateModulatedComponent::Listener,
 public OpenGLComboBox::Listener
-
+// public juce::ValueTree::Listener
 {
   public:
     static constexpr int kIndicesPerMeter = 6;
@@ -385,6 +385,7 @@ public OpenGLComboBox::Listener
     {
         return;
     }
+    // void valueTreeChildRemoved(juce::ValueTree &parentTree, juce::ValueTree &childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
   private:
 
     void setDestinationQuadBounds(ModulationDestination* destination);
