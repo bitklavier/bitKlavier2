@@ -56,6 +56,9 @@ void TuningState::processStateChanges()
         if (val != nullVar)
         {
             DBG("absoluteTuning mod or reset triggered");
+            for (auto& element : absoluteTuningOffset) {
+                element.store(0.0f, std::memory_order_relaxed);
+            }
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
             touchedAbsolute = true;
         }
@@ -63,6 +66,9 @@ void TuningState::processStateChanges()
         val = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
+            for (auto& element : circularTuningOffset) {
+                element.store(0.0f, std::memory_order_relaxed);
+            }
             parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
             touchedCircular = true;
         }
