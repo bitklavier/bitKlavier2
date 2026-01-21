@@ -296,8 +296,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case midifilter:
             {
-                prepWidth = 75.0f;
-                prepHeight = 75.0f;
+                prepWidth = 120.0f;
+                prepHeight = 120.0f;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiFilter);
@@ -312,8 +312,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case miditarget:
             {
-                prepWidth = 75.0f;
-                prepHeight = 75.0f;
+                prepWidth = 120.0f;
+                prepHeight = 120.0f;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiTarget);
@@ -420,16 +420,20 @@ PreparationSection *ConstructionSite::getComponentForPlugin(juce::AudioProcessor
     }
 }
 
-void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) {
+void ConstructionSite::createWindow (juce::AudioProcessorGraph::Node* node, PluginWindow::Type type)
+{
     jassert (node != nullptr);
 
-#if JUCE_IOS || JUCE_ANDROID
+    #if JUCE_IOS || JUCE_ANDROID
     closeAnyOpenPluginWindows();
-#else
+    #else
     for (auto* w : activePluginWindows)
         if (w->node.get() == node && w->type == type)
-            w->toFront(true);
-#endif
+        {
+            w->toFront (true);
+            return; // <-- prevent creating a second editor for the same processor/type
+        }
+    #endif
 
     if (auto* processor = node->getProcessor())
     {
@@ -437,7 +441,7 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
         {
             auto description = plugin->getPluginDescription();
             auto window = activePluginWindows.add (new PluginWindow (node, type, activePluginWindows));
-            window->toFront(true);
+            window->toFront (true);
         }
     }
 }

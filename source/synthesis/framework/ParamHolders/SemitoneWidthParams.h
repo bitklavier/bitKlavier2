@@ -6,7 +6,6 @@
 #define BITKLAVIER0_SEMITONEWIDTHPARAMS_H
 
 #include <PreparationStateImpl.h>
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include "utils.h"
 
 struct SemitoneWidthParams : chowdsp::ParamHolder

@@ -185,7 +185,7 @@ void KeyboardOffsetComponent::drawKeyboardBackground(juce::Graphics & g, juce::R
     }
 }
 
-BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningState* state, bool toggles, bool nos, bool isCircular): StateModulatedComponent(juce::ValueTree{}),
+BKTuningKeyboardSlider::BKTuningKeyboardSlider(TuningState* state, bool toggles, bool nos, bool isCircular, const juce::ValueTree& stateDefault) : StateModulatedComponent(stateDefault),
 needsOctaveSlider(nos),
 ratio(1.0),
 keyboardState(state), isCircular(isCircular)
@@ -355,13 +355,41 @@ void BKTuningKeyboardSlider::mouseDown(const juce::MouseEvent& e)
 
 }
 
+void BKTuningKeyboardSlider::updateValuesFromString(juce::String newVals, bool isCircular)
+{
+    if (isCircular) {
+        auto tempVals = parseFloatStringToArrayCircular<12>(newVals.toStdString());
+        if (tempVals.size() == maxKey + 1) {
+            int offset;
+            if(keyboardState->getFundamental() <= 0) offset = 0;
+            else offset = keyboardState->getFundamental();
+            auto rangeAll  =  (keyboard->getRangeEnd() - keyboard->getRangeStart()) + 1;
+            for(int i=keyboard->getRangeStart(); i<=keyboard->getRangeEnd(); i++)
+            {
+                int index = ((i - offset) + rangeAll) % rangeAll;
+                keyboardState->setKeyOffset(index, tempVals[index], isCircular);
+            }
+        }
+
+    } else {
+        auto array = parseIndexValueStringToArrayAbsolute<128>(newVals.toStdString());
+        for(int i=0; i<array.size(); i++)
+        {
+            keyboardState->setKeyOffset(i, array[i],isCircular);
+        }
+    }
+    keyboardValsTextField->setAlpha(0);
+    keyboardValsTextField->toBack();
+    unfocusAllComponents();
+}
+
 void BKTuningKeyboardSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 {
     if(textEditor.getName() == keyboardValsTextField->getName())
     {
         if (isCircular) {
              auto   tempVals = parseFloatStringToArrayCircular<12>(keyboardValsTextField->getText().toStdString());
-            if (tempVals.size() == maxKey - 1) {
+            if (tempVals.size() == maxKey + 1) { // i'm not sure if this ever really works? shouldn't in be maxKey + 1? which is what works in updateValuesFromString() above
                 int offset;
                 if(keyboardState->getFundamental() <= 0) offset = 0;
                 else offset = keyboardState->getFundamental();
@@ -458,12 +486,12 @@ void BKTuningKeyboardSlider::buttonClicked (juce::Button* b)
     }
 }
 
-void BKTuningKeyboardSlider::setValues(juce::Array<float> newvals)
-{
-    for(int i=0; i<newvals.size(); i++)
-    {
-        //keyboard->setKeyValue(i, newvals.getUnchecked(i));
-    }
-
-    keyboard->repaint();
-}
+// void BKTuningKeyboardSlider::setValues(juce::Array<float> newvals)
+// {
+//     for(int i=0; i<newvals.size(); i++)
+//     {
+//         //keyboard->setKeyValue(i, newvals.getUnchecked(i));
+//     }
+//
+//     keyboard->repaint();
+// }

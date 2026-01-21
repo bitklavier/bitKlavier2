@@ -88,6 +88,16 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             startParam = NostalgicTargetFirst + 1;
             lastParam = NostalgicTargetNil;
         }
+        else if (state.params.connectedPrep == IDs::direct)
+        {
+            startParam = DirectTargetFirst + 1;
+            lastParam = DirectTargetNil;
+        }
+        else if (state.params.connectedPrep == IDs::tuning)
+        {
+            startParam = TuningTargetFirst + 1;
+            lastParam = TuningTargetNil;
+        }
 
         for (int i = startParam; i < lastParam; ++i)
         {

@@ -169,6 +169,11 @@ namespace bitklavier {
 
         bool supportsParameterModulation() const;
 
+        void resetContinuousModulations() {
+            DBG("PluginBase::resetContinuousModulations");
+            parent.requestResetAllContinuousModsRT();
+        }
+
         void processContinuousModulations(juce::AudioBuffer<float> &buffer) {
             const auto &modBus = getBusBuffer(buffer, true, 1); // true = input, bus index 0 = mod
 
@@ -238,7 +243,6 @@ namespace bitklavier {
                         vt.setProperty(IDs::start, a.start, nullptr);
                         vt.setProperty(IDs::end, a.end, nullptr);
                         vt.setProperty(IDs::skew, a.skew, nullptr);
-                    vt.setProperty(IDs::sliderval, param->get(),nullptr);
                     }
                     // std::visit([&](auto *p) {
                                    param->setRangeToValueTree(vt);

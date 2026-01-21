@@ -10,25 +10,54 @@
 class OpenGLAbsoluteKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
     OpenGLAbsoluteKeyboardSlider(TuningState& keystate, bool helperButtons = true)
-        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate, false, false, false) {
+        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate, false, false, false, keystate.stateChanges.defaultState)
+    {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         setComponentID(IDs::absoluteTuning.toString());
         useHelperButtons = helperButtons;
+
+        isModulated_ = true;
+        isModulation_ = false;
     }
 
-    OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state){
-
+   OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state)
+    {
+        isModulated_ = false;
         isModulation_ = true;
+
+        setName("");
+
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("MODIFIED");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
+
+        addAndMakeVisible(sliderBorder);
     }
 
     ~OpenGLAbsoluteKeyboardSlider(){}
 
     virtual void resized() override {
+        if (isModulation_)
+        {
+            sliderBorder.setBounds(getLocalBounds());
+        }
+
         OpenGlAutoImageComponent::resized();
-        // if (isShowing())
         redoImage();
+    }
+
+    /*
+     * this is for making the modulation UI view opaque
+     */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKTuningKeyboardSlider::paint(g);
+        }
     }
 
     /*
@@ -75,6 +104,9 @@ public:
         if (isModulation_) {
             modulationState.setProperty(IDs::absoluteTuning, keyboardValsTextField->getText(), nullptr);
         }
+        else if (isModulated_) {
+            defaultState.setProperty(IDs::absoluteTuning, keyboardValsTextField->getText(), nullptr);
+        }
     }
 
     void textEditorFocusLost(juce::TextEditor &textEditor) override {
@@ -102,35 +134,64 @@ public:
      * see the comparable one in OpenGL_TranspositionSlider.h
      */
     void syncToValueTree() override {
-//        modulationState = juce::ValueTree(IDs::absoluteTuning);
+        updateValuesFromString (modulationState.getProperty(IDs::absoluteTuning).toString(), false);
     }
 
-    TuningState mod_key_state;
+    inline static TuningState mod_key_state;
     bool useHelperButtons = true;
+    juce::GroupComponent sliderBorder;
 };
 
 class OpenGLCircularKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
 
     OpenGLCircularKeyboardSlider(TuningState& keystate)
-        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, true) {
+        : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, true, keystate.stateChanges.defaultState) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
         setComponentID(IDs::circularTuning.toString());
+
+        isModulated_ = true;
+        isModulation_ = false;
     }
 
     OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state)
     {
+        isModulated_ = false;
         isModulation_ = true;
+
+        setName("");
+
+        sliderBorder.setColour(juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour(juce::GroupComponent::textColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("MODIFIED");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
+
+        addAndMakeVisible(sliderBorder);
     }
 
     ~OpenGLCircularKeyboardSlider() {}
 
     virtual void resized() override {
+        if (isModulation_)
+        {
+            sliderBorder.setBounds(getLocalBounds());
+        }
+
         OpenGlAutoImageComponent::resized();
-        // if (isShowing())
         redoImage();
+    }
+
+    /*
+     * this is for making the modulation UI view opaque
+     */
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black); // choose your opaque BG
+            BKTuningKeyboardSlider::paint(g);
+        }
     }
 
     /**
@@ -171,6 +232,9 @@ public:
         if (isModulation_) {
             modulationState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
         }
+        else if (isModulated_) {
+            defaultState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
+        }
     }
 
     void textEditorFocusLost(juce::TextEditor &textEditor) override {
@@ -199,10 +263,10 @@ public:
      */
     void syncToValueTree() override
     {
-
+        updateValuesFromString (modulationState.getProperty(IDs::circularTuning).toString(), true);
     }
 
-    TuningState mod_key_state;
-
+    inline static TuningState mod_key_state;
+    juce::GroupComponent sliderBorder;
 };
 #endif //OPENGL_ABSOLUTEKEYBOARDSLIDER_H

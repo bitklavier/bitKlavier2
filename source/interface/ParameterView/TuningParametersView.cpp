@@ -25,10 +25,6 @@ TuningParametersView::TuningParametersView(
 
     auto& listeners = pluginState.getParameterListeners();
 
-    /**
-     * todo: need to add slider->addAttachment(attachment.get()); to all SynthSliders, so they can display liveModulation
-     */
-
     absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(absolutekeyboard.get());
     absolutekeyboard->setName("absolute");
@@ -37,35 +33,39 @@ TuningParametersView::TuningParametersView(
     addStateModulatedComponent(circular_keyboard.get());
     circular_keyboard->setName("circular");
 
-    semitoneSection = std::make_unique<SemitoneWidthSection>(name, params.tuningState.semitoneWidthParams, listeners, *this);
+    semitoneSection = std::make_unique<SemitoneWidthSection>(name + "_semitone", params.tuningState.semitoneWidthParams, listeners, *this);
     addSubSection(semitoneSection.get());
 
-    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name, params.tuningState.adaptiveParams, listeners, *this);
+    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name + "_adaptive", params.tuningState.adaptiveParams, listeners, *this);
     addSubSection(adaptiveSection.get());
 
-    springTuningSection = std::make_unique<SpringTuningSection>(name, params.tuningState.springTuningParams, listeners, *this);
+    springTuningSection = std::make_unique<SpringTuningSection>(name + "_spring", params.tuningState.springTuningParams, listeners, *this);
     addSubSection(springTuningSection.get());
 
-    offsetKnobSection = std::make_unique<OffsetKnobSection>(name, params.tuningState.offsetKnobParam, listeners, *this);
+    offsetKnobSection = std::make_unique<OffsetKnobSection>(name + "_offset", params.tuningState.offsetKnobParam, listeners, *this);
     addSubSection(offsetKnobSection.get());
 
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
-        auto index = tuningParams->tuningState.tuningSystem->getIndex();
         tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString(), tuningParams->tuningState.tuningSystem->stateChanges.defaultState);
-        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, nullptr);
         setupTuningSystemMenu(tuning_combo_box);
+        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, nullptr);
         addComboBox(tuning_combo_box.get(), true, true);
-        tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
 
-        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(),tuningParams->tuningState.fundamental->stateChanges.defaultState);
+        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(), tuningParams->tuningState.fundamental->stateChanges.defaultState);
         fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, nullptr);
         addComboBox(fundamental_combo_box.get(), true, true);
 
-        tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString(),tuningParams->tuningState.tuningType->stateChanges.defaultState);
+        tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString(), tuningParams->tuningState.tuningType->stateChanges.defaultState);
         tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, nullptr);
         addComboBox(tuningtype_combo_box.get(), true, true);
     }
+
+    setOffsetsFromTuningSystem(
+                params.tuningState.tuningSystem->get(),
+                params.tuningState.fundamental->getIndex(),
+                this->params.tuningState.circularTuningOffset,
+                this->params.tuningState.circularTuningOffset_custom);
 
     /*
      * display relevant subsets of the UI depending on selected TuningType
@@ -344,6 +344,25 @@ void TuningParametersView::timerCallback(void)
         {
             if (gui->prep_popup != nullptr)
                 gui->prep_popup->repaintPrepBackground();
+        }
+    }
+
+    // Refresh keyboards if tuning offsets were updated by the audio thread
+    if (params.tuningState.absoluteTuningDirty.exchange(false, std::memory_order_acq_rel))
+    {
+        if (absolutekeyboard)
+        {
+            absolutekeyboard->redoImage();
+            absolutekeyboard->repaint();
+        }
+    }
+
+    if (params.tuningState.circularTuningDirty.exchange(false, std::memory_order_acq_rel))
+    {
+        if (circular_keyboard)
+        {
+            circular_keyboard->redoImage();
+            circular_keyboard->repaint();
         }
     }
 }

@@ -18,10 +18,9 @@
 #include "SpringTuningParams.h"
 #include "OffsetKnobParam.h"
 #include "SpringTuning/SpringTuning.h"
-#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
+#include "target_types.h"
 
 /**
  * todo: maybe someday..
@@ -43,7 +42,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     void setKeyOffset (int midiNoteNumber, float val);
     void setCircularKeyOffset (int midiNoteNumber, float val);
     void setKeyOffset (int midiNoteNumber, float val, bool circular);
-    //static std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental);
     void processStateChanges() override;
 
     void setFundamental (int fund);
@@ -66,10 +64,11 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::array<std::atomic<float>, 12> circularTuningOffset = { 0.f };
     std::array<std::atomic<float>, 12> circularTuningOffset_custom = { 0.f };
 
+    // UI invalidation flags (set from audio thread, read on message thread)
+    std::atomic<bool> absoluteTuningDirty { false };
+    std::atomic<bool> circularTuningDirty { false };
+
     int oldFundamental = 0;
-    /*
-     * todo: remove all the A4frequency stuff, as it will be handled in BKSynthesizer
-     */
     float A4frequency = 440.;       // set this in gallery or app preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
@@ -154,12 +153,12 @@ struct TuningState : bitklavier::StateChangeableParameter
     float getGlobalTuningReference() const { return A4frequency; };
     TuningType getTuningType() const { return tuningType->get(); }
 
-    inline const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
-    inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
-    inline const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
-    inline const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
-    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
-    inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
+    const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
+    const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
+    const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
+    const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
+    const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
+    const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
 
     /*
      * Adaptive vars
@@ -183,10 +182,10 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.fundamental,
             tuningState.tuningType,
             tuningState.semitoneWidthParams,
-            tuningState.lastNote,
             tuningState.adaptiveParams,
             tuningState.springTuningParams,
-            tuningState.offsetKnobParam);
+            tuningState.offsetKnobParam,
+            tuningState.lastNote);
 
         tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
 
@@ -257,6 +256,8 @@ public:
     void noteOn (int midiChannel,int midiNoteNumber,float velocity);
     void noteOff (int midiChannel,int midiNoteNumber,float velocity);
 
+    void resetStateModulations();
+
     void setA4Frequency(double A4new) { state.params.tuningState.setGlobalTuningReference(A4new);}
     void incrementClusterTime(long numSamples) { state.params.tuningState.clusterTimeMS += numSamples * 1000. / getSampleRate(); }
 
@@ -267,7 +268,7 @@ public:
         return BusesProperties()
                 .withOutput("Output", juce::AudioChannelSet::stereo(), false)
                 .withInput ("Input", juce::AudioChannelSet::stereo(), false)
-                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(25),true)
+                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(22 * 2),true)
                 .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
     }
 

@@ -41,29 +41,47 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 
 void TuningState::processStateChanges()
 {
-
     fundamental->processStateChanges();
     tuningSystem->processStateChanges();
     tuningType->processStateChanges();
 
+    bool touchedAbsolute = false;
+    bool touchedCircular = false;
+
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
-
+        DBG("TuningState::processStateChanges() " + change.toXmlString ());
         auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
         {
+            DBG("absoluteTuning mod or reset triggered");
+            for (auto& element : absoluteTuningOffset) {
+                element.store(0.0f, std::memory_order_relaxed);
+            }
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
+            touchedAbsolute = true;
         }
 
         val = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
+            for (auto& element : circularTuningOffset) {
+                element.store(0.0f, std::memory_order_relaxed);
+            }
             parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
+            touchedCircular = true;
         }
     }
 
+    if (touchedAbsolute)
+        absoluteTuningDirty.store(true, std::memory_order_release);
+
+    if (touchedCircular)
+        circularTuningDirty.store(true, std::memory_order_release);
+
     stateChanges.changeState.clear();
+
 }
 
 void TuningState::setFundamental (int fund)
@@ -99,7 +117,7 @@ int TuningState::getSemitoneWidthFundamental()
 
 double TuningState::getSemitoneWidth()
 {
-    return semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
+    return *semitoneWidthParams.semitoneWidthSliderParam;
 }
 
 /**
@@ -161,7 +179,7 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
  * Get the tuning offset value, from "offset" slider
  * @return offset in fractional Midi note values
  */
-double TuningState::getOverallOffset() { return offsetKnobParam.offSet->getCurrentValue() * 0.01;}
+double TuningState::getOverallOffset() { return *offsetKnobParam.offSetSliderParam * 0.01;}
 
 /**
  * update the last frequency and the last interval, for use in the UI
@@ -669,11 +687,24 @@ void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity
     state.params.tuningState.keyReleased(midiNoteNumber);
 }
 
+void TuningProcessor::resetStateModulations()
+{
+    state.params.tuningState.fundamental->stateChanges.changeState.emplace_back (0, state.params.tuningState.fundamental->stateChanges.defaultState);
+    state.params.tuningState.tuningSystem->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningSystem->stateChanges.defaultState);
+    state.params.tuningState.tuningType->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningType->stateChanges.defaultState);
+    state.params.tuningState.stateChanges.changeState.emplace_back(0, state.params.tuningState.stateChanges.defaultState);
+}
+
 void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
 {
     const int channel = m.getChannel();
 
-    if (m.isNoteOn())
+    if (channel + (TuningTargetFirst) == TuningTargetModReset)
+    {
+        resetContinuousModulations();
+        resetStateModulations();
+    }
+    else if (m.isNoteOn())
     {
         noteOn (channel, m.getNoteNumber(), m.getVelocity());
     }

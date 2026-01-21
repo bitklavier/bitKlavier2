@@ -658,6 +658,15 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
      * also for doPatternSync, which gets toggled internally below
      */
 
+    /*
+     * todo: add SynchronicModReset (and to all other moddable preps)
+     *      - if it's triggered call `resetContinuousModulations()`
+     *          - which will set all the Ramps and LFOs to 0
+     *          - it will freeze the Ramps (set their state to 0)
+     *          - and the LFOs will have their phase set to 0
+     *              - they will continue to oscillate if the user has set them to "auto"
+     */
+
     switch(channel + (SynchronicTargetFirst))
     {
         case SynchronicTargetDefault:
@@ -686,6 +695,10 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
         case SynchronicTargetPausePlay:
             if (doPausePlay) doPausePlay = false;
             else doPausePlay = true;
+            break;
+
+        case SynchronicTargetModReset:
+            resetContinuousModulations();
             break;
 
 /*

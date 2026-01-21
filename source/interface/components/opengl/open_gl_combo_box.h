@@ -4,25 +4,24 @@
 
 #ifndef OPEN_GL_COMBOBOX_H
 #define OPEN_GL_COMBOBOX_H
-#include "valuetree_utils/VariantConverters.h"
 
 #include "juce_data_structures/juce_data_structures.h"
-#include "open_gl_component.h"
 #include "open_gl_image_component.h"
 #include "default_look_and_feel.h"
 #include "BKLookAndFeel.h"
 class OpenGLComboBox : public OpenGlAutoImageComponent<juce::ComboBox>{
 
 public:
-    OpenGLComboBox(std::string str, const juce::ValueTree &defaultState = {}) : OpenGlAutoImageComponent<juce::ComboBox> (str)
+    OpenGLComboBox(std::string str, const juce::ValueTree &defaultState_ = {}) : OpenGlAutoImageComponent<juce::ComboBox> (str)
     {
-        this->defaultState = defaultState;
+        this->defaultState = defaultState_;
         image_component_ = std::make_shared<OpenGlImageComponent> ();
         setLookAndFeel(&laf);
         image_component_->setComponent(this);
         setComponentID(str);
         paramID = str;
     }
+
     ~OpenGLComboBox() {
         setLookAndFeel(nullptr);
     }

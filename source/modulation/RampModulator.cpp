@@ -67,12 +67,14 @@ void RampModulatorProcessor::triggerModulation()
     // setTime(*_state.params.time);
     // ModulatorBase::triggerModulation();
     // Instead of forcing value_ to 0 implicitly, restart from current value_
+
     retriggerFrom (value_);
 }
 
 void RampModulatorProcessor::triggerReset()
 {
-    value_ = 0;
+    DBG("RampModulatorProcessor::triggerReset()");
+    value_ = 0.f;
     state_ = 0;
     ModulatorBase::triggerReset();
 }
@@ -96,16 +98,18 @@ SynthSection *RampModulatorProcessor::createEditor() {
 
 void RampModulatorProcessor::retriggerFrom(float current)
 {
+    DBG("RampModulatorProcessor::retriggerFrom = " << current);
+    // note, this always gets a current = 0, but it still keeps continuity, just the time changes, so the continuity must be because of something else
     // Keep continuity: start from the current output level
     value_ = juce::jlimit (0.0f, 1.0f, current);
 
     // Retrigger means "ramp toward 1 again" (match triggerModulation semantics)
     target_ = 1.0f;
-
     state_ = 1;
 
     // Recompute rate based on (target_ - value_) and current time
     setTime (*_state.params.time);
 
+    // this function doesn't currently do anything
     ModulatorBase::triggerModulation(); // if you use this for notifying listeners etc.
 }

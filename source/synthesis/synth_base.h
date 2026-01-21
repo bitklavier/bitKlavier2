@@ -154,6 +154,8 @@ public:
 
     int getNumModulations(const std::string &destination);
 
+    void requestResetAllContinuousModsRT();
+
     virtual SynthGuiInterface *getGuiInterface() = 0;
 
     bool isSourceConnected(const std::string &source);

@@ -251,6 +251,10 @@ void BlendronicProcessor::handleMidiTargetMessages(juce::MidiBuffer& midiMessage
             case BlendronicTargetOutput:
                 doOpenCloseOutput();
                 break;
+
+            case BlendronicTargetModReset:
+                resetContinuousModulations();
+                break;
         }
     }
 }

@@ -19,15 +19,15 @@ public:
         {
             setComponentID(parent.getComponentID());
 
-            offsetKnob = std::make_unique<SynthSlider>(params.offSet->paramID,params.offSet->getModParam());
+            offsetKnob = std::make_unique<SynthSlider>(params.offSetSliderParam->paramID,params.offSetSliderParam->getModParam());
             addSlider(offsetKnob.get());
             offsetKnob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             offsetKnob->setPopupPlacement(juce::BubbleComponent::below);
             offsetKnob->setShowPopupOnHover(true);
-            offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSet, listeners, *offsetKnob, nullptr);
+            offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSetSliderParam, listeners, *offsetKnob, nullptr);
             offsetKnob->addAttachment(offsetKnobAttachment.get()); // for modulations
 
-            offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), params.offSet->getName(20));
+            offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), params.offSetSliderParam->getName(20));
             addOpenGlComponent(offset_label);
             offset_label->setTextSize (10.0f);
             offset_label->setJustification(juce::Justification::centred);
@@ -41,8 +41,6 @@ public:
     void paintBackground(juce::Graphics& g) override
     {
         setLabelFont(g);
-        //drawLabelForComponent(g, TRANS("cents"), offsetKnob.get());
-
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
     }
