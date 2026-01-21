@@ -25,10 +25,6 @@ TuningParametersView::TuningParametersView(
 
     auto& listeners = pluginState.getParameterListeners();
 
-    /**
-     * todo: need to add slider->addAttachment(attachment.get()); to all SynthSliders, so they can display liveModulation
-     */
-
     absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
     addStateModulatedComponent(absolutekeyboard.get());
     absolutekeyboard->setName("absolute");
@@ -51,12 +47,10 @@ TuningParametersView::TuningParametersView(
 
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
-        auto index = tuningParams->tuningState.tuningSystem->getIndex();
         tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString(), tuningParams->tuningState.tuningSystem->stateChanges.defaultState);
-        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, nullptr);
         setupTuningSystemMenu(tuning_combo_box);
+        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, nullptr);
         addComboBox(tuning_combo_box.get(), true, true);
-        tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(), tuningParams->tuningState.fundamental->stateChanges.defaultState);
         fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, nullptr);
@@ -66,6 +60,12 @@ TuningParametersView::TuningParametersView(
         tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, nullptr);
         addComboBox(tuningtype_combo_box.get(), true, true);
     }
+
+    setOffsetsFromTuningSystem(
+                params.tuningState.tuningSystem->get(),
+                params.tuningState.fundamental->getIndex(),
+                this->params.tuningState.circularTuningOffset,
+                this->params.tuningState.circularTuningOffset_custom);
 
     /*
      * display relevant subsets of the UI depending on selected TuningType

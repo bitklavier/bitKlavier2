@@ -296,8 +296,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case midifilter:
             {
-                prepWidth = 75.0f;
-                prepHeight = 75.0f;
+                prepWidth = 120.0f;
+                prepHeight = 120.0f;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiFilter);
@@ -312,8 +312,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case miditarget:
             {
-                prepWidth = 75.0f;
-                prepHeight = 75.0f;
+                prepWidth = 120.0f;
+                prepHeight = 120.0f;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiTarget);
