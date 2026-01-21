@@ -233,8 +233,21 @@ public:
         if (list == popup_list_.get()) {
             if (id >= 0) {
                 if (!list->getSelectionItems(index).items.empty()) {
-                    int Ypos   = index * list->getRowHeight() + list->getX();
-                    popup_list_1->setBounds(popup_list_1->getX(),Ypos,popup_list_1->getWidth(),list->getRowHeight()*list->getSelectionItems(index).items.size());
+                    // Position submenu aligned to the selected row and clamp within this component's bounds
+                    const int rowHeight = list->getRowHeight();
+                    const int subRows   = (int) list->getSelectionItems(index).items.size();
+                    const int subHeight = rowHeight * subRows;
+
+                    // Base Y starts at the top of the left list plus the offset of the clicked row
+                    int baseY = popup_list_->getY() + index * rowHeight;
+
+                    // Respect rounded margins used in resized()
+                    const int rounding = findValue(Skin::kBodyRounding);
+                    const int minY = rounding;
+                    const int maxY = std::max(minY, getHeight() - rounding - subHeight);
+                    const int clampedY = std::min(std::max(baseY, minY), maxY);
+
+                    popup_list_1->setBounds(popup_list_1->getX(), clampedY, popup_list_1->getWidth(), subHeight);
                     popup_list_1->setSelections(list->getSelectionItems(index));
                     popup_list_1->showSelected(true);
                     popup_list_1->setVisible(true);
