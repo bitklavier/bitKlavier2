@@ -172,6 +172,9 @@ public:
     }
 
     void timerCallback() override;
+    void stopAllTimers() override {
+        stopTimer();
+    }
 
     void paintBackground (juce::Graphics& g) override
     {

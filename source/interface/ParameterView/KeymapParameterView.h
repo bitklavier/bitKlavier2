@@ -265,7 +265,7 @@ private:
 
     // min/max filter slider
     std::unique_ptr<OpenGL_VelocityMinMaxSlider> velocityMinMaxSlider;
-    void stopAllTimers()override {
+    void stopAllTimers() override {
         stopTimer();
     }
 };
