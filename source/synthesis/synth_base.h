@@ -238,6 +238,7 @@ protected:
 
 public:
     PreparationList *getActivePreparationList();
+     juce::ValueTree getActivePreparationListValueTree();
 
     bitklavier::ConnectionList *getActiveConnectionList();
 

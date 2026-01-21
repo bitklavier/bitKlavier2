@@ -150,6 +150,8 @@ namespace bitklavier {
 
     void SoundEngine::removeMidiLiveListener (MidiManager::LiveMidiListener* l)
     {
+        if(!processorGraph)
+            return;
         auto nodes = processorGraph->getNodes();
         for (auto* node : nodes)
             if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
