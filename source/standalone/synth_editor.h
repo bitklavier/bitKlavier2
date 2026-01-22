@@ -91,11 +91,13 @@ public:
     void animate(bool animate);
 
 private:
+    void tryAutoLoadInitialGallery();
     std::unique_ptr<MainMenuModel> menuModel;
     juce::CriticalSection critical_section_;
     juce::StringArray current_midi_ins_;
     double current_time_;
     bool isInit;
+    bool initialGalleryLoadAttempted { false };
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;
 #endif

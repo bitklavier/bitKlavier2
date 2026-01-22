@@ -42,6 +42,10 @@ public:
         juce::String path_to_galleries = "~/Documents/bitKlavier/galleries";
         tree.setProperty("default_galleries_path", path_to_galleries, nullptr);
 
+        // Remember last opened gallery path (if any). Empty by default.
+        if (! tree.hasProperty("last_gallery_path"))
+            tree.setProperty("last_gallery_path", juce::String(), nullptr);
+
         juce::ValueTree a (IDs::midiPrefs);
         if(!tree.getChildWithName(IDs::midiPrefs).isValid())
             tree.appendChild(a, nullptr);

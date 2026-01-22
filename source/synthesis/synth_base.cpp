@@ -39,6 +39,8 @@
 #include "SynchronicProcessor.h"
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "valuetree_utils/VariantConverters.h"
+// For saving last opened gallery path
+#include "../common/UserPreferences.h"
 
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     expired_ (false),
@@ -574,6 +576,9 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     {
         // Set active file immediately so UI Save Current knows the target
         active_file_ = preset;
+        // Save last opened gallery path to user preferences immediately
+        if (user_prefs && user_prefs->tree.isValid())
+            user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
         pendingPresetTree = parsed;
         presetPending.store (true);
 
@@ -590,6 +595,9 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 
     // Successful immediate load: set active file
     active_file_ = preset;
+    // Save last opened gallery path to user preferences
+    if (user_prefs && user_prefs->tree.isValid())
+        user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
 
     if (auto* gui = getGuiInterface())
     {
