@@ -1014,13 +1014,24 @@ void SinglePopupSelector::resized() {
 void SinglePopupSelector::setPosition(juce::Point<int> position, juce::Rectangle<int> bounds) {
     int rounding = findValue(Skin::kBodyRounding);
     int width = popup_list_->getBrowseWidth();
-    int height = popup_list_->getBrowseHeight() + 2 * rounding;
+
+    // Desired content height (without rounded margins)
+    const int desiredContentHeight = popup_list_->getBrowseHeight();
+    // Maximum content height we can show within the given bounds while preserving rounded margins
+    const int maxContentHeight = std::max(0, bounds.getHeight() - 2 * rounding);
+    // Ensure at least one row is visible if there are any items
+    const int minContentHeight = std::min(desiredContentHeight, std::max(0, popup_list_->getRowHeight()));
+    const int contentHeight = juce::jlimit(minContentHeight, maxContentHeight, desiredContentHeight);
+    int height = contentHeight + 2 * rounding;
     int x = position.x;
     int y = position.y;
     if (x + width > bounds.getRight())
         x -= width;
+    // Clamp Y so the popup stays entirely within bounds even when very tall
     if (y + height > bounds.getBottom())
         y = bounds.getBottom() - height;
+    if (y < bounds.getY())
+        y = bounds.getY();
     setBounds(x, y, width, height);
 }
 

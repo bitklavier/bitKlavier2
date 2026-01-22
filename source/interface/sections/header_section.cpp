@@ -867,7 +867,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         juce::Point<int> position(VSTSelector->getX(), VSTSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int a) {
-            // figure out how to add VSTs here
             parent->gui_->main_->constructionSite_->addItem(selection, true);
         });
     } else if (clicked_button == loadButton.get()) {
