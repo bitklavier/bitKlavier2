@@ -283,3 +283,37 @@ include(Benchmarks)
 #
 # Pass some config to GA (like our PRODUCT_NAME)
 include(GitHubENV)
+if(APPLE)
+    set(STANDALONE_TGT "${PROJECT_NAME}_Standalone")
+
+    if(TARGET "${STANDALONE_TGT}")
+        add_custom_command(TARGET "${STANDALONE_TGT}" POST_BUILD
+                COMMAND /bin/sh -c
+                "if [ \"$<CONFIG>\" = \"Debug\" ]; then \
+           build_dir=\"$<TARGET_PROPERTY:${STANDALONE_TGT},BINARY_DIR>\"; \
+           artefacts_dir=\"$build_dir/${PROJECT_NAME}_artefacts\"; \
+           juce_codegen_dir=\"$artefacts_dir/JuceLibraryCode\"; \
+           if [ ! -d \"$juce_codegen_dir\" ]; then \
+             echo \"ERROR: JUCE codegen dir not found: $juce_codegen_dir\"; \
+             exit 1; \
+           fi; \
+           base_ent=\"$(find \"$juce_codegen_dir\" -maxdepth 2 -name '*Standalone*.entitlements' -print -quit)\"; \
+           if [ -z \"$base_ent\" ]; then \
+             echo \"ERROR: Could not find Standalone entitlements under $juce_codegen_dir\"; \
+             echo \"       Available entitlements:\"; \
+             find \"$juce_codegen_dir\" -maxdepth 2 -name '*.entitlements' -print || true; \
+             exit 1; \
+           fi; \
+           debug_ent=\"$artefacts_dir/JuceLibraryCode/${STANDALONE_TGT}.debug.entitlements\"; \
+           cp \"$base_ent\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.get-task-allow bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.get-task-allow true\" \"$debug_ent\"; \
+           /usr/bin/codesign --force --deep --sign - \
+             --entitlements \"$debug_ent\" \
+             \"$<TARGET_BUNDLE_DIR:${STANDALONE_TGT}>\"; \
+         fi"
+                VERBATIM
+                COMMENT "Debug ad-hoc codesign ${STANDALONE_TGT} with JUCE entitlements + get-task-allow"
+        )
+    endif()
+endif()
