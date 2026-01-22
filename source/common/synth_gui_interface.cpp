@@ -330,7 +330,16 @@ void SynthGuiInterface::openSaveDialog()
 
 void SynthGuiInterface::saveCurrentGallery()
 {
-    synth_->saveToFile(getActiveFile());
+    // If there is no active file yet (brand‑new document), fall back to "Save As..."
+    auto active = getActiveFile();
+    if (active == juce::File())
+    {
+        openSaveDialog();
+        return;
+    }
+
+    // Otherwise save to the currently active file
+    synth_->saveToFile(active);
 }
 
 void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
