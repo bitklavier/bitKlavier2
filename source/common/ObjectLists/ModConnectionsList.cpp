@@ -22,7 +22,16 @@ namespace bitklavier {
             synth.connectTuning(c->state);
         // }
         if (c->state.hasType(IDs::RESETCONNECTION))
-            synth.connectReset(c->state);
+        {
+            // Only keep/show a reset connection if the backend accepted it.
+            // If connectReset returns false (e.g., Reset -> Tuning), remove the just-added tree and skip UI notification.
+            if (! synth.connectReset(c->state))
+            {
+                DBG ("ModConnectionList: rejected RESETCONNECTION, removing from tree");
+                removeChild (c->state, &synth.getUndoManager());
+                return;
+            }
+        }
         if (c->state.hasType (IDs::TEMPOCONNECTION))
             synth.connectTempo(c->state);
         if (c->state.hasType (IDs::SYNCHRONICCONNECTION))
