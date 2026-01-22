@@ -1352,7 +1352,8 @@ void PreparationPopup::resized() {
     auto header_bounds = bounds.removeFromTop(35);
     exit_button_->setBounds(header_bounds.removeFromLeft(35).reduced(5));
     header_bounds.removeFromLeft(10);
-    if (!is_modulation_) {
+    //if (!is_modulation_)
+    {
         int label_height = findValue(Skin::kLabelBackgroundHeight);
         float label_text_height = findValue(Skin::kLabelHeight);
 

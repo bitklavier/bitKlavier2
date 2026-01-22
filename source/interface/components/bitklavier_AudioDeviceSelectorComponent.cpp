@@ -458,6 +458,7 @@ namespace bitklavier
                     config.useDefaultOutputChannels = true;
 
                 error = setup.manager->setAudioDeviceSetup (config, true);
+                parent.persistCurrentSetup();
 
                 updateSelectedInput();
                 updateSelectedOutput();
@@ -470,6 +471,7 @@ namespace bitklavier
                 {
                     config.sampleRate = sampleRateDropDown->getSelectedId();
                     error = setup.manager->setAudioDeviceSetup (config, true);
+                    parent.persistCurrentSetup();
                 }
             }
             else if (updateBufferSize)
@@ -478,6 +480,7 @@ namespace bitklavier
                 {
                     config.bufferSize = bufferSizeDropDown->getSelectedId();
                     error = setup.manager->setAudioDeviceSetup (config, true);
+                    parent.persistCurrentSetup();
                 }
             }
 
@@ -1130,6 +1133,31 @@ namespace bitklavier
             deviceTypeDropDownLabel->attachToComponent (deviceTypeDropDown.get(), true);
         }
 
+        // Attempt to restore audio preferences from state before building the rest of UI
+        {
+            if (! state.getChildWithName("audioPrefs").isValid())
+                state.appendChild(juce::ValueTree("audioPrefs"), nullptr);
+
+            auto prefs = state.getChildWithName("audioPrefs");
+            juce::String prefType = prefs.getProperty("deviceType").toString();
+            if (prefType.isNotEmpty())
+                deviceManager.setCurrentAudioDeviceType(prefType, true);
+
+            auto setup = deviceManager.getAudioDeviceSetup();
+            auto outName = prefs.getProperty("outputDevice").toString();
+            auto inName  = prefs.getProperty("inputDevice").toString();
+            auto rate    = (double) prefs.getProperty("sampleRate", 0.0);
+            auto bufSize = (int) prefs.getProperty("bufferSize", 0);
+
+            if (outName.isNotEmpty()) setup.outputDeviceName = outName;
+            if (inName.isNotEmpty())  setup.inputDeviceName  = inName;
+            if (rate > 0.0)          setup.sampleRate       = rate;
+            if (bufSize > 0)         setup.bufferSize       = (juce::uint32) bufSize;
+
+            juce::String err = deviceManager.setAudioDeviceSetup(setup, true);
+            juce::ignoreUnused(err); // if restore fails, we just continue with current defaults
+        }
+
         if (showMidiInputOptions)
         {
             midiInputsList = std::make_unique <MidiInputSelectorComponentListBox> (deviceManager,
@@ -1235,6 +1263,10 @@ namespace bitklavier
         {
             audioDeviceSettingsComp.reset();
             deviceManager.setCurrentAudioDeviceType (type->getTypeName(), true);
+            // persist selected device type
+            if (! state.getChildWithName("audioPrefs").isValid())
+                state.appendChild(juce::ValueTree("audioPrefs"), nullptr);
+            state.getChildWithName("audioPrefs").setProperty("deviceType", type->getTypeName(), nullptr);
             updateAllControls(); // needed in case the type hasn't actually changed
         }
     }
@@ -1242,6 +1274,7 @@ namespace bitklavier
     void AudioDeviceSelectorComponent::changeListenerCallback (juce::ChangeBroadcaster*)
     {
         updateAllControls();
+        persistCurrentSetup();
     }
 
     void AudioDeviceSelectorComponent::updateAllControls()
@@ -1296,6 +1329,21 @@ namespace bitklavier
         }
 
         resized();
+    }
+
+    void AudioDeviceSelectorComponent::persistCurrentSetup()
+    {
+        if (! state.isValid()) return;
+        if (! state.getChildWithName("audioPrefs").isValid())
+            state.appendChild(juce::ValueTree("audioPrefs"), nullptr);
+
+        auto prefs = state.getChildWithName("audioPrefs");
+        auto setup = deviceManager.getAudioDeviceSetup();
+        prefs.setProperty("deviceType", deviceManager.getCurrentAudioDeviceType(), nullptr);
+        prefs.setProperty("outputDevice", setup.outputDeviceName, nullptr);
+        prefs.setProperty("inputDevice", setup.inputDeviceName, nullptr);
+        prefs.setProperty("sampleRate", setup.sampleRate, nullptr);
+        prefs.setProperty("bufferSize", (int) setup.bufferSize, nullptr);
     }
 
     void AudioDeviceSelectorComponent::handleBluetoothButton()
