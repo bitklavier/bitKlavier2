@@ -52,7 +52,7 @@ class DragMagnifyingGlass : public OpenGlShapeButton {
 class EnvelopeSection : public SynthSection, DragMagnifyingGlass::Listener {
 
 public:
-    EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent);
+    EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent, juce::UndoManager* um = nullptr);
 
     virtual ~EnvelopeSection();
 

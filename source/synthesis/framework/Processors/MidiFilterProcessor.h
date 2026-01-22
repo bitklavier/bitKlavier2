@@ -99,7 +99,7 @@ struct MidiFilterNonParameterState : chowdsp::NonParamState
 class MidiFilterProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiFilterParams,MidiFilterNonParameterState>>
 {
 public:
-    MidiFilterProcessor ( SynthBase& parent,const juce::ValueTree& v);
+    MidiFilterProcessor ( SynthBase& parent,const juce::ValueTree& v, juce::UndoManager*);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
     void releaseResources() override {}

@@ -15,33 +15,37 @@
  */
 #include "synth_base.h"
 
-#include "CompressorProcessor.h"
-#include "EQProcessor.h"
 #include "SampleLoadManager.h"
 #include "FullInterface.h"
-#include "GainProcessor.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
 #include "synth_gui_interface.h"
 #include "sound_engine.h"
 #include "startup.h"
-#include "../common/ObjectLists/PreparationList.h"
+#include "ObjectLists/PreparationList.h"
 #include "Identifiers.h"
-#include "LFOModulator.h"
-#include "ModulationProcessor.h"
 #include "ObjectLists/ConnectionsList.h"
 #include "ObjectLists/ModConnectionsList.h"
-#include "PluginBase.h"
-#include "RampModulator.h"
-#include "StateModulator.h"
 #include "Synthesiser/Sample.h"
-#include "TempoProcessor.h"
-#include "TuningProcessor.h"
-#include "SynchronicProcessor.h"
 #include "chowdsp_sources/chowdsp_sources.h"
 #include "valuetree_utils/VariantConverters.h"
-// For saving last opened gallery path
-#include "../common/UserPreferences.h"
+#include "ModulationProcessor.h"
+#include "RampModulator.h"
+#include "LFOModulator.h"
+#include "StateModulator.h"
+#include "SynchronicProcessor.h"
+#include "NostalgicProcessor.h"
+#include "DirectProcessor.h"
+#include "TempoProcessor.h"
+#include "TuningProcessor.h"
+#include "MidiFilterProcessor.h"
+#include "MidiTargetProcessor.h"
+#include "PianoSwitchProcessor.h"
+#include "BlendronicProcessor.h"
+#include "ResetProcessor.h"
 
+// For saving last opened gallery path
+#include "UserPreferences.h"
+class BlendronicProcessor;
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     expired_ (false),
     manager (deviceManager),
@@ -85,14 +89,29 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     tree.addListener (this);
 
     //use valuetree rather than const valuetree bcus the std::ant cast ends upwith a juce::valuetree through cop
-    modulator_factory.registerType<RampModulatorProcessor, juce::ValueTree> ("ramp");
-    modulator_factory.registerType<LFOModulatorProcessor, juce::ValueTree> ("lfo");
-    modulator_factory.registerType<StateModulatorProcessor, juce::ValueTree> ("state");
+    modulator_factory.template registerType<RampModulatorProcessor,const  juce::ValueTree&,juce::UndoManager*& > ("ramp");
+    modulator_factory.template registerType<LFOModulatorProcessor, const juce::ValueTree&, juce::UndoManager*&> ("lfo");
+    modulator_factory.template registerType<StateModulatorProcessor, const juce::ValueTree&, juce::UndoManager*&> ("state");
+    prepFactory.template registerType<DirectProcessor,  SynthBase&, const juce::ValueTree&, juce::UndoManager*&>(IDs::direct.toString().toStdString());
+    prepFactory.template registerType<BlendronicProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::blendronic.toString().toStdString());
+    prepFactory.template registerType<SynchronicProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::synchronic.toString().toStdString());
+    prepFactory.template registerType<ResonanceProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::resonance.toString().toStdString());
+    prepFactory.template registerType<KeymapProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::keymap.toString().toStdString());
+    prepFactory.template registerType<bitklavier::ModulationProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::modulation.toString().toStdString());
+    prepFactory.template registerType<TuningProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::tuning.toString().toStdString());
+    prepFactory.template registerType<bitklavier::ResetProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::reset.toString().toStdString());
+    prepFactory.template registerType<MidiFilterProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::midiFilter.toString().toStdString());
+    prepFactory.template registerType<MidiTargetProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::midiTarget.toString().toStdString());
+    prepFactory.template registerType<PianoSwitchProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::pianoMap.toString().toStdString());
+    prepFactory.template registerType<TempoProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::tempo.toString().toStdString());
+    prepFactory.template registerType<NostalgicProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::nostalgic.toString().toStdString());
+
+
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
     preparationLists.emplace_back (
         std::make_unique<PreparationList> (
-            *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS)));
+            *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS), &um));
     connectionLists.emplace_back (
         std::make_unique<bitklavier::ConnectionList> (
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::CONNECTIONS)));
@@ -142,7 +161,7 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
         }
         else
         {
-            i++;
+        i++;
         }
     }
     //modulation connections, i.e. tuning, mod, reset
@@ -156,11 +175,16 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
         if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
         {
             DBG ("remove mod connection");
+            for (int j = 0; j < connection.getNumChildren(); ++j) //const auto& child : connection) {
+            {
+                disconnectModulation (connection.getChild(j));
+                    //getGuiInterface()->notifyModulationsChanged();
+            }
             modConnectionList->removeChild (connection, &getUndoManager());
         }
         else
         {
-            i++;
+        i++;
         }
     }
     // }
@@ -183,7 +207,7 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
         DBG ("added piano");
         preparationLists.emplace_back (
             std::make_unique<PreparationList> (
-                *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr)));
+                *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));
         connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (
             *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
         mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
@@ -216,12 +240,12 @@ void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
         if (disconnectModulation (childWhichHasBeenRemoved))
             getGuiInterface()->notifyModulationsChanged();
     }
-    if (childWhichHasBeenRemoved.hasType(IDs::MODCONNECTION)) {
-        for (auto child : childWhichHasBeenRemoved) {
-            if (disconnectModulation (child))
-                getGuiInterface()->notifyModulationsChanged();
-        }
-    }
+    // if (childWhichHasBeenRemoved.hasType(IDs::MODCONNECTION)) {
+    //     for (const auto& child : childWhichHasBeenRemoved) {
+    //         if (disconnectModulation (child))
+    //             getGuiInterface()->notifyModulationsChanged();
+    //     }
+    // }
 }
 
 void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
@@ -1097,10 +1121,8 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
     connection->processor->removeListener (connection);
     state_connections_.remove (connection);
     engine_->removeConnection (connection->connection_);
-    getGuiInterface()->tryEnqueueProcessorInitQueue ([this, connection]() {
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection (connection);
-    });
     connection->state.getParent().removeChild (connection->state, nullptr);
 }
 

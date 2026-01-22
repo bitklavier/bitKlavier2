@@ -480,7 +480,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
                             public juce::ValueTree::Listener, public TuningListener
 {
    public:
-    SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
+    SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~SynchronicProcessor()
     {
         parent.getValueTree().removeListener(this);

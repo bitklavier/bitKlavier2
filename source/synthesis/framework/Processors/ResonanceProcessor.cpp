@@ -395,8 +395,8 @@ void ResonantString::finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages)
 /*
  * ========================== ResonanceProcessor ==========================
  */
-ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree& vt) :
-        PluginBase (parent, vt, nullptr, resonanceBusLayout()),
+ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) :
+        PluginBase (parent, vt, um, resonanceBusLayout()),
         resonanceSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
       for (int i = 0; i < MaxMidiNotes; ++i)

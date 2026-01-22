@@ -7,7 +7,7 @@
 #include "common.h"
 #include "synth_base.h"
 
-TempoProcessor::TempoProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, tempoBusLayout())
+TempoProcessor::TempoProcessor (SynthBase& parent, const juce::ValueTree& vt,juce::UndoManager* um) : PluginBase (parent, vt, um, tempoBusLayout())
 {
     state.params.timeWindowMinMaxParams.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     parent.getStateBank().addParam (std::make_pair<std::string,

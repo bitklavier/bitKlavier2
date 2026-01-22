@@ -444,7 +444,7 @@ class ResonanceProcessor : public bitklavier::PluginBase<bitklavier::Preparation
                            public juce::ValueTree::Listener, public TuningListener
 {
 public:
-    ResonanceProcessor(SynthBase& parent, const juce::ValueTree& v);
+    ResonanceProcessor(SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~ResonanceProcessor(){if(tuning !=nullptr) tuning->removeListener(this);}
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;

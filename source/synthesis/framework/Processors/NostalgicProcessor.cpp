@@ -8,8 +8,8 @@
 #include "common.h"
 #include "synth_base.h"
 
-NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree& vt)
-    : PluginBase (parent, vt, nullptr, nostalgicBusLayout()),
+NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
+    : PluginBase (parent, vt, um, nostalgicBusLayout()),
     nostalgicSynth (new BKSynthesiser (state.params.reverseEnv, state.params.noteOnGain))
 
 {

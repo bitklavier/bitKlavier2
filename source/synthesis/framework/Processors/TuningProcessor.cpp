@@ -600,7 +600,7 @@ void TuningState::printSpiralNotes()
 // ********************************************************************************************************************* //
 
 
-TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, tuningBusLayout())
+TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt,juce::UndoManager* um ) : PluginBase (parent, vt, um, tuningBusLayout())
 {
     state.params.tuningState.initializeSpiralNotes();
 

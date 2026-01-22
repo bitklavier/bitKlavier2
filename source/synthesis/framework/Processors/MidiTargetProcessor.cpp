@@ -5,7 +5,7 @@
 #include "MidiTargetProcessor.h"
 
 MidiTargetProcessor::MidiTargetProcessor ( SynthBase& parent,
-    const juce::ValueTree& v) : PluginBase (parent, v, nullptr, midiTargetBusLayout())
+    const juce::ValueTree& v, juce::UndoManager* um) : PluginBase (parent, v, um, midiTargetBusLayout())
 {
     parent.getActiveConnectionList()->addListener (this);
     connectedPrepIds.ensureStorageAllocated (10);
@@ -13,7 +13,7 @@ MidiTargetProcessor::MidiTargetProcessor ( SynthBase& parent,
 
 void MidiTargetProcessor::connectionAdded (bitklavier::Connection* connection)
 {
-    auto preparationList = parent.getActivePreparationList()->getValueTree();
+    auto preparationList = parent.getActivePreparationListValueTree();
     // if you are connecting a midi target, set connectedPrep. if already set, only connect to that type
     auto midiTarget_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty (IDs::nodeID));
     if (connection->src_id.get() == midiTarget_id)

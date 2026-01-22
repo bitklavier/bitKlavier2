@@ -181,8 +181,8 @@ namespace bitklavier {
         // gainProcessor = std::make_unique<GainProcessor>(parent,tree);
         // compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
         // eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
-        gainProcessor       = std::make_unique<GainProcessor>(parent, tree);
-        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq);
-        eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor);
+        gainProcessor       = std::make_unique<GainProcessor>(parent, tree, &parent.getUndoManager());
+        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq, &parent.getUndoManager());
+        eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor, &parent.getUndoManager());
     }
 } // namespace bitklavier

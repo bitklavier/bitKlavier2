@@ -160,7 +160,7 @@ class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
                             DirectNonParameterState> >,
                         public juce::ValueTree::Listener,public TuningListener {
 public:
-    DirectProcessor(SynthBase &parent, const juce::ValueTree &v);
+    DirectProcessor(SynthBase &parent, const juce::ValueTree &v,juce::UndoManager* );
     ~DirectProcessor() {
         /*
          * both of these need to be called in the destructor

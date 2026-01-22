@@ -10,7 +10,7 @@
 #include "synth_gui_interface.h"
 
 ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier::ModulationProcessor* proc) : tracktion::ValueTreeObjectList<ModulatorBase>(v),
-        parent_(p), proc_(proc)
+        parent_(p), proc_(proc), um(&parent_->getUndoManager())
 {
     rebuildObjects();
     for (auto object : objects)
@@ -70,11 +70,9 @@ void ModulationList::deleteObject(ModulatorBase * base)
 }
 
 ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
-//LEAF* leaf = parent->getLEAF();
-    std::any args = std::make_tuple( v );
 
     try {
-        auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),args);
+        auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),std::any(std::tie( v, um )));
         this->proc_->addModulator(proc);
         return proc;
     } catch (const std::bad_any_cast& e) {

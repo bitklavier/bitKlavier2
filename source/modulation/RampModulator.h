@@ -26,7 +26,7 @@ struct RampParams : public chowdsp::ParamHolder {
 class RampModulatorProcessor : public ModulatorStateBase<bitklavier::PreparationStateImpl<RampParams>> {
 
 public :
-    RampModulatorProcessor(juce::ValueTree&);
+    RampModulatorProcessor(const juce::ValueTree&, juce::UndoManager*);
     ~RampModulatorProcessor() {}
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
 

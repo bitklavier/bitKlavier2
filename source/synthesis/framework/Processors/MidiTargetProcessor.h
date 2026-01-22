@@ -547,7 +547,7 @@ class MidiTargetProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 public bitklavier::ConnectionList::Listener
 {
 public:
-    MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v);
+    MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v, juce::UndoManager*);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
     void releaseResources() override {}

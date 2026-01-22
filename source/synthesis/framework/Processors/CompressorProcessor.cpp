@@ -8,8 +8,8 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <simd/common.h>
 
-CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTree& vt)
-    : PluginBase (parent, vt, nullptr, compressorBusLayout())
+CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
+    : PluginBase (parent, vt, um, compressorBusLayout())
 {
     parent.getValueTree().addListener(this);
     originalSignal.setSize(2, 512);

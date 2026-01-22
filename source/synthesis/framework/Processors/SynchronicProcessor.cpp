@@ -15,8 +15,8 @@ Synchronic.h
 #include "common.h"
 #include "synth_base.h"
 
-SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) :
-      PluginBase (parent, vt, nullptr, synchronicBusLayout()),
+SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) :
+      PluginBase (parent, vt, um, synchronicBusLayout()),
       synchronicSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
     // for testing

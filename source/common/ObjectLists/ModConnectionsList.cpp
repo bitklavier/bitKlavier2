@@ -69,7 +69,13 @@ namespace bitklavier {
 
     void ModConnectionList::removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)
     {
-        undoManager->beginNewTransaction();
-        this->parent.removeChild(child,undoManager);
+        for(const auto& _child: this->parent) {
+            if(_child == child) {
+                undoManager->beginNewTransaction();
+                this->parent.removeChild(child,undoManager);
+            }
+
+        }
+
     }
 }

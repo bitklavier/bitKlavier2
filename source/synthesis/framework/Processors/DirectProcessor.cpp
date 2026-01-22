@@ -6,7 +6,7 @@
 #include "Synthesiser/Sample.h"
 #include "synth_base.h"
 
-DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
+DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager * um) : PluginBase (parent, vt, um, directBusLayout()),
                                                                                   mainSynth (new BKSynthesiser (state.params.env, state.params.gainParam)),
                                                                                   hammerSynth (new BKSynthesiser (state.params.env, state.params.hammerParam)),
                                                                                   releaseResonanceSynth (new BKSynthesiser (state.params.env, state.params.releaseResonanceParam)),

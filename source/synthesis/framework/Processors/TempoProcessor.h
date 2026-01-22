@@ -111,7 +111,7 @@ class TempoProcessor : public bitklavier::PluginBase<bitklavier::PreparationStat
                         public juce::ValueTree::Listener
 {
 public:
-    TempoProcessor (SynthBase& parent, const juce::ValueTree& v);
+    TempoProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~TempoProcessor() {}
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;

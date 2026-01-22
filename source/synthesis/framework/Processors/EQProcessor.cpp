@@ -7,8 +7,8 @@
 #include "common.h"
 #include "synth_base.h"
 
-EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt)
-    : PluginBase (parent, vt, nullptr, eqBusLayout())
+EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager *um)
+    : PluginBase (parent, vt, um, eqBusLayout())
 {
     // parent.getValueTree().addListener(this);
     // state.params.sampleRate = getSampleRate();

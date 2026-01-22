@@ -35,7 +35,7 @@ struct LFOParams : public chowdsp::ParamHolder {
 class LFOModulatorProcessor : public ModulatorStateBase<bitklavier::PreparationStateImpl<LFOParams>> {
 
 public :
-    LFOModulatorProcessor(juce::ValueTree&);
+    LFOModulatorProcessor(const juce::ValueTree&, juce::UndoManager *);
     ~LFOModulatorProcessor() {}
 
     void process() override{};

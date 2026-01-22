@@ -7,8 +7,8 @@
 #include "common.h"
 #include "synth_base.h"
 
-GainProcessor::GainProcessor (SynthBase& parent, const juce::ValueTree& vt)
-    : PluginBase (parent, vt, nullptr, gainBusLayout())
+GainProcessor::GainProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
+    : PluginBase (parent, vt, um, gainBusLayout())
 {
 }
 

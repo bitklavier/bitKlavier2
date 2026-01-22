@@ -59,7 +59,7 @@ public:
                 if (param_->paramID == "Pedal")
                     slider->setDisabled(!*this->params.pedalLoaded);
                 auto attachment = std::make_unique<chowdsp::SliderAttachment>(
-                    *param_.get(), listeners, *slider.get(), nullptr);
+                    *param_.get(), listeners, *slider.get(), pluginState.undoManager);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider(slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -74,7 +74,7 @@ public:
         }
 
         // create the more complex UI elements
-        envSection = std::make_unique<EnvelopeSection>(params.env, listeners, *this);
+        envSection = std::make_unique<EnvelopeSection>(params.env, listeners, *this, pluginState.undoManager);
         transpositionSlider = std::make_unique<TranspositionSliderSection>(
             &params.transpose, listeners, name.toStdString());
 

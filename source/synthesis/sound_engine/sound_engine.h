@@ -135,6 +135,7 @@ namespace bitklavier
             auto processor = node->getProcessor();
             if (processor->getMainBusNumOutputChannels() > 0)
             {
+                DBG("adddmainoutconneciton");
                 processorGraph->addConnection ({ { node->nodeID, 0 }, { audioOutputNode->nodeID, 0 } });
                 processorGraph->addConnection ({ { node->nodeID, 1 }, { audioOutputNode->nodeID, 1 } });
             }

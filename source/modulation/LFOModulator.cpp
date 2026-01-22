@@ -4,13 +4,13 @@
 
 #include "LFOModulator.h"
 #include "ParameterView/ParametersView.h"
-LFOModulatorProcessor::LFOModulatorProcessor(juce::ValueTree& vt) : ModulatorStateBase<bitklavier::PreparationStateImpl<LFOParams>>(vt)
+LFOModulatorProcessor::LFOModulatorProcessor(const juce::ValueTree& vt, juce::UndoManager* um) : ModulatorStateBase<bitklavier::PreparationStateImpl<LFOParams>>(vt,um)
 
 {
 //    vt.setProperty(IDs::uuid, state.params.processor.processorUniqueID, nullptr);
 //    name = vt.getProperty(IDs::type).toString() + vt.getProperty(IDs::uuid).toString();
     isDefaultBipolar = true;
-    createUuidProperty(vt);
+    createUuidProperty(state);
 }
 
 void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,juce::MidiBuffer& midiMessages) {

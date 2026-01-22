@@ -5,8 +5,8 @@
 #include "PianoSwitchProcessor.h"
 
 PianoSwitchProcessor::PianoSwitchProcessor (SynthBase& parent,
-    const juce::ValueTree& v
-    ) : PluginBase (parent, v, nullptr, pianoSwitchBusLayout()),
+    const juce::ValueTree& v, juce::UndoManager* um
+    ) : PluginBase (parent, v, um, pianoSwitchBusLayout()),
                          synth_base_ (parent)
 {
 }

@@ -20,7 +20,7 @@ namespace bitklavier {
     };
     class ModulationProcessor : public juce::AudioProcessor {
     public:
-        ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt);
+        ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt, juce::UndoManager*);
         ~ModulationProcessor() {
             // Stop audio callbacks ASAP (host-dependent, but this is the right signal)
             suspendProcessing(true);

@@ -8,7 +8,7 @@
 #include "synth_base.h"
 #include "sound_engine/sound_engine.h"
 
-KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (
+KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) : PluginBase (
                                                                                      parent,
                                                                                      vt,
                                                                                      nullptr,

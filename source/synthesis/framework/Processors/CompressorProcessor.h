@@ -190,7 +190,7 @@ class CompressorProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
                         public juce::ValueTree::Listener
 {
 public:
-    CompressorProcessor (SynthBase& parent, const juce::ValueTree& v);
+    CompressorProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~CompressorProcessor()
     {
         parent.getValueTree().removeListener(this);
@@ -200,10 +200,7 @@ public:
         currentOutput.set(-std::numeric_limits<float>::infinity());
     }
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<CompressorProcessor> (parent, v);
-    }
+
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

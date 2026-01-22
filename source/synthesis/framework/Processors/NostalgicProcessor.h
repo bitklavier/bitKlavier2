@@ -341,17 +341,14 @@ class NostalgicProcessor : public bitklavier::PluginBase<bitklavier::Preparation
                         public juce::ValueTree::Listener, public TuningListener
 {
 public:
-    NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v);
+    NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~NostalgicProcessor()
     {
         parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<NostalgicProcessor> (parent, v);
-    }
+
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

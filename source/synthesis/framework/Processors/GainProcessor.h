@@ -62,16 +62,12 @@ class GainProcessor : public bitklavier::PluginBase<bitklavier::PreparationState
 
 {
 public:
-    GainProcessor (SynthBase& parent, const juce::ValueTree& v);
+    GainProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~GainProcessor()
     {
 
     }
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<GainProcessor> (parent, v);
-    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
     void releaseResources() override {}

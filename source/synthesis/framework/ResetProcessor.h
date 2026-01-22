@@ -14,7 +14,7 @@ class StateConnection;
 
     class ResetProcessor : public juce::AudioProcessor {
     public:
-        ResetProcessor(SynthBase& parent,const juce::ValueTree& vt) :
+        ResetProcessor(SynthBase& parent,const juce::ValueTree& vt,juce::UndoManager*) :
         juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("main_out_disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)

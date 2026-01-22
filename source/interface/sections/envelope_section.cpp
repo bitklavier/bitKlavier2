@@ -64,11 +64,11 @@ void DragMagnifyingGlass::mouseDrag(const juce::MouseEvent& e) {
 void DragMagnifyingGlass::mouseDoubleClick(const juce::MouseEvent& e) {
   for (Listener* listener : listeners_)
     listener->magnifyDoubleClicked();
-  
+
   OpenGlShapeButton::mouseDoubleClick(e);
 }
 
-EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent) : SynthSection("envsection"), _params(params)
+EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent, juce::UndoManager* um) : SynthSection("envsection"), _params(params)
 {
     setComponentID(parent.getComponentID());
 
@@ -151,15 +151,15 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     addAndMakeVisible(drag_magnifying_glass_.get());
     addOpenGlComponent(drag_magnifying_glass_->getGlComponent());
 
-    delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, nullptr);
-    attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, nullptr);
-    attackPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackPowerParam, listeners, *attack_power_, nullptr);
-    hold_attachment = std::make_unique<chowdsp::SliderAttachment>(params.holdParam, listeners, *hold_, nullptr);
-    decay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayParam, listeners, *decay_, nullptr);
-    decayPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayPowerParam, listeners, *decay_power_, nullptr);
-    sustain_attachment = std::make_unique<chowdsp::SliderAttachment>(params.sustainParam, listeners, *sustain_, nullptr);
-    release_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releaseParam, listeners, *release_, nullptr);
-    releasePower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releasePowerParam, listeners, *release_power_, nullptr);
+    delay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.delayParam, listeners, *delay_, um);
+    attack_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackParam, listeners, *attack_, um);
+    attackPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attackPowerParam, listeners, *attack_power_, um);
+    hold_attachment = std::make_unique<chowdsp::SliderAttachment>(params.holdParam, listeners, *hold_, um);
+    decay_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayParam, listeners, *decay_, um);
+    decayPower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.decayPowerParam, listeners, *decay_power_, um);
+    sustain_attachment = std::make_unique<chowdsp::SliderAttachment>(params.sustainParam, listeners, *sustain_, um);
+    release_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releaseParam, listeners, *release_, um);
+    releasePower_attachment = std::make_unique<chowdsp::SliderAttachment>(params.releasePowerParam, listeners, *release_power_, um);
 
     // for modulations
     attack_->addAttachment(attack_attachment.get());

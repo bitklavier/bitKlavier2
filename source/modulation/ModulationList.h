@@ -56,6 +56,7 @@ public:
 
     bitklavier::ModulationProcessor *proc_;
     SynthBase* parent_;
+    juce::UndoManager *um;
     void addListener (Listener* l) { listeners_.push_back (l); }
 
     void removeListener (Listener* l) {listeners_.erase(

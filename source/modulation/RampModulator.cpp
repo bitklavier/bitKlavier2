@@ -6,9 +6,9 @@
 #include "RampModulator.h"
 #include "ParameterView/ParametersView.h"
 
-RampModulatorProcessor::RampModulatorProcessor(juce::ValueTree& vt) : ModulatorStateBase<bitklavier::PreparationStateImpl<RampParams>>(vt)
+RampModulatorProcessor::RampModulatorProcessor(const juce::ValueTree& vt, juce::UndoManager* um) : ModulatorStateBase<bitklavier::PreparationStateImpl<RampParams>>(vt,um)
 {
-    createUuidProperty(vt);
+    createUuidProperty(state);
 }
 
 void RampModulatorProcessor::prepareToPlay (double sampleRate_, int samplesPerBlock)

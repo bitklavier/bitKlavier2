@@ -4,9 +4,9 @@
 
 #include "StateModulator.h"
 #include "synth_section.h"
-StateModulatorProcessor::StateModulatorProcessor(juce::ValueTree& vt): ModulatorBase(vt)
+StateModulatorProcessor::StateModulatorProcessor(const juce::ValueTree& vt, juce::UndoManager* um): ModulatorBase(vt,um)
 {
-    createUuidProperty(vt);
+    createUuidProperty(state);
 }
 
 void StateModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& bufferToFill,juce::MidiBuffer& midiMessages) {

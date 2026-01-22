@@ -24,7 +24,7 @@
 #include "ModulationConnection.h"
 #include "circular_queue.h"
 #include "ModulatorBase.h"
-#include "../common/ObjectLists/PreparationList.h"
+#include "Factory.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
@@ -45,6 +45,8 @@ enum class SwitchTriggerThread
 };
 
 class UserPreferencesWrapper;
+typedef Factory<juce::AudioProcessor, std::unique_ptr<juce::AudioProcessor>> PreparationFactory; //, int,SynthBase& ,const juce::ValueTree&  > PreparationFactory;
+
 class SynthBase : public juce::ValueTree::Listener {
 public:
     static constexpr float kOutputWindowMinNote = 16.0f;
@@ -177,7 +179,8 @@ public:
 
     juce::AudioDeviceManager *manager;
     std::shared_ptr<UserPreferencesWrapper> user_prefs;
-    SimpleFactory<ModulatorBase> modulator_factory;
+    Factory<ModulatorBase, ModulatorBase*> modulator_factory;
+    Factory<juce::AudioProcessor> prepFactory;
     bitklavier::CircularQueue<bitklavier::ModulationConnection *> mod_connections_;
     bitklavier::CircularQueue<bitklavier::StateConnection *> state_connections_;
     /** Calls an action on the main thread via chowdsp::DeferredAction */

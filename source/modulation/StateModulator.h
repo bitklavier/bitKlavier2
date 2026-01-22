@@ -14,7 +14,7 @@ class StateModulatorProcessor : public ModulatorBase {
 
 public :
 
-    StateModulatorProcessor(juce::ValueTree&);
+    StateModulatorProcessor(const juce::ValueTree&, juce::UndoManager*);
     ~StateModulatorProcessor(){}
     void process() override {};
     void getNextAudioBlock (juce::AudioBuffer<float>& bufferToFill, juce::MidiBuffer& midiMessages) override;

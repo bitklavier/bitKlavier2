@@ -29,7 +29,7 @@
 #include "BlendronicProcessor.h"
 #include "synth_base.h"
 
-BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, blendronicBusLayout())
+BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) : PluginBase (parent, vt, um, blendronicBusLayout())
 {
     // for testing
     // bufferDebugger = new BufferDebugger();

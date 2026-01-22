@@ -334,18 +334,13 @@ class EQProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateIm
                         public juce::ValueTree::Listener
 {
 public:
-    EQProcessor (SynthBase& parent, const juce::ValueTree& v);
+    EQProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~EQProcessor()
     {
         parent.getValueTree().removeListener(this);
     }
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<EQProcessor> (parent, v);
-    }
-
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
     // void setupModulationMappings();

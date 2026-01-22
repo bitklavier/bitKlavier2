@@ -238,7 +238,7 @@ struct TuningNonParameterState : chowdsp::NonParamState
 class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams, TuningNonParameterState>>
 {
 public:
-    TuningProcessor (SynthBase& parent, const juce::ValueTree& v);
+    TuningProcessor (SynthBase& parent, const juce::ValueTree& v,juce::UndoManager*);
 
     ~TuningProcessor() {
         parent.pauseProcessing(true);

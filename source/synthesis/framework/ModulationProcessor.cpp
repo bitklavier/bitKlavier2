@@ -9,7 +9,8 @@
 #include "sound_engine.h"
 
 bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
-                                                     const juce::ValueTree &vt) : juce::AudioProcessor(
+                                                     const juce::ValueTree &vt, juce::UndoManager* um) :
+juce::AudioProcessor(
         BusesProperties().withInput("disabled", juce::AudioChannelSet::mono(), false)
         .withOutput("disabled", juce::AudioChannelSet::mono(), false)
         .withOutput("Modulation", juce::AudioChannelSet::discreteChannels(1), true)
