@@ -1088,6 +1088,7 @@ public:
 
     virtual void stopNote (float velocity, bool allowTailOff)
     {
+
         if (allowTailOff)
         {
             ampEnv.noteOff();

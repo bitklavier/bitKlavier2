@@ -883,7 +883,7 @@ bool SampleLoadJob::loadMainSamplesByPitch() {
         auto [reader, filename] = sampleReader->make(*manager);
         if (!reader)
             break; // Break the loop if the reader is null
-        auto sample = std::make_shared<Sample<juce::AudioFormatReader> >(*(reader.get()), 10);
+        auto sample = std::make_shared<Sample<juce::AudioFormatReader> >(*(reader.get()), 90);
         juce::StringArray stringArray;
         stringArray.addTokens(filename, "v", "");
         juce::String noteName = stringArray[0];
