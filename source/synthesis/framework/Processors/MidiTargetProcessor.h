@@ -583,11 +583,20 @@ struct MidiTargetNonParameterState : chowdsp::NonParamState
     }
 };
 
-class MidiTargetProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>,
-public bitklavier::ConnectionList::Listener
+class MidiTargetProcessor :
+    public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>,
+    public bitklavier::ConnectionList::Listener,
+    private juce::Timer
 {
 public:
     MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v, juce::UndoManager*);
+    ~MidiTargetProcessor() override
+    {
+        if (listenerAttached) {
+            if (auto* list = parent.getActiveConnectionList())
+                list->removeListener (this);
+        }
+    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
     void releaseResources() override {}
@@ -620,6 +629,12 @@ public:
     void changeProgramName(int index, const juce::String &newName) override {}
 
 private:
+    void timerCallback() override;
+    void tryAttachListener();
+    bool listenerAttached = false;
+    int attachAttempts = 0;
+    static constexpr int kMaxAttachAttempts = 10;
+
     juce::Array<juce::var> connectedPrepIds;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiTargetProcessor)
 };

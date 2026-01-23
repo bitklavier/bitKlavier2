@@ -45,7 +45,7 @@
 
 // For saving last opened gallery path
 #include "UserPreferences.h"
-class BlendronicProcessor;
+//class BlendronicProcessor;
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     expired_ (false),
     manager (deviceManager),
@@ -106,7 +106,6 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     prepFactory.template registerType<TempoProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::tempo.toString().toStdString());
     prepFactory.template registerType<NostalgicProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::nostalgic.toString().toStdString());
 
-
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
     preparationLists.emplace_back (
@@ -121,13 +120,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
     engine_->addDefaultChain(*this,tree);
 
-    /*
-     * want to open default preset file, but this is not the right place to do it
-     */
-    // juce::File preset_file = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile("Application Support").getChildFile("bitklavier").getChildFile ("galleries").getChildFile ("Default Piano.bk2");
-    // DBG("default file = " + preset_file.getFullPathName());
-    // std::string error;
-    // loadFromFile(preset_file, error);
+
 }
 
 SynthBase::~SynthBase()

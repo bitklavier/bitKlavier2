@@ -7,8 +7,31 @@
 MidiTargetProcessor::MidiTargetProcessor ( SynthBase& parent,
     const juce::ValueTree& v, juce::UndoManager* um) : PluginBase (parent, v, um, midiTargetBusLayout())
 {
-    parent.getActiveConnectionList()->addListener (this);
     connectedPrepIds.ensureStorageAllocated (10);
+
+    // Defer listener attach instead of doing it here immediately:
+    // parent.getActiveConnectionList()->addListener (this); // remove/avoid
+
+    // Try a few times on the message thread; 50 ms gives time for lists to exist
+    startTimer (50);
+}
+
+void MidiTargetProcessor::timerCallback()
+{
+    if (! listenerAttached)
+        tryAttachListener();
+
+    if (listenerAttached || ++attachAttempts >= kMaxAttachAttempts)
+        stopTimer();
+}
+
+void MidiTargetProcessor::tryAttachListener()
+{
+    if (auto* list = parent.getActiveConnectionList())
+    {
+        list->addListener (this);
+        listenerAttached = true;
+    }
 }
 
 void MidiTargetProcessor::connectionAdded (bitklavier::Connection* connection)
