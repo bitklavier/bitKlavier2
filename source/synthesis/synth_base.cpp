@@ -990,55 +990,72 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
 bool SynthBase::connectReset (const juce::ValueTree& v)
 {
-    // Extract IDs
     auto sourceId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src, -1));
-    auto destId   = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest, -1));
+    auto destId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest, -1));
+    auto source_index = engine_->getNodeForId (sourceId)->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 2, 0); //2 is reset
+    auto dest_index = engine_->getNodeForId (destId)->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 2, 0);
+    //1 is mod
 
-    // Resolve nodes safely
-    auto srcNode = engine_->getNodeForId (sourceId);
-    auto dstNode = engine_->getNodeForId (destId);
+    juce::AudioProcessorGraph::Connection connection_ = { { sourceId, source_index }, { destId, dest_index } };
 
-    if (srcNode == nullptr || dstNode == nullptr)
-    {
-        DBG ("connectReset: invalid node(s), ignoring.");
-        return false;
-    }
-
-    auto* srcProc = srcNode->getProcessor();
-    auto* dstProc = dstNode->getProcessor();
-    if (srcProc == nullptr || dstProc == nullptr)
-    {
-        DBG ("connectReset: invalid processor(s), ignoring.");
-        return false;
-    }
-
-    // Reset uses bus index 2 by convention in this project
-    constexpr int resetBusIndex = 2;
-
-    // Ensure the required buses exist before querying channel indices
-    const bool srcHasResetOut = (srcProc->getBusCount (false) > resetBusIndex)
-                                && (srcProc->getChannelCountOfBus (false, resetBusIndex) > 0);
-    const bool dstHasResetIn  = (dstProc->getBusCount (true) > resetBusIndex)
-                                && (dstProc->getChannelCountOfBus (true, resetBusIndex) > 0);
-
-    if (! srcHasResetOut || ! dstHasResetIn)
-    {
-        // This covers cases like trying to connect Reset -> Tuning, where the destination has no reset input bus.
-        DBG ("connectReset: unsupported connection (missing reset bus), ignoring.");
-        return false;
-    }
-
-    // Now it's safe to query channel indices
-    auto source_index = srcProc->getChannelIndexInProcessBlockBuffer (false, resetBusIndex, 0);
-    auto dest_index   = dstProc->getChannelIndexInProcessBlockBuffer  (true,  resetBusIndex, 0);
-
-    juce::AudioProcessorGraph::Connection connection_ { { sourceId, source_index }, { destId, dest_index } };
-
-    const bool added = engine_->addConnection (connection_);
-    // Avoid DBG operator<< issues with ternary by constructing a juce::String explicitly
-    DBG (juce::String (added ? "connectReset: connected" : "connectReset: not connected"));
-    return added;
+    auto b = engine_->addConnection (connection_);
+    if (b)
+        DBG ("connected");
+    else
+        DBG ("not connected");
 }
+
+// bool SynthBase::connectReset (const juce::ValueTree& v)
+// {
+//     // Extract IDs
+//     auto sourceId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src, -1));
+//     auto destId   = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest, -1));
+//
+//     // Resolve nodes safely
+//     auto srcNode = engine_->getNodeForId (sourceId);
+//     auto dstNode = engine_->getNodeForId (destId);
+//
+//     if (srcNode == nullptr || dstNode == nullptr)
+//     {
+//         DBG ("connectReset: invalid node(s), ignoring.");
+//         return false;
+//     }
+//
+//     auto* srcProc = srcNode->getProcessor();
+//     auto* dstProc = dstNode->getProcessor();
+//     if (srcProc == nullptr || dstProc == nullptr)
+//     {
+//         DBG ("connectReset: invalid processor(s), ignoring.");
+//         return false;
+//     }
+//
+//     // Reset uses bus index 2 by convention in this project
+//     constexpr int resetBusIndex = 2;
+//
+//     // Ensure the required buses exist before querying channel indices
+//     const bool srcHasResetOut = (srcProc->getBusCount (false) > resetBusIndex)
+//                                 && (srcProc->getChannelCountOfBus (false, resetBusIndex) > 0);
+//     const bool dstHasResetIn  = (dstProc->getBusCount (true) > resetBusIndex)
+//                                 && (dstProc->getChannelCountOfBus (true, resetBusIndex) > 0);
+//
+//     if (! srcHasResetOut || ! dstHasResetIn)
+//     {
+//         // This covers cases like trying to connect Reset -> Tuning, where the destination has no reset input bus.
+//         DBG ("connectReset: unsupported connection (missing reset bus), ignoring.");
+//         return false;
+//     }
+//
+//     // Now it's safe to query channel indices
+//     auto source_index = srcProc->getChannelIndexInProcessBlockBuffer (false, resetBusIndex, 0);
+//     auto dest_index   = dstProc->getChannelIndexInProcessBlockBuffer  (true,  resetBusIndex, 0);
+//
+//     juce::AudioProcessorGraph::Connection connection_ { { sourceId, source_index }, { destId, dest_index } };
+//
+//     const bool added = engine_->addConnection (connection_);
+//     // Avoid DBG operator<< issues with ternary by constructing a juce::String explicitly
+//     DBG (juce::String (added ? "connectReset: connected" : "connectReset: not connected"));
+//     return added;
+// }
 
 bool SynthBase::connectModulation (const juce::ValueTree& v)
 {
