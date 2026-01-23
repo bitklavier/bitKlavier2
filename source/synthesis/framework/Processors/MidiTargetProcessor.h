@@ -73,7 +73,11 @@ struct MidiTargetParams : chowdsp::ParamHolder
             nostalgicTargetDefault,
             nostalgicTargetClear,
             nostalgicTargetModReset,
+            // Direct targets (booleans)
+            directTargetDefault,
             directTargetModReset,
+            // Tuning targets (booleans)
+            tuningTargetDefault,
             tuningTargetModReset,
             // ***
             blendronicTargetPatternSync_noteMode,
@@ -97,7 +101,11 @@ struct MidiTargetParams : chowdsp::ParamHolder
             nostalgicTargetDefault_noteMode,
             nostalgicTargetClear_noteMode,
             nostalgicTargetModReset_noteMode,
+            // Direct targets (note mode)
+            directTargetDefault_noteMode,
             directTargetModReset_noteMode,
+            // Tuning targets (note mode)
+            tuningTargetDefault_noteMode,
             tuningTargetModReset_noteMode);
 //            synchronicTargetDeleteOldest_noteMode,
 //            synchronicTargetDeleteNewest_noteMode,
@@ -178,8 +186,14 @@ struct MidiTargetParams : chowdsp::ParamHolder
         targetMapper[NostalgicTargetModReset]        = nostalgicTargetModReset.get();
         noteModeMapper[NostalgicTargetModReset]      = nostalgicTargetModReset_noteMode.get();
 
+        targetMapper[DirectTargetDefault]           = directTargetDefault.get();
+        noteModeMapper[DirectTargetDefault]         = directTargetDefault_noteMode.get();
+
         targetMapper[DirectTargetModReset]           = directTargetModReset.get();
         noteModeMapper[DirectTargetModReset]         = directTargetModReset_noteMode.get();
+
+        targetMapper[TuningTargetDefault]           = tuningTargetDefault.get();
+        noteModeMapper[TuningTargetDefault]         = tuningTargetDefault_noteMode.get();
 
         targetMapper[TuningTargetModReset]           = tuningTargetModReset.get();
         noteModeMapper[TuningTargetModReset]         = tuningTargetModReset_noteMode.get();
@@ -499,6 +513,19 @@ struct MidiTargetParams : chowdsp::ParamHolder
      * Direct and Tuning Targets
      */
 
+    chowdsp::BoolParameter::Ptr directTargetDefault {
+        juce::ParameterID { "dTargetDefault", 100},
+        "Default Behavior",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr directTargetDefault_noteMode {
+        juce::ParameterID{"dTargetDefaultNoteMode", 100},
+        "Note Mode",
+        TriggerType::_Both,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
     chowdsp::BoolParameter::Ptr directTargetModReset {
         juce::ParameterID { "dTargetModReset", 100},
         "Reset Mods",
@@ -509,6 +536,19 @@ struct MidiTargetParams : chowdsp::ParamHolder
         juce::ParameterID{"dTargetModResetNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr tuningTargetDefault {
+        juce::ParameterID { "tTargetDefault", 100},
+        "Default Behavior",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr tuningTargetDefault_noteMode {
+        juce::ParameterID{"tTargetDefaultNoteMode", 100},
+        "Note Mode",
+        TriggerType::_Both,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
     };
 
