@@ -592,10 +592,10 @@ public:
     MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v, juce::UndoManager*);
     ~MidiTargetProcessor() override
     {
-        if (listenerAttached) {
-            if (auto* list = parent.getActiveConnectionList())
-                list->removeListener (this);
-        }
+        // if (listenerAttached) {
+        //     if (auto* list = parent.getActiveConnectionList())
+        //         list->removeListener (this);
+        // }
     }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
