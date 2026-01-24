@@ -87,13 +87,24 @@ namespace bitklavier {
 
     void ModConnectionList::removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)
     {
-        for(const auto& _child: this->parent) {
-            if(_child == child) {
-                undoManager->beginNewTransaction();
-                this->parent.removeChild(child,undoManager);
-            }
-
+        // Don't iterate the ValueTree while removing from it – that can invalidate
+        // the iterator and lead to use-after-free inside JUCE's ValueTree iterator.
+        // Instead, find the index first, then remove by index.
+        const int index = this->parent.indexOf (child);
+        if (index >= 0)
+        {
+            undoManager->beginNewTransaction();
+            this->parent.removeChild (index, undoManager);
         }
-
     }
+
+    // void ModConnectionList::removeChild (juce::ValueTree& child, juce::UndoManager* undoManager)
+    // {
+    //     for(const auto& _child: this->parent) {
+    //         if(_child == child) {
+    //             undoManager->beginNewTransaction();
+    //             this->parent.removeChild(child,undoManager);
+    //         }
+    //     }
+    // }
 }

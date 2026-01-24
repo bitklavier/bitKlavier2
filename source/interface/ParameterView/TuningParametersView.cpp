@@ -61,11 +61,24 @@ TuningParametersView::TuningParametersView(
         addComboBox(tuningtype_combo_box.get(), true, true);
     }
 
-    setOffsetsFromTuningSystem(
-                params.tuningState.tuningSystem->get(),
-                params.tuningState.fundamental->getIndex(),
-                this->params.tuningState.circularTuningOffset,
-                this->params.tuningState.circularTuningOffset_custom);
+    /*
+     * todo: this is problematic, in that it overwrites modded values
+     *          - if you trigger a mod that changes the circular tuning, and then open the Tuning prep, this will overwrite those
+     *          - probably should use defaultState or modulationState if they exist?
+     *
+     * ok, so somewhat complicated:
+     * - on initialization of TuningProcessor, defaultState and modulatedState should be the same, and should exist
+     *      - when created from scratch, both should be set equal to the system and fundamental, like using setOffsetsFromTuningSystem
+     *      - when a gallery is opened, both should be set from the gallery, where both should be saved
+     * - if the tuning system is anything other than "custom",
+     */
+    // setOffsetsFromTuningSystem(
+    //             params.tuningState.tuningSystem->get(),
+    //             params.tuningState.fundamental->getIndex(),
+    //             this->params.tuningState.circularTuningOffset,
+    //             this->params.tuningState.circularTuningOffset_custom);
+
+    //circular_keyboard->updateValuesFromString (params.tuningState.stateChanges.defaultState.getProperty(IDs::circularTuning).toString(), true);
 
     /*
      * display relevant subsets of the UI depending on selected TuningType
