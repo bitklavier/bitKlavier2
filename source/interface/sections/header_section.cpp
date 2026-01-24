@@ -905,6 +905,24 @@ void HeaderSection::saveCurrentGallery()
         return;
     }
 
+    // Protect the default "Basic Piano" preset from being overwritten by Save (Cmd+S)
+    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                    .getChildFile("Documents")
+                    .getChildFile("bitKlavier")
+                    .getChildFile("galleries");
+    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    const auto activePath = activeFile.getFullPathName();
+    if (activePath == basicA.getFullPathName()
+        || activePath == basicB.getFullPathName()
+        || activePath == basicC.getFullPathName())
+    {
+        // Route to Save As instead
+        saveGallery();
+        return;
+    }
+
     // Delegate save to backend helper which handles sync and file I/O
     if (interface->getSynth()->saveToActiveFile())
     {

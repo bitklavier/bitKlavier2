@@ -338,6 +338,26 @@ void SynthGuiInterface::saveCurrentGallery()
         return;
     }
 
+    // Protect the default "Basic Piano" from accidental overwrite with Cmd+S
+    // Detect the known installed location in the user's Documents/bitKlavier/galleries
+    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                    .getChildFile("Documents")
+                    .getChildFile("bitKlavier")
+                    .getChildFile("galleries");
+    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
+
+    const auto activePath = active.getFullPathName();
+    if (activePath == basicA.getFullPathName()
+        || activePath == basicB.getFullPathName()
+        || activePath == basicC.getFullPathName())
+    {
+        // Use Save As so the default preset isn't overwritten
+        openSaveDialog();
+        return;
+    }
+
     // Otherwise save to the currently active file
     synth_->saveToFile(active);
 }
