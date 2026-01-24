@@ -91,6 +91,17 @@ BKItem (bitklavier::BKPreparationType type);
         prep_color_ = col;
     }
 
+    // Returns the visual bounds used for port placement. If the item draws its icon
+    // directly in paintButton() without populating layer_1_, fall back to the
+    // component's local bounds with a small reduction for margins.
+    juce::Rectangle<float> getVisualBounds() const
+    {
+        auto b = layer_1_.getBounds();
+        if (b.isEmpty())
+            return getLocalBounds().toFloat().reduced(kMeterPixel);
+        return b;
+    }
+
     bool hitTest(int x, int y) override {
         layer_1_.contains(x, y);
     }

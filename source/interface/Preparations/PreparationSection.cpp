@@ -265,11 +265,42 @@ void PreparationSection::resized() {
             auto totalSpaces = static_cast<float>(total) +
                                (static_cast<float>(juce::jmax(0, processor->getBusCount(isInput) - 1)) * 0.5f);
             auto indexPos = static_cast<float>(index/2) + (static_cast<float>(busIdx) * 0.5f);
+            // Determine bounds reference for port placement.
+            // For MidiTarget, MidiFilter, and Modulation, items may draw their icon in paintButton()
+            // instead of populating layer_1_, so use BKItem::getVisualBounds() for those.
             auto transformedBounds = item->layer_1_.getBounds();
+            const auto prepType = static_cast<int>(state.getProperty(IDs::type));
+            const bool useVisualBounds = (prepType == bitklavier::BKPreparationType::PreparationTypeMidiTarget) ||
+                                          (prepType == bitklavier::BKPreparationType::PreparationTypeMidiFilter) ||
+                                          (prepType == bitklavier::BKPreparationType::PreparationTypeModulation);
+            if (useVisualBounds)
+                transformedBounds = item->getVisualBounds();
+            // Translate icon-local bounds to this component's coordinate space
+            transformedBounds = transformedBounds.withPosition(
+                transformedBounds.getX() + item->getX(),
+                transformedBounds.getY() + item->getY());
             if (port->pin.isMIDI()) {
+                // For MIDI ports, space them independently across the icon width,
+                // ignoring audio channel/bus counts so that a single MIDI port is centered.
+                int midiTotal = 0;
+                int midiIndex = 0;
+                int seen = 0;
+                for (auto* p : objects)
+                {
+                    if (p->isInput == isInput && p->pin.isMIDI())
+                    {
+                        if (p == port) midiIndex = seen;
+                        ++seen;
+                    }
+                }
+                midiTotal = seen;
+                // Fallback safety
+                if (midiTotal <= 0) midiTotal = 1;
+                const float midiTotalSpaces = static_cast<float>(midiTotal);
+                const float midiIndexPos = static_cast<float>(midiIndex);
                 port->setBounds(
                     transformedBounds.getX() + transformedBounds.getWidth() * (
-                        (1.0f + indexPos) / (totalSpaces + 1.0f)),
+                        (1.0f + midiIndexPos) / (midiTotalSpaces + 1.0f)) - portSize / 2.0f,
                     isInput
                         ? transformedBounds.getBottom() - portSize / 2 + BKItem::kMeterPixel
                         : transformedBounds.getY() - portSize / 2,
