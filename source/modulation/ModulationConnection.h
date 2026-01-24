@@ -453,19 +453,54 @@ struct StateConnection : public ModulatorBase::Listener{
         void modulationTriggered() //listener funciton
         {
             DBG("StateConnection::modulationTriggered()");
-            changeBuffer->changeState.emplace_back(0,change);
+            // It's possible for the audio thread to receive a trigger before the
+            // ParameterChangeBuffer has been wired up (e.g., right after loading a gallery).
+            if (changeBuffer == nullptr)
+            {
+                DBG("StateConnection::modulationTriggered() dropped: changeBuffer is null");
+                return;
+            }
+
+            if (! change.isValid())
+            {
+                DBG("StateConnection::modulationTriggered() dropped: change ValueTree invalid");
+                return;
+            }
+
+            if (! changeBuffer->tryPush(0, change))
+            {
+                DBG("StateConnection::modulationTriggered() dropped: change buffer contended");
+            }
         }
 
         void resetTriggered()
         {
             DBG("StateConnection::resetTriggered()");
-            DBG(changeBuffer->defaultState.toXmlString());
-            changeBuffer->changeState.emplace_back(0,changeBuffer->defaultState);
+            if (changeBuffer == nullptr)
+            {
+                DBG("StateConnection::resetTriggered() dropped: changeBuffer is null");
+                return;
+            }
+
+            if (! changeBuffer->defaultState.isValid())
+            {
+                DBG("StateConnection::resetTriggered() dropped: defaultState invalid");
+                return;
+            }
+
+            // Avoid heavy debug string creation on the audio thread and any potential issues
+            // if the destination parameter is being torn down. Just queue the state change.
+            if (! changeBuffer->tryPush(0, changeBuffer->defaultState))
+            {
+                DBG("StateConnection::resetTriggered() dropped: change buffer contended");
+            }
         }
 
         void reset() {
             source_name = "";
             destination_name = "";
+            // Ensure we don't hold dangling pointers across gallery/prep resets.
+            changeBuffer = nullptr;
         }
 
         std::string source_name;
@@ -495,9 +530,12 @@ struct StateConnection : public ModulatorBase::Listener{
         size_t numConnections() { return all_connections_.size(); }
         void addParam(std::pair<std::string,ParameterChangeBuffer*>&&);
         void reset() {
-            for ( auto& c : all_connections_ ) {
+            // Clear out any existing connections and drop stale buffers.
+            for (auto& c : all_connections_) {
                 c->reset();
             }
+            // Drop all parameter pointers to avoid dangling references across gallery switches.
+            parameter_map.clear();
         }
 
     private:

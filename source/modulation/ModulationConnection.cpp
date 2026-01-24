@@ -92,7 +92,18 @@ namespace bitklavier {
             std::string invalid_connection = "State_" + std::to_string(index++) + "_amount";
             if (to != invalid_connection && isConnectionAvailable(connection.get())) {
                 connection->resetConnection(from, to);
-                connection->setChangeBuffer(parameter_map.find(to)->second);
+                // The parameter may not be registered yet when the connection is created.
+                // Avoid dereferencing an invalid iterator; set a null buffer for now.
+                auto it = parameter_map.find(to);
+                if (it != parameter_map.end())
+                {
+                    connection->setChangeBuffer(it->second);
+                }
+                else
+                {
+                    DBG("StateConnectionBank::createConnection: parameter not found for '" + juce::String(to) + "' — deferring buffer hookup");
+                    connection->setChangeBuffer(nullptr);
+                }
                 return connection.get();
             }
         }
@@ -101,7 +112,19 @@ namespace bitklavier {
     }
 
     void StateConnectionBank::addParam(std::pair<std::string, bitklavier::ParameterChangeBuffer *> &&pair) {
+        const auto key = pair.first;
+        auto* buf = pair.second;
         parameter_map.insert(pair);
+
+        // Late-bind any existing connections targeting this parameter
+        for (auto& connection : all_connections_)
+        {
+            if (connection->destination_name == key && connection->changeBuffer == nullptr)
+            {
+                connection->setChangeBuffer(buf);
+                DBG("StateConnectionBank::addParam: hooked buffer for destination '" + juce::String(key) + "'");
+            }
+        }
     }
 
     void ModulationConnection::updateScalingAudioThread(float currentTotalParamUnits, float raw0) noexcept {
