@@ -9,6 +9,40 @@
 #include "ModulationPreparation.h"
 #include "synth_base.h"
 
+namespace {
+// Helper to apply default per-port MIDI Y offsets for a specific preparation type.
+// - prepState: ValueTree of the preparation
+// - prepType: BKPreparationType this default should apply to
+// - inputYOffset: offset (px) applied to MIDI input ports (isIn = true) if not already set on the port
+// - outputYOffset: offset (px) applied to MIDI output ports (isIn = false) if not already set on the port
+static void applyDefaultMidiPortOffsetsForType(juce::ValueTree& prepState,
+                                              bitklavier::BKPreparationType prepType,
+                                              float inputYOffset,
+                                              float outputYOffset)
+{
+    const auto currentType = static_cast<int>(prepState.getProperty(IDs::type));
+    if (currentType != static_cast<int>(prepType))
+        return;
+
+    for (auto child : prepState)
+    {
+        if (!child.hasType(IDs::PORT))
+            continue;
+
+        const int ch = (int) child.getProperty(IDs::chIdx, 0);
+        const bool isIn = (bool) child.getProperty(IDs::isIn, false);
+        const bool isMidi = (ch == juce::AudioProcessorGraph::midiChannelIndex);
+
+        if (isMidi)
+        {
+            // Only set if not already set, so manual tweaks can override
+            if (!child.hasProperty(IDs::yOffset))
+                child.setProperty(IDs::yOffset, isIn ? inputYOffset : outputYOffset, nullptr);
+        }
+    }
+}
+}
+
 PreparationSection::PreparationSection(juce::String name, const juce::ValueTree& v, OpenGlWrapper &open_gl,
                                        juce::AudioProcessorGraph::NodeID node, juce::UndoManager &um) :
 tracktion::engine::ValueTreeObjectList<BKPort>(v),
@@ -200,6 +234,23 @@ void PreparationSection::setPortInfo() {
                 }
                 numOuts = numOuts + 1;
             }
+
+            // Apply default per-port MIDI yOffsets for specific preparation types via helper
+            // MidiTarget: Top (output) +6 px, Bottom (input) -4 px (only if not already set on the port)
+            applyDefaultMidiPortOffsetsForType(state,
+                                              bitklavier::BKPreparationType::PreparationTypeMidiTarget,
+                                              -10.0f,  // inputYOffset (bottom)
+                                              +7.0f); // outputYOffset (top)
+
+            applyDefaultMidiPortOffsetsForType(state,
+                                              bitklavier::BKPreparationType::PreparationTypeMidiFilter,
+                                              -7.0f,  // inputYOffset (bottom)
+                                              +3.0f); // outputYOffset (top)
+
+            applyDefaultMidiPortOffsetsForType(state,
+                                              bitklavier::BKPreparationType::PreparationTypeModulation,
+                                              +1.0f,  // inputYOffset (bottom)
+                                              +0.0f); // outputYOffset (top), NA for Mod
         }
     }
 }
@@ -298,20 +349,36 @@ void PreparationSection::resized() {
                 if (midiTotal <= 0) midiTotal = 1;
                 const float midiTotalSpaces = static_cast<float>(midiTotal);
                 const float midiIndexPos = static_cast<float>(midiIndex);
-                port->setBounds(
-                    transformedBounds.getX() + transformedBounds.getWidth() * (
-                        (1.0f + midiIndexPos) / (midiTotalSpaces + 1.0f)) - portSize / 2.0f,
-                    isInput
+                const float x = transformedBounds.getX() + transformedBounds.getWidth() * (
+                        (1.0f + midiIndexPos) / (midiTotalSpaces + 1.0f)) - portSize / 2.0f;
+                float yBase = isInput
                         ? transformedBounds.getBottom() - portSize / 2 + BKItem::kMeterPixel
-                        : transformedBounds.getY() - portSize / 2,
-                    portSize, portSize);
+                        : transformedBounds.getY() - portSize / 2;
+                // Apply optional per-port/per-prep Y offset only for MidiTarget/MidiFilter/Modulation
+                float yOffset = 0.0f;
+                if (useVisualBounds)
+                {
+                    const float perPortOffset = (float) port->state.getProperty(IDs::yOffset, 0.0f);
+                    const float perPrepDefault = (float) state.getProperty(isInput ? IDs::inputYOffset : IDs::outputYOffset, 0.0f);
+                    yOffset = (perPortOffset != 0.0f) ? perPortOffset : perPrepDefault;
+                }
+                const float y = yBase + yOffset;
+                port->setBounds(x, y, portSize, portSize);
             } else {
-                port->setBounds(isInput
+                const float x = isInput
                       ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
-                      : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel,
-                  transformedBounds.getY() + transformedBounds.getHeight() * (
-                      1.0f - ((1.0f + indexPos) / (totalSpaces + 1.0f))) - portSize / 2,
-                  portSize, portSize);
+                      : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel;
+                float yBase = transformedBounds.getY() + transformedBounds.getHeight() * (
+                      1.0f - ((1.0f + indexPos) / (totalSpaces + 1.0f))) - portSize / 2;
+                float yOffset = 0.0f;
+                if (useVisualBounds)
+                {
+                    const float perPortOffset = (float) port->state.getProperty(IDs::yOffset, 0.0f);
+                    const float perPrepDefault = (float) state.getProperty(isInput ? IDs::inputYOffset : IDs::outputYOffset, 0.0f);
+                    yOffset = (perPortOffset != 0.0f) ? perPortOffset : perPrepDefault;
+                }
+                const float y = yBase + yOffset;
+                port->setBounds(x, y, portSize, portSize);
             }
         }
     }

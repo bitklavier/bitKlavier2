@@ -44,6 +44,8 @@ namespace IDs
     DECLARE_ID (isIn)
     DECLARE_ID (PORT)
     DECLARE_ID (chIdx)
+    // Per-port placement tweak properties
+    DECLARE_ID (yOffset)
     DECLARE_ID (TUNINGCONNECTION)
     DECLARE_ID (MODCONNECTION)
     DECLARE_ID (MODCONNECTIONS)
@@ -57,6 +59,10 @@ namespace IDs
     DECLARE_ID (midiDeviceId)
     DECLARE_ID (active)
     DECLARE_ID (midiPrefs)
+
+    // Per-preparation default placement tweaks (used when per-port offset is not provided)
+    DECLARE_ID (inputYOffset)
+    DECLARE_ID (outputYOffset)
 
     DECLARE_ID (modulationproc)
     DECLARE_ID (ModulationConnection)
