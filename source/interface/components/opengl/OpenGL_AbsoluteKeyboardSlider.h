@@ -81,10 +81,12 @@ public:
         if (isModulation_)
         {
             modulationState.setProperty(IDs::absoluteTuning, s, nullptr);
+            DBG("UI modulationState: " + modulationState.toXmlString());
         }
         else if (isModulated_)
         {
             defaultState.setProperty(IDs::absoluteTuning, s, nullptr);
+            DBG("UI defaultState: " + defaultState.toXmlString());
         }
     }
 
@@ -209,10 +211,12 @@ public:
         if (isModulation_)
         {
             modulationState.setProperty(IDs::circularTuning, s, nullptr);
+            DBG("UI modulationState: " + modulationState.toXmlString());
         }
         else if (isModulated_)
         {
             defaultState.setProperty(IDs::circularTuning, s, nullptr);
+            DBG("UI defaultState: " + defaultState.toXmlString());
         }
     }
 

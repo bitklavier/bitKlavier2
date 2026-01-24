@@ -600,7 +600,7 @@ void TuningState::printSpiralNotes()
 // ********************************************************************************************************************* //
 
 
-TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt,juce::UndoManager* um ) : PluginBase (parent, vt, um, tuningBusLayout())
+TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um ) : PluginBase (parent, vt, um, tuningBusLayout())
 {
     state.params.tuningState.initializeSpiralNotes();
 
@@ -639,8 +639,12 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt,j
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "octave", &(state.params.tuningState.semitoneWidthParams.octave->stateChanges)));
 
-    // primary combo boxes
+    // overall tuningState states
     state.params.tuningState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "", nullptr);
+    state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "", nullptr);
+
+    // primary combo boxes
     state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::fundamental, v.getProperty(IDs::fundamental,0),nullptr);
     state.params.tuningState.tuningSystem->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -689,6 +693,7 @@ void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity
 
 void TuningProcessor::resetStateModulations()
 {
+    DBG("PROC defaultState: " + state.params.tuningState.stateChanges.defaultState.toXmlString());
     state.params.tuningState.fundamental->stateChanges.changeState.emplace_back (0, state.params.tuningState.fundamental->stateChanges.defaultState);
     state.params.tuningState.tuningSystem->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningSystem->stateChanges.defaultState);
     state.params.tuningState.tuningType->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningType->stateChanges.defaultState);
