@@ -414,12 +414,12 @@ public OpenGLComboBox::Listener
     std::map<juce::Viewport*, int> num_button_meters;
     ModulationButton* current_source_;
     ExpandModulationButton* current_expanded_modulation_;
-    ModulationDestination* temporarily_set_destination_;
-    SynthSlider* temporarily_set_synth_slider_;
-    SynthButton* temporarily_set_button_;
-    StateModulatedComponent* temporarily_set_state_component_;
-    OpenGLComboBox* temporarily_set_state_combo_box_;
-    ModulationAmountKnob* temporarily_set_hover_slider_;
+    juce::Component::SafePointer<ModulationDestination> temporarily_set_destination_;
+    juce::Component::SafePointer<SynthSlider>           temporarily_set_synth_slider_;
+    juce::Component::SafePointer<SynthButton>           temporarily_set_button_;
+    juce::Component::SafePointer<StateModulatedComponent> temporarily_set_state_component_;
+    juce::Component::SafePointer<OpenGLComboBox>        temporarily_set_state_combo_box_;
+    juce::Component::SafePointer<ModulationAmountKnob>  temporarily_set_hover_slider_;
     bool temporarily_set_bipolar_;
     OpenGlQuad drag_quad_;
     std::shared_ptr<ModulationExpansionBox> modulation_expansion_box_;
