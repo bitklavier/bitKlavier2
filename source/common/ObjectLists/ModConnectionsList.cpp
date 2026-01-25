@@ -12,10 +12,21 @@ namespace bitklavier {
     }
 
     void ModConnectionList::newObjectAdded(ModConnection *c) {
-        // synth.addModConnection(c->ModConnection);
-        for (const auto& v : c->state) {
-            if (v.hasType(IDs::ModulationConnection)) {
-                synth.connectModulation(v);
+        // If this node itself is a ModulationConnection (covers both continuous and state mods),
+        // connect it directly. Otherwise, iterate its children and connect any contained
+        // ModulationConnection nodes (legacy/container cases).
+        if (c->state.hasType(IDs::ModulationConnection))
+        {
+            synth.connectModulation(c->state);
+        }
+        else
+        {
+            for (const auto& v : c->state)
+            {
+                if (v.hasType(IDs::ModulationConnection))
+                {
+                    synth.connectModulation(v);
+                }
             }
         }
         if (c->state.hasType(IDs::TUNINGCONNECTION))

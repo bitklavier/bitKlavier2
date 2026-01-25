@@ -83,7 +83,15 @@ namespace bitklavier {
         };
         bool isSuitableType (const juce::ValueTree& v) const override
         {
-            return v.hasType(IDs::RESETCONNECTION) || v.hasType(IDs::MODCONNECTION) || v.hasType(IDs::TUNINGCONNECTION) || v.hasType (IDs::TEMPOCONNECTION) || v.hasType (IDs::SYNCHRONICCONNECTION);
+            // Include both legacy container nodes (RESET/MOD/TUNING/...) and the flat
+            // per-connection nodes (ModulationConnection) so saved state/continuous
+            // mods are reconstructed on load.
+            return v.hasType (IDs::RESETCONNECTION)
+                || v.hasType (IDs::MODCONNECTION)
+                || v.hasType (IDs::TUNINGCONNECTION)
+                || v.hasType (IDs::TEMPOCONNECTION)
+                || v.hasType (IDs::SYNCHRONICCONNECTION)
+                || v.hasType (IDs::ModulationConnection);
         }
         void addListener (Listener* l) { listeners_.add(l); }
         void removeListener (Listener* l) { listeners_.remove(l); }
