@@ -610,10 +610,11 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "fundamental", &(state.params.tuningState.fundamental->stateChanges)));
+    // route enum combo box state changes to their respective parameter change buffers
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningType", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningType", &(state.params.tuningState.tuningType->stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningSystem", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningSystem", &(state.params.tuningState.tuningSystem->stateChanges)));
 
     //adaptive
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
