@@ -51,7 +51,7 @@ void TuningState::processStateChanges()
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
-        DBG("TuningState::processStateChanges() " + change.toXmlString ());
+        //DBG("TuningState::processStateChanges() " + change.toXmlString ());
         auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
         {
@@ -642,7 +642,7 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
 
     // overall tuningState states
     state.params.tuningState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "", nullptr);
+    state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
     state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "", nullptr);
 
     // primary combo boxes

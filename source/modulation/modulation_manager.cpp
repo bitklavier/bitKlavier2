@@ -2803,7 +2803,7 @@ void ModulationManager::makeCurrentStateModulatorsVisible() {
         return;
 
     std::string source_name = current_modulator_->getComponentID().toStdString();
-    DBG("source_name" + source_name);
+    //DBG("source_name" + source_name);
     std::vector<bitklavier::StateConnection *> connections = parent->getSynth()->getSourceStateConnections(source_name);
     std::set<ModulationIndicator *> selected_modulation_indicators;
     int width = size_ratio_ * 24.0f;

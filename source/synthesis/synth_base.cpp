@@ -785,7 +785,7 @@ std::vector<bitklavier::StateConnection*> SynthBase::getSourceStateConnections (
 
     for (auto connection : state_connections_)
     {
-        DBG(connection->source_name);
+        //DBG(connection->source_name);
 
         if (connection->source_name == source)
             connections.push_back (connection);

@@ -452,7 +452,7 @@ struct StateConnection : public ModulatorBase::Listener{
 
         void modulationTriggered() //listener funciton
         {
-            DBG("StateConnection::modulationTriggered()");
+            //DBG("StateConnection::modulationTriggered()");
             // It's possible for the audio thread to receive a trigger before the
             // ParameterChangeBuffer has been wired up (e.g., right after loading a gallery).
             if (changeBuffer == nullptr)

@@ -26,7 +26,7 @@ struct StateModulatedComponent : juce::Component
 
     void mouseEnter(const juce::MouseEvent &event) override
     {
-        DBG(getComponentID() + "mouseenter");
+        //DBG(getComponentID() + "mouseenter");
 
         for (auto* listener : listeners_)
             listener->hoverStarted(this);
