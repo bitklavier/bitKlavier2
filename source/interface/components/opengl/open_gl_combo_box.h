@@ -32,6 +32,20 @@ public:
         redoImage();
     }
 
+    void mouseEnter(const juce::MouseEvent &event) override
+    {
+        OpenGlAutoImageComponent<juce::ComboBox>::mouseEnter(event);
+        for (auto* listener : listeners_)
+            listener->hoverStarted(this);
+    }
+
+    void mouseExit(const juce::MouseEvent &event) override
+    {
+        OpenGlAutoImageComponent<juce::ComboBox>::mouseExit(event);
+        for (auto* listener : listeners_)
+            listener->hoverEnded(this);
+    }
+
     void mouseDown(const juce::MouseEvent &event) override {
         OpenGlAutoImageComponent<juce::ComboBox>::mouseDown(event);
         redoImage();

@@ -2997,7 +2997,7 @@ void ModulationManager::makeModulationsVisible(StateModulatedComponent *destinat
             hover_indicator->setBounds(x, y, hover_indicator_width, hover_indicator_width);
             hover_indicator->makeVisible(visible);
             // hover_indicator->redoImage();
-            DBG("make visible statemodcomp");
+            //DBG("make visible statemodcomp");
         }
         x += delta_x;
         y += delta_y;
