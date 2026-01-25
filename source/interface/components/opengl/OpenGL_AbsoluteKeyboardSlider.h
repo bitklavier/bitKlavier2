@@ -212,6 +212,7 @@ public:
         {
             modulationState.setProperty(IDs::circularTuning, s, nullptr);
             DBG("UI modulationState: " + modulationState.toXmlString());
+            // issue: this should set the tuningType to custom, and then modify whatever is in custom
         }
         else if (isModulated_)
         {

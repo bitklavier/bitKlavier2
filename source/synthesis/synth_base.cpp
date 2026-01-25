@@ -1247,7 +1247,19 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     {
         connection = getStateBank().createConnection (source, destination);
         state_connections_.push_back (connection);
-        state_connection.appendChild (connection->state, nullptr);
+        // Ensure the ValueTree child isn't already attached somewhere else before appending
+        if (connection != nullptr)
+        {
+            auto currentParent = connection->state.getParent();
+            // Only reparent if needed
+            if (currentParent != state_connection)
+            {
+                if (currentParent.isValid())
+                    currentParent.removeChild (connection->state, nullptr);
+
+                state_connection.appendChild (connection->state, nullptr);
+            }
+        }
     }
     // if (connection)
     //     connectStateModulation (connection);

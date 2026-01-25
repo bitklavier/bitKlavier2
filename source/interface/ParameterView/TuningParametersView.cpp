@@ -70,7 +70,7 @@ TuningParametersView::TuningParametersView(
      * - on initialization of TuningProcessor, defaultState and modulatedState should be the same, and should exist
      *      - when created from scratch, both should be set equal to the system and fundamental, like using setOffsetsFromTuningSystem
      *      - when a gallery is opened, both should be set from the gallery, where both should be saved
-     * - if the tuning system is anything other than "custom",
+     * - if the tuning system is anything other than "custom", we ignore what the circularTuningOffset_custom values are
      */
     // setOffsetsFromTuningSystem(
     //             params.tuningState.tuningSystem->get(),
