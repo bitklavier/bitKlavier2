@@ -45,6 +45,12 @@ public:
             attachmentVec.emplace_back(std::move(ptr));
         }
 
+        if (!defaultState.hasProperty("t0"))
+        {
+            DBG("OpenGL_TranspositionSlider, assigning defaultState t0 = 0, since it has an empty defaultState");
+            defaultState.setProperty("t0", "0.", nullptr);
+        }
+
         /**
          * these callbacks are for each of the 12 transposition values in the slider
          * they will be called when a modulation is triggered, changing any/all of the transp values
