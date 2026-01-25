@@ -651,6 +651,10 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
                 editing_state_component_ = nullptr;
             } else if (editing_state_component_ != nullptr && editing_state_component_->getComponentID() ==
                        juce::String(connection->destination_name)) {
+                // Same destination editor is already open: retarget it to this specific connection
+                editing_state_component_->modulationState = connection->state;
+                // Ensure the UI reflects the newly selected connection's values
+                editing_state_component_->syncToValueTree();
                 editing_state_component_->setVisible(true);
                 editing_state_component_->getImageComponent()->setVisible(true);
             }
@@ -660,6 +664,8 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
                 editing_state_component_->modulationState = connection->state;
                 addAndMakeVisible(editing_state_component_);
                 addOpenGlComponent(editing_state_component_->getImageComponent());
+                // Prime the UI with this connection's stored values
+                editing_state_component_->syncToValueTree();
 
                 // //code for putting the editing/mod component above or below the destination component
                 // int mod_offset = 0;

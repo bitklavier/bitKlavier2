@@ -1233,12 +1233,18 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
     //DBG (src_modulator_uuid_and_name);
 
-    auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    auto mod_dst = tree.getChildWithName (IDs::PIANO)
+                         .getChildWithName (IDs::PREPARATIONS)
+                         .getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
 
-    auto mod_connections = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS);
-
-    auto state_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
-    //    connection->state.removeFromParent();
+    // Root container for all modulation/state connections
+    auto mod_connections = tree.getChildWithName (IDs::PIANO)
+                                 .getChildWithName (IDs::MODCONNECTIONS);
+    // NOTE:
+    // We intentionally do NOT look up a specific existing connection node by dest
+    // to use as a parent. Each connection's ValueTree should be a direct child
+    // of MODCONNECTIONS (or a dedicated container), not nested under another
+    // connection node.
 
     bitklavier::StateConnection* connection = getStateConnection (source, destination);
     bool create = connection == nullptr;
@@ -1247,17 +1253,16 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     {
         connection = getStateBank().createConnection (source, destination);
         state_connections_.push_back (connection);
-        // Ensure the ValueTree child isn't already attached somewhere else before appending
+        // Ensure the ValueTree child is attached directly under MODCONNECTIONS
         if (connection != nullptr)
         {
             auto currentParent = connection->state.getParent();
-            // Only reparent if needed
-            if (currentParent != state_connection)
+            if (currentParent != mod_connections)
             {
                 if (currentParent.isValid())
                     currentParent.removeChild (connection->state, nullptr);
 
-                state_connection.appendChild (connection->state, nullptr);
+                mod_connections.appendChild (connection->state, nullptr);
             }
         }
     }
