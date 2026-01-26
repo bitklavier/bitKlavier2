@@ -642,7 +642,12 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
 
     // overall tuningState states
     state.params.tuningState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
+    //state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
+    if (! state.params.tuningState.stateChanges.defaultState.hasProperty(IDs::absoluteTuning)
+        || state.params.tuningState.stateChanges.defaultState.getProperty(IDs::absoluteTuning).isVoid())
+    {
+        state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
+    }
     state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "", nullptr);
 
     // primary combo boxes
