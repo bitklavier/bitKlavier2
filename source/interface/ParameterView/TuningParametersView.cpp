@@ -101,6 +101,7 @@ TuningParametersView::TuningParametersView(
         chowdsp::ParameterListenerThread::MessageThread,
         [this]()
         {
+            // need to make sure this only runs from mouse action i think
             setOffsetsFromTuningSystem(
                 params.tuningState.tuningSystem->get(),
                 params.tuningState.fundamental->getIndex(),

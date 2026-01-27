@@ -45,7 +45,7 @@ void KeyboardOffsetComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g
             case verticalKeyboardFacingRight:   g.fillRect (area.reduced (0, h * sideIndent).removeFromLeft  (w * topIndent)); break;
             default: break;
         }
-    if (isCircular) {
+    if (isCircular && state.isInitialised()) {
         if (state.getFundamental() == midiNoteNumber) {
 
             int x = area.getX();
@@ -111,7 +111,7 @@ void KeyboardOffsetComponent::drawWhiteKey(int midiNoteNumber, juce::Graphics &g
             }
         }
     }
-    if (isCircular) {
+    if (isCircular && state.isInitialised()) {
         if (state.getFundamental() == midiNoteNumber) {
             const float height = juce::jmin (12.0f, getKeyWidth() * 0.9f);
             juce::String text = "*";

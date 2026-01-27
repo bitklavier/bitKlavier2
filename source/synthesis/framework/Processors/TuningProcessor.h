@@ -45,7 +45,8 @@ struct TuningState : bitklavier::StateChangeableParameter
     void processStateChanges() override;
 
     void setFundamental (int fund);
-    int getFundamental() { return fundamental->getIndex(); }
+    int getFundamental() const noexcept { return (fundamental != nullptr ? fundamental->getIndex() : oldFundamental); }
+    bool isInitialised() const noexcept { return fundamental != nullptr && tuningSystem != nullptr && tuningType != nullptr; }
     int getOldFundamental() { return oldFundamental; }
     void setOldFundamental(int newold) { oldFundamental = newold; }
     int getSemitoneWidthFundamental();

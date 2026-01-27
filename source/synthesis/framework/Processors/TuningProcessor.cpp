@@ -20,7 +20,7 @@ void TuningState::setCircularKeyOffset (int midiNoteNumber, float val)
     if (midiNoteNumber >= 0 && midiNoteNumber < 12)
         circularTuningOffset[midiNoteNumber] = val;
 
-    if (tuningSystem->get() == TuningSystem::Custom)
+    if (tuningSystem != nullptr && tuningSystem->get() == TuningSystem::Custom)
         copyAtomicArrayToAtomicArray(circularTuningOffset, circularTuningOffset_custom);
 }
 
@@ -41,9 +41,9 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 
 void TuningState::processStateChanges()
 {
-    fundamental->processStateChanges();
-    tuningSystem->processStateChanges();
-    tuningType->processStateChanges();
+    if (fundamental != nullptr) fundamental->processStateChanges();
+    if (tuningSystem != nullptr) tuningSystem->processStateChanges();
+    if (tuningType != nullptr) tuningType->processStateChanges();
 
     bool touchedAbsolute = false;
     bool touchedCircular = false;
@@ -55,7 +55,7 @@ void TuningState::processStateChanges()
         auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
         {
-            DBG("absoluteTuning mod or reset triggered");
+            DBG("TuningState::processStateChanges => absoluteTuning mod or reset triggered");
             for (auto& element : absoluteTuningOffset) {
                 element.store(0.0f, std::memory_order_relaxed);
             }
@@ -66,6 +66,10 @@ void TuningState::processStateChanges()
         val = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
+            if (tuningSystem != nullptr)
+                DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = " + tuningSystem->getCurrentValueAsText() + "");
+            else
+                DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = <uninitialised>");
             for (auto& element : circularTuningOffset) {
                 element.store(0.0f, std::memory_order_relaxed);
             }
@@ -648,7 +652,13 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
     {
         state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
     }
-    state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "", nullptr);
+
+    //state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "", nullptr);
+    if (! state.params.tuningState.stateChanges.defaultState.hasProperty(IDs::circularTuning)
+        || state.params.tuningState.stateChanges.defaultState.getProperty(IDs::circularTuning).isVoid())
+    {
+        state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "0 0 0 0 0 0 0 0 0 0 0 0", nullptr);
+    }
 
     // primary combo boxes
     state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);

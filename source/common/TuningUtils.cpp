@@ -213,6 +213,7 @@ void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::ar
 void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<std::atomic<float>, 12>& circularTuningVec, std::array<std::atomic<float>, 12>& customTuningVec)
 {
     //if (!params.tuningState.setFromAudioThread) { // it's not clear whether this is necessary; see bitKlavierDevNotes
+    DBG("setOffsetsFromTuningSystem, system = " <<(int)t);
 
     auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
         [t](const auto& pair) {

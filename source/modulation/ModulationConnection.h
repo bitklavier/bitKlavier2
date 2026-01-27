@@ -490,6 +490,7 @@ struct StateConnection : public ModulatorBase::Listener{
 
             // Avoid heavy debug string creation on the audio thread and any potential issues
             // if the destination parameter is being torn down. Just queue the state change.
+            //DBG("resetTriggered = " + changeBuffer->defaultState.toXmlString ());
             if (! changeBuffer->tryPush(0, changeBuffer->defaultState))
             {
                 DBG("StateConnection::resetTriggered() dropped: change buffer contended");
