@@ -71,18 +71,12 @@ void TuningState::processStateChanges()
             else
                 DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = <uninitialised>");
 
-            // for (auto& element : circularTuningOffset) {
-            //     element.store(0.0f, std::memory_order_relaxed);
-            // }
             for (auto& element : circularTuningOffset_custom) {
                 element.store(0.0f, std::memory_order_relaxed);
             }
 
-            //if (*tuningSystem == TuningSystem::Custom)
             parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset_custom);
             setOffsetsFromTuningSystem(tuningSystem->get(), fundamental->getIndex(), circularTuningOffset, circularTuningOffset_custom);
-
-            //parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
 
             touchedCircular = true;
         }
