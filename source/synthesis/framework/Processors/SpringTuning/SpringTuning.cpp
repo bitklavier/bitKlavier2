@@ -158,6 +158,7 @@ void SpringTuning::intervalFundamentalChanged()
 
 void SpringTuning::tetherScaleChanged()
 {
+    DBG("tetherScaleChanged");
     auto newtuningv = getOffsetsFromTuningSystem(sparams.scaleId_tether->get());
     copyStdArrayIntoJuceArray(newtuningv, tetherTuning); // so i don't have to rewrite all this with std:vectors right now...
 
@@ -181,6 +182,7 @@ void SpringTuning::tetherFundamentalChanged()
 {
     updateTetherTuning();
 }
+
 void SpringTuning::setRate(double r, bool start)
 {
     if (start) {

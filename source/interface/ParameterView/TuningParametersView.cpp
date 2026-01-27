@@ -25,11 +25,11 @@ TuningParametersView::TuningParametersView(
 
     auto& listeners = pluginState.getParameterListeners();
 
-    absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState, true, true, "absolute");
+    absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState, true, true, "Individual Key Offsets");
     addStateModulatedComponent(absolutekeyboard.get());
     absolutekeyboard->setName("absolute");
 
-    circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState, true, "circular");
+    circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState, true, "Octave Repeating");
     addStateModulatedComponent(circular_keyboard.get());
     circular_keyboard->setName("circular");
 

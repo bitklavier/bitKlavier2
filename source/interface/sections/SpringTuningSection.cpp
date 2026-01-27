@@ -124,12 +124,12 @@ SpringTuningSection::SpringTuningSection (
     currentFundamental->setTextSize (12.0f);
     currentFundamental->setJustification(juce::Justification::centred);
 
-    intervalsLabel = std::make_shared<PlainTextComponent>("intervals", "Intervals");
+    intervalsLabel = std::make_shared<PlainTextComponent>("intervals", "Intervals and Fundamental");
     addOpenGlComponent(intervalsLabel);
     intervalsLabel->setTextSize (12.0f);
     intervalsLabel->setJustification(juce::Justification::centred);
 
-    anchorsLabel = std::make_shared<PlainTextComponent>("anchors", "Anchors");
+    anchorsLabel = std::make_shared<PlainTextComponent>("anchors", "Tether Anchors");
     addOpenGlComponent(anchorsLabel);
     anchorsLabel->setTextSize (12.0f);
     anchorsLabel->setJustification(juce::Justification::centred);
