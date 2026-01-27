@@ -344,7 +344,8 @@ void TuningParametersView::timerCallback(void)
  */
 void TuningParametersView::drawSpiral(juce::Graphics& g)
 {
-    float midi, scalex,radians, cx, cy;
+    float midi, scalex, radians, cx, cy;
+    float tmidi, tscalex, tradians, tcx, tcy;
     float centerx = spiralBox.getWidth() * 0.5f + spiralBox.getX();
     float centery = spiralBox.getCentreY();
 
@@ -353,7 +354,7 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
     float dimc_scale = 0.05;
     float dimc = juce::jmin(spiralBox.getHeight() * dimc_scale, spiralBox.getWidth() * dimc_scale);
 
-    float midiScale;
+    float midiScale, tmidiScale;
 
     std::vector<float> currentFreqs;
 
@@ -362,16 +363,32 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
      * todo: for spring tuning, update to draw locations of anchor springs
      *          - also possibly scale thickness of "springs" from spring settings
      */
-    for (int midi = 20; midi < 109; midi++)
+
+    // for (int midi = 20; midi < 109; midi++)
+    // {
+    //     midiScale = midi / 60.;
+    //     scalex = ((midi - 60.0f) / 12.0f);
+    //     radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+    //     cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
+    //     cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+    //     g.setColour (juce::Colours::dimgrey);
+    //     g.setOpacity(0.25);
+    //     g.fillEllipse(cx, cy, dimc, dimc);
+    // }
+
+    for (int tnote = 20; tnote < 109; tnote++)
     {
-        midiScale = midi / 60.;
-        scalex = ((midi - 60.0f) / 12.0f);
-        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
-        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
-        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+        double tetherFrequency = params.tuningState.springTuner->getTetherFrequency(tnote, params.tuningState.getGlobalTuningReference()) * intervalToRatio(params.tuningState.getOverallOffset());
+        tmidi = ftom(tetherFrequency, params.tuningState.getGlobalTuningReference());
+        tmidiScale = tmidi / 60.;
+        tscalex = ((tmidi - 60.0f) / 12.0f);
+        tradians = tscalex * Utilities::twopi - Utilities::pi * 0.5;
+        tcx = centerx + cosf(tradians) * radius * tmidiScale - dimc * 0.5f;
+        tcy = centery + sinf(tradians) * radius * tmidiScale - dimc * 0.5f;
+
         g.setColour (juce::Colours::dimgrey);
         g.setOpacity(0.25);
-        g.fillEllipse(cx, cy, dimc, dimc);
+        g.fillEllipse(tcx, tcy, dimc, dimc);
     }
 
     /**

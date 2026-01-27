@@ -636,6 +636,23 @@ double SpringTuning::getFrequency(int note, float globalRefA4)
     return freq;
 }
 
+double SpringTuning::getTetherFrequency(int note, float globalRefA4)
+{
+    const juce::ScopedLock sl (lock);
+
+    auto& particles = tetherParticleArray;
+    double x = particles[note]->getX();
+    //    int octave = particles[note]->getOctave();
+    double freq = mtof(x * .01, globalRefA4);
+
+    //    DBG("SpringTuning::getFrequency for " + juce::String(note) +
+    //        " x = " + juce::String(x) +
+    //        " octave = " + juce::String(octave) +
+    //        " output frequency = " + juce::String(midi));
+
+    return freq;
+}
+
 void SpringTuning::print()
 {
     DBG("~ ~ ~ ~ ~ ~ ~ Spring Tuning ~ ~ ~ ~ ~ ~");
