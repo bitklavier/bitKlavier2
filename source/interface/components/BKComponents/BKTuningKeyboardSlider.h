@@ -176,6 +176,7 @@ public:
     void mouseDoubleClick(const juce::MouseEvent& e) override;
     std::unique_ptr<juce::TextEditor> keyboardValsTextField;
     TuningState* keyboardState;
+    juce::GroupComponent sliderBorder;
 
 private:
 

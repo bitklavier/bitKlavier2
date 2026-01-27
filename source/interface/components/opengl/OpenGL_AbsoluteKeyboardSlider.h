@@ -9,7 +9,7 @@
 
 class OpenGLAbsoluteKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
-    OpenGLAbsoluteKeyboardSlider(TuningState& keystate, bool helperButtons = true)
+    OpenGLAbsoluteKeyboardSlider(TuningState& keystate, bool helperButtons = true, bool showBorder_ = false, juce::String borderLabel = "")
         : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate, false, false, false, keystate.stateChanges.defaultState)
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
@@ -20,6 +20,14 @@ public:
 
         isModulated_ = true;
         isModulation_ = false;
+
+        showBorder = showBorder_;
+        if (showBorder)
+        {
+            addAndMakeVisible(sliderBorder);
+            sliderBorder.setText (borderLabel);
+            sliderBorder.setTextLabelPosition (juce::Justification::centred);
+        }
     }
 
    OpenGLAbsoluteKeyboardSlider() :OpenGLAbsoluteKeyboardSlider(mod_key_state)
@@ -40,7 +48,7 @@ public:
     ~OpenGLAbsoluteKeyboardSlider(){}
 
     virtual void resized() override {
-        if (isModulation_)
+        if (isModulation_ || showBorder)
         {
             sliderBorder.setBounds(getLocalBounds());
         }
@@ -126,6 +134,7 @@ public:
         redoImage();
     }
 
+
     OpenGLAbsoluteKeyboardSlider *clone() override {
         return new OpenGLAbsoluteKeyboardSlider();
     }
@@ -141,13 +150,14 @@ public:
 
     inline static TuningState mod_key_state;
     bool useHelperButtons = true;
-    juce::GroupComponent sliderBorder;
+    bool showBorder = false;
+    //juce::GroupComponent sliderBorder;
 };
 
 class OpenGLCircularKeyboardSlider : public OpenGlAutoImageComponent<BKTuningKeyboardSlider> {
 public:
 
-    OpenGLCircularKeyboardSlider(TuningState& keystate)
+    OpenGLCircularKeyboardSlider(TuningState& keystate, bool showBorder_ = false, juce::String borderLabel = "")
         : OpenGlAutoImageComponent<BKTuningKeyboardSlider> (&keystate,false,false, true, keystate.stateChanges.defaultState) {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -156,8 +166,17 @@ public:
 
         isModulated_ = true;
         isModulation_ = false;
+
+        showBorder = showBorder_;
+        if (showBorder)
+        {
+            addAndMakeVisible(sliderBorder);
+            sliderBorder.setText (borderLabel);
+            sliderBorder.setTextLabelPosition (juce::Justification::centred);
+        }
     }
 
+    // clone constructor for modulators
     OpenGLCircularKeyboardSlider() : OpenGLCircularKeyboardSlider(mod_key_state)
     {
         isModulated_ = false;
@@ -176,7 +195,7 @@ public:
     ~OpenGLCircularKeyboardSlider() {}
 
     virtual void resized() override {
-        if (isModulation_)
+        if (isModulation_ || showBorder)
         {
             sliderBorder.setBounds(getLocalBounds());
         }
@@ -272,6 +291,7 @@ public:
     }
 
     inline static TuningState mod_key_state;
-    juce::GroupComponent sliderBorder;
+    bool showBorder = false;
+    //juce::GroupComponent sliderBorder;
 };
 #endif //OPENGL_ABSOLUTEKEYBOARDSLIDER_H

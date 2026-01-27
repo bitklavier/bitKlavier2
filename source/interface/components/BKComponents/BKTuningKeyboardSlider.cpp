@@ -245,10 +245,13 @@ keyboardState(state), isCircular(isCircular)
 
 void BKTuningKeyboardSlider::resized()
 {
-    float heightUnit = getHeight() * 0.1;
-    float widthUnit = getWidth() * 0.1;
-
     juce::Rectangle<int> area (getLocalBounds());
+    if (sliderBorder.isVisible()) // make room for border
+        area.reduce(10,10);
+
+    float heightUnit = area.getHeight() * 0.1;
+    float widthUnit = area.getWidth() * 0.1;
+
     float keyboardHeight = 8 * heightUnit;
     juce::Rectangle<int> keymapRow = area.removeFromBottom(10 * heightUnit);
 
@@ -263,7 +266,8 @@ void BKTuningKeyboardSlider::resized()
 
     juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2*heightUnit + 4));
     keyboardValueTF.setBounds(textSlab.removeFromRight(ratio * widthUnit));
-    showName.setBounds(textSlab.removeFromRight(2*ratio*widthUnit));
+    if (!sliderBorder.isVisible())
+        showName.setBounds(textSlab.removeFromRight(2*ratio*widthUnit));
     keyboardValsTextFieldOpen.setBounds(textSlab.removeFromLeft(ratio*widthUnit*1.5));
     keyboardValsTextField->setBounds(keyboard->getBounds());
 }
