@@ -538,9 +538,14 @@ void TuningParametersView::resized()
 //    adaptiveSection->setBounds(areaAdaptive.removeFromTop(200));
 //    springTuningSection->setBounds(areaSpring.removeFromTop(300));
 
-    adaptiveSection->setBounds(leftHalf.removeFromTop(165));
-    leftHalf.removeFromTop(smallpadding);
-    springTuningSection->setBounds(leftHalf.removeFromTop(300));
+    // adaptiveSection->setBounds(leftHalf.removeFromTop(165));
+    // leftHalf.removeFromTop(smallpadding);
+    // springTuningSection->setBounds(leftHalf.removeFromTop(300));
+
+    // these two can be on top of one another, since only one or the other is visible at any particular time
+    juce::Rectangle leftHalfSave = leftHalf;
+    adaptiveSection->setBounds(leftHalf.removeFromBottom(165));
+    springTuningSection->setBounds(leftHalfSave.removeFromBottom(275));
 
     SynthSection::resized();
 }
