@@ -158,7 +158,6 @@ void SpringTuning::intervalFundamentalChanged()
 
 void SpringTuning::tetherScaleChanged()
 {
-    DBG("tetherScaleChanged");
     auto newtuningv = getOffsetsFromTuningSystem(sparams.scaleId_tether->get());
     copyStdArrayIntoJuceArray(newtuningv, tetherTuning); // so i don't have to rewrite all this with std:vectors right now...
 
@@ -167,19 +166,21 @@ void SpringTuning::tetherScaleChanged()
 
 void SpringTuning::updateTetherTuning()
 {
+    // DBG("updateTetherTuning, fundamental = " << intFromPitchClass(tetherFundamental));
     const juce::ScopedLock sl (lock);
 
     for (int i = 0; i < 128; i++)
     {
-        tetherParticleArray[i]->setX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
-        tetherParticleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        tetherParticleArray[i]->setX( (i * 100.0) + 100. * tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        tetherParticleArray[i]->setRestX( (i * 100.0) + 100. * tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
 
-        particleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        particleArray[i]->setRestX( (i * 100.0) + 100. * tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
     }
 }
 
 void SpringTuning::tetherFundamentalChanged()
 {
+    tetherFundamental = sparams.tetherFundamental->get();
     updateTetherTuning();
 }
 
@@ -235,13 +236,15 @@ void SpringTuning::simulate()
     {
         if (spring->getEnabled())
         {
+            //DBG("tetherSpringArray spring->getA()->getX() = " << spring->getA()->getX() << " spring->getB()->getX() = " << spring->getB()->getX());
             spring->satisfyConstraints();
         }
     }
 
-    // apply interval spring forces to all particless
+    // apply interval spring forces to all particles
 	for (auto spring : enabledSpringArray)
 	{
+	    //DBG("enabledSpringArray spring->getA()->getX() = " << spring->getA()->getX() << " spring->getB()->getX() = " << spring->getB()->getX());
         spring->satisfyConstraints();
 	}
 }
@@ -300,6 +303,7 @@ void SpringTuning::addParticle(int note)
     const juce::ScopedLock sl (lock);
     particleArray[note]->setEnabled(true);
     tetherParticleArray[note]->setEnabled(true);
+    // DBG("addParticle, restX = " << tetherParticleArray[note]->getRestX() << " X = " << tetherParticleArray[note]->getX());
 }
 
 void SpringTuning::removeParticle(int note)
@@ -564,7 +568,8 @@ void SpringTuning::retuneIndividualSpring(Spring* spring)
     if(!usingFundamentalForIntervalSprings || !getSpringMode(interval))
     {
         int diff = spring->getA()->getRestX() - spring->getB()->getRestX();
-        spring->setRestingLength(fabs(diff) + 100. * intervalTuning[interval]);
+        //DBG("retuneIndividualSpring, resting length = " << fabs(diff) + 100. * (intervalTuning[interval] - tetherTuning[interval]));
+        spring->setRestingLength(fabs(diff) + 100. * (intervalTuning[interval] - tetherTuning[interval]));
     }
 
     //otherwise, set resting length to interval scale relative to intervalFundamental (F)
