@@ -68,7 +68,8 @@ void SemitoneWidthSection::resized() {
     juce::Rectangle<int> widthKnobArea = area.removeFromLeft(getKnobSectionHeight());
     widthSlider_->setBounds(widthKnobArea);
     int labelsectionheight = findValue(Skin::kLabelHeight);
-    juce::Rectangle<int> label_rect (widthSlider_->getX(), widthSlider_->getBottom() - 10, widthSlider_->getWidth(), labelsectionheight );
+    //juce::Rectangle<int> label_rect (widthSlider_->getX(), widthSlider_->getBottom() - 10, widthSlider_->getWidth(), labelsectionheight );
+    juce::Rectangle<int> label_rect (widthSlider_->getX(), widthSlider_->getY() + widthSlider_->getHeight() / 2 + 20, widthSlider_->getWidth(), labelsectionheight );
     width_label->setBounds(label_rect);
 
     area.removeFromLeft(largepadding);
@@ -76,13 +77,42 @@ void SemitoneWidthSection::resized() {
 
     int comboboxheight = findValue(Skin::kComboMenuHeight);
 
-    juce::Rectangle<int> fundamentalComboBoxArea = area.removeFromTop(comboboxheight);
-    fundamentalComboBox->setBounds(fundamentalComboBoxArea);
+    // area.reduce(0, area.getHeight() - (comboboxheight + smallpadding));
+    // juce::Rectangle<int> fundamentalComboBoxArea = area.removeFromTop(comboboxheight);
+    // fundamentalComboBox->setBounds(fundamentalComboBoxArea);
+    //
+    // area.removeFromTop(smallpadding);
+    //
+    // juce::Rectangle<int> octaveComboBoxArea = area.removeFromTop(comboboxheight);
+    // octaveComboBox->setBounds(octaveComboBoxArea);
 
-    area.removeFromTop(smallpadding);
+    juce::FlexBox fb;
 
-    juce::Rectangle<int> octaveComboBoxArea = area.removeFromTop(comboboxheight);
-    octaveComboBox->setBounds(octaveComboBoxArea);
+    // 1. Stack items vertically
+    fb.flexDirection = juce::FlexBox::Direction::column;
+
+    // 2. Center the stack vertically within the area
+    fb.justifyContent = juce::FlexBox::JustifyContent::center;
+
+    // 3. Stretch items to fill the full width of the 'area'
+    fb.alignItems = juce::FlexBox::AlignItems::stretch;
+
+    // 4. Add the items
+    // Note: We don't need .withWidth() if alignItems is set to stretch
+    fb.items.add(juce::FlexItem(*fundamentalComboBox)
+                    .withHeight(comboboxheight));
+
+    // Fixed spacer for padding
+    fb.items.add(juce::FlexItem()
+                    .withHeight(static_cast<float>(smallpadding)));
+
+    fb.items.add(juce::FlexItem(*octaveComboBox)
+                    .withHeight(comboboxheight));
+
+    // 5. Execute layout
+    // This will automatically use area.getWidth() for the items' width
+    // because of the 'stretch' alignment.
+    fb.performLayout(area.toFloat());
 
     SynthSection::resized();
 }

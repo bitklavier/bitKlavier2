@@ -56,7 +56,8 @@ public:
         offsetKnob->setBounds(area);
 
         int labelsectionheight = findValue(Skin::kLabelHeight);
-        juce::Rectangle<int> label_rect (offsetKnob->getX(), offsetKnob->getBottom() - 10, offsetKnob->getWidth(), labelsectionheight );
+        //juce::Rectangle<int> label_rect (offsetKnob->getX(), offsetKnob->getBottom() - 10, offsetKnob->getWidth(), labelsectionheight );
+        juce::Rectangle<int> label_rect (offsetKnob->getX(), offsetKnob->getY() + offsetKnob->getHeight() / 2 + 20, offsetKnob->getWidth(), labelsectionheight );
         offset_label->setBounds(label_rect);
 
         SynthSection::resized();

@@ -512,20 +512,40 @@ void TuningParametersView::resized()
 
     leftHalf.removeFromTop(largepadding);
 
-    juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
+    juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.5);
+    absolutekeyboard->setBounds(absoluteKeyboardBox);
+
+    leftHalf.removeFromTop(smallpadding);
+
+    juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.5);
     semitoneSection->setBounds(circularKeyboardBox.removeFromRight(semitoneBoxTargetWidth));
     offsetKnobSection->setBounds(circularKeyboardBox.removeFromLeft(knobsectionheight + 30));
+    //circularKeyboardBox.reduce(largepadding * 6, 0);
     circular_keyboard->setBounds(circularKeyboardBox);
+
+    // juce::Rectangle knobsBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
+    //knobsBox.reduce(largepadding * 6, 0);
+    // semitoneSection->setBounds(knobsBox.removeFromRight(semitoneBoxTargetWidth));
+    // offsetKnobSection->setBounds(knobsBox.removeFromLeft(knobsectionheight + 30));
+    // juce::Rectangle leftKnobBox = knobsBox.removeFromLeft(knobsBox.getWidth() / 2.);
+    // leftKnobBox.reduce(largepadding, 0);
+    // semitoneSection->setBounds(knobsBox.removeFromLeft(semitoneBoxTargetWidth));
+    // offsetKnobSection->setBounds(leftKnobBox.removeFromRight(knobsectionheight + 30));
+    //circular_keyboard->setBounds(circularKeyboardBox);
 //    if (circularKeyboardBox.getWidth() > circularKeyboardTargetWidth)
 //        circularKeyboardBox.reduce((circularKeyboardBox.getWidth() - circularKeyboardTargetWidth) / 2., 0);
 //    circular_keyboard->setBounds(circularKeyboardBox);
 
-    leftHalf.removeFromTop(smallpadding);
+    // leftHalf.removeFromTop(smallpadding);
+    // juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.25);
+    // circularKeyboardBox.reduce(largepadding * 6, 0);
+    // circular_keyboard->setBounds(circularKeyboardBox);
 
-    juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
-    absolutekeyboard->setBounds(absoluteKeyboardBox);
+    // leftHalf.removeFromTop(smallpadding);
+    // juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.25);
+    // absolutekeyboard->setBounds(absoluteKeyboardBox);
 
-    leftHalf.removeFromTop(largepadding);
+    //leftHalf.removeFromTop(largepadding);
 
 //    juce::Rectangle offsetAndSemitoneBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
 //    semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
