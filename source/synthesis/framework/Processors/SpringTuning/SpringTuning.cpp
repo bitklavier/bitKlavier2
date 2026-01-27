@@ -570,6 +570,7 @@ void SpringTuning::retuneIndividualSpring(Spring* spring)
         int diff = spring->getA()->getRestX() - spring->getB()->getRestX();
         //DBG("retuneIndividualSpring, resting length = " << fabs(diff) + 100. * (intervalTuning[interval] - tetherTuning[interval]));
         spring->setRestingLength(fabs(diff) + 100. * (intervalTuning[interval] - tetherTuning[interval]));
+        //spring->setRestingLength(fabs(diff) + 100. * (intervalTuning[interval]));
     }
 
     //otherwise, set resting length to interval scale relative to intervalFundamental (F)
