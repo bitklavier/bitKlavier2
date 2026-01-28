@@ -30,6 +30,7 @@ private:
     std::unique_ptr<int[]> indices_;
     GLuint vertex_buffer_;
     GLuint indices_buffer_;
+    GLuint vao_ { 0 };
     std::unique_ptr<float[]> data_;
 
     juce::Component::SafePointer<juce::Component> target_component_;

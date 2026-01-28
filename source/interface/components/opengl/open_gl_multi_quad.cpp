@@ -84,6 +84,10 @@ bool OpenGlMultiQuad::isInit()
 }
 void OpenGlMultiQuad::init(OpenGlWrapper &open_gl)
 {
+  // Create and bind a VAO (required on macOS core profile)
+  open_gl.context.extensions.glGenVertexArrays(1, &vao_);
+  open_gl.context.extensions.glBindVertexArray(vao_);
+
   open_gl.context.extensions.glGenBuffers(1, &vertex_buffer_);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
 
@@ -97,6 +101,12 @@ void OpenGlMultiQuad::init(OpenGlWrapper &open_gl)
   open_gl.context.extensions.glBufferData(juce::gl::GL_ELEMENT_ARRAY_BUFFER, bar_size, indices_.get(), juce::gl::GL_STATIC_DRAW);
 
   shader_ = open_gl.shaders->getShaderProgram(Shaders::kPassthroughVertex, fragment_shader_);
+  if (shader_ == nullptr)
+  {
+    DBG("[GL][OpenGlMultiQuad] shader unavailable in init; aborting init");
+    open_gl.context.extensions.glBindVertexArray(0);
+    return;
+  }
   shader_->use();
   color_uniform_ = getUniform(open_gl, *shader_, "color");
   alt_color_uniform_ = getUniform(open_gl, *shader_, "alt_color");
@@ -113,6 +123,12 @@ void OpenGlMultiQuad::init(OpenGlWrapper &open_gl)
   thumb_amount_uniform_ = getUniform(open_gl, *shader_, "thumb_amount");
   start_pos_uniform_ = getUniform(open_gl, *shader_, "start_pos");
   alpha_mult_uniform_ = getUniform(open_gl, *shader_, "alpha_mult");
+
+#if DEBUG
+  GLenum err = juce::gl::glGetError();
+  if (err != juce::gl::GL_NO_ERROR)
+    DBG("[GL][OpenGlMultiQuad] error during init: code=" + juce::String((int)err));
+#endif
 }
 
 void OpenGlMultiQuad::destroy(OpenGlWrapper &open_gl)
@@ -134,9 +150,12 @@ void OpenGlMultiQuad::destroy(OpenGlWrapper &open_gl)
   alpha_mult_uniform_ = nullptr;
   open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
   open_gl.context.extensions.glDeleteBuffers(1, &indices_buffer_);
+  if (vao_ != 0)
+    open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
 
   vertex_buffer_ = 0;
   indices_buffer_ = 0;
+  vao_ = 0;
 }
 
 void OpenGlMultiQuad::render(OpenGlWrapper &open_gl, bool animate)
@@ -158,6 +177,9 @@ void OpenGlMultiQuad::render(OpenGlWrapper &open_gl, bool animate)
 
   if (shader_ == nullptr)
     init(open_gl);
+
+  if (shader_ == nullptr)
+    return;
 
   juce::gl::glEnable(juce::gl::GL_BLEND);
   juce::gl::glEnable(juce::gl::GL_SCISSOR_TEST);
@@ -249,6 +271,8 @@ void OpenGlMultiQuad::render(OpenGlWrapper &open_gl, bool animate)
   if (max_arc_uniform_)
     max_arc_uniform_->set(max_arc_);
 
+  // Bind VAO for attribute setup/draw
+  open_gl.context.extensions.glBindVertexArray(vao_);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, indices_buffer_);
 
@@ -288,6 +312,7 @@ void OpenGlMultiQuad::render(OpenGlWrapper &open_gl, bool animate)
     open_gl.context.extensions.glDisableVertexAttribArray(shader_values_->attributeID);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, 0);
+  open_gl.context.extensions.glBindVertexArray(0);
   juce::gl::glDisable(juce::gl::GL_BLEND);
   juce::gl::glDisable(juce::gl::GL_SCISSOR_TEST);
 }

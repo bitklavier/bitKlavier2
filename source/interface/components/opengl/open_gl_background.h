@@ -57,6 +57,7 @@ private:
 
     GLuint vertex_buffer_;
     GLuint triangle_buffer_;
+    GLuint vao_ { 0 };
     juce::Component* component_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OpenGlBackground)

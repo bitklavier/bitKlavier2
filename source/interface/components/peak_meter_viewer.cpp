@@ -45,6 +45,7 @@ PeakMeterViewer::PeakMeterViewer(bool left, const std::tuple<std::atomic<float>,
 
   vertex_buffer_ = 0;
   triangle_buffer_ = 0;
+  vao_ = 0;
 }
 
 PeakMeterViewer::~PeakMeterViewer() { }
@@ -56,6 +57,11 @@ void PeakMeterViewer::resized() {
 void PeakMeterViewer::init(OpenGlWrapper& open_gl) {
   OpenGlComponent::init(open_gl);
 
+  // Create and bind a VAO (required on macOS core profile)
+  open_gl.context.extensions.glGenVertexArrays(1, &vao_);
+  open_gl.context.extensions.glBindVertexArray(vao_);
+
+  // Create and populate buffers
   open_gl.context.extensions.glGenBuffers(1, &vertex_buffer_);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
 
@@ -66,15 +72,28 @@ void PeakMeterViewer::init(OpenGlWrapper& open_gl) {
   open_gl.context.extensions.glGenBuffers(1, &triangle_buffer_);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-  GLsizeiptr tri_size = static_cast<GLsizeiptr>(static_cast<size_t>(kNumTriangleIndices * sizeof(float)));
+  // NOTE: indices are ints; use sizeof(int), not sizeof(float)
+  GLsizeiptr tri_size = static_cast<GLsizeiptr>(static_cast<size_t>(kNumTriangleIndices * sizeof(int)));
   open_gl.context.extensions.glBufferData(juce::gl::GL_ELEMENT_ARRAY_BUFFER, tri_size,
                                          position_triangles_, juce::gl::GL_STATIC_DRAW);
 
   shader_ = open_gl.shaders->getShaderProgram(Shaders::kGainMeterVertex, Shaders::kGainMeterFragment);
+  if (shader_ == nullptr) {
+    DBG("[GL][PeakMeterViewer] shader unavailable in init; aborting initialization");
+    open_gl.context.extensions.glBindVertexArray(0);
+    return;
+  }
   shader_->use();
   position_ = getAttribute(open_gl, *shader_, "position");
   color_from_ = getUniform(open_gl, *shader_, "color_from");
   color_to_ = getUniform(open_gl, *shader_, "color_to");
+
+#if DEBUG
+  GLenum err = juce::gl::glGetError();
+  if (err != juce::gl::GL_NO_ERROR) {
+    DBG("[GL][PeakMeterViewer] error during init: code=" + juce::String((int)err));
+  }
+#endif
 }
 
 void PeakMeterViewer::updateVertices() {
@@ -135,6 +154,12 @@ void PeakMeterViewer::render(OpenGlWrapper& open_gl, bool animate)
     if (peakOutput == nullptr) // ignore animate bool for now
         return;
 
+  if (shader_ == nullptr || position_ == nullptr || color_from_ == nullptr || color_to_ == nullptr)
+    return; // not initialized correctly yet
+
+  // Bind VAO for attribute pointer calls
+  open_gl.context.extensions.glBindVertexArray(vao_);
+
   juce::gl::glEnable(juce::gl::GL_BLEND);
   juce::gl::glBlendFunc(juce::gl::GL_ONE, juce::gl::GL_ONE_MINUS_SRC_ALPHA);
 
@@ -173,6 +198,7 @@ void PeakMeterViewer::render(OpenGlWrapper& open_gl, bool animate)
 }
 
 void PeakMeterViewer::draw(OpenGlWrapper& open_gl) {
+  // Assumes VAO is already bound by caller
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
   GLsizeiptr vert_size = static_cast<GLsizeiptr>(static_cast<size_t>(kNumPositions * sizeof(float)));
   open_gl.context.extensions.glBufferData(juce::gl::GL_ARRAY_BUFFER, vert_size,
@@ -188,6 +214,7 @@ void PeakMeterViewer::draw(OpenGlWrapper& open_gl) {
 
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, 0);
+  open_gl.context.extensions.glBindVertexArray(0);
 }
 
 void PeakMeterViewer::destroy(OpenGlWrapper& open_gl) {
@@ -197,8 +224,15 @@ void PeakMeterViewer::destroy(OpenGlWrapper& open_gl) {
   position_ = nullptr;
   color_from_ = nullptr;
   color_to_ = nullptr;
-  open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
-  open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
+  if (vertex_buffer_ != 0)
+    open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
+  if (triangle_buffer_ != 0)
+    open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
+  if (vao_ != 0)
+    open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
+  vertex_buffer_ = 0;
+  triangle_buffer_ = 0;
+  vao_ = 0;
 }
 
 void PeakMeterViewer::paintBackground(juce::Graphics& g) {

@@ -54,6 +54,10 @@ class OverlayBackgroundRenderer : public OpenGlComponent {
     virtual ~OverlayBackgroundRenderer() { }
 
     virtual void init(OpenGlWrapper& open_gl) override {
+      // Create and bind VAO (required on macOS core profile)
+      open_gl.context.extensions.glGenVertexArrays(1, &vao_);
+      open_gl.context.extensions.glBindVertexArray(vao_);
+
       open_gl.context.extensions.glGenBuffers(1, &data_buffer_);
       open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, data_buffer_);
 
@@ -67,9 +71,20 @@ class OverlayBackgroundRenderer : public OpenGlComponent {
       open_gl.context.extensions.glBufferData(juce::gl::GL_ELEMENT_ARRAY_BUFFER, bar_size, indices_, juce::gl::GL_STATIC_DRAW);
 
       shader_ = open_gl.shaders->getShaderProgram(Shaders::kPassthroughVertex, Shaders::kColorFragment);
+      if (shader_ == nullptr) {
+        DBG("[GL][OverlayBackgroundRenderer] shader unavailable in init; aborting init");
+        open_gl.context.extensions.glBindVertexArray(0);
+        return;
+      }
       shader_->use();
       color_uniform_ = getUniform(open_gl, *shader_, "color");
       position_ = getAttribute(open_gl, *shader_, "position");
+
+#if DEBUG
+      GLenum err = juce::gl::glGetError();
+      if (err != juce::gl::GL_NO_ERROR)
+        DBG("[GL][OverlayBackgroundRenderer] error during init: code=" + juce::String((int)err));
+#endif
     }
 
     virtual void render(OpenGlWrapper& open_gl, bool animate) override {
@@ -101,6 +116,12 @@ class OverlayBackgroundRenderer : public OpenGlComponent {
       if (shader_ == nullptr)
         init(open_gl);
 
+      if (shader_ == nullptr || position_ == nullptr || color_uniform_ == nullptr)
+        return; // not initialized
+
+      // Bind VAO for attribute setup/draw
+      open_gl.context.extensions.glBindVertexArray(vao_);
+
       juce::gl::glEnable(juce::gl::GL_BLEND);
       juce::gl::glEnable(juce::gl::GL_SCISSOR_TEST);
       if (additive_blending_)
@@ -124,6 +145,7 @@ class OverlayBackgroundRenderer : public OpenGlComponent {
       open_gl.context.extensions.glDisableVertexAttribArray(position_->attributeID);
       open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
       open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, 0);
+      open_gl.context.extensions.glBindVertexArray(0);
       
       juce::gl::glDisable(juce::gl::GL_BLEND);
       juce::gl::glDisable(juce::gl::GL_SCISSOR_TEST);
@@ -140,6 +162,7 @@ class OverlayBackgroundRenderer : public OpenGlComponent {
     int indices_[kIndices];
     GLuint data_buffer_;
     GLuint indices_buffer_;
+    GLuint vao_ { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OverlayBackgroundRenderer)
 };

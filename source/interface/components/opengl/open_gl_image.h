@@ -93,6 +93,8 @@ private:
     std::unique_ptr<int[]> position_triangles_;
     GLuint vertex_buffer_;
     GLuint triangle_buffer_;
+    GLuint vao_;
+    bool initialized_ { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OpenGlImage)
 };

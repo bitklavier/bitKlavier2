@@ -41,6 +41,9 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
     indices_[1] = 1;
 
     vertex_buffer_ = 0;
+    indices_buffer_ = 0;
+    vao_ = 0;
+    dirty_ = true;
 
     // Debugging additional information
     DBG("Line Vertex Data: X1 = " + juce::String(data_[0]) + ", Y1 = " + juce::String(data_[1]) +
@@ -85,6 +88,9 @@ void OpenGlLine::paintBackground(juce::Graphics& g) {
 // Function to initialize OpenGL buffers
 void OpenGlLine::init(OpenGlWrapper& open_gl) {
     // Set up the points
+    open_gl.context.extensions.glGenVertexArrays(1, &vao_);
+    open_gl.context.extensions.glBindVertexArray(vao_);
+
     open_gl.context.extensions.glGenBuffers(1, &vertex_buffer_);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
     jassert(vertex_buffer_ != 0); // Ensure the buffer was successfully created
@@ -136,6 +142,12 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
         return;
     if (shader_ == nullptr)
         init(open_gl);
+    if (shader_ == nullptr)
+        return;
+    // Ensure scissor does not clip the line unexpectedly
+    OpenGlComponent::setScissor(component, open_gl);
+    juce::gl::glEnable(juce::gl::GL_BLEND);
+    juce::gl::glBlendFunc(juce::gl::GL_SRC_ALPHA, juce::gl::GL_ONE_MINUS_SRC_ALPHA);
     if(dirty_)
     {
         dirty_ = false;
@@ -161,6 +173,8 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
 
     }
     shader_->use();
+    // Bind VAO before attribute setup and draw
+    open_gl.context.extensions.glBindVertexArray(vao_);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
     open_gl.context.extensions.glVertexAttribPointer(0, 2, juce::gl::GL_FLOAT, juce::gl::GL_FALSE, 2 * sizeof(float), nullptr);
     open_gl.context.extensions.glEnableVertexAttribArray(0);
@@ -168,6 +182,8 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, indices_buffer_);
     juce::gl::glDrawElements(juce::gl::GL_LINES, 2, juce::gl::GL_UNSIGNED_INT, nullptr);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
+    open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, 0);
+    open_gl.context.extensions.glBindVertexArray(0);
 }
 
 // Resized logic
