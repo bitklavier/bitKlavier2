@@ -41,6 +41,8 @@ public:
          * we don't need one for the displaySlider, since that one will not be changed by the user, so we don't need to listen to it
          * but, we do need a parameter listener for displaySlider, which is added to the sliderChangeCallback list.
          */
+
+        // note: the undo manager stuff for this doesn't currently work, as this is treated as a state modulated component.
         auto minsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[0].get(),
                                                                         listeners,
                                                                         minSlider, pluginState.undoManager);

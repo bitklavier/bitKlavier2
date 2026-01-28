@@ -398,23 +398,28 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
     }
 
     for (auto &open_gl_component: open_gl_components_) {
+        if (!open_gl_component) {
+            DBG("[GL] warning: null OpenGL component found in open_gl_components_ (normal pass), skipping");
+            continue;
+        }
+        const juce::String compName = open_gl_component ? open_gl_component->getName() : juce::String("<null>");
         if (!open_gl_component->isInit()) {
-            //DBG("[GL] init start: component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] init start: component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->init(open_gl);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
-                DBG("[GL] error after init: component='" + open_gl_component->getName() + "' code=" + juce::String((int) gl));
+                DBG("[GL] error after init: component='" + compName + "' code=" + juce::String((int) gl));
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
         if (open_gl_component->isVisible() && !open_gl_component->isAlwaysOnTop()) {
-            //DBG("[GL] render start (not always-on-top): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] render start (not always-on-top): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->render(open_gl, animate);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
-                DBG("[GL] error after render (not always-on-top): component='" + open_gl_component->getName() + "' code=" + juce::String((int) gl));
+                DBG("[GL] error after render (not always-on-top): component='" + compName + "' code=" + juce::String((int) gl));
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
@@ -426,23 +431,28 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
     }
 
     for (auto &open_gl_component: open_gl_components_) {
+        if (!open_gl_component) {
+            DBG("[GL] warning: null OpenGL component found in open_gl_components_ (AOT pass), skipping");
+            continue;
+        }
+        const juce::String compName = open_gl_component ? open_gl_component->getName() : juce::String("<null>");
         if (!open_gl_component->isInit()) {
-            //DBG("[GL] init start (always-on-top pass): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] init start (always-on-top pass): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->init(open_gl);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
-                DBG("[GL] error after init (always-on-top pass): component='" + open_gl_component->getName() + "' code=" + juce::String((int) gl));
+                DBG("[GL] error after init (always-on-top pass): component='" + compName + "' code=" + juce::String((int) gl));
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
         if (open_gl_component->isVisible() && open_gl_component->isAlwaysOnTop()) {
-            //DBG("[GL] render start (always-on-top): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] render start (always-on-top): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->render(open_gl, animate);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
-                DBG("[GL] error after render (always-on-top): component='" + open_gl_component->getName() + "' code=" + juce::String((int) gl));
+                DBG("[GL] error after render (always-on-top): component='" + compName + "' code=" + juce::String((int) gl));
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }

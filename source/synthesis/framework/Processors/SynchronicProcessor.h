@@ -193,7 +193,7 @@ struct SynchronicParams : chowdsp::ParamHolder
         true};
 
     chowdsp::FloatParameter::Ptr clusterThickness{
-        juce::ParameterID{"clusterThickness", 100},
+        juce::ParameterID{"cThickness", 100},
         "CLUSTER THICKNESS",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 20.f, 10.f, 1.f),
         8.f,
@@ -201,8 +201,15 @@ struct SynchronicParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal,
         true};
 
+    /*
+     * NOTE: if the ParameterIDs are too similar, it seems we can run into trouble
+     *      - at first, these two params had IDs "clusterThickness" and "clusterThreshold"
+     *          and then when they were modulated or reset, their knobs seemed to interact, jitter, etc...
+     *          making the IDs more different solved it
+     *      - presumably there is some string comparing going on somewhere that stops after a certain number of characters
+     */
     chowdsp::TimeMsParameter::Ptr clusterThreshold{
-        juce::ParameterID{"clusterThreshold", 100},
+        juce::ParameterID{"cMin", 100},
         "CLUSTER THRESHOLD",
         chowdsp::ParamUtils::createNormalisableRange(20.0f, 2000.f, 1000.f),
         500.f,
