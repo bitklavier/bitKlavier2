@@ -20,7 +20,8 @@ public:
         juce::String name,
         AdaptiveTuningParams &params,
         chowdsp::ParameterListeners &listeners,
-        SynthSection &parent);
+        SynthSection &parent,
+        chowdsp::PluginState& pluginState);
 
     virtual ~AdaptiveTuningSection();
 

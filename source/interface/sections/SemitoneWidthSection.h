@@ -19,7 +19,8 @@ public:
         juce::String name,
         SemitoneWidthParams &params,
         chowdsp::ParameterListeners &listeners,
-        SynthSection &parent);
+        SynthSection &parent,
+        chowdsp::PluginState& pluginState);
 
     virtual ~SemitoneWidthSection();
 

@@ -399,7 +399,7 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
 
     for (auto &open_gl_component: open_gl_components_) {
         if (!open_gl_component->isInit()) {
-            DBG("[GL] init start: component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] init start: component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->init(open_gl);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
@@ -409,7 +409,7 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
         if (open_gl_component->isVisible() && !open_gl_component->isAlwaysOnTop()) {
-            DBG("[GL] render start (not always-on-top): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] render start (not always-on-top): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->render(open_gl, animate);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
@@ -427,7 +427,7 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
 
     for (auto &open_gl_component: open_gl_components_) {
         if (!open_gl_component->isInit()) {
-            DBG("[GL] init start (always-on-top pass): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] init start (always-on-top pass): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->init(open_gl);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
@@ -437,7 +437,7 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
         if (open_gl_component->isVisible() && open_gl_component->isAlwaysOnTop()) {
-            DBG("[GL] render start (always-on-top): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            //DBG("[GL] render start (always-on-top): component='" + open_gl_component->getName() + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
             open_gl_component->render(open_gl, animate);
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)

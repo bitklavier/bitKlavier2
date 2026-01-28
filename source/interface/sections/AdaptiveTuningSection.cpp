@@ -7,7 +7,8 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     juce::String name,
     AdaptiveTuningParams &params,
     chowdsp::ParameterListeners &listeners,
-    SynthSection &parent) : SynthSection(name)
+    SynthSection &parent,
+    chowdsp::PluginState& pluginState) : SynthSection(name)
 {
     setComponentID(parent.getComponentID());
 
@@ -16,7 +17,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     clusterThreshold_Slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     clusterThreshold_Slider->setPopupPlacement(juce::BubbleComponent::below);
     clusterThreshold_Slider->setShowPopupOnHover(true);
-    clusterThreshold_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveClusterThresh, listeners, *clusterThreshold_Slider, nullptr);
+    clusterThreshold_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveClusterThresh, listeners, *clusterThreshold_Slider, pluginState.undoManager);
     clusterThreshold_Slider->addAttachment(clusterThreshold_SliderAttachment.get());
 
     history_Slider = std::make_unique<SynthSlider>(params.tAdaptiveHistory->paramID, params.tAdaptiveHistory->getModParam());
@@ -24,36 +25,36 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     history_Slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     history_Slider->setPopupPlacement(juce::BubbleComponent::below);
     history_Slider->setShowPopupOnHover(true);
-    history_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveHistory, listeners, *history_Slider, nullptr);
+    history_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveHistory, listeners, *history_Slider, pluginState.undoManager);
     history_Slider->addAttachment(history_SliderAttachment.get());
 
     if (auto* tuningParams = dynamic_cast<AdaptiveTuningParams*>(&params)) {
         auto index = tuningParams->tAdaptiveIntervalScale->getIndex();
         adaptiveIntervalScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveIntervalScale->paramID.toStdString());
-        adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, nullptr);
+        adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, pluginState.undoManager);
         addComboBox(adaptiveIntervalScale_ComboBox.get(),true,true) ;
         setupTuningSystemMenu(adaptiveIntervalScale_ComboBox);
         adaptiveIntervalScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         index = tuningParams->tAdaptiveAnchorScale->getIndex();
         adaptiveAnchorScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorScale->paramID.toStdString());
-        adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, nullptr);
+        adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, pluginState.undoManager);
         addComboBox(adaptiveAnchorScale_ComboBox.get(),true,true);
         setupTuningSystemMenu(adaptiveAnchorScale_ComboBox);
         adaptiveAnchorScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
     }
 
     adaptiveAnchorFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorFundamental->paramID.toStdString());
-    adaptiveAnchorFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorFundamental, listeners, *adaptiveAnchorFundamental_ComboBox, nullptr);
+    adaptiveAnchorFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorFundamental, listeners, *adaptiveAnchorFundamental_ComboBox, pluginState.undoManager);
     addComboBox(adaptiveAnchorFundamental_ComboBox.get(),true,true);
     useInversionOfIntervalScale_Toggle = std::make_unique<SynthButton>(params.tAdaptiveInversional->paramID);
-    useInversionOfIntervalScale_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(params.tAdaptiveInversional,listeners,*useInversionOfIntervalScale_Toggle,nullptr);
+    useInversionOfIntervalScale_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(params.tAdaptiveInversional,listeners,*useInversionOfIntervalScale_Toggle,pluginState.undoManager);
     useInversionOfIntervalScale_Toggle->setComponentID(params.tAdaptiveInversional->paramID);
     addSynthButton(useInversionOfIntervalScale_Toggle.get(), true);
     useInversionOfIntervalScale_Toggle->setText("invert?");
 
     resetButton = std::make_unique<SynthButton>("reset");
-    resetButton_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.tReset,listeners,*resetButton,nullptr);
+    resetButton_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.tReset,listeners,*resetButton, nullptr);
     resetButton->setComponentID("reset");
     addSynthButton(resetButton.get(), true);
     resetButton->setText("reset!");

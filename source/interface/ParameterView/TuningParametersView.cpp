@@ -33,31 +33,31 @@ TuningParametersView::TuningParametersView(
     addStateModulatedComponent(circular_keyboard.get());
     circular_keyboard->setName("circular");
 
-    semitoneSection = std::make_unique<SemitoneWidthSection>(name + "_semitone", params.tuningState.semitoneWidthParams, listeners, *this);
+    semitoneSection = std::make_unique<SemitoneWidthSection>(name + "_semitone", params.tuningState.semitoneWidthParams, listeners, *this, pluginState);
     addSubSection(semitoneSection.get());
 
-    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name + "_adaptive", params.tuningState.adaptiveParams, listeners, *this);
+    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name + "_adaptive", params.tuningState.adaptiveParams, listeners, *this, pluginState);
     addSubSection(adaptiveSection.get());
 
-    springTuningSection = std::make_unique<SpringTuningSection>(name + "_spring", params.tuningState.springTuningParams, listeners, *this);
+    springTuningSection = std::make_unique<SpringTuningSection>(name + "_spring", params.tuningState.springTuningParams, listeners, *this, pluginState);
     addSubSection(springTuningSection.get());
 
-    offsetKnobSection = std::make_unique<OffsetKnobSection>(name + "_offset", params.tuningState.offsetKnobParam, listeners, *this);
+    offsetKnobSection = std::make_unique<OffsetKnobSection>(name + "_offset", params.tuningState.offsetKnobParam, listeners, *this, pluginState);
     addSubSection(offsetKnobSection.get());
 
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
         tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString(), tuningParams->tuningState.tuningSystem->stateChanges.defaultState);
         setupTuningSystemMenu(tuning_combo_box);
-        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, nullptr);
+        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, pluginState.undoManager);
         addComboBox(tuning_combo_box.get(), true, true);
 
         fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(), tuningParams->tuningState.fundamental->stateChanges.defaultState);
-        fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, nullptr);
+        fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, pluginState.undoManager);
         addComboBox(fundamental_combo_box.get(), true, true);
 
         tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString(), tuningParams->tuningState.tuningType->stateChanges.defaultState);
-        tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, nullptr);
+        tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, pluginState.undoManager);
         addComboBox(tuningtype_combo_box.get(), true, true);
     }
 

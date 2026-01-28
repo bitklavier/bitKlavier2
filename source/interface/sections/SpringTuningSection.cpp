@@ -8,7 +8,8 @@ SpringTuningSection::SpringTuningSection (
     juce::String name,
     SpringTuningParams &params,
     chowdsp::ParameterListeners &listeners,
-    SynthSection &parent) : SynthSection(name)
+    SynthSection &parent,
+    chowdsp::PluginState& pluginState) : SynthSection(name)
 {
     setComponentID(parent.getComponentID());
     setName("springtuning");
@@ -18,7 +19,7 @@ SpringTuningSection::SpringTuningSection (
     for ( auto &param_ : *params.getFloatParams())
     {
         auto slider = std::make_unique<SynthSlider>(param_->paramID,param_->getModParam());
-        auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), nullptr);
+        auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), pluginState.undoManager);
         slider->addAttachment(attachment.get());
 
         addSlider(slider.get());
@@ -56,14 +57,14 @@ SpringTuningSection::SpringTuningSection (
     {
         auto index = tuningParams->scaleId->getIndex();
         scaleId_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId->paramID.toStdString());
-        scaleId_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId, listeners, *scaleId_ComboBox, nullptr);
+        scaleId_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId, listeners, *scaleId_ComboBox, pluginState.undoManager);
         addComboBox(scaleId_ComboBox.get(),true,true);
         setupTuningSystemMenu(scaleId_ComboBox);
         scaleId_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
 
         index = tuningParams->scaleId_tether->getIndex();
         scaleId_tether_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId_tether->paramID.toStdString());
-        scaleId_tether_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId_tether, listeners, *scaleId_tether_ComboBox, nullptr);
+        scaleId_tether_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId_tether, listeners, *scaleId_tether_ComboBox, pluginState.undoManager);
         addComboBox(scaleId_tether_ComboBox.get(),true,true);
         setupTuningSystemMenu(scaleId_tether_ComboBox);
         scaleId_tether_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
@@ -75,7 +76,7 @@ SpringTuningSection::SpringTuningSection (
         if(param_->paramID.startsWith("useLocalOrFundamental")){
             auto button = std::make_unique<SynthButton>(param_->paramID);
 //            SynthButton* currentButtonPtr = button.get(); // for use in the onStateChange lambda below
-            auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, nullptr);
+            auto button_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(param_, listeners, *button, pluginState.undoManager);
             button->setComponentID(param_->paramID);
             addSynthButton(button.get(), true);
             button->setButtonText("F");
@@ -112,11 +113,11 @@ SpringTuningSection::SpringTuningSection (
 
     // the tuning system fundamental combo boxes
     intervalFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
-    intervalFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.intervalFundamental, listeners, *intervalFundamental_ComboBox, nullptr);
+    intervalFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.intervalFundamental, listeners, *intervalFundamental_ComboBox, pluginState.undoManager);
     addComboBox(intervalFundamental_ComboBox.get(),true,true);
 
     tetherFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tetherFundamental->paramID.toStdString());
-    tetherFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tetherFundamental, listeners, *tetherFundamental_ComboBox, nullptr);
+    tetherFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tetherFundamental, listeners, *tetherFundamental_ComboBox, pluginState.undoManager);
     addComboBox(tetherFundamental_ComboBox.get(),true,true);
     // labels...
     currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");

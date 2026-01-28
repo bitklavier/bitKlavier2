@@ -8,7 +8,8 @@ SemitoneWidthSection::SemitoneWidthSection (
     juce::String name,
     SemitoneWidthParams &params,
     chowdsp::ParameterListeners &listeners,
-    SynthSection &parent) : SynthSection(name)
+    SynthSection &parent,
+    chowdsp::PluginState& pluginState) : SynthSection(name)
 {
     setComponentID(parent.getComponentID());
 
@@ -17,15 +18,15 @@ SemitoneWidthSection::SemitoneWidthSection (
     widthSlider_->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     widthSlider_->setPopupPlacement(juce::BubbleComponent::below);
     widthSlider_->setShowPopupOnHover(true);
-    widthSliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.semitoneWidthSliderParam, listeners, *widthSlider_, nullptr);
+    widthSliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.semitoneWidthSliderParam, listeners, *widthSlider_, pluginState.undoManager);
     widthSlider_->addAttachment(widthSliderAttachment.get());
 
     fundamentalComboBox = std::make_unique<OpenGLComboBox>(params.reffundamental->paramID.toStdString());
-    fundamentalComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.reffundamental, listeners, *fundamentalComboBox, nullptr);
+    fundamentalComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.reffundamental, listeners, *fundamentalComboBox, pluginState.undoManager);
     addComboBox(fundamentalComboBox.get(),true,true);
 
     octaveComboBox = std::make_unique<OpenGLComboBox>(params.octave->paramID.toStdString());
-    octaveComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.octave, listeners, *octaveComboBox, nullptr);
+    octaveComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.octave, listeners, *octaveComboBox, pluginState.undoManager);
     addComboBox(octaveComboBox.get(),true,true);
 
     width_label = std::make_shared<PlainTextComponent>(widthSlider_->getName(), params.semitoneWidthSliderParam->getName(20));

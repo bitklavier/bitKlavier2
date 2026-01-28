@@ -15,7 +15,8 @@ public:
         juce::String name,
         OffsetKnobParam &params,
         chowdsp::ParameterListeners &listeners,
-        SynthSection &parent) : SynthSection(name)
+        SynthSection &parent,
+        chowdsp::PluginState& pluginState) : SynthSection(name)
         {
             setComponentID(parent.getComponentID());
 
@@ -24,7 +25,7 @@ public:
             offsetKnob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             offsetKnob->setPopupPlacement(juce::BubbleComponent::below);
             offsetKnob->setShowPopupOnHover(true);
-            offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSetSliderParam, listeners, *offsetKnob, nullptr);
+            offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSetSliderParam, listeners, *offsetKnob, pluginState.undoManager);
             offsetKnob->addAttachment(offsetKnobAttachment.get()); // for modulations
 
             offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), params.offSetSliderParam->getName(20));

@@ -20,7 +20,8 @@ public:
         juce::String name,
         SpringTuningParams &params,
         chowdsp::ParameterListeners &listeners,
-        SynthSection &parent);
+        SynthSection &parent,
+        chowdsp::PluginState& pluginState);
 
     virtual ~SpringTuningSection();
 
