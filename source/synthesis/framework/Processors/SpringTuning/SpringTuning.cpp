@@ -8,7 +8,7 @@
 
     Based on the Verlet mass/spring algorithm:
     Jakobsen, T. (2001). Advanced character physics.
-     In IN PROCEEDINGS OF THE GAME DEVELOPERS CONFERENCE 2001, page 19.
+    IN PROCEEDINGS OF THE GAME DEVELOPERS CONFERENCE 2001, page 19.
 
   ==============================================================================
 */
@@ -198,9 +198,10 @@ void SpringTuning::setRate(double r, bool start)
 
 bool SpringTuning::getSpringMode(int which)
 {
-    juce::String whichSpringId = "useLocalOrFundamental_" + juce::String(which);
+    juce::String whichSpringId = "useLocalOrFundamental" + juce::String(which);
     for ( auto &param_ : *sparams.getBoolParams())
     {
+        DBG("checking if " + param_->getParameterID() + " == " + whichSpringId);
         if(param_->getParameterID() == whichSpringId)
         {
             return param_->get();
@@ -563,6 +564,7 @@ void SpringTuning::addSpringsByNote(int note)
 void SpringTuning::retuneIndividualSpring(Spring* spring)
 {
     int interval = spring->getIntervalIndex();
+    //DBG("retuneIndividualSpring, usingFundamentalForIntervalSprings = " << (int)usingFundamentalForIntervalSprings << ", interval = " << interval << " getSpringMode for this interval = " << (int)getSpringMode(interval));
 
     //set spring length locally, for all if !usingFundamentalForIntervalSprings, or for individual springs as set by L/F
     if(!usingFundamentalForIntervalSprings || !getSpringMode(interval))
