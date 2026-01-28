@@ -10,10 +10,12 @@
 #include "valuetree_utils/VariantConverters.h"
 #include "juce_data_structures/juce_data_structures.h"
 
-class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>, BKRangeSlider::Listener {
+class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>,
+                                    public BKRangeSlider::Listener {
 public:
     OpenGL_VelocityMinMaxSlider(VelocityMinMaxParams *_params,
-                                chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKRangeSlider>(
+                                chowdsp::ParameterListeners &listeners,
+                                chowdsp::PluginState& pluginState) : OpenGlAutoImageComponent<BKRangeSlider>(
                                                                               "Accepted Velocity Range", // slider name
                                                                               0.f, // min
                                                                               128.f, // max
@@ -42,13 +44,17 @@ public:
          */
         auto minsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[0].get(),
                                                                         listeners,
-                                                                        minSlider, nullptr);
+                                                                        minSlider, pluginState.undoManager);
         attachmentVec.emplace_back(std::move(minsliderptr));
 
         auto maxsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[1].get(),
                                                                         listeners,
-                                                                        maxSlider, nullptr);
+                                                                        maxSlider, pluginState.undoManager);
         attachmentVec.emplace_back(std::move(maxsliderptr));
+
+        // BKRangeSlider already registers itself as a juce::Slider::Listener for
+        // minSlider, maxSlider, and invisibleSlider. We only override the listener
+        // callbacks here to bracket undo gestures; no need to add another listener.
 
         minValueTF.setText(juce::String(minSlider.getValue()),juce::dontSendNotification);
         maxValueTF.setText(juce::String(maxSlider.getValue()),juce::dontSendNotification);
@@ -105,6 +111,29 @@ public:
     virtual void resized() override {
         OpenGlAutoImageComponent<BKRangeSlider>::resized();
         redoImage();
+    }
+
+    // juce::Slider::Listener — used to bracket parameter changes with gestures for Undo
+    void sliderDragStarted(juce::Slider* /*slider*/) override
+    {
+        if (params != nullptr)
+        {
+            if (params->velocityMinParam != nullptr)
+                params->velocityMinParam->beginChangeGesture();
+            if (params->velocityMaxParam != nullptr)
+                params->velocityMaxParam->beginChangeGesture();
+        }
+    }
+
+    void sliderDragEnded(juce::Slider* /*slider*/) override
+    {
+        if (params != nullptr)
+        {
+            if (params->velocityMinParam != nullptr)
+                params->velocityMinParam->endChangeGesture();
+            if (params->velocityMaxParam != nullptr)
+                params->velocityMaxParam->endChangeGesture();
+        }
     }
 
     /*

@@ -11,7 +11,7 @@
 KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) : PluginBase (
                                                                                      parent,
                                                                                      vt,
-                                                                                     nullptr,
+                                                                                     um,
                                                                                      keymapBusLayout()),
                                                                                  _midi (std::make_unique<MidiManager> (&keyboard_state, parent.manager, vt))
 {

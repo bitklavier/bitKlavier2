@@ -38,7 +38,7 @@ KeymapParameterView::KeymapParameterView(
     addStateModulatedComponent(keyboard_component_.get());
     addAndMakeVisible(keyboard_component_.get());
 
-    velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners);
+    velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners, _proc.getState());
     velocityMinMaxSlider->setComponentID("keymap_velocity_min_max");
     addStateModulatedComponent(velocityMinMaxSlider.get());
 
@@ -50,7 +50,7 @@ KeymapParameterView::KeymapParameterView(
     asymmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
     asymmetricalWarp_knob->setShowPopupOnHover(true);
     asymmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(
-        params.velocityCurve_asymWarp, listeners, *asymmetricalWarp_knob, nullptr);
+        params.velocityCurve_asymWarp, listeners, *asymmetricalWarp_knob, _proc.getState().undoManager);
     asymmetricalWarp_knob->addAttachment(asymmetricalWarp_knob_attach.get());
 
     symmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_symWarp->paramID,
@@ -60,7 +60,7 @@ KeymapParameterView::KeymapParameterView(
     symmetricalWarp_knob->setPopupPlacement(juce::BubbleComponent::below);
     symmetricalWarp_knob->setShowPopupOnHover(true);
     symmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(
-        params.velocityCurve_symWarp, listeners, *symmetricalWarp_knob, nullptr);
+        params.velocityCurve_symWarp, listeners, *symmetricalWarp_knob, _proc.getState().undoManager);
     symmetricalWarp_knob->addAttachment(symmetricalWarp_knob_attach.get());
 
     scale_knob = std::make_unique<SynthSlider>(params.velocityCurve_scale->paramID,
@@ -70,7 +70,7 @@ KeymapParameterView::KeymapParameterView(
     scale_knob->setPopupPlacement(juce::BubbleComponent::below);
     scale_knob->setShowPopupOnHover(true);
     scale_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_scale, listeners, *scale_knob,
-                                                                    nullptr);
+                                                                    _proc.getState().undoManager);
     scale_knob->addAttachment(scale_knob_attach.get());
 
     offset_knob = std::make_unique<SynthSlider>(params.velocityCurve_offset->paramID,
@@ -80,12 +80,12 @@ KeymapParameterView::KeymapParameterView(
     offset_knob->setPopupPlacement(juce::BubbleComponent::below);
     offset_knob->setShowPopupOnHover(true);
     offset_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_offset, listeners,
-                                                                     *offset_knob, nullptr);
+                                                                     *offset_knob, _proc.getState().undoManager);
     offset_knob->addAttachment(offset_knob_attach.get());
 
     invert = std::make_unique<SynthButton>(params.velocityCurve_invert->paramID);
     invert_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.velocityCurve_invert, listeners, *invert,
-                                                                    nullptr);
+                                                                    _proc.getState().undoManager);
     invert->setComponentID(params.velocityCurve_invert->paramID);
     addSynthButton(invert.get(), true, true);
     invert->setText("invert?");
