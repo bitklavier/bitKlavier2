@@ -711,9 +711,11 @@ void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity
     state.params.tuningState.keyReleased(midiNoteNumber);
 }
 
+// called with the MIDITarget prep send a Reset message here
+// Davis may change how this works, have the Reset prep connect directly to each prep, in which case this may no longer be needed
 void TuningProcessor::resetStateModulations()
 {
-    DBG("PROC defaultState: " + state.params.tuningState.stateChanges.defaultState.toXmlString());
+    DBG("TuningProcessor::resetStateModulations() defaultState: " + state.params.tuningState.stateChanges.defaultState.toXmlString());
     state.params.tuningState.fundamental->stateChanges.changeState.emplace_back (0, state.params.tuningState.fundamental->stateChanges.defaultState);
     state.params.tuningState.tuningSystem->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningSystem->stateChanges.defaultState);
     state.params.tuningState.tuningType->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningType->stateChanges.defaultState);

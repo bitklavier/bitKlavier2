@@ -49,6 +49,9 @@ typedef Factory<juce::AudioProcessor, std::unique_ptr<juce::AudioProcessor>> Pre
 
 class SynthBase : public juce::ValueTree::Listener {
 public:
+    JUCE_DECLARE_WEAK_REFERENCEABLE (SynthBase)
+public:
+public:
     static constexpr float kOutputWindowMinNote = 16.0f;
     static constexpr float kOutputWindowMaxNote = 128.0f;
 

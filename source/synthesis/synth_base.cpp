@@ -201,10 +201,13 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
         preparationLists.emplace_back (
             std::make_unique<PreparationList> (
                 *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));
+
         connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (
             *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
+
         mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
             *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr)));
+
         if (childWhichHasBeenAdded.getProperty (IDs::isActive))
         {
             if (getGuiInterface())
@@ -1156,6 +1159,7 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
 
 void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
 {
+    // Parse the source/destination identifiers from the connection names
     std::stringstream ss (connection->source_name);
     std::string uuid;
     std::getline (ss, uuid, '_');
@@ -1182,14 +1186,51 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
 
     std::string dst_param;
     std::getline (dst_stream, dst_param, '_');
-    auto source_node = engine_->getNodeForId (
-        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
-    auto dest_node = engine_->getNodeForId (
-        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
+    // Ensure graph nodes exist before attempting to use them; defer if needed
+    auto resolveNode = [this](const juce::ValueTree& prep) -> juce::AudioProcessorGraph::Node* {
+        if (! prep.isValid() || ! prep.hasProperty(IDs::nodeID))
+            return nullptr;
+        auto id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(prep.getProperty(IDs::nodeID));
+        return engine_ != nullptr ? engine_->getNodeForId(id) : nullptr;
+    };
+
+    auto source_node = resolveNode(mod_src);
+    auto dest_node   = resolveNode(mod_dst);
+
+    if (source_node == nullptr || dest_node == nullptr)
+    {
+        // Defer once (or a few times) until preparations have finished creating nodes
+        static const juce::Identifier kConnectRetries{"connectRetries"};
+        const int retries = (int) connection->state.getProperty(kConnectRetries, 0);
+        if (retries < 5)
+        {
+            connection->state.setProperty(kConnectRetries, retries + 1, nullptr);
+            auto srcName  = connection->source_name; // capture names for re-lookup
+            auto destName = connection->destination_name;
+            juce::MessageManager::callAsync([weakThis = juce::WeakReference<SynthBase>(this), srcName, destName]
+            {
+                if (auto* self = weakThis.get())
+                {
+                    if (auto* conn = self->getStateConnection(srcName, destName))
+                        self->connectStateModulation(conn);
+                }
+            });
+        }
+        else
+        {
+            DBG("connectStateModulation: nodes not ready after retries, giving up for " + juce::String(connection->source_name.c_str()) + " -> " + juce::String(connection->destination_name.c_str()));
+        }
+        return;
+    }
 
     //    auto parameter_tree = mod_dst.getChildWithProperty(IDs::parameter,juce::String(dst_param));
     //    auto param_index = parameter_tree.getProperty(IDs::channel,-1);
-    connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
+    // Extra safety: processors must exist
+    auto* srcProcChecked  = source_node->getProcessor();
+    auto* dstProcChecked  = dest_node->getProcessor();
+    if (srcProcChecked == nullptr || dstProcChecked == nullptr)
+        return;
+    connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (srcProcChecked);
     //determine where this would actually output in the modulationprocessor
     //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
     // bus output
@@ -1202,7 +1243,7 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
 
     //    connection->parent_processor->modulation_connections_.push_back(connection);
     //DBG ("mod output bus index" + juce::String (connection->modulation_output_bus_index));
-    auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0); //1 is mod
+    auto source_index = srcProcChecked->getChannelIndexInProcessBlockBuffer (false, 1, 0); //1 is mod
     //    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer(true,1,param_index);
     //this is safe since we know that every source will be a modulationprocessor
 
