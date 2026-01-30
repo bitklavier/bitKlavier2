@@ -193,39 +193,116 @@ void SynthBase::clearAllGuiListeners() {
 }
 
 void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
-    juce::ValueTree& childWhichHasBeenAdded)
+                                     juce::ValueTree& childWhichHasBeenAdded)
 {
     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
         DBG ("added piano");
-        preparationLists.emplace_back (
-            std::make_unique<PreparationList> (
-                *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));
 
-        connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (
-            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
+        // 1) Always build preparations first (creates processors + graph nodes)
+        auto prepsVT = childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr);
+        preparationLists.emplace_back (std::make_unique<PreparationList> (*this, prepsVT, &um));
 
-        mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
-            *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr)));
+        // 2) Defer connection list creation until nodes exist
+        auto pianoVT  = childWhichHasBeenAdded; // copy handle
+        auto weakThis = juce::WeakReference<SynthBase> (this);
+        auto attempts = std::make_shared<int> (0);
 
-        if (childWhichHasBeenAdded.getProperty (IDs::isActive))
+        auto tryBuildLists = std::make_shared<std::function<void()>>();
+        *tryBuildLists = [weakThis, pianoVT, attempts, tryBuildLists]() mutable
         {
-            if (getGuiInterface())
+            if (auto* self = weakThis.get())
             {
-                getGuiInterface()->setActivePiano (childWhichHasBeenAdded);
+                auto nodesReady = [&]() -> bool
+                {
+                    auto preps = pianoVT.getChildWithName (IDs::PREPARATIONS);
+                    if (! preps.isValid())
+                        return false;
+                    for (int i = 0; i < preps.getNumChildren(); ++i)
+                    {
+                        auto prep = preps.getChild(i);
+                        if (! prep.hasProperty (IDs::nodeID))
+                            return false;
+                        auto nid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>
+                                     ::fromVar (prep.getProperty (IDs::nodeID));
+                        if (self->getNodeForId (nid) == nullptr)
+                            return false;
+                    }
+                    return true;
+                }();
+
+                if (! nodesReady)
+                {
+                    if (++(*attempts) < 5)
+                    {
+                        juce::MessageManager::callAsync([tryBuildLists]{ (*tryBuildLists)(); });
+                    }
+                    else
+                    {
+                        DBG ("valueTreeChildAdded: nodes not ready after retries, proceeding anyway");
+                    }
+                }
+
+                // Build lists (safe to call even if not perfectly ready; guards exist elsewhere)
+                auto connsVT = pianoVT.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr);
+                auto modsVT  = pianoVT.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr);
+                self->connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (*self, connsVT));
+                self->mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (*self, modsVT));
+
+                if (pianoVT.getProperty (IDs::isActive))
+                    if (self->getGuiInterface())
+                        self->getGuiInterface()->setActivePiano (pianoVT);
             }
-        }
-        // else
-        // {
-        //     setActivePiano (childWhichHasBeenAdded,SwitchTriggerThread::MessageThread);
-        // }
+        };
+
+        // Kick the first deferred attempt
+        juce::MessageManager::callAsync([tryBuildLists]{ (*tryBuildLists)(); });
+        return; // handled
     }
+
+    // Existing handling for on‑the‑fly additions of individual connection nodes
     if (childWhichHasBeenAdded.hasType (IDs::ModulationConnection))
     {
         if (connectModulation (childWhichHasBeenAdded))
             getGuiInterface()->notifyModulationsChanged();
     }
 }
+
+// orig, for reference
+// void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
+//     juce::ValueTree& childWhichHasBeenAdded)
+// {
+//     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
+//     {
+//         DBG ("added piano");
+//         preparationLists.emplace_back (
+//             std::make_unique<PreparationList> (
+//                 *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));
+//
+//         connectionLists.emplace_back (std::make_unique<bitklavier::ConnectionList> (
+//             *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::CONNECTIONS, nullptr)));
+//
+//         mod_connection_lists_.emplace_back (std::make_unique<bitklavier::ModConnectionList> (
+//             *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::MODCONNECTIONS, nullptr)));
+//
+//         if (childWhichHasBeenAdded.getProperty (IDs::isActive))
+//         {
+//             if (getGuiInterface())
+//             {
+//                 getGuiInterface()->setActivePiano (childWhichHasBeenAdded);
+//             }
+//         }
+//         // else
+//         // {
+//         //     setActivePiano (childWhichHasBeenAdded,SwitchTriggerThread::MessageThread);
+//         // }
+//     }
+//     if (childWhichHasBeenAdded.hasType (IDs::ModulationConnection))
+//     {
+//         if (connectModulation (childWhichHasBeenAdded))
+//             getGuiInterface()->notifyModulationsChanged();
+//     }
+// }
 
 void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenRemoved,
