@@ -186,7 +186,11 @@ void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection *connec
 
 bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
     bool success = getSynth()->loadFromFile(preset, error);
-    if (success) gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
+    if (success)
+    {
+        gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
+        gui_->header_->updateCurrentPianoName();
+    }
     return success;
     //sampleLoadManager->loadSamples()
 }

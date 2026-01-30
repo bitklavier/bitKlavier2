@@ -268,6 +268,11 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
     std::shared_ptr<PlainTextComponent> gallerySelectText;
 
+    void updateCurrentPianoName()
+    {
+        pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
+    }
+
   private:
     const juce::ValueTree& getActivePiano();
     juce::ValueTree getActivePianoCopy();
