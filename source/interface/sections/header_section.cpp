@@ -393,6 +393,36 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
     std::map<juce::String, juce::String> uuidMap;
     std::map<juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID> nodeIdMap;
 
+    // Helper: recursively replace any property named nodeID within the subtree
+    // so that nested PORTs and other child nodes get their nodeID updated to the
+    // newly generated value. This avoids graph connection mismatches.
+    std::function<void(juce::ValueTree,
+                       juce::AudioProcessorGraph::NodeID,
+                       juce::AudioProcessorGraph::NodeID)> replaceNodeIdInSubtree;
+
+    replaceNodeIdInSubtree = [&replaceNodeIdInSubtree](juce::ValueTree vt,
+                                                       juce::AudioProcessorGraph::NodeID oldId,
+                                                       juce::AudioProcessorGraph::NodeID newId)
+    {
+        if (! vt.isValid()) return;
+
+        // If this node has a property named nodeID and it equals oldId, update it
+        if (vt.hasProperty(IDs::nodeID))
+        {
+            auto current = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(vt.getProperty(IDs::nodeID));
+            if (current == oldId)
+            {
+                vt.setProperty(IDs::nodeID,
+                               juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(newId),
+                               nullptr);
+            }
+        }
+
+        // Recurse into children
+        for (int i = 0; i < vt.getNumChildren(); ++i)
+            replaceNodeIdInSubtree(vt.getChild(i), oldId, newId);
+    };
+
     for (int i = 0; i < preps.getNumChildren(); ++i)
     {
         auto prep = preps.getChild(i);
@@ -401,17 +431,36 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
         auto oldUuid = prep.getProperty(IDs::uuid).toString();
         if (oldUuid.isEmpty()) continue;
 
+        // Generate and set a brand new UUID for the preparation
         auto newUuid = juce::Uuid().toString();
         uuidMap[oldUuid] = newUuid;
         prep.setProperty(IDs::uuid, newUuid, nullptr);
 
-        auto oldNodeId = juce::AudioProcessorGraph::NodeID(juce::Uuid(oldUuid).getTimeLow());
+        // Critically: read the ACTUAL stored nodeID for this prep as the oldId.
+        // Do NOT derive it from the UUID, since existing projects may not follow that scheme.
+        juce::AudioProcessorGraph::NodeID oldNodeId = juce::AudioProcessorGraph::NodeID{};
+        if (prep.hasProperty(IDs::nodeID))
+        {
+            oldNodeId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(
+                prep.getProperty(IDs::nodeID));
+        }
+        else
+        {
+            // Fallback: approximate old nodeID from the old UUID if it's missing
+            oldNodeId = juce::AudioProcessorGraph::NodeID(juce::Uuid(oldUuid).getTimeLow());
+        }
+
+        // Create a fresh nodeID for the duplicated preparation
         auto newNodeId = juce::AudioProcessorGraph::NodeID(juce::Uuid(newUuid).getTimeLow());
         nodeIdMap[oldNodeId] = newNodeId;
 
+        // Update this prep's nodeID and all nested children that reference it
         prep.setProperty(IDs::nodeID,
                          juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(newNodeId),
                          nullptr);
+
+        // Also update any nested PORTs or child nodes that carry the old nodeID
+        replaceNodeIdInSubtree(prep, oldNodeId, newNodeId);
     }
 
     if (uuidMap.empty()) return;
@@ -434,25 +483,104 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
         }
     }
 
-    // MODCONNECTIONS remap (NodeID-only)
+    // MODCONNECTIONS remap
     if (auto mconns = piano.getChildWithName(IDs::MODCONNECTIONS); mconns.isValid())
     {
-        for (int i = 0; i < mconns.getNumChildren(); ++i)
+        auto coerceVarToNodeId = [](const juce::var& v, bool& ok)
         {
-            auto c = mconns.getChild(i);
-            if (! c.isValid()) continue;
+            ok = true;
+            // If it's already a number, use the VariantConverter path
+            if (v.isInt() || v.isInt64() || v.isDouble() || v.isBool())
+                return juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v);
 
-            if (! c.hasProperty(IDs::src) || ! c.hasProperty(IDs::dest))
-                continue;
+            // If it's a string, try to parse it as a number
+            if (v.isString())
+            {
+                auto s = v.toString();
+                // getLargeIntValue handles decimal numeric strings
+                auto asInt64 = (juce::int64) s.getLargeIntValue();
+                return juce::AudioProcessorGraph::NodeID((uint32_t) asInt64);
+            }
 
-            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
-            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+            ok = false;
+            return juce::AudioProcessorGraph::NodeID{};
+        };
 
-            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
-                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
-            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
-                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
-        }
+        // Helper to process a single ModulationConnection node (string src/dest, refresh uuid)
+        auto processModulationConnection = [&](juce::ValueTree mc)
+        {
+            if (! mc.isValid()) return;
+            const auto srcVar = mc.getProperty(IDs::src);
+            const auto dstVar = mc.getProperty(IDs::dest);
+
+            juce::String srcStr = srcVar.toString();
+            juce::String dstStr = dstVar.toString();
+
+            for (const auto& kv : uuidMap)
+            {
+                const juce::String& oldU = kv.first;
+                const juce::String& newU = kv.second;
+                srcStr = srcStr.replace(oldU, newU, true);
+                dstStr = dstStr.replace(oldU, newU, true);
+            }
+
+            mc.setProperty(IDs::src, srcStr, nullptr);
+            mc.setProperty(IDs::dest, dstStr, nullptr);
+
+            if (mc.hasProperty(IDs::uuid))
+                mc.setProperty(IDs::uuid, juce::Uuid().toString(), nullptr);
+
+            if (mc.hasProperty(juce::Identifier("connectRetries")))
+                mc.removeProperty(juce::Identifier("connectRetries"), nullptr);
+        };
+
+        // Recursive traversal to handle nested structures inside MODCONNECTIONS
+        std::function<void(juce::ValueTree)> walkModConnections;
+        walkModConnections = [&](juce::ValueTree node)
+        {
+            if (! node.isValid()) return;
+
+            for (int i = 0; i < node.getNumChildren(); ++i)
+            {
+                auto c = node.getChild(i);
+                if (! c.isValid()) continue;
+
+                if (c.hasType(IDs::ModulationConnection))
+                {
+                    processModulationConnection(c);
+                }
+                else
+                {
+                    // For non-ModulationConnection nodes: try numeric NodeID remap if they expose src/dest
+                    if (c.hasProperty(IDs::src) && c.hasProperty(IDs::dest))
+                    {
+                        bool okSrc = false, okDst = false;
+                        auto srcId = coerceVarToNodeId(c.getProperty(IDs::src), okSrc);
+                        auto dstId = coerceVarToNodeId(c.getProperty(IDs::dest), okDst);
+
+                        if (okSrc)
+                        {
+                            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                        }
+                        if (okDst)
+                        {
+                            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                        }
+
+                        if (c.hasProperty(juce::Identifier("connectRetries")))
+                            c.removeProperty(juce::Identifier("connectRetries"), nullptr);
+                    }
+
+                    // Recurse to find any nested ModulationConnection nodes
+                    walkModConnections(c);
+                }
+            }
+        };
+
+        // Start traversal from the MODCONNECTIONS node
+        walkModConnections(mconns);
     }
 }
 
