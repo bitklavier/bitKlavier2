@@ -27,6 +27,23 @@ public:
         addMyListener(this);
 
         updateFromParams(juce::dontSendNotification);
+
+        // create a defaultState if there isn't one already
+        if (! defaultState.hasProperty(name_ + "Vals") || defaultState.getProperty(name_ + "Vals").isVoid())
+        {
+            auto defVal = juce::String(params->sliderVals[0][0].load());
+            auto defValSize = juce::String(params->sliderVals_size.load());
+            juce::String statesVal;
+            if (params->activeSliders[0].load())
+                statesVal = "true";
+            else
+                statesVal = "false";
+            auto statesValSize = juce::String(params->activeVals_size.load());
+            defaultState.setProperty( name_ + "Vals", defVal, nullptr);
+            defaultState.setProperty( name_ + "Size", defValSize, nullptr);
+            defaultState.setProperty(name_ + "States", statesVal, nullptr);
+            defaultState.setProperty(name_ + "StatesSize", statesValSize, nullptr);
+        }
     }
 
     juce::Array<juce::Array<float>> getUIValuesFromSliderVals(
