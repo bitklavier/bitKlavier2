@@ -683,6 +683,13 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
     state.params.tuningState.springTuningParams.scaleId_tether->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.springTuningParams.tetherFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
+    // initialize offsets
+    setOffsetsFromTuningSystem(
+        state.params.tuningState.tuningSystem->get(),
+        state.params.tuningState.fundamental->getIndex(),
+        state.params.tuningState.circularTuningOffset,
+        state.params.tuningState.circularTuningOffset_custom);
+
    //  tuningCallbacks += {state.getParameterListeners().addParameterListener(
    //     state.params.tuningState.fundamental,
    //     chowdsp::ParameterListenerThread::AudioThread,

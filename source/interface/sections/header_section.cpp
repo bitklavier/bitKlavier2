@@ -570,10 +570,10 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         disabledItem.enabled = false; // This makes it non-selectable
         disabledItem.id = -1; // will be a separator line
 
-        options.addItem(itemCounter++, "Add");
-        options.addItem(itemCounter++, "Rename");
-        options.addItem(itemCounter++, "Duplicate");
-        options.addItem(itemCounter++, "Delete");
+        options.addItem(itemCounter++, "Add New Piano");
+        options.addItem(itemCounter++, "Rename Current");
+        options.addItem(itemCounter++, "Duplicate Current");
+        options.addItem(itemCounter++, "Delete Current");
         options.addItem(disabledItem); // create separator line
 
         for (int i = 0; i < names.size(); i++) {
