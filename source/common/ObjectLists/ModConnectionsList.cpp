@@ -13,6 +13,7 @@ namespace bitklavier {
 
     void ModConnectionList::newObjectAdded(ModConnection *c) {
         // Flat layout only: connect per-connection nodes directly.
+        DBG("ModConnectionList::newObjectAdded(ModConnection *c) " + c->state.getType().toString());
         if (c->state.hasType(IDs::ModulationConnection))
             synth.connectModulation(c->state);
         if (c->state.hasType(IDs::TUNINGCONNECTION))

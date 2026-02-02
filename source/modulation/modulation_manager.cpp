@@ -1393,7 +1393,7 @@ void ModulationManager::setDestinationQuadBounds(ModulationDestination *destinat
  {
      using T = std::decay_t<T0>;
 
-     DBG("destination holds: " << typeid(T).name());
+     //DBG("destination holds: " << typeid(T).name());
 
      if (ptr != nullptr)
          viewport = ptr->template findParentComponentOfClass<juce::Viewport>();
@@ -1410,6 +1410,7 @@ void ModulationManager::setDestinationQuadBounds(ModulationDestination *destinat
 }
 
 void ModulationManager::modulationDraggedToHoverSlider(ModulationAmountKnob *hover_slider) {
+    DBG("ModulationManager::modulationDraggedToHoverSlider");
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     if (hover_slider->isCurrentModulator() || hover_slider->hasAux() || current_modulator_ == nullptr)
         return;
@@ -1436,23 +1437,39 @@ void ModulationManager::modulationDraggedToHoverSlider(ModulationAmountKnob *hov
 void ModulationManager::modulationDraggedToComponent(juce::Component *component, bool bipolar) {
     //    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
 
-     if (component && current_modulator_ &&
-        destination_lookup_.count(component->getComponentID().toStdString())) {
+    /*
+     * note: the component is always null in a new piano
+     */
+    if (component == nullptr) DBG("ModulationManager::modulationDraggedToComponent => component is null");
+    else if (current_modulator_ == nullptr) DBG("ModulationManager::modulationDraggedToComponent => current_modulator_ is null");
+    else if (!destination_lookup_.count(component->getComponentID().toStdString())) DBG("ModulationManager::modulationDraggedToComponent => destination_lookup_ does not contain component");
+
+    //DBG("ModulationManager::modulationDraggedToComponent");
+     if (component &&
+         current_modulator_ &&
+         destination_lookup_.count(component->getComponentID().toStdString()))
+     {
+         DBG("ModulationManager::modulationDraggedToComponent 1");
+
          std::string name = component->getComponentID().toStdString();
          ModulationDestination* destination = destination_lookup_[name];
          std::string source_name = current_modulator_->getComponentID().toStdString();
 
          std::visit([&]<typename T0>(const T0& ptr)
          {
+             DBG("ModulationManager::modulationDraggedToComponent 2");
              using T = std::decay_t<T0>;
 
              if (ptr == nullptr)
                  return;
 
+             DBG("ModulationManager::modulationDraggedToComponent 3");
              if constexpr (std::is_same_v<T, SliderPtr> )
              {
                  if (source_name.contains("state"))
                      return;
+
+                 DBG("ModulationManager::modulationDraggedToComponent 4");
                  if (getConnection(source_name, name) == nullptr)
                  {
                      // if (auto sp = std::get_if<SliderPtr>(&destination)) {
@@ -1468,6 +1485,7 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
                      temporarily_set_destination_   = destination;
                      temporarily_set_synth_slider_ = slider_model_lookup_[name];
 
+                     DBG("ModulationManager::modulationDraggedToComponent 5");
                      connectModulation(source_name, name);
                      setModulationValues(source_name, name, modulation_amount, bipolar, false, false);
                      destination->setActive(true);
@@ -1617,7 +1635,11 @@ void ModulationManager::modulationDragged(const juce::MouseEvent &e) {
 
     mouse_drag_position_ = getLocalPoint(current_source_, e.getPosition());
     juce::Component *component = getComponentAt(mouse_drag_position_.x, mouse_drag_position_.y);
-       bool bipolar = e.mods.isAnyModifierKeyDown();
+    DBG("ModulationManager::modulationDragged, mouse_drag_position_: " << mouse_drag_position_.x << ", " << mouse_drag_position_.y);
+    if (component) DBG("ModulationManager::modulationDragged, component: " << component->getComponentID());
+
+
+    bool bipolar = e.mods.isAnyModifierKeyDown();
     // if you've set the destination on one parameter that isn't the current one
     // (if you dragged quickly between two parameters) clear the temporary mod
     // before connecting
@@ -2419,6 +2441,7 @@ void ModulationManager::connectStateModulation(std::string source, std::string d
 
 
 void ModulationManager::connectModulation(std::string source, std::string destination) {
+    DBG("ModulationManager::connectModulation(std::string source, std::string destination)");
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent == nullptr || source.empty() || destination.empty())

@@ -87,6 +87,8 @@ void ModulationLineView::preparationDropped (const juce::MouseEvent& e, juce::Po
 
 void ModulationLineView::modulationDropped (const juce::ValueTree& source, const juce::ValueTree& destination)
 {
+    DBG("ModulationLineView::modulationDropped ");
+
     auto sourceId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
         source.getProperty (IDs::nodeID, -1));
     auto destId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (

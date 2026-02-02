@@ -965,7 +965,7 @@ void HeaderSection::notifyFresh() {
     }
 }
 
-//void HeaderSection::setPresetBrowserVisibility(bool visible) {
+//void HeaderSection::setPresetBrowserVisibility(bool f) {
 //  for (Listener* listener : listeners_)
 //    listener->setPresetBrowserVisibility(visible, tab_selector_->getValue());
 //}

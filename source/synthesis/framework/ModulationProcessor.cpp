@@ -23,7 +23,8 @@ juce::AudioProcessor(
 }
 
 void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
-                                                   juce::MidiBuffer &midiMessages) {
+                                                   juce::MidiBuffer &midiMessages)
+{
     const int idx = activeSnapshotIndex.load(std::memory_order_acquire);
     auto &snap = snapshots[idx];
 
@@ -258,6 +259,7 @@ void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnecti
     // callOnMainThread([this, connection]
     // {
     // Allocate / reuse output channel
+    DBG("bitklavier::ModulationProcessor::addModulationConnection modulationConnection");
     auto mystring = connection->isContinuousMod ? connection->destination_name + "cont" : connection->destination_name;
     connection->modulation_output_bus_index =
             allocateModulationChannel(mystring);
@@ -305,6 +307,7 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(StateConnection *connection) {
+    DBG("ModulationProcessor::addModulationConnection, stateconnection");
     all_state_connections_.push_back(connection);
 
     // auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);

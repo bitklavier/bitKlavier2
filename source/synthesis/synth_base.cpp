@@ -195,6 +195,7 @@ void SynthBase::clearAllGuiListeners() {
 void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenAdded)
 {
+    DBG("SynthBase::valueTreeChildAdded type " + childWhichHasBeenAdded.getType().toString());
     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
         DBG ("added piano");
@@ -219,8 +220,12 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
     }
     if (childWhichHasBeenAdded.hasType (IDs::ModulationConnection))
     {
+        DBG("SynthBase::valueTreeChildAdded 2");
         if (connectModulation (childWhichHasBeenAdded))
+        {
+            DBG("SynthBase::valueTreeChildAdded 3");
             getGuiInterface()->notifyModulationsChanged();
+        }
     }
 }
 
@@ -717,6 +722,7 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
 bool SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
     juce::AudioProcessorGraph::NodeID dest)
 {
+    DBG("SynthBase::addModulationConnection");
     auto* sourceNode = getNodeForId (source);
     auto* destNode = getNodeForId (dest);
     destNode->getProcessor()->getBus (true, 1)->enable (true); //should always be modulation bus
@@ -897,8 +903,11 @@ bool SynthBase::isSourceConnected (const std::string& source)
 
 void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 {
+    DBG("SynthBase::connectModulation");
     if (mod_connections_.count (connection) == 1)
         return;
+
+    DBG("SynthBase::connectModulation 2");
     std::string src_uuid;
     std::string dst_uuid;
     std::string src_modulator_uuid_and_name;
@@ -978,6 +987,8 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
         bool connectionAdded = engine_->addConnection (connection->connection_);
 
+        DBG("SynthBase::connectModulation 3, connectionAdded: " + std::to_string(connectionAdded));
+
     }
 }
 
@@ -1052,6 +1063,7 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
 
 bool SynthBase::connectModulation (const juce::ValueTree& v)
 {
+    DBG("SynthBase::connectModulation (const juce::ValueTree& v)");
     if (v.getProperty (IDs::isState))
     {
         bitklavier::StateConnection* connection = getStateConnection (v.getProperty (IDs::src).toString().toStdString(),
@@ -1072,12 +1084,15 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
 
     bitklavier::ModulationConnection* connection = getConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
     bool create = connection == nullptr;
+    DBG("SynthBase::connectModulation (const juce::ValueTree& v), create = " << (int)create);
     if (create)
     {
         connection = getModulationBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
         connection->setStateValueTree (v);
 
     }
+
+    DBG("SynthBase::connectModulation (const juce::ValueTree& v), connection: " + std::to_string(connection != nullptr));
     if (connection)
         connectModulation (connection);
     return create;
@@ -1085,13 +1100,16 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
 
 bool SynthBase::connectModulation (const std::string& source, const std::string& destination)
 {
+    DBG("SynthBase::connectModulation (const std::string& source, const std::string& destination)");
     bitklavier::ModulationConnection* connection = getConnection (source, destination);
     bool create = connection == nullptr;
+    DBG("SynthBase::connectModulation (const std::string& source, const std::string& destination), create = " << (int)create);
     if (create)
     {
         connection = getModulationBank().createConnection (source, destination);
         //        tree.appendChild(connection->state, nullptr);
     }
+    DBG("SynthBase::connectModulation (const std::string& source, const std::string& destination), connection: " + std::to_string(connection != nullptr));
     if (connection)
         connectModulation (connection);
     return create;

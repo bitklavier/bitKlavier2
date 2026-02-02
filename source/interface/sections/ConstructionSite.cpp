@@ -855,13 +855,15 @@ void ConstructionSite::setActivePiano() {
     }
 
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    prep_list= interface->getSynth()->getActivePreparationList();
+    prep_list = interface->getSynth()->getActivePreparationList();
     parent = prep_list->getValueTree().getParent();
     prep_list->addListener(this);
     prep_list->rebuildAllGui();
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
+
+    DBG("ConstructionSite::setActivePiano(), prep_list size: " + juce::String(prep_list->size()));
 }
 
 void ConstructionSite::removeAllGuiListeners()
