@@ -387,7 +387,7 @@ public OpenGLComboBox::Listener
     }
     // void valueTreeChildRemoved(juce::ValueTree &parentTree, juce::ValueTree &childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
   private:
-
+    SynthBase *base;
     void setDestinationQuadBounds(ModulationDestination* destination);
     void makeCurrentModulatorAmountsVisible();
     void makeModulationsVisible(SynthSlider* destination, bool visible);

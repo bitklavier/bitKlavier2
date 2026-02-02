@@ -474,7 +474,7 @@ void ModulationIndicator::setCurrentModulator(bool current) {
  *
  */
 ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase *base
-) : SynthSection("modulation_manager"),
+) : SynthSection("modulation_manager"),base(base),
     drag_quad_(Shaders::kRingFragment),
     current_modulator_quad_(Shaders::kRoundedRectangleBorderFragment),
     editing_rotary_amount_quad_(Shaders::kRotaryModulationFragment),
@@ -1000,12 +1000,12 @@ void ModulationManager::componentAdded() {
     if (!uniqueModPrefixes.empty())
         _src = *uniqueModPrefixes.begin();
 
-    auto dest = full->vt.getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_dst));
-    auto src = full->vt.getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_src));
+    auto dest = base->getActivePianoValueTree().getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_dst));
+    auto src =  base->getActivePianoValueTree().getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_src));
     if (dest.isValid() && src.isValid()) {
         auto *interface = findParentComponentOfClass<SynthGuiInterface>();
         //check the modconnections array first to see if there is psuedoconnection
-        auto modconnections = full->vt.getChildWithName(IDs::MODCONNECTIONS);
+        auto modconnections =  base->getActivePianoValueTree().getChildWithName(IDs::MODCONNECTIONS);
         bool isConnected = false;
 
         for (auto modconnection: modconnections) {

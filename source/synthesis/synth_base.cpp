@@ -274,6 +274,9 @@ juce::ValueTree SynthBase::getActivePreparationListValueTree()
     jassertfalse;
     return {};
 }
+juce::ValueTree SynthBase::getActivePianoValueTree() {
+   return tree.getChildWithProperty(IDs::isActive, 1);
+}
 
 PreparationList* SynthBase::getActivePreparationList()
 {
@@ -918,9 +921,9 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     DBG (src_modulator_uuid_and_name);
 
     //get actual value tree representations from string uuids
-    auto mod_src = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (src_uuid));
-    auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
-    auto mod_connections = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS);
+    auto mod_src = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (src_uuid));
+    auto mod_dst = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    auto mod_connections = getActivePianoValueTree().getChildWithName (IDs::MODCONNECTIONS);
     auto mod_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
 
     //get backend audio graph representation from value tree
@@ -1160,7 +1163,7 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     std::string uuid;
     std::getline (ss, uuid, '_');
 
-    auto mod_src = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
+    auto mod_src = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
     std::stringstream dst_stream (connection->destination_name);
     std::string dst_uuid;
     std::getline (dst_stream, dst_uuid, '_');
@@ -1173,9 +1176,9 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection)
     //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
     //DBG (src_modulator_uuid_and_name);
 
-    auto mod_dst = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    auto mod_dst = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
 
-    auto mod_connections = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS);
+    auto mod_connections = getActivePianoValueTree().getChildWithName (IDs::MODCONNECTIONS);
 
     auto state_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
     //    connection->state.removeFromParent();
@@ -1220,7 +1223,7 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     std::string uuid;
     std::getline (ss, uuid, '_');
 
-    auto mod_src = tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
+    auto mod_src = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
     std::stringstream dst_stream (destination);
     std::string dst_uuid;
     std::getline (dst_stream, dst_uuid, '_');
@@ -1233,12 +1236,12 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
     //DBG (src_modulator_uuid_and_name);
 
-    auto mod_dst = tree.getChildWithName (IDs::PIANO)
+    auto mod_dst = getActivePianoValueTree()
                          .getChildWithName (IDs::PREPARATIONS)
                          .getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
 
     // Root container for all modulation/state connections
-    auto mod_connections = tree.getChildWithName (IDs::PIANO)
+    auto mod_connections = getActivePianoValueTree()
                                  .getChildWithName (IDs::MODCONNECTIONS);
     // NOTE:
     // We intentionally do NOT look up a specific existing connection node by dest

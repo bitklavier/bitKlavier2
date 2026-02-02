@@ -525,3 +525,4 @@ void FullInterface::modulationChanged()
     if (modulation_manager)
         modulation_manager->reset();
 }
+
