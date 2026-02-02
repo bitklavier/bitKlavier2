@@ -266,6 +266,11 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
     }
     void addListener(Listener* listener) { listeners_.push_back(listener); }
 
+    void updateCurrentPianoName()
+    {
+        pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
+    }
+
     std::shared_ptr<PlainTextComponent> gallerySelectText;
 
   private:
