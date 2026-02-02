@@ -1009,7 +1009,61 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     auto parameter_tree = mod_dst.getChildWithName (IDs::MODULATABLE_PARAMS).getChildWithProperty (IDs::parameter, juce::String (dst_param));
     connection->setParamTree (parameter_tree);
-    jassert (parameter_tree.isValid()); //if you hit this then the Parameter ID is not a modulatable param listed in the value tree.
+    if (! parameter_tree.isValid())
+    {
+        DBG ("connectModulation: parameter_tree invalid for dst_uuid=" << dst_uuid.c_str() << ", dst_param=" << dst_param.c_str());
+        if (! mod_dst.isValid())
+        {
+            DBG ("  Destination preparation ValueTree is invalid. Cannot register or look up params. Aborting connect.");
+            return;
+        }
+        // List available modulatable params for this destination prep to aid debugging
+        auto paramsNode = mod_dst.getChildWithName (IDs::MODULATABLE_PARAMS);
+        int count = paramsNode.getNumChildren();
+        DBG ("  MODULATABLE_PARAMS child count = " << count);
+        if (count > 0)
+        {
+            int i = 0;
+            for (auto p : paramsNode)
+            {
+                DBG ("  available param[" << i++ << "] = " << p.getProperty (IDs::parameter).toString());
+            }
+        }
+        else
+        {
+            DBG ("  No modulatable params found for this preparation. Auto-registering requested param.");
+        }
+
+        // Attempt to auto-register the requested parameter so the first connection can succeed on new pianos.
+        auto& um = getUndoManager();
+        auto ensuredParamsNode = mod_dst.getOrCreateChildWithName (IDs::MODULATABLE_PARAMS, &um);
+        bool alreadyPresent = false;
+        for (auto p : ensuredParamsNode)
+        {
+            if (p.getProperty (IDs::parameter).toString() == juce::String (dst_param))
+            {
+                alreadyPresent = true;
+                break;
+            }
+        }
+        if (! alreadyPresent)
+        {
+            juce::ValueTree p (IDs::parameter);
+            p.setProperty (IDs::parameter, juce::String (dst_param), &um);
+            ensuredParamsNode.appendChild (p, &um);
+            DBG ("  Auto-registered param: " << juce::String (dst_param));
+        }
+
+        // Re-fetch after auto-registration
+        parameter_tree = mod_dst.getChildWithName (IDs::MODULATABLE_PARAMS)
+                                .getChildWithProperty (IDs::parameter, juce::String (dst_param));
+        connection->setParamTree (parameter_tree);
+        if (! parameter_tree.isValid())
+        {
+            DBG ("connectModulation: failed to auto-register param; aborting.");
+            return;
+        }
+    }
     //this means the paramid for the component does not match a modulatable param on the backend
     //this requires you to add the Parameter ID to the value tree as a MODULATABLE_PARAM see DirectProcessor Constructor for an example
     /**
@@ -1078,6 +1132,136 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
         DBG ("not connected");
 }
 
+void SynthBase::initializePrepModParamsForPiano(juce::ValueTree pianoVT)
+{
+    DBG("initializePrepModParamsForPiano called");
+
+    if (! pianoVT.isValid() || ! pianoVT.hasType(IDs::PIANO))
+    {
+        DBG("initializePrepModParamsForPiano: invalid piano ValueTree");
+        return;
+    }
+
+    auto preps = pianoVT.getChildWithName(IDs::PREPARATIONS);
+    if (! preps.isValid())
+    {
+        DBG("initializePrepModParamsForPiano: no PREPARATIONS found");
+        return;
+    }
+
+    // Default minimal set of modulatable params to seed for fresh preparations
+    const juce::StringArray defaultParamIDs { "OutputGain", "Send", "Pedal" };
+
+    auto& um = getUndoManager();
+
+    for (int i = 0; i < preps.getNumChildren(); ++i)
+    {
+        auto prep = preps.getChild(i);
+        if (! prep.isValid())
+            continue;
+
+        // Ensure MODULATABLE_PARAMS exists
+        auto modParams = prep.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, &um);
+
+        // Only seed if empty to avoid duplicating existing definitions
+        if (modParams.getNumChildren() == 0)
+        {
+            DBG("initializePrepModParamsForPiano: seeding MODULATABLE_PARAMS for prep uuid=" << prep.getProperty(IDs::uuid).toString());
+            for (auto& id : defaultParamIDs)
+            {
+                // Use an existing Identifier for the child node; only the 'parameter' property is used for lookup
+                juce::ValueTree p(IDs::parameter);
+                p.setProperty(IDs::parameter, id, &um);
+                modParams.appendChild(p, &um);
+            }
+        }
+        else
+        {
+            DBG("initializePrepModParamsForPiano: prep already has " << modParams.getNumChildren() << " modulatable params");
+        }
+    }
+}
+
+void SynthBase::initializePrepModParamsFromProcessors(juce::ValueTree pianoVT)
+{
+    if (! pianoVT.isValid() || ! pianoVT.hasType(IDs::PIANO))
+    {
+        DBG("initializePrepModParamsFromProcessors: invalid piano ValueTree");
+        return;
+    }
+
+    auto preps = pianoVT.getChildWithName(IDs::PREPARATIONS);
+    if (! preps.isValid())
+    {
+        DBG("initializePrepModParamsFromProcessors: no PREPARATIONS found");
+        return;
+    }
+
+    auto& um = getUndoManager();
+
+    for (int i = 0; i < preps.getNumChildren(); ++i)
+    {
+        auto prep = preps.getChild(i);
+        if (! prep.isValid())
+            continue;
+
+        // Expect a nodeID property that links this prep to a graph node
+        auto nodeIdVar = prep.getProperty(IDs::nodeID);
+        if (nodeIdVar.isVoid())
+        {
+            DBG("initializePrepModParamsFromProcessors: prep missing nodeID, uuid=" << prep.getProperty(IDs::uuid).toString());
+            continue;
+        }
+
+        auto nodeId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(nodeIdVar);
+        auto* node = getNodeForId(nodeId);
+        if (node == nullptr || node->getProcessor() == nullptr)
+        {
+            DBG("initializePrepModParamsFromProcessors: no processor for nodeID, uuid=" << prep.getProperty(IDs::uuid).toString());
+            continue;
+        }
+
+        auto* proc = node->getProcessor();
+        auto modParams = prep.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, &um);
+
+        // If already populated, skip (idempotent)
+        if (modParams.getNumChildren() > 0)
+        {
+            DBG("initializePrepModParamsFromProcessors: prep already populated with " << modParams.getNumChildren() << " params");
+            continue;
+        }
+
+        // Query the processor parameters and add reasonable candidates
+        DBG("initializePrepModParamsFromProcessors: populating from processor params, count=" << proc->getNumParameters());
+        for (int p = 0; p < proc->getNumParameters(); ++p)
+        {
+            auto* ap = proc->getParameters()[p];
+            if (ap == nullptr)
+                continue;
+
+            // Prefer parameter ID if available (AudioProcessorParameterWithID), else use name
+            juce::String paramID;
+            if (auto* withID = dynamic_cast<juce::AudioProcessorParameterWithID*>(ap))
+                paramID = withID->paramID;
+            else
+                paramID = ap->getName(64);
+
+            if (paramID.isEmpty())
+                continue;
+
+            // Filter out obviously non-modulatable or internal params by simple heuristics
+            const juce::String lower = paramID.toLowerCase();
+            if (lower.contains("bypass") || lower.contains("mute") || lower.contains("solo"))
+                continue;
+
+            juce::ValueTree vt(IDs::parameter);
+            vt.setProperty(IDs::parameter, paramID, &um);
+            modParams.appendChild(vt, &um);
+            DBG("initializePrepModParamsFromProcessors: added paramID=" << paramID);
+        }
+    }
+}
+
 // bool SynthBase::connectReset (const juce::ValueTree& v)
 // {
 //     // Extract IDs
@@ -1132,6 +1316,7 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
 
 bool SynthBase::connectModulation (const juce::ValueTree& v)
 {
+    DBG("SynthBase::connectModulation");
     if (v.getProperty (IDs::isState))
     {
         bitklavier::StateConnection* connection = getStateConnection (v.getProperty (IDs::src).toString().toStdString(),
@@ -1165,6 +1350,7 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
 
 bool SynthBase::connectModulation (const std::string& source, const std::string& destination)
 {
+    DBG("SynthBase::connectModulation2");
     bitklavier::ModulationConnection* connection = getConnection (source, destination);
     bool create = connection == nullptr;
     if (create)

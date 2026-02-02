@@ -15,6 +15,7 @@
 */
 
 #include "FullInterface.h"
+#include "sections/ConstructionSite.h"
 #include "Identifiers.h"
 #include "ModulationPreparation.h"
 #include "about_section.h"
@@ -499,12 +500,62 @@ void FullInterface::showFullScreenSection (SynthSection* full_screen)
 
 std::map<std::string, SynthSlider*> FullInterface::getAllSliders()
 {
-    return prep_popup->getAllSliders();
+    // Prefer sliders from the preparation popup if available; otherwise, fall back to main_
+    if (prep_popup)
+    {
+        auto fromPrep = prep_popup->getAllSliders();
+        if (!fromPrep.empty())
+            return fromPrep;
+    }
+    if (main_)
+    {
+        // Aggregate from all visible preparation sections in the ConstructionSite
+        std::map<std::string, SynthSlider*> aggregated;
+        if (main_->constructionSite_)
+        {
+            for (auto &prep : main_->constructionSite_->plugin_components)
+            {
+                if (prep)
+                {
+                    auto m = prep->getAllSliders();
+                    aggregated.insert(m.begin(), m.end());
+                }
+            }
+        }
+        if (!aggregated.empty())
+            return aggregated;
+        return main_->getAllSliders();
+    }
+    return {};
 }
 
 std::map<std::string, SynthButton*> FullInterface::getAllButtons()
 {
-    return prep_popup->getAllButtons();
+    if (prep_popup)
+    {
+        auto fromPrep = prep_popup->getAllButtons();
+        if (!fromPrep.empty())
+            return fromPrep;
+    }
+    if (main_)
+    {
+        std::map<std::string, SynthButton*> aggregated;
+        if (main_->constructionSite_)
+        {
+            for (auto &prep : main_->constructionSite_->plugin_components)
+            {
+                if (prep)
+                {
+                    auto m = prep->getAllButtons();
+                    aggregated.insert(m.begin(), m.end());
+                }
+            }
+        }
+        if (!aggregated.empty())
+            return aggregated;
+        return main_->getAllButtons();
+    }
+    return {};
 }
 
 std::map<std::string, ModulationButton*> FullInterface::getAllModulationButtons()
@@ -512,12 +563,60 @@ std::map<std::string, ModulationButton*> FullInterface::getAllModulationButtons(
     return mod_popup->getAllModulationButtons();
 }
 std::map<std::string, OpenGLComboBox*> FullInterface::getAllComboBox() {
-    return prep_popup->getAllComboBox();
+    if (prep_popup)
+    {
+        auto fromPrep = prep_popup->getAllComboBox();
+        if (!fromPrep.empty())
+            return fromPrep;
+    }
+    if (main_)
+    {
+        std::map<std::string, OpenGLComboBox*> aggregated;
+        if (main_->constructionSite_)
+        {
+            for (auto &prep : main_->constructionSite_->plugin_components)
+            {
+                if (prep)
+                {
+                    auto m = prep->getAllComboBox();
+                    aggregated.insert(m.begin(), m.end());
+                }
+            }
+        }
+        if (!aggregated.empty())
+            return aggregated;
+        return main_->getAllComboBox();
+    }
+    return {};
 }
 
 std::map<std::string, StateModulatedComponent*> FullInterface::getAllStateModulatedComponents()
 {
-    return prep_popup->getAllStateModulatedComponents();
+    if (prep_popup)
+    {
+        auto fromPrep = prep_popup->getAllStateModulatedComponents();
+        if (!fromPrep.empty())
+            return fromPrep;
+    }
+    if (main_)
+    {
+        std::map<std::string, StateModulatedComponent*> aggregated;
+        if (main_->constructionSite_)
+        {
+            for (auto &prep : main_->constructionSite_->plugin_components)
+            {
+                if (prep)
+                {
+                    auto m = prep->getAllStateModulatedComponents();
+                    aggregated.insert(m.begin(), m.end());
+                }
+            }
+        }
+        if (!aggregated.empty())
+            return aggregated;
+        return main_->getAllStateModulatedComponents();
+    }
+    return {};
 }
 
 void FullInterface::modulationChanged()

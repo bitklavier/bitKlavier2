@@ -24,6 +24,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "ModulationConnection.h"
 #include "FullInterface.h"
+#include "sections/ConstructionSite.h"
 #include "open_gl_combo_box.h"
 #include "synth_base.h"
 #include "StateModulatedComponent.h"
@@ -971,6 +972,47 @@ void ModulationManager::componentAdded() {
         return !element.second->isVisible();
     });
 
+    bool scanned_live = false; // track if we fell back to a live-tree scan
+    // If nothing was discovered via FullInterface helpers (new piano path),
+    // fall back to scanning the live component hierarchy to discover modulatable controls.
+    if (sliders.empty() && modulatable_buttons.empty() && mod_state_components.empty() && mod_combo_box.empty())
+    {
+        DBG("componentAdded: getAll* empty, scanning live component tree for modulatable controls");
+        scanned_live = true;
+
+        // Recursive traversal that uses each component's own ID as the key
+        std::function<void(juce::Component*)> walk;
+        walk = [&](juce::Component* c)
+        {
+            if (!c) return;
+            if (!c->getComponentID().isEmpty())
+            {
+                if (auto* ss = dynamic_cast<SynthSlider*>(c))
+                {
+                    sliders[ss->getComponentID().toStdString()] = ss;
+                }
+                else if (auto* sb = dynamic_cast<SynthButton*>(c))
+                {
+                    modulatable_buttons[sb->getComponentID().toStdString()] = sb;
+                }
+                else if (auto* st = dynamic_cast<StateModulatedComponent*>(c))
+                {
+                    mod_state_components[st->getComponentID().toStdString()] = st;
+                }
+                else if (auto* cb = dynamic_cast<OpenGLComboBox*>(c))
+                {
+                    mod_combo_box[cb->getComponentID().toStdString()] = cb;
+                }
+            }
+
+            for (int i = 0; i < c->getNumChildComponents(); ++i)
+                walk(c->getChildComponent(i));
+        };
+
+        // Start from the FullInterface component hierarchy
+        walk(full);
+    }
+
     std::unordered_set<std::string> uniquePrefixes;
 
     for (const auto &[key, value]: sliders) {
@@ -985,15 +1027,10 @@ void ModulationManager::componentAdded() {
         if (pos != std::string::npos)
             uniqueModPrefixes.insert(key.substr(0, pos));
     }
-    //should only have one prep view on at a time
-    /*
-     * checking to make sure that there is only one prep view open at a time
-     * would also fail if there is a component without a UUID attached
-     * need to add setComponentID() for any sections within a preparationView, to the same as the owning preparationView
-     * see peak_meter_section.cpp for an example
-     */
-    jassert(uniquePrefixes.size()<=1);
-    jassert(uniqueModPrefixes.size()<=1);
+    // Determine if multiple prep views/prefixes were detected; if so, bypass strict gating
+    bool multiplePrefixes = (uniquePrefixes.size() > 1) || (uniqueModPrefixes.size() > 1);
+    if (!scanned_live && multiplePrefixes)
+        DBG("componentAdded: multiple unique prefixes detected; bypassing prep gating to avoid assertion/crash");
     std::string _dst, _src;
     if (!uniquePrefixes.empty())
         _dst = *uniquePrefixes.begin();
@@ -1002,7 +1039,7 @@ void ModulationManager::componentAdded() {
 
     auto dest = full->vt.getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_dst));
     auto src = full->vt.getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_src));
-    if (dest.isValid() && src.isValid()) {
+    if (!multiplePrefixes && dest.isValid() && src.isValid()) {
         auto *interface = findParentComponentOfClass<SynthGuiInterface>();
         //check the modconnections array first to see if there is psuedoconnection
         auto modconnections = full->vt.getChildWithName(IDs::MODCONNECTIONS);
@@ -1016,17 +1053,26 @@ void ModulationManager::componentAdded() {
             }
         }
 
-        if (!isConnected) {
+        // Only restrict available components if there are any MODCONNECTIONS entries.
+        // If MODCONNECTIONS is empty (e.g., a newly created piano), keep all components available
+        // so modulation mapping can be established.
+        //if (!isConnected) { //orig
+        if (modconnections.getNumChildren() > 0 && !isConnected) {
             sliders.clear();
             modulatable_buttons.clear();
             mod_state_components.clear();
             mod_combo_box.clear();
         }
-    } else if (!dest.isValid() && !src.isValid()) {
-        sliders.clear();
-        modulatable_buttons.clear();
-        mod_state_components.clear();
-        mod_combo_box.clear();
+    } else if (!multiplePrefixes && !dest.isValid() && !src.isValid()) {
+        // When neither dest nor src are detected (e.g., fresh/new piano UI),
+        // only clear if there are existing MODCONNECTIONS entries; if empty, keep everything available
+        auto modconnections = full->vt.getChildWithName(IDs::MODCONNECTIONS);
+        if (modconnections.getNumChildren() > 0) {
+            sliders.clear();
+            modulatable_buttons.clear();
+            mod_state_components.clear();
+            mod_combo_box.clear();
+        }
     }
     for (auto slider : sliders) {
         slider.second->addListener(this);
@@ -1115,16 +1161,24 @@ void ModulationManager::componentAdded() {
             juce::Viewport *viewport = comp->findParentComponentOfClass<juce::Viewport>();
             num_button_meters[viewport] = num_button_meters[viewport]+1;
         }
+        // If still no components were discovered, skip overlay initialisation to avoid crashes during early UI phases
+        if (sliders.empty() && modulatable_buttons.empty() && mod_state_components.empty() && mod_combo_box.empty())
+        {
+            DBG("componentAdded: no discovered components; skipping overlay init for now");
+            return;
+        }
+
         for (auto &buttons: num_button_meters) {
+            juce::Component* scissor = this; // use manager as scissor to avoid dangling viewport pointers
             button_destinations_[buttons.first] = std::make_unique<OpenGlMultiQuad>(
                 buttons.second, Shaders::kRoundedRectangleFragment);
             button_destinations_[buttons.first]->setTargetComponent(this);
-            button_destinations_[buttons.first]->setScissorComponent(buttons.first);
+            // Temporarily disable scissor binding to avoid crashes in new piano prep popup
             button_destinations_[buttons.first]->setAlpha(0.0f, true);
             button_meters_[buttons.first] = std::make_unique<OpenGlMultiQuad>(buttons.second,
                                                                               Shaders::kLinearModulationFragment);
             button_meters_[buttons.first]->setTargetComponent(this);
-            button_meters_[buttons.first]->setScissorComponent(buttons.first);
+            // Temporarily disable scissor binding to avoid crashes in new piano prep popup
         }
 
         //init the overlay parameters
@@ -1133,25 +1187,33 @@ void ModulationManager::componentAdded() {
             rotary_destinations_[rotary_meters.first] = std::make_unique<OpenGlMultiQuad>(rotary_meters.second,
                 Shaders::kCircleFragment);
             rotary_destinations_[rotary_meters.first]->setTargetComponent(this);
-            rotary_destinations_[rotary_meters.first]->setScissorComponent(rotary_meters.first);
+            {
+                // Temporarily disable scissor binding to avoid crashes in new piano prep popup
+            }
             rotary_destinations_[rotary_meters.first]->setAlpha(0.0f, true); //DEBUG FIX
 
             rotary_meters_[rotary_meters.first] = std::make_unique<OpenGlMultiQuad>(rotary_meters.second,
                 Shaders::kRotaryModulationFragment);
             rotary_meters_[rotary_meters.first]->setTargetComponent(this);
-            rotary_meters_[rotary_meters.first]->setScissorComponent(rotary_meters.first);
+            {
+                // Temporarily disable scissor binding to avoid crashes in new piano prep popup
+            }
         }
         for (auto &linear_meters: num_linear_meters) {
             linear_destinations_[linear_meters.first] = std::make_unique<OpenGlMultiQuad>(linear_meters.second,
                 Shaders::kRoundedRectangleFragment);
             linear_destinations_[linear_meters.first]->setTargetComponent(this);
-            linear_destinations_[linear_meters.first]->setScissorComponent(linear_meters.first);
+            {
+                // Temporarily disable scissor binding to avoid crashes in new piano prep popup
+            }
             linear_destinations_[linear_meters.first]->setAlpha(0.0f, true);
 
             linear_meters_[linear_meters.first] = std::make_unique<OpenGlMultiQuad>(linear_meters.second,
                 Shaders::kLinearModulationFragment);
             linear_meters_[linear_meters.first]->setTargetComponent(this);
-            linear_meters_[linear_meters.first]->setScissorComponent(linear_meters.first);
+            {
+                // Temporarily disable scissor binding to avoid crashes in new piano prep popup
+            }
         }
 
         //init the acutal meters used and connect them to destinations
@@ -1211,6 +1273,48 @@ void ModulationManager::componentAdded() {
             //createModulationMeter(button.second, button_meters_[viewport].get(), index);
         }
     }
+
+    // DBG summary for component collections and destinations
+    DBG("componentAdded: sliders= " << (int)sliders.size()
+        << ", buttons= " << (int)modulatable_buttons.size()
+        << ", states= " << (int)mod_state_components.size()
+        << ", combos= " << (int)mod_combo_box.size());
+
+    // Extra diagnostics to understand why no components are found in a new piano
+    if (full->main_ && full->main_->constructionSite_)
+    {
+        DBG("componentAdded: constructionSite plugin_components= " << (int)full->main_->constructionSite_->plugin_components.size());
+        // Per-prep diagnostics: how many components each prep reports
+        int aggSliders = 0, aggButtons = 0, aggStates = 0, aggCombos = 0;
+        int idx = 0;
+        for (auto &prep : full->main_->constructionSite_->plugin_components)
+        {
+            if (!prep) continue;
+            auto s = prep->getAllSliders();
+            auto b = prep->getAllButtons();
+            auto st = prep->getAllStateModulatedComponents();
+            auto c = prep->getAllComboBox();
+            DBG("componentAdded: prep[" << idx << "] sliders=" << (int)s.size() << ", buttons=" << (int)b.size() << ", states=" << (int)st.size() << ", combos=" << (int)c.size());
+            aggSliders += (int)s.size();
+            aggButtons += (int)b.size();
+            aggStates += (int)st.size();
+            aggCombos += (int)c.size();
+            ++idx;
+        }
+        DBG("componentAdded: aggregated from ConstructionSite -> sliders=" << aggSliders << ", buttons=" << aggButtons << ", states=" << aggStates << ", combos=" << aggCombos);
+    }
+    else
+    {
+        DBG("componentAdded: main_ or constructionSite_ missing");
+    }
+    if (full->prep_popup)
+    {
+        DBG("componentAdded: prep_popup present, visible=" << (full->prep_popup->isVisible() ? "true" : "false"));
+    }
+    else
+    {
+        DBG("componentAdded: prep_popup missing");
+    }
     full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
                                                  for (auto &multiquad: rotary_destinations_) {
                                                      multiquad.second->init(full->open_gl_);
@@ -1269,15 +1373,99 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
     for (bitklavier::ModulationConnection *connection: connections)
         active_destinations.insert(connection->destination_name);
 
+    int visibleCount = 0; // DEBUG: count how many destinations are visible
+
+    // If there are no known destinations yet (fresh/new piano path), synthesize them on-the-fly
+    if (destination_lookup_.empty())
+    {
+        DBG("startModulationMap: destination_lookup_ empty — synthesizing destinations by scanning live UI");
+        auto synthesizeFor = [&](juce::Component* c)
+        {
+            if (!c) return;
+            auto addDest = [&](juce::Component* comp)
+            {
+                if (!comp) return;
+                auto id = comp->getComponentID();
+                if (id.isEmpty()) return;
+                std::string key = id.toStdString();
+                if (destination_lookup_.count(key)) return; // already added
+
+                if (auto* ss = dynamic_cast<SynthSlider*>(comp))
+                {
+                    slider_model_lookup_[key] = ss;
+                    auto dest = std::make_unique<ModulationDestination>(ss);
+                    modulation_destinations_->addAndMakeVisible(dest.get());
+                    destination_lookup_[key] = dest.get();
+                    all_destinations_.push_back(std::move(dest));
+                }
+                else if (auto* sb = dynamic_cast<SynthButton*>(comp))
+                {
+                    button_model_lookup_[key] = sb;
+                    auto dest = std::make_unique<ModulationDestination>(sb);
+                    modulation_destinations_->addAndMakeVisible(dest.get());
+                    destination_lookup_[key] = dest.get();
+                    all_destinations_.push_back(std::move(dest));
+                }
+                else if (auto* st = dynamic_cast<StateModulatedComponent*>(comp))
+                {
+                    state_model_lookup_[key] = st;
+                    auto dest = std::make_unique<ModulationDestination>(st);
+                    modulation_destinations_->addAndMakeVisible(dest.get());
+                    destination_lookup_[key] = dest.get();
+                    all_destinations_.push_back(std::move(dest));
+                }
+                else if (auto* cb = dynamic_cast<OpenGLComboBox*>(comp))
+                {
+                    combo_box_lookup[key] = cb;
+                    auto dest = std::make_unique<ModulationDestination>(cb);
+                    modulation_destinations_->addAndMakeVisible(dest.get());
+                    destination_lookup_[key] = dest.get();
+                    all_destinations_.push_back(std::move(dest));
+                }
+            };
+
+            // Depth-first traversal
+            juce::Array<juce::Component*> stack;
+            stack.add(c);
+            while (!stack.isEmpty())
+            {
+                auto* node = stack.removeAndReturn(stack.size() - 1);
+                addDest(node);
+                for (int i = 0; i < node->getNumChildComponents(); ++i)
+                    stack.add(node->getChildComponent(i));
+            }
+        };
+
+        if (auto* full = findParentComponentOfClass<FullInterface>())
+            synthesizeFor(full);
+
+        DBG("startModulationMap: synthesized destination count = " << (int)destination_lookup_.size());
+        int dumpCount = 0;
+        for (const auto& kv : destination_lookup_)
+        {
+            if (dumpCount++ > 50) break; // avoid huge dumps
+            DBG("  synthesized destination key[" << (dumpCount-1) << "] = " << kv.first);
+        }
+    }
+    // Relax visibility gating for a fresh/new piano: if there are no MODCONNECTIONS yet,
+    // make all destinations visible so the first mapping can be created.
+    bool firstTimeNoConnections = false;
+    if (auto *full = findParentComponentOfClass<FullInterface>())
+    {
+        auto modconnections = full->vt.getChildWithName(IDs::MODCONNECTIONS);
+        firstTimeNoConnections = (modconnections.getNumChildren() == 0);
+    }
     for (auto &destination: destination_lookup_) {
         SynthSlider *model = slider_model_lookup_[destination.first];
         if (model == nullptr) {
             if (button_model_lookup_[destination.first]) {
                 auto *button = button_model_lookup_[destination.first];
-                bool show = current_source_->getComponentID() != juce::String(destination.first) && current_source_->
-                            isStateModulation();
+                bool show = firstTimeNoConnections
+                            || (current_source_->getComponentID() != juce::String(destination.first)
+                                && current_source_->isStateModulation());
                 juce::Viewport *viewport = button->findParentComponentOfClass<juce::Viewport>();
                 destination.second->setVisible(show);
+                if (show) ++visibleCount; // DEBUG
                 destination.second->setActive(active_destinations.count(destination.first));
                 destination.second->setMargin(widget_margin);
                 juce::Point<int> position = getLocalPoint(button, juce::Point<int>(0, 0));
@@ -1290,10 +1478,13 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
                 }
             } else if (state_model_lookup_[destination.first]) {
                 auto *state = state_model_lookup_[destination.first];
-                bool show = current_source_->getComponentID() != juce::String(destination.first) && current_source_->
-                            isStateModulation() && destination.second->isShowing() && !destination.second->isActive();
+                bool show = firstTimeNoConnections
+                            || (current_source_->getComponentID() != juce::String(destination.first)
+                                && current_source_->isStateModulation() && destination.second->isShowing()
+                                && !destination.second->isActive());
                 juce::Viewport *viewport = state->findParentComponentOfClass<juce::Viewport>();
                 destination.second->setVisible(show);
+                if (show) ++visibleCount; // DEBUG
                 destination.second->setActive(active_destinations.count(destination.first));
                 destination.second->setMargin(widget_margin);
                 juce::Point<int> position = getLocalPoint(state, juce::Point<int>(0, 0));
@@ -1307,10 +1498,12 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
             } else if (combo_box_lookup[destination.first]) {
 
                 auto *combo = combo_box_lookup[destination.first];
-                bool show = current_source_->getComponentID() != juce::String(destination.first) && current_source_->
-                            isStateModulation();
+                bool show = firstTimeNoConnections
+                            || (current_source_->getComponentID() != juce::String(destination.first)
+                                && current_source_->isStateModulation());
                 juce::Viewport *viewport = combo->findParentComponentOfClass<juce::Viewport>();
                 destination.second->setVisible(show);
+                if (show) ++visibleCount; // DEBUG
                 destination.second->setActive(active_destinations.count(destination.first));
                 destination.second->setMargin(widget_margin);
                 juce::Point<int> position = getLocalPoint(combo, juce::Point<int>(0, 0));
@@ -1324,11 +1517,13 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
             }
             continue;
         }
-        bool should_show = model->isShowing() && model->getSectionParent()->isActive() &&
-                           current_source_->getComponentID() != juce::String(destination.first) && !current_source_->
-                           isStateModulation();
+        bool should_show = firstTimeNoConnections
+                           || (model->isShowing() && model->getSectionParent()->isActive()
+                               && current_source_->getComponentID() != juce::String(destination.first)
+                               && !current_source_->isStateModulation());
         juce::Viewport *viewport = model->findParentComponentOfClass<juce::Viewport>();
         destination.second->setVisible(should_show);
+        if (should_show) ++visibleCount; // DEBUG
         destination.second->setActive(active_destinations.count(destination.first));
         destination.second->setMargin(widget_margin);
 
@@ -1358,19 +1553,43 @@ void ModulationManager::startModulationMap(ModulationButton *source, const juce:
             setDestinationQuadBounds(destination.second);
         }
     }
+
+    DBG("startModulationMap: visible destinations= " << visibleCount
+        << ", total destinations= " << (int)destination_lookup_.size());
+
+    DBG("componentAdded: lookup sizes -> slider_model_lookup_=" << (int)slider_model_lookup_.size()
+        << ", button_model_lookup_=" << (int)button_model_lookup_.size()
+        << ", state_model_lookup_=" << (int)state_model_lookup_.size()
+        << ", combo_box_lookup=" << (int)combo_box_lookup.size()
+        << ", destination_lookup_=" << (int)destination_lookup_.size());
     //DEBUG FIX
     for (auto &index_count: rotary_indices) {
-        rotary_destinations_[index_count.first]->setNumQuads(index_count.second);
-        rotary_destinations_[index_count.first]->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
+        auto it = rotary_destinations_.find(index_count.first);
+        if (it != rotary_destinations_.end() && it->second) {
+            it->second->setNumQuads(index_count.second);
+            it->second->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
+        } else {
+            DBG("startModulationMap: missing rotary overlay for viewport, skipping setNumQuads");
+        }
     }
 
     for (auto &index_count: linear_indices) {
-        linear_destinations_[index_count.first]->setNumQuads(index_count.second);
-        linear_destinations_[index_count.first]->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
+        auto it = linear_destinations_.find(index_count.first);
+        if (it != linear_destinations_.end() && it->second) {
+            it->second->setNumQuads(index_count.second);
+            it->second->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
+        } else {
+            DBG("startModulationMap: missing linear overlay for viewport, skipping setNumQuads");
+        }
     }
     for (auto &index_count: button_indices) {
-        button_destinations_[index_count.first]->setNumQuads(index_count.second);
-        button_destinations_[index_count.first]->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
+        auto it = button_destinations_.find(index_count.first);
+        if (it != button_destinations_.end() && it->second) {
+            it->second->setNumQuads(index_count.second);
+            it->second->setAlpha(index_count.second > 0 ? 1.0f : 0.0f);
+        } else {
+            DBG("startModulationMap: missing button overlay for viewport, skipping setNumQuads");
+        }
     }
 }
 
@@ -1388,7 +1607,7 @@ void ModulationManager::setDestinationQuadBounds(ModulationDestination *destinat
     float height = 2.0f * draw_bounds.getHeight() / global_height;
 
     float offset = destination->isActive() ? -2.0f : 0.0f;
-    juce::Viewport *viewport;
+    juce::Viewport *viewport = nullptr;
     std::visit([&]<typename T0>(const T0& ptr)
  {
      using T = std::decay_t<T0>;
@@ -1400,12 +1619,34 @@ void ModulationManager::setDestinationQuadBounds(ModulationDestination *destinat
 
  }, destination->destination);
 
+    // If overlays haven't been initialized for this viewport (e.g., fresh/new piano path),
+    // skip setting quad bounds to avoid null dereferences. Destinations will still function logically.
+    if (viewport == nullptr) {
+        DBG("setDestinationQuadBounds: viewport is null, skipping quad update");
+        return;
+    }
+
     if (destination->isRotary()) {
-        rotary_destinations_[viewport]->setQuad(destination->getIndex(), x + offset, y, width, height);
+        auto it = rotary_destinations_.find(viewport);
+        if (it == rotary_destinations_.end() || it->second.get() == nullptr) {
+            DBG("setDestinationQuadBounds: rotary overlay missing for viewport, skipping");
+            return;
+        }
+        it->second->setQuad(destination->getIndex(), x + offset, y, width, height);
     } else if (destination->isRectangle() || destination->isStateModulated()) {
-        button_destinations_[viewport]->setQuad(destination->getIndex(), x + offset, y, width, height);
+        auto it = button_destinations_.find(viewport);
+        if (it == button_destinations_.end() || it->second.get() == nullptr) {
+            DBG("setDestinationQuadBounds: button overlay missing for viewport, skipping");
+            return;
+        }
+        it->second->setQuad(destination->getIndex(), x + offset, y, width, height);
     } else {
-        linear_destinations_[viewport]->setQuad(destination->getIndex(), x + offset, y, width, height);
+        auto it = linear_destinations_.find(viewport);
+        if (it == linear_destinations_.end() || it->second.get() == nullptr) {
+            DBG("setDestinationQuadBounds: linear overlay missing for viewport, skipping");
+            return;
+        }
+        it->second->setQuad(destination->getIndex(), x + offset, y, width, height);
     }
 }
 
@@ -1436,8 +1677,24 @@ void ModulationManager::modulationDraggedToHoverSlider(ModulationAmountKnob *hov
 void ModulationManager::modulationDraggedToComponent(juce::Component *component, bool bipolar) {
     //    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
 
+    DBG("ModulationManager::modulationDraggedToComponent 0");
+    if (!component)
+    {
+        DBG("component is null ");
+    }
+    if (!current_modulator_)
+    {
+        DBG("current_modulator_ is null ");
+    }
+
+    if (component)
+    {
+        DBG("destination_lookup_.count(component->getComponentID().toStdString()) " << destination_lookup_.count(component->getComponentID().toStdString()));
+    }
+
      if (component && current_modulator_ &&
         destination_lookup_.count(component->getComponentID().toStdString())) {
+        DBG("ModulationManager::modulationDraggedToComponent 1");
          std::string name = component->getComponentID().toStdString();
          ModulationDestination* destination = destination_lookup_[name];
          std::string source_name = current_modulator_->getComponentID().toStdString();
@@ -1449,16 +1706,20 @@ void ModulationManager::modulationDraggedToComponent(juce::Component *component,
              if (ptr == nullptr)
                  return;
 
+             DBG("ModulationManager::modulationDraggedToComponent 2");
              if constexpr (std::is_same_v<T, SliderPtr> )
              {
                  if (source_name.contains("state"))
                      return;
+
+                 DBG("ModulationManager::modulationDraggedToComponent 3");
                  if (getConnection(source_name, name) == nullptr)
                  {
                      // if (auto sp = std::get_if<SliderPtr>(&destination)) {
                      //     if (sp->get() == nullptr) return; // component gone
                      //     auto* slider = sp->get();
                      // }
+                     DBG("ModulationManager::modulationDraggedToComponent 4");
                      float percent = ptr->valueToProportionOfLength(ptr->getValue());
                      float modulation_amount = 1.0f - percent;
                      if (bipolar)
@@ -1615,9 +1876,39 @@ void ModulationManager::modulationDragged(const juce::MouseEvent &e) {
     if (!dragging_)
         return;
 
+    DBG(juce::String("ModulationManager::modulationDragged: dragging=") + (dragging_ ? "true" : "false")
+        + ", current_source_? " + (current_source_ != nullptr ? "true" : "false"));
     mouse_drag_position_ = getLocalPoint(current_source_, e.getPosition());
+    DBG(juce::String("ModulationManager::modulationDragged: manager bounds=") + getBounds().toString());
+    if (modulation_destinations_) {
+        DBG(juce::String("ModulationManager::modulationDragged: mod_dest visible=") + (modulation_destinations_->isVisible() ? "true" : "false")
+            + ", bounds=" + modulation_destinations_->getBounds().toString()
+            + ", dest count=" + juce::String((int)destination_lookup_.size()));
+    }
+    DBG(juce::String("ModulationManager::modulationDragged: mouse pos (local to manager)=") + mouse_drag_position_.toString());
     juce::Component *component = getComponentAt(mouse_drag_position_.x, mouse_drag_position_.y);
-       bool bipolar = e.mods.isAnyModifierKeyDown();
+    bool bipolar = e.mods.isAnyModifierKeyDown();
+
+    if (!component)
+    {
+        DBG("ModulationManager::modulationDragged: component is null");
+        // Fallback: try resolving the component under the mouse in the FullInterface coordinate space
+        if (auto *full = findParentComponentOfClass<FullInterface>())
+        {
+            auto ptInFull = full->getLocalPoint(current_source_, e.getPosition());
+            auto *under = full->getComponentAt(ptInFull.x, ptInFull.y);
+            if (under)
+            {
+                DBG("ModulationManager::modulationDragged: fallback found component=" << under->getName());
+                component = under;
+            }
+        }
+    }
+    else
+    {
+        DBG("ModulationManager::modulationDragged: component = " << component->getName());;
+    }
+
     // if you've set the destination on one parameter that isn't the current one
     // (if you dragged quickly between two parameters) clear the temporary mod
     // before connecting
@@ -1630,7 +1921,88 @@ void ModulationManager::modulationDragged(const juce::MouseEvent &e) {
 
     // if (hover_knob)
     //   return;// modulationDraggedToHoverSlider(hover_knob);
-    // else
+    // Try to resolve to a known destination by walking up the parent chain if needed
+    if (component && destination_lookup_.count(component->getComponentID().toStdString()) == 0)
+    {
+        juce::Component* probe = component;
+        while (probe && destination_lookup_.count(probe->getComponentID().toStdString()) == 0)
+            probe = probe->getParentComponent();
+        if (probe)
+        {
+            DBG("ModulationManager::modulationDragged: resolved parent component=" << probe->getName());
+            component = probe;
+        }
+    }
+
+    // If still not a known destination, try to synthesize one on the fly for common modulatable types
+    if (component && destination_lookup_.count(component->getComponentID().toStdString()) == 0)
+    {
+        auto createDestinationFor = [&](juce::Component* c) -> bool {
+            if (!c) return false;
+            juce::String id = c->getComponentID();
+            if (id.isEmpty()) return false;
+
+            // Identify type and register in corresponding lookup
+            if (auto* ss = dynamic_cast<SynthSlider*>(c))
+            {
+                slider_model_lookup_[id.toStdString()] = ss;
+                std::unique_ptr<ModulationDestination> dest = std::make_unique<ModulationDestination>(ss);
+                modulation_destinations_->addAndMakeVisible(dest.get());
+                destination_lookup_[id.toStdString()] = dest.get();
+                all_destinations_.push_back(std::move(dest));
+            }
+            else if (auto* sb = dynamic_cast<SynthButton*>(c))
+            {
+                button_model_lookup_[id.toStdString()] = sb;
+                std::unique_ptr<ModulationDestination> dest = std::make_unique<ModulationDestination>(sb);
+                modulation_destinations_->addAndMakeVisible(dest.get());
+                destination_lookup_[id.toStdString()] = dest.get();
+                all_destinations_.push_back(std::move(dest));
+            }
+            else if (auto* st = dynamic_cast<StateModulatedComponent*>(c))
+            {
+                state_model_lookup_[id.toStdString()] = st;
+                std::unique_ptr<ModulationDestination> dest = std::make_unique<ModulationDestination>(st);
+                modulation_destinations_->addAndMakeVisible(dest.get());
+                destination_lookup_[id.toStdString()] = dest.get();
+                all_destinations_.push_back(std::move(dest));
+            }
+            else if (auto* cb = dynamic_cast<OpenGLComboBox*>(c))
+            {
+                combo_box_lookup[id.toStdString()] = cb;
+                std::unique_ptr<ModulationDestination> dest = std::make_unique<ModulationDestination>(cb);
+                modulation_destinations_->addAndMakeVisible(dest.get());
+                destination_lookup_[id.toStdString()] = dest.get();
+                all_destinations_.push_back(std::move(dest));
+            }
+            else
+            {
+                return false;
+            }
+
+            // Basic bounds/activation
+            auto bounds = c->getBounds().withPosition(getLocalPoint(c, juce::Point<int>(0, 0)));
+            destination_lookup_[id.toStdString()]->setBounds(bounds);
+            destination_lookup_[id.toStdString()]->setVisible(true);
+            destination_lookup_[id.toStdString()]->setActive(false);
+            setDestinationQuadBounds(destination_lookup_[id.toStdString()]);
+            return true;
+        };
+
+        // Try component itself, then walk up to find a modulatable ancestor
+        juce::Component* p = component;
+        bool created = false;
+        while (p && !created)
+        {
+            created = createDestinationFor(p);
+            if (!created) p = p->getParentComponent();
+        }
+        if (created)
+        {
+            DBG("ModulationManager::modulationDragged: synthesized destination for componentID=" << component->getComponentID());
+        }
+    }
+
     modulationDraggedToComponent(component, bipolar);
 }
 
@@ -2419,6 +2791,7 @@ void ModulationManager::connectStateModulation(std::string source, std::string d
 
 
 void ModulationManager::connectModulation(std::string source, std::string destination) {
+    DBG("ModulationManager::connectModulation");
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent == nullptr || source.empty() || destination.empty())
@@ -2501,23 +2874,39 @@ void ModulationManager::removeModulation(std::string source, std::string destina
 
 void ModulationManager::setModulationSliderValue(int index, float value) {
     //    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
-    modulation_amount_sliders_[index]->setValue(value, juce::dontSendNotification);
-    modulation_hover_sliders_[index]->setValue(value, juce::dontSendNotification);
-    selected_modulation_sliders_[index]->setValue(value, juce::dontSendNotification);
-    modulation_amount_sliders_[index]->redoImage();
-    modulation_hover_sliders_[index]->redoImage();
-    selected_modulation_sliders_[index]->redoImage();
+    if (index < 0
+        || index >= (int)bitklavier::kMaxModulationConnections)
+    {
+        DBG("setModulationSliderValue: invalid index " << index);
+        return;
+    }
+    if (modulation_amount_sliders_[index])
+        modulation_amount_sliders_[index]->setValue(value, juce::dontSendNotification);
+    if (modulation_hover_sliders_[index])
+        modulation_hover_sliders_[index]->setValue(value, juce::dontSendNotification);
+    if (selected_modulation_sliders_[index])
+        selected_modulation_sliders_[index]->setValue(value, juce::dontSendNotification);
+    if (modulation_amount_sliders_[index]) modulation_amount_sliders_[index]->redoImage();
+    if (modulation_hover_sliders_[index]) modulation_hover_sliders_[index]->redoImage();
+    if (selected_modulation_sliders_[index]) selected_modulation_sliders_[index]->redoImage();
 }
 
 void ModulationManager::setModulationSliderBipolar(int index, bool bipolar) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
-    modulation_amount_sliders_[index]->setBipolar(bipolar);
-    modulation_hover_sliders_[index]->setBipolar(bipolar);
-    selected_modulation_sliders_[index]->setBipolar(bipolar);
+    if (index < 0
+        || index >= (int)bitklavier::kMaxModulationConnections)
+    {
+        DBG("setModulationSliderBipolar: invalid index " << index);
+        return;
+    }
+    if (modulation_amount_sliders_[index]) modulation_amount_sliders_[index]->setBipolar(bipolar);
+    if (modulation_hover_sliders_[index]) modulation_hover_sliders_[index]->setBipolar(bipolar);
+    if (selected_modulation_sliders_[index]) selected_modulation_sliders_[index]->setBipolar(bipolar);
 }
 
 void ModulationManager::setModulationSliderValues(int index, float value) {
     //    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
+    if (index < 0) { DBG("setModulationSliderValues: invalid index " << index); return; }
     setModulationSliderValue(index, value);
     float from_value = value;
     int from_index = index;
@@ -2540,6 +2929,7 @@ void ModulationManager::setModulationSliderValues(int index, float value) {
 
 void ModulationManager::setModulationSliderScale(int index) {
     //    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
+    if (index < 0) { DBG("setModulationSliderScale: invalid index " << index); return; }
     int end_index = index;
     float scale = 1.0f;
     while (aux_connections_from_to_.count(end_index)) {

@@ -109,6 +109,16 @@ public:
 
     void connectTuning(const juce::ValueTree &v);
 
+    // Populate MODULATABLE_PARAMS for all preparations under a given piano ValueTree.
+    // This seeds new pianos so UI modulation mapping works immediately.
+    // Safe to call multiple times; will only add params if the list is missing or empty.
+    void initializePrepModParamsForPiano(juce::ValueTree pianoVT);
+
+    // Populate MODULATABLE_PARAMS for all preparations by querying their attached processors' parameters.
+    // For each PREPARATION with a valid nodeID, fetch the AudioProcessor and add its parameter IDs/names
+    // as modulatable params (filtering out unsuitable entries). This provides exact per‑prep parameter sets.
+    void initializePrepModParamsFromProcessors(juce::ValueTree pianoVT);
+
     void addTempoConnection(juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID);
 
     void connectTempo(const juce::ValueTree &v);

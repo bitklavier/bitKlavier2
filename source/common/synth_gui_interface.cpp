@@ -158,6 +158,7 @@ void SynthGuiInterface::connectStateModulation(std::string source, std::string d
 }
 
 void SynthGuiInterface::connectModulation(std::string source, std::string destination) {
+    DBG("SynthGuiInterface::connectModulation");
     bool created = synth_->connectModulation(source, destination);
     // if (created)
     //   initModulationValues(source, destination);

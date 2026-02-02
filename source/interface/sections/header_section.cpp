@@ -301,6 +301,7 @@ void HeaderSection::reset() {
 
 void HeaderSection::addPiano()
 {
+    DBG("add piano");
     juce::ValueTree piano{IDs::PIANO};
     piano.setProperty(IDs::isActive, true, nullptr);
     juce::String pianoName = "piano " + juce::String(howManyOfThisPrepTypeInVT(gallery, IDs::PIANO) + 1);
@@ -323,6 +324,18 @@ void HeaderSection::addPiano()
         }
     }
     gallery.appendChild(piano, nullptr);
+
+    DBG("added piano");
+
+    // Seed modulatable params for all preparations under this piano.
+    if (auto* interface = findParentComponentOfClass<SynthGuiInterface>())
+    {
+        DBG("initializePrepModParamsForPiano called");
+        // First, try exact population from processors (preferred)
+        interface->getSynth()->initializePrepModParamsFromProcessors(piano);
+        // Also ensure a minimal seed exists if processors haven’t populated yet
+        interface->getSynth()->initializePrepModParamsForPiano(piano);
+    }
 
     pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
     interface->allNotesOff();
