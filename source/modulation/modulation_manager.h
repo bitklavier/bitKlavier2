@@ -371,13 +371,13 @@ public OpenGLComboBox::Listener
     //  ModulesInterface<ModulationSection>::Listener,
     void added() override
     {
-        DBG("added");
+        DBG("ModulationManager::componentAdded added: called");
         componentAdded();
         DBG("done adding");
     }
     void removed() override
     {
-        DBG("remove");
+        DBG("ModulationManager::remove");
         componentAdded();
         DBG("doneremoving");
     }

@@ -136,7 +136,7 @@ public:
 
     void disconnectModulation(bitklavier::StateConnection *connection);
 
-    void connectStateModulation(bitklavier::StateConnection *connection);
+    void connectStateModulation(bitklavier::StateConnection *connection, const juce::ValueTree& v);
 
 
     ///modulation functionality
@@ -171,6 +171,7 @@ public:
                                   const juce::Identifier &property);
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
 
+    juce::ValueTree findParentWithType(juce::ValueTree child, const juce::Identifier& typeName_);
 
     //single consumer single produce queue (thread safe / non blocking)
     static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })

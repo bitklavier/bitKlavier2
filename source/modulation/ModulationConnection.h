@@ -625,7 +625,7 @@ struct StateConnection : public ModulatorBase::Listener{
                 + paramName.toStdString();
 
             auto val = addParam ({ key, initialValue });
-            DBG("adding param " + juce::String(key)  + "with index " + juce::String(val));
+            //DBG("adding param " + juce::String(key)  + "with index " + juce::String(val));
             return val;
         }
 

@@ -15,13 +15,13 @@ bool BKSynthesiserVoice::isPlayingChannel (const int midiChannel) const
 
 void BKSynthesiserVoice::setCurrentPlaybackSampleRate (const double newRate)
 {
-    DBG ("BKSynthesiserVoice sample rate changed to " + juce::String (newRate));
+    //DBG ("BKSynthesiserVoice sample rate changed to " + juce::String (newRate));
     currentSampleRate = newRate;
 }
 
 void BKSynthesiserVoice::setCurrentA4Frequency (const double newA4)
 {
-    DBG ("BKSynthesiserVoice A4 freq " + juce::String (newA4));
+    //DBG ("BKSynthesiserVoice A4 freq " + juce::String (newA4));
     currentA4Freq = newA4;
 }
 

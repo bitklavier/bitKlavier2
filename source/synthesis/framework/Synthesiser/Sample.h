@@ -909,7 +909,7 @@ public:
 
     void setCurrentPlaybackSampleRate(double newRate) override {
 
-        DBG("BKSamplerVoice::setCurrentPlaybackSampleRate " << newRate);
+        //DBG("BKSamplerVoice::setCurrentPlaybackSampleRate " << newRate);
         if (newRate <= 0) {
             return;
         }

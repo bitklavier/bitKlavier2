@@ -107,6 +107,8 @@ namespace bitklavier {
         void valueTreeRedirected (juce::ValueTree&) override ;
         void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
 
+        juce::ValueTree findParentWithProperty(juce::ValueTree child, const juce::Identifier& propName);
+
         void deleteAllGui() {
             for (auto obj: objects)
                 listeners_.call([&](Listener& l){ l.removeModConnection(obj); });
