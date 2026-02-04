@@ -3,6 +3,7 @@
 //
 
 #include "PianoSwitchProcessor.h"
+#include "FullInterface.h"
 
 PianoSwitchProcessor::PianoSwitchProcessor (SynthBase& parent,
     const juce::ValueTree& v, juce::UndoManager* um
@@ -63,6 +64,8 @@ void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
                     juce::ValueTree pianoVT = selectedPianoVT;
                     if (pianoVT.isValid() && pianoVT.hasType (IDs::PIANO))
                         pianoVT.setProperty (IDs::isActive, 1, nullptr);
+
+                    synth_base_.getGuiInterface()->getGui()->header_->updateCurrentPianoName();
                 });
             }
             break;

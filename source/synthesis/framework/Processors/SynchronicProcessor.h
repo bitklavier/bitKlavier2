@@ -403,7 +403,7 @@ class SynchronicCluster
 
         if (++beatCounter > static_cast<int>(*_sparams->numPulses))
         {
-            DBG("beatCounter = " << beatCounter << " numPulses = " << static_cast<int>(*_sparams->numPulses));
+            //DBG("beatCounter = " << beatCounter << " numPulses = " << static_cast<int>(*_sparams->numPulses));
             shouldPlay = false;
         }
     }
