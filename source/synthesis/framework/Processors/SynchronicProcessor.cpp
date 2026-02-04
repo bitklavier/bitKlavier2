@@ -398,8 +398,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
                                                              * getBeatThresholdSeconds() * 1000;
-
-                        DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + "");
+                        //DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + "");
 
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
@@ -587,7 +586,7 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
         }
     }
 
-    DBG("failed hold check");
+    //DBG("failed hold check");
     return false;
 }
 
@@ -612,8 +611,8 @@ bool SynchronicProcessor::updateCurrentCluster()
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
 
-        DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
-        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        //DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
+        //DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }

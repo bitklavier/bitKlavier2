@@ -116,6 +116,10 @@ TuningParametersView::TuningParametersView(
         params.tuningState.fundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this]() {
+            //doing this twice, because of the listener in TuningProcessor;
+            //  ok, but might want to optimize at some point, having the processor notify here that the fundamental
+            //  has been changed, so redoImage is called after.
+            //  some with tuningSystem above
             params.tuningState.setFundamental(params.tuningState.fundamental->getIndex());
             circular_keyboard->redoImage();
         })

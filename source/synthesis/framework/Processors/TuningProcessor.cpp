@@ -51,7 +51,7 @@ void TuningState::processStateChanges()
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
-        //DBG("TuningState::processStateChanges() " + change.toXmlString ());
+
         auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
         {
@@ -690,14 +690,35 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
         state.params.tuningState.circularTuningOffset,
         state.params.tuningState.circularTuningOffset_custom);
 
-   //  tuningCallbacks += {state.getParameterListeners().addParameterListener(
-   //     state.params.tuningState.fundamental,
-   //     chowdsp::ParameterListenerThread::AudioThread,
-   //     [this]() {
-   //
-   //  state.params.tuningState.setFundamental(state.params.tuningState.fundamental->getIndex());
-   //     })
-   // };
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+           state.params.tuningState.fundamental,
+           chowdsp::ParameterListenerThread::AudioThread,
+           [this]()
+           {
+                state.params.tuningState.setFundamental(state.params.tuningState.fundamental->getIndex());
+           }
+       )
+   };
+
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+            state.params.tuningState.tuningSystem,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]()
+            {
+                setOffsetsFromTuningSystem(
+                    state.params.tuningState.tuningSystem->get(),
+                    state.params.tuningState.fundamental->getIndex(),
+                    state.params.tuningState.circularTuningOffset,
+                    state.params.tuningState.circularTuningOffset_custom);
+            }
+        )
+    };
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

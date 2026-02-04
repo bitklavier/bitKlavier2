@@ -420,7 +420,7 @@ class SynchronicCluster
 
     inline void reset()
     {
-        DBG("reset called");
+        //DBG("reset called");
         envelopeCounter = 0;
         shouldPlay = false;
         resetPatternPhase();
@@ -432,13 +432,13 @@ class SynchronicCluster
     inline void setBeatPhasor(juce::uint64 c)
     {
         phasor = c;
-        DBG("resetting beat phasor");
+        //DBG("resetting beat phasor");
     }
     inline const juce::uint64 getPhasor(void) const noexcept { return phasor; }
 
     inline void addNote(int note)
     {
-        DBG("synchronic cluster adding note: " + juce::String(note));
+        //DBG("synchronic cluster adding note: " + juce::String(note));
         cluster.insert(0, note);
     }
 

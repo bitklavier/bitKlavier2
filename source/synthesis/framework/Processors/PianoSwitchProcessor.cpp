@@ -4,6 +4,7 @@
 
 #include "PianoSwitchProcessor.h"
 #include "FullInterface.h"
+#include "modulation_manager.h"
 
 PianoSwitchProcessor::PianoSwitchProcessor (SynthBase& parent,
     const juce::ValueTree& v, juce::UndoManager* um

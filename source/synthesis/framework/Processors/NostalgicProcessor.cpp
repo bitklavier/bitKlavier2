@@ -430,7 +430,7 @@ bool NostalgicProcessor::holdCheck(int noteNumber)
             return true;
         }
     }
-    DBG("failed hold check");
+    //DBG("failed hold check");
     return false;
 }
 

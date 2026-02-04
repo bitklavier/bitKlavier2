@@ -20,7 +20,7 @@ void bitklavier::ResetProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     {
         if (msg.getMessage().isNoteOn())
         {
-            DBG("reset called");
+            //DBG("reset called");
             outval = 1;
         }
     }
