@@ -1177,6 +1177,7 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
 
 void SynthBase::connectStateModulation (bitklavier::StateConnection* connection, const juce::ValueTree& v)
 {
+    // extract uuids and names from the connection
     std::stringstream ss (connection->source_name);
     std::string uuid;
     std::getline (ss, uuid, '_');
@@ -1184,38 +1185,38 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
     std::stringstream dst_stream (connection->destination_name);
     std::string dst_uuid;
     std::getline (dst_stream, dst_uuid, '_');
+
     std::string src_modulator_uuid_and_name;
     std::getline (ss, src_modulator_uuid_and_name, '_');
+
+    std::string dst_param;
+    std::getline (dst_stream, dst_param, '_');
+
     auto pos = src_modulator_uuid_and_name.find_first_of ("-");
     std::string juse_uuid = src_modulator_uuid_and_name.substr (pos + 1, src_modulator_uuid_and_name.size());
 
-    // auto mod_dst = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
-    // auto mod_connections = getActivePianoValueTree().getChildWithName (IDs::MODCONNECTIONS);
-    // auto mod_dst = parentPiano.getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
-    // auto mod_connections = parentPiano.getChildWithName (IDs::MODCONNECTIONS);
+    // find the needed nodes within the value tree to situation this connection
     auto parentPiano = findParentWithType (v, IDs::PIANO);
     auto mod_dst = parentPiano.getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
     auto mod_connections = parentPiano.getChildWithName (IDs::MODCONNECTIONS);
     auto state_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
     auto mod_src = parentPiano.getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
 
-    std::string dst_param;
-    std::getline (dst_stream, dst_param, '_');
+    // find the nodes in the audio graph
     auto source_node = engine_->getNodeForId (
         juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
     auto dest_node = engine_->getNodeForId (
         juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
 
+    // update the connection with the nodes and listener information
     connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
-    //determine where this would actually output in the modulationprocessor
-    //if two seperate mods in modproc would modulate the same paramater for whatever reason they will map to the same
-    // bus output
     connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
     connection->processor = connection->parent_processor->getModulatorBase (juse_uuid);
     connection->processor->addListener (connection);
     connection->parent_processor->addModulationConnection (connection);
     connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
 
+    // finally, add the connection to the sound enging
     engine_->addConnection (connection->connection_);
 }
 

@@ -262,7 +262,6 @@ namespace bitklavier
         }
         bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
-
             if(processorGraph == nullptr)
                 return false;
             dbgPrintConnectionsForNode(*processorGraph, connection.source.nodeID);
