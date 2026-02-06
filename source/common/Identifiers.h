@@ -42,6 +42,7 @@ namespace IDs
     DECLARE_ID (srcIdx)
     DECLARE_ID (destIdx)
     DECLARE_ID (isIn)
+    DECLARE_ID (isSelected)
     DECLARE_ID (PORT)
     DECLARE_ID (chIdx)
     DECLARE_ID (TUNINGCONNECTION)

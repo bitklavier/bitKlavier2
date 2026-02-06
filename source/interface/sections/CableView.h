@@ -95,6 +95,7 @@ public:
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
     void removeAllGuiListeners();
     void destroyOpenGlComponents(OpenGlWrapper& open_gl) override;
+    void hitTestCables (juce::Point<float> pos);
 private:
     OpenGlComponent* objectToDelete = nullptr;
 

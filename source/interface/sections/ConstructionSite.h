@@ -121,6 +121,7 @@ public:
 
 private:
     PreparationList* prep_list;
+    bitklavier::ConnectionList* connection_list;
     juce::ApplicationCommandManager& commandManager;
     void moduleListChanged() {}
     void moduleAdded (PluginInstanceWrapper* newModule) override;

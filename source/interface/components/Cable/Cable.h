@@ -127,7 +127,14 @@ public:
 
     void mouseDown (const juce::MouseEvent&) override
     {
+        // set all other cables to be unselected
+        // for (auto connection : site->connection_list)
+        // {
+        //     connection->state.setProperty (IDs::isSelected, 0, nullptr);
+        // }
+        state.setProperty (IDs::isSelected, 1, nullptr);
         dragging = false;
+        resized();
     }
 
     void mouseDrag (const juce::MouseEvent& e) override;
@@ -178,6 +185,14 @@ public:
                         comp->redoImage();
                     //comp->repaint (cableBounds);
                 });
+
+        // highlight cable if selected
+        if (state.getProperty (IDs::isSelected)) {
+            juce::Path selectionPath;
+            juce::PathStrokeType highlightStroke (4.0f); // Slightly wider than the main cable
+            highlightStroke.createStrokedPath (selectionPath, linePath);
+            linePath.addPath(selectionPath);
+        }
     }
 
     void getDistancesFromEnds (juce::Point<float> p, double& distanceFromStart, double& distanceFromEnd) const

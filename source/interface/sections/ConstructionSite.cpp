@@ -38,7 +38,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                          cableView(*this, um,data),
                                                          modulationLineView(*this, um,data),
                                                          preparationSelector(*this), parent(v),
-                                                        commandManager (_manager)
+                                                        commandManager (_manager),
+                                                        connection_list (data->synth->getActiveConnectionList())
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
     commandManager.registerAllCommandsForTarget (this);
@@ -386,6 +387,15 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 {
                     prep_list->removeChild(prep->state, &undo);
                 }
+
+                for (auto connection : *connection_list)
+                {
+                    if (connection->state.getProperty (IDs::isSelected))
+                    {
+                        connection_list->removeChild(connection->state, &undo);
+                    }
+                }
+
                 return true;
             }
             default:
@@ -592,6 +602,10 @@ void ConstructionSite::mouseMove(const juce::MouseEvent &eo) {
 
 void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     juce::MouseEvent e = eo.getEventRelativeTo(this);
+
+    // if you don't hit a cable, set all cables to be unselected
+    cableView.hitTestCables (e.position);
+
     auto itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent->getParentComponent());
     if (itemToSelect == nullptr) {
         preparationSelector.getLassoSelection().deselectAll();

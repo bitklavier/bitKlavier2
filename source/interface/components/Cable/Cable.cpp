@@ -159,6 +159,13 @@ void Cable::drawCable (juce::Graphics& g, juce::Point<float> start, juce::Point<
 {
     drawCableShadow (g, cableThickness);
 
+    if (state.getProperty (IDs::isSelected)) {
+        g.setColour(juce::Colours::white);
+        juce::ScopedLock sl (pathCrit);
+        // Stroke the path with a slightly larger width to create the "edge" effect
+        g.strokePath (linePath, juce::PathStrokeType (cableThickness));
+    }
+
     g.setGradientFill (juce::ColourGradient { startColour, start, endColour, end, false });
     {
         juce::ScopedLock sl (pathCrit);

@@ -14,7 +14,7 @@ CableView::CableView (ConstructionSite &site, juce::UndoManager& um, SynthGuiDat
     undoManager (um),
 connection_list(data->synth->getActiveConnectionList())
 {
-    setInterceptsMouseClicks (false,false);
+    setInterceptsMouseClicks (false,true);
     //startTimerHz (36);
     setAlwaysOnTop(true);
     connection_list->addListener(this);
@@ -223,6 +223,7 @@ void CableView::endDraggingConnector (const juce::MouseEvent& e)
         my_connection.setProperty(IDs::srcIdx, connection.source.channelIndex, nullptr);
         my_connection.setProperty(IDs::dest,  juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(connection.destination.nodeID), nullptr);
         my_connection.setProperty(IDs::destIdx, connection.destination.channelIndex, nullptr);
+        my_connection.setProperty(IDs::isSelected, 0, nullptr);
 
         connection_list->appendChild(my_connection, &undoManager);
     }
@@ -393,5 +394,22 @@ void CableView::removeAllGuiListeners() {
         connection_list->removeListener(this);
     }
     connection_list = nullptr;
+}
+
+void CableView::hitTestCables (juce::Point<float> pos)
+{
+    for (auto* cable : objects)
+    {
+        auto relativePos = pos - cable->getPosition().toFloat();
+        if (cable->hitTest ((int) relativePos.x, (int) relativePos.y))
+        {
+            cable->state.setProperty (IDs::isSelected, 1, nullptr);
+        }
+        else
+        {
+            cable->state.setProperty (IDs::isSelected, 0, nullptr);
+        }
+        cable->resized();
+    }
 }
 
