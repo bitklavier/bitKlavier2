@@ -132,7 +132,7 @@ bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
     int sClusterMax = *state.params.clusterMinMaxParams.clusterMaxParam;
     int rescaledMax = state.params.clusterMinMaxParams.clusterMaxParam.get()->getNormalisableRange().end;
 
-    DBG("SynchronicProcessor::checkClusterMinMax, clusterMax = " << sClusterMax << ", clusterNotesCounter = " << clusterNotesSize << ", rescaledMax = " << rescaledMax);
+    //DBG("SynchronicProcessor::checkClusterMinMax, clusterMax = " << sClusterMax << ", clusterNotesCounter = " << clusterNotesSize << ", rescaledMax = " << rescaledMax);
 
     if(sClusterMin <= sClusterMax)
     {
@@ -1033,7 +1033,7 @@ typename Serializer::SerializedType SynchronicParams::serialize (const Synchroni
 template <typename Serializer>
 void SynchronicParams::deserialize (typename Serializer::DeserializedType deserial, SynchronicParams& paramHolder)
 {
-    // Pre-scan attributes for cluster min/max
+    // Pre-scan attributes for params that might have ranges saved beyond the pre-defined defaults
     const int numAttrs = Serializer::getNumAttributes(deserial);
     float savedClusterMin = std::numeric_limits<float>::quiet_NaN();
     float savedClusterMax = std::numeric_limits<float>::quiet_NaN();
@@ -1080,9 +1080,8 @@ void SynchronicParams::deserialize (typename Serializer::DeserializedType deseri
     if (!std::isnan(savedHoldTimeMax) && savedHoldTimeMax > maxParam->range.end)
         maxParam->range.end = savedHoldTimeMax;
 
-
     /*
-     * call the default deserializer first, for the simple params
+     * call the default deserializer, for the simple params
      */
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
 
