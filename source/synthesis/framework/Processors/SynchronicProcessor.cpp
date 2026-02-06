@@ -22,6 +22,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     // for testing
     // bufferDebugger = new BufferDebugger();
 
+    DBG("SynchronicProcessor::SynchronicProcessor() constructor, clusterMax = " << *state.params.clusterMinMaxParams.clusterMaxParam);
 
     /*
      * todo: need to make sure that if the user tries to increase numLayers > MAX_CLUSTERS that this doesn't break
@@ -129,6 +130,9 @@ bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
     //in the normal case, where cluster is within a range defined by clusterMin and Max
     int sClusterMin = *state.params.clusterMinMaxParams.clusterMinParam;
     int sClusterMax = *state.params.clusterMinMaxParams.clusterMaxParam;
+    int rescaledMax = state.params.clusterMinMaxParams.clusterMaxParam.get()->getNormalisableRange().end;
+
+    DBG("SynchronicProcessor::checkClusterMinMax, clusterMax = " << sClusterMax << ", clusterNotesCounter = " << clusterNotesSize << ", rescaledMax = " << rescaledMax);
 
     if(sClusterMin <= sClusterMax)
     {
@@ -1029,6 +1033,54 @@ typename Serializer::SerializedType SynchronicParams::serialize (const Synchroni
 template <typename Serializer>
 void SynchronicParams::deserialize (typename Serializer::DeserializedType deserial, SynchronicParams& paramHolder)
 {
+    // Pre-scan attributes for cluster min/max
+    const int numAttrs = Serializer::getNumAttributes(deserial);
+    float savedClusterMin = std::numeric_limits<float>::quiet_NaN();
+    float savedClusterMax = std::numeric_limits<float>::quiet_NaN();
+    float savedHoldTimeMin = std::numeric_limits<float>::quiet_NaN();
+    float savedHoldTimeMax = std::numeric_limits<float>::quiet_NaN();
+
+    for (int i = 0; i < numAttrs; ++i)
+    {
+        auto name = Serializer::getAttributeName(deserial, i);
+        if (name == juce::String("clustermin"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedClusterMin = val;
+        }
+        else if (name == juce::String("clustermax"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedClusterMax = val;
+        }
+        else if (name == juce::String("holdTimeMinParam"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedHoldTimeMin = val;
+        }
+        else if (name == juce::String("holdTimeMaxParam"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedHoldTimeMax = val;
+        }
+    }
+
+    // Expand ranges first if needed
+    auto* minParam = paramHolder.clusterMinMaxParams.clusterMinParam.get();
+    auto* maxParam = paramHolder.clusterMinMaxParams.clusterMaxParam.get();
+    if (!std::isnan(savedClusterMin) && savedClusterMin < minParam->range.start)
+        minParam->range.start = savedClusterMin;
+    if (!std::isnan(savedClusterMax) && savedClusterMax > maxParam->range.end)
+        maxParam->range.end = savedClusterMax;
+
+    minParam = paramHolder.holdTimeMinMaxParams.holdTimeMinParam.get();
+    maxParam = paramHolder.holdTimeMinMaxParams.holdTimeMaxParam.get();
+    if (!std::isnan(savedHoldTimeMin) && savedHoldTimeMin < minParam->range.start)
+        minParam->range.start = savedHoldTimeMin;
+    if (!std::isnan(savedHoldTimeMax) && savedHoldTimeMax > maxParam->range.end)
+        maxParam->range.end = savedHoldTimeMax;
+
+
     /*
      * call the default deserializer first, for the simple params
      */

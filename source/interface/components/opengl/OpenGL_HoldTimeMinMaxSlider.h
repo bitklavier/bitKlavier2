@@ -29,6 +29,11 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
+        setMinValue (params->holdTimeMinParam->getNormalisableRange().start, juce::dontSendNotification);
+        setMaxValue (params->holdTimeMaxParam->getNormalisableRange().end, juce::dontSendNotification);
+        defmin = params->holdTimeMinParam->getNormalisableRange().start;
+        defmax = params->holdTimeMaxParam->getNormalisableRange().end;
+
         isModulated_ = true;
         addMyListener(this);
 
@@ -187,6 +192,16 @@ public:
         }
 
         else if (isModulated_) {
+            if (min < params->holdTimeMinParam->range.start)
+            {
+                params->holdTimeMinParam->range.start = min;
+            }
+
+            if (max > params->holdTimeMaxParam->range.end)
+            {
+                params->holdTimeMaxParam->range.end = max;
+            }
+
             defaultState.setProperty("holdtimemin", min, nullptr);
             defaultState.setProperty("holdtimemax", max, nullptr);
         }
@@ -246,6 +261,11 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+
+        setMinValue (params->holdTimeMinParam->getNormalisableRange().start, juce::dontSendNotification);
+        setMaxValue (params->holdTimeMaxParam->getNormalisableRange().end, juce::dontSendNotification);
+        defmin = params->holdTimeMinParam->getNormalisableRange().start;
+        defmax = params->holdTimeMaxParam->getNormalisableRange().end;
 
         isModulation_ = true;
         addMyListener(this);
