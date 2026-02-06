@@ -403,6 +403,7 @@ class SynchronicCluster
 
         DBG("beatCounter = " << beatCounter << " numPulses = " << static_cast<int>(*_sparams->numPulses));
         if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - *_sparams->skipFirst))
+        //if (++beatCounter > (static_cast<int>(*_sparams->numPulses)))
         {
             shouldPlay = false;
         }
