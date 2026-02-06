@@ -120,10 +120,6 @@ void EnvelopeSequenceSection::resized() {
     juce::Rectangle<int> area (getLocalBounds());
 
     int smallpadding = findValue(Skin::kPadding);
-    int largepadding = findValue(Skin::kLargePadding);
-    int comboboxheight = findValue(Skin::kComboMenuHeight);
-    int knobsectionheight = findValue(Skin::kKnobSectionHeight);
-    int labelsectionheight = findValue(Skin::kLabelHeight);
 
     envelopeBorder->setBounds(area);
 

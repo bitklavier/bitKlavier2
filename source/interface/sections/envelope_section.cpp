@@ -189,6 +189,54 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
 
     envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", params.label);
     addBorder(envelopeBorder.get());
+
+    sliderChangedCallback += {
+        listeners.addParameterListener
+        (
+            params.attackParam,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]
+            {
+                notifyParentOfValueChange();
+            }
+        )
+    };
+
+    sliderChangedCallback += {
+        listeners.addParameterListener
+        (
+            params.decayParam,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]
+            {
+                notifyParentOfValueChange();
+            }
+        )
+    };
+
+    sliderChangedCallback += {
+        listeners.addParameterListener
+        (
+            params.sustainParam,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]
+            {
+                notifyParentOfValueChange();
+            }
+        )
+    };
+
+    sliderChangedCallback += {
+        listeners.addParameterListener
+        (
+            params.releaseParam,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]
+            {
+                notifyParentOfValueChange();
+            }
+        )
+    };
 }
 
 EnvelopeSection::~EnvelopeSection() { }
@@ -206,7 +254,9 @@ void EnvelopeSection::paintBackground(juce::Graphics& g) {
 
 void EnvelopeSection::notifyParentOfValueChange()
 {
+    //DBG("EnvelopeSection::notifyParentOfValueChange()");
     _params.notify->setValueNotifyingHost(true);
+    envelope_->magnifyReset();
 }
 
 

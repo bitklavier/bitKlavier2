@@ -814,7 +814,10 @@ public:
     BKSynthesiserSound::Ptr currentlyPlayingSound;
 
     bool keyIsDown = false, sustainPedalDown = false, sostenutoPedalDown = false;
-    void updateAmpEnv(BKADSR::Parameters &parameters) {
+
+    void updateAmpEnv(BKADSR::Parameters &parameters)
+    {
+        //DBG("updateAmpEnv, attackTime = " << parameters.attack);
         ampEnv.setParameters(parameters);
         // todo: update mod amount
     }
