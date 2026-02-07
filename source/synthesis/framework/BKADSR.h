@@ -116,6 +116,7 @@ public:
     {
         jassert (newSampleRate > 0.0);
         sampleRate = newSampleRate;
+        recalculateRates();
     }
 
     //==============================================================================
@@ -129,6 +130,8 @@ public:
     /** Starts the attack phase of the envelope. */
     void noteOn() noexcept
     {
+        DBG("BKADSR::noteOn(), attack = " << parameters.attack << ", decay = " << parameters.decay << ", sustain = " << parameters.sustain << ", release = " << parameters.release);
+        DBG("BKADSR::noteOn(), attackRate = " << attackRate);
         if (attackRate > 0.0f)
         {
             state = State::attack;

@@ -254,7 +254,6 @@ void EnvelopeSection::paintBackground(juce::Graphics& g) {
 
 void EnvelopeSection::notifyParentOfValueChange()
 {
-    //DBG("EnvelopeSection::notifyParentOfValueChange()");
     _params.notify->setValueNotifyingHost(true);
     envelope_->magnifyReset();
 }
