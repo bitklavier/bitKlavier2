@@ -28,6 +28,7 @@ public:
 
     PopupItems createPopupMenu() override;
     void handlePopupResult(int result) override;
+    void buttonClicked(juce::Button* clicked_button) override;
 
     juce::ValueTree parent;
     std::map<std::string, SynthSlider*> getAllSliders() override;

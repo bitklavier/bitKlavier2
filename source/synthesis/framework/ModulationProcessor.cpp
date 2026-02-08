@@ -9,7 +9,8 @@
 #include "sound_engine.h"
 
 bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
-                                                     const juce::ValueTree &vt, juce::UndoManager* um) :
+                                                     const juce::ValueTree &vt,
+                                                     juce::UndoManager* um) :
 juce::AudioProcessor(
         BusesProperties().withInput("disabled", juce::AudioChannelSet::mono(), false)
         .withOutput("disabled", juce::AudioChannelSet::mono(), false)
@@ -20,6 +21,24 @@ juce::AudioProcessor(
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
     mod_list = std::make_unique<ModulationList>(state, &parent, this);
+}
+
+void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap) const
+{
+    for (auto &e: snap.mods)
+    {
+        if (e.mod != nullptr)
+        {
+            for (auto c    :e.connections)
+            {
+                const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+                const float raw0 = e.lastRaw0;
+                c->calculateReset(currentTotal,raw0);
+                parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+            }
+            e.mod->triggerReset();
+        }
+    }
 }
 
 void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
@@ -33,60 +52,75 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     // From MIDITarget Reset messages, which should trigger a reset of all mods to a the targeted prep
     if (pendingResetAll_.exchange(false, std::memory_order_acq_rel))
     {
-        //DBG("ModulationProcessor::processBlock, pendingResetAll_ = true");
-        for (auto& e : snap.mods)
-            if (e.mod != nullptr) {
-                for (    auto c    :e.connections) {
-                    //calculate the carryapplied offset in order to return to slider
-                    //c->currentDestinationSliderVal;
-                    const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
-                    const float raw0 = e.lastRaw0;               // wh
-                    c->calculateReset(currentTotal,raw0);
-
-                    // for full prep reset you want to set carryappliedto0
-                    //like so c->carryApplied_ = 0;
-                    //and set scalingvalueto0. which may be slightly more code due to trigger locks
-                    //c->setScalingValue(0.f);
-                    parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
-                }
-                e.mod->triggerReset();
-            }
-            // if (auto* mod = e.mod)
-            //     mod->continuousReset(); // For Ramp, this calls triggerReset()
+        triggerResets(snap);
+        // //DBG("ModulationProcessor::processBlock, pendingResetAll_ = true");
+        // for (auto& e : snap.mods)
+        //     if (e.mod != nullptr) {
+        //         for (    auto c    :e.connections) {
+        //             //calculate the carryapplied offset in order to return to slider
+        //             //c->currentDestinationSliderVal;
+        //             const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+        //             const float raw0 = e.lastRaw0;               // wh
+        //             c->calculateReset(currentTotal,raw0);
+        //
+        //             // for full prep reset you want to set carryappliedto0
+        //             //like so c->carryApplied_ = 0;
+        //             //and set scalingvalueto0. which may be slightly more code due to trigger locks
+        //             //c->setScalingValue(0.f);
+        //             parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+        //         }
+        //         e.mod->triggerReset();
+        //     }
+        //     // if (auto* mod = e.mod)
+        //     //     mod->continuousReset(); // For Ramp, this calls triggerReset()
     }
 
     // from Audio Bus
     auto reset_in = getBusBuffer(buffer, true, 2);
-    if (reset_in.getSample(0, 0) == 1.0f) {
-        //DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
-        for (auto &e: snap.mods)
-            if (e.mod != nullptr) {
-                for (    auto c    :e.connections) {
-                    //calculate the carryapplied offset in order to return to slider
-                    //c->currentDestinationSliderVal;
-                    const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
-                    const float raw0 = e.lastRaw0;               // wh
-                    c->calculateReset(currentTotal,raw0);
-
-                    // for full prep reset you want to set carryappliedto0
-                    //like so c->carryApplied_ = 0;
-                    //and set scalingvalueto0. which may be slightly more code due to trigger locks
-                    //c->setScalingValue(0.f);
-                    parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
-                }
-                e.mod->triggerReset();
-
-            }
+    if (reset_in.getSample(0, 0) == 1.0f)
+    {
+        triggerResets(snap);
+        // //DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
+        // for (auto &e: snap.mods)
+        // {
+        //     if (e.mod != nullptr)
+        //     {
+        //         for (auto c    :e.connections)
+        //         {
+        //             //calculate the carryapplied offset in order to return to slider
+        //             //c->currentDestinationSliderVal;
+        //             const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+        //             const float raw0 = e.lastRaw0;               // wh
+        //             c->calculateReset(currentTotal,raw0);
+        //
+        //             // for full prep reset you want to set carryappliedto0
+        //             //like so c->carryApplied_ = 0;
+        //             //and set scalingvalueto0. which may be slightly more code due to trigger locks
+        //             //c->setScalingValue(0.f);
+        //             parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+        //         }
+        //         e.mod->triggerReset();
+        //     }
+        // }
     }
 
     // MIDI note-on => request retrigger
     for (auto msg: midiMessages) {
         if (msg.getMessage().isNoteOn())
         {
-            //DBG("ModulationProcessor::processBlock, retrigger from noteOn");
-            for (auto &e: snap.mods)
-                if (e.mod != nullptr)
-                    e.mod->pendingRetrigger.store(true, std::memory_order_release);
+            if (isModded && isToggle)
+            {
+                //do reset
+                triggerResets(snap);
+                isModded = false;
+            }
+            else // trigger the mods
+            {
+                for (auto &e: snap.mods)
+                    if (e.mod != nullptr)
+                        e.mod->pendingRetrigger.store(true, std::memory_order_release);
+                isModded = true;
+            }
         }
     }
 
@@ -98,8 +132,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
 
         if (mod->type != ModulatorType::AUDIO)
             continue;
-
-
 
         const bool doRetrig = mod->pendingRetrigger.exchange(false, std::memory_order_acq_rel);
         if (doRetrig) {

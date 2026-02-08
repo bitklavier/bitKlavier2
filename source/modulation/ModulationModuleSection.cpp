@@ -138,6 +138,24 @@ void ModulationModuleSection::handlePopupResult(int result) {
     }
 }
 
+void ModulationModuleSection::buttonClicked(juce::Button* clicked_button)
+{
+    // Intercept toggle-mode button to propagate state to the underlying processor
+    if (clicked_button == setToggleMode.get())
+    {
+        if (modulation_list_ != nullptr && modulation_list_->proc_ != nullptr)
+        {
+            const bool toggled = setToggleMode->getToggleState();
+            modulation_list_->proc_->isToggle = toggled;
+            DBG("ModulationModuleSection: set processor isToggle = " << (int)toggled);
+        }
+        return; // don't pass to base; we've handled it
+    }
+
+    // Defer other buttons to base implementation
+    ModulesInterface::buttonClicked(clicked_button);
+}
+
 void ModulationModuleSection::setEffectPositions() {
     if (getWidth() <= 0 || getHeight() <= 0)
         return;
@@ -150,7 +168,8 @@ void ModulationModuleSection::setEffectPositions() {
     int knob_section_height = getKnobSectionHeight();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int effect_height = 2 * knob_section_height - widget_margin;
-    int y = large_padding * 4; // make space for add modulation button
+    //int y = large_padding * 4; // make space for add modulation button and toggle mode button
+    int y = (findValue(Skin::kComboMenuHeight) + 2 * padding) * 2;
 
     for(auto& section : modulation_sections_)
     {

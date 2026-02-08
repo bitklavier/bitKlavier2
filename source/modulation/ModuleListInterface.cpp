@@ -27,16 +27,22 @@ ModulesInterface::ModulesInterface(juce::ValueTree &v) : SynthSection("modules")
     //addModButton->setLookAndFeel(TextLookAndFeel::instance());
     addModButton->setButtonText("add modification");
 
+    setToggleMode = std::make_unique<OpenGlTextButton>("mod_set_toggle_mode");
+    addOpenGlComponent(setToggleMode->getGlComponent());
+    addAndMakeVisible(setToggleMode.get());
+    setToggleMode->addListener(this);
+    setToggleMode->setToggleable (true);
+    setToggleMode->setClickingTogglesState (true);
+    setToggleMode->setButtonText("toggle mode");
+
     modListTitle = std::make_shared<PlainTextComponent>(getName(), "modifications");
     addOpenGlComponent(modListTitle);
     modListTitle->setFontType (PlainTextComponent::kTitle);
     modListTitle->setJustification(juce::Justification::centred);
 
     setOpaque(false);
-
-//    setInterceptsMouseClicks(false, true);
-    ////    setSkinOverride(Skin::kAllEffects);
 }
+
 ModulesInterface::~ModulesInterface() {
     //freeObjects();
 }
@@ -90,8 +96,14 @@ void ModulesInterface::resized() {
     scroll_bar_->setBounds(getWidth() - large_padding + 1, 0, large_padding - 2, getHeight());
     scroll_bar_->setColor(findColour(Skin::kLightenScreen, true));
 
+    juce::Rectangle<int> buttonArea = getLocalBounds();
+    buttonArea.reduce(large_padding, small_padding);
     //addModButton->setBounds(getLocalBounds().reduced(large_padding, small_padding).removeFromBottom(findValue(Skin::kComboMenuHeight)));
-    addModButton->setBounds(getLocalBounds().reduced(large_padding, small_padding).removeFromTop(findValue(Skin::kComboMenuHeight)));
+    // addModButton->setBounds(buttonArea.reduced(large_padding, small_padding).removeFromTop(findValue(Skin::kComboMenuHeight)));
+    // setToggleMode->setBounds(buttonArea.reduced(large_padding, small_padding).removeFromTop(findValue(Skin::kComboMenuHeight)));
+    addModButton->setBounds(buttonArea.removeFromTop(findValue(Skin::kComboMenuHeight)));
+    buttonArea.removeFromTop(small_padding);
+    setToggleMode->setBounds(buttonArea.removeFromTop(findValue(Skin::kComboMenuHeight)));
 
     SynthSection::resized();
 }
@@ -108,9 +120,16 @@ void ModulesInterface::mouseDown (const juce::MouseEvent& e)
 
 void ModulesInterface::buttonClicked(juce::Button* clicked_button)
 {
-    PopupItems options = createPopupMenu();
-    showPopupSelector(this, getLocalBounds().getTopRight(), options, [=](int selection,int) { handlePopupResult(selection); });
-    SynthSection::buttonClicked(clicked_button);
+    if (clicked_button == addModButton.get())
+    {
+        PopupItems options = createPopupMenu();
+        showPopupSelector(this, getLocalBounds().getTopRight(), options, [=](int selection,int) { handlePopupResult(selection); });
+        SynthSection::buttonClicked(clicked_button);
+    }
+    else if (clicked_button == setToggleMode.get())
+    {
+        DBG("toggle mode = " << (int)setToggleMode->getToggleState());
+    }
 }
 
 void ModulesInterface::initOpenGlComponents(OpenGlWrapper& open_gl) {

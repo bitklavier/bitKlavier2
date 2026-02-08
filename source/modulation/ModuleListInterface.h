@@ -123,6 +123,8 @@ protected:
     std::unique_ptr<OpenGlTextButton> addModButton;
     std::shared_ptr<PlainTextComponent> modListTitle;
 
+    std::unique_ptr<OpenGlTextButton> setToggleMode;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModulesInterface)
 };
 
