@@ -141,15 +141,15 @@ public:
         addStateModulatedComponent (accentsSlider.get());
         accentsSlider->updateFromParams(juce::dontSendNotification);
 
-        sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustainlength_multipliers", &params.sustainLengthMultipliers, listeners);
-        sustainLengthMultipliersSlider->setComponentID ("sustainlength_multipliers");
+        sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustain_length_multipliers", &params.sustainLengthMultipliers, listeners);
+        sustainLengthMultipliersSlider->setComponentID ("sustain_length_multipliers");
         sustainLengthMultipliersSlider->setMinMaxDefaultInc({-2., 2., 1., 0.01});
         sustainLengthMultipliersSlider->setName("Sustain Length Multipliers");
         addStateModulatedComponent (sustainLengthMultipliersSlider.get());
         sustainLengthMultipliersSlider->updateFromParams(juce::dontSendNotification);
 
-        beatLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("beatlength_multipliers", &params.beatLengthMultipliers, listeners);
-        beatLengthMultipliersSlider->setComponentID ("beatlength_multipliers");
+        beatLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("beat_length_multipliers", &params.beatLengthMultipliers, listeners);
+        beatLengthMultipliersSlider->setComponentID ("beat_length_multipliers");
         beatLengthMultipliersSlider->setMinMaxDefaultInc({0., 2., 1., 0.01});
         beatLengthMultipliersSlider->setName("Beat Length Multipliers");
         addStateModulatedComponent (beatLengthMultipliersSlider.get());

@@ -35,7 +35,6 @@ Synchronic.h
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
 #include "buffer_debugger.h"
-#include "target_types.h"
 #include "utils.h"
 
 enum SynchronicPulseTriggerType
@@ -110,8 +109,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     // primary multislider params
     MultiSlider2DState transpositions {"transpositions"};
     MultiSliderState accents {"accents"};
-    MultiSliderState sustainLengthMultipliers{"SustainLengthMultipliers"};
-    MultiSliderState beatLengthMultipliers{"beatLengthMultipliers"};
+    MultiSliderState sustainLengthMultipliers{"sustain_length_multipliers"};
+    MultiSliderState beatLengthMultipliers{"beat_length_multipliers"};
 
     /*
      * for keeping track of the current multislider lengths

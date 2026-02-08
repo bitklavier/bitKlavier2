@@ -160,9 +160,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                 }
                 const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
 
-
-
-
                 // const float carry = c->lastAppliedPrev_.load(std::memory_order_relaxed);
                 // c->setCarryActive(carry);
                 c->updateScalingAudioThread(currentTotal, raw0);
@@ -239,7 +236,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     }
 }
 
-
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase *mod) {
     // callOnMainThread([this, mod]
     //    {
@@ -255,7 +251,6 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase *mod) {
         index = modulators_.size();
         modulators_.push_back(mod);
     }
-
 
     if (tmp_buffers.size() <= index) tmp_buffers.resize(index + 1);
     if (mod_routing.size() <= index) mod_routing.resize(index + 1);

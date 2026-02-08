@@ -76,7 +76,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "holdtime_min_max",
         &(state.params.holdTimeMinMaxParams.stateChanges)));
 
-    state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    //state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "envelope_sequence",
@@ -120,7 +120,6 @@ void SynchronicProcessor::tuningStateInvalidated() {
     tuning = nullptr;
     synchronicSynth->setTuning(nullptr);
 }
-
 
 bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
 {
