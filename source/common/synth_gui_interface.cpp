@@ -478,7 +478,6 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
 
     auto tree = juce::KnownPluginList::createTree (pluginDescriptions, synth_->user_prefs->userPreferences->pluginSortMethod);
     synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference = {};
-    popup.addItem (-1, "");
     addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
     return popup;
 }
@@ -509,12 +508,12 @@ PopupItems SynthGuiInterface::getPreparationPopupItems()
 PopupItems SynthGuiInterface::getVSTPopupItems()
 {
     PopupItems popup;
-
-    auto pluginDescriptions = synth_->user_prefs->userPreferences->knownPluginList.getTypes();
+    auto& pluginList = synth_->user_prefs->userPreferences->knownPluginList;
+    auto pluginDescriptions = pluginList.getTypes();
+    DBG("SynthGuiInterface::getVSTPopupItems known plugins: " << pluginDescriptions.size());
 
     auto tree = juce::KnownPluginList::createTree (pluginDescriptions, synth_->user_prefs->userPreferences->pluginSortMethod);
     synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference = {};
-    popup.addItem (-1, "");
     addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
     return popup;
 }

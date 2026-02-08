@@ -273,11 +273,13 @@ class HeaderSection : public SynthSection, public LogoSection::Listener{
 
     std::shared_ptr<PlainTextComponent> gallerySelectText;
 
-  private:
+  public:
     const juce::ValueTree& getActivePiano();
     juce::ValueTree getActivePianoCopy();
     std::vector<std::string> getAllPianoNames();
     void renamePiano(juce::String newname);
+
+  private:
     std::vector<Listener*> listeners_;
 
     int tab_offset_;

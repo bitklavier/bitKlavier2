@@ -659,9 +659,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         for (int i = 0; i < presetNames.size(); ++i)
             options.addItem(i, presetNames.getReference(i).toStdString());
 
-        //juce::Point<int> position(soundfontPresetSelector->getX(), soundfontPresetSelector->getBottom());
+        juce::Point<int> position(soundfontPresetSelector->getX(), soundfontPresetSelector->getBottom());
         // for some reason, the placement of this right-most popup isn't working as expected; this kludge gets it in the right place
-        juce::Point<int> position(getLocalBounds().getRight() + 100, soundfontPresetSelector->getBottom());
+        //juce::Point<int> position(getLocalBounds().getRight() + 100, soundfontPresetSelector->getBottom());
 
         showPopupSelector(this, position, options,
                           [this, presetNames, sfzName](int selection, int) {
@@ -864,6 +864,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else if (clicked_button == VSTSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         PopupItems options = parent->getVSTPopupItems();
+        DBG("HeaderSection::buttonClicked VSTSelector clicked. Options size: " << options.size());
 
         juce::Point<int> position(VSTSelector->getX(), VSTSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int a) {

@@ -620,6 +620,15 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     //grabKeyboardFocus();
 
     if (e.mods.isPopupMenu()) {
+        auto itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent->getParentComponent());
+        if (itemToSelect == nullptr) {
+            itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent);
+        }
+
+        if (itemToSelect != nullptr) {
+            return;
+        }
+
         _parent = findParentComponentOfClass<SynthGuiInterface>();
           auto callback = [=](int selection,int index) {handlePluginPopup(selection,index);};
     auto cancel = [=]() {

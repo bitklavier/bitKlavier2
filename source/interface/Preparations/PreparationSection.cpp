@@ -259,8 +259,27 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
     juce::Logger::writeToLog ("prep mousedown");
 
-    //todo investigate need for this only in release build
+    if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
+    {
+        FullInterface* fullInterface = findParentComponentOfClass<FullInterface>();
+        if (fullInterface && fullInterface->header_)
+        {
+            std::vector<std::string> pianoNames = fullInterface->header_->getAllPianoNames();
+            PopupItems menu("add linked prep to...");
+            int id = 1;
+            for (const auto& name : pianoNames)
+            {
+                menu.addItem(id++, name);
+            }
 
+            showPopupSelector(this, e.getPosition(), menu, [pianoNames](int id, int selectedIndex) {
+                if (selectedIndex >= 0 && selectedIndex < pianoNames.size())
+                {
+                    DBG("Selected piano to add linked prep to: " << pianoNames[selectedIndex]);
+                }
+            });
+        }
+    }
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {

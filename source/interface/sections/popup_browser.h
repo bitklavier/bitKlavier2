@@ -155,11 +155,17 @@ public:
 
     void setSelections(PopupItems selections);
     PopupItems getSelectionItems(int index) const { return selections_.items[index]; }
+    bool hasTitle() const { return !selections_.name.empty(); }
     int getRowFromPosition(float mouse_position);
     int getRowHeight();
     int getTextPadding() { return getRowHeight() / 4; }
     int getBrowseWidth();
-    int getBrowseHeight() { return getRowHeight() * selections_.size(); }
+    int getBrowseHeight() {
+        int num_rows = selections_.size();
+        if (!selections_.name.empty())
+            num_rows++;
+        return getRowHeight() * num_rows;
+    }
     juce::Font getFont() ;
     void mouseMove(const juce::MouseEvent& e) override;
     void mouseDrag(const juce::MouseEvent& e) override;
@@ -176,6 +182,7 @@ public:
     void scrollBarMoved(juce::ScrollBar* scroll_bar, double range_start) override;
     void setScrollBarRange();
     int getScrollableRange();
+    int getViewPosition();
 
     void initOpenGlComponents(OpenGlWrapper& open_gl) override;
     void renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) override;
@@ -190,10 +197,6 @@ public:
     int Ypos;
 
 private:
-    int getViewPosition() {
-        int view_height = getHeight();
-        return std::max(0, std::min<int>(selections_.size() * getRowHeight() - view_height, view_position_));
-    }
     void redoImage();
     void moveQuadToRow(OpenGlQuad& quad, int row);
 
@@ -228,47 +231,9 @@ public:
     }
 
     void setPosition(juce::Point<int> position, juce::Rectangle<int> bounds);
+    void updateSize();
 
-    void newSelection(PopupList* list, int id, int index) override {
-        if (list == popup_list_.get()) {
-            if (id >= 0) {
-                if (!list->getSelectionItems(index).items.empty()) {
-                    // Position submenu aligned to the selected row and clamp within this component's bounds
-                    const int rowHeight = list->getRowHeight();
-                    const int subRows   = (int) list->getSelectionItems(index).items.size();
-                    const int subHeight = rowHeight * subRows;
-
-                    // Base Y starts at the top of the left list plus the offset of the clicked row
-                    int baseY = popup_list_->getY() + index * rowHeight;
-
-                    // Respect rounded margins used in resized()
-                    const int rounding = findValue(Skin::kBodyRounding);
-                    const int minY = rounding;
-                    const int maxY = std::max(minY, getHeight() - rounding - subHeight);
-                    const int clampedY = std::min(std::max(baseY, minY), maxY);
-
-                    popup_list_1->setBounds(popup_list_1->getX(), clampedY, popup_list_1->getWidth(), subHeight);
-                    popup_list_1->setSelections(list->getSelectionItems(index));
-                    popup_list_1->showSelected(true);
-                    popup_list_1->setVisible(true);
-                    body_1->setBounds(popup_list_1->getBounds());
-                    border_1->setBounds(popup_list_1->getBounds());
-                    body_1->setVisible(true);
-                    border_1->setVisible(true);
-                } else {
-                    cancel_ = nullptr;
-                    callback_(id,index);
-                    setVisible(false);
-                }
-            }
-            else
-                cancel_();
-        } else if (list == popup_list_1.get()) {
-            cancel_ = nullptr;
-            callback_(id,index);
-            setVisible(false);
-        }
-    }
+    void newSelection(PopupList* list, int id, int index) override;
 
     void focusLost(FocusChangeType cause) override {
         setVisible(false);
@@ -284,6 +249,7 @@ public:
         popup_list_1->setVisible(false);
         border_1->setVisible(false);
         body_1->setVisible(false);
+        resized();
     }
 
 private:
