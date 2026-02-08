@@ -15,7 +15,7 @@ class ModulationModuleSection : public ModulesInterface
 {
 
 public:
-    explicit ModulationModuleSection(ModulationList *,juce::ValueTree &, ModulationManager* m, juce::UndoManager &um);
+    explicit ModulationModuleSection(ModulationList *, juce::ValueTree &, ModulationManager* m, juce::UndoManager &um);
     virtual ~ModulationModuleSection();
 
     // ModulationList::Listener override: notified before the list is destroyed

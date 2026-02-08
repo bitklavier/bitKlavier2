@@ -35,6 +35,13 @@ ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
 //    factory.registerType<OscillatorModuleProcessor, juce::ValueTree, LEAF*>("osc");
 //    factory.registerType<FilterModuleProcessor, juce::ValueTree, LEAF*>("filt");
      addListener(m);
+
+    // Initialize toggle button and processor state from ValueTree
+    const bool vtToggle = (bool) parent.getProperty(IDs::modulationToggleMode, false);
+    if (setToggleMode != nullptr)
+        setToggleMode->setToggleState(vtToggle, juce::NotificationType::dontSendNotification);
+    if (modulation_list_ != nullptr && modulation_list_->proc_ != nullptr)
+        modulation_list_->proc_->isToggle = vtToggle;
 }
 
 void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
@@ -146,6 +153,8 @@ void ModulationModuleSection::buttonClicked(juce::Button* clicked_button)
         if (modulation_list_ != nullptr && modulation_list_->proc_ != nullptr)
         {
             const bool toggled = setToggleMode->getToggleState();
+            // Persist to ValueTree so it is saved/loaded with galleries
+            parent.setProperty(IDs::modulationToggleMode, toggled, &undo);
             modulation_list_->proc_->isToggle = toggled;
             DBG("ModulationModuleSection: set processor isToggle = " << (int)toggled);
         }

@@ -71,6 +71,7 @@ namespace IDs
     DECLARE_ID (isBipolar)
     DECLARE_ID (isOffsetMod)
     DECLARE_ID (isMod)
+    DECLARE_ID (modulationToggleMode)
     DECLARE_ID (parameter)
     DECLARE_ID (MODULATABLE_PARAMS)
     DECLARE_ID (MODULATABLE_PARAM)

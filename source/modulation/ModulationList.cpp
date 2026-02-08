@@ -91,6 +91,14 @@ void ModulationList::newObjectAdded(ModulatorBase * m) {
 
 void ModulationList:: valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i)
 {
+    // Update processor toggle mode if persisted property changes (e.g., when loading a gallery)
+    if (i == IDs::modulationToggleMode)
+    {
+        if (proc_ != nullptr)
+            proc_->isToggle = (bool) v.getProperty(IDs::modulationToggleMode, false);
+        return;
+    }
+
     if(v.getProperty(IDs::sync,0))
     {
         for(auto obj : objects)
