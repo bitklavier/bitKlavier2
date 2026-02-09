@@ -110,9 +110,23 @@ bool SynchronicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bu
 
 void SynchronicProcessor::setTuning (TuningProcessor* tun)
 {
+    if (tuning == tun)
+        return;
+
+    if (tuning != nullptr)
+        tuning->removeListener (this);
+
     tuning = tun;
-    tuning->addListener(this);
-    synchronicSynth->setTuning (&tuning->getState().params.tuningState);
+
+    if (tuning != nullptr)
+    {
+        tuning->addListener (this);
+        synchronicSynth->setTuning (&tuning->getState().params.tuningState);
+    }
+    else
+    {
+        synchronicSynth->setTuning (nullptr);
+    }
 }
 
 void SynchronicProcessor::tuningStateInvalidated() {

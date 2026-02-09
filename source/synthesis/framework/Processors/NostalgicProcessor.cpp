@@ -63,15 +63,28 @@ bool NostalgicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bus
 void NostalgicProcessor::setSynchronic (SynchronicProcessor* synch)
 {
     synchronic = synch;
-    state.params.synchronicConnected = true;
+    state.params.synchronicConnected = (synchronic != nullptr);
 }
 
 void NostalgicProcessor::setTuning (TuningProcessor* tun)
 {
-    tuning = tun;
-    tuning->addListener(this);
-    nostalgicSynth->setTuning (&tuning->getState().params.tuningState);
+    if (tuning == tun)
+        return;
 
+    if (tuning != nullptr)
+        tuning->removeListener (this);
+
+    tuning = tun;
+
+    if (tuning != nullptr)
+    {
+        tuning->addListener (this);
+        nostalgicSynth->setTuning (&tuning->getState().params.tuningState);
+    }
+    else
+    {
+        nostalgicSynth->setTuning (nullptr);
+    }
 }
 void NostalgicProcessor::tuningStateInvalidated() {
     tuning = nullptr;
