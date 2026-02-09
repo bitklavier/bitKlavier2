@@ -165,9 +165,35 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
     for (int i = 0; i < size_;)
     {
         auto connection = vt_.getChild (i);
-        if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
+        auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src));
+        auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest));
+
+        if (srcid == delete_id || dstid == delete_id)
         {
             DBG ("remove mod connection");
+
+            if (connection.hasType (IDs::TUNINGCONNECTION))
+            {
+                auto* destNode = getNodeForId (dstid);
+                if (destNode != nullptr)
+                    if (auto* proc = dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor()))
+                        proc->setTuning (nullptr);
+            }
+            else if (connection.hasType (IDs::TEMPOCONNECTION))
+            {
+                auto* destNode = getNodeForId (dstid);
+                if (destNode != nullptr)
+                    if (auto* proc = dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor()))
+                        proc->setTempo (nullptr);
+            }
+            else if (connection.hasType (IDs::SYNCHRONICCONNECTION))
+            {
+                auto* destNode = getNodeForId (dstid);
+                if (destNode != nullptr)
+                    if (auto* proc = dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor()))
+                        proc->setSynchronic (nullptr);
+            }
+
             for (int j = 0; j < connection.getNumChildren(); ++j) //const auto& child : connection) {
             {
                 disconnectModulation (connection.getChild(j));
@@ -432,6 +458,24 @@ void SynthBase::addConnection (juce::AudioProcessorGraph::Connection& connect)
 
 void SynthBase::removeConnection (const juce::AudioProcessorGraph::Connection& connect)
 {
+    // Check if this connection was a special internal one
+    auto* srcNode = getNodeForId (connect.source.nodeID);
+    auto* dstNode = getNodeForId (connect.destination.nodeID);
+
+    if (dstNode != nullptr && srcNode != nullptr)
+    {
+        if (auto* destProc = dynamic_cast<bitklavier::InternalProcessor*> (dstNode->getProcessor()))
+        {
+            auto* srcProc = srcNode->getProcessor();
+            if (dynamic_cast<TuningProcessor*> (srcProc) != nullptr && destProc->getTuning() == srcProc)
+                destProc->setTuning (nullptr);
+            else if (dynamic_cast<TempoProcessor*> (srcProc) != nullptr && destProc->getTempo() == srcProc)
+                destProc->setTempo (nullptr);
+            else if (dynamic_cast<SynchronicProcessor*> (srcProc) != nullptr && destProc->getSynchronic() == srcProc)
+                destProc->setSynchronic (nullptr);
+        }
+    }
+
     engine_->removeConnection (connect);
 }
 

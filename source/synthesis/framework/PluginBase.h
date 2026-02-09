@@ -30,15 +30,20 @@ namespace bitklavier {
         }
 
         virtual void setTuning(TuningProcessor *tun) {
-            // tuning = tun;
+            tuning = tun;
         }
 
         virtual void setTempo(TempoProcessor *tem) {
             tempo = tem;
         }
 
-        virtual void setSynchronic(SynchronicProcessor *synchronic) {
+        virtual void setSynchronic(SynchronicProcessor *syn) {
+            synchronic = syn;
         }
+
+        TuningProcessor* getTuning() const { return tuning; }
+        TempoProcessor* getTempo() const { return tempo; }
+        SynchronicProcessor* getSynchronic() const { return synchronic; }
 
         virtual void addSoundSet(
             juce::ReferenceCountedArray<BKSynthesiserSound> *s, // main samples
