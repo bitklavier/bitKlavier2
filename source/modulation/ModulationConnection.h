@@ -91,6 +91,7 @@ class ModulationProcessor;
         bool isOffset() const { return offset_; }
         bool isBypass() const {return bypass_; }
         bool isStereo() const {return stereo_; }
+
         bool setDefaultBipolar (bool val)
         {
             defaultBipolar = val;
@@ -357,6 +358,7 @@ class ModulationProcessor;
         juce::NormalisableRange<float> range;
         //calculate number to return slider to default value based on all active mods
         void calculateReset(float currentTotalParamUnits,float);
+
     private:
         float currentTotalBaseValue;
         std::atomic<float> scalingValue_   { 0.0f }; // editable pre-trigger

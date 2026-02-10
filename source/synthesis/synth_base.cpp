@@ -1037,11 +1037,15 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         connection->setDestParamIndex(getParamOffsetBank().getIndexIfExists(connection->destination_name));
         mod_connections_.push_back (connection);
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
-        um.beginNewTransaction();
-        mod_connection.appendChild (connection->state, &um);
+
+        // Check if an identical connection child already exists to avoid duplication
+        if (mod_connection.getChildWithProperty(IDs::uuid, connection->state.getProperty(IDs::uuid)).isValid() == false)
+        {
+            um.beginNewTransaction();
+            mod_connection.appendChild (connection->state, &um);
+        }
 
         bool connectionAdded = engine_->addConnection (connection->connection_);
-
     }
 }
 

@@ -12,9 +12,22 @@ namespace bitklavier {
     }
 
     void ModConnectionList::newObjectAdded(ModConnection *c) {
-        // Flat layout only: connect per-connection nodes directly.
+        // Flat layout: connect per-connection nodes directly.
         if (c->state.hasType(IDs::ModulationConnection))
+        {
             synth.connectModulation(c->state);
+        }
+
+        // Nested layout: check children of wrapper nodes.
+        if (c->state.hasType(IDs::MODCONNECTION))
+        {
+            for (const auto& v : c->state)
+            {
+                if (v.hasType(IDs::ModulationConnection))
+                    synth.connectModulation(v);
+            }
+        }
+
         if (c->state.hasType(IDs::TUNINGCONNECTION))
             synth.connectTuning(c->state);
         if (c->state.hasType(IDs::RESETCONNECTION))
