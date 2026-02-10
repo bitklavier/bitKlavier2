@@ -184,14 +184,13 @@ namespace bitklavier {
 
             int numInputChannels = modBus.getNumChannels();
             for (int channel = 0; channel < numInputChannels / 2; ++channel) {
+            //for (int channel = 0; channel < juce::jmin (numInputChannels / 2, (int) state.params.modulatableParams.size()); ++channel) {
                 const float *in = modBus.getReadPointer(channel);
                 const float *in_continous = modBus.getReadPointer(channel + (numInputChannels/2));
-                // std::visit([this,in, in_continous](auto *p) -> void {
-                auto p =                            state.params.modulatableParams[channel];
-                               p->applyMonophonicModulation(*in);
-                               parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
-                                p->applyMonophonicModulation(*in + *in_continous);
-                           // },
+                auto p = state.params.modulatableParams[channel];
+                p->applyMonophonicModulation(*in);
+                parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
+                p->applyMonophonicModulation(*in + *in_continous);
             }
         }
 

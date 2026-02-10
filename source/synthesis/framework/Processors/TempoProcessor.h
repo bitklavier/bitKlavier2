@@ -30,24 +30,25 @@ struct TempoParams : chowdsp::ParamHolder
         add (tempoParam,
             subdivisionsParam,
             historyParam,
-            tempoModeOptions,
-            timeWindowMinMaxParams);
+            timeWindowMinMaxParams,
+            tempoModeOptions
+            );
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
-        // used in the DirectProcessor constructor
-        doForAllParameters ([this] (auto& param, size_t) {
-            // if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+        doForAllParameters([this](auto &param, size_t)
+        {
+            // if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *>(&param))
             //     if (sliderParam->supportsMonophonicModulation())
-            //         modulatableParams.push_back ( sliderParam);
+            //         modulatableParams.push_back(sliderParam);
             //
-            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            // if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *>(&param))
             //     if (sliderParam->supportsMonophonicModulation())
-            //         modulatableParams.push_back ( sliderParam);
+            //         modulatableParams.push_back(sliderParam);
 
-            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
+            if (auto *sliderParam = dynamic_cast<chowdsp::FloatParameter *>(&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-   });
+                    modulatableParams.push_back(sliderParam);
+        });
     }
 
     // Tempo param
@@ -126,11 +127,13 @@ public:
 
     juce::AudioProcessor::BusesProperties tempoBusLayout()
     {
+        // three modulatable params: tempo, subdivisions, and history; *2 because modulation and reset require their own channels
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), false) // Main Output
             .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
-            .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (3 * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withOutput("Modulation", juce::AudioChannelSet::mono(),false) // Modulation send channel; disabled for all but Modulation preps!
+            .withOutput("Send", juce::AudioChannelSet::stereo(), false); // Send channel (right outputs)
     }
 
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
