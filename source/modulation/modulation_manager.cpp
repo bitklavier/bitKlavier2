@@ -264,6 +264,9 @@ void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
     if (e.mods.isMiddleButtonDown())
         toggleBypass();
 
+    // remove option-click, at least for now; it's crashing
+    if (e.mods.isAltDown()) return;
+
     if (e.mods.isPopupMenu()) {
         SynthSlider::mouseExit(e);
 
@@ -296,21 +299,20 @@ void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
         for (SliderListener *listener: slider_listeners_)
             listener->mouseDown(this);
     }
-    // remove option-click, at least for now; it's crashing
-    // else
-    // {
-    //     SynthSlider::mouseDown(e);
-    //     juce::MouseInputSource source = e.source;
-    //
-    //     if (source.isMouse() && source.canDoUnboundedMovement()) {
-    //         editing_ = true;
-    //         source.hideCursor();
-    //         source.enableUnboundedMouseMovement(true);
-    //         mouse_down_position_ = e.getScreenPosition();
-    //         for (SliderListener *listener: slider_listeners_)
-    //             listener->beginModulationEdit(this);
-    //     }
-    // }
+    else
+    {
+        SynthSlider::mouseDown(e);
+        juce::MouseInputSource source = e.source;
+
+        if (source.isMouse() && source.canDoUnboundedMovement()) {
+            editing_ = true;
+            source.hideCursor();
+            source.enableUnboundedMouseMovement(true);
+            mouse_down_position_ = e.getScreenPosition();
+            for (SliderListener *listener: slider_listeners_)
+                listener->beginModulationEdit(this);
+        }
+    }
 }
 
 void ModulationAmountKnob::mouseUp(const juce::MouseEvent &e) {
