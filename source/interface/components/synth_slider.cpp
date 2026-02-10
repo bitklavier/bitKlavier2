@@ -247,6 +247,8 @@ SynthSlider::~SynthSlider() {
 PopupItems SynthSlider::createPopupMenu() {
     PopupItems options;
 
+    options.addItem(kManualEntry, "Enter Value");
+
     if (isDoubleClickReturnEnabled())
         options.addItem(kDefaultValue, "Set to Default Value");
 
@@ -256,7 +258,7 @@ PopupItems SynthSlider::createPopupMenu() {
     //  if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getName().toStdString()))
 
     //    options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
-    options.addItem(kManualEntry, "Enter Value");
+
     // options.addItem(kRangeResize, "Resize Range");
     std::vector<bitklavier::ModulationConnection *> connections = getConnections();
     if (!connections.empty())
@@ -605,7 +607,6 @@ void SynthSlider::showTextEntry() {
     else
         setLinearTextEntryBounds();
     text_entry_->setVisible(true);
-
     text_entry_->redoImage();
     text_entry_->setText(getRawTextFromValue(getValue()));
     text_entry_->selectAll();

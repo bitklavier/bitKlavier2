@@ -261,53 +261,56 @@ void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
      * - most of the options don't seem to actually do anything, and i'm not sure this is a feature we'd want to add at this point anyhow...
      */
 
-    // if (e.mods.isMiddleButtonDown())
-    //     toggleBypass();
-    //
-    // if (e.mods.isPopupMenu()) {
-    //     SynthSlider::mouseExit(e);
-    //
-    //     PopupItems options;
-    //     options.addItem(kDisconnect, "Remove");
-    //     options.addItem(kToggleBypass, bypass_ ? "Unbypass" : "Bypass");
-    //     options.addItem(kToggleBipolar, bipolar_ ? "Make Unipolar" : "Make Bipolar");
-    //     options.addItem(kToggleStereo, stereo_ ? "Make Mono" : "Make Stereo");
-    //     options.addItem(-1, "");
-    //
-    //     //    if (has_parameter_assignment_)
-    //     //      options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
-    //     //
-    //     //    if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getComponentID().toStdString()))
-    //     //      options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
-    //
-    //     options.addItem(kManualEntry, "Enter juce::Value");
-    //
-    //     hovering_ = false;
-    //     redoImage();
-    //
-    //     auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
-    //     auto cancel = [=]() {
-    //         for (SliderListener *listener: slider_listeners_)
-    //             listener->menuFinished(this);
-    //     };
-    //     parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
-    //
-    //     for (SliderListener *listener: slider_listeners_)
-    //         listener->mouseDown(this);
-    // } else
-    {
-        SynthSlider::mouseDown(e);
-        juce::MouseInputSource source = e.source;
+    if (e.mods.isMiddleButtonDown())
+        toggleBypass();
 
-        if (source.isMouse() && source.canDoUnboundedMovement()) {
-            editing_ = true;
-            source.hideCursor();
-            source.enableUnboundedMouseMovement(true);
-            mouse_down_position_ = e.getScreenPosition();
+    if (e.mods.isPopupMenu()) {
+        SynthSlider::mouseExit(e);
+
+        PopupItems options;
+        options.addItem(kManualEntry, "Enter Value");
+        options.addItem(kDisconnect, "Remove Modification");
+        //options.addItem(kToggleBypass, bypass_ ? "Unbypass" : "Bypass");
+        //options.addItem(kToggleBipolar, bipolar_ ? "Make Unipolar" : "Make Bipolar");
+        //options.addItem(kToggleStereo, stereo_ ? "Make Mono" : "Make Stereo");
+        //options.addItem(-1, "");
+
+        //    if (has_parameter_assignment_)
+        //      options.addItem(kArmMidiLearn, "Learn MIDI Assignment");
+        //
+        //    if (has_parameter_assignment_ && synth_interface_->getSynth()->isMidiMapped(getComponentID().toStdString()))
+        //      options.addItem(kClearMidiLearn, "Clear MIDI Assignment");
+
+        // options.addItem(kManualEntry, "Enter Value Manually");
+
+        hovering_ = false;
+        redoImage();
+
+        auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
+        auto cancel = [=]() {
             for (SliderListener *listener: slider_listeners_)
-                listener->beginModulationEdit(this);
-        }
+                listener->menuFinished(this);
+        };
+        parent_->showPopupSelector(this, e.getPosition(), options, callback, cancel);
+
+        for (SliderListener *listener: slider_listeners_)
+            listener->mouseDown(this);
     }
+    // remove option-click, at least for now; it's crashing
+    // else
+    // {
+    //     SynthSlider::mouseDown(e);
+    //     juce::MouseInputSource source = e.source;
+    //
+    //     if (source.isMouse() && source.canDoUnboundedMovement()) {
+    //         editing_ = true;
+    //         source.hideCursor();
+    //         source.enableUnboundedMouseMovement(true);
+    //         mouse_down_position_ = e.getScreenPosition();
+    //         for (SliderListener *listener: slider_listeners_)
+    //             listener->beginModulationEdit(this);
+    //     }
+    // }
 }
 
 void ModulationAmountKnob::mouseUp(const juce::MouseEvent &e) {
@@ -1571,11 +1574,6 @@ void ModulationManager::setTemporaryModulationBipolar(juce::Component *component
         temporarily_set_bipolar_ = bipolar;
         showModulationAmountOverlay(selected_modulation_sliders_[index].get());
     }
-
-
-
-
-
 }
 
 void ModulationManager::clearTemporaryModulation() {
@@ -1849,8 +1847,6 @@ void ModulationManager::renderOpenGlComponents(OpenGlWrapper &open_gl, bool anim
     //  renderSourceMeters(open_gl, 0);
     //  updateSmoothModValues();
     //
-
-
 
     SynthSection::renderOpenGlComponents(open_gl, animate);
     for (auto &ind: modulation_indicators_) {
