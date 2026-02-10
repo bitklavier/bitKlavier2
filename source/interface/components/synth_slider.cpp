@@ -400,6 +400,11 @@ void SynthSlider::focusLost(FocusChangeType cause) {
 
 void SynthSlider::valueChanged() {
     OpenGlSlider::valueChanged();
+    if (attachment) {
+        if (attachment->getParameter()->getModParam().isValid()) {
+            attachment->getParameter()->getModParam().setProperty(IDs::sliderval, getValue(), nullptr);
+        }
+    }
     notifyGuis();
 }
 

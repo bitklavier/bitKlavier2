@@ -147,6 +147,7 @@ class ModulationProcessor;
             //setScalingValue()
             scalingValue_ = state.getProperty(IDs::mod0to1);
             modAmt_ = state.getProperty(IDs::modAmt);
+            currentDestinationSliderVal = state.getProperty(IDs::sliderval);
         }
 
         juce::ValueTree state;

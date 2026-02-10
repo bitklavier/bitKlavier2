@@ -250,9 +250,7 @@ namespace bitklavier {
                     }
                     // std::visit([&](auto *p) {
                                    param->setRangeToValueTree(vt);
-                               // },
-                               // param);
-
+                    vt.setProperty(IDs::sliderval, v.getProperty(name), nullptr);
 
                     auto val = v.getProperty(name);
                     // std::visit([&](auto *p) {

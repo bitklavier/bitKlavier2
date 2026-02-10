@@ -96,6 +96,14 @@ struct TempoParams : chowdsp::ParamHolder
     {
         timeWindowMinMaxParams.processStateChanges();
     }
+
+    /* Custom serializer */
+    template <typename Serializer>
+    static typename Serializer::SerializedType serialize(const TempoParams& paramHolder);
+
+    /* Custom deserializer */
+    template <typename Serializer>
+    static void deserialize(typename Serializer::DeserializedType deserial, TempoParams& paramHolder);
 };
 
 struct TempoNonParameterState : chowdsp::NonParamState
@@ -147,33 +155,6 @@ public:
     }
     float getGlobalTempoMultiplier() { return globalTempoMultiplier; }
     double globalTempoMultiplier = 1.;
-
-    // void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
-    // {
-    //     //should add an if check here to make sure its actually the sampleset changing
-    //     juce::String a = t.getProperty (IDs::mainSampleSet, "");
-    //     juce::String b = t.getProperty (IDs::hammerSampleSet, "");
-    //     juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
-    //     juce::String d = t.getProperty (IDs::pedalSampleSet, "");
-    //     addSoundSet (&(*ptrToSamples)[a],
-    //         &(*ptrToSamples)[b],
-    //         &(*ptrToSamples)[c],
-    //         &(*ptrToSamples)[d]);
-    // }
-
-    /**
-     * todo: do we need these?
-     * DAVIS: this just explicitly defines the other valuetree listener functions to be doing nothing
-     * we only care about the treepropertychanged valuetree
-     */
-//    void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) {}
-//    void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) {}
-//    void valueTreeChildOrderChanged (juce::ValueTree&, int, int) {}
-//    void valueTreeParentChanged (juce::ValueTree&) {}
-//    void valueTreeRedirected (juce::ValueTree&) {}
-
-//    bool getTranspositionUsesTuning() { return state.params.transpose.transpositionUsesTuning->get();}
-
 
 private:
 
