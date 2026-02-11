@@ -778,15 +778,71 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
 //modulation connections are used for both audio rate modulations and to order tuning/modulation/reset/and piano change
 //preparations to occur before all other preparations they are connected to
 // NOTE: piano change connections must be ensure to occur before all other preparations
+// bool SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
+//     juce::AudioProcessorGraph::NodeID dest)
+// {
+//     auto* sourceNode = getNodeForId (source);
+//     auto* destNode = getNodeForId (dest);
+//
+//     if (sourceNode == nullptr || destNode == nullptr)
+//         return false;
+//
+//     destNode->getProcessor()->getBus (true, 1)->enable (true); //should always be modulation bus
+//     sourceNode->getProcessor()->getBus (false, 1)->enable (true); //should always be modulation bus
+//     auto dest_index = destNode->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, 0);
+//     auto source_index = sourceNode->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0);
+//
+//     juce::AudioProcessorGraph::Connection connection { { source, source_index }, { dest, dest_index } };
+//     return engine_->addConnection (connection);
+// }
+
+/**
+ * Finds the index of a bus by its name.
+ * @param processor The processor to query
+ * @param busName The name to look for (e.g., "Modulation")
+ * @param isInput True for input buses, false for output buses
+ * @return The bus index, or -1 if not found.
+ */
+int getBusIndexByName (juce::AudioProcessor* processor, const juce::String& busName, bool isInput)
+{
+    int numBuses = processor->getBusCount (isInput);
+    for (int i = 0; i < numBuses; ++i)
+    {
+        if (processor->getBus (isInput, i)->getName() == busName)
+            return i;
+    }
+    return -1;
+}
+
 bool SynthBase::addModulationConnection (juce::AudioProcessorGraph::NodeID source,
     juce::AudioProcessorGraph::NodeID dest)
 {
     auto* sourceNode = getNodeForId (source);
     auto* destNode = getNodeForId (dest);
-    destNode->getProcessor()->getBus (true, 1)->enable (true); //should always be modulation bus
-    sourceNode->getProcessor()->getBus (false, 1)->enable (true); //should always be modulation bus
-    auto dest_index = destNode->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, 0);
-    auto source_index = sourceNode->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, 0);
+
+    if (sourceNode == nullptr || destNode == nullptr)
+        return false;
+    auto* srcProc = sourceNode->getProcessor();
+    auto* dstProc = destNode->getProcessor();
+
+    // DYNAMIC LOOKUP: Find the "Modulation" bus indices
+    int srcModBusIdx = getBusIndexByName (srcProc, "Modulation", false); // Output
+    int dstModBusIdx = getBusIndexByName (dstProc, "Modulation", true);  // Input
+
+    // Safety check: ensure both processors actually have a Modulation bus
+    if (srcModBusIdx == -1 || dstModBusIdx == -1)
+    {
+        DBG ("SynthBase: Could not find Modulation bus for connection.");
+        return false;
+    }
+
+    // Enable the buses if they aren't already
+    dstProc->getBus (true, dstModBusIdx)->enable (true);
+    srcProc->getBus (false, srcModBusIdx)->enable (true);
+
+    // Get the absolute channel indices based on the found bus indices
+    auto dest_index = dstProc->getChannelIndexInProcessBlockBuffer (true, dstModBusIdx, 0);
+    auto source_index = srcProc->getChannelIndexInProcessBlockBuffer (false, srcModBusIdx, 0);
 
     juce::AudioProcessorGraph::Connection connection { { source, source_index }, { dest, dest_index } };
     return engine_->addConnection (connection);

@@ -9,6 +9,7 @@
 #include "bk_XMLSerializer.h"
 #include "synth_base.h"
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
+#include "buffer_debugger.h"
 
 class SynthSection;
 class SynthBase;
@@ -28,6 +29,8 @@ namespace bitklavier {
 
         InternalProcessor() : juce::AudioProcessor() {
         }
+
+        juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
 
         virtual void setTuning(TuningProcessor *tun) {
             tuning = tun;
@@ -180,7 +183,23 @@ namespace bitklavier {
         }
 
         void processContinuousModulations(juce::AudioBuffer<float> &buffer) {
-            const auto &modBus = getBusBuffer(buffer, true, 1); // true = input, bus index 0 = mod
+
+            // 1. Find the actual index of the "Modulation" input bus
+            int modBusIdx = -1;
+            for (int i = 0; i < getBusCount(true); ++i) {
+                if (getBus(true, i)->getName() == "Modulation") {
+                    modBusIdx = i;
+                    break;
+                }
+            }
+
+            if (modBusIdx == -1)
+            {
+                DBG("processContinuousModulations: no modulation bus found");
+                return; // No modulation bus found
+            }
+
+            const auto &modBus = getBusBuffer(buffer, true, modBusIdx);
 
             int numInputChannels = modBus.getNumChannels();
             for (int channel = 0; channel < numInputChannels / 2; ++channel) {
@@ -191,6 +210,8 @@ namespace bitklavier {
                 p->applyMonophonicModulation(*in);
                 parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
                 p->applyMonophonicModulation(*in + *in_continous);
+                bufferDebugger->capture("m"+juce::String(channel), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
+                bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
             }
         }
 
@@ -323,13 +344,6 @@ namespace bitklavier {
         if (!v.hasProperty(IDs::soundset)) {
             v.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
         }
-        // else {
-        //     if (v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
-        //         _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString());
-        // }
-        /*
-     * modulations and state changes
-     */
 
         setupModulationMappings();
     }

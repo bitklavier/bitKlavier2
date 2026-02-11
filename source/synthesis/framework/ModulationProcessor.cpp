@@ -12,11 +12,13 @@ bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
                                                      const juce::ValueTree &vt,
                                                      juce::UndoManager* um) :
 juce::AudioProcessor(
-        BusesProperties().withInput("disabled", juce::AudioChannelSet::mono(), false)
-        .withOutput("disabled", juce::AudioChannelSet::mono(), false)
+        BusesProperties()
+        .withInput("disabled", juce::AudioChannelSet::stereo(), false)
+        .withOutput("disabled", juce::AudioChannelSet::stereo(), false)
         .withOutput("Modulation", juce::AudioChannelSet::discreteChannels(1), true)
         .withInput("Modulation", juce::AudioChannelSet::discreteChannels(1), true)
-        .withInput("Reset", juce::AudioChannelSet::discreteChannels(1), true)), state(vt),
+        .withInput("Reset", juce::AudioChannelSet::discreteChannels(1), true)),
+    state(vt),
     parent(parent) {
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
@@ -42,7 +44,8 @@ void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap) const
 }
 
 void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
-                                                   juce::MidiBuffer &midiMessages) {
+                                                   juce::MidiBuffer &midiMessages)
+{
     const int idx = activeSnapshotIndex.load(std::memory_order_acquire);
     auto &snap = snapshots[idx];
 
@@ -102,6 +105,24 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
         //         e.mod->triggerReset();
         //     }
         // }
+    }
+
+    // --- 2. SURGICAL CLEARING OF OUTPUTS ---
+    // Instead of buffer.clear(), we only clear the channels
+    // we are actually going to write to (the Modulation output bus).
+    if (auto* modOutBus = getBus(false, 1)) {
+        for (int ch = 0; ch < modOutBus->getNumberOfChannels(); ++ch) {
+            int absIdx = getChannelIndexInProcessBlockBuffer(false, 1, ch);
+            buffer.clear(absIdx, 0, buffer.getNumSamples());
+        }
+    }
+
+    // Also clear the 'disabled' bus (Bus 0) to be safe
+    if (auto* disabledBus = getBus(false, 0)) {
+        for (int ch = 0; ch < disabledBus->getNumberOfChannels(); ++ch) {
+            int absIdx = getChannelIndexInProcessBlockBuffer(false, 0, ch);
+            buffer.clear(absIdx, 0, buffer.getNumSamples());
+        }
     }
 
     // MIDI note-on => request retrigger

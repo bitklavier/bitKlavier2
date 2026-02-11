@@ -615,7 +615,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
-     *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have
+     *      the "discreteChannels" number is currently just by hand set based on the max that this particular preparation could have
      *      so if you add new params, might need to increase that number
      */
     juce::AudioProcessor::BusesProperties synchronicBusLayout()
