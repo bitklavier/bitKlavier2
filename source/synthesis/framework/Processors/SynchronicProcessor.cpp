@@ -414,9 +414,33 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
                         // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
-                                                             * getBeatThresholdSeconds() * 1000;
-                        //DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + "");
+                                                             * getBeatThresholdSeconds() * 1000.f;
 
+                        // calculate total envelope time
+                        float envLen = 1000. * (noteOnSpecMap[newNote].envParams.attack + noteOnSpecMap[newNote].envParams.decay + noteOnSpecMap[newNote].envParams.release);
+
+                        DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + " envLen = " + juce::String(envLen));
+
+                        //constrain adsr times, if needed
+                        if(envLen > noteOnSpecMap[newNote].sustainTime) {
+                            // reduce env time proportionally
+                            noteOnSpecMap[newNote].envParams.attack *= noteOnSpecMap[newNote].sustainTime / envLen;
+                            noteOnSpecMap[newNote].envParams.decay *= noteOnSpecMap[newNote].sustainTime / envLen;
+                            noteOnSpecMap[newNote].envParams.release *= noteOnSpecMap[newNote].sustainTime / envLen;
+                        }
+
+                        // constrain mins on env params
+                        if(noteOnSpecMap[newNote].envParams.attack  < 0.001f) noteOnSpecMap[newNote].envParams.attack = 0.001f;
+                        if(noteOnSpecMap[newNote].envParams.decay < 0.003f)  noteOnSpecMap[newNote].envParams.decay = 0.003f;
+                        if(noteOnSpecMap[newNote].envParams.release < 0.003f) noteOnSpecMap[newNote].envParams.release = 0.003f;
+
+                        // recalculate sustainTime based on adjusted env times, and adjust sustainTime accordingly
+                        envLen = 1000. * (noteOnSpecMap[newNote].envParams.attack + noteOnSpecMap[newNote].envParams.decay + noteOnSpecMap[newNote].envParams.release);
+                        noteOnSpecMap[newNote].sustainTime -= envLen;
+                        if (noteOnSpecMap[newNote].sustainTime < 1.f) noteOnSpecMap[newNote].sustainTime = 1.f;
+                        //if (noteOnSpecMap[newNote].sustainTime < envLen) noteOnSpecMap[newNote].sustainTime = envLen;
+
+                        DBG("revised sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + " revised envLen = " + juce::String(envLen));
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                         {
