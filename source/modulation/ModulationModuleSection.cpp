@@ -40,8 +40,8 @@ ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
     const bool vtToggle = (bool) parent.getProperty(IDs::modulationToggleMode, false);
     if (setToggleMode != nullptr)
         setToggleMode->setToggleState(vtToggle, juce::NotificationType::dontSendNotification);
-    if (modulation_list_ != nullptr && modulation_list_->proc_ != nullptr)
-        modulation_list_->proc_->isToggle = vtToggle;
+    // if (modulation_list_ != nullptr && modulation_list_->proc_ != nullptr)
+    //     modulation_list_->proc_->isToggle = vtToggle;
 }
 
 void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)

@@ -23,6 +23,9 @@ juce::AudioProcessor(
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
     mod_list = std::make_unique<ModulationList>(state, &parent, this);
+
+    const bool vtToggle = (bool) state.getProperty(IDs::modulationToggleMode, false);
+    isToggle = vtToggle;
 }
 
 void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap) const
@@ -56,6 +59,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     if (pendingResetAll_.exchange(false, std::memory_order_acq_rel))
     {
         triggerResets(snap);
+        isModded = false;
         // //DBG("ModulationProcessor::processBlock, pendingResetAll_ = true");
         // for (auto& e : snap.mods)
         //     if (e.mod != nullptr) {
@@ -83,6 +87,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     if (reset_in.getSample(0, 0) == 1.0f)
     {
         triggerResets(snap);
+        isModded = false;
         // //DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
         // for (auto &e: snap.mods)
         // {
