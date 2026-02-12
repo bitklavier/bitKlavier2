@@ -852,7 +852,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                     }
                 }
             }
-        });
+        }, {}, 1.5f);
     } else if (clicked_button == preparationsSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         PopupItems options = parent->getPreparationPopupItems();

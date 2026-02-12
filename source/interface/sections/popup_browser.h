@@ -159,6 +159,7 @@ public:
     int getRowFromPosition(float mouse_position);
     int getRowHeight();
     int getTextPadding() { return getRowHeight() / 4; }
+    void setWidthScale(float scale) { width_scale_ = scale; }
     int getBrowseWidth();
     int getBrowseHeight() {
         int num_rows = selections_.size();
@@ -207,6 +208,7 @@ private:
     bool show_selected_;
 
     float view_position_;
+    float width_scale_ = 1.0f;
     std::unique_ptr<OpenGlScrollBar> scroll_bar_;
     std::shared_ptr<OpenGlImage> rows_;
     std::shared_ptr<OpenGlQuad> highlight_;
@@ -239,6 +241,11 @@ public:
         setVisible(false);
         if (cancel_)
             cancel_();
+    }
+
+    void setWidthScale(float scale) {
+        popup_list_->setWidthScale(scale);
+        popup_list_1->setWidthScale(scale);
     }
 
     void setCallback(std::function<void(int,int)> callback) { callback_ = std::move(callback); }

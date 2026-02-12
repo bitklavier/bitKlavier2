@@ -210,7 +210,7 @@ int PopupList::getBrowseWidth() {
             max_width,
             static_cast<int>(juce::GlyphArrangement::getStringWidthInt(font, selections_.items[i].name)) + buffer);
 
-    return max_width / scale;
+    return (max_width * width_scale_) / scale;
 }
 
 void PopupList::mouseMove(const juce::MouseEvent &e) {

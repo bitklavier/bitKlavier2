@@ -354,7 +354,7 @@ void FullInterface::hideDisplay (bool primary)
         display->setVisible (false);
 }
 
-void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int,int)> callback, std::function<void()> cancel)
+void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int,int)> callback, std::function<void()> cancel, float width_scale)
 {
     if (options.size() == 0)
     {
@@ -364,6 +364,7 @@ void FullInterface::popupSelector (juce::Component* source, juce::Point<int> pos
 
     popup_selector_->setCallback (callback);
     popup_selector_->setCancelCallback (cancel);
+    popup_selector_->setWidthScale(width_scale);
     popup_selector_->showSelections (options);
     DBG("FullInterface::popupSelector items: " << options.size());
     juce::Rectangle<int> bounds (0, 0, std::ceil (getWidth()), std::ceil (getHeight()));
