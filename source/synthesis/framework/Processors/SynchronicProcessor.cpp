@@ -419,8 +419,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         // calculate total envelope time
                         float envLen = 1000. * (noteOnSpecMap[newNote].envParams.attack + noteOnSpecMap[newNote].envParams.decay + noteOnSpecMap[newNote].envParams.release);
 
-                        DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + " envLen = " + juce::String(envLen));
-
                         //constrain adsr times, if needed
                         if(envLen > noteOnSpecMap[newNote].sustainTime) {
                             // reduce env time proportionally
@@ -438,9 +436,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         envLen = 1000. * (noteOnSpecMap[newNote].envParams.attack + noteOnSpecMap[newNote].envParams.decay + noteOnSpecMap[newNote].envParams.release);
                         noteOnSpecMap[newNote].sustainTime -= envLen;
                         if (noteOnSpecMap[newNote].sustainTime < 1.f) noteOnSpecMap[newNote].sustainTime = 1.f;
-                        //if (noteOnSpecMap[newNote].sustainTime < envLen) noteOnSpecMap[newNote].sustainTime = envLen;
 
-                        DBG("revised sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + " revised envLen = " + juce::String(envLen));
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
                         {
