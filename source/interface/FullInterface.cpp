@@ -332,16 +332,18 @@ void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, co
     }
     prep_popup->setContent (std::move(synth_section),v);
     prep_popup->setVisible (true);
-    modulation_manager->added();
 
     if (prepScale_x_save != prepScale_x || prepScale_y_save != prepScale_y)
         resized();
+
+    modulation_manager->added();
 }
 
 void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section,const juce::ValueTree &v)
 {
     mod_popup->setContent (std::move(synth_section),v);
     mod_popup->setVisible (true);
+    resized();
     modulation_manager->added();
 }
 
