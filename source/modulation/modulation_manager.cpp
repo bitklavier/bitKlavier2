@@ -3297,7 +3297,13 @@ void ModulationManager::positionModulationAmountSliders(const std::string &sourc
     if (parent == nullptr)
         return;
 
-    ModulationButton *modulation_button = modulation_buttons_[source];
+    auto itButton = modulation_buttons_.find(source);
+    if (itButton == modulation_buttons_.end() || itButton->second == nullptr)
+    {
+        // Source key not found or button was removed; nothing to position.
+        return;
+    }
+    ModulationButton *modulation_button = itButton->second;
     juce::Rectangle<int> modulation_area = modulation_button->getModulationAreaBounds();
     int area_width = std::max(1, modulation_area.getWidth());
     int max_modulation_height = (kMaxModulationsAcross * modulation_area.getHeight()) / area_width;
@@ -3310,8 +3316,11 @@ void ModulationManager::positionModulationAmountSliders(const std::string &sourc
             positionModulationAmountSlidersCallout(source, connections);
         else
             positionModulationAmountSlidersInside(source, connections);
-    } else
-        modulation_callout_buttons_[source]->setVisible(false);
+    } else {
+        auto itCallout = modulation_callout_buttons_.find(source);
+        if (itCallout != modulation_callout_buttons_.end() && itCallout->second)
+            itCallout->second->setVisible(false);
+    }
 }
 
 void ModulationManager::positionModulationAmountSliders() {
@@ -3322,8 +3331,8 @@ void ModulationManager::positionModulationAmountSliders() {
     for (auto &modulation_slider: modulation_amount_sliders_)
         modulation_slider->setVisible(false);
 
-    for (auto &modulation_button: modulation_buttons_) {
-        std::string name = modulation_button.second->getComponentID().toStdString();
+    for (auto &entry: modulation_buttons_) {
+        const std::string& name = entry.first;
         positionModulationAmountSliders(name);
     }
 }

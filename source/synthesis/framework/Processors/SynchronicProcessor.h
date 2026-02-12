@@ -399,7 +399,8 @@ class SynchronicCluster
             if (++beatMultiplierCounter >= _sparams->beatLengthMultipliers.sliderVals_size)
                 beatMultiplierCounter = 0;
         }
-        
+
+        DBG("numPulses = " << *_sparams->numPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << (int)*_sparams->skipFirst);
         if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - *_sparams->skipFirst))
         {
             shouldPlay = false;

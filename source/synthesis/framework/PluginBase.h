@@ -30,7 +30,7 @@ namespace bitklavier {
         InternalProcessor() : juce::AudioProcessor() {
         }
 
-        //juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
+        juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
 
         virtual void setTuning(TuningProcessor *tun) {
             tuning = tun;
@@ -210,8 +210,8 @@ namespace bitklavier {
                 p->applyMonophonicModulation(*in);
                 parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
                 p->applyMonophonicModulation(*in + *in_continous);
-                // bufferDebugger->capture("m"+juce::String(channel), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
-                // bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
+                bufferDebugger->capture("m"+juce::String(channel), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
+                bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
             }
         }
 
@@ -253,13 +253,13 @@ namespace bitklavier {
                 for (auto param: state.params.modulatableParams) {
                     //int mod = 0;
                     // juce::String name = std::visit([](auto *p) -> juce::String {
-                                                       auto name = param->paramID; // Works if all types have getParamID()
+                    auto name = param->paramID; // Works if all types have getParamID()
                                                    // },
                                                    // param);
                     auto vt = mod_params.getChildWithProperty(IDs::parameter, name);
                     if (!vt.isValid()) {
                         // const auto &a = std::visit([](auto *p) -> juce::NormalisableRange<float> {
-                                                    auto &a = param->getNormalisableRange();
+                        auto &a = param->getNormalisableRange();
                                                        // Works if all types have getParamID()
                                                    // },
                                                    // param);
@@ -270,18 +270,18 @@ namespace bitklavier {
                         vt.setProperty(IDs::skew, a.skew, nullptr);
                     }
                     // std::visit([&](auto *p) {
-                                   param->setRangeToValueTree(vt);
+                    param->setRangeToValueTree(vt);
                     vt.setProperty(IDs::sliderval, v.getProperty(name), nullptr);
 
                     auto val = v.getProperty(name);
                     // std::visit([&](auto *p) {
-                                   param->setParameterValue(val);
+                    param->setParameterValue(val);
                                // },
                                // param);
                     ////for setting up audio modulations in order to set via absolute value
                     const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
                     // std::visit([&](auto *p) {
-                        param->setParamOffsetIndex(offsetIdx);
+                    param->setParamOffsetIndex(offsetIdx);
                     // }, param);
                 }
             }
