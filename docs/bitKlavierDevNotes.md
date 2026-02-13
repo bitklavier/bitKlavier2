@@ -338,3 +338,5 @@ With the recent updates, bitKlavier has become even smarter about these modes:
 *   **Graceful Recovery**: In Out-of-process mode, we've implemented logic to catch those specific macOS `SIGTRAP` errors and ensure the scanner simply skips the problematic plugin rather than getting stuck.
 
 **Recommendation**: Generally, **Out-of-process** is the safer choice and is the industry standard for modern DAWs, as it provides the most robust protection against "crashing" your session while searching for new plugins.
+
+* note that the scanning might only work in Release mode, not Debug mode!
