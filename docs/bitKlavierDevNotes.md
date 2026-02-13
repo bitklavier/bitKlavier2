@@ -309,3 +309,32 @@ and hopefully with answers included here for the record!
 - [x] will creating global preferences, probably under Options menu with new window, be straightforward?
   - need A440, for instance.
   - and will save? will app, or with gallery?
+
+## VST Plugin scanning info (for manual in the future)
+### In-Process vs. Out-of-Process Scanning
+
+The "Scan mode" setting in the "Available Plugins" window determines how bitKlavier handles the loading and interrogation of plugin files. Here is the breakdown of the differences:
+
+#### 1. In-process Scanning
+*   **How it works**: The plugin file is loaded directly into the main bitKlavier application memory.
+*   **Pros**:
+  *   Slightly faster because there is no overhead of starting a separate process or communicating between processes.
+  *   Simpler architecture.
+*   **Cons**:
+  *   **High Risk**: If a plugin is poorly written or encounters an error during initialization (like the `SIGTRAP` you experienced with *soothe2* or *SSL Meter*), it will **crash the entire bitKlavier application**.
+  *   Some plugins have strict threading requirements that are harder to satisfy when competing with the main app's resources.
+
+#### 2. Out-of-process Scanning
+*   **How it works**: bitKlavier launches a small, dedicated "worker" subprocess (the `bitklavierscanner`) to handle the plugin. The main app tells the worker which file to scan, and the worker sends the results back.
+*   **Pros**:
+  *   **Isolation & Stability**: This is the primary benefit. If a plugin crashes (SIGTRAP, Segmentation Fault, etc.), it only kills the small worker process. The main bitKlavier application detects that the worker disappeared, logs the failure, and moves on to the next plugin without any interruption to the user.
+  *   **Clean Environment**: Each plugin is scanned in a fresh process, preventing memory leaks or state conflicts between different plugins from affecting each other.
+*   **Cons**:
+  *   Minor performance overhead for starting the subprocess.
+
+### How it works in bitKlavier now
+With the recent updates, bitKlavier has become even smarter about these modes:
+*   **Automatic Safety**: Even if you select **In-process**, the scanner will now **automatically force Out-of-process** mode for VST3 plugins that don't support "fast scanning" (those missing a `moduleinfo.json` file). This ensures that known risky operations never threaten the main application's stability.
+*   **Graceful Recovery**: In Out-of-process mode, we've implemented logic to catch those specific macOS `SIGTRAP` errors and ensure the scanner simply skips the problematic plugin rather than getting stuck.
+
+**Recommendation**: Generally, **Out-of-process** is the safer choice and is the industry standard for modern DAWs, as it provides the most robust protection against "crashing" your session while searching for new plugins.

@@ -47,11 +47,34 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
 
         juce::PluginDescription pd;
         pd.loadFromXml(*v.getChildWithName(IDs::PLUGIN).createXml());
-        temporary_instance = synth.user_prefs->userPreferences->formatManager.createPluginInstance(
-            pd,
-            synth.getSampleRate(),
-            synth.getBufferSize(),
-            err);
+        
+        auto& formatManager = synth.user_prefs->userPreferences->formatManager;
+        
+        auto* format = formatManager.getFormat (0); // Default to first format if we can't find by name
+        for (auto* f : formatManager.getFormats())
+        {
+            if (f->getName() == pd.pluginFormatName)
+            {
+                format = f;
+                break;
+            }
+        }
+
+        if (format != nullptr && format->requiresUnblockedMessageThreadDuringCreation (pd) && ! juce::MessageManager::getInstance()->isThisTheMessageThread())
+        {
+            juce::WaitableEvent finished;
+            juce::MessageManager::callAsync ([&]
+            {
+                temporary_instance = formatManager.createPluginInstance (pd, synth.getSampleRate(), synth.getBufferSize(), err);
+                finished.signal();
+            });
+            finished.wait (10000);
+        }
+        else
+        {
+            temporary_instance = formatManager.createPluginInstance (pd, synth.getSampleRate(), synth.getBufferSize(), err);
+        }
+
         if (temporary_instance == nullptr) {
             auto options = juce::MessageBoxOptions::makeOptionsOk(juce::MessageBoxIconType::WarningIcon,
                                                                   TRANS("Couldn't create plugin"),
@@ -137,31 +160,12 @@ void PreparationList::valueTreeParentChanged(juce::ValueTree &) {
 }
 
 void PreparationList::addPlugin(const juce::PluginDescription &desc, const juce::ValueTree &v) {
-    if (desc.pluginFormatName != "AudioUnit") {
-        juce::String err;
-        temporary_instance = synth.user_prefs->userPreferences->formatManager.createPluginInstance(desc,
-            synth.getSampleRate(),
-            synth.getBufferSize(),
-            err);
-        if (temporary_instance == nullptr) {
-            auto options = juce::MessageBoxOptions::makeOptionsOk(juce::MessageBoxIconType::WarningIcon,
-                                                                  TRANS("Couldn't create plugin"),
-                                                                  err);
-            //TODO show error
-            jassertfalse;
-            //return nullptr;
-            return;
-        }
-        parent.addChild(v, -1, nullptr);
-    } else {
-        synth.user_prefs->userPreferences->formatManager.createPluginInstanceAsync(desc,
-            synth.getSampleRate(),
-            synth.getBufferSize(),
-            [this, v](std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String &error) {
-                addPluginCallback(std::move(instance), error, v);
-            });
-    }
-    //temporary_instance = nullptr;
+    synth.user_prefs->userPreferences->formatManager.createPluginInstanceAsync(desc,
+        synth.getSampleRate(),
+        synth.getBufferSize(),
+        [this, v](std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String &error) {
+            addPluginCallback(std::move(instance), error, v);
+        });
 }
 
 void PreparationList::addPluginCallback(std::unique_ptr<juce::AudioPluginInstance> instance,
