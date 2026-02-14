@@ -117,7 +117,7 @@ public:
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
     void removeAllGuiListeners();
-
+    void linkedPiano() override;
 private:
     PreparationList* prep_list;
     juce::ApplicationCommandManager& commandManager;

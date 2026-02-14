@@ -272,10 +272,24 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
                 menu.addItem(id++, name);
             }
 
-            showPopupSelector(this, e.getPosition(), menu, [pianoNames](int id, int selectedIndex) {
+            showPopupSelector(this, e.getPosition(), menu, [this, pianoNames](int id, int selectedIndex) {
                 if (selectedIndex >= 0 && selectedIndex < pianoNames.size())
                 {
                     DBG("Selected piano to add linked prep to: " << pianoNames[selectedIndex]);
+                    juce::ValueTree linked_piano{IDs::linkedPrep};
+                    auto gallery = state.getParent().getParent().getParent();
+                    auto new_piano = gallery.getChildWithProperty(IDs::name, juce::String(pianoNames[selectedIndex]));
+                    auto p  = state.getProperty(IDs::nodeID);
+                    auto type = state.getProperty(IDs::type);
+                    auto currPianoName = state.getParent().getParent().getProperty(IDs::name);
+
+                    linked_piano.setProperty(IDs::nodeID, p,nullptr);
+                    linked_piano.setProperty(IDs::linkedType,type,nullptr);
+                    linked_piano.setProperty(IDs::linkedPianoName, currPianoName, nullptr);
+
+                    new_piano.getChildWithName(IDs::PREPARATIONS).appendChild(linked_piano,nullptr);
+
+
                 }
             });
         }

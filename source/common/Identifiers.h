@@ -128,6 +128,9 @@ namespace IDs
     DECLARE_ID(vst)
     DECLARE_ID(keymap)
     DECLARE_ID(noConnection)
+    DECLARE_ID(linkedPrep)
+    DECLARE_ID(linkedType)
+    DECLARE_ID(linkedPianoName)
 
     DECLARE_ID(soundset)
     DECLARE_ID(globalsoundset)

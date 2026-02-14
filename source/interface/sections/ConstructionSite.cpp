@@ -477,7 +477,9 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
         plugin_components.push_back (std::move (s));
     }
 }
+void ConstructionSite::linkedPiano() {
 
+}
 void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate)
 {
     juce::ScopedLock lock(open_gl_critical_section_);

@@ -164,6 +164,7 @@ public:
         virtual void moduleListChanged() = 0;
         virtual void moduleAdded(PluginInstanceWrapper* newModule) = 0;
         virtual void removeModule(PluginInstanceWrapper* moduleToRemove) = 0;
+        virtual void linkedPiano(){};
     };
     void addListener (Listener* l) { listeners_.push_back (l); }
     void clearListeners(){listeners_.clear();}

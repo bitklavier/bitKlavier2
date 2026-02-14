@@ -47,9 +47,9 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
 
         juce::PluginDescription pd;
         pd.loadFromXml(*v.getChildWithName(IDs::PLUGIN).createXml());
-        
+
         auto& formatManager = synth.user_prefs->userPreferences->formatManager;
-        
+
         auto* format = formatManager.getFormat (0); // Default to first format if we can't find by name
         for (auto* f : formatManager.getFormats())
         {
@@ -153,6 +153,14 @@ void PreparationList::rebuildAllGui() {
     for (auto obj: objects)
         for (auto listener: listeners_)
             listener->moduleAdded(obj);
+    for (const auto & vt : parent) {
+        if(vt.getType() == IDs::linkedPrep) {
+            //auto piano  = parent.getParent().getParent().getChildWithProperty(IDs::name,vt.getProperty(IDs::linkedPianoName));
+            //piano.getChildWithName(IDs::PREPARATIONS).get
+            for (auto listener: listeners_)
+                listener->linkedPiano();
+        }
+    }
 }
 
 
