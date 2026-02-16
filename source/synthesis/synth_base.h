@@ -251,7 +251,8 @@ public:
 
     juce::ValueTree activePiano;
     SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
-    int sample_index_of_switch;
+    juce::uint64 sample_index_of_switch;
+    juce::uint64 total_samples_passed;
     //ensure prep list is deleted before mod connection and connection
 
     std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;

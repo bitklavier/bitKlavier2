@@ -120,7 +120,8 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
     engine_->addDefaultChain(*this,tree);
 
-
+    sample_index_of_switch = 0;
+    total_samples_passed = 0;
 }
 
 SynthBase::~SynthBase()
@@ -367,6 +368,8 @@ void SynthBase::setActivePiano (const juce::ValueTree& v, SwitchTriggerThread th
     {
         engine_->setActivePiano (activePiano);
     }
+
+    sample_index_of_switch = total_samples_passed;
 
     // tree.removeListener (this);
     // tree.setProperty (IDs::isActive, 0, nullptr);
@@ -771,7 +774,10 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
     engine_->getEQProcessor()->processBlock (audio_buffer, midi_buffer);
     engine_->getCompressorProcessor()->processBlock (audio_buffer, midi_buffer);
     engine_->getMainVolumeProcessor()->processBlock (audio_buffer, midi_buffer);
-    sample_index_of_switch = std::numeric_limits<int>::min();
+
+    total_samples_passed += audio_buffer.getNumSamples();
+
+    // sample_index_of_switch = std::numeric_limits<int>::min();
     //melatonin::printSparkline(audio_buffer);
 }
 

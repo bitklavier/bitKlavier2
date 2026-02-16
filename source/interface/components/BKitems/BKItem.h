@@ -71,11 +71,6 @@ BKItem (bitklavier::BKPreparationType type);
         redoImage();
     };
 
-    virtual void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
-    {
-
-    }
-
     class Listener
     {
     public:
@@ -730,6 +725,10 @@ public:
         {
             g.setColour(juce::Colours::orangered);
             g.fillPath(targetPaths[0]);
+
+            // White border
+            g.setColour(juce::Colours::white);
+            g.strokePath(targetPaths[0], juce::PathStrokeType(6.0f));
         }
 
         // Fill the middle circle with white

@@ -472,6 +472,7 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->addListener(&modulationLineView);
     s->addListener(this);
     s->setNodeInfo();
+
     {
         juce::ScopedLock lock (open_gl_critical_section_);
         plugin_components.push_back (std::move (s));

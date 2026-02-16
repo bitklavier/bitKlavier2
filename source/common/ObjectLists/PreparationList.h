@@ -74,6 +74,7 @@ public:
         description = getPluginDescription (*inner);
     }
     std::unique_ptr<AudioProcessor> inner;
+
 private:
     static juce::PluginDescription getPluginDescription (const AudioProcessor& proc)
     {
