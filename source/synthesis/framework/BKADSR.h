@@ -130,8 +130,8 @@ public:
     /** Starts the attack phase of the envelope. */
     void noteOn() noexcept
     {
-        DBG("BKADSR::noteOn(), attack = " << parameters.attack << ", decay = " << parameters.decay << ", sustain = " << parameters.sustain << ", release = " << parameters.release);
-        DBG("BKADSR::noteOn(), attackRate = " << attackRate);
+        // DBG("BKADSR::noteOn(), attack = " << parameters.attack << ", decay = " << parameters.decay << ", sustain = " << parameters.sustain << ", release = " << parameters.release);
+        // DBG("BKADSR::noteOn(), attackRate = " << attackRate);
         if (attackRate > 0.0f)
         {
             state = State::attack;

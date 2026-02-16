@@ -77,13 +77,13 @@ SpringTuning::SpringTuning(SpringTuningParams &params, std::array<std::atomic<fl
 SpringTuning::~SpringTuning()
 {
     stopTimer();
-    DBG("SpringTuning: stopping timer");
+    // DBG("SpringTuning: stopping timer");
 };
 
 inline void SpringTuning::stop(void)
 {
     stopTimer();
-    DBG("SpringTuning: stopping timer");
+    // DBG("SpringTuning: stopping timer");
 }
 
 void SpringTuning::rateChanged() // called from UI
@@ -188,11 +188,11 @@ void SpringTuning::setRate(double r, bool start)
 {
     if (start) {
         startTimer(1000 / sparams.rate->getCurrentValue());
-        DBG("SpringTuning: starting timer");
+        // DBG("SpringTuning: starting timer");
     }
     else {
         stopTimer();
-        DBG("SpringTuning: stopping timer");
+        // DBG("SpringTuning: stopping timer");
     }
 }
 
@@ -201,7 +201,7 @@ bool SpringTuning::getSpringMode(int which)
     juce::String whichSpringId = "useLocalOrFundamental" + juce::String(which);
     for ( auto &param_ : *sparams.getBoolParams())
     {
-        DBG("checking if " + param_->getParameterID() + " == " + whichSpringId);
+        // DBG("checking if " + param_->getParameterID() + " == " + whichSpringId);
         if(param_->getParameterID() == whichSpringId)
         {
             return param_->get();

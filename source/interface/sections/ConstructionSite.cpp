@@ -518,7 +518,7 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     //delete heap memory
     plugin_components.erase(plugin_components.begin()+index);
 
-    DBG("moduleRemoved construction site");
+    // DBG("moduleRemoved construction site");
 }
 
 ConstructionSite::~ConstructionSite(void) {

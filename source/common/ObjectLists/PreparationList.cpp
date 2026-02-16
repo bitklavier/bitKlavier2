@@ -36,8 +36,8 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
         processor->prepareToPlay(synth.getSampleRate(), synth.getBufferSize());
         //looking at ProcessorGraph i actually don't think their is any need to try to wrap this in thread safety because
         //the graph rebuild is inherently gonna trigger some async blocking
-        DBG("add to " + v.getParent().getParent().getProperty(IDs::name).toString());
-        DBG("create new object with uuid" + state.getProperty(IDs::uuid).toString());
+        // DBG("add to " + v.getParent().getParent().getProperty(IDs::name).toString());
+        // DBG("create new object with uuid" + state.getProperty(IDs::uuid).toString());
         node_ptr = synth.addProcessor(std::move(processor),
                                       juce::AudioProcessorGraph::NodeID(
                                           juce::Uuid(state.getProperty(IDs::uuid).toString()).getTimeLow()));
@@ -255,8 +255,8 @@ void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapp
             if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr)
                 if(!synth.addModulationConnection(piano_switch->node_id,processor->node_id))
                     jassertfalse;
-            else
-                DBG(juce::String("did not prepend") + juce::String(processor->state.getProperty(IDs::type)));
+            // else
+            //     DBG(juce::String("did not prepend") + juce::String(processor->state.getProperty(IDs::type)));
 
         }
     }

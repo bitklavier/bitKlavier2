@@ -12,7 +12,7 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
 {
     // Check that components are valid
     if (start_component_ == nullptr || end_component_ == nullptr || target_component_ == nullptr) {
-        DBG("Error: Invalid components supplied to OpenGlLine");
+        // DBG("Error: Invalid components supplied to OpenGlLine");
         return;
     }
 
@@ -21,12 +21,12 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
     juce::Point<float> endClip = getClipSpaceCoordinates(end_component_, target_component_);
 
     // Debug outputs to verify the calculated coordinates
-    DBG("------------ OpenGlLine Created ------------");
-    DBG("Start Component Clip Space Coordinates: (" + juce::String(startClip.getX()) +
-        ", " + juce::String(startClip.getY()) + ")");
-    DBG("End Component Clip Space Coordinates: (" + juce::String(endClip.getX()) +
-        ", " + juce::String(endClip.getY()) + ")");
-    DBG("-------------------------------------------");
+    // DBG("------------ OpenGlLine Created ------------");
+    // DBG("Start Component Clip Space Coordinates: (" + juce::String(startClip.getX()) +
+    //     ", " + juce::String(startClip.getY()) + ")");
+    // DBG("End Component Clip Space Coordinates: (" + juce::String(endClip.getX()) +
+    //     ", " + juce::String(endClip.getY()) + ")");
+    // DBG("-------------------------------------------");
 
     // Store the data in the vertex buffer format (clip-space coordinates)
     data_ = std::make_unique<float[]>(4);
@@ -46,8 +46,8 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
     dirty_ = true;
 
     // Debugging additional information
-    DBG("Line Vertex Data: X1 = " + juce::String(data_[0]) + ", Y1 = " + juce::String(data_[1]) +
-        ", X2 = " + juce::String(data_[2]) + ", Y2 = " + juce::String(data_[3]));
+    // DBG("Line Vertex Data: X1 = " + juce::String(data_[0]) + ", Y1 = " + juce::String(data_[1]) +
+    //     ", X2 = " + juce::String(data_[2]) + ", Y2 = " + juce::String(data_[3]));
 }
 
 // Static function to calculate OpenGL clip-space coordinates
@@ -110,7 +110,7 @@ void OpenGlLine::init(OpenGlWrapper& open_gl) {
     shader_ = open_gl.shaders->getShaderProgram(Shaders::kSimpleLineVertex, fragment_shader_);
     shader_->use();
     if (!shader_->getLastError().isEmpty()) {
-        DBG(shader_->getLastError());
+        // DBG(shader_->getLastError());
         jassertfalse; // Shader compilation/linking failed
     }
 
@@ -126,7 +126,7 @@ void OpenGlLine::init(OpenGlWrapper& open_gl) {
     for (int i = 0; i < 4; ++i) {
         vertexBufferData += juce::String(debugData[i]) + ", ";
     }
-    DBG("Vertex Buffer Data: " + vertexBufferData);
+    // DBG("Vertex Buffer Data: " + vertexBufferData);
 
     // Unbind the buffer (optional safety)
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);

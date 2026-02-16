@@ -210,7 +210,10 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
 void KeymapProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    //processBlock (buffer, midiMessages);
+    //Keymap needs to allow note messages through while bypassed, so preps can handle them gracefully
+    // - for instance, Direct needs to see noteOff messages
+    // - so, Keymaps are essentially always active
+    processBlock (buffer, midiMessages);
 }
 
 void KeymapProcessor::allNotesOff()

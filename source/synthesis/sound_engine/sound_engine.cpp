@@ -59,8 +59,8 @@ namespace bitklavier {
 //    }
 
     void SoundEngine::setActivePiano(const juce::ValueTree &v) {
-//        DBG("***********SWITCH PIANOS********************");
-//        DBG("*********curr piano is " + v.getProperty(IDs::name).toString() + " ***********************");
+        DBG("***********SoundEngine::setActivePiano SWITCH PIANOS********************");
+        DBG("*********curr piano is " + v.getProperty(IDs::name).toString() + " ***********************");
         jassert(v.hasType(IDs::PIANO));
         auto nodes = processorGraph->getNodes();
         //skip input output nodes

@@ -16,15 +16,23 @@ PianoSwitchProcessor::PianoSwitchProcessor (SynthBase& parent,
 void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     buffer.clear();
-    // DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "switch");
+    // DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "PianoSwitchProcessor::processBlock");
 
     for (auto msg : midiMessages)
     {
         //if (msg.getMessage().isNoteOn() && std::abs(synth_base_.sample_index_of_switch - msg.samplePosition) >= 10)
+        //DBG("PianoSwitchProcessor::processBlock, synth_base_.total_samples_passed = " + juce::String(synth_base_.total_samples_passed) + " synth_base_.sample_index_of_switch = " + juce::String(synth_base_.sample_index_of_switch));
+        if (msg.getMessage().isNoteOn())
+        {
+            DBG("PianoSwitchProcessor::processBlock, uuid = " + juce::String(v.getProperty (IDs::uuid)));
+            DBG("PianoSwitchProcessor::processBlock, samples since last switch = " + juce::String(synth_base_.total_samples_passed - synth_base_.sample_index_of_switch));
+        }
+
         if (msg.getMessage().isNoteOn() && (synth_base_.total_samples_passed - synth_base_.sample_index_of_switch) >= 500)
         {
             DBG ("PianoSwitchProcessor::processBlock received noteOn " + juce::String (msg.getMessage().getNoteNumber()));
-            DBG("PianoSwitchProcessor::processBlock, synth_base_.total_samples_passed = " + juce::String(synth_base_.total_samples_passed) + " synth_base_.sample_index_of_switch = " + juce::String(synth_base_.sample_index_of_switch));
+            DBG ("PianoSwitchProcessor::processBlock, selectedPianoIndex = " + juce::String (v.getProperty (IDs::selectedPianoIndex)));
+
             if (roundToInt (v.getProperty (IDs::selectedPianoIndex)) != -1)
             {
                 const int selectedIndex = (int) v.getProperty (IDs::selectedPianoIndex);
@@ -51,7 +59,7 @@ void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
                     break;
                 }
 
-                synth_base_.sample_index_of_switch = msg.samplePosition;
+                //synth_base_.sample_index_of_switch = msg.samplePosition;
                 synth_base_.setActivePiano (selectedPianoVT, SwitchTriggerThread::AudioThread);
                 synth_base_.callOnMainThread ([=]()
                 {
@@ -74,4 +82,9 @@ void PianoSwitchProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
             break;
         }
     }
+}
+
+void PianoSwitchProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "PianoSwitchProcessor::processBlockBypassed");
 }

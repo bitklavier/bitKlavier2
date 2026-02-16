@@ -54,7 +54,7 @@ OpenGlComponent::OpenGlComponent(juce::String name) : juce::Component(name), onl
                                                 {
   background_color_ = juce::Colours::transparentBlack;
   id = generateID();
-  DBG("create " + name + " id: " + juce::String(id));
+  // DBG("create " + name + " id: " + juce::String(id));
 }
 
 OpenGlComponent::~OpenGlComponent() {

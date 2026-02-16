@@ -138,7 +138,7 @@ std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > *>*Synth
 
 void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delete_id)
 {
-    DBG ("delete connectionswithid");
+    // DBG ("delete connectionswithid");
 
     //cable connections i.e. audio/midi
     // if (connectionLists?
@@ -150,7 +150,7 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
         auto connection = vt.getChild (i);
         if (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::src)) == delete_id || juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (connection.getProperty (IDs::dest)) == delete_id)
         {
-            DBG ("remove connection");
+            // DBG ("remove connection");
             connectionList->removeChild (connection, &getUndoManager());
         }
         else
@@ -224,7 +224,7 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
 {
     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
-        DBG ("added piano");
+        DBG ("SynthBase::valueTreeChildAdded -- added piano");
         preparationLists.emplace_back (
             std::make_unique<PreparationList> (
                 *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));
@@ -357,7 +357,7 @@ bitklavier::ModConnectionList* SynthBase::getActiveModConnectionList()
 
 void SynthBase::setActivePiano (const juce::ValueTree& v, SwitchTriggerThread thread)
 {
-    //DBG ("setActivePiano");
+    DBG ("SynthBase::setActivePiano " << v.getProperty(IDs::name).toString());
     activePiano = v;
     switch_trigger_thread = thread;
     if (thread == SwitchTriggerThread::MessageThread)
@@ -687,6 +687,7 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     {
         gui->updateFullGui();
         gui->notifyFresh();
+        // gui->setActivePiano (getActivePianoValueTree());
     }
 
     return true;
@@ -728,6 +729,7 @@ bool SynthBase::saveToActiveFile()
         return false;
     return saveToFile(active_file_);
 }
+
 void SynthBase::startSampleLoading()
 {
     samplesLoading.store (true);
@@ -738,6 +740,7 @@ void SynthBase::startSampleLoading()
     if(getGuiInterface() && getGuiInterface()->getGui())
         getGuiInterface()->getGui()->showLoadingSection();
 }
+
 void SynthBase::finishedSampleLoading()
 {
     if (presetPending.load()) {
@@ -754,10 +757,13 @@ void SynthBase::finishedSampleLoading()
         }
         pendingPresetTree = juce::ValueTree{};
     }
+
     if(getGuiInterface() && getGuiInterface()->getGui()) {
         getGuiInterface()->getGui()->hideLoadingSection();
-       getGuiInterface()->getGui()->notifyFresh();
+        getGuiInterface()->getGui()->notifyFresh();
+        // getGuiInterface()->setActivePiano (getActivePianoValueTree());
     }
+
     samplesLoading.store (false);
 }
 

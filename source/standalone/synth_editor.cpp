@@ -178,12 +178,8 @@ void SynthEditor::resized() {
   }
 }
 
-void SynthEditor::timerCallback() {
-
-    /*
-     * todo: confirm this fix is correct, since getDevices() has been removed from JUCE
-     */
-    //juce::StringArray midi_ins(juce::MidiInput::getDevices());
+void SynthEditor::timerCallback()
+{
     auto midiInputs = juce::MidiInput::getAvailableDevices();
     juce::StringArray midi_ins;
     for (auto& info : midiInputs)

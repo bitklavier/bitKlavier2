@@ -366,9 +366,9 @@ void FullInterface::popupSelector (juce::Component* source, juce::Point<int> pos
     popup_selector_->setCancelCallback (cancel);
     popup_selector_->setWidthScale(width_scale);
     popup_selector_->showSelections (options);
-    DBG("FullInterface::popupSelector items: " << options.size());
+    // DBG("FullInterface::popupSelector items: " << options.size());
     juce::Rectangle<int> bounds (0, 0, std::ceil (getWidth()), std::ceil (getHeight()));
-    DBG("FullInterface::popupSelector bounds: " << bounds.toString());
+    // DBG("FullInterface::popupSelector bounds: " << bounds.toString());
     popup_selector_->setPosition (getLocalPoint (source, position), bounds);
     popup_selector_->setVisible (true);
     popup_selector_->setEnabled (options.enabled);

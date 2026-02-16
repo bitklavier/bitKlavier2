@@ -128,7 +128,7 @@ void CompressorProcessor::prepareToPlay (double sampleRate_, int samplesPerBlock
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate_, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
     sampleRate = sampleRate_;
-    DBG("compressor sample rate: " << sampleRate);
+    // DBG("compressor sample rate: " << sampleRate);
     originalSignal.setSize(2, spec.maximumBlockSize);
     sidechainSignal.resize(spec.maximumBlockSize, 0.0f);
     rawSidechainSignal = sidechainSignal.data();

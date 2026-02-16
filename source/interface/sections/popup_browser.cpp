@@ -292,8 +292,8 @@ void PopupList::redoImage() {
     //getDisplayForRect(getScreenBounds())->scale;
     int image_width = getWidth() * mult;
 
-    DBG("PopupList::redoImage - Row Height: " << row_height); // Debug row height
-    DBG("PopupList::redoImage - Image Width: " << image_width); // Debug image width
+    // DBG("PopupList::redoImage - Row Height: " << row_height); // Debug row height
+    // DBG("PopupList::redoImage - Image Width: " << image_width); // Debug image width
 
     juce::Colour text_color = findColour(Skin::kTextComponentText, true);
     juce::Colour lighten = findColour(Skin::kLightenScreen, true);
@@ -1168,7 +1168,7 @@ void SinglePopupSelector::setPosition(juce::Point<int> position, juce::Rectangle
     if (y < bounds.getY())
         y = bounds.getY();
     
-    DBG("SinglePopupSelector::setPosition final bounds: " << x << ", " << y << ", " << width << ", " << height);
+    // DBG("SinglePopupSelector::setPosition final bounds: " << x << ", " << y << ", " << width << ", " << height);
     setBounds(x, y, width, height);
 }
 

@@ -23,13 +23,13 @@ Cable::Cable (ConstructionSite* site, CableView& cableView) : juce::Component (C
     cableThickness = getCableThickness();
     // src_id.referTo(state, IDs::src, nullptr);
     // dest_id.referTo(state, IDs::dest, nullptr);
-    DBG("create cable");
+    // DBG("create cable");
 }
 
 
 Cable::~Cable()
 {
-    DBG("destory cable");
+    // DBG("destory cable");
 }
 
 juce::ValueTree Cable::getValueTree() {
