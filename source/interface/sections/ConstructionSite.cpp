@@ -448,7 +448,7 @@ void ConstructionSite::createWindow (juce::AudioProcessorGraph::Node* node, Plug
 
 void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     auto * interface = findParentComponentOfClass<SynthGuiInterface>();
-    auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state,interface );
+    auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state, interface );
     {
         juce::ScopedLock lock(open_gl_critical_section_);
         addSubSection (s.get());
@@ -477,14 +477,15 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
         plugin_components.push_back (std::move (s));
     }
 }
-void ConstructionSite::linkedPiano() {
 
+void ConstructionSite::linkedPiano() {
+    DBG("ConstructionSite::linkedPiano()");
 }
+
 void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate)
 {
     juce::ScopedLock lock(open_gl_critical_section_);
     SynthSection::renderOpenGlComponents(open_gl, animate);
-
 }
 
 void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
@@ -515,7 +516,8 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     plugin_components[index]->destroyOpenGlComponents (open_gl);
     //delete heap memory
     plugin_components.erase(plugin_components.begin()+index);
-DBG("moduleRemoved construction site");
+
+    DBG("moduleRemoved construction site");
 }
 
 ConstructionSite::~ConstructionSite(void) {

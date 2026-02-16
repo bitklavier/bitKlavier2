@@ -147,18 +147,55 @@ void PreparationList::deleteAllGui() {
     for (auto obj: objects)
         for (auto listener: listeners_)
             listener->removeModule(obj);
-
 }
+
 void PreparationList::rebuildAllGui() {
     for (auto obj: objects)
         for (auto listener: listeners_)
             listener->moduleAdded(obj);
     for (const auto & vt : parent) {
         if(vt.getType() == IDs::linkedPrep) {
-            //auto piano  = parent.getParent().getParent().getChildWithProperty(IDs::name,vt.getProperty(IDs::linkedPianoName));
-            //piano.getChildWithName(IDs::PREPARATIONS).get
-            for (auto listener: listeners_)
-                listener->linkedPiano();
+            auto galleryTop = parent.getRoot();
+            /*
+             * todo: remove name from this search, so it's not dependent on something the user might change
+             */
+            auto lpiano = galleryTop.getChildWithProperty(IDs::name, vt.getProperty(IDs::linkedPianoName));
+            auto lprep = lpiano.getChildWithName(IDs::PREPARATIONS).getChildWithProperty (IDs::nodeID, vt.getProperty(IDs::nodeID));
+            DBG("PreparationList::rebuildAllGui(), found linked prep with nodeID = " << juce::String(lprep.getProperty(IDs::nodeID)));
+
+            // need to find the PluginInstanceWrapper* for this lprep.
+            PluginInstanceWrapper* linkedObj = nullptr;
+            for (auto& preparationList : synth.preparationLists)
+            {
+                if (preparationList->getValueTree().getParent() == lpiano)
+                {
+                    for (auto obj : preparationList->objects)
+                    {
+                        if (obj->state.getProperty(IDs::nodeID) == lprep.getProperty(IDs::nodeID))
+                        {
+                            linkedObj = obj;
+                            break;
+                        }
+                    }
+                }
+                if (linkedObj != nullptr) break;
+            }
+
+            if (linkedObj != nullptr)
+            {
+                DBG("PreparationList::rebuildAllGui(), found linked OBJECT with nodeID = " << juce::String(linkedObj->state.getProperty(IDs::nodeID)));
+                for (auto listener : listeners_)
+                {
+                    // Check if this module is already added to the listener (ConstructionSite)
+                    // ConstructionSite implements moduleAdded by creating a new PreparationSection.
+                    // If we call it multiple times for the same linkedObj, it might create duplicates.
+                    // However, rebuildAllGui is usually called when we need to refresh the WHOLE GUI.
+                    listener->moduleAdded(linkedObj);
+                }
+            }
+
+            // for (auto listener: listeners_)
+            //     listener->linkedPiano();
         }
     }
 }

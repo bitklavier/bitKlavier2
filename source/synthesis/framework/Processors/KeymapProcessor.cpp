@@ -207,9 +207,10 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     // DBG("keymap");
 }
+
 void KeymapProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    processBlock (buffer, midiMessages);
+    //processBlock (buffer, midiMessages);
 }
 
 void KeymapProcessor::allNotesOff()

@@ -123,7 +123,7 @@ private:
 class KeymapProcessor;
 class PluginInstanceWrapper  {
     public:
-    PluginInstanceWrapper (juce::AudioProcessor* proc,const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc),node_id(nodeID) {
+    PluginInstanceWrapper (juce::AudioProcessor* proc, const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc), node_id(nodeID) {
         // if (!v.getProperty(IDs::nodeID))
             state.setProperty(IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeID),nullptr);
     }
