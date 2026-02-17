@@ -2428,7 +2428,7 @@ void ModulationManager::connectModulation(std::string source, std::string destin
 }
 
 void ModulationManager::removeStateModulation(std::string source, std::string destination) {
-    //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
+    DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
     if (parent == nullptr || source.empty() || destination.empty())
         return;

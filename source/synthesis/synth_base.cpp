@@ -1266,7 +1266,7 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
     DBG("state connection listener being removed");
     connection->processor->removeListener (connection);
     state_connections_.remove (connection);
-    engine_->removeConnection (connection->connection_);
+    // engine_->removeConnection (connection->connection_);
         connection->connection_ = {};
         connection->parent_processor->removeModulationConnection (connection);
     connection->state.getParent().removeChild (connection->state, nullptr);
@@ -1330,10 +1330,10 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
     connection->processor = connection->parent_processor->getModulatorBase (juse_uuid);
     connection->processor->addListener (connection);
     connection->parent_processor->addModulationConnection (connection);
-    connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
+    // connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
 
     // finally, add the connection to the sound enging
-    engine_->addConnection (connection->connection_);
+    // engine_->addConnection (connection->connection_);
 }
 
 bool SynthBase::connectStateModulation (const std::string& source, const std::string& destination)
