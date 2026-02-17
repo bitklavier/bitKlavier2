@@ -96,7 +96,7 @@ void PianoSwitchPreparation::resized()
     int largepadding = findValue(Skin::kLargePadding);
 
     juce::Colour body_text = findColour(Skin::kTextComponentText, true);
-    float label_text_font = findValue(Skin::kTextComponentFontSize);
+    float label_text_font = findValue(Skin::kButtonFontSize);
     pianoSelectText->setColor(body_text);
     pianoSelectText->setTextSize(label_text_font);
     pianoSelectText->setJustification(juce::Justification::left);

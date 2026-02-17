@@ -192,7 +192,7 @@ bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
         gui_->header_->updateCurrentPianoName();
         setPianoSwitchTriggerThreadMessage();
         setActivePiano (getSynth()->getActivePianoValueTree());
-        DBG("SynthGuiInterface::loadFromFile, currentPiano = " + juce::String( gui_->header_->getActivePiano().getProperty(IDs::name)));
+        // DBG("SynthGuiInterface::loadFromFile, currentPiano = " + juce::String( gui_->header_->getActivePiano().getProperty(IDs::name)));
     }
     return success;
     //sampleLoadManager->loadSamples()

@@ -179,6 +179,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
      * todo: prepScale should be settable by the user, and saved
      *          - it should also scale distances between preps
      *          - not sure if this is the right place to set this overall, but it scales the prep sizes at least
+     *      - yeah this is not the right way to do this, but will leave for now....
      */
     float prepScale = 0.6;
 
@@ -328,8 +329,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case pianoswitch:
             {
-                prepWidth = 150.0f;
-                prepHeight = 120.0f;
+                prepWidth = 150.0f * 1.5;
+                prepHeight = 120.0f * 1.25;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::pianoMap);
