@@ -452,8 +452,12 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
         }
     }
 
-    // MODCONNECTIONS remap — src/dest are compound strings containing UUIDs
-    // (e.g. "uuid_modulatorName" / "uuid_paramName"), so replace UUID substrings
+    // MODCONNECTIONS remap — two levels:
+    // 1) Direct children (TUNINGCONNECTION, MODCONNECTION, TEMPOCONNECTION) have
+    //    NodeID-based src/dest that need remapping via nodeIdMap.
+    // 2) Their ModulationConnection grandchildren have UUID-based compound string
+    //    src/dest (e.g. "uuid_modulatorName" / "uuid_paramName") and their own uuid
+    //    property, all of which need remapping via uuidMap.
     if (auto mconns = piano.getChildWithName(IDs::MODCONNECTIONS); mconns.isValid())
     {
         for (int i = 0; i < mconns.getNumChildren(); ++i)
@@ -461,22 +465,71 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
             auto c = mconns.getChild(i);
             if (! c.isValid()) continue;
 
-            if (! c.hasProperty(IDs::src) || ! c.hasProperty(IDs::dest))
-                continue;
-
-            auto srcStr = c.getProperty(IDs::src).toString();
-            auto dstStr = c.getProperty(IDs::dest).toString();
-
-            for (auto& [oldUuid, newUuid] : uuidMap)
+            // Flat ModulationConnection directly under MODCONNECTIONS:
+            // has UUID-based compound string src/dest and its own uuid property
+            if (c.hasType(IDs::ModulationConnection))
             {
-                if (srcStr.contains(oldUuid))
-                    srcStr = srcStr.replace(oldUuid, newUuid);
-                if (dstStr.contains(oldUuid))
-                    dstStr = dstStr.replace(oldUuid, newUuid);
+                if (c.hasProperty(IDs::uuid))
+                    c.setProperty(IDs::uuid, juce::Uuid().toString(), nullptr);
+
+                if (c.hasProperty(IDs::src))
+                {
+                    auto s = c.getProperty(IDs::src).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (s.contains(oldUuid))
+                            s = s.replace(oldUuid, newUuid);
+                    c.setProperty(IDs::src, s, nullptr);
+                }
+                if (c.hasProperty(IDs::dest))
+                {
+                    auto d = c.getProperty(IDs::dest).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (d.contains(oldUuid))
+                            d = d.replace(oldUuid, newUuid);
+                    c.setProperty(IDs::dest, d, nullptr);
+                }
+                continue;
             }
 
-            c.setProperty(IDs::src, srcStr, nullptr);
-            c.setProperty(IDs::dest, dstStr, nullptr);
+            // Wrapper types (TUNINGCONNECTION, MODCONNECTION, TEMPOCONNECTION, etc.)
+            // have NodeID-based src/dest
+            if (c.hasProperty(IDs::src) && c.hasProperty(IDs::dest))
+            {
+                auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
+                auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+
+                if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                    c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                    c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            }
+
+            // Remap ModulationConnection grandchildren
+            for (int j = 0; j < c.getNumChildren(); ++j)
+            {
+                auto mc = c.getChild(j);
+                if (! mc.isValid()) continue;
+
+                if (mc.hasProperty(IDs::uuid))
+                    mc.setProperty(IDs::uuid, juce::Uuid().toString(), nullptr);
+
+                if (mc.hasProperty(IDs::src))
+                {
+                    auto s = mc.getProperty(IDs::src).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (s.contains(oldUuid))
+                            s = s.replace(oldUuid, newUuid);
+                    mc.setProperty(IDs::src, s, nullptr);
+                }
+                if (mc.hasProperty(IDs::dest))
+                {
+                    auto d = mc.getProperty(IDs::dest).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (d.contains(oldUuid))
+                            d = d.replace(oldUuid, newUuid);
+                    mc.setProperty(IDs::dest, d, nullptr);
+                }
+            }
         }
     }
 }
