@@ -359,7 +359,17 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
         newPiano.setProperty(IDs::name, candidate, nullptr);
     }
 
-    // 3) Deactivate current pianos and append the duplicate
+    // 3) Temporarily remove MODCONNECTIONS so that appending the piano
+    //    doesn't try to wire up modulations before the processors exist
+    auto modConns = newPiano.getChildWithName(IDs::MODCONNECTIONS);
+    juce::ValueTree savedModConns;
+    if (modConns.isValid())
+    {
+        savedModConns = modConns.createCopy();
+        modConns.removeAllChildren(nullptr);
+    }
+
+    // 4) Deactivate current pianos and append the duplicate
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     interface->setPianoSwitchTriggerThreadMessage();
 
@@ -369,7 +379,15 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
 
     gallery.appendChild(newPiano, nullptr);
 
-    // 4) UI updates
+    // 5) Now that processors exist, restore the modulation connections
+    if (savedModConns.isValid())
+    {
+        auto mc = newPiano.getChildWithName(IDs::MODCONNECTIONS);
+        for (int i = 0; i < savedModConns.getNumChildren(); ++i)
+            mc.appendChild(savedModConns.getChild(i).createCopy(), nullptr);
+    }
+
+    // 6) UI updates
     pianoSelectText->setText(newPiano.getProperty(IDs::name));
     interface->allNotesOff();
     resized();
@@ -434,7 +452,8 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
         }
     }
 
-    // MODCONNECTIONS remap (NodeID-only)
+    // MODCONNECTIONS remap — src/dest are compound strings containing UUIDs
+    // (e.g. "uuid_modulatorName" / "uuid_paramName"), so replace UUID substrings
     if (auto mconns = piano.getChildWithName(IDs::MODCONNECTIONS); mconns.isValid())
     {
         for (int i = 0; i < mconns.getNumChildren(); ++i)
@@ -445,13 +464,19 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
             if (! c.hasProperty(IDs::src) || ! c.hasProperty(IDs::dest))
                 continue;
 
-            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
-            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+            auto srcStr = c.getProperty(IDs::src).toString();
+            auto dstStr = c.getProperty(IDs::dest).toString();
 
-            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
-                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
-            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
-                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            for (auto& [oldUuid, newUuid] : uuidMap)
+            {
+                if (srcStr.contains(oldUuid))
+                    srcStr = srcStr.replace(oldUuid, newUuid);
+                if (dstStr.contains(oldUuid))
+                    dstStr = dstStr.replace(oldUuid, newUuid);
+            }
+
+            c.setProperty(IDs::src, srcStr, nullptr);
+            c.setProperty(IDs::dest, dstStr, nullptr);
         }
     }
 }
