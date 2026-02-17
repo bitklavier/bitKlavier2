@@ -143,6 +143,7 @@ etc...
   - so, if you want to add new values, they need to be in the same placement/order in both `skin.cpp` and `skin.h`
 - `synth_section.cpp` then has helper functions to get some of these vals (`SynthSection::getKnobSectionHeight()` for instance)
 - can add to all these as needed!
+- keyboard key colors are in `BKOnOffKeyboardComponent`
 
 ---------
 ## Modulatable Parameters

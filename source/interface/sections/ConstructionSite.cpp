@@ -12,21 +12,25 @@
 #include "tracktion_ValueTreeUtilities.h"
 
 static constexpr std::array<std::pair<float, float>,
-    static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST) - 1> prepSizes =
+    static_cast<size_t>(bitklavier::BKPreparationType::BKPreparationTypeNil)> prepSizes =
 {{
-    /* 3 Keymap      */ { 185.0f, 105.0f },
+    /* 0 Keymap      */ { 185.0f, 105.0f },
     /* 1 Direct      */ { 245.0f, 125.0f },
-    /* 5 Synchronic  */ { 260.0f, 132.0f },
-    /* 2 Nostalgic   */ { 245.0f, 125.0f },
-    /* 6 Blendronic  */ { 245.0f, 125.0f }, // default
-    /* 4 Resonance   */ { 245.0f, 125.0f },
-    /* 8 Tuning      */ { 125.0f, 245.0f },
+    /* 2 Synchronic  */ { 260.0f, 132.0f },
+    /* 3 Nostalgic   */ { 245.0f, 125.0f },
+    /* 4 Blendronic  */ { 245.0f, 125.0f },
+    /* 5 Resonance   */ { 245.0f, 125.0f },
+    /* 6 Tuning      */ { 125.0f, 245.0f },
     /* 7 Tempo       */ { 132.0f, 260.0f },
-    /* 9 MidiFilter  */ { 75.0f,  75.0f  },
-    /* 10 MidiTarget */ { 75.0f,  75.0f  },
-    /* 12 Modulation */ { 100.0f, 100.0f },
-    /* 13 Reset      */ { 100.0f, 100.0f },
-    /* 11 PianoMap   */ { 150.0f, 120.0f },
+    /* 8 MidiFilter  */ { 75.0f,  75.0f  },
+    /* 9 MidiTarget */ { 75.0f,  75.0f  },
+    /* 10 Modulation */ { 100.0f, 100.0f },
+    /* 11 Reset      */ { 100.0f, 100.0f },
+    /* 12 PianoMap   */ { 150.0f, 120.0f },
+    /* 13 Comment    */ { 100.0f, 100.0f },
+    /* 14 Compressor */ { 245.0f, 125.0f },
+    /* 15 EQ         */ { 245.0f, 125.0f },
+    /* 16 VST        */ { 245.0f, 125.0f },
 }};
 
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
@@ -686,8 +690,12 @@ void ConstructionSite::addItem (int selection, bool center)
     else {
         DBG("adding VST? " + juce::String(selection) + "");
 
-        const float prepWidth  = 245.f * prepScale;
-        const float prepHeight = 125.f * prepScale;
+        const auto idx = static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST);
+        jassert (idx < prepSizes.size());
+        const auto [baseW, baseH] = prepSizes[idx];
+
+        const float prepWidth  = baseW * prepScale;
+        const float prepHeight = baseH * prepScale;
         _parent = findParentComponentOfClass<SynthGuiInterface>();
         juce::ValueTree t(IDs::vst);
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);

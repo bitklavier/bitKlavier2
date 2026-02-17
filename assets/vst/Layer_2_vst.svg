@@ -1,4 +1,28 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 235.21 110.15"><style type="text/css">.cls-3undefined.cls-4undefined</style><g xmlns="http://www.w3.org/2000/svg">
-    <line class="cls-3" x1="14.3" y1="56.8" x2="109.07" y2="56.8"/>
-    <path class="cls-4" d="M125.97,56.8c-7.95,2.95-17.82,7.98-23.93,13.32l4.82-13.32-4.82-13.31c6.12,5.33,15.98,10.37,23.93,13.31Z"/>
-  </g></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 205.53 45.75">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #ee2a7b;
+        stroke-miterlimit: 10;
+        stroke-width: 4px;
+      }
+
+      .cls-2 {
+        fill: #ee2a7b;
+        stroke-width: 0px;
+      }
+    </style>
+  </defs>
+  <g id="Layer_3">
+    <g>
+      <line class="cls-1" y1="13.31" x2="94.76" y2="13.31"/>
+      <path class="cls-2" d="M111.66,13.31c-7.95,2.95-17.82,7.98-23.93,13.32l4.82-13.32-4.82-13.31c6.12,5.33,15.98,10.37,23.93,13.31Z"/>
+    </g>
+    <g>
+      <line class="cls-1" x1="152.05" y1="14.88" x2="190.89" y2="37.3"/>
+      <path class="cls-2" d="M205.53,45.75c-8.36-1.42-19.42-1.99-27.38-.43l10.83-9.12,2.49-13.94c2.63,7.68,8.66,16.97,14.07,23.5Z"/>
+    </g>
+  </g>
+</svg>

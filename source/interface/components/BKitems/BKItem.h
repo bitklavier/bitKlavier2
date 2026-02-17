@@ -147,7 +147,8 @@ public:
         float layer_2_height = bounds.getHeight() * 11 / 20;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -161,7 +162,8 @@ public:
         float layer_3_height = bounds.getHeight() * 29 / 36;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -178,8 +180,8 @@ public:
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
 
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
@@ -207,7 +209,8 @@ public:
         float layer_2_height = bounds.getHeight() * 3 / 5;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -221,7 +224,8 @@ public:
         float layer_3_height = bounds.getHeight() * 11 / 20;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -236,8 +240,8 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
@@ -264,7 +268,8 @@ public:
         float layer_2_height = bounds.getHeight() * 3 / 4;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -278,7 +283,8 @@ public:
         float layer_3_height = bounds.getHeight() * 11 / 20;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -293,8 +299,8 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
@@ -322,7 +328,8 @@ public:
         float layer_2_height = bounds.getHeight() * 7 / 9;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -336,7 +343,8 @@ public:
         float layer_3_height = bounds.getHeight() / 2;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -351,8 +359,8 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered));
     }
@@ -379,7 +387,8 @@ public:
         float layer_2_height = bounds.getHeight() * 5 / 7;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -393,7 +402,8 @@ public:
         float layer_3_height = bounds.getHeight() * 9 / 20;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -408,8 +418,8 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
@@ -436,7 +446,8 @@ public:
         float layer_2_height = bounds.getHeight() * 5 / 7;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -450,7 +461,8 @@ public:
         float layer_3_height = bounds.getHeight() / 2;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -465,8 +477,8 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
@@ -492,7 +504,8 @@ public:
         float layer_2_height = bounds.getHeight() * 4 / 5;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -508,7 +521,7 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
+        g.fillPath(layer2);
         g.setColour(prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
@@ -536,7 +549,8 @@ public:
         float layer_2_height = bounds.getHeight() * 19 / 30;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -544,7 +558,6 @@ public:
 
 
         // Retrieves and sets the color of each layer
-
         g.setColour(findColour(Skin::kShadow, true));
         g.drawImageAt(shadow_, 0, 0, true);
         g.fillPath(layer_1_);
@@ -552,61 +565,79 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
+        g.fillPath(layer2);
         g.setColour(prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
 
-
+/*
+ * not sure why VST is such a headache to draw here....
+ * definitely don't reproduce elsewhere!
+ */
 class VSTItem : public BKItem {
     public:
     VSTItem (): BKItem(bitklavier::BKPreparationType::PreparationTypeVST){}
-     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
     {
         // Ascertains the current window size
         juce::Rectangle<float> bounds = getLocalBounds().toFloat();
 
         // Ascertains the appropriate location for layer_2 based on the preparation
         // window size
-        float layer_2_x = bounds.getX() + (bounds.getWidth() * 9 / 30);
-        float layer_2_y = bounds.getY() + (bounds.getHeight() / 7);
-        float layer_2_width = bounds.getWidth() * 18 / 30;
-        float layer_2_height = bounds.getHeight() * 5 / 7;
+        // float layer_2_x = bounds.getX() + (bounds.getWidth() * 9 / 30);
+        float layer_2_x = bounds.getX() + (bounds.getWidth() * 2 / 30);
+        float layer_2_y = bounds.getY() + (bounds.getHeight() / 2.5);
+        // float layer_2_width = bounds.getWidth() * 18 / 30;
+        float layer_2_width = bounds.getWidth() * 25 / 30;
+        float layer_2_height = bounds.getHeight() * 3 / 7;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
                                                                   false));
 
-        // Ascertains the appropriate location for layer_3 based on the preparation
-        // window size
-        float layer_3_x = bounds.getX() + (bounds.getWidth() / 10);
-        float layer_3_y = bounds.getY() + (bounds.getHeight() * 10 / 30);
-        float layer_3_width = bounds.getWidth() / 7;
-        float layer_3_height = bounds.getHeight() / 2;
+        // Place layer_3 just to the right of center within layer_2's area
+        float layer_3_width = layer_2_width * 0.22f;
+        // float layer_3_height = layer_2_height * 0.55f;
+        float layer_3_height = bounds.getHeight() * 0.4f;
+        // float layer_3_x = layer_2_x + layer_2_width * 0.58f - layer_3_width * 0.5f;
+        float layer_3_x = layer_2_width * 0.6f;
+        // float layer_3_y = layer_2_y + (layer_2_height - layer_3_height) * 0.5f;
+        float layer_3_y = bounds.getY() + (bounds.getHeight() * 0.3f);
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
                                                                   true));
 
-        // Retrieves and sets the color of each layer
-
+        // Draw in the same order/style as other items for consistency
         g.setColour(findColour(Skin::kShadow, true));
         g.drawImageAt(shadow_, 0, 0, true);
         g.fillPath(layer_1_);
 
-        juce::Colour c;
-        c = findColour(Skin::kWidgetPrimary1, true);
-        g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
-        g.setColour(prep_color_);
+        // Fill overlay layers
+        juce::Colour c = findColour(Skin::kWidgetPrimary1, true);
+        //g.setColour(c);
+        // not sure why we are having to hardwire these for VST unlike the others....
+        g.setColour(juce::Colour::fromRGB(0xEE, 0x2A, 0x7B));
+        g.fillPath(layer2);
+        g.fillPath(layer3);
+
+        // Stroke overlay layers using SVG stroke color (#ee2a7b)
+        g.setColour(juce::Colour::fromRGB(0xEE, 0x2A, 0x7B));
+        // g.strokePath(layer2, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
+        // g.strokePath(layer3, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
+
+        // VST outline uses the preparation accent colour
+        //g.setColour(prep_color_);
+        g.setColour(juce::Colour::fromRGB(0xEE, 0x2A, 0x7B));
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
@@ -804,7 +835,8 @@ public:
         float layer_2_height = bounds.getHeight() * 3 / 4;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -818,7 +850,8 @@ public:
         float layer_3_height = bounds.getHeight() * 11 / 20;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -833,8 +866,8 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
@@ -861,7 +894,8 @@ public:
         float layer_2_height = bounds.getHeight() * 3 / 4;
 
         // Transforms layer_2 to fit appropriately in the preparation window
-        layer_2_.applyTransform(layer_2_.getTransformToScaleToFit(layer_2_x,
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
                                                                   layer_2_y,
                                                                   layer_2_width,
                                                                   layer_2_height,
@@ -875,7 +909,8 @@ public:
         float layer_3_height = bounds.getHeight() * 11 / 20;
 
         // Transforms layer_3 to fit appropriately in the preparation window
-        layer_3_.applyTransform(layer_3_.getTransformToScaleToFit(layer_3_x,
+        juce::Path layer3 = layer_3_;
+        layer3.applyTransform(layer3.getTransformToScaleToFit(layer_3_x,
                                                                   layer_3_y,
                                                                   layer_3_width,
                                                                   layer_3_height,
@@ -890,8 +925,8 @@ public:
         juce::Colour c;
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
-        g.fillPath(layer_2_);
-        g.fillPath(layer_3_);
+        g.fillPath(layer2);
+        g.fillPath(layer3);
         g.setColour(prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }

@@ -111,7 +111,7 @@ class Paths {
       arr.add(fromSvgData((const void*)BinaryData::Layer_1_vst_svg,BinaryData::Layer_1_vst_svgSize));
       arr.add(fromSvgData((const void*)BinaryData::Layer_2_vst_svg,BinaryData::Layer_2_vst_svgSize));
       arr.add(fromSvgData((const void*)BinaryData::Layer_3_vst_svg,BinaryData::Layer_3_vst_svgSize));
-      arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
+      //arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
 
       return arr;
     }
@@ -126,7 +126,7 @@ class Paths {
         arr.add(fromSvgData((const void*)BinaryData::Layer_1_vst_svg,BinaryData::Layer_1_vst_svgSize));
         arr.add(fromSvgData((const void*)BinaryData::Layer_2_vst_svg,BinaryData::Layer_2_vst_svgSize));
         arr.add(fromSvgData((const void*)BinaryData::Layer_3_vst_svg,BinaryData::Layer_3_vst_svgSize));
-        arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
+        //arr.add(fromSvgData((const void*)BinaryData::Layer_4_vst_svg,BinaryData::Layer_4_vst_svgSize));
 
         return arr;
     }
