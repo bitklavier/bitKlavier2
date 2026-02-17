@@ -30,7 +30,7 @@ namespace bitklavier {
         InternalProcessor() : juce::AudioProcessor() {
         }
 
-        // juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
+        juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
 
         virtual void setTuning(TuningProcessor *tun) {
             tuning = tun;
@@ -210,8 +210,8 @@ namespace bitklavier {
                 p->applyMonophonicModulation(*in);
                 parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
                 p->applyMonophonicModulation(*in + *in_continous);
-                // bufferDebugger->capture("m"+juce::String(channel), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
-                // bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
+                bufferDebugger->capture("m"+juce::String(channel) + "    " + p->getParameterID(), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
+                bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)) + " " + p->getParameterID(), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
             }
         }
 
@@ -222,68 +222,44 @@ namespace bitklavier {
          *      this is on a separate bus from the regular audio graph that carries audio between preparations
          */
         void setupModulationMappings() {
-            auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
-            if (!mod_params.isValid()) {
-                mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, nullptr);
-                for (auto param: state.params.modulatableParams) {
-                    juce::ValueTree modChan{IDs::MODULATABLE_PARAM};
-                    juce::String name = param->paramID; // Works if all types have getParamID()
+            auto mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, nullptr);
 
+            // Create a temporary vector to store the children in the desired order
+            juce::Array<juce::ValueTree> orderedChildren;
+
+            for (auto param: state.params.modulatableParams) {
+                juce::String name = param->paramID;
+                auto vt = mod_params.getChildWithProperty(IDs::parameter, name);
+
+                if (!vt.isValid()) {
+                    vt = juce::ValueTree{IDs::MODULATABLE_PARAM};
+                    vt.setProperty(IDs::parameter, name, nullptr);
                     const auto &a = param->getNormalisableRange();
-                    modChan.setProperty(IDs::parameter, name, nullptr);
-                    modChan.setProperty(IDs::start, a.start, nullptr);
-                    modChan.setProperty(IDs::end, a.end, nullptr);
-                    modChan.setProperty(IDs::skew, a.skew, nullptr);
-                    param->setRangeToValueTree(modChan);
-                    modChan.setProperty(IDs::sliderval, param->get(),nullptr);
-                    // std::visit([&](auto *p) {
-                    //
-                    //
-                    //            },
-                    //            param);
-                    mod_params.appendChild(modChan, nullptr);
-                    ////for setting up audio modulations in order to set via absolute value
-                    const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
-                    param->setParamOffsetIndex(offsetIdx);
-                    // std::visit([&](auto *p) {
-                    //
-                    // }, param);
+                    vt.setProperty(IDs::start, a.start, nullptr);
+                    vt.setProperty(IDs::end, a.end, nullptr);
+                    vt.setProperty(IDs::skew, a.skew, nullptr);
                 }
-            } else {
-                for (auto param: state.params.modulatableParams) {
-                    //int mod = 0;
-                    // juce::String name = std::visit([](auto *p) -> juce::String {
-                    auto name = param->paramID; // Works if all types have getParamID()
-                                                   // },
-                                                   // param);
-                    auto vt = mod_params.getChildWithProperty(IDs::parameter, name);
-                    if (!vt.isValid()) {
-                        // const auto &a = std::visit([](auto *p) -> juce::NormalisableRange<float> {
-                        auto &a = param->getNormalisableRange();
-                                                       // Works if all types have getParamID()
-                                                   // },
-                                                   // param);
-                        vt = juce::ValueTree{IDs::MODULATABLE_PARAM};
-                        vt.setProperty(IDs::parameter, name, nullptr);
-                        vt.setProperty(IDs::start, a.start, nullptr);
-                        vt.setProperty(IDs::end, a.end, nullptr);
-                        vt.setProperty(IDs::skew, a.skew, nullptr);
-                    }
-                    // std::visit([&](auto *p) {
-                    param->setRangeToValueTree(vt);
-                    vt.setProperty(IDs::sliderval, v.getProperty(name), nullptr);
 
-                    auto val = v.getProperty(name);
-                    // std::visit([&](auto *p) {
-                    param->setParameterValue(val);
-                               // },
-                               // param);
-                    ////for setting up audio modulations in order to set via absolute value
-                    const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
-                    // std::visit([&](auto *p) {
-                    param->setParamOffsetIndex(offsetIdx);
-                    // }, param);
+                // Update properties
+                param->setRangeToValueTree(vt);
+                if (v.hasProperty(name)) {
+                    vt.setProperty(IDs::sliderval, v.getProperty(name), nullptr);
+                    param->setParameterValue(v.getProperty(name));
+                } else {
+                    vt.setProperty(IDs::sliderval, param->get(), nullptr);
                 }
+
+                // Setup audio modulation offset
+                const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
+                param->setParamOffsetIndex(offsetIdx);
+
+                orderedChildren.add(vt);
+            }
+
+            // Now rebuild mod_params children in the correct order
+            mod_params.removeAllChildren(nullptr);
+            for (auto& child : orderedChildren) {
+                mod_params.appendChild(child, nullptr);
             }
         }
 

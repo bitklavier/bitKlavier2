@@ -55,10 +55,13 @@ void TuningState::processStateChanges()
         auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
         {
-            DBG("TuningState::processStateChanges => absoluteTuning mod or reset triggered");
+            //DBG("TuningState::processStateChanges => absoluteTuning mod or reset triggered");
             for (auto& element : absoluteTuningOffset) {
                 element.store(0.0f, std::memory_order_relaxed);
             }
+            /*
+             * todo: ideally we don't have this string parsing happening on the audio thread like this
+             */
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
             touchedAbsolute = true;
         }
@@ -66,10 +69,10 @@ void TuningState::processStateChanges()
         val = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
-            if (tuningSystem != nullptr)
-                DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = " + tuningSystem->getCurrentValueAsText() + "");
-            else
-                DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = <uninitialised>");
+            // if (tuningSystem != nullptr)
+            //     DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = " + tuningSystem->getCurrentValueAsText() + "");
+            // else
+            //     DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = <uninitialised>");
 
             for (auto& element : circularTuningOffset_custom) {
                 element.store(0.0f, std::memory_order_relaxed);
@@ -94,6 +97,7 @@ void TuningState::processStateChanges()
 
 void TuningState::setFundamental (int fund)
 {
+    DBG("TuningState::setFundamental = " << fund << "");
     //need to shift keyValues over by difference in fundamental
     int oldFund = getOldFundamental();
     setOldFundamental(fund);
@@ -187,7 +191,11 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
  * Get the tuning offset value, from "offset" slider
  * @return offset in fractional Midi note values
  */
-double TuningState::getOverallOffset() { return *offsetKnobParam.offSetSliderParam * 0.01;}
+double TuningState::getOverallOffset()
+{
+    //DBG("TuningState::getOverallOffset() = " << *offsetKnobParam.offSetSliderParam);
+    return *offsetKnobParam.offSetSliderParam * 0.01;
+}
 
 /**
  * update the last frequency and the last interval, for use in the UI
@@ -262,6 +270,8 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
+        //DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
+        //DBG(" TuningState::getStaticTargetFrequency, about to return " + juce::String(mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference())));
         return mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference());
     }
 
@@ -293,6 +303,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
         workingOffset += getOverallOffset();
+        //DBG(" TuningState::getStaticTargetFrequency with getSemitoneWidthOffsetForMidiNote, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " midiNoteAdjustment = " + juce::String(midiNoteAdjustment));
         return mtof (workingOffset + midiNoteNumberTemp, getGlobalTuningReference());
     }
 

@@ -179,30 +179,73 @@ struct TuningParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("tuning")
     {
-        add (tuningState.tuningSystem,
+        add (tuningState.offsetKnobParam,
+        tuningState.semitoneWidthParams,
+            tuningState.tuningSystem,
             tuningState.fundamental,
             tuningState.tuningType,
-            tuningState.semitoneWidthParams,
             tuningState.adaptiveParams,
             tuningState.springTuningParams,
-            tuningState.offsetKnobParam,
             tuningState.lastNote);
 
         tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
 
-        doForAllParameters ([this] (auto& param, size_t) {
-            // if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
-            //     if (sliderParam->supportsMonophonicModulation())
-            //         modulatableParams.push_back ( sliderParam);
-            //
-            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-            //     if (sliderParam->supportsMonophonicModulation())
-            //         modulatableParams.push_back ( sliderParam);
+        // clear modulatableParams just in case, though it should be empty
+        modulatableParams.clear();
 
-            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-        });
+        // 1. offset (1 param)
+        if (tuningState.offsetKnobParam.offSetSliderParam->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.offsetKnobParam.offSetSliderParam.get());
+
+        // 2. semitoneWidth (1 param)
+        if (tuningState.semitoneWidthParams.semitoneWidthSliderParam->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.semitoneWidthParams.semitoneWidthSliderParam.get());
+
+        // 3. adaptive history and thresh (2 params)
+        if (tuningState.adaptiveParams.tAdaptiveHistory->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.adaptiveParams.tAdaptiveHistory.get());
+        if (tuningState.adaptiveParams.tAdaptiveClusterThresh->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.adaptiveParams.tAdaptiveClusterThresh.get());
+
+        // 4. spring tuning (rate, drag, stiffnesses, weights: 18 params)
+        if (tuningState.springTuningParams.rate->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.rate.get());
+        if (tuningState.springTuningParams.drag->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.drag.get());
+        if (tuningState.springTuningParams.intervalStiffness->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.intervalStiffness.get());
+        if (tuningState.springTuningParams.tetherStiffness->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.tetherStiffness.get());
+        if (tuningState.springTuningParams.tetherWeightGlobal->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.tetherWeightGlobal.get());
+        if (tuningState.springTuningParams.tetherWeightSecondaryGlobal->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.tetherWeightSecondaryGlobal.get());
+
+        // interval weights 1-12
+        auto addIfModulatable = [this](auto& param) {
+            if (param->supportsMonophonicModulation())
+                modulatableParams.push_back(param.get());
+        };
+
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_1);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_2);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_3);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_4);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_5);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_6);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_7);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_8);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_9);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_10);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_11);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_12);
+
+        // check if lastNote is modulatable (usually not, but just in case)
+        if (tuningState.lastNote->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.lastNote.get());
+
+        // ensure we have the expected number of parameters (22)
+        // jassert(modulatableParams.size() == 22);
     }
 
     /**
