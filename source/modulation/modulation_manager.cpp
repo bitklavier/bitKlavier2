@@ -3159,7 +3159,13 @@ void ModulationManager::positionModulationAmountSlidersInside(const std::string 
     static constexpr float kRightPopupPositionX = 150;
     int total_connections = static_cast<int>(connections.size());
     ModulationButton *modulation_button = modulation_buttons_[source];
+    if (modulation_button == nullptr || modulation_button->getParentComponent() == nullptr)
+        return;
+
     ExpandModulationButton *expand_button = modulation_callout_buttons_[source].get();
+    if (expand_button == nullptr)
+        return;
+
     expand_button->setVisible(false);
 
     if (expand_button == current_expanded_modulation_)
@@ -3169,6 +3175,9 @@ void ModulationManager::positionModulationAmountSlidersInside(const std::string 
         bitklavier::ModulationConnection *connection = connections[i];
         int index = connection->index_in_all_mods;
         ModulationAmountKnob *slider = modulation_amount_sliders_[index].get();
+        if (slider == nullptr)
+            continue;
+
         slider->setVisible(showingInParents(modulation_button));
         juce::Point<int> point = getLocalPoint(modulation_button, juce::Point<int>(0, 0));
         slider->setBounds(modulation_button->getModulationAmountBounds(i, total_connections) + point);
@@ -3198,7 +3207,13 @@ void ModulationManager::positionModulationAmountSlidersCallout(const std::string
                                                                std::vector<bitklavier::ModulationConnection *>
                                                                connections) {
     ModulationButton *modulation_button = modulation_buttons_[source];
+    if (modulation_button == nullptr || modulation_button->getParentComponent() == nullptr)
+        return;
+
     ExpandModulationButton *expand_button = modulation_callout_buttons_[source].get();
+    if (expand_button == nullptr)
+        return;
+
     expand_button->setBounds(getLocalArea(modulation_button, modulation_button->getModulationAreaBounds()));
     expand_button->setVisible(showingInParents(modulation_button));
 
@@ -3229,7 +3244,13 @@ void ModulationManager::showModulationAmountCallout(const std::string &source) {
     static constexpr int kPadding = 5;
 
     ModulationButton *modulation_button = modulation_buttons_[source];
+    if (modulation_button == nullptr || modulation_button->getParentComponent() == nullptr)
+        return;
+
     current_expanded_modulation_ = modulation_callout_buttons_[source].get();
+    if (current_expanded_modulation_ == nullptr)
+        return;
+
     std::vector<ModulationAmountKnob *> amount_controls = current_expanded_modulation_->getSliders();
 
     int num_sliders = static_cast<int>(amount_controls.size());
@@ -3312,9 +3333,10 @@ void ModulationManager::positionModulationAmountSliders(const std::string &sourc
     std::vector<bitklavier::ModulationConnection *> connections = parent->getSynth()->getSourceConnections(source);
     int total_connections = static_cast<int>(connections.size());
     if (total_connections) {
-        if (total_connections && total_connections > max_modulations_inside)
+        if (modulation_button != nullptr && modulation_button->getParentComponent() != nullptr &&
+            total_connections && total_connections > max_modulations_inside)
             positionModulationAmountSlidersCallout(source, connections);
-        else
+        else if (modulation_button != nullptr && modulation_button->getParentComponent() != nullptr)
             positionModulationAmountSlidersInside(source, connections);
     } else {
         auto itCallout = modulation_callout_buttons_.find(source);
