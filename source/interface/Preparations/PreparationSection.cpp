@@ -8,6 +8,7 @@
 #include "FullInterface.h"
 #include "ModulationPreparation.h"
 #include "synth_base.h"
+#include "KeymapProcessor.h"
 
 namespace {
 // Helper to apply default per-port MIDI Y offsets for a specific preparation type.
@@ -92,6 +93,63 @@ juce::AudioProcessor *PreparationSection::getProcessor() const {
 
         return {};
     }
+}
+
+void PreparationSection::changeListenerCallback(juce::ChangeBroadcaster *source) {
+    if (selectedSet->isSelected(this)) {
+        item->setColor(juce::Colours::white);
+        isSelected = true;
+
+        // If this is a Keymap preparation, display its keyStates on the footer keyboard
+        if (auto* keymapProc = dynamic_cast<KeymapProcessor*>(getProcessor()))
+        {
+            if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+            {
+                if (auto* gui = iface->getGui())
+                {
+                    if (gui->footer_)
+                    {
+                        auto keys = keymapProc->getState().params.keyboard_state.keyStates.load();
+                        gui->footer_->displayKeymapState(keys);
+                    }
+                }
+            }
+        }
+    } else {
+        item->setColor(findColour(Skin::kWidgetPrimary1, true));
+        isSelected = false;
+
+        // If this is a Keymap preparation being deselected, clear the footer keyboard display
+        // only if no other Keymap is currently selected
+        if (dynamic_cast<KeymapProcessor*>(getProcessor()) != nullptr)
+        {
+            bool anotherKeymapSelected = false;
+            if (selectedSet != nullptr)
+            {
+                for (int i = 0; i < selectedSet->getNumSelected(); ++i)
+                {
+                    auto* other = selectedSet->getSelectedItem(i);
+                    if (other != this && dynamic_cast<KeymapProcessor*>(other->getProcessor()) != nullptr)
+                    {
+                        anotherKeymapSelected = true;
+                        break;
+                    }
+                }
+            }
+            if (!anotherKeymapSelected)
+            {
+                if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+                {
+                    if (auto* gui = iface->getGui())
+                    {
+                        if (gui->footer_)
+                            gui->footer_->clearKeymapDisplay();
+                    }
+                }
+            }
+        }
+    }
+    item->redoImage();
 }
 
 void PreparationSection::paintBackground(juce::Graphics &g) {

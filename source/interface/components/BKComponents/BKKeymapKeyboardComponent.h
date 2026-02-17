@@ -190,6 +190,17 @@ public:
         keyboard_.clearAllLiveKeys();
     }
 
+    // Keymap selection display overlay (orange) — separate from live MIDI (red)
+    void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
+    {
+        keyboard_.setKeymapDisplayKeyState (midiNoteNumber, isDown);
+    }
+
+    void clearAllKeymapDisplayKeys()
+    {
+        keyboard_.clearAllKeymapDisplayKeys();
+    }
+
     void setWhite(bool action);
     void setBlack(bool action);
     void setChord(KeySet set, PitchClass root);

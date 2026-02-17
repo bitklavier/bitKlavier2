@@ -126,3 +126,16 @@ void FooterSection::buttonClicked(juce::Button *clicked_button) {
 void FooterSection::sliderValueChanged(juce::Slider *slider) {
     SynthSection::sliderValueChanged(slider);
 }
+
+void FooterSection::displayKeymapState (const std::bitset<128>& keys)
+{
+    for (int i = 0; i < 128; ++i)
+        keyboard_component_->setKeymapDisplayKeyState (i, keys.test ((size_t) i));
+    keyboard_component_->redoImage();
+}
+
+void FooterSection::clearKeymapDisplay()
+{
+    keyboard_component_->clearAllKeymapDisplayKeys();
+    keyboard_component_->redoImage();
+}

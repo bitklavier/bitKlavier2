@@ -29,6 +29,12 @@ public:
      */
     virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override;
 
+    /** Highlight the footer keyboard with the given keymap key states */
+    void displayKeymapState (const std::bitset<128>& keys);
+
+    /** Clear any keymap highlight from the footer keyboard */
+    void clearKeymapDisplay();
+
   private:
     std::shared_ptr<PeakMeterSection> levelMeter;
 
