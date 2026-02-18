@@ -92,28 +92,11 @@ void TuningState::processStateChanges()
         circularTuningDirty.store(true, std::memory_order_release);
 
     stateChanges.changeState.clear();
-
 }
 
 void TuningState::setFundamental (int fund)
 {
-    DBG("TuningState::setFundamental = " << fund << "");
-    //need to shift keyValues over by difference in fundamental
-    int oldFund = getOldFundamental();
-    setOldFundamental(fund);
-
-    int offset = fund - oldFund;
-    std::array<float, 12> vals;
-
-    for (size_t i = 0; i < circularTuningOffset.size(); ++i) {
-        vals[i] = circularTuningOffset[i].load(std::memory_order_relaxed);
-    }
-
-    for (int i = 0; i < 12; i++)
-    {
-        int index = ((i - offset) + 12) % 12;
-        circularTuningOffset[i].store(vals[index]);
-    }
+    setOffsetsFromTuningSystem(tuningSystem->get(), fund, circularTuningOffset, circularTuningOffset_custom);
 }
 
 /**

@@ -22,8 +22,6 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     // for testing
     // bufferDebugger = new BufferDebugger();
 
-    DBG("SynchronicProcessor::SynchronicProcessor() constructor, clusterMax = " << *state.params.clusterMinMaxParams.clusterMaxParam);
-
     /*
      * todo: need to make sure that if the user tries to increase numLayers > MAX_CLUSTERS that this doesn't break
      */
@@ -145,7 +143,7 @@ bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
     int sClusterMax = *state.params.clusterMinMaxParams.clusterMaxParam;
     int rescaledMax = state.params.clusterMinMaxParams.clusterMaxParam.get()->getNormalisableRange().end;
 
-    //DBG("SynchronicProcessor::checkClusterMinMax, clusterMax = " << sClusterMax << ", clusterNotesCounter = " << clusterNotesSize << ", rescaledMax = " << rescaledMax);
+    // DBG("SynchronicProcessor::checkClusterMinMax, clusterMin = " << sClusterMin << ", clusterMax = " << sClusterMax << ", clusterNotesSize = " << clusterNotesSize);
 
     if(sClusterMin <= sClusterMax)
     {
