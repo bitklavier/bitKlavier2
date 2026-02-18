@@ -51,6 +51,7 @@ class PeakMeterViewer : public OpenGlComponent {
     int position_triangles_[kNumTriangleIndices];
     GLuint vertex_buffer_;
     GLuint triangle_buffer_;
+    GLuint vao_;
     bool left_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PeakMeterViewer)

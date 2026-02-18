@@ -171,39 +171,60 @@ void PopupList::setSelections(PopupItems selections) {
 }
 
 int PopupList::getRowFromPosition(float mouse_position) {
+    if (selections_.items.empty())
+        return -1;
+
     int index = floorf((mouse_position + getViewPosition()) / getRowHeight());
 
-    if (index < selections_.size() && index >= 0 && selections_.items[index].id < 0)
-        return -1;
-    return index;
+    if (!selections_.name.empty()) {
+        if (index == 0)
+            return -1;
+        index--;
+    }
+
+    if (index >= 0 && index < selections_.size()) {
+        if (selections_.items[index].id < 0 && selections_.items[index].name == "separator")
+            return -1;
+        return index;
+    }
+
+    return -1;
 }
 
 int PopupList::getBrowseWidth() {
-    static constexpr int kMinWidth = 300;
+    static constexpr int kMinWidth = 150;
 
     juce::Font font = getFont();
-    int max_width = kMinWidth * size_ratio_;
-    int buffer = getTextPadding() * 2 + 2;
+    float scale = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds())->scale;
+    int max_width = (kMinWidth * size_ratio_ * scale);
+    int buffer = (getTextPadding() * 2 + 2) * scale;
+
+    if (!selections_.name.empty()) {
+        max_width = std::max(
+            max_width,
+            static_cast<int>(juce::GlyphArrangement::getStringWidthInt(font, selections_.name)) + buffer);
+    }
+
     for (int i = 0; i < selections_.size(); ++i)
         max_width = std::max(
             max_width,
-            static_cast<int>(juce::GlyphArrangement::getStringWidthInt(font, selections_.items[i].name) /
-                             juce::Desktop::getInstance().getDisplays().
-                             getDisplayForRect(getScreenBounds())->scale) + buffer);
+            static_cast<int>(juce::GlyphArrangement::getStringWidthInt(font, selections_.items[i].name)) + buffer);
 
-    return max_width;
+    return (max_width * width_scale_) / scale;
 }
 
 void PopupList::mouseMove(const juce::MouseEvent &e) {
     int row = getRowFromPosition(e.position.y);
-    if (row >= selections_.size() || row < 0)
+    int limit = selections_.size();
+    if (row >= limit || row < 0)
         row = -1;
     hovered_ = row;
 }
 
 void PopupList::mouseDrag(const juce::MouseEvent &e) {
     int row = getRowFromPosition(e.position.y);
-    if (e.position.x < 0 || e.position.x > getWidth() || row >= selections_.size() || row < 0)
+    int limit = selections_.size();
+    if (e.position.x < 0 || e.position.x > getWidth() || row >= limit || row < 0)
         row = -1;
     hovered_ = row;
 }
@@ -215,7 +236,8 @@ void PopupList::mouseExit(const juce::MouseEvent &e) {
 int PopupList::getSelection(const juce::MouseEvent &e) {
     float click_y_position = e.position.y;
     int row = getRowFromPosition(click_y_position);
-    if (row < selections_.size() && row >= 0)
+    int limit = selections_.size();
+    if (row < limit && row >= 0)
         return row;
 
     return -1;
@@ -270,12 +292,16 @@ void PopupList::redoImage() {
     //getDisplayForRect(getScreenBounds())->scale;
     int image_width = getWidth() * mult;
 
-    DBG("PopupList::redoImage - Row Height: " << row_height); // Debug row height
-    DBG("PopupList::redoImage - Image Width: " << image_width); // Debug image width
+    // DBG("PopupList::redoImage - Row Height: " << row_height); // Debug row height
+    // DBG("PopupList::redoImage - Image Width: " << image_width); // Debug image width
 
     juce::Colour text_color = findColour(Skin::kTextComponentText, true);
     juce::Colour lighten = findColour(Skin::kLightenScreen, true);
-    int image_height = std::max(row_height * selections_.size(), getHeight());
+    int num_rows = selections_.size();
+    if (!selections_.name.empty() && !selections_.items.empty())
+        num_rows++;
+
+    int image_height = std::max(row_height * num_rows, std::max(1, getHeight() * mult));
     juce::Image rows_image(juce::Image::ARGB, image_width, image_height, true);
     juce::Graphics g(rows_image);
     g.setColour(text_color);
@@ -283,26 +309,52 @@ void PopupList::redoImage() {
 
     int padding = getTextPadding();
     int width = (getWidth() - 2 * padding) * mult;
+    int currentRow = 0;
+
+    if (!selections_.name.empty() && !selections_.items.empty()) {
+        g.setColour(text_color.withAlpha(0.7f));
+        auto font = g.getCurrentFont();
+        g.setFont(font.boldened());
+        g.drawText(selections_.name, padding, row_height * currentRow, width, row_height, juce::Justification::centredLeft, true);
+        g.setFont(font);
+        currentRow++;
+
+        // separator
+        g.setColour(lighten);
+        int y = row_height * currentRow;
+        g.drawRect(padding, y - 1, width, 1);
+    }
+
     for (int i = 0; i < selections_.size(); ++i) {
-        if (selections_.items[i].id < 0) {
+        bool isSeparator = selections_.items[i].id < 0 && (selections_.items[i].name == "separator" || selections_.items[i].name.empty());
+        if (isSeparator) {
             g.setColour(lighten);
-            int y = row_height * (i + 0.5f);
-            g.drawRect(padding, y, width, 1);
+            int y = row_height * currentRow + row_height / 2;
+            g.fillRect(padding, y - mult / 2, width, std::max(1, mult));
         } else {
             g.setColour(text_color);
             juce::String name = selections_.items[i].name;
-            g.drawText(name, padding, row_height * i, width, row_height, juce::Justification::centredLeft, true);
+            g.drawText(name, padding, row_height * currentRow, width, row_height, juce::Justification::centredLeft, true);
         }
+        currentRow++;
     }
     rows_->setOwnImage(rows_image);
 }
 
 
 void PopupList::moveQuadToRow(OpenGlQuad &quad, int row) {
+    if (selections_.items.empty())
+        return;
+
     int row_height = getRowHeight();
     float view_height = getHeight();
     float open_gl_row_height = 2.0f * row_height / view_height;
-    float offset = row * open_gl_row_height - 2.0f * getViewPosition() / view_height;
+
+    int displayRow = row;
+    if (!selections_.name.empty())
+        displayRow++;
+
+    float offset = displayRow * open_gl_row_height - 2.0f * getViewPosition() / view_height;
 
     float y = 1.0f - offset;
     quad.setQuad(0, -1.0f, y - open_gl_row_height, 2.0f, open_gl_row_height);
@@ -389,8 +441,16 @@ void PopupList::setScrollBarRange() {
 
 int PopupList::getScrollableRange() {
     int row_height = getRowHeight();
-    int selections_height = row_height * static_cast<int>(selections_.size());
+    int num_rows = static_cast<int>(selections_.size());
+    if (!selections_.name.empty())
+        num_rows++;
+    int selections_height = row_height * num_rows;
     return std::max(selections_height, getHeight());
+}
+
+int PopupList::getViewPosition() {
+    int view_height = getHeight();
+    return std::max(0, std::min<int>(getScrollableRange() - view_height, view_position_));
 }
 
 //SelectionList::SelectionList() : SynthSection("Selection List"), favorites_option_(false),
@@ -989,38 +1049,126 @@ void SinglePopupSelector::resized() {
 
     juce::Rectangle<int> bounds = getLocalBounds();
     int rounding = findValue(Skin::kBodyRounding);
-    popup_list_->setBounds(1, rounding, getWidth() / 2 - 2, getHeight() - 2 * rounding);
-    popup_list_1->setBounds(popup_list_->getWidth(), rounding, getWidth() / 2 - 2, getHeight() - 2 * rounding);
 
-    bounds = bounds.removeFromLeft(bounds.getWidth() / 2);
-    body_->setBounds(bounds);
-    body_->setRounding(findValue(Skin::kBodyRounding));
-    body_->setColor(findColour(Skin::kBody, true));
+    // If popup_list_1 is not visible, use the full width for popup_list_
+    if (!popup_list_1->isVisible())
+    {
+        popup_list_->setBounds(1, rounding, getWidth() - 2, getHeight() - 2 * rounding);
+        body_->setBounds(bounds);
+        border_->setBounds(bounds);
+    }
+    else
+    {
+        int leftWidth = getWidth() / 2;
+        popup_list_->setBounds(1, rounding, leftWidth - 2, getHeight() - 2 * rounding);
+        popup_list_1->setBounds(leftWidth + 1, rounding, getWidth() - leftWidth - 2, getHeight() - 2 * rounding);
 
-    border_->setBounds(bounds);
-    border_->setRounding(findValue(Skin::kBodyRounding));
+        juce::Rectangle<int> leftBounds = bounds.removeFromLeft(leftWidth);
+        body_->setBounds(leftBounds);
+        border_->setBounds(leftBounds);
+
+        body_1->setBounds(bounds);
+        border_1->setBounds(bounds);
+    }
+
+    body_->setRounding(rounding);
+    border_->setRounding(rounding);
     border_->setThickness(1.0f, true);
     border_->setColor(findColour(Skin::kBorder, true));
-    body_1->setBounds(bounds);
-    body_1->setRounding(findValue(Skin::kBodyRounding));
-    body_1->setColor(findColour(Skin::kBody, true));
+    body_->setColor(findColour(Skin::kBody, true));
 
-    border_1->setBounds(bounds);
-    border_1->setRounding(findValue(Skin::kBodyRounding));
+    body_1->setRounding(rounding);
+    border_1->setRounding(rounding);
     border_1->setThickness(1.0f, true);
     border_1->setColor(findColour(Skin::kBorder, true));
+    body_1->setColor(findColour(Skin::kBody, true));
+}
+
+void SinglePopupSelector::newSelection(PopupList* list, int id, int index) {
+    if (list == popup_list_.get()) {
+        if (id >= 0) {
+            if (!list->getSelectionItems(index).items.empty()) {
+                popup_list_1->setSelections(list->getSelectionItems(index));
+                popup_list_1->showSelected(true);
+                popup_list_1->setVisible(true);
+
+                updateSize();
+
+                // Position submenu aligned to the selected row and clamp within this component's bounds
+                const int rowHeight = list->getRowHeight();
+                const int subHeightDesired = popup_list_1->getBrowseHeight();
+
+                // Base Y starts at the top of the left list plus the offset of the clicked row
+                int baseY = popup_list_->getY() + (index + (list->hasTitle() ? 1 : 0)) * rowHeight - list->getViewPosition();
+
+                // Respect rounded margins used in resized()
+                const int rounding = findValue(Skin::kBodyRounding);
+                const int minY = rounding;
+                // Submenu height should not exceed the available space in the parent component
+                const int maxSubHeight = getHeight() - 2 * rounding;
+                const int subHeight = std::min(subHeightDesired, maxSubHeight);
+
+                const int maxY = std::max(minY, getHeight() - rounding - subHeight);
+                const int clampedY = std::min(std::max(baseY, minY), maxY);
+
+                popup_list_1->setBounds(popup_list_1->getX(), clampedY, popup_list_1->getWidth(), subHeight);
+                body_1->setBounds(popup_list_1->getBounds());
+                border_1->setBounds(popup_list_1->getBounds());
+                body_1->setVisible(true);
+                border_1->setVisible(true);
+            } else {
+                cancel_ = nullptr;
+                callback_(id, index);
+                setVisible(false);
+            }
+        } else if (cancel_)
+            cancel_();
+    } else if (list == popup_list_1.get()) {
+        cancel_ = nullptr;
+        callback_(id, index);
+        setVisible(false);
+    }
+}
+
+void SinglePopupSelector::updateSize() {
+    FullInterface* parent = findParentComponentOfClass<FullInterface>();
+    if (parent) {
+        juce::Rectangle<int> bounds(0, 0, std::ceil(parent->getWidth()), std::ceil(parent->getHeight()));
+        setPosition(getPosition(), bounds);
+    }
 }
 
 void SinglePopupSelector::setPosition(juce::Point<int> position, juce::Rectangle<int> bounds) {
     int rounding = findValue(Skin::kBodyRounding);
     int width = popup_list_->getBrowseWidth();
-    int height = popup_list_->getBrowseHeight() + 2 * rounding;
+    int desiredContentHeight = popup_list_->getBrowseHeight();
+
+    if (popup_list_1->isVisible())
+    {
+        width *= 2;
+        desiredContentHeight = std::max(desiredContentHeight, popup_list_1->getBrowseHeight());
+    }
+
+    const int rowHeight = popup_list_->getRowHeight();
+    
+    // Maximum content height we can show within the given bounds while preserving rounded margins
+    const int maxContentHeight = std::max(0, bounds.getHeight() - 2 * rounding);
+    // Ensure at least one row is visible if there are any items
+    const int minContentHeight = std::min(desiredContentHeight, std::max(0, rowHeight));
+    const int contentHeight = juce::jlimit(minContentHeight, maxContentHeight, desiredContentHeight);
+    int height = contentHeight + 2 * rounding;
+
     int x = position.x;
     int y = position.y;
     if (x + width > bounds.getRight())
         x -= width;
+    // Clamp Y so the popup stays entirely within bounds even when very tall
     if (y + height > bounds.getBottom())
         y = bounds.getBottom() - height;
+    if (y < bounds.getY())
+        y = bounds.getY();
+    
+    // DBG("SinglePopupSelector::setPosition final bounds: " << x << ", " << y << ", " << width << ", " << height);
     setBounds(x, y, width, height);
 }
 
@@ -1341,7 +1489,8 @@ void PreparationPopup::resized() {
     auto header_bounds = bounds.removeFromTop(35);
     exit_button_->setBounds(header_bounds.removeFromLeft(35).reduced(5));
     header_bounds.removeFromLeft(10);
-    if (!is_modulation_) {
+    //if (!is_modulation_)
+    {
         int label_height = findValue(Skin::kLabelBackgroundHeight);
         float label_text_height = findValue(Skin::kLabelHeight);
 

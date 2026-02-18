@@ -34,13 +34,13 @@ struct KeymapParams : chowdsp::ParamHolder
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters ([this] (auto& param, size_t) {
-            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+            // if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam);
+            //
+            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -119,7 +119,7 @@ struct KeymapNonParameterState : chowdsp::NonParamState
 class KeymapProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<KeymapParams, KeymapNonParameterState>>
 {
 public:
-    KeymapProcessor( SynthBase& parent,const juce::ValueTree& v);
+    KeymapProcessor( SynthBase& parent,const juce::ValueTree& v, juce::UndoManager*);
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override  {};

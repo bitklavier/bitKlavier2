@@ -131,7 +131,8 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
 //    void updatePopupBrowser(SynthSection* owner);
 
     void showPopupSelector(juce::Component* source,juce::Point<int> position, const PopupItems& options,
-                           std::function<void(int,int)> callback, std::function<void()> cancel = { });
+                           std::function<void(int,int)> callback, std::function<void()> cancel = { },
+                           float width_scale = 1.0f);
 //    void showDualPopupSelector(juce::Component* source,juce::Point<int> position, int width,
 //                               const PopupItems& options, std::function<void(int)> callback);
     void showPopupDisplay(juce::Component* source, const std::string& text,

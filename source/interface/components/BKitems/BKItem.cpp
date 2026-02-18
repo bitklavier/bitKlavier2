@@ -60,7 +60,7 @@ namespace
     }
 }
 
-BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem")
+    BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem"), prep_color_(juce::Colours::white)
 {
     image_component_ = std::make_shared<OpenGlImageComponent>();
     image_component_->setComponent(this);
@@ -72,6 +72,8 @@ BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem")
     layer_2_ = paths.getUnchecked(1);
     if (paths.size() > 2)
         layer_3_ = paths.getUnchecked(2);
+    if (paths.size() > 3)
+        layer_4_ = paths.getUnchecked(3);
     // setInterceptsMouseClicks (false, false);
 }
 

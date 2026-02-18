@@ -18,10 +18,9 @@
 #include "SpringTuningParams.h"
 #include "OffsetKnobParam.h"
 #include "SpringTuning/SpringTuning.h"
-#include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
-#include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
+#include "target_types.h"
 
 /**
  * todo: maybe someday..
@@ -43,11 +42,11 @@ struct TuningState : bitklavier::StateChangeableParameter
     void setKeyOffset (int midiNoteNumber, float val);
     void setCircularKeyOffset (int midiNoteNumber, float val);
     void setKeyOffset (int midiNoteNumber, float val, bool circular);
-    //static std::array<float, 12> rotateValuesByFundamental (std::array<float, 12> vals, int fundamental);
     void processStateChanges() override;
 
     void setFundamental (int fund);
-    int getFundamental() { return fundamental->getIndex(); }
+    int getFundamental() const noexcept { return (fundamental != nullptr ? fundamental->getIndex() : oldFundamental); }
+    bool isInitialised() const noexcept { return fundamental != nullptr && tuningSystem != nullptr && tuningType != nullptr; }
     int getOldFundamental() { return oldFundamental; }
     void setOldFundamental(int newold) { oldFundamental = newold; }
     int getSemitoneWidthFundamental();
@@ -66,10 +65,11 @@ struct TuningState : bitklavier::StateChangeableParameter
     std::array<std::atomic<float>, 12> circularTuningOffset = { 0.f };
     std::array<std::atomic<float>, 12> circularTuningOffset_custom = { 0.f };
 
+    // UI invalidation flags (set from audio thread, read on message thread)
+    std::atomic<bool> absoluteTuningDirty { false };
+    std::atomic<bool> circularTuningDirty { false };
+
     int oldFundamental = 0;
-    /*
-     * todo: remove all the A4frequency stuff, as it will be handled in BKSynthesizer
-     */
     float A4frequency = 440.;       // set this in gallery or app preferences
     double lastFrequencyHz = 440.;  // frequency of last getTargetFrequency returned
     double lastIntervalCents = 0.;  // difference between pitch of last two notes returned, in cents
@@ -154,12 +154,12 @@ struct TuningState : bitklavier::StateChangeableParameter
     float getGlobalTuningReference() const { return A4frequency; };
     TuningType getTuningType() const { return tuningType->get(); }
 
-    inline const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
-    inline const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
-    inline const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
-    inline const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
-    inline const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
-    inline const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
+    const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
+    const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
+    const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
+    const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
+    const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
+    const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
 
     /*
      * Adaptive vars
@@ -179,30 +179,73 @@ struct TuningParams : chowdsp::ParamHolder
     // Adds the appropriate parameters to the Tuning Processor
     TuningParams(const juce::ValueTree &v) : chowdsp::ParamHolder ("tuning")
     {
-        add (tuningState.tuningSystem,
+        add (tuningState.offsetKnobParam,
+        tuningState.semitoneWidthParams,
+            tuningState.tuningSystem,
             tuningState.fundamental,
             tuningState.tuningType,
-            tuningState.semitoneWidthParams,
-            tuningState.lastNote,
             tuningState.adaptiveParams,
             tuningState.springTuningParams,
-            tuningState.offsetKnobParam);
+            tuningState.lastNote);
 
         tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
 
-        doForAllParameters ([this] (auto& param, size_t) {
-            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+        // clear modulatableParams just in case, though it should be empty
+        modulatableParams.clear();
 
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+        // 1. offset (1 param)
+        if (tuningState.offsetKnobParam.offSetSliderParam->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.offsetKnobParam.offSetSliderParam.get());
 
-            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-        });
+        // 2. semitoneWidth (1 param)
+        if (tuningState.semitoneWidthParams.semitoneWidthSliderParam->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.semitoneWidthParams.semitoneWidthSliderParam.get());
+
+        // 3. adaptive history and thresh (2 params)
+        if (tuningState.adaptiveParams.tAdaptiveHistory->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.adaptiveParams.tAdaptiveHistory.get());
+        if (tuningState.adaptiveParams.tAdaptiveClusterThresh->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.adaptiveParams.tAdaptiveClusterThresh.get());
+
+        // 4. spring tuning (rate, drag, stiffnesses, weights: 18 params)
+        if (tuningState.springTuningParams.rate->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.rate.get());
+        if (tuningState.springTuningParams.drag->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.drag.get());
+        if (tuningState.springTuningParams.intervalStiffness->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.intervalStiffness.get());
+        if (tuningState.springTuningParams.tetherStiffness->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.tetherStiffness.get());
+        if (tuningState.springTuningParams.tetherWeightGlobal->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.tetherWeightGlobal.get());
+        if (tuningState.springTuningParams.tetherWeightSecondaryGlobal->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.springTuningParams.tetherWeightSecondaryGlobal.get());
+
+        // interval weights 1-12
+        auto addIfModulatable = [this](auto& param) {
+            if (param->supportsMonophonicModulation())
+                modulatableParams.push_back(param.get());
+        };
+
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_1);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_2);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_3);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_4);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_5);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_6);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_7);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_8);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_9);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_10);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_11);
+        addIfModulatable(tuningState.springTuningParams.intervalWeight_12);
+
+        // check if lastNote is modulatable (usually not, but just in case)
+        if (tuningState.lastNote->supportsMonophonicModulation())
+            modulatableParams.push_back(tuningState.lastNote.get());
+
+        // ensure we have the expected number of parameters (22)
+        // jassert(modulatableParams.size() == 22);
     }
 
     /**
@@ -239,7 +282,7 @@ struct TuningNonParameterState : chowdsp::NonParamState
 class TuningProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<TuningParams, TuningNonParameterState>>
 {
 public:
-    TuningProcessor (SynthBase& parent, const juce::ValueTree& v);
+    TuningProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
 
     ~TuningProcessor() {
         parent.pauseProcessing(true);
@@ -257,6 +300,8 @@ public:
     void noteOn (int midiChannel,int midiNoteNumber,float velocity);
     void noteOff (int midiChannel,int midiNoteNumber,float velocity);
 
+    void resetStateModulations();
+
     void setA4Frequency(double A4new) { state.params.tuningState.setGlobalTuningReference(A4new);}
     void incrementClusterTime(long numSamples) { state.params.tuningState.clusterTimeMS += numSamples * 1000. / getSampleRate(); }
 
@@ -267,7 +312,8 @@ public:
         return BusesProperties()
                 .withOutput("Output", juce::AudioChannelSet::stereo(), false)
                 .withInput ("Input", juce::AudioChannelSet::stereo(), false)
-                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(25),true)
+                // 22 = modulatableParams.size()
+                .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(22 * 2),true)
                 .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
     }
 

@@ -180,13 +180,13 @@ struct ResonanceParams : chowdsp::ParamHolder
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters ([this] (auto& param, size_t) {
-            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+            // if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam);
+            //
+            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -444,7 +444,7 @@ class ResonanceProcessor : public bitklavier::PluginBase<bitklavier::Preparation
                            public juce::ValueTree::Listener, public TuningListener
 {
 public:
-    ResonanceProcessor(SynthBase& parent, const juce::ValueTree& v);
+    ResonanceProcessor(SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~ResonanceProcessor(){if(tuning !=nullptr) tuning->removeListener(this);}
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;

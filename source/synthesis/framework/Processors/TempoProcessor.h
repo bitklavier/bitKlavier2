@@ -30,24 +30,25 @@ struct TempoParams : chowdsp::ParamHolder
         add (tempoParam,
             subdivisionsParam,
             historyParam,
-            tempoModeOptions,
-            timeWindowMinMaxParams);
+            timeWindowMinMaxParams,
+            tempoModeOptions
+            );
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
-        // used in the DirectProcessor constructor
-        doForAllParameters ([this] (auto& param, size_t) {
-            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+        doForAllParameters([this](auto &param, size_t)
+        {
+            // if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *>(&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back(sliderParam);
+            //
+            // if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *>(&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back(sliderParam);
 
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            if (auto *sliderParam = dynamic_cast<chowdsp::FloatParameter *>(&param))
                 if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-
-            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-   });
+                    modulatableParams.push_back(sliderParam);
+        });
     }
 
     // Tempo param
@@ -95,6 +96,14 @@ struct TempoParams : chowdsp::ParamHolder
     {
         timeWindowMinMaxParams.processStateChanges();
     }
+
+    /* Custom serializer */
+    template <typename Serializer>
+    static typename Serializer::SerializedType serialize(const TempoParams& paramHolder);
+
+    /* Custom deserializer */
+    template <typename Serializer>
+    static void deserialize(typename Serializer::DeserializedType deserial, TempoParams& paramHolder);
 };
 
 struct TempoNonParameterState : chowdsp::NonParamState
@@ -111,7 +120,7 @@ class TempoProcessor : public bitklavier::PluginBase<bitklavier::PreparationStat
                         public juce::ValueTree::Listener
 {
 public:
-    TempoProcessor (SynthBase& parent, const juce::ValueTree& v);
+    TempoProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~TempoProcessor() {}
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -126,11 +135,13 @@ public:
 
     juce::AudioProcessor::BusesProperties tempoBusLayout()
     {
+        // three modulatable params: tempo, subdivisions, and history; *2 because modulation and reset require their own channels
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), false) // Main Output
             .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
-            .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (3 * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withOutput("Modulation", juce::AudioChannelSet::mono(),false) // Modulation send channel; disabled for all but Modulation preps!
+            .withOutput("Send", juce::AudioChannelSet::stereo(), false); // Send channel (right outputs)
     }
 
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const override;
@@ -144,33 +155,6 @@ public:
     }
     float getGlobalTempoMultiplier() { return globalTempoMultiplier; }
     double globalTempoMultiplier = 1.;
-
-    // void valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
-    // {
-    //     //should add an if check here to make sure its actually the sampleset changing
-    //     juce::String a = t.getProperty (IDs::mainSampleSet, "");
-    //     juce::String b = t.getProperty (IDs::hammerSampleSet, "");
-    //     juce::String c = t.getProperty (IDs::releaseResonanceSampleSet, "");
-    //     juce::String d = t.getProperty (IDs::pedalSampleSet, "");
-    //     addSoundSet (&(*ptrToSamples)[a],
-    //         &(*ptrToSamples)[b],
-    //         &(*ptrToSamples)[c],
-    //         &(*ptrToSamples)[d]);
-    // }
-
-    /**
-     * todo: do we need these?
-     * DAVIS: this just explicitly defines the other valuetree listener functions to be doing nothing
-     * we only care about the treepropertychanged valuetree
-     */
-//    void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) {}
-//    void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) {}
-//    void valueTreeChildOrderChanged (juce::ValueTree&, int, int) {}
-//    void valueTreeParentChanged (juce::ValueTree&) {}
-//    void valueTreeRedirected (juce::ValueTree&) {}
-
-//    bool getTranspositionUsesTuning() { return state.params.transpose.transpositionUsesTuning->get();}
-
 
 private:
 

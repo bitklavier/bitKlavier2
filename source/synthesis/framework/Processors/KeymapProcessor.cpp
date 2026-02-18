@@ -8,10 +8,10 @@
 #include "synth_base.h"
 #include "sound_engine/sound_engine.h"
 
-KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (
+KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) : PluginBase (
                                                                                      parent,
                                                                                      vt,
-                                                                                     nullptr,
+                                                                                     um,
                                                                                      keymapBusLayout()),
                                                                                  _midi (std::make_unique<MidiManager> (&keyboard_state, parent.manager, vt))
 {
@@ -207,8 +207,12 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     // DBG("keymap");
 }
+
 void KeymapProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    //Keymap needs to allow note messages through while bypassed, so preps can handle them gracefully
+    // - for instance, Direct needs to see noteOff messages
+    // - so, Keymaps are essentially always active
     processBlock (buffer, midiMessages);
 }
 

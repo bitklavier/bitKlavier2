@@ -20,7 +20,8 @@ public:
         upDownButtonBackgroundColourId  = 0x1005006,
         upDownButtonArrowColourId       = 0x1005007,
         shadowColourId                  = 0x1005008,
-        keyPlayed                       = 0x1005009
+        keyPlayed                       = 0x1005009,
+        keymapDisplayColourId           = 0x100500a
     };
     BKOnOffKeyboardComponent(Orientation o, std::atomic<std::bitset<128>> & keys) : juce::KeyboardComponentBase(o), keys(keys)
     {
@@ -33,7 +34,8 @@ public:
         setColour(upDownButtonBackgroundColourId, juce::Colours::grey);
         setColour(upDownButtonArrowColourId, juce::Colours::black);
         setColour(shadowColourId, juce::Colours::black.withAlpha(0.5f));
-        setColour(keyPlayed, juce::Colours::red);
+        setColour(keyPlayed, juce::Colours::red.withAlpha(0.75f));
+        setColour(keymapDisplayColourId, juce::Colours::orange.withAlpha(0.75f));
     };
 
     ~BKOnOffKeyboardComponent() {
@@ -60,8 +62,24 @@ public:
         repaint();
     }
 
+    void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128)
+        {
+            keymapDisplayKeys.set ((size_t) midiNoteNumber, isDown);
+            repaint();
+        }
+    }
+
+    void clearAllKeymapDisplayKeys()
+    {
+        keymapDisplayKeys.reset();
+        repaint();
+    }
+
 private:
     std::bitset<128> liveKeys;
+    std::bitset<128> keymapDisplayKeys;
 };
 
 

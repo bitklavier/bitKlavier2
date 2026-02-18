@@ -141,7 +141,7 @@ public:
     public:
         virtual ~Listener() {};
 
-        virtual void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey) = 0;
+        virtual void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey, juce::ModifierKeys mods = juce::ModifierKeys()) = 0;
     };
 
     juce::ListenerList<Listener> listeners;
@@ -188,6 +188,17 @@ public:
     void clearAllLiveKeys()
     {
         keyboard_.clearAllLiveKeys();
+    }
+
+    // Keymap selection display overlay (orange) — separate from live MIDI (red)
+    void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
+    {
+        keyboard_.setKeymapDisplayKeyState (midiNoteNumber, isDown);
+    }
+
+    void clearAllKeymapDisplayKeys()
+    {
+        keyboard_.clearAllKeymapDisplayKeys();
     }
 
     void setWhite(bool action);

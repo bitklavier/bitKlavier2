@@ -15,38 +15,7 @@
 #include "bk_XMLSerializer.h"
 
 class SynthSection;
-template <class Base>
-class SimpleFactory {
-public:
-    using CreateFunction = std::function<Base*(std::any)>;
 
-    template <typename T, typename... Args>
-    void registerType(const std::string& typeName) {
-        creators[typeName] = [](std::any args) -> Base* {
-            try {
-                auto tupleArgs = std::any_cast<std::tuple<Args...>>(args); // Unpack std::any into tuple
-                return std::apply([](auto&&... unpackedArgs) {
-                    return new T(std::forward<decltype(unpackedArgs)>(unpackedArgs)...);  // Create shared_ptr with forwarded arguments
-                }, tupleArgs);  // Apply the arguments
-            } catch (const std::bad_any_cast& e) {
-                std::cerr << "std::bad_any_cast: " << e.what() << " (expected tuple)" << std::endl;
-                return nullptr;
-            }
-        };
-    }
-
-    // Create object with arguments wrapped in std::any
-    Base* create(const std::string& typeName, std::any args) const {
-        auto it = creators.find(typeName);
-        if (it != creators.end()) {
-            return it->second(args);  // Call the creation function with arguments
-        }
-        return nullptr;  // Type not found
-    }
-
-private:
-    std::map<std::string, CreateFunction> creators;
-};
 
 namespace bitklavier{
     class ModulationProcessor;
@@ -61,7 +30,7 @@ enum class ModulatorType{
 class ModulatorBase
 {
 public:
-    explicit ModulatorBase(juce::ValueTree& tree, juce::UndoManager* um = nullptr) : state(tree), parent_(nullptr)
+    explicit ModulatorBase(const juce::ValueTree& tree, juce::UndoManager* um = nullptr) : state(tree), parent_(nullptr)
     {
     }
 
@@ -136,7 +105,7 @@ class ModulatorStateBase : public ModulatorBase
 {
 public :
 
-    ModulatorStateBase( juce::ValueTree& tree, juce::UndoManager* um = nullptr) : ModulatorBase( tree, um)
+    ModulatorStateBase( const juce::ValueTree& tree, juce::UndoManager* um = nullptr) : ModulatorBase( tree, um), _state(tree,um)
     {
       if(tree.isValid())
         chowdsp::Serialization::deserialize<bitklavier::XMLSerializer>(tree.createXml(),_state);

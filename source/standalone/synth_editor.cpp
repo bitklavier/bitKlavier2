@@ -22,7 +22,24 @@
 
 #include "startup.h"
 #include "utils.h"
+#include "../common/UserPreferences.h"
+#include "../common/load_save.h"
 #include <memory>
+
+namespace {
+    static juce::File expandUserPath(const juce::String& path)
+    {
+        if (path.isEmpty())
+            return juce::File();
+
+        if (path.startsWith("~/"))
+        {
+            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+            return home.getChildFile(path.fromFirstOccurrenceOf("~/", false, false));
+        }
+        return juce::File(path);
+    }
+}
 
 SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), SynthBase(&deviceManager) {
   static constexpr int kHeightBuffer = 50;
@@ -91,6 +108,9 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
   menuModel = std::make_unique<MainMenuModel>(commandManager);
   juce::MenuBarModel::setMacMainMenu(menuModel.get());
 
+  // Defer initial gallery auto-load until the window/component has a peer (GL context attached).
+  // See tryAutoLoadInitialGallery() and timerCallback().
+
   startTimer(500);
   isInit = true;
 }
@@ -158,12 +178,8 @@ void SynthEditor::resized() {
   }
 }
 
-void SynthEditor::timerCallback() {
-
-    /*
-     * todo: confirm this fix is correct, since getDevices() has been removed from JUCE
-     */
-    //juce::StringArray midi_ins(juce::MidiInput::getDevices());
+void SynthEditor::timerCallback()
+{
     auto midiInputs = juce::MidiInput::getAvailableDevices();
     juce::StringArray midi_ins;
     for (auto& info : midiInputs)
@@ -177,6 +193,10 @@ void SynthEditor::timerCallback() {
   }
 
   current_midi_ins_ = midi_ins;
+
+  // Perform one-shot initial gallery auto-load once a peer is available to avoid early GL calls
+  if (! initialGalleryLoadAttempted)
+      tryAutoLoadInitialGallery();
 }
 
 void SynthEditor::animate(bool animate) {
@@ -192,4 +212,44 @@ void SynthEditor::pauseProcessing(bool pause) {
         else
             critical_section_.exit();
 
+}
+
+void SynthEditor::tryAutoLoadInitialGallery()
+{
+    // Only proceed when the component has a peer (ensures GL context can attach)
+    auto* peer = getPeer();
+    if (peer == nullptr)
+        return; // try again on next timer tick
+
+    // Guard so we attempt only once
+    initialGalleryLoadAttempted = true;
+
+    juce::String lastPath = user_prefs->tree.getProperty("last_gallery_path");
+    juce::File candidate = expandUserPath(lastPath);
+
+    auto tryLoad = [this](const juce::File& f) -> bool {
+        if (! f.existsAsFile())
+            return false;
+        std::string error;
+        return SynthGuiInterface::loadFromFile(const_cast<juce::File&>(f), error);
+    };
+
+    bool loaded = false;
+    if (candidate.existsAsFile())
+        loaded = tryLoad(candidate);
+
+    if (!loaded)
+    {
+        auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                        .getChildFile("Documents")
+                        .getChildFile("bitKlavier")
+                        .getChildFile("galleries");
+        juce::File basicPiano = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
+        if (!basicPiano.existsAsFile())
+            basicPiano = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+        if (!basicPiano.existsAsFile())
+            basicPiano = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
+
+        tryLoad(basicPiano); // ignore result; ok to do nothing if missing
+    }
 }

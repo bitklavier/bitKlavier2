@@ -29,6 +29,11 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
+        setMinValue (params->clusterMinParam->getNormalisableRange().start, juce::dontSendNotification);
+        setMaxValue (params->clusterMinParam->getNormalisableRange().end, juce::dontSendNotification);
+        defmin = params->clusterMinParam->getNormalisableRange().start;
+        defmax = params->clusterMaxParam->getNormalisableRange().end;
+
         isModulated_ = true;
         addMyListener(this);
 
@@ -184,6 +189,16 @@ public:
         }
 
         else if (isModulated_) {
+            if (min < params->clusterMinParam->range.start)
+            {
+                params->clusterMinParam->range.start = min;
+            }
+
+            if (max > params->clusterMaxParam->range.end)
+            {
+                params->clusterMaxParam->range.end = max;
+            }
+
             defaultState.setProperty("clustermin", min, nullptr);
             defaultState.setProperty("clustermax", max, nullptr);
         }
@@ -243,6 +258,11 @@ private :
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+
+        setMinValue (params->clusterMinParam->getNormalisableRange().start, juce::dontSendNotification);
+        setMaxValue (params->clusterMinParam->getNormalisableRange().end, juce::dontSendNotification);
+        defmin = params->clusterMinParam->getNormalisableRange().start;
+        defmax = params->clusterMaxParam->getNormalisableRange().end;
 
         isModulation_ = true;
         addMyListener(this);

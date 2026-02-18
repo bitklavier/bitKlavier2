@@ -16,6 +16,7 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 #include "SampleLoadManager.h"
+#include "target_types.h"
 
 struct DirectParams : chowdsp::ParamHolder {
     // gain slider params, for all gain-type knobs
@@ -42,13 +43,13 @@ struct DirectParams : chowdsp::ParamHolder {
         // used in the DirectProcessor constructor
         doForAllParameters([this](auto &param, size_t)
         {
-            if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *>(&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back(sliderParam);
-
-            if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *>(&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back(sliderParam);
+            // if (auto *sliderParam = dynamic_cast<chowdsp::ChoiceParameter *>(&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back(sliderParam);
+            //
+            // if (auto *sliderParam = dynamic_cast<chowdsp::BoolParameter *>(&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back(sliderParam);
 
             if (auto *sliderParam = dynamic_cast<chowdsp::FloatParameter *>(&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -159,7 +160,7 @@ class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationSta
                             DirectNonParameterState> >,
                         public juce::ValueTree::Listener,public TuningListener {
 public:
-    DirectProcessor(SynthBase &parent, const juce::ValueTree &v);
+    DirectProcessor(SynthBase &parent, const juce::ValueTree &v, juce::UndoManager* );
     ~DirectProcessor() {
         /*
          * both of these need to be called in the destructor
@@ -219,10 +220,15 @@ public:
                 /**
                  * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
                  *              for direct, we have 10:
-                 *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, andramp
+                 *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam,
                  *                  - the main params: gainParam, hammerParam, releaseResonanceParam, pedalParam, OutputSendParam, outputGain,
+                 *            also, needs to be *2, since ramp mods and LFO mods need separate channels
+                 *
+                 * todo: work out a way to set this number of channels automatically, perhaps using doForAllParameters(),
+                 *          or reading through modulatableParams and counting float params (check if true for last arg?)
                  */
-                .withInput("Modulation", juce::AudioChannelSet::discreteChannels(11 * 2), true)
+                    // todo: why is this 11 * 2 and not 10 * 2?
+                .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10 * 2), true)
                 // Mod inputs; numChannels for the number of mods we want to enable
                 .withOutput("Modulation", juce::AudioChannelSet::mono(), false)
                 // Modulation send channel; disabled for all but Modulation preps!
@@ -325,6 +331,7 @@ private:
     juce::Array<float> midiNoteTranspositions;
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();
+    void handleMidiTargetMessages(juce::MidiBuffer& midiMessages);
 
     /*
      * noteOnSpecMap

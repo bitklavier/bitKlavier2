@@ -390,23 +390,73 @@ void SynthSection::initOpenGlComponents(OpenGlWrapper &open_gl) {
 }
 
 void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
-    if (background_)
+    // Helper to map GL error code to a readable name (debug aid)
+    auto glErrorName = [](GLenum gl) -> const char* {
+        switch (gl) {
+            case juce::gl::GL_NO_ERROR: return "GL_NO_ERROR";
+            case juce::gl::GL_INVALID_ENUM: return "GL_INVALID_ENUM";
+            case juce::gl::GL_INVALID_VALUE: return "GL_INVALID_VALUE";
+            case juce::gl::GL_INVALID_OPERATION: return "GL_INVALID_OPERATION";
+#if ! JUCE_ANDROID
+            case juce::gl::GL_INVALID_FRAMEBUFFER_OPERATION: return "GL_INVALID_FRAMEBUFFER_OPERATION";
+#endif
+            case juce::gl::GL_OUT_OF_MEMORY: return "GL_OUT_OF_MEMORY";
+            default: return "GL_UNKNOWN_ERROR";
+        }
+    };
+    if (background_) {
+        // Clear any pre-existing errors so failures are attributed correctly
+        while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
+        const juce::String bgType = juce::String(typeid(*background_).name());
         background_->render(open_gl);
+        GLenum glb = juce::gl::glGetError();
+        if (glb != juce::gl::GL_NO_ERROR)
+        {
+            DBG("[GL] error after render (background): type='" + bgType + "' ptr="
+                + juce::String::toHexString((juce::uint64)(uintptr_t)background_)
+                + " code=" + juce::String((int) glb) + " (" + juce::String(glErrorName(glb)) + ")");
+        }
+        _ASSERT(glb == juce::gl::GL_NO_ERROR);
+    }
     for (auto &sub_section: sub_sections_) {
         if (sub_section->isVisible() && !sub_section->isAlwaysOnTop())
             sub_section->renderOpenGlComponents(open_gl, animate);
     }
 
     for (auto &open_gl_component: open_gl_components_) {
+        if (!open_gl_component) {
+            DBG("[GL] warning: null OpenGL component found in open_gl_components_ (normal pass), skipping");
+            continue;
+        }
+        const juce::String compNameRaw = open_gl_component ? open_gl_component->getName() : juce::String("<null>");
+        const juce::String compName = compNameRaw.isNotEmpty() ? compNameRaw : juce::String("<unnamed>");
+        const juce::String compType = juce::String(typeid(*open_gl_component.get()).name());
         if (!open_gl_component->isInit()) {
+            //DBG("[GL] init start: component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            // Clear any pre-existing GL errors so we attribute errors to this component's init
+            while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
             open_gl_component->init(open_gl);
             GLenum gl = juce::gl::glGetError();
+            if (gl != juce::gl::GL_NO_ERROR)
+            {
+                DBG("[GL] error after init: component='" + compName + "' type='" + compType + "' ptr="
+                    + juce::String::toHexString((juce::uint64)(uintptr_t)open_gl_component.get())
+                    + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
+            }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
         if (open_gl_component->isVisible() && !open_gl_component->isAlwaysOnTop()) {
+            //DBG("[GL] render start (not always-on-top): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            // Clear any pre-existing GL errors so we attribute errors to this component's render
+            while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
             open_gl_component->render(open_gl, animate);
             GLenum gl = juce::gl::glGetError();
-            //DBG(juce::String(gl));
+            if (gl != juce::gl::GL_NO_ERROR)
+            {
+                DBG("[GL] error after render (not always-on-top): component='" + compName + "' type='" + compType + "' ptr="
+                    + juce::String::toHexString((juce::uint64)(uintptr_t)open_gl_component.get())
+                    + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
+            }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
     }
@@ -417,14 +467,38 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
     }
 
     for (auto &open_gl_component: open_gl_components_) {
+        if (!open_gl_component) {
+            DBG("[GL] warning: null OpenGL component found in open_gl_components_ (AOT pass), skipping");
+            continue;
+        }
+        const juce::String compNameRaw = open_gl_component ? open_gl_component->getName() : juce::String("<null>");
+        const juce::String compName = compNameRaw.isNotEmpty() ? compNameRaw : juce::String("<unnamed>");
+        const juce::String compType = juce::String(typeid(*open_gl_component.get()).name());
         if (!open_gl_component->isInit()) {
+            //DBG("[GL] init start (always-on-top pass): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
             open_gl_component->init(open_gl);
             GLenum gl = juce::gl::glGetError();
+            if (gl != juce::gl::GL_NO_ERROR)
+            {
+                DBG("[GL] error after init (always-on-top pass): component='" + compName + "' type='" + compType + "' ptr="
+                    + juce::String::toHexString((juce::uint64)(uintptr_t)open_gl_component.get())
+                    + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
+            }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
         if (open_gl_component->isVisible() && open_gl_component->isAlwaysOnTop()) {
+            //DBG("[GL] render start (always-on-top): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+            while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
             open_gl_component->render(open_gl, animate);
-            _ASSERT(juce::gl::glGetError() == juce::gl::GL_NO_ERROR);
+            GLenum gl = juce::gl::glGetError();
+            if (gl != juce::gl::GL_NO_ERROR)
+            {
+                DBG("[GL] error after render (always-on-top): component='" + compName + "' type='" + compType + "' ptr="
+                    + juce::String::toHexString((juce::uint64)(uintptr_t)open_gl_component.get())
+                    + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
+            }
+            _ASSERT(gl == juce::gl::GL_NO_ERROR);
         }
     }
 //    if(background_)
@@ -1115,10 +1189,11 @@ void SynthSection::hidePopupDisplay(bool primary) {
 }
 
 void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> position, const PopupItems &options,
-                                     std::function<void(int,int)> callback, std::function<void()> cancel) {
+                                     std::function<void(int,int)> callback, std::function<void()> cancel,
+                                     float width_scale) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent)
-        parent->popupSelector(source, position, options, callback, cancel);
+        parent->popupSelector(source, position, options, callback, cancel, width_scale);
 }
 
 void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,const juce::ValueTree &v, bitklavier::BKPreparationType type) {

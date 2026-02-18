@@ -6,7 +6,7 @@
 #include "Synthesiser/Sample.h"
 #include "synth_base.h"
 
-DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, directBusLayout()),
+DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager * um) : PluginBase (parent, vt, um, directBusLayout()),
                                                                                   mainSynth (new BKSynthesiser (state.params.env, state.params.gainParam)),
                                                                                   hammerSynth (new BKSynthesiser (state.params.env, state.params.hammerParam)),
                                                                                   releaseResonanceSynth (new BKSynthesiser (state.params.env, state.params.releaseResonanceParam)),
@@ -114,10 +114,25 @@ void DirectProcessor::updateAllMidiNoteTranspositions()
 
 void DirectProcessor::setTuning (TuningProcessor* tun)
 {
+    if (tuning == tun)
+        return;
+
+    if (tuning != nullptr)
+        tuning->removeListener (this);
+
     tuning = tun;
-    tuning->addListener(this);
-    mainSynth->setTuning (&tuning->getState().params.tuningState);
-    releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
+
+    if (tuning != nullptr)
+    {
+        tuning->addListener (this);
+        mainSynth->setTuning (&tuning->getState().params.tuningState);
+        releaseResonanceSynth->setTuning (&tuning->getState().params.tuningState);
+    }
+    else
+    {
+        mainSynth->setTuning (nullptr);
+        releaseResonanceSynth->setTuning (nullptr);
+    }
 }
 
 void DirectProcessor::tuningStateInvalidated() {
@@ -128,9 +143,34 @@ void DirectProcessor::tuningStateInvalidated() {
 
 }
 
+void DirectProcessor::handleMidiTargetMessages(juce::MidiBuffer& midiMessages)
+{
+    juce::MidiBuffer tempBuffer;
+
+    for (auto mi : midiMessages)
+    {
+        auto message = mi.getMessage();
+
+        switch(message.getChannel() + (DirectTargetFirst))
+        {
+            case DirectTargetModReset:
+                DBG("DirectTargetModReset called");
+                resetContinuousModulations();
+                break;
+
+            default:
+                tempBuffer.addEvent(message, mi.samplePosition);
+        }
+    }
+
+    midiMessages.swapWith(tempBuffer);
+}
+
 void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
+
+    handleMidiTargetMessages(midiMessages);
 
     /*
      * this updates all the AudioThread callbacks we might have in place
@@ -154,19 +194,12 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     // then, the state-change modulations, for more complex params
     state.params.transpose.processStateChanges();
-    state.params.transpose.transpositionUsesTuning->processStateChanges();
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();
 
     // update transposition slider values
-    //updateMidiNoteTranspositions();
     updateAllMidiNoteTranspositions();
-    /**
-     * todo: need to include useTuningForTranspositions in noteOnSpecMap now...
-     *      - in place of synth->updateMidiNoteTranspositions (midiNoteTranspositions, useTuningForTranspositions);
-     */
-    bool useTuningForTranspositions = state.params.transpose.transpositionUsesTuning->get();
 
     if (mainSynth->hasSamples())
     {

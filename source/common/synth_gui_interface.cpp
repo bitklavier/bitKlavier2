@@ -186,7 +186,14 @@ void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection *connec
 
 bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
     bool success = getSynth()->loadFromFile(preset, error);
-    if (success) gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
+    if (success)
+    {
+        gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
+        gui_->header_->updateCurrentPianoName();
+        setPianoSwitchTriggerThreadMessage();
+        setActivePiano (getSynth()->getActivePianoValueTree());
+        // DBG("SynthGuiInterface::loadFromFile, currentPiano = " + juce::String( gui_->header_->getActivePiano().getProperty(IDs::name)));
+    }
     return success;
     //sampleLoadManager->loadSamples()
 }
@@ -330,12 +337,42 @@ void SynthGuiInterface::openSaveDialog()
 
 void SynthGuiInterface::saveCurrentGallery()
 {
-    synth_->saveToFile(getActiveFile());
+    // If there is no active file yet (brand‑new document), fall back to "Save As..."
+    auto active = getActiveFile();
+    if (active == juce::File())
+    {
+        openSaveDialog();
+        return;
+    }
+
+    // Protect the default "Basic Piano" from accidental overwrite with Cmd+S
+    // Detect the known installed location in the user's Documents/bitKlavier/galleries
+    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                    .getChildFile("Documents")
+                    .getChildFile("bitKlavier")
+                    .getChildFile("galleries");
+    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
+
+    const auto activePath = active.getFullPathName();
+    if (activePath == basicA.getFullPathName()
+        || activePath == basicB.getFullPathName()
+        || activePath == basicC.getFullPathName())
+    {
+        // Use Save As so the default preset isn't overwritten
+        openSaveDialog();
+        return;
+    }
+
+    // Otherwise save to the currently active file
+    synth_->saveToFile(active);
 }
 
 void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
 {
     JUCE_ASSERT_MESSAGE_THREAD
+    DBG("SynthGuiInterface::setActivePiano");
     if (synth_->switch_trigger_thread == SwitchTriggerThread::MessageThread)
         synth_->setActivePiano (v, synth_->switch_trigger_thread);
     gui_->main_->constructionSite_->setActivePiano();
@@ -445,7 +482,6 @@ PopupItems SynthGuiInterface::getPluginPopupItems()
 
     auto tree = juce::KnownPluginList::createTree (pluginDescriptions, synth_->user_prefs->userPreferences->pluginSortMethod);
     synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference = {};
-    popup.addItem (-1, "");
     addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
     return popup;
 }
@@ -476,12 +512,12 @@ PopupItems SynthGuiInterface::getPreparationPopupItems()
 PopupItems SynthGuiInterface::getVSTPopupItems()
 {
     PopupItems popup;
-
-    auto pluginDescriptions = synth_->user_prefs->userPreferences->knownPluginList.getTypes();
+    auto& pluginList = synth_->user_prefs->userPreferences->knownPluginList;
+    auto pluginDescriptions = pluginList.getTypes();
+    DBG("SynthGuiInterface::getVSTPopupItems known plugins: " << pluginDescriptions.size());
 
     auto tree = juce::KnownPluginList::createTree (pluginDescriptions, synth_->user_prefs->userPreferences->pluginSortMethod);
     synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference = {};
-    popup.addItem (-1, "");
     addToMenu (*tree, popup, pluginDescriptions, synth_->user_prefs->userPreferences->pluginDescriptionsAndPreference);
     return popup;
 }

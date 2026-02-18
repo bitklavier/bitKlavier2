@@ -9,6 +9,7 @@
 #include "bk_XMLSerializer.h"
 #include "synth_base.h"
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
+#include "buffer_debugger.h"
 
 class SynthSection;
 class SynthBase;
@@ -29,16 +30,23 @@ namespace bitklavier {
         InternalProcessor() : juce::AudioProcessor() {
         }
 
+        // juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
+
         virtual void setTuning(TuningProcessor *tun) {
-            // tuning = tun;
+            tuning = tun;
         }
 
         virtual void setTempo(TempoProcessor *tem) {
             tempo = tem;
         }
 
-        virtual void setSynchronic(SynchronicProcessor *synchronic) {
+        virtual void setSynchronic(SynchronicProcessor *syn) {
+            synchronic = syn;
         }
+
+        TuningProcessor* getTuning() const { return tuning; }
+        TempoProcessor* getTempo() const { return tempo; }
+        SynchronicProcessor* getSynchronic() const { return synchronic; }
 
         virtual void addSoundSet(
             juce::ReferenceCountedArray<BKSynthesiserSound> *s, // main samples
@@ -169,19 +177,41 @@ namespace bitklavier {
 
         bool supportsParameterModulation() const;
 
+        void resetContinuousModulations() {
+            DBG("PluginBase::resetContinuousModulations");
+            parent.requestResetAllContinuousModsRT();
+        }
+
         void processContinuousModulations(juce::AudioBuffer<float> &buffer) {
-            const auto &modBus = getBusBuffer(buffer, true, 1); // true = input, bus index 0 = mod
+
+            // 1. Find the actual index of the "Modulation" input bus
+            int modBusIdx = -1;
+            for (int i = 0; i < getBusCount(true); ++i) {
+                if (getBus(true, i)->getName() == "Modulation") {
+                    modBusIdx = i;
+                    break;
+                }
+            }
+
+            if (modBusIdx == -1)
+            {
+                DBG("processContinuousModulations: no modulation bus found");
+                return; // No modulation bus found
+            }
+
+            const auto &modBus = getBusBuffer(buffer, true, modBusIdx);
 
             int numInputChannels = modBus.getNumChannels();
             for (int channel = 0; channel < numInputChannels / 2; ++channel) {
+            //for (int channel = 0; channel < juce::jmin (numInputChannels / 2, (int) state.params.modulatableParams.size()); ++channel) {
                 const float *in = modBus.getReadPointer(channel);
                 const float *in_continous = modBus.getReadPointer(channel + (numInputChannels/2));
-                std::visit([this,in, in_continous](auto *p) -> void {
-                               p->applyMonophonicModulation(*in);
-                               parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
-                                p->applyMonophonicModulation(*in + *in_continous);
-                           },
-                           state.params.modulatableParams[channel]);
+                auto p = state.params.modulatableParams[channel];
+                p->applyMonophonicModulation(*in);
+                parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
+                p->applyMonophonicModulation(*in + *in_continous);
+                // bufferDebugger->capture("m"+juce::String(channel) + "    " + p->getParameterID(), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
+                // bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)) + " " + p->getParameterID(), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
             }
         }
 
@@ -192,72 +222,44 @@ namespace bitklavier {
          *      this is on a separate bus from the regular audio graph that carries audio between preparations
          */
         void setupModulationMappings() {
-            auto mod_params = v.getChildWithName(IDs::MODULATABLE_PARAMS);
-            if (!mod_params.isValid()) {
-                mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, nullptr);
-                for (auto param: state.params.modulatableParams) {
-                    juce::ValueTree modChan{IDs::MODULATABLE_PARAM};
-                    juce::String name = std::visit([](auto *p) -> juce::String {
-                                                       return p->paramID; // Works if all types have getParamID()
-                                                   },
-                                                   param);
-                    const auto &a = std::visit([](auto *p) -> juce::NormalisableRange<float> {
-                                                   return p->getNormalisableRange();
-                                                   // Works if all types have getParamID()
-                                               },
-                                               param);
-                    modChan.setProperty(IDs::parameter, name, nullptr);
-                    modChan.setProperty(IDs::start, a.start, nullptr);
-                    modChan.setProperty(IDs::end, a.end, nullptr);
-                    modChan.setProperty(IDs::skew, a.skew, nullptr);
-                    std::visit([&](auto *p) {
-                                   p->setRangeToValueTree(modChan);
-                               },
-                               param);
-                    mod_params.appendChild(modChan, nullptr);
-                    ////for setting up audio modulations in order to set via absolute value
-                    const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
-                    std::visit([&](auto *p) {
-                        p->setParamOffsetIndex(offsetIdx);
-                    }, param);
-                }
-            } else {
-                for (auto param: state.params.modulatableParams) {
-                    //int mod = 0;
-                    juce::String name = std::visit([](auto *p) -> juce::String {
-                                                       return p->paramID; // Works if all types have getParamID()
-                                                   },
-                                                   param);
-                    auto vt = mod_params.getChildWithProperty(IDs::parameter, name);
-                    if (!vt.isValid()) {
-                        const auto &a = std::visit([](auto *p) -> juce::NormalisableRange<float> {
-                                                       return p->getNormalisableRange();
-                                                       // Works if all types have getParamID()
-                                                   },
-                                                   param);
-                        vt = juce::ValueTree{IDs::MODULATABLE_PARAM};
-                        vt.setProperty(IDs::parameter, name, nullptr);
-                        vt.setProperty(IDs::start, a.start, nullptr);
-                        vt.setProperty(IDs::end, a.end, nullptr);
-                        vt.setProperty(IDs::skew, a.skew, nullptr);
-                    }
-                    std::visit([&](auto *p) {
-                                   p->setRangeToValueTree(vt);
-                               },
-                               param);
+            auto mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, nullptr);
 
+            // Create a temporary vector to store the children in the desired order
+            juce::Array<juce::ValueTree> orderedChildren;
 
-                    auto val = v.getProperty(name);
-                    std::visit([&](auto *p) {
-                                   p->setParameterValue(val);
-                               },
-                               param);
-                    ////for setting up audio modulations in order to set via absolute value
-                    const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
-                    std::visit([&](auto *p) {
-                        p->setParamOffsetIndex(offsetIdx);
-                    }, param);
+            for (auto param: state.params.modulatableParams) {
+                juce::String name = param->paramID;
+                auto vt = mod_params.getChildWithProperty(IDs::parameter, name);
+
+                if (!vt.isValid()) {
+                    vt = juce::ValueTree{IDs::MODULATABLE_PARAM};
+                    vt.setProperty(IDs::parameter, name, nullptr);
+                    const auto &a = param->getNormalisableRange();
+                    vt.setProperty(IDs::start, a.start, nullptr);
+                    vt.setProperty(IDs::end, a.end, nullptr);
+                    vt.setProperty(IDs::skew, a.skew, nullptr);
                 }
+
+                // Update properties
+                param->setRangeToValueTree(vt);
+                if (v.hasProperty(name)) {
+                    vt.setProperty(IDs::sliderval, v.getProperty(name), nullptr);
+                    param->setParameterValue(v.getProperty(name));
+                } else {
+                    vt.setProperty(IDs::sliderval, param->get(), nullptr);
+                }
+
+                // Setup audio modulation offset
+                const int offsetIdx = parent.getParamOffsetBank().addParam(v, name);
+                param->setParamOffsetIndex(offsetIdx);
+
+                orderedChildren.add(vt);
+            }
+
+            // Now rebuild mod_params children in the correct order
+            mod_params.removeAllChildren(nullptr);
+            for (auto& child : orderedChildren) {
+                mod_params.appendChild(child, nullptr);
             }
         }
 
@@ -318,13 +320,6 @@ namespace bitklavier {
         if (!v.hasProperty(IDs::soundset)) {
             v.setProperty(IDs::soundset, IDs::syncglobal.toString(), nullptr);
         }
-        // else {
-        //     if (v.getProperty(IDs::soundset).toString() != IDs::syncglobal.toString())
-        //         _parent.sampleLoadManager->loadSamples(v.getProperty(IDs::soundset).toString());
-        // }
-        /*
-     * modulations and state changes
-     */
 
         setupModulationMappings();
     }

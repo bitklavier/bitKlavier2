@@ -22,7 +22,6 @@ public:
                                                                             12, // default max
                                                                             0, // default val
                                                                             0.01,
-//                                                                            _params->numActive,
                                                                 _params->numActiveSliders->getCurrentValue(),
                                                                     _params->stateChanges.defaultState), // increment
                                                                         params(_params)
@@ -44,6 +43,12 @@ public:
                 nullptr);
             // (*params->getFloatParams())[i++].get()->getCurrentValue() > 0.f;
             attachmentVec.emplace_back(std::move(ptr));
+        }
+
+        if (!defaultState.hasProperty("t0"))
+        {
+            DBG("OpenGL_TranspositionSlider, assigning defaultState t0 = 0, since it has an empty defaultState");
+            defaultState.setProperty("t0", "0.", nullptr);
         }
 
         /**

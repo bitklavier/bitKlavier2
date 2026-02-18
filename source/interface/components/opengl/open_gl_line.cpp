@@ -12,7 +12,7 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
 {
     // Check that components are valid
     if (start_component_ == nullptr || end_component_ == nullptr || target_component_ == nullptr) {
-        DBG("Error: Invalid components supplied to OpenGlLine");
+        // DBG("Error: Invalid components supplied to OpenGlLine");
         return;
     }
 
@@ -21,12 +21,12 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
     juce::Point<float> endClip = getClipSpaceCoordinates(end_component_, target_component_);
 
     // Debug outputs to verify the calculated coordinates
-    DBG("------------ OpenGlLine Created ------------");
-    DBG("Start Component Clip Space Coordinates: (" + juce::String(startClip.getX()) +
-        ", " + juce::String(startClip.getY()) + ")");
-    DBG("End Component Clip Space Coordinates: (" + juce::String(endClip.getX()) +
-        ", " + juce::String(endClip.getY()) + ")");
-    DBG("-------------------------------------------");
+    // DBG("------------ OpenGlLine Created ------------");
+    // DBG("Start Component Clip Space Coordinates: (" + juce::String(startClip.getX()) +
+    //     ", " + juce::String(startClip.getY()) + ")");
+    // DBG("End Component Clip Space Coordinates: (" + juce::String(endClip.getX()) +
+    //     ", " + juce::String(endClip.getY()) + ")");
+    // DBG("-------------------------------------------");
 
     // Store the data in the vertex buffer format (clip-space coordinates)
     data_ = std::make_unique<float[]>(4);
@@ -41,10 +41,13 @@ OpenGlLine::OpenGlLine(juce::Component* start_component, juce::Component* end_co
     indices_[1] = 1;
 
     vertex_buffer_ = 0;
+    indices_buffer_ = 0;
+    vao_ = 0;
+    dirty_ = true;
 
     // Debugging additional information
-    DBG("Line Vertex Data: X1 = " + juce::String(data_[0]) + ", Y1 = " + juce::String(data_[1]) +
-        ", X2 = " + juce::String(data_[2]) + ", Y2 = " + juce::String(data_[3]));
+    // DBG("Line Vertex Data: X1 = " + juce::String(data_[0]) + ", Y1 = " + juce::String(data_[1]) +
+    //     ", X2 = " + juce::String(data_[2]) + ", Y2 = " + juce::String(data_[3]));
 }
 
 // Static function to calculate OpenGL clip-space coordinates
@@ -85,6 +88,9 @@ void OpenGlLine::paintBackground(juce::Graphics& g) {
 // Function to initialize OpenGL buffers
 void OpenGlLine::init(OpenGlWrapper& open_gl) {
     // Set up the points
+    open_gl.context.extensions.glGenVertexArrays(1, &vao_);
+    open_gl.context.extensions.glBindVertexArray(vao_);
+
     open_gl.context.extensions.glGenBuffers(1, &vertex_buffer_);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
     jassert(vertex_buffer_ != 0); // Ensure the buffer was successfully created
@@ -104,7 +110,7 @@ void OpenGlLine::init(OpenGlWrapper& open_gl) {
     shader_ = open_gl.shaders->getShaderProgram(Shaders::kSimpleLineVertex, fragment_shader_);
     shader_->use();
     if (!shader_->getLastError().isEmpty()) {
-        DBG(shader_->getLastError());
+        // DBG(shader_->getLastError());
         jassertfalse; // Shader compilation/linking failed
     }
 
@@ -120,7 +126,7 @@ void OpenGlLine::init(OpenGlWrapper& open_gl) {
     for (int i = 0; i < 4; ++i) {
         vertexBufferData += juce::String(debugData[i]) + ", ";
     }
-    DBG("Vertex Buffer Data: " + vertexBufferData);
+    // DBG("Vertex Buffer Data: " + vertexBufferData);
 
     // Unbind the buffer (optional safety)
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
@@ -136,6 +142,12 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
         return;
     if (shader_ == nullptr)
         init(open_gl);
+    if (shader_ == nullptr)
+        return;
+    // Ensure scissor does not clip the line unexpectedly
+    OpenGlComponent::setScissor(component, open_gl);
+    juce::gl::glEnable(juce::gl::GL_BLEND);
+    juce::gl::glBlendFunc(juce::gl::GL_SRC_ALPHA, juce::gl::GL_ONE_MINUS_SRC_ALPHA);
     if(dirty_)
     {
         dirty_ = false;
@@ -161,6 +173,8 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
 
     }
     shader_->use();
+    // Bind VAO before attribute setup and draw
+    open_gl.context.extensions.glBindVertexArray(vao_);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
     open_gl.context.extensions.glVertexAttribPointer(0, 2, juce::gl::GL_FLOAT, juce::gl::GL_FALSE, 2 * sizeof(float), nullptr);
     open_gl.context.extensions.glEnableVertexAttribArray(0);
@@ -168,6 +182,8 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, indices_buffer_);
     juce::gl::glDrawElements(juce::gl::GL_LINES, 2, juce::gl::GL_UNSIGNED_INT, nullptr);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
+    open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, 0);
+    open_gl.context.extensions.glBindVertexArray(0);
 }
 
 // Resized logic

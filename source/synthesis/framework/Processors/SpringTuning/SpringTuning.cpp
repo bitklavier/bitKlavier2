@@ -8,7 +8,7 @@
 
     Based on the Verlet mass/spring algorithm:
     Jakobsen, T. (2001). Advanced character physics.
-     In IN PROCEEDINGS OF THE GAME DEVELOPERS CONFERENCE 2001, page 19.
+    IN PROCEEDINGS OF THE GAME DEVELOPERS CONFERENCE 2001, page 19.
 
   ==============================================================================
 */
@@ -77,13 +77,13 @@ SpringTuning::SpringTuning(SpringTuningParams &params, std::array<std::atomic<fl
 SpringTuning::~SpringTuning()
 {
     stopTimer();
-    DBG("SpringTuning: stopping timer");
+    // DBG("SpringTuning: stopping timer");
 };
 
 inline void SpringTuning::stop(void)
 {
     stopTimer();
-    DBG("SpringTuning: stopping timer");
+    // DBG("SpringTuning: stopping timer");
 }
 
 void SpringTuning::rateChanged() // called from UI
@@ -166,38 +166,42 @@ void SpringTuning::tetherScaleChanged()
 
 void SpringTuning::updateTetherTuning()
 {
+    // DBG("updateTetherTuning, fundamental = " << intFromPitchClass(tetherFundamental));
     const juce::ScopedLock sl (lock);
 
     for (int i = 0; i < 128; i++)
     {
-        tetherParticleArray[i]->setX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
-        tetherParticleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        tetherParticleArray[i]->setX( (i * 100.0) + 100. * tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        tetherParticleArray[i]->setRestX( (i * 100.0) + 100. * tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
 
-        particleArray[i]->setRestX( (i * 100.0) + tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
+        particleArray[i]->setRestX( (i * 100.0) + 100. * tetherTuning[(i - intFromPitchClass(tetherFundamental)) % 12] );
     }
 }
 
 void SpringTuning::tetherFundamentalChanged()
 {
+    tetherFundamental = sparams.tetherFundamental->get();
     updateTetherTuning();
 }
+
 void SpringTuning::setRate(double r, bool start)
 {
     if (start) {
         startTimer(1000 / sparams.rate->getCurrentValue());
-        DBG("SpringTuning: starting timer");
+        // DBG("SpringTuning: starting timer");
     }
     else {
         stopTimer();
-        DBG("SpringTuning: stopping timer");
+        // DBG("SpringTuning: stopping timer");
     }
 }
 
 bool SpringTuning::getSpringMode(int which)
 {
-    juce::String whichSpringId = "useLocalOrFundamental_" + juce::String(which);
+    juce::String whichSpringId = "useLocalOrFundamental" + juce::String(which);
     for ( auto &param_ : *sparams.getBoolParams())
     {
+        // DBG("checking if " + param_->getParameterID() + " == " + whichSpringId);
         if(param_->getParameterID() == whichSpringId)
         {
             return param_->get();
@@ -233,13 +237,15 @@ void SpringTuning::simulate()
     {
         if (spring->getEnabled())
         {
+            //DBG("tetherSpringArray spring->getA()->getX() = " << spring->getA()->getX() << " spring->getB()->getX() = " << spring->getB()->getX());
             spring->satisfyConstraints();
         }
     }
 
-    // apply interval spring forces to all particless
+    // apply interval spring forces to all particles
 	for (auto spring : enabledSpringArray)
 	{
+	    //DBG("enabledSpringArray spring->getA()->getX() = " << spring->getA()->getX() << " spring->getB()->getX() = " << spring->getB()->getX());
         spring->satisfyConstraints();
 	}
 }
@@ -298,6 +304,7 @@ void SpringTuning::addParticle(int note)
     const juce::ScopedLock sl (lock);
     particleArray[note]->setEnabled(true);
     tetherParticleArray[note]->setEnabled(true);
+    // DBG("addParticle, restX = " << tetherParticleArray[note]->getRestX() << " X = " << tetherParticleArray[note]->getX());
 }
 
 void SpringTuning::removeParticle(int note)
@@ -557,12 +564,15 @@ void SpringTuning::addSpringsByNote(int note)
 void SpringTuning::retuneIndividualSpring(Spring* spring)
 {
     int interval = spring->getIntervalIndex();
+    //DBG("retuneIndividualSpring, usingFundamentalForIntervalSprings = " << (int)usingFundamentalForIntervalSprings << ", interval = " << interval << " getSpringMode for this interval = " << (int)getSpringMode(interval));
 
     //set spring length locally, for all if !usingFundamentalForIntervalSprings, or for individual springs as set by L/F
     if(!usingFundamentalForIntervalSprings || !getSpringMode(interval))
     {
         int diff = spring->getA()->getRestX() - spring->getB()->getRestX();
-        spring->setRestingLength(fabs(diff) + 100. * intervalTuning[interval]);
+        //DBG("retuneIndividualSpring, resting length = " << fabs(diff) + 100. * (intervalTuning[interval] - tetherTuning[interval]));
+        spring->setRestingLength(fabs(diff) + 100. * (intervalTuning[interval] - tetherTuning[interval]));
+        //spring->setRestingLength(fabs(diff) + 100. * (intervalTuning[interval]));
     }
 
     //otherwise, set resting length to interval scale relative to intervalFundamental (F)
@@ -625,6 +635,23 @@ double SpringTuning::getFrequency(int note, float globalRefA4)
 //        " x = " + juce::String(x) +
 //        " octave = " + juce::String(octave) +
 //        " output frequency = " + juce::String(midi));
+
+    return freq;
+}
+
+double SpringTuning::getTetherFrequency(int note, float globalRefA4)
+{
+    const juce::ScopedLock sl (lock);
+
+    auto& particles = tetherParticleArray;
+    double x = particles[note]->getX();
+    //    int octave = particles[note]->getOctave();
+    double freq = mtof(x * .01, globalRefA4);
+
+    //    DBG("SpringTuning::getFrequency for " + juce::String(note) +
+    //        " x = " + juce::String(x) +
+    //        " octave = " + juce::String(octave) +
+    //        " output frequency = " + juce::String(midi));
 
     return freq;
 }

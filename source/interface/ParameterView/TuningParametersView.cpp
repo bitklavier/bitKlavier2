@@ -25,47 +25,60 @@ TuningParametersView::TuningParametersView(
 
     auto& listeners = pluginState.getParameterListeners();
 
-    /**
-     * todo: need to add slider->addAttachment(attachment.get()); to all SynthSliders, so they can display liveModulation
-     */
-
-    absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
+    absolutekeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState, true, true, "Individual Key Offsets");
     addStateModulatedComponent(absolutekeyboard.get());
     absolutekeyboard->setName("absolute");
 
-    circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState);
+    circular_keyboard = std::make_unique<OpenGLCircularKeyboardSlider>(dynamic_cast<TuningParams*>(&params)->tuningState, true, "Octave Repeating");
     addStateModulatedComponent(circular_keyboard.get());
     circular_keyboard->setName("circular");
 
-    semitoneSection = std::make_unique<SemitoneWidthSection>(name, params.tuningState.semitoneWidthParams, listeners, *this);
+    semitoneSection = std::make_unique<SemitoneWidthSection>(name + "_semitone", params.tuningState.semitoneWidthParams, listeners, *this, pluginState);
     addSubSection(semitoneSection.get());
 
-    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name, params.tuningState.adaptiveParams, listeners, *this);
+    adaptiveSection = std::make_unique<AdaptiveTuningSection>(name + "_adaptive", params.tuningState.adaptiveParams, listeners, *this, pluginState);
     addSubSection(adaptiveSection.get());
 
-    springTuningSection = std::make_unique<SpringTuningSection>(name, params.tuningState.springTuningParams, listeners, *this);
+    springTuningSection = std::make_unique<SpringTuningSection>(name + "_spring", params.tuningState.springTuningParams, listeners, *this, pluginState);
     addSubSection(springTuningSection.get());
 
-    offsetKnobSection = std::make_unique<OffsetKnobSection>(name, params.tuningState.offsetKnobParam, listeners, *this);
+    offsetKnobSection = std::make_unique<OffsetKnobSection>(name + "_offset", params.tuningState.offsetKnobParam, listeners, *this, pluginState);
     addSubSection(offsetKnobSection.get());
 
     if (auto* tuningParams = dynamic_cast<TuningParams*>(&params)) {
         ///tuning systems
-        auto index = tuningParams->tuningState.tuningSystem->getIndex();
         tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString(), tuningParams->tuningState.tuningSystem->stateChanges.defaultState);
-        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, nullptr);
         setupTuningSystemMenu(tuning_combo_box);
+        tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, pluginState.undoManager);
         addComboBox(tuning_combo_box.get(), true, true);
-        tuning_combo_box->setSelectedItemIndex(index,juce::sendNotificationSync);
 
-        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(),tuningParams->tuningState.fundamental->stateChanges.defaultState);
-        fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, nullptr);
+        fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(), tuningParams->tuningState.fundamental->stateChanges.defaultState);
+        fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, pluginState.undoManager);
         addComboBox(fundamental_combo_box.get(), true, true);
 
-        tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString(),tuningParams->tuningState.tuningType->stateChanges.defaultState);
-        tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, nullptr);
+        tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString(), tuningParams->tuningState.tuningType->stateChanges.defaultState);
+        tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, pluginState.undoManager);
         addComboBox(tuningtype_combo_box.get(), true, true);
     }
+
+    /*
+     * todo: this is problematic, in that it overwrites modded values
+     *          - if you trigger a mod that changes the circular tuning, and then open the Tuning prep, this will overwrite those
+     *          - probably should use defaultState or modulationState if they exist?
+     *
+     * ok, so somewhat complicated:
+     * - on initialization of TuningProcessor, defaultState and modulatedState should be the same, and should exist
+     *      - when created from scratch, both should be set equal to the system and fundamental, like using setOffsetsFromTuningSystem
+     *      - when a gallery is opened, both should be set from the gallery, where both should be saved
+     * - if the tuning system is anything other than "custom", we ignore what the circularTuningOffset_custom values are
+     */
+    // setOffsetsFromTuningSystem(
+    //             params.tuningState.tuningSystem->get(),
+    //             params.tuningState.fundamental->getIndex(),
+    //             this->params.tuningState.circularTuningOffset,
+    //             this->params.tuningState.circularTuningOffset_custom);
+
+    //circular_keyboard->updateValuesFromString (params.tuningState.stateChanges.defaultState.getProperty(IDs::circularTuning).toString(), true);
 
     /*
      * display relevant subsets of the UI depending on selected TuningType
@@ -103,6 +116,10 @@ TuningParametersView::TuningParametersView(
         params.tuningState.fundamental,
         chowdsp::ParameterListenerThread::MessageThread,
         [this]() {
+            //doing this twice, because of the listener in TuningProcessor;
+            //  ok, but might want to optimize at some point, having the processor notify here that the fundamental
+            //  has been changed, so redoImage is called after.
+            //  some with tuningSystem above
             params.tuningState.setFundamental(params.tuningState.fundamental->getIndex());
             circular_keyboard->redoImage();
         })
@@ -238,77 +255,33 @@ TuningParametersView::TuningParametersView(
 
 void TuningParametersView::showStaticTuning(bool show)
 {
-    /**
-     * the "setVisible" approach here has run into some openGL asserts, either on
-     * opening or closing the Tuning prep popup. we haven't been able to figure them
-     * out so far; are maybe in the button code, perhaps in render somewhere.
-     * workaround for now is to show all the components, and change their alpha instead
-     * part of the fix was also in PreparationPopup::reset()
-     */
-//    tuning_combo_box->setVisible(show);
-//    fundamental_combo_box->setVisible(show);
-//    absolutekeyboard->setVisible(show);
-//    circular_keyboard->setVisible(show);
-//    semitoneSection->setVisible(show);
-//    offsetKnobSection->setVisible(show);
-
-    /**
-     * the "setAlpha" approach is also a bit of a pain for subsections, leave for later
-     */
-//    if(show)
-//    {
-//        tuning_combo_box->setAlpha(1.);
-//        fundamental_combo_box->setAlpha(1.);
-//        absolutekeyboard->setAlpha(1.);
-//        circular_keyboard->setAlpha(1.);
-//        semitoneSection->setAlpha(1.);
-//        offsetKnobSection->setAlpha(1.);
-//    }
-//    else
-//    {
-//        tuning_combo_box->setAlpha(0.25);
-//        fundamental_combo_box->setAlpha(0.25);
-//        absolutekeyboard->setAlpha(0.25);
-//        circular_keyboard->setAlpha(0.25);
-//        semitoneSection->setAlpha(0.25);
-//        offsetKnobSection->setAlpha(0.25);
-//    }
-//
-//    tuning_combo_box->redoImage();
-//    fundamental_combo_box->redoImage();
-//    absolutekeyboard->redoImage();
-//    circular_keyboard->redoImage();
-//    offsetKnobSection->redoImage();
+    tuning_combo_box->setVisible(show);
+    fundamental_combo_box->setVisible(show);
+    absolutekeyboard->setVisible(show);
+    circular_keyboard->setVisible(show);
+    semitoneSection->setVisible(show);
+    offsetKnobSection->setVisible(show);
 }
 
 void TuningParametersView::showAdaptiveTuning(bool show)
 {
-//    adaptiveSection->setVisible(show);
-//    if(show) adaptiveSection->setAlpha(1.);
-//    else adaptiveSection->setAlpha(0.25);
+    adaptiveSection->setVisible(show);
 }
 
 void TuningParametersView::showSpringTuning(bool show)
 {
-//    if(show)
-//    {
-////        springTuningSection->setVisible (show);
-//        springTuningSection->setAlpha(1.);
-//    }
-//    else
-//    {
-//        springTuningSection->setAlpha(0.25);
-//    }
-
+    springTuningSection->setVisible (show);
     params.tuningState.springTuner->setRate (params.tuningState.springTuningParams.rate->getCurrentValue(), show);
 }
 
 void TuningParametersView::showCurrentTuningType()
 {
-    if(params.tuningState.tuningType->get() == TuningType::Static)
-        showStaticTuning(true);
-    else
-        showStaticTuning(false);
+    // always show static tuning
+    showStaticTuning(true);
+    // if(params.tuningState.tuningType->get() == TuningType::Static)
+    //     showStaticTuning(true);
+    // else
+    //     showStaticTuning(false);
 
     if(params.tuningState.tuningType->get() == TuningType::Adaptive || params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored)
         showAdaptiveTuning(true);
@@ -338,8 +311,33 @@ void TuningParametersView::keyboardSliderChanged(juce::String name)
 void TuningParametersView::timerCallback(void)
 {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    if (interface != NULL)
-        interface->getGui()->prep_popup->repaintPrepBackground();
+    if (interface != nullptr)
+    {
+        if (auto* gui = interface->getGui())
+        {
+            if (gui->prep_popup != nullptr)
+                gui->prep_popup->repaintPrepBackground();
+        }
+    }
+
+    // Refresh keyboards if tuning offsets were updated by the audio thread
+    if (params.tuningState.absoluteTuningDirty.exchange(false, std::memory_order_acq_rel))
+    {
+        if (absolutekeyboard)
+        {
+            absolutekeyboard->redoImage();
+            absolutekeyboard->repaint();
+        }
+    }
+
+    if (params.tuningState.circularTuningDirty.exchange(false, std::memory_order_acq_rel))
+    {
+        if (circular_keyboard)
+        {
+            circular_keyboard->redoImage();
+            circular_keyboard->repaint();
+        }
+    }
 }
 
 /**
@@ -350,7 +348,8 @@ void TuningParametersView::timerCallback(void)
  */
 void TuningParametersView::drawSpiral(juce::Graphics& g)
 {
-    float midi, scalex,radians, cx, cy;
+    float midi, scalex, radians, cx, cy;
+    float tmidi, tscalex, tradians, tcx, tcy;
     float centerx = spiralBox.getWidth() * 0.5f + spiralBox.getX();
     float centery = spiralBox.getCentreY();
 
@@ -359,7 +358,7 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
     float dimc_scale = 0.05;
     float dimc = juce::jmin(spiralBox.getHeight() * dimc_scale, spiralBox.getWidth() * dimc_scale);
 
-    float midiScale;
+    float midiScale, tmidiScale;
 
     std::vector<float> currentFreqs;
 
@@ -368,16 +367,32 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
      * todo: for spring tuning, update to draw locations of anchor springs
      *          - also possibly scale thickness of "springs" from spring settings
      */
-    for (int midi = 20; midi < 109; midi++)
+
+    // for (int midi = 20; midi < 109; midi++)
+    // {
+    //     midiScale = midi / 60.;
+    //     scalex = ((midi - 60.0f) / 12.0f);
+    //     radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
+    //     cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
+    //     cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+    //     g.setColour (juce::Colours::dimgrey);
+    //     g.setOpacity(0.25);
+    //     g.fillEllipse(cx, cy, dimc, dimc);
+    // }
+
+    for (int tnote = 20; tnote < 109; tnote++)
     {
-        midiScale = midi / 60.;
-        scalex = ((midi - 60.0f) / 12.0f);
-        radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
-        cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
-        cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+        double tetherFrequency = params.tuningState.springTuner->getTetherFrequency(tnote, params.tuningState.getGlobalTuningReference()) * intervalToRatio(params.tuningState.getOverallOffset());
+        tmidi = ftom(tetherFrequency, params.tuningState.getGlobalTuningReference());
+        tmidiScale = tmidi / 60.;
+        tscalex = ((tmidi - 60.0f) / 12.0f);
+        tradians = tscalex * Utilities::twopi - Utilities::pi * 0.5;
+        tcx = centerx + cosf(tradians) * radius * tmidiScale - dimc * 0.5f;
+        tcy = centery + sinf(tradians) * radius * tmidiScale - dimc * 0.5f;
+
         g.setColour (juce::Colours::dimgrey);
         g.setOpacity(0.25);
-        g.fillEllipse(cx, cy, dimc, dimc);
+        g.fillEllipse(tcx, tcy, dimc, dimc);
     }
 
     /**
@@ -386,9 +401,17 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
     auto& allnotes = params.tuningState.spiralNotes;
     for (auto& p : allnotes)
     {
-        if (p.load() < 0) continue;
+        const float f = p.load();
+        if (!(f > 0.0f) || !std::isfinite(f))
+            continue;
 
-        midi = ftom(p.load(), params.tuningState.getGlobalTuningReference());
+        const float ref = params.tuningState.getGlobalTuningReference();
+        if (!(ref > 0.0f) || !std::isfinite(ref))
+            continue;
+
+        midi = ftom(f, ref);
+        if (!std::isfinite(midi))
+            continue;
         currentFreqs.emplace_back(midi); // keep track of all the current notes, for drawing lines between
 
         midiScale = midi / 60.;
@@ -396,6 +419,8 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
         radians = scalex * Utilities::twopi - Utilities::pi * 0.5;
         cx = centerx + cosf(radians) * radius * midiScale - dimc * 0.5f;
         cy = centery + sinf(radians) * radius * midiScale - dimc * 0.5f;
+        if (!std::isfinite(cx) || !std::isfinite(cy))
+            continue;
 
         float hue = fmod(midi, 12.) / 12.;
         juce::Colour colour (hue, 0.5f, 0.5f, 0.9f);
@@ -403,10 +428,13 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
         g.setOpacity(0.75);
         g.fillEllipse(cx, cy, dimc, dimc);
 
-        int cents = (midi - round(midi)) * 100.0; // might need to update to show actual offset from anchor locations
-        g.setColour(juce::Colours::white);
-        g.setFont(14.0f);
-        g.drawText(juce::String(round(cents)), cx-dimc*0.25, cy+dimc*0.25, dimc * 1.5, dimc * 0.5, juce::Justification::centred);
+        const float centsF = (midi - std::round(midi)) * 100.0f; // might need to update to show actual offset from anchor locations
+        if (std::isfinite(centsF))
+        {
+            g.setColour(juce::Colours::white);
+            g.setFont(14.0f);
+            g.drawText(juce::String((int) std::round(centsF)), cx - dimc * 0.25f, cy + dimc * 0.25f, dimc * 1.5f, dimc * 0.5f, juce::Justification::centred);
+        }
     }
 
     /**
@@ -439,19 +467,24 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
             float cxb = centerx + cosf(radians) * radius * midiScale;
             float cyb = centery + sinf(radians) * radius * midiScale;
 
+            if (!std::isfinite(cxa) || !std::isfinite(cya) || !std::isfinite(cxb) || !std::isfinite(cyb))
+                continue;
+
             float hue = fmod((midi + midiSave)/2., 12.) / 12.;
             juce::Colour colour (hue, 0.5f, 0.5f, 0.25f);
             g.setColour(colour);
             g.drawLine(cxa, cya, cxb, cyb, 5);
 
             int h = 10, w = 35;
-            int midX = (cxa + cxb) / 2.0; //+ xoff;
-            int midY = (cya + cyb) / 2.0; //+ yoff;
+            float midX = (cxa + cxb) * 0.5f; //+ xoff;
+            float midY = (cya + cyb) * 0.5f; //+ yoff;
 
             g.setColour(juce::Colours::ghostwhite);
             g.setFont(12.0f);
             g.setOpacity(0.7);
-            g.drawText(juce::String((int)round(100.*(midi - midiSave))), midX-dimc*0.25, midY, w, h, juce::Justification::topLeft);
+            const float centsDelta = 100.0f * (midi - midiSave);
+            if (std::isfinite(centsDelta))
+                g.drawText(juce::String((int) std::round(centsDelta)), midX - dimc * 0.25f, midY, w, h, juce::Justification::topLeft);
 
         }
     }
@@ -500,20 +533,40 @@ void TuningParametersView::resized()
 
     leftHalf.removeFromTop(largepadding);
 
-    juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
+    juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.5);
+    absolutekeyboard->setBounds(absoluteKeyboardBox);
+
+    leftHalf.removeFromTop(smallpadding);
+
+    juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.5);
     semitoneSection->setBounds(circularKeyboardBox.removeFromRight(semitoneBoxTargetWidth));
     offsetKnobSection->setBounds(circularKeyboardBox.removeFromLeft(knobsectionheight + 30));
+    //circularKeyboardBox.reduce(largepadding * 6, 0);
     circular_keyboard->setBounds(circularKeyboardBox);
+
+    // juce::Rectangle knobsBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
+    //knobsBox.reduce(largepadding * 6, 0);
+    // semitoneSection->setBounds(knobsBox.removeFromRight(semitoneBoxTargetWidth));
+    // offsetKnobSection->setBounds(knobsBox.removeFromLeft(knobsectionheight + 30));
+    // juce::Rectangle leftKnobBox = knobsBox.removeFromLeft(knobsBox.getWidth() / 2.);
+    // leftKnobBox.reduce(largepadding, 0);
+    // semitoneSection->setBounds(knobsBox.removeFromLeft(semitoneBoxTargetWidth));
+    // offsetKnobSection->setBounds(leftKnobBox.removeFromRight(knobsectionheight + 30));
+    //circular_keyboard->setBounds(circularKeyboardBox);
 //    if (circularKeyboardBox.getWidth() > circularKeyboardTargetWidth)
 //        circularKeyboardBox.reduce((circularKeyboardBox.getWidth() - circularKeyboardTargetWidth) / 2., 0);
 //    circular_keyboard->setBounds(circularKeyboardBox);
 
-    leftHalf.removeFromTop(smallpadding);
+    // leftHalf.removeFromTop(smallpadding);
+    // juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.25);
+    // circularKeyboardBox.reduce(largepadding * 6, 0);
+    // circular_keyboard->setBounds(circularKeyboardBox);
 
-    juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
-    absolutekeyboard->setBounds(absoluteKeyboardBox);
+    // leftHalf.removeFromTop(smallpadding);
+    // juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.25);
+    // absolutekeyboard->setBounds(absoluteKeyboardBox);
 
-    leftHalf.removeFromTop(largepadding);
+    //leftHalf.removeFromTop(largepadding);
 
 //    juce::Rectangle offsetAndSemitoneBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
 //    semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
@@ -526,9 +579,14 @@ void TuningParametersView::resized()
 //    adaptiveSection->setBounds(areaAdaptive.removeFromTop(200));
 //    springTuningSection->setBounds(areaSpring.removeFromTop(300));
 
-    adaptiveSection->setBounds(leftHalf.removeFromTop(165));
-    leftHalf.removeFromTop(smallpadding);
-    springTuningSection->setBounds(leftHalf.removeFromTop(300));
+    // adaptiveSection->setBounds(leftHalf.removeFromTop(165));
+    // leftHalf.removeFromTop(smallpadding);
+    // springTuningSection->setBounds(leftHalf.removeFromTop(300));
+
+    // these two can be on top of one another, since only one or the other is visible at any particular time
+    juce::Rectangle leftHalfSave = leftHalf;
+    adaptiveSection->setBounds(leftHalf.removeFromBottom(165));
+    springTuningSection->setBounds(leftHalfSave.removeFromBottom(275));
 
     SynthSection::resized();
 }

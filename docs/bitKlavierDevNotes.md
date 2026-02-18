@@ -2,6 +2,8 @@
 ---------
 ## Gui Layout Notes
 - FlexBox is nice. see `void HeaderSection::resized()`
+- the cables are drawn in Cable.h `resized()`
+
 ## Value Tree Notes
 - comment/uncomment this line `valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);` in FullInterface.cpp to make the VT debugger window visible when needed
 - for Gallery Settings, see `updateChangedGalleryState` in sound_engine.h 
@@ -12,6 +14,7 @@
 - note that the Save/SaveAs/Load stuff for the top File menu is all handled in `getCommandInfo` and so on in main.cpp (not ApplicationCommandHandler; not sure why we have those classes/files)
   - also `PopupMenu getMenuForIndex` in synth_editor.h, for adding the elements to that File menu and the others.
     - so we'll want to add copy, paste, etc... there as well
+
 ## Mod Notes
 - i think there should be an add menu, in addition to being able to control-click
   - let's put LFO below ramp and before state, since state is really quite different than LFO/ramp
@@ -47,6 +50,10 @@
 - Make sure that processStateChanges() is called in the processBlock for the prep that is being modulated; for instance, `clusterMinMaxParams.processStateChanges();` in `SynchronicProcessor::processBlock`
 - the OpenGL shaders for the knobs are set in `OpenGlSliderQuad::init` in synth_slider.cpp
 - mod amount knob placement settings in `ModulationManager::makeCurrentModulatorAmountsVisible()` and `ModulationManager::makeModulationsVisible` and `SynthSlider::SynthSlider` constructor
+- lots of work to so on streamlining and clarifying this code
+  - see `ModulationConnection::updateScalingAudioThread` for starters
+- the number of discrete channels for the mod bus needs to be set precisely, and x2 to allow for both ramp and LFO
+  - `juce::AudioProcessor::BusesProperties tuningBusLayout()`, for instance, we have 22 continuously modulatable params, so `22 * 2`
 ---------
 ## Creating a New Preparation
 Typing as I do MidiFilter and Resonance
@@ -139,6 +146,7 @@ etc...
   - so, if you want to add new values, they need to be in the same placement/order in both `skin.cpp` and `skin.h`
 - `synth_section.cpp` then has helper functions to get some of these vals (`SynthSection::getKnobSectionHeight()` for instance)
 - can add to all these as needed!
+- keyboard key colors are in `BKOnOffKeyboardComponent`
 
 ---------
 ## Modulatable Parameters
@@ -305,3 +313,34 @@ and hopefully with answers included here for the record!
 - [x] will creating global preferences, probably under Options menu with new window, be straightforward?
   - need A440, for instance.
   - and will save? will app, or with gallery?
+
+## VST Plugin scanning info (for manual in the future)
+### In-Process vs. Out-of-Process Scanning
+
+The "Scan mode" setting in the "Available Plugins" window determines how bitKlavier handles the loading and interrogation of plugin files. Here is the breakdown of the differences:
+
+#### 1. In-process Scanning
+*   **How it works**: The plugin file is loaded directly into the main bitKlavier application memory.
+*   **Pros**:
+  *   Slightly faster because there is no overhead of starting a separate process or communicating between processes.
+  *   Simpler architecture.
+*   **Cons**:
+  *   **High Risk**: If a plugin is poorly written or encounters an error during initialization (like the `SIGTRAP` you experienced with *soothe2* or *SSL Meter*), it will **crash the entire bitKlavier application**.
+  *   Some plugins have strict threading requirements that are harder to satisfy when competing with the main app's resources.
+
+#### 2. Out-of-process Scanning
+*   **How it works**: bitKlavier launches a small, dedicated "worker" subprocess (the `bitklavierscanner`) to handle the plugin. The main app tells the worker which file to scan, and the worker sends the results back.
+*   **Pros**:
+  *   **Isolation & Stability**: This is the primary benefit. If a plugin crashes (SIGTRAP, Segmentation Fault, etc.), it only kills the small worker process. The main bitKlavier application detects that the worker disappeared, logs the failure, and moves on to the next plugin without any interruption to the user.
+  *   **Clean Environment**: Each plugin is scanned in a fresh process, preventing memory leaks or state conflicts between different plugins from affecting each other.
+*   **Cons**:
+  *   Minor performance overhead for starting the subprocess.
+
+### How it works in bitKlavier now
+With the recent updates, bitKlavier has become even smarter about these modes:
+*   **Automatic Safety**: Even if you select **In-process**, the scanner will now **automatically force Out-of-process** mode for VST3 plugins that don't support "fast scanning" (those missing a `moduleinfo.json` file). This ensures that known risky operations never threaten the main application's stability.
+*   **Graceful Recovery**: In Out-of-process mode, we've implemented logic to catch those specific macOS `SIGTRAP` errors and ensure the scanner simply skips the problematic plugin rather than getting stuck.
+
+**Recommendation**: Generally, **Out-of-process** is the safer choice and is the industry standard for modern DAWs, as it provides the most robust protection against "crashing" your session while searching for new plugins.
+
+* note that the scanning might only work in Release mode, not Debug mode!

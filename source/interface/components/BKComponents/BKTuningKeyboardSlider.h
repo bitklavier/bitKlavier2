@@ -69,7 +69,7 @@ class BKTuningKeyboardSlider :
 {
 public:
 
-    BKTuningKeyboardSlider(TuningState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false);
+    BKTuningKeyboardSlider(TuningState* state, bool toggles, bool needsOctaveSlider = false, bool isCircular = false, const juce::ValueTree& defaultState={});
     ~BKTuningKeyboardSlider()
     {
         keyboard = nullptr;
@@ -120,7 +120,7 @@ public:
     void setName(juce::String newName) { sliderName = newName; showName.setText(sliderName, juce::dontSendNotification); }
     juce::String getName() { return sliderName; }
     void setAvailableRange(int min, int max);
-    void setValues(juce::Array<float> newvals);
+    // void setValues(juce::Array<float> newvals);
     void setMinMidMaxValues(float min, float mid, float max, int resolution)
     {
         if (min > mid || min > max || mid > max) {
@@ -166,6 +166,7 @@ public:
     void textEditorFocusLost(juce::TextEditor& textEditor) override;
     void textEditorEscapeKeyPressed (juce::TextEditor& textEditor) override;
     void textEditorTextChanged(juce::TextEditor& textEditor) override;
+    void updateValuesFromString(juce::String newVals, bool isCircular);
     // void bkTextFieldDidChange (juce::TextEditor& txt) override;
     void buttonClicked (juce::Button* b) override;
     void mouseMove(const juce::MouseEvent& e) override;
@@ -175,6 +176,7 @@ public:
     void mouseDoubleClick(const juce::MouseEvent& e) override;
     std::unique_ptr<juce::TextEditor> keyboardValsTextField;
     TuningState* keyboardState;
+    juce::GroupComponent sliderBorder;
 
 private:
 

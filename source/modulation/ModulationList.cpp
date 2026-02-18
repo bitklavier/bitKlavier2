@@ -10,7 +10,7 @@
 #include "synth_gui_interface.h"
 
 ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier::ModulationProcessor* proc) : tracktion::ValueTreeObjectList<ModulatorBase>(v),
-        parent_(p), proc_(proc)
+        parent_(p), proc_(proc), um(&parent_->getUndoManager())
 {
     rebuildObjects();
     for (auto object : objects)
@@ -22,6 +22,13 @@ ModulationList::ModulationList(const juce::ValueTree &v,SynthBase* p,bitklavier:
 
 ModulationList::~ModulationList()
 {
+    // Notify listeners (copy to allow self-unregistering safely)
+    {
+        auto listenersCopy = listeners_;
+        for (auto* l : listenersCopy)
+            if (l != nullptr)
+                l->listAboutToBeDeleted(this);
+    }
     shutdown = true;
     freeObjects();
 }
@@ -63,11 +70,9 @@ void ModulationList::deleteObject(ModulatorBase * base)
 }
 
 ModulatorBase *ModulationList::createNewObject(const juce::ValueTree &v) {
-//LEAF* leaf = parent->getLEAF();
-    std::any args = std::make_tuple( v );
 
     try {
-        auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),args);
+        auto proc = parent_->modulator_factory.create(v.getProperty(IDs::type).toString().toStdString(),std::any(std::tie( v, um )));
         this->proc_->addModulator(proc);
         return proc;
     } catch (const std::bad_any_cast& e) {
@@ -86,6 +91,14 @@ void ModulationList::newObjectAdded(ModulatorBase * m) {
 
 void ModulationList:: valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i)
 {
+    // Update processor toggle mode if persisted property changes (e.g., when loading a gallery)
+    if (i == IDs::modulationToggleMode)
+    {
+        if (proc_ != nullptr)
+            proc_->isToggle = (bool) v.getProperty(IDs::modulationToggleMode, false);
+        return;
+    }
+
     if(v.getProperty(IDs::sync,0))
     {
         for(auto obj : objects)

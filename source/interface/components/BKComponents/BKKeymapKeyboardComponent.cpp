@@ -53,21 +53,25 @@ void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
         lastKeyPressed = keyboard_.getNoteAndVelocityAtPosition(e.position).note;
         if (lastKeyPressed != -1)
         {
-            if (isMonophonic)
+            if (!e.mods.isShiftDown())
             {
-                //keyboard_state_.keyStates.load().reset();
-                keyboard_state_.setAllKeysState(false);
-                //keyboard_state_.keyStates.load().set(lastKeyPressed);
-                keyboard_state_.setKeyState(lastKeyPressed, true);
-            }
-            else
-                keyboard_state_.flipKeyState(lastKeyPressed);
+                if (isMonophonic)
+                {
+                    //keyboard_state_.keyStates.load().reset();
+                    keyboard_state_.setAllKeysState(false);
+                    //keyboard_state_.keyStates.load().set(lastKeyPressed);
+                    keyboard_state_.setKeyState(lastKeyPressed, true);
+                }
+                else
+                    keyboard_state_.flipKeyState(lastKeyPressed);
                 //keyboard_state_.keyStates.load().flip(lastKeyPressed);
+            }
 
             listeners.call(&BKKeymapKeyboardComponent::Listener::BKKeymapKeyboardChanged,
                 getName(),
                 keyboard_state_.keyStates.load(),
-                lastKeyPressed);
+                lastKeyPressed,
+                e.mods);
         }
     }
 }
@@ -84,22 +88,25 @@ void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
             lastKeyPressed = key;
             if (lastKeyPressed != -1)
             {
-                if (isMonophonic)
+                if (!e.mods.isShiftDown())
                 {
-                    //keyboard_state_.keyStates.load().reset();
-                    keyboard_state_.setAllKeysState(false);
-                    keyboard_state_.setKeyState(lastKeyPressed, true);
-                    //keyboard_state_.keyStates.load().set(lastKeyPressed);
-                }
-                else
-                    keyboard_state_.flipKeyState(lastKeyPressed);
+                    if (isMonophonic)
+                    {
+                        //keyboard_state_.keyStates.load().reset();
+                        keyboard_state_.setAllKeysState(false);
+                        keyboard_state_.setKeyState(lastKeyPressed, true);
+                        //keyboard_state_.keyStates.load().set(lastKeyPressed);
+                    }
+                    else
+                        keyboard_state_.flipKeyState(lastKeyPressed);
                     //keyboard_state_.keyStates.load().flip(lastKeyPressed);
-
+                }
 
                 listeners.call(&BKKeymapKeyboardComponent::Listener::BKKeymapKeyboardChanged,
                     getName(),
                     keyboard_state_.keyStates.load(),
-                    lastKeyPressed);
+                    lastKeyPressed,
+                    e.mods);
             }
         }
     }
@@ -152,7 +159,7 @@ void BKKeymapKeyboardComponent::keysMenuCallback(int result, BKKeymapKeyboardCom
 {
     int set = result / 12;
     int pc = result % 12;
-    DBG("set: " + juce::String(set) + " pc: " + juce::String(pc));
+    //DBG("set: " + juce::String(set) + " pc: " + juce::String(pc));
 
     switch (set) {
         case KeySetBlack :
@@ -343,7 +350,7 @@ juce::PopupMenu BKKeymapKeyboardComponent::getPitchClassMenu(int offset)
     for (int i = 0; i < 12; i++)
     {
         Id = offset + i;
-        DBG("ID: " + juce::String(Id));
+        //DBG("ID: " + juce::String(Id));
         menu.addItem(Id, pcs[i]);
     }
 

@@ -21,6 +21,8 @@ class SynthGuiInterface;
 /************************************************************************************/
 /*     CLASS: PreparationSection, inherits from SynthSection and Listener           */
 /************************************************************************************/
+#include "open_gl_image_component.h"
+
 class PreparationSection
         : public SynthSection, public BKItem::Listener, public BKPort::Listener, public juce::ChangeListener,
           public tracktion::engine::ValueTreeObjectList<BKPort>, public juce::DragAndDropTarget {
@@ -114,17 +116,7 @@ public:
         return v.hasType(IDs::PORT);
     }
 
-    void changeListenerCallback(juce::ChangeBroadcaster *source) {
-        if (selectedSet->isSelected(this)) {
-            item->setColor(juce::Colours::white);
-            isSelected = true;
-        } else {
-            item->setColor(findColour(Skin::kWidgetPrimary1, true));
-            isSelected = false;
-        }
-        item->redoImage();
-
-    }
+    void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
     // Public function declarations, which override base class (SynthSection) virtual functions
     void paintBackground(juce::Graphics &g) override;
@@ -200,6 +192,7 @@ public:
     void setNodeInfo();
     juce::AudioProcessor* getProcessor() const;
     juce::CachedValue<juce::Uuid> uuid;
+
 
     // Public member variables for a PreparationSection object
     juce::ValueTree state;

@@ -15,8 +15,11 @@ class ModulationModuleSection : public ModulesInterface
 {
 
 public:
-    explicit ModulationModuleSection(ModulationList *,juce::ValueTree &, ModulationManager* m, juce::UndoManager &um);
+    explicit ModulationModuleSection(ModulationList *, juce::ValueTree &, ModulationManager* m, juce::UndoManager &um);
     virtual ~ModulationModuleSection();
+
+    // ModulationList::Listener override: notified before the list is destroyed
+    void listAboutToBeDeleted(ModulationList* list) override;
 
     void setEffectPositions() override;
 
@@ -25,6 +28,7 @@ public:
 
     PopupItems createPopupMenu() override;
     void handlePopupResult(int result) override;
+    void buttonClicked(juce::Button* clicked_button) override;
 
     juce::ValueTree parent;
     std::map<std::string, SynthSlider*> getAllSliders() override;

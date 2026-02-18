@@ -70,13 +70,13 @@ struct NostalgicParams : chowdsp::ParamHolder
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         // used in the NostalgicProcessor constructor
         doForAllParameters ([this] (auto& param, size_t) {
-            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+            // if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam)afa
+            //
+            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -341,17 +341,14 @@ class NostalgicProcessor : public bitklavier::PluginBase<bitklavier::Preparation
                         public juce::ValueTree::Listener, public TuningListener
 {
 public:
-    NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v);
+    NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~NostalgicProcessor()
     {
         parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<NostalgicProcessor> (parent, v);
-    }
+
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

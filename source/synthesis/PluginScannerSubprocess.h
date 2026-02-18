@@ -78,11 +78,56 @@ private:
 
         juce::OwnedArray<juce::PluginDescription> results;
 
-        if (matchingFormat != nullptr
-            && (juce::MessageManager::getInstance()->isThisTheMessageThread()
-                || matchingFormat->requiresUnblockedMessageThreadDuringCreation (pd)))
+        if (matchingFormat != nullptr)
         {
-            matchingFormat->findAllTypesForFile (results, identifier);
+            if (matchingFormat->getName() == "VST3")
+            {
+                // VST3 is special: it asserts if slow-scanned on background thread in DEBUG,
+                // but might SIGTRAP if slow-scanned on message thread (e.g. SSL Meter) on macOS.
+                bool fastScanPossible = false;
+                const juce::File file (identifier);
+                if (file.getChildFile ("Contents").getChildFile ("Resources").getChildFile ("moduleinfo.json").exists()
+                    || file.getChildFile ("Contents").getChildFile ("moduleinfo.json").exists()
+                    || file.getChildFile ("moduleinfo.json").exists())
+                {
+                    fastScanPossible = true;
+                }
+
+#if JUCE_DEBUG
+                if (fastScanPossible || juce::MessageManager::getInstance()->isThisTheMessageThread())
+                {
+                    matchingFormat->findAllTypesForFile (results, identifier);
+                }
+                else
+                {
+                    // In Debug, we skip to avoid JUCE_ASSERT_MESSAGE_THREAD if it's a slow scan.
+                    juce::Logger::writeToLog ("Skipping VST3 plugin in Debug (requires slow scan on message thread): " + identifier);
+                }
+#else
+                // In Release, we allow the scan to proceed on the background thread as the assert is inactive.
+                // This avoids the SIGTRAP that occurs when loading some plugins on the message thread.
+                // NOTE: If we are here, we are already in the subprocess, so if it SIGTRAPs here,
+                // only the subprocess dies and the coordinator handles it.
+                matchingFormat->findAllTypesForFile (results, identifier);
+#endif
+            }
+            else if (juce::MessageManager::getInstance()->isThisTheMessageThread()
+                || matchingFormat->requiresUnblockedMessageThreadDuringCreation (pd))
+            {
+                matchingFormat->findAllTypesForFile (results, identifier);
+            }
+            else
+            {
+                juce::WaitableEvent finished;
+
+                juce::MessageManager::callAsync ([&]
+                {
+                    matchingFormat->findAllTypesForFile (results, identifier);
+                    finished.signal();
+                });
+
+                finished.wait (20000); // 20 seconds timeout for scanning a single file
+            }
         }
 
         return results;
@@ -184,18 +229,65 @@ public:
                              juce::OwnedArray<juce::PluginDescription>& result,
                              const juce::String& fileOrIdentifier) override
     {
-        if (!scanInProcess)
+        bool fastScanPossible = false;
+        if (format.getName() == "VST3")
         {
-            superprocess = nullptr;
-            format.findAllTypesForFile (result, fileOrIdentifier);
-            return true;
+            const juce::File file (fileOrIdentifier);
+            if (file.getChildFile ("Contents").getChildFile ("Resources").getChildFile ("moduleinfo.json").exists()
+                || file.getChildFile ("Contents").getChildFile ("moduleinfo.json").exists()
+                || file.getChildFile ("moduleinfo.json").exists())
+            {
+                fastScanPossible = true;
+            }
         }
 
-        if (addPluginDescriptions (format.getName(), fileOrIdentifier, result))
-            return true;
+        // VST3 slow-scans are dangerous: they can SIGTRAP on load or assert on wrong thread.
+        // If we are in-process and it's a VST3 slow-scan, we force it to use the subprocess for safety.
+        bool forceSubprocess = (format.getName() == "VST3" && !fastScanPossible);
+
+        if (scanInProcess || forceSubprocess)
+        {
+            if (addPluginDescriptions (format.getName(), fileOrIdentifier, result))
+                return true;
+
+            superprocess = nullptr;
+            return false;
+        }
 
         superprocess = nullptr;
-        return false;
+        if (format.getName() == "VST3")
+        {
+#if JUCE_DEBUG
+            if (fastScanPossible || juce::MessageManager::getInstance()->isThisTheMessageThread())
+            {
+                format.findAllTypesForFile (result, fileOrIdentifier);
+            }
+            else
+            {
+                juce::Logger::writeToLog ("Skipping VST3 plugin in Debug (requires slow scan on message thread): " + fileOrIdentifier);
+            }
+#else
+            format.findAllTypesForFile (result, fileOrIdentifier);
+#endif
+        }
+        else if (juce::MessageManager::getInstance()->isThisTheMessageThread())
+        {
+            format.findAllTypesForFile (result, fileOrIdentifier);
+        }
+        else
+        {
+            juce::WaitableEvent finished;
+
+            juce::MessageManager::callAsync ([&]
+            {
+                format.findAllTypesForFile (result, fileOrIdentifier);
+                finished.signal();
+            });
+
+            finished.wait (20000);
+        }
+
+        return true;
     }
 
     void scanFinished() override

@@ -25,8 +25,8 @@ namespace {
   constexpr int kNumTriangleIndices = 6;
 } // namespace
 
-OpenGlImage::OpenGlImage() : dirty_(true), image_(nullptr), image_width_(0), image_height_(0), 
-                             additive_(false), use_alpha_(false), scissor_(false),image_shader_(nullptr) {
+OpenGlImage::OpenGlImage() : dirty_(true), image_(nullptr), image_width_(0), image_height_(0),
+                             additive_(false), use_alpha_(false), scissor_(false), image_shader_(nullptr) {
   position_vertices_ = std::make_unique<float[]>(kNumPositions);
   float position_vertices[kNumPositions] = {
     0.0f, 1.0f, 0.0f, 1.0f,
@@ -42,6 +42,10 @@ OpenGlImage::OpenGlImage() : dirty_(true), image_(nullptr), image_width_(0), ima
     2, 3, 0
   };
   memcpy(position_triangles_.get(), position_triangles, kNumTriangleIndices * sizeof(int));
+
+  vertex_buffer_ = 0;
+  triangle_buffer_ = 0;
+  vao_ = 0;
 }
 
 OpenGlImage::~OpenGlImage() {
@@ -50,42 +54,75 @@ OpenGlImage::~OpenGlImage() {
 
 
 void OpenGlImage::init(OpenGlWrapper& open_gl) {
+  // Create VAO (required on macOS core profile) and buffers
+  open_gl.context.extensions.glGenVertexArrays(1, &vao_);
+  open_gl.context.extensions.glBindVertexArray(vao_);
 
   open_gl.context.extensions.glGenBuffers(1, &vertex_buffer_);
-
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
-
   GLsizeiptr vert_size = static_cast<GLsizeiptr>(static_cast<size_t>(kNumPositions * sizeof(float)));
   open_gl.context.extensions.glBufferData(juce::gl::GL_ARRAY_BUFFER, vert_size,
-                                         position_vertices_.get(), juce::gl::GL_STATIC_DRAW);
+                                          position_vertices_.get(), juce::gl::GL_STATIC_DRAW);
 
   open_gl.context.extensions.glGenBuffers(1, &triangle_buffer_);
-
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
-
-  GLsizeiptr tri_size = static_cast<GLsizeiptr>(static_cast<size_t>(kNumTriangleIndices * sizeof(float)));
+  GLsizeiptr tri_size = static_cast<GLsizeiptr>(static_cast<size_t>(kNumTriangleIndices * sizeof(int)));
   open_gl.context.extensions.glBufferData(juce::gl::GL_ELEMENT_ARRAY_BUFFER, tri_size,
                                           position_triangles_.get(), juce::gl::GL_STATIC_DRAW);
 
   image_shader_ = open_gl.shaders->getShaderProgram(Shaders::kImageVertex, Shaders::kTintedImageFragment);
-
+  if (image_shader_ == nullptr) {
+    DBG("[GL][OpenGlImage] shader program unavailable in init; aborting initialization");
+    open_gl.context.extensions.glBindVertexArray(0);
+    return;
+  }
   image_shader_->use();
 
   image_color_ = OpenGlComponent::getUniform(open_gl, *image_shader_, "color");
   image_position_ = OpenGlComponent::getAttribute(open_gl, *image_shader_, "position");
   texture_coordinates_ = OpenGlComponent::getAttribute(open_gl, *image_shader_, "tex_coord_in");
 
+#if DEBUG
+  GLenum err = juce::gl::glGetError();
+  if (err != juce::gl::GL_NO_ERROR) {
+    DBG("[GL][OpenGlImage] error during init: code=" + juce::String((int)err));
+  }
+#endif
+  initialized_ = true;
 }
 
 void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
+  if (!initialized_)
+    return;
+
+  if (image_shader_ == nullptr || image_color_ == nullptr ||
+      image_position_ == nullptr || texture_coordinates_ == nullptr) {
+    DBG("[GL][OpenGlImage] missing shader/attributes; skipping draw");
+    return;
+  }
+
+  // Drain any pre-existing GL errors so JUCE texture code doesn't trip on stale state
+#if DEBUG
+  for (GLenum e = juce::gl::glGetError(); e != juce::gl::GL_NO_ERROR; e = juce::gl::glGetError()) {
+    DBG(juce::String("[GL][OpenGlImage] clearing pre-existing GL error before loadImage: ") + juce::String((int)e));
+  }
+#endif
   mutex_.lock();
   if (image_) {
     texture_.loadImage(*image_);
+#if DEBUG
+    GLenum afterLoad = juce::gl::glGetError();
+    if (afterLoad != juce::gl::GL_NO_ERROR) {
+      DBG("[GL][OpenGlImage] GL error after texture_.loadImage: code=" + juce::String((int)afterLoad));
+    }
+#endif
     image_ = nullptr;
   }
   mutex_.unlock();
 
- juce::gl::glEnable(juce::gl::GL_BLEND);
+  open_gl.context.extensions.glBindVertexArray(vao_);
+
+  juce::gl::glEnable(juce::gl::GL_BLEND);
   if (scissor_)
    juce::gl::glEnable(juce::gl::GL_SCISSOR_TEST);
   else
@@ -98,9 +135,6 @@ void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
   else
    juce::gl::glBlendFunc(juce::gl::GL_ONE, juce::gl::GL_ONE_MINUS_SRC_ALPHA);
 
- juce::gl::glTexParameteri(juce::gl::GL_TEXTURE_2D, juce::gl::GL_TEXTURE_WRAP_S, juce::gl::GL_CLAMP_TO_EDGE);
- juce::gl::glTexParameteri(juce::gl::GL_TEXTURE_2D, juce::gl::GL_TEXTURE_WRAP_T, juce::gl::GL_CLAMP_TO_EDGE);
-
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
   GLsizeiptr vert_size = static_cast<GLsizeiptr>(static_cast<size_t>(kNumPositions * sizeof(float)));
 
@@ -111,8 +145,16 @@ void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
 
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
 
-  texture_.bind();
   open_gl.context.extensions.glActiveTexture(juce::gl::GL_TEXTURE0);
+  texture_.bind();
+  juce::gl::glTexParameteri(juce::gl::GL_TEXTURE_2D, juce::gl::GL_TEXTURE_WRAP_S, juce::gl::GL_CLAMP_TO_EDGE);
+  juce::gl::glTexParameteri(juce::gl::GL_TEXTURE_2D, juce::gl::GL_TEXTURE_WRAP_T, juce::gl::GL_CLAMP_TO_EDGE);
+#if DEBUG
+  GLenum afterTexParams = juce::gl::glGetError();
+  if (afterTexParams != juce::gl::GL_NO_ERROR) {
+    DBG("[GL][OpenGlImage] GL error after texture bind/params: code=" + juce::String((int)afterTexParams));
+  }
+#endif
   mutex_.unlock();
 
   image_shader_->use();
@@ -134,12 +176,16 @@ void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
 
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
   open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, 0);
+  open_gl.context.extensions.glBindVertexArray(0);
 
  juce::gl::glDisable(juce::gl::GL_BLEND);
  juce::gl::glDisable(juce::gl::GL_SCISSOR_TEST);
 }
 
 void OpenGlImage::destroy(OpenGlWrapper& open_gl) {
+  if (!initialized_ && vertex_buffer_ == 0 && triangle_buffer_ == 0 && vao_ == 0)
+    return;
+
   texture_.release();
 
   image_shader_ = nullptr;
@@ -147,6 +193,15 @@ void OpenGlImage::destroy(OpenGlWrapper& open_gl) {
   image_position_ = nullptr;
   texture_coordinates_ = nullptr;
 
-  open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
-  open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
+  if (vertex_buffer_ != 0)
+    open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
+  if (triangle_buffer_ != 0)
+    open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
+  if (vao_ != 0)
+    open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
+
+  vertex_buffer_ = 0;
+  triangle_buffer_ = 0;
+  vao_ = 0;
+  initialized_ = false;
 }

@@ -13,7 +13,8 @@
 class OpenGL_VelocityMinMaxSlider : public OpenGlAutoImageComponent<BKRangeSlider>, BKRangeSlider::Listener {
 public:
     OpenGL_VelocityMinMaxSlider(VelocityMinMaxParams *_params,
-                                chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKRangeSlider>(
+                                chowdsp::ParameterListeners &listeners,
+                                chowdsp::PluginState& pluginState) : OpenGlAutoImageComponent<BKRangeSlider>(
                                                                               "Accepted Velocity Range", // slider name
                                                                               0.f, // min
                                                                               128.f, // max
@@ -40,14 +41,16 @@ public:
          * we don't need one for the displaySlider, since that one will not be changed by the user, so we don't need to listen to it
          * but, we do need a parameter listener for displaySlider, which is added to the sliderChangeCallback list.
          */
+
+        // note: the undo manager stuff for this doesn't currently work, as this is treated as a state modulated component.
         auto minsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[0].get(),
                                                                         listeners,
-                                                                        minSlider, nullptr);
+                                                                        minSlider, pluginState.undoManager);
         attachmentVec.emplace_back(std::move(minsliderptr));
 
         auto maxsliderptr = std::make_unique<chowdsp::SliderAttachment>(*(*params->getFloatParams())[1].get(),
                                                                         listeners,
-                                                                        maxSlider, nullptr);
+                                                                        maxSlider, pluginState.undoManager);
         attachmentVec.emplace_back(std::move(maxsliderptr));
 
         minValueTF.setText(juce::String(minSlider.getValue()),juce::dontSendNotification);

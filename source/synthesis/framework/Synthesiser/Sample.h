@@ -814,7 +814,10 @@ public:
     BKSynthesiserSound::Ptr currentlyPlayingSound;
 
     bool keyIsDown = false, sustainPedalDown = false, sostenutoPedalDown = false;
-    void updateAmpEnv(BKADSR::Parameters &parameters) {
+
+    void updateAmpEnv(BKADSR::Parameters &parameters)
+    {
+        //DBG("updateAmpEnv, attackTime = " << parameters.attack);
         ampEnv.setParameters(parameters);
         // todo: update mod amount
     }
@@ -909,7 +912,7 @@ public:
 
     void setCurrentPlaybackSampleRate(double newRate) override {
 
-        DBG("BKSamplerVoice::setCurrentPlaybackSampleRate " << newRate);
+        //DBG("BKSamplerVoice::setCurrentPlaybackSampleRate " << newRate);
         if (newRate <= 0) {
             return;
         }
@@ -1088,6 +1091,7 @@ public:
 
     virtual void stopNote (float velocity, bool allowTailOff)
     {
+
         if (allowTailOff)
         {
             ampEnv.noteOff();

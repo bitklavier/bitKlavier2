@@ -15,13 +15,12 @@ Synchronic.h
 #include "common.h"
 #include "synth_base.h"
 
-SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt) :
-      PluginBase (parent, vt, nullptr, synchronicBusLayout()),
+SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) :
+      PluginBase (parent, vt, um, synchronicBusLayout()),
       synchronicSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
     // for testing
     // bufferDebugger = new BufferDebugger();
-
 
     /*
      * todo: need to make sure that if the user tries to increase numLayers > MAX_CLUSTERS that this doesn't break
@@ -75,7 +74,7 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "holdtime_min_max",
         &(state.params.holdTimeMinMaxParams.stateChanges)));
 
-    state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    //state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.envelopeSequence.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "envelope_sequence",
@@ -109,9 +108,23 @@ bool SynchronicProcessor::isBusesLayoutSupported (const juce::AudioProcessor::Bu
 
 void SynchronicProcessor::setTuning (TuningProcessor* tun)
 {
+    if (tuning == tun)
+        return;
+
+    if (tuning != nullptr)
+        tuning->removeListener (this);
+
     tuning = tun;
-    tuning->addListener(this);
-    synchronicSynth->setTuning (&tuning->getState().params.tuningState);
+
+    if (tuning != nullptr)
+    {
+        tuning->addListener (this);
+        synchronicSynth->setTuning (&tuning->getState().params.tuningState);
+    }
+    else
+    {
+        synchronicSynth->setTuning (nullptr);
+    }
 }
 
 void SynchronicProcessor::tuningStateInvalidated() {
@@ -119,7 +132,6 @@ void SynchronicProcessor::tuningStateInvalidated() {
     tuning = nullptr;
     synchronicSynth->setTuning(nullptr);
 }
-
 
 bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
 {
@@ -129,6 +141,9 @@ bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
     //in the normal case, where cluster is within a range defined by clusterMin and Max
     int sClusterMin = *state.params.clusterMinMaxParams.clusterMinParam;
     int sClusterMax = *state.params.clusterMinMaxParams.clusterMaxParam;
+    int rescaledMax = state.params.clusterMinMaxParams.clusterMaxParam.get()->getNormalisableRange().end;
+
+    // DBG("SynchronicProcessor::checkClusterMinMax, clusterMin = " << sClusterMin << ", clusterMax = " << sClusterMax << ", clusterNotesSize = " << clusterNotesSize);
 
     if(sClusterMin <= sClusterMax)
     {
@@ -286,6 +301,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             //check to see if enough time has passed for next beat
             if (cluster->getPhasor() >= numSamplesBeat)
             {
+                DBG("phasor = " << cluster->getPhasor() << ", numSamplesBeat = " << numSamplesBeat);
                 // if patternSync has been set by a target message, reset the phase of all the counters
                 if (cluster->doPatternSync)
                 {
@@ -397,9 +413,28 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
                         // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
                         noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
-                                                             * getBeatThresholdSeconds() * 1000;
+                                                             * getBeatThresholdSeconds() * 1000.f;
 
-                        DBG("noteOnSpecMap[newNote].sustainTime = " + juce::String(noteOnSpecMap[newNote].sustainTime) + "");
+                        // calculate total envelope time
+                        float envLen = 1000. * (noteOnSpecMap[newNote].envParams.attack + noteOnSpecMap[newNote].envParams.decay + noteOnSpecMap[newNote].envParams.release);
+
+                        //constrain adsr times, if needed
+                        if(envLen > noteOnSpecMap[newNote].sustainTime) {
+                            // reduce env time proportionally
+                            noteOnSpecMap[newNote].envParams.attack *= noteOnSpecMap[newNote].sustainTime / envLen;
+                            noteOnSpecMap[newNote].envParams.decay *= noteOnSpecMap[newNote].sustainTime / envLen;
+                            noteOnSpecMap[newNote].envParams.release *= noteOnSpecMap[newNote].sustainTime / envLen;
+                        }
+
+                        // constrain mins on env params
+                        if(noteOnSpecMap[newNote].envParams.attack  < 0.001f) noteOnSpecMap[newNote].envParams.attack = 0.001f;
+                        if(noteOnSpecMap[newNote].envParams.decay < 0.003f)  noteOnSpecMap[newNote].envParams.decay = 0.003f;
+                        if(noteOnSpecMap[newNote].envParams.release < 0.003f) noteOnSpecMap[newNote].envParams.release = 0.003f;
+
+                        // recalculate sustainTime based on adjusted env times, and adjust sustainTime accordingly
+                        envLen = 1000. * (noteOnSpecMap[newNote].envParams.attack + noteOnSpecMap[newNote].envParams.decay + noteOnSpecMap[newNote].envParams.release);
+                        noteOnSpecMap[newNote].sustainTime -= envLen;
+                        if (noteOnSpecMap[newNote].sustainTime < 1.f) noteOnSpecMap[newNote].sustainTime = 1.f;
 
                         // forward and backwards notes need to be handled differently, for BKSynth
                         if(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter] > 0.)
@@ -587,7 +622,7 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
         }
     }
 
-    DBG("failed hold check");
+    //DBG("failed hold check");
     return false;
 }
 
@@ -612,8 +647,8 @@ bool SynchronicProcessor::updateCurrentCluster()
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
 
-        DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
-        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        //DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
+        //DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }
@@ -658,6 +693,15 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
      * also for doPatternSync, which gets toggled internally below
      */
 
+    /*
+     * todo: add SynchronicModReset (and to all other moddable preps)
+     *      - if it's triggered call `resetContinuousModulations()`
+     *          - which will set all the Ramps and LFOs to 0
+     *          - it will freeze the Ramps (set their state to 0)
+     *          - and the LFOs will have their phase set to 0
+     *              - they will continue to oscillate if the user has set them to "auto"
+     */
+
     switch(channel + (SynchronicTargetFirst))
     {
         case SynchronicTargetDefault:
@@ -686,6 +730,10 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
         case SynchronicTargetPausePlay:
             if (doPausePlay) doPausePlay = false;
             else doPausePlay = true;
+            break;
+
+        case SynchronicTargetModReset:
+            resetContinuousModulations();
             break;
 
 /*
@@ -1017,8 +1065,55 @@ typename Serializer::SerializedType SynchronicParams::serialize (const Synchroni
 template <typename Serializer>
 void SynchronicParams::deserialize (typename Serializer::DeserializedType deserial, SynchronicParams& paramHolder)
 {
+    // Pre-scan attributes for params that might have ranges saved beyond the pre-defined defaults
+    const int numAttrs = Serializer::getNumAttributes(deserial);
+    float savedClusterMin = std::numeric_limits<float>::quiet_NaN();
+    float savedClusterMax = std::numeric_limits<float>::quiet_NaN();
+    float savedHoldTimeMin = std::numeric_limits<float>::quiet_NaN();
+    float savedHoldTimeMax = std::numeric_limits<float>::quiet_NaN();
+
+    for (int i = 0; i < numAttrs; ++i)
+    {
+        auto name = Serializer::getAttributeName(deserial, i);
+        if (name == juce::String("clustermin"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedClusterMin = val;
+        }
+        else if (name == juce::String("clustermax"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedClusterMax = val;
+        }
+        else if (name == juce::String("holdTimeMinParam"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedHoldTimeMin = val;
+        }
+        else if (name == juce::String("holdTimeMaxParam"))
+        {
+            auto val = Serializer::template deserializeArithmeticType<float>(deserial, name);
+            savedHoldTimeMax = val;
+        }
+    }
+
+    // Expand ranges first if needed
+    auto* minParam = paramHolder.clusterMinMaxParams.clusterMinParam.get();
+    auto* maxParam = paramHolder.clusterMinMaxParams.clusterMaxParam.get();
+    if (!std::isnan(savedClusterMin) && savedClusterMin < minParam->range.start)
+        minParam->range.start = savedClusterMin;
+    if (!std::isnan(savedClusterMax) && savedClusterMax > maxParam->range.end)
+        maxParam->range.end = savedClusterMax;
+
+    minParam = paramHolder.holdTimeMinMaxParams.holdTimeMinParam.get();
+    maxParam = paramHolder.holdTimeMinMaxParams.holdTimeMaxParam.get();
+    if (!std::isnan(savedHoldTimeMin) && savedHoldTimeMin < minParam->range.start)
+        minParam->range.start = savedHoldTimeMin;
+    if (!std::isnan(savedHoldTimeMax) && savedHoldTimeMax > maxParam->range.end)
+        maxParam->range.end = savedHoldTimeMax;
+
     /*
-     * call the default deserializer first, for the simple params
+     * call the default deserializer, for the simple params
      */
     chowdsp::ParamHolder::deserialize<Serializer> (deserial, paramHolder);
 

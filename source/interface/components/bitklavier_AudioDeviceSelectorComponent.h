@@ -71,6 +71,9 @@ private juce::ChangeListener
     /** Returns the juce::ListBox that's being used to show the midi inputs, or nullptr if there isn't one. */
     juce::ListBox* getMidiInputSelectorListBox() const noexcept;
 
+    /** Persist the current audio device setup to the provided ValueTree state. */
+    void persistCurrentSetup();
+
     //==============================================================================
     /** @internal */
     void resized() override;

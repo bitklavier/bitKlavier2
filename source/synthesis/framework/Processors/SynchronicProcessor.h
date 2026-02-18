@@ -35,7 +35,6 @@ Synchronic.h
 #include "TransposeParams.h"
 #include "TuningProcessor.h"
 #include "buffer_debugger.h"
-#include "target_types.h"
 #include "utils.h"
 
 enum SynchronicPulseTriggerType
@@ -94,13 +93,13 @@ struct SynchronicParams : chowdsp::ParamHolder
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters([this](auto& param, size_t)
         {
-            if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
-
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.push_back ( sliderParam);
+            // if (auto* sliderParam = dynamic_cast<chowdsp::ChoiceParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam);
+            //
+            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.push_back ( sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -110,8 +109,8 @@ struct SynchronicParams : chowdsp::ParamHolder
     // primary multislider params
     MultiSlider2DState transpositions {"transpositions"};
     MultiSliderState accents {"accents"};
-    MultiSliderState sustainLengthMultipliers{"SustainLengthMultipliers"};
-    MultiSliderState beatLengthMultipliers{"beatLengthMultipliers"};
+    MultiSliderState sustainLengthMultipliers{"sustain_length_multipliers"};
+    MultiSliderState beatLengthMultipliers{"beat_length_multipliers"};
 
     /*
      * for keeping track of the current multislider lengths
@@ -193,7 +192,7 @@ struct SynchronicParams : chowdsp::ParamHolder
         true};
 
     chowdsp::FloatParameter::Ptr clusterThickness{
-        juce::ParameterID{"clusterThickness", 100},
+        juce::ParameterID{"cThickness", 100},
         "CLUSTER THICKNESS",
         chowdsp::ParamUtils::createNormalisableRange(1.0f, 20.f, 10.f, 1.f),
         8.f,
@@ -201,8 +200,15 @@ struct SynchronicParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal,
         true};
 
+    /*
+     * NOTE: if the ParameterIDs are too similar, it seems we can run into trouble
+     *      - at first, these two params had IDs "clusterThickness" and "clusterThreshold"
+     *          and then when they were modulated or reset, their knobs seemed to interact, jitter, etc...
+     *          making the IDs more different solved it
+     *      - presumably there is some string comparing going on somewhere that stops after a certain number of characters
+     */
     chowdsp::TimeMsParameter::Ptr clusterThreshold{
-        juce::ParameterID{"clusterThreshold", 100},
+        juce::ParameterID{"cMin", 100},
         "CLUSTER THRESHOLD",
         chowdsp::ParamUtils::createNormalisableRange(20.0f, 2000.f, 1000.f),
         500.f,
@@ -347,9 +353,10 @@ class SynchronicCluster
     inline void step(juce::uint64 numSamplesBeat)
     {
         // set the phasor back by the number of samples to the next beat
-        // phasor -= numSamplesBeat;
-        // phasor -= numSamplesBeat;
-        phasor = 0; // the decrement doesn't make sense to me, why not just set the phasor to 0?
+        phasor -= numSamplesBeat;
+        //phasor = 0;
+        // the decrement doesn't make sense to me, why not just set the phasor to 0?
+        // - because we get slop from the blocksize, and you'll end up running slow!
 
         // increment all the counters
         if (++lengthMultiplierCounter >= _sparams->sustainLengthMultipliers.sliderVals_size)
@@ -394,7 +401,8 @@ class SynchronicCluster
                 beatMultiplierCounter = 0;
         }
 
-        if (++beatCounter >= *_sparams->numPulses)
+        //DBG("numPulses = " << *_sparams->numPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << (int)*_sparams->skipFirst);
+        if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - *_sparams->skipFirst))
         {
             shouldPlay = false;
         }
@@ -412,7 +420,7 @@ class SynchronicCluster
 
     inline void reset()
     {
-        DBG("reset called");
+        //DBG("reset called");
         envelopeCounter = 0;
         shouldPlay = false;
         resetPatternPhase();
@@ -424,13 +432,13 @@ class SynchronicCluster
     inline void setBeatPhasor(juce::uint64 c)
     {
         phasor = c;
-        DBG("resetting beat phasor");
+        //DBG("resetting beat phasor");
     }
     inline const juce::uint64 getPhasor(void) const noexcept { return phasor; }
 
     inline void addNote(int note)
     {
-        DBG("synchronic cluster adding note: " + juce::String(note));
+        //DBG("synchronic cluster adding note: " + juce::String(note));
         cluster.insert(0, note);
     }
 
@@ -480,7 +488,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
                             public juce::ValueTree::Listener, public TuningListener
 {
    public:
-    SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v);
+    SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~SynchronicProcessor()
     {
         parent.getValueTree().removeListener(this);
@@ -609,7 +617,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
-     *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have
+     *      the "discreteChannels" number is currently just by hand set based on the max that this particular preparation could have
      *      so if you add new params, might need to increase that number
      */
     juce::AudioProcessor::BusesProperties synchronicBusLayout()

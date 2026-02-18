@@ -89,6 +89,7 @@ public:
     void setTetherWeight(int which, double weight);
     double getTetherWeightGlobal();
     double getTetherWeightSecondaryGlobal();
+    double getTetherFrequency(int index, float globalRefA4);
     bool getSpringMode(int which);
     double getFrequency(int index, float globalRefA4);
     PitchClass getTetherFundamental();
@@ -102,6 +103,8 @@ public:
     void updateTetherTuning();
     void retuneIndividualSpring(Spring* spring);
     void retuneAllActiveSprings(void);
+
+    juce::Array<Spring*>& getTetherSprings(void) { return tetherSpringArray; }
 
     SpringTuningParams &sparams;
     std::array<std::atomic<float>, 12> &customTuning;

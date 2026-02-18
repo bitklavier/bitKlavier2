@@ -32,14 +32,16 @@ ModulesInterface(v), modulation_list_(modulationProcessor), undo (um)
      }
      parent = modulation_list_->getValueTree();
      modulation_list_->addListener(this);
-//    factory.registerType<OscillatorModuleProcessor, juce::ValueTree, LEAF*>("osc");
-//    factory.registerType<FilterModuleProcessor, juce::ValueTree, LEAF*>("filt");
      addListener(m);
+
+    // Initialize toggle button and processor state from ValueTree
+    const bool vtToggle = (bool) parent.getProperty(IDs::modulationToggleMode, false);
+    if (setToggleMode != nullptr)
+        setToggleMode->setToggleState(vtToggle, juce::NotificationType::dontSendNotification);
 }
 
 void ModulationModuleSection::modulatorAdded( ModulatorBase* obj)
 {
-//    auto obj = tracktion::engine::getObjectFor(*modulation_list_, v);
     auto *module_section = new ModulationSection(obj->state,obj->createEditor(), undo);
     {
         //TODO : make sure all the addSubsections are getting locked
@@ -95,7 +97,17 @@ void ModulationModuleSection::removeModulator (ModulatorBase* base)
 
 ModulationModuleSection::~ModulationModuleSection()
 {
-   modulation_list_->removeListener(this);
+   if (modulation_list_ != nullptr)
+       modulation_list_->removeListener(this);
+}
+
+void ModulationModuleSection::listAboutToBeDeleted(ModulationList* list)
+{
+    if (modulation_list_ == list && modulation_list_ != nullptr)
+    {
+        modulation_list_->removeListener(this);
+        modulation_list_ = nullptr;
+    }
 }
 
 void ModulationModuleSection::handlePopupResult(int result) {
@@ -128,6 +140,26 @@ void ModulationModuleSection::handlePopupResult(int result) {
     }
 }
 
+void ModulationModuleSection::buttonClicked(juce::Button* clicked_button)
+{
+    // Intercept toggle-mode button to propagate state to the underlying processor
+    if (clicked_button == setToggleMode.get())
+    {
+        if (modulation_list_ != nullptr && modulation_list_->proc_ != nullptr)
+        {
+            const bool toggled = setToggleMode->getToggleState();
+            // Persist to ValueTree so it is saved/loaded with galleries
+            parent.setProperty(IDs::modulationToggleMode, toggled, &undo);
+            modulation_list_->proc_->isToggle = toggled;
+            DBG("ModulationModuleSection: set processor isToggle = " << (int)toggled);
+        }
+        return; // don't pass to base; we've handled it
+    }
+
+    // Defer other buttons to base implementation
+    ModulesInterface::buttonClicked(clicked_button);
+}
+
 void ModulationModuleSection::setEffectPositions() {
     if (getWidth() <= 0 || getHeight() <= 0)
         return;
@@ -140,7 +172,8 @@ void ModulationModuleSection::setEffectPositions() {
     int knob_section_height = getKnobSectionHeight();
     int widget_margin = findValue(Skin::kWidgetMargin);
     int effect_height = 2 * knob_section_height - widget_margin;
-    int y = large_padding * 4; // make space for add modulation button
+    //int y = large_padding * 4; // make space for add modulation button and toggle mode button
+    int y = (findValue(Skin::kComboMenuHeight) + 2 * padding) * 2;
 
     for(auto& section : modulation_sections_)
     {

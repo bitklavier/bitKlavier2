@@ -132,7 +132,7 @@ void BKSynthesiser::setMinimumRenderingSubdivisionSize (int numSamples, bool sho
 //==============================================================================
 void BKSynthesiser::setCurrentPlaybackSampleRate (const double newRate)
 {
-    DBG ("BKSynthesiser sample rate changed to " + juce::String (newRate));
+    // DBG ("BKSynthesiser sample rate changed to " + juce::String (newRate));
     if (!juce::approximatelyEqual (sampleRate, newRate))
     {
         const juce::ScopedLock sl (lock);
@@ -337,7 +337,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
 
         if (m.isNoteOn())
         {
-            //DBG ("BKSynthesizer Note On (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            DBG ("BKSynthesizer Note On (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;
@@ -350,7 +350,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
         }
         else if (m.isNoteOff())
         {
-            //DBG ("BKSynthesizer Note Off (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            // DBG ("BKSynthesizer Note Off (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;

@@ -4,12 +4,11 @@
 
 #ifndef BITKLAVIER2_CONSTRUCTIONSITE_H
 #define BITKLAVIER2_CONSTRUCTIONSITE_H
-#include "../../common/ObjectLists/PreparationList.h"
+#include "ObjectLists/PreparationList.h"
 #include "CableView.h"
 #include "ModulationLineView.h"
 #include "PluginWindow.h"
 #include "PreparationSelector.h"
-#include "common.h"
 #include "templates/Factory.h"
 
 class OpenGlLine;
@@ -118,7 +117,7 @@ public:
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
     void removeAllGuiListeners();
-
+    void linkedPiano() override;
 private:
     PreparationList* prep_list;
     bitklavier::ConnectionList* connection_list;
@@ -143,6 +142,7 @@ private:
     bool multiple;
     bool held;
 
+    friend class FooterSection;
     PreparationSelector preparationSelector;
     juce::LassoComponent<PreparationSection*> selectorLasso;
 

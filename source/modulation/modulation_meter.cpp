@@ -27,8 +27,8 @@
 ModulationMeter::ModulationMeter(
 SynthSlider* slider, OpenGlMultiQuad* quads, int index) :
         destination_(slider),
-        quads_(quads), index_(index), current_value_(0.0), mod_percent_(0.0) {
-
+        quads_(quads), index_(index), current_value_(0.0), mod_percent_(0.0)
+{
   if (destination_ != nullptr)
     rotary_ = destination_->isRotary() && !destination_->isTextOrCurve();
   else
@@ -43,7 +43,8 @@ SynthSlider* slider, OpenGlMultiQuad* quads, int index) :
 
 ModulationMeter::~ModulationMeter() { }
 
-void ModulationMeter::resized() {
+void ModulationMeter::resized()
+{
   SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
   if (parent) {
     std::vector<bitklavier::ModulationConnection*> connections;
@@ -57,7 +58,8 @@ void ModulationMeter::resized() {
     collapseVertices();
 }
 
-void ModulationMeter::setActive(bool active) {
+void ModulationMeter::setActive(bool active)
+{
   if (active)
     setVertices();
   else
@@ -93,16 +95,23 @@ juce::Rectangle<float> ModulationMeter::getMeterBounds() {
     meter_width += destination_->findValue(Skin::kKnobModMeterArcThickness) * (1.0f - knob_scale);
     float offset = destination_->findValue(Skin::kKnobOffset);
 
-    float center_x = getWidth() * 0.5f;
-    float center_y = getHeight() * 0.5f;
-    return juce::Rectangle<float>(center_x - meter_width * 0.5f, center_y - meter_width * 0.5f + offset,
-                            meter_width, meter_width);
+    // float center_x = getWidth() * 0.5f;
+    // float center_y = getHeight() * 0.5f;
+      float center_x = width * 0.5f;
+      float center_y = height * 0.5f;
+
+      //DBG("ModulationMeter::getMeterBounds() " + juce::String(center_x) + "," + juce::String(center_y) + "," + juce::String(meter_width) + "," + juce::String(offset));
+    return juce::Rectangle<float>(center_x - meter_width * 0.5f,
+        center_y - meter_width * 0.5f + offset,
+        meter_width,
+        meter_width);
   }
 
   return getLocalBounds().toFloat();
 }
 
-void ModulationMeter::setVertices() {
+void ModulationMeter::setVertices()
+{
   if (destination_ == nullptr) {
     collapseVertices();
     return;
@@ -127,14 +136,15 @@ void ModulationMeter::setVertices() {
   quads_->setQuad(index_, left_, bottom_, right_ - left_, top_ - bottom_);
 }
 
-void ModulationMeter::collapseVertices() {
+void ModulationMeter::collapseVertices()
+{
   left_ = right_ = top_ = bottom_= 0.0f;
-
   quads_->setQuad(index_, left_, bottom_, right_ - left_, top_ - bottom_);
   mod_percent_ = 0.0f;
 }
 
-void ModulationMeter::setAmountQuadVertices(OpenGlQuad& quad) {
+void ModulationMeter::setAmountQuadVertices(OpenGlQuad& quad)
+{
   if (destination_ == nullptr) {
     return;
   }
@@ -166,7 +176,8 @@ void ModulationMeter::setAmountQuadVertices(OpenGlQuad& quad) {
   }
 }
 
-void ModulationMeter::updateDrawing(bool use_poly) {
+void ModulationMeter::updateDrawing(bool use_poly)
+{
   if (destination_ == nullptr) {
     mod_percent_ = 0.0f;
     return;
@@ -209,7 +220,8 @@ void ModulationMeter::updateDrawing(bool use_poly) {
   quads_->setShaderValue(index_, max_percent, 3);
 }
 
-void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bool bipolar) {
+void ModulationMeter::setModulationAmountQuad(OpenGlQuad& quad, float amount, bool bipolar)
+{
   if (destination_ == nullptr) {
     return;
   }

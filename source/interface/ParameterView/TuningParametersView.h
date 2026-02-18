@@ -40,6 +40,14 @@ public:
     void showCurrentTuningType();
 
     void timerCallback(void) override;
+
+    /*
+     * important to include this override in all parameter view classes that use timers
+     */
+    void stopAllTimers() override {
+        stopTimer();
+    }
+
     void drawSpiral(juce::Graphics& g);
 
     void resized() override;

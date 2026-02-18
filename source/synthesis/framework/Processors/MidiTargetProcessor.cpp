@@ -5,15 +5,38 @@
 #include "MidiTargetProcessor.h"
 
 MidiTargetProcessor::MidiTargetProcessor ( SynthBase& parent,
-    const juce::ValueTree& v) : PluginBase (parent, v, nullptr, midiTargetBusLayout())
+    const juce::ValueTree& v, juce::UndoManager* um) : PluginBase (parent, v, um, midiTargetBusLayout())
 {
-    parent.getActiveConnectionList()->addListener (this);
     connectedPrepIds.ensureStorageAllocated (10);
+
+    // Defer listener attach instead of doing it here immediately:
+    // parent.getActiveConnectionList()->addListener (this); // remove/avoid
+
+    // Try a few times on the message thread; 50 ms gives time for lists to exist
+    startTimer (50);
+}
+
+void MidiTargetProcessor::timerCallback()
+{
+    if (! listenerAttached)
+        tryAttachListener();
+
+    if (listenerAttached || ++attachAttempts >= kMaxAttachAttempts)
+        stopTimer();
+}
+
+void MidiTargetProcessor::tryAttachListener()
+{
+    if (auto* list = parent.getActiveConnectionList())
+    {
+        list->addListener (this);
+        listenerAttached = true;
+    }
 }
 
 void MidiTargetProcessor::connectionAdded (bitklavier::Connection* connection)
 {
-    auto preparationList = parent.getActivePreparationList()->getValueTree();
+    auto preparationList = parent.getActivePreparationListValueTree();
     // if you are connecting a midi target, set connectedPrep. if already set, only connect to that type
     auto midiTarget_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(v.getProperty (IDs::nodeID));
     if (connection->src_id.get() == midiTarget_id)
@@ -87,6 +110,16 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         {
             startParam = NostalgicTargetFirst + 1;
             lastParam = NostalgicTargetNil;
+        }
+        else if (state.params.connectedPrep == IDs::direct)
+        {
+            startParam = DirectTargetFirst + 1;
+            lastParam = DirectTargetNil;
+        }
+        else if (state.params.connectedPrep == IDs::tuning)
+        {
+            startParam = TuningTargetFirst + 1;
+            lastParam = TuningTargetNil;
         }
 
         for (int i = startParam; i < lastParam; ++i)

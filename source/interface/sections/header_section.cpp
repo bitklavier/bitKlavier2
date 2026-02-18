@@ -359,7 +359,17 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
         newPiano.setProperty(IDs::name, candidate, nullptr);
     }
 
-    // 3) Deactivate current pianos and append the duplicate
+    // 3) Temporarily remove MODCONNECTIONS so that appending the piano
+    //    doesn't try to wire up modulations before the processors exist
+    auto modConns = newPiano.getChildWithName(IDs::MODCONNECTIONS);
+    juce::ValueTree savedModConns;
+    if (modConns.isValid())
+    {
+        savedModConns = modConns.createCopy();
+        modConns.removeAllChildren(nullptr);
+    }
+
+    // 4) Deactivate current pianos and append the duplicate
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     interface->setPianoSwitchTriggerThreadMessage();
 
@@ -369,7 +379,15 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
 
     gallery.appendChild(newPiano, nullptr);
 
-    // 4) UI updates
+    // 5) Now that processors exist, restore the modulation connections
+    if (savedModConns.isValid())
+    {
+        auto mc = newPiano.getChildWithName(IDs::MODCONNECTIONS);
+        for (int i = 0; i < savedModConns.getNumChildren(); ++i)
+            mc.appendChild(savedModConns.getChild(i).createCopy(), nullptr);
+    }
+
+    // 6) UI updates
     pianoSelectText->setText(newPiano.getProperty(IDs::name));
     interface->allNotesOff();
     resized();
@@ -434,7 +452,12 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
         }
     }
 
-    // MODCONNECTIONS remap (NodeID-only)
+    // MODCONNECTIONS remap — two levels:
+    // 1) Direct children (TUNINGCONNECTION, MODCONNECTION, TEMPOCONNECTION) have
+    //    NodeID-based src/dest that need remapping via nodeIdMap.
+    // 2) Their ModulationConnection grandchildren have UUID-based compound string
+    //    src/dest (e.g. "uuid_modulatorName" / "uuid_paramName") and their own uuid
+    //    property, all of which need remapping via uuidMap.
     if (auto mconns = piano.getChildWithName(IDs::MODCONNECTIONS); mconns.isValid())
     {
         for (int i = 0; i < mconns.getNumChildren(); ++i)
@@ -442,16 +465,71 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
             auto c = mconns.getChild(i);
             if (! c.isValid()) continue;
 
-            if (! c.hasProperty(IDs::src) || ! c.hasProperty(IDs::dest))
+            // Flat ModulationConnection directly under MODCONNECTIONS:
+            // has UUID-based compound string src/dest and its own uuid property
+            if (c.hasType(IDs::ModulationConnection))
+            {
+                if (c.hasProperty(IDs::uuid))
+                    c.setProperty(IDs::uuid, juce::Uuid().toString(), nullptr);
+
+                if (c.hasProperty(IDs::src))
+                {
+                    auto s = c.getProperty(IDs::src).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (s.contains(oldUuid))
+                            s = s.replace(oldUuid, newUuid);
+                    c.setProperty(IDs::src, s, nullptr);
+                }
+                if (c.hasProperty(IDs::dest))
+                {
+                    auto d = c.getProperty(IDs::dest).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (d.contains(oldUuid))
+                            d = d.replace(oldUuid, newUuid);
+                    c.setProperty(IDs::dest, d, nullptr);
+                }
                 continue;
+            }
 
-            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
-            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
+            // Wrapper types (TUNINGCONNECTION, MODCONNECTION, TEMPOCONNECTION, etc.)
+            // have NodeID-based src/dest
+            if (c.hasProperty(IDs::src) && c.hasProperty(IDs::dest))
+            {
+                auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
+                auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
 
-            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
-                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
-            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
-                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
+                    c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+                if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
+                    c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            }
+
+            // Remap ModulationConnection grandchildren
+            for (int j = 0; j < c.getNumChildren(); ++j)
+            {
+                auto mc = c.getChild(j);
+                if (! mc.isValid()) continue;
+
+                if (mc.hasProperty(IDs::uuid))
+                    mc.setProperty(IDs::uuid, juce::Uuid().toString(), nullptr);
+
+                if (mc.hasProperty(IDs::src))
+                {
+                    auto s = mc.getProperty(IDs::src).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (s.contains(oldUuid))
+                            s = s.replace(oldUuid, newUuid);
+                    mc.setProperty(IDs::src, s, nullptr);
+                }
+                if (mc.hasProperty(IDs::dest))
+                {
+                    auto d = mc.getProperty(IDs::dest).toString();
+                    for (auto& [oldUuid, newUuid] : uuidMap)
+                        if (d.contains(oldUuid))
+                            d = d.replace(oldUuid, newUuid);
+                    mc.setProperty(IDs::dest, d, nullptr);
+                }
+            }
         }
     }
 }
@@ -570,10 +648,10 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         disabledItem.enabled = false; // This makes it non-selectable
         disabledItem.id = -1; // will be a separator line
 
-        options.addItem(itemCounter++, "Add");
-        options.addItem(itemCounter++, "Rename");
-        options.addItem(itemCounter++, "Duplicate");
-        options.addItem(itemCounter++, "Delete");
+        options.addItem(itemCounter++, "Add New Piano");
+        options.addItem(itemCounter++, "Rename Current");
+        options.addItem(itemCounter++, "Duplicate Current");
+        options.addItem(itemCounter++, "Delete Current");
         options.addItem(disabledItem); // create separator line
 
         for (int i = 0; i < names.size(); i++) {
@@ -659,9 +737,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         for (int i = 0; i < presetNames.size(); ++i)
             options.addItem(i, presetNames.getReference(i).toStdString());
 
-        //juce::Point<int> position(soundfontPresetSelector->getX(), soundfontPresetSelector->getBottom());
+        juce::Point<int> position(soundfontPresetSelector->getX(), soundfontPresetSelector->getBottom());
         // for some reason, the placement of this right-most popup isn't working as expected; this kludge gets it in the right place
-        juce::Point<int> position(getLocalBounds().getRight() + 100, soundfontPresetSelector->getBottom());
+        //juce::Point<int> position(getLocalBounds().getRight() + 100, soundfontPresetSelector->getBottom());
 
         showPopupSelector(this, position, options,
                           [this, presetNames, sfzName](int selection, int) {
@@ -852,7 +930,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                     }
                 }
             }
-        });
+        }, {}, 1.5f);
     } else if (clicked_button == preparationsSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         PopupItems options = parent->getPreparationPopupItems();
@@ -864,11 +942,11 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
     } else if (clicked_button == VSTSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         PopupItems options = parent->getVSTPopupItems();
+        DBG("HeaderSection::buttonClicked VSTSelector clicked. Options size: " << options.size());
 
         juce::Point<int> position(VSTSelector->getX(), VSTSelector->getBottom());
-        showPopupSelector(this, position, options, [=](int selection, int) {
-            // figure out how to add VSTs here
-            parent->gui_->main_->constructionSite_->addItem(selection + bitklavier::BKPreparationType::PreparationTypeVST, true);
+        showPopupSelector(this, position, options, [=](int selection, int a) {
+            parent->gui_->main_->constructionSite_->addItem(selection, true);
         });
     } else if (clicked_button == loadButton.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -902,6 +980,24 @@ void HeaderSection::saveCurrentGallery()
     auto activeFile = interface->getActiveFile();
     if (activeFile == juce::File())
     {
+        saveGallery();
+        return;
+    }
+
+    // Protect the default "Basic Piano" preset from being overwritten by Save (Cmd+S)
+    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                    .getChildFile("Documents")
+                    .getChildFile("bitKlavier")
+                    .getChildFile("galleries");
+    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    const auto activePath = activeFile.getFullPathName();
+    if (activePath == basicA.getFullPathName()
+        || activePath == basicB.getFullPathName()
+        || activePath == basicC.getFullPathName())
+    {
+        // Route to Save As instead
         saveGallery();
         return;
     }

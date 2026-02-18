@@ -59,8 +59,8 @@ namespace bitklavier {
 //    }
 
     void SoundEngine::setActivePiano(const juce::ValueTree &v) {
-//        DBG("***********SWITCH PIANOS********************");
-//        DBG("*********curr piano is " + v.getProperty(IDs::name).toString() + " ***********************");
+        DBG("***********SoundEngine::setActivePiano SWITCH PIANOS********************");
+        DBG("*********curr piano is " + v.getProperty(IDs::name).toString() + " ***********************");
         jassert(v.hasType(IDs::PIANO));
         auto nodes = processorGraph->getNodes();
         //skip input output nodes
@@ -83,6 +83,15 @@ namespace bitklavier {
                 node->setBypassed(true);
             }
         }
+    }
+
+    void bitklavier::SoundEngine::requestResetAllContinuousModsRT()
+    {
+        DBG("SoundEngine::requestResetAllContinuousModsRT()");
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+            if (auto* mp = dynamic_cast<bitklavier::ModulationProcessor*>(node->getProcessor()))
+                mp->requestResetAllContinuousModsRT();
     }
 
     void SoundEngine::allNotesOff() {
@@ -141,6 +150,8 @@ namespace bitklavier {
 
     void SoundEngine::removeMidiLiveListener (MidiManager::LiveMidiListener* l)
     {
+        if(!processorGraph)
+            return;
         auto nodes = processorGraph->getNodes();
         for (auto* node : nodes)
             if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
@@ -170,8 +181,8 @@ namespace bitklavier {
         // gainProcessor = std::make_unique<GainProcessor>(parent,tree);
         // compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
         // eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
-        gainProcessor       = std::make_unique<GainProcessor>(parent, tree);
-        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq);
-        eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor);
+        gainProcessor       = std::make_unique<GainProcessor>(parent, tree, &parent.getUndoManager());
+        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq, &parent.getUndoManager());
+        eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor, &parent.getUndoManager());
     }
 } // namespace bitklavier

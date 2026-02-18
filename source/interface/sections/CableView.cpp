@@ -239,7 +239,7 @@ void CableView::connectionListChanged() {
 }
 
 void CableView::removeConnection(bitklavier::Connection *c) {
-    DBG("remove cable");
+    // DBG("remove cable");
    Cable* at = nullptr;
     int index = 0;
     if (objects.isEmpty())
@@ -270,7 +270,7 @@ void CableView::removeConnection(bitklavier::Connection *c) {
     }
 
     delete at;
-        DBG("cable remove");
+        // DBG("cable remove");
 
 }
 
@@ -286,7 +286,7 @@ void CableView::updateCablePositions()
 }
 void CableView::connectionAdded(bitklavier::Connection *c) {
 
-        DBG("add cable");
+        // DBG("add cable");
         auto* comp = new Cable(&site, *this);
         addChildComponent(comp, 0);
     {
@@ -307,7 +307,7 @@ void CableView::connectionAdded(bitklavier::Connection *c) {
         // addAndMakeVisible (comp);
         comp->setValueTree(c->state);
         objects.add(comp);
-        DBG("cable added");
+        // DBG("cable added");
 }
 
 

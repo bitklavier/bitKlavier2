@@ -36,6 +36,7 @@ public:
     std::vector<std::unique_ptr<chowdsp::ComboBoxAttachment>> _noteModeMenus_attachments;
 
     MidiTargetParams& params;
+    void arrange_parameter_toggles_and_menus (int firstID, int endNilId, int smallpadding, int comboboxheight, int targetOffset, juce::Rectangle<int> noteMenuColumn, juce::Rectangle<int> toggleColumn);
 
 };
 #endif //BITKLAVIER0_MIDITARGETPARAMETERSVIEW_H

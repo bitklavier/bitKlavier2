@@ -74,6 +74,7 @@ public:
         description = getPluginDescription (*inner);
     }
     std::unique_ptr<AudioProcessor> inner;
+
 private:
     static juce::PluginDescription getPluginDescription (const AudioProcessor& proc)
     {
@@ -120,11 +121,10 @@ private:
 #include <tracktion_ValueTreeUtilities.h>
 #include "../Identifiers.h"
 #include "synth_base.h"
-#include "../templates/Factory.h"
 class KeymapProcessor;
 class PluginInstanceWrapper  {
     public:
-    PluginInstanceWrapper (juce::AudioProcessor* proc,const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc),node_id(nodeID) {
+    PluginInstanceWrapper (juce::AudioProcessor* proc, const juce::ValueTree& v, juce::AudioProcessorGraph::NodeID nodeID) : state(v), proc(proc), node_id(nodeID) {
         // if (!v.getProperty(IDs::nodeID))
             state.setProperty(IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeID),nullptr);
     }
@@ -149,58 +149,23 @@ class PluginInstanceWrapper  {
     // KeymapProcessor* keymap_processor;
 
 };
-template <class Base>
-class Factory {
-public:
-    using CreateFunction = std::function<std::unique_ptr<Base>(std::any)>;
 
-    template <typename T, typename... Args>
-    void registerType(const std::string& typeName) {
-        creators[typeName] = [](std::any args) -> std::unique_ptr<Base> {
-            try {
-                auto tupleArgs = std::any_cast<std::tuple<Args...>>(args); // Unpack std::any into tuple
-                return std::apply([](auto&&... unpackedArgs) {
-                    return std::make_unique<T>(std::forward<decltype(unpackedArgs)>(unpackedArgs)...);  // Create shared_ptr with forwarded arguments
-                }, tupleArgs);  // Apply the arguments
-            } catch (const std::bad_any_cast& e) {
-                std::cerr << "std::bad_any_cast: " << e.what() << " (expected tuple)" << std::endl;
-                return nullptr;
-            }
-        };
-    }
-
-    // Create object with arguments wrapped in std::any
-    std::unique_ptr<Base> create(const std::string& typeName, std::any args) const {
-        auto it = creators.find(typeName);
-        if (it != creators.end()) {
-            return std::move(it->second(args));  // Call the creation function with arguments
-        }
-        return nullptr;  // Type not found
-    }
-    bool contains(std::string str) const {
-       return creators.find(str) != creators.end();
-    }
-private:
-    std::map<std::string, CreateFunction> creators;
-};
-typedef Factory<juce::AudioProcessor> PreparationFactory; //, int,SynthBase& ,const juce::ValueTree&  > PreparationFactory;
 class PreparationList : public tracktion::engine::ValueTreeObjectList<PluginInstanceWrapper>, public juce::ChangeBroadcaster{
 public:
-    PreparationList(SynthBase& parent, const juce::ValueTree & v);
+    PreparationList(SynthBase& parent, const juce::ValueTree & v, juce::UndoManager*);
     ~PreparationList() {
         freeObjects();
     }
 
-    bool isSuitableType (const juce::ValueTree& v) const override
-    {
-        return prepFactory.contains(v.getType().toString().toStdString());
-    }
+    bool isSuitableType (const juce::ValueTree& v) const override;
+
     class Listener {
     public:
         virtual ~Listener() {}
         virtual void moduleListChanged() = 0;
         virtual void moduleAdded(PluginInstanceWrapper* newModule) = 0;
         virtual void removeModule(PluginInstanceWrapper* moduleToRemove) = 0;
+        virtual void linkedPiano(){};
     };
     void addListener (Listener* l) { listeners_.push_back (l); }
     void clearListeners(){listeners_.clear();}
@@ -293,9 +258,9 @@ private:
     void prependPianoChangeProcessorToAll(const PluginInstanceWrapper*);
     std::vector<PluginInstanceWrapper*> pianoSwitchProcessors;
     std::unique_ptr<juce::AudioPluginInstance> temporary_instance;
-    PreparationFactory prepFactory;
     std::vector<Listener*> listeners_;
     SynthBase& synth;
+    juce::UndoManager *um;
 };
 
 

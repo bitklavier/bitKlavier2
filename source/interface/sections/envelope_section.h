@@ -52,7 +52,7 @@ class DragMagnifyingGlass : public OpenGlShapeButton {
 class EnvelopeSection : public SynthSection, DragMagnifyingGlass::Listener {
 
 public:
-    EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent);
+    EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners& listeners, SynthSection &parent, juce::UndoManager* um = nullptr);
 
     virtual ~EnvelopeSection();
 
@@ -96,6 +96,8 @@ public:
 
     std::shared_ptr<OpenGL_LabeledBorder> envelopeBorder;
     EnvParams& _params;
+
+    chowdsp::ScopedCallbackList sliderChangedCallback;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EnvelopeSection)
 };

@@ -228,7 +228,7 @@ void ModulationLineView::modConnectionAdded (bitklavier::ModConnection* c)
 
 void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
 {
-    DBG ("removemodconnection");
+    // DBG ("removemodconnection");
     ModulationLine* at = nullptr;
     int index = 0;
     for (auto obj : objects)
@@ -256,7 +256,7 @@ void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
         },
             true);
     }
-    DBG ("delete line object");
+    // DBG ("delete line object");
     {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         juce::ScopedLock{*interface->getOpenGlCriticalSection()};

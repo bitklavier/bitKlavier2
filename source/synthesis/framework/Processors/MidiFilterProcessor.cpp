@@ -5,8 +5,8 @@
 #include "MidiFilterProcessor.h"
 
 MidiFilterProcessor::MidiFilterProcessor (
-     SynthBase& parent,const juce::ValueTree& v) :
-             PluginBase (parent, v, nullptr, midiFilterBusLayout())
+     SynthBase& parent,const juce::ValueTree& v, juce::UndoManager* um) :
+             PluginBase (parent, v,um, midiFilterBusLayout())
 {
     noteOnState.reset();
 }

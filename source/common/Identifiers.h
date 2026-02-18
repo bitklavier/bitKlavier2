@@ -45,6 +45,8 @@ namespace IDs
     DECLARE_ID (isSelected)
     DECLARE_ID (PORT)
     DECLARE_ID (chIdx)
+    // Per-port placement tweak properties
+    DECLARE_ID (yOffset)
     DECLARE_ID (TUNINGCONNECTION)
     DECLARE_ID (MODCONNECTION)
     DECLARE_ID (MODCONNECTIONS)
@@ -59,6 +61,10 @@ namespace IDs
     DECLARE_ID (active)
     DECLARE_ID (midiPrefs)
 
+    // Per-preparation default placement tweaks (used when per-port offset is not provided)
+    DECLARE_ID (inputYOffset)
+    DECLARE_ID (outputYOffset)
+
     DECLARE_ID (modulationproc)
     DECLARE_ID (ModulationConnection)
 
@@ -66,6 +72,7 @@ namespace IDs
     DECLARE_ID (isBipolar)
     DECLARE_ID (isOffsetMod)
     DECLARE_ID (isMod)
+    DECLARE_ID (modulationToggleMode)
     DECLARE_ID (parameter)
     DECLARE_ID (MODULATABLE_PARAMS)
     DECLARE_ID (MODULATABLE_PARAM)
@@ -122,6 +129,9 @@ namespace IDs
     DECLARE_ID(vst)
     DECLARE_ID(keymap)
     DECLARE_ID(noConnection)
+    DECLARE_ID(linkedPrep)
+    DECLARE_ID(linkedType)
+    DECLARE_ID(linkedPianoName)
 
     DECLARE_ID(soundset)
     DECLARE_ID(globalsoundset)

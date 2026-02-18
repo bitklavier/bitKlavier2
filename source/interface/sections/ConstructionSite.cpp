@@ -12,21 +12,25 @@
 #include "tracktion_ValueTreeUtilities.h"
 
 static constexpr std::array<std::pair<float, float>,
-    static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST) - 1> prepSizes =
+    static_cast<size_t>(bitklavier::BKPreparationType::BKPreparationTypeNil)> prepSizes =
 {{
-    /* 3 Keymap      */ { 185.0f, 105.0f },
+    /* 0 Keymap      */ { 185.0f, 105.0f },
     /* 1 Direct      */ { 245.0f, 125.0f },
-    /* 5 Synchronic  */ { 260.0f, 132.0f },
-    /* 2 Nostalgic   */ { 245.0f, 125.0f },
-    /* 6 Blendronic  */ { 245.0f, 125.0f }, // default
-    /* 4 Resonance   */ { 245.0f, 125.0f },
-    /* 8 Tuning      */ { 125.0f, 245.0f },
+    /* 2 Synchronic  */ { 260.0f, 132.0f },
+    /* 3 Nostalgic   */ { 245.0f, 125.0f },
+    /* 4 Blendronic  */ { 245.0f, 125.0f },
+    /* 5 Resonance   */ { 245.0f, 125.0f },
+    /* 6 Tuning      */ { 125.0f, 245.0f },
     /* 7 Tempo       */ { 132.0f, 260.0f },
-    /* 9 MidiFilter  */ { 75.0f,  75.0f  },
-    /* 10 MidiTarget */ { 75.0f,  75.0f  },
-    /* 12 Modulation */ { 100.0f, 100.0f },
-    /* 13 Reset      */ { 100.0f, 100.0f },
-    /* 11 PianoMap   */ { 150.0f, 120.0f },
+    /* 8 MidiFilter  */ { 75.0f,  75.0f  },
+    /* 9 MidiTarget */ { 75.0f,  75.0f  },
+    /* 10 Modulation */ { 100.0f, 100.0f },
+    /* 11 Reset      */ { 100.0f, 100.0f },
+    /* 12 PianoMap   */ { 150.0f, 120.0f },
+    /* 13 Comment    */ { 100.0f, 100.0f },
+    /* 14 Compressor */ { 245.0f, 125.0f },
+    /* 15 EQ         */ { 245.0f, 125.0f },
+    /* 16 VST        */ { 245.0f, 125.0f },
 }};
 
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
@@ -180,6 +184,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
      * todo: prepScale should be settable by the user, and saved
      *          - it should also scale distances between preps
      *          - not sure if this is the right place to set this overall, but it scales the prep sizes at least
+     *      - yeah this is not the right way to do this, but will leave for now....
      */
     float prepScale = 0.6;
 
@@ -297,8 +302,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case midifilter:
             {
-                prepWidth = 75.0f;
-                prepHeight = 75.0f;
+                prepWidth = 120.0f;
+                prepHeight = 120.0f;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiFilter);
@@ -313,8 +318,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case miditarget:
             {
-                prepWidth = 75.0f;
-                prepHeight = 75.0f;
+                prepWidth = 120.0f;
+                prepHeight = 120.0f;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::midiTarget);
@@ -329,8 +334,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case pianoswitch:
             {
-                prepWidth = 150.0f;
-                prepHeight = 120.0f;
+                prepWidth = 150.0f * 1.5;
+                prepHeight = 120.0f * 1.25;
                 prepWidth *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::pianoMap);
@@ -430,16 +435,20 @@ PreparationSection *ConstructionSite::getComponentForPlugin(juce::AudioProcessor
     }
 }
 
-void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, PluginWindow::Type type) {
+void ConstructionSite::createWindow (juce::AudioProcessorGraph::Node* node, PluginWindow::Type type)
+{
     jassert (node != nullptr);
 
-#if JUCE_IOS || JUCE_ANDROID
+    #if JUCE_IOS || JUCE_ANDROID
     closeAnyOpenPluginWindows();
-#else
+    #else
     for (auto* w : activePluginWindows)
         if (w->node.get() == node && w->type == type)
-            w->toFront(true);
-#endif
+        {
+            w->toFront (true);
+            return; // <-- prevent creating a second editor for the same processor/type
+        }
+    #endif
 
     if (auto* processor = node->getProcessor())
     {
@@ -447,14 +456,14 @@ void ConstructionSite::createWindow(juce::AudioProcessorGraph::Node* node, Plugi
         {
             auto description = plugin->getPluginDescription();
             auto window = activePluginWindows.add (new PluginWindow (node, type, activePluginWindows));
-            window->toFront(true);
+            window->toFront (true);
         }
     }
 }
 
 void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     auto * interface = findParentComponentOfClass<SynthGuiInterface>();
-    auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state,interface );
+    auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state, interface );
     {
         juce::ScopedLock lock(open_gl_critical_section_);
         addSubSection (s.get());
@@ -478,17 +487,21 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->addListener(&modulationLineView);
     s->addListener(this);
     s->setNodeInfo();
+
     {
         juce::ScopedLock lock (open_gl_critical_section_);
         plugin_components.push_back (std::move (s));
     }
 }
 
+void ConstructionSite::linkedPiano() {
+    DBG("ConstructionSite::linkedPiano()");
+}
+
 void ConstructionSite::renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate)
 {
     juce::ScopedLock lock(open_gl_critical_section_);
     SynthSection::renderOpenGlComponents(open_gl, animate);
-
 }
 
 void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
@@ -519,7 +532,8 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     plugin_components[index]->destroyOpenGlComponents (open_gl);
     //delete heap memory
     plugin_components.erase(plugin_components.begin()+index);
-DBG("moduleRemoved construction site");
+
+    // DBG("moduleRemoved construction site");
 }
 
 ConstructionSite::~ConstructionSite(void) {
@@ -630,6 +644,15 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     //grabKeyboardFocus();
 
     if (e.mods.isPopupMenu()) {
+        auto itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent->getParentComponent());
+        if (itemToSelect == nullptr) {
+            itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent);
+        }
+
+        if (itemToSelect != nullptr) {
+            return;
+        }
+
         _parent = findParentComponentOfClass<SynthGuiInterface>();
           auto callback = [=](int selection,int index) {handlePluginPopup(selection,index);};
     auto cancel = [=]() {
@@ -681,10 +704,14 @@ void ConstructionSite::addItem (int selection, bool center)
     else {
         DBG("adding VST? " + juce::String(selection) + "");
 
-        const float prepWidth  = 245.f * prepScale;
-        const float prepHeight = 125.f * prepScale;
+        const auto idx = static_cast<size_t>(bitklavier::BKPreparationType::PreparationTypeVST);
+        jassert (idx < prepSizes.size());
+        const auto [baseW, baseH] = prepSizes[idx];
+
+        const float prepWidth  = baseW * prepScale;
+        const float prepHeight = baseH * prepScale;
         _parent = findParentComponentOfClass<SynthGuiInterface>();
-        juce::ValueTree t(IDs::PREPARATION);
+        juce::ValueTree t(IDs::vst);
         t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeVST, nullptr);
         t.setProperty(IDs::width, prepWidth, nullptr);
         t.setProperty(IDs::height, prepHeight, nullptr);

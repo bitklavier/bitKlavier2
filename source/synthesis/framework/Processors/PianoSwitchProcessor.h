@@ -25,12 +25,12 @@ struct PianoSwitchNonParameterState : chowdsp::NonParamState
 class PianoSwitchProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<PianoSwitchParams, PianoSwitchNonParameterState>>
 {
 public:
-    PianoSwitchProcessor (SynthBase& parent, const juce::ValueTree&);
+    PianoSwitchProcessor (SynthBase& parent, const juce::ValueTree&, juce::UndoManager*);
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override {}
     void releaseResources() override {}
     void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
-    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override {};
+    void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override  {};
 
     bool acceptsMidi() const override {return true;}

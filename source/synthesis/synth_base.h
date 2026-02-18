@@ -24,7 +24,7 @@
 #include "ModulationConnection.h"
 #include "circular_queue.h"
 #include "ModulatorBase.h"
-#include "../common/ObjectLists/PreparationList.h"
+#include "Factory.h"
 class SynthGuiInterface;
 template<typename T>
 class BKSamplerSound;
@@ -45,6 +45,8 @@ enum class SwitchTriggerThread
 };
 
 class UserPreferencesWrapper;
+typedef Factory<juce::AudioProcessor, std::unique_ptr<juce::AudioProcessor>> PreparationFactory; //, int,SynthBase& ,const juce::ValueTree&  > PreparationFactory;
+
 class SynthBase : public juce::ValueTree::Listener {
 public:
     static constexpr float kOutputWindowMinNote = 16.0f;
@@ -134,7 +136,7 @@ public:
 
     void disconnectModulation(bitklavier::StateConnection *connection);
 
-    void connectStateModulation(bitklavier::StateConnection *connection);
+    void connectStateModulation(bitklavier::StateConnection *connection, const juce::ValueTree& v);
 
 
     ///modulation functionality
@@ -154,6 +156,8 @@ public:
 
     int getNumModulations(const std::string &destination);
 
+    void requestResetAllContinuousModsRT();
+
     virtual SynthGuiInterface *getGuiInterface() = 0;
 
     bool isSourceConnected(const std::string &source);
@@ -167,6 +171,7 @@ public:
                                   const juce::Identifier &property);
     void valueTreeChildRemoved(juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
 
+    juce::ValueTree findParentWithType(juce::ValueTree child, const juce::Identifier& typeName_);
 
     //single consumer single produce queue (thread safe / non blocking)
     static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
@@ -175,7 +180,8 @@ public:
 
     juce::AudioDeviceManager *manager;
     std::shared_ptr<UserPreferencesWrapper> user_prefs;
-    SimpleFactory<ModulatorBase> modulator_factory;
+    Factory<ModulatorBase, ModulatorBase*> modulator_factory;
+    Factory<juce::AudioProcessor> prepFactory;
     bitklavier::CircularQueue<bitklavier::ModulationConnection *> mod_connections_;
     bitklavier::CircularQueue<bitklavier::StateConnection *> state_connections_;
     /** Calls an action on the main thread via chowdsp::DeferredAction */
@@ -236,6 +242,8 @@ protected:
 
 public:
     PreparationList *getActivePreparationList();
+     juce::ValueTree getActivePreparationListValueTree();
+    juce::ValueTree getActivePianoValueTree();
 
     bitklavier::ConnectionList *getActiveConnectionList();
 
@@ -243,7 +251,8 @@ public:
 
     juce::ValueTree activePiano;
     SwitchTriggerThread switch_trigger_thread = SwitchTriggerThread::MessageThread;
-    int sample_index_of_switch;
+    juce::uint64 sample_index_of_switch;
+    juce::uint64 total_samples_passed;
     //ensure prep list is deleted before mod connection and connection
 
     std::vector<std::unique_ptr<bitklavier::ConnectionList> > connectionLists;

@@ -320,6 +320,7 @@ protected:
 
   GLuint vertex_buffer_;
   GLuint indices_buffer_;
+  GLuint vao_ { 0 };
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OpenGlMultiQuad)
 };

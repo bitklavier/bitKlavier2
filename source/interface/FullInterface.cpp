@@ -332,6 +332,7 @@ void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, co
     }
     prep_popup->setContent (std::move(synth_section),v);
     prep_popup->setVisible (true);
+
     modulation_manager->added();
 
     if (prepScale_x_save != prepScale_x || prepScale_y_save != prepScale_y)
@@ -343,6 +344,7 @@ void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section,cons
     mod_popup->setContent (std::move(synth_section),v);
     mod_popup->setVisible (true);
     modulation_manager->added();
+    resized();
 }
 
 void FullInterface::hideDisplay (bool primary)
@@ -352,12 +354,21 @@ void FullInterface::hideDisplay (bool primary)
         display->setVisible (false);
 }
 
-void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int,int)> callback, std::function<void()> cancel)
+void FullInterface::popupSelector (juce::Component* source, juce::Point<int> position, const PopupItems& options, std::function<void (int,int)> callback, std::function<void()> cancel, float width_scale)
 {
+    if (options.size() == 0)
+    {
+        DBG("FullInterface::popupSelector - options is empty, not showing popup.");
+        return;
+    }
+
     popup_selector_->setCallback (callback);
     popup_selector_->setCancelCallback (cancel);
+    popup_selector_->setWidthScale(width_scale);
     popup_selector_->showSelections (options);
-    juce::Rectangle<int> bounds (0, 0, std::ceil (display_scale_ * getWidth()), std::ceil (display_scale_ * getHeight()));
+    // DBG("FullInterface::popupSelector items: " << options.size());
+    juce::Rectangle<int> bounds (0, 0, std::ceil (getWidth()), std::ceil (getHeight()));
+    // DBG("FullInterface::popupSelector bounds: " << bounds.toString());
     popup_selector_->setPosition (getLocalPoint (source, position), bounds);
     popup_selector_->setVisible (true);
     popup_selector_->setEnabled (options.enabled);
@@ -525,3 +536,4 @@ void FullInterface::modulationChanged()
     if (modulation_manager)
         modulation_manager->reset();
 }
+

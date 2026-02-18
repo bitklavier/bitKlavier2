@@ -15,19 +15,20 @@ public:
         juce::String name,
         OffsetKnobParam &params,
         chowdsp::ParameterListeners &listeners,
-        SynthSection &parent) : SynthSection(name)
+        SynthSection &parent,
+        chowdsp::PluginState& pluginState) : SynthSection(name)
         {
             setComponentID(parent.getComponentID());
 
-            offsetKnob = std::make_unique<SynthSlider>(params.offSet->paramID,params.offSet->getModParam());
+            offsetKnob = std::make_unique<SynthSlider>(params.offSetSliderParam->paramID,params.offSetSliderParam->getModParam());
             addSlider(offsetKnob.get());
             offsetKnob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             offsetKnob->setPopupPlacement(juce::BubbleComponent::below);
             offsetKnob->setShowPopupOnHover(true);
-            offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSet, listeners, *offsetKnob, nullptr);
+            offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSetSliderParam, listeners, *offsetKnob, pluginState.undoManager);
             offsetKnob->addAttachment(offsetKnobAttachment.get()); // for modulations
 
-            offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), params.offSet->getName(20));
+            offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), params.offSetSliderParam->getName(20));
             addOpenGlComponent(offset_label);
             offset_label->setTextSize (10.0f);
             offset_label->setJustification(juce::Justification::centred);
@@ -41,8 +42,6 @@ public:
     void paintBackground(juce::Graphics& g) override
     {
         setLabelFont(g);
-        //drawLabelForComponent(g, TRANS("cents"), offsetKnob.get());
-
         paintKnobShadows(g);
         paintChildrenBackgrounds(g);
     }
@@ -58,7 +57,8 @@ public:
         offsetKnob->setBounds(area);
 
         int labelsectionheight = findValue(Skin::kLabelHeight);
-        juce::Rectangle<int> label_rect (offsetKnob->getX(), offsetKnob->getBottom() - 10, offsetKnob->getWidth(), labelsectionheight );
+        //juce::Rectangle<int> label_rect (offsetKnob->getX(), offsetKnob->getBottom() - 10, offsetKnob->getWidth(), labelsectionheight );
+        juce::Rectangle<int> label_rect (offsetKnob->getX(), offsetKnob->getY() + offsetKnob->getHeight() / 2 + 20, offsetKnob->getWidth(), labelsectionheight );
         offset_label->setBounds(label_rect);
 
         SynthSection::resized();

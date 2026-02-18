@@ -405,6 +405,9 @@ void OpenGlLineRenderer::drawLines(OpenGlWrapper& open_gl, bool left) {
   if (fill_shader_ == nullptr)
     init(open_gl);
 
+  // Ensure scissor matches this component's bounds to avoid clipping from prior draws
+  OpenGlComponent::setScissor(this, open_gl);
+
   juce::gl::glBlendFunc(juce::gl::GL_SRC_ALPHA, juce::gl::GL_ONE_MINUS_SRC_ALPHA);
   juce::gl::glEnable(juce::gl::GL_BLEND);
   juce::gl::glEnable(juce::gl::GL_SCISSOR_TEST);

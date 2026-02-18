@@ -44,9 +44,9 @@ struct EQParams : chowdsp::ParamHolder
                 presets);
 
         doForAllParameters ([this] (auto& param, size_t) {
-            if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
-                if (sliderParam->supportsMonophonicModulation())
-                    modulatableParams.emplace_back(sliderParam);
+            // if (auto* sliderParam = dynamic_cast<chowdsp::BoolParameter*> (&param))
+            //     if (sliderParam->supportsMonophonicModulation())
+            //         modulatableParams.emplace_back(sliderParam);
 
             if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
                 if (sliderParam->supportsMonophonicModulation())
@@ -128,7 +128,7 @@ struct EQParams : chowdsp::ParamHolder
     using Chain = juce::dsp::ProcessorChain<CutFilter, Filter, Filter, Filter, CutFilter>;
     Chain leftChain;
     Chain rightChain;
-    
+
     double sampleRate = 44100;
 
     double magForFreq(double freq) {
@@ -334,18 +334,13 @@ class EQProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateIm
                         public juce::ValueTree::Listener
 {
 public:
-    EQProcessor (SynthBase& parent, const juce::ValueTree& v);
+    EQProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
     ~EQProcessor()
     {
         parent.getValueTree().removeListener(this);
     }
 
-    static std::unique_ptr<juce::AudioProcessor> create (SynthBase& parent, const juce::ValueTree& v)
-    {
-        return std::make_unique<EQProcessor> (parent, v);
-    }
-
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
     // void setupModulationMappings();

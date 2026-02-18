@@ -7,6 +7,11 @@
 #include "sound_engine.h"
 #include "synth_base.h"
 #include "text_look_and_feel.h"
+#include "FullInterface.h"
+#include "main_section.h"
+#include "ConstructionSite.h"
+#include "PreparationSelector.h"
+#include "KeymapProcessor.h"
 FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"),
                                                            body_(new OpenGlQuad(Shaders::kRoundedRectangleFragment)),
                                                             gallery(data->tree)
@@ -50,9 +55,39 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     keyboard_component_->addMyListener(this);
 }
 
-void FooterSection::BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey)
+void FooterSection::BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey, juce::ModifierKeys mods)
 {
-    DBG("Footer::BKKeymapKeyboardChanged called");
+    if (mods.isShiftDown())
+    {
+        if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+        {
+            if (auto* gui = iface->getGui())
+            {
+                if (gui->main_ && gui->main_->constructionSite_)
+                {
+                    auto& selectionSet = gui->main_->constructionSite_->preparationSelector.getLassoSelection();
+                    if (selectionSet.getNumSelected() > 0)
+                    {
+                        for (int i = 0; i < selectionSet.getNumSelected(); ++i)
+                        {
+                            if (auto* prep = selectionSet.getSelectedItem(i))
+                            {
+                                if (auto* keymapProc = dynamic_cast<KeymapProcessor*>(prep->getProcessor()))
+                                {
+                                    if (lastKey >= 0 && lastKey < 128)
+                                    {
+                                        keymapProc->getState().params.keyboard_state.flipKeyState(lastKey);
+                                        displayKeymapState(keymapProc->getState().params.keyboard_state.keyStates.load());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return;
+    }
 
     // keys reflects the current state after the change: if bit is set, it's a key down
     const bool isDown = (lastKey >= 0 && lastKey < 128) ? keys.test ((size_t) lastKey) : false;
@@ -61,7 +96,7 @@ void FooterSection::BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<
             if (auto* eng = synth->getEngine())
             {
                 if (isDown)
-                    eng->postUINoteOn (lastKey, 1.0f, 1);
+                    eng->postUINoteOn (lastKey, 0.5f, 1);
                 else
                     eng->postUINoteOff (lastKey, 0.0f, 1);
             }
@@ -114,7 +149,6 @@ void FooterSection::reset() {
 }
 
 void FooterSection::buttonClicked(juce::Button *clicked_button) {
-    DBG("FooterSection::buttonClicked");
     if (clicked_button == compressorButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         showPrepPopup(interface->getCompressorPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);
@@ -128,4 +162,17 @@ void FooterSection::buttonClicked(juce::Button *clicked_button) {
 
 void FooterSection::sliderValueChanged(juce::Slider *slider) {
     SynthSection::sliderValueChanged(slider);
+}
+
+void FooterSection::displayKeymapState (const std::bitset<128>& keys)
+{
+    for (int i = 0; i < 128; ++i)
+        keyboard_component_->setKeymapDisplayKeyState (i, keys.test ((size_t) i));
+    keyboard_component_->redoImage();
+}
+
+void FooterSection::clearKeymapDisplay()
+{
+    keyboard_component_->clearAllKeymapDisplayKeys();
+    keyboard_component_->redoImage();
 }

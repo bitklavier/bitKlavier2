@@ -43,6 +43,10 @@ void OpenGlBackground::init(OpenGlWrapper& open_gl) {
             2, 3, 0
     };
 
+    // Create and bind VAO (required on macOS core profile)
+    open_gl.context.extensions.glGenVertexArrays(1, &vao_);
+    open_gl.context.extensions.glBindVertexArray(vao_);
+
     open_gl.context.extensions.glGenBuffers(1, &vertex_buffer_);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
 
@@ -56,10 +60,22 @@ void OpenGlBackground::init(OpenGlWrapper& open_gl) {
     open_gl.context.extensions.glBufferData(juce::gl::GL_ELEMENT_ARRAY_BUFFER, tri_size, triangles, juce::gl::GL_STATIC_DRAW);
 
     image_shader_ = open_gl.shaders->getShaderProgram(Shaders::kImageVertex, Shaders::kImageFragment);
+    if (image_shader_ == nullptr) {
+        DBG("[GL][OpenGlBackground] shader unavailable in init; aborting initialization");
+        open_gl.context.extensions.glBindVertexArray(0);
+        return;
+    }
     image_shader_->use();
     position_ = OpenGlComponent::getAttribute(open_gl, *image_shader_, "position");
     texture_coordinates_ = OpenGlComponent::getAttribute(open_gl, *image_shader_, "tex_coord_in");
     texture_uniform_ = OpenGlComponent::getUniform(open_gl, *image_shader_, "image");
+
+#if DEBUG
+    GLenum err = juce::gl::glGetError();
+    if (err != juce::gl::GL_NO_ERROR) {
+        DBG("[GL][OpenGlBackground] error during init: code=" + juce::String((int)err));
+    }
+#endif
 }
 
 void OpenGlBackground::destroy(OpenGlWrapper& open_gl) {
@@ -73,9 +89,12 @@ void OpenGlBackground::destroy(OpenGlWrapper& open_gl) {
 
     open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
     open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
+    if (vao_ != 0)
+        open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
 }
 
 void OpenGlBackground::bind(juce::OpenGLContext& open_gl_context) {
+    // VAO should already be bound by caller in render()
     open_gl_context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vertex_buffer_);
     open_gl_context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, triangle_buffer_);
     background_.bind();
@@ -109,9 +128,21 @@ void OpenGlBackground::render(OpenGlWrapper& open_gl) {
     {
         OpenGlComponent::setViewPort(component_, component_->getLocalBounds(),open_gl) ;
     }
+#if DEBUG
+    // Drain pre-existing errors to attribute correctly to background
+    for (GLenum e = juce::gl::glGetError(); e != juce::gl::GL_NO_ERROR; e = juce::gl::glGetError()) {
+        DBG(juce::String("[GL][OpenGlBackground] clearing pre-existing GL error before render: ") + juce::String((int)e));
+    }
+#endif
     if ((new_background_ || background_.getWidth() == 0) && background_image_.getWidth() > 0) {
         new_background_ = false;
         background_.loadImage(background_image_);
+#if DEBUG
+        GLenum afterLoad = juce::gl::glGetError();
+        if (afterLoad != juce::gl::GL_NO_ERROR) {
+            DBG("[GL][OpenGlBackground] GL error after background_.loadImage: code=" + juce::String((int)afterLoad));
+        }
+#endif
         float width_ratio = (1.0f * background_.getWidth()) / background_image_.getWidth();
         float height_ratio = (1.0f * background_.getHeight()) / background_image_.getHeight();
         float width_end = 2.0f * width_ratio - 1.0f;
@@ -129,6 +160,8 @@ void OpenGlBackground::render(OpenGlWrapper& open_gl) {
     juce::gl::glDisable(juce::gl::GL_SCISSOR_TEST);
 
     image_shader_->use();
+    // Bind VAO for attribute operations
+    open_gl.context.extensions.glBindVertexArray(vao_);
     bind(open_gl.context);
     open_gl.context.extensions.glActiveTexture(juce::gl::GL_TEXTURE0);
     //DBG(background_.getWidth());
@@ -142,6 +175,7 @@ void OpenGlBackground::render(OpenGlWrapper& open_gl) {
 
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, 0);
     open_gl.context.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, 0);
+    open_gl.context.extensions.glBindVertexArray(0);
 
     mutex_.unlock();
 }

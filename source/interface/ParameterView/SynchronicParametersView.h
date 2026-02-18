@@ -55,12 +55,12 @@ public:
         // menus
         if (auto* synchronicParams = dynamic_cast<SynchronicParams*>(&params)) {
             pulseTriggeredBy_combo_box = std::make_unique<OpenGLComboBox>(synchronicParams->pulseTriggeredBy->paramID.toStdString());
-            pulseTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*synchronicParams->pulseTriggeredBy.get(), listeners, *pulseTriggeredBy_combo_box, nullptr);
+            pulseTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*synchronicParams->pulseTriggeredBy.get(), listeners, *pulseTriggeredBy_combo_box, pluginState.undoManager);
             addAndMakeVisible(pulseTriggeredBy_combo_box.get());
             addOpenGlComponent(pulseTriggeredBy_combo_box->getImageComponent());
 
             determinesCluster_combo_box = std::make_unique<OpenGLComboBox>(synchronicParams->determinesCluster->paramID.toStdString());
-            determinesCluster_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*synchronicParams->determinesCluster.get(), listeners, *determinesCluster_combo_box, nullptr);
+            determinesCluster_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*synchronicParams->determinesCluster.get(), listeners, *determinesCluster_combo_box, pluginState.undoManager);
             addAndMakeVisible(determinesCluster_combo_box.get());
             addOpenGlComponent(determinesCluster_combo_box->getImageComponent());
         }
@@ -80,7 +80,7 @@ public:
         numPulses_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         numPulses_knob->setPopupPlacement(juce::BubbleComponent::below);
         numPulses_knob->setShowPopupOnHover(true);
-        numPulses_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numPulses, listeners, *numPulses_knob, nullptr);
+        numPulses_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numPulses, listeners, *numPulses_knob, pluginState.undoManager);
         numPulses_knob->addAttachment(numPulses_knob_attachment.get()); // needed for mods!!
 
         numLayers_knob = std::make_unique<SynthSlider>(params.numLayers->paramID,params.numLayers->getModParam());
@@ -88,7 +88,7 @@ public:
         numLayers_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         numLayers_knob->setPopupPlacement(juce::BubbleComponent::below);
         numLayers_knob->setShowPopupOnHover(true);
-        numLayers_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numLayers, listeners, *numLayers_knob, nullptr);
+        numLayers_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numLayers, listeners, *numLayers_knob, pluginState.undoManager);
         numLayers_knob->addAttachment(numLayers_knob_attachment.get());
 
         clusterThickness_knob = std::make_unique<SynthSlider>(params.clusterThickness->paramID,params.clusterThickness->getModParam());
@@ -96,7 +96,7 @@ public:
         clusterThickness_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThickness_knob->setPopupPlacement(juce::BubbleComponent::below);
         clusterThickness_knob->setShowPopupOnHover(true);
-        clusterThickness_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThickness, listeners, *clusterThickness_knob, nullptr);
+        clusterThickness_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThickness, listeners, *clusterThickness_knob, pluginState.undoManager);
         clusterThickness_knob->addAttachment(clusterThickness_knob_attachment.get());
 
         clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshold->paramID,params.clusterThreshold->getModParam());
@@ -104,7 +104,7 @@ public:
         clusterThreshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);
         clusterThreshold_knob->setShowPopupOnHover(true);
-        clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshold, listeners, *clusterThreshold_knob, nullptr);
+        clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshold, listeners, *clusterThreshold_knob, pluginState.undoManager);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
         numPulses_knob_label = std::make_shared<PlainTextComponent>(numPulses_knob->getName(), params.numPulses->getName(20));
@@ -141,15 +141,15 @@ public:
         addStateModulatedComponent (accentsSlider.get());
         accentsSlider->updateFromParams(juce::dontSendNotification);
 
-        sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustainlength_multipliers", &params.sustainLengthMultipliers, listeners);
-        sustainLengthMultipliersSlider->setComponentID ("sustainlength_multipliers");
+        sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustain_length_multipliers", &params.sustainLengthMultipliers, listeners);
+        sustainLengthMultipliersSlider->setComponentID ("sustain_length_multipliers");
         sustainLengthMultipliersSlider->setMinMaxDefaultInc({-2., 2., 1., 0.01});
         sustainLengthMultipliersSlider->setName("Sustain Length Multipliers");
         addStateModulatedComponent (sustainLengthMultipliersSlider.get());
         sustainLengthMultipliersSlider->updateFromParams(juce::dontSendNotification);
 
-        beatLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("beatlength_multipliers", &params.beatLengthMultipliers, listeners);
-        beatLengthMultipliersSlider->setComponentID ("beatlength_multipliers");
+        beatLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("beat_length_multipliers", &params.beatLengthMultipliers, listeners);
+        beatLengthMultipliersSlider->setComponentID ("beat_length_multipliers");
         beatLengthMultipliersSlider->setMinMaxDefaultInc({0., 2., 1., 0.01});
         beatLengthMultipliersSlider->setName("Beat Length Multipliers");
         addStateModulatedComponent (beatLengthMultipliersSlider.get());
@@ -165,7 +165,7 @@ public:
         addStateModulatedComponent (holdTimeMinMaxSlider.get());
 
         // envelope/ADSR controller UI
-        envSection = std::make_unique<EnvelopeSection>(params.env, listeners, *this);
+        envSection = std::make_unique<EnvelopeSection>(params.env, listeners, *this, pluginState.undoManager);
         addSubSection (envSection.get());
 
         // sequence of ADSRs
@@ -174,13 +174,13 @@ public:
 
         // toggles
         useTuning = std::make_unique<SynthButton>(params.transpositionUsesTuning->paramID);
-        useTuning_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.transpositionUsesTuning, listeners, *useTuning, nullptr);
+        useTuning_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.transpositionUsesTuning, listeners, *useTuning, pluginState.undoManager);
         useTuning->setComponentID(params.transpositionUsesTuning->paramID);
         addSynthButton(useTuning.get(), true);
         useTuning->setText("use Tuning?");
 
         skipFirst = std::make_unique<SynthButton>(params.skipFirst->paramID);
-        skipFirst_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.skipFirst, listeners, *skipFirst, nullptr);
+        skipFirst_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.skipFirst, listeners, *skipFirst, pluginState.undoManager);
         skipFirst->setComponentID(params.skipFirst->paramID);
         addSynthButton(skipFirst.get(), true);
         skipFirst->setText("skip first?");

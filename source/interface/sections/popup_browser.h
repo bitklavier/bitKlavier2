@@ -155,11 +155,18 @@ public:
 
     void setSelections(PopupItems selections);
     PopupItems getSelectionItems(int index) const { return selections_.items[index]; }
+    bool hasTitle() const { return !selections_.name.empty(); }
     int getRowFromPosition(float mouse_position);
     int getRowHeight();
     int getTextPadding() { return getRowHeight() / 4; }
+    void setWidthScale(float scale) { width_scale_ = scale; }
     int getBrowseWidth();
-    int getBrowseHeight() { return getRowHeight() * selections_.size(); }
+    int getBrowseHeight() {
+        int num_rows = selections_.size();
+        if (!selections_.name.empty())
+            num_rows++;
+        return getRowHeight() * num_rows;
+    }
     juce::Font getFont() ;
     void mouseMove(const juce::MouseEvent& e) override;
     void mouseDrag(const juce::MouseEvent& e) override;
@@ -176,6 +183,7 @@ public:
     void scrollBarMoved(juce::ScrollBar* scroll_bar, double range_start) override;
     void setScrollBarRange();
     int getScrollableRange();
+    int getViewPosition();
 
     void initOpenGlComponents(OpenGlWrapper& open_gl) override;
     void renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) override;
@@ -190,10 +198,6 @@ public:
     int Ypos;
 
 private:
-    int getViewPosition() {
-        int view_height = getHeight();
-        return std::max(0, std::min<int>(selections_.size() * getRowHeight() - view_height, view_position_));
-    }
     void redoImage();
     void moveQuadToRow(OpenGlQuad& quad, int row);
 
@@ -204,6 +208,7 @@ private:
     bool show_selected_;
 
     float view_position_;
+    float width_scale_ = 1.0f;
     std::unique_ptr<OpenGlScrollBar> scroll_bar_;
     std::shared_ptr<OpenGlImage> rows_;
     std::shared_ptr<OpenGlQuad> highlight_;
@@ -228,39 +233,19 @@ public:
     }
 
     void setPosition(juce::Point<int> position, juce::Rectangle<int> bounds);
+    void updateSize();
 
-    void newSelection(PopupList* list, int id, int index) override {
-        if (list == popup_list_.get()) {
-            if (id >= 0) {
-                if (!list->getSelectionItems(index).items.empty()) {
-                    int Ypos   = index * list->getRowHeight() + list->getX();
-                    popup_list_1->setBounds(popup_list_1->getX(),Ypos,popup_list_1->getWidth(),list->getRowHeight()*list->getSelectionItems(index).items.size());
-                    popup_list_1->setSelections(list->getSelectionItems(index));
-                    popup_list_1->showSelected(true);
-                    popup_list_1->setVisible(true);
-                    body_1->setBounds(popup_list_1->getBounds());
-                    border_1->setBounds(popup_list_1->getBounds());
-                    body_1->setVisible(true);
-                    border_1->setVisible(true);
-                } else {
-                    cancel_ = nullptr;
-                    callback_(id,index);
-                    setVisible(false);
-                }
-            }
-            else
-                cancel_();
-        } else if (list == popup_list_1.get()) {
-            cancel_ = nullptr;
-            callback_(id,index);
-            setVisible(false);
-        }
-    }
+    void newSelection(PopupList* list, int id, int index) override;
 
     void focusLost(FocusChangeType cause) override {
         setVisible(false);
         if (cancel_)
             cancel_();
+    }
+
+    void setWidthScale(float scale) {
+        popup_list_->setWidthScale(scale);
+        popup_list_1->setWidthScale(scale);
     }
 
     void setCallback(std::function<void(int,int)> callback) { callback_ = std::move(callback); }
@@ -271,6 +256,7 @@ public:
         popup_list_1->setVisible(false);
         border_1->setVisible(false);
         body_1->setVisible(false);
+        resized();
     }
 
 private:

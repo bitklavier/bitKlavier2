@@ -7,20 +7,22 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"
+#include "buffer_debugger.h"
 #include "ModulationList.h"
 class ModulatorBase;
 
 namespace bitklavier {
     static constexpr int kMaxModulationChannels = 256;
-   class ModulationConnection;
-class StateConnection;
+    class ModulationConnection;
+    class StateConnection;
     struct ModulatorRouting{
         std::vector<ModulationConnection*> mod_connections;
     };
     class ModulationProcessor : public juce::AudioProcessor {
     public:
-        ModulationProcessor(SynthBase& parent,const juce::ValueTree& vt);
-        ~ModulationProcessor() {
+        ModulationProcessor(SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager*);
+        ~ModulationProcessor()
+        {
             // Stop audio callbacks ASAP (host-dependent, but this is the right signal)
             suspendProcessing(true);
 
@@ -28,7 +30,19 @@ class StateConnection;
             snapshots[0].mods.clear();
             snapshots[1].mods.clear();
             activeSnapshotIndex.store(0, std::memory_order_release);
+
+            // Safety: nullify ourselves in any connections that still point to us.
+            // This prevents use-after-free if the connection outlives this processor.
+            const juce::ScopedLock sl (stateConnLock);
+            for (auto* c : all_state_connections_)
+                if (c && c->parent_processor == this)
+                    c->parent_processor = nullptr;
+
+            for (auto* c : all_modulation_connections_)
+                if (c && c->parent_processor == this)
+                    c->parent_processor = nullptr;
         }
+
         bool acceptsMidi() const override {
             return true;
         }
@@ -55,16 +69,8 @@ class StateConnection;
             callOnMainThread([this] { rebuildAndPublishSnapshot(); }, true);
         }
 
-        void releaseResources() override
-        {
-
-        }
-
-        double getTailLengthSeconds() const override
-        {
-
-        }
-
+        void releaseResources() override {}
+        double getTailLengthSeconds() const override {}
         void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
 
         [[maybe_unused]] void addModulator(ModulatorBase*);
@@ -140,34 +146,42 @@ class StateConnection;
             mainThreadAction.call (std::forward<Callable> (func), couldBeAudioThread);
         }
 
+        void requestResetAllContinuousModsRT() noexcept { pendingResetAll_.store(true, std::memory_order_release); }
+
+        bool isToggle = false; // turn this into param; if true, then a key that triggers a mod will then automatically trigger a reset
+        bool isModded = false; // is true if mod has been triggered, to allow for toggling resets
+
     private :
+        std::atomic<bool> pendingResetAll_ { false };
+
         // ===== Snapshot types =====
-    struct RoutingSnapshot : public juce::ReferenceCountedObject
-    {
-        using Ptr = juce::ReferenceCountedObjectPtr<RoutingSnapshot>;
-
-        struct ModEntry
+        struct RoutingSnapshot : public juce::ReferenceCountedObject
         {
-            float lastRaw0 = 0.0f; // last raw sample0 from previous block (audio thread only)
-            ModulatorBase* mod = nullptr; // not owning
-            juce::AudioBuffer<float> tmp; // owned by snapshot
-            std::vector<ModulationConnection*> connections; // not owning
+            using Ptr = juce::ReferenceCountedObjectPtr<RoutingSnapshot>;
+
+            struct ModEntry
+            {
+                float lastRaw0 = 0.0f; // last raw sample0 from previous block (audio thread only)
+                ModulatorBase* mod = nullptr; // not owning
+                juce::AudioBuffer<float> tmp; // owned by snapshot
+                std::vector<ModulationConnection*> connections; // not owning
+            };
+
+            std::vector<ModEntry> mods;
+            int blockSize = 0;
+            double sampleRate = 0.0;
+            void clearForRebuild()
+            {
+                mods.clear();
+            }
         };
-
-        std::vector<ModEntry> mods;
-        int blockSize = 0;
-        double sampleRate = 0.0;
-        void clearForRebuild()
-        {
-            mods.clear();
-        }
-    };
 
         // Double buffer
         RoutingSnapshot snapshots[2];
         std::atomic<int> activeSnapshotIndex { 0 }; // audio reads this
         // Call this whenever graph changes (message thread only)
         void rebuildAndPublishSnapshot();
+        void triggerResets(RoutingSnapshot& snap) const;
 
         // Optional: make bus resizing safer by suspending processing while changing buses
         struct ScopedSuspendProcessing
@@ -194,7 +208,10 @@ class StateConnection;
         int createNewModIndex();
         chowdsp::DeferredAction mainThreadAction;
         SynthBase &parent;
+        juce::CriticalSection stateConnLock;
+
     public :
+        juce::ScopedPointer<BufferDebugger> bufferDebugger;
         std::unique_ptr<ModulationList >mod_list;
 
     };

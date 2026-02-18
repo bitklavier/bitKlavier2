@@ -8,6 +8,41 @@
 #include "FullInterface.h"
 #include "ModulationPreparation.h"
 #include "synth_base.h"
+#include "KeymapProcessor.h"
+
+namespace {
+// Helper to apply default per-port MIDI Y offsets for a specific preparation type.
+// - prepState: ValueTree of the preparation
+// - prepType: BKPreparationType this default should apply to
+// - inputYOffset: offset (px) applied to MIDI input ports (isIn = true) if not already set on the port
+// - outputYOffset: offset (px) applied to MIDI output ports (isIn = false) if not already set on the port
+static void applyDefaultMidiPortOffsetsForType(juce::ValueTree& prepState,
+                                              bitklavier::BKPreparationType prepType,
+                                              float inputYOffset,
+                                              float outputYOffset)
+{
+    const auto currentType = static_cast<int>(prepState.getProperty(IDs::type));
+    if (currentType != static_cast<int>(prepType))
+        return;
+
+    for (auto child : prepState)
+    {
+        if (!child.hasType(IDs::PORT))
+            continue;
+
+        const int ch = (int) child.getProperty(IDs::chIdx, 0);
+        const bool isIn = (bool) child.getProperty(IDs::isIn, false);
+        const bool isMidi = (ch == juce::AudioProcessorGraph::midiChannelIndex);
+
+        if (isMidi)
+        {
+            // Only set if not already set, so manual tweaks can override
+            if (!child.hasProperty(IDs::yOffset))
+                child.setProperty(IDs::yOffset, isIn ? inputYOffset : outputYOffset, nullptr);
+        }
+    }
+}
+}
 
 PreparationSection::PreparationSection(juce::String name, const juce::ValueTree& v, OpenGlWrapper &open_gl,
                                        juce::AudioProcessorGraph::NodeID node, juce::UndoManager &um) :
@@ -58,6 +93,63 @@ juce::AudioProcessor *PreparationSection::getProcessor() const {
 
         return {};
     }
+}
+
+void PreparationSection::changeListenerCallback(juce::ChangeBroadcaster *source) {
+    if (selectedSet->isSelected(this)) {
+        item->setColor(juce::Colours::white);
+        isSelected = true;
+
+        // If this is a Keymap preparation, display its keyStates on the footer keyboard
+        if (auto* keymapProc = dynamic_cast<KeymapProcessor*>(getProcessor()))
+        {
+            if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+            {
+                if (auto* gui = iface->getGui())
+                {
+                    if (gui->footer_)
+                    {
+                        auto keys = keymapProc->getState().params.keyboard_state.keyStates.load();
+                        gui->footer_->displayKeymapState(keys);
+                    }
+                }
+            }
+        }
+    } else {
+        item->setColor(findColour(Skin::kWidgetPrimary1, true));
+        isSelected = false;
+
+        // If this is a Keymap preparation being deselected, clear the footer keyboard display
+        // only if no other Keymap is currently selected
+        if (dynamic_cast<KeymapProcessor*>(getProcessor()) != nullptr)
+        {
+            bool anotherKeymapSelected = false;
+            if (selectedSet != nullptr)
+            {
+                for (int i = 0; i < selectedSet->getNumSelected(); ++i)
+                {
+                    auto* other = selectedSet->getSelectedItem(i);
+                    if (other != this && dynamic_cast<KeymapProcessor*>(other->getProcessor()) != nullptr)
+                    {
+                        anotherKeymapSelected = true;
+                        break;
+                    }
+                }
+            }
+            if (!anotherKeymapSelected)
+            {
+                if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+                {
+                    if (auto* gui = iface->getGui())
+                    {
+                        if (gui->footer_)
+                            gui->footer_->clearKeymapDisplay();
+                    }
+                }
+            }
+        }
+    }
+    item->redoImage();
 }
 
 void PreparationSection::paintBackground(juce::Graphics &g) {
@@ -200,6 +292,23 @@ void PreparationSection::setPortInfo() {
                 }
                 numOuts = numOuts + 1;
             }
+
+            // Apply default per-port MIDI yOffsets for specific preparation types via helper
+            // MidiTarget: Top (output) +6 px, Bottom (input) -4 px (only if not already set on the port)
+            applyDefaultMidiPortOffsetsForType(state,
+                                              bitklavier::BKPreparationType::PreparationTypeMidiTarget,
+                                              -10.0f,  // inputYOffset (bottom)
+                                              +7.0f); // outputYOffset (top)
+
+            applyDefaultMidiPortOffsetsForType(state,
+                                              bitklavier::BKPreparationType::PreparationTypeMidiFilter,
+                                              -7.0f,  // inputYOffset (bottom)
+                                              +3.0f); // outputYOffset (top)
+
+            applyDefaultMidiPortOffsetsForType(state,
+                                              bitklavier::BKPreparationType::PreparationTypeModulation,
+                                              +1.0f,  // inputYOffset (bottom)
+                                              +0.0f); // outputYOffset (top), NA for Mod
         }
     }
 }
@@ -208,8 +317,41 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
     juce::Logger::writeToLog ("prep mousedown");
 
-    //todo investigate need for this only in release build
+    if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
+    {
+        FullInterface* fullInterface = findParentComponentOfClass<FullInterface>();
+        if (fullInterface && fullInterface->header_)
+        {
+            std::vector<std::string> pianoNames = fullInterface->header_->getAllPianoNames();
+            PopupItems menu("add linked prep to...");
+            int id = 1;
+            for (const auto& name : pianoNames)
+            {
+                menu.addItem(id++, name);
+            }
 
+            showPopupSelector(this, e.getPosition(), menu, [this, pianoNames](int id, int selectedIndex) {
+                if (selectedIndex >= 0 && selectedIndex < pianoNames.size())
+                {
+                    DBG("Selected piano to add linked prep to: " << pianoNames[selectedIndex]);
+                    juce::ValueTree linked_piano{IDs::linkedPrep};
+                    auto gallery = state.getParent().getParent().getParent();
+                    auto new_piano = gallery.getChildWithProperty(IDs::name, juce::String(pianoNames[selectedIndex]));
+                    auto p  = state.getProperty(IDs::nodeID);
+                    auto type = state.getProperty(IDs::type);
+                    auto currPianoName = state.getParent().getParent().getProperty(IDs::name);
+
+                    linked_piano.setProperty(IDs::nodeID, p,nullptr);
+                    linked_piano.setProperty(IDs::linkedType,type,nullptr);
+                    linked_piano.setProperty(IDs::linkedPianoName, currPianoName, nullptr);
+
+                    new_piano.getChildWithName(IDs::PREPARATIONS).appendChild(linked_piano,nullptr);
+
+
+                }
+            });
+        }
+    }
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {
@@ -265,22 +407,69 @@ void PreparationSection::resized() {
             auto totalSpaces = static_cast<float>(total) +
                                (static_cast<float>(juce::jmax(0, processor->getBusCount(isInput) - 1)) * 0.5f);
             auto indexPos = static_cast<float>(index/2) + (static_cast<float>(busIdx) * 0.5f);
+            // Determine bounds reference for port placement.
+            // For MidiTarget, MidiFilter, and Modulation, items may draw their icon in paintButton()
+            // instead of populating layer_1_, so use BKItem::getVisualBounds() for those.
             auto transformedBounds = item->layer_1_.getBounds();
+            const auto prepType = static_cast<int>(state.getProperty(IDs::type));
+            const bool useVisualBounds = (prepType == bitklavier::BKPreparationType::PreparationTypeMidiTarget) ||
+                                          (prepType == bitklavier::BKPreparationType::PreparationTypeMidiFilter) ||
+                                          (prepType == bitklavier::BKPreparationType::PreparationTypeModulation);
+            if (useVisualBounds)
+                transformedBounds = item->getVisualBounds();
+            // Translate icon-local bounds to this component's coordinate space
+            transformedBounds = transformedBounds.withPosition(
+                transformedBounds.getX() + item->getX(),
+                transformedBounds.getY() + item->getY());
             if (port->pin.isMIDI()) {
-                port->setBounds(
-                    transformedBounds.getX() + transformedBounds.getWidth() * (
-                        (1.0f + indexPos) / (totalSpaces + 1.0f)),
-                    isInput
+                // For MIDI ports, space them independently across the icon width,
+                // ignoring audio channel/bus counts so that a single MIDI port is centered.
+                int midiTotal = 0;
+                int midiIndex = 0;
+                int seen = 0;
+                for (auto* p : objects)
+                {
+                    if (p->isInput == isInput && p->pin.isMIDI())
+                    {
+                        if (p == port) midiIndex = seen;
+                        ++seen;
+                    }
+                }
+                midiTotal = seen;
+                // Fallback safety
+                if (midiTotal <= 0) midiTotal = 1;
+                const float midiTotalSpaces = static_cast<float>(midiTotal);
+                const float midiIndexPos = static_cast<float>(midiIndex);
+                const float x = transformedBounds.getX() + transformedBounds.getWidth() * (
+                        (1.0f + midiIndexPos) / (midiTotalSpaces + 1.0f)) - portSize / 2.0f;
+                float yBase = isInput
                         ? transformedBounds.getBottom() - portSize / 2 + BKItem::kMeterPixel
-                        : transformedBounds.getY() - portSize / 2,
-                    portSize, portSize);
+                        : transformedBounds.getY() - portSize / 2;
+                // Apply optional per-port/per-prep Y offset only for MidiTarget/MidiFilter/Modulation
+                float yOffset = 0.0f;
+                if (useVisualBounds)
+                {
+                    const float perPortOffset = (float) port->state.getProperty(IDs::yOffset, 0.0f);
+                    const float perPrepDefault = (float) state.getProperty(isInput ? IDs::inputYOffset : IDs::outputYOffset, 0.0f);
+                    yOffset = (perPortOffset != 0.0f) ? perPortOffset : perPrepDefault;
+                }
+                const float y = yBase + yOffset;
+                port->setBounds(x, y, portSize, portSize);
             } else {
-                port->setBounds(isInput
+                const float x = isInput
                       ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
-                      : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel,
-                  transformedBounds.getY() + transformedBounds.getHeight() * (
-                      1.0f - ((1.0f + indexPos) / (totalSpaces + 1.0f))) - portSize / 2,
-                  portSize, portSize);
+                      : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel;
+                float yBase = transformedBounds.getY() + transformedBounds.getHeight() * (
+                      1.0f - ((1.0f + indexPos) / (totalSpaces + 1.0f))) - portSize / 2;
+                float yOffset = 0.0f;
+                if (useVisualBounds)
+                {
+                    const float perPortOffset = (float) port->state.getProperty(IDs::yOffset, 0.0f);
+                    const float perPrepDefault = (float) state.getProperty(isInput ? IDs::inputYOffset : IDs::outputYOffset, 0.0f);
+                    yOffset = (perPortOffset != 0.0f) ? perPortOffset : perPrepDefault;
+                }
+                const float y = yBase + yOffset;
+                port->setBounds(x, y, portSize, portSize);
             }
         }
     }

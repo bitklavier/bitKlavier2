@@ -20,7 +20,7 @@ void TuningState::setCircularKeyOffset (int midiNoteNumber, float val)
     if (midiNoteNumber >= 0 && midiNoteNumber < 12)
         circularTuningOffset[midiNoteNumber] = val;
 
-    if (tuningSystem->get() == TuningSystem::Custom)
+    if (tuningSystem != nullptr && tuningSystem->get() == TuningSystem::Custom)
         copyAtomicArrayToAtomicArray(circularTuningOffset, circularTuningOffset_custom);
 }
 
@@ -41,64 +41,62 @@ void TuningState::setKeyOffset (int midiNoteNumber, float val, bool circular)
 
 void TuningState::processStateChanges()
 {
+    if (fundamental != nullptr) fundamental->processStateChanges();
+    if (tuningSystem != nullptr) tuningSystem->processStateChanges();
+    if (tuningType != nullptr) tuningType->processStateChanges();
+
+    bool touchedAbsolute = false;
+    bool touchedCircular = false;
 
     for (const auto& [index, change] : stateChanges.changeState)
     {
         static juce::var nullVar;
-        auto val = change.getProperty (IDs::absoluteTuning);
 
+        auto val = change.getProperty (IDs::absoluteTuning);
         if (val != nullVar)
         {
+            //DBG("TuningState::processStateChanges => absoluteTuning mod or reset triggered");
+            for (auto& element : absoluteTuningOffset) {
+                element.store(0.0f, std::memory_order_relaxed);
+            }
+            /*
+             * todo: ideally we don't have this string parsing happening on the audio thread like this
+             */
             parseIndexValueStringToAtomicArray(val.toString().toStdString(), absoluteTuningOffset);
+            touchedAbsolute = true;
         }
+
         val = change.getProperty (IDs::circularTuning);
         if (val != nullVar)
         {
-            parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset);
-        }
-        val = change.getProperty(IDs::tuningSystem);
-        if (val != nullVar) {
-            int n = val;
-            TuningSystem t = static_cast<TuningSystem> (1 << n);
-            tuningSystem->setParameterValue(t);
-            setOffsetsFromTuningSystem(
-                tuningSystem->get(),
-                fundamental->getIndex(),
-                circularTuningOffset,
-                circularTuningOffset_custom);
-        }
-        val = change.getProperty(IDs::tuningType);
-        if (val != nullVar) {
-            int n = val;
-            TuningType t =static_cast<TuningType>(1<<n);
-            tuningType->setParameterValue(t);
-        }
-        val = change.getProperty(IDs::fundamental);
-        if (val != nullVar) {
-            int n = val;
-            Fundamental t = static_cast<Fundamental>(1<<n);
-            setFundamental(n);
-        }
+            // if (tuningSystem != nullptr)
+            //     DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = " + tuningSystem->getCurrentValueAsText() + "");
+            // else
+            //     DBG("TuningState::processStateChanges => circularTuning mod or reset triggered, tuningSystem = <uninitialised>");
 
+            for (auto& element : circularTuningOffset_custom) {
+                element.store(0.0f, std::memory_order_relaxed);
+            }
 
+            parseFloatStringToAtomicArrayCircular(val.toString().toStdString(), circularTuningOffset_custom);
+            setOffsetsFromTuningSystem(tuningSystem->get(), fundamental->getIndex(), circularTuningOffset, circularTuningOffset_custom);
 
+            touchedCircular = true;
+        }
     }
+
+    if (touchedAbsolute)
+        absoluteTuningDirty.store(true, std::memory_order_release);
+
+    if (touchedCircular)
+        circularTuningDirty.store(true, std::memory_order_release);
+
     stateChanges.changeState.clear();
 }
 
 void TuningState::setFundamental (int fund)
 {
-    //need to shift keyValues over by difference in fundamental
-    int oldFund = getOldFundamental();
-    setOldFundamental(fund);
-
-    int offset = fund - oldFund;
-    auto& vals = circularTuningOffset;
-    for (int i = 0; i < 12; i++)
-    {
-        int index = ((i - offset) + 12) % 12;
-        circularTuningOffset[i].store(vals[index]);
-    }
+    setOffsetsFromTuningSystem(tuningSystem->get(), fund, circularTuningOffset, circularTuningOffset_custom);
 }
 
 /**
@@ -114,7 +112,7 @@ int TuningState::getSemitoneWidthFundamental()
 
 double TuningState::getSemitoneWidth()
 {
-    return semitoneWidthParams.semitoneWidthSliderParam->getCurrentValue();
+    return *semitoneWidthParams.semitoneWidthSliderParam;
 }
 
 /**
@@ -176,7 +174,11 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
  * Get the tuning offset value, from "offset" slider
  * @return offset in fractional Midi note values
  */
-double TuningState::getOverallOffset() { return offsetKnobParam.offSet->getCurrentValue() * 0.01;}
+double TuningState::getOverallOffset()
+{
+    //DBG("TuningState::getOverallOffset() = " << *offsetKnobParam.offSetSliderParam);
+    return *offsetKnobParam.offSetSliderParam * 0.01;
+}
 
 /**
  * update the last frequency and the last interval, for use in the UI
@@ -251,6 +253,8 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
+        //DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
+        //DBG(" TuningState::getStaticTargetFrequency, about to return " + juce::String(mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference())));
         return mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference());
     }
 
@@ -282,6 +286,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
         workingOffset += getOverallOffset();
+        //DBG(" TuningState::getStaticTargetFrequency with getSemitoneWidthOffsetForMidiNote, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " midiNoteAdjustment = " + juce::String(midiNoteAdjustment));
         return mtof (workingOffset + midiNoteNumberTemp, getGlobalTuningReference());
     }
 
@@ -597,7 +602,7 @@ void TuningState::printSpiralNotes()
 // ********************************************************************************************************************* //
 
 
-TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) : PluginBase (parent, vt, nullptr, tuningBusLayout())
+TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um ) : PluginBase (parent, vt, um, tuningBusLayout())
 {
     state.params.tuningState.initializeSpiralNotes();
 
@@ -607,10 +612,11 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "circularTuning", &(state.params.tuningState.stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "fundamental", &(state.params.tuningState.fundamental->stateChanges)));
+    // route enum combo box state changes to their respective parameter change buffers
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningType", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningType", &(state.params.tuningState.tuningType->stateChanges)));
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningSystem", &(state.params.tuningState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "tuningSystem", &(state.params.tuningState.tuningSystem->stateChanges)));
 
     //adaptive
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
@@ -636,13 +642,29 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "octave", &(state.params.tuningState.semitoneWidthParams.octave->stateChanges)));
 
+    // overall tuningState states
     state.params.tuningState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    //state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
+    if (! state.params.tuningState.stateChanges.defaultState.hasProperty(IDs::absoluteTuning)
+        || state.params.tuningState.stateChanges.defaultState.getProperty(IDs::absoluteTuning).isVoid())
+    {
+        state.params.tuningState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
+    }
+
+    //state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "", nullptr);
+    if (! state.params.tuningState.stateChanges.defaultState.hasProperty(IDs::circularTuning)
+        || state.params.tuningState.stateChanges.defaultState.getProperty(IDs::circularTuning).isVoid())
+    {
+        state.params.tuningState.stateChanges.defaultState.setProperty(IDs::circularTuning, "0 0 0 0 0 0 0 0 0 0 0 0", nullptr);
+    }
+
+    // primary combo boxes
     state.params.tuningState.fundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::fundamental, v.getProperty(IDs::fundamental,0),nullptr);
     state.params.tuningState.tuningSystem->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::tuningSystem, v.getProperty(IDs::tuningSystem,0),nullptr);
+    state.params.tuningState.tuningSystem->stateChanges.defaultState.setProperty(IDs::tuningSystem, v.getProperty(IDs::tuningSystem,0),nullptr);
     state.params.tuningState.tuningType->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
-    state.params.tuningState.fundamental->stateChanges.defaultState.setProperty(IDs::tuningType, v.getProperty(IDs::tuningType,0),nullptr);
+    state.params.tuningState.tuningType->stateChanges.defaultState.setProperty(IDs::tuningType, v.getProperty(IDs::tuningType,0),nullptr);
 
     //adaptive
     state.params.tuningState.adaptiveParams.tAdaptiveIntervalScale->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
@@ -655,16 +677,42 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt) 
     state.params.tuningState.springTuningParams.scaleId_tether->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     state.params.tuningState.springTuningParams.tetherFundamental->stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
 
-    // float newA4 = vt.getRoot().getProperty(IDs::global_A440);
-    // state.params.tuningState.setGlobalTuningReference (newA4);
-    tuningCallbacks += {state.getParameterListeners().addParameterListener(
-       state.params.tuningState.fundamental,
-       chowdsp::ParameterListenerThread::AudioThread,
-       [this]() {
+    // initialize offsets
+    setOffsetsFromTuningSystem(
+        state.params.tuningState.tuningSystem->get(),
+        state.params.tuningState.fundamental->getIndex(),
+        state.params.tuningState.circularTuningOffset,
+        state.params.tuningState.circularTuningOffset_custom);
 
-    state.params.tuningState.setFundamental(state.params.tuningState.fundamental->getIndex());
-       })
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+           state.params.tuningState.fundamental,
+           chowdsp::ParameterListenerThread::AudioThread,
+           [this]()
+           {
+                state.params.tuningState.setFundamental(state.params.tuningState.fundamental->getIndex());
+           }
+       )
    };
+
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+            state.params.tuningState.tuningSystem,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]()
+            {
+                setOffsetsFromTuningSystem(
+                    state.params.tuningState.tuningSystem->get(),
+                    state.params.tuningState.fundamental->getIndex(),
+                    state.params.tuningState.circularTuningOffset,
+                    state.params.tuningState.circularTuningOffset_custom);
+            }
+        )
+    };
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -685,11 +733,25 @@ void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity
     state.params.tuningState.keyReleased(midiNoteNumber);
 }
 
+void TuningProcessor::resetStateModulations()
+{
+    DBG("PROC defaultState: " + state.params.tuningState.stateChanges.defaultState.toXmlString());
+    state.params.tuningState.fundamental->stateChanges.changeState.emplace_back (0, state.params.tuningState.fundamental->stateChanges.defaultState);
+    state.params.tuningState.tuningSystem->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningSystem->stateChanges.defaultState);
+    state.params.tuningState.tuningType->stateChanges.changeState.emplace_back (0, state.params.tuningState.tuningType->stateChanges.defaultState);
+    state.params.tuningState.stateChanges.changeState.emplace_back(0, state.params.tuningState.stateChanges.defaultState);
+}
+
 void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
 {
     const int channel = m.getChannel();
 
-    if (m.isNoteOn())
+    if (channel + (TuningTargetFirst) == TuningTargetModReset)
+    {
+        resetContinuousModulations();
+        resetStateModulations();
+    }
+    else if (m.isNoteOn())
     {
         noteOn (channel, m.getNoteNumber(), m.getVelocity());
     }
@@ -708,7 +770,6 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      *      - the circular and absolute tuning arrays in this case
      */
     state.params.tuningState.processStateChanges();
-    state.params.tuningState.fundamental->processStateChanges();
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     /*

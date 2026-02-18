@@ -9,39 +9,148 @@
 #include "sound_engine.h"
 
 bitklavier::ModulationProcessor::ModulationProcessor(SynthBase &parent,
-                                                     const juce::ValueTree &vt) : juce::AudioProcessor(
-        BusesProperties().withInput("disabled", juce::AudioChannelSet::mono(), false)
-        .withOutput("disabled", juce::AudioChannelSet::mono(), false)
+                                                     const juce::ValueTree &vt,
+                                                     juce::UndoManager* um) :
+juce::AudioProcessor(
+        BusesProperties()
+        .withInput("disabled", juce::AudioChannelSet::stereo(), false)
+        .withOutput("disabled", juce::AudioChannelSet::stereo(), false)
         .withOutput("Modulation", juce::AudioChannelSet::discreteChannels(1), true)
         .withInput("Modulation", juce::AudioChannelSet::discreteChannels(1), true)
-        .withInput("Reset", juce::AudioChannelSet::discreteChannels(1), true)), state(vt),
+        .withInput("Reset", juce::AudioChannelSet::discreteChannels(1), true)),
+    state(vt),
     parent(parent) {
     // getBus(false,1)->setNumberOfChannels(state.getProperty(IDs::numModChans,0));
     createUuidProperty(state);
     mod_list = std::make_unique<ModulationList>(state, &parent, this);
+
+    const bool vtToggle = (bool) state.getProperty(IDs::modulationToggleMode, false);
+    isToggle = vtToggle;
+}
+
+void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap) const
+{
+    for (auto &e: snap.mods)
+    {
+        if (e.mod != nullptr)
+        {
+            for (auto c    :e.connections)
+            {
+                const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+                const float raw0 = e.lastRaw0;
+                c->calculateReset(currentTotal,raw0);
+                parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+            }
+            e.mod->triggerReset();
+        }
+    }
 }
 
 void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
-                                                   juce::MidiBuffer &midiMessages) {
+                                                   juce::MidiBuffer &midiMessages)
+{
     const int idx = activeSnapshotIndex.load(std::memory_order_acquire);
     auto &snap = snapshots[idx];
 
     if (snap.mods.empty())
         return;
 
+    // From MIDITarget Reset messages, which should trigger a reset of all mods to a the targeted prep
+    if (pendingResetAll_.exchange(false, std::memory_order_acq_rel))
+    {
+        triggerResets(snap);
+        isModded = false;
+        // //DBG("ModulationProcessor::processBlock, pendingResetAll_ = true");
+        // for (auto& e : snap.mods)
+        //     if (e.mod != nullptr) {
+        //         for (    auto c    :e.connections) {
+        //             //calculate the carryapplied offset in order to return to slider
+        //             //c->currentDestinationSliderVal;
+        //             const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+        //             const float raw0 = e.lastRaw0;               // wh
+        //             c->calculateReset(currentTotal,raw0);
+        //
+        //             // for full prep reset you want to set carryappliedto0
+        //             //like so c->carryApplied_ = 0;
+        //             //and set scalingvalueto0. which may be slightly more code due to trigger locks
+        //             //c->setScalingValue(0.f);
+        //             parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+        //         }
+        //         e.mod->triggerReset();
+        //     }
+        //     // if (auto* mod = e.mod)
+        //     //     mod->continuousReset(); // For Ramp, this calls triggerReset()
+    }
 
+    // from Audio Bus
     auto reset_in = getBusBuffer(buffer, true, 2);
-    if (reset_in.getSample(0, 0) == 1.0f) {
-        for (auto &e: snap.mods)
-            if (e.mod != nullptr)
-                e.mod->triggerReset();
+    if (reset_in.getSample(0, 0) == 1.0f)
+    {
+        triggerResets(snap);
+        isModded = false;
+        // //DBG("ModulationProcessor::processBlock, reset from sample == 1 on reset bus");
+        // for (auto &e: snap.mods)
+        // {
+        //     if (e.mod != nullptr)
+        //     {
+        //         for (auto c    :e.connections)
+        //         {
+        //             //calculate the carryapplied offset in order to return to slider
+        //             //c->currentDestinationSliderVal;
+        //             const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
+        //             const float raw0 = e.lastRaw0;               // wh
+        //             c->calculateReset(currentTotal,raw0);
+        //
+        //             // for full prep reset you want to set carryappliedto0
+        //             //like so c->carryApplied_ = 0;
+        //             //and set scalingvalueto0. which may be slightly more code due to trigger locks
+        //             //c->setScalingValue(0.f);
+        //             parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
+        //         }
+        //         e.mod->triggerReset();
+        //     }
+        // }
+    }
+
+    // --- 2. SURGICAL CLEARING OF OUTPUTS ---
+    // Instead of buffer.clear(), we only clear the channels
+    // we are actually going to write to (the Modulation output bus).
+    if (auto* modOutBus = getBus(false, 1)) {
+        for (int ch = 0; ch < modOutBus->getNumberOfChannels(); ++ch) {
+            int absIdx = getChannelIndexInProcessBlockBuffer(false, 1, ch);
+            buffer.clear(absIdx, 0, buffer.getNumSamples());
+        }
+    }
+
+    // Also clear the 'disabled' bus (Bus 0) to be safe
+    if (auto* disabledBus = getBus(false, 0)) {
+        for (int ch = 0; ch < disabledBus->getNumberOfChannels(); ++ch) {
+            int absIdx = getChannelIndexInProcessBlockBuffer(false, 0, ch);
+            buffer.clear(absIdx, 0, buffer.getNumSamples());
+        }
     }
 
     // MIDI note-on => request retrigger
     for (auto msg: midiMessages) {
-        if (msg.getMessage().isNoteOn()) if (msg.getMessage().isNoteOn()) for (auto &e: snap.mods) if (e.mod != nullptr)
-            e.mod->pendingRetrigger.store(true, std::memory_order_release);
-    } // Main render/mix
+        if (msg.getMessage().isNoteOn())
+        {
+            if (isModded && isToggle)
+            {
+                //do reset
+                triggerResets(snap);
+                isModded = false;
+            }
+            else // trigger the mods
+            {
+                for (auto &e: snap.mods)
+                    if (e.mod != nullptr)
+                        e.mod->pendingRetrigger.store(true, std::memory_order_release);
+                isModded = true;
+            }
+        }
+    }
+
+    // Main render/mix
     for (auto &e: snap.mods) {
         auto *mod = e.mod;
         if (mod == nullptr)
@@ -50,18 +159,17 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
         if (mod->type != ModulatorType::AUDIO)
             continue;
 
-
-
         const bool doRetrig = mod->pendingRetrigger.exchange(false, std::memory_order_acq_rel);
         if (doRetrig) {
+            //DBG("doTrig == true");
             // capture per-connection carry + compute new scaling per connection
             for (auto *c: e.connections) {
                 if (!c) continue;
                 const float raw0 = e.lastRaw0;               // where the ramp was before retrigger
                 const float oldScale = c->getScalingForDSP();// locked/old scaling BEFORE you change it
                 float carry = 0.0f;
-                DBG("oldScale" + juce::String(oldScale));
-                DBG("lastRaw" + juce::String(raw0));
+                //DBG("oldScale = " + juce::String(oldScale));
+                //DBG("lastRaw = " + juce::String(raw0));
                 // handle polarity the same way you mix
                 const bool polarityMatches =
                     (mod->isDefaultBipolar && c->isBipolar()) ||
@@ -77,9 +185,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     carry = unipolar0 * oldScale;
                 }
                 const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
-
-
-
 
                 // const float carry = c->lastAppliedPrev_.load(std::memory_order_relaxed);
                 // c->setCarryActive(carry);
@@ -157,7 +262,6 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     }
 }
 
-
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase *mod) {
     // callOnMainThread([this, mod]
     //    {
@@ -173,7 +277,6 @@ void bitklavier::ModulationProcessor::addModulator(ModulatorBase *mod) {
         index = modulators_.size();
         modulators_.push_back(mod);
     }
-
 
     if (tmp_buffers.size() <= index) tmp_buffers.resize(index + 1);
     if (mod_routing.size() <= index) mod_routing.resize(index + 1);
@@ -255,6 +358,9 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(StateConnection *connection) {
+    const juce::ScopedLock sl (stateConnLock);
+    if (std::find(all_state_connections_.begin(), all_state_connections_.end(), connection) != all_state_connections_.end())
+        return;
     all_state_connections_.push_back(connection);
 
     // auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
@@ -263,6 +369,9 @@ void bitklavier::ModulationProcessor::addModulationConnection(StateConnection *c
 }
 
 void bitklavier::ModulationProcessor::removeModulationConnection(StateConnection *connection) {
+    if (connection == nullptr)
+        return;
+    const juce::ScopedLock sl (stateConnLock);
     auto end = std::remove(all_state_connections_.begin(), all_state_connections_.end(), connection);
     all_state_connections_.erase(end, all_state_connections_.end());
 };
@@ -284,6 +393,7 @@ int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavie
 }
 
 int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavier::StateConnection &connection) {
+    const juce::ScopedLock sl (stateConnLock);
     for (auto _connection: all_state_connections_) {
         if (connection.destination_name == _connection->destination_name) {
             return _connection->modulation_output_bus_index;

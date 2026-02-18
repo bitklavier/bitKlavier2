@@ -189,7 +189,7 @@ public:
         paintChildrenBackgrounds (g);
     }
 
-    void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey) override
+    void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey, juce::ModifierKeys mods = juce::ModifierKeys()) override
     {
         DBG("BKKeymapKeyboardChanged called in ResonanceParametersView " + juce::String(lastKey));
         sparams_.heldKeymap_changedInUI = lastKey; // notify processor that the held keymap has changed vai the UI

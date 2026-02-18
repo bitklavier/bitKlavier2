@@ -85,12 +85,19 @@ juce_add_plugin("${PROJECT_NAME}"
     # Note: this must have at least one upper-case character
     PLUGIN_CODE B202
     FORMATS "${FORMATS}"
+    NEEDS_WEB_BROWSER TRUE
 
     # The name of your final executable
     # This is how it's listed in the DAW
     # This can be different from PROJECT_NAME and can have spaces!
     # You might want to use v${MAJOR_VERSION} here once you go to v2...
     PRODUCT_NAME "${PRODUCT_NAME}")
+
+target_link_libraries("${PROJECT_NAME}" PRIVATE
+        "-framework MetalPerformanceShaders"
+        "-framework MetalPerformanceShadersGraph"
+        "-framework Metal"
+)
 
 # This lets us use our code in both the JUCE targets and our Test target
 # Without running into ODR violations
@@ -176,7 +183,7 @@ target_compile_definitions(SharedCode
 
         JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1
     # JUCE_WEB_BROWSER and JUCE_USE_CURL off by default
-    JUCE_WEB_BROWSER=0  # If you set this to 1, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
+    JUCE_WEB_BROWSER=1  # If you set this to 1, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
     JUCE_USE_CURL=0     # If you set this to 1, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
     JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_OPENGL3=1
@@ -283,3 +290,69 @@ include(Benchmarks)
 #
 # Pass some config to GA (like our PRODUCT_NAME)
 include(GitHubENV)
+if(APPLE)
+    set(STANDALONE_TGT "${PROJECT_NAME}_Standalone")
+
+    if(TARGET "${STANDALONE_TGT}")
+        add_custom_command(TARGET "${STANDALONE_TGT}" POST_BUILD
+                COMMAND /bin/sh -c
+                "if [ \"$<CONFIG>\" = \"Debug\" ]; then \
+           build_dir=\"$<TARGET_PROPERTY:${STANDALONE_TGT},BINARY_DIR>\"; \
+           artefacts_dir=\"$build_dir/${PROJECT_NAME}_artefacts\"; \
+           juce_codegen_dir=\"$artefacts_dir/JuceLibraryCode\"; \
+           if [ ! -d \"$juce_codegen_dir\" ]; then \
+             echo \"ERROR: JUCE codegen dir not found: $juce_codegen_dir\"; \
+             exit 1; \
+           fi; \
+           base_ent=\"$(find \"$juce_codegen_dir\" -maxdepth 2 -name '*Standalone*.entitlements' -print -quit)\"; \
+           if [ -z \"$base_ent\" ]; then \
+             echo \"ERROR: Could not find Standalone entitlements under $juce_codegen_dir\"; \
+             echo \"       Available entitlements:\"; \
+             find \"$juce_codegen_dir\" -maxdepth 2 -name '*.entitlements' -print || true; \
+             exit 1; \
+           fi; \
+           debug_ent=\"$artefacts_dir/JuceLibraryCode/${STANDALONE_TGT}.debug.entitlements\"; \
+           cp \"$base_ent\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.get-task-allow bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.get-task-allow true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.cs.disable-library-validation bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.cs.disable-library-validation true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.cs.allow-unsigned-executable-memory bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.cs.allow-unsigned-executable-memory true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.cs.allow-jit bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.cs.allow-jit true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.cs.allow-dyld-environment-variables bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.cs.allow-dyld-environment-variables true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.network.client bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.network.client true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.network.server bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.network.server true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.device.audio-input bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.device.audio-input true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.device.usb bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.device.usb true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.device.bluetooth bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.device.bluetooth true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.personal-information.location bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.personal-information.location true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.automation.apple-events bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.automation.apple-events true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.cs.disable-executable-page-protection bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.cs.disable-executable-page-protection true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.cs.debugger bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.cs.debugger true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.files.user-selected.read-write bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.files.user-selected.read-write true\" \"$debug_ent\"; \
+           /usr/libexec/PlistBuddy -c \"Add :com.apple.security.files.downloads.read-write bool true\" \"$debug_ent\" 2>/dev/null || \
+           /usr/libexec/PlistBuddy -c \"Set :com.apple.security.files.downloads.read-write true\" \"$debug_ent\"; \
+           /usr/bin/codesign --force --deep --sign - \
+             --entitlements \"$debug_ent\" \
+             \"$<TARGET_BUNDLE_DIR:${STANDALONE_TGT}>\"; \
+           echo \"Ad-hoc signed $<TARGET_BUNDLE_DIR:${STANDALONE_TGT}> with entitlements:\"; \
+           codesign -d --entitlements - \"$<TARGET_BUNDLE_DIR:${STANDALONE_TGT}>\"; \
+         fi"
+                VERBATIM
+                COMMENT "Debug ad-hoc codesign ${STANDALONE_TGT} with JUCE entitlements + get-task-allow"
+        )
+    endif()
+endif()
