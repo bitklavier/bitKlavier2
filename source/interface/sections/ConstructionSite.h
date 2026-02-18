@@ -102,10 +102,6 @@ public:
 
     void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails& source)
     {
-        // DBG("ConstructionSite::dragOperationEnded - item_dropped_on_prep_: " << (int)item_dropped_on_prep_);
-        // DBG("ConstructionSite::dragOperationEnded - mouse_drag_position: " << mouse_drag_position_.toString());
-        // DBG("ConstructionSite::dragOperationEnded - drag_offset: " << drag_offset_.toString());
-
         //setMouseCursor(juce::MouseCursor::ParentCursor);
         auto* targetComp = dynamic_cast<PreparationSection*>(getComponentAt(mouse_drag_position_));
         const bool droppedOnDifferentPrep = (item_dropped_on_prep_ && targetComp != nullptr && targetComp != source.sourceComponent.get());
@@ -116,17 +112,12 @@ public:
             {
                 if (fc.get() == source.sourceComponent)
                 {
-                    // DBG("ConstructionSite::dragOperationEnded - Updating curr_point for " << fc->getName());
                     fc->undo.beginNewTransaction();
                     fc->curr_point = mouse_drag_position_ - drag_offset_;
                 }
             }
             cableView._update();
             modulationLineView._update();
-        }
-        else
-        {
-            // DBG("ConstructionSite::dragOperationEnded - Dropped on different prep, skipping update");
         }
         item_dropped_on_prep_ = false;
     }
