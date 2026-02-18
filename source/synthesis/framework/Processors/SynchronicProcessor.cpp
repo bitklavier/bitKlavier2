@@ -303,6 +303,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             //check to see if enough time has passed for next beat
             if (cluster->getPhasor() >= numSamplesBeat)
             {
+                DBG("phasor = " << cluster->getPhasor() << ", numSamplesBeat = " << numSamplesBeat);
                 // if patternSync has been set by a target message, reset the phase of all the counters
                 if (cluster->doPatternSync)
                 {

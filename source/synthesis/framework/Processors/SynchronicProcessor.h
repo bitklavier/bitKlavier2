@@ -353,9 +353,10 @@ class SynchronicCluster
     inline void step(juce::uint64 numSamplesBeat)
     {
         // set the phasor back by the number of samples to the next beat
-        // phasor -= numSamplesBeat;
-        // phasor -= numSamplesBeat;
-        phasor = 0; // the decrement doesn't make sense to me, why not just set the phasor to 0?
+        phasor -= numSamplesBeat;
+        //phasor = 0;
+        // the decrement doesn't make sense to me, why not just set the phasor to 0?
+        // - because we get slop from the blocksize, and you'll end up running slow!
 
         // increment all the counters
         if (++lengthMultiplierCounter >= _sparams->sustainLengthMultipliers.sliderVals_size)
