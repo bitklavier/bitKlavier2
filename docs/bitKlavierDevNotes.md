@@ -2,6 +2,8 @@
 ---------
 ## Gui Layout Notes
 - FlexBox is nice. see `void HeaderSection::resized()`
+- the cables are drawn in Cable.h `resized()`
+
 ## Value Tree Notes
 - comment/uncomment this line `valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);` in FullInterface.cpp to make the VT debugger window visible when needed
 - for Gallery Settings, see `updateChangedGalleryState` in sound_engine.h 
@@ -12,6 +14,7 @@
 - note that the Save/SaveAs/Load stuff for the top File menu is all handled in `getCommandInfo` and so on in main.cpp (not ApplicationCommandHandler; not sure why we have those classes/files)
   - also `PopupMenu getMenuForIndex` in synth_editor.h, for adding the elements to that File menu and the others.
     - so we'll want to add copy, paste, etc... there as well
+
 ## Mod Notes
 - i think there should be an add menu, in addition to being able to control-click
   - let's put LFO below ramp and before state, since state is really quite different than LFO/ramp

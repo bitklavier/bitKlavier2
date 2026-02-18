@@ -147,9 +147,23 @@ public:
 
         linePath.clear();
         linePath.startNewSubPath (p1);
-        linePath.cubicTo (p1.x, p1.y + (p2.y - p1.y) * 0.33f,
-                          p2.x, p1.y + (p2.y - p1.y) * 0.66f,
-                          p2.x, p2.y);
+
+        //if (p2.y < p1.y)
+        {
+            linePath.cubicTo (p1.x, p1.y + (p2.y - p1.y) * 0.33f,
+                             p2.x, p1.y + (p2.y - p1.y) * 0.66f,
+                             p2.x, p2.y);
+        }
+        /*
+         * todo: figure out an elegant way to draw cables when the outlet is above the inlet
+         *          - probably requires two linePaths
+         */
+        // else
+        // {
+        //     linePath.cubicTo (p1.x, p1.y - 20,
+        //                      p1.x + (p2.x - p1.x) * 0.5, p1.y - 20,
+        //                      p2.x, p2.y);
+        // }
 
         juce::PathStrokeType wideStroke (8.0f);
         wideStroke.createStrokedPath (hitPath, linePath);
