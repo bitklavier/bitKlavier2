@@ -323,6 +323,11 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
     juce::Logger::writeToLog ("prep mousedown");
 
+    if (auto* site = dynamic_cast<ConstructionSite *>(getParentComponent()))
+    {
+        site->drag_offset_ = (e.getEventRelativeTo(this).getPosition() - getLocalBounds().getCentre()).toInt();
+    }
+
     if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
     {
         FullInterface* fullInterface = findParentComponentOfClass<FullInterface>();
@@ -362,7 +367,12 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {
 
-    dynamic_cast<ConstructionSite *>(getParentComponent())->item_dropped_on_prep_ = true;
+    if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+    {
+        site->mouse_drag_position_ = site->getLocalPoint(this, dragSourceDetails.localPosition);
+        site->item_dropped_on_prep_ = true;
+    }
+
     auto dropped_tree = juce::ValueTree::fromXml(dragSourceDetails.description);
 
     //should switch to strings for type names
@@ -387,6 +397,27 @@ void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetail
         for (auto listener: listeners_)
             listener->synchronicDropped(dropped_tree, state);
     }
+}
+
+void PreparationSection::itemDragMove(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+    {
+        site->mouse_drag_position_ = site->getLocalPoint(this, dragSourceDetails.localPosition);
+        site->item_dropped_on_prep_ = true;
+    }
+}
+
+void PreparationSection::itemDragEnter(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+        site->item_dropped_on_prep_ = true;
+}
+
+void PreparationSection::itemDragExit(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
+{
+    if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+        site->item_dropped_on_prep_ = false;
 }
 
 void PreparationSection::resized() {
@@ -532,8 +563,8 @@ void PreparationSection::mouseDrag(const juce::MouseEvent &e) {
         listener->preparationDragged(this, e);
     }
     setMouseCursor(juce::MouseCursor::DraggingHandCursor);
-    dynamic_cast<ConstructionSite *>(getParentComponent())->startDragging(
-        state.toXmlString(), this, juce::ScaledImage(), true);
+    auto* site = dynamic_cast<ConstructionSite *>(getParentComponent());
+    site->startDragging(state.toXmlString(), this, juce::ScaledImage(), true);
     //    if (e.mods.isLeftButtonDown()) {
     //        auto newPos = this->getPosition() + e.getDistanceFromDragStart();
     //        this->setPosition(newPos);

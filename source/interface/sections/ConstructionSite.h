@@ -17,6 +17,7 @@ typedef Loki::Factory<std::unique_ptr<PreparationSection>, juce::Identifier, con
 class ConstructionSite : public SynthSection,
 
                          public juce::DragAndDropContainer,
+                         public juce::DragAndDropTarget,
                          // public juce::ChangeListener,
                          private PreparationList::Listener,
                          public PreparationSection::Listener,
@@ -75,32 +76,64 @@ public:
         parent.copyPropertiesFrom (vt, nullptr);
     }
 
+    bool isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& dragSourceDetails) override
+    {
+        return true;
+    }
+
+    void itemDragMove (const juce::DragAndDropTarget::SourceDetails& dragSourceDetails) override
+    {
+        mouse_drag_position_ = dragSourceDetails.localPosition;
+    }
+
+    void itemDropped (const juce::DragAndDropTarget::SourceDetails& dragSourceDetails) override
+    {
+        // We handle this in dragOperationEnded
+    }
+
     void dragOperationStarted (const juce::DragAndDropTarget::SourceDetails&)
     {
         //wsetMouseCursor(juce::MouseCursor::DraggingHandCursor);
     }
 
+    void dragOperationMoved (const juce::DragAndDropTarget::SourceDetails& source)
+    {
+    }
+
     void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails& source)
     {
+        // DBG("ConstructionSite::dragOperationEnded - item_dropped_on_prep_: " << (int)item_dropped_on_prep_);
+        // DBG("ConstructionSite::dragOperationEnded - mouse_drag_position: " << mouse_drag_position_.toString());
+        // DBG("ConstructionSite::dragOperationEnded - drag_offset: " << drag_offset_.toString());
+
         //setMouseCursor(juce::MouseCursor::ParentCursor);
-        if (!item_dropped_on_prep_ || source.sourceComponent == getComponentAt(mouse_drag_position_))
+        auto* targetComp = dynamic_cast<PreparationSection*>(getComponentAt(mouse_drag_position_));
+        const bool droppedOnDifferentPrep = (item_dropped_on_prep_ && targetComp != nullptr && targetComp != source.sourceComponent.get());
+
+        if (!droppedOnDifferentPrep)
         {
             for (auto& fc : plugin_components)
             {
                 if (fc.get() == source.sourceComponent)
                 {
+                    // DBG("ConstructionSite::dragOperationEnded - Updating curr_point for " << fc->getName());
                     fc->undo.beginNewTransaction();
-                    fc->curr_point = mouse_drag_position_;
+                    fc->curr_point = mouse_drag_position_ - drag_offset_;
                 }
             }
             cableView._update();
             modulationLineView._update();
+        }
+        else
+        {
+            // DBG("ConstructionSite::dragOperationEnded - Dropped on different prep, skipping update");
         }
         item_dropped_on_prep_ = false;
     }
     bool item_dropped_on_prep_ = false;
 
     juce::Point<int> mouse_drag_position_;
+    juce::Point<int> drag_offset_;
     juce::OwnedArray<PluginWindow> activePluginWindows;
     void createWindow (juce::AudioProcessorGraph::Node* node, PluginWindow::Type type);
     std::vector<std::unique_ptr<PreparationSection>> plugin_components;

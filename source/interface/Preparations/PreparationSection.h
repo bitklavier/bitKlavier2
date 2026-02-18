@@ -183,9 +183,9 @@ public:
     }
 
     void itemDropped(const SourceDetails &dragSourceDetails) override;
-    void itemDragMove(const SourceDetails &dragSourceDetails) {}
-    void itemDragEnter(const SourceDetails &dragSourceDetails) {}
-    void itemDragExit(const SourceDetails &dragSourceDetails) {}
+    void itemDragMove(const SourceDetails &dragSourceDetails) override;
+    void itemDragEnter(const SourceDetails &dragSourceDetails) override;
+    void itemDragExit(const SourceDetails &dragSourceDetails) override;
 
     juce::Point<float> getPinPos(int index, bool isInput) const {
         for (auto *port: objects)
