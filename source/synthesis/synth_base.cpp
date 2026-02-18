@@ -1279,10 +1279,12 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
     connection->source_name = "";
     connection->destination_name = "";
     DBG("state connection listener being removed");
-    connection->processor->removeListener (connection);
+    if (connection->processor)
+        connection->processor->removeListener (connection);
     state_connections_.remove (connection);
     // engine_->removeConnection (connection->connection_);
         connection->connection_ = {};
+    if (connection->parent_processor)
         connection->parent_processor->removeModulationConnection (connection);
     connection->state.getParent().removeChild (connection->state, nullptr);
 }
@@ -1299,7 +1301,8 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
 
 
 
-    connection->parent_processor->removeModulationConnection (connection, destination_name);
+    if (connection->parent_processor)
+        connection->parent_processor->removeModulationConnection (connection, destination_name);
     connection->connection_ = {};
     um.beginNewTransaction();
     connection->state.getParent().removeChild (connection->state, nullptr);

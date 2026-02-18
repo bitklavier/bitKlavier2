@@ -113,6 +113,8 @@ class ModulationProcessor;
         void reset() {
             source_name = "";
             destination_name = "";
+            parent_processor = nullptr;
+            processor = nullptr;
         }
         float getScaling() {
             return scalingValue_.load();
@@ -505,6 +507,8 @@ struct StateConnection : public ModulatorBase::Listener{
             destination_name = "";
             // Ensure we don't hold dangling pointers across gallery/prep resets.
             changeBuffer = nullptr;
+            parent_processor = nullptr;
+            processor = nullptr;
         }
 
         std::string source_name;

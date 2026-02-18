@@ -30,6 +30,17 @@ namespace bitklavier {
             snapshots[0].mods.clear();
             snapshots[1].mods.clear();
             activeSnapshotIndex.store(0, std::memory_order_release);
+
+            // Safety: nullify ourselves in any connections that still point to us.
+            // This prevents use-after-free if the connection outlives this processor.
+            const juce::ScopedLock sl (stateConnLock);
+            for (auto* c : all_state_connections_)
+                if (c && c->parent_processor == this)
+                    c->parent_processor = nullptr;
+
+            for (auto* c : all_modulation_connections_)
+                if (c && c->parent_processor == this)
+                    c->parent_processor = nullptr;
         }
 
         bool acceptsMidi() const override {
