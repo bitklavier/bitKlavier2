@@ -1055,9 +1055,24 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     auto mod_connections = getActivePianoValueTree().getChildWithName (IDs::MODCONNECTIONS);
     auto mod_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
 
-    //get backend audio graph representation from value tree
-    auto source_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
-    auto dest_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
+    // get backend audio graph representation from value tree
+    auto src_node_id_var = mod_src.getProperty (IDs::nodeID);
+    auto dst_node_id_var = mod_dst.getProperty (IDs::nodeID);
+
+    if (src_node_id_var.isVoid() || dst_node_id_var.isVoid())
+    {
+        DBG ("connectModulation: mod_src or mod_dst missing nodeID, skipping.");
+        return;
+    }
+
+    auto source_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (src_node_id_var));
+    auto dest_node = engine_->getNodeForId (juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (dst_node_id_var));
+
+    if (source_node == nullptr || dest_node == nullptr)
+    {
+        DBG ("connectModulation: source_node or dest_node not found in engine, skipping.");
+        return;
+    }
 
     auto parameter_tree = mod_dst.getChildWithName (IDs::MODULATABLE_PARAMS).getChildWithProperty (IDs::parameter, juce::String (dst_param));
     connection->setParamTree (parameter_tree);
@@ -1319,10 +1334,25 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
     auto mod_src = parentPiano.getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
 
     // find the nodes in the audio graph
+    auto src_node_id_var = mod_src.getProperty (IDs::nodeID);
+    auto dst_node_id_var = mod_dst.getProperty (IDs::nodeID);
+
+    if (src_node_id_var.isVoid() || dst_node_id_var.isVoid())
+    {
+        DBG ("connectStateModulation: mod_src or mod_dst missing nodeID, skipping.");
+        return;
+    }
+
     auto source_node = engine_->getNodeForId (
-        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID)));
+        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (src_node_id_var));
     auto dest_node = engine_->getNodeForId (
-        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID)));
+        juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (dst_node_id_var));
+
+    if (source_node == nullptr || dest_node == nullptr)
+    {
+        DBG ("connectStateModulation: source_node or dest_node not found in engine, skipping.");
+        return;
+    }
 
     // update the connection with the nodes and listener information
     connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());

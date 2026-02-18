@@ -197,6 +197,7 @@ namespace bitklavier {
         int createNewModIndex();
         chowdsp::DeferredAction mainThreadAction;
         SynthBase &parent;
+        juce::CriticalSection stateConnLock;
 
     public :
         juce::ScopedPointer<BufferDebugger> bufferDebugger;

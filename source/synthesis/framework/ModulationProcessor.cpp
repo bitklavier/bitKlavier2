@@ -358,6 +358,9 @@ void bitklavier::ModulationProcessor::removeModulationConnection(ModulationConne
 }
 
 void bitklavier::ModulationProcessor::addModulationConnection(StateConnection *connection) {
+    const juce::ScopedLock sl (stateConnLock);
+    if (std::find(all_state_connections_.begin(), all_state_connections_.end(), connection) != all_state_connections_.end())
+        return;
     all_state_connections_.push_back(connection);
 
     // auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
@@ -366,6 +369,9 @@ void bitklavier::ModulationProcessor::addModulationConnection(StateConnection *c
 }
 
 void bitklavier::ModulationProcessor::removeModulationConnection(StateConnection *connection) {
+    if (connection == nullptr)
+        return;
+    const juce::ScopedLock sl (stateConnLock);
     auto end = std::remove(all_state_connections_.begin(), all_state_connections_.end(), connection);
     all_state_connections_.erase(end, all_state_connections_.end());
 };
@@ -387,6 +393,7 @@ int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavie
 }
 
 int bitklavier::ModulationProcessor::getNewModulationOutputIndex(const bitklavier::StateConnection &connection) {
+    const juce::ScopedLock sl (stateConnLock);
     for (auto _connection: all_state_connections_) {
         if (connection.destination_name == _connection->destination_name) {
             return _connection->modulation_output_bus_index;
