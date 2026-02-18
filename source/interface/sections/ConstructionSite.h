@@ -27,32 +27,20 @@ public:
     ConstructionSite (const juce::ValueTree& v, juce::UndoManager& um, OpenGlWrapper& open_gl, SynthGuiData* data, juce::ApplicationCommandManager& _manager);
     ~ConstructionSite (void);
 
-    void redraw (void);
-
     ApplicationCommandTarget* getNextCommandTarget() override
     {
         return findFirstTargetParentComponent();
     }
+
     void getAllCommands (juce::Array<juce::CommandID>& commands) override;
     void getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info) override;
     bool perform (const InvocationInfo& info) override;
-    // void initializeCommandManager();
-
-    // bool keyPressed (const juce::KeyPress& k, juce::Component* c) override;
     void itemIsBeingDragged (BKItem* thisItem, const juce::MouseEvent& e);
-
     void paintBackground (juce::Graphics& g) override;
-
     void addItem (int selection, bool center = false);
-
-    // void changeListenerCallback(juce::ChangeBroadcaster *source) override
-    //
-    // {
-    //     updateComponents();
-    // }
-
     void updateComponents();
     void reset() override;
+    void redraw (void);
 
     BKPort* findPinAt (juce::Point<float> pos) const
     {
@@ -68,6 +56,7 @@ public:
 
         return nullptr;
     }
+
     PreparationSection* getComponentForPlugin (juce::AudioProcessorGraph::NodeID nodeID) const;
 
     juce::Viewport* view;
@@ -118,6 +107,7 @@ public:
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
     void removeAllGuiListeners();
     void linkedPiano() override;
+
 private:
     PreparationList* prep_list;
     bitklavier::ConnectionList* connection_list;
@@ -131,8 +121,7 @@ private:
     juce::CriticalSection open_gl_critical_section_;
     std::shared_ptr<OpenGlLine> _line;
 
-    bool edittingComment;
-
+    bool editing_comment_;
     juce::OwnedArray<juce::HashMap<int, int>> pastemap;
     friend class ModulationLineView;
     ModulationLineView modulationLineView;
@@ -152,19 +141,12 @@ private:
     juce::UndoManager& undo;
 
     void draw (void);
-
     void prepareItemDrag (BKItem* item, const juce::MouseEvent& e, bool center);
-
     void resized() override;
-
     void mouseDown (const juce::MouseEvent& eo) override;
-
     void mouseUp (const juce::MouseEvent& eo) override;
-
     void mouseDrag (const juce::MouseEvent& e) override;
-
     void mouseMove (const juce::MouseEvent& e) override;
-
     void deleteItem (BKItem* item);
 
     BKItem* getItemAtPoint (const int X, const int Y);

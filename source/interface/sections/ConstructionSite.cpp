@@ -200,7 +200,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -210,7 +210,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -224,7 +224,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2., lastY -  roundToInt(t.getProperty(IDs::height))/ 2.)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -234,7 +234,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2,lastY - prepHeight / 2)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -249,7 +249,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
                  t.setProperty(IDs::width, prepWidth, nullptr);
                  t.setProperty(IDs::height, prepHeight, nullptr);
-                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - prepWidth / 2., lastY - prepHeight / 2.)), nullptr);
+                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
                  prep_list->appendChild(t,  &undo);
                  return true;
             }
@@ -263,7 +263,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
                  t.setProperty(IDs::width, prepWidth, nullptr);
                  t.setProperty(IDs::height, prepHeight, nullptr);
-                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX - 245 / 2,lastY - 125 / 2)), nullptr);
+                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
                  prep_list->appendChild(t,  &undo);
                  return true;
             }
@@ -278,7 +278,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                    juce::Point<int>(lastX, lastY)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -293,7 +293,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                    juce::Point<int>(lastX, lastY)), nullptr);
 
                 // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
@@ -311,7 +311,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                                             juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                                             juce::Point<int>(lastX, lastY)), nullptr);
 
                 prep_list->appendChild(t,  &undo);
                 return true;
@@ -327,7 +327,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                                             juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                                             juce::Point<int>(lastX, lastY)), nullptr);
 
                 prep_list->appendChild(t,  &undo);
                 return true;
@@ -343,7 +343,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                                             juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                                             juce::Point<int>(lastX, lastY)), nullptr);
 
                 prep_list->appendChild(t,  &undo);
                 return true;
@@ -359,7 +359,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                    juce::Point<int>(lastX, lastY)), nullptr);
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
@@ -376,7 +376,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX - roundToInt(t.getProperty(IDs::width)) / 2,lastY -  roundToInt(t.getProperty(IDs::height))/ 2)), nullptr);
+                    juce::Point<int>(lastX, lastY)), nullptr);
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
@@ -475,6 +475,7 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->setCentrePosition (s->curr_point);
     // s->setCentrePosition(s->x, s->y);
     s->setSize(s->width, s->height);
+    s->resized();
 
     /**
      * todo: this stuff should be moved outside of the GUI to the back end
@@ -695,7 +696,7 @@ void ConstructionSite::addItem (int selection, bool center)
         {
             t.setProperty(IDs::x_y,
                juce::VariantConverter<juce::Point<int>>::toVar(
-                   juce::Point<int>(lastX - prepWidth  / 2.0f, lastY - prepHeight / 2.0f)),
+                   juce::Point<int>(lastX, lastY)),
                nullptr);
         }
 
@@ -730,7 +731,7 @@ void ConstructionSite::addItem (int selection, bool center)
         {
             t.setProperty(IDs::x_y,
                juce::VariantConverter<juce::Point<int>>::toVar(
-                   juce::Point<int>(lastX - prepWidth  / 2.0f, lastY - prepHeight / 2.0f)),
+                   juce::Point<int>(lastX, lastY)),
                nullptr);
         }
 
@@ -793,7 +794,7 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     //    DBG ("mouseupconst");
     selectorLasso.endLasso();
     removeChildComponent(&selectorLasso);
-    if (edittingComment) return;
+    if (editing_comment_) return;
 
     juce::MouseEvent e = eo.getEventRelativeTo(this);
     cableView.mouseUp(e);
@@ -845,10 +846,11 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
 }
 
 void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
-    if (edittingComment)
+    if (editing_comment_)
         return;
 
     cableView.mouseDrag(e);
+
     // Do nothing on right click drag
     if (e.mods.isRightButtonDown())
         return;

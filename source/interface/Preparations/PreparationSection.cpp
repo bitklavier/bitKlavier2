@@ -64,6 +64,12 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
     numOuts.referTo(state, IDs::numOuts, nullptr);
     uuid.referTo(state, IDs::uuid, nullptr);
 
+    if (state.hasProperty(IDs::width) && state.hasProperty(IDs::height))
+        setSize(state.getProperty(IDs::width), state.getProperty(IDs::height));
+
+    if (state.hasProperty (IDs::x_y))
+        setCentrePosition (juce::VariantConverter<juce::Point<int>>::fromVar (state.getProperty (IDs::x_y)));
+
     constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
     rebuildObjects();
 
@@ -391,7 +397,8 @@ void PreparationSection::resized() {
     int item_width = getWidth() - 2 * item_padding_x;
     auto newBounds = getBoundsInParent();
 
-    item->setBounds(item_padding_x, item_padding_y, item_width, item_height);
+    if (item)
+        item->setBounds(item_padding_x, item_padding_y, item_width, item_height);
 
     if (auto *processor = getProcessor()) {
         for (auto *port: objects) {
@@ -407,6 +414,9 @@ void PreparationSection::resized() {
             auto totalSpaces = static_cast<float>(total) +
                                (static_cast<float>(juce::jmax(0, processor->getBusCount(isInput) - 1)) * 0.5f);
             auto indexPos = static_cast<float>(index/2) + (static_cast<float>(busIdx) * 0.5f);
+            if (item == nullptr)
+                continue;
+
             // Determine bounds reference for port placement.
             // For MidiTarget, MidiFilter, and Modulation, items may draw their icon in paintButton()
             // instead of populating layer_1_, so use BKItem::getVisualBounds() for those.

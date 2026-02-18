@@ -110,6 +110,15 @@ public:
         {
             this->setCentrePosition (juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty (i)));
         }
+        else if (i == IDs::width || i == IDs::height)
+        {
+            if (v.hasProperty(IDs::width) && v.hasProperty(IDs::height))
+            {
+                auto oldCenter = getBounds().getCentre();
+                setSize(v.getProperty(IDs::width), v.getProperty(IDs::height));
+                setCentrePosition(oldCenter);
+            }
+        }
     }
 
     bool isSuitableType(const juce::ValueTree &v) const override {
