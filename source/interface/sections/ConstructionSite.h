@@ -141,6 +141,7 @@ private:
     bool multiple;
     bool held;
 
+    friend class FooterSection;
     PreparationSelector preparationSelector;
     juce::LassoComponent<PreparationSection*> selectorLasso;
 

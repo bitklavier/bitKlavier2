@@ -86,7 +86,7 @@ public:
     }
 
     // UI selection changes -> broadcast to engine
-    virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override
+    virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey, juce::ModifierKeys mods = juce::ModifierKeys()) override
     {
         if (! postUInotesToEngine_) return;
 

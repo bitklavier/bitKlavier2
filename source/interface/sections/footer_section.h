@@ -27,7 +27,7 @@ public:
     /**
      * for playback from virtual keyboard
      */
-    virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey) override;
+    virtual void BKKeymapKeyboardChanged (juce::String /*name*/, std::bitset<128> keys, int lastKey, juce::ModifierKeys mods = juce::ModifierKeys()) override;
 
     /** Highlight the footer keyboard with the given keymap key states */
     void displayKeymapState (const std::bitset<128>& keys);
