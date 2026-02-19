@@ -51,7 +51,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     setWantsKeyboardFocus(true);
     //addKeyListener(this);
     setSkinOverride(Skin::kConstructionSite);
-    setInterceptsMouseClicks(false, true);
+    setInterceptsMouseClicks(true, true);
     //data->synth->getEngine()->addChangeListener(this);
     // data->synth->setGainProcessor(&gainProcessor);
 
@@ -62,7 +62,6 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     modulationLineView.setAlwaysOnTop(false);
     prep_list->addListener(this);
 
-    // prep_list->addChangeListener(this);
     nodeFactory.Register(IDs::direct, DirectPreparation::create);
     nodeFactory.Register(IDs::blendronic, BlendronicPreparation::create);
     nodeFactory.Register(IDs::synchronic, SynchronicPreparation::create);
@@ -77,6 +76,14 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(IDs::tempo, TempoPreparation::create);
     nodeFactory.Register(IDs::nostalgic, NostalgicPreparation::create);
     nodeFactory.Register(IDs::resonance, ResonancePreparation::create);
+
+    lassoVisual = std::make_shared<OpenGlImageComponent>("lassoVisual");
+    lassoVisual->setComponent(&selectorLasso);
+    lassoVisual->setUseAlpha(true);
+    lassoVisual->setVisible(false);
+    lassoVisual->setAlwaysOnTop(true);
+    lassoVisual->setStatic(false);
+    addOpenGlComponent(lassoVisual, false, true);
 
 }
 
@@ -621,18 +628,52 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     // if you don't hit a cable, set all cables to be unselected
     cableView.hitTestCables (e.position);
 
-    auto itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent->getParentComponent());
-    if (itemToSelect == nullptr) {
-        preparationSelector.getLassoSelection().deselectAll();
-        //DBG ("mousedown empty space");
-    }
+    auto itemToSelect = e.originalComponent->findParentComponentOfClass<PreparationSection>();
+    if (itemToSelect == nullptr)
+        itemToSelect = dynamic_cast<PreparationSection*>(e.originalComponent);
 
-    addChildComponent(selectorLasso);
-    selectorLasso.beginLasso(e, &preparationSelector);
-    //////Fake drag so the lasso will select anything we click and drag////////
-    auto thisPoint = e.getPosition();
-    thisPoint.addXY(10, 10);
-    selectorLasso.dragLasso(e.withNewPosition(thisPoint));
+    if (e.mods.isLeftButtonDown() && !e.mods.isPopupMenu() && itemToSelect == nullptr) {
+        if (!e.mods.isShiftDown())
+            preparationSelector.getLassoSelection().deselectAll();
+
+        if (e.originalComponent == this || e.originalComponent->getName() == "cableView")
+        {
+            addChildComponent(selectorLasso);
+            selectorLasso.setVisible(true);
+            selectorLasso.toFront(false);
+
+            selectorLasso.endLasso();
+            selectorLasso.beginLasso(e, &preparationSelector);
+
+            lassoVisual->setVisible(true);
+            lassoVisual->setBounds(selectorLasso.getBounds());
+            lassoVisual->redrawImage(true);
+
+            //////Fake drag so the lasso will select anything we click and drag////////
+            auto thisPoint = e.getPosition();
+            thisPoint.addXY(1, 1);
+            selectorLasso.dragLasso(e.withNewPosition(thisPoint));
+
+            lassoVisual->setBounds(selectorLasso.getBounds());
+            lassoVisual->redrawImage(true);
+        }
+    } else if (itemToSelect != nullptr && !e.mods.isPopupMenu()) {
+        if (e.mods.isShiftDown())
+        {
+            if (preparationSelector.getLassoSelection().isSelected(itemToSelect))
+                preparationSelector.getLassoSelection().deselect(itemToSelect);
+            else
+                preparationSelector.getLassoSelection().addToSelection(itemToSelect);
+        }
+        else
+        {
+            // If we click on an item that is NOT selected, select ONLY it.
+            // If we click on an item that IS already selected, keep the current selection
+            // so we can drag the whole group.
+            if (!preparationSelector.getLassoSelection().isSelected(itemToSelect))
+                preparationSelector.getLassoSelection().selectOnly(itemToSelect);
+        }
+    }
 
     held = false;
 
@@ -645,12 +686,12 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     //grabKeyboardFocus();
 
     if (e.mods.isPopupMenu()) {
-        auto itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent->getParentComponent());
-        if (itemToSelect == nullptr) {
-            itemToSelect = dynamic_cast<PreparationSection *>(e.originalComponent);
+        auto itemToSelectPop = e.originalComponent->findParentComponentOfClass<PreparationSection>();
+        if (itemToSelectPop == nullptr) {
+            itemToSelectPop = dynamic_cast<PreparationSection *>(e.originalComponent);
         }
 
-        if (itemToSelect != nullptr) {
+        if (itemToSelectPop != nullptr) {
             return;
         }
 
@@ -793,6 +834,8 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     //inLasso = false;
     //    DBG ("mouseupconst");
     selectorLasso.endLasso();
+    selectorLasso.setVisible(false);
+    lassoVisual->setVisible(false);
     removeChildComponent(&selectorLasso);
     if (editing_comment_) return;
 
@@ -855,9 +898,15 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
     if (e.mods.isRightButtonDown())
         return;
 
-    if (e.mods.isShiftDown()) {
+    if (selectorLasso.isVisible())
+    {
+        // DBG("ConstructionSite::mouseDrag - dragging lasso");
         selectorLasso.toFront(false);
         selectorLasso.dragLasso(e);
+        selectorLasso.repaint();
+
+        lassoVisual->setBounds(selectorLasso.getBounds());
+        lassoVisual->redrawImage(true);
     }
 
     repaint();

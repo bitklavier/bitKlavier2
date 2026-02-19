@@ -167,7 +167,6 @@ public:
         // showPrepPopup(std::move(popup),state,bitklavier::BKPreparationTypeNil);
         auto popup = getPrepPopup();
         auto safeThis = juce::Component::SafePointer<SynthSection> (this);
-        juce::Logger::writeToLog ("prepsectiin double click");
         juce::MessageManager::callAsync ([safeThis, popup = std::move(popup), thisState = state] () mutable
         {
             if (safeThis == nullptr) return;

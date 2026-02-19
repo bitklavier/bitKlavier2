@@ -108,12 +108,26 @@ public:
 
         if (!droppedOnDifferentPrep)
         {
-            for (auto& fc : plugin_components)
+            auto delta = mouse_drag_position_ - source.sourceComponent->getBounds().getCentre();
+
+            if (preparationSelector.getLassoSelection().isSelected(dynamic_cast<PreparationSection*>(source.sourceComponent.get())))
             {
-                if (fc.get() == source.sourceComponent)
+                for (int i = 0; i < preparationSelector.getLassoSelection().getNumSelected(); ++i)
                 {
+                    auto* fc = preparationSelector.getLassoSelection().getSelectedItem(i);
                     fc->undo.beginNewTransaction();
-                    fc->curr_point = mouse_drag_position_ - drag_offset_;
+                    fc->curr_point = fc->getBounds().getCentre() + delta;
+                }
+            }
+            else
+            {
+                for (auto& fc : plugin_components)
+                {
+                    if (fc.get() == source.sourceComponent)
+                    {
+                        fc->undo.beginNewTransaction();
+                        fc->curr_point = mouse_drag_position_ - drag_offset_;
+                    }
                 }
             }
             cableView._update();
@@ -157,21 +171,41 @@ private:
 
     friend class FooterSection;
     PreparationSelector preparationSelector;
-    juce::LassoComponent<PreparationSection*> selectorLasso;
+
+    class LassoOutlineComponent : public juce::LassoComponent<PreparationSection*>
+    {
+    public:
+        LassoOutlineComponent()
+        {
+            setInterceptsMouseClicks (false, false);
+        }
+
+        void paint (juce::Graphics& g) override
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.3f));
+            g.fillAll();
+            g.setColour (juce::Colours::white);
+            g.drawRect (getLocalBounds(), 1);
+        }
+    };
+    LassoOutlineComponent selectorLasso;
+    std::shared_ptr<OpenGlImageComponent> lassoVisual;
 
     friend class CableView;
     CableView cableView;
 
-    juce::UndoManager& undo;
-
-    void draw (void);
-    void prepareItemDrag (BKItem* item, const juce::MouseEvent& e, bool center);
+public:
     void resized() override;
     void mouseDown (const juce::MouseEvent& eo) override;
     void mouseUp (const juce::MouseEvent& eo) override;
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseMove (const juce::MouseEvent& e) override;
-    void deleteItem (BKItem* item);
+    void draw (void);
+    void prepareItemDrag (BKItem* item, const juce::MouseEvent& e, bool center);
+
+    juce::UndoManager& undo;
+
+private:
 
     BKItem* getItemAtPoint (const int X, const int Y);
 

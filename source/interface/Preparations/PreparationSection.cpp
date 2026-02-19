@@ -51,7 +51,7 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
     pluginID(node), undo(um)
 {
     //_parent = findParentComponentOfClass<SynthGuiInterface>();
-    // setInterceptsMouseClicks(true, false);
+    setInterceptsMouseClicks(true, true);
     //make this undoable
     curr_point.referTo(state,IDs::x_y,&undo);
     // x.referTo(state, IDs::x, &undo);
@@ -105,51 +105,44 @@ void PreparationSection::changeListenerCallback(juce::ChangeBroadcaster *source)
     if (selectedSet->isSelected(this)) {
         item->setColor(juce::Colours::white);
         isSelected = true;
+    } else {
+        item->setColor(findColour(Skin::kWidgetPrimary1, true));
+        isSelected = false;
+    }
 
-        // If this is a Keymap preparation, display its keyStates on the footer keyboard
-        if (auto* keymapProc = dynamic_cast<KeymapProcessor*>(getProcessor()))
+    // Handle Keymap specific footer display
+    if (auto* keymapProc = dynamic_cast<KeymapProcessor*>(getProcessor()))
+    {
+        if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
         {
-            if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+            if (auto* gui = iface->getGui())
             {
-                if (auto* gui = iface->getGui())
+                if (gui->footer_)
                 {
-                    if (gui->footer_)
+                    if (isSelected)
                     {
                         auto keys = keymapProc->getState().params.keyboard_state.keyStates.load();
                         gui->footer_->displayKeymapState(keys);
                     }
-                }
-            }
-        }
-    } else {
-        item->setColor(findColour(Skin::kWidgetPrimary1, true));
-        isSelected = false;
-
-        // If this is a Keymap preparation being deselected, clear the footer keyboard display
-        // only if no other Keymap is currently selected
-        if (dynamic_cast<KeymapProcessor*>(getProcessor()) != nullptr)
-        {
-            bool anotherKeymapSelected = false;
-            if (selectedSet != nullptr)
-            {
-                for (int i = 0; i < selectedSet->getNumSelected(); ++i)
-                {
-                    auto* other = selectedSet->getSelectedItem(i);
-                    if (other != this && dynamic_cast<KeymapProcessor*>(other->getProcessor()) != nullptr)
+                    else
                     {
-                        anotherKeymapSelected = true;
-                        break;
-                    }
-                }
-            }
-            if (!anotherKeymapSelected)
-            {
-                if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
-                {
-                    if (auto* gui = iface->getGui())
-                    {
-                        if (gui->footer_)
+                        bool anotherKeymapSelected = false;
+                        if (selectedSet != nullptr)
+                        {
+                            for (int i = 0; i < selectedSet->getNumSelected(); ++i)
+                            {
+                                auto* other = selectedSet->getSelectedItem(i);
+                                if (other != this && dynamic_cast<KeymapProcessor*>(other->getProcessor()) != nullptr)
+                                {
+                                    anotherKeymapSelected = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!anotherKeymapSelected)
+                        {
                             gui->footer_->clearKeymapDisplay();
+                        }
                     }
                 }
             }
@@ -321,12 +314,6 @@ void PreparationSection::setPortInfo() {
 
 void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
-    juce::Logger::writeToLog ("prep mousedown");
-
-    if (auto* site = dynamic_cast<ConstructionSite *>(getParentComponent()))
-    {
-        site->drag_offset_ = (e.getEventRelativeTo(this).getPosition() - getLocalBounds().getCentre()).toInt();
-    }
 
     if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
     {
