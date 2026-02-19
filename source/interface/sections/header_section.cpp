@@ -653,6 +653,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(itemCounter++, "Duplicate Current");
         options.addItem(itemCounter++, "Delete Current");
         options.addItem(disabledItem);
+        options.addItem(itemCounter++, "Select All");
         options.addItem(itemCounter++, "Horizontally Align Selected");
         options.addItem(itemCounter++, "Vertically Align Selected");
         options.addItem(disabledItem); // create separator line
@@ -719,10 +720,16 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                     case 4:
                     {
                         auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
-                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0627));
+                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x062d));
                         break;
                     }
                     case 5:
+                    {
+                        auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
+                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0627));
+                        break;
+                    }
+                    case 6:
                     {
                         auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
                         site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0628));

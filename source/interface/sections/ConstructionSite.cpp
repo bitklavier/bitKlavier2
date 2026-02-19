@@ -108,7 +108,8 @@ enum CommandIDs {
     nudgeUp = 0x0629,
     nudgeDown = 0x062a,
     nudgeLeft = 0x062b,
-    nudgeRight = 0x062c
+    nudgeRight = 0x062c,
+    selectAll = 0x062d
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
@@ -132,7 +133,8 @@ void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
         nudgeUp,
         nudgeDown,
         nudgeLeft,
-        nudgeRight});
+        nudgeRight,
+        selectAll});
 }
 
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
@@ -196,9 +198,11 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
             break;
         case horizontallyAlignSelected:
             info.setInfo("Horizontally Align Selected", "Aligns Selected Preparations Horizontally", "Edit", 0);
+            info.addDefaultKeypress('h', juce::ModifierKeys::shiftModifier);
             break;
         case verticallyAlignSelected:
             info.setInfo("Vertically Align Selected", "Aligns Selected Preparations Vertically", "Edit", 0);
+            info.addDefaultKeypress('v', juce::ModifierKeys::shiftModifier);
             break;
         case nudgeUp:
             info.setInfo("Nudge Up", "Moves selected items up", "Edit", 0);
@@ -215,6 +219,10 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
         case nudgeRight:
             info.setInfo("Nudge Right", "Moves selected items right", "Edit", 0);
             info.addDefaultKeypress(juce::KeyPress::rightKey, juce::ModifierKeys::noModifiers);
+            break;
+        case selectAll:
+            info.setInfo("Select All", "Selects all preparations", "Edit", 0);
+            info.addDefaultKeypress('a', juce::ModifierKeys::commandModifier);
             break;
     }
 }
@@ -499,6 +507,16 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 }
                 return false;
             }
+            case selectAll:
+            {
+                auto& lasso = preparationSelector.getLassoSelection();
+                lasso.deselectAll();
+                for (auto& fc : plugin_components)
+                {
+                    lasso.addToSelection(fc.get());
+                }
+                return true;
+            }
             case deletion:
             {
                 auto& lasso = preparationSelector.getLassoSelection();
@@ -511,7 +529,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 for (auto connection : *connection_list)
                 {
-                    if (connection->state.getProperty (IDs::isSelected))
+                    if (connection != nullptr && connection->state.isValid() && connection->state.getProperty (IDs::isSelected))
                     {
                         connection_list->removeChild(connection->state, &undo);
                     }
