@@ -114,17 +114,9 @@ public:
         return false;
     }
 
-    void mouseDown (const juce::MouseEvent&) override
-    {
-        // set all other cables to be unselected
-        // for (auto connection : site->connection_list)
-        // {
-        //     connection->state.setProperty (IDs::isSelected, 0, nullptr);
-        // }
-        state.setProperty (IDs::isSelected, 1, nullptr);
-        dragging = false;
-        resized();
-    }
+    void mouseDown (const juce::MouseEvent&) override;
+
+    bool keyPressed (const juce::KeyPress& key) override;
 
     void mouseDrag (const juce::MouseEvent& e) override;
 

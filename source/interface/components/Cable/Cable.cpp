@@ -17,6 +17,7 @@ Cable::Cable (ConstructionSite* site, CableView& cableView) : juce::Component (C
     //this->startPoint.store(startPoint.toFloat());
     //cableView = cableView;
     setAlwaysOnTop(true);
+    setWantsKeyboardFocus (true);
     image_component_->setComponent(this);
     startColour = juce::Colours::lightgoldenrodyellow;
     endColour = juce::Colours::goldenrod;
@@ -68,6 +69,31 @@ void Cable::getPoints (juce::Point<float>& p1, juce::Point<float>& p2) const
 void Cable::updateStartPoint (bool repaintIfMoved)
 {
 
+}
+
+void Cable::mouseDown (const juce::MouseEvent&)
+{
+    // set all other cables to be unselected
+    // for (auto connection : site->connection_list)
+    // {
+    //     connection->state.setProperty (IDs::isSelected, 0, nullptr);
+    // }
+    state.setProperty (IDs::isSelected, 1, nullptr);
+    dragging = false;
+    grabKeyboardFocus();
+    resized();
+}
+
+bool Cable::keyPressed (const juce::KeyPress& key)
+{
+    if (key == juce::KeyPress::backspaceKey || key == juce::KeyPress::deleteKey)
+    {
+        // Let the CableView handle safe deletion through its connection list and undo manager
+        cableView.requestDeleteConnection (state);
+        return true;
+    }
+
+    return false;
 }
 
 void Cable::mouseDrag (const juce::MouseEvent& e)

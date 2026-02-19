@@ -179,6 +179,7 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
         case deletion:
             info.setInfo("Deletion", "Deletes Preparation", "Edit", 0);
             info.addDefaultKeypress(juce::KeyPress::backspaceKey, juce::ModifierKeys::noModifiers);
+            info.addDefaultKeypress(juce::KeyPress::deleteKey, juce::ModifierKeys::noModifiers);
             break;
         case resetMod:
             info.setInfo("Reset", "Create Reset Preparation", "Edit", 0);

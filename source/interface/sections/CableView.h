@@ -19,6 +19,9 @@ class CableView : public PreparationSection::Listener,
 public:
     explicit CableView (ConstructionSite& site, juce::UndoManager& um, SynthGuiData* data);
 
+    // Request deletion of a specific connection ValueTree (e.g., from a focused Cable)
+    void requestDeleteConnection (juce::ValueTree connectionVT);
+
     ~CableView() override;
 
     void paint (juce::Graphics& g) override;

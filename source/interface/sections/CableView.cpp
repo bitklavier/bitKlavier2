@@ -20,6 +20,14 @@ connection_list(data->synth->getActiveConnectionList())
     connection_list->addListener(this);
 }
 
+void CableView::requestDeleteConnection (juce::ValueTree connectionVT)
+{
+    if (connection_list != nullptr && connectionVT.isValid() && connectionVT.getParent().isValid())
+    {
+        connection_list->removeChild (connectionVT, &undoManager);
+    }
+}
+
 CableView::~CableView() {
     for (auto object: objects)
         delete object;
