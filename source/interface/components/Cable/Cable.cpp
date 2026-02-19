@@ -197,6 +197,18 @@ void Cable::resized()
     linePath.clear();
     linePath.startNewSubPath (p1);
 
+    /*
+     * Gemini suggests the following, perhaps for the future:
+     * If you want that smooth, "liquid" look found in modular synth software (like VCV Rack),
+     * you can use a hybrid approach that blends both X and Y offsets. Instead of an if/else,
+     * you can use a fixed X-offset for horizontal flow but add a minimum "slack" value so
+     * the curve never feels too stiff when the points are close together.
+     *
+     * CP1x = P1x + max(dx * 0.5, 30.))
+     *
+     * This keeps the curve exiting the "port" horizontally before dipping.
+     */
+
     if (!connection.source.isMIDI()) // for audio connections, running out the right-side ports of preps
     {
         if (p2.x > p1.x)
