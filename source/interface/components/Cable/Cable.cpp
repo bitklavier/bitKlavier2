@@ -134,27 +134,42 @@ void Cable::resizeToFit()
 
     auto newBounds = juce::Rectangle<float> (p1, p2);
 
-    if (p2.y >= p1.y && connection.source.isMIDI())
+    if (connection.source.isMIDI())
     {
-        float midX = (p1.x + p2.x) * 0.5f;
-        if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
+        if (p2.y >= p1.y)
         {
-            if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
+            float midX = (p1.x + p2.x) * 0.5f;
+            if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
             {
-                auto srcBounds = src->getBoundsInParent().toFloat();
-                auto destBounds = dest->getBoundsInParent().toFloat();
+                if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
+                {
+                    auto srcBounds = src->getBoundsInParent().toFloat();
+                    auto destBounds = dest->getBoundsInParent().toFloat();
 
-                if (srcBounds.getRight() < destBounds.getX())
-                    midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
-                else if (destBounds.getRight() < srcBounds.getX())
-                    midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
+                    if (srcBounds.getRight() < destBounds.getX())
+                        midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
+                    else if (destBounds.getRight() < srcBounds.getX())
+                        midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
+                }
             }
-        }
 
-        newBounds = newBounds.getUnion (juce::Rectangle<float> (p1.x, p1.y - 20.0f, 1.0f, 1.0f))
-                            .getUnion (juce::Rectangle<float> (midX, p1.y - 20.0f, 1.0f, 1.0f))
-                            .getUnion (juce::Rectangle<float> (midX, p2.y + 20.0f, 1.0f, 1.0f))
-                            .getUnion (juce::Rectangle<float> (p2.x, p2.y + 20.0f, 1.0f, 1.0f));
+            newBounds = newBounds.getUnion (juce::Rectangle<float> (p1.x, p1.y - 20.0f, 1.0f, 1.0f))
+                                .getUnion (juce::Rectangle<float> (midX, p1.y - 20.0f, 1.0f, 1.0f))
+                                .getUnion (juce::Rectangle<float> (midX, p2.y + 20.0f, 1.0f, 1.0f))
+                                .getUnion (juce::Rectangle<float> (p2.x, p2.y + 20.0f, 1.0f, 1.0f));
+        }
+    }
+    else
+    {
+        if (p2.x <= p1.x)
+        {
+            const float portSegment = 20.0f;
+            float midY = (p1.y + p2.y) * 0.5f;
+            newBounds = newBounds.getUnion (juce::Rectangle<float> (p1.x + portSegment, p1.y, 1.0f, 1.0f))
+                                .getUnion (juce::Rectangle<float> (p1.x + portSegment, midY, 1.0f, 1.0f))
+                                .getUnion (juce::Rectangle<float> (p2.x - portSegment, midY, 1.0f, 1.0f))
+                                .getUnion (juce::Rectangle<float> (p2.x - portSegment, p2.y, 1.0f, 1.0f));
+        }
     }
 
     newBounds = newBounds.expanded (10.0f); // extra margin for stroke/arrow
@@ -184,20 +199,34 @@ void Cable::resized()
 
     if (!connection.source.isMIDI()) // for audio connections, running out the right-side ports of preps
     {
-        // 1. Calculate the distance between points
-        float dx = std::abs(p2.x - p1.x);
-        float dy = std::abs(p2.y - p1.y);
+        if (p2.x > p1.x)
+        {
+            // 1. Calculate the distance between points
+            float dx = std::abs(p2.x - p1.x);
+            float dy = std::abs(p2.y - p1.y);
 
-        // 2. Determine how much "bend" to apply based on the largest distance
-        // This ensures the curve scales with the length of the path.
-        float offset = (dx > dy) ? dx * 0.5f : dy * 0.5f;
+            // 2. Determine how much "bend" to apply based on the largest distance
+            // This ensures the curve scales with the length of the path.
+            float offset = (dx > dy) ? dx * 0.5f : dy * 0.5f;
 
-        linePath.clear();
-        linePath.startNewSubPath(p1);
+            linePath.clear();
+            linePath.startNewSubPath(p1);
 
-        linePath.cubicTo (p1.x + offset, p1.y,
-                             p2.x - offset, p2.y,
-                             p2.x, p2.y);
+            linePath.cubicTo (p1.x + offset, p1.y,
+                                 p2.x - offset, p2.y,
+                                 p2.x, p2.y);
+        }
+        else
+        {
+            const float portSegment = 10.0f;
+            float midY = (p1.y + p2.y) * 0.5f;
+
+            linePath.lineTo (p1.x + portSegment, p1.y);
+            linePath.lineTo (p1.x + portSegment, midY);
+            linePath.lineTo (p2.x - portSegment, midY);
+            linePath.lineTo (p2.x - portSegment, p2.y);
+            linePath.lineTo (p2.x, p2.y);
+        }
     }
     else if (p2.y < p1.y) // audio and MIDI connections, running vertically from, say, Keymap to other preps
     {
@@ -249,7 +278,23 @@ void Cable::resized()
                        -arrowL, -arrowW,
                        arrowL, 0.0f);
 
-    if (p2.y < p1.y || !connection.source.isMIDI())
+    if (!connection.source.isMIDI())
+    {
+        if (p2.x > p1.x)
+        {
+            arrow.applyTransform (juce::AffineTransform()
+                                          .rotated (juce::MathConstants<float>::halfPi - (float) atan2 (p2.x - p1.x, p2.y - p1.y))
+                                          .translated ((p1 + p2) * 0.5f));
+        }
+        else
+        {
+            // midpoint of the cross segment
+            float midY = (p1.y + p2.y) * 0.5f;
+            arrow.applyTransform (juce::AffineTransform()
+                                          .translated ((p1.x + p2.x) * 0.5f, midY));
+        }
+    }
+    else if (p2.y < p1.y)
     {
         arrow.applyTransform (juce::AffineTransform()
                                       .rotated (juce::MathConstants<float>::halfPi - (float) atan2 (p2.x - p1.x, p2.y - p1.y))
