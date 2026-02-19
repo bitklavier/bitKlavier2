@@ -102,7 +102,9 @@ enum CommandIDs {
     resetMod = 0x0623,
     midifilter = 0x0624,
     miditarget = 0x0625,
-    pianoswitch = 0x0626
+    pianoswitch = 0x0626,
+    horizontallyAlignSelected = 0x0627,
+    verticallyAlignSelected = 0x0628
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
@@ -120,7 +122,9 @@ void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
         resetMod,
         midifilter,
         miditarget,
-        pianoswitch});
+        pianoswitch,
+        horizontallyAlignSelected,
+        verticallyAlignSelected});
 }
 
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
@@ -181,6 +185,12 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
         case pianoswitch:
             info.setInfo("Pianoswitch", "Create Pianoswitch Preparation", "Edit", 0);
             info.addDefaultKeypress('p', juce::ModifierKeys::noModifiers);
+            break;
+        case horizontallyAlignSelected:
+            info.setInfo("Horizontally Align Selected", "Aligns Selected Preparations Horizontally", "Edit", 0);
+            break;
+        case verticallyAlignSelected:
+            info.setInfo("Vertically Align Selected", "Aligns Selected Preparations Vertically", "Edit", 0);
             break;
     }
 }
@@ -388,6 +398,52 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
                 prep_list->appendChild(t,  &undo);
+                return true;
+            }
+            case horizontallyAlignSelected:
+            {
+                auto& lasso = preparationSelector.getLassoSelection();
+                if (lasso.getNumSelected() > 1)
+                {
+                    undo.beginNewTransaction();
+                    float sumY = 0;
+                    for (int i = 0; i < lasso.getNumSelected(); ++i)
+                        sumY += lasso.getSelectedItem(i)->getBounds().getCentreY();
+
+                    int avgY = std::round(sumY / lasso.getNumSelected());
+
+                    for (int i = 0; i < lasso.getNumSelected(); ++i)
+                    {
+                        auto* fc = lasso.getSelectedItem(i);
+                        auto center = fc->getBounds().getCentre();
+                        fc->curr_point = juce::Point<int>(center.getX(), avgY);
+                    }
+                    cableView._update();
+                    modulationLineView._update();
+                }
+                return true;
+            }
+            case verticallyAlignSelected:
+            {
+                auto& lasso = preparationSelector.getLassoSelection();
+                if (lasso.getNumSelected() > 1)
+                {
+                    undo.beginNewTransaction();
+                    float sumX = 0;
+                    for (int i = 0; i < lasso.getNumSelected(); ++i)
+                        sumX += lasso.getSelectedItem(i)->getBounds().getCentreX();
+
+                    int avgX = std::round(sumX / lasso.getNumSelected());
+
+                    for (int i = 0; i < lasso.getNumSelected(); ++i)
+                    {
+                        auto* fc = lasso.getSelectedItem(i);
+                        auto center = fc->getBounds().getCentre();
+                        fc->curr_point = juce::Point<int>(avgX, center.getY());
+                    }
+                    cableView._update();
+                    modulationLineView._update();
+                }
                 return true;
             }
             case deletion:

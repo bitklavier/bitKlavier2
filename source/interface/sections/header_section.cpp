@@ -652,6 +652,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(itemCounter++, "Rename Current");
         options.addItem(itemCounter++, "Duplicate Current");
         options.addItem(itemCounter++, "Delete Current");
+        options.addItem(disabledItem);
+        options.addItem(itemCounter++, "Horizontally Align Selected");
+        options.addItem(itemCounter++, "Vertically Align Selected");
         options.addItem(disabledItem); // create separator line
 
         for (int i = 0; i < names.size(); i++) {
@@ -713,6 +716,18 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                         DBG("delete piano");
                         deletePiano();
                         break;
+                    case 4:
+                    {
+                        auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
+                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0627));
+                        break;
+                    }
+                    case 5:
+                    {
+                        auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
+                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0628));
+                        break;
+                    }
                     default:
                         DBG("no action");
                 }
