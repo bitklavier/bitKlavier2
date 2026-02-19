@@ -519,9 +519,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                     }
                     cableView._update();
                     modulationLineView._update();
-                    return true;
                 }
-                return false;
+                return true;
             }
             case selectAll:
             {

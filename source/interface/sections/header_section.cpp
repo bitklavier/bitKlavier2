@@ -98,7 +98,7 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     pianoSelector->setShape(juce::Path(), true, true, true);
     currentPianoIndex = 0;
 
-    preparationSelectText = std::make_shared<PlainTextComponent>("Preparation", "add");
+    preparationSelectText = std::make_shared<PlainTextComponent>("Preparation", "add/copy/paste/align");
     addOpenGlComponent(preparationSelectText);
     preparationsSelector = std::make_unique<juce::ShapeButton>("prepSelector", juce::Colour(0xff666666),
                                                         juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
