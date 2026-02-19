@@ -3,6 +3,7 @@
 ## Gui Layout Notes
 - FlexBox is nice. see `void HeaderSection::resized()`
 - the cables are drawn in Cable.h `resized()`
+- thickness of lines connected Tuning/Tempo/Mods is set by `kLineThickness` in open_gl_line.cpp
 
 ## Value Tree Notes
 - comment/uncomment this line `valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);` in FullInterface.cpp to make the VT debugger window visible when needed

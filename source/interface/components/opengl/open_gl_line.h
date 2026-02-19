@@ -25,8 +25,15 @@ private:
     bool active_;
     bool draw_when_not_visible_ = false;
 
+    // shader and drawing state
     Shaders::FragmentShader fragment_shader_;
     juce::OpenGLShaderProgram* shader_;
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> color_uniform_;
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> scale_uniform_;
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> boost_uniform_;
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> line_width_uniform_;
+    std::unique_ptr<juce::OpenGLShaderProgram::Attribute> position_attribute_;
+
     std::unique_ptr<int[]> indices_;
     GLuint vertex_buffer_;
     GLuint indices_buffer_;
