@@ -22,6 +22,7 @@
 #include "main_section.h"
 #include "synth_base.h"
 #include "text_look_and_feel.h"
+#include "valuetree_utils/ValueTreeIdsRemapper.h"
 #include <memory>
 
 LogoSection::LogoSection() : SynthSection("logo_section") {
@@ -359,8 +360,16 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
         newPiano.setProperty(IDs::name, candidate, nullptr);
     }
 
-    // 3) Temporarily remove MODCONNECTIONS so that appending the piano
-    //    doesn't try to wire up modulations before the processors exist
+    // 3) Temporarily remove CONNECTIONS and MODCONNECTIONS so that appending the piano
+    //    doesn't try to wire things up before the processors exist
+    auto connsNode = newPiano.getChildWithName(IDs::CONNECTIONS);
+    juce::ValueTree savedConns;
+    if (connsNode.isValid())
+    {
+        savedConns = connsNode.createCopy();
+        connsNode.removeAllChildren(nullptr);
+    }
+
     auto modConns = newPiano.getChildWithName(IDs::MODCONNECTIONS);
     juce::ValueTree savedModConns;
     if (modConns.isValid())
@@ -379,13 +388,26 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
 
     gallery.appendChild(newPiano, nullptr);
 
-    // 5) Now that processors exist, restore the modulation connections
-    if (savedModConns.isValid())
-    {
-        auto mc = newPiano.getChildWithName(IDs::MODCONNECTIONS);
-        for (int i = 0; i < savedModConns.getNumChildren(); ++i)
-            mc.appendChild(savedModConns.getChild(i).createCopy(), nullptr);
-    }
+    // 5) Now that processors exist, restore the standard and modulation connections
+    juce::MessageManager::callAsync([this, newPiano, savedConns, savedModConns]() mutable {
+        if (auto conns = newPiano.getChildWithName(IDs::CONNECTIONS); conns.isValid())
+        {
+            for (int i = 0; i < savedConns.getNumChildren(); ++i)
+            {
+                auto c = savedConns.getChild(i).createCopy();
+                conns.appendChild(c, nullptr);
+            }
+        }
+
+        if (auto mc = newPiano.getChildWithName(IDs::MODCONNECTIONS); mc.isValid())
+        {
+            for (int i = 0; i < savedModConns.getNumChildren(); ++i)
+            {
+                auto c = savedModConns.getChild(i).createCopy();
+                mc.appendChild(c, nullptr);
+            }
+        }
+    });
 
     // 6) UI updates
     pianoSelectText->setText(newPiano.getProperty(IDs::name));
@@ -430,106 +452,32 @@ void HeaderSection::remapPianoUUIDsAndConnections (juce::ValueTree& piano)
         prep.setProperty(IDs::nodeID,
                          juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(newNodeId),
                          nullptr);
+
+        // Deeply remap children of each preparation (like PORT, modulationproc, etc.)
+        for (int j = 0; j < prep.getNumChildren(); ++j)
+        {
+            auto child = prep.getChild(j);
+            bitklavier::deepRemapIDs (child, uuidMap, nodeIdMap);
+        }
     }
 
-    if (uuidMap.empty()) return;
-
-    // CONNECTIONS remap (unchanged)
+    // CONNECTIONS remap
     if (auto conns = piano.getChildWithName(IDs::CONNECTIONS); conns.isValid())
     {
         for (int i = 0; i < conns.getNumChildren(); ++i)
         {
             auto c = conns.getChild(i);
-            if (! c.isValid()) continue;
-
-            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
-            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
-
-            if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
-                c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
-            if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
-                c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
+            bitklavier::deepRemapIDs (c, uuidMap, nodeIdMap);
         }
     }
 
-    // MODCONNECTIONS remap — two levels:
-    // 1) Direct children (TUNINGCONNECTION, MODCONNECTION, TEMPOCONNECTION) have
-    //    NodeID-based src/dest that need remapping via nodeIdMap.
-    // 2) Their ModulationConnection grandchildren have UUID-based compound string
-    //    src/dest (e.g. "uuid_modulatorName" / "uuid_paramName") and their own uuid
-    //    property, all of which need remapping via uuidMap.
+    // MODCONNECTIONS remap
     if (auto mconns = piano.getChildWithName(IDs::MODCONNECTIONS); mconns.isValid())
     {
         for (int i = 0; i < mconns.getNumChildren(); ++i)
         {
             auto c = mconns.getChild(i);
-            if (! c.isValid()) continue;
-
-            // Flat ModulationConnection directly under MODCONNECTIONS:
-            // has UUID-based compound string src/dest and its own uuid property
-            if (c.hasType(IDs::ModulationConnection))
-            {
-                if (c.hasProperty(IDs::uuid))
-                    c.setProperty(IDs::uuid, juce::Uuid().toString(), nullptr);
-
-                if (c.hasProperty(IDs::src))
-                {
-                    auto s = c.getProperty(IDs::src).toString();
-                    for (auto& [oldUuid, newUuid] : uuidMap)
-                        if (s.contains(oldUuid))
-                            s = s.replace(oldUuid, newUuid);
-                    c.setProperty(IDs::src, s, nullptr);
-                }
-                if (c.hasProperty(IDs::dest))
-                {
-                    auto d = c.getProperty(IDs::dest).toString();
-                    for (auto& [oldUuid, newUuid] : uuidMap)
-                        if (d.contains(oldUuid))
-                            d = d.replace(oldUuid, newUuid);
-                    c.setProperty(IDs::dest, d, nullptr);
-                }
-                continue;
-            }
-
-            // Wrapper types (TUNINGCONNECTION, MODCONNECTION, TEMPOCONNECTION, etc.)
-            // have NodeID-based src/dest
-            if (c.hasProperty(IDs::src) && c.hasProperty(IDs::dest))
-            {
-                auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::src));
-                auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar(c.getProperty(IDs::dest));
-
-                if (auto it = nodeIdMap.find(srcId); it != nodeIdMap.end())
-                    c.setProperty(IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
-                if (auto it = nodeIdMap.find(dstId); it != nodeIdMap.end())
-                    c.setProperty(IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(it->second), nullptr);
-            }
-
-            // Remap ModulationConnection grandchildren
-            for (int j = 0; j < c.getNumChildren(); ++j)
-            {
-                auto mc = c.getChild(j);
-                if (! mc.isValid()) continue;
-
-                if (mc.hasProperty(IDs::uuid))
-                    mc.setProperty(IDs::uuid, juce::Uuid().toString(), nullptr);
-
-                if (mc.hasProperty(IDs::src))
-                {
-                    auto s = mc.getProperty(IDs::src).toString();
-                    for (auto& [oldUuid, newUuid] : uuidMap)
-                        if (s.contains(oldUuid))
-                            s = s.replace(oldUuid, newUuid);
-                    mc.setProperty(IDs::src, s, nullptr);
-                }
-                if (mc.hasProperty(IDs::dest))
-                {
-                    auto d = mc.getProperty(IDs::dest).toString();
-                    for (auto& [oldUuid, newUuid] : uuidMap)
-                        if (d.contains(oldUuid))
-                            d = d.replace(oldUuid, newUuid);
-                    mc.setProperty(IDs::dest, d, nullptr);
-                }
-            }
+            bitklavier::deepRemapIDs (c, uuidMap, nodeIdMap);
         }
     }
 }

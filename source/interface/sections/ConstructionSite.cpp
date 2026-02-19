@@ -10,6 +10,7 @@
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
 #include "tracktion_ValueTreeUtilities.h"
+#include "valuetree_utils/ValueTreeIdsRemapper.h"
 #include <set>
 
 juce::ValueTree ConstructionSite::clipboard;
@@ -742,6 +743,13 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             nodeIdMap[oldNodeId] = newNodeId;
             prep.setProperty (IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(newNodeId), nullptr);
         
+            // Deeply remap children of each preparation (like PORT, modulationproc, etc.)
+            for (int j = 0; j < prep.getNumChildren(); ++j)
+            {
+                auto child = prep.getChild(j);
+                bitklavier::deepRemapIDs (child, uuidMap, nodeIdMap);
+            }
+
             // Offset position
             if (prep.hasProperty (IDs::x_y))
             {
@@ -753,64 +761,23 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
         // Remap Connections
         auto conns = workVt.getChildWithName (IDs::CONNECTIONS);
-        for (int i = 0; i < conns.getNumChildren(); ++i)
+        if (conns.isValid())
         {
-            auto c = conns.getChild(i);
-            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::src));
-            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::dest));
-
-            if (nodeIdMap.count(srcId))
-                c.setProperty (IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[srcId]), nullptr);
-            if (nodeIdMap.count(dstId))
-                c.setProperty (IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[dstId]), nullptr);
+            for (int i = 0; i < conns.getNumChildren(); ++i)
+            {
+                auto c = conns.getChild(i);
+                bitklavier::deepRemapIDs (c, uuidMap, nodeIdMap);
+            }
         }
 
         // Remap ModConnections
         auto mconns = workVt.getChildWithName (IDs::MODCONNECTIONS);
-        for (int i = 0; i < mconns.getNumChildren(); ++i)
+        if (mconns.isValid())
         {
-            auto c = mconns.getChild(i);
-            if (c.hasType(IDs::ModulationConnection))
+            for (int i = 0; i < mconns.getNumChildren(); ++i)
             {
-                if (c.hasProperty(IDs::uuid))
-                    c.setProperty (IDs::uuid, juce::Uuid().toString(), nullptr);
-            
-                auto s = c.getProperty(IDs::src).toString();
-                auto d = c.getProperty(IDs::dest).toString();
-                for (auto const& [oldU, newU] : uuidMap)
-                {
-                    s = s.replace(oldU, newU);
-                    d = d.replace(oldU, newU);
-                }
-                c.setProperty(IDs::src, s, nullptr);
-                c.setProperty(IDs::dest, d, nullptr);
-            }
-            else
-            {
-                if (c.hasProperty(IDs::src) && c.hasProperty(IDs::dest))
-                {
-                    auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::src));
-                    auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::dest));
-                    if (nodeIdMap.count(srcId))
-                        c.setProperty (IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[srcId]), nullptr);
-                    if (nodeIdMap.count(dstId))
-                        c.setProperty (IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[dstId]), nullptr);
-                }
-                for (int j = 0; j < c.getNumChildren(); ++j)
-                {
-                    auto mc = c.getChild(j);
-                    if (mc.hasProperty(IDs::uuid))
-                        mc.setProperty (IDs::uuid, juce::Uuid().toString(), nullptr);
-                    auto s = mc.getProperty(IDs::src).toString();
-                    auto d = mc.getProperty(IDs::dest).toString();
-                    for (auto const& [oldU, newU] : uuidMap)
-                    {
-                        s = s.replace(oldU, newU);
-                        d = d.replace(oldU, newU);
-                    }
-                    mc.setProperty(IDs::src, s, nullptr);
-                    mc.setProperty(IDs::dest, d, nullptr);
-                }
+                auto c = mconns.getChild(i);
+                bitklavier::deepRemapIDs (c, uuidMap, nodeIdMap);
             }
         }
 
@@ -824,26 +791,36 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
         for (int i = 0; i < preps.getNumChildren(); ++i)
             prep_list->appendChild (preps.getChild(i).createCopy(), &undo);
     
-        // connections
-        if (connection_list != nullptr)
-        {
-            for (int i = 0; i < conns.getNumChildren(); ++i)
-                connection_list->appendChild (conns.getChild(i).createCopy(), &undo);
-        }
-    
-        // mod connections
-        if (modulationLineView.connection_list != nullptr)
-        {
-            for (int i = 0; i < mconns.getNumChildren(); ++i)
-                modulationLineView.connection_list->appendChild (mconns.getChild(i).createCopy(), &undo);
-        }
+        // Use callAsync to wait for processors to be created before adding connections
+        juce::MessageManager::callAsync([this, conns = conns.createCopy(), mconns = mconns.createCopy(), nodeIdMap] {
+            // connections
+            if (connection_list != nullptr)
+            {
+                for (int i = 0; i < conns.getNumChildren(); ++i)
+                {
+                    auto c = conns.getChild(i).createCopy();
+                    connection_list->appendChild (c, &undo);
+                }
+            }
+        
+            // mod connections
+            if (modulationLineView.connection_list != nullptr)
+            {
+                for (int i = 0; i < mconns.getNumChildren(); ++i)
+                {
+                    auto c = mconns.getChild(i).createCopy();
+                    modulationLineView.connection_list->appendChild (c, &undo);
+                }
+            }
 
-        // Select the newly pasted items
-        for (auto const& [oldId, newId] : nodeIdMap)
-        {
-            if (auto* comp = getComponentForPlugin (newId))
-                lasso.addToSelection (comp);
-        }
+            // Select the newly pasted items
+            auto& lasso = preparationSelector.getLassoSelection();
+            for (auto const& [oldId, newId] : nodeIdMap)
+            {
+                if (auto* comp = getComponentForPlugin (newId))
+                    lasso.addToSelection (comp);
+            }
+        });
     }
 
 void ConstructionSite::reset() {

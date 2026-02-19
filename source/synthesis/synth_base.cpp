@@ -1327,7 +1327,9 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
     std::getline (dst_stream, dst_param, '_');
 
     auto pos = src_modulator_uuid_and_name.find_first_of ("-");
-    std::string juse_uuid = src_modulator_uuid_and_name.substr (pos + 1, src_modulator_uuid_and_name.size());
+    std::string juse_uuid = (pos != std::string::npos) 
+        ? src_modulator_uuid_and_name.substr (pos + 1)
+        : src_modulator_uuid_and_name;
 
     // find the needed nodes within the value tree to situation this connection
     auto parentPiano = findParentWithType (v, IDs::PIANO);
@@ -1358,9 +1360,23 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
     }
 
     // update the connection with the nodes and listener information
-    connection->parent_processor = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
+    auto* srcProc = dynamic_cast<bitklavier::ModulationProcessor*> (source_node->getProcessor());
+    if (srcProc == nullptr)
+    {
+        DBG ("connectStateModulation: source processor is not a ModulationProcessor, skipping.");
+        return;
+    }
+
+    connection->parent_processor = srcProc;
     connection->modulation_output_bus_index = connection->parent_processor->getNewModulationOutputIndex (*connection);
     connection->processor = connection->parent_processor->getModulatorBase (juse_uuid);
+    
+    if (connection->processor == nullptr)
+    {
+        DBG ("connectStateModulation: modulator not found: " << juse_uuid << ", skipping.");
+        return;
+    }
+
     connection->processor->addListener (connection);
     connection->parent_processor->addModulationConnection (connection);
     // connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
@@ -1382,7 +1398,9 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     std::string src_modulator_uuid_and_name;
     std::getline (ss, src_modulator_uuid_and_name, '_');
     auto pos = src_modulator_uuid_and_name.find_first_of ("-");
-    std::string juse_uuid = src_modulator_uuid_and_name.substr (pos + 1, src_modulator_uuid_and_name.size());
+    std::string juse_uuid = (pos != std::string::npos) 
+        ? src_modulator_uuid_and_name.substr (pos + 1)
+        : src_modulator_uuid_and_name;
     //DBG (juse_uuid);
     //   auto it = std::find_if(src_modulator_uuid_and_name.begin(),src_modulator_uuid_and_name.end(),::isdigit);
     //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);

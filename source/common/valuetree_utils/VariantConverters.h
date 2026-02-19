@@ -13,11 +13,7 @@ namespace juce {
 
         static juce::AudioProcessorGraph::NodeID fromVar(const juce::var& v)
         {
-            if(v.isString())
-            {
-                return juce::AudioProcessorGraph::NodeID(static_cast<uint32_t>(int64(v)));
-            }
-            return {};
+            return juce::AudioProcessorGraph::NodeID (static_cast<uint32_t> (static_cast<int64> (v)));
         }
 
         static juce::var toVar(const juce::AudioProcessorGraph::NodeID& id)
