@@ -154,6 +154,8 @@ public:
     void mouseDrag(const juce::MouseEvent &e) override;
 
     void mouseUp(const juce::MouseEvent &e) override {
+        // Reset cursor and internal drag state on mouse up
+        hasStartedDrag_ = false;
         setMouseCursor(juce::MouseCursor::ParentCursor);
         for (auto listener: listeners_) {
             listener->_update();
@@ -208,6 +210,10 @@ public:
     juce::SelectedItemSet<PreparationSection *> *selectedSet;
     std::unique_ptr<BKItem> item;
     juce::CachedValue<int>  width, height, numIns, numOuts;
+
+    // Drag handling helpers to prevent accidental movement on clicks/double-clicks
+    static constexpr int kDragStartThresholdPx_ = 6; // pixels
+    bool hasStartedDrag_ = false;
     juce::CachedValue<juce::Point<int>> curr_point;
 
     juce::ComponentBoundsConstrainer constrainer;

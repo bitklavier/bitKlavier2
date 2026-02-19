@@ -313,7 +313,9 @@ void PreparationSection::setPortInfo() {
 }
 
 void PreparationSection::mouseDown(const juce::MouseEvent &e) {
+    // Record position before any drag and reset drag state
     pointBeforDrag = this->getPosition();
+    hasStartedDrag_ = false;
 
     if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
     {
@@ -546,18 +548,37 @@ void PreparationSection::newObjectAdded(BKPort *object) {
 void PreparationSection::valueTreeRedirected(juce::ValueTree &) {}
 
 void PreparationSection::mouseDrag(const juce::MouseEvent &e) {
+    // Only consider left-button drags for moving items
+    if (! e.mods.isLeftButtonDown())
+        return;
+
+    // Defer starting a drag until the mouse has moved a small threshold to avoid
+    // accidental nudges during clicks/double-clicks.
+    if (!hasStartedDrag_)
+    {
+        if (e.getDistanceFromDragStart() < kDragStartThresholdPx_)
+            return; // Ignore tiny movements
+
+        // Threshold exceeded: begin the actual drag now
+        hasStartedDrag_ = true;
+
+        if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+        {
+            // Compute drag offset (mouse position relative to the component's top-left)
+            auto mousePosInSite = e.getEventRelativeTo(site).getPosition();
+            site->drag_offset_ = mousePosInSite - this->getPosition();
+        }
+    }
+
     for (auto listener: listeners_) {
         listener->_update();
         listener->preparationDragged(this, e);
     }
-    setMouseCursor(juce::MouseCursor::DraggingHandCursor);
-    auto* site = dynamic_cast<ConstructionSite *>(getParentComponent());
-    site->startDragging(state.toXmlString(), this, juce::ScaledImage(), true);
-    //    if (e.mods.isLeftButtonDown()) {
-    //        auto newPos = this->getPosition() + e.getDistanceFromDragStart();
-    //        this->setPosition(newPos);
-    //    }
 
+    setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+
+    if (auto* site = dynamic_cast<ConstructionSite *>(getParentComponent()))
+        site->startDragging(state.toXmlString(), this, juce::ScaledImage(), true);
 }
 
 void PreparationSection::moved()
