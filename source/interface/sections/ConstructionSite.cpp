@@ -519,19 +519,63 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case deletion:
             {
+                if (prep_list == nullptr)
+                    return false;
+
                 auto& lasso = preparationSelector.getLassoSelection();
                 auto lassoCopy  = lasso;
                 lasso.deselectAll();
+
+                juce::Array<juce::ValueTree> prepsToRemove;
                 for (auto prep : lassoCopy)
                 {
-                    prep_list->removeChild(prep->state, &undo);
+                    prepsToRemove.add (prep->state);
                 }
 
-                for (auto connection : *connection_list)
+                juce::Array<juce::ValueTree> connectionsToRemove;
+                if (connection_list != nullptr)
                 {
-                    if (connection != nullptr && connection->state.isValid() && connection->state.getProperty (IDs::isSelected))
+                    for (auto connection : *connection_list)
                     {
-                        connection_list->removeChild(connection->state, &undo);
+                        if (connection != nullptr && connection->state.isValid() && connection->state.getProperty (IDs::isSelected))
+                        {
+                            connectionsToRemove.add (connection->state);
+                        }
+                    }
+                }
+
+                juce::Array<juce::ValueTree> modConnectionsToRemove;
+                if (modulationLineView.connection_list != nullptr)
+                {
+                    for (auto modConnection : *modulationLineView.connection_list)
+                    {
+                        if (modConnection != nullptr && modConnection->state.isValid() && modConnection->state.getProperty (IDs::isSelected))
+                        {
+                            modConnectionsToRemove.add (modConnection->state);
+                        }
+                    }
+                }
+
+                for (auto& vt : prepsToRemove)
+                {
+                    prep_list->removeChild (vt, &undo);
+                }
+
+                if (connection_list != nullptr)
+                {
+                    for (auto& vt : connectionsToRemove)
+                    {
+                        if (vt.isValid() && vt.getParent().isValid())
+                            connection_list->removeChild (vt, &undo);
+                    }
+                }
+
+                if (modulationLineView.connection_list != nullptr)
+                {
+                    for (auto& vt : modConnectionsToRemove)
+                    {
+                        if (vt.isValid() && vt.getParent().isValid())
+                            modulationLineView.connection_list->removeChild (vt, &undo);
                     }
                 }
 
