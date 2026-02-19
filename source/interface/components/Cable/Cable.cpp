@@ -139,19 +139,6 @@ void Cable::resizeToFit()
         if (p2.y >= p1.y)
         {
             float midX = (p1.x + p2.x) * 0.5f;
-            if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
-            {
-                if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
-                {
-                    auto srcBounds = src->getBoundsInParent().toFloat();
-                    auto destBounds = dest->getBoundsInParent().toFloat();
-
-                    if (srcBounds.getRight() < destBounds.getX())
-                        midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
-                    else if (destBounds.getRight() < srcBounds.getX())
-                        midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
-                }
-            }
 
             newBounds = newBounds.getUnion (juce::Rectangle<float> (p1.x, p1.y - 20.0f, 1.0f, 1.0f))
                                 .getUnion (juce::Rectangle<float> (midX, p1.y - 20.0f, 1.0f, 1.0f))
@@ -193,6 +180,8 @@ void Cable::resized()
 
     p1 -= getPosition().toFloat();
     p2 -= getPosition().toFloat();
+
+    const float midY_original = (p1.y + p2.y) * 0.5f;
 
     linePath.clear();
     linePath.startNewSubPath (p1);
@@ -251,24 +240,6 @@ void Cable::resized()
         const float portSegment = 10.0f;
         float midX = (p1.x + p2.x) * 0.5f;
 
-        /*
-         * below was to use the midpoint between the edges of the BKItems, rather than the ports
-         * but it doesn't work and i'm not sure i care; looks good with the midpoint between the ports
-         */
-        // if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
-        // {
-        //     if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
-        //     {
-        //         auto srcBounds = src->getBoundsInParent().toFloat();
-        //         auto destBounds = dest->getBoundsInParent().toFloat();
-        //
-        //         if (srcBounds.getRight() < destBounds.getX())
-        //             midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
-        //         else if (destBounds.getRight() < srcBounds.getX())
-        //             midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
-        //     }
-        // }
-
         linePath.lineTo (p1.x, p1.y - portSegment);
         linePath.lineTo (midX, p1.y - portSegment);
         linePath.lineTo (midX, p2.y + portSegment);
@@ -294,23 +265,43 @@ void Cable::resized()
     {
         if (p2.x > p1.x)
         {
+            // Calculate the cubic bezier midpoint and tangent
+            float dx = std::abs(p2.x - p1.x);
+            float dy = std::abs(p2.y - p1.y);
+            float offset = (dx > dy) ? dx * 0.5f : dy * 0.5f;
+
+            juce::Point<float> cp1 { p1.x + offset, p1.y };
+            juce::Point<float> cp2 { p2.x - offset, p2.y };
+
+            // B(0.5) = 0.125*P0 + 0.375*P1 + 0.375*P2 + 0.125*P3
+            juce::Point<float> midPoint = p1 * 0.125f + cp1 * 0.375f + cp2 * 0.375f + p2 * 0.125f;
+
+            // B'(0.5) = 0.75*(P1-P0) + 1.5*(P2-P1) + 0.75*(P3-P2)
+            juce::Point<float> tangent = (cp1 - p1) * 0.75f + (cp2 - cp1) * 1.5f + (p2 - cp2) * 0.75f;
+
             arrow.applyTransform (juce::AffineTransform()
-                                          .rotated (juce::MathConstants<float>::halfPi - (float) atan2 (p2.x - p1.x, p2.y - p1.y))
-                                          .translated ((p1 + p2) * 0.5f));
+                                          .rotated ((float) atan2 (tangent.y, tangent.x))
+                                          .translated (midPoint));
         }
         else
         {
             // midpoint of the cross segment
-            float midY = (p1.y + p2.y) * 0.5f;
             arrow.applyTransform (juce::AffineTransform()
-                                          .translated ((p1.x + p2.x) * 0.5f, midY));
+                                          .rotated (juce::MathConstants<float>::pi) // pointing left
+                                          .translated ((p1.x + p2.x) * 0.5f, midY_original));
         }
     }
     else if (p2.y < p1.y)
     {
+        juce::Point<float> cp1 { p1.x, p1.y + (p2.y - p1.y) * 0.33f };
+        juce::Point<float> cp2 { p2.x, p1.y + (p2.y - p1.y) * 0.66f };
+
+        juce::Point<float> midPoint = p1 * 0.125f + cp1 * 0.375f + cp2 * 0.375f + p2 * 0.125f;
+        juce::Point<float> tangent = (cp1 - p1) * 0.75f + (cp2 - cp1) * 1.5f + (p2 - cp2) * 0.75f;
+
         arrow.applyTransform (juce::AffineTransform()
-                                      .rotated (juce::MathConstants<float>::halfPi - (float) atan2 (p2.x - p1.x, p2.y - p1.y))
-                                      .translated ((p1 + p2) * 0.5f));
+                                      .rotated ((float) atan2 (tangent.y, tangent.x))
+                                      .translated (midPoint));
     }
     else
     {
@@ -318,27 +309,14 @@ void Cable::resized()
         // For the 5-segment path, the midpoint is always on the vertical segment at midX.
         float midX = (p1.x + p2.x) * 0.5f;
 
-        if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
-        {
-            if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
-            {
-                auto srcBounds = src->getBoundsInParent().toFloat();
-                auto destBounds = dest->getBoundsInParent().toFloat();
-
-                if (srcBounds.getRight() < destBounds.getX())
-                    midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
-                else if (destBounds.getRight() < srcBounds.getX())
-                    midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
-            }
-        }
-
         arrow.applyTransform (juce::AffineTransform()
                                       .rotated (juce::MathConstants<float>::halfPi) // pointing down
-                                      .translated (midX, (p1.y + p2.y) * 0.5f));
+                                      .translated (midX, midY_original));
     }
 
     linePath.addPath (arrow);
     linePath.setUsingNonZeroWinding (true);
+
     juce::MessageManager::callAsync (
             [safeComp = juce::Component::SafePointer<Cable> (this)]
             {
@@ -391,18 +369,16 @@ void Cable::drawCable (juce::Graphics& g, juce::Point<float> start, juce::Point<
     if (state.getProperty (IDs::isSelected)) {
         g.setColour(juce::Colours::white);
         juce::ScopedLock sl (pathCrit);
-        // Stroke the path with a slightly larger width to create the "edge" effect
-        g.strokePath (linePath, juce::PathStrokeType (cableThickness));
+        g.strokePath (linePath, juce::PathStrokeType (cableThickness + 1.5f));
     }
 
     g.setGradientFill (juce::ColourGradient { startColour, start, endColour, end, false });
     {
         juce::ScopedLock sl (pathCrit);
-        g.strokePath (linePath, juce::PathStrokeType (cableThickness, juce::PathStrokeType::JointStyle::curved));
+        g.fillPath (linePath);
+        // Also stroke it to give it some weight if needed, or just leave it filled if it's already stroked
+        // But since we are using fillPath, the linePath must have been converted to a stroked path.
     }
-
-//    drawCableEndCircle (g, start, startColour);
-//    drawCableEndCircle (g, end, endColour);
 }
 
 void Cable::paint (juce::Graphics& g)
