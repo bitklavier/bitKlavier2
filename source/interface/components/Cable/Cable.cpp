@@ -3,8 +3,8 @@
 //
 #include "CableView.h"
 #include "Cable.h"
-
 #include "ConstructionSite.h"
+#include "Preparations/PreparationSection.h"
 using namespace CableConstants;
 
 Cable::Cable (ConstructionSite* site, CableView& cableView) : juce::Component (Cable::componentName.data()),
@@ -125,6 +125,178 @@ juce::Path Cable::createCablePath (juce::Point<float> start, juce::Point<float> 
 void Cable::repaintIfNeeded (bool force)
 {
 
+}
+
+void Cable::resizeToFit()
+{
+    juce::Point<float> p1, p2;
+    getPoints (p1, p2);
+
+    auto newBounds = juce::Rectangle<float> (p1, p2);
+
+    if (p2.y >= p1.y && connection.source.isMIDI())
+    {
+        float midX = (p1.x + p2.x) * 0.5f;
+        if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
+        {
+            if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
+            {
+                auto srcBounds = src->getBoundsInParent().toFloat();
+                auto destBounds = dest->getBoundsInParent().toFloat();
+
+                if (srcBounds.getRight() < destBounds.getX())
+                    midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
+                else if (destBounds.getRight() < srcBounds.getX())
+                    midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
+            }
+        }
+
+        newBounds = newBounds.getUnion (juce::Rectangle<float> (p1.x, p1.y - 20.0f, 1.0f, 1.0f))
+                            .getUnion (juce::Rectangle<float> (midX, p1.y - 20.0f, 1.0f, 1.0f))
+                            .getUnion (juce::Rectangle<float> (midX, p2.y + 20.0f, 1.0f, 1.0f))
+                            .getUnion (juce::Rectangle<float> (p2.x, p2.y + 20.0f, 1.0f, 1.0f));
+    }
+
+    newBounds = newBounds.expanded (10.0f); // extra margin for stroke/arrow
+
+    auto integerBounds = newBounds.getSmallestIntegerContainer();
+    if (integerBounds != getBounds())
+        setBounds (integerBounds);
+    else
+        resized();
+
+    repaint();
+}
+
+void Cable::resized()
+{
+    juce::Point<float> p1, p2;
+    getPoints (p1, p2);
+
+    lastInputPos = p1;
+    lastOutputPos = p2;
+
+    p1 -= getPosition().toFloat();
+    p2 -= getPosition().toFloat();
+
+    linePath.clear();
+    linePath.startNewSubPath (p1);
+
+    if (!connection.source.isMIDI()) // for audio connections, running out the right-side ports of preps
+    {
+        // 1. Calculate the distance between points
+        float dx = std::abs(p2.x - p1.x);
+        float dy = std::abs(p2.y - p1.y);
+
+        // 2. Determine how much "bend" to apply based on the largest distance
+        // This ensures the curve scales with the length of the path.
+        float offset = (dx > dy) ? dx * 0.5f : dy * 0.5f;
+
+        linePath.clear();
+        linePath.startNewSubPath(p1);
+
+        linePath.cubicTo (p1.x + offset, p1.y,
+                             p2.x - offset, p2.y,
+                             p2.x, p2.y);
+    }
+    else if (p2.y < p1.y) // audio and MIDI connections, running vertically from, say, Keymap to other preps
+    {
+        linePath.cubicTo (p1.x, p1.y + (p2.y - p1.y) * 0.33f,
+                         p2.x, p1.y + (p2.y - p1.y) * 0.66f,
+                         p2.x, p2.y);
+    }
+    else // case when the output port is above the input port, to make a more readable path
+    {
+        const float portSegment = 10.0f;
+        float midX = (p1.x + p2.x) * 0.5f;
+
+        /*
+         * below was to use the midpoint between the edges of the BKItems, rather than the ports
+         * but it doesn't work and i'm not sure i care; looks good with the midpoint between the ports
+         */
+        // if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
+        // {
+        //     if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
+        //     {
+        //         auto srcBounds = src->getBoundsInParent().toFloat();
+        //         auto destBounds = dest->getBoundsInParent().toFloat();
+        //
+        //         if (srcBounds.getRight() < destBounds.getX())
+        //             midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
+        //         else if (destBounds.getRight() < srcBounds.getX())
+        //             midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
+        //     }
+        // }
+
+        linePath.lineTo (p1.x, p1.y - portSegment);
+        linePath.lineTo (midX, p1.y - portSegment);
+        linePath.lineTo (midX, p2.y + portSegment);
+        linePath.lineTo (p2.x, p2.y + portSegment);
+        linePath.lineTo (p2.x, p2.y);
+    }
+
+    juce::PathStrokeType wideStroke (8.0f);
+    wideStroke.createStrokedPath (hitPath, linePath);
+
+    juce::PathStrokeType stroke (2.5f);
+    stroke.createStrokedPath (linePath, linePath);
+
+    auto arrowW = 5.0f;
+    auto arrowL = 4.0f;
+
+    juce::Path arrow;
+    arrow.addTriangle (-arrowL, arrowW,
+                       -arrowL, -arrowW,
+                       arrowL, 0.0f);
+
+    if (p2.y < p1.y || !connection.source.isMIDI())
+    {
+        arrow.applyTransform (juce::AffineTransform()
+                                      .rotated (juce::MathConstants<float>::halfPi - (float) atan2 (p2.x - p1.x, p2.y - p1.y))
+                                      .translated ((p1 + p2) * 0.5f));
+    }
+    else
+    {
+        // Arrow at the halfway point along the path.
+        // For the 5-segment path, the midpoint is always on the vertical segment at midX.
+        float midX = (p1.x + p2.x) * 0.5f;
+
+        if (auto* src = site->getComponentForPlugin (connection.source.nodeID))
+        {
+            if (auto* dest = site->getComponentForPlugin (connection.destination.nodeID))
+            {
+                auto srcBounds = src->getBoundsInParent().toFloat();
+                auto destBounds = dest->getBoundsInParent().toFloat();
+
+                if (srcBounds.getRight() < destBounds.getX())
+                    midX = (srcBounds.getRight() + destBounds.getX()) * 0.5f;
+                else if (destBounds.getRight() < srcBounds.getX())
+                    midX = (destBounds.getRight() + srcBounds.getX()) * 0.5f;
+            }
+        }
+
+        arrow.applyTransform (juce::AffineTransform()
+                                      .rotated (juce::MathConstants<float>::halfPi) // pointing down
+                                      .translated (midX, (p1.y + p2.y) * 0.5f));
+    }
+
+    linePath.addPath (arrow);
+    linePath.setUsingNonZeroWinding (true);
+    juce::MessageManager::callAsync (
+            [safeComp = juce::Component::SafePointer<Cable> (this)]
+            {
+                if (auto* comp = safeComp.getComponent())
+                    comp->redoImage();
+                //comp->repaint (cableBounds);
+            });
+
+    // highlight cable if selected
+    if (state.getProperty (IDs::isSelected)) {
+        juce::Path selectionPath;
+        juce::PathStrokeType highlightStroke (4.0f); // Slightly wider than the main cable
+        highlightStroke.createStrokedPath (selectionPath, linePath);
+        linePath.addPath(selectionPath);
+    }
 }
 
 float Cable::getCableThickness() const

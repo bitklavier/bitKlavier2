@@ -9,8 +9,10 @@
 #include "open_gl_image_component.h"
 #include "Identifiers.h"
 
-
 class CableView;
+class ConstructionSite;
+class PreparationSection;
+
 namespace CableConstants
 {
     const juce::Colour cableColour (0xFFD0592C); // currently only used for "glow"
@@ -92,20 +94,7 @@ public:
 
     juce::ValueTree getValueTree();
 
-    void resizeToFit()
-    {
-        juce::Point<float> p1, p2;
-        getPoints (p1, p2);
-
-        auto newBounds = juce::Rectangle<float> (p1, p2).expanded (4.0f).getSmallestIntegerContainer();
-
-        if (newBounds != getBounds())
-            setBounds (newBounds);
-        else
-            resized();
-
-        repaint();
-    }
+    void resizeToFit();
 
     void getPoints (juce::Point<float>& p1, juce::Point<float>& p2) const;
     juce::AudioProcessorGraph::Connection connection { { {}, 0 }, { {}, 0 } };
@@ -141,73 +130,7 @@ public:
 
     void mouseUp (const juce::MouseEvent& e) override;
 
-    void resized() override
-    {
-        juce::Point<float> p1, p2;
-        getPoints (p1, p2);
-
-        lastInputPos = p1;
-        lastOutputPos = p2;
-
-        p1 -= getPosition().toFloat();
-        p2 -= getPosition().toFloat();
-
-        linePath.clear();
-        linePath.startNewSubPath (p1);
-
-        //if (p2.y < p1.y)
-        {
-            linePath.cubicTo (p1.x, p1.y + (p2.y - p1.y) * 0.33f,
-                             p2.x, p1.y + (p2.y - p1.y) * 0.66f,
-                             p2.x, p2.y);
-        }
-        /*
-         * todo: figure out an elegant way to draw cables when the outlet is above the inlet
-         *          - probably requires two linePaths
-         */
-        // else
-        // {
-        //     linePath.cubicTo (p1.x, p1.y - 20,
-        //                      p1.x + (p2.x - p1.x) * 0.5, p1.y - 20,
-        //                      p2.x, p2.y);
-        // }
-
-        juce::PathStrokeType wideStroke (8.0f);
-        wideStroke.createStrokedPath (hitPath, linePath);
-
-        juce::PathStrokeType stroke (2.5f);
-        stroke.createStrokedPath (linePath, linePath);
-
-        auto arrowW = 5.0f;
-        auto arrowL = 4.0f;
-
-        juce::Path arrow;
-        arrow.addTriangle (-arrowL, arrowW,
-                           -arrowL, -arrowW,
-                           arrowL, 0.0f);
-
-        arrow.applyTransform (juce::AffineTransform()
-                                      .rotated (juce::MathConstants<float>::halfPi - (float) atan2 (p2.x - p1.x, p2.y - p1.y))
-                                      .translated ((p1 + p2) * 0.5f));
-
-        linePath.addPath (arrow);
-        linePath.setUsingNonZeroWinding (true);
-        juce::MessageManager::callAsync (
-                [safeComp = juce::Component::SafePointer<Cable> (this)]
-                {
-                    if (auto* comp = safeComp.getComponent())
-                        comp->redoImage();
-                    //comp->repaint (cableBounds);
-                });
-
-        // highlight cable if selected
-        if (state.getProperty (IDs::isSelected)) {
-            juce::Path selectionPath;
-            juce::PathStrokeType highlightStroke (4.0f); // Slightly wider than the main cable
-            highlightStroke.createStrokedPath (selectionPath, linePath);
-            linePath.addPath(selectionPath);
-        }
-    }
+    void resized() override;
 
     void getDistancesFromEnds (juce::Point<float> p, double& distanceFromStart, double& distanceFromEnd) const
     {

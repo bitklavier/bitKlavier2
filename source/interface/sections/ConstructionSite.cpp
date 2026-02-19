@@ -535,11 +535,17 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 juce::Array<juce::ValueTree> connectionsToRemove;
                 if (connection_list != nullptr)
                 {
-                    for (auto connection : *connection_list)
+                    const bitklavier::ConnectionList::ScopedLockType sl (connection_list->arrayLock);
+                    // Copy the current objects to avoid iterator invalidation if the list is modified during removal.
+                    // bitklavier::ConnectionList inherits from ValueTreeObjectList which has an 'objects' member.
+                    for (int i = 0; i < connection_list->size(); ++i)
                     {
-                        if (connection != nullptr && connection->state.isValid() && connection->state.getProperty (IDs::isSelected))
+                        if (auto* connection = connection_list->at(i))
                         {
-                            connectionsToRemove.add (connection->state);
+                            if (connection->state.isValid() && (bool) connection->state.getProperty (IDs::isSelected, false))
+                            {
+                                connectionsToRemove.add (connection->state);
+                            }
                         }
                     }
                 }
@@ -547,11 +553,15 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 juce::Array<juce::ValueTree> modConnectionsToRemove;
                 if (modulationLineView.connection_list != nullptr)
                 {
-                    for (auto modConnection : *modulationLineView.connection_list)
+                    const bitklavier::ModConnectionList::ScopedLockType sl (modulationLineView.connection_list->arrayLock);
+                    for (int i = 0; i < modulationLineView.connection_list->size(); ++i)
                     {
-                        if (modConnection != nullptr && modConnection->state.isValid() && modConnection->state.getProperty (IDs::isSelected))
+                        if (auto* modConnection = modulationLineView.connection_list->at(i))
                         {
-                            modConnectionsToRemove.add (modConnection->state);
+                            if (modConnection->state.isValid() && (bool) modConnection->state.getProperty (IDs::isSelected, false))
+                            {
+                                modConnectionsToRemove.add (modConnection->state);
+                            }
                         }
                     }
                 }
@@ -1121,6 +1131,7 @@ void ConstructionSite::setActivePiano() {
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
+    connection_list = interface->getSynth()->getActiveConnectionList();
 }
 
 void ConstructionSite::removeAllGuiListeners()
