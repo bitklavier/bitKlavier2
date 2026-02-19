@@ -652,10 +652,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(itemCounter++, "Rename Current");
         options.addItem(itemCounter++, "Duplicate Current");
         options.addItem(itemCounter++, "Delete Current");
-        options.addItem(disabledItem);
-        options.addItem(itemCounter++, "Select All");
-        options.addItem(itemCounter++, "Horizontally Align Selected");
-        options.addItem(itemCounter++, "Vertically Align Selected");
         options.addItem(disabledItem); // create separator line
 
         for (int i = 0; i < names.size(); i++) {
@@ -717,24 +713,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                         DBG("delete piano");
                         deletePiano();
                         break;
-                    case 4:
-                    {
-                        auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
-                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x062d));
-                        break;
-                    }
-                    case 5:
-                    {
-                        auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
-                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0627));
-                        break;
-                    }
-                    case 6:
-                    {
-                        auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
-                        site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0628));
-                        break;
-                    }
                     default:
                         DBG("no action");
                 }
@@ -955,12 +933,70 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         }, {}, 1.5f);
     } else if (clicked_button == preparationsSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-        PopupItems options = parent->getPreparationPopupItems();
+        PopupItems options;
+
+        PopupItems disabledItem ("separator");
+        disabledItem.enabled = false; // This makes it non-selectable
+        disabledItem.id = -1; // will be a separator line
+
+        int specialItemBase = 1000;
+        options.addItem(specialItemBase + 0, "Select All (command-a)");
+        options.addItem(specialItemBase + 1, "Horizontally Align Selected (shift-h)");
+        options.addItem(specialItemBase + 2, "Vertically Align Selected (shift-v)");
+        options.addItem(disabledItem);
+
+        PopupItems prepOptions = parent->getPreparationPopupItems();
+
+        auto appendShortcut = [] (int prepId, const std::string& baseName) -> std::string {
+            using PT = bitklavier::BKPreparationType;
+            switch (static_cast<PT>(prepId))
+            {
+                case PT::PreparationTypeDirect:       return baseName + " (d)";
+                case PT::PreparationTypeNostalgic:    return baseName + " (n)";
+                case PT::PreparationTypeKeymap:       return baseName + " (k)";
+                case PT::PreparationTypeResonance:    return baseName + " (r)";
+                case PT::PreparationTypeSynchronic:   return baseName + " (s)";
+                case PT::PreparationTypeBlendronic:   return baseName + " (b)";
+                case PT::PreparationTypeTempo:        return baseName + " (m)";
+                case PT::PreparationTypeTuning:       return baseName + " (t)";
+                case PT::PreparationTypeModulation:   return baseName + " (c)";
+                case PT::PreparationTypeMidiFilter:   return baseName + " (shift-f)";
+                case PT::PreparationTypeMidiTarget:   return baseName + " (shift-t)";
+                case PT::PreparationTypePianoMap:     return baseName + " (p)";
+                case PT::PreparationTypeReset:        return baseName + " (\\)";
+                default:                              return baseName; // no shortcut defined or shown
+            }
+        };
+
+        for (const auto& item : prepOptions.items)
+        {
+            if (!item.enabled || item.id == -1 || item.name == "separator")
+            {
+                options.addItem(item);
+                continue;
+            }
+            PopupItems withShortcut = item; // copy
+            withShortcut.name = appendShortcut(item.id, item.name);
+            options.addItem(withShortcut);
+        }
 
         juce::Point<int> position(preparationsSelector->getX(), preparationsSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            parent->gui_->main_->constructionSite_->addItem(selection, true);
-        });
+            if (selection >= specialItemBase && selection < specialItemBase + 3)
+            {
+                auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
+                if (selection == specialItemBase + 0)
+                    site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x062d)); // selectAll
+                else if (selection == specialItemBase + 1)
+                    site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0627)); // horizontallyAlignSelected
+                else if (selection == specialItemBase + 2)
+                    site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0628)); // verticallyAlignSelected
+            }
+            else
+            {
+                parent->gui_->main_->constructionSite_->addItem(selection, true);
+            }
+        }, {}, 1.25f);
     } else if (clicked_button == VSTSelector.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         PopupItems options = parent->getVSTPopupItems();
