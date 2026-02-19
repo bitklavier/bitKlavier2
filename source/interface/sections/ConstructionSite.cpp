@@ -10,6 +10,9 @@
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
 #include "tracktion_ValueTreeUtilities.h"
+#include <set>
+
+juce::ValueTree ConstructionSite::clipboard;
 
 static constexpr std::array<std::pair<float, float>,
     static_cast<size_t>(bitklavier::BKPreparationType::BKPreparationTypeNil)> prepSizes =
@@ -109,7 +112,9 @@ enum CommandIDs {
     nudgeDown = 0x062a,
     nudgeLeft = 0x062b,
     nudgeRight = 0x062c,
-    selectAll = 0x062d
+    selectAll = 0x062d,
+    copy = 0x062e,
+    paste = 0x062f
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
@@ -134,7 +139,9 @@ void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
         nudgeDown,
         nudgeLeft,
         nudgeRight,
-        selectAll});
+        selectAll,
+        copy,
+        paste});
 }
 
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
@@ -224,6 +231,14 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
         case selectAll:
             info.setInfo("Select All", "Selects all preparations", "Edit", 0);
             info.addDefaultKeypress('a', juce::ModifierKeys::commandModifier);
+            break;
+        case copy:
+            info.setInfo("Copy", "Copies selected preparations", "Edit", 0);
+            info.addDefaultKeypress('c', juce::ModifierKeys::commandModifier);
+            break;
+        case paste:
+            info.setInfo("Paste", "Pastes copied preparations", "Edit", 0);
+            info.addDefaultKeypress('v', juce::ModifierKeys::commandModifier);
             break;
     }
 }
@@ -592,10 +607,245 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 return true;
             }
+            case copy:
+                copySelectedItems();
+                return true;
+            case paste:
+                pasteItems();
+                return true;
             default:
                 return false;
         }
-}
+    }
+
+    void ConstructionSite::copySelectedItems()
+    {
+        auto selected = preparationSelector.getLassoSelection();
+        if (selected.getNumSelected() == 0)
+            return;
+
+        clipboard = juce::ValueTree ("CLIPBOARD");
+        auto preps = juce::ValueTree (IDs::PREPARATIONS);
+        clipboard.addChild (preps, -1, nullptr);
+
+        std::set<juce::String> selectedUuids;
+        std::set<juce::AudioProcessorGraph::NodeID> selectedNodeIds;
+
+        juce::Rectangle<int> bounds;
+
+        for (int i = 0; i < selected.getNumSelected(); ++i)
+        {
+            auto* item = selected.getSelectedItem(i);
+            if (item != nullptr && item->state.isValid())
+            {
+                preps.addChild (item->state.createCopy(), -1, nullptr);
+                selectedUuids.insert (item->state.getProperty(IDs::uuid).toString());
+                selectedNodeIds.insert (item->pluginID);
+
+                if (item->state.hasProperty(IDs::x_y))
+                {
+                    auto p = juce::VariantConverter<juce::Point<int>>::fromVar (item->state.getProperty (IDs::x_y));
+                    if (bounds.isEmpty())
+                        bounds = juce::Rectangle<int>(p.x, p.y, 1, 1);
+                    else
+                        bounds = bounds.getUnion(juce::Rectangle<int>(p.x, p.y, 1, 1));
+                }
+            }
+        }
+
+        if (!bounds.isEmpty())
+        {
+            clipboard.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(bounds.getCentre()), nullptr);
+        }
+
+        // Copy Connections
+        auto connections = juce::ValueTree (IDs::CONNECTIONS);
+        clipboard.addChild (connections, -1, nullptr);
+        auto currentConnections = parent.getChildWithName (IDs::CONNECTIONS);
+        for (int i = 0; i < currentConnections.getNumChildren(); ++i)
+        {
+            auto c = currentConnections.getChild(i);
+            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::src));
+            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::dest));
+
+            if (selectedNodeIds.count(srcId) && selectedNodeIds.count(dstId))
+                connections.addChild (c.createCopy(), -1, nullptr);
+        }
+
+        // Copy ModConnections
+        auto modConnections = juce::ValueTree (IDs::MODCONNECTIONS);
+        clipboard.addChild (modConnections, -1, nullptr);
+        auto currentModConnections = parent.getChildWithName (IDs::MODCONNECTIONS);
+        for (int i = 0; i < currentModConnections.getNumChildren(); ++i)
+        {
+            auto c = currentModConnections.getChild(i);
+        
+            if (c.hasType(IDs::ModulationConnection))
+            {
+                auto srcUuid = c.getProperty(IDs::src).toString().upToFirstOccurrenceOf ("_", false, false);
+                auto dstUuid = c.getProperty(IDs::dest).toString().upToFirstOccurrenceOf ("_", false, false);
+                if (selectedUuids.count(srcUuid) && selectedUuids.count(dstUuid))
+                    modConnections.addChild (c.createCopy(), -1, nullptr);
+            }
+            else if (c.hasProperty(IDs::src) && c.hasProperty(IDs::dest))
+            {
+                auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::src));
+                auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::dest));
+                if (selectedNodeIds.count(srcId) && selectedNodeIds.count(dstId))
+                {
+                    auto copy = c.createCopy();
+                    // Also check children of the wrapper
+                    for (int j = copy.getNumChildren() - 1; j >= 0; --j)
+                    {
+                        auto mc = copy.getChild(j);
+                        auto srcUuid = mc.getProperty(IDs::src).toString().upToFirstOccurrenceOf ("_", false, false);
+                        auto dstUuid = mc.getProperty(IDs::dest).toString().upToFirstOccurrenceOf ("_", false, false);
+                        if (!selectedUuids.count(srcUuid) || !selectedUuids.count(dstUuid))
+                            copy.removeChild(j, nullptr);
+                    }
+                    modConnections.addChild (copy, -1, nullptr);
+                }
+            }
+        }
+    }
+
+    void ConstructionSite::pasteItems()
+    {
+        if (!clipboard.isValid())
+            return;
+
+        auto workVt = clipboard.createCopy();
+        auto preps = workVt.getChildWithName (IDs::PREPARATIONS);
+        if (!preps.isValid())
+            return;
+
+        std::map<juce::String, juce::String> uuidMap;
+        std::map<juce::AudioProcessorGraph::NodeID, juce::AudioProcessorGraph::NodeID> nodeIdMap;
+
+        juce::Point<int> offset(20, 20);
+        if (clipboard.hasProperty(IDs::x_y))
+        {
+            auto originalCenter = juce::VariantConverter<juce::Point<int>>::fromVar(clipboard.getProperty(IDs::x_y));
+            offset = mouse.toInt() - originalCenter;
+        }
+
+        // Generate new IDs
+        for (int i = 0; i < preps.getNumChildren(); ++i)
+        {
+            auto prep = preps.getChild(i);
+            auto oldUuid = prep.getProperty(IDs::uuid).toString();
+            auto newUuid = juce::Uuid().toString();
+            uuidMap[oldUuid] = newUuid;
+            prep.setProperty (IDs::uuid, newUuid, nullptr);
+
+            auto oldNodeId = juce::AudioProcessorGraph::NodeID (juce::Uuid(oldUuid).getTimeLow());
+            auto newNodeId = juce::AudioProcessorGraph::NodeID (juce::Uuid(newUuid).getTimeLow());
+            nodeIdMap[oldNodeId] = newNodeId;
+            prep.setProperty (IDs::nodeID, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(newNodeId), nullptr);
+        
+            // Offset position
+            if (prep.hasProperty (IDs::x_y))
+            {
+                auto p = juce::VariantConverter<juce::Point<int>>::fromVar (prep.getProperty (IDs::x_y));
+                p += offset;
+                prep.setProperty (IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar (p), nullptr);
+            }
+        }
+
+        // Remap Connections
+        auto conns = workVt.getChildWithName (IDs::CONNECTIONS);
+        for (int i = 0; i < conns.getNumChildren(); ++i)
+        {
+            auto c = conns.getChild(i);
+            auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::src));
+            auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::dest));
+
+            if (nodeIdMap.count(srcId))
+                c.setProperty (IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[srcId]), nullptr);
+            if (nodeIdMap.count(dstId))
+                c.setProperty (IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[dstId]), nullptr);
+        }
+
+        // Remap ModConnections
+        auto mconns = workVt.getChildWithName (IDs::MODCONNECTIONS);
+        for (int i = 0; i < mconns.getNumChildren(); ++i)
+        {
+            auto c = mconns.getChild(i);
+            if (c.hasType(IDs::ModulationConnection))
+            {
+                if (c.hasProperty(IDs::uuid))
+                    c.setProperty (IDs::uuid, juce::Uuid().toString(), nullptr);
+            
+                auto s = c.getProperty(IDs::src).toString();
+                auto d = c.getProperty(IDs::dest).toString();
+                for (auto const& [oldU, newU] : uuidMap)
+                {
+                    s = s.replace(oldU, newU);
+                    d = d.replace(oldU, newU);
+                }
+                c.setProperty(IDs::src, s, nullptr);
+                c.setProperty(IDs::dest, d, nullptr);
+            }
+            else
+            {
+                if (c.hasProperty(IDs::src) && c.hasProperty(IDs::dest))
+                {
+                    auto srcId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::src));
+                    auto dstId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (c.getProperty(IDs::dest));
+                    if (nodeIdMap.count(srcId))
+                        c.setProperty (IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[srcId]), nullptr);
+                    if (nodeIdMap.count(dstId))
+                        c.setProperty (IDs::dest, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(nodeIdMap[dstId]), nullptr);
+                }
+                for (int j = 0; j < c.getNumChildren(); ++j)
+                {
+                    auto mc = c.getChild(j);
+                    if (mc.hasProperty(IDs::uuid))
+                        mc.setProperty (IDs::uuid, juce::Uuid().toString(), nullptr);
+                    auto s = mc.getProperty(IDs::src).toString();
+                    auto d = mc.getProperty(IDs::dest).toString();
+                    for (auto const& [oldU, newU] : uuidMap)
+                    {
+                        s = s.replace(oldU, newU);
+                        d = d.replace(oldU, newU);
+                    }
+                    mc.setProperty(IDs::src, s, nullptr);
+                    mc.setProperty(IDs::dest, d, nullptr);
+                }
+            }
+        }
+
+        // Apply to current piano
+        undo.beginNewTransaction ("Paste items");
+        
+        auto& lasso = preparationSelector.getLassoSelection();
+        lasso.deselectAll();
+    
+        // items
+        for (int i = 0; i < preps.getNumChildren(); ++i)
+            prep_list->appendChild (preps.getChild(i).createCopy(), &undo);
+    
+        // connections
+        if (connection_list != nullptr)
+        {
+            for (int i = 0; i < conns.getNumChildren(); ++i)
+                connection_list->appendChild (conns.getChild(i).createCopy(), &undo);
+        }
+    
+        // mod connections
+        if (modulationLineView.connection_list != nullptr)
+        {
+            for (int i = 0; i < mconns.getNumChildren(); ++i)
+                modulationLineView.connection_list->appendChild (mconns.getChild(i).createCopy(), &undo);
+        }
+
+        // Select the newly pasted items
+        for (auto const& [oldId, newId] : nodeIdMap)
+        {
+            if (auto* comp = getComponentForPlugin (newId))
+                lasso.addToSelection (comp);
+        }
+    }
 
 void ConstructionSite::reset() {
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);

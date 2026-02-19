@@ -943,6 +943,8 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(specialItemBase + 0, "Select All (command-a)");
         options.addItem(specialItemBase + 1, "Horizontally Align Selected (shift-h)");
         options.addItem(specialItemBase + 2, "Vertically Align Selected (shift-v)");
+        options.addItem(specialItemBase + 3, "Copy (command-c)");
+        options.addItem(specialItemBase + 4, "Paste (command-v)");
         options.addItem(disabledItem);
 
         PopupItems prepOptions = parent->getPreparationPopupItems();
@@ -982,7 +984,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         juce::Point<int> position(preparationsSelector->getX(), preparationsSelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
-            if (selection >= specialItemBase && selection < specialItemBase + 3)
+            if (selection >= specialItemBase && selection < specialItemBase + 5)
             {
                 auto site = findParentComponentOfClass<FullInterface>()->main_->constructionSite_.get();
                 if (selection == specialItemBase + 0)
@@ -991,6 +993,10 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                     site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0627)); // horizontallyAlignSelected
                 else if (selection == specialItemBase + 2)
                     site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x0628)); // verticallyAlignSelected
+                else if (selection == specialItemBase + 3)
+                    site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x062e)); // copy
+                else if (selection == specialItemBase + 4)
+                    site->perform(juce::ApplicationCommandTarget::InvocationInfo(0x062f)); // paste
             }
             else
             {

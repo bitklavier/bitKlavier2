@@ -146,6 +146,11 @@ public:
     void removeAllGuiListeners();
     void linkedPiano() override;
 
+    void copySelectedItems();
+    void pasteItems();
+
+    static juce::ValueTree clipboard;
+
 private:
     PreparationList* prep_list;
     bitklavier::ConnectionList* connection_list;
