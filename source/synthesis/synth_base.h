@@ -173,6 +173,11 @@ public:
 
     juce::ValueTree findParentWithType(juce::ValueTree child, const juce::Identifier& typeName_);
 
+    static juce::ValueTree getChildWithPropertyAndType (const juce::ValueTree& parent,
+                                                        const juce::Identifier& property,
+                                                        const juce::var& value,
+                                                        const juce::Identifier& type);
+
     //single consumer single produce queue (thread safe / non blocking)
     static constexpr size_t actionSize = 64; // sizeof ([this, i = index] { callMessageThreadBroadcaster (i); })
     using AudioThreadAction = juce::dsp::FixedSizeFunction<actionSize, void()>;

@@ -363,7 +363,8 @@ void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetail
     auto dropped_tree = juce::ValueTree::fromXml(dragSourceDetails.description);
 
     //should switch to strings for type names
-    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeModulation) {
+    if (static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeModulation ||
+        static_cast<int>(dropped_tree.getProperty(IDs::type)) == bitklavier::BKPreparationType::PreparationTypeDirect) {
         for (auto listener: listeners_)
             listener->modulationDropped(dropped_tree, state);
     }

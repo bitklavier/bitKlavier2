@@ -322,6 +322,21 @@ juce::ValueTree SynthBase::findParentWithType(juce::ValueTree child, const juce:
     return {}; // Return an invalid ValueTree if not found
 }
 
+juce::ValueTree SynthBase::getChildWithPropertyAndType (const juce::ValueTree& parent,
+                                                        const juce::Identifier& property,
+                                                        const juce::var& value,
+                                                        const juce::Identifier& type)
+{
+    for (int i = 0; i < parent.getNumChildren(); ++i)
+    {
+        auto child = parent.getChild (i);
+        if (child.hasType (type) && child.getProperty (property) == value)
+            return child;
+    }
+
+    return {};
+}
+
 PreparationList* SynthBase::getActivePreparationList()
 {
     for (auto& preparation : preparationLists)
@@ -1053,7 +1068,14 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     auto mod_src = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (src_uuid));
     auto mod_dst = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
     auto mod_connections = getActivePianoValueTree().getChildWithName (IDs::MODCONNECTIONS);
-    auto mod_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
+    auto mod_connection = getChildWithPropertyAndType (mod_connections, IDs::dest, mod_dst.getProperty (IDs::nodeID), IDs::MODCONNECTION);
+
+    if (! mod_connection.isValid())
+    {
+        mod_connection = juce::ValueTree (IDs::MODCONNECTION);
+        mod_connection.setProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID), nullptr);
+        mod_connections.appendChild (mod_connection, &um);
+    }
 
     // get backend audio graph representation from value tree
     auto src_node_id_var = mod_src.getProperty (IDs::nodeID);
@@ -1335,7 +1357,7 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
     auto parentPiano = findParentWithType (v, IDs::PIANO);
     auto mod_dst = parentPiano.getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
     auto mod_connections = parentPiano.getChildWithName (IDs::MODCONNECTIONS);
-    auto state_connection = mod_connections.getChildWithProperty (IDs::dest, mod_dst.getProperty (IDs::nodeID));
+    auto state_connection = getChildWithPropertyAndType (mod_connections, IDs::dest, mod_dst.getProperty (IDs::nodeID), IDs::MODCONNECTION);
     auto mod_src = parentPiano.getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
 
     // find the nodes in the audio graph
