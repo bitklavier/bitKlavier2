@@ -104,7 +104,11 @@ enum CommandIDs {
     miditarget = 0x0625,
     pianoswitch = 0x0626,
     horizontallyAlignSelected = 0x0627,
-    verticallyAlignSelected = 0x0628
+    verticallyAlignSelected = 0x0628,
+    nudgeUp = 0x0629,
+    nudgeDown = 0x062a,
+    nudgeLeft = 0x062b,
+    nudgeRight = 0x062c
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
@@ -124,7 +128,11 @@ void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
         miditarget,
         pianoswitch,
         horizontallyAlignSelected,
-        verticallyAlignSelected});
+        verticallyAlignSelected,
+        nudgeUp,
+        nudgeDown,
+        nudgeLeft,
+        nudgeRight});
 }
 
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
@@ -191,6 +199,22 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
             break;
         case verticallyAlignSelected:
             info.setInfo("Vertically Align Selected", "Aligns Selected Preparations Vertically", "Edit", 0);
+            break;
+        case nudgeUp:
+            info.setInfo("Nudge Up", "Moves selected items up", "Edit", 0);
+            info.addDefaultKeypress(juce::KeyPress::upKey, juce::ModifierKeys::noModifiers);
+            break;
+        case nudgeDown:
+            info.setInfo("Nudge Down", "Moves selected items down", "Edit", 0);
+            info.addDefaultKeypress(juce::KeyPress::downKey, juce::ModifierKeys::noModifiers);
+            break;
+        case nudgeLeft:
+            info.setInfo("Nudge Left", "Moves selected items left", "Edit", 0);
+            info.addDefaultKeypress(juce::KeyPress::leftKey, juce::ModifierKeys::noModifiers);
+            break;
+        case nudgeRight:
+            info.setInfo("Nudge Right", "Moves selected items right", "Edit", 0);
+            info.addDefaultKeypress(juce::KeyPress::rightKey, juce::ModifierKeys::noModifiers);
             break;
     }
 }
@@ -445,6 +469,35 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                     modulationLineView._update();
                 }
                 return true;
+            }
+            case nudgeUp:
+            case nudgeDown:
+            case nudgeLeft:
+            case nudgeRight:
+            {
+                auto& lasso = preparationSelector.getLassoSelection();
+                if (lasso.getNumSelected() > 0)
+                {
+                    undo.beginNewTransaction();
+                    juce::Point<int> delta(0, 0);
+                    const int amount = 5; // small amount as requested
+
+                    if (info.commandID == nudgeUp) delta.setY(-amount);
+                    else if (info.commandID == nudgeDown) delta.setY(amount);
+                    else if (info.commandID == nudgeLeft) delta.setX(-amount);
+                    else if (info.commandID == nudgeRight) delta.setX(amount);
+
+                    for (int i = 0; i < lasso.getNumSelected(); ++i)
+                    {
+                        auto* fc = lasso.getSelectedItem(i);
+                        auto center = fc->getBounds().getCentre();
+                        fc->curr_point = center + delta;
+                    }
+                    cableView._update();
+                    modulationLineView._update();
+                    return true;
+                }
+                return false;
             }
             case deletion:
             {
