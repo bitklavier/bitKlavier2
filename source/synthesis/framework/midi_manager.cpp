@@ -47,6 +47,12 @@ MidiManager::MidiManager(juce::MidiKeyboardState* keyboard_state, juce::AudioDev
   mpe_enabled_ = false;
   mpe_zone_layout_.setLowerZone(bitklavier::kNumMidiChannels - 1);
     rebuildObjects();
+    for (auto obj : objects) {
+        if (obj->identifier.get() == IDs::defaultMidiInput.toString()) {
+            defaultMidiInputEnabled = true;
+            break;
+        }
+    }
     manager->addChangeListener(this);
     updateDefaultMidiListeners();
 }
