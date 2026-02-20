@@ -97,13 +97,15 @@ void PianoSwitchPreparation::resized()
 
     juce::Colour body_text = findColour(Skin::kTextComponentText, true);
     float label_text_font = findValue(Skin::kButtonFontSize);
-    pianoSelectText->setColor(body_text);
+    // pianoSelectText->setColor(body_text);
+    pianoSelectText->setColor(juce::Colours::darkgrey);
     pianoSelectText->setTextSize(label_text_font);
     pianoSelectText->setJustification(juce::Justification::left);
 
     juce::Rectangle<int> area (getLocalBounds());
     int comboboxheight = findValue(Skin::kComboMenuHeight);
     area.reduce(largepadding, largepadding);
+    area.removeFromRight(largepadding + 4);
     pianoSelector->setBounds(area.removeFromBottom(comboboxheight));
     pianoSelectText->setBounds(pianoSelector->getBounds());
 }

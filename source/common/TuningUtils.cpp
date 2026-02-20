@@ -213,7 +213,7 @@ void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::ar
 void setOffsetsFromTuningSystem(const TuningSystem t, const int newFund, std::array<std::atomic<float>, 12>& circularTuningVec, std::array<std::atomic<float>, 12>& customTuningVec)
 {
     //if (!params.tuningState.setFromAudioThread) { // it's not clear whether this is necessary; see bitKlarrayToString(arrayToString(avierDevNotes
-    DBG("setOffsetsFromTuningSystem, system = " <<(int)t << ", newFund = " << newFund << ", tuningVec = " << arrayOfAtomicsToString(circularTuningVec) << ", customTuningVec = " << arrayOfAtomicsToString(customTuningVec));
+    // DBG("setOffsetsFromTuningSystem, system = " <<(int)t << ", newFund = " << newFund << ", tuningVec = " << arrayOfAtomicsToString(circularTuningVec) << ", customTuningVec = " << arrayOfAtomicsToString(customTuningVec));
 
     auto it = std::find_if(tuningMap.begin(), tuningMap.end(),
         [t](const auto& pair) {

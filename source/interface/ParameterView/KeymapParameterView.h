@@ -139,6 +139,7 @@ private:
         }
         return false;
     }
+
     void flipEnablement (const int row)
     {
         if (juce::isPositiveAndBelow (row, items.size()))

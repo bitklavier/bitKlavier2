@@ -260,7 +260,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
     {
         if (m.isNoteOn())
         {
-            //DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            // DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;
@@ -278,6 +278,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
         }
         else if (m.isNoteOff())
         {
+            // DBG ("BKSynthesizer Note Off " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
             if (pedalSynth)
                 return;
 
@@ -290,7 +291,6 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
             {
                 if (activeNotes.test (m.getNoteNumber()))
                 {
-                    //TODO
                     noteOn (channel, m.getNoteNumber(), m.getVelocity() ? m.getVelocity() : 64.f);
                     activeNotes.reset (m.getNoteNumber());
                 }

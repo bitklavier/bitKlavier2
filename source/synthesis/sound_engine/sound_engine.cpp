@@ -216,7 +216,7 @@ namespace bitklavier {
                             processorGraph->addConnection ({{node->nodeID, absIdx}, {audioOutputNode->nodeID, ch}});
                         }
                         
-                        DBG ("SoundEngine: Restored default output for " + processor->getName());
+                        // DBG ("SoundEngine: Restored default output for " + processor->getName());
                     }
                 }
             }

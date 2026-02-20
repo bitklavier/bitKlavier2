@@ -20,7 +20,7 @@ struct EnvelopeSequenceState : bitklavier::StateChangeableParameter
 {
     EnvelopeSequenceState() : bitklavier::StateChangeableParameter()
     {
-        DBG("EnvelopeSequenceState() initializing ");
+        // DBG("EnvelopeSequenceState() initializing ");
         for (auto& attack : attacks) attack = 3.0f;
         for (auto& decay : decays) decay = 10.0f;
         for (auto& sustain : sustains) sustain = 1.0f;
