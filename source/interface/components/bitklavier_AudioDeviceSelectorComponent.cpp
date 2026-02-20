@@ -1147,12 +1147,13 @@ namespace bitklavier
             auto outName = prefs.getProperty("outputDevice").toString();
             auto inName  = prefs.getProperty("inputDevice").toString();
             auto rate    = (double) prefs.getProperty("sampleRate", 0.0);
-            auto bufSize = (int) prefs.getProperty("bufferSize", 0);
+            auto bufSize = (int) prefs.getProperty ("bufferSize", 128);
 
             if (outName.isNotEmpty()) setup.outputDeviceName = outName;
             if (inName.isNotEmpty())  setup.inputDeviceName  = inName;
             if (rate > 0.0)          setup.sampleRate       = rate;
             if (bufSize > 0)         setup.bufferSize       = (juce::uint32) bufSize;
+            else                     setup.bufferSize       = 128;
 
             juce::String err = deviceManager.setAudioDeviceSetup(setup, true);
             juce::ignoreUnused(err); // if restore fails, we just continue with current defaults

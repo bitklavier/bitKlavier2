@@ -54,6 +54,7 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
   juce::AudioDeviceManager::AudioDeviceSetup setup;
   deviceManager.getAudioDeviceSetup(setup);
   setup.sampleRate = bitklavier::kDefaultSampleRate;
+  setup.bufferSize = 128;
   deviceManager.initialise(0, bitklavier::kNumChannels, nullptr, true, "", &setup);
 
   if (deviceManager.getCurrentAudioDevice() == nullptr) {
