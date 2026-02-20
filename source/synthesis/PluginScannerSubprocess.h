@@ -27,15 +27,19 @@ private:
 
         const std::lock_guard<std::mutex> lock (mutex);
 
-        if (const auto results = doScan (mb); ! results.isEmpty())
+        // If we are on the message thread (not expected for IPC callback) or it's a fast scan, do it now.
+        // Otherwise, defer to the message thread.
+        if (juce::MessageManager::getInstance()->isThisTheMessageThread() || isFastScanPossible (mb))
         {
-            sendResults (results);
+            if (const auto results = doScan (mb); ! results.isEmpty())
+            {
+                sendResults (results);
+                return;
+            }
         }
-        else
-        {
-            pendingBlocks.emplace (mb);
-            triggerAsyncUpdate();
-        }
+
+        pendingBlocks.emplace (mb);
+        triggerAsyncUpdate();
     }
 
     void handleConnectionLost() override
@@ -55,6 +59,21 @@ private:
             sendResults (doScan (pendingBlocks.front()));
             pendingBlocks.pop();
         }
+    }
+
+    bool isFastScanPossible (const juce::MemoryBlock& block)
+    {
+        juce::MemoryInputStream stream { block, false };
+        const auto formatName = stream.readString();
+        const auto identifier = stream.readString();
+
+        if (formatName != "VST3")
+            return true; // We only care about VST3 slow scans for thread safety here
+
+        const juce::File file (identifier);
+        return file.getChildFile ("Contents").getChildFile ("Resources").getChildFile ("moduleinfo.json").exists()
+            || file.getChildFile ("Contents").getChildFile ("moduleinfo.json").exists()
+            || file.getChildFile ("moduleinfo.json").exists();
     }
 
     juce::OwnedArray<juce::PluginDescription> doScan (const juce::MemoryBlock& block)
@@ -83,33 +102,17 @@ private:
             if (matchingFormat->getName() == "VST3")
             {
                 // VST3 is special: it asserts if slow-scanned on background thread in DEBUG,
-                // but might SIGTRAP if slow-scanned on message thread (e.g. SSL Meter) on macOS.
-                bool fastScanPossible = false;
-                const juce::File file (identifier);
-                if (file.getChildFile ("Contents").getChildFile ("Resources").getChildFile ("moduleinfo.json").exists()
-                    || file.getChildFile ("Contents").getChildFile ("moduleinfo.json").exists()
-                    || file.getChildFile ("moduleinfo.json").exists())
-                {
-                    fastScanPossible = true;
-                }
-
-#if JUCE_DEBUG
-                if (fastScanPossible || juce::MessageManager::getInstance()->isThisTheMessageThread())
+                // and might SIGTRAP if slow-scanned on background thread (e.g. UAD plugins) on macOS.
+                if (isFastScanPossible (block) || juce::MessageManager::getInstance()->isThisTheMessageThread())
                 {
                     matchingFormat->findAllTypesForFile (results, identifier);
                 }
                 else
                 {
-                    // In Debug, we skip to avoid JUCE_ASSERT_MESSAGE_THREAD if it's a slow scan.
-                    juce::Logger::writeToLog ("Skipping VST3 plugin in Debug (requires slow scan on message thread): " + identifier);
+                    // If we get here, it means we are trying a slow scan on a background thread.
+                    // This should be avoided by the check in handleMessageFromCoordinator.
+                    juce::Logger::writeToLog ("Warning: VST3 slow scan requested on background thread: " + identifier);
                 }
-#else
-                // In Release, we allow the scan to proceed on the background thread as the assert is inactive.
-                // This avoids the SIGTRAP that occurs when loading some plugins on the message thread.
-                // NOTE: If we are here, we are already in the subprocess, so if it SIGTRAPs here,
-                // only the subprocess dies and the coordinator handles it.
-                matchingFormat->findAllTypesForFile (results, identifier);
-#endif
             }
             else if (juce::MessageManager::getInstance()->isThisTheMessageThread()
                 || matchingFormat->requiresUnblockedMessageThreadDuringCreation (pd))
