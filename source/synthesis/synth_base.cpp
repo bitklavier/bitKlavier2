@@ -501,12 +501,22 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
 {
     //engine_->allSoundsOff();
     pauseProcessing(true);
+    setBatchLoading(true);
+
     tree.copyPropertiesAndChildrenFrom (state, nullptr);
 
+    setBatchLoading(false);
     pauseProcessing (false);
+
     if (tree.isValid())
         return true;
     return false;
+}
+
+void SynthBase::setBatchLoading (bool isBatch)
+{
+    if (engine_)
+        engine_->setBatchLoading (isBatch);
 }
 
 void SynthBase::clearAllBackend() {
@@ -546,72 +556,6 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
     for (int i = 0; i < node.getNumChildren(); ++i)
         collectSoundsetRefsRecursive (node.getChild(i), out);
 }
-// bool SynthBase::loadFromFile (juce::File preset, std::string& error)
-// {
-//     if (!preset.exists())
-//         return false;
-//
-//     auto xml = juce::parseXML (preset);
-//     if (xml == nullptr)
-//     {
-//         error = "Error loading preset";
-//         return false;
-//     }
-//     auto parsed_value_tree = juce::ValueTree::fromXml (*xml);
-//     if (!parsed_value_tree.isValid())
-//     {
-//         error = "Error converting XML to juce::ValueTree";
-//         return false;
-//     }
-//
-//     clearAllBackend();
-//     SynthGuiInterface* gui_interface = getGuiInterface();
-//     if (gui_interface)
-//     {
-//         gui_interface->removeAllGuiListeners();
-//     }
-//     engine_->resetEngine();
-//     if (!loadFromValueTree (parsed_value_tree))
-//     {
-//         error = "Error Initializing juce::ValueTree";
-//         return false;
-//     }
-//
-//     //setPresetName(preset.getFileNameWithoutExtension());
-//     if (gui_interface)
-//     {
-//         gui_interface->updateFullGui();
-//         gui_interface->notifyFresh();
-//     }
-//
-//     // load samples
-//     juce::Array<SoundsetRef> refs;
-//     collectSoundsetRefsRecursive (parsed_value_tree, refs);
-//
-//     // Dedup by soundset name (but still allow multiple target nodes to be updated)
-//     juce::StringArray uniqueSoundsets;
-//     uniqueSoundsets.ensureStorageAllocated (refs.size());
-//
-//     for (auto& r : refs)
-//         uniqueSoundsets.addIfNotAlreadyThere (r.name);
-//
-//     // Kick off loads FIRST
-//     if (sampleLoadManager != nullptr)
-//     {
-//         for (auto& r : refs)
-//             sampleLoadManager->loadSamples (r.name, r.target);
-//
-//         // Optional: make sure each referencing node has the property normalized
-//         // (useful if you want to enforce Gallery/global routing at read-time)
-//         // for (auto& r : refs)
-//         // {
-//         //     // If your loadSamples(ss, target) sets IDs::soundset appropriately when already-loaded,
-//         //     // you can call that instead of direct setProperty.
-//         //     r.target.setProperty (IDs::soundset, r.name, nullptr);
-//         // }
-//     }
-//     return true;
-// }
 bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 {
     if (!preset.exists())

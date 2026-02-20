@@ -219,6 +219,7 @@ protected:
     juce::UndoManager um;
 
     bool loadFromValueTree(const juce::ValueTree &state);
+    void setBatchLoading(bool isBatch);
 
     void processAudio(juce::AudioSampleBuffer *buffer, int channels, int samples, int offset);
 

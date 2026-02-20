@@ -169,6 +169,60 @@ namespace bitklavier {
             midiMgr->addLiveMidiListener(l);
     }
 
+    void SoundEngine::restoreDefaultOutputConnections()
+    {
+        if (processorGraph == nullptr)
+            return;
+
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+        {
+            if (node->nodeID == audioOutputNode->nodeID || 
+                node->nodeID == midiInputNode->nodeID || 
+                node->nodeID == midiOutputNode->nodeID)
+                continue;
+
+            auto* processor = node->getProcessor();
+            if (processor == nullptr)
+                continue;
+
+            // Skip modulation processors for auto-audio-output
+            if (dynamic_cast<bitklavier::ModulationProcessor*> (processor) != nullptr)
+                continue;
+
+            if (processor->getMainBusNumOutputChannels() > 0)
+            {
+                // Check if this node has ANY outgoing audio connections.
+                // If it doesn't, it might be a final node that needs to be connected to the output.
+                bool hasAudioOutput = false;
+                const auto connections = processorGraph->getConnections();
+                for (const auto& c : connections)
+                {
+                    if (c.source.nodeID == node->nodeID && !c.source.isMIDI())
+                    {
+                        hasAudioOutput = true;
+                        break;
+                    }
+                }
+
+                if (!hasAudioOutput)
+                {
+                    if (auto* mainBus = processor->getBus (false, 0))
+                    {
+                        int numChannels = mainBus->getNumberOfChannels();
+                        for (int ch = 0; ch < numChannels && ch < 2; ++ch)
+                        {
+                            int absIdx = processor->getChannelIndexInProcessBlockBuffer (false, 0, ch);
+                            processorGraph->addConnection ({{node->nodeID, absIdx}, {audioOutputNode->nodeID, ch}});
+                        }
+                        
+                        DBG ("SoundEngine: Restored default output for " + processor->getName());
+                    }
+                }
+            }
+        }
+    }
+
     void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {
         if (gainProcessor || compressorProcessor || eqProcessor)
             return;

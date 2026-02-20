@@ -129,7 +129,9 @@ namespace bitklavier
             // 1. Add the node to the graph using the provided ID or generate a new one
             if (id.uid != 0)
             {
-                lastUID = id;
+                if (id.uid > lastUID.uid)
+                    lastUID = id;
+
                 node = processorGraph->addNode (std::move (newProcessor), id);
             }
             else
@@ -139,7 +141,25 @@ namespace bitklavier
 
             auto processor = node->getProcessor();
 
-            // 2. Identification: Should this processor's audio be automatically wired to the main output?
+            // --- 2. MIDI AUTO-CONNECTION ---
+            // Almost all processors in bitklavier expect MIDI input from the global MIDI input node.
+            // This is safe to do even during batch loading as it's a small number of connections
+            // compared to the audio matrix, and it's almost always necessary.
+            if (processor->acceptsMidi())
+            {
+                processorGraph->addConnection ({
+                    { midiInputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex },
+                    { node->nodeID, juce::AudioProcessorGraph::midiChannelIndex }
+                });
+            }
+
+            // If we are in batch loading mode, we skip automatic output connections
+            // because they will be defined by the preset anyway.
+            if (getBatchLoading())
+                return node;
+
+            // --- 3. AUDIO OUTPUT AUTO-CONNECTION ---
+            // Identification: Should this processor's audio be automatically wired to the main output?
             // We skip processors that are strictly for modulation (like ModulationProcessor)
             // because their "Main Bus" might contain non-audio signals.
             bool isModulationProcessor = (dynamic_cast<bitklavier::ModulationProcessor*> (processor) != nullptr);
@@ -185,27 +205,6 @@ namespace bitklavier
         }
 
 
-        // Node::Ptr addNode (std::unique_ptr<juce::AudioProcessor> newProcessor, juce::AudioProcessorGraph::NodeID id)
-        // {
-        //     Node::Ptr node;
-        //     if (id.uid != 0)
-        //     {
-        //         lastUID = id;
-        //         node = processorGraph->addNode (std::move (newProcessor), id);
-        //     }
-        //     else
-        //         node = processorGraph->addNode (std::move (newProcessor), getNextUID());
-        //
-        //     auto processor = node->getProcessor();
-        //     if (processor->getMainBusNumOutputChannels() > 0)
-        //     {
-        //         DBG("adddmainoutconneciton");
-        //         processorGraph->addConnection ({ { node->nodeID, 0 }, { audioOutputNode->nodeID, 0 } });
-        //         processorGraph->addConnection ({ { node->nodeID, 1 }, { audioOutputNode->nodeID, 1 } });
-        //     }
-        //
-        //     return node;
-        // }
 
         juce::AudioProcessorGraph::Node::Ptr removeNode (juce::AudioProcessorGraph::NodeID id)
         {
@@ -325,25 +324,6 @@ namespace bitklavier
             }
         }
 
-        // bool addConnection (juce::AudioProcessorGraph::Connection& connection)
-        // {
-        //     if(processorGraph == nullptr)
-        //         return false;
-        //     dbgPrintConnectionsForNode(*processorGraph, connection.source.nodeID);
-        //     if(connection.source.channelIndex == 0 or connection.source.channelIndex == 1
-        //         && connection.destination.nodeID != audioOutputNode->nodeID) {
-        //         processorGraph->removeConnection({{connection.source.nodeID, 0},{audioOutputNode->nodeID,0}});
-        //         processorGraph->removeConnection({{connection.source.nodeID, 1},{audioOutputNode->nodeID,1}});
-        //         DBG("[Graph] Removed previous stereo connections from node " + juce::String(connection.source.nodeID.uid)
-        //             + " to audio output node " + juce::String(audioOutputNode->nodeID.uid));
-        //     }
-        //
-        //     if (!connection.source.isMIDI())
-        //         processorGraph->addConnection({{connection.source.nodeID, connection.source.channelIndex+1},
-        //             {connection.destination.nodeID,connection.destination.channelIndex+1}});
-        //
-        //     return processorGraph->addConnection (connection);
-        // }
 
         bool addConnection (juce::AudioProcessorGraph::Connection& connection)
         {
@@ -410,28 +390,6 @@ namespace bitklavier
             return processorGraph->addConnection (connection);
         }
 
-        // void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
-        // {
-        //     if(processorGraph == nullptr)
-        //         return;
-        //
-        //     if (!connection.source.isMIDI())
-        //         processorGraph->removeConnection({{connection.source.nodeID, connection.source.channelIndex+1},
-        //            {connection.destination.nodeID,connection.destination.channelIndex+1}});
-        //
-        //     processorGraph->removeConnection (connection);
-        //
-        //     if(connection.source.channelIndex == 0 or connection.source.channelIndex == 1
-        //      && connection.destination.nodeID != audioOutputNode->nodeID) {
-        //         if (!processorGraph->isAnInputTo(connection.source.nodeID,audioOutputNode->nodeID)) {
-        //             processorGraph->addConnection ({ { connection.source.nodeID, 0 }, { audioOutputNode->nodeID, 0 } });
-        //             processorGraph->addConnection ({ { connection.source.nodeID, 1 }, { audioOutputNode->nodeID, 1 } });
-        //             DBG ("[Graph] Reconnected node "
-        //          + juce::String(connection.source.nodeID.uid) + "  to audio output node "
-        //          + juce::String(audioOutputNode->nodeID.uid));
-        //         }
-        //      }
-        // }
 
         void removeConnection (const juce::AudioProcessorGraph::Connection& connection)
         {
@@ -534,6 +492,22 @@ namespace bitklavier
             tempoMultiplierDirty.store (true, std::memory_order_release);
         }
 
+        void setBatchLoading (bool isBatch) noexcept
+        {
+            const bool wasBatch = isBatchLoading.exchange (isBatch, std::memory_order_relaxed);
+
+            // When switching from batch to normal mode, ensure all nodes have appropriate connections
+            if (wasBatch && !isBatch)
+                restoreDefaultOutputConnections();
+        }
+
+        void restoreDefaultOutputConnections();
+
+        bool getBatchLoading() const noexcept
+        {
+            return isBatchLoading.load (std::memory_order_relaxed);
+        }
+
 
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);
@@ -547,6 +521,7 @@ namespace bitklavier
 
         std::atomic<double> pendingTempoMultiplier { 1.0 };
         std::atomic<bool>   tempoMultiplierDirty { false };
+        std::atomic<bool>   isBatchLoading { false };
 
         std::unique_ptr<juce::AudioProcessorGraph> processorGraph;
 
