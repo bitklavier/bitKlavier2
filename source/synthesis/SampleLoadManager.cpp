@@ -54,20 +54,18 @@ SampleLoadManager::SampleLoadManager(SynthBase *parent,
 }
 
 SampleLoadManager::~SampleLoadManager() {
-    for (auto [_, samples]: samplerSoundset) {
-        samples->clear();
-        delete samples;
-    }
+    shuttingDown = true;
+    sampleLoader.removeAllJobs (true, 5000);
+    clearAllSamples();
 }
 
 void SampleLoadManager::clearAllSamples() {
-    //    globalHammersSoundset = nullptr;
-    //    globalPedalsSoundset = nullptr;
-    //    globalReleaseResonanceSoundset = nullptr;
-    //    globalSoundset = nullptr;
+    juce::ScopedLock sl (soundsetLock);
     for(auto & [key,val] : samplerSoundset) {
-        val->clear();
-        delete val;
+        if (val != nullptr) {
+            val->clear();
+            delete val;
+        }
     }
     samplerSoundset.clear();
 }
@@ -773,11 +771,16 @@ bool SampleLoadJob::loadHammerSamples() {
         juce::BigInteger velRange;
         velRange.setRange(0, 128, true);
 
-        auto sound = soundset->add(new BKSamplerSound(
-            filename, std::shared_ptr<Sample<juce::AudioFormatReader> >(sample), midiNoteRange, midiNote, 0, velRange,
-            1, dBFSBelow));
-        if (shouldExit())
+        if (shouldExit() || samplerLoader.isShuttingDown())
             return false;
+
+        BKSynthesiserSound* sound;
+        {
+            juce::ScopedLock sl (samplerLoader.getSoundsetLock());
+            sound = soundset->add (new BKSamplerSound<juce::AudioFormatReader> (
+                filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), midiNoteRange, midiNote, 0, velRange,
+                1, dBFSBelow));
+        }
     }
     // DBG ("done loading hammer samples");
     return true;
@@ -810,12 +813,18 @@ bool SampleLoadJob::loadReleaseResonanceSamples() {
         juce::BigInteger velRange;
         velRange.setRange(begin, end - begin, true);
 
-        auto sound = soundset->add(new BKSamplerSound(
-            filename, std::shared_ptr<Sample<juce::AudioFormatReader> >(sample), thisMidiRange, midiNote, 0, velRange,
-            layers, dBFSBelow));
+        if (shouldExit() || samplerLoader.isShuttingDown())
+            return false;
+
+        BKSynthesiserSound* sound;
+        {
+            juce::ScopedLock sl (samplerLoader.getSoundsetLock());
+            sound = soundset->add (new BKSamplerSound<juce::AudioFormatReader> (
+                filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), thisMidiRange, midiNote, 0, velRange,
+                layers, dBFSBelow));
+        }
 
         dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
-
         //DBG ("**** loading resonance sample: " + filename);
         //DBG ("");
         if (shouldExit())
@@ -858,11 +867,16 @@ bool SampleLoadJob::loadPedalSamples() {
         velRange.setRange(begin, end - begin, true);
         //DBG ("pedal vel range = " + juce::String (begin) + " to " + juce::String (end) + " for " + filename);
 
-        auto sound = soundset->add(new BKSamplerSound(
-            filename, std::shared_ptr<Sample<juce::AudioFormatReader> >(sample), midiNoteRange, midiNote, 0, velRange,
-            1, dBFSBelow));
-        if (shouldExit())
+        if (shouldExit() || samplerLoader.isShuttingDown())
             return false;
+
+        BKSynthesiserSound* sound;
+        {
+            juce::ScopedLock sl (samplerLoader.getSoundsetLock());
+            sound = soundset->add (new BKSamplerSound<juce::AudioFormatReader> (
+                filename, std::shared_ptr<Sample<juce::AudioFormatReader>> (sample), midiNoteRange, midiNote, 0, velRange,
+                1, dBFSBelow));
+        }
     }
 
     DBG("done loading pedal samples");
@@ -894,18 +908,20 @@ bool SampleLoadJob::loadMainSamplesByPitch() {
         juce::BigInteger velRange;
         velRange.setRange(begin, end - begin, true);
 
-        auto sound = soundset->add(
-            new BKSamplerSound<juce::AudioFormatReader>(filename, sample, thisMidiRange, midiNote, 0, velRange, layers,
-                                                        dBFSBelow));
-
-        dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
-
-        //DBG ("**** loading sample: " + filename);
-        //DBG ("");
-        if (shouldExit()) {
+        if (shouldExit() || samplerLoader.isShuttingDown()) {
             velLayerContinue = currentVelLayer++;
             return false;
         }
+
+        BKSynthesiserSound* sound;
+        {
+            juce::ScopedLock sl (samplerLoader.getSoundsetLock());
+            sound = soundset->add (
+                new BKSamplerSound<juce::AudioFormatReader> (filename, sample, thisMidiRange, midiNote, 0, velRange, layers,
+                    dBFSBelow));
+        }
+
+        dBFSBelow = sound->dBFSLevel; // to pass on to next sample, which should be the next velocity layer above
         //DBG ("done loading main samples for " + filename);
     }
 

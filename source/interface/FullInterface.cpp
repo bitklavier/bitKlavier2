@@ -25,9 +25,9 @@
 #include "synth_slider.h"
 #include "loading_section.h"
 
-FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommandManager& _manager)
+FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommandManager& _manager, SynthGuiInterface* _interface)
     : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_),
-    commandManager (_manager)
+    synthInterface_ (_interface), commandManager (_manager)
 {
     full_screen_section_ = nullptr;
     Skin default_skin;
@@ -115,6 +115,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
 
 FullInterface::~FullInterface()
 {
+    open_gl_context_.detach();
 }
 
 void FullInterface::paintBackground (juce::Graphics& g)
@@ -292,7 +293,11 @@ void FullInterface::reset()
     //vital previously had a scoped lock on this whole section. but this only really makes sense whenever we have a static system
     //since individual components must be capable of being created and destroyed we want to lock or block in those
     //individual destruction calls -- 4/25/25 -- davis
-    vt = findParentComponentOfClass<SynthGuiInterface>()->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
+    auto* guiInterface = synthInterface_ != nullptr ? synthInterface_ : findParentComponentOfClass<SynthGuiInterface>();
+
+    if (guiInterface != nullptr)
+        vt = guiInterface->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
+
     SynthSection::reset();
     repaintSynthesisSection();
     prep_popup->reset();

@@ -29,38 +29,48 @@ public:
         options.osxLibrarySubFolder = "Application Support";
         file = options.getDefaultFile();
 
-        tree = juce::ValueTree::fromXml(file.loadFileAsString());
-        if (!tree.isValid())
-            tree = juce::ValueTree("Preferences");
-        tree.addListener(this);
+        if (file.existsAsFile())
+            tree = juce::ValueTree::fromXml (file.loadFileAsString());
+
+        if (! tree.isValid())
+            tree = juce::ValueTree ("Preferences");
+
+        tree.addListener (this);
 
         //juce::String path_to_samples = "~/Library/Application Support/bitklavier/samples";
         juce::String path_to_samples = "~/Documents/bitKlavier/samples";
-        tree.setProperty("default_sample_path", path_to_samples, nullptr);
+        if (! tree.hasProperty ("default_sample_path"))
+            tree.setProperty ("default_sample_path", path_to_samples, nullptr);
+
         juce::String path_to_soundfonts = "~/Documents/bitKlavier/soundfonts";
-        tree.setProperty("default_soundfonts_path", path_to_soundfonts, nullptr);
+        if (! tree.hasProperty ("default_soundfonts_path"))
+            tree.setProperty ("default_soundfonts_path", path_to_soundfonts, nullptr);
+
         juce::String path_to_galleries = "~/Documents/bitKlavier/galleries";
-        tree.setProperty("default_galleries_path", path_to_galleries, nullptr);
+        if (! tree.hasProperty ("default_galleries_path"))
+            tree.setProperty ("default_galleries_path", path_to_galleries, nullptr);
 
         // Remember last opened gallery path (if any). Empty by default.
-        if (! tree.hasProperty("last_gallery_path"))
-            tree.setProperty("last_gallery_path", juce::String(), nullptr);
+        if (! tree.hasProperty ("last_gallery_path"))
+            tree.setProperty ("last_gallery_path", juce::String(), nullptr);
 
-        juce::ValueTree a (IDs::midiPrefs);
-        if(!tree.getChildWithName(IDs::midiPrefs).isValid())
-            tree.appendChild(a, nullptr);
-        if ( tree.getChildWithName("KNOWNPLUGINS").isValid()) {
-            knownPluginList.recreateFromXml(*tree.getChildWithName("KNOWNPLUGINS").createXml());
+        if (! tree.getChildWithName (IDs::midiPrefs).isValid())
+            tree.appendChild (juce::ValueTree (IDs::midiPrefs), nullptr);
+
+        if (tree.getChildWithName ("KNOWNPLUGINS").isValid())
+        {
+            knownPluginList.recreateFromXml (*tree.getChildWithName ("KNOWNPLUGINS").createXml());
         }
-        auto val = int(tree.getProperty("pluginSortMethod", juce::KnownPluginList::sortByManufacturer));
-        pluginSortMethod = static_cast<juce::KnownPluginList::SortMethod>(val);
-        knownPluginList.setCustomScanner (std::make_unique<CustomPluginScanner>(tree));
-        knownPluginList.addChangeListener(this);
+
+        auto val = int (tree.getProperty ("pluginSortMethod", juce::KnownPluginList::sortByManufacturer));
+        pluginSortMethod = static_cast<juce::KnownPluginList::SortMethod> (val);
+        knownPluginList.setCustomScanner (std::make_unique<CustomPluginScanner> (tree));
+        knownPluginList.addChangeListener (this);
         /*
          *todo: confirm this is the correct new function to use
          *      it's either this one, or addHeadlessDefaultFormatsToManager(), since addDefaultFormats has been deleted from JUCE
          */
-        addDefaultFormatsToManager(formatManager);
+        addDefaultFormatsToManager (formatManager);
         //formatManager.addDefaultFormats();
     }
 
@@ -105,7 +115,7 @@ private:
 
 namespace ProjectInfo
 {
-    const char* const  projectName    = "bitKlavier5";
+    const char* const  projectName    = "bitKlavier4";
     const char* const  companyName    = "Many Arrows Music";
     const char* const  versionString  = "0.0.1";
     const int          versionNumber  =  0x1;

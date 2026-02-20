@@ -72,7 +72,7 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
     }
     if (use_gui) {
         SynthGuiData synth_data (synth_);
-        gui_ = std::make_unique<FullInterface> (&synth_data, commandManager);
+        gui_ = std::make_unique<FullInterface> (&synth_data, commandManager, this);
         gui_->showLoadingSection();
         // for registering hotkeys etc.
         commandManager.registerAllCommandsForTarget(this);

@@ -126,9 +126,10 @@ class SampleLoadManager : public juce::AsyncUpdater
 {
 public:
     SampleLoadManager (SynthBase* parent, std::shared_ptr<UserPreferencesWrapper> preferences);
-    ~SampleLoadManager(
+    ~SampleLoadManager() override;
 
-        );
+    bool isShuttingDown() const noexcept { return shuttingDown.load (std::memory_order_relaxed); }
+    juce::CriticalSection& getSoundsetLock() { return soundsetLock; }
 
     bool loadSamples (const juce::String& soundsetName, const juce::ValueTree& targetTreee = juce::ValueTree{});
     void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType,std::string);
@@ -147,10 +148,8 @@ public:
     std::unique_ptr<juce::AudioFormatManager> audioFormatManager;
     std::unique_ptr<AudioFormatReaderFactory> readerFactory;
     juce::ThreadPool sampleLoader;
-    //maps used for matching against soundfont names
-    //for custom sample libraries this is the name of the folder
-    //for soundfonts this is the SFZ/SF2 file || the preset name
-    //for example "mysoundfont.sf2||mypreset"
+    std::atomic<bool> shuttingDown { false };
+    juce::CriticalSection soundsetLock;
     std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> samplerSoundset;
     std::map<std::string, std::shared_ptr<SampleSetProgress>> soundsetProgressMap;
     std::unordered_map<juce::String, std::unique_ptr<SFZSound>> sfzBanks; // key = sfzName.toStdString()

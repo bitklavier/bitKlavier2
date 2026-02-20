@@ -38,17 +38,24 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     compressorButton->setLookAndFeel(TextLookAndFeel::instance());
     compressorButton->setButtonText("Compressor");
 
-    auto gainProcessor = data->synth->getEngine()->getMainVolumeProcessor();
-    auto& gainParams = gainProcessor->getState().params;
-    auto& listeners  = gainProcessor->getState().getParameterListeners();
-    levelMeter = std::make_unique<PeakMeterSection>(
-        "BusGain",
-        gainParams.outputGain,
-        listeners,
-        &gainParams.outputLevels,
-        true
-    );
-    addSubSection(levelMeter.get());
+    auto engine = data->synth->getEngine();
+    if (engine)
+    {
+        auto gainProcessor = engine->getMainVolumeProcessor();
+        if (gainProcessor)
+        {
+            auto& gainParams = gainProcessor->getState().params;
+            auto& listeners  = gainProcessor->getState().getParameterListeners();
+            levelMeter = std::make_unique<PeakMeterSection>(
+                "BusGain",
+                gainParams.outputGain,
+                listeners,
+                &gainParams.outputLevels,
+                true
+            );
+            addSubSection(levelMeter.get());
+        }
+    }
     // setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
 
@@ -139,7 +146,8 @@ void FooterSection::resized() {
     bounds.removeFromRight (padding*2);
     int meterHeight = 50;
     int y = bounds.getY() + (bounds.getHeight() - meterHeight) / 2 + 5;
-    levelMeter->setBounds(bounds.getX(), y, bounds.getWidth(), meterHeight);
+    if (levelMeter)
+        levelMeter->setBounds(bounds.getX(), y, bounds.getWidth(), meterHeight);
     SynthSection::resized();
 }
 

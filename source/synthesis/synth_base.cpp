@@ -45,7 +45,7 @@
 
 // For saving last opened gallery path
 #include "UserPreferences.h"
-//class BlendronicProcessor;
+
 SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     expired_ (false),
     manager (deviceManager),
@@ -130,7 +130,8 @@ SynthBase::~SynthBase()
     um.clearUndoHistory();
 }
 
-std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > *>*SynthBase::getSamples() {
+std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > *>*SynthBase::getSamples()
+{
     for (const auto &[key, val] : sampleLoadManager->samplerSoundset)
             DBG(key);
     return &sampleLoadManager->samplerSoundset;
@@ -138,10 +139,6 @@ std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > *>*Synth
 
 void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delete_id)
 {
-    // DBG ("delete connectionswithid");
-
-    //cable connections i.e. audio/midi
-    // if (connectionLists?
     auto* connectionList = getActiveConnectionList();
     auto size = connectionList->size();
     auto vt = connectionList->getValueTree();
@@ -198,19 +195,19 @@ void SynthBase::deleteConnectionsWithId (juce::AudioProcessorGraph::NodeID delet
             for (int j = 0; j < connection.getNumChildren(); ++j) //const auto& child : connection) {
             {
                 disconnectModulation (connection.getChild(j));
-                    //getGuiInterface()->notifyModulationsChanged();
+                //getGuiInterface()->notifyModulationsChanged();
             }
             modConnectionList->removeChild (connection, &getUndoManager());
         }
         else
         {
-        i++;
+            i++;
         }
     }
-    // }
 }
 
-void SynthBase::clearAllGuiListeners() {
+void SynthBase::clearAllGuiListeners()
+{
     for (auto &connectionList: connectionLists)
         connectionList->clearListeners();
     for (auto &list : preparationLists)
@@ -291,6 +288,7 @@ void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasC
             eng->requestTempoMultiplierUpdate (gTM); // thread-safe: sets atomics only
     }
 }
+
 juce::ValueTree SynthBase::getActivePreparationListValueTree()
 {
     for (auto& preparation : preparationLists)
@@ -302,7 +300,8 @@ juce::ValueTree SynthBase::getActivePreparationListValueTree()
     return {};
 }
 
-juce::ValueTree SynthBase::getActivePianoValueTree() {
+juce::ValueTree SynthBase::getActivePianoValueTree()
+{
    return tree.getChildWithProperty(IDs::isActive, 1);
 }
 
@@ -971,11 +970,14 @@ bitklavier::StateConnectionBank& SynthBase::getStateBank()
 
     return engine_->getStateBank();
 }
-bitklavier::ParamOffsetBank& SynthBase::getParamOffsetBank() {
+
+bitklavier::ParamOffsetBank& SynthBase::getParamOffsetBank()
+{
     jassert(engine_ != nullptr); // will fire during construction if you hit it too early
 
     return engine_->getParamOffsetBank();
 }
+
 bool SynthBase::isSourceConnected (const std::string& source)
 {
     for (auto* connection : mod_connections_)
@@ -1274,7 +1276,6 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
     connection->state.getParent().removeChild (connection->state, nullptr);
 }
 
-
 void SynthBase::connectStateModulation (bitklavier::StateConnection* connection, const juce::ValueTree& v)
 {
     // extract uuids and names from the connection
@@ -1345,10 +1346,6 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
 
     connection->processor->addListener (connection);
     connection->parent_processor->addModulationConnection (connection);
-    // connection->connection_ = { { source_node->nodeID, 0 }, { dest_node->nodeID, 0 } };
-
-    // finally, add the connection to the sound enging
-    // engine_->addConnection (connection->connection_);
 }
 
 bool SynthBase::connectStateModulation (const std::string& source, const std::string& destination)

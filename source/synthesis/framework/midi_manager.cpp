@@ -53,13 +53,16 @@ MidiManager::MidiManager(juce::MidiKeyboardState* keyboard_state, juce::AudioDev
             break;
         }
     }
-    manager->addChangeListener(this);
+    if (manager)
+        manager->addChangeListener (this);
     updateDefaultMidiListeners();
 }
 
 MidiManager::~MidiManager() {
-  manager->removeChangeListener(this);
-  freeObjects();
+    if (manager)
+        manager->removeChangeListener (this);
+    freeObjects();
+    manager = nullptr;
 }
 
 // midi_manager.h
@@ -406,11 +409,14 @@ void MidiManager::objectRemoved (bitklavier::MidiDeviceWrapper* obj) {
 }
 
 void MidiManager::updateDefaultMidiListeners() {
+    if (! manager)
+        return;
+
     auto devices = juce::MidiInput::getAvailableDevices();
     for (auto& d : devices) {
         bool shouldBeRegistered = false;
 
-        if (defaultMidiInputEnabled && manager->isMidiInputDeviceEnabled(d.identifier)) {
+        if (defaultMidiInputEnabled && manager->isMidiInputDeviceEnabled (d.identifier)) {
             shouldBeRegistered = true;
         } else {
             // Check if explicitly enabled in our objects list
@@ -423,9 +429,9 @@ void MidiManager::updateDefaultMidiListeners() {
         }
 
         if (shouldBeRegistered) {
-            manager->addMidiInputDeviceCallback(d.identifier, this);
+            manager->addMidiInputDeviceCallback (d.identifier, this);
         } else {
-            manager->removeMidiInputDeviceCallback(d.identifier, this);
+            manager->removeMidiInputDeviceCallback (d.identifier, this);
         }
     }
 }

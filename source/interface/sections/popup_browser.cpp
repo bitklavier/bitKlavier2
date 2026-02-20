@@ -1384,7 +1384,8 @@ void PreparationPopup::reset() {
     all_state_modulated_components.clear();
     all_combo_box_.clear();
     setVisible(false);
-    parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
+    if (parent != nullptr)
+        parent->getGui()->modulation_manager->preparationClosed(is_modulation_);
     // repaintPrepBackground();
     if (prep_view)
         prep_view->stopAllTimers();

@@ -35,7 +35,7 @@ class FullInterface : public SynthSection, public juce::OpenGLRenderer, public H
 
 public :
     static constexpr double kMinOpenGlVersion = 1.4;
-    FullInterface(SynthGuiData *synth_gui_data, juce::ApplicationCommandManager& _manager);
+    FullInterface(SynthGuiData *synth_gui_data, juce::ApplicationCommandManager& _manager, SynthGuiInterface* _interface = nullptr);
     ~FullInterface() override;
     void paintBackground(juce::Graphics& g) override;
     void parentHierarchyChanged() override {
@@ -125,6 +125,7 @@ public :
 private :
 
 //std::unique_ptr<TestSection> test_;
+    SynthGuiInterface* synthInterface_;
     juce::ApplicationCommandManager& commandManager;
     int width_;
     int resized_width_;

@@ -44,9 +44,7 @@ public:
     SynthGuiInterface* getGuiInterface() override;
 
 private:
-    juce::AudioPlayHead* playHead;
-    juce::AudioPlayHead::CurrentPositionInfo currentPositionInfo;
-    double hostTempo;
+    double hostTempo = 120.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

@@ -11,6 +11,7 @@
 PluginEditor::PluginEditor (PluginProcessor& p)
     : juce::AudioProcessorEditor (&p), SynthGuiInterface (&p), processorRef (p), was_animating_ (true)
 {
+    DBG ("PluginEditor constructed: " + juce::String::toHexString ((juce::uint64) this) + " for processor: " + juce::String::toHexString ((juce::uint64) &p));
     static constexpr int kHeightBuffer = 50;
     juce::ignoreUnused (processorRef);
     setLookAndFeel (DefaultLookAndFeel::instance());
@@ -39,6 +40,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
 PluginEditor::~PluginEditor()
 {
+    DBG ("PluginEditor destroyed: " + juce::String::toHexString ((juce::uint64) this));
 }
 
 //void PluginEditor::paint (juce::Graphics& g)
