@@ -140,6 +140,7 @@ namespace IDs
 
     DECLARE_ID(global_A440)
     DECLARE_ID(global_tempo_multiplier)
+    DECLARE_ID(defaultMidiInput)
 }
 
 // order should match BKPreparationType in common.h

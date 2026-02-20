@@ -35,7 +35,7 @@ public:
 
     int getNumRows() override
     {
-        return items.size();
+        return items.size() + 1;
     }
 
     static void drawTextLayout (juce::Graphics& g, juce::Component& owner, juce::StringRef text, const juce::Rectangle<int>& textBounds, bool enabled)
@@ -57,14 +57,26 @@ public:
 
     void paintListBoxItem (int row, juce::Graphics& g, int width, int height, bool rowIsSelected) override
     {
-        if (juce::isPositiveAndBelow (row, items.size()))
+        if (juce::isPositiveAndBelow (row, getNumRows()))
         {
             if (rowIsSelected)
                 g.fillAll (findColour (juce::TextEditor::highlightColourId)
                                    .withMultipliedAlpha (0.3f));
 
-            auto item = items[row];
-            bool _enabled = isMidiInputDeviceEnabled(item.identifier);
+            bool _enabled = false;
+            juce::String name;
+
+            if (row == 0)
+            {
+                _enabled = isMidiInputDeviceEnabled (IDs::defaultMidiInput.toString());
+                name = "Default MIDI Input";
+            }
+            else
+            {
+                auto item = items[row - 1];
+                _enabled = isMidiInputDeviceEnabled (item.identifier);
+                name = item.name;
+            }
 
             auto x = getTickX();
             auto tickW = (float) height * 0.75f;
@@ -72,7 +84,7 @@ public:
             getLookAndFeel().drawTickBox (g, *this, (float) x - tickW, ((float) height - tickW) * 0.5f, tickW, tickW,
                                           _enabled, true, true, false);
 
-            drawTextLayout (g, *this, item.name, { x + 5, 0, width - x - 5, height }, _enabled);
+            drawTextLayout (g, *this, name, { x + 5, 0, width - x - 5, height }, _enabled);
         }
     }
 
@@ -142,21 +154,27 @@ private:
 
     void flipEnablement (const int row)
     {
-        if (juce::isPositiveAndBelow (row, items.size()))
+        if (juce::isPositiveAndBelow (row, getNumRows()))
         {
-            auto identifier = items[row].identifier;
-            if (!isMidiInputDeviceEnabled(identifier))
+            juce::Identifier identifier;
+            if (row == 0)
             {
+                identifier = IDs::defaultMidiInput;
+            }
+            else
+            {
+                identifier = items[row - 1].identifier;
+            }
 
+            if (!isMidiInputDeviceEnabled(identifier.toString()))
+            {
                juce::ValueTree t(IDs::midiInput);
-               t.setProperty(IDs::midiDeviceId, identifier,nullptr);
+               t.setProperty(IDs::midiDeviceId, identifier.toString(), nullptr);
                v.appendChild(t, nullptr);
             }
             else
             {
-
-                v.removeChild(v.getChildWithProperty(IDs::midiDeviceId, identifier), nullptr);
-
+                v.removeChild(v.getChildWithProperty(IDs::midiDeviceId, identifier.toString()), nullptr);
             }
         }
         resized(); // should probably do this with a changelistener/changebroadcaster

@@ -38,7 +38,7 @@ MidiManager::MidiManager(juce::MidiKeyboardState* keyboard_state, juce::AudioDev
   current_bank_ = -1;
   current_folder_ = -1;
   current_preset_ = -1;
-  
+
   for (int i = 0; i < bitklavier::kNumMidiChannels; ++i) {
     lsb_slide_values_[i] = -1;
     lsb_pressure_values_[i] = -1;
@@ -47,13 +47,12 @@ MidiManager::MidiManager(juce::MidiKeyboardState* keyboard_state, juce::AudioDev
   mpe_enabled_ = false;
   mpe_zone_layout_.setLowerZone(bitklavier::kNumMidiChannels - 1);
     rebuildObjects();
-    for(auto obj: objects)
-    {
-        manager->addMidiInputDeviceCallback(obj->identifier, this);
-    }
+    manager->addChangeListener(this);
+    updateDefaultMidiListeners();
 }
 
 MidiManager::~MidiManager() {
+  manager->removeChangeListener(this);
   freeObjects();
 }
 
@@ -370,4 +369,57 @@ void MidiManager::handleIncomingMidiMessage(juce::MidiInput* source, const juce:
 //for an internal block size different from the external block size
 void MidiManager::replaceKeyboardMessages(juce::MidiBuffer& buffer, int num_samples) {
     keyboard_state_->processNextMidiBuffer(buffer, 0, num_samples, true);
+}
+
+void MidiManager::changeListenerCallback(juce::ChangeBroadcaster* source) {
+    if (source == manager) {
+        updateDefaultMidiListeners();
+    }
+}
+
+void MidiManager::deleteObject (bitklavier::MidiDeviceWrapper* at) {
+    if (at->identifier.get() == IDs::defaultMidiInput.toString()) {
+        defaultMidiInputEnabled = false;
+    }
+    updateDefaultMidiListeners();
+}
+
+void MidiManager::valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) {
+    tracktion::engine::ValueTreeObjectList<bitklavier::MidiDeviceWrapper>::valueTreePropertyChanged(v, i);
+}
+
+void MidiManager::newObjectAdded (bitklavier::MidiDeviceWrapper* obj) {
+    if (obj->identifier.get() == IDs::defaultMidiInput.toString()) {
+        defaultMidiInputEnabled = true;
+    }
+    updateDefaultMidiListeners();
+}
+
+void MidiManager::objectRemoved (bitklavier::MidiDeviceWrapper* obj) {
+    // handled in deleteObject
+}
+
+void MidiManager::updateDefaultMidiListeners() {
+    auto devices = juce::MidiInput::getAvailableDevices();
+    for (auto& d : devices) {
+        bool shouldBeRegistered = false;
+
+        if (defaultMidiInputEnabled && manager->isMidiInputDeviceEnabled(d.identifier)) {
+            shouldBeRegistered = true;
+        } else {
+            // Check if explicitly enabled in our objects list
+            for (auto obj : objects) {
+                if (obj->identifier.get() == d.identifier) {
+                    shouldBeRegistered = true;
+                    break;
+                }
+            }
+        }
+
+        if (shouldBeRegistered) {
+            manager->addMidiInputDeviceCallback(d.identifier, this);
+        } else {
+            manager->removeMidiInputDeviceCallback(d.identifier, this);
+        }
+    }
 }

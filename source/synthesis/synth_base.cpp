@@ -224,7 +224,7 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
 {
     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
-        DBG ("SynthBase::valueTreeChildAdded -- added piano");
+        //DBG ("SynthBase::valueTreeChildAdded -- added piano");
         preparationLists.emplace_back (
             std::make_unique<PreparationList> (
                 *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));

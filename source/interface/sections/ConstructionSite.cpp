@@ -291,6 +291,11 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
+
+                juce::ValueTree midiInput(IDs::midiInput);
+                midiInput.setProperty(IDs::midiDeviceId, IDs::defaultMidiInput.toString(), nullptr);
+                t.appendChild(midiInput, nullptr);
+
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -1150,6 +1155,13 @@ void ConstructionSite::addItem (int selection, bool center)
         }
 
         prep_list->appendChild(t,  &undo);
+
+        if (selection == bitklavier::BKPreparationType::PreparationTypeKeymap)
+        {
+            juce::ValueTree midiInput(IDs::midiInput);
+            midiInput.setProperty(IDs::midiDeviceId, IDs::defaultMidiInput.toString(), nullptr);
+            t.appendChild(midiInput, nullptr);
+        }
     }
     else {
         DBG("adding VST? " + juce::String(selection) + "");

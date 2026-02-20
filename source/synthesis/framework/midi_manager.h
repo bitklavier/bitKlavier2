@@ -61,7 +61,7 @@ namespace bitklavier {
     };
 } // namespace bitklavier
 
-class MidiManager : public juce::MidiInputCallback, public tracktion::engine::ValueTreeObjectList<bitklavier::MidiDeviceWrapper> {
+class MidiManager : public juce::MidiInputCallback, public tracktion::engine::ValueTreeObjectList<bitklavier::MidiDeviceWrapper>, private juce::ChangeListener {
   public:
     typedef std::map<int, std::map<std::string, const bitklavier::ValueDetails*>> midi_map;
 
@@ -120,21 +120,11 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     {
         return new bitklavier::MidiDeviceWrapper(v);
     }
-    void deleteObject (bitklavier::MidiDeviceWrapper* at) override
-    {
-        manager->removeMidiInputDeviceCallback(at->identifier, this);
-    }
-    void newObjectAdded (bitklavier::MidiDeviceWrapper* obj) override
-    {
-        manager->addMidiInputDeviceCallback(obj->identifier, this);
-    }
-    void objectRemoved (bitklavier::MidiDeviceWrapper*) override     { }//resized(); }
-    void objectOrderChanged() override              { }//resized(); }
-    // void valueTreeParentChanged (juce::ValueTree&) override;
-    //void valueTreeRedirected (juce::ValueTree&) override ;
-    void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override {
-        tracktion::engine::ValueTreeObjectList<bitklavier::MidiDeviceWrapper>::valueTreePropertyChanged(v, i);
-    }
+    void deleteObject (bitklavier::MidiDeviceWrapper* at) override;
+    void newObjectAdded (bitklavier::MidiDeviceWrapper* obj) override;
+    void objectRemoved (bitklavier::MidiDeviceWrapper* obj) override;
+    void objectOrderChanged() override { }
+    void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
     bool isSuitableType (const juce::ValueTree& v) const override
     {
         return v.hasType (IDs::midiInput);
@@ -176,6 +166,9 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     // juce::MidiInputCallback
     void handleIncomingMidiMessage (juce::MidiInput *source, const juce::MidiMessage &midi_message) override;
 
+    // juce::ChangeListener
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override;
+
     struct PresetLoadedCallback : public juce::CallbackMessage {
       PresetLoadedCallback(Listener* lis, juce::File pre) : listener(lis), preset(std::move(pre)) { }
 
@@ -192,6 +185,8 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     void allNotesOff() {
         keyboard_state_->allNotesOff(0);
     }
+
+    void updateDefaultMidiListeners();
   protected:
     void readMpeMessage(const juce::MidiMessage& message);
 
@@ -214,6 +209,7 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     int lsb_slide_values_[bitklavier::kNumMidiChannels];
 
     bool mpe_enabled_;
+    bool defaultMidiInputEnabled = false;
     juce::MPEZoneLayout mpe_zone_layout_;
     juce::MidiRPNDetector rpn_detector_;
 
