@@ -187,6 +187,22 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     }
 
     void updateDefaultMidiListeners();
+
+    /** Returns the current live note state as a bitset. Thread-safe. */
+    std::bitset<128> getLiveNoteState() const
+    {
+        std::bitset<128> bits;
+        uint64_t low = live_note_low_.load (std::memory_order_relaxed);
+        uint64_t high = live_note_high_.load (std::memory_order_relaxed);
+
+        for (int i = 0; i < 64; ++i)
+        {
+            if ((low >> i) & 1) bits.set ((size_t) i);
+            if ((high >> i) & 1) bits.set ((size_t) (i + 64));
+        }
+        return bits;
+    }
+
   protected:
     void readMpeMessage(const juce::MidiMessage& message);
 
@@ -213,8 +229,12 @@ class MidiManager : public juce::MidiInputCallback, public tracktion::engine::Va
     juce::MPEZoneLayout mpe_zone_layout_;
     juce::MidiRPNDetector rpn_detector_;
 
-    // UI live listeners, notified on the message thread via callAsync
+    // UI live listeners, notified on the message thread
     juce::ListenerList<LiveMidiListener> live_listeners_;
+
+    // Thread-safe state for UI polling of live MIDI notes
+    std::atomic<uint64_t> live_note_low_ { 0 };  // Notes 0-63
+    std::atomic<uint64_t> live_note_high_ { 0 }; // Notes 64-127
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiManager)
 };

@@ -80,15 +80,19 @@ namespace
 
 void BKItem::mouseDown(const juce::MouseEvent& e)
 {
+    getParentComponent()->mouseDown(e.getEventRelativeTo(getParentComponent()));
 }
 
 void BKItem::mouseDrag(const juce::MouseEvent& e)
 {
+    getParentComponent()->mouseDrag(e.getEventRelativeTo(getParentComponent()));
 }
 
 void BKItem::mouseDoubleClick(const juce::MouseEvent& e)
 {
     getParentComponent()->mouseDoubleClick(e.getEventRelativeTo(getParentComponent()));
 }
+
 void BKItem::mouseUp(const juce::MouseEvent &e) {
+    getParentComponent()->mouseUp(e.getEventRelativeTo(getParentComponent()));
 }

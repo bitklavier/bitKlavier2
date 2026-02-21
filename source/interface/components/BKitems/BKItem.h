@@ -98,7 +98,7 @@ BKItem (bitklavier::BKPreparationType type);
     }
 
     bool hitTest(int x, int y) override {
-        layer_1_.contains(x, y);
+        return layer_1_.contains(x, y);
     }
 
     float size_ratio;

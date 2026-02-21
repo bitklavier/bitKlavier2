@@ -8,12 +8,14 @@
 
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 #include "../../common/synth_gui_interface.h"
+#include "../../common/ObjectLists/PreparationList.h"
 #include "../../../synthesis/synth_base.h"
 #include "../../../synthesis/sound_engine/sound_engine.h"
 
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent>,
                                      public BKKeymapKeyboardComponent::Listener,
-                                     public MidiManager::LiveMidiListener {
+                                     public MidiManager::LiveMidiListener,
+                                     private juce::Timer {
 public:
     OpenGLKeymapKeyboardComponent(KeymapKeyboardState& params, bool helperButtons = true, bool isMono = false) :
         OpenGlAutoImageComponent (&params, helperButtons, isMono), _params(params)
@@ -27,6 +29,8 @@ public:
 
         // Try to register as live MIDI listener (safe if not available yet)
         tryRegisterLiveListener();
+
+        startTimer (33); // ~30 Hz for visual MIDI updates
     }
 
     ~OpenGLKeymapKeyboardComponent() override
@@ -106,8 +110,49 @@ public:
     // Live external MIDI -> display only, no injection back to engine
     void midiNoteChanged (int note, bool isDown, int /*channel*/, float /*velocity01*/) override
     {
+        // Legacy path for standalone or synchronous notifications
         setLiveKeyState (note, isDown);
         redoImage();
+    }
+
+    void timerCallback() override
+    {
+        if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+        {
+            if (auto* synth = iface->getSynth())
+            {
+                auto* prepList = synth->getActivePreparationList();
+                if (prepList == nullptr) return;
+
+                KeymapProcessor* kp = nullptr;
+                for (auto* obj : *prepList)
+                {
+                    if (obj != nullptr && obj->proc != nullptr)
+                    {
+                        if (obj->state.getProperty (IDs::type).equals (bitklavier::BKPreparationType::PreparationTypeKeymap))
+                        {
+                            kp = dynamic_cast<KeymapProcessor*> (obj->proc);
+                            break;
+                        }
+                    }
+                }
+
+                if (kp != nullptr && kp->_midi != nullptr)
+                {
+                    auto newState = kp->_midi->getLiveNoteState();
+                    if (newState != lastPolledState_)
+                    {
+                        clearAllLiveKeys();
+                        for (int i = 0; i < 128; ++i)
+                            if (newState.test ((size_t) i))
+                                setLiveKeyState (i, true);
+
+                        lastPolledState_ = newState;
+                        redoImage();
+                    }
+                }
+            }
+        }
     }
 
     bool postUInotesToEngine_ { false };
@@ -137,6 +182,7 @@ private:
 
     KeymapKeyboardState& _params;
     bool registeredLive_ { false };
+    std::bitset<128> lastPolledState_;
 };
 
 #endif //BITKLAVIER0_OPENGL_KEYMAPKEYBOARD_H

@@ -125,17 +125,24 @@ void MidiManager::postExternalMidi (const juce::MidiMessage& msg)
   if (m.getTimeStamp() == 0)
     m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
 
-  // Notify UI listeners (on message thread) for note on/off for visualisation
-  if (m.isNoteOnOrOff())
+  // Update thread-safe note state for UI polling
+  if (m.isNoteOn())
   {
       const int note = m.getNoteNumber();
-      const bool down = m.isNoteOn();
-      const int ch = m.getChannel();
-      const float v01 = down ? (m.getVelocity() / 127.0f) : 0.0f;
-      juce::MessageManager::callAsync ([this, note, down, ch, v01]
+      if (note >= 0 && note < 128)
       {
-          live_listeners_.call (&LiveMidiListener::midiNoteChanged, note, down, ch, v01);
-      });
+          if (note < 64) live_note_low_.fetch_or (1ULL << note, std::memory_order_relaxed);
+          else           live_note_high_.fetch_or (1ULL << (note - 64), std::memory_order_relaxed);
+      }
+  }
+  else if (m.isNoteOff())
+  {
+      const int note = m.getNoteNumber();
+      if (note >= 0 && note < 128)
+      {
+          if (note < 64) live_note_low_.fetch_and (~(1ULL << note), std::memory_order_relaxed);
+          else           live_note_high_.fetch_and (~(1ULL << (note - 64)), std::memory_order_relaxed);
+      }
   }
 
   midi_collector_.addMessageToQueue (m);
