@@ -98,6 +98,11 @@ public:
 
         adaptiveKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("adaptive knobs border", "Adaptive Parameters");
         addBorder(adaptiveKnobsBorder.get());
+
+        currentTempoDisplay = std::make_shared<PlainTextComponent>("currenttempo", "Current Tempo = 120.00bpm");
+        addOpenGlComponent(currentTempoDisplay);
+        currentTempoDisplay->setTextSize (12.0f);
+        currentTempoDisplay->setJustification(juce::Justification::centred);
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -127,6 +132,8 @@ public:
 
     std::shared_ptr<OpenGL_LabeledBorder> primaryKnobsBorder;
     std::shared_ptr<OpenGL_LabeledBorder> adaptiveKnobsBorder;
+
+    std::shared_ptr<PlainTextComponent> currentTempoDisplay;
 
     void resized() override;
 };

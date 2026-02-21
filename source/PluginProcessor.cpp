@@ -144,6 +144,10 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    // Forward host playhead to our internal graph so sub-processors (e.g., Tempo) can query it
+    if (engine_ != nullptr)
+        engine_->setPlayHead (getPlayHead());
+
     // bitKlavier processing
     processAudioAndMidi (buffer, midiMessages);
 }

@@ -50,6 +50,22 @@ void TempoProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
     processContinuousModulations(buffer);
     state.params.timeWindowMinMaxParams.processStateChanges();
 
+    if (state.params.tempoModeOptions->get() == TempoModeType::Host_Tempo) {
+        if (auto* ph = getPlayHead()) {
+            auto position = ph->getPosition();
+            if (position.hasValue()) {
+                auto bpm = position->getBpm();
+                if (bpm.hasValue()) {
+                    if (*bpm != state.params.tempoParam->get()) {
+                        state.params.tempoParam->beginChangeGesture();
+                        state.params.tempoParam->setParameterValue (*bpm);
+                        state.params.tempoParam->endChangeGesture();
+                    }
+                }
+            }
+        }
+    }
+
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();
 }

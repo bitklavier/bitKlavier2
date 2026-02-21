@@ -103,6 +103,13 @@ namespace bitklavier
         }
         void addDefaultChain(SynthBase& parent, juce::ValueTree& tree);
 
+        // Forward the host playhead to the internal AudioProcessorGraph so child nodes can query it
+        void setPlayHead (juce::AudioPlayHead* ph)
+        {
+            if (processorGraph != nullptr)
+                processorGraph->setPlayHead (ph);
+        }
+
         // Inject UI-generated MIDI to all KeymapProcessors in the graph
         void postUINoteOn  (int midiNote, float velocity01, int channel = 1);
         void postUINoteOff (int midiNote, float velocity01 = 0.0f, int channel = 1);
