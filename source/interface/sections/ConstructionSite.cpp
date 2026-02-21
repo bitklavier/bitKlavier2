@@ -47,7 +47,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                          modulationLineView(*this, um,data),
                                                          preparationSelector(*this), parent(v),
                                                         commandManager (_manager),
-                                                        connection_list (data->synth->getActiveConnectionList())
+                                                        connection_list (data->synth->getActiveConnectionList()),
+                                                        synth (data->synth)
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
     commandManager.registerAllCommandsForTarget (this);
@@ -830,20 +831,18 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
 void ConstructionSite::reset() {
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
-    SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-    if (_parent == nullptr)
+    
+    if (synth == nullptr)
+    {
+        DBG("ConstructionSite::reset - synth is null!");
         return;
-        if (_parent->getSynth() != nullptr) {
-            // _parent->getSynth()->getEngine()->resetEngine();
-            // prep_list->setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
-            // IDs::PREPARATIONS));
-            // setActivePiano();
-        }
-//        if(prep_list)
-//            prep_list->removeListener(this);
-//        prep_list = nullptr;
-        cableView.reset();
-        modulationLineView.reset();
+    }
+    
+    cableView.reset();
+    modulationLineView.reset();
+
+    // Rebuild the GUI components based on the (possibly new) ValueTree piano node
+    setActivePiano();
 }
 PreparationSection *ConstructionSite::getComponentForPlugin(juce::AudioProcessorGraph::NodeID nodeID) const {
     {
@@ -882,6 +881,7 @@ void ConstructionSite::createWindow (juce::AudioProcessorGraph::Node* node, Plug
 }
 
 void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
+    DBG ("ConstructionSite::moduleAdded - wrapper node ID: " + juce::String(wrapper->node_id.uid));
     auto * interface = findParentComponentOfClass<SynthGuiInterface>();
     auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state, interface );
     {
@@ -938,8 +938,13 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     }
     if (index == -1) jassertfalse;
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    interface->getGui()->mod_popup->reset();
-    interface->getGui()->prep_popup->reset();
+    if (interface != nullptr && interface->getGui() != nullptr)
+    {
+        if (interface->getGui()->mod_popup != nullptr)
+            interface->getGui()->mod_popup->reset();
+        if (interface->getGui()->prep_popup != nullptr)
+            interface->getGui()->prep_popup->reset();
+    }
     //cleanup
     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
 
@@ -947,10 +952,24 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
     {
         juce::ScopedLock lock(open_gl_critical_section_);
         removeSubSection (plugin_components[index].get());
+        
+        // Ensure GL resources are destroyed before deleting the component
+        // This must be done while the context is active.
+        if (open_gl.context.isAttached() && open_gl.context.isActive())
+        {
+            open_gl.context.executeOnGLThread([comp = plugin_components[index].get(), this](juce::OpenGLContext &) {
+                comp->destroyOpenGlComponents(this->open_gl);
+            }, true);
+        }
+        else
+        {
+            // If the context isn't active, we might leak, but at least we won't crash 
+            // if we can prevent the destructor from calling release() without a context.
+            // But we should try to call destroy anyway if we can.
+            plugin_components[index]->destroyOpenGlComponents(open_gl);
+        }
     }
 
-    //delete opengl
-    plugin_components[index]->destroyOpenGlComponents (open_gl);
     //delete heap memory
     plugin_components.erase(plugin_components.begin()+index);
 
@@ -1356,21 +1375,62 @@ void ConstructionSite::updateComponents() {
 }
 
 void ConstructionSite::setActivePiano() {
+    DBG("ConstructionSite::setActivePiano - starting");
+    
+    // Clear all existing GUI components
     if(prep_list != nullptr)
     {
         prep_list->deleteAllGui();
         prep_list->removeListener (this);
     }
+    
+    // Explicitly clear plugin_components just in case
+    {
+        juce::ScopedLock lock (open_gl_critical_section_);
+        plugin_components.clear();
+    }
 
-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    prep_list= interface->getSynth()->getActivePreparationList();
+    if (synth == nullptr)
+    {
+        DBG("ConstructionSite::setActivePiano - synth is null!");
+        return;
+    }
+
+    prep_list = synth->getActivePreparationList();
+    if (prep_list == nullptr)
+    {
+        DBG("ConstructionSite::setActivePiano - prep_list is null!");
+        // Try to get ANY preparation list if no active one is found
+        if (!synth->preparationLists.empty())
+        {
+            prep_list = synth->preparationLists.front().get();
+            DBG("ConstructionSite::setActivePiano - falling back to first prep_list");
+        }
+        else
+        {
+            return;
+        }
+    }
+
+    // Update our ValueTree reference to the new active piano node
     parent = prep_list->getValueTree().getParent();
+    DBG("ConstructionSite::setActivePiano - parent node type: " + parent.getType().toString() + ", name: " + parent.getProperty(IDs::name).toString());
     prep_list->addListener(this);
+    
+    DBG("ConstructionSite::setActivePiano - rebuilding all GUI modules. prep_list size: " + juce::String(prep_list->size()));
+    
+    // This will call moduleAdded for each preparation in the list
     prep_list->rebuildAllGui();
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
-    connection_list = interface->getSynth()->getActiveConnectionList();
+    connection_list = synth->getActiveConnectionList();
+    
+    // Force a redraw and layout of all new components
+    resized();
+    repaint();
+    
+    DBG("ConstructionSite::setActivePiano - finished. Created " + juce::String(plugin_components.size()) + " components.");
 }
 
 void ConstructionSite::removeAllGuiListeners()

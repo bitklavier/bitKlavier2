@@ -15,6 +15,7 @@ public:
     ~MainSection();
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
+    void reset() override;
 //    void reset() override;
 //
 //    void buttonClicked(juce::Button* clicked_button) override;

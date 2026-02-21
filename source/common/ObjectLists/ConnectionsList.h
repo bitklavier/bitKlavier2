@@ -10,6 +10,8 @@
 #include "Identifiers.h"
 #include "tracktion_ValueTreeUtilities.h"
 #include "synth_base.h"
+#include "synth_gui_interface.h"
+#include "FullInterface.h"
 namespace bitklavier {
     class Connection {
     public:
@@ -100,8 +102,21 @@ namespace bitklavier {
         void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
 
         void deleteAllGui() {
-            for (auto obj: objects)
-                listeners_.call([&](Listener& l){ l.removeConnection(obj); });
+            auto interface = synth.getGuiInterface() != nullptr ? synth.getGuiInterface() : nullptr;
+            auto full = interface != nullptr ? interface->getGui() : nullptr;
+
+            if (full != nullptr && full->open_gl_.context.isAttached() && full->open_gl_.context.isActive())
+            {
+                full->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext &) {
+                    for (auto obj: objects)
+                        listeners_.call([&](Listener& l){ l.removeConnection(obj); });
+                }, true);
+            }
+            else
+            {
+                for (auto obj: objects)
+                    listeners_.call([&](Listener& l){ l.removeConnection(obj); });
+            }
         }
         void rebuildAllGui() {
             for (auto obj: objects)

@@ -1,6 +1,22 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "sound_engine.h"
+#include "UserPreferences.h"
+
+namespace {
+    static juce::File expandUserPath(const juce::String& path)
+    {
+        if (path.isEmpty())
+            return juce::File();
+
+        if (path.startsWith("~/"))
+        {
+            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+            return home.getChildFile(path.fromFirstOccurrenceOf("~/", false, false));
+        }
+        return juce::File(path);
+    }
+}
 
 //==============================================================================
 PluginProcessor::PluginProcessor()
@@ -174,17 +190,38 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
 //==============================================================================
 void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or juce::ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    juce::ignoreUnused (destData);
+    juce::ValueTree state ("bitKlavierPluginState");
+
+    if (user_prefs != nullptr)
+    {
+        juce::String lastPath = user_prefs->tree.getProperty ("last_gallery_path");
+        state.setProperty ("last_gallery_path", lastPath, nullptr);
+    }
+
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    copyXmlToBinary (*xml, destData);
 }
 
 void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    juce::ignoreUnused (data, sizeInBytes);
+    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+
+    if (xmlState != nullptr)
+    {
+        juce::ValueTree state = juce::ValueTree::fromXml (*xmlState);
+
+        if (state.hasProperty ("last_gallery_path"))
+        {
+            juce::String lastPath = state.getProperty ("last_gallery_path");
+            juce::File candidate = expandUserPath (lastPath);
+
+            if (candidate.existsAsFile())
+            {
+                std::string error;
+                loadFromFile (candidate, error);
+            }
+        }
+    }
 }
 
 //==============================================================================

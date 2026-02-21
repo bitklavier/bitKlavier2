@@ -71,32 +71,44 @@ void SampleLoadManager::clearAllSamples() {
 }
 
 void SampleLoadManager::handleAsyncUpdate() {
+    // If the threadpool is still working, wait. 
+    // BUT we should only care about our own jobs if we can track them.
+    // getNumJobs() covers the whole pool.
     if (sampleLoader.getNumJobs() > 0)
+    {
+        // Still jobs in flight. trigger again shortly if needed, 
+        // but normally SampleLoadJob destructor triggers this.
         return;
+    }
 
-    DBG("All samples loaded. Audio thread can safely switch soundsets.");
+    DBG("SampleLoadManager::handleAsyncUpdate - no more jobs in pool.");
 
+    bool anyStillLoading = false;
     for (auto it = soundsetProgressMap.begin(); it != soundsetProgressMap.end(); )
     {
         auto& name     = it->first;
         auto& progress = it->second;
 
-        if (progress->completedJobs == progress->totalJobs)
+        if (progress->completedJobs >= progress->totalJobs)
         {
-            DBG ("Soundset " + name + " finished loading.");
+            DBG ("Soundset " + juce::String(name) + " finished loading. (" + juce::String(progress->completedJobs.load()) + "/" + juce::String(progress->totalJobs.load()) + ")");
             progress->currentProgress = 1.0f;
-
             progress->markComplete(); // Message thread safe
-
-            // erase returns the next iterator
             it = soundsetProgressMap.erase (it);
         }
         else
         {
+            DBG ("Soundset " + juce::String(name) + " still loading: " + juce::String(progress->completedJobs.load()) + "/" + juce::String(progress->totalJobs.load()));
+            anyStillLoading = true;
             ++it;
         }
     }
-    parent->finishedSampleLoading();
+
+    if (!anyStillLoading)
+    {
+        DBG("SampleLoadManager: All soundsets finished. Calling finishedSampleLoading.");
+        parent->finishedSampleLoading();
+    }
 }
 
 // sort array of sample files into arrays of velocities by pitch
@@ -297,13 +309,14 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     progressPtr->soundsetName = soundsetName.toStdString();
     progressPtr->targetTree = vtToWrite; // store where to write soundset / completion callbacks
     progressPtr->load_manager = this;
-    parent->startSampleLoading();
 
     /*
      * handle soundfonts, otherwise move on to regular bK sample types
      */
     const juce::String ext = directory.getFileExtension().toLowerCase();
     if (ext == ".sfz" || ext == ".sf2") {
+        // Only show loading spinner when we actually enqueue work
+        parent->startSampleLoading();
         progressPtr->totalJobs++; // one job per sample type
         progressPtr->isSoundFont = true;
         progressPtr->soundset = new juce::ReferenceCountedArray<BKSynthesiserSound>();
@@ -323,22 +336,40 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     /// function so it never hangs
     if (!directory.exists()) {
         DBG("Soundset dir does not exist: " + directory.getFullPathName());
+        // Reset loading state just in case startSampleLoading was called by the caller
+        parent->finishedSampleLoading(); 
         return false;
     }
-    // (Optional debug listing)
 
-    MyComparator sorter;
-    auto allSamples = directory.findChildFiles(juce::File::findFiles, false, "*.wav");
-    allSamples.sort(sorter);
+    // Determine sub-directories that have samples before enqueuing jobs
+    using namespace bitklavier::utils;
+    std::vector<BKPianoSampleType> typesToLoad;
+    BKPianoSampleType allTypes[] = { BKPianoMain, BKPianoHammer, BKPianoReleaseResonance, BKPianoPedal };
 
-    int i = 0;
-    for (auto file: allSamples)
-        DBG(file.getFullPathName() + " " + juce::String (++i));
+    for (auto type : allTypes) {
+        juce::String subPath = directory.getFullPathName();
+        subPath.append(BKPianoSampleType_string[type], 1000);
+        juce::File subDir(subPath);
+        if (subDir.isDirectory() && !subDir.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false, "*.wav").isEmpty()) {
+            typesToLoad.push_back(type);
+        }
+    }
 
-    loadSamples_sub(bitklavier::utils::BKPianoMain, soundsetName.toStdString());
-    loadSamples_sub(bitklavier::utils::BKPianoHammer, soundsetName.toStdString());
-    loadSamples_sub(bitklavier::utils::BKPianoReleaseResonance, soundsetName.toStdString());
-    loadSamples_sub(bitklavier::utils::BKPianoPedal, soundsetName.toStdString());
+    if (typesToLoad.empty()) {
+        DBG("Soundset dir exists but has no .wav samples in expected subfolders: " + directory.getFullPathName() + " (soundsetName: " + soundsetName + ")");
+        parent->finishedSampleLoading(); // Ensure state is reset if we thought we might load something
+        return false;
+    }
+
+    // Ensure spinner is visible and loading state is set BEFORE enqueuing any jobs
+    parent->startSampleLoading();
+
+    // Now enqueue the jobs. Since we have already started loading, handleAsyncUpdate will be triggered
+    // once all these jobs (and any others) have finished.
+    for (auto type : typesToLoad) {
+        loadSamples_sub(type, soundsetName.toStdString());
+    }
+
     return true;
 }
 
@@ -943,7 +974,7 @@ int subsoundIndexForName ( SFZSound& sound,
 bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
     // --- Validation ---
     if (soundset == nullptr) {
-        DBG("loadSoundFont: soundset pointer is null.");
+        DBG("loadSoundFont: soundset pointer is null. Soundset name: " + progress->soundsetName);
         return false;
     }
 
@@ -962,7 +993,7 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
     else if (ext == ".sf2")
         sound = std::make_unique<SF2Sound>(sfzFile.getFullPathName().toStdString());
     else {
-        DBG("loadSoundFont: Unsupported extension " + ext);
+        DBG("loadSoundFont: Unsupported extension " + ext + " for file " + sfzFile.getFullPathName());
         return false;
     }
 

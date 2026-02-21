@@ -15,8 +15,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     static constexpr int kHeightBuffer = 50;
     juce::ignoreUnused (processorRef);
     setLookAndFeel (DefaultLookAndFeel::instance());
-    gui_->reset();
     addAndMakeVisible (gui_.get());
+    gui_->reset();
 
     constrainer_.setMinimumSize (bitklavier::kMinWindowWidth, bitklavier::kMinWindowHeight);
     double ratio = (1.0 * bitklavier::kDefaultWindowWidth) / bitklavier::kDefaultWindowHeight;

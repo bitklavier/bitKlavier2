@@ -9,22 +9,26 @@
 #include "ModulationProcessor.h"
 #include "PianoSwitchProcessor.h"
 #include "../UserPreferences.h"
+#include "FullInterface.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v, juce::UndoManager* um) : tracktion::engine::ValueTreeObjectList<
     PluginInstanceWrapper>(v), synth(parent) , um(um){
+    DBG ("PreparationList constructor - node type: " + v.getType().toString() + " children: " + juce::String(v.getNumChildren()));
     jassert(v.hasType(IDs::PREPARATIONS));
       rebuildObjects();
+    DBG ("PreparationList constructor - after rebuildObjects, objects size: " + juce::String(objects.size()));
     for (auto object: objects) {
         PreparationList::newObjectAdded(object);
     }
 }
 bool PreparationList::isSuitableType(const juce::ValueTree& v)const {
-    {
-        return synth.prepFactory.contains(v.getType().toString().toStdString()) || v.hasType(IDs::vst);
-    }
+    bool suitable = synth.prepFactory.contains(v.getType().toString().toStdString()) || v.hasType(IDs::vst);
+    if (!suitable)
+        DBG ("PreparationList::isSuitableType - REJECTED: " + v.getType().toString());
+    return suitable;
 }
 PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v) {
-
+    DBG ("PreparationList::createNewObject - creating: " + v.getType().toString());
     juce::AudioProcessor *rawPtr;
     juce::AudioProcessorGraph::Node::Ptr node_ptr;
     juce::ValueTree state = v;
@@ -144,12 +148,27 @@ void PreparationList::newObjectAdded(PluginInstanceWrapper *instance_wrapper) {
 }
 
 void PreparationList::deleteAllGui() {
-    for (auto obj: objects)
-        for (auto listener: listeners_)
-            listener->removeModule(obj);
+    auto interface = synth.getGuiInterface() != nullptr ? synth.getGuiInterface() : nullptr;
+    auto full = interface != nullptr ? dynamic_cast<FullInterface*>(interface->getGui()) : nullptr;
+
+    if (full != nullptr && full->open_gl_.context.isAttached() && full->open_gl_.context.isActive())
+    {
+        full->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext &) {
+            for (auto obj: objects)
+                for (auto listener: listeners_)
+                    listener->removeModule(obj);
+        }, true);
+    }
+    else
+    {
+        for (auto obj: objects)
+            for (auto listener: listeners_)
+                listener->removeModule(obj);
+    }
 }
 
 void PreparationList::rebuildAllGui() {
+    DBG ("PreparationList::rebuildAllGui - objects size: " + juce::String(objects.size()));
     for (auto obj: objects)
         for (auto listener: listeners_)
             listener->moduleAdded(obj);

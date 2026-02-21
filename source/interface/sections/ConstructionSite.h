@@ -150,6 +150,7 @@ public:
     void pasteItems();
 
     static juce::ValueTree clipboard;
+    SynthBase* synth;
 
 private:
     PreparationList* prep_list;

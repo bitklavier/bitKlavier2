@@ -81,18 +81,30 @@ public:
 
     void setActivePiano()
     {
-        //        DBG("setPIano CableView");
+        DBG("CableView::setActivePiano - starting");
         if (connection_list != nullptr)
         {
             connection_list->deleteAllGui();
             connection_list->removeListener (this);
         }
 
-        auto interface = findParentComponentOfClass<SynthGuiInterface>();
-        connection_list = interface->getSynth()->getActiveConnectionList();
-        //connections_vt = connection_list->getValueTree();
+        if (synth == nullptr)
+        {
+            DBG("CableView::setActivePiano - synth is null!");
+            return;
+        }
+
+        connection_list = synth->getActiveConnectionList();
+        if (connection_list == nullptr)
+        {
+            DBG("CableView::setActivePiano - connection_list is null!");
+            return;
+        }
+
+        DBG("CableView::setActivePiano - rebuildAllGui. connection_list size: " + juce::String(connection_list->objects.size()));
         connection_list->addListener (this);
         connection_list->rebuildAllGui();
+        DBG("CableView::setActivePiano - finished");
     }
 
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
@@ -104,6 +116,7 @@ private:
 
     juce::CriticalSection open_gl_critical_section_;
     bitklavier::ConnectionList* connection_list;
+    SynthBase* synth;
     //    void timerCallback() override;
     juce::Array<Cable*> objects;
     ConstructionSite& site;

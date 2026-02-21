@@ -49,7 +49,17 @@ OpenGlImage::OpenGlImage() : dirty_(true), image_(nullptr), image_width_(0), ima
 }
 
 OpenGlImage::~OpenGlImage() {
-
+    // We explicitly avoid calling texture_.release() here.
+    // juce::OpenGLTexture's own destructor will call release(), and if it's on a thread
+    // without the correct active context, it will trigger an assertion in juce_OpenGLTexture.cpp.
+    
+    // To prevent this assertion, we'd need to ensure the context is current, but we
+    // don't always have access to the context or the thread here.
+    
+    // The safest way to handle this in JUCE is to call texture_.release() explicitly
+    // while the context is active (which we do in destroy()). If destroy() wasn't called,
+    // we unfortunately leak the texture ID to avoid a crash. The GPU resources will
+    // eventually be reclaimed when the context itself is destroyed.
 }
 
 
@@ -186,19 +196,34 @@ void OpenGlImage::destroy(OpenGlWrapper& open_gl) {
   if (!initialized_ && vertex_buffer_ == 0 && triangle_buffer_ == 0 && vao_ == 0)
     return;
 
-  texture_.release();
+  if (auto* context = juce::OpenGLContext::getCurrentContext())
+  {
+      if (context == &open_gl.context)
+      {
+          // Drain any existing GL errors before release
+          while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
+          
+          texture_.release();
+      }
+  }
 
   image_shader_ = nullptr;
   image_color_ = nullptr;
   image_position_ = nullptr;
   texture_coordinates_ = nullptr;
 
-  if (vertex_buffer_ != 0)
-    open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
-  if (triangle_buffer_ != 0)
-    open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
-  if (vao_ != 0)
-    open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
+  if (auto* context = juce::OpenGLContext::getCurrentContext())
+  {
+      if (context == &open_gl.context)
+      {
+          if (vertex_buffer_ != 0)
+              open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
+          if (triangle_buffer_ != 0)
+              open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
+          if (vao_ != 0)
+              open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
+      }
+  }
 
   vertex_buffer_ = 0;
   triangle_buffer_ = 0;

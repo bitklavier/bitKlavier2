@@ -48,6 +48,9 @@ public:
         }
 
         Overlay::setVisible(should_be_visible);
+
+        // Ensure we handle mouse interaction when visible
+        setInterceptsMouseClicks(should_be_visible, should_be_visible);
     }
     void buttonClicked(juce::Button* clicked_button) override{}
     void resized() override {

@@ -305,7 +305,7 @@ public:
     void setA4Frequency(double A4new) { state.params.tuningState.setGlobalTuningReference(A4new);}
     void incrementClusterTime(long numSamples) { state.params.tuningState.clusterTimeMS += numSamples * 1000. / getSampleRate(); }
 
-    bool hasEditor() const override { return false; }
+    bool hasEditor() const override { return false;}
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
 
     juce::AudioProcessor::BusesProperties tuningBusLayout() {

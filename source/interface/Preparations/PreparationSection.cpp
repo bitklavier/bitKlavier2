@@ -74,9 +74,12 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
     rebuildObjects();
 
     for (auto object: objects) {
-        open_gl.context.executeOnGLThread([this,object,&open_gl](juce::OpenGLContext &context) {
-            object->getImageComponent()->init(open_gl);
-        }, true);
+        if (_open_gl.context.isAttached() && _open_gl.context.isActive())
+        {
+            _open_gl.context.executeOnGLThread([this,object,&open_gl](juce::OpenGLContext &context) {
+                object->getImageComponent()->init(open_gl);
+            }, true);
+        }
         this->addOpenGlComponent(object->getImageComponent(), false, true);
         object->addListener(this);
         addAndMakeVisible(object);
@@ -517,15 +520,42 @@ BKPort *PreparationSection::createNewObject(const juce::ValueTree &v) {
 }
 
 void PreparationSection::deleteObject(BKPort *at) {
-    if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
+    if (at == nullptr)
+        return;
+
+    if (juce::OpenGLContext::getCurrentContext() == nullptr) {
         SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-        //this might cause bugs when adding deletion of a prepartion and dynamic port adding and delting
+        if (_parent == nullptr || _parent->getGui() == nullptr)
+        {
+            // Fallback: if we can't find the interface or GUI, just hide and delete on message thread
+            // This avoids an assert in executeOnGLThread.
+            at->setVisible(false);
+            delete at;
+            return;
+        }
+
+        auto& context = _parent->getGui()->open_gl_.context;
         at->setVisible(false);
-        _parent->getOpenGlWrapper()->context.executeOnGLThread([this, &at](juce::OpenGLContext &openGLContext) {
-                                                                   //this->destroyOpenGlComponent()
-                                                               },
-                                                               false);
-    } else delete at;
+        
+        if (context.isAttached() && context.isActive())
+        {
+            context.executeOnGLThread([at](juce::OpenGLContext &openGLContext) {
+                // The port will be deleted on the message thread after this returns if it's still managed,
+                // but since ValueTreeObjectList calls deleteObject and then actually deletes it,
+                // we need to be careful about where the 'delete' happens.
+                // In this case, ValueTreeObjectList expects us to delete it.
+                juce::MessageManager::callAsync([at]() { delete at; });
+            }, false);
+        }
+        else
+        {
+            // If context is not active, just delete it on the message thread.
+            // OpenGlImage destructor will now safely handle the texture release (to avoid assert).
+            juce::MessageManager::callAsync([at]() { delete at; });
+        }
+    } else {
+        delete at;
+    }
 }
 
 void PreparationSection::reset() {
@@ -533,16 +563,42 @@ void PreparationSection::reset() {
 }
 
 void PreparationSection::newObjectAdded(BKPort *object) {
+    if (object == nullptr)
+        return;
+
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-    parent->getGui()->open_gl_.context.executeOnGLThread([this,object](juce::OpenGLContext &context) {
-        SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-        object->getImageComponent()->init(_parent->getGui()->open_gl_);
-        juce::MessageManagerLock mm;
-        this->addOpenGlComponent(object->getImageComponent(), false, true);
+    if (parent == nullptr || parent->getGui() == nullptr)
+        return;
+
+    auto& context = parent->getGui()->open_gl_.context;
+    
+    if (context.isAttached() && context.isActive())
+    {
+        context.executeOnGLThread([this, object](juce::OpenGLContext &context) {
+            SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+            if (_parent == nullptr || _parent->getGui() == nullptr)
+                return;
+
+            object->getImageComponent()->init(_parent->getGui()->open_gl_);
+            
+            juce::MessageManager::callAsync([this, objectSafe = juce::Component::SafePointer<BKPort>(object)]() {
+                if (auto* _object = objectSafe.getComponent())
+                {
+                    this->addOpenGlComponent(_object->getImageComponent(), false, true);
+                    this->addAndMakeVisible(_object);
+                    _object->addListener(this);
+                    this->resized();
+                }
+            });
+        }, false);
+    }
+    else
+    {
+        // Fallback: if GL context not active, just add on message thread
         this->addAndMakeVisible(object);
         object->addListener(this);
         this->resized();
-    }, false);
+    }
 }
 
 void PreparationSection::valueTreeRedirected(juce::ValueTree &) {}

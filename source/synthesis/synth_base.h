@@ -205,6 +205,7 @@ public:
     }
     void finishedSampleLoading();
     void startSampleLoading();
+    bool isSamplesLoading() const { return samplesLoading.load(); }
     void clearAllGuiListeners();
 
 protected:

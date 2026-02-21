@@ -21,9 +21,12 @@ ModulationPreparation::ModulationPreparation ( juce::ValueTree v, OpenGlWrapper 
 {
     item = std::make_unique<ModulationItem> (); // Initializes member variable `item` of PreparationSection class
     addOpenGlComponent (item->getImageComponent(),true); // Calls member function of SynthSection (parent class to PreparationSection)
-    _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
-                                        {item->getImageComponent()->init(_open_gl);
-                                        },false);
+    if (_open_gl.context.isAttached() && _open_gl.context.isActive())
+    {
+        _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
+                                            {item->getImageComponent()->init(_open_gl);
+                                            },false);
+    }
 
     addAndMakeVisible (item.get());
     setSkinOverride (Skin::kModulation);

@@ -102,6 +102,19 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     about_section_->toFront (true);
     loading_section->toFront (true);
     setOpaque (true);
+
+    if (synth_data->synth != nullptr)
+    {
+        bool loading = synth_data->synth->isSamplesLoading();
+        DBG ("FullInterface: checking loading state at creation: " + juce::String (loading ? "true" : "false") + ". synth pointer: " + juce::String::toHexString ((juce::uint64) synth_data->synth));
+        if (loading)
+            showLoadingSection();
+        else
+            hideLoadingSection();
+
+        startTimer (250); // Periodic sync to avoid any race conditions
+    }
+
     open_gl_context_.setContinuousRepainting (true);
     open_gl_context_.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
     open_gl_context_.setSwapInterval (0);
@@ -262,6 +275,39 @@ void FullInterface::resized()
         redoBackground();
 }
 
+void FullInterface::timerCallback()
+{
+    if (synthInterface_ && synthInterface_->getSynth())
+    {
+        bool stillLoading = synthInterface_->getSynth()->isSamplesLoading();
+        if (loading_section->isVisible() != stillLoading)
+        {
+            DBG ("FullInterface: timer detected state mismatch. Loading flag: " + juce::String (stillLoading ? "true" : "false") + ". Updating visibility.");
+            if (stillLoading)
+                showLoadingSection();
+            else
+                hideLoadingSection();
+        }
+
+        // If not loading, we could stop the timer, but keeping it running for a bit 
+        // ensures we catch rapid state changes during initialization.
+        if (!stillLoading)
+        {
+            static int checksAfterLoading = 0;
+            if (++checksAfterLoading > 4) // Stop after 1 second of "not loading"
+            {
+                stopTimer();
+                checksAfterLoading = 0;
+            }
+        }
+    }
+    else
+    {
+        DBG ("FullInterface: timer running but synth pointer is null!");
+        stopTimer();
+    }
+}
+
 void FullInterface::showAboutSection()
 {
     juce::ScopedLock lock (open_gl_critical_section_);
@@ -296,7 +342,13 @@ void FullInterface::reset()
     auto* guiInterface = synthInterface_ != nullptr ? synthInterface_ : findParentComponentOfClass<SynthGuiInterface>();
 
     if (guiInterface != nullptr)
-        vt = guiInterface->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
+    {
+        vt = guiInterface->getSynth()->getActivePianoValueTree();
+        if (! vt.isValid())
+            vt = guiInterface->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
+
+        DBG ("FullInterface::reset - vt type: " + vt.getType().toString() + ", isValid: " + (vt.isValid() ? "true" : "false"));
+    }
 
     SynthSection::reset();
     repaintSynthesisSection();

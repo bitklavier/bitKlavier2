@@ -55,3 +55,9 @@ void MainSection::resized()
     //constructionPort.setBounds(large_padding, 0,width, height);
     SynthSection::resized();
 }
+
+void MainSection::reset()
+{
+    constructionSite_->reset();
+    SynthSection::reset();
+}

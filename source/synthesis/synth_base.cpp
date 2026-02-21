@@ -221,7 +221,7 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
 {
     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
-        //DBG ("SynthBase::valueTreeChildAdded -- added piano");
+        DBG ("SynthBase::valueTreeChildAdded - added piano: " + childWhichHasBeenAdded.getProperty(IDs::name).toString());
         preparationLists.emplace_back (
             std::make_unique<PreparationList> (
                 *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));
@@ -302,7 +302,9 @@ juce::ValueTree SynthBase::getActivePreparationListValueTree()
 
 juce::ValueTree SynthBase::getActivePianoValueTree()
 {
-   return tree.getChildWithProperty(IDs::isActive, 1);
+   auto active = tree.getChildWithProperty(IDs::isActive, 1);
+   DBG ("SynthBase::getActivePianoValueTree - found active: " + (active.isValid() ? active.getProperty(IDs::name).toString() : juce::String("INVALID")));
+   return active;
 }
 
 
@@ -498,6 +500,7 @@ void SynthBase::removeConnection (const juce::AudioProcessorGraph::Connection& c
 
 bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
 {
+    DBG ("SynthBase::loadFromValueTree - starting");
     //engine_->allSoundsOff();
     pauseProcessing(true);
     setBatchLoading(true);
@@ -507,6 +510,7 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
     setBatchLoading(false);
     pauseProcessing (false);
 
+    DBG ("SynthBase::loadFromValueTree - finished. tree isValid: " + (tree.isValid() ? juce::String("true") : juce::String("false")));
     if (tree.isValid())
         return true;
     return false;
@@ -690,6 +694,7 @@ bool SynthBase::saveToActiveFile()
 
 void SynthBase::startSampleLoading()
 {
+    DBG ("SynthBase: starting sample loading (showing popup)");
     samplesLoading.store (true);
 
     // Optional but common:
@@ -701,6 +706,9 @@ void SynthBase::startSampleLoading()
 
 void SynthBase::finishedSampleLoading()
 {
+    DBG ("SynthBase: finishing sample loading (hiding popup)");
+    samplesLoading.store (false);
+
     if (presetPending.load()) {
         presetPending.store (false);
 
@@ -721,8 +729,6 @@ void SynthBase::finishedSampleLoading()
         getGuiInterface()->getGui()->notifyFresh();
         // getGuiInterface()->setActivePiano (getActivePianoValueTree());
     }
-
-    samplesLoading.store (false);
 }
 
 void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)

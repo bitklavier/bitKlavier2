@@ -1036,27 +1036,30 @@ void ModulationManager::componentAdded() {
     for (auto slider : sliders) {
         slider.second->addListener(this);
     }
-    full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
-                                                 for (auto &multiquad: rotary_destinations_) {
-                                                     multiquad.second->destroy(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: rotary_meters_) {
-                                                     multiquad.second->destroy(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: linear_meters_) {
-                                                     multiquad.second->destroy(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: linear_destinations_) {
-                                                     multiquad.second->destroy(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: button_destinations_) {
-                                                     multiquad.second->destroy(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: button_meters_) {
-                                                     multiquad.second->destroy(full->open_gl_);
-                                                 }
-                                             },
-                                             true); {
+    if (full->open_gl_.context.isAttached() && full->open_gl_.context.isActive()) {
+        DBG ("ModulationManager::componentAdded - executing cleanup on GL thread");
+        full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
+                                                     for (auto &multiquad: rotary_destinations_) {
+                                                         multiquad.second->destroy(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: rotary_meters_) {
+                                                         multiquad.second->destroy(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: linear_meters_) {
+                                                         multiquad.second->destroy(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: linear_destinations_) {
+                                                         multiquad.second->destroy(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: button_destinations_) {
+                                                         multiquad.second->destroy(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: button_meters_) {
+                                                         multiquad.second->destroy(full->open_gl_);
+                                                     }
+                                                 },
+                                                 true);
+    } {
         juce::ScopedLock lock(full->open_gl_critical_section_);
         rotary_destinations_.clear();
         rotary_meters_.clear();
@@ -1216,27 +1219,29 @@ void ModulationManager::componentAdded() {
             //createModulationMeter(button.second, button_meters_[viewport].get(), index);
         }
     }
-    full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
-                                                 for (auto &multiquad: rotary_destinations_) {
-                                                     multiquad.second->init(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: rotary_meters_) {
-                                                     multiquad.second->init(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: linear_meters_) {
-                                                     multiquad.second->init(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: linear_destinations_) {
-                                                     multiquad.second->init(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: button_destinations_) {
-                                                     multiquad.second->init(full->open_gl_);
-                                                 }
-                                                 for (auto &multiquad: button_meters_) {
-                                                     multiquad.second->init(full->open_gl_);
-                                                 }
-                                             },
-                                             true);
+    if (full->open_gl_.context.isAttached() && full->open_gl_.context.isActive()) {
+        full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
+                                                     for (auto &multiquad: rotary_destinations_) {
+                                                         multiquad.second->init(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: rotary_meters_) {
+                                                         multiquad.second->init(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: linear_meters_) {
+                                                         multiquad.second->init(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: linear_destinations_) {
+                                                         multiquad.second->init(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: button_destinations_) {
+                                                         multiquad.second->init(full->open_gl_);
+                                                     }
+                                                     for (auto &multiquad: button_meters_) {
+                                                         multiquad.second->init(full->open_gl_);
+                                                     }
+                                                 },
+                                                 true);
+    }
 
     resized();
 }

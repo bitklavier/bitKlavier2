@@ -23,9 +23,12 @@ PianoSwitchPreparation::PianoSwitchPreparation(
     // Calls member function of SynthSection (parent class to PreparationSection)
     addOpenGlComponent (item->getImageComponent(),true);
 
-    _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
-        {item->getImageComponent()->init(_open_gl);
-        },false);
+    if (_open_gl.context.isAttached() && _open_gl.context.isActive())
+    {
+        _open_gl.context.executeOnGLThread([this](juce::OpenGLContext& context)
+            {item->getImageComponent()->init(_open_gl);
+            },false);
+    }
 
     addAndMakeVisible (item.get());
     pianoSelectText = std::make_shared<PlainTextComponent>("Piano", "---");

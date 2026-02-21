@@ -12,7 +12,8 @@ CableView::CableView (ConstructionSite &site, juce::UndoManager& um, SynthGuiDat
     : site(site),
     /*pathTask (*this),*/ SynthSection("cableView"),
     undoManager (um),
-connection_list(data->synth->getActiveConnectionList())
+connection_list(data->synth->getActiveConnectionList()),
+synth(data->synth)
 {
     setInterceptsMouseClicks (false,true);
     //startTimerHz (36);
@@ -100,25 +101,7 @@ void CableView::paint (juce::Graphics& g)
 void CableView::reset()
 {
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
-    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
-    //safe to do on message thread because we have locked processing if this is called
-    //_parent->getSynth()->getEngine()->resetEngine();
-    //if (_parent->getSynth()->getCriticalSection().tryEnter())
-    //{
-       //safe to do on message thread because we have locked processing if this is called
-        //parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
-        //_parent->getSynth()->getCriticalSection().exit();
-    //}
-    //else
-    //{
-     //   jassertfalse; // The MESSAGE thread was NOT holding the lock
-    //}
-
-//    if(connection_list)
-//    {
-//        connection_list->removeListener(this);
-//    }
-//    connection_list = nullptr;
+    setActivePiano();
 }
 void CableView::resized()
 {
@@ -248,37 +231,52 @@ void CableView::connectionListChanged() {
 
 void CableView::removeConnection(bitklavier::Connection *c) {
     // DBG("remove cable");
-   Cable* at = nullptr;
+    Cable* at = nullptr;
     int index = 0;
     if (objects.isEmpty())
         return;
-   for (auto obj : objects)
-   {
+    for (auto obj : objects)
+    {
 
         if (obj->state == c->state) {
             at = obj;
             break;
         }
-       index++;
-   }
-   if(at == nullptr)
-       return;
-
-
-    if ((juce::OpenGLContext::getCurrentContext() == nullptr))
-    {
-        at->setVisible(false);
-        site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
-            this->destroyOpenGlComponent(*(at->getImageComponent()), *this->open_gl);
-        },true);
+        index++;
     }
+    if(at == nullptr)
+        return;
+
+
+    at->setVisible(false);
+
+    // If context is already active, use GL thread for cleanup.
+    // Else let standard destruction handle it (OpenGlImage has safety guards).
+    if (site.open_gl.context.isActive())
+    {
+        site.open_gl.context.executeOnGLThread([this, at](juce::OpenGLContext &openGLContext) {
+            this->destroyOpenGlComponent(*(at->getImageComponent()), site.open_gl);
+        }, true);
+    }
+    else
+    {
+        // Still remove from the list so we don't try to render it.
+        juce::ScopedLock lock(open_gl_critical_section_);
+        auto new_logical_end = std::partition(open_gl_components_.begin(), open_gl_components_.end(),
+                                              [&](std::shared_ptr<OpenGlComponent> const &p) {
+                                                  return p.get() != static_cast<OpenGlComponent*>(at->image_component_.get());
+                                              });
+        if (new_logical_end != open_gl_components_.end())
+            open_gl_components_.erase(new_logical_end, open_gl_components_.end());
+    }
+
     {
         juce::ScopedLock lock(open_gl_critical_section_);
-       objects.remove(index);
+        objects.remove(index);
     }
 
     delete at;
-        // DBG("cable remove");
+    // DBG("cable remove");
 
 }
 
@@ -301,7 +299,9 @@ void CableView::connectionAdded(bitklavier::Connection *c) {
         juce::ScopedLock lock(open_gl_critical_section_);
             addOpenGlComponent(comp->getImageComponent(), true, false);
     }
-            site.open_gl.context.executeOnGLThread([this,comp](juce::OpenGLContext& context) {
+    if (site.open_gl.context.isAttached() && site.open_gl.context.isActive())
+    {
+        site.open_gl.context.executeOnGLThread([this,comp](juce::OpenGLContext& context) {
             comp->getImageComponent()->init(site.open_gl);
             juce::MessageManager::callAsync(
                     [safeComp = juce::Component::SafePointer<Cable>(comp)] {
@@ -312,6 +312,19 @@ void CableView::connectionAdded(bitklavier::Connection *c) {
                         }
                     });
         },true);
+    }
+    else
+    {
+        // Fallback: if GL context not active, mark for init but don't block
+        juce::MessageManager::callAsync(
+                [safeComp = juce::Component::SafePointer<Cable>(comp)] {
+                    if (auto *_comp = safeComp.getComponent()) {
+                        _comp->setVisible(true);
+                        _comp->getImageComponent()->setVisible(true);
+                        _comp->resized();
+                    }
+                });
+    }
         // addAndMakeVisible (comp);
         comp->setValueTree(c->state);
         objects.add(comp);

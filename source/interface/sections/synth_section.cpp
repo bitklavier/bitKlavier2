@@ -363,20 +363,23 @@ void SynthSection::drawTempoDivider(juce::Graphics &g, juce::Component *sync) {
 
 void SynthSection::initOpenGlComponents(OpenGlWrapper &open_gl) {
     if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
-        open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
-            for (auto &open_gl_component: open_gl_components_) {
-                open_gl_component->init(open_gl);
-            }
+        if (open_gl.context.isAttached() && open_gl.context.isActive())
+        {
+            open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
+                for (auto &open_gl_component: open_gl_components_) {
+                    open_gl_component->init(open_gl);
+                }
 
-            for (auto &sub_section: sub_sections_)
-                sub_section->initOpenGlComponents(open_gl);
+                for (auto &sub_section: sub_sections_)
+                    sub_section->initOpenGlComponents(open_gl);
 
-            for (auto &open_gl_component: open_gl_components_)
-                open_gl_component->setVisible(true);
+                for (auto &open_gl_component: open_gl_components_)
+                    open_gl_component->setVisible(true);
 
-            if (background_)
-                background_->init(open_gl);
-        }, true);
+                if (background_)
+                    background_->init(open_gl);
+            }, true);
+        }
     } else {
         for (auto &open_gl_component: open_gl_components_)
             open_gl_component->init(open_gl);
@@ -507,19 +510,22 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
 
 void SynthSection::destroyOpenGlComponents(OpenGlWrapper &open_gl) {
     if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
-        open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
-            for (auto &open_gl_component: open_gl_components_)
-                open_gl_component->destroy(open_gl);
+        if (open_gl.context.isAttached() && open_gl.context.isActive())
+        {
+            open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
+                for (auto &open_gl_component: open_gl_components_)
+                    open_gl_component->destroy(open_gl);
 
-            for (auto &sub_section: sub_sections_) {
-                sub_section->destroyOpenGlComponents(open_gl);
-            }
+                for (auto &sub_section: sub_sections_) {
+                    sub_section->destroyOpenGlComponents(open_gl);
+                }
 
-            if (background_)
-                background_->destroy(open_gl);
-            GLenum gl = juce::gl::glGetError();
+                if (background_)
+                    background_->destroy(open_gl);
+                GLenum gl = juce::gl::glGetError();
 
-        }, true);
+            }, true);
+        }
     } else {
         for (auto &open_gl_component: open_gl_components_)
             open_gl_component->destroy(open_gl);
@@ -536,14 +542,19 @@ void SynthSection::destroyOpenGlComponent(OpenGlComponent &open_gl_component, Op
     //moves the component to the end of the array
     //using partition so that it won't overwite
     //std::remove_if can overwrite values which would call the destructor
-//    open_gl_component.setVisible(false);
+    //    open_gl_component.setVisible(false);
     auto new_logical_end = std::partition(open_gl_components_.begin(), open_gl_components_.end(),
                                           [&](std::shared_ptr<OpenGlComponent> const &p) {
                                               return *p != open_gl_component;
                                           });
     //copy to a shared ptr that we will then pass to the message thread
+    if (new_logical_end == open_gl_components_.end())
+        return;
+
     std::shared_ptr<OpenGlComponent> component = *new_logical_end;
-    component->destroy(open_gl);
+    if (component != nullptr)
+        component->destroy(open_gl);
+
     //remove from components render thread so that isVisible() doesn't get called
     // on the render thread
     // while it's being deleted on the message thread
