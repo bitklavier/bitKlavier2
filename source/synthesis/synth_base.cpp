@@ -734,6 +734,7 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
     while (processorInitQueue.try_dequeue (action))
         action();
 
+    engine_->injectHostMidi (midi_buffer);
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
     engine_->getEQProcessor()->processBlock (audio_buffer, midi_buffer);
     engine_->getCompressorProcessor()->processBlock (audio_buffer, midi_buffer);

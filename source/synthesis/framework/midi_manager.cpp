@@ -124,6 +124,20 @@ void MidiManager::postExternalMidi (const juce::MidiMessage& msg)
   auto m = msg;
   if (m.getTimeStamp() == 0)
     m.setTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001);
+
+  // Notify UI listeners (on message thread) for note on/off for visualisation
+  if (m.isNoteOnOrOff())
+  {
+      const int note = m.getNoteNumber();
+      const bool down = m.isNoteOn();
+      const int ch = m.getChannel();
+      const float v01 = down ? (m.getVelocity() / 127.0f) : 0.0f;
+      juce::MessageManager::callAsync ([this, note, down, ch, v01]
+      {
+          live_listeners_.call (&LiveMidiListener::midiNoteChanged, note, down, ch, v01);
+      });
+  }
+
   midi_collector_.addMessageToQueue (m);
 }
 

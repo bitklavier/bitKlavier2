@@ -85,6 +85,8 @@ juce_add_plugin("${PROJECT_NAME}"
     # Note: this must have at least one upper-case character
     PLUGIN_CODE B202
     FORMATS "${FORMATS}"
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
     NEEDS_WEB_BROWSER TRUE
 
     # The name of your final executable

@@ -29,6 +29,7 @@
 #include "TuningProcessor.h"
 #include "midi_manager.h"
 #include "synth_base.h"
+#include "KeymapProcessor.h"
 #include <vector>
 
 namespace bitklavier
@@ -84,6 +85,7 @@ namespace bitklavier
 
         void connectMidiNodes()
         {
+            // Always connect the graph's MIDI input to MIDI output so host-thru works if desired
             processorGraph->addConnection ({ { midiInputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex },
                 { midiOutputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
         }
@@ -104,6 +106,9 @@ namespace bitklavier
         // Inject UI-generated MIDI to all KeymapProcessors in the graph
         void postUINoteOn  (int midiNote, float velocity01, int channel = 1);
         void postUINoteOff (int midiNote, float velocity01 = 0.0f, int channel = 1);
+
+        // Inject host-provided MIDI (from DAW) into all KeymapProcessors
+        void injectHostMidi (const juce::MidiBuffer& midiMessages);
 
         // UI live MIDI visualisation registration: forwards to all KeymapProcessors' MidiManagers
         void addMidiLiveListener (MidiManager::LiveMidiListener* l);
@@ -142,16 +147,9 @@ namespace bitklavier
             auto processor = node->getProcessor();
 
             // --- 2. MIDI AUTO-CONNECTION ---
-            // Almost all processors in bitklavier expect MIDI input from the global MIDI input node.
-            // This is safe to do even during batch loading as it's a small number of connections
-            // compared to the audio matrix, and it's almost always necessary.
-            if (processor->acceptsMidi())
-            {
-                processorGraph->addConnection ({
-                    { midiInputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex },
-                    { node->nodeID, juce::AudioProcessorGraph::midiChannelIndex }
-                });
-            }
+            // In bitKlavier, we handle host MIDI injection manually into Keymap objects
+            // via injectHostMidi(). We bypass the standard graph auto-connections for host MIDI
+            // to ensure messages only reach non-Keymap objects through explicit graph wiring.
 
             // If we are in batch loading mode, we skip automatic output connections
             // because they will be defined by the preset anyway.

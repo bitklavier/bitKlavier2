@@ -30,11 +30,8 @@ const juce::String PluginProcessor::getName() const
 
 bool PluginProcessor::acceptsMidi() const
 {
-#if JucePlugin_WantsMidiInput
+    // Ensure hosts always route MIDI to the plugin
     return true;
-#else
-    return false;
-#endif
 }
 
 bool PluginProcessor::producesMidi() const

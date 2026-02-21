@@ -131,6 +131,22 @@ namespace bitklavier {
                 kp->postExternalMidi (msg);
     }
 
+    void SoundEngine::injectHostMidi (const juce::MidiBuffer& midiMessages)
+    {
+        if (midiMessages.isEmpty())
+            return;
+
+        auto nodes = processorGraph->getNodes();
+        for (auto* node : nodes)
+        {
+            if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
+            {
+                for (const auto metadata : midiMessages)
+                    kp->postExternalMidi (metadata.getMessage());
+            }
+        }
+    }
+
     void SoundEngine::addMidiLiveListener (MidiManager::LiveMidiListener* l)
     {
         // Store for future processors and attach to all current ones

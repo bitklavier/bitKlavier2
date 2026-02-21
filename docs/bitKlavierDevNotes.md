@@ -345,3 +345,59 @@ With the recent updates, bitKlavier has become even smarter about these modes:
 **Recommendation**: Generally, **Out-of-process** is the safer choice and is the industry standard for modern DAWs, as it provides the most robust protection against "crashing" your session while searching for new plugins.
 
 * note that the scanning might only work in Release mode, not Debug mode!
+
+### Setting up AU and VST3 in CLion
+
+Based on your current project structure, most of the heavy lifting for AU and VST3 is already configured in your `CMakeLists.txt`. Here is how you can manage these configurations and what to keep in mind for the code itself.
+
+#### 1. CLion Configuration
+To build and debug the AU and VST3 versions, you don't need to create new CMake profiles. Instead, you select the specific **CMake Targets** that were automatically created by JUCE.
+
+*   **Select the Target:** In the top-right corner of CLion (next to the "Run" and "Debug" buttons), click on the target selector. You will see targets like:
+  *   `bitKlavier0_AU` (for Audio Unit)
+  *   `bitKlavier0_VST3` (for VST3)
+*   **Building:** Selecting these and clicking the "Build" icon (hammer) will generate the plugin files.
+*   **Output Locations:** On macOS, the build system is configured (`COPY_PLUGIN_AFTER_BUILD TRUE`) to automatically copy the resulting plugins to:
+  *   **AU:** `~/Library/Audio/Plug-Ins/Components/`
+  *   **VST3:** `~/Library/Audio/Plug-Ins/VST3/`
+*   **Debugging:**
+  *   Since a plugin cannot run by itself, you need a **Host Application** (like Ableton, Logic, or the JUCE AudioPluginHost).
+  *   Go to **Run -> Edit Configurations...**
+  *   Select your `bitKlavier0_AU` or `bitKlavier0_VST3` configuration.
+  *   In the **Executable** field, point it to your preferred DAW or the `AudioPluginHost` executable.
+  *   Now, when you click "Debug," CLion will launch the host, and your breakpoints in the code will be hit when the host loads the plugin.
+
+#### 2. Code-Level Considerations
+Since you are moving from a standalone application to a plugin, here are the main areas to focus on in your `PluginProcessor` and `PluginEditor`:
+
+*   **Parameter Management:** Plugins rely on the host to automate and save parameters. You should use `juce::AudioProcessorValueTreeState` (APVTS) to manage your parameters. This ensures that the host can "see" your sliders and knobs for automation.
+*   **State Persistence:** In a plugin, the host is responsible for asking the plugin to save/load its state (e.g., when a user saves a DAW project). You must implement:
+  *   `getStateInformation()`: Serialize your current settings into a memory block.
+  *   `setStateInformation()`: Restore your settings from a memory block.
+*   **Host Synchronization:** If your plugin needs to know the current tempo, time signature, or transport state (playing/stopped), use `getPlayHead()` inside `processBlock`.
+    ```cpp
+    if (auto* ph = getPlayHead()) {
+        auto position = ph->getPosition();
+        if (position.hasValue()) {
+            auto bpm = position->getTempo();
+            // ...
+        }
+    }
+    ```
+*   **Processor vs. Editor:** Remember that in a plugin, the `Editor` (UI) can be closed and reopened while the `Processor` (audio) continues to run. Never store essential state data in the Editor; always keep it in the Processor.
+*   **Buses Layout:** Ensure `isBusesLayoutSupported` correctly defines how many input/output channels your plugin supports (e.g., Mono/Stereo).
+
+#### 3. Verification
+You can use the `pluginval` tool (a standard in the industry) or the JUCE `AudioPluginHost` to verify that your AU and VST3 versions are loading correctly without having to open a full DAW every time.
+
+Your `CMakeLists.txt` is already set up with the correct `FORMATS` (Standalone, AU, VST3, AUv3), so once you select the target in CLion and build, the plugin should be ready for testing in your DAW!
+
+If `pluginval` has trouble scanning or crashes with either the VST or the AU, we can run it in the Clion Terminal, and run a backtrace to see what's going on.
+
+-`lldb -- /Applications/pluginval.app --validate /Users/dtrueman/Library/Audio/Plug-Ins/Components/bitKlavier0.component`
+
+-followed by `run`. It tends to look really bad in the Terminal, with lots of white and so on, but still works. 
+
+-then, `bt` to get the backtrace.
+
+- may need to build the AU in Release to get it to pass validation
