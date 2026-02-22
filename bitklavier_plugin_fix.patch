@@ -1,0 +1,1206 @@
+diff --git a/source/PluginEditor.cpp b/source/PluginEditor.cpp
+index 74e540e..2306a3c 100644
+--- a/source/PluginEditor.cpp
++++ b/source/PluginEditor.cpp
+@@ -15,8 +15,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
+     static constexpr int kHeightBuffer = 50;
+     juce::ignoreUnused (processorRef);
+     setLookAndFeel (DefaultLookAndFeel::instance());
+-    gui_->reset();
+     addAndMakeVisible (gui_.get());
++    gui_->reset();
+ 
+     constrainer_.setMinimumSize (bitklavier::kMinWindowWidth, bitklavier::kMinWindowHeight);
+     double ratio = (1.0 * bitklavier::kDefaultWindowWidth) / bitklavier::kDefaultWindowHeight;
+diff --git a/source/PluginProcessor.cpp b/source/PluginProcessor.cpp
+index e208268..65d1fbd 100644
+--- a/source/PluginProcessor.cpp
++++ b/source/PluginProcessor.cpp
+@@ -1,6 +1,22 @@
+ #include "PluginProcessor.h"
+ #include "PluginEditor.h"
+ #include "sound_engine.h"
++#include "UserPreferences.h"
++
++namespace {
++    static juce::File expandUserPath(const juce::String& path)
++    {
++        if (path.isEmpty())
++            return juce::File();
++
++        if (path.startsWith("~/"))
++        {
++            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
++            return home.getChildFile(path.fromFirstOccurrenceOf("~/", false, false));
++        }
++        return juce::File(path);
++    }
++}
+ 
+ //==============================================================================
+ PluginProcessor::PluginProcessor()
+@@ -144,6 +160,10 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
+     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+         buffer.clear (i, 0, buffer.getNumSamples());
+ 
++    // Forward host playhead to our internal graph so sub-processors (e.g., Tempo) can query it
++    if (engine_ != nullptr)
++        engine_->setPlayHead (getPlayHead());
++
+     // bitKlavier processing
+     processAudioAndMidi (buffer, midiMessages);
+ }
+@@ -170,17 +190,38 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
+ //==============================================================================
+ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
+ {
+-    // You should use this method to store your parameters in the memory block.
+-    // You could do that either as raw data, or use the XML or juce::ValueTree classes
+-    // as intermediaries to make it easy to save and load complex data.
+-    juce::ignoreUnused (destData);
++    juce::ValueTree state ("bitKlavierPluginState");
++
++    if (user_prefs != nullptr)
++    {
++        juce::String lastPath = user_prefs->tree.getProperty ("last_gallery_path");
++        state.setProperty ("last_gallery_path", lastPath, nullptr);
++    }
++
++    std::unique_ptr<juce::XmlElement> xml (state.createXml());
++    copyXmlToBinary (*xml, destData);
+ }
+ 
+ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
+ {
+-    // You should use this method to restore your parameters from this memory block,
+-    // whose contents will have been created by the getStateInformation() call.
+-    juce::ignoreUnused (data, sizeInBytes);
++    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
++
++    if (xmlState != nullptr)
++    {
++        juce::ValueTree state = juce::ValueTree::fromXml (*xmlState);
++
++        if (state.hasProperty ("last_gallery_path"))
++        {
++            juce::String lastPath = state.getProperty ("last_gallery_path");
++            juce::File candidate = expandUserPath (lastPath);
++
++            if (candidate.existsAsFile())
++            {
++                std::string error;
++                loadFromFile (candidate, error);
++            }
++        }
++    }
+ }
+ 
+ //==============================================================================
+diff --git a/source/common/ObjectLists/ConnectionsList.h b/source/common/ObjectLists/ConnectionsList.h
+index 294eab5..e08e282 100644
+--- a/source/common/ObjectLists/ConnectionsList.h
++++ b/source/common/ObjectLists/ConnectionsList.h
+@@ -10,6 +10,8 @@
+ #include "Identifiers.h"
+ #include "tracktion_ValueTreeUtilities.h"
+ #include "synth_base.h"
++#include "synth_gui_interface.h"
++#include "FullInterface.h"
+ namespace bitklavier {
+     class Connection {
+     public:
+@@ -100,8 +102,21 @@ namespace bitklavier {
+         void valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i) override;
+ 
+         void deleteAllGui() {
+-            for (auto obj: objects)
+-                listeners_.call([&](Listener& l){ l.removeConnection(obj); });
++            auto interface = synth.getGuiInterface() != nullptr ? synth.getGuiInterface() : nullptr;
++            auto full = interface != nullptr ? interface->getGui() : nullptr;
++
++            if (full != nullptr && full->open_gl_.context.isAttached() && full->open_gl_.context.isActive())
++            {
++                full->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext &) {
++                    for (auto obj: objects)
++                        listeners_.call([&](Listener& l){ l.removeConnection(obj); });
++                }, true);
++            }
++            else
++            {
++                for (auto obj: objects)
++                    listeners_.call([&](Listener& l){ l.removeConnection(obj); });
++            }
+         }
+         void rebuildAllGui() {
+             for (auto obj: objects)
+diff --git a/source/common/ObjectLists/PreparationList.cpp b/source/common/ObjectLists/PreparationList.cpp
+index d9dff35..d57afe6 100644
+--- a/source/common/ObjectLists/PreparationList.cpp
++++ b/source/common/ObjectLists/PreparationList.cpp
+@@ -9,22 +9,26 @@
+ #include "ModulationProcessor.h"
+ #include "PianoSwitchProcessor.h"
+ #include "../UserPreferences.h"
++#include "FullInterface.h"
+ 
+ PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v, juce::UndoManager* um) : tracktion::engine::ValueTreeObjectList<
+     PluginInstanceWrapper>(v), synth(parent) , um(um){
++    DBG ("PreparationList constructor - node type: " + v.getType().toString() + " children: " + juce::String(v.getNumChildren()));
+     jassert(v.hasType(IDs::PREPARATIONS));
+       rebuildObjects();
++    DBG ("PreparationList constructor - after rebuildObjects, objects size: " + juce::String(objects.size()));
+     for (auto object: objects) {
+         PreparationList::newObjectAdded(object);
+     }
+ }
+ bool PreparationList::isSuitableType(const juce::ValueTree& v)const {
+-    {
+-        return synth.prepFactory.contains(v.getType().toString().toStdString()) || v.hasType(IDs::vst);
+-    }
++    bool suitable = synth.prepFactory.contains(v.getType().toString().toStdString()) || v.hasType(IDs::vst);
++    if (!suitable)
++        DBG ("PreparationList::isSuitableType - REJECTED: " + v.getType().toString());
++    return suitable;
+ }
+ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v) {
+-
++    DBG ("PreparationList::createNewObject - creating: " + v.getType().toString());
+     juce::AudioProcessor *rawPtr;
+     juce::AudioProcessorGraph::Node::Ptr node_ptr;
+     juce::ValueTree state = v;
+@@ -144,12 +148,27 @@ void PreparationList::newObjectAdded(PluginInstanceWrapper *instance_wrapper) {
+ }
+ 
+ void PreparationList::deleteAllGui() {
+-    for (auto obj: objects)
+-        for (auto listener: listeners_)
+-            listener->removeModule(obj);
++    auto interface = synth.getGuiInterface() != nullptr ? synth.getGuiInterface() : nullptr;
++    auto full = interface != nullptr ? dynamic_cast<FullInterface*>(interface->getGui()) : nullptr;
++
++    if (full != nullptr && full->open_gl_.context.isAttached() && full->open_gl_.context.isActive())
++    {
++        full->open_gl_.context.executeOnGLThread([this](juce::OpenGLContext &) {
++            for (auto obj: objects)
++                for (auto listener: listeners_)
++                    listener->removeModule(obj);
++        }, true);
++    }
++    else
++    {
++        for (auto obj: objects)
++            for (auto listener: listeners_)
++                listener->removeModule(obj);
++    }
+ }
+ 
+ void PreparationList::rebuildAllGui() {
++    DBG ("PreparationList::rebuildAllGui - objects size: " + juce::String(objects.size()));
+     for (auto obj: objects)
+         for (auto listener: listeners_)
+             listener->moduleAdded(obj);
+diff --git a/source/interface/FullInterface.cpp b/source/interface/FullInterface.cpp
+index b915ab1..fad92cd 100644
+--- a/source/interface/FullInterface.cpp
++++ b/source/interface/FullInterface.cpp
+@@ -102,6 +102,19 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
+     about_section_->toFront (true);
+     loading_section->toFront (true);
+     setOpaque (true);
++
++    if (synth_data->synth != nullptr)
++    {
++        bool loading = synth_data->synth->isSamplesLoading();
++        DBG ("FullInterface: checking loading state at creation: " + juce::String (loading ? "true" : "false") + ". synth pointer: " + juce::String::toHexString ((juce::uint64) synth_data->synth));
++        if (loading)
++            showLoadingSection();
++        else
++            hideLoadingSection();
++
++        startTimer (250); // Periodic sync to avoid any race conditions
++    }
++
+     open_gl_context_.setContinuousRepainting (true);
+     open_gl_context_.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
+     open_gl_context_.setSwapInterval (0);
+@@ -262,6 +275,39 @@ void FullInterface::resized()
+         redoBackground();
+ }
+ 
++void FullInterface::timerCallback()
++{
++    if (synthInterface_ && synthInterface_->getSynth())
++    {
++        bool stillLoading = synthInterface_->getSynth()->isSamplesLoading();
++        if (loading_section->isVisible() != stillLoading)
++        {
++            DBG ("FullInterface: timer detected state mismatch. Loading flag: " + juce::String (stillLoading ? "true" : "false") + ". Updating visibility.");
++            if (stillLoading)
++                showLoadingSection();
++            else
++                hideLoadingSection();
++        }
++
++        // If not loading, we could stop the timer, but keeping it running for a bit 
++        // ensures we catch rapid state changes during initialization.
++        if (!stillLoading)
++        {
++            static int checksAfterLoading = 0;
++            if (++checksAfterLoading > 4) // Stop after 1 second of "not loading"
++            {
++                stopTimer();
++                checksAfterLoading = 0;
++            }
++        }
++    }
++    else
++    {
++        DBG ("FullInterface: timer running but synth pointer is null!");
++        stopTimer();
++    }
++}
++
+ void FullInterface::showAboutSection()
+ {
+     juce::ScopedLock lock (open_gl_critical_section_);
+@@ -296,7 +342,13 @@ void FullInterface::reset()
+     auto* guiInterface = synthInterface_ != nullptr ? synthInterface_ : findParentComponentOfClass<SynthGuiInterface>();
+ 
+     if (guiInterface != nullptr)
+-        vt = guiInterface->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
++    {
++        vt = guiInterface->getSynth()->getActivePianoValueTree();
++        if (! vt.isValid())
++            vt = guiInterface->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
++
++        DBG ("FullInterface::reset - vt type: " + vt.getType().toString() + ", isValid: " + (vt.isValid() ? "true" : "false"));
++    }
+ 
+     SynthSection::reset();
+     repaintSynthesisSection();
+diff --git a/source/interface/Preparations/PreparationSection.cpp b/source/interface/Preparations/PreparationSection.cpp
+index 0fd73e9..4721c96 100644
+--- a/source/interface/Preparations/PreparationSection.cpp
++++ b/source/interface/Preparations/PreparationSection.cpp
+@@ -74,9 +74,12 @@ tracktion::engine::ValueTreeObjectList<BKPort>(v),
+     rebuildObjects();
+ 
+     for (auto object: objects) {
+-        open_gl.context.executeOnGLThread([this,object,&open_gl](juce::OpenGLContext &context) {
+-            object->getImageComponent()->init(open_gl);
+-        }, true);
++        if (_open_gl.context.isAttached() && _open_gl.context.isActive())
++        {
++            _open_gl.context.executeOnGLThread([this,object,&open_gl](juce::OpenGLContext &context) {
++                object->getImageComponent()->init(open_gl);
++            }, true);
++        }
+         this->addOpenGlComponent(object->getImageComponent(), false, true);
+         object->addListener(this);
+         addAndMakeVisible(object);
+@@ -517,15 +520,42 @@ BKPort *PreparationSection::createNewObject(const juce::ValueTree &v) {
+ }
+ 
+ void PreparationSection::deleteObject(BKPort *at) {
+-    if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
++    if (at == nullptr)
++        return;
++
++    if (juce::OpenGLContext::getCurrentContext() == nullptr) {
+         SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+-        //this might cause bugs when adding deletion of a prepartion and dynamic port adding and delting
++        if (_parent == nullptr || _parent->getGui() == nullptr)
++        {
++            // Fallback: if we can't find the interface or GUI, just hide and delete on message thread
++            // This avoids an assert in executeOnGLThread.
++            at->setVisible(false);
++            delete at;
++            return;
++        }
++
++        auto& context = _parent->getGui()->open_gl_.context;
+         at->setVisible(false);
+-        _parent->getOpenGlWrapper()->context.executeOnGLThread([this, &at](juce::OpenGLContext &openGLContext) {
+-                                                                   //this->destroyOpenGlComponent()
+-                                                               },
+-                                                               false);
+-    } else delete at;
++        
++        if (context.isAttached() && context.isActive())
++        {
++            context.executeOnGLThread([at](juce::OpenGLContext &openGLContext) {
++                // The port will be deleted on the message thread after this returns if it's still managed,
++                // but since ValueTreeObjectList calls deleteObject and then actually deletes it,
++                // we need to be careful about where the 'delete' happens.
++                // In this case, ValueTreeObjectList expects us to delete it.
++                juce::MessageManager::callAsync([at]() { delete at; });
++            }, false);
++        }
++        else
++        {
++            // If context is not active, just delete it on the message thread.
++            // OpenGlImage destructor will now safely handle the texture release (to avoid assert).
++            juce::MessageManager::callAsync([at]() { delete at; });
++        }
++    } else {
++        delete at;
++    }
+ }
+ 
+ void PreparationSection::reset() {
+@@ -533,16 +563,42 @@ void PreparationSection::reset() {
+ }
+ 
+ void PreparationSection::newObjectAdded(BKPort *object) {
++    if (object == nullptr)
++        return;
++
+     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+-    parent->getGui()->open_gl_.context.executeOnGLThread([this,object](juce::OpenGLContext &context) {
+-        SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+-        object->getImageComponent()->init(_parent->getGui()->open_gl_);
+-        juce::MessageManagerLock mm;
+-        this->addOpenGlComponent(object->getImageComponent(), false, true);
++    if (parent == nullptr || parent->getGui() == nullptr)
++        return;
++
++    auto& context = parent->getGui()->open_gl_.context;
++    
++    if (context.isAttached() && context.isActive())
++    {
++        context.executeOnGLThread([this, object](juce::OpenGLContext &context) {
++            SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
++            if (_parent == nullptr || _parent->getGui() == nullptr)
++                return;
++
++            object->getImageComponent()->init(_parent->getGui()->open_gl_);
++            
++            juce::MessageManager::callAsync([this, objectSafe = juce::Component::SafePointer<BKPort>(object)]() {
++                if (auto* _object = objectSafe.getComponent())
++                {
++                    this->addOpenGlComponent(_object->getImageComponent(), false, true);
++                    this->addAndMakeVisible(_object);
++                    _object->addListener(this);
++                    this->resized();
++                }
++            });
++        }, false);
++    }
++    else
++    {
++        // Fallback: if GL context not active, just add on message thread
+         this->addAndMakeVisible(object);
+         object->addListener(this);
+         this->resized();
+-    }, false);
++    }
+ }
+ 
+ void PreparationSection::valueTreeRedirected(juce::ValueTree &) {}
+diff --git a/source/interface/components/opengl/open_gl_image.cpp b/source/interface/components/opengl/open_gl_image.cpp
+index d8263d5..3a9376e 100644
+--- a/source/interface/components/opengl/open_gl_image.cpp
++++ b/source/interface/components/opengl/open_gl_image.cpp
+@@ -49,7 +49,17 @@ OpenGlImage::OpenGlImage() : dirty_(true), image_(nullptr), image_width_(0), ima
+ }
+ 
+ OpenGlImage::~OpenGlImage() {
+-
++    // We explicitly avoid calling texture_.release() here.
++    // juce::OpenGLTexture's own destructor will call release(), and if it's on a thread
++    // without the correct active context, it will trigger an assertion in juce_OpenGLTexture.cpp.
++    
++    // To prevent this assertion, we'd need to ensure the context is current, but we
++    // don't always have access to the context or the thread here.
++    
++    // The safest way to handle this in JUCE is to call texture_.release() explicitly
++    // while the context is active (which we do in destroy()). If destroy() wasn't called,
++    // we unfortunately leak the texture ID to avoid a crash. The GPU resources will
++    // eventually be reclaimed when the context itself is destroyed.
+ }
+ 
+ 
+@@ -186,19 +196,34 @@ void OpenGlImage::destroy(OpenGlWrapper& open_gl) {
+   if (!initialized_ && vertex_buffer_ == 0 && triangle_buffer_ == 0 && vao_ == 0)
+     return;
+ 
+-  texture_.release();
++  if (auto* context = juce::OpenGLContext::getCurrentContext())
++  {
++      if (context == &open_gl.context)
++      {
++          // Drain any existing GL errors before release
++          while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
++          
++          texture_.release();
++      }
++  }
+ 
+   image_shader_ = nullptr;
+   image_color_ = nullptr;
+   image_position_ = nullptr;
+   texture_coordinates_ = nullptr;
+ 
+-  if (vertex_buffer_ != 0)
+-    open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
+-  if (triangle_buffer_ != 0)
+-    open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
+-  if (vao_ != 0)
+-    open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
++  if (auto* context = juce::OpenGLContext::getCurrentContext())
++  {
++      if (context == &open_gl.context)
++      {
++          if (vertex_buffer_ != 0)
++              open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
++          if (triangle_buffer_ != 0)
++              open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
++          if (vao_ != 0)
++              open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
++      }
++  }
+ 
+   vertex_buffer_ = 0;
+   triangle_buffer_ = 0;
+diff --git a/source/interface/sections/CableView.cpp b/source/interface/sections/CableView.cpp
+index 239a52d..aaf08e7 100644
+--- a/source/interface/sections/CableView.cpp
++++ b/source/interface/sections/CableView.cpp
+@@ -12,7 +12,8 @@ CableView::CableView (ConstructionSite &site, juce::UndoManager& um, SynthGuiDat
+     : site(site),
+     /*pathTask (*this),*/ SynthSection("cableView"),
+     undoManager (um),
+-connection_list(data->synth->getActiveConnectionList())
++connection_list(data->synth->getActiveConnectionList()),
++synth(data->synth)
+ {
+     setInterceptsMouseClicks (false,true);
+     //startTimerHz (36);
+@@ -100,25 +101,7 @@ void CableView::paint (juce::Graphics& g)
+ void CableView::reset()
+ {
+     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
+-    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+-    //safe to do on message thread because we have locked processing if this is called
+-    //_parent->getSynth()->getEngine()->resetEngine();
+-    //if (_parent->getSynth()->getCriticalSection().tryEnter())
+-    //{
+-       //safe to do on message thread because we have locked processing if this is called
+-        //parent = _parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(IDs::CONNECTIONS);
+-        //_parent->getSynth()->getCriticalSection().exit();
+-    //}
+-    //else
+-    //{
+-     //   jassertfalse; // The MESSAGE thread was NOT holding the lock
+-    //}
+-
+-//    if(connection_list)
+-//    {
+-//        connection_list->removeListener(this);
+-//    }
+-//    connection_list = nullptr;
++    setActivePiano();
+ }
+ void CableView::resized()
+ {
+@@ -248,37 +231,52 @@ void CableView::connectionListChanged() {
+ 
+ void CableView::removeConnection(bitklavier::Connection *c) {
+     // DBG("remove cable");
+-   Cable* at = nullptr;
++    Cable* at = nullptr;
+     int index = 0;
+     if (objects.isEmpty())
+         return;
+-   for (auto obj : objects)
+-   {
++    for (auto obj : objects)
++    {
+ 
+         if (obj->state == c->state) {
+             at = obj;
+             break;
+         }
+-       index++;
+-   }
+-   if(at == nullptr)
+-       return;
++        index++;
++    }
++    if(at == nullptr)
++        return;
+ 
+ 
+-    if ((juce::OpenGLContext::getCurrentContext() == nullptr))
++    at->setVisible(false);
++
++    // If context is already active, use GL thread for cleanup.
++    // Else let standard destruction handle it (OpenGlImage has safety guards).
++    if (site.open_gl.context.isActive())
+     {
+-        at->setVisible(false);
+-        site.open_gl.context.executeOnGLThread([this,&at](juce::OpenGLContext &openGLContext) {
+-            this->destroyOpenGlComponent(*(at->getImageComponent()), *this->open_gl);
+-        },true);
++        site.open_gl.context.executeOnGLThread([this, at](juce::OpenGLContext &openGLContext) {
++            this->destroyOpenGlComponent(*(at->getImageComponent()), site.open_gl);
++        }, true);
++    }
++    else
++    {
++        // Still remove from the list so we don't try to render it.
++        juce::ScopedLock lock(open_gl_critical_section_);
++        auto new_logical_end = std::partition(open_gl_components_.begin(), open_gl_components_.end(),
++                                              [&](std::shared_ptr<OpenGlComponent> const &p) {
++                                                  return p.get() != static_cast<OpenGlComponent*>(at->image_component_.get());
++                                              });
++        if (new_logical_end != open_gl_components_.end())
++            open_gl_components_.erase(new_logical_end, open_gl_components_.end());
+     }
++
+     {
+         juce::ScopedLock lock(open_gl_critical_section_);
+-       objects.remove(index);
++        objects.remove(index);
+     }
+ 
+     delete at;
+-        // DBG("cable remove");
++    // DBG("cable remove");
+ 
+ }
+ 
+@@ -301,7 +299,9 @@ void CableView::connectionAdded(bitklavier::Connection *c) {
+         juce::ScopedLock lock(open_gl_critical_section_);
+             addOpenGlComponent(comp->getImageComponent(), true, false);
+     }
+-            site.open_gl.context.executeOnGLThread([this,comp](juce::OpenGLContext& context) {
++    if (site.open_gl.context.isAttached() && site.open_gl.context.isActive())
++    {
++        site.open_gl.context.executeOnGLThread([this,comp](juce::OpenGLContext& context) {
+             comp->getImageComponent()->init(site.open_gl);
+             juce::MessageManager::callAsync(
+                     [safeComp = juce::Component::SafePointer<Cable>(comp)] {
+@@ -312,6 +312,19 @@ void CableView::connectionAdded(bitklavier::Connection *c) {
+                         }
+                     });
+         },true);
++    }
++    else
++    {
++        // Fallback: if GL context not active, mark for init but don't block
++        juce::MessageManager::callAsync(
++                [safeComp = juce::Component::SafePointer<Cable>(comp)] {
++                    if (auto *_comp = safeComp.getComponent()) {
++                        _comp->setVisible(true);
++                        _comp->getImageComponent()->setVisible(true);
++                        _comp->resized();
++                    }
++                });
++    }
+         // addAndMakeVisible (comp);
+         comp->setValueTree(c->state);
+         objects.add(comp);
+diff --git a/source/interface/sections/ConstructionSite.cpp b/source/interface/sections/ConstructionSite.cpp
+index 3301b6b..4f7f855 100644
+--- a/source/interface/sections/ConstructionSite.cpp
++++ b/source/interface/sections/ConstructionSite.cpp
+@@ -47,7 +47,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
+                                                          modulationLineView(*this, um,data),
+                                                          preparationSelector(*this), parent(v),
+                                                         commandManager (_manager),
+-                                                        connection_list (data->synth->getActiveConnectionList())
++                                                        connection_list (data->synth->getActiveConnectionList()),
++                                                        synth (data->synth)
+ //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
+ {
+     commandManager.registerAllCommandsForTarget (this);
+@@ -830,20 +831,18 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
+ 
+ void ConstructionSite::reset() {
+     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
+-    SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
+-    if (_parent == nullptr)
++    
++    if (synth == nullptr)
++    {
++        DBG("ConstructionSite::reset - synth is null!");
+         return;
+-        if (_parent->getSynth() != nullptr) {
+-            // _parent->getSynth()->getEngine()->resetEngine();
+-            // prep_list->setValueTree(_parent->getSynth()->getValueTree().getChildWithName(IDs::PIANO).getChildWithName(
+-            // IDs::PREPARATIONS));
+-            // setActivePiano();
+-        }
+-//        if(prep_list)
+-//            prep_list->removeListener(this);
+-//        prep_list = nullptr;
+-        cableView.reset();
+-        modulationLineView.reset();
++    }
++    
++    cableView.reset();
++    modulationLineView.reset();
++
++    // Rebuild the GUI components based on the (possibly new) ValueTree piano node
++    setActivePiano();
+ }
+ PreparationSection *ConstructionSite::getComponentForPlugin(juce::AudioProcessorGraph::NodeID nodeID) const {
+     {
+@@ -882,6 +881,7 @@ void ConstructionSite::createWindow (juce::AudioProcessorGraph::Node* node, Plug
+ }
+ 
+ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
++    DBG ("ConstructionSite::moduleAdded - wrapper node ID: " + juce::String(wrapper->node_id.uid));
+     auto * interface = findParentComponentOfClass<SynthGuiInterface>();
+     auto s = nodeFactory.CreateObject(wrapper->state.getType(), wrapper->state, interface );
+     {
+@@ -938,8 +938,13 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
+     }
+     if (index == -1) jassertfalse;
+     auto interface = findParentComponentOfClass<SynthGuiInterface>();
+-    interface->getGui()->mod_popup->reset();
+-    interface->getGui()->prep_popup->reset();
++    if (interface != nullptr && interface->getGui() != nullptr)
++    {
++        if (interface->getGui()->mod_popup != nullptr)
++            interface->getGui()->mod_popup->reset();
++        if (interface->getGui()->prep_popup != nullptr)
++            interface->getGui()->prep_popup->reset();
++    }
+     //cleanup
+     preparationSelector.getLassoSelection().removeChangeListener (plugin_components[index].get());
+ 
+@@ -947,10 +952,24 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
+     {
+         juce::ScopedLock lock(open_gl_critical_section_);
+         removeSubSection (plugin_components[index].get());
++        
++        // Ensure GL resources are destroyed before deleting the component
++        // This must be done while the context is active.
++        if (open_gl.context.isAttached() && open_gl.context.isActive())
++        {
++            open_gl.context.executeOnGLThread([comp = plugin_components[index].get(), this](juce::OpenGLContext &) {
++                comp->destroyOpenGlComponents(this->open_gl);
++            }, true);
++        }
++        else
++        {
++            // If the context isn't active, we might leak, but at least we won't crash 
++            // if we can prevent the destructor from calling release() without a context.
++            // But we should try to call destroy anyway if we can.
++            plugin_components[index]->destroyOpenGlComponents(open_gl);
++        }
+     }
+ 
+-    //delete opengl
+-    plugin_components[index]->destroyOpenGlComponents (open_gl);
+     //delete heap memory
+     plugin_components.erase(plugin_components.begin()+index);
+ 
+@@ -1356,21 +1375,62 @@ void ConstructionSite::updateComponents() {
+ }
+ 
+ void ConstructionSite::setActivePiano() {
++    DBG("ConstructionSite::setActivePiano - starting");
++    
++    // Clear all existing GUI components
+     if(prep_list != nullptr)
+     {
+         prep_list->deleteAllGui();
+         prep_list->removeListener (this);
+     }
++    
++    // Explicitly clear plugin_components just in case
++    {
++        juce::ScopedLock lock (open_gl_critical_section_);
++        plugin_components.clear();
++    }
+ 
+-    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+-    prep_list= interface->getSynth()->getActivePreparationList();
++    if (synth == nullptr)
++    {
++        DBG("ConstructionSite::setActivePiano - synth is null!");
++        return;
++    }
++
++    prep_list = synth->getActivePreparationList();
++    if (prep_list == nullptr)
++    {
++        DBG("ConstructionSite::setActivePiano - prep_list is null!");
++        // Try to get ANY preparation list if no active one is found
++        if (!synth->preparationLists.empty())
++        {
++            prep_list = synth->preparationLists.front().get();
++            DBG("ConstructionSite::setActivePiano - falling back to first prep_list");
++        }
++        else
++        {
++            return;
++        }
++    }
++
++    // Update our ValueTree reference to the new active piano node
+     parent = prep_list->getValueTree().getParent();
++    DBG("ConstructionSite::setActivePiano - parent node type: " + parent.getType().toString() + ", name: " + parent.getProperty(IDs::name).toString());
+     prep_list->addListener(this);
++    
++    DBG("ConstructionSite::setActivePiano - rebuilding all GUI modules. prep_list size: " + juce::String(prep_list->size()));
++    
++    // This will call moduleAdded for each preparation in the list
+     prep_list->rebuildAllGui();
+ 
+     cableView.setActivePiano();
+     modulationLineView.setActivePiano();
+-    connection_list = interface->getSynth()->getActiveConnectionList();
++    connection_list = synth->getActiveConnectionList();
++    
++    // Force a redraw and layout of all new components
++    resized();
++    repaint();
++    
++    DBG("ConstructionSite::setActivePiano - finished. Created " + juce::String(plugin_components.size()) + " components.");
+ }
+ 
+ void ConstructionSite::removeAllGuiListeners()
+diff --git a/source/interface/sections/loading_section.h b/source/interface/sections/loading_section.h
+index 1731cde..5a26155 100644
+--- a/source/interface/sections/loading_section.h
++++ b/source/interface/sections/loading_section.h
+@@ -48,6 +48,9 @@ public:
+         }
+ 
+         Overlay::setVisible(should_be_visible);
++
++        // Ensure we handle mouse interaction when visible
++        setInterceptsMouseClicks(should_be_visible, should_be_visible);
+     }
+     void buttonClicked(juce::Button* clicked_button) override{}
+     void resized() override {
+diff --git a/source/interface/sections/main_section.cpp b/source/interface/sections/main_section.cpp
+index e10e34b..65ac01b 100644
+--- a/source/interface/sections/main_section.cpp
++++ b/source/interface/sections/main_section.cpp
+@@ -54,4 +54,10 @@ void MainSection::resized()
+     //constructionPort.setBounds(large_padding, 0,getDisplayScale()* width, getDisplayScale() * height);
+     //constructionPort.setBounds(large_padding, 0,width, height);
+     SynthSection::resized();
++}
++
++void MainSection::reset()
++{
++    constructionSite_->reset();
++    SynthSection::reset();
+ }
+\ No newline at end of file
+diff --git a/source/interface/sections/synth_section.cpp b/source/interface/sections/synth_section.cpp
+index cefa299..727715e 100644
+--- a/source/interface/sections/synth_section.cpp
++++ b/source/interface/sections/synth_section.cpp
+@@ -363,20 +363,23 @@ void SynthSection::drawTempoDivider(juce::Graphics &g, juce::Component *sync) {
+ 
+ void SynthSection::initOpenGlComponents(OpenGlWrapper &open_gl) {
+     if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
+-        open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
+-            for (auto &open_gl_component: open_gl_components_) {
+-                open_gl_component->init(open_gl);
+-            }
++        if (open_gl.context.isAttached() && open_gl.context.isActive())
++        {
++            open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
++                for (auto &open_gl_component: open_gl_components_) {
++                    open_gl_component->init(open_gl);
++                }
+ 
+-            for (auto &sub_section: sub_sections_)
+-                sub_section->initOpenGlComponents(open_gl);
++                for (auto &sub_section: sub_sections_)
++                    sub_section->initOpenGlComponents(open_gl);
+ 
+-            for (auto &open_gl_component: open_gl_components_)
+-                open_gl_component->setVisible(true);
++                for (auto &open_gl_component: open_gl_components_)
++                    open_gl_component->setVisible(true);
+ 
+-            if (background_)
+-                background_->init(open_gl);
+-        }, true);
++                if (background_)
++                    background_->init(open_gl);
++            }, true);
++        }
+     } else {
+         for (auto &open_gl_component: open_gl_components_)
+             open_gl_component->init(open_gl);
+@@ -507,19 +510,22 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate)
+ 
+ void SynthSection::destroyOpenGlComponents(OpenGlWrapper &open_gl) {
+     if ((juce::OpenGLContext::getCurrentContext() == nullptr)) {
+-        open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
+-            for (auto &open_gl_component: open_gl_components_)
+-                open_gl_component->destroy(open_gl);
++        if (open_gl.context.isAttached() && open_gl.context.isActive())
++        {
++            open_gl.context.executeOnGLThread([this, &open_gl](juce::OpenGLContext &openGLContext) {
++                for (auto &open_gl_component: open_gl_components_)
++                    open_gl_component->destroy(open_gl);
+ 
+-            for (auto &sub_section: sub_sections_) {
+-                sub_section->destroyOpenGlComponents(open_gl);
+-            }
++                for (auto &sub_section: sub_sections_) {
++                    sub_section->destroyOpenGlComponents(open_gl);
++                }
+ 
+-            if (background_)
+-                background_->destroy(open_gl);
+-            GLenum gl = juce::gl::glGetError();
++                if (background_)
++                    background_->destroy(open_gl);
++                GLenum gl = juce::gl::glGetError();
+ 
+-        }, true);
++            }, true);
++        }
+     } else {
+         for (auto &open_gl_component: open_gl_components_)
+             open_gl_component->destroy(open_gl);
+@@ -536,14 +542,19 @@ void SynthSection::destroyOpenGlComponent(OpenGlComponent &open_gl_component, Op
+     //moves the component to the end of the array
+     //using partition so that it won't overwite
+     //std::remove_if can overwrite values which would call the destructor
+-//    open_gl_component.setVisible(false);
++    //    open_gl_component.setVisible(false);
+     auto new_logical_end = std::partition(open_gl_components_.begin(), open_gl_components_.end(),
+                                           [&](std::shared_ptr<OpenGlComponent> const &p) {
+                                               return *p != open_gl_component;
+                                           });
+     //copy to a shared ptr that we will then pass to the message thread
++    if (new_logical_end == open_gl_components_.end())
++        return;
++
+     std::shared_ptr<OpenGlComponent> component = *new_logical_end;
+-    component->destroy(open_gl);
++    if (component != nullptr)
++        component->destroy(open_gl);
++
+     //remove from components render thread so that isVisible() doesn't get called
+     // on the render thread
+     // while it's being deleted on the message thread
+diff --git a/source/modulation/modulation_manager.cpp b/source/modulation/modulation_manager.cpp
+index 6e7eea4..b26cb71 100644
+--- a/source/modulation/modulation_manager.cpp
++++ b/source/modulation/modulation_manager.cpp
+@@ -1036,27 +1036,30 @@ void ModulationManager::componentAdded() {
+     for (auto slider : sliders) {
+         slider.second->addListener(this);
+     }
+-    full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
+-                                                 for (auto &multiquad: rotary_destinations_) {
+-                                                     multiquad.second->destroy(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: rotary_meters_) {
+-                                                     multiquad.second->destroy(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: linear_meters_) {
+-                                                     multiquad.second->destroy(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: linear_destinations_) {
+-                                                     multiquad.second->destroy(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: button_destinations_) {
+-                                                     multiquad.second->destroy(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: button_meters_) {
+-                                                     multiquad.second->destroy(full->open_gl_);
+-                                                 }
+-                                             },
+-                                             true); {
++    if (full->open_gl_.context.isAttached() && full->open_gl_.context.isActive()) {
++        DBG ("ModulationManager::componentAdded - executing cleanup on GL thread");
++        full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
++                                                     for (auto &multiquad: rotary_destinations_) {
++                                                         multiquad.second->destroy(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: rotary_meters_) {
++                                                         multiquad.second->destroy(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: linear_meters_) {
++                                                         multiquad.second->destroy(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: linear_destinations_) {
++                                                         multiquad.second->destroy(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: button_destinations_) {
++                                                         multiquad.second->destroy(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: button_meters_) {
++                                                         multiquad.second->destroy(full->open_gl_);
++                                                     }
++                                                 },
++                                                 true);
++    } {
+         juce::ScopedLock lock(full->open_gl_critical_section_);
+         rotary_destinations_.clear();
+         rotary_meters_.clear();
+@@ -1216,27 +1219,29 @@ void ModulationManager::componentAdded() {
+             //createModulationMeter(button.second, button_meters_[viewport].get(), index);
+         }
+     }
+-    full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
+-                                                 for (auto &multiquad: rotary_destinations_) {
+-                                                     multiquad.second->init(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: rotary_meters_) {
+-                                                     multiquad.second->init(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: linear_meters_) {
+-                                                     multiquad.second->init(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: linear_destinations_) {
+-                                                     multiquad.second->init(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: button_destinations_) {
+-                                                     multiquad.second->init(full->open_gl_);
+-                                                 }
+-                                                 for (auto &multiquad: button_meters_) {
+-                                                     multiquad.second->init(full->open_gl_);
+-                                                 }
+-                                             },
+-                                             true);
++    if (full->open_gl_.context.isAttached() && full->open_gl_.context.isActive()) {
++        full->open_gl_.context.executeOnGLThread([this, &full](juce::OpenGLContext &openGLContext) {
++                                                     for (auto &multiquad: rotary_destinations_) {
++                                                         multiquad.second->init(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: rotary_meters_) {
++                                                         multiquad.second->init(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: linear_meters_) {
++                                                         multiquad.second->init(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: linear_destinations_) {
++                                                         multiquad.second->init(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: button_destinations_) {
++                                                         multiquad.second->init(full->open_gl_);
++                                                     }
++                                                     for (auto &multiquad: button_meters_) {
++                                                         multiquad.second->init(full->open_gl_);
++                                                     }
++                                                 },
++                                                 true);
++    }
+ 
+     resized();
+ }
+diff --git a/source/synthesis/SampleLoadManager.cpp b/source/synthesis/SampleLoadManager.cpp
+index f0842a2..f66e268 100644
+--- a/source/synthesis/SampleLoadManager.cpp
++++ b/source/synthesis/SampleLoadManager.cpp
+@@ -71,32 +71,44 @@ void SampleLoadManager::clearAllSamples() {
+ }
+ 
+ void SampleLoadManager::handleAsyncUpdate() {
++    // If the threadpool is still working, wait. 
++    // BUT we should only care about our own jobs if we can track them.
++    // getNumJobs() covers the whole pool.
+     if (sampleLoader.getNumJobs() > 0)
++    {
++        // Still jobs in flight. trigger again shortly if needed, 
++        // but normally SampleLoadJob destructor triggers this.
+         return;
++    }
+ 
+-    DBG("All samples loaded. Audio thread can safely switch soundsets.");
++    DBG("SampleLoadManager::handleAsyncUpdate - no more jobs in pool.");
+ 
++    bool anyStillLoading = false;
+     for (auto it = soundsetProgressMap.begin(); it != soundsetProgressMap.end(); )
+     {
+         auto& name     = it->first;
+         auto& progress = it->second;
+ 
+-        if (progress->completedJobs == progress->totalJobs)
++        if (progress->completedJobs >= progress->totalJobs)
+         {
+-            DBG ("Soundset " + name + " finished loading.");
++            DBG ("Soundset " + juce::String(name) + " finished loading. (" + juce::String(progress->completedJobs.load()) + "/" + juce::String(progress->totalJobs.load()) + ")");
+             progress->currentProgress = 1.0f;
+-
+             progress->markComplete(); // Message thread safe
+-
+-            // erase returns the next iterator
+             it = soundsetProgressMap.erase (it);
+         }
+         else
+         {
++            DBG ("Soundset " + juce::String(name) + " still loading: " + juce::String(progress->completedJobs.load()) + "/" + juce::String(progress->totalJobs.load()));
++            anyStillLoading = true;
+             ++it;
+         }
+     }
+-    parent->finishedSampleLoading();
++
++    if (!anyStillLoading)
++    {
++        DBG("SampleLoadManager: All soundsets finished. Calling finishedSampleLoading.");
++        parent->finishedSampleLoading();
++    }
+ }
+ 
+ // sort array of sample files into arrays of velocities by pitch
+@@ -297,13 +309,14 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
+     progressPtr->soundsetName = soundsetName.toStdString();
+     progressPtr->targetTree = vtToWrite; // store where to write soundset / completion callbacks
+     progressPtr->load_manager = this;
+-    parent->startSampleLoading();
+ 
+     /*
+      * handle soundfonts, otherwise move on to regular bK sample types
+      */
+     const juce::String ext = directory.getFileExtension().toLowerCase();
+     if (ext == ".sfz" || ext == ".sf2") {
++        // Only show loading spinner when we actually enqueue work
++        parent->startSampleLoading();
+         progressPtr->totalJobs++; // one job per sample type
+         progressPtr->isSoundFont = true;
+         progressPtr->soundset = new juce::ReferenceCountedArray<BKSynthesiserSound>();
+@@ -323,22 +336,40 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
+     /// function so it never hangs
+     if (!directory.exists()) {
+         DBG("Soundset dir does not exist: " + directory.getFullPathName());
++        // Reset loading state just in case startSampleLoading was called by the caller
++        parent->finishedSampleLoading(); 
+         return false;
+     }
+-    // (Optional debug listing)
+ 
+-    MyComparator sorter;
+-    auto allSamples = directory.findChildFiles(juce::File::findFiles, false, "*.wav");
+-    allSamples.sort(sorter);
++    // Determine sub-directories that have samples before enqueuing jobs
++    using namespace bitklavier::utils;
++    std::vector<BKPianoSampleType> typesToLoad;
++    BKPianoSampleType allTypes[] = { BKPianoMain, BKPianoHammer, BKPianoReleaseResonance, BKPianoPedal };
++
++    for (auto type : allTypes) {
++        juce::String subPath = directory.getFullPathName();
++        subPath.append(BKPianoSampleType_string[type], 1000);
++        juce::File subDir(subPath);
++        if (subDir.isDirectory() && !subDir.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false, "*.wav").isEmpty()) {
++            typesToLoad.push_back(type);
++        }
++    }
+ 
+-    int i = 0;
+-    for (auto file: allSamples)
+-        DBG(file.getFullPathName() + " " + juce::String (++i));
++    if (typesToLoad.empty()) {
++        DBG("Soundset dir exists but has no .wav samples in expected subfolders: " + directory.getFullPathName() + " (soundsetName: " + soundsetName + ")");
++        parent->finishedSampleLoading(); // Ensure state is reset if we thought we might load something
++        return false;
++    }
++
++    // Ensure spinner is visible and loading state is set BEFORE enqueuing any jobs
++    parent->startSampleLoading();
++
++    // Now enqueue the jobs. Since we have already started loading, handleAsyncUpdate will be triggered
++    // once all these jobs (and any others) have finished.
++    for (auto type : typesToLoad) {
++        loadSamples_sub(type, soundsetName.toStdString());
++    }
+ 
+-    loadSamples_sub(bitklavier::utils::BKPianoMain, soundsetName.toStdString());
+-    loadSamples_sub(bitklavier::utils::BKPianoHammer, soundsetName.toStdString());
+-    loadSamples_sub(bitklavier::utils::BKPianoReleaseResonance, soundsetName.toStdString());
+-    loadSamples_sub(bitklavier::utils::BKPianoPedal, soundsetName.toStdString());
+     return true;
+ }
+ 
+@@ -943,7 +974,7 @@ int subsoundIndexForName ( SFZSound& sound,
+ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
+     // --- Validation ---
+     if (soundset == nullptr) {
+-        DBG("loadSoundFont: soundset pointer is null.");
++        DBG("loadSoundFont: soundset pointer is null. Soundset name: " + progress->soundsetName);
+         return false;
+     }
+ 
+@@ -962,7 +993,7 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
+     else if (ext == ".sf2")
+         sound = std::make_unique<SF2Sound>(sfzFile.getFullPathName().toStdString());
+     else {
+-        DBG("loadSoundFont: Unsupported extension " + ext);
++        DBG("loadSoundFont: Unsupported extension " + ext + " for file " + sfzFile.getFullPathName());
+         return false;
+     }
+ 
+diff --git a/source/synthesis/synth_base.cpp b/source/synthesis/synth_base.cpp
+index 2e854c0..aa2022f 100644
+--- a/source/synthesis/synth_base.cpp
++++ b/source/synthesis/synth_base.cpp
+@@ -221,7 +221,7 @@ void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
+ {
+     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
+     {
+-        //DBG ("SynthBase::valueTreeChildAdded -- added piano");
++        DBG ("SynthBase::valueTreeChildAdded - added piano: " + childWhichHasBeenAdded.getProperty(IDs::name).toString());
+         preparationLists.emplace_back (
+             std::make_unique<PreparationList> (
+                 *this, childWhichHasBeenAdded.getOrCreateChildWithName (IDs::PREPARATIONS, nullptr),&um));
+@@ -302,7 +302,9 @@ juce::ValueTree SynthBase::getActivePreparationListValueTree()
+ 
+ juce::ValueTree SynthBase::getActivePianoValueTree()
+ {
+-   return tree.getChildWithProperty(IDs::isActive, 1);
++   auto active = tree.getChildWithProperty(IDs::isActive, 1);
++   DBG ("SynthBase::getActivePianoValueTree - found active: " + (active.isValid() ? active.getProperty(IDs::name).toString() : juce::String("INVALID")));
++   return active;
+ }
+ 
+ 
+@@ -498,6 +500,7 @@ void SynthBase::removeConnection (const juce::AudioProcessorGraph::Connection& c
+ 
+ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
+ {
++    DBG ("SynthBase::loadFromValueTree - starting");
+     //engine_->allSoundsOff();
+     pauseProcessing(true);
+     setBatchLoading(true);
+@@ -507,6 +510,7 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
+     setBatchLoading(false);
+     pauseProcessing (false);
+ 
++    DBG ("SynthBase::loadFromValueTree - finished. tree isValid: " + (tree.isValid() ? juce::String("true") : juce::String("false")));
+     if (tree.isValid())
+         return true;
+     return false;
+@@ -690,6 +694,7 @@ bool SynthBase::saveToActiveFile()
+ 
+ void SynthBase::startSampleLoading()
+ {
++    DBG ("SynthBase: starting sample loading (showing popup)");
+     samplesLoading.store (true);
+ 
+     // Optional but common:
+@@ -701,6 +706,9 @@ void SynthBase::startSampleLoading()
+ 
+ void SynthBase::finishedSampleLoading()
+ {
++    DBG ("SynthBase: finishing sample loading (hiding popup)");
++    samplesLoading.store (false);
++
+     if (presetPending.load()) {
+         presetPending.store (false);
+ 
+@@ -721,8 +729,6 @@ void SynthBase::finishedSampleLoading()
+         getGuiInterface()->getGui()->notifyFresh();
+         // getGuiInterface()->setActivePiano (getActivePianoValueTree());
+     }
+-
+-    samplesLoading.store (false);
+ }
+ 
+ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)

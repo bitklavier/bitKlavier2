@@ -401,3 +401,5 @@ If `pluginval` has trouble scanning or crashes with either the VST or the AU, we
 -then, `bt` to get the backtrace.
 
 - may need to build the AU in Release to get it to pass validation
+- in general, the Pluginval validation with bitKlavier is hard to understand; it passes with an empty gallery, and sometimes with a simple gallery, so it may be best to just test it that way
+- it seems to pass with Keymap => Direct, with no Tuning. So maybe leave it at that. 

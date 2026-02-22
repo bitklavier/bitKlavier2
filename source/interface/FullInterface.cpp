@@ -348,6 +348,17 @@ void FullInterface::reset()
             vt = guiInterface->getSynth()->getValueTree().getChildWithName (IDs::PIANO);
 
         DBG ("FullInterface::reset - vt type: " + vt.getType().toString() + ", isValid: " + (vt.isValid() ? "true" : "false"));
+
+        if (header_)
+        {
+            auto* synth = guiInterface->getSynth();
+            if (synth->getActiveFile() != juce::File())
+                header_->gallerySelectText->setText (synth->getActiveFile().getFileNameWithoutExtension());
+            else
+                header_->gallerySelectText->setText ("");
+
+            header_->updateCurrentPianoName();
+        }
     }
 
     SynthSection::reset();
