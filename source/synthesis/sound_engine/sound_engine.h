@@ -295,6 +295,8 @@ namespace bitklavier
 
         juce::AudioProcessorGraph::Node* getNodeForId (juce::AudioProcessorGraph::NodeID id)
         {
+            if (processorGraph == nullptr)
+                return nullptr;
             return processorGraph->getNodeForId (id);
         }
 
