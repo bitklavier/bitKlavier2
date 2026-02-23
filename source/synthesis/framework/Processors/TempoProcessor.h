@@ -122,7 +122,12 @@ class TempoProcessor : public bitklavier::PluginBase<bitklavier::PreparationStat
 {
 public:
     TempoProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
-    ~TempoProcessor() {}
+    ~TempoProcessor()
+    {
+        /*
+         * todo: need similar as in ~TuningProcessor, to notify of disconnection
+         */
+    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

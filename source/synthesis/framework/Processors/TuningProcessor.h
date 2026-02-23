@@ -285,9 +285,12 @@ public:
     TuningProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
 
     ~TuningProcessor() {
-        parent.pauseProcessing(true);
-        listeners.call ([] (TuningListener& l) { l.tuningStateInvalidated(); });
-        parent.pauseProcessing(false);
+        if (parent.getEngine() != nullptr)
+        {
+            parent.pauseProcessing(true);
+            listeners.call ([] (TuningListener& l) { l.tuningStateInvalidated(); });
+            parent.pauseProcessing(false);
+        }
     }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
