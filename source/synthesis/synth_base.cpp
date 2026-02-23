@@ -555,6 +555,7 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
     for (int i = 0; i < node.getNumChildren(); ++i)
         collectSoundsetRefsRecursive (node.getChild(i), out);
 }
+
 bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 {
     if (!preset.exists())
@@ -719,7 +720,7 @@ void SynthBase::finishedSampleLoading()
     if(getGuiInterface() && getGuiInterface()->getGui()) {
         getGuiInterface()->getGui()->hideLoadingSection();
         getGuiInterface()->getGui()->notifyFresh();
-        // getGuiInterface()->setActivePiano (getActivePianoValueTree());
+        getGuiInterface()->setActivePiano (getActivePianoValueTree());
     }
 
     samplesLoading.store (false);

@@ -10,7 +10,8 @@ MainSection::MainSection(const juce::ValueTree& v, juce::UndoManager &um, OpenGl
     : SynthSection("main_section"), um(um), commandManager (_manager)
 {
 
-    constructionSite_ = std::make_unique<ConstructionSite>(v.getChildWithName(IDs::PIANO), um, open_gl, data, commandManager);
+    // constructionSite_ = std::make_unique<ConstructionSite>(v.getChildWithName(IDs::PIANO), um, open_gl, data, commandManager);
+    constructionSite_ = std::make_unique<ConstructionSite>(v, um, open_gl, data, commandManager);
     addMouseListener(constructionSite_.get(), true);
     constructionSite_->view = &constructionPort;
     // constructionSite_->initializeCommandManager();

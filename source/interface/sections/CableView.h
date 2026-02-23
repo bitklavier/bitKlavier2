@@ -89,10 +89,18 @@ public:
         }
 
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
-        connection_list = interface->getSynth()->getActiveConnectionList();
-        //connections_vt = connection_list->getValueTree();
-        connection_list->addListener (this);
-        connection_list->rebuildAllGui();
+        if (interface != nullptr)
+        {
+            connection_list = interface->getSynth()->getActiveConnectionList();
+            //connections_vt = connection_list->getValueTree();
+            connection_list->addListener (this);
+            connection_list->rebuildAllGui();
+        }
+
+        // Use the data pointer from the constructor
+        // connection_list = data_->synth->getActiveConnectionList();
+        // connection_list->addListener (this);
+        // connection_list->rebuildAllGui();
     }
 
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
@@ -125,6 +133,7 @@ private:
     juce::CriticalSection cableMutex;
 
     bool portGlow = false;
+    SynthGuiData* data_;
 
     //    struct PathGeneratorTask : juce::TimeSliceClient
     //    {

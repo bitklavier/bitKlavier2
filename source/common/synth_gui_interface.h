@@ -155,7 +155,8 @@ public:
     std::atomic<bool> loading;
     std::unique_ptr<juce::FileChooser> filechooser;
     SynthBase* synth_;
-  
+
+    JUCE_DECLARE_WEAK_REFERENCEABLE (SynthGuiInterface)
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthGuiInterface)
 };
 

@@ -58,6 +58,8 @@ public:
     bitklavier::ModConnectionList* connection_list;
     juce::CriticalSection open_gl_lock;
     juce::ValueTree mod_connections_vt;
+
+    SynthGuiData* data_;
 };
 
 #endif //BITKLAVIER2_MODULATIONLINEVIEW_H

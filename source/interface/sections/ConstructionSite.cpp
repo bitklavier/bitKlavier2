@@ -47,6 +47,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
                                                          modulationLineView(*this, um,data),
                                                          preparationSelector(*this), parent(v),
                                                         commandManager (_manager),
+                                                        gui_data (data),
                                                         connection_list (data->synth->getActiveConnectionList())
 //_line(std::make_shared<OpenGlLine>(nullptr,nullptr,nullptr))
 {
@@ -88,7 +89,6 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     lassoVisual->setAlwaysOnTop(true);
     lassoVisual->setStatic(false);
     addOpenGlComponent(lassoVisual, false, true);
-
 }
 
 // Define your command IDs
@@ -1363,7 +1363,13 @@ void ConstructionSite::setActivePiano() {
     }
 
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    prep_list= interface->getSynth()->getActivePreparationList();
+    //prep_list= interface->getSynth()->getActivePreparationList();
+    if (interface != nullptr && interface->getSynth() != nullptr)
+    {
+        prep_list= interface->getSynth()->getActivePreparationList();
+    }
+    else prep_list = gui_data->synth->getActivePreparationList();
+
     parent = prep_list->getValueTree().getParent();
     prep_list->addListener(this);
     prep_list->rebuildAllGui();

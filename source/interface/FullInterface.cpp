@@ -34,12 +34,15 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     setSkinValues (default_skin, true);
     default_skin.copyValuesToLookAndFeel (DefaultLookAndFeel::instance());
 
-    vt = synth_data->tree.getChildWithName(IDs::PIANO);
-    main_ = std::make_unique<MainSection> (synth_data->tree, synth_data->um, open_gl_, synth_data, commandManager);
+    // vt = synth_data->tree.getChildWithName(IDs::PIANO);
+    vt = synth_data->synth->getActivePianoValueTree();
+    // main_ = std::make_unique<MainSection> (synth_data->tree, synth_data->um, open_gl_, synth_data, commandManager);
+    main_ = std::make_unique<MainSection> (vt, synth_data->um, open_gl_, synth_data, commandManager);
     addSubSection (main_.get());
     main_->addListener (this);
     valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);
-    modulation_manager = std::make_unique<ModulationManager> (synth_data->tree.getChildWithName(IDs::PIANO), synth_data->synth);
+    // modulation_manager = std::make_unique<ModulationManager> (synth_data->tree.getChildWithName(IDs::PIANO), synth_data->synth);
+    modulation_manager = std::make_unique<ModulationManager> (vt, synth_data->synth);
     modulation_manager->setOpaque (false);
     modulation_manager->setAlwaysOnTop (true);
     modulation_manager->setModulationAmounts();
@@ -267,6 +270,7 @@ void FullInterface::showAboutSection()
     juce::ScopedLock lock (open_gl_critical_section_);
     about_section_->setVisible (true);
 }
+
 void FullInterface::showLoadingSection()
 {
     juce::ScopedLock lock (open_gl_critical_section_);

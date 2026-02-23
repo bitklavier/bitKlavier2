@@ -12,7 +12,8 @@ CableView::CableView (ConstructionSite &site, juce::UndoManager& um, SynthGuiDat
     : site(site),
     /*pathTask (*this),*/ SynthSection("cableView"),
     undoManager (um),
-connection_list(data->synth->getActiveConnectionList())
+    data_(data),
+    connection_list(data->synth->getActiveConnectionList())
 {
     setInterceptsMouseClicks (false,true);
     //startTimerHz (36);

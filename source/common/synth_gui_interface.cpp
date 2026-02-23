@@ -67,17 +67,31 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
     int defaultIndex = (it != sets.end())
         ? static_cast<int>(std::distance(sets.begin(), it))
         : -1;
-    if (defaultIndex >= 0) {
-        synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
+
+    bool firstLoad = !synth_->samplesLoaded; // for plugin formats, we don't want to reload samples every time the plugin window is opened
+    if (defaultIndex >= 0 && firstLoad) {
+        synth_->samplesLoaded = synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
     }
+
     if (use_gui) {
         SynthGuiData synth_data (synth_);
         gui_ = std::make_unique<FullInterface> (&synth_data, commandManager, this);
-        gui_->showLoadingSection();
+        if (firstLoad) gui_->showLoadingSection();
+        //else setActivePiano(synth_->getActivePianoValueTree());
         // for registering hotkeys etc.
         commandManager.registerAllCommandsForTarget(this);
         if (defaultIndex >= 0)
             gui_->header_->setSampleSelectText(sets[defaultIndex]);
+
+        // Use WeakReference instead of SafePointer
+        juce::WeakReference<SynthGuiInterface> weakThis (this);
+        auto activePianoTree = synth_->getActivePianoValueTree();
+
+        juce::MessageManager::callAsync ([weakThis, activePianoTree]() {
+            if (weakThis != nullptr) {
+                weakThis->setActivePiano (activePianoTree);
+            }
+        });
     }
 }
 

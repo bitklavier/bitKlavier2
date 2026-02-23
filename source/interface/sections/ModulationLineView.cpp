@@ -13,6 +13,7 @@ ModulationLineView::ModulationLineView (ConstructionSite& site, juce::UndoManage
 
       current_source_ (nullptr),
       undoManager (um),
+      data_(data),
       connection_list (data->synth->getActiveModConnectionList())
 {
     setInterceptsMouseClicks (false, false);
@@ -275,10 +276,18 @@ void ModulationLineView::setActivePiano()
     }
 
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
-    connection_list = interface->getSynth()->getActiveModConnectionList();
-    mod_connections_vt = connection_list->getValueTree();
-    connection_list->addListener (this);
-    connection_list->rebuildAllGui();
+    if (interface != nullptr)
+    {
+        connection_list = interface->getSynth()->getActiveModConnectionList();
+        mod_connections_vt = connection_list->getValueTree();
+        connection_list->addListener (this);
+        connection_list->rebuildAllGui();
+    }
+
+    // connection_list = data_->synth->getActiveModConnectionList();
+    // mod_connections_vt = connection_list->getValueTree();
+    // connection_list->addListener (this);
+    // connection_list->rebuildAllGui();
 }
 
 void ModulationLineView::modConnectionListChanged()

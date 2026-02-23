@@ -213,6 +213,7 @@ public:
 private:
 
     BKItem* getItemAtPoint (const int X, const int Y);
+    SynthGuiData *gui_data;
 
     JUCE_LEAK_DETECTOR (ConstructionSite)
 };

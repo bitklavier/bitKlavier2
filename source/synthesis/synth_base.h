@@ -207,6 +207,8 @@ public:
     void startSampleLoading();
     void clearAllGuiListeners();
 
+    bool samplesLoaded = false;
+
 protected:
     // Holds the parsed preset tree until samples finish loading
     juce::ValueTree pendingPresetTree;
