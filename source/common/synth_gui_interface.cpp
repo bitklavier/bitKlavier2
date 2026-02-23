@@ -202,11 +202,14 @@ bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
     bool success = getSynth()->loadFromFile(preset, error);
     if (success)
     {
+        // DBG("SynthGuiInterface::loadFromFile, currentPiano = " + juce::String( gui_->header_->getActivePiano().getProperty(IDs::name)));
         gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
         gui_->header_->updateCurrentPianoName();
         setPianoSwitchTriggerThreadMessage();
         setActivePiano (getSynth()->getActivePianoValueTree());
-        // DBG("SynthGuiInterface::loadFromFile, currentPiano = " + juce::String( gui_->header_->getActivePiano().getProperty(IDs::name)));
+
+        // this will notify a DAW host that something has changed, so it will be saved with the DAW session
+        updateHostDisplay();
     }
     return success;
     //sampleLoadManager->loadSamples()
@@ -244,6 +247,11 @@ void SynthGuiInterface::notifyFresh() {
         return;
 
     gui_->notifyFresh();
+}
+
+void SynthGuiInterface::updateHostDisplay (const juce::AudioProcessor::ChangeDetails& details)
+{
+    synth_->updateHostDisplay (details);
 }
 
 void SynthGuiInterface::setGuiSize (float scale)

@@ -75,5 +75,5 @@ void PluginEditor::setScaleFactor (float newScale)
 void PluginEditor::updateFullGui()
 {
     SynthGuiInterface::updateFullGui();
-    //synth_.updateHostDisplay();
+    updateHostDisplay();
 }

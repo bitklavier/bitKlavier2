@@ -41,6 +41,7 @@ public:
 
     const juce::CriticalSection& getCriticalSection() override;
     void pauseProcessing (bool pause) override;
+    void updateHostDisplay (const ChangeDetails& details) override;
     SynthGuiInterface* getGuiInterface() override;
 
 private:

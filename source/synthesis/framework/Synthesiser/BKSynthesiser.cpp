@@ -260,7 +260,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
     {
         if (m.isNoteOn())
         {
-            // DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;

@@ -113,6 +113,7 @@ public:
     void setFocus();
     void notifyChange();
     void notifyFresh();
+    void updateHostDisplay (const juce::AudioProcessor::ChangeDetails& details = juce::AudioProcessor::ChangeDetails::getDefaultFlags());
     void openSaveDialog();
     void openLoadDialog();
     void saveCurrentGallery();

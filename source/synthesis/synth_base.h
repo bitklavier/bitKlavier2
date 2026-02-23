@@ -83,6 +83,11 @@ public:
     juce::ValueTree &getValueTree();
     juce::UndoManager &getUndoManager();
 
+    virtual void updateHostDisplay (const juce::AudioProcessor::ChangeDetails& details = juce::AudioProcessor::ChangeDetails::getDefaultFlags())
+    {
+
+    }
+
     //processor adding functions
     juce::AudioProcessorGraph::Node::Ptr addProcessor(std::unique_ptr<juce::AudioProcessor> processor,
                                                       juce::AudioProcessorGraph::NodeID id = {});
