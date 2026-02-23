@@ -37,6 +37,17 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     setSize (width, height);
     gui_->addKeyListener (commandManager.getKeyMappings());
 
+    // for plugin formats
+    if (synth_->samplesLoaded)
+    {
+        // don't want to see Samples Loading popup....
+        gui_->hideLoadingSection();
+
+        // make sure current gallery name is showing
+        if (gui_->header_->gallerySelectText)
+            gui_->header_->gallerySelectText->setText(getActiveFile().getFileNameWithoutExtension());
+    }
+
     // setActivePiano(processorRef.getActivePianoValueTree());
 }
 

@@ -15,11 +15,12 @@
  */
 
 #include "synth_gui_interface.h"
-#include "ConstructionSite.h"
 #include "CompressorParameterView.h"
+#include "ConstructionSite.h"
 #include "EQParameterView.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
+#include "juce_core/unit_tests/juce_UnitTestCategories.h"
 #include "load_save.h"
 #include "modulation_manager.h"
 #include "sound_engine.h"
@@ -83,7 +84,6 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         if (defaultIndex >= 0)
             gui_->header_->setSampleSelectText(sets[defaultIndex]);
 
-        // Use WeakReference instead of SafePointer
         juce::WeakReference<SynthGuiInterface> weakThis (this);
         auto activePianoTree = synth_->getActivePianoValueTree();
 
