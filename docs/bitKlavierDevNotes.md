@@ -401,3 +401,29 @@ If `pluginval` has trouble scanning or crashes with either the VST or the AU, we
 -then, `bt` to get the backtrace.
 
 - may need to build the AU in Release to get it to pass validation
+
+## Version Number information
+To set the version number for the application and plugin, you should modify the `VERSION` file located in the root directory of the project.
+
+### How it works:
+1.  **`VERSION` file**: This file contains the version string (e.g., `0.0.1`).
+2.  **`cmake/PamplejuceVersion.cmake`**: This script reads the content of the `VERSION` file and sets a CMake variable called `CURRENT_VERSION`.
+3.  **`CMakeLists.txt`**: The main configuration file uses `CURRENT_VERSION` to:
+  *   Set the project version: `project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})`
+  *   Define a preprocessor macro: `VERSION="${CURRENT_VERSION}"` (line 198) which can be used in your C++ code.
+
+### To change the version:
+1.  Open the `VERSION` file in the project root.
+2.  Update the version number (e.g., change `0.0.1` to `1.0.0`).
+3.  Reconfigure and rebuild the project.
+
+Also, the "major" number sets the suffix for the build (bitKlavier5, for instance)
+
+**Note**: The version in `VERSION` should be in a standard `major.minor.patch` format (e.g., `1.2.3`). Additionally, the `PamplejuceVersion.cmake` script has an option `PAMPLEJUCE_AUTO_BUMP_PATCH_LEVEL` (currently `OFF`) which can automatically increment the patch level based on git commit counts if enabled.
+
+### regarding build targets and the suffix on the binaries:
+
+- **Reload the CMake Project**: This updated CLion's internal project model, so it now sees the new targets like `bitKlavier5_Standalone`, `bitKlavier5_AU`, etc.
+- **Verified Targets**: Confirmed that the build system now correctly recognizes `bitKlavier5_Standalone` as a valid target.
+
+should end up with bitKlavier5 for the binary name then

@@ -117,7 +117,11 @@ namespace ProjectInfo
 {
     const char* const  projectName    = "bitKlavier4";
     const char* const  companyName    = "Many Arrows Music";
-    const char* const  versionString  = "0.0.1";
-    const int          versionNumber  =  0x1;
+#ifdef VERSION
+    const char* const  versionString  = VERSION;
+#else
+    const char* const  versionString  = "4.0.0";
+#endif
+    const int          versionNumber  =  0x40000;
 }
 #endif //BITKLAVIER2_USERPREFERENCES_H

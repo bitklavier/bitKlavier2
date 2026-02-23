@@ -224,12 +224,14 @@ void PeakMeterViewer::destroy(OpenGlWrapper& open_gl) {
   position_ = nullptr;
   color_from_ = nullptr;
   color_to_ = nullptr;
+
   if (vertex_buffer_ != 0)
     open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
   if (triangle_buffer_ != 0)
     open_gl.context.extensions.glDeleteBuffers(1, &triangle_buffer_);
   if (vao_ != 0)
     open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
+
   vertex_buffer_ = 0;
   triangle_buffer_ = 0;
   vao_ = 0;
