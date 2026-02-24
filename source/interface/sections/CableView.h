@@ -81,7 +81,7 @@ public:
 
     void setActivePiano()
     {
-        //        DBG("setPIano CableView");
+        //DBG("setPIano CableView");
         if (connection_list != nullptr)
         {
             connection_list->deleteAllGui();

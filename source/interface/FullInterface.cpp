@@ -40,7 +40,9 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     main_ = std::make_unique<MainSection> (vt, synth_data->um, open_gl_, synth_data, commandManager);
     addSubSection (main_.get());
     main_->addListener (this);
+#if JUCE_DEBUG
     valueTreeDebugger = new ValueTreeDebugger (synth_data->tree);
+#endif
     // modulation_manager = std::make_unique<ModulationManager> (synth_data->tree.getChildWithName(IDs::PIANO), synth_data->synth);
     modulation_manager = std::make_unique<ModulationManager> (vt, synth_data->synth);
     modulation_manager->setOpaque (false);

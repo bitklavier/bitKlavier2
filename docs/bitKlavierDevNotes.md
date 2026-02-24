@@ -372,8 +372,8 @@ Since you are moving from a standalone application to a plugin, here are the mai
 
 *   **Parameter Management:** Plugins rely on the host to automate and save parameters. You should use `juce::AudioProcessorValueTreeState` (APVTS) to manage your parameters. This ensures that the host can "see" your sliders and knobs for automation.
 *   **State Persistence:** In a plugin, the host is responsible for asking the plugin to save/load its state (e.g., when a user saves a DAW project). You must implement:
-  *   `getStateInformation()`: Serialize your current settings into a memory block.
-  *   `setStateInformation()`: Restore your settings from a memory block.
+  *   `getStateInformation()`: Serialize your current settings into a memory block, in PluginProcessor.cpp
+  *   `setStateInformation()`: Restore your settings from a memory block, also in PluginProcessor.cpp
 *   **Host Synchronization:** If your plugin needs to know the current tempo, time signature, or transport state (playing/stopped), use `getPlayHead()` inside `processBlock`.
     ```cpp
     if (auto* ph = getPlayHead()) {
@@ -423,7 +423,43 @@ Also, the "major" number sets the suffix for the build (bitKlavier5, for instanc
 
 ### regarding build targets and the suffix on the binaries:
 
-- **Reload the CMake Project**: This updated CLion's internal project model, so it now sees the new targets like `bitKlavier5_Standalone`, `bitKlavier5_AU`, etc.
+- **Reload the CMake Project**: This updated CLion's internal project model, so it   now sees the new targets like `bitKlavier5_Standalone`, `bitKlavier5_AU`, etc.
+
+  - Tools -> CMake -> Reload CMake Project
 - **Verified Targets**: Confirmed that the build system now correctly recognizes `bitKlavier5_Standalone` as a valid target.
 
 should end up with bitKlavier5 for the binary name then
+
+### Analysis of Performance Bottleneck in Gallery Loading (Junie)
+
+The reported slowdown between `SynthBase::setActivePiano()` and `SoundEngine::setActivePiano()` is primarily caused by intensive GUI operations on the Message Thread that occur immediately after the engine update is enqueued.
+
+#### 1. Asynchronous Execution Gap
+When `SynthBase::setActivePiano` is called from the Message Thread (typical during a gallery load), it performs a `processorInitQueue.try_enqueue`. This enqueues the `SoundEngine::setActivePiano` call to be executed on the **Audio Thread** during the next process block.
+
+However, immediately after this call returns, the Message Thread continues with `SynthGuiInterface::setActivePiano`, which triggers a full GUI rebuild. The "bottleneck" is the period where the Message Thread is heavily blocked by this rebuild, preventing it from finishing the piano switch sequence and potentially delaying subsequent state updates or user interactions.
+
+#### 2. The "Full Wipe and Rebuild" Strategy
+The primary bottleneck is located in `ConstructionSite::setActivePiano()` and its counterparts in `CableView` and `ModulationLineView`. These components follow a "destructive" update pattern:
+
+*   **`deleteAllGui()`**: Completely destroys all existing `PreparationSection` components, `Cable` components, and `ModulationLine` components for the previous piano.
+*   **`rebuildAllGui()`**: Iterates through the entire `ValueTree` of the new piano and creates brand new components for every preparation and connection.
+
+#### 3. Complexity of Rebuild Operations
+For each preparation in a large gallery:
+*   **Component Creation**: `ConstructionSite::moduleAdded` uses a factory to create a `PreparationSection`.
+*   **Deep Inspection**: `PreparationSection::setPortInfo` (a ~130 line function) is called, which performs multiple loops through the processor's input and output buses to dynamically create and position `BKPort` pins.
+*   **Listener Overload**: Every new preparation section registers itself with multiple listeners (`cableView`, `modulationLineView`, `ConstructionSite`, `LassoSelection`), leading to a high volume of registration overhead.
+*   **OpenGL Synchronization**: Both `CableView` and `ModulationLineView` often use `executeOnGLThread(..., true)` (blocking wait) to initialize or destroy OpenGL resources during the rebuild. In a gallery with many connections, these serial blocking calls to the OpenGL thread significantly stall the Message Thread.
+
+#### 4. Impact on Gallery Loading
+During `SynthBase::loadFromValueTree`, the system is in a "Batch Loading" state with processing often paused. The sequence is:
+1.  **Enqueue** Engine update (Fast).
+2.  **Rebuild** entire GUI (Slow - O(N) where N is the number of preparations and connections).
+3.  **Resume** Processing (Fast).
+
+In large galleries, step 2 dominates the execution time. Because the engine call was enqueued in step 1, but the audio thread might not process it until the Message Thread yields or the batch loading completes, the delay is perceived as occurring "after" the SynthBase call but "before" the SoundEngine work actually takes effect in the audio stream.
+
+#### Conclusion
+The bottleneck is a **Message Thread congestion** issue caused by the lack of incremental updates in the GUI. Instead of updating only what changed, the interface performs a total teardown and reconstruction, which scales poorly with the size of the Gallery file.
+DLT: I'm not sure we should touch this right now, as there are all sorts of complications with order of operations and connections/modconnections. In Release, it's barely noticeable slow, and we could put a pacifier up if necessary, but i don't want to risk breaking all this right now

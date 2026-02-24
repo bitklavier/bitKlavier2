@@ -132,8 +132,8 @@ SynthBase::~SynthBase()
 
 std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound > *>*SynthBase::getSamples()
 {
-    for (const auto &[key, val] : sampleLoadManager->samplerSoundset)
-            DBG(key);
+    // for (const auto &[key, val] : sampleLoadManager->samplerSoundset)
+    //         DBG(key);
     return &sampleLoadManager->samplerSoundset;
 }
 
@@ -305,7 +305,6 @@ juce::ValueTree SynthBase::getActivePianoValueTree()
    return tree.getChildWithProperty(IDs::isActive, 1);
 }
 
-
 juce::ValueTree SynthBase::findParentWithType(juce::ValueTree child, const juce::Identifier& typeName_)
 {
     auto current = child.getParent();
@@ -371,7 +370,7 @@ bitklavier::ModConnectionList* SynthBase::getActiveModConnectionList()
 
 void SynthBase::setActivePiano (const juce::ValueTree& v, SwitchTriggerThread thread)
 {
-    DBG ("SynthBase::setActivePiano " << v.getProperty(IDs::name).toString());
+    DBG ("SynthBase::setActivePiano: " << v.getProperty(IDs::name).toString());
     activePiano = v;
     switch_trigger_thread = thread;
     if (thread == SwitchTriggerThread::MessageThread)
@@ -626,6 +625,7 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         presetPending.store (true);
 
         startSampleLoading(); // spinner / disable audio etc.
+        // setActivePiano (parsed, SwitchTriggerThread::MessageThread);
         return true;
     }
 
@@ -649,6 +649,7 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         // gui->setActivePiano (getActivePianoValueTree());
     }
 
+    // setActivePiano (parsed, SwitchTriggerThread::MessageThread);
     return true;
 }
 
@@ -717,12 +718,20 @@ void SynthBase::finishedSampleLoading()
         pendingPresetTree = juce::ValueTree{};
     }
 
+    // with standalone, we should have a GUI at the beginning to initialize
     if(getGuiInterface() && getGuiInterface()->getGui()) {
         getGuiInterface()->getGui()->hideLoadingSection();
         getGuiInterface()->getGui()->notifyFresh();
         getGuiInterface()->setActivePiano (getActivePianoValueTree());
     }
-
+    // in plugin formats, we generally won't have a GUI to start, so we just initialize the active piano on the graph
+    else
+    {
+        //#ifdef JUCE_PLUGINHOST_VST || JUCE_PLUGINHOST_AU
+        DBG("setting active piano for plugin host");
+        setActivePiano (getActivePianoValueTree(), SwitchTriggerThread::MessageThread);
+        //#endif
+    }
     samplesLoading.store (false);
 }
 
