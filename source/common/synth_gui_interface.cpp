@@ -89,6 +89,7 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
 
         juce::MessageManager::callAsync ([weakThis, activePianoTree]() {
             if (weakThis != nullptr) {
+                DBG("SynthGuiInterface::SynthGuiInterface--juce::MessageManager::callAsync ");
                 weakThis->setActivePiano (activePianoTree);
             }
         });
@@ -206,7 +207,6 @@ bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {
         gui_->header_->gallerySelectText->setText(preset.getFileNameWithoutExtension());
         gui_->header_->updateCurrentPianoName();
         setPianoSwitchTriggerThreadMessage();
-        setActivePiano (getSynth()->getActivePianoValueTree());
 
         // this will notify a DAW host that something has changed, so it will be saved with the DAW session
         updateHostDisplay();

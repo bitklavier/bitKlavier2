@@ -1356,6 +1356,8 @@ void ConstructionSite::updateComponents() {
 }
 
 void ConstructionSite::setActivePiano() {
+    DBG("ConstructionSite::setActivePiano()");
+
     if(prep_list != nullptr)
     {
         prep_list->deleteAllGui();
@@ -1377,6 +1379,9 @@ void ConstructionSite::setActivePiano() {
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
     connection_list = interface->getSynth()->getActiveConnectionList();
+
+    DBG("***** done setActivePiano() *****");
+    DBG("");
 }
 
 void ConstructionSite::removeAllGuiListeners()

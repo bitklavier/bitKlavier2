@@ -348,6 +348,7 @@ PreparationList* SynthBase::getActivePreparationList()
 
 bitklavier::ConnectionList* SynthBase::getActiveConnectionList()
 {
+    DBG("bitklavier::ConnectionList* SynthBase::getActiveConnectionList()");
     for (auto& connection : connectionLists)
     {
         if (connection->getValueTree().getParent().getProperty (IDs::isActive))
@@ -718,19 +719,16 @@ void SynthBase::finishedSampleLoading()
         pendingPresetTree = juce::ValueTree{};
     }
 
-    // with standalone, we should have a GUI at the beginning to initialize
-    if(getGuiInterface() && getGuiInterface()->getGui()) {
-        getGuiInterface()->getGui()->hideLoadingSection();
-        getGuiInterface()->getGui()->notifyFresh();
+    if(getGuiInterface()) {
+        if (auto* gui = getGuiInterface()->getGui()) {
+            gui->hideLoadingSection();
+            gui->notifyFresh();
+        }
         getGuiInterface()->setActivePiano (getActivePianoValueTree());
     }
-    // in plugin formats, we generally won't have a GUI to start, so we just initialize the active piano on the graph
     else
     {
-        //#ifdef JUCE_PLUGINHOST_VST || JUCE_PLUGINHOST_AU
-        DBG("setting active piano for plugin host");
         setActivePiano (getActivePianoValueTree(), SwitchTriggerThread::MessageThread);
-        //#endif
     }
     samplesLoading.store (false);
 }

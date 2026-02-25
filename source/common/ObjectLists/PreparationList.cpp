@@ -149,7 +149,10 @@ void PreparationList::deleteAllGui() {
             listener->removeModule(obj);
 }
 
-void PreparationList::rebuildAllGui() {
+void PreparationList::rebuildAllGui()
+{
+    DBG("PreparationList::rebuildAllGui()");
+
     for (auto obj: objects)
         for (auto listener: listeners_)
             listener->moduleAdded(obj);

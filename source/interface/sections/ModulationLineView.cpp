@@ -268,7 +268,7 @@ void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
 
 void ModulationLineView::setActivePiano()
 {
-    //    DBG ("setPIano CableView");
+    DBG("ModulationLineView::setActivePiano()");
     if (connection_list != nullptr)
     {
         connection_list->deleteAllGui();
