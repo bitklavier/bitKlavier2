@@ -1,4 +1,5 @@
 # Notes about how to do stuff in the bK codebase
+
 ---------
 ## Gui Layout Notes
 - FlexBox is nice. see `void HeaderSection::resized()`
@@ -430,7 +431,7 @@ Also, the "major" number sets the suffix for the build (bitKlavier5, for instanc
 
 should end up with bitKlavier5 for the binary name then
 
-### Analysis of Performance Bottleneck in Gallery Loading (Junie)
+## Analysis of Performance Bottleneck in Gallery Loading (Junie)
 
 The reported slowdown between `SynthBase::setActivePiano()` and `SoundEngine::setActivePiano()` is primarily caused by intensive GUI operations on the Message Thread that occur immediately after the engine update is enqueued.
 
@@ -463,3 +464,24 @@ In large galleries, step 2 dominates the execution time. Because the engine call
 #### Conclusion
 The bottleneck is a **Message Thread congestion** issue caused by the lack of incremental updates in the GUI. Instead of updating only what changed, the interface performs a total teardown and reconstruction, which scales poorly with the size of the Gallery file.
 DLT: I'm not sure we should touch this right now, as there are all sorts of complications with order of operations and connections/modconnections. In Release, it's barely noticeable slow, and we could put a pacifier up if necessary, but i don't want to risk breaking all this right now
+
+## Plugin Debugging
+- Build configuration "bitKlavier4_VST3" should have "executable" set to REAPER.
+- then, use CMake Profile "Debug" and press the Debug button in CLion.
+  - REAPER should open, and you should be able to see DBG message in the console
+  - you can also set breakpoints in the code and step through it
+  - in CLion, you can also "Run:Attach to Process" to attach to the running process, if it is not already attached
+
+## "Unit" Testing and Plugin Tests
+### Galleries to check, in both Standalone and Plugin Formats:
+- RampModSave_test.bk2
+- StateModSave_test.bk2
+- Prelude 1 (Inside Out), Release build
+  - make sure that it makes sound when it loads
+  - and also that the activePiano is set in the plugin formats (if is not, then ALL the Pianos will play at once!)
+- SynchronicHost_test.bk2
+  - make sure the host tempo is coming through correctly
+### Pluginval
+- check both AU and VST3 versions, with Release buulds
+  - might need to rescan them in Pluginval first
+  - Pluginval's console should indicate that they passed all tests

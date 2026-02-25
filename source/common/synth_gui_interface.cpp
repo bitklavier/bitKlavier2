@@ -74,7 +74,8 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         synth_->samplesLoaded = synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
     }
 
-    if (use_gui) {
+    if (use_gui)
+    {
         SynthGuiData synth_data (synth_);
         gui_ = std::make_unique<FullInterface> (&synth_data, commandManager, this);
         if (firstLoad) gui_->showLoadingSection();
@@ -84,15 +85,20 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         if (defaultIndex >= 0)
             gui_->header_->setSampleSelectText(sets[defaultIndex]);
 
+        // otherwise, in plugins the saved gallery will load but won't show its construction site or make sound unless reloaded
+        #if JUCE_PLUGINHOST_VST3 || JUCE_PLUGINHOST_AU
         juce::WeakReference<SynthGuiInterface> weakThis (this);
         auto activePianoTree = synth_->getActivePianoValueTree();
 
-        juce::MessageManager::callAsync ([weakThis, activePianoTree]() {
-            if (weakThis != nullptr) {
+        juce::MessageManager::callAsync ([weakThis, activePianoTree]()
+        {
+            if (weakThis != nullptr)
+            {
                 DBG("SynthGuiInterface::SynthGuiInterface--juce::MessageManager::callAsync ");
                 weakThis->setActivePiano (activePianoTree);
             }
         });
+        #endif
     }
 }
 
