@@ -86,11 +86,11 @@ void NostalgicProcessor::setTuning (TuningProcessor* tun)
         nostalgicSynth->setTuning (nullptr);
     }
 }
+
 void NostalgicProcessor::tuningStateInvalidated() {
     tuning = nullptr;
     nostalgicSynth->setTuning(nullptr);
 }
-
 
 void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 {
