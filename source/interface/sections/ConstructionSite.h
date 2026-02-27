@@ -103,14 +103,24 @@ public:
     void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails& source)
     {
         //setMouseCursor(juce::MouseCursor::ParentCursor);
-        auto* targetComp = dynamic_cast<PreparationSection*>(getComponentAt(mouse_drag_position_));
-        const bool droppedOnDifferentPrep = (item_dropped_on_prep_ && targetComp != nullptr && targetComp != source.sourceComponent.get());
+        const auto* src = const_cast<PreparationSection*>(dynamic_cast<const PreparationSection*>(source.sourceComponent.get()));
+        const bool droppedOnDifferentPrep = (item_dropped_on_prep_ && last_drop_target_ != nullptr && last_drop_target_ != src);
 
-        if (!droppedOnDifferentPrep)
+        if (droppedOnDifferentPrep)
+        {
+            // Snap back to original centre if captured, else do nothing (tree-stored point already unchanged)
+            if (has_original_drag_centre_ && src != nullptr)
+            {
+                auto* nonConstSrc = const_cast<PreparationSection*>(src);
+                nonConstSrc->undo.beginNewTransaction();
+                nonConstSrc->curr_point = original_drag_centre_;
+            }
+        }
+        else
         {
             auto delta = mouse_drag_position_ - source.sourceComponent->getBounds().getCentre();
 
-            if (preparationSelector.getLassoSelection().isSelected(dynamic_cast<PreparationSection*>(source.sourceComponent.get())))
+            if (preparationSelector.getLassoSelection().isSelected(const_cast<PreparationSection*>(src)))
             {
                 for (int i = 0; i < preparationSelector.getLassoSelection().getNumSelected(); ++i)
                 {
@@ -119,23 +129,24 @@ public:
                     fc->curr_point = fc->getBounds().getCentre() + delta;
                 }
             }
-            else
+            else if (src != nullptr)
             {
-                for (auto& fc : plugin_components)
-                {
-                    if (fc.get() == source.sourceComponent)
-                    {
-                        fc->undo.beginNewTransaction();
-                        fc->curr_point = mouse_drag_position_ - drag_offset_;
-                    }
-                }
+                auto* nonConstSrc = const_cast<PreparationSection*>(src);
+                nonConstSrc->undo.beginNewTransaction();
+                nonConstSrc->curr_point = mouse_drag_position_ - drag_offset_;
             }
+
             cableView._update();
             modulationLineView._update();
         }
         item_dropped_on_prep_ = false;
+        last_drop_target_ = nullptr;
+        has_original_drag_centre_ = false;
     }
     bool item_dropped_on_prep_ = false;
+    PreparationSection* last_drop_target_ = nullptr;
+    juce::Point<int> original_drag_centre_;
+    bool has_original_drag_centre_ = false;
 
     juce::Point<int> mouse_drag_position_;
     juce::Point<int> drag_offset_;

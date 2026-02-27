@@ -360,6 +360,7 @@ void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetail
     {
         site->mouse_drag_position_ = site->getLocalPoint(this, dragSourceDetails.localPosition);
         site->item_dropped_on_prep_ = true;
+        site->last_drop_target_ = this;
     }
 
     auto dropped_tree = juce::ValueTree::fromXml(dragSourceDetails.description);
@@ -395,19 +396,26 @@ void PreparationSection::itemDragMove(const juce::DragAndDropTarget::SourceDetai
     {
         site->mouse_drag_position_ = site->getLocalPoint(this, dragSourceDetails.localPosition);
         site->item_dropped_on_prep_ = true;
+        site->last_drop_target_ = this;
     }
 }
 
 void PreparationSection::itemDragEnter(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
     if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+    {
         site->item_dropped_on_prep_ = true;
+        site->last_drop_target_ = this;
+    }
 }
 
 void PreparationSection::itemDragExit(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
     if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+    {
         site->item_dropped_on_prep_ = false;
+        site->last_drop_target_ = nullptr;
+    }
 }
 
 void PreparationSection::resized() {
@@ -567,6 +575,9 @@ void PreparationSection::mouseDrag(const juce::MouseEvent &e) {
             // Compute drag offset (mouse position relative to the component's top-left)
             auto mousePosInSite = e.getEventRelativeTo(site).getPosition();
             site->drag_offset_ = mousePosInSite - this->getPosition();
+
+            site->original_drag_centre_ = getBounds().getCentre();
+            site->has_original_drag_centre_ = true;
         }
     }
 
