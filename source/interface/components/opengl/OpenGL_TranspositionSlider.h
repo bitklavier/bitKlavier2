@@ -77,6 +77,8 @@ public:
             };
             j++;
         }
+
+        resetRanges();
     }
 
     virtual void resized() override {

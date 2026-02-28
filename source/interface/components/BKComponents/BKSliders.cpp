@@ -1843,7 +1843,6 @@ void BKStackedSlider::mouseMove(const juce::MouseEvent& e)
     }
 }
 
-
 void BKStackedSlider::mouseDoubleClick (const juce::MouseEvent &e)
 {
     juce::StringArray tokens;

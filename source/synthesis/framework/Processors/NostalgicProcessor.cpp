@@ -211,7 +211,8 @@ void NostalgicProcessor::handleNostalgicNote(int noteNumber, float clusterMin, j
     // this is the same whether it's Sync_KeyUp or Sync_KeyDown
     else
     {
-        auto timeFromSynchronic = synchronic->getTimeToBeatMS (state.params.beatsToSkipParam->getCurrentValue());
+        float timeFromSynchronic = 0.;
+        if (synchronic != nullptr)timeFromSynchronic = synchronic->getTimeToBeatMS (state.params.beatsToSkipParam->getCurrentValue());
         currentNoteData.noteDurationMs = timeFromSynchronic;
         currentNoteData.noteDurationSamples = timeFromSynchronic * (getSampleRate()/1000.0);
         currentNoteData.noteStart = timeFromSynchronic + currentNoteData.waveDistanceMs;

@@ -15,9 +15,6 @@ DirectProcessor::DirectProcessor (SynthBase& parent, const juce::ValueTree& vt, 
     // for testing
     // bufferDebugger = new BufferDebugger();
 
-    DBG("DirectProcessor::DirectProcessor, t0 = " << *state.params.transpose.t0 << "");
-    DBG("DirectProcessor::DirectProcessor, hammers = " << *state.params.hammerParam << "");
-
     for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};
