@@ -14,7 +14,7 @@
 class OpenGL_TranspositionSlider : public OpenGlAutoImageComponent<BKStackedSlider>, BKStackedSlider::Listener
 {
 public:
-    OpenGL_TranspositionSlider (TransposeParams *_params, chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKStackedSlider>(
+    OpenGL_TranspositionSlider (TransposeParams *_params, chowdsp::ParameterListeners &listeners) : params(_params), OpenGlAutoImageComponent<BKStackedSlider>(
                                                                             "Transpositions", // slider name
                                                                             -12, // min
                                                                             12, // max
@@ -23,8 +23,7 @@ public:
                                                                             0, // default val
                                                                             0.01,
                                                                 _params->numActiveSliders->getCurrentValue(),
-                                                                    _params->stateChanges.defaultState), // increment
-                                                                        params(_params)
+                                                                    _params->stateChanges.defaultState) // increment
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -104,6 +103,24 @@ public:
 
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
         mouseInteraction = true;
+
+        // // Ensure parameter ranges are expanded before they are set by the text editor
+        // auto newVals = BKstringToFloatArray(textEditor.getText());
+        // auto floatParams = params->getFloatParams();
+        // for (int i = 0; i < std::min(newVals.size(), 12); ++i)
+        // {
+        //     auto& param = (*floatParams)[i];
+        //     auto newVal = newVals[i];
+        //     auto currentRange = param.get()->getNormalisableRange();
+        //     float newStart = std::min(currentRange.start, newVal);
+        //     float newEnd = std::max(currentRange.end, newVal);
+        //     if (newStart != currentRange.start || newEnd != currentRange.end)
+        //     {
+        //         juce::NormalisableRange<float> updatedRange { newStart, newEnd, currentRange.interval, currentRange.skew };
+        //         param.get()->range = updatedRange;
+        //     }
+        // }
+
         OpenGlAutoImageComponent<BKStackedSlider>::textEditorReturnKeyPressed(textEditor);
         redoImage();
         mouseInteraction = false;
@@ -211,8 +228,8 @@ public:
     void mouseExit(const juce::MouseEvent &e) override {
         if (getTextEditor()->isVisible())
             return;
-        DBG(getComponentID() + "mouseexit");
-        DBG(juce::String("isModulation_: ") + (isModulation_ ? "true" : "false"));
+        // DBG(getComponentID() + "mouseexit");
+        // DBG(juce::String("isModulation_: ") + (isModulation_ ? "true" : "false"));
 
         for (auto *listener: listeners_)
             listener->hoverEnded(this);

@@ -94,6 +94,8 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
+        transpositionSlider->slider->resetRanges();
+
         disableSliderCallback += {
             listeners.addParameterListener(
                 params.resonanceLoaded,

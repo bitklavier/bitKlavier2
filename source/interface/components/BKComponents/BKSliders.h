@@ -14,6 +14,8 @@
 // **************************************************  BKSubSlider **************************************************** //
 // ******************************************************************************************************************** //
 
+juce::Array<float> BKstringToFloatArray(juce::String s);
+
 class BKSubSlider : public juce::Slider
 {
 public:
@@ -351,7 +353,6 @@ public:
     void setTo (juce::Array<float> newvals, juce::NotificationType newnotify);
 
     void setValue (juce::Array<float> newvals, juce::NotificationType newnotify) { setTo (newvals, newnotify); }
-    void resetRanges();
     int whichSlider();
     int whichSlider (const juce::MouseEvent& e);
     virtual void addSlider (juce::NotificationType newnotify);
@@ -419,6 +420,8 @@ public:
 
     juce::GroupComponent sliderBorder;
 
+    void resetRanges();
+
 private:
     chowdsp::SliderAttachment attachment;
     std::unique_ptr<juce::Slider> topSlider; //user interacts with this
@@ -437,6 +440,7 @@ private:
     BKMultiSliderLookAndFeel stackedSliderLookAndFeel;
     BKMultiSliderLookAndFeel topSliderLookAndFeel;
 
+protected:
     double sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault;
     double sliderDefault;
     double sliderIncrement;

@@ -1645,7 +1645,8 @@ BKStackedSlider::BKStackedSlider(
 
     topSlider = std::make_unique<juce::Slider>();
     topSlider->setSliderStyle(juce::Slider::LinearBar);
-    topSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 0,0);
+    //topSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 0,0);
+    topSlider->setTextBoxStyle (juce::Slider::NoTextBox, false, 50, 50);
     //topSlider->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxLeft, true, 50,50);
     topSlider->setRange(sliderMin, sliderMax, sliderIncrement);
     topSlider->setValue(sliderDefault, juce::dontSendNotification);
@@ -1780,44 +1781,41 @@ void BKStackedSlider::setTo(juce::Array<float> newvals, juce::NotificationType n
 
 void BKStackedSlider::mouseDown (const juce::MouseEvent &event)
 {
-    DBG("mouseup");
-    if(event.mouseWasClicked())
+
+    clickedSlider = whichSlider(event);
+    clickedPosition = event.x;
+
+    mouseJustDown = true;
+
+    if(event.mods.isCtrlDown())
     {
-        clickedSlider = whichSlider();
-        clickedPosition = event.x;
-
-        mouseJustDown = true;
-
-        if(event.mods.isCtrlDown())
-        {
-            addSlider(juce::sendNotification);
-//            showModifyPopupMenu();
-        }
+        addSlider(juce::sendNotification);
     }
+    
     if (editValsTextField->hasKeyboardFocus(false)) {
         editValsTextField->mouseDown(event);
     }
 }
 
-
 void BKStackedSlider::mouseDrag(const juce::MouseEvent& e)
 {
-    if(!mouseJustDown)
+    if (clickedSlider < dataSliders.size() && !mouseJustDown)
     {
-        juce::Slider* currentSlider = dataSliders.operator[](clickedSlider);
-        if(currentSlider != nullptr)
+        // Pass mouseDrag to topSlider so it updates its value
+        // topSlider->mouseDrag(e.getEventRelativeTo(this));
+
+        juce::Slider* currentSlider = dataSliders.getUnchecked(clickedSlider);
+        if(e.mods.isShiftDown())
         {
-            if(e.mods.isShiftDown())
-            {
-                currentSlider->setValue(round(topSlider->getValue()));
-                topSlider->setValue(round(topSlider->getValue()));
-            }
-            else {
-                currentSlider->setValue(topSlider->getValue(), juce::sendNotification);
-            }
+            currentSlider->setValue(round(topSlider->getValue()));
+            topSlider->setValue(round(topSlider->getValue()));
+        }
+        else {
+            currentSlider->setValue(topSlider->getValue(), juce::sendNotification);
         }
     }
-    else mouseJustDown = false;
+    else (mouseJustDown = false);
+
     if (editValsTextField->hasKeyboardFocus(false)) {
         editValsTextField->mouseDrag(e);
     }
@@ -1825,10 +1823,10 @@ void BKStackedSlider::mouseDrag(const juce::MouseEvent& e)
 
 void BKStackedSlider::mouseUp(const juce::MouseEvent& e)
 {
-
     listeners.call(&BKStackedSlider::Listener::BKStackedSliderValueChanged,
         getName(),
         getAllActiveValues());
+
     if (editValsTextField->hasKeyboardFocus(false)) {
         editValsTextField->mouseUp(e);
     }
@@ -1836,7 +1834,13 @@ void BKStackedSlider::mouseUp(const juce::MouseEvent& e)
 
 void BKStackedSlider::mouseMove(const juce::MouseEvent& e)
 {
-    topSlider->setValue(dataSliders.getUnchecked(whichSlider(e))->getValue());
+    for(int i=0; i<dataSliders.size(); i++)
+    {
+        if(dataSliders.getUnchecked(whichSlider(e)) == dataSliders.getUnchecked(i))
+            dataSliders.getUnchecked(i)->setTextBoxStyle(juce::Slider::TextBoxLeft, false, 50, 50);
+        else
+            dataSliders.getUnchecked(i)->setTextBoxStyle(juce::Slider::NoTextBox, false, 50, 50);
+    }
 }
 
 
@@ -1912,9 +1916,8 @@ void BKStackedSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 
 void BKStackedSlider::resetRanges()
 {
-
-    double sliderMinTemp = sliderMinDefault;
-    double sliderMaxTemp = sliderMaxDefault;
+    double sliderMinTemp = std::min(sliderMin, sliderMinDefault);
+    double sliderMaxTemp = std::max(sliderMax, sliderMaxDefault);
 
     for(int i = 0; i<dataSliders.size(); i++)
     {
@@ -1926,7 +1929,9 @@ void BKStackedSlider::resetRanges()
         }
     }
 
-    if( (sliderMax != sliderMaxTemp) || sliderMin != sliderMinTemp)
+    bool rangeChanged = (sliderMax != sliderMaxTemp) || (sliderMin != sliderMinTemp);
+
+    //if (rangeChanged)
     {
         sliderMax = sliderMaxTemp;
         sliderMin = sliderMinTemp;
