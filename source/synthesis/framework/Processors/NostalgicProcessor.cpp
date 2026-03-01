@@ -58,7 +58,7 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
         state.params.undertowEnv.decayParam->setParameterValue (3.f);
         state.params.undertowEnv.sustainParam->setParameterValue (1.f);
         state.params.undertowEnv.releaseParam->setParameterValue (2000.f);
-    }
+    } // else use values saved in VT
 
     parent.getValueTree().addListener(this);
     loadSamples();

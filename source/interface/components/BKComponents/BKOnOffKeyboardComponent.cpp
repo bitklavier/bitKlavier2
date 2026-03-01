@@ -61,6 +61,51 @@ void BKOnOffKeyboardComponent::drawKeyboardBackground(juce::Graphics & g, juce::
         }
     }
 }
+
+void BKOnOffKeyboardComponent::resized()
+{
+    juce::KeyboardComponentBase::resized();
+
+    if (showOctaveLabels)
+    {
+        updateOctaveLabels();
+        for (auto* label : octaveLabels)
+        {
+            int note = label->getProperties()["note"];
+            auto rect = getRectangleForKey(note);
+            if (!rect.isEmpty())
+            {
+                // Place near the bottom of the key
+                float labelHeight = 12.0f;
+                label->setBounds(rect.getX(), rect.getBottom() - labelHeight - 2.0f, rect.getWidth(), labelHeight);
+            }
+        }
+    }
+}
+
+void BKOnOffKeyboardComponent::updateOctaveLabels()
+{
+    octaveLabels.clear();
+    if (!showOctaveLabels) return;
+
+    for (int i = getRangeStart(); i <= getRangeEnd(); ++i)
+    {
+        if (i % 12 == 0) // C
+        {
+            int octave = (i / 12) - 1;
+            auto* label = new juce::Label();
+            label->setText("C" + juce::String(octave), juce::dontSendNotification);
+            label->setFont(juce::Font(10.0f));
+            label->setJustificationType(juce::Justification::centred);
+            label->setColour(juce::Label::textColourId, findColour(textLabelColourId));
+            label->setInterceptsMouseClicks(false, false);
+            label->getProperties().set("note", i);
+            addAndMakeVisible(label);
+            octaveLabels.add(label);
+        }
+    }
+}
+
 void BKOnOffKeyboardComponent::drawBlackKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) {
 
     juce::Colour c (juce::Colours::black);

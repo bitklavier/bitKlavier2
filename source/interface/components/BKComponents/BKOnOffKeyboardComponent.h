@@ -39,10 +39,24 @@ public:
     };
 
     ~BKOnOffKeyboardComponent() {
+        octaveLabels.clear();
     }
     void drawWhiteKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) override;
     void drawBlackKey(int midiNoteNumber, juce::Graphics &g, juce::Rectangle<float> area) override;
     void drawKeyboardBackground(juce::Graphics &g, juce::Rectangle<float> area) override;
+
+    void resized() override;
+
+    void setShowOctaveLabels(bool show)
+    {
+        if (showOctaveLabels != show)
+        {
+            showOctaveLabels = show;
+            updateOctaveLabels();
+            resized();
+        }
+    }
+
     int mouseOverNote = -1;
     std::atomic<std::bitset<128>> &keys;
 
@@ -80,6 +94,11 @@ public:
 private:
     std::bitset<128> liveKeys;
     std::bitset<128> keymapDisplayKeys;
+
+    bool showOctaveLabels = false;
+    juce::OwnedArray<juce::Label> octaveLabels;
+
+    void updateOctaveLabels();
 };
 
 

@@ -56,7 +56,7 @@ class BKKeymapKeyboardComponent : public StateModulatedComponent,
                                   public juce::Button::Listener,
                                   public juce::ComboBox::Listener {
 public:
-    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state, bool helperButtons = true, bool isMono = false) :
+    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state, bool helperButtons = true, bool isMono = false, bool showOctaveLabels = false) :
                   StateModulatedComponent(juce::ValueTree{}),
                   keyboard_state_(*keyboard_state),
                   keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard, keyboard_state->keyStates){
@@ -72,6 +72,7 @@ public:
         keyboard_.setScrollButtonsVisible(false);
         keyboard_.setAvailableRange(minKey, maxKey);
         keyboard_.setOctaveForMiddleC(4);
+        keyboard_.setShowOctaveLabels(showOctaveLabels);
         keyboard_.addMouseListener(this, true);
         addAndMakeVisible(keyboard_);
 
@@ -160,6 +161,8 @@ public:
         //all of the above unnecessary?
         keyboard_.setAvailableRange(minKey, maxKey);
     }
+
+    void setOctaveLabelsEnabled(bool enabled) { keyboard_.setShowOctaveLabels(enabled); }
 
     void setOctaveForMiddleC(int octaveNum)
     {

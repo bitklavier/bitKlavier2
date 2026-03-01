@@ -17,8 +17,8 @@ class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKey
                                      public MidiManager::LiveMidiListener,
                                      private juce::Timer {
 public:
-    OpenGLKeymapKeyboardComponent(KeymapKeyboardState& params, bool helperButtons = true, bool isMono = false) :
-        OpenGlAutoImageComponent (&params, helperButtons, isMono), _params(params)
+    OpenGLKeymapKeyboardComponent(KeymapKeyboardState& params, bool helperButtons = true, bool isMono = false, bool showOctaveLabels = false) :
+        OpenGlAutoImageComponent (&params, helperButtons, isMono, showOctaveLabels), _params(params)
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
@@ -156,6 +156,9 @@ public:
     }
 
     bool postUInotesToEngine_ { false };
+
+    void setShowOctaveLabels(bool show) { setOctaveLabelsEnabled(show); }
+    void setOctaveForMiddleC(int octaveNum) { BKKeymapKeyboardComponent::setOctaveForMiddleC(octaveNum); }
 
 private:
     void tryRegisterLiveListener()
