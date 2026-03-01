@@ -180,7 +180,10 @@ void NostalgicProcessor::updateNoteVisualization()
             newpositions.add(note.undertowTimerSamples * (1000./getSampleRate())+note.waveDistanceMs);
         }
     }
-    state.params.waveDistUndertowParams.displaySliderPositions = newpositions;
+    {
+        const juce::ScopedLock sl (state.params.waveDistUndertowParams.displaySliderLock);
+        state.params.waveDistUndertowParams.displaySliderPositions = newpositions;
+    }
 }
 
 void NostalgicProcessor::handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages)

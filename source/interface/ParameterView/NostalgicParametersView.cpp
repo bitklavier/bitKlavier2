@@ -6,8 +6,15 @@
 
 void NostalgicParametersView::timerCallback()
 {
-    if(isVisible())
-        waveSlider->updateSliderPositionsGL (nparams_.waveDistUndertowParams.displaySliderPositions);
+    if (isVisible())
+    {
+        juce::Array<int> positionsCopy;
+        {
+            const juce::ScopedLock sl (nparams_.waveDistUndertowParams.displaySliderLock);
+            positionsCopy = nparams_.waveDistUndertowParams.displaySliderPositions;
+        }
+        waveSlider->updateSliderPositionsGL (positionsCopy);
+    }
 }
 
 void NostalgicParametersView::resized()

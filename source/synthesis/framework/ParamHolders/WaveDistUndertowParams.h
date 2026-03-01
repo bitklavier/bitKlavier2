@@ -31,6 +31,7 @@ struct WaveDistUndertowParams : chowdsp::ParamHolder
     };
 
     juce::Array<int> displaySliderPositions;
+    juce::CriticalSection displaySliderLock;
 
 
 
