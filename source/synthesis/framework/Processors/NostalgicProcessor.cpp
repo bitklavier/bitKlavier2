@@ -45,6 +45,21 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
     for (int i = 0; i < 128; i++){
         holdTimers.add(0);
     }
+
+    // set some default vals different from the EnvParams defaults, if there aren't already saved values in the valueTree
+    if (!vt.hasProperty ("Reverseattack")) // just using Reverseattack as a proxy for whether this is a new Nostalgic, or one with values in VT
+    {
+        state.params.reverseEnv.attackParam->setParameterValue (30.f);
+        state.params.reverseEnv.decayParam->setParameterValue (3.f);
+        state.params.reverseEnv.sustainParam->setParameterValue (1.f);
+        state.params.reverseEnv.releaseParam->setParameterValue (200.f);
+
+        state.params.undertowEnv.attackParam->setParameterValue (200.f);
+        state.params.undertowEnv.decayParam->setParameterValue (3.f);
+        state.params.undertowEnv.sustainParam->setParameterValue (1.f);
+        state.params.undertowEnv.releaseParam->setParameterValue (2000.f);
+    }
+
     parent.getValueTree().addListener(this);
     loadSamples();
 }
@@ -275,7 +290,8 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     for (int i = reverseTimers.size() - 1; i >= 0; --i)
     {
         auto& reverseNote = reverseTimers.getReference(i);
-        if (reverseNote.reverseTimerSamples > reverseNote.noteDurationSamples)
+        //begin the noteOff taking into account the release time, so that the note ends completely within the desired reverseNote duration
+        if (reverseNote.reverseTimerSamples > reverseNote.noteDurationSamples - *state.params.reverseEnv.releaseParam * getSampleRate() / 1000.)
         {
             // play the undertow for that note
             if (reverseNote.undertowDurationMs > 0 && reverseNote.isReverse)
@@ -286,10 +302,10 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 noteOnSpecMap[note].startDirection = Direction::forward;
                 noteOnSpecMap[note].startTime = reverseNote.waveDistanceMs;
                 noteOnSpecMap[note].sustainTime = reverseNote.undertowDurationMs;
-                noteOnSpecMap[note].envParams.attack = state.params.undertowEnv.attackParam->getCurrentValue() * .001; // BKADSR expects seconds, not ms
-                noteOnSpecMap[note].envParams.decay = state.params.undertowEnv.decayParam->getCurrentValue() * .001;
-                noteOnSpecMap[note].envParams.sustain = state.params.undertowEnv.sustainParam->getCurrentValue();
-                noteOnSpecMap[note].envParams.release = state.params.undertowEnv.releaseParam->getCurrentValue() * .001;
+                noteOnSpecMap[note].envParams.attack = *state.params.undertowEnv.attackParam * .001; // BKADSR expects seconds, not ms
+                noteOnSpecMap[note].envParams.decay = *state.params.undertowEnv.decayParam * .001;
+                noteOnSpecMap[note].envParams.sustain = *state.params.undertowEnv.sustainParam;
+                noteOnSpecMap[note].envParams.release = *state.params.undertowEnv.releaseParam * .001;
 
                 reverseNote.isReverse = false;
 

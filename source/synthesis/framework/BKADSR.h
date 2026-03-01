@@ -115,6 +115,7 @@ public:
     void setSampleRate (double newSampleRate) noexcept
     {
         jassert (newSampleRate > 0.0);
+        //DBG("BKADSR::setSampleRate(), newSampleRate = " << newSampleRate);
         sampleRate = newSampleRate;
         recalculateRates();
     }
@@ -130,8 +131,6 @@ public:
     /** Starts the attack phase of the envelope. */
     void noteOn() noexcept
     {
-        // DBG("BKADSR::noteOn(), attack = " << parameters.attack << ", decay = " << parameters.decay << ", sustain = " << parameters.sustain << ", release = " << parameters.release);
-        // DBG("BKADSR::noteOn(), attackRate = " << attackRate);
         if (attackRate > 0.0f)
         {
             state = State::attack;
@@ -156,8 +155,12 @@ public:
             if (parameters.release > 0.0f)
             {
                 if (state != State::release) envelopeVal = lastPreReleaseEnvelopeVal;
-                releaseRate = (float) (envelopeVal / (parameters.release * sampleRate));
-                state = State::release;
+                // releaseRate = (float) (envelopeVal / (parameters.release * sampleRate));
+                if (state != State::release)
+                {
+                    releaseRate = (float) (envelopeVal / (parameters.release * sampleRate));
+                    state = State::release;
+                }
             }
             else
             {
@@ -349,6 +352,7 @@ private:
 
     void goToNextState() noexcept
     {
+        // DBG("BKADSR::goToNextState(), envelopeVal = " << envelopeVal << " state = " << static_cast<int>(state));
         if (state == State::attack)
         {
             state = (decayRate > 0.0f ? State::decay : State::sustain);

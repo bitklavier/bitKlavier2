@@ -954,8 +954,6 @@ public:
         float startTimeMS = 0.f,
         Direction startDirection = Direction::forward)
     {
-        firstTime = true;
-
         samplerSound = _sound;
         currentlyPlayingSound = _sound;
         currentlyPlayingNote = midiNoteNumber;
@@ -975,7 +973,6 @@ public:
             samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
             currentA4Freq / 440.);
 
-        DBG("sample increment = " << sampleIncrement.getTargetValue());
         /*
          * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
          */
@@ -986,7 +983,6 @@ public:
         currentDirection = startDirection;
         currentSamplePos = startTimeMS * getSampleRate() * .001;
         startTimeOffset =  currentSamplePos - targetSustainTime_samples; // Wave Distance
-        DBG("startTimeOffset (sec) = " << startTimeOffset / getSampleRate());
 
         /*
          * need to account for sampleIncrement when setting start time
@@ -995,19 +991,8 @@ public:
         if (currentDirection == Direction::backward)
         {
             // currentSamplePos *= sampleIncrement.getTargetValue();
-
-            auto envP = ampEnv.getParameters();
-            envP.release *= sampleIncrement.getTargetValue();
-            ampEnv.setParameters(envP);
-
-            DBG("targetSustainTime_samples (sec) 1 = " << targetSustainTime_samples / getSampleRate());
-            currentSamplePos = startTimeOffset + (targetSustainTime_samples + ampEnv.getParameters().release * getSampleRate()) * sampleIncrement.getTargetValue(); // Wave Distance + sustain time, scaled for increment
-            DBG("start play position = " << currentSamplePos / getSampleRate());
-
+            currentSamplePos = startTimeOffset + targetSustainTime_samples * sampleIncrement.getTargetValue(); // Wave Distance + sustain time, scaled for increment
             targetSustainTime_samples -= (ampEnv.getParameters().release * getSampleRate()); // start the noteOff to allow for the release time
-            DBG("targetSustainTime_samples (sec) 2 = " << targetSustainTime_samples / getSampleRate());
-            //startTimeOffset =  currentSamplePos - targetSustainTime_samples;
-            DBG("******* start play position - targetSustainTime = " << (currentSamplePos - targetSustainTime_samples) / getSampleRate());
         }
 
         tailOff = 0.0;
@@ -1421,11 +1406,6 @@ private:
         {
             if (currentSustainTime_samples > targetSustainTime_samples)
             {
-                if (firstTime)
-                {
-                    DBG("stopping note, currentSamplePos = " << currentSamplePos/getSampleRate() << ", targetSustainTime_samples = " << targetSustainTime_samples << ", currentSustainTime_samples = " << currentSustainTime_samples);
-                    firstTime = false;
-                }
                 stopNote(64, true);
             }
         }
@@ -1440,8 +1420,6 @@ private:
 
     void stopNote()
     {
-        DBG("stopNote called, currentSamplePos = " << currentSamplePos/getSampleRate());
-        DBG(""); DBG("");
         ampEnv.reset();
         clearCurrentNote();
         currentSamplePos = 0.0;
@@ -1522,8 +1500,6 @@ private:
     Direction currentDirection{ Direction::forward };
     //juce::uint64 currentSustainTime_samples = 0;
     double currentSustainTime_samples = 0;
-
-    bool firstTime;
 
     juce::AudioBuffer<float> m_Buffer;
 };
