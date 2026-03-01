@@ -21,7 +21,6 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     addOpenGlComponent(body_);
 
     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(keymap_, false, false, true);
-    keyboard_component_->setShowOctaveLabels(false);
     keyboard_component_->setOctaveForMiddleC(4);
     addStateModulatedComponent(keyboard_component_.get());
     addAndMakeVisible(keyboard_component_.get());
