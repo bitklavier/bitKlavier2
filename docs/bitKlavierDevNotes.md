@@ -485,3 +485,49 @@ DLT: I'm not sure we should touch this right now, as there are all sorts of comp
 - check both AU and VST3 versions, with Release buulds
   - might need to rescan them in Pluginval first
   - Pluginval's console should indicate that they passed all tests
+
+## Analysis of bitKlavier CPU Load (Idle State)
+
+Based on a detailed analysis of the codebase, here are the primary reasons for the high baseline CPU load when the application is not making any sound, along with suggestions for optimization.
+
+#### 1. OpenGL Continuous Repainting
+The most significant factor contributing to high idle CPU/GPU usage is the current OpenGL configuration in `FullInterface.cpp`.
+
+*   **Continuous Repainting**: In `FullInterface::FullInterface()`, the code calls `open_gl_context_.setContinuousRepainting(true)`. This forces the application to redraw the entire UI at the maximum possible rate (likely 60+ FPS), even if nothing on the screen has changed.
+*   **Disabled V-Sync**: The call to `open_gl_context_.setSwapInterval(0)` in the same constructor typically disables vertical synchronization. This allows the render loop to run as fast as the hardware allows, which can consume a full CPU core just for the render loop's overhead, even with a simple UI.
+
+**Suggestions:**
+*   **Switch to Demand-Based Repainting**: Change `setContinuousRepainting(true)` to `false`. Then, use `repaint()` or `open_gl_context_.triggerRepaint()` only when something actually changes (e.g., a parameter is moved, a new module is added, or an animation is active).
+*   **Enable V-Sync**: Change `setSwapInterval(0)` to `1` (or remove it, as `1` is often the default). This synchronizes the frame rate with the monitor's refresh rate (typically 60Hz), preventing the application from wasting cycles on invisible frames.
+
+#### 2. Modulation Meter Updates
+In `FullInterface::renderOpenGL()`, the application calls `modulation_manager->renderMeters(open_gl_, animate_)` every frame.
+
+*   Inside `ModulationManager::renderMeters()`, it iterates through every meter in `meter_lookup_` and calls `meter.second->updateDrawing(num_voices)`.
+*   Even if `animate_` is `false`, `renderOpenGL` is still being called continuously due to the setting mentioned above.
+
+**Suggestions:**
+*   **Throttle Meter Updates**: Only update and render meters if there is actually audio signal or modulation activity. You can implement a "sleep" mode for the meters if they haven't seen a value change for a certain amount of time.
+*   **Conditional Rendering**: In `renderMeters`, check if any meters are actually active/moving before proceeding with the full render loop for them.
+
+#### 3. Timer Load
+While many timers in the project are set to reasonable intervals (e.g., 50ms/20Hz for parameter views), the aggregate load of many independent timers can add up.
+
+*   `NostalgicParametersView`, `BlendronicParametersView`, and several others all run their own `startTimer(50)`.
+*   `OpenGL_KeymapKeyboard` runs at 33ms (~30Hz) for visual MIDI updates.
+
+**Suggestions:**
+*   **Centralized UI Timer**: Instead of many components having their own timers, consider using a single centralized "UI Refresh" timer in `FullInterface` that notifies sub-sections if they need to update.
+*   **Lower Frequency for Background/Hidden Views**: Timers for components that are not currently visible (e.g., in a background tab or collapsed section) should be stopped or significantly slowed down.
+
+#### 4. Construction Site / OpenGL Lines
+The "cables" in the Construction Site use `OpenGlLine`. While these are well-optimized with a `dirty_` flag to avoid recalculating geometry, they are still being re-rendered every frame because of the global `setContinuousRepainting(true)`.
+
+**Suggestions:**
+*   Once `setContinuousRepainting` is set to `false`, these lines will only be re-rendered when `dirty_` is true (e.g., when a module is dragged), which will drastically reduce the idle load of the construction site.
+
+### Summary of Suggested Changes
+1.  **In `FullInterface.cpp`**: Set `setContinuousRepainting(false)` and `setSwapInterval(1)`.
+2.  **In `FullInterface.cpp`**: Add logic to call `open_gl_context_.triggerRepaint()` only when animations are active or when a UI interaction occurs.
+3.  **In `ModulationManager.cpp`**: Implement a check to skip meter updates if the audio engine reports no activity.
+4.  **Across Interface Components**: Ensure timers are stopped when components are hidden or when the plugin window is closed.

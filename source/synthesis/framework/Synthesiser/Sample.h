@@ -973,6 +973,8 @@ public:
             samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
             currentA4Freq / 440.);
 
+        targetFreqAtStartNote = getTargetFrequency();
+
         /*
          * these are actually the start and end points for the sample, not loop point markers for sustained sample looping
          */
@@ -1141,7 +1143,17 @@ private:
          * do need to for spring, and probably for regular notes it might be handy
          */
         if(tuning != nullptr ) {
-            if((tuning->getTuningType() == Static) || (tuning->getTuningType() == Spring_Tuning)) {
+            if(tuning->getTuningType() == Static)
+            {
+                // discrete, with frequency set at noteOn
+                sampleIncrement.setTargetValue (
+                    targetFreqAtStartNote / samplerSound->getCentreFrequencyInHz() *
+                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+                    currentA4Freq / 440.);
+            }
+            else if (tuning->getTuningType() == Spring_Tuning)
+            {
+                // continuous, with frequency updated every block
                 sampleIncrement.setTargetValue (
                     getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
                     samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
@@ -1482,6 +1494,7 @@ private:
 
     double currentTransposition; // comes from Transposition sliders in Direct/Nostalgic/Synchronic
     bool tuneTranspositions = false; // if this is true, then Transposition slider values will be tuned using the current tuning system (in TuningState)
+    double targetFreqAtStartNote;
 
     juce::SmoothedValue<double> level { 0 };
     juce::SmoothedValue<double> sampleBegin;

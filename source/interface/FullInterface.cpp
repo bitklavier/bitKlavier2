@@ -109,7 +109,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     setOpaque (true);
     open_gl_context_.setContinuousRepainting (true);
     open_gl_context_.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
-    open_gl_context_.setSwapInterval (0);
+    // open_gl_context_.setSwapInterval (0);
     open_gl_context_.setRenderer (this);
     //componentpaintingenabled fixes flickering
     open_gl_context_.setComponentPaintingEnabled (false); // set to true, and the non-OpenGL components will draw
