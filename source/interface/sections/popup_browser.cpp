@@ -1409,10 +1409,21 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+
+        PopupItems separator ("separator");
+        separator.enabled = false; // This makes it non-selectable
+        separator.id = -1; // will be a separator line
+
         auto string_names = parent->getSynth()->sampleLoadManager->getAllSampleSets();
         options.addItem(0, "use Global Soundset");
-        for (int i = 1; i < string_names.size() + 1; i++) {
-            options.addItem(i, string_names[i - 1]);
+        // for (int i = 1; i < string_names.size() + 1; i++) {
+        //     options.addItem(i, string_names[i - 1]);
+        // }
+        for (int i = 0; i < string_names.size(); i++) {
+            if (string_names[i] == "menuSeparator")
+                options.addItem(separator);
+            else
+                options.addItem(i, string_names[i]);
         }
 
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
