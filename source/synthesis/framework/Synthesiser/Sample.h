@@ -1146,6 +1146,14 @@ private:
             if(tuning->getTuningType() == Static)
             {
                 // discrete, with frequency set at noteOn
+                // - but, since the Tuning might have been Modded within a block or two of being played, we need to update the starting frequency
+                // - if we are within 20ms of the attack, we'll update the targetFreq, but otherwise leave it stable for the duration of the note
+                if (currentSustainTime_samples < .02f * getSampleRate())
+                {
+                    //DBG("updating targetFreqAtStartNote = " << targetFreqAtStartNote << " with numSamples = " << numSamples << " and currentSustainTime_samples = " << currentSustainTime_samples);
+                    targetFreqAtStartNote = getTargetFrequency();
+                }
+
                 sampleIncrement.setTargetValue (
                     targetFreqAtStartNote / samplerSound->getCentreFrequencyInHz() *
                     samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
@@ -1159,6 +1167,14 @@ private:
                     samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
                     currentA4Freq / 440.);
             }
+            // if (tuning->getTuningType() == Static || tuning->getTuningType() == Spring_Tuning)
+            // {
+            //     // continuous, with frequency updated every block
+            //     sampleIncrement.setTargetValue (
+            //         getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
+            //         samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+            //         currentA4Freq / 440.);
+            // }
             // skip for adaptive tunings
         }
         // otherwise just return ET

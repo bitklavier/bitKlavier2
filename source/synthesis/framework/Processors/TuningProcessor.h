@@ -169,7 +169,6 @@ struct TuningState : bitklavier::StateChangeableParameter
     int adaptiveHistoryCounter = 0;
     float clusterTimeMS = 0.;
     double lastFrequencyTarget = 440.;
-
     //std::atomic<bool> setFromAudioThread;
 
 };
