@@ -588,6 +588,59 @@ void TuningParametersView::textEditorEscapePressed(juce::TextEditor& editor)
     editor.moveCaretToTop(false);
 }
 
+bool TuningParametersView::isInterestedInFileDrag(const juce::StringArray& files)
+{
+    for (auto& file : files)
+    {
+        if (file.endsWithIgnoreCase(".scl") || file.endsWithIgnoreCase(".kbm"))
+            return true;
+    }
+    return false;
+}
+
+void TuningParametersView::filesDropped(const juce::StringArray& files, int x, int y)
+{
+    for (auto& filePath : files)
+    {
+        juce::File file(filePath);
+        if (file.existsAsFile())
+        {
+            if (file.getFileExtension().equalsIgnoreCase(".scl"))
+            {
+                juce::String content = file.loadFileAsString();
+                try
+                {
+                    Tunings::parseSCLData(content.toStdString());
+                    sclTextEditor->setText(content);
+                    params.tuningState.setScalaScaleFromString(content.toStdString());
+                }
+                catch (const Tunings::TuningError& e)
+                {
+                    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                           "SCL Parse Error",
+                                                           "Failed to parse .scl file: " + juce::String(e.what()));
+                }
+            }
+            else if (file.getFileExtension().equalsIgnoreCase(".kbm"))
+            {
+                juce::String content = file.loadFileAsString();
+                try
+                {
+                    Tunings::parseKBMData(content.toStdString());
+                    kbmTextEditor->setText(content);
+                    params.tuningState.setKBMFromString(content.toStdString());
+                }
+                catch (const Tunings::TuningError& e)
+                {
+                    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                           "KBM Parse Error",
+                                                           "Failed to parse .kbm file: " + juce::String(e.what()));
+                }
+            }
+        }
+    }
+}
+
 void TuningParametersView::resized()
 {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();

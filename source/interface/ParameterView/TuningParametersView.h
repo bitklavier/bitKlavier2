@@ -16,7 +16,7 @@
 #include "synth_slider.h"
 
 class AdaptiveTuningSection;
-class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener, juce::Timer, juce::TextEditor::Listener
+class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener, juce::Timer, juce::TextEditor::Listener, public juce::FileDragAndDropTarget
 {
 public:
     TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param, juce::String name, OpenGlWrapper *open_gl);
@@ -56,6 +56,9 @@ public:
 
     void showScalaKbm(bool show);
     void resized() override;
+
+    bool isInterestedInFileDrag(const juce::StringArray& files) override;
+    void filesDropped(const juce::StringArray& files, int x, int y) override;
 
     std::shared_ptr<PlainTextComponent> prepTitle;
 
