@@ -566,15 +566,36 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
 
 void TuningParametersView::textEditorReturnKeyPressed(juce::TextEditor& editor)
 {
-    if (&editor == sclTextEditor.get())
+    try
     {
-        params.tuningState.setScalaScaleFromString(editor.getText().toStdString());
-        DBG("Scala text editor: " << editor.getText());
+        if (&editor == sclTextEditor.get())
+        {
+            params.tuningState.setScalaScaleFromString(editor.getText().toStdString());
+            DBG("Scala text editor: " << editor.getText());
+        }
+        else if (&editor == kbmTextEditor.get())
+        {
+            params.tuningState.setKBMFromString(editor.getText().toStdString());
+            DBG("KBM text editor: " << editor.getText());
+        }
     }
-    else if (&editor == kbmTextEditor.get())
+    catch (const Tunings::TuningError& e)
     {
-        params.tuningState.setKBMFromString(editor.getText().toStdString());
-        DBG("KBM text editor: " << editor.getText());
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                               "Tuning Error",
+                                               "Failed to apply tuning: " + juce::String(e.what()));
+    }
+    catch (const std::exception& e)
+    {
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                               "System Error",
+                                               "An unexpected error occurred: " + juce::String(e.what()));
+    }
+    catch (...)
+    {
+        juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                               "Unknown Error",
+                                               "An unknown error occurred while applying tuning.");
     }
 }
 
@@ -605,37 +626,47 @@ void TuningParametersView::filesDropped(const juce::StringArray& files, int x, i
         juce::File file(filePath);
         if (file.existsAsFile())
         {
-            if (file.getFileExtension().equalsIgnoreCase(".scl"))
+            try
             {
-                juce::String content = file.loadFileAsString();
-                try
+                std::string content = file.loadFileAsString().toStdString();
+                if (file.getFileExtension().equalsIgnoreCase(".scl"))
                 {
-                    Tunings::parseSCLData(content.toStdString());
+                    // Validate content and compatibility
+                    auto scale = Tunings::parseSCLData(content);
+                    Tunings::Tuning(scale, params.tuningState.currentKBM, true);
+
+                    // If we get here, it's valid and compatible
                     sclTextEditor->setText(content);
-                    params.tuningState.setScalaScaleFromString(content.toStdString());
+                    params.tuningState.setScalaScaleFromString(content);
                 }
-                catch (const Tunings::TuningError& e)
+                else if (file.getFileExtension().equalsIgnoreCase(".kbm"))
                 {
-                    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
-                                                           "SCL Parse Error",
-                                                           "Failed to parse .scl file: " + juce::String(e.what()));
+                    // Validate content and compatibility
+                    auto kbm = Tunings::parseKBMData(content);
+                    Tunings::Tuning(params.tuningState.currentScalaScale, kbm, true);
+
+                    // If we get here, it's valid and compatible
+                    kbmTextEditor->setText(content);
+                    params.tuningState.setKBMFromString(content);
                 }
             }
-            else if (file.getFileExtension().equalsIgnoreCase(".kbm"))
+            catch (const Tunings::TuningError& e)
             {
-                juce::String content = file.loadFileAsString();
-                try
-                {
-                    Tunings::parseKBMData(content.toStdString());
-                    kbmTextEditor->setText(content);
-                    params.tuningState.setKBMFromString(content.toStdString());
-                }
-                catch (const Tunings::TuningError& e)
-                {
-                    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
-                                                           "KBM Parse Error",
-                                                           "Failed to parse .kbm file: " + juce::String(e.what()));
-                }
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                       "Tuning Parse Error",
+                                                       "Failed to parse or apply tuning file: " + juce::String(e.what()));
+            }
+            catch (const std::exception& e)
+            {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                       "System Error",
+                                                       "An unexpected error occurred: " + juce::String(e.what()));
+            }
+            catch (...)
+            {
+                juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                                       "Unknown Error",
+                                                       "An unknown error occurred while processing the file.");
             }
         }
     }
