@@ -544,6 +544,17 @@ void copyAtomicArrayToFloatArray(const std::array<std::atomic<float>, Size>& sou
     }
 }
 
+template <size_t Size>
+void copyFloatArrayToAtomicArray(const std::array<float, Size>& sourceArray, std::array<std::atomic<float>, Size>& destinationArray)
+{
+    for (size_t i = 0; i < Size; ++i)
+    {
+        // Atomically store the value from the source float array
+        // into the corresponding element in the destination atomic array.
+        destinationArray[i].store(sourceArray[i], std::memory_order_relaxed);
+    }
+}
+
 //juce::String arrayToStringWithIndex(const std::array<float, 128>& array);
 
 /**

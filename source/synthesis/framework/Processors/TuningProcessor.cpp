@@ -716,6 +716,63 @@ void TuningState::loadKBMFile(std::string fname)
     auto scala = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
 }
 
+void TuningState::mapScalaToInternalTuning()
+{
+    // for non 12-tet systems, map to absolute tuning
+    if (currentScalaTuning.scale.count != 12)
+    {
+        DBG ("Scala scale is not 12-tone, mapping to Absolute Offsets");
+        fundamental->setParameterValue (PitchClass::C);
+        DBG("currentScalaTuning.keyboardMapping.tuningFrequency = " << currentScalaTuning.keyboardMapping.tuningFrequency);
+        auto offset_ = bitklavier::utils::ratioToMidiTranspose (currentScalaTuning.keyboardMapping.tuningFrequency / mtof(currentScalaTuning.keyboardMapping.tuningConstantNote));
+        DBG("tuning offset from scala = " << offset_);
+        offsetKnobParam.offSetSliderParam->setParameterValue (offset_);
+        tuningSystem->setParameterValue(TuningSystem::Equal_Temperament);
+        for(int i = 0; i < absoluteTuningOffset.size(); i++)
+        {
+            float newOffset = (ftom(currentScalaTuning.frequencyForMidiNote(i), currentScalaTuning.keyboardMapping.tuningFrequency) - i) * 100.f;
+            absoluteTuningOffset[i].store(newOffset);
+        }
+    }
+
+    // otherwise, map to circular tuning
+    else
+    {
+        DBG("mapScalaToInternalTuning: mapping 12-tet Scala to Circular Tuning");
+        auto offsets = juce::Array<float>(12);
+
+        //subtract from equal temperament to get fractional midi representation
+        Tunings::Scale et = Tunings::evenTemperament12NoteScale();
+        for (int i = 0; i < 12; i++)
+        {
+            float micro = currentScalaTuning.scale.tones[i].cents;
+            float equal = et.tones[i].cents;
+            float offset = micro - equal;
+            //offsets.set((i+1)%12,offset); //.scl format puts first interval as the first line so we shift the representation over
+            circularTuningOffset_custom[(i+1)%12] = offset;
+        }
+
+        // set Fundamental
+        DBG("mapScalaToInternalTuning: scala fundamental = " << currentScalaTuning.keyboardMapping.tuningConstantNote);
+        fundamental->setParameterValue (PitchClass(currentScalaTuning.keyboardMapping.tuningConstantNote));
+
+        // set offset from A440, as above
+        auto scalaOffset = bitklavier::utils::ratioToMidiTranspose(currentScalaTuning.keyboardMapping.tuningFrequency / mtof(currentScalaTuning.keyboardMapping.tuningConstantNote));
+        DBG("mapScalaToInternalTuning: scalaOffset = " << scalaOffset);
+        offsetKnobParam.offSetSliderParam->setParameterValue (scalaOffset);
+
+        // set the scale to Custom
+        tuningSystem->setParameterValue(TuningSystem::Custom);
+
+        // reset absolute offsets as needed
+        for(int i = 0; i < absoluteTuningOffset.size(); i++)
+        {
+            absoluteTuningOffset[i].store(0.);
+        }
+
+    }
+}
+
 
 // ********************************************************************************************************************* //
 // ************************************************* Tuning Processor ************************************************** //

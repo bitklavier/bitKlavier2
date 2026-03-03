@@ -169,6 +169,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     void loadKBMFile(std::string fname);
     void setScalaScaleFromString(std::string s);
     void setKBMFromString(std::string s);
+    void mapScalaToInternalTuning();
 
     TuningState()
     {
