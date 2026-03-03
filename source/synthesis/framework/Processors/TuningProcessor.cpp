@@ -320,6 +320,24 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
     jassert(true);
 }
 
+double TuningState::getScalaTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
+{
+    // simple case: no transpositions
+    if (currentTransposition == 0)
+    {
+        return currentScalaTuning.frequencyForMidiNote(currentlyPlayingNote);
+    }
+
+    // or: transpositions
+    if (!tuneTranspositions) // in this case, tranposition is treated as multiple of currentlyPlayingNote frequency
+    {
+        return currentScalaTuning.frequencyForMidiNote (currentlyPlayingNote) * intervalToRatio (currentTransposition);
+    }
+
+    // otherwise, tune the transposed note with the scala scale
+    return currentScalaTuning.frequencyForMidiNote (currentlyPlayingNote + std::round(currentTransposition));
+}
+
 /**
  * getTargetFrequency() is the primary function for synthesizers to handle tuning
  *
@@ -388,8 +406,8 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
          * todo: need to sort out transposition handling for Scala
          *
          */
-        lastFrequencyTarget = currentScalaTuning.frequencyForMidiNote (currentlyPlayingNote);
-        // lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+        // lastFrequencyTarget = currentScalaTuning.frequencyForMidiNote (currentlyPlayingNote);
+        lastFrequencyTarget = getScalaTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
     /**
