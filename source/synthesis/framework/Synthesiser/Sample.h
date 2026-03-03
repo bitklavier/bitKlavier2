@@ -1150,7 +1150,6 @@ private:
                 // - if we are within 20ms of the attack, we'll update the targetFreq, but otherwise leave it stable for the duration of the note
                 if (currentSustainTime_samples < .02f * getSampleRate())
                 {
-                    //DBG("updating targetFreqAtStartNote = " << targetFreqAtStartNote << " with numSamples = " << numSamples << " and currentSustainTime_samples = " << currentSustainTime_samples);
                     targetFreqAtStartNote = getTargetFrequency();
                 }
 
