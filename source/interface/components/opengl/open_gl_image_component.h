@@ -140,10 +140,11 @@ class OpenGlTextEditor : public OpenGlAutoImageComponent<juce::TextEditor>, publ
 
     void applyFont() {
       juce::Font font;
+      float fontHeight = isMultiLine() ? 14.0f : getHeight() / 2.0f;
       if (monospace_)
-        font = Fonts::instance()->monospace().withPointHeight(getHeight() / 2.0f);
+        font = Fonts::instance()->monospace().withPointHeight(fontHeight);
       else
-        font = Fonts::instance()->proportional_light().withPointHeight(getHeight() / 2.0f);
+        font = Fonts::instance()->proportional_light().withPointHeight(fontHeight);
 
       applyFontToAllText(font);
       redoImage();
@@ -152,7 +153,7 @@ class OpenGlTextEditor : public OpenGlAutoImageComponent<juce::TextEditor>, publ
     void visibilityChanged() override {
       juce::TextEditor::visibilityChanged();
 
-      if (isVisible() && !isMultiLine())
+      if (isVisible())
         applyFont();
     }
 
@@ -161,13 +162,14 @@ class OpenGlTextEditor : public OpenGlAutoImageComponent<juce::TextEditor>, publ
       if (isMultiLine()) {
         float indent = image_component_->findValue(Skin::kLabelBackgroundRounding);
         setIndents(indent, indent);
-        return;
+      }
+      else {
+        if (monospace_)
+          setIndents(getHeight() * 0.2, getHeight() * 0.17);
+        else
+          setIndents(getHeight() * 0.2, getHeight() * 0.15);
       }
 
-      if (monospace_)
-        setIndents(getHeight() * 0.2, getHeight() * 0.17);
-      else
-        setIndents(getHeight() * 0.2, getHeight() * 0.15);
       if (isVisible())
         applyFont();
     }

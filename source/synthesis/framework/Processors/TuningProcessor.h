@@ -20,6 +20,7 @@
 #include "SpringTuning/SpringTuning.h"
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_sources/chowdsp_sources.h>
+#include "Tunings.h"
 #include "target_types.h"
 
 /**
@@ -160,6 +161,16 @@ struct TuningState : bitklavier::StateChangeableParameter
     const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
     const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
     const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
+
+    // SCALA/KBM stuff
+    void loadScalaFile(juce::File file);
+    void loadScalaFile(std::string fname);
+    void loadKBMFile(std::string fname);
+
+    juce::String currentScalaString;
+    juce::String currentKBMString;
+    Tunings::Scale currentScalaScale;
+    Tunings::KeyboardMapping currentKBM;
 
     /*
      * Adaptive vars

@@ -589,6 +589,7 @@ enum TuningType {
     Adaptive = 1 << 1,
     Adaptive_Anchored = 1 << 2,
     Spring_Tuning = 1 << 3,
+    Scala_KBM = 1 << 4,
 };
 
 enum SelectChoice {

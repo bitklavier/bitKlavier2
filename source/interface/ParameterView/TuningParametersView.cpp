@@ -61,6 +61,43 @@ TuningParametersView::TuningParametersView(
         addComboBox(tuningtype_combo_box.get(), true, true);
     }
 
+    // Scala editing
+    sclTextEditor = std::make_shared<OpenGlTextEditor>("SCLTXT");
+    addOpenGlComponent(sclTextEditor->getImageComponent());
+    addAndMakeVisible(sclTextEditor.get());
+    sclTextEditor->setMultiLine(true);
+    sclTextEditor->setReturnKeyStartsNewLine(true);
+    sclTextEditor->setReadOnly(false);
+    sclTextEditor->setScrollbarsShown(true);
+    sclTextEditor->setCaretVisible(true);
+    sclTextEditor->setPopupMenuEnabled(true);
+    sclTextEditor->setText("SCALA STUFF");
+    sclTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colours::black.withAlpha(0.5f));
+    sclTextEditor->setColour(juce::TextEditor::textColourId, juce::Colours::white);
+    sclTextEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::white.withAlpha(0.5f));
+    sclTextEditor->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::white);
+
+    kbmTextEditor = std::make_shared<OpenGlTextEditor>("KBMTXT");
+    addOpenGlComponent(kbmTextEditor->getImageComponent());
+    addAndMakeVisible(kbmTextEditor.get());
+    kbmTextEditor->setMultiLine(true);
+    kbmTextEditor->setReturnKeyStartsNewLine(true);
+    kbmTextEditor->setReadOnly(false);
+    kbmTextEditor->setScrollbarsShown(true);
+    kbmTextEditor->setCaretVisible(true);
+    kbmTextEditor->setPopupMenuEnabled(true);
+    kbmTextEditor->setText("KBM STUFF");
+    kbmTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colours::black.withAlpha(0.5f));
+    kbmTextEditor->setColour(juce::TextEditor::textColourId, juce::Colours::white);
+    kbmTextEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::white.withAlpha(0.5f));
+    kbmTextEditor->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::white);
+
+    sclTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
+    kbmTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
+
+    sclTextEditor->addListener(this);
+    kbmTextEditor->addListener(this);
+
     /*
      * todo: this is problematic, in that it overwrites modded values
      *          - if you trigger a mod that changes the circular tuning, and then open the Tuning prep, this will overwrite those
@@ -88,19 +125,15 @@ TuningParametersView::TuningParametersView(
         chowdsp::ParameterListenerThread::MessageThread,
         [this]() {
              showCurrentTuningType();
-            /*
-             * important call to get the backgrounds to redraw properly!
-             */
-            auto interface = findParentComponentOfClass<SynthGuiInterface>();
-            interface->getGui()->prep_popup->repaintPrepBackground();
         })
     };
-
+    
     tuningCallbacks += {listeners.addParameterListener(
         params.tuningState.tuningSystem,
         chowdsp::ParameterListenerThread::MessageThread,
         [this]()
         {
+            showCurrentTuningType();
             setOffsetsFromTuningSystem(
                 params.tuningState.tuningSystem->get(),
                 params.tuningState.fundamental->getIndex(),
@@ -274,24 +307,63 @@ void TuningParametersView::showSpringTuning(bool show)
     params.tuningState.springTuner->setRate (params.tuningState.springTuningParams.rate->getCurrentValue(), show);
 }
 
+void TuningParametersView::showScalaKbm(bool show)
+{
+    DBG("TuningParametersView::showScalaKbm, show = " + juce::String((int)show));
+    sclTextEditor->setVisible(show);
+    kbmTextEditor->setVisible(show);
+    if (show)
+    {
+        sclTextEditor->toFront(true);
+        kbmTextEditor->toFront(true);
+        sclTextEditor->getImageComponent()->toFront(true);
+        kbmTextEditor->getImageComponent()->toFront(true);
+        sclTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
+        kbmTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
+        sclTextEditor->redoImage();
+        kbmTextEditor->redoImage();
+    }
+
+    // Ensure they are not covered by other components
+    if (show)
+    {
+        for (auto* child : getChildren())
+        {
+            if (child != sclTextEditor.get() && child != kbmTextEditor.get() &&
+                child != sclTextEditor->getImageComponent().get() && child != kbmTextEditor->getImageComponent().get())
+            {
+                if (child->getBounds().intersects(sclTextEditor->getBounds()) ||
+                    child->getBounds().intersects(kbmTextEditor->getBounds()))
+                {
+                    child->toBack();
+                }
+            }
+        }
+    }
+}
+
 void TuningParametersView::showCurrentTuningType()
 {
     // always show static tuning
     showStaticTuning(true);
-    // if(params.tuningState.tuningType->get() == TuningType::Static)
-    //     showStaticTuning(true);
-    // else
-    //     showStaticTuning(false);
+    showAdaptiveTuning(params.tuningState.tuningType->get() == TuningType::Adaptive || params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored);
+    showSpringTuning(params.tuningState.tuningType->get() == TuningType::Spring_Tuning);
+    showScalaKbm(params.tuningState.tuningType->get() == TuningType::Scala_KBM);
 
-    if(params.tuningState.tuningType->get() == TuningType::Adaptive || params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored)
-        showAdaptiveTuning(true);
-    else
-        showAdaptiveTuning(false);
+    resized();
 
-    if(params.tuningState.tuningType->get() == TuningType::Spring_Tuning)
-        showSpringTuning(true);
-    else
-        showSpringTuning(false);
+    /*
+     * important call to get the backgrounds to redraw properly!
+     */
+    auto interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (interface != nullptr)
+    {
+        if (auto* gui = interface->getGui())
+        {
+            if (gui->prep_popup != nullptr)
+                gui->prep_popup->repaintPrepBackground();
+        }
+    }
 }
 
 /**
@@ -490,6 +562,30 @@ void TuningParametersView::drawSpiral(juce::Graphics& g)
     }
 }
 
+void TuningParametersView::textEditorReturnKeyPressed(juce::TextEditor& editor)
+{
+    if (&editor == sclTextEditor.get())
+    {
+        //params.tuningState.loadScalaFile(editor.getText().toStdString());
+        DBG("Scala text editor return key: " << editor.getText());
+    }
+    else if (&editor == kbmTextEditor.get())
+    {
+        //params.tuningState.loadKBMFile(editor.getText().toStdString());
+        DBG("KBM text editor return key: " << editor.getText());
+    }
+}
+
+void TuningParametersView::textEditorFocusLost(juce::TextEditor& editor)
+{
+    textEditorReturnKeyPressed(editor);
+}
+
+void TuningParametersView::textEditorEscapePressed(juce::TextEditor& editor)
+{
+    editor.moveCaretToTop(false);
+}
+
 void TuningParametersView::resized()
 {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
@@ -541,52 +637,19 @@ void TuningParametersView::resized()
     juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.5);
     semitoneSection->setBounds(circularKeyboardBox.removeFromRight(semitoneBoxTargetWidth));
     offsetKnobSection->setBounds(circularKeyboardBox.removeFromLeft(knobsectionheight + 30));
-    //circularKeyboardBox.reduce(largepadding * 6, 0);
     circular_keyboard->setBounds(circularKeyboardBox);
-
-    // juce::Rectangle knobsBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
-    //knobsBox.reduce(largepadding * 6, 0);
-    // semitoneSection->setBounds(knobsBox.removeFromRight(semitoneBoxTargetWidth));
-    // offsetKnobSection->setBounds(knobsBox.removeFromLeft(knobsectionheight + 30));
-    // juce::Rectangle leftKnobBox = knobsBox.removeFromLeft(knobsBox.getWidth() / 2.);
-    // leftKnobBox.reduce(largepadding, 0);
-    // semitoneSection->setBounds(knobsBox.removeFromLeft(semitoneBoxTargetWidth));
-    // offsetKnobSection->setBounds(leftKnobBox.removeFromRight(knobsectionheight + 30));
-    //circular_keyboard->setBounds(circularKeyboardBox);
-//    if (circularKeyboardBox.getWidth() > circularKeyboardTargetWidth)
-//        circularKeyboardBox.reduce((circularKeyboardBox.getWidth() - circularKeyboardTargetWidth) / 2., 0);
-//    circular_keyboard->setBounds(circularKeyboardBox);
-
-    // leftHalf.removeFromTop(smallpadding);
-    // juce::Rectangle circularKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.25);
-    // circularKeyboardBox.reduce(largepadding * 6, 0);
-    // circular_keyboard->setBounds(circularKeyboardBox);
-
-    // leftHalf.removeFromTop(smallpadding);
-    // juce::Rectangle absoluteKeyboardBox = leftHalf.removeFromTop(semitoneBoxTargetHeight * 1.25);
-    // absolutekeyboard->setBounds(absoluteKeyboardBox);
-
-    //leftHalf.removeFromTop(largepadding);
-
-//    juce::Rectangle offsetAndSemitoneBox = leftHalf.removeFromTop(semitoneBoxTargetHeight);
-//    semitoneSection->setBounds(offsetAndSemitoneBox.removeFromRight(semitoneBoxTargetWidth));
-//
-//    juce::Rectangle offsetKnobBox = offsetAndSemitoneBox.removeFromLeft(knobsectionheight + 30);
-//    offsetKnobSection->setBounds(offsetKnobBox);
-
-//    areaAdaptive.removeFromTop(comboboxheight + largepadding * 2);
-//    areaSpring.removeFromTop(comboboxheight + largepadding * 2);
-//    adaptiveSection->setBounds(areaAdaptive.removeFromTop(200));
-//    springTuningSection->setBounds(areaSpring.removeFromTop(300));
-
-    // adaptiveSection->setBounds(leftHalf.removeFromTop(165));
-    // leftHalf.removeFromTop(smallpadding);
-    // springTuningSection->setBounds(leftHalf.removeFromTop(300));
 
     // these two can be on top of one another, since only one or the other is visible at any particular time
     juce::Rectangle leftHalfSave = leftHalf;
+    juce::Rectangle scalaBox = leftHalf;
     adaptiveSection->setBounds(leftHalf.removeFromBottom(165));
     springTuningSection->setBounds(leftHalfSave.removeFromBottom(275));
+
+    sclTextEditor->setBounds(scalaBox.removeFromLeft(scalaBox.getWidth() / 2.));
+    kbmTextEditor->setBounds(scalaBox);
+
+    sclTextEditor->getImageComponent()->setBounds(sclTextEditor->getBounds());
+    kbmTextEditor->getImageComponent()->setBounds(kbmTextEditor->getBounds());
 
     SynthSection::resized();
 }

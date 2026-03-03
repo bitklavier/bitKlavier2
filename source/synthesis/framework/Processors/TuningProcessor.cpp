@@ -596,6 +596,50 @@ void TuningState::printSpiralNotes()
     }
 }
 
+// ****************** SCALA / KBM stuff ****************** //
+
+void TuningState::loadScalaFile(juce::File file)
+{
+    Tunings::Scale s;
+    juce::String a = file.loadFileAsString();
+    DBG(a);
+
+    try {
+        s = Tunings::parseSCLData(file.loadFileAsString().toStdString());
+    } catch (Tunings::TuningError t) {
+        juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, TRANS("Scala Loading Error"), TRANS(t.what()));
+        return;
+    }
+    currentScalaScale = s;
+    auto scala = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+}
+
+void TuningState::loadScalaFile(std::string fname)
+{
+    Tunings::Scale s;
+    try {
+        s = Tunings::readSCLFile(fname);
+    } catch (Tunings::TuningError t) {
+        juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, TRANS("Scala Loading Error"), TRANS(t.what()));
+        return;
+    }
+    currentScalaScale = s;
+    auto scala = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+}
+
+void TuningState::loadKBMFile(std::string fname)
+{
+    Tunings::KeyboardMapping kbm;
+    try {
+        kbm = Tunings::readKBMFile(fname);
+    } catch (Tunings::TuningError t) {
+        juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, TRANS("KBM Loading Error"), TRANS(t.what()));
+        return;
+    }
+    currentKBM = kbm;
+    auto scala = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+}
+
 
 // ********************************************************************************************************************* //
 // ************************************************* Tuning Processor ************************************************** //

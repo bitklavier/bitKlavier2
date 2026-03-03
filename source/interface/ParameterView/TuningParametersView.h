@@ -16,7 +16,7 @@
 #include "synth_slider.h"
 
 class AdaptiveTuningSection;
-class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener, juce::Timer
+class TuningParametersView : public SynthSection, BKTuningKeyboardSlider::Listener, juce::Timer, juce::TextEditor::Listener
 {
 public:
     TuningParametersView(chowdsp::PluginState& pluginState, TuningParams& param, juce::String name, OpenGlWrapper *open_gl);
@@ -50,6 +50,11 @@ public:
 
     void drawSpiral(juce::Graphics& g);
 
+    void textEditorReturnKeyPressed(juce::TextEditor& editor) override;
+    void textEditorFocusLost(juce::TextEditor& editor) override;
+    void textEditorEscapePressed(juce::TextEditor& editor);
+
+    void showScalaKbm(bool show);
     void resized() override;
 
     std::shared_ptr<PlainTextComponent> prepTitle;
@@ -76,6 +81,10 @@ public:
     std::shared_ptr<PlainTextComponent> lastFrequencyDisplay;
 
     juce::Rectangle<int> spiralBox;
+
+    // SCALA/KBM
+    std::shared_ptr<OpenGlTextEditor> sclTextEditor;
+    std::shared_ptr<OpenGlTextEditor> kbmTextEditor;
 
     TuningParams& params;
 
