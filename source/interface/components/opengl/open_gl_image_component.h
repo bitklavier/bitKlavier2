@@ -140,7 +140,12 @@ class OpenGlTextEditor : public OpenGlAutoImageComponent<juce::TextEditor>, publ
 
     void applyFont() {
       juce::Font font;
-      float fontHeight = isMultiLine() ? 14.0f : getHeight() / 2.0f;
+      float fontHeight;
+      if (font_size_ > 0.0f)
+        fontHeight = font_size_;
+      else
+        fontHeight = isMultiLine() ? 14.0f : getHeight() / 2.0f;
+
       if (monospace_)
         font = Fonts::instance()->monospace().withPointHeight(fontHeight);
       else
@@ -178,8 +183,14 @@ class OpenGlTextEditor : public OpenGlAutoImageComponent<juce::TextEditor>, publ
       monospace_ = true;
     }
 
+    void setFontSize(float size) {
+      font_size_ = size;
+      applyFont();
+    }
+
   private:
     bool monospace_;
+    float font_size_ = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OpenGlTextEditor)
 };

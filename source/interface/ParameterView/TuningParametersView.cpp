@@ -71,11 +71,12 @@ TuningParametersView::TuningParametersView(
     sclTextEditor->setScrollbarsShown(true);
     sclTextEditor->setCaretVisible(true);
     sclTextEditor->setPopupMenuEnabled(true);
-    sclTextEditor->setText("SCALA STUFF");
+    sclTextEditor->setText(params.tuningState.currentScalaTuning.scale.rawText);
     sclTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colours::black.withAlpha(0.5f));
     sclTextEditor->setColour(juce::TextEditor::textColourId, juce::Colours::white);
     sclTextEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::white.withAlpha(0.5f));
     sclTextEditor->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::white);
+    sclTextEditor->setFontSize(12.0f);
 
     kbmTextEditor = std::make_shared<OpenGlTextEditor>("KBMTXT");
     addOpenGlComponent(kbmTextEditor->getImageComponent());
@@ -86,11 +87,12 @@ TuningParametersView::TuningParametersView(
     kbmTextEditor->setScrollbarsShown(true);
     kbmTextEditor->setCaretVisible(true);
     kbmTextEditor->setPopupMenuEnabled(true);
-    kbmTextEditor->setText("KBM STUFF");
+    kbmTextEditor->setText(params.tuningState.currentScalaTuning.keyboardMapping.rawText);
     kbmTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colours::black.withAlpha(0.5f));
     kbmTextEditor->setColour(juce::TextEditor::textColourId, juce::Colours::white);
     kbmTextEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::white.withAlpha(0.5f));
     kbmTextEditor->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::white);
+    kbmTextEditor->setFontSize(12.0f);
 
     sclTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
     kbmTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
@@ -645,8 +647,11 @@ void TuningParametersView::resized()
     adaptiveSection->setBounds(leftHalf.removeFromBottom(165));
     springTuningSection->setBounds(leftHalfSave.removeFromBottom(275));
 
-    sclTextEditor->setBounds(scalaBox.removeFromLeft(scalaBox.getWidth() / 2.));
-    kbmTextEditor->setBounds(scalaBox);
+    juce::Rectangle kbmBox = scalaBox.removeFromRight(scalaBox.getWidth() / 2.);
+    scalaBox.reduce(largepadding, largepadding);
+    kbmBox.reduce(largepadding, largepadding);
+    sclTextEditor->setBounds(scalaBox);
+    kbmTextEditor->setBounds(kbmBox);
 
     sclTextEditor->getImageComponent()->setBounds(sclTextEditor->getBounds());
     kbmTextEditor->getImageComponent()->setBounds(kbmTextEditor->getBounds());

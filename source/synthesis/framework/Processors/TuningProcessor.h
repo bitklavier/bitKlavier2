@@ -171,6 +171,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     juce::String currentKBMString;
     Tunings::Scale currentScalaScale;
     Tunings::KeyboardMapping currentKBM;
+    Tunings::Tuning currentScalaTuning;
 
     /*
      * Adaptive vars
