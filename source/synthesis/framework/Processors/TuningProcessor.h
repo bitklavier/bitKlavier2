@@ -169,6 +169,13 @@ struct TuningState : bitklavier::StateChangeableParameter
     void setScalaScaleFromString(std::string s);
     void setKBMFromString(std::string s);
 
+    TuningState()
+    {
+        currentScalaScale = Tunings::evenTemperament12NoteScale();
+        currentKBM = Tunings::KeyboardMapping();
+        currentScalaTuning = Tunings::Tuning (currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+    }
+
     juce::String currentScalaString;
     juce::String currentKBMString;
     Tunings::Scale currentScalaScale;

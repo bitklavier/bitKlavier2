@@ -427,6 +427,12 @@ typename Serializer::SerializedType TuningParams::serialize (const TuningParams&
     copyAtomicArrayToFloatArray(paramHolder.tuningState.absoluteTuningOffset, tempAbsoluteOffsets);
     Serializer::template addChildElement<128> (ser, "absoluteTuning", tempAbsoluteOffsets, arrayToStringWithIndex<128>);
 
+    auto scalaString = juce::String(paramHolder.tuningState.currentScalaTuning.scale.rawText);
+    Serializer::addChildElement (ser, "scalaScale", scalaString);
+
+    auto kbmString = juce::String(paramHolder.tuningState.currentScalaTuning.keyboardMapping.rawText);
+    Serializer::addChildElement (ser, "scalaKBM", kbmString);
+
     return ser;
 }
 
@@ -446,6 +452,12 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 
     myStr = deserial->getStringAttribute ("absoluteTuning");
     parseIndexValueStringToAtomicArray(myStr.toStdString(), paramHolder.tuningState.absoluteTuningOffset);
+
+    auto scalaString = deserial->getStringAttribute ("scalaScale");
+    paramHolder.tuningState.setScalaScaleFromString(scalaString.toStdString());
+
+    auto kbmString = deserial->getStringAttribute ("scalaKBM");
+    paramHolder.tuningState.setKBMFromString(kbmString.toStdString());
 }
 
 /**
@@ -610,18 +622,38 @@ void TuningState::printSpiralNotes()
 
 void TuningState::setScalaScaleFromString(std::string s)
 {
-    currentScalaScale = Tunings::parseSCLData(s);
-    currentScalaTuning = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
-    currentScalaString = currentScalaTuning.scale.rawText;
-    DBG("Scala scale set from string: " << currentScalaString);
+    if (s.empty())
+        return;
+
+    try
+    {
+        currentScalaScale = Tunings::parseSCLData (s);
+        currentScalaTuning = Tunings::Tuning (currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+        currentScalaString = currentScalaTuning.scale.rawText;
+        DBG ("Scala scale set from string: " << currentScalaString);
+    }
+    catch (const Tunings::TuningError& t)
+    {
+        DBG ("Error setting Scala scale from string: " << t.what());
+    }
 }
 
 void TuningState::setKBMFromString(std::string s)
 {
-    currentKBM = Tunings::parseKBMData(s);
-    currentScalaTuning = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
-    currentKBMString = currentScalaTuning.keyboardMapping.rawText;
-    DBG("KBM set from string: " << currentKBMString);
+    if (s.empty())
+        return;
+
+    try
+    {
+        currentKBM = Tunings::parseKBMData (s);
+        currentScalaTuning = Tunings::Tuning (currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+        currentKBMString = currentScalaTuning.keyboardMapping.rawText;
+        DBG ("KBM set from string: " << currentKBMString);
+    }
+    catch (const Tunings::TuningError& t)
+    {
+        DBG ("Error setting KBM from string: " << t.what());
+    }
 }
 
 void TuningState::loadScalaFile(juce::File file)
