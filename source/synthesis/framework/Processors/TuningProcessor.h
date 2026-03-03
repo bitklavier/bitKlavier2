@@ -166,6 +166,8 @@ struct TuningState : bitklavier::StateChangeableParameter
     void loadScalaFile(juce::File file);
     void loadScalaFile(std::string fname);
     void loadKBMFile(std::string fname);
+    void setScalaScaleFromString(std::string s);
+    void setKBMFromString(std::string s);
 
     juce::String currentScalaString;
     juce::String currentKBMString;

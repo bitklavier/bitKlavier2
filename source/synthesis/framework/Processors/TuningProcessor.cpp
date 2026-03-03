@@ -382,6 +382,16 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
+    else if(getTuningType() == TuningType::Scala_KBM)
+    {
+        /*
+         * todo: need to sort out transposition handling for Scala
+         *
+         */
+        lastFrequencyTarget = currentScalaTuning.frequencyForMidiNote (currentlyPlayingNote);
+        // lastFrequencyTarget = getStaticTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
+    }
+
     /**
      * spiralNotes will hold the lastFrequencyTarget for all currently playing non-transposed notes
      *      - spiralNotes is initialized to all -1, indicating that all notes are inactive
@@ -597,6 +607,22 @@ void TuningState::printSpiralNotes()
 }
 
 // ****************** SCALA / KBM stuff ****************** //
+
+void TuningState::setScalaScaleFromString(std::string s)
+{
+    currentScalaScale = Tunings::parseSCLData(s);
+    currentScalaTuning = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+    currentScalaString = currentScalaTuning.scale.rawText;
+    DBG("Scala scale set from string: " << currentScalaString);
+}
+
+void TuningState::setKBMFromString(std::string s)
+{
+    currentKBM = Tunings::parseKBMData(s);
+    currentScalaTuning = Tunings::Tuning(currentScalaScale, currentKBM, true).withSkippedNotesInterpolated();
+    currentKBMString = currentScalaTuning.keyboardMapping.rawText;
+    DBG("KBM set from string: " << currentKBMString);
+}
 
 void TuningState::loadScalaFile(juce::File file)
 {

@@ -568,13 +568,13 @@ void TuningParametersView::textEditorReturnKeyPressed(juce::TextEditor& editor)
 {
     if (&editor == sclTextEditor.get())
     {
-        //params.tuningState.loadScalaFile(editor.getText().toStdString());
-        DBG("Scala text editor return key: " << editor.getText());
+        params.tuningState.setScalaScaleFromString(editor.getText().toStdString());
+        DBG("Scala text editor: " << editor.getText());
     }
     else if (&editor == kbmTextEditor.get())
     {
-        //params.tuningState.loadKBMFile(editor.getText().toStdString());
-        DBG("KBM text editor return key: " << editor.getText());
+        params.tuningState.setKBMFromString(editor.getText().toStdString());
+        DBG("KBM text editor: " << editor.getText());
     }
 }
 
