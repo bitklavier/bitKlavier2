@@ -892,6 +892,31 @@ void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
         {
             showModifyPopupMenu(whichSlider(event));
         }
+
+        // if(event.mods.isShiftDown())
+        // {
+        //     int which = whichSlider(event);
+        //
+        //     if(which >= 0) {
+        //
+        //         if (sliders[which]->size() == 0) addSubSlider(which, false, juce::sendNotification);
+        //
+        //         updateSliderVal(which, currentSubSlider, sliderDefault);
+        //
+        //         BKSubSlider* currentSlider = sliders[which]->operator[](0);
+        //         if (currentSlider != nullptr)
+        //         {
+        //             currentSlider->setValue(sliderDefault); //again, need to identify which subslider to get
+        //         }
+        //
+        //         displaySlider->setValue(sliderDefault);
+        //
+        //         listeners.call(&BKMultiSlider::Listener::multiSliderValueChanged,
+        //             getName(),
+        //             whichActiveSlider(which),
+        //             getOneSliderBank(which));
+        //     }
+        // }
     }
 }
 
@@ -901,30 +926,30 @@ void BKMultiSlider::mouseUp (const juce::MouseEvent &event)
 {
     if(!event.mouseWasClicked())
     {
-        if(event.mods.isShiftDown())
-        {
-            int which = whichSlider(event);
-
-            if(which >= 0) {
-
-                if (sliders[which]->size() == 0) addSubSlider(which, false, juce::sendNotification);
-
-                updateSliderVal(which, currentSubSlider, sliderDefault);
-
-                BKSubSlider* currentSlider = sliders[which]->operator[](0);
-                if (currentSlider != nullptr)
-                {
-                    currentSlider->setValue(sliderDefault); //again, need to identify which subslider to get
-                }
-
-                displaySlider->setValue(sliderDefault);
-
-                listeners.call(&BKMultiSlider::Listener::multiSliderValueChanged,
-                    getName(),
-                    whichActiveSlider(which),
-                    getOneSliderBank(which));
-            }
-        }
+        // if(event.mods.isShiftDown())
+        // {
+        //     int which = whichSlider(event);
+        //
+        //     if(which >= 0) {
+        //
+        //         if (sliders[which]->size() == 0) addSubSlider(which, false, juce::sendNotification);
+        //
+        //         updateSliderVal(which, currentSubSlider, sliderDefault);
+        //
+        //         BKSubSlider* currentSlider = sliders[which]->operator[](0);
+        //         if (currentSlider != nullptr)
+        //         {
+        //             currentSlider->setValue(sliderDefault); //again, need to identify which subslider to get
+        //         }
+        //
+        //         displaySlider->setValue(sliderDefault);
+        //
+        //         listeners.call(&BKMultiSlider::Listener::multiSliderValueChanged,
+        //             getName(),
+        //             whichActiveSlider(which),
+        //             getOneSliderBank(which));
+        //     }
+        // }
     }
 }
 
