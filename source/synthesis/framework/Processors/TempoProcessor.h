@@ -135,7 +135,7 @@ public:
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {};
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
-    // void processContinuousModulations(juce::AudioBuffer<float>& buffer);
+    void ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, int numSamples);
 
     bool acceptsMidi() const override { return true; }
 
@@ -163,6 +163,19 @@ public:
     double globalTempoMultiplier = 1.;
 
 private:
+
+    // adaptive tempo stuff
+    void atNewNote();
+    void atNewNoteOff();
+    void atCalculatePeriodMultiplier();
+    float adaptiveTempoPeriodMultiplier;
+    int getAtDelta();
+    void adaptiveReset();
+
+    juce::uint64 atTimer, atLastTime;   //in samples
+    int atDelta;                        //in ms
+    juce::Array<int> atDeltaHistory;    //in ms
+    std::array<int, 10> atDeltaHistoryFixed;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TempoProcessor)
 };

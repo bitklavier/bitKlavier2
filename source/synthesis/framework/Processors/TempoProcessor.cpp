@@ -13,6 +13,9 @@ TempoProcessor::TempoProcessor (SynthBase& parent, const juce::ValueTree& vt,juc
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "timewindowminmax",
         &(state.params.timeWindowMinMaxParams.stateChanges)));
+
+    atTimer = 0;
+    atLastTime = 0;
 }
 
 void TempoProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -25,21 +28,101 @@ bool TempoProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLa
     return true;
 }
 
-void TempoProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void TempoProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, int numSamples)
 {
-    //DBG (v.getParent().getParent().getProperty (IDs::name).toString() + "direct");
+    atTimer += numSamples;
 
     /*
-     * this updates all the AudioThread callbacks we might have in place
-     * for instance, in TuningParametersView.cpp, we have lots of lambda callbacks from the UI
-     *  they are all on the MessageThread, but if we wanted to have them synced to the block
-     *      we would put them on the AudioThread and they would be heard here
-     *  if we put them on the AudioThread, it would be important to have minimal actions in those
-     *      callbacks, no UI stuff, etc, just updating params needed in the audio block here
-     *      if we want to do other stuff for the same callback, we should have a second MessageThread callback
-     *
-     *  I'm not sure we have any of these for Tempo, but no harm in calling it, and for reference going forward
+     * process incoming MIDI messages, including the target messages
      */
+    for (auto mi : inMidiMessages)
+    {
+        auto message = mi.getMessage();
+        if(message.isNoteOn())
+            atNewNote();
+        else if(message.isNoteOff())
+            atNewNoteOff();
+    }
+}
+
+void TempoProcessor::atNewNote()
+{
+    if(state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Time_Between_Notes)
+        atCalculatePeriodMultiplier();
+    atLastTime = atTimer;
+}
+
+void TempoProcessor::atNewNoteOff()
+{
+    if(state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Sustain_Time)
+        atCalculatePeriodMultiplier();
+}
+
+int TempoProcessor::getAtDelta()
+{
+    return atDelta = (atTimer - atLastTime) * 1000. / getSampleRate();
+}
+
+//really basic, using constrained moving average of time-between-notes (or note-length)
+void TempoProcessor::atCalculatePeriodMultiplier()
+{
+    if(*state.params.historyParam > 0) {
+
+        atDelta = (atTimer - atLastTime) / (0.001 * getSampleRate());
+        DBG(" ");
+        DBG("atTimer = " + juce::String(atTimer) + " atLastTime = " + juce::String(atLastTime));
+        DBG("atDelta = " + juce::String(atDelta));
+
+        /**
+         *todo: this should be reworked without resizing arrays and so on
+         */
+
+        //constrain be min and max times between notes
+        if (atDelta > *state.params.timeWindowMinMaxParams.holdTimeMinParam && atDelta < *state.params.timeWindowMinMaxParams.holdTimeMaxParam )
+        {
+            //insert delta at beginning of history
+            atDeltaHistory.insert(0, atDelta);
+
+            //eliminate oldest time difference
+            atDeltaHistory.resize(*state.params.historyParam);
+
+            //calculate moving average and then tempo period multiplier
+            int totalDeltas = 0;
+            for(int i = 0; i < atDeltaHistory.size(); i++)
+                totalDeltas += atDeltaHistory.getUnchecked(i);
+            DBG("totalDeltas = " + juce::String(totalDeltas));
+            DBG("atDeltaHistory.size() = " + juce::String(atDeltaHistory.size()));
+            DBG("historyParam = " + juce::String(*state.params.historyParam));
+
+            float movingAverage = totalDeltas / *state.params.historyParam;
+            DBG("movingAverage = " + juce::String(movingAverage));
+
+            float beatThreshMS =  60000. / *state.params.tempoParam;
+            DBG("beatThreshMS = " + juce::String(beatThreshMS));
+            DBG("*state.params.subdivisionsParam = " + juce::String(*state.params.subdivisionsParam));
+
+            adaptiveTempoPeriodMultiplier = movingAverage /
+                                            beatThreshMS /
+                                            *state.params.subdivisionsParam;
+
+            DBG("adaptiveTempoPeriodMultiplier = " + juce::String(adaptiveTempoPeriodMultiplier));
+        }
+    }
+}
+
+void TempoProcessor::adaptiveReset()
+{
+
+    for (int i = 0; i < *state.params.historyParam; i++)
+    {
+        atDeltaHistory.insert(0, (60000.0 / (*state.params.tempoParam)));
+    }
+    adaptiveTempoPeriodMultiplier = 1.;
+}
+
+void TempoProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     /*
@@ -64,6 +147,11 @@ void TempoProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
                 }
             }
         }
+    }
+
+    if (state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Sustain_Time || state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Time_Between_Notes)
+    {
+        ProcessMIDIBlock(midiMessages, buffer.getNumSamples());
     }
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
