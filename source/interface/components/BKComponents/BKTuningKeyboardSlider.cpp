@@ -265,7 +265,8 @@ void BKTuningKeyboardSlider::resized()
     keyboard->setBounds(keyboardRect);
 
     juce::Rectangle<int> textSlab (keymapRow.removeFromBottom(2*heightUnit + 4));
-    keyboardValueTF.setBounds(textSlab.removeFromRight(ratio * widthUnit));
+    if (isCircular)  keyboardValueTF.setBounds(textSlab.removeFromRight(ratio * widthUnit * 2));
+    else keyboardValueTF.setBounds(textSlab.removeFromRight(ratio * widthUnit));
     if (!sliderBorder.isVisible())
         showName.setBounds(textSlab.removeFromRight(2*ratio*widthUnit));
     keyboardValsTextFieldOpen.setBounds(textSlab.removeFromLeft(ratio*widthUnit*1.5));
@@ -284,7 +285,21 @@ void BKTuningKeyboardSlider::setAvailableRange(int min, int max)
 
 void BKTuningKeyboardSlider::mouseMove(const juce::MouseEvent& e)
 {
-   // keyboardValueTF.setText(juce::String(keyboard->getLastNoteOverValue(), displayResolution), dontSendNotification);
+    auto note = keyboard->getNoteAtPosition(e.getEventRelativeTo(keyboard.get()).position);
+    if (note >= 0 && note < 128)
+    {
+        float val = 0.0f;
+        if (isCircular)
+        {
+            if (note < 12)
+                val = keyboardState->circularTuningOffset[note].load();
+        }
+        else
+        {
+            val = keyboardState->absoluteTuningOffset[note].load();
+        }
+        keyboardValueTF.setText(juce::String(val, displayResolution), juce::dontSendNotification);
+    }
 }
 
 void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
