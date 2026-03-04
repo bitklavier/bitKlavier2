@@ -100,6 +100,13 @@ TuningParametersView::TuningParametersView(
     sclTextEditor->addListener(this);
     kbmTextEditor->addListener(this);
 
+    mapScalaToInternal_button = std::make_unique<SynthButton>("maptointernal");
+    mapScalaToInternal_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.tMapScaleToInternal, listeners, *mapScalaToInternal_button, nullptr);
+    mapScalaToInternal_button->setComponentID("mapScaleToInternal");
+    addSynthButton(mapScalaToInternal_button.get(), true);
+    mapScalaToInternal_button->setText("map Scala to internal tuning");
+    mapScalaToInternal_button->setToggleable(true);
+
     /*
      * todo: this is problematic, in that it overwrites modded values
      *          - if you trigger a mod that changes the circular tuning, and then open the Tuning prep, this will overwrite those
@@ -168,6 +175,20 @@ TuningParametersView::TuningParametersView(
             if (params.tuningState.adaptiveParams.tReset.get()->get()) {
                 params.tuningState.adaptiveReset();
                 params.tuningState.adaptiveParams.tReset->setParameterValue(false);
+            }
+        })
+    };
+
+    // to catch presses of the scala map button
+    tuningCallbacks += {listeners.addParameterListener(
+        params.tMapScaleToInternal,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            if (params.tMapScaleToInternal.get()->get()) {
+                params.tuningState.mapScalaToInternalTuning();
+                params.tMapScaleToInternal->setParameterValue(false);
+                absolutekeyboard->redoImage();
+                circular_keyboard->redoImage();
             }
         })
     };
@@ -314,6 +335,7 @@ void TuningParametersView::showScalaKbm(bool show)
     DBG("TuningParametersView::showScalaKbm, show = " + juce::String((int)show));
     sclTextEditor->setVisible(show);
     kbmTextEditor->setVisible(show);
+    mapScalaToInternal_button->setVisible(show);
     if (show)
     {
         sclTextEditor->toFront(true);
@@ -730,6 +752,10 @@ void TuningParametersView::resized()
     juce::Rectangle scalaBox = leftHalf;
     adaptiveSection->setBounds(leftHalf.removeFromBottom(165));
     springTuningSection->setBounds(leftHalfSave.removeFromBottom(275));
+
+    juce::Rectangle mapScalaBox = scalaBox.removeFromBottom(comboboxheight);
+    mapScalaBox.reduce(largepadding, 0);
+    mapScalaToInternal_button->setBounds(mapScalaBox);
 
     juce::Rectangle kbmBox = scalaBox.removeFromRight(scalaBox.getWidth() / 2.);
     scalaBox.reduce(largepadding, largepadding);

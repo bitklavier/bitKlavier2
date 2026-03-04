@@ -208,7 +208,8 @@ struct TuningParams : chowdsp::ParamHolder
             tuningState.tuningType,
             tuningState.adaptiveParams,
             tuningState.springTuningParams,
-            tuningState.lastNote);
+            tuningState.lastNote,
+            tMapScaleToInternal);
 
         tuningState.springTuner = std::make_unique<SpringTuning>(tuningState.springTuningParams, tuningState.circularTuningOffset_custom);
 
@@ -279,6 +280,15 @@ struct TuningParams : chowdsp::ParamHolder
 
     /* this contains the current state of the tuning system, with helper functions */
     TuningState tuningState;
+
+    /**
+     * to catch presses of the reset button, for TuningState::adaptiveReset()
+     */
+    chowdsp::BoolParameter::Ptr tMapScaleToInternal {
+        juce::ParameterID { "tMapToInternal", 100},
+        "map to internal",
+        false
+    };
 
     /*
      * serializers are used for more complex params; called only on save and load

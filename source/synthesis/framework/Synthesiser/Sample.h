@@ -830,7 +830,7 @@ public:
     void setTargetSustainTime(float sustainTimeMS)
     {
         targetSustainTime_samples = sustainTimeMS * getSampleRate() * .001;
-        DBG("targetSustainTime_samples set to (sec) " << targetSustainTime_samples / getSampleRate());
+        // DBG("targetSustainTime_samples set to (sec) " << targetSustainTime_samples / getSampleRate());
     }
 
     void setGain(float g)

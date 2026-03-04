@@ -88,6 +88,8 @@ public:
     // SCALA/KBM
     std::shared_ptr<OpenGlTextEditor> sclTextEditor;
     std::shared_ptr<OpenGlTextEditor> kbmTextEditor;
+    std::unique_ptr<SynthButton> mapScalaToInternal_button;
+    std::unique_ptr<chowdsp::ButtonAttachment> mapScalaToInternal_button_attachment;
 
     TuningParams& params;
 
