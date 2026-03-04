@@ -42,8 +42,8 @@ public:
     //uses modulation bus for ordering
     juce::AudioProcessor::BusesProperties pianoSwitchBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("disabled",juce::AudioChannelSet::mono(),false)
-        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true); }
+        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),false)
+        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),false); }
 
     const juce::String getName() const override { return "pianoswitch"; }
     double getTailLengthSeconds() const override {}

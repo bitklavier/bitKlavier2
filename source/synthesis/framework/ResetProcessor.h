@@ -17,10 +17,10 @@ class StateConnection;
         ResetProcessor(SynthBase& parent,const juce::ValueTree& vt,juce::UndoManager*) :
         juce::AudioProcessor(BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
         .withOutput("main_out_disabled",juce::AudioChannelSet::mono(),false)
-        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),true)
-        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true)
+        .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),false)
+        .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),false)
         .withOutput("send_disabled", juce::AudioChannelSet::mono(),false)
-        .withOutput("Reset",juce::AudioChannelSet::discreteChannels(1),true)), state(vt)
+        .withOutput("Reset",juce::AudioChannelSet::discreteChannels(1),false)), state(vt)
         {
             createUuidProperty(state);
         }

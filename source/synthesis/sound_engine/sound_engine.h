@@ -346,13 +346,34 @@ namespace bitklavier
             auto* srcProc = srcNode->getProcessor();
             auto* dstProc = dstNode->getProcessor();
 
-            DBG("SoundEngine::addConnection: [" + srcProc->getName() + " (ID: " + juce::String(connection.source.nodeID.uid) + ")]:" + juce::String(connection.source.channelIndex) 
-                + " -> [" + dstProc->getName() + " (ID: " + juce::String(connection.destination.nodeID.uid) + ")]:" + juce::String(connection.destination.channelIndex));
+            // DBG("SoundEngine::addConnection: [" + srcProc->getName() + " (ID: " + juce::String(connection.source.nodeID.uid) + ")]:" + juce::String(connection.source.channelIndex)
+            //     + " -> [" + dstProc->getName() + " (ID: " + juce::String(connection.destination.nodeID.uid) + ")]:" + juce::String(connection.destination.channelIndex));
+
+            // Determine if this is a connection on a Modulation bus
+            bool isModulationConnection = false;
+            if (!connection.source.isMIDI())
+            {
+                for (int i = 0; i < srcProc->getBusCount(false); ++i)
+                {
+                    auto* bus = srcProc->getBus(false, i);
+                    if (bus->getName() == "Modulation")
+                    {
+                        int startIndex = bus->getChannelIndexInProcessBlockBuffer(0);
+                        if (connection.source.channelIndex >= startIndex && 
+                            connection.source.channelIndex < startIndex + bus->getNumberOfChannels())
+                        {
+                            isModulationConnection = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
             // --- 1. SMART MIDI AUTO-CONNECTION ---
             // If this is an audio connection, and both nodes support MIDI,
             // ensure the MIDI bus is also connected.
-            if (!connection.source.isMIDI() && dstProc->acceptsMidi() && srcProc->producesMidi())
+            // SKIP for modulation connections to avoid infinite loops and unnecessary wiring.
+            if (!connection.source.isMIDI() && !isModulationConnection && dstProc->acceptsMidi() && srcProc->producesMidi())
             {
                 juce::AudioProcessorGraph::Connection midiConn {
                     { connection.source.nodeID, juce::AudioProcessorGraph::midiChannelIndex },
@@ -370,7 +391,8 @@ namespace bitklavier
             // If the source bus is stereo (or more) and we are connecting the first channel of that bus,
             // automatically connect the subsequent channels of that bus to the corresponding channels
             // of the destination bus.
-            if (!connection.source.isMIDI())
+            // SKIP for modulation connections.
+            if (!connection.source.isMIDI() && !isModulationConnection)
             {
                 int srcNumBuses = srcProc->getBusCount (false);
                 for (int b = 0; b < srcNumBuses; ++b)
@@ -429,7 +451,8 @@ namespace bitklavier
 
             // --- 3. OUTPUT CLEANUP ---
             // If we are custom-wiring main audio, remove the default auto-wires to output.
-            if (connection.destination.nodeID != audioOutputNode->nodeID && !connection.source.isMIDI())
+            // SKIP for modulation connections.
+            if (connection.destination.nodeID != audioOutputNode->nodeID && !connection.source.isMIDI() && !isModulationConnection)
             {
                 if (auto* mainBus = srcProc->getBus (false, 0))
                 {

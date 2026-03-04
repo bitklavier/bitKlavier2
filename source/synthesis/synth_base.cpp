@@ -1117,9 +1117,33 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
 {
     auto sourceId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src, -1));
     auto destId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest, -1));
-    auto source_index = engine_->getNodeForId (sourceId)->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 2, 0); //2 is reset
-    auto dest_index = engine_->getNodeForId (destId)->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 2, 0);
-    //1 is mod
+
+    auto* srcNode = engine_->getNodeForId (sourceId);
+    auto* dstNode = engine_->getNodeForId (destId);
+
+    if (srcNode == nullptr || dstNode == nullptr)
+        return false;
+
+    auto* srcProc = srcNode->getProcessor();
+    auto* dstProc = dstNode->getProcessor();
+
+    // Reset output is index 3 on ResetProcessor, Reset input is index 2 on ModulationProcessor
+    int srcResetBusIdx = 3;
+    int dstResetBusIdx = 2;
+
+    // Safety check: ensure both processors actually have the buses
+    if (srcProc->getBusCount(false) <= srcResetBusIdx || dstProc->getBusCount(true) <= dstResetBusIdx)
+    {
+        DBG ("SynthBase: Could not find Reset bus for connection.");
+        return false;
+    }
+
+    // Enable the buses
+    srcProc->getBus (false, srcResetBusIdx)->enable (true);
+    dstProc->getBus (true, dstResetBusIdx)->enable (true);
+
+    auto source_index = srcProc->getChannelIndexInProcessBlockBuffer (false, srcResetBusIdx, 0);
+    auto dest_index = dstProc->getChannelIndexInProcessBlockBuffer (true, dstResetBusIdx, 0);
 
     juce::AudioProcessorGraph::Connection connection_ = { { sourceId, source_index }, { destId, dest_index } };
 
@@ -1128,6 +1152,8 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
         DBG ("connected");
     else
         DBG ("not connected");
+
+    return b;
 }
 
 // bool SynthBase::connectReset (const juce::ValueTree& v)

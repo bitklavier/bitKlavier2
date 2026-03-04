@@ -571,25 +571,25 @@ struct MidiTargetParams : chowdsp::ParamHolder
      */
     std::map<PreparationParameterTargetType, chowdsp::BoolParameter*> targetMapper;
     std::map<PreparationParameterTargetType, chowdsp::EnumChoiceParameter<TriggerType>*> noteModeMapper;
-
-    juce::Identifier connectedPrep = IDs::noConnection;
-
-};
-
-struct MidiTargetNonParameterState : chowdsp::NonParamState
-{
-    MidiTargetNonParameterState()
-    {
-    }
 };
 
 class MidiTargetProcessor :
-    public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams,MidiTargetNonParameterState>>,
+    public bitklavier::PluginBase<bitklavier::PreparationStateImpl<MidiTargetParams>>,
     public bitklavier::ConnectionList::Listener,
     private juce::Timer
 {
 public:
     MidiTargetProcessor ( SynthBase& parent,const juce::ValueTree& v, juce::UndoManager*);
+
+    juce::Identifier getConnectedPrep() const
+    {
+        return juce::Identifier (v.getProperty (IDs::connectedPrep, IDs::noConnection.toString()).toString());
+    }
+
+    void setConnectedPrep (juce::Identifier id)
+    {
+        v.setProperty (IDs::connectedPrep, id.toString(), nullptr);
+    }
     ~MidiTargetProcessor() override
     {
         // if (listenerAttached) {
@@ -617,7 +617,7 @@ public:
     juce::AudioProcessor::BusesProperties midiTargetBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
             .withOutput("Disabled",juce::AudioChannelSet::mono(),false)
             .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),false)
-            .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true); }
+            .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),false); }
 
     const juce::String getName() const override { return "miditarget"; }
     double getTailLengthSeconds() const override {}

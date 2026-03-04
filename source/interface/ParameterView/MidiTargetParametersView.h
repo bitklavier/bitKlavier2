@@ -14,7 +14,7 @@
 class MidiTargetParametersView : public SynthSection
 {
 public:
-    MidiTargetParametersView(chowdsp::PluginState& pluginState, MidiTargetParams& param, juce::String name, OpenGlWrapper *open_gl);
+    MidiTargetParametersView(chowdsp::PluginState& pluginState, MidiTargetProcessor* proc, juce::String name, OpenGlWrapper *open_gl);
 
     void paintBackground(juce::Graphics& g) override
     {
@@ -36,6 +36,7 @@ public:
     std::vector<std::unique_ptr<chowdsp::ComboBoxAttachment>> _noteModeMenus_attachments;
 
     MidiTargetParams& params;
+    MidiTargetProcessor* processor;
     void arrange_parameter_toggles_and_menus (int firstID, int endNilId, int smallpadding, int comboboxheight, int targetOffset, juce::Rectangle<int> noteMenuColumn, juce::Rectangle<int> toggleColumn);
 
 };

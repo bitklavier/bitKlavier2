@@ -4,7 +4,8 @@
 
 #include "MidiTargetParametersView.h"
 #include "FullInterface.h"
-MidiTargetParametersView::MidiTargetParametersView(chowdsp::PluginState& pluginState, MidiTargetParams& param, juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
+MidiTargetParametersView::MidiTargetParametersView(chowdsp::PluginState& pluginState, MidiTargetProcessor* proc, juce::String name, OpenGlWrapper *open_gl)
+    : SynthSection(""), params(proc->getState().params), processor(proc)
 {
     setName ("miditarget");
     setLookAndFeel (DefaultLookAndFeel::instance());
@@ -91,22 +92,22 @@ void MidiTargetParametersView::resized()
     toggleColumn.reduce(smallpadding, smallpadding);
     noteMenuColumn.reduce(smallpadding, smallpadding);
 
-    if (params.connectedPrep == IDs::blendronic)
+    if (processor->getConnectedPrep() == IDs::blendronic)
         arrange_parameter_toggles_and_menus(BlendronicTargetFirst, BlendronicTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-    if (params.connectedPrep == IDs::synchronic)
+    if (processor->getConnectedPrep() == IDs::synchronic)
         arrange_parameter_toggles_and_menus(SynchronicTargetFirst, SynchronicTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-    if (params.connectedPrep == IDs::resonance)
+    if (processor->getConnectedPrep() == IDs::resonance)
         arrange_parameter_toggles_and_menus(ResonanceTargetFirst, ResonanceTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-    if (params.connectedPrep == IDs::nostalgic)
+    if (processor->getConnectedPrep() == IDs::nostalgic)
         arrange_parameter_toggles_and_menus(NostalgicTargetFirst, NostalgicTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-    if (params.connectedPrep == IDs::direct)
+    if (processor->getConnectedPrep() == IDs::direct)
         arrange_parameter_toggles_and_menus(DirectTargetFirst, DirectTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
-    if (params.connectedPrep == IDs::tuning)
+    if (processor->getConnectedPrep() == IDs::tuning)
         arrange_parameter_toggles_and_menus(TuningTargetFirst, TuningTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
 
     SynthSection::resized();

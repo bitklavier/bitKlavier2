@@ -27,7 +27,7 @@ std::unique_ptr<SynthSection> MidiTargetPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
         if (auto* proc = dynamic_cast<MidiTargetProcessor*> (getProcessor()))
-            return std::make_unique<MidiTargetParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+            return std::make_unique<MidiTargetParametersView> (proc->getState(), proc, state.getProperty (IDs::uuid).toString(), open_gl);
 
     return nullptr;
 }

@@ -32,6 +32,12 @@ void MidiTargetProcessor::tryAttachListener()
     {
         list->addListener (this);
         listenerAttached = true;
+
+        // Re-process existing connections
+        for (auto* connection : *list)
+        {
+            connectionAdded (connection);
+        }
     }
 }
 
@@ -45,10 +51,10 @@ void MidiTargetProcessor::connectionAdded (bitklavier::Connection* connection)
         auto nodeIdVar = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(connection->dest_id.get());
         auto prep = preparationList.getChildWithProperty (IDs::nodeID, nodeIdVar);
         auto prepType = prep.getType();
-        if (state.params.connectedPrep == IDs::noConnection) state.params.connectedPrep = prepType;
-        else if (state.params.connectedPrep != prepType)
+        if (getConnectedPrep() == IDs::noConnection) setConnectedPrep (prepType);
+        else if (getConnectedPrep() != prepType)
         {
-            juce::String message = "You've already connected your midiTarget to a " + state.params.connectedPrep.toString() +
+            juce::String message = "You've already connected your midiTarget to a " + getConnectedPrep().toString() +
                 " preparation, which means you can't connect to a " + prepType.toString() + " preparation.";
             juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::InfoIcon,
                 "Invalid Connection", message);
@@ -68,7 +74,7 @@ void MidiTargetProcessor::removeConnection(bitklavier::Connection* connection)
     if ((connection->src_id.get() == midiTarget_id) && (connectedPrepIds.contains (nodeIdVar)))
     {
         connectedPrepIds.removeFirstMatchingValue (nodeIdVar);
-        if (connectedPrepIds.isEmpty ()) state.params.connectedPrep = IDs::noConnection;
+        if (connectedPrepIds.isEmpty ()) setConnectedPrep (IDs::noConnection);
     };
 }
 
@@ -92,32 +98,32 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         int startParam = 0;
         int lastParam = 0;
 
-        if (state.params.connectedPrep == IDs::blendronic)
+        if (getConnectedPrep() == IDs::blendronic)
         {
             startParam = BlendronicTargetFirst + 1;
             lastParam = BlendronicTargetNil;
         }
-        else if (state.params.connectedPrep == IDs::synchronic)
+        else if (getConnectedPrep() == IDs::synchronic)
         {
             startParam = SynchronicTargetFirst + 1;
             lastParam = SynchronicTargetNil;
         }
-        else if (state.params.connectedPrep == IDs::resonance)
+        else if (getConnectedPrep() == IDs::resonance)
         {
             startParam = ResonanceTargetFirst + 1;
             lastParam = ResonanceTargetNil;
         }
-        else if (state.params.connectedPrep == IDs::nostalgic)
+        else if (getConnectedPrep() == IDs::nostalgic)
         {
             startParam = NostalgicTargetFirst + 1;
             lastParam = NostalgicTargetNil;
         }
-        else if (state.params.connectedPrep == IDs::direct)
+        else if (getConnectedPrep() == IDs::direct)
         {
             startParam = DirectTargetFirst + 1;
             lastParam = DirectTargetNil;
         }
-        else if (state.params.connectedPrep == IDs::tuning)
+        else if (getConnectedPrep() == IDs::tuning)
         {
             startParam = TuningTargetFirst + 1;
             lastParam = TuningTargetNil;

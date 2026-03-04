@@ -116,7 +116,7 @@ public:
     juce::AudioProcessor::BusesProperties midiFilterBusLayout() { return BusesProperties().withInput("disabled",juce::AudioChannelSet::mono(),false)
             .withOutput("Disabled",juce::AudioChannelSet::mono(),false)
             .withOutput("Modulation",juce::AudioChannelSet::discreteChannels(1),false)
-            .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),true); }
+            .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),false); }
 
     const juce::String getName() const override { return "midifilter"; }
     double getTailLengthSeconds() const override {}
