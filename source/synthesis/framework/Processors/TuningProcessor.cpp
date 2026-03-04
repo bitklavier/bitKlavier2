@@ -713,26 +713,29 @@ void TuningState::loadKBMFile(std::string fname)
 
 void TuningState::mapScalaToInternalTuning()
 {
-
     // for non 12-tet systems, map to absolute tuning
     if (currentScalaTuning.scale.count != 12)
     {
-        DBG ("Scala scale is not 12-tone, mapping to Absolute Offsets");
+        // set absolute offsets throughout the range, based on the scala tuning
         auto tuningRefRatio = currentScalaTuning.keyboardMapping.tuningFrequency / mtof(currentScalaTuning.keyboardMapping.tuningConstantNote);
-        DBG("middle note = " << currentScalaTuning.keyboardMapping.middleNote);
-
-        auto cnote = currentScalaTuning.frequencyForMidiNote(currentScalaTuning.keyboardMapping.tuningConstantNote);
-        auto offset_ = 100.f * bitklavier::utils::ratioToMidiTranspose (currentScalaTuning.keyboardMapping.tuningFrequency / cnote);
-
-        fundamental->setParameterValue (PitchClass::C);
-        offsetKnobParam.offSetSliderParam->setParameterValue (offset_);
-        tuningSystem->setParameterValue(TuningSystem::Equal_Temperament);
         for(int i = 0; i < absoluteTuningOffset.size(); i++)
         {
-            // float newOffset = (ftom(currentScalaTuning.frequencyForMidiNote(i), getGlobalTuningReference()) - i) * 100.f;
             float newOffset = (ftom(currentScalaTuning.frequencyForMidiNote(i), tuningRefRatio * 440.) - i) * 100.f;
             absoluteTuningOffset[i].store(newOffset);
         }
+
+        // reset circular stuff
+        fundamental->setParameterValue (PitchClass::C);
+        tuningSystem->setParameterValue(TuningSystem::Equal_Temperament);
+
+        // set offset, taking into account Scala tuningFrequency
+        offsetKnobParam.offSetSliderParam->setParameterValue (0.); // need to zero it out first, since getStaticTargetFrequency will use it from the previous setting
+        auto offsetN = 100.f * bitklavier::utils::ratioToMidiTranspose
+        (
+            currentScalaTuning.keyboardMapping.tuningFrequency /
+            getStaticTargetFrequency (currentScalaTuning.keyboardMapping.tuningConstantNote, 0, false)
+        );
+        offsetKnobParam.offSetSliderParam->setParameterValue (offsetN);
     }
 
     // otherwise, map to circular tuning

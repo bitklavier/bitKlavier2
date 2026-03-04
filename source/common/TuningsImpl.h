@@ -455,7 +455,7 @@ inline Tuning::Tuning(const Scale &s, const KeyboardMapping &k, bool allowTuning
 {
     scale = s;
     keyboardMapping = k;
-    int oSP;
+    int oSP = 0;
     if (s.count <= 0)
         throw TuningError("Unable to tune to a scale with no notes. Your scale provided " +
                           std::to_string(s.count) + " notes.");
@@ -504,7 +504,7 @@ inline Tuning::Tuning(const Scale &s, const KeyboardMapping &k, bool allowTuning
         tuningCenterPitchOffset = 0;
     else
     {
-        if (scalePositionOfTuningNote == -1 && allowTuningCenterOnUnmapped)
+        if (scalePositionOfTuningNote == -1 && allowTuningCenterOnUnmapped && k.count > 0)
         {
             int low, high;
             bool octave_up = false;
@@ -512,7 +512,7 @@ inline Tuning::Tuning(const Scale &s, const KeyboardMapping &k, bool allowTuning
             float pitch_high;
             float pitch_low;
             // find next closest mapped note
-            for (int i = oSP - 1; i != oSP; i = (i - 1) % k.count)
+            for (int i = (oSP - 1 + k.count) % k.count; i != oSP; i = (i - 1 + k.count) % k.count)
             {
                 if (k.keys[i] != -1)
                 {
@@ -525,7 +525,7 @@ inline Tuning::Tuning(const Scale &s, const KeyboardMapping &k, bool allowTuning
                     octave_down = true;
                 }
             }
-            for (int i = oSP + 1; i != oSP; i = (i + 1) % k.count)
+            for (int i = (oSP + 1) % k.count; i != oSP; i = (i + 1) % k.count)
             {
                 if (k.keys[i] != -1)
                 {
@@ -546,6 +546,10 @@ inline Tuning::Tuning(const Scale &s, const KeyboardMapping &k, bool allowTuning
             pitch_high =
                 octave_up ? s.tones[high - 1].cents + dt : s.tones[high - 1].floatValue - 1.0;
             tuningCenterPitchOffset = (pitch_high + pitch_low) / 2.f;
+        }
+        else if (scalePositionOfTuningNote == -1 && allowTuningCenterOnUnmapped && k.count == 0)
+        {
+            tuningCenterPitchOffset = 0;
         }
         else
         {
