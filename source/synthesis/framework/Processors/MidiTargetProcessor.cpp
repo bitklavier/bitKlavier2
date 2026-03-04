@@ -8,6 +8,7 @@ MidiTargetProcessor::MidiTargetProcessor ( SynthBase& parent,
     const juce::ValueTree& v, juce::UndoManager* um) : PluginBase (parent, v, um, midiTargetBusLayout())
 {
     connectedPrepIds.ensureStorageAllocated (10);
+    this->v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
 
     // Defer listener attach instead of doing it here immediately:
     // parent.getActiveConnectionList()->addListener (this); // remove/avoid

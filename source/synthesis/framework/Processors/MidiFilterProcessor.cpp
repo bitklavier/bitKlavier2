@@ -9,6 +9,7 @@ MidiFilterProcessor::MidiFilterProcessor (
              PluginBase (parent, v,um, midiFilterBusLayout())
 {
     noteOnState.reset();
+    this->v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
 }
 
 void MidiFilterProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
