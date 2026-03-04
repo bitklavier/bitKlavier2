@@ -995,6 +995,7 @@ public:
             // currentSamplePos *= sampleIncrement.getTargetValue();
             currentSamplePos = startTimeOffset + targetSustainTime_samples * sampleIncrement.getTargetValue(); // Wave Distance + sustain time, scaled for increment
             targetSustainTime_samples -= (ampEnv.getParameters().release * getSampleRate()); // start the noteOff to allow for the release time
+            if (targetSustainTime_samples <= 0) targetSustainTime_samples = 1; // need to make sure that we go directly to stopNote; if targetSustainTime_samples < 1, then it will play back until the beginning of the file
         }
 
         tailOff = 0.0;

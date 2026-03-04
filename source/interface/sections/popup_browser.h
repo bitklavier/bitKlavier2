@@ -95,6 +95,8 @@ public:
     {
         sampleSelector->setVisible(false);
         sampleSelectText->setVisible(false);
+        soundfontPresetSelector->setVisible(false);
+        soundfontPresetSelectText->setVisible(false);
     }
 
     void repaintBackground() override
@@ -112,6 +114,10 @@ juce::ValueTree curr_vt;
     int currentSampleType;
     std::shared_ptr<PlainTextComponent> sampleSelectText;
     std::unique_ptr<juce::ShapeButton> sampleSelector ;
+
+    int currentSoundfontPreset;
+    std::shared_ptr<PlainTextComponent> soundfontPresetSelectText;
+    std::unique_ptr<juce::ShapeButton> soundfontPresetSelector;
 
     /*
      * omit prepSelector for now

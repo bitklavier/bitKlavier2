@@ -1276,6 +1276,16 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
     sampleSelectText = std::make_shared<PlainTextComponent>("Sample Select Text", "---");
     addOpenGlComponent(sampleSelectText);
 
+    soundfontPresetSelector = std::make_unique<juce::ShapeButton>("PresetSelector", juce::Colour(0xff666666),
+                                                                 juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(soundfontPresetSelector.get());
+    soundfontPresetSelector->addListener(this);
+    soundfontPresetSelector->setTriggeredOnMouseDown(true);
+    soundfontPresetSelector->setShape(juce::Path(), true, true, true);
+    currentSoundfontPreset = 0;
+    soundfontPresetSelectText = std::make_shared<PlainTextComponent>("Soundfont Preset Select Text", "---");
+    addOpenGlComponent(soundfontPresetSelectText);
+
     addBackgroundComponent(background_.get());
     background_->setComponent(this);
 
@@ -1306,9 +1316,7 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
     SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
     if (_parent == nullptr)
         return;
-    // if (prep_view != nullptr) {
-    //     return;
-    // }
+
     if (prep_view != nullptr) {
         /* needed to solve weird button drawn crash*/
         //        if (auto *a = dynamic_cast<TuningParametersView*>(prep_view.get())) {
@@ -1352,6 +1360,18 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
     curr_vt = v;
     sampleSelector->setVisible(true);
     sampleSelectText->setVisible(true);
+
+    const juce::String sfzName = curr_vt.getProperty(IDs::soundset).toString();
+    auto* slm = _parent->getSampleLoadManager();
+    if (slm->sfzHasPresets(sfzName)) {
+        soundfontPresetSelector->setVisible(true);
+        soundfontPresetSelectText->setVisible(true);
+        soundfontPresetSelectText->setText(slm->getSelectedSFZPreset(sfzName));
+    } else {
+        soundfontPresetSelector->setVisible(false);
+        soundfontPresetSelectText->setVisible(false);
+    }
+
     if (curr_vt.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
         sampleSelectText->setText("use Global Soundset");
     else
@@ -1381,6 +1401,8 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
 void PreparationPopup::reset() {
     sampleSelector->setVisible(true);
     sampleSelectText->setVisible(true);
+    soundfontPresetSelector->setVisible(false);
+    soundfontPresetSelectText->setVisible(false);
     auto *parent = findParentComponentOfClass<SynthGuiInterface>();
     all_synth_buttons_.clear();
     all_sliders_.clear();
@@ -1439,15 +1461,59 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
                 sampleSelectText->setText("use Global Soundset");
             } else {
                 SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-                parent->getSampleLoadManager()->loadSamples(
-                    parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
+                const juce::String soundsetName = parent->getSampleLoadManager()->getAllSampleSets()[selection];
+                parent->getSampleLoadManager()->loadSamples(soundsetName, curr_vt);
                 sampleSelectText->setText(
-                    juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection]).
+                    juce::String(soundsetName).
                     upToFirstOccurrenceOf("||", false, false));
+            }
+
+            const juce::String sfzName = curr_vt.getProperty(IDs::soundset).toString();
+            auto* parent_full = findParentComponentOfClass<SynthGuiInterface>();
+            auto* slm = parent_full->getSampleLoadManager();
+            if (slm->sfzHasPresets(sfzName)) {
+                soundfontPresetSelector->setVisible(true);
+                soundfontPresetSelectText->setVisible(true);
+                soundfontPresetSelectText->setText(slm->getSelectedSFZPreset(sfzName));
+            } else {
+                soundfontPresetSelector->setVisible(false);
+                soundfontPresetSelectText->setVisible(false);
             }
 
             resized();
         });
+    } else if (clicked_button == soundfontPresetSelector.get()) {
+        const juce::String sfzName = curr_vt.getProperty(IDs::soundset).toString();
+        auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+        auto* slm = parent->getSampleLoadManager();
+        // No presets → nothing to show
+        if (!slm->sfzHasPresets(sfzName))
+            return;
+
+        PopupItems options;
+
+        auto presetNames = slm->getSFZPresetNames(sfzName);
+        const juce::juce_wchar bellChar = 7; // '\a'
+
+        for (auto& s : presetNames)
+            s = s.removeCharacters (juce::String::charToString (bellChar));
+        for (int i = 0; i < presetNames.size(); ++i)
+            options.addItem(i, presetNames.getReference(i).toStdString());
+
+        juce::Point<int> position(soundfontPresetSelector->getX(), soundfontPresetSelector->getBottom());
+
+        showPopupSelector(this, position, options,
+                          [this, presetNames, sfzName](int selection, int) {
+                              if (selection < 0 || selection >= presetNames.size())
+                                  return;
+                              SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+
+                              // Update UI
+                              soundfontPresetSelectText->setText(presetNames[selection]);
+                              resized();
+
+                              parent->getSampleLoadManager()->changeSFZPresetAndUpdateTree(sfzName, selection, curr_vt);
+                          });
     }
 
     /*
@@ -1514,6 +1580,10 @@ void PreparationPopup::resized() {
         sampleSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));
         sampleSelectText->setBounds(sampleSelector->getBounds());
         sampleSelectText->setTextSize(label_text_height);
+
+        soundfontPresetSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));
+        soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
+        soundfontPresetSelectText->setTextSize(label_text_height);
 
         /*
          * omit the prepSelector for now, until we develop a more robust "linked" prep setup
