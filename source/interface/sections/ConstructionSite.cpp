@@ -1367,13 +1367,15 @@ void ConstructionSite::setActivePiano() {
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     //prep_list= interface->getSynth()->getActivePreparationList();
     if (interface != nullptr && interface->getSynth() != nullptr)
-    {
-        prep_list= interface->getSynth()->getActivePreparationList();
-    }
-    else prep_list = gui_data->synth->getActivePreparationList();
+        prep_list = interface->getSynth()->getActivePreparationList();
+    else
+        prep_list = gui_data->synth->getActivePreparationList();
+
+    if (prep_list == nullptr)
+        return;
 
     parent = prep_list->getValueTree().getParent();
-    prep_list->addListener(this);
+    prep_list->addListener (this);
     prep_list->rebuildAllGui();
 
     cableView.setActivePiano();

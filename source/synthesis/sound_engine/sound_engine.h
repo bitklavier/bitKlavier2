@@ -346,6 +346,9 @@ namespace bitklavier
             auto* srcProc = srcNode->getProcessor();
             auto* dstProc = dstNode->getProcessor();
 
+            DBG("SoundEngine::addConnection: [" + srcProc->getName() + " (ID: " + juce::String(connection.source.nodeID.uid) + ")]:" + juce::String(connection.source.channelIndex) 
+                + " -> [" + dstProc->getName() + " (ID: " + juce::String(connection.destination.nodeID.uid) + ")]:" + juce::String(connection.destination.channelIndex));
+
             // --- 1. SMART MIDI AUTO-CONNECTION ---
             // If this is an audio connection, and both nodes support MIDI,
             // ensure the MIDI bus is also connected.
@@ -364,33 +367,85 @@ namespace bitklavier
             }
 
             // --- 2. SMART STEREO PAIRING ---
-            // We only pair if the channel belongs to the "Main" output bus (index 0).
-
+            // If the source bus is stereo (or more) and we are connecting the first channel of that bus,
+            // automatically connect the subsequent channels of that bus to the corresponding channels
+            // of the destination bus.
             if (!connection.source.isMIDI())
             {
-                // Find if this channel is part of the main output bus
-                int mainBusNumChannels = 0;
-                if (auto* mainBus = srcProc->getBus (false, 0))
-                    mainBusNumChannels = mainBus->getNumberOfChannels();
-
-                // If the main bus is stereo (or more) and we are connecting the first channel (0),
-                // automatically connect the second channel (1).
-                if (mainBusNumChannels > 1 && connection.source.channelIndex == 0)
+                int srcNumBuses = srcProc->getBusCount (false);
+                for (int b = 0; b < srcNumBuses; ++b)
                 {
-                     processorGraph->addConnection ({
-                        { connection.source.nodeID, 1 },
-                        { connection.destination.nodeID, 1 }
-                    });
+                    auto* srcBus = srcProc->getBus (false, b);
+                    if (! srcBus->isEnabled() || srcBus->getNumberOfChannels() == 0)
+                        continue;
+
+                    int srcBusStartIndex = srcBus->getChannelIndexInProcessBlockBuffer (0);
+                    if (srcBusStartIndex == connection.source.channelIndex)
+                    {
+                        DBG("  Matched source bus: " << srcBus->getName() << " (chans: " << srcBus->getNumberOfChannels() << ")");
+                        if (srcBus->getNumberOfChannels() > 1)
+                        {
+                            // Found a stereo (or more) source bus starting at this channel.
+                            // Now check the destination bus.
+                            int dstNumBuses = dstProc->getBusCount (true);
+                            for (int db = 0; db < dstNumBuses; ++db)
+                            {
+                                auto* dstBus = dstProc->getBus (true, db);
+                                if (! dstBus->isEnabled() || dstBus->getNumberOfChannels() == 0)
+                                    continue;
+
+                                int dstBusStartIndex = dstBus->getChannelIndexInProcessBlockBuffer (0);
+                                if (dstBusStartIndex == connection.destination.channelIndex)
+                                {
+                                    DBG("  Matched dest bus: " << dstBus->getName() << " (chans: " << dstBus->getNumberOfChannels() << ")");
+                                    int numChannelsToConnect = std::min (srcBus->getNumberOfChannels(), dstBus->getNumberOfChannels());
+                                    for (int ch = 1; ch < numChannelsToConnect; ++ch)
+                                    {
+                                        juce::AudioProcessorGraph::Connection pairedConn {
+                                            { connection.source.nodeID, connection.source.channelIndex + ch },
+                                            { connection.destination.nodeID, connection.destination.channelIndex + ch }
+                                        };
+                                        if (!processorGraph->isConnected (pairedConn))
+                                        {
+                                            bool success = processorGraph->addConnection (pairedConn);
+                                            DBG("  Adding paired connection: " + juce::String(connection.source.channelIndex + ch) 
+                                                + " -> " + juce::String(connection.destination.channelIndex + ch) 
+                                                + (success ? " (SUCCESS)" : " (FAILED)"));
+                                        }
+                                        else
+                                        {
+                                            DBG("  Paired connection already exists: " + juce::String(connection.source.channelIndex + ch) 
+                                                + " -> " + juce::String(connection.destination.channelIndex + ch));
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
                 }
             }
 
             // --- 3. OUTPUT CLEANUP ---
             // If we are custom-wiring main audio, remove the default auto-wires to output.
-            if ((connection.source.channelIndex == 0 || connection.source.channelIndex == 1)
-                && connection.destination.nodeID != audioOutputNode->nodeID)
+            if (connection.destination.nodeID != audioOutputNode->nodeID && !connection.source.isMIDI())
             {
-                processorGraph->removeConnection ({{connection.source.nodeID, 0}, {audioOutputNode->nodeID, 0}});
-                processorGraph->removeConnection ({{connection.source.nodeID, 1}, {audioOutputNode->nodeID, 1}});
+                if (auto* mainBus = srcProc->getBus (false, 0))
+                {
+                    if (mainBus->isEnabled() && mainBus->getNumberOfChannels() > 0)
+                    {
+                        int absIdx0 = mainBus->getChannelIndexInProcessBlockBuffer (0);
+                        int absIdx1 = mainBus->getNumberOfChannels() > 1 ? mainBus->getChannelIndexInProcessBlockBuffer (1) : -1;
+
+                        if (connection.source.channelIndex == absIdx0 || (absIdx1 != -1 && connection.source.channelIndex == absIdx1))
+                        {
+                            processorGraph->removeConnection ({{connection.source.nodeID, absIdx0}, {audioOutputNode->nodeID, 0}});
+                            if (absIdx1 != -1)
+                                processorGraph->removeConnection ({{connection.source.nodeID, absIdx1}, {audioOutputNode->nodeID, 1}});
+                        }
+                    }
+                }
             }
 
             // --- 4. FINAL PRIMARY CONNECTION ---
@@ -407,39 +462,86 @@ namespace bitklavier
             processorGraph->removeConnection (connection);
 
             // 2. SYMMETRICAL STEREO CLEANUP
-            // If we are removing the first channel (0) of a Main Bus,
-            // we should also remove the automatic second channel (1) connection.
+            // If we are removing the first channel of a multi-channel bus,
+            // we should also remove the automatic subsequent channel connections.
+            if (!connection.source.isMIDI())
+            {
+                auto* srcNode = processorGraph->getNodeForId (connection.source.nodeID);
+                auto* dstNode = processorGraph->getNodeForId (connection.destination.nodeID);
+                if (srcNode != nullptr && dstNode != nullptr)
+                {
+                    auto* srcProc = srcNode->getProcessor();
+                    auto* dstProc = dstNode->getProcessor();
+
+                    int srcNumBuses = srcProc->getBusCount (false);
+                    for (int b = 0; b < srcNumBuses; ++b)
+                    {
+                        auto* srcBus = srcProc->getBus (false, b);
+                        if (! srcBus->isEnabled() || srcBus->getNumberOfChannels() == 0)
+                            continue;
+
+                        int srcBusStartIndex = srcBus->getChannelIndexInProcessBlockBuffer (0);
+                        if (srcBusStartIndex == connection.source.channelIndex)
+                        {
+                            if (srcBus->getNumberOfChannels() > 1)
+                            {
+                                int dstNumBuses = dstProc->getBusCount (true);
+                                for (int db = 0; db < dstNumBuses; ++db)
+                                {
+                                    auto* dstBus = dstProc->getBus (true, db);
+                                    if (! dstBus->isEnabled() || dstBus->getNumberOfChannels() == 0)
+                                        continue;
+
+                                    int dstBusStartIndex = dstBus->getChannelIndexInProcessBlockBuffer (0);
+                                    if (dstBusStartIndex == connection.destination.channelIndex)
+                                    {
+                                        int numChannelsToRemove = std::min (srcBus->getNumberOfChannels(), dstBus->getNumberOfChannels());
+                                        for (int ch = 1; ch < numChannelsToRemove; ++ch)
+                                        {
+                                            processorGraph->removeConnection ({
+                                                { connection.source.nodeID, connection.source.channelIndex + ch },
+                                                { connection.destination.nodeID, connection.destination.channelIndex + ch }
+                                            });
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 3. RESTORE DEFAULT OUTPUT CONNECTIONS
+            // If the node's main audio is no longer connected
+            // to any other internal node, wire it back to the final speakers.
             if (!connection.source.isMIDI())
             {
                 auto* srcNode = processorGraph->getNodeForId (connection.source.nodeID);
                 if (srcNode != nullptr)
                 {
                     auto* srcProc = srcNode->getProcessor();
-                    int mainBusNumChannels = 0;
                     if (auto* mainBus = srcProc->getBus (false, 0))
-                        mainBusNumChannels = mainBus->getNumberOfChannels();
-
-                    if (mainBusNumChannels > 1 && connection.source.channelIndex == 0)
                     {
-                        processorGraph->removeConnection ({
-                            { connection.source.nodeID, 1 },
-                            { connection.destination.nodeID, 1 }
-                        });
-                    }
-                }
-            }
+                        if (mainBus->isEnabled() && mainBus->getNumberOfChannels() > 0)
+                        {
+                            int absIdx0 = mainBus->getChannelIndexInProcessBlockBuffer (0);
+                            int absIdx1 = mainBus->getNumberOfChannels() > 1 ? mainBus->getChannelIndexInProcessBlockBuffer (1) : -1;
 
-            // 3. RESTORE DEFAULT OUTPUT CONNECTIONS
-            // If the node's main audio (channels 0 or 1) is no longer connected
-            // to any other internal node, wire it back to the final speakers.
-            if (connection.source.channelIndex == 0 || connection.source.channelIndex == 1)
-            {
-                // Only restore if the node has no other outgoing connections
-                // leading to the final audio output node.
-                if (!processorGraph->isAnInputTo (connection.source.nodeID, audioOutputNode->nodeID))
-                {
-                    processorGraph->addConnection ({{connection.source.nodeID, 0}, {audioOutputNode->nodeID, 0}});
-                    processorGraph->addConnection ({{connection.source.nodeID, 1}, {audioOutputNode->nodeID, 1}});
+                            if (connection.source.channelIndex == absIdx0 || (absIdx1 != -1 && connection.source.channelIndex == absIdx1))
+                            {
+                                // Only restore if the node has no other outgoing connections
+                                // leading to the final audio output node.
+                                if (!processorGraph->isAnInputTo (connection.source.nodeID, audioOutputNode->nodeID))
+                                {
+                                    processorGraph->addConnection ({{connection.source.nodeID, absIdx0}, {audioOutputNode->nodeID, 0}});
+                                    if (absIdx1 != -1)
+                                        processorGraph->addConnection ({{connection.source.nodeID, absIdx1}, {audioOutputNode->nodeID, 1}});
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

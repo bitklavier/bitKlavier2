@@ -3,6 +3,7 @@
 //
 
 #include "MidiTargetParametersView.h"
+#include "FullInterface.h"
 MidiTargetParametersView::MidiTargetParametersView(chowdsp::PluginState& pluginState, MidiTargetParams& param, juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
 {
     setName ("miditarget");
@@ -14,6 +15,10 @@ MidiTargetParametersView::MidiTargetParametersView(chowdsp::PluginState& pluginS
     prepTitle->setJustification(juce::Justification::centredLeft);
     prepTitle->setFontType (PlainTextComponent::kTitle);
     prepTitle->setRotation (-90);
+
+    FullInterface *parent = findParentComponentOfClass<FullInterface>();
+    if (parent)
+        parent->hideSoundsetSelector();
 
     auto& listeners = pluginState.getParameterListeners();
 
@@ -57,6 +62,10 @@ void MidiTargetParametersView::arrange_parameter_toggles_and_menus (int firstID,
 
 void MidiTargetParametersView::resized()
 {
+    FullInterface *parent = findParentComponentOfClass<FullInterface>();
+    if (parent)
+        parent->hideSoundsetSelector();
+
     juce::Rectangle<int> area (getLocalBounds());
 
     int smallpadding = findValue(Skin::kPadding);

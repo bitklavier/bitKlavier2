@@ -3,6 +3,7 @@
 //
 
 #include "MidiFilterParametersView.h"
+#include "FullInterface.h"
 MidiFilterParametersView::MidiFilterParametersView(chowdsp::PluginState& pluginState, MidiFilterParams& param, juce::String name, OpenGlWrapper *open_gl) : SynthSection(""), params(param)
 {
     setName ("midifilter");
@@ -14,6 +15,10 @@ MidiFilterParametersView::MidiFilterParametersView(chowdsp::PluginState& pluginS
     prepTitle->setJustification(juce::Justification::centredLeft);
     prepTitle->setFontType (PlainTextComponent::kTitle);
     prepTitle->setRotation (-90);
+
+    FullInterface *parent = findParentComponentOfClass<FullInterface>();
+    if (parent)
+        parent->hideSoundsetSelector();
 
     auto& listeners = pluginState.getParameterListeners();
 
@@ -113,6 +118,10 @@ MidiFilterParametersView::MidiFilterParametersView(chowdsp::PluginState& pluginS
 
 void MidiFilterParametersView::resized()
 {
+    FullInterface *parent = findParentComponentOfClass<FullInterface>();
+    if (parent)
+        parent->hideSoundsetSelector();
+
     juce::Rectangle<int> area (getLocalBounds());
     int smallpadding = findValue(Skin::kPadding);
     int largepadding = findValue(Skin::kLargePadding);

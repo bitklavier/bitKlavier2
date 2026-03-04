@@ -21,6 +21,10 @@ KeymapParameterView::KeymapParameterView(
     prepTitle->setFontType(PlainTextComponent::kTitle);
     prepTitle->setRotation(-90);
 
+    FullInterface *parent = findParentComponentOfClass<FullInterface>();
+    if (parent)
+        parent->hideSoundsetSelector();
+
     velocityInLabel = std::make_shared<PlainTextComponent>("velocityIn", "VELOCITY  IN");
     addOpenGlComponent(velocityInLabel);
     velocityInLabel->setJustification(juce::Justification::centredBottom);
@@ -170,6 +174,10 @@ KeymapParameterView::~KeymapParameterView() {
 }
 
 void KeymapParameterView::resized() {
+    FullInterface *full_parent = findParentComponentOfClass<FullInterface>();
+    if (full_parent)
+        full_parent->hideSoundsetSelector();
+
     const auto kTitleWidth = findValue(Skin::kTitleWidth);
     juce::Rectangle<int> area(getLocalBounds());
 

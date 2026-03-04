@@ -24,6 +24,7 @@ namespace bitklavier {
 
     SoundEngine::SoundEngine(SynthBase& parent, juce::ValueTree& tree) :
     /*voice_handler_(nullptr),*/
+    /*voice_handler_(nullptr),*/
             last_oversampling_amount_(-1), last_sample_rate_(-1),
             processorGraph(std::make_unique<juce::AudioProcessorGraph>())
         {
@@ -208,32 +209,46 @@ namespace bitklavier {
 
             if (processor->getMainBusNumOutputChannels() > 0)
             {
-                // Check if this node has ANY outgoing audio connections.
-                // If it doesn't, it might be a final node that needs to be connected to the output.
-                bool hasAudioOutput = false;
-                const auto connections = processorGraph->getConnections();
-                for (const auto& c : connections)
+                // RATIONALE:
+                // We only want to restore the default output connection if the MAIN BUS (Bus 0)
+                // is not already connected to something else.
+                // Connections on other buses (like 'Send') should not prevent Bus 0 from being auto-connected.
+                bool mainBusIsConnected = false;
+                int absIdx0 = -1;
+                int absIdx1 = -1;
+
+                if (auto* mainBus = processor->getBus (false, 0))
                 {
-                    if (c.source.nodeID == node->nodeID && !c.source.isMIDI())
+                    if (mainBus->isEnabled() && mainBus->getNumberOfChannels() > 0)
                     {
-                        hasAudioOutput = true;
-                        break;
+                        absIdx0 = processor->getChannelIndexInProcessBlockBuffer (false, 0, 0);
+                        if (mainBus->getNumberOfChannels() > 1)
+                            absIdx1 = processor->getChannelIndexInProcessBlockBuffer (false, 0, 1);
                     }
                 }
 
-                if (!hasAudioOutput)
+                const auto connections = processorGraph->getConnections();
+                for (const auto& c : connections)
                 {
-                    if (auto* mainBus = processor->getBus (false, 0))
+                    if (c.source.nodeID == node->nodeID)
                     {
-                        int numChannels = mainBus->getNumberOfChannels();
-                        for (int ch = 0; ch < numChannels && ch < 2; ++ch)
+                        if (c.source.channelIndex == absIdx0 || (absIdx1 != -1 && c.source.channelIndex == absIdx1))
                         {
-                            int absIdx = processor->getChannelIndexInProcessBlockBuffer (false, 0, ch);
-                            processorGraph->addConnection ({{node->nodeID, absIdx}, {audioOutputNode->nodeID, ch}});
+                            // If the destination is the audio output node, it's ALREADY connected to speakers.
+                            // If it's anything else, then it's manually connected, so we shouldn't auto-connect.
+                            mainBusIsConnected = true;
+                            break;
                         }
-                        
-                        // DBG ("SoundEngine: Restored default output for " + processor->getName());
                     }
+                }
+
+                if (!mainBusIsConnected && absIdx0 != -1)
+                {
+                    processorGraph->addConnection ({{node->nodeID, absIdx0}, {audioOutputNode->nodeID, 0}});
+                    if (absIdx1 != -1)
+                        processorGraph->addConnection ({{node->nodeID, absIdx1}, {audioOutputNode->nodeID, 1}});
+
+                    DBG ("SoundEngine: Restored default output for " + processor->getName() + " (Main Bus)");
                 }
             }
         }

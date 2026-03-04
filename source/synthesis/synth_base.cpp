@@ -296,7 +296,6 @@ juce::ValueTree SynthBase::getActivePreparationListValueTree()
         if (preparation->getValueTree().getParent().getProperty (IDs::isActive))
             return preparation->getValueTree();
     }
-    jassertfalse;
     return {};
 }
 
@@ -342,7 +341,6 @@ PreparationList* SynthBase::getActivePreparationList()
         if (preparation->getValueTree().getParent().getProperty (IDs::isActive))
             return preparation.get();
     }
-    jassertfalse;
     return nullptr;
 }
 
@@ -354,7 +352,6 @@ bitklavier::ConnectionList* SynthBase::getActiveConnectionList()
         if (connection->getValueTree().getParent().getProperty (IDs::isActive))
             return connection.get();
     }
-    jassertfalse;
     return nullptr;
 }
 
@@ -365,7 +362,6 @@ bitklavier::ModConnectionList* SynthBase::getActiveModConnectionList()
         if (connection->getValueTree().getParent().getProperty (IDs::isActive))
             return connection.get();
     }
-    jassertfalse;
     return nullptr;
 }
 
@@ -1020,9 +1016,17 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     DBG (src_modulator_uuid_and_name);
 
     //get actual value tree representations from string uuids
-    auto mod_src = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (src_uuid));
-    auto mod_dst = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
-    auto mod_connections = getActivePianoValueTree().getChildWithName (IDs::MODCONNECTIONS);
+    auto activePiano = getActivePianoValueTree();
+    if (! activePiano.isValid())
+    {
+        DBG ("connectModulation: no active piano, skipping.");
+        return;
+    }
+
+    auto preparations = activePiano.getChildWithName (IDs::PREPARATIONS);
+    auto mod_src = preparations.getChildWithProperty (IDs::uuid, juce::String (src_uuid));
+    auto mod_dst = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    auto mod_connections = activePiano.getChildWithName (IDs::MODCONNECTIONS);
     auto mod_connection = getChildWithPropertyAndType (mod_connections, IDs::dest, mod_dst.getProperty (IDs::nodeID), IDs::MODCONNECTION);
 
     if (! mod_connection.isValid())
@@ -1363,7 +1367,15 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     std::string uuid;
     std::getline (ss, uuid, '_');
 
-    auto mod_src = getActivePianoValueTree().getChildWithName (IDs::PREPARATIONS).getChildWithProperty (IDs::uuid, juce::String (uuid));
+    auto activePiano = getActivePianoValueTree();
+    if (! activePiano.isValid())
+    {
+        DBG ("connectStateModulation: no active piano, skipping.");
+        return false;
+    }
+
+    auto preparations = activePiano.getChildWithName (IDs::PREPARATIONS);
+    auto mod_src = preparations.getChildWithProperty (IDs::uuid, juce::String (uuid));
     std::stringstream dst_stream (destination);
     std::string dst_uuid;
     std::getline (dst_stream, dst_uuid, '_');
@@ -1378,13 +1390,10 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     //   src_modulator_uuid_and_name.erase(src_modulator_uuid_and_name.begin(),it);
     //DBG (src_modulator_uuid_and_name);
 
-    auto mod_dst = getActivePianoValueTree()
-                         .getChildWithName (IDs::PREPARATIONS)
-                         .getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    auto mod_dst = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
 
     // Root container for all modulation/state connections
-    auto mod_connections = getActivePianoValueTree()
-                                 .getChildWithName (IDs::MODCONNECTIONS);
+    auto mod_connections = activePiano.getChildWithName (IDs::MODCONNECTIONS);
     // NOTE:
     // We intentionally do NOT look up a specific existing connection node by dest
     // to use as a parent. Each connection's ValueTree should be a direct child

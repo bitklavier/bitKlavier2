@@ -1350,6 +1350,8 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
     prep_view->setAlwaysOnTop(true);
 
     curr_vt = v;
+    sampleSelector->setVisible(true);
+    sampleSelectText->setVisible(true);
     if (curr_vt.getProperty(IDs::soundset).equals(IDs::syncglobal.toString()))
         sampleSelectText->setText("use Global Soundset");
     else
@@ -1377,6 +1379,8 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
 
 
 void PreparationPopup::reset() {
+    sampleSelector->setVisible(true);
+    sampleSelectText->setVisible(true);
     auto *parent = findParentComponentOfClass<SynthGuiInterface>();
     all_synth_buttons_.clear();
     all_sliders_.clear();
@@ -1436,9 +1440,9 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
             } else {
                 SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
                 parent->getSampleLoadManager()->loadSamples(
-                    parent->getSampleLoadManager()->getAllSampleSets()[selection - 1], curr_vt);
+                    parent->getSampleLoadManager()->getAllSampleSets()[selection], curr_vt);
                 sampleSelectText->setText(
-                    juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection - 1]).
+                    juce::String(parent->getSynth()->sampleLoadManager->getAllSampleSets()[selection]).
                     upToFirstOccurrenceOf("||", false, false));
             }
 
