@@ -728,14 +728,14 @@ void TuningState::mapScalaToInternalTuning()
         fundamental->setParameterValue (PitchClass::C);
         tuningSystem->setParameterValue(TuningSystem::Equal_Temperament);
 
-        // set offset, taking into account Scala tuningFrequency
-        offsetKnobParam.offSetSliderParam->setParameterValue (0.); // need to zero it out first, since getStaticTargetFrequency will use it from the previous setting
-        auto offsetN = 100.f * bitklavier::utils::ratioToMidiTranspose
-        (
-            currentScalaTuning.keyboardMapping.tuningFrequency /
-            getStaticTargetFrequency (currentScalaTuning.keyboardMapping.tuningConstantNote, 0, false)
-        );
-        offsetKnobParam.offSetSliderParam->setParameterValue (offsetN);
+        // //set offset, taking into account Scala tuningFrequency; seems to don't need/want this for absolute offsets
+        // offsetKnobParam.offSetSliderParam->setParameterValue (0.); // need to zero it out first, since getStaticTargetFrequency will use it from the previous setting
+        // auto offsetN = 100.f * bitklavier::utils::ratioToMidiTranspose
+        // (
+        //     currentScalaTuning.keyboardMapping.tuningFrequency /
+        //     getStaticTargetFrequency (currentScalaTuning.keyboardMapping.tuningConstantNote, 0, false)
+        // );
+        // offsetKnobParam.offSetSliderParam->setParameterValue (offsetN);
     }
 
     // otherwise, map to circular tuning
