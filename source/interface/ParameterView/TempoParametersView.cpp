@@ -78,5 +78,34 @@ void TempoParametersView::resized()
     historyLabel->setBounds(history_label_rect);
     historyLabel->setTextSize (knobLabelSize);
 
+    auto bottomArea = bounds.removeFromBottom(labelsectionheight * 2).withSizeKeepingCentre(400, labelsectionheight * 2);
+    bottomArea.removeFromTop(large_padding);
+    auto currentTempoBox = bottomArea.removeFromRight(150).reduced(10, 2);
+    currentTempoDisplay->setBounds(currentTempoBox);
+    auto resetBox = bottomArea.removeFromRight(100).reduced(10, 2);
+    resetButton->setBounds(resetBox);
+    adaptiveMultiplierDisplay->setBounds(bottomArea.reduced(10, 2));
+
     SynthSection::resized();
+}
+
+void TempoParametersView::timerCallback()
+{
+    if (processor)
+    {
+        currentTempoDisplay->setText("Current Tempo = " + juce::String(60.f / (processor->getCurrentPulseLength_seconds() * *processor->getState().params.subdivisionsParam), 2) + "bpm");
+        adaptiveMultiplierDisplay->setText("Multiplier = " + juce::String(1. / processor->adaptiveTempoPeriodMultiplier, 2));
+
+        auto mode = processor->getState().params.tempoModeOptions->get();
+        bool isAdaptive = (mode == TempoModeType::Adaptive2Time_Between_Notes || mode == TempoModeType::Adaptive2Sustain_Time);
+
+        adaptiveMultiplierDisplay->setVisible(isAdaptive);
+        resetButton->setVisible(isAdaptive);
+        currentTempoDisplay->setVisible(isAdaptive);
+        resetButton->setToggleState(false, juce::dontSendNotification); // just turn it off, since it shouldn't be a toggle
+        historySlider->setVisible(isAdaptive);
+        historyLabel->setVisible(isAdaptive);
+        timeWindowMinMaxSlider->setVisible(isAdaptive);
+        adaptiveKnobsBorder->setVisible(isAdaptive);
+    }
 }

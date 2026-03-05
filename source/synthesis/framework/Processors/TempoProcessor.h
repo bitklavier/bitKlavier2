@@ -180,15 +180,16 @@ public:
 
     }
 
+    float adaptiveTempoPeriodMultiplier;
+    void adaptiveReset();
+
 private:
 
     // adaptive tempo stuff
     void atNewNote();
     void atNewNoteOff();
     void atCalculatePeriodMultiplier();
-    float adaptiveTempoPeriodMultiplier;
     int getAtDelta();
-    void adaptiveReset();
 
     juce::uint64 atTimer, atLastTime;   //in samples
     int atDelta;                        //in ms

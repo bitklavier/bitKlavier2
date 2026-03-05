@@ -14,10 +14,10 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 
-class TempoParametersView : public SynthSection
+class TempoParametersView : public SynthSection, public juce::Timer
 {
 public:
-    TempoParametersView (chowdsp::PluginState& pluginState, TempoParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection ("")
+    TempoParametersView (chowdsp::PluginState& pluginState, TempoParams& params, juce::String name, OpenGlWrapper* open_gl, TempoProcessor* proc) : SynthSection (""), processor(proc)
     {
         // the name that will appear in the UI as the name of the section
         setName ("Tempo");
@@ -103,6 +103,18 @@ public:
         addOpenGlComponent(currentTempoDisplay);
         currentTempoDisplay->setTextSize (12.0f);
         currentTempoDisplay->setJustification(juce::Justification::centred);
+
+        adaptiveMultiplierDisplay = std::make_shared<PlainTextComponent>("adaptivemultiplier", "Multiplier = 1.00");
+        addOpenGlComponent(adaptiveMultiplierDisplay);
+        adaptiveMultiplierDisplay->setTextSize (12.0f);
+        adaptiveMultiplierDisplay->setJustification(juce::Justification::centred);
+
+        resetButton = std::make_unique<SynthButton>("reset");
+        resetButton->setButtonText("Reset");
+        resetButton->onClick = [this] { if (processor) processor->adaptiveReset(); };
+        addSynthButton(resetButton.get());
+
+        startTimer(50);
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -134,6 +146,12 @@ public:
     std::shared_ptr<OpenGL_LabeledBorder> adaptiveKnobsBorder;
 
     std::shared_ptr<PlainTextComponent> currentTempoDisplay;
+    std::shared_ptr<PlainTextComponent> adaptiveMultiplierDisplay;
+    std::unique_ptr<SynthButton> resetButton;
+
+    TempoProcessor* processor;
+
+    void timerCallback() override;
 
     void resized() override;
 };
