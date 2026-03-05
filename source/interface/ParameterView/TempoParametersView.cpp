@@ -108,6 +108,10 @@ void TempoParametersView::timerCallback()
         currentTempoDisplay->setVisible(isAdaptive);
         resetButton->setToggleState(false, juce::dontSendNotification); // just turn it off, since it shouldn't be a toggle
         historySlider->setVisible(isAdaptive);
+        // if (auto glQuad = std::dynamic_pointer_cast<OpenGlMultiQuad>(historySlider->getQuadComponent()))
+        //     glQuad->setActive(isAdaptive);
+        // else if (auto glImage = std::dynamic_pointer_cast<OpenGlImageComponent>(historySlider->getImageComponent()))
+        //     glImage->setActive(isAdaptive);
         historyLabel->setVisible(isAdaptive);
         timeWindowMinMaxSlider->setVisible(isAdaptive);
         adaptiveKnobsBorder->setVisible(isAdaptive);
