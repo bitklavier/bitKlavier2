@@ -18,7 +18,8 @@ CableView::CableView (ConstructionSite &site, juce::UndoManager& um, SynthGuiDat
     setInterceptsMouseClicks (false,true);
     //startTimerHz (36);
     setAlwaysOnTop(true);
-    connection_list->addListener(this);
+    if (connection_list != nullptr)
+        connection_list->addListener(this);
 }
 
 void CableView::requestDeleteConnection (juce::ValueTree connectionVT)
@@ -30,6 +31,7 @@ void CableView::requestDeleteConnection (juce::ValueTree connectionVT)
 }
 
 CableView::~CableView() {
+    removeAllGuiListeners();
     for (auto object: objects)
         delete object;
   objects.clear();

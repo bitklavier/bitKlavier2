@@ -554,14 +554,15 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 }
 
                 juce::Array<juce::ValueTree> connectionsToRemove;
-                if (connection_list != nullptr)
+                auto* active_connection_list = connection_list;
+                if (active_connection_list != nullptr)
                 {
-                    const bitklavier::ConnectionList::ScopedLockType sl (connection_list->arrayLock);
+                    const bitklavier::ConnectionList::ScopedLockType sl (active_connection_list->arrayLock);
                     // Copy the current objects to avoid iterator invalidation if the list is modified during removal.
                     // bitklavier::ConnectionList inherits from ValueTreeObjectList which has an 'objects' member.
-                    for (int i = 0; i < connection_list->size(); ++i)
+                    for (int i = 0; i < active_connection_list->size(); ++i)
                     {
-                        if (auto* connection = connection_list->at(i))
+                        if (auto* connection = active_connection_list->at(i))
                         {
                             if (connection->state.isValid() && (bool) connection->state.getProperty (IDs::isSelected, false))
                             {
@@ -572,12 +573,13 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 }
 
                 juce::Array<juce::ValueTree> modConnectionsToRemove;
-                if (modulationLineView.connection_list != nullptr)
+                auto* active_mod_connection_list = modulationLineView.connection_list;
+                if (active_mod_connection_list != nullptr)
                 {
-                    const bitklavier::ModConnectionList::ScopedLockType sl (modulationLineView.connection_list->arrayLock);
-                    for (int i = 0; i < modulationLineView.connection_list->size(); ++i)
+                    const bitklavier::ModConnectionList::ScopedLockType sl (active_mod_connection_list->arrayLock);
+                    for (int i = 0; i < active_mod_connection_list->size(); ++i)
                     {
-                        if (auto* modConnection = modulationLineView.connection_list->at(i))
+                        if (auto* modConnection = active_mod_connection_list->at(i))
                         {
                             if (modConnection->state.isValid() && (bool) modConnection->state.getProperty (IDs::isSelected, false))
                             {
@@ -592,21 +594,21 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                     prep_list->removeChild (vt, &undo);
                 }
 
-                if (connection_list != nullptr)
+                if (active_connection_list != nullptr)
                 {
                     for (auto& vt : connectionsToRemove)
                     {
                         if (vt.isValid() && vt.getParent().isValid())
-                            connection_list->removeChild (vt, &undo);
+                            active_connection_list->removeChild (vt, &undo);
                     }
                 }
 
-                if (modulationLineView.connection_list != nullptr)
+                if (active_mod_connection_list != nullptr)
                 {
                     for (auto& vt : modConnectionsToRemove)
                     {
                         if (vt.isValid() && vt.getParent().isValid())
-                            modulationLineView.connection_list->removeChild (vt, &undo);
+                            active_mod_connection_list->removeChild (vt, &undo);
                     }
                 }
 
@@ -799,22 +801,24 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
         // Use callAsync to wait for processors to be created before adding connections
         juce::MessageManager::callAsync([this, conns = conns.createCopy(), mconns = mconns.createCopy(), nodeIdMap] {
             // connections
-            if (connection_list != nullptr)
+            auto* active_connection_list = connection_list;
+            if (active_connection_list != nullptr)
             {
                 for (int i = 0; i < conns.getNumChildren(); ++i)
                 {
                     auto c = conns.getChild(i).createCopy();
-                    connection_list->appendChild (c, &undo);
+                    active_connection_list->appendChild (c, &undo);
                 }
             }
         
             // mod connections
-            if (modulationLineView.connection_list != nullptr)
+            auto* active_mod_connection_list = modulationLineView.connection_list;
+            if (active_mod_connection_list != nullptr)
             {
                 for (int i = 0; i < mconns.getNumChildren(); ++i)
                 {
                     auto c = mconns.getChild(i).createCopy();
-                    modulationLineView.connection_list->appendChild (c, &undo);
+                    active_mod_connection_list->appendChild (c, &undo);
                 }
             }
 
@@ -1375,6 +1379,11 @@ void ConstructionSite::setActivePiano() {
         return;
 
     parent = prep_list->getValueTree().getParent();
+    if (interface != nullptr && interface->getSynth() != nullptr)
+        connection_list = interface->getSynth()->getActiveConnectionList();
+    else
+        connection_list = gui_data->synth->getActiveConnectionList();
+
     prep_list->addListener (this);
     prep_list->rebuildAllGui();
 

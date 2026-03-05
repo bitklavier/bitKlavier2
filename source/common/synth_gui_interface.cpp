@@ -403,8 +403,12 @@ void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
     DBG("SynthGuiInterface::setActivePiano");
     if (synth_->switch_trigger_thread == SwitchTriggerThread::MessageThread)
         synth_->setActivePiano (v, synth_->switch_trigger_thread);
-    gui_->main_->constructionSite_->setActivePiano();
-    gui_->header_->updateCurrentPianoName();
+
+    if (gui_ != nullptr && gui_->main_ != nullptr && gui_->main_->constructionSite_ != nullptr)
+        gui_->main_->constructionSite_->setActivePiano();
+
+    if (gui_ != nullptr && gui_->header_ != nullptr)
+        gui_->header_->updateCurrentPianoName();
 }
 
 std::vector<std::string> SynthGuiInterface::getAllPianoNames()

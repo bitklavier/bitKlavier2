@@ -447,7 +447,7 @@ public:
         }
     }
 
-    void loadSamples() {
+    void loadSamples() override {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {
             //if global sync read soundset from global valuetree

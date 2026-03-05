@@ -26,11 +26,21 @@ void MidiTargetProcessor::timerCallback()
         stopTimer();
 }
 
+void MidiTargetProcessor::refreshSubscription()
+{
+    subscription.release();
+    connectedPrepIds.clear();
+    setConnectedPrep(IDs::noConnection);
+    listenerAttached = false;
+    attachAttempts = 0;
+    tryAttachListener();
+}
+
 void MidiTargetProcessor::tryAttachListener()
 {
     if (auto* list = parent.getActiveConnectionList())
     {
-        list->addListener (this);
+        subscription = list->subscribe (this);
         listenerAttached = true;
 
         // Re-process existing connections

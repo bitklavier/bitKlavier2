@@ -641,6 +641,8 @@ namespace bitklavier
         }
 
 
+        juce::ReferenceCountedArray<juce::AudioProcessorGraph::Node> getNodes() const { return processorGraph->getNodes(); }
+
     private:
         void setOversamplingAmount (int oversampling_amount, int sample_rate);
         int last_oversampling_amount_;

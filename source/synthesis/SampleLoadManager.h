@@ -46,7 +46,7 @@ struct SampleSetProgress
     std::atomic<int> totalJobs { 0 };
     std::atomic<int> completedJobs { 0 };
 
-    juce::ValueTree targetTree;       // tree to update when loading completes
+    juce::Array<juce::ValueTree> targetTrees;       // trees to update when loading completes
     juce::String soundsetName;        // actual sample set name to set into the tree
     juce::String presetName;
     juce::ReferenceCountedArray<BKSynthesiserSound>* soundset = nullptr;

@@ -55,6 +55,7 @@ namespace bitklavier {
             juce::ReferenceCountedArray<BKSynthesiserSound> *p) {
         } // pedal samples;
 
+        virtual void loadSamples() {}
         juce::ValueTree v;
 
     protected:

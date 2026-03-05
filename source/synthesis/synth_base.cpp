@@ -381,6 +381,18 @@ void SynthBase::setActivePiano (const juce::ValueTree& v, SwitchTriggerThread th
 
     sample_index_of_switch = total_samples_passed;
 
+    if (auto* engine = getEngine())
+    {
+        for (auto node : engine->getNodes())
+        {
+            if (auto* proc = node->getProcessor())
+            {
+                if (auto* midiTarget = dynamic_cast<MidiTargetProcessor*>(proc))
+                    midiTarget->refreshSubscription();
+            }
+        }
+    }
+
     // tree.removeListener (this);
     // tree.setProperty (IDs::isActive, 0, nullptr);
     // tree = v;
@@ -698,6 +710,21 @@ void SynthBase::startSampleLoading()
         getGuiInterface()->getGui()->showLoadingSection();
 }
 
+void SynthBase::reloadAllLoadedSamples()
+{
+    if (auto* engine = getEngine())
+    {
+        for (auto node : engine->getNodes())
+        {
+            if (auto* proc = node->getProcessor())
+            {
+                if (auto* internalProc = dynamic_cast<bitklavier::InternalProcessor*>(proc))
+                    internalProc->loadSamples();
+            }
+        }
+    }
+}
+
 void SynthBase::finishedSampleLoading()
 {
     if (presetPending.load()) {
@@ -713,6 +740,18 @@ void SynthBase::finishedSampleLoading()
             gui->notifyFresh();
         }
         pendingPresetTree = juce::ValueTree{};
+    }
+
+    if (auto* engine = getEngine())
+    {
+        for (auto node : engine->getNodes())
+        {
+            if (auto* proc = node->getProcessor())
+            {
+                if (auto* internalProc = dynamic_cast<bitklavier::InternalProcessor*>(proc))
+                    internalProc->loadSamples();
+            }
+        }
     }
 
     if(getGuiInterface()) {

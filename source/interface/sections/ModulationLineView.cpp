@@ -19,7 +19,8 @@ ModulationLineView::ModulationLineView (ConstructionSite& site, juce::UndoManage
     setInterceptsMouseClicks (false, false);
     setAlwaysOnTop (true);
     //    addAndMakeVisible(line_.get());
-    connection_list->addListener (this);
+    if (connection_list != nullptr)
+        connection_list->addListener (this);
 }
 
 void ModulationLineView::reset()
@@ -47,7 +48,7 @@ void ModulationLineView::removeAllGuiListeners()
 
 ModulationLineView::~ModulationLineView()
 {
-    // freeObjects();
+    removeAllGuiListeners();
 }
 
 void ModulationLineView::renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate)

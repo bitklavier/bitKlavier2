@@ -28,15 +28,19 @@ static inline juce::String makeSFZKey(const juce::String &base, const juce::Stri
 }
 
 void SampleSetProgress::markComplete() {
-    if (!targetTree.isValid())
+    if (targetTrees.isEmpty())
         return;
     // std::string preset = "";
     // if (presetName.isEmpty() && load_manager->sfzHasPresets(soundsetName))
     // presetName = "||" + load_manager->getSelectedSFZPreset(soundsetName);
     if (isSoundFont)
         load_manager->samplerSoundset[makeSFZKey(soundsetName, presetName)] = soundset;
-    targetTree.setProperty(IDs::soundset, makeSFZKey(soundsetName, presetName), nullptr);
 
+    for (auto& targetTree : targetTrees)
+    {
+        if (targetTree.isValid())
+            targetTree.setProperty(IDs::soundset, makeSFZKey(soundsetName, presetName), nullptr);
+    }
 }
 
 SampleLoadManager::SampleLoadManager(SynthBase *parent,
@@ -265,7 +269,16 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     if (samplerSoundset.contains(soundsetName.toStdString())) {
         if (vtToWrite.isValid())
             vtToWrite.setProperty(IDs::soundset, soundsetName, nullptr);
+        // Ensure processors refresh immediately on cache hit
+        if (parent)
+            parent->reloadAllLoadedSamples();
+        return true;
+    }
 
+    // If already in progress, add this tree to the targets and return
+    if (auto it = soundsetProgressMap.find(soundsetName.toStdString()); it != soundsetProgressMap.end()) {
+        if (vtToWrite.isValid())
+            it->second->targetTrees.addIfNotAlreadyThere (vtToWrite);
         return true;
     }
 
@@ -295,7 +308,8 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
         progressPtr = std::make_shared<SampleSetProgress>();
 
     progressPtr->soundsetName = soundsetName.toStdString();
-    progressPtr->targetTree = vtToWrite; // store where to write soundset / completion callbacks
+    if (vtToWrite.isValid())
+        progressPtr->targetTrees.addIfNotAlreadyThere (vtToWrite); // store where to write soundset / completion callbacks
     progressPtr->load_manager = this;
     parent->startSampleLoading();
 
@@ -548,6 +562,8 @@ bool SampleLoadManager::changeSFZPresetAndUpdateTree(const juce::String &current
     // If already loaded, just update the tree
     if (samplerSoundset.contains(newKey)) {
         targetTree.setProperty(IDs::soundset, newKey, nullptr);
+        if (parent)
+            parent->reloadAllLoadedSamples();
         return true;
     }
 
@@ -629,6 +645,8 @@ bool SampleLoadManager::changeSFZPresetAndUpdateTree(const juce::String &current
 
     // Update ValueTree while both soundset keys may exist
     targetTree.setProperty(IDs::soundset, newKey, nullptr);
+    if (parent)
+        parent->reloadAllLoadedSamples();
     // targetTree.setProperty(IDs::soundfont_preset, newPresetName, nullptr);
     //todo : update this to check for any other preps that are using the preset
     // and remove if it is unused

@@ -78,6 +78,9 @@ public:
     bool saveToFile(juce::File preset);
     bool saveToActiveFile();
 
+    // Reload samples for all internal processors immediately (no GUI spinner)
+    void reloadAllLoadedSamples();
+
     void clearActiveFile() { active_file_ = juce::File(); }
     juce::File getActiveFile() { return active_file_; }
     juce::ValueTree &getValueTree();

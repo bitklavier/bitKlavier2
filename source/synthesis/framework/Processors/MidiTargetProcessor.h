@@ -666,10 +666,7 @@ public:
     }
     ~MidiTargetProcessor() override
     {
-        // if (listenerAttached) {
-        //     if (auto* list = parent.getActiveConnectionList())
-        //         list->removeListener (this);
-        // }
+        subscription.release();
     }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override {};
@@ -685,6 +682,7 @@ public:
 
     void connectionAdded(bitklavier::Connection*) override;
     void connectionListChanged() override {};
+    void refreshSubscription();
     void removeConnection(bitklavier::Connection*) override;
 
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
@@ -705,6 +703,7 @@ public:
 private:
     void timerCallback() override;
     void tryAttachListener();
+    bitklavier::ConnectionList::Subscription subscription;
     bool listenerAttached = false;
     int attachAttempts = 0;
     static constexpr int kMaxAttachAttempts = 10;
