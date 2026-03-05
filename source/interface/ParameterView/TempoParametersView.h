@@ -117,6 +117,11 @@ public:
         startTimer(50);
     }
 
+    ~TempoParametersView() override
+    {
+        stopTimer();
+    }
+
     void paintBackground (juce::Graphics& g) override
     {
         setLabelFont(g);

@@ -26,7 +26,7 @@ void bitklavier::ResetProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
 
     auto reset_out = getChannelIndexInProcessBlockBuffer(false,3,0);
-    if (reset_out >= 0)
+    if (reset_out >= 0 && reset_out < buffer.getNumChannels() && buffer.getNumSamples() > 0)
         buffer.setSample(reset_out,0,outval);
     midiMessages.clear();
 }

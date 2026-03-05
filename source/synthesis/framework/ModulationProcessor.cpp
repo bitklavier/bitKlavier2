@@ -84,7 +84,7 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
 
     // from Audio Bus
     auto reset_in = getBusBuffer(buffer, true, 2);
-    if (reset_in.getSample(0, 0) == 1.0f)
+    if (reset_in.getNumChannels() > 0 && reset_in.getNumSamples() > 0 && reset_in.getSample(0, 0) == 1.0f)
     {
         triggerResets(snap);
         isModded = false;

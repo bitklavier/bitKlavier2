@@ -164,6 +164,9 @@ public:
 
     float getCurrentPulseLength_seconds()
     {
+        if (state.params.tempoModeOptions == nullptr)
+            return 0.5f;
+
         if (state.params.tempoModeOptions->get() == TempoModeType::Constant_Tempo)
             return 60.f /
                     (*state.params.tempoParam *
@@ -176,7 +179,7 @@ public:
                     *state.params.subdivisionsParam *
                     getGlobalTempoMultiplier());
 
-        return 0.5;
+        return 0.5f;
 
     }
 

@@ -93,10 +93,14 @@ void TempoParametersView::timerCallback()
 {
     if (processor)
     {
-        currentTempoDisplay->setText("Current Tempo = " + juce::String(60.f / (processor->getCurrentPulseLength_seconds() * *processor->getState().params.subdivisionsParam), 2) + "bpm");
+        auto& params = processor->getState().params;
+        if (params.subdivisionsParam == nullptr || params.tempoModeOptions == nullptr)
+            return;
+
+        currentTempoDisplay->setText("Current Tempo = " + juce::String(60.f / (processor->getCurrentPulseLength_seconds() * *params.subdivisionsParam), 2) + "bpm");
         adaptiveMultiplierDisplay->setText("Multiplier = " + juce::String(1. / processor->adaptiveTempoPeriodMultiplier, 2));
 
-        auto mode = processor->getState().params.tempoModeOptions->get();
+        auto mode = params.tempoModeOptions->get();
         bool isAdaptive = (mode == TempoModeType::Adaptive2Time_Between_Notes || mode == TempoModeType::Adaptive2Sustain_Time);
 
         adaptiveMultiplierDisplay->setVisible(isAdaptive);

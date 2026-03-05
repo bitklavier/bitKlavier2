@@ -543,13 +543,16 @@ void SynchronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-    float sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendGain);
-    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
-    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+    if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
+    {
+        float sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendGain);
+        buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+        buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
 
-    // send level meter update
-    std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
-    std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+        // send level meter update
+        std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
+        std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+    }
 
     // final output gain stage, from rightmost slider in DirectParametersView
     float outputgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputGain);
@@ -590,9 +593,12 @@ void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
 
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-    float sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendGain);
-    buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
-    buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+    if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
+    {
+        float sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendGain);
+        buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+        buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+    }
 
     // final output gain stage, from rightmost slider in DirectParametersView
     float outputgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputGain);
