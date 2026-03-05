@@ -47,9 +47,15 @@ typedef enum PreparationParameterTargetType {
     DirectTargetDefault,
     DirectTargetModReset,
     DirectTargetNil,
+    TempoTargetFirst,
+    TempoTargetDefault,
+    TempoTargetModReset,
+    TempoTargetReset,
+    TempoTargetNil,
     TuningTargetFirst,
     TuningTargetDefault,
     TuningTargetModReset,
+    TuningTargetReset,
     TuningTargetNil,
 
 } PreparationParameterTargetType;

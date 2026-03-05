@@ -128,6 +128,11 @@ void MidiTargetProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             startParam = TuningTargetFirst + 1;
             lastParam = TuningTargetNil;
         }
+        else if (getConnectedPrep() == IDs::tempo)
+        {
+            startParam = TempoTargetFirst + 1;
+            lastParam = TempoTargetNil;
+        }
 
         for (int i = startParam; i < lastParam; ++i)
         {

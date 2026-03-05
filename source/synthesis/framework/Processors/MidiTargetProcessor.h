@@ -76,9 +76,14 @@ struct MidiTargetParams : chowdsp::ParamHolder
             // Direct targets (booleans)
             directTargetDefault,
             directTargetModReset,
+            // Tempo targets (booleans)
+            tempoTargetDefault,
+            tempoTargetModReset,
+            tempoTargetReset,
             // Tuning targets (booleans)
             tuningTargetDefault,
             tuningTargetModReset,
+            tuningTargetReset,
             // ***
             blendronicTargetPatternSync_noteMode,
             blendronicTargetBeatSync_noteMode,
@@ -104,9 +109,14 @@ struct MidiTargetParams : chowdsp::ParamHolder
             // Direct targets (note mode)
             directTargetDefault_noteMode,
             directTargetModReset_noteMode,
+            // Tempo targets (note mode)
+            tempoTargetDefault_noteMode,
+            tempoTargetModReset_noteMode,
+            tempoTargetReset_noteMode,
             // Tuning targets (note mode)
             tuningTargetDefault_noteMode,
-            tuningTargetModReset_noteMode);
+            tuningTargetModReset_noteMode,
+            tuningTargetReset_noteMode);
 //            synchronicTargetDeleteOldest_noteMode,
 //            synchronicTargetDeleteNewest_noteMode,
 //            synchronicTargetRotate_noteMode);
@@ -192,11 +202,23 @@ struct MidiTargetParams : chowdsp::ParamHolder
         targetMapper[DirectTargetModReset]           = directTargetModReset.get();
         noteModeMapper[DirectTargetModReset]         = directTargetModReset_noteMode.get();
 
+        targetMapper[TempoTargetDefault]           = tempoTargetDefault.get();
+        noteModeMapper[TempoTargetDefault]         = tempoTargetDefault_noteMode.get();
+
+        targetMapper[TempoTargetModReset]           = tempoTargetModReset.get();
+        noteModeMapper[TempoTargetModReset]         = tempoTargetModReset_noteMode.get();
+
+        targetMapper[TempoTargetReset]           = tempoTargetReset.get();
+        noteModeMapper[TempoTargetReset]         = tempoTargetReset_noteMode.get();
+
         targetMapper[TuningTargetDefault]           = tuningTargetDefault.get();
         noteModeMapper[TuningTargetDefault]         = tuningTargetDefault_noteMode.get();
 
         targetMapper[TuningTargetModReset]           = tuningTargetModReset.get();
         noteModeMapper[TuningTargetModReset]         = tuningTargetModReset_noteMode.get();
+
+        targetMapper[TuningTargetReset]           = tuningTargetReset.get();
+        noteModeMapper[TuningTargetReset]         = tuningTargetReset_noteMode.get();
     }
 
     chowdsp::BoolParameter::Ptr blendronicTargetPatternSync {
@@ -560,6 +582,58 @@ struct MidiTargetParams : chowdsp::ParamHolder
 
     chowdsp::EnumChoiceParameter<TriggerType>::Ptr tuningTargetModReset_noteMode {
         juce::ParameterID{"tTargetModResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr tuningTargetReset {
+        juce::ParameterID { "tTargetReset", 100},
+        "Reset",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr tuningTargetReset_noteMode {
+        juce::ParameterID{"tTargetResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr tempoTargetDefault {
+        juce::ParameterID { "tmTargetDefault", 100},
+        "Default Behavior",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr tempoTargetDefault_noteMode {
+        juce::ParameterID{"tmTargetDefaultNoteMode", 100},
+        "Note Mode",
+        TriggerType::_Both,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr tempoTargetModReset {
+        juce::ParameterID { "tmTargetModReset", 100},
+        "Reset Mods",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr tempoTargetModReset_noteMode {
+        juce::ParameterID{"tmTargetModResetNoteMode", 100},
+        "Note Mode",
+        TriggerType::_NoteOn,
+        std::initializer_list<std::pair<char, char>> { { '_', ' ' } }
+    };
+
+    chowdsp::BoolParameter::Ptr tempoTargetReset {
+        juce::ParameterID { "tmTargetReset", 100},
+        "Reset",
+        false
+    };
+
+    chowdsp::EnumChoiceParameter<TriggerType>::Ptr tempoTargetReset_noteMode {
+        juce::ParameterID{"tmTargetResetNoteMode", 100},
         "Note Mode",
         TriggerType::_NoteOn,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' } }

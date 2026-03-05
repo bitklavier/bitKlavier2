@@ -42,7 +42,18 @@ void TempoProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, int numS
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
-        if(message.isNoteOn())
+        const int channel = message.getChannel();
+
+        if (channel + (TempoTargetFirst) == TempoTargetModReset)
+        {
+            resetContinuousModulations();
+            //resetStateModulations(); // no state mods for tempo currently
+        }
+        else if (channel + (TempoTargetFirst) == TempoTargetReset)
+        {
+            adaptiveReset();
+        }
+        else if(message.isNoteOn())
             atNewNote();
         else if(message.isNoteOff())
             atNewNoteOff();

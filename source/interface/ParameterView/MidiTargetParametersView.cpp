@@ -107,6 +107,9 @@ void MidiTargetParametersView::resized()
     if (processor->getConnectedPrep() == IDs::direct)
         arrange_parameter_toggles_and_menus(DirectTargetFirst, DirectTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
     targetOffset += 2;
+    if (processor->getConnectedPrep() == IDs::tempo)
+        arrange_parameter_toggles_and_menus(TempoTargetFirst, TempoTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
+    targetOffset += 2;
     if (processor->getConnectedPrep() == IDs::tuning)
         arrange_parameter_toggles_and_menus(TuningTargetFirst, TuningTargetNil, smallpadding, comboboxheight, targetOffset, noteMenuColumn, toggleColumn);
 

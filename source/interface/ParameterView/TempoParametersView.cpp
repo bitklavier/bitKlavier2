@@ -78,8 +78,8 @@ void TempoParametersView::resized()
     historyLabel->setBounds(history_label_rect);
     historyLabel->setTextSize (knobLabelSize);
 
-    auto bottomArea = bounds.removeFromBottom(labelsectionheight * 2).withSizeKeepingCentre(400, labelsectionheight * 2);
-    bottomArea.removeFromTop(large_padding);
+    auto bottomArea = bounds.removeFromBottom(labelsectionheight * 3).withSizeKeepingCentre(400, labelsectionheight * 3);
+    bottomArea.removeFromBottom(large_padding);
     auto currentTempoBox = bottomArea.removeFromRight(150).reduced(10, 2);
     currentTempoDisplay->setBounds(currentTempoBox);
     auto resetBox = bottomArea.removeFromRight(100).reduced(10, 2);

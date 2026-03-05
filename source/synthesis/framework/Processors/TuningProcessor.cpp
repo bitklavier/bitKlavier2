@@ -928,6 +928,10 @@ void TuningProcessor::handleMidiEvent (const juce::MidiMessage& m)
         resetContinuousModulations();
         resetStateModulations();
     }
+    else if (channel + (TuningTargetFirst) == TuningTargetReset)
+    {
+        state.params.tuningState.adaptiveReset();
+    }
     else if (m.isNoteOn())
     {
         noteOn (channel, m.getNoteNumber(), m.getVelocity());
