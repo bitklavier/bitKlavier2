@@ -105,8 +105,8 @@ void TempoProcessor::atCalculatePeriodMultiplier()
             float beatThreshMS =  60000. / *state.params.tempoParam;
 
             adaptiveTempoPeriodMultiplier = movingAverage /
-                                            beatThreshMS /
-                                            *state.params.subdivisionsParam;
+                                            beatThreshMS; // /
+                                            //*state.params.subdivisionsParam;
 
             DBG("adaptiveTempoPeriodMultiplier = " + juce::String(adaptiveTempoPeriodMultiplier));
         }
