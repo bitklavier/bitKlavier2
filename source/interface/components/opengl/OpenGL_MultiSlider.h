@@ -49,6 +49,7 @@ public:
      */
     void updateFromParams(juce::NotificationType notify = juce::sendNotification)
     {
+        DBG("updating from params");
         setToOnlyActive(
             atomicArrayToJuceArrayLimited(params->sliderVals, params->sliderVals_size),
             atomicBoolArrayToJuceArrayLimited(params->activeSliders, params->activeVals_size),

@@ -86,6 +86,7 @@ void TempoProcessor::atCalculatePeriodMultiplier()
         atDelta = (atTimer - atLastTime) / (0.001 * getSampleRate());
 
         //constrain be min and max times between notes
+        //DBG("delta = " + juce::String(atDelta) + " minTime = " << *state.params.timeWindowMinMaxParams.holdTimeMinParam << " maxTime = " << *state.params.timeWindowMinMaxParams.holdTimeMaxParam);
         if (atDelta > *state.params.timeWindowMinMaxParams.holdTimeMinParam && atDelta < *state.params.timeWindowMinMaxParams.holdTimeMaxParam )
         {
             //insert delta into history circular buffer

@@ -10,6 +10,16 @@ void BlendronicParametersView::timerCallback()
      * for updating the currently active sliders in the UI
      */
 
+    // feedback is the only param where we don't want a default of 1, so need to update here and in BlendronicProcessor constructor
+    if (feedbackCoeffsSlider->getAllActiveValues()[0][0] != bparams_.feedbackCoeffs.sliderVals[0].load())
+    {
+        DBG("updating slider value to match internal val");
+        feedbackCoeffsSlider->updateSliderVal (0, 0, bparams_.feedbackCoeffs.sliderVals[0].load());
+        bparams_.feedbackCoeffs_current = bparams_.feedbackCoeffs.sliderVals[0].load();
+        feedbackCoeffsSlider->drawSliders(juce::dontSendNotification);
+        feedbackCoeffsSlider->redoImage();
+    }
+
     if(!beatLengthsSlider->hovering_)
     {
         beatLengthsSlider->setCurrentSlider(bparams_.beatLengths_current.load());

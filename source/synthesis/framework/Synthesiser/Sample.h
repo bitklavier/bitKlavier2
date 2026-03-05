@@ -1065,10 +1065,10 @@ public:
             {
                 if (loop_start < loop_end)
                 {
-                    DBG("playing sustained sample sample, "
-                        "loop_start: " << (loop_start - currentSampleStart) / currentSampleRate <<
-                        " loop_end: " << (loop_end - currentSampleStart) / currentSampleRate <<
-                        " currentSamplePos: " << (currentSamplePos - currentSampleStart) / currentSampleRate);
+                    // DBG("playing sustained sample sample, "
+                    //     "loop_start: " << (loop_start - currentSampleStart) / currentSampleRate <<
+                    //     " loop_end: " << (loop_end - currentSampleStart) / currentSampleRate <<
+                    //     " currentSamplePos: " << (currentSamplePos - currentSampleStart) / currentSampleRate);
 
                     if (currentDirection == Direction::backward)
                     {

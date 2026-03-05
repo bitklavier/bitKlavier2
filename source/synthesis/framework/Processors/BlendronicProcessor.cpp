@@ -57,6 +57,15 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
     parent.getStateBank().addParam (std::make_pair<std::string,
         bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "feedback_coefficients",
         &(state.params.feedbackCoeffs.stateChanges)));
+
+    // feedback needs to be set to a non-1.0 value if it's not saved to a value already
+    if (!vt.hasProperty ("feedback_coefficientsStates"))
+    {
+        DBG ("feedback_coefficientsStates not found, initializing first value = " << 0.95);
+        state.params.feedbackCoeffs.sliderVals[0] = 0.95;
+        state.params.feedbackCoeffs.sliderVals_size = 1;
+        state.params.feedbackCoeffs.activeSliders[0] = true;
+    }
 }
 
 void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -104,13 +113,14 @@ void BlendronicProcessor::updateDelayParameters()
 
     delay->setDelayTargetLength(numSamplesDelay);
     delay->setSmoothRate(smoothRate); // this is really a rate, not a duration
+    // DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load()) << " feedbackIndex = " << feedbackIndex << "");
     delay->setFeedback(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load());
 
-//    DBG("===== BlendronicProcessor::updateDelayParameters =====");
-//    DBG("beat length    = " + juce::String(state.params.beatLengths.sliderVals[beatIndex]));
-//    DBG("delay length   = " + juce::String(state.params.delayLengths.sliderVals[delayIndex]));
-//    DBG("smooth time    = " + juce::String(state.params.smoothingTimes.sliderVals[smoothIndex]));
-//    DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex]));
+    // DBG("===== BlendronicProcessor::updateDelayParameters =====");
+    // DBG("beat length    = " + juce::String(state.params.beatLengths.sliderVals[beatIndex]));
+    // DBG("delay length   = " + juce::String(state.params.delayLengths.sliderVals[delayIndex]));
+    // DBG("smooth time    = " + juce::String(state.params.smoothingTimes.sliderVals[smoothIndex]));
+    // DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex]));
 }
 
 void BlendronicProcessor::doPatternSync()
