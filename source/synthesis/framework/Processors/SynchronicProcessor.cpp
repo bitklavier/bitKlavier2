@@ -411,12 +411,12 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         }
                         noteOnSpecMap[newNote].useAttachedTuning = *state.params.transpositionUsesTuning;
 
-                        // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR release time will be in addition to this time
-                        noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
-                                                             * getBeatThresholdSeconds() * 1000.f;
-
                         // calculate total envelope time
                         float envLen = 1000. * (noteOnSpecMap[newNote].envParams.attack + noteOnSpecMap[newNote].envParams.decay + noteOnSpecMap[newNote].envParams.release);
+
+                        // set the duration of this note, so BKSynth can handle the sustain time internally. ADSR time  (envLen) is included, to be consistent with old bK--makes a noticable sonic difference
+                        noteOnSpecMap[newNote].sustainTime = fabs(state.params.sustainLengthMultipliers.sliderVals[cluster->lengthMultiplierCounter])
+                                                             * (getBeatThresholdSeconds() * 1000.f + envLen);
 
                         //constrain adsr times, if needed
                         if(envLen > noteOnSpecMap[newNote].sustainTime) {
