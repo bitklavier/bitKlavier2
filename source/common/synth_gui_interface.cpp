@@ -404,6 +404,7 @@ void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
     if (synth_->switch_trigger_thread == SwitchTriggerThread::MessageThread)
         synth_->setActivePiano (v, synth_->switch_trigger_thread);
     gui_->main_->constructionSite_->setActivePiano();
+    gui_->header_->updateCurrentPianoName();
 }
 
 std::vector<std::string> SynthGuiInterface::getAllPianoNames()

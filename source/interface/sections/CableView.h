@@ -86,21 +86,19 @@ public:
         {
             connection_list->deleteAllGui();
             connection_list->removeListener (this);
+            connection_list = nullptr;
         }
 
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         if (interface != nullptr)
         {
             connection_list = interface->getSynth()->getActiveConnectionList();
-            //connections_vt = connection_list->getValueTree();
-            connection_list->addListener (this);
-            connection_list->rebuildAllGui();
+            if (connection_list != nullptr)
+            {
+                connection_list->addListener (this);
+                connection_list->rebuildAllGui();
+            }
         }
-
-        // Use the data pointer from the constructor
-        // connection_list = data_->synth->getActiveConnectionList();
-        // connection_list->addListener (this);
-        // connection_list->rebuildAllGui();
     }
 
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;

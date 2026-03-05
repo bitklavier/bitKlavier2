@@ -273,21 +273,20 @@ void ModulationLineView::setActivePiano()
     {
         connection_list->deleteAllGui();
         connection_list->removeListener (this);
+        connection_list = nullptr;
     }
 
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     if (interface != nullptr)
     {
         connection_list = interface->getSynth()->getActiveModConnectionList();
-        mod_connections_vt = connection_list->getValueTree();
-        connection_list->addListener (this);
-        connection_list->rebuildAllGui();
+        if (connection_list != nullptr)
+        {
+            mod_connections_vt = connection_list->getValueTree();
+            connection_list->addListener (this);
+            connection_list->rebuildAllGui();
+        }
     }
-
-    // connection_list = data_->synth->getActiveModConnectionList();
-    // mod_connections_vt = connection_list->getValueTree();
-    // connection_list->addListener (this);
-    // connection_list->rebuildAllGui();
 }
 
 void ModulationLineView::modConnectionListChanged()

@@ -1380,7 +1380,6 @@ void ConstructionSite::setActivePiano() {
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
-    connection_list = interface->getSynth()->getActiveConnectionList();
 
     DBG("***** done setActivePiano() *****");
     DBG("");
