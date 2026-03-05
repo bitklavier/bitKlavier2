@@ -16,6 +16,10 @@ TempoProcessor::TempoProcessor (SynthBase& parent, const juce::ValueTree& vt,juc
 
     atTimer = 0;
     atLastTime = 0;
+    atDelta = 0;
+    atHistoryWriteIndex = 0;
+    adaptiveTempoPeriodMultiplier = 1.;
+    atDeltaHistory.fill(60000. / *state.params.tempoParam);
 }
 
 void TempoProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -69,37 +73,25 @@ void TempoProcessor::atCalculatePeriodMultiplier()
     if(*state.params.historyParam > 0) {
 
         atDelta = (atTimer - atLastTime) / (0.001 * getSampleRate());
-        DBG(" ");
-        DBG("atTimer = " + juce::String(atTimer) + " atLastTime = " + juce::String(atLastTime));
-        DBG("atDelta = " + juce::String(atDelta));
-
-        /**
-         *todo: this should be reworked without resizing arrays and so on
-         */
 
         //constrain be min and max times between notes
         if (atDelta > *state.params.timeWindowMinMaxParams.holdTimeMinParam && atDelta < *state.params.timeWindowMinMaxParams.holdTimeMaxParam )
         {
-            //insert delta at beginning of history
-            atDeltaHistory.insert(0, atDelta);
-
-            //eliminate oldest time difference
-            atDeltaHistory.resize(*state.params.historyParam);
+            //insert delta into history circular buffer
+            atDeltaHistory[atHistoryWriteIndex] = atDelta;
+            atHistoryWriteIndex = (atHistoryWriteIndex + 1) % 10;
 
             //calculate moving average and then tempo period multiplier
+            int historySize = juce::jlimit (1, 10, (int) *state.params.historyParam);
             int totalDeltas = 0;
-            for(int i = 0; i < atDeltaHistory.size(); i++)
-                totalDeltas += atDeltaHistory.getUnchecked(i);
-            DBG("totalDeltas = " + juce::String(totalDeltas));
-            DBG("atDeltaHistory.size() = " + juce::String(atDeltaHistory.size()));
-            DBG("historyParam = " + juce::String(*state.params.historyParam));
+            for (int i = 0; i < historySize; ++i)
+            {
+                int index = (atHistoryWriteIndex - 1 - i + 10) % 10;
+                totalDeltas += atDeltaHistory[index];
+            }
 
-            float movingAverage = totalDeltas / *state.params.historyParam;
-            DBG("movingAverage = " + juce::String(movingAverage));
-
+            float movingAverage = (float) totalDeltas / (float) historySize;
             float beatThreshMS =  60000. / *state.params.tempoParam;
-            DBG("beatThreshMS = " + juce::String(beatThreshMS));
-            DBG("*state.params.subdivisionsParam = " + juce::String(*state.params.subdivisionsParam));
 
             adaptiveTempoPeriodMultiplier = movingAverage /
                                             beatThreshMS /
@@ -112,11 +104,13 @@ void TempoProcessor::atCalculatePeriodMultiplier()
 
 void TempoProcessor::adaptiveReset()
 {
-
-    for (int i = 0; i < *state.params.historyParam; i++)
+    int historySize = juce::jlimit (1, 10, (int) *state.params.historyParam);
+    int defaultDelta = (int) (60000.0 / (*state.params.tempoParam));
+    for (int i = 0; i < 10; i++)
     {
-        atDeltaHistory.insert(0, (60000.0 / (*state.params.tempoParam)));
+        atDeltaHistory[i] = defaultDelta;
     }
+    atHistoryWriteIndex = 0;
     adaptiveTempoPeriodMultiplier = 1.;
 }
 

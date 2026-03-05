@@ -162,6 +162,24 @@ public:
     float getGlobalTempoMultiplier() { return globalTempoMultiplier; }
     double globalTempoMultiplier = 1.;
 
+    float getCurrentPulseLength_seconds()
+    {
+        if (state.params.tempoModeOptions->get() == TempoModeType::Constant_Tempo)
+            return 60.f /
+                    (*state.params.tempoParam *
+                    *state.params.subdivisionsParam *
+                    getGlobalTempoMultiplier());
+
+        if (state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Sustain_Time || state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Time_Between_Notes)
+            return 60.f /
+                    ((*state.params.tempoParam / adaptiveTempoPeriodMultiplier) *
+                    *state.params.subdivisionsParam *
+                    getGlobalTempoMultiplier());
+
+        return 0.5;
+
+    }
+
 private:
 
     // adaptive tempo stuff
@@ -174,8 +192,8 @@ private:
 
     juce::uint64 atTimer, atLastTime;   //in samples
     int atDelta;                        //in ms
-    juce::Array<int> atDeltaHistory;    //in ms
-    std::array<int, 10> atDeltaHistoryFixed;
+    std::array<int, 10> atDeltaHistory; //in ms
+    int atHistoryWriteIndex = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TempoProcessor)
 };

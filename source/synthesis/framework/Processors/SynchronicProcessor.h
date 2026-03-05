@@ -607,12 +607,14 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     float getBeatThresholdSeconds()
     {
         if (tempo != nullptr)
-            return 60.f /
-                (*tempo->getState().params.tempoParam *
-                *tempo->getState().params.subdivisionsParam *
-                tempo->getGlobalTempoMultiplier());
-        else
-            return 0.5; // 120bpm by default
+        {
+            // return 60.f /
+            //     (*tempo->getState().params.tempoParam *
+            //     *tempo->getState().params.subdivisionsParam *
+            //     tempo->getGlobalTempoMultiplier());
+            return tempo->getCurrentPulseLength_seconds();
+        }
+        return 0.5; // 120bpm by default
     }
 
     /*
