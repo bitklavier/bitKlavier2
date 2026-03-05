@@ -6,6 +6,7 @@
 #define TEMPOPARAMETERSVIEW_H
 #include "OpenGL_HoldTimeMinMaxSlider.h"
 #include "OpenGL_VelocityMinMaxSlider.h"
+#include "TempoAdaptiveSection.h"
 #include "TempoProcessor.h"
 #include "TranspositionSliderSection.h"
 #include "VelocityMinMaxParams.h"
@@ -17,7 +18,7 @@
 class TempoParametersView : public SynthSection, public juce::Timer
 {
 public:
-    TempoParametersView (chowdsp::PluginState& pluginState, TempoParams& params, juce::String name, OpenGlWrapper* open_gl, TempoProcessor* proc) : SynthSection (""), processor(proc)
+    TempoParametersView (chowdsp::PluginState& pluginState, TempoParams& params, juce::String name, OpenGlWrapper* open_gl, TempoProcessor* proc) : SynthSection (""), processor(proc), params_(params)
     {
         // the name that will appear in the UI as the name of the section
         setName ("Tempo");
@@ -78,42 +79,22 @@ public:
             addOpenGlComponent(tempoMode->getImageComponent());
         }
 
-        historySlider = std::make_unique<SynthSlider> (params.historyParam->paramID, params.historyParam->getModParam());
-        historyAttachment= std::make_unique<chowdsp::SliderAttachment> (*params.historyParam.get(), listeners, *historySlider.get(), nullptr);
-        historySlider->addAttachment(historyAttachment.get()); // necessary for mods to be able to display properly
-        addSlider (historySlider.get()); // adds the slider to the synthSection
-        historySlider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-        historySlider->setShowPopupOnHover(true);
-        historyLabel = std::make_shared<PlainTextComponent>(historySlider->getName(), params.historyParam->getName(20));
-        addOpenGlComponent(historyLabel);
-        historyLabel->setJustification(juce::Justification::centred);
-
-        timeWindowMinMaxSlider = std::make_unique<OpenGL_HoldTimeMinMaxSlider>(&params.timeWindowMinMaxParams, listeners);
-        timeWindowMinMaxSlider->setComponentID ("timewindow_min_max");
-        timeWindowMinMaxSlider->setTitletext ("Time Window min/max (ms)");
-        addStateModulatedComponent (timeWindowMinMaxSlider.get());
-
         primaryKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("primary knobs border", "Primary Parameters");
         addBorder(primaryKnobsBorder.get());
 
-        adaptiveKnobsBorder = std::make_shared<OpenGL_LabeledBorder>("adaptive knobs border", "Adaptive Parameters");
-        addBorder(adaptiveKnobsBorder.get());
 
-        currentTempoDisplay = std::make_shared<PlainTextComponent>("currenttempo", "Current Tempo = 120.00bpm");
-        addOpenGlComponent(currentTempoDisplay);
-        currentTempoDisplay->setTextSize (12.0f);
-        currentTempoDisplay->setJustification(juce::Justification::centred);
+        adaptiveSection = std::make_unique<TempoAdaptiveSection>(pluginState, params, name, proc);
+        addSubSection(adaptiveSection.get());
 
-        adaptiveMultiplierDisplay = std::make_shared<PlainTextComponent>("adaptivemultiplier", "Multiplier = 1.00");
-        addOpenGlComponent(adaptiveMultiplierDisplay);
-        adaptiveMultiplierDisplay->setTextSize (12.0f);
-        adaptiveMultiplierDisplay->setJustification(juce::Justification::centred);
+        tempoCallbacks += {listeners.addParameterListener(
+            params.tempoModeOptions,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() {
+                updateAdaptiveSectionVisibility();
+            })
+        };
 
-        resetButton = std::make_unique<SynthButton>("reset");
-        resetButton->setButtonText("Reset");
-        resetButton->onClick = [this] { if (processor) processor->adaptiveReset(); };
-        addSynthButton(resetButton.get());
-
+        updateAdaptiveSectionVisibility();
         startTimer(50);
     }
 
@@ -134,31 +115,27 @@ public:
     // prep title, vertical, left side
     std::shared_ptr<PlainTextComponent> prepTitle;
 
+    std::unique_ptr<TempoAdaptiveSection> adaptiveSection;
+
     // place to store generic sliders/knobs for this prep, with their attachments for tracking/updating values
     std::vector<std::unique_ptr<SynthSlider>> _sliders;
     std::vector<std::unique_ptr<chowdsp::SliderAttachment>> floatAttachments;
     std::vector<std::shared_ptr<PlainTextComponent> > slider_labels;
 
-    std::unique_ptr<SynthSlider> historySlider;
-    std::unique_ptr<chowdsp::SliderAttachment> historyAttachment;
-    std::shared_ptr<PlainTextComponent> historyLabel;
-
-    std::unique_ptr<OpenGL_HoldTimeMinMaxSlider> timeWindowMinMaxSlider;
     std::unique_ptr<OpenGLComboBox> tempoMode;
     std::unique_ptr<chowdsp::ComboBoxAttachment> tempoMode_attachment;
 
     std::shared_ptr<OpenGL_LabeledBorder> primaryKnobsBorder;
-    std::shared_ptr<OpenGL_LabeledBorder> adaptiveKnobsBorder;
-
-    std::shared_ptr<PlainTextComponent> currentTempoDisplay;
-    std::shared_ptr<PlainTextComponent> adaptiveMultiplierDisplay;
-    std::unique_ptr<SynthButton> resetButton;
 
     TempoProcessor* processor;
+    TempoParams& params_;
 
+    void updateAdaptiveSectionVisibility();
     void timerCallback() override;
 
     void resized() override;
+private:
+    chowdsp::ScopedCallbackList tempoCallbacks;
 };
 
 #endif //TEMPOPARAMETERSVIEW_H
