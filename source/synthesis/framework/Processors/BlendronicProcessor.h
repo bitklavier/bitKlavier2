@@ -253,10 +253,20 @@ public:
 
 float getPulseLength()
 {
-    if (tempo != nullptr)
-        return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
-    else
+        if (tempo != nullptr)
+        {
+            // return 60.f /
+            //     (*tempo->getState().params.tempoParam *
+            //     *tempo->getState().params.subdivisionsParam *
+            //     tempo->getGlobalTempoMultiplier());
+            return tempo->getCurrentPulseLength_seconds();
+        }
         return 0.5; // 120bpm by default
+
+    // if (tempo != nullptr)
+    //     return 60.f / (tempo->getState().params.tempoParam->getCurrentValue() * tempo->getState().params.subdivisionsParam->getCurrentValue());
+    // else
+    //     return 0.5; // 120bpm by default
 }
 
 private:
