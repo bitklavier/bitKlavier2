@@ -242,6 +242,45 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
+
+        // sustain pedal handling
+        if (message.isController() && message.getControllerNumber() == 64)
+        {
+            isDown = message.getControllerValue() >= 64;
+
+            if (!isDown)
+            {
+                // go through all the on bits in sustainPedalsDown and add noteOffs for them
+                for (size_t i = 0; i < sustainPedalsDown.size(); ++i)
+                {
+                    if (sustainPedalsDown[i])
+                    {
+                        if (!keysDepressedForSustain.test(i) && // if key is still depressed, don't trigger synchronic notes
+                            holdCheck(i) && // check the hold time
+                            state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::First_NoteOn && // check the mode
+                            state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::Any_NoteOn)
+                        {
+                            keyReleased(i, 1);
+                        }
+                    }
+                }
+
+                // then clear sustainPedalsDown
+                sustainPedalsDown.reset();
+            }
+            else
+            {
+                // save which keys are currently depressed when sustain pedal is pushed down
+                for (int i = 0; i<128; i++)
+                {
+                    if (keysDepressedForSustain.test(i))
+                    {
+                        sustainPedalsDown.set(i, 1);
+                    }
+                }
+            }
+        }
+
         if(message.isNoteOn())
             keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
         else if(message.isNoteOff())
@@ -763,6 +802,10 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
 
 void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
 {
+    keysDepressedForSustain.set(noteNumber, true);
+    if (isDown)
+        sustainPedalsDown.set(noteNumber, 1);
+
     // set all the modes, handled below (like doCluster, etc...)
     // only one mode will be set for each keyPressed call
     handleMidiTargetMessages(channel);
@@ -915,6 +958,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
 
 void SynchronicProcessor::keyReleased(int noteNumber, int channel)
 {
+    keysDepressedForSustain.set(noteNumber, false);
 
     handleMidiTargetMessages(channel);
 
@@ -938,7 +982,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     /*
      * ************** doCluster => default Synchronic behavior **************
      */
-    if (doCluster)
+    if (doCluster && !isDown)
     {
         // remove key from cluster-targeted keys
         clusterKeysDepressed.removeAllInstancesOf(noteNumber);

@@ -728,6 +728,10 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     juce::Array<int> clusterNotes;
     bool checkClusterMinMax(int clusterNotesSize);
 
+    std::bitset<128> keysDepressedForSustain;
+    std::bitset<128> sustainPedalsDown;
+    bool isDown = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynchronicProcessor)
 };
 
