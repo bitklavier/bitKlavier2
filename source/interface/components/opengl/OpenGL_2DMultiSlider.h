@@ -97,6 +97,12 @@ public:
             notify);
     }
 
+    void setSkewFromMidpoint(bool sfm)
+    {
+        skewFromMidpoint = sfm;
+        BKMultiSlider::setSkewFromMidpoint(sfm);
+    }
+
     //setBackgroundColor(findColour(Skin::kWidgetBackground, true));
 
     virtual void resized() override {
@@ -383,6 +389,7 @@ private :
     }
 
     bool mouseInteraction = false;
+    float skewFromMidpoint = 1.0;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 

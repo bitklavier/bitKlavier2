@@ -144,6 +144,7 @@ public:
         sustainLengthMultipliersSlider = std::make_unique<OpenGL_MultiSlider>("sustain_length_multipliers", &params.sustainLengthMultipliers, listeners);
         sustainLengthMultipliersSlider->setComponentID ("sustain_length_multipliers");
         sustainLengthMultipliersSlider->setMinMaxDefaultInc({-2., 2., 1., 0.01});
+        sustainLengthMultipliersSlider->setSkewFromMidpoint (1.);
         sustainLengthMultipliersSlider->setName("Sustain Length Multipliers");
         addStateModulatedComponent (sustainLengthMultipliersSlider.get());
         sustainLengthMultipliersSlider->updateFromParams(juce::dontSendNotification);

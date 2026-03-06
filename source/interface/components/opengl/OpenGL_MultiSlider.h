@@ -44,6 +44,12 @@ public:
         }
     }
 
+    void setSkewFromMidpoint(bool sfm)
+    {
+        skewFromMidpoint = sfm;
+        BKMultiSlider::setSkewFromMidpoint(sfm);
+    }
+
     /*
      * updates the sliders from the current parameter values: useful after a mod or reset
      */
@@ -250,6 +256,8 @@ private :
         isModulation_ = true;
         addMyListener(this);
 
+        setSkewFromMidpoint(skewFromMidpoint);
+
         /*
          * this is so the modulation UI view has a distinctive colored border
          */
@@ -260,6 +268,7 @@ private :
     }
 
     bool mouseInteraction = false;
+    float skewFromMidpoint = 1.0;
     chowdsp::ScopedCallbackList sliderChangedCallback;
 };
 
