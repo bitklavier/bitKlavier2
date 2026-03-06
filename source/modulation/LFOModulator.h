@@ -87,6 +87,8 @@ public :
     void reset()
     {
         phase = 0.0f;
+        // getNextSample(); // remove this
+        // DBG("resetting phase, lastSample = " << lastSample);
     }
 
     float getNextSample()
@@ -97,7 +99,7 @@ public :
         if (phase > juce::MathConstants<float>::twoPi)
             phase -= juce::MathConstants<float>::twoPi;
 
-        return sample;
+        return lastSample = sample;
     }
     void continuousReset() override {
         triggerReset();
@@ -108,6 +110,7 @@ private:
     float depth = 1.0f;
     float phase = 0.0f;
     float phaseIncrement = 0.0f;
+    float lastSample = 0.0f;
     bool lfo_on = false;
 };
 

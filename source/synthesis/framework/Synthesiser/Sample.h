@@ -1074,7 +1074,7 @@ public:
                     {
                         if (currentSamplePos > loop_end) currentSamplePos = loop_end;
                         loopingForSustain = true;
-                        DBG("changing currentSamplePos to " << (currentSamplePos - currentSampleStart) / currentSampleRate);
+                        // DBG("changing currentSamplePos to " << (currentSamplePos - currentSampleStart) / currentSampleRate);
                     }
                 }
             }
