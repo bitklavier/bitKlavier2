@@ -80,7 +80,7 @@ SpringTuning::~SpringTuning()
     // DBG("SpringTuning: stopping timer");
 };
 
-inline void SpringTuning::stop(void)
+void SpringTuning::stop(void)
 {
     stopTimer();
     // DBG("SpringTuning: stopping timer");

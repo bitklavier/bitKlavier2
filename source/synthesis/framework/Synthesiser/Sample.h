@@ -1141,11 +1141,20 @@ private:
         //updateParams(); // NB: important line (except this function doesn't do anything right now!)
 
         /*
-         * don't change tuning after noteOn for adaptive tunings
-         * do need to for spring, and probably for regular notes it might be handy
+         * continuous changes for spring tuning
+         * otherwise change only at noteOn
          */
         if(tuning != nullptr ) {
-            if(tuning->getTuningType() == Static || tuning->getTuningType() == Adaptive || tuning->getTuningType() == Adaptive_Anchored || tuning->getTuningType() == Scala_KBM)
+            if (tuning->getTuningType() == Spring_Tuning)
+            {
+                // continuous, with frequency updated every block
+                sampleIncrement.setTargetValue (
+                    getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
+                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+                    currentA4Freq / 440.);
+            }
+            // else if(tuning->getTuningType() == Static || tuning->getTuningType() == Adaptive || tuning->getTuningType() == Adaptive_Anchored || tuning->getTuningType() == Scala_KBM)
+            else
             {
                 // discrete, with frequency set at noteOn
                 // - but, since the Tuning might have been Modded within a block or two of being played, we need to update the starting frequency
@@ -1160,23 +1169,6 @@ private:
                     samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
                     currentA4Freq / 440.);
             }
-            else if (tuning->getTuningType() == Spring_Tuning)
-            {
-                // continuous, with frequency updated every block
-                sampleIncrement.setTargetValue (
-                    getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
-                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
-                    currentA4Freq / 440.);
-            }
-            // if (tuning->getTuningType() == Static || tuning->getTuningType() == Spring_Tuning)
-            // {
-            //     // continuous, with frequency updated every block
-            //     sampleIncrement.setTargetValue (
-            //         getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
-            //         samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
-            //         currentA4Freq / 440.);
-            // }
-            // skip for adaptive tunings
         }
         // otherwise just return ET
         else

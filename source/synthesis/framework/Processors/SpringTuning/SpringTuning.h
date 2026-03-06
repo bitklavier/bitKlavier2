@@ -49,7 +49,7 @@
 
 class Particle;
 class Spring;
-class SpringTuning : private juce::HighResolutionTimer
+class SpringTuning : public juce::HighResolutionTimer
 {
 public:
     SpringTuning(SpringTuningParams &params, std::array<std::atomic<float>, 12> &circularTuningCustom);
@@ -72,10 +72,10 @@ public:
     void tetherFundamentalChanged();
 
     void setRate(double r, bool start = true);
-    inline void setActive(bool status);
+    void setActive(bool status);
 
     void simulate();
-    inline void stop(void);
+    void stop(void);
 
 	void addParticle(int pc);
 	void removeParticle(int pc);

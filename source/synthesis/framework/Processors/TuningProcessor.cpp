@@ -957,6 +957,17 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     /*
+     * start/stop spring tuning if necessary
+     */
+    if (state.params.tuningState.tuningType->get() == TuningType::Spring_Tuning)
+    {
+        if (!state.params.tuningState.springTuner->isTimerRunning())
+            state.params.tuningState.springTuner->rateChanged();
+    }
+    else if (state.params.tuningState.springTuner->isTimerRunning())
+        state.params.tuningState.springTuner->stopTimer();
+
+    /*
      * increment timer for tuningType tuning cluster measurements.
      *      - will get reset elsewhere
      */
@@ -973,6 +984,12 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         {
             handleMidiEvent (meta.getMessage());
         });
+}
+
+void TuningProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    if (state.params.tuningState.tuningType->get() == TuningType::Spring_Tuning && state.params.tuningState.springTuner->isTimerRunning())
+        state.params.tuningState.springTuner->stop();
 }
 
 
