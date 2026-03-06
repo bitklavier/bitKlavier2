@@ -220,6 +220,30 @@ public:
 protected:
     // Holds the parsed preset tree until samples finish loading
     juce::ValueTree pendingPresetTree;
+
+    enum class ConnectionType
+    {
+        Tuning,
+        Tempo,
+        Synchronic,
+        Reset
+    };
+
+    struct PendingConnection
+    {
+        juce::ValueTree state;
+        ConnectionType type;
+    };
+
+    struct PendingModulation
+    {
+        juce::ValueTree state;
+        bool isState;
+    };
+
+    std::vector<PendingConnection> pendingConnections;
+    std::vector<PendingModulation> pendingModulations;
+
     std::atomic<bool> samplesLoading { false };
     // True while we’re waiting to apply pendingPresetTree
     std::atomic<bool> presetPending { false };
@@ -246,6 +270,8 @@ protected:
     void processKeyboardEvents(juce::MidiBuffer &buffer, int num_samples);
 
     void clearAllBackend();
+    void flushPendingConnections();
+
     std::unique_ptr<bitklavier::SoundEngine> engine_;
     std::unique_ptr<MidiManager> midi_manager_;
     std::unique_ptr<juce::MidiKeyboardState> keyboard_state_;

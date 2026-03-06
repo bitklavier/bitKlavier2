@@ -403,7 +403,16 @@ void SynthBase::addTuningConnection (juce::AudioProcessorGraph::NodeID src, juce
 {
     auto* sourceNode = getNodeForId (src);
     auto* destNode = getNodeForId (dest);
-    dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor())->setTuning (dynamic_cast<TuningProcessor*> (sourceNode->getProcessor()));
+    
+    if (sourceNode == nullptr || destNode == nullptr)
+        return;
+    
+    auto* destProc = dynamic_cast<bitklavier::InternalProcessor*> (destNode->getProcessor());
+    auto* srcProc = dynamic_cast<TuningProcessor*> (sourceNode->getProcessor());
+    
+    if (destProc != nullptr && srcProc != nullptr)
+        destProc->setTuning (srcProc);
+    
     addModulationConnection (src, dest);
 }
 
@@ -411,6 +420,16 @@ void SynthBase::connectTuning (const juce::ValueTree& v)
 {
     auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src));
     auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest));
+    
+    auto* sourceNode = getNodeForId (srcid);
+    auto* destNode = getNodeForId (dstid);
+
+    if (sourceNode == nullptr || destNode == nullptr)
+    {
+        pendingConnections.push_back ({ v, ConnectionType::Tuning });
+        return;
+    }
+
     addTuningConnection (srcid, dstid);
 }
 
@@ -426,6 +445,16 @@ void SynthBase::connectTempo (const juce::ValueTree& v)
 {
     auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src));
     auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest));
+    
+    auto* sourceNode = getNodeForId (srcid);
+    auto* destNode = getNodeForId (dstid);
+
+    if (sourceNode == nullptr || destNode == nullptr)
+    {
+        pendingConnections.push_back ({ v, ConnectionType::Tempo });
+        return;
+    }
+
     addTempoConnection (srcid, dstid);
 }
 
@@ -441,6 +470,16 @@ void SynthBase::connectSynchronic (const juce::ValueTree& v)
 {
     auto srcid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::src));
     auto dstid = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (v.getProperty (IDs::dest));
+    
+    auto* sourceNode = getNodeForId (srcid);
+    auto* destNode = getNodeForId (dstid);
+
+    if (sourceNode == nullptr || destNode == nullptr)
+    {
+        pendingConnections.push_back ({ v, ConnectionType::Synchronic });
+        return;
+    }
+
     addSynchronicConnection (srcid, dstid);
 }
 
@@ -512,6 +551,8 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
 
     tree.copyPropertiesAndChildrenFrom (state, nullptr);
 
+    juce::MessageManager::callAsync ([this] { flushPendingConnections(); });
+
     setBatchLoading(false);
     pauseProcessing (false);
 
@@ -537,7 +578,36 @@ void SynthBase::clearAllBackend() {
     preparationLists.clear();
     mod_connection_lists_.clear();
     connectionLists.clear();
+    pendingConnections.clear();
+    pendingModulations.clear();
     this->engine_->initialiseGraph();
+}
+
+void SynthBase::flushPendingConnections()
+{
+    if (pendingConnections.empty() && pendingModulations.empty())
+        return;
+
+    auto remainingConnections = std::move (pendingConnections);
+    pendingConnections.clear();
+
+    for (auto& pc : remainingConnections)
+    {
+        switch (pc.type)
+        {
+            case ConnectionType::Tuning:     connectTuning (pc.state);     break;
+            case ConnectionType::Tempo:      connectTempo (pc.state);      break;
+            case ConnectionType::Synchronic: connectSynchronic (pc.state); break;
+            case ConnectionType::Reset:      connectReset (pc.state);      break;
+        }
+    }
+
+    auto remainingModulations = std::move (pendingModulations);
+    pendingModulations.clear();
+    for (auto& pm : remainingModulations)
+    {
+        connectModulation (pm.state);
+    }
 }
 struct SoundsetRef
 {
@@ -727,6 +797,20 @@ void SynthBase::reloadAllLoadedSamples()
 
 void SynthBase::finishedSampleLoading()
 {
+    // 1. Reload samples into existing processors
+    if (auto* engine = getEngine())
+    {
+        for (auto node : engine->getNodes())
+        {
+            if (auto* proc = node->getProcessor())
+            {
+                if (auto* internalProc = dynamic_cast<bitklavier::InternalProcessor*>(proc))
+                    internalProc->loadSamples();
+            }
+        }
+    }
+
+    // 2. Apply pending preset if exists (this triggers connections)
     if (presetPending.load()) {
         presetPending.store (false);
 
@@ -742,17 +826,8 @@ void SynthBase::finishedSampleLoading()
         pendingPresetTree = juce::ValueTree{};
     }
 
-    if (auto* engine = getEngine())
-    {
-        for (auto node : engine->getNodes())
-        {
-            if (auto* proc = node->getProcessor())
-            {
-                if (auto* internalProc = dynamic_cast<bitklavier::InternalProcessor*>(proc))
-                    internalProc->loadSamples();
-            }
-        }
-    }
+    // 3. Call async to allow any pending graph updates to settle before connecting
+    juce::MessageManager::callAsync ([this] { flushPendingConnections(); });
 
     if(getGuiInterface()) {
         if (auto* gui = getGuiInterface()->getGui()) {
@@ -1161,7 +1236,10 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
     auto* dstNode = engine_->getNodeForId (destId);
 
     if (srcNode == nullptr || dstNode == nullptr)
+    {
+        pendingConnections.push_back ({ v, ConnectionType::Reset });
         return false;
+    }
 
     auto* srcProc = srcNode->getProcessor();
     auto* dstProc = dstNode->getProcessor();
@@ -1249,6 +1327,34 @@ bool SynthBase::connectReset (const juce::ValueTree& v)
 
 bool SynthBase::connectModulation (const juce::ValueTree& v)
 {
+    // Pre-check for existence of source/destination processors
+    // We only do this check if we have a way to find the processors.
+    // Modulation connections are indexed by UUID in the strings: "srcUUID_modulatorName" and "dstUUID_paramName"
+    
+    std::string src_uuid_str;
+    std::string dst_uuid_str;
+    std::stringstream src_stream (v.getProperty (IDs::src).toString().toStdString());
+    std::stringstream dst_stream (v.getProperty (IDs::dest).toString().toStdString());
+    std::getline (src_stream, src_uuid_str, '_');
+    std::getline (dst_stream, dst_uuid_str, '_');
+
+    auto activePiano = getActivePianoValueTree();
+    if (activePiano.isValid())
+    {
+        auto preparations = activePiano.getChildWithName (IDs::PREPARATIONS);
+        auto mod_src = preparations.getChildWithProperty (IDs::uuid, juce::String (src_uuid_str));
+        auto mod_dst = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid_str));
+        
+        auto src_node_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID));
+        auto dst_node_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID));
+        
+        if (getNodeForId (src_node_id) == nullptr || getNodeForId (dst_node_id) == nullptr)
+        {
+            pendingModulations.push_back ({ v, (bool)v.getProperty (IDs::isState) });
+            return false;
+        }
+    }
+
     if (v.getProperty (IDs::isState))
     {
         bitklavier::StateConnection* connection = getStateConnection (v.getProperty (IDs::src).toString().toStdString(),

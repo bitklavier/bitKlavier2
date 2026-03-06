@@ -1087,7 +1087,7 @@ public:
         if (tuning == nullptr) return mtof ((double) currentlyPlayingNote + currentTransposition);
 
         // otherwise, get the target frequency from the attached Tuning pre
-        DBG("tuner connected in setTargetFrequency");
+        //DBG("tuner connected in setTargetFrequency");
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
@@ -1181,7 +1181,7 @@ private:
         // otherwise just return ET
         else
         {
-            DBG("no tuner connected!");
+            // DBG("no tuner connected!");
             sampleIncrement.setTargetValue (
             mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() *
             samplerSound->getSample()->getSampleRate() / this->currentSampleRate *

@@ -57,6 +57,11 @@ BKSynthesiserVoice* BKSynthesiser::addVoice (BKSynthesiserVoice* const newVoice)
     {
         const juce::ScopedLock sl (lock);
         newVoice->setCurrentPlaybackSampleRate (sampleRate);
+        if (tuning != nullptr)
+        {
+            newVoice->setTuning (tuning);
+            DBG ("BKSynthesiser::addVoice: Applied current tuning to new voice.");
+        }
         voice = voices.add (newVoice);
     }
 
@@ -88,11 +93,15 @@ void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>
         {
             if (s->getFirst()->getSoundSampleType() == SoundSampleType::SFZ)
             {
-                voices.add (new BKSamplerVoice<SFZRegion>());
+                auto* v = new BKSamplerVoice<SFZRegion>();
+                v->setTuning (tuning);
+                voices.add (v);
             }
             else
             {
-                voices.add (new BKSamplerVoice<juce::AudioFormatReader>());
+                auto* v = new BKSamplerVoice<juce::AudioFormatReader>();
+                v->setTuning (tuning);
+                voices.add (v);
             }
         }
     }
