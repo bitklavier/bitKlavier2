@@ -12,7 +12,7 @@ void PreparationSelector::findLassoItemsInArea (juce::Array<PreparationSection*>
 {
     const auto checkAndAddEditor = [&results, area] (PreparationSection* editor)
     {
-        if (area.intersects (editor->getBoundsInParent()))
+        if (area.intersects (editor->getBounds().getSmallestIntegerContainer()))
             results.add (editor);
     };
 
