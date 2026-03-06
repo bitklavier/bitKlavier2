@@ -183,23 +183,23 @@ public:
     void keysMenuCallback(int result, BKKeymapKeyboardComponent* vc);
 
     // Display-only live MIDI overlay controls (do not affect selection bitset)
-    void setLiveKeyState (int midiNoteNumber, bool isDown)
+    virtual void setLiveKeyState (int midiNoteNumber, bool isDown)
     {
         keyboard_.setLiveKeyState (midiNoteNumber, isDown);
     }
 
-    void clearAllLiveKeys()
+    virtual void clearAllLiveKeys()
     {
         keyboard_.clearAllLiveKeys();
     }
 
     // Keymap selection display overlay (orange) — separate from live MIDI (red)
-    void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
+    virtual void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
     {
         keyboard_.setKeymapDisplayKeyState (midiNoteNumber, isDown);
     }
 
-    void clearAllKeymapDisplayKeys()
+    virtual void clearAllKeymapDisplayKeys()
     {
         keyboard_.clearAllKeymapDisplayKeys();
     }

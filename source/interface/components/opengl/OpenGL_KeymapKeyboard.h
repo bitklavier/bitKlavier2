@@ -107,12 +107,41 @@ public:
                 }
     }
 
+    void setLiveKeyState (int midiNoteNumber, bool isDown) override
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128)
+        {
+            BKKeymapKeyboardComponent::setLiveKeyState (midiNoteNumber, isDown);
+            needsRedo_ = true;
+        }
+    }
+
+    void clearAllLiveKeys() override
+    {
+        BKKeymapKeyboardComponent::clearAllLiveKeys();
+        needsRedo_ = true;
+    }
+
+    void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
+    {
+        if (midiNoteNumber >= 0 && midiNoteNumber < 128)
+        {
+            BKKeymapKeyboardComponent::setKeymapDisplayKeyState (midiNoteNumber, isDown);
+            needsRedo_ = true;
+        }
+    }
+
+    void clearAllKeymapDisplayKeys()
+    {
+        BKKeymapKeyboardComponent::clearAllKeymapDisplayKeys();
+        needsRedo_ = true;
+    }
+
     // Live external MIDI -> display only, no injection back to engine
     void midiNoteChanged (int note, bool isDown, int /*channel*/, float /*velocity01*/) override
     {
         // Legacy path for standalone or synchronous notifications
         setLiveKeyState (note, isDown);
-        redoImage();
     }
 
     void timerCallback() override
@@ -122,7 +151,7 @@ public:
             if (auto* synth = iface->getSynth())
             {
                 auto* prepList = synth->getActivePreparationList();
-                if (prepList == nullptr) return;
+                if (prepList == nullptr) goto checkRedo;
 
                 KeymapProcessor* kp = nullptr;
                 for (auto* obj : *prepList)
@@ -142,16 +171,23 @@ public:
                     auto newState = kp->_midi->getLiveNoteState();
                     if (newState != lastPolledState_)
                     {
-                        clearAllLiveKeys();
+                        BKKeymapKeyboardComponent::clearAllLiveKeys();
                         for (int i = 0; i < 128; ++i)
                             if (newState.test ((size_t) i))
-                                setLiveKeyState (i, true);
+                                BKKeymapKeyboardComponent::setLiveKeyState (i, true);
 
                         lastPolledState_ = newState;
-                        redoImage();
+                        needsRedo_ = true;
                     }
                 }
             }
+        }
+
+    checkRedo:
+        if (needsRedo_)
+        {
+            needsRedo_ = false;
+            redoImage();
         }
     }
 
@@ -185,6 +221,7 @@ private:
 
     KeymapKeyboardState& _params;
     bool registeredLive_ { false };
+    bool needsRedo_ { false };
     std::bitset<128> lastPolledState_;
 };
 
