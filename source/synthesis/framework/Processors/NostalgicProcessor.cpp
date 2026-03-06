@@ -321,6 +321,7 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         }
     }
 
+
     // go through the incoming MIDI messages
     for (auto mi : inMidiMessages)
     {
@@ -329,7 +330,40 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
         if (doDefault)
         {
-            // TODO: we can make it an option for noteOn velocity to set noteOff velocity
+            // sustain pedal handling
+            if (message.isController() && message.getControllerNumber() == 64)
+            {
+                isDown = message.getControllerValue() >= 64;
+                if (!isDown)
+                {
+                    // go through all the on bits in sustainPedalsDown and add noteOffs for them
+                    for (size_t i = 0; i < sustainPedalsDown.size(); ++i) {
+                        if (sustainPedalsDown[i])
+                        {
+                            if (holdCheck(i) &&
+                                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown &&
+                                velocities[i] > 0)
+                            {
+                                handleNostalgicNote(i, clusterMin, outMidiMessages);
+                                velocities.set(i,0);
+                            }
+
+                        }
+                    }
+
+                    // then clear sustainPedalsDown
+                    sustainPedalsDown.reset();
+                }
+                else
+                {
+                    // save which keys are currently depressed when sustain pedal is pushed down
+                    for (int i = 0; i<128; i++)
+                    {
+                        sustainPedalsDown.set(i, velocities[i] > 0);
+                    }
+                }
+            }
+
             if (message.isNoteOn () && !bypassed) // we don't want to create new nostalgic notes if we are bypassed
             {
                 // store the velocity and note duration from the note on message
@@ -341,6 +375,8 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 {
                     handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
                 }
+
+                // sustainPedalsDown.set(message.getNoteNumber(), message.getVelocity() > 0);
             }
 
             // if there's a note off message and hold time is in specified range,
@@ -348,9 +384,11 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             // note: we DO want to track noteOff messages if we are bypassed
             //  - but ONLY if they are from a noteOn when we were NOT bypassed
             //     - we use velocities to check that
-            if (message.isNoteOff() && holdCheck(message.getNoteNumber()) &&
+            if (message.isNoteOff() &&
+                holdCheck(message.getNoteNumber()) &&
                 state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown &&
-                velocities[message.getNoteNumber()] > 0)
+                velocities[message.getNoteNumber()] > 0 && // noteOn pressed when not bypassed
+                !isDown) // sustain pedal is not down
             {
                 handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
                 velocities.set(message.getNoteNumber(),0);

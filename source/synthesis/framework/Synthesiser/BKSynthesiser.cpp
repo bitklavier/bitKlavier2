@@ -675,7 +675,7 @@ void BKSynthesiser::handleChannelPressure (int midiChannel, int channelPressureV
 
 void BKSynthesiser::handleSustainPedal (int midiChannel, bool isDown)
 {
-    DBG ("BKSynthesiser::handleSustainPedal");
+    //DBG ("BKSynthesiser::handleSustainPedal");
     jassert (midiChannel > 0 && midiChannel <= 16);
     const juce::ScopedLock sl (lock);
 
@@ -683,7 +683,7 @@ void BKSynthesiser::handleSustainPedal (int midiChannel, bool isDown)
     {
         if (pedalSynth) // only do this if this is a sustainPedal synth
         {
-            DBG ("pressing sustain pedal");
+            //DBG ("pressing sustain pedal");
             if (!sustainPedalAlreadyDown)
             {
                 // play pedal down sample here
@@ -707,7 +707,7 @@ void BKSynthesiser::handleSustainPedal (int midiChannel, bool isDown)
         {
             if (sustainPedalAlreadyDown)
             {
-                DBG ("releasing sustain pedal");
+                //DBG ("releasing sustain pedal");
                 // play pedal up sample here
                 noteOff (midiChannel, 65, 64, true); // turn off sustain pedal down sample, which can be long
                 noteOn (midiChannel, 66, 64); // 65 for pedal up
