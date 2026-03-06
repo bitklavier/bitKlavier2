@@ -368,11 +368,13 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
 
         /*
          * handle transpositions
-         *      - note that for spring tuning, the "useTuning" option is ignored, and the literal transp value indicted in the transposition slider is used
+         *      - note that for spring tuning, the "useTuning" option is ignored, and the literal transp value indicated in the transposition slider is used
          *          - could be a project for the future to figure out how to incorporate that...
          */
         if (currentTransposition != 0)
             lastFrequencyTarget *= intervalToRatio(currentTransposition);
+
+        // DBG("getTargetFrequency for spring tuning, lastFrequencyTarget = " << lastFrequencyTarget << " currentTransposition = " << currentTransposition);
     }
 
     /*
@@ -903,6 +905,7 @@ void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 void TuningProcessor::noteOn (int midiChannel,int midiNoteNumber,float velocity)
 {
     state.params.tuningState.keyPressed(midiNoteNumber);
+    // state.params.tuningState.springTuner->print();
 }
 
 void TuningProcessor::noteOff (int midiChannel,int midiNoteNumber,float velocity)

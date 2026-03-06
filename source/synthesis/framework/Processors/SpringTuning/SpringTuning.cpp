@@ -548,12 +548,16 @@ void SpringTuning::addSpringsByNote(int note)
                 int tnoteA = tether->getA()->getNote();
                 int tnoteB = tether->getB()->getNote();
 
-                if(tnoteA % 12 == intFromPitchClass(getTetherFundamental()) || tnoteB % 12 == intFromPitchClass(getTetherFundamental()))
+                //intervalFundamentalActive
+                // if(tnoteA % 12 == intFromPitchClass(getTetherFundamental()) || tnoteB % 12 == intFromPitchClass(getTetherFundamental()))
+                if(tnoteA % 12 == intFromPitchClass(intervalFundamentalActive) || tnoteB % 12 == intFromPitchClass(intervalFundamentalActive))
                 {
+                    // DBG("setting tether weight = " << getTetherWeightGlobal() << " for tether note " << tnoteA);
                     setTetherWeight(tnoteA, getTetherWeightGlobal());
                 }
                 else
                 {
+                    // DBG("setting secondary tether weight = " << getTetherWeightSecondaryGlobal() << " for tether note " << tnoteA);
                     setTetherWeight(tnoteA, getTetherWeightSecondaryGlobal());
                 }
             }

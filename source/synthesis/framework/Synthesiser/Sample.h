@@ -1087,6 +1087,7 @@ public:
         if (tuning == nullptr) return mtof ((double) currentlyPlayingNote + currentTransposition);
 
         // otherwise, get the target frequency from the attached Tuning pre
+        DBG("tuner connected in setTargetFrequency");
         return tuning->getTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
@@ -1144,7 +1145,7 @@ private:
          * do need to for spring, and probably for regular notes it might be handy
          */
         if(tuning != nullptr ) {
-            if(tuning->getTuningType() == Static)
+            if(tuning->getTuningType() == Static || tuning->getTuningType() == Adaptive || tuning->getTuningType() == Adaptive_Anchored || tuning->getTuningType() == Scala_KBM)
             {
                 // discrete, with frequency set at noteOn
                 // - but, since the Tuning might have been Modded within a block or two of being played, we need to update the starting frequency
@@ -1178,10 +1179,14 @@ private:
             // skip for adaptive tunings
         }
         // otherwise just return ET
-        else sampleIncrement.setTargetValue (
+        else
+        {
+            DBG("no tuner connected!");
+            sampleIncrement.setTargetValue (
             mtof ((double) currentlyPlayingNote + currentTransposition) / samplerSound->getCentreFrequencyInHz() *
             samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
             currentA4Freq / 440.);
+        }
 
         /*
          * these are actually the start and end points for the sample, not loop point markers for sustained sample looping

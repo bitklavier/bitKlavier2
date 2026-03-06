@@ -481,6 +481,7 @@ DLT: I'm not sure we should touch this right now, as there are all sorts of comp
   - and also that the activePiano is set in the plugin formats (if is not, then ALL the Pianos will play at once!)
 - SynchronicHost_test.bk2
   - make sure the host tempo is coming through correctly
+- LFO_test.bk2
 ### Pluginval
 - check both AU and VST3 versions, with Release buulds
   - might need to rescan them in Pluginval first
