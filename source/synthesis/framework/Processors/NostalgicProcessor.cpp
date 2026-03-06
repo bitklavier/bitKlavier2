@@ -345,10 +345,15 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
             // if there's a note off message and hold time is in specified range,
             // check cluster and play the associated reverse note
+            // note: we DO want to track noteOff messages if we are bypassed
+            //  - but ONLY if they are from a noteOn when we were NOT bypassed
+            //     - we use velocities to check that
             if (message.isNoteOff() && holdCheck(message.getNoteNumber()) &&
-                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown) // we DO want to track noteOff messages if we are bypassed
+                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown &&
+                velocities[message.getNoteNumber()] > 0)
             {
                 handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
+                velocities.set(message.getNoteNumber(),0);
             }
         }
         if (doClear)

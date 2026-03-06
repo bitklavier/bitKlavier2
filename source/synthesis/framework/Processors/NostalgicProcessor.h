@@ -481,7 +481,7 @@ public:
      */
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
-    juce::Array<int> keysDepressed;   //current keys that are depressed
+    // juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<juce::uint8> velocities;
     juce::Array<float> noteLengthTimers;
     juce::Array<NostalgicNoteData> reverseTimers;
