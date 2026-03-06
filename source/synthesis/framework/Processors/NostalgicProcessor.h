@@ -496,6 +496,7 @@ private:
     bool doClear = false;
     bool bypassed = false; // set by graph; when bypassed == true, this preparation is in an inactive Piano within the Gallery
 
+    std::bitset<128> keysDepressed;
     std::bitset<128> sustainPedalsDown;
     bool isDown = false;
 

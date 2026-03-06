@@ -340,14 +340,14 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                     for (size_t i = 0; i < sustainPedalsDown.size(); ++i) {
                         if (sustainPedalsDown[i])
                         {
-                            if (holdCheck(i) &&
-                                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown &&
-                                velocities[i] > 0)
+                            if (!keysDepressed.test(i) && // if key is still depressed, don't trigger nostalgic note
+                                holdCheck(i) && // check the hold time
+                                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown && // check the mode
+                                velocities[i] > 0) // make sure it has a non-zero velocity
                             {
                                 handleNostalgicNote(i, clusterMin, outMidiMessages);
                                 velocities.set(i,0);
                             }
-
                         }
                     }
 
@@ -369,14 +369,13 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 // store the velocity and note duration from the note on message
                 velocities.set(message.getNoteNumber(), message.getVelocity());
                 noteLengthTimers.set(message.getNoteNumber(), 1);
+                keysDepressed.set(message.getNoteNumber(), true);
 
                 // if we're syncing with synchronic
                 if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Sync_KeyDown)
                 {
                     handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
                 }
-
-                // sustainPedalsDown.set(message.getNoteNumber(), message.getVelocity() > 0);
             }
 
             // if there's a note off message and hold time is in specified range,
@@ -393,6 +392,10 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
                 velocities.set(message.getNoteNumber(),0);
             }
+
+            // just to keep track of which keys are depressed, for sustain pedal handling
+            if (message.isNoteOff())
+                keysDepressed.set(message.getNoteNumber(), false);
         }
         if (doClear)
         {
