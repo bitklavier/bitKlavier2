@@ -744,7 +744,11 @@ void BKSynthesiser::handleSostenutoPedal (int midiChannel, bool isDown)
             if (isDown)
                 voice->setSostenutoPedalDown (true);
             else if (voice->isSostenutoPedalDown())
-                stopVoice (voice, 1.0f, true);
+            {
+                voice->setSostenutoPedalDown (false);
+                if (!voice->isKeyDown())
+                    stopVoice (voice, 1.0f, true);
+            }
         }
     }
 }
