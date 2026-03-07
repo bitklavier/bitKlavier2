@@ -86,12 +86,12 @@ public:
             ++key;
         }
 
-        if (isModulation_)
+        if (isModulation_ && modulationState.isValid())
         {
             modulationState.setProperty(IDs::absoluteTuning, s, nullptr);
             DBG("UI modulationState: " + modulationState.toXmlString());
         }
-        else if (isModulated_)
+        else if (isModulated_ && defaultState.isValid())
         {
             defaultState.setProperty(IDs::absoluteTuning, s, nullptr);
             DBG("UI defaultState: " + defaultState.toXmlString());
@@ -111,10 +111,13 @@ public:
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
         OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
         redoImage();
-        if (isModulation_) {
+        if (keyboardValsTextField == nullptr)
+            return;
+
+        if (isModulation_ && modulationState.isValid()) {
             modulationState.setProperty(IDs::absoluteTuning, keyboardValsTextField->getText(), nullptr);
         }
-        else if (isModulated_) {
+        else if (isModulated_ && defaultState.isValid()) {
             defaultState.setProperty(IDs::absoluteTuning, keyboardValsTextField->getText(), nullptr);
         }
     }
@@ -227,13 +230,13 @@ public:
             s += juce::String((offset)) + " ";
         }
 
-        if (isModulation_)
+        if (isModulation_ && modulationState.isValid())
         {
             modulationState.setProperty(IDs::circularTuning, s, nullptr);
             DBG("UI modulationState: " + modulationState.toXmlString());
             // issue: this should set the tuningType to custom, and then modify whatever is in custom
         }
-        else if (isModulated_)
+        else if (isModulated_ && defaultState.isValid())
         {
             defaultState.setProperty(IDs::circularTuning, s, nullptr);
             DBG("UI defaultState: " + defaultState.toXmlString());
@@ -253,10 +256,13 @@ public:
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
         OpenGlAutoImageComponent::textEditorReturnKeyPressed(textEditor);
         redoImage();
-        if (isModulation_) {
+        if (keyboardValsTextField == nullptr)
+            return;
+
+        if (isModulation_ && modulationState.isValid()) {
             modulationState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
         }
-        else if (isModulated_) {
+        else if (isModulated_ && defaultState.isValid()) {
             defaultState.setProperty(IDs::circularTuning, keyboardValsTextField->getText(), nullptr);
         }
     }
