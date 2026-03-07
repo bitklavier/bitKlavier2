@@ -214,6 +214,10 @@ class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 {
 public:
     BlendronicProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
+    ~BlendronicProcessor()
+    {
+        parent.getValueTree().removeListener(this);
+    }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
