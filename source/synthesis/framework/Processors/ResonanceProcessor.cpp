@@ -301,7 +301,7 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                  * - closer to the beginning of the sample, the more "presence"
                  */
                 _noteOnSpecMap[heldKey].startTime = 2000. * (1.0 - *_rparams->presence); // ms
-                _noteOnSpecMap[heldKey].sustainTime = 4000. * (*_rparams->sustain); // ms
+                _noteOnSpecMap[heldKey].sustainTime = 20000. * (*_rparams->sustain); // ms
                 _noteOnSpecMap[heldKey].stopSameCurrentNote = false; // don't want to interrupt resonances already playing on this string
                 sendMIDImsg = true;
                 //DBG("playing partial associated with held key" + juce::String(heldPartialOffset) + " for " + juce::String(heldPartial));
@@ -399,7 +399,27 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         PluginBase (parent, vt, um, resonanceBusLayout()),
         resonanceSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
-      for (int i = 0; i < MaxMidiNotes; ++i)
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.gainsKeyboardState.stateChanges)));
+
+    state.params.gainsKeyboardState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    if (! state.params.gainsKeyboardState.stateChanges.defaultState.hasProperty(IDs::absoluteTuning)
+        || state.params.gainsKeyboardState.stateChanges.defaultState.getProperty(IDs::absoluteTuning).isVoid())
+    {
+        state.params.gainsKeyboardState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
+    }
+
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.offsetsKeyboardState.stateChanges)));
+
+    state.params.offsetsKeyboardState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
+    if (! state.params.offsetsKeyboardState.stateChanges.defaultState.hasProperty(IDs::absoluteTuning)
+        || state.params.offsetsKeyboardState.stateChanges.defaultState.getProperty(IDs::absoluteTuning).isVoid())
+    {
+        state.params.offsetsKeyboardState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
+    }
+
+    for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};
     }
