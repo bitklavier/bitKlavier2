@@ -362,6 +362,8 @@ public:
     void updateNoteVisualization();
     void playReverseNote(NostalgicNoteData& noteData, juce::MidiBuffer& outMidiMessages);
     void handleNostalgicNote(int noteNumber, float clusterMin, juce::MidiBuffer& outMidiMessages);
+    void handle_sustain_pedal(juce::MidiBuffer& outMidiMessages, float clusterMin, juce::MidiMessage message);
+    void handle_sostenuto_pedal(juce::MidiBuffer& outMidiMessages, float clusterMin, juce::MidiMessage message);
     void updateMidiNoteTranspositions(int noteOnNumber);
     void updateAllMidiNoteTranspositions();
     void handleMidiTargetMessages(int channel);
@@ -497,8 +499,10 @@ private:
     bool bypassed = false; // set by graph; when bypassed == true, this preparation is in an inactive Piano within the Gallery
 
     std::bitset<128> keysDepressed;
-    std::bitset<128> sustainPedalsDown;
-    bool isDown = false;
+    std::bitset<128> sustainPedalNotesDown;
+    bool sustainIsDown = false;
+    std::bitset<128> sostenutoPedalNotesDown;
+    bool sostenutoIsDown = false;
 
     std::unique_ptr<BKSynthesiser> nostalgicSynth;
     BKSynthesizerState lastSynthState;

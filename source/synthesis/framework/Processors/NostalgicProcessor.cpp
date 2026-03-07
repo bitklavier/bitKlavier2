@@ -253,6 +253,82 @@ void NostalgicProcessor::handleNostalgicNote(int noteNumber, float clusterMin, j
     inCluster = true;
 }
 
+void NostalgicProcessor::handle_sustain_pedal (juce::MidiBuffer& outMidiMessages, float clusterMin, juce::MidiMessage message)
+{
+    // sustain pedal handling
+    if (message.isController() && message.getControllerNumber() == 64)
+    {
+        sustainIsDown = message.getControllerValue() >= 64;
+        if (!sustainIsDown)
+        {
+            // go through all the on bits in sustainPedalsDown and add noteOffs for them
+            for (size_t i = 0; i < sustainPedalNotesDown.size(); ++i)
+            {
+                if (sustainPedalNotesDown[i])
+                {
+                    if (!keysDepressed.test (i) && // if key is still depressed, don't trigger nostalgic note
+                        holdCheck (i) && // check the hold time
+                        state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown && // check the mode
+                        velocities[i] > 0) // make sure it has a non-zero velocity
+                    {
+                        handleNostalgicNote (i, clusterMin, outMidiMessages);
+                        velocities.set (i, 0);
+                    }
+                }
+            }
+
+            // then clear sustainPedalsDown
+            sustainPedalNotesDown.reset();
+        }
+        else
+        {
+            // save which keys are currently depressed when sustain pedal is pushed down
+            for (int i = 0; i < 128; i++)
+            {
+                sustainPedalNotesDown.set (i, velocities[i] > 0);
+            }
+        }
+    }
+}
+
+void NostalgicProcessor::handle_sostenuto_pedal (juce::MidiBuffer& outMidiMessages, float clusterMin, juce::MidiMessage message)
+{
+    // sustain pedal handling
+    if (message.isController() && message.getControllerNumber() == 66)
+    {
+        sostenutoIsDown = message.getControllerValue() >= 64;
+        if (!sostenutoIsDown)
+        {
+            // go through all the on bits in sustainPedalsDown and add noteOffs for them
+            for (size_t i = 0; i < sostenutoPedalNotesDown.size(); ++i)
+            {
+                if (sostenutoPedalNotesDown[i])
+                {
+                    if (!keysDepressed.test (i) && // if key is still depressed, don't trigger nostalgic note
+                        holdCheck (i) && // check the hold time
+                        state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown && // check the mode
+                        velocities[i] > 0) // make sure it has a non-zero velocity
+                    {
+                        handleNostalgicNote (i, clusterMin, outMidiMessages);
+                        velocities.set (i, 0);
+                    }
+                }
+            }
+
+            // then clear sustainPedalsDown
+            sostenutoPedalNotesDown.reset();
+        }
+        else
+        {
+            // save which keys are currently depressed when sustain pedal is pushed down
+            for (int i = 0; i < 128; i++)
+            {
+                sostenutoPedalNotesDown.set (i, velocities[i] > 0);
+            }
+        }
+    }
+}
+
 void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
@@ -321,7 +397,6 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
         }
     }
 
-
     // go through the incoming MIDI messages
     for (auto mi : inMidiMessages)
     {
@@ -330,39 +405,8 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
         if (doDefault)
         {
-            // sustain pedal handling
-            if (message.isController() && message.getControllerNumber() == 64)
-            {
-                isDown = message.getControllerValue() >= 64;
-                if (!isDown)
-                {
-                    // go through all the on bits in sustainPedalsDown and add noteOffs for them
-                    for (size_t i = 0; i < sustainPedalsDown.size(); ++i) {
-                        if (sustainPedalsDown[i])
-                        {
-                            if (!keysDepressed.test(i) && // if key is still depressed, don't trigger nostalgic note
-                                holdCheck(i) && // check the hold time
-                                state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown && // check the mode
-                                velocities[i] > 0) // make sure it has a non-zero velocity
-                            {
-                                handleNostalgicNote(i, clusterMin, outMidiMessages);
-                                velocities.set(i,0);
-                            }
-                        }
-                    }
-
-                    // then clear sustainPedalsDown
-                    sustainPedalsDown.reset();
-                }
-                else
-                {
-                    // save which keys are currently depressed when sustain pedal is pushed down
-                    for (int i = 0; i<128; i++)
-                    {
-                        sustainPedalsDown.set(i, velocities[i] > 0);
-                    }
-                }
-            }
+            handle_sustain_pedal (outMidiMessages, clusterMin, message);
+            handle_sostenuto_pedal (outMidiMessages, clusterMin, message);
 
             if (message.isNoteOn () && !bypassed) // we don't want to create new nostalgic notes if we are bypassed
             {
@@ -387,7 +431,8 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 holdCheck(message.getNoteNumber()) &&
                 state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown &&
                 velocities[message.getNoteNumber()] > 0 && // noteOn pressed when not bypassed
-                !isDown) // sustain pedal is not down
+                !sustainIsDown && // sustain pedal is not down
+                !sostenutoPedalNotesDown.test(message.getNoteNumber())) // continue sustaining for sostenuto notes
             {
                 handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
                 velocities.set(message.getNoteNumber(),0);

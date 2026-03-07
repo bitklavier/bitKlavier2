@@ -234,6 +234,47 @@ float SynchronicProcessor::getTimeToBeatMS(float beatsToSkip)
     return timeToReturn * 1000./getSampleRate(); //optimize later....
 }
 
+void SynchronicProcessor::handle_sustain_pedal (juce::MidiMessage message)
+{
+    // sustain pedal handling
+    if (message.isController() && message.getControllerNumber() == 64)
+    {
+        isDown = message.getControllerValue() >= 64;
+
+        if (!isDown)
+        {
+            // go through all the on bits in sustainPedalsDown and add noteOffs for them
+            for (size_t i = 0; i < sustainPedalsDown.size(); ++i)
+            {
+                if (sustainPedalsDown[i])
+                {
+                    if (!keysDepressedForSustain.test (i) && // if key is still depressed, don't trigger synchronic notes
+                        holdCheck (i) && // check the hold time
+                        state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::First_NoteOn && // check the mode
+                        state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::Any_NoteOn)
+                    {
+                        keyReleased (i, 1);
+                    }
+                }
+            }
+
+            // then clear sustainPedalsDown
+            sustainPedalsDown.reset();
+        }
+        else
+        {
+            // save which keys are currently depressed when sustain pedal is pushed down
+            for (int i = 0; i < 128; i++)
+            {
+                if (keysDepressedForSustain.test (i))
+                {
+                    sustainPedalsDown.set (i, 1);
+                }
+            }
+        }
+    }
+}
+
 void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
     /*
@@ -243,43 +284,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     {
         auto message = mi.getMessage();
 
-        // sustain pedal handling
-        if (message.isController() && message.getControllerNumber() == 64)
-        {
-            isDown = message.getControllerValue() >= 64;
-
-            if (!isDown)
-            {
-                // go through all the on bits in sustainPedalsDown and add noteOffs for them
-                for (size_t i = 0; i < sustainPedalsDown.size(); ++i)
-                {
-                    if (sustainPedalsDown[i])
-                    {
-                        if (!keysDepressedForSustain.test(i) && // if key is still depressed, don't trigger synchronic notes
-                            holdCheck(i) && // check the hold time
-                            state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::First_NoteOn && // check the mode
-                            state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::Any_NoteOn)
-                        {
-                            keyReleased(i, 1);
-                        }
-                    }
-                }
-
-                // then clear sustainPedalsDown
-                sustainPedalsDown.reset();
-            }
-            else
-            {
-                // save which keys are currently depressed when sustain pedal is pushed down
-                for (int i = 0; i<128; i++)
-                {
-                    if (keysDepressedForSustain.test(i))
-                    {
-                        sustainPedalsDown.set(i, 1);
-                    }
-                }
-            }
-        }
+        handle_sustain_pedal (message);
 
         if(message.isNoteOn())
             keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());

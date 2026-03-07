@@ -651,6 +651,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     void handleMidiTargetMessages(int channel);
     bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
+    void handle_sustain_pedal(juce::MidiMessage message);
     void removeOldestCluster();
     void removeNewestCluster();
     void rotateClusters();
