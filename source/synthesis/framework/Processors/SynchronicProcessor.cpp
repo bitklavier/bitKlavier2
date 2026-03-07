@@ -239,14 +239,14 @@ void SynchronicProcessor::handle_sustain_pedal (juce::MidiMessage message)
     // sustain pedal handling
     if (message.isController() && message.getControllerNumber() == 64)
     {
-        isDown = message.getControllerValue() >= 64;
+        sustainIsDown = message.getControllerValue() >= 64;
 
-        if (!isDown)
+        if (!sustainIsDown)
         {
             // go through all the on bits in sustainPedalsDown and add noteOffs for them
-            for (size_t i = 0; i < sustainPedalsDown.size(); ++i)
+            for (size_t i = 0; i < sustainPedalNotesDown.size(); ++i)
             {
-                if (sustainPedalsDown[i])
+                if (sustainPedalNotesDown[i])
                 {
                     if (!keysDepressedForSustain.test (i) && // if key is still depressed, don't trigger synchronic notes
                         holdCheck (i) && // check the hold time
@@ -259,7 +259,7 @@ void SynchronicProcessor::handle_sustain_pedal (juce::MidiMessage message)
             }
 
             // then clear sustainPedalsDown
-            sustainPedalsDown.reset();
+            sustainPedalNotesDown.reset();
         }
         else
         {
@@ -268,7 +268,55 @@ void SynchronicProcessor::handle_sustain_pedal (juce::MidiMessage message)
             {
                 if (keysDepressedForSustain.test (i))
                 {
-                    sustainPedalsDown.set (i, 1);
+                    sustainPedalNotesDown.set (i, true);
+                }
+            }
+        }
+    }
+}
+
+void SynchronicProcessor::handle_sostenuto_pedal (juce::MidiMessage message)
+{
+    // sustain pedal handling
+    if (message.isController() && message.getControllerNumber() == 66)
+    {
+        sostenutoIsDown = message.getControllerValue() >= 64;
+
+        // pedal released
+        if (!sostenutoIsDown)
+        {
+            // go through all the on bits in sustainPedalsDown and add noteOffs for them
+            for (size_t i = 0; i < sostenutoPedalNotesDown.size(); ++i)
+            {
+                if (sostenutoPedalNotesDown[i])
+                {
+                    if (
+                        state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::First_NoteOn && // check the mode
+                        state.params.pulseTriggeredBy->get() != SynchronicPulseTriggerType::Any_NoteOn)
+                    {
+                        sostenutoPedalNotesDown.set (i, false);
+                        if (!keysDepressedForSustain.test (i) && // if key is still depressed, don't trigger synchronic notes
+                            holdCheck (i)) // check the hold time)
+                        {
+                            DBG("sostenuto key released, noteNumber =" << i);
+                            keyReleased (i, 1);
+                        }
+                    }
+                }
+            }
+
+            // then clear sustainPedalsDown
+            // sostenutoPedalNotesDown.reset();
+        }
+        // pedal just pressed
+        else
+        {
+            // save which keys are currently depressed when sustain pedal is pushed down
+            for (int i = 0; i < 128; i++)
+            {
+                if (keysDepressedForSustain.test (i))
+                {
+                    sostenutoPedalNotesDown.set (i, true);
                 }
             }
         }
@@ -285,6 +333,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         auto message = mi.getMessage();
 
         handle_sustain_pedal (message);
+        handle_sostenuto_pedal (message);
 
         if(message.isNoteOn())
             keyPressed(message.getNoteNumber(), message.getVelocity(), message.getChannel());
@@ -807,9 +856,10 @@ void SynchronicProcessor::handleMidiTargetMessages(int channel)
 
 void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
 {
-    keysDepressedForSustain.set(noteNumber, true);
-    if (isDown)
-        sustainPedalsDown.set(noteNumber, 1);
+    keysDepressedForSustain.set(noteNumber, velocity > 0);
+    if (sustainIsDown)
+        sustainPedalNotesDown.set(noteNumber, true);
+    // don't add for sostenuto here! only set when the the pedal is pressed
 
     // set all the modes, handled below (like doCluster, etc...)
     // only one mode will be set for each keyPressed call
@@ -987,7 +1037,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     /*
      * ************** doCluster => default Synchronic behavior **************
      */
-    if (doCluster && !isDown)
+    if (doCluster && !sustainIsDown && !sostenutoPedalNotesDown.test(noteNumber))
     {
         // remove key from cluster-targeted keys
         clusterKeysDepressed.removeAllInstancesOf(noteNumber);

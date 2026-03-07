@@ -652,6 +652,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     bool updateCurrentCluster();
     float getTimeToBeatMS(float beatsToSkip);
     void handle_sustain_pedal(juce::MidiMessage message);
+    void handle_sostenuto_pedal(juce::MidiMessage message);
     void removeOldestCluster();
     void removeNewestCluster();
     void rotateClusters();
@@ -730,8 +731,10 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     bool checkClusterMinMax(int clusterNotesSize);
 
     std::bitset<128> keysDepressedForSustain;
-    std::bitset<128> sustainPedalsDown;
-    bool isDown = false;
+    std::bitset<128> sustainPedalNotesDown;
+    bool sustainIsDown = false;
+    std::bitset<128> sostenutoPedalNotesDown;
+    bool sostenutoIsDown = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynchronicProcessor)
 };
