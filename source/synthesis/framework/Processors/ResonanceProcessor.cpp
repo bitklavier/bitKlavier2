@@ -405,7 +405,7 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         resonanceSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
 {
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.gainsKeyboardState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "gainsKeyboard", &(state.params.gainsKeyboardState.stateChanges)));
 
     state.params.gainsKeyboardState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     if (! state.params.gainsKeyboardState.stateChanges.defaultState.hasProperty(IDs::absoluteTuning)
@@ -415,7 +415,7 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
     }
 
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
-        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "absoluteTuning", &(state.params.offsetsKeyboardState.stateChanges)));
+        (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "offsetsKeyboard", &(state.params.offsetsKeyboardState.stateChanges)));
 
     state.params.offsetsKeyboardState.stateChanges.defaultState = v.getOrCreateChildWithName(IDs::PARAM_DEFAULT,nullptr);
     if (! state.params.offsetsKeyboardState.stateChanges.defaultState.hasProperty(IDs::absoluteTuning)
@@ -960,7 +960,7 @@ void ResonanceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     // process continuous modulations (gain level sliders)
     processContinuousModulations(buffer);
 
-    // process any mod changes to the multisliders
+    // process any state changes
     state.params.processStateChanges();
 
     // this is a synth, so we want an empty audio buffer to start
