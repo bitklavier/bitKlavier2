@@ -304,7 +304,8 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                  * - closer to the beginning of the sample, the more "presence"
                  */
                 _noteOnSpecMap[heldKey].startTime = 2000. * (1.0 - *_rparams->presence); // ms
-                _noteOnSpecMap[heldKey].sustainTime = 20000. * (*_rparams->sustain); // ms
+                _noteOnSpecMap[heldKey].sustainTime = 20000. * std::powf(*_rparams->sustain, 3.); // ms
+                if (_noteOnSpecMap[heldKey].sustainTime < 1) _noteOnSpecMap[heldKey].sustainTime = 1;
                 _noteOnSpecMap[heldKey].stopSameCurrentNote = false; // don't want to interrupt resonances already playing on this string
                 sendMIDImsg = true;
                 //DBG("playing partial associated with held key" + juce::String(heldPartialOffset) + " for " + juce::String(heldPartial));
