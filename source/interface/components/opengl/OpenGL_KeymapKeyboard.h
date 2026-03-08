@@ -109,6 +109,7 @@ public:
 
     void setLiveKeyState (int midiNoteNumber, bool isDown) override
     {
+        if (!showLiveState) return;
         if (midiNoteNumber >= 0 && midiNoteNumber < 128)
         {
             BKKeymapKeyboardComponent::setLiveKeyState (midiNoteNumber, isDown);
@@ -192,6 +193,7 @@ public:
     }
 
     bool postUInotesToEngine_ { false };
+    bool showLiveState = true;
 
     void setShowOctaveLabels(bool show) { setOctaveLabelsEnabled(show); }
     void setOctaveForMiddleC(int octaveNum) { BKKeymapKeyboardComponent::setOctaveForMiddleC(octaveNum); }

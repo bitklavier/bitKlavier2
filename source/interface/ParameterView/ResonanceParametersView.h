@@ -103,6 +103,7 @@ public:
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         heldKeysKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.heldKeymap, false);
+        heldKeysKeyboard->showLiveState = false;
         addStateModulatedComponent(heldKeysKeyboard.get());
         heldKeysKeyboard->setName("heldKeys");
         heldKeysKeyboard->addMyListener(this);

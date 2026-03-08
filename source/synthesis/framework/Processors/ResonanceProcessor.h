@@ -464,6 +464,8 @@ public:
     void keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
     void keyReleased(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
     void handleMidiTargetMessages(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages);
+    void handle_sustain_pedal(juce::MidiBuffer& outMidiMessages, juce::MidiMessage message);
+    void handle_sostenuto_pedal(juce::MidiBuffer& outMidiMessages, juce::MidiMessage message);
     void ringSympStrings(int noteNumber, float velocity, juce::MidiBuffer& outMidiMessages);
     void addSympStrings(int noteNumber);
     void toggleSympString(int noteNumber, juce::MidiBuffer& outMidiMessages);
@@ -638,6 +640,12 @@ private:
 
     std::array<std::unique_ptr<ResonantString>, MaxHeldKeys> resonantStringsArray;
     int currentHeldKey = 0;
+
+    std::bitset<128> keysDepressed;
+    std::bitset<128> sustainPedalNotesDown;
+    bool sustainIsDown = false;
+    std::bitset<128> sostenutoPedalNotesDown;
+    bool sostenutoIsDown = false;
 
     bool bypassed = false;
 

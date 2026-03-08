@@ -9,6 +9,7 @@ void ResonanceParametersView::timerCallback(void)
     /*
      * probably a more direct way to do this without a timer...
      */
+    sparams_.heldKeymap.keyStates.load();
     heldKeysKeyboard->redoImage();
 }
 
@@ -65,10 +66,12 @@ void ResonanceParametersView::resized()
     int kpadding = (keyboardsRect.getHeight() - 4. * (keyboardHeight + labelsectionheight)) / 3.;
 
     fundamentalKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
+    fundamentalKeyboard->showLiveState = false;
     fundamentalKeyboard_label->setBounds(fundamentalKeyboard->getX(), fundamentalKeyboard->getY() + 4, fundamentalKeyboard->getWidth(), labelsectionheight);
     keyboardsRect.removeFromBottom(kpadding + labelsectionheight);
 
     closestKeyboard->setBounds(keyboardsRect.removeFromBottom(keyboardHeight));
+    closestKeyboard->showLiveState = false;
     closestKeyboard_label->setBounds(closestKeyboard->getX(), closestKeyboard->getY() + 4, closestKeyboard->getWidth(), labelsectionheight);
     keyboardsRect.removeFromBottom(kpadding + labelsectionheight);
 

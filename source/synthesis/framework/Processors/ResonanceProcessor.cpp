@@ -554,6 +554,10 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
     for (auto mi : inMidiMessages)
     {
         auto message = mi.getMessage();
+
+        handle_sustain_pedal (outMidiMessages, message);
+        handle_sostenuto_pedal (outMidiMessages, message);
+
         if(message.isNoteOff())
             keyReleased(message.getNoteNumber(), message.getVelocity(), message.getChannel(), outMidiMessages);
     }
@@ -701,7 +705,7 @@ void ResonanceProcessor::toggleSympString(int noteNumber, juce::MidiBuffer& outM
 
 void ResonanceProcessor::addSympStrings(int noteNumber)
 {
-    DBG("adding sympgSting");
+    // DBG("adding sympgSting");
     // this first approach will always move forward through the channels, which might be useful
     // for letting noteOffs resolve and so on, but shouldn't make a difference if we've
     // handled everything correctly
@@ -732,6 +736,11 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
 
 void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
+    //DBG("ResonanceProcessor: keyPressed called with noteNumber: " + juce::String(noteNumber) + ", velocity: " + juce::String(velocity) + ", channel: " + juce::String(channel));
+    keysDepressed.set(noteNumber, velocity > 0);
+    if (sustainIsDown)
+        sustainPedalNotesDown.set(noteNumber, velocity > 0);
+
     handleMidiTargetMessages(noteNumber, velocity, channel, outMidiMessages);
 
     /*
@@ -740,7 +749,7 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, j
     if(firstNoteOn)
     {
         updatePartialStructure();
-        printPartialStructure();
+        // printPartialStructure();
         firstNoteOn = false;
     }
 
@@ -759,18 +768,106 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, j
 
 void ResonanceProcessor::keyReleased(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
 {
+    //DBG("ResonanceProcessor: keyReleased called with noteNumber: " + juce::String(noteNumber) + ", velocity: " + juce::String(velocity) + ", channel: " + juce::String(channel));
+    keysDepressed.set(noteNumber, false);
+
     handleMidiTargetMessages(noteNumber, velocity, channel, outMidiMessages);
 
-    if (doAdd)
+    if (!sustainIsDown && !sostenutoPedalNotesDown.test(noteNumber)) // continue sustaining for sostenuto and sustained notes)
     {
-        for (auto& _string : resonantStringsArray)
+        if (doAdd)
         {
-            if(_string->heldKey == noteNumber)
-                _string->removeString (noteNumber, outMidiMessages);
+            for (auto& _string : resonantStringsArray)
+            {
+                if(_string->heldKey == noteNumber)
+                    _string->removeString (noteNumber, outMidiMessages);
+            }
+            state.params.heldKeymap.keyStates.load().set(noteNumber, false);
         }
-        state.params.heldKeymap.keyStates.load().set(noteNumber, false);
+        if (doRing) {}
     }
-    if (doRing) {}
+}
+
+void ResonanceProcessor::handle_sustain_pedal (juce::MidiBuffer& outMidiMessages, juce::MidiMessage message)
+{
+    // sustain pedal handling
+    if (message.isController() && message.getControllerNumber() == 64)
+    {
+        sustainIsDown = message.getControllerValue() >= 64;
+        if (!sustainIsDown)
+        {
+            DBG("Resonance: sustain pedal released");
+            // go through all the on bits in sustainPedalsDown and add noteOffs for them
+            for (size_t i = 0; i < sustainPedalNotesDown.size(); ++i)
+            {
+                if (sustainPedalNotesDown[i])
+                {
+                    if (!keysDepressed.test (i))
+                    {
+                        //DBG("Resonance: sustain pedal released, turn note off " + juce::String(i));
+                        keyReleased(i, 64, 1, outMidiMessages);
+                    }
+                }
+            }
+
+            // then clear sustainPedalsDown
+            sustainPedalNotesDown.reset();
+        }
+        else
+        {
+            DBG("Resonance: sustain pedal pressed");
+            // save which keys are currently depressed when sustain pedal is pushed down
+            for (int i = 0; i < 128; i++)
+            {
+                if (keysDepressed.test (i))
+                {
+                    //DBG("ResonanceProcessor: adding " + juce::String(i) + " to sustainPedalNotesDown");
+                    sustainPedalNotesDown.set (i, true);
+                }
+            }
+        }
+    }
+}
+
+void ResonanceProcessor::handle_sostenuto_pedal (juce::MidiBuffer& outMidiMessages, juce::MidiMessage message)
+{
+    // sostenuto pedal handling
+    if (message.isController() && message.getControllerNumber() == 66)
+    {
+        sostenutoIsDown = message.getControllerValue() >= 64;
+        if (!sostenutoIsDown)
+        {
+            DBG("Resonance: sostenuto pedal released");
+            // go through all the on bits in sustainPedalsDown and add noteOffs for them
+            for (size_t i = 0; i < sostenutoPedalNotesDown.size(); ++i)
+            {
+                if (sostenutoPedalNotesDown[i])
+                {
+                    if (!keysDepressed.test (i))
+                    {
+                        //DBG("Resonance: sostenuto pedal released, turn note off " + juce::String(i));
+                        sostenutoPedalNotesDown[i] = false;
+                        keyReleased(i, 64, 1, outMidiMessages);
+                    }
+                }
+            }
+
+            // then clear sustainPedalsDown
+            sostenutoPedalNotesDown.reset();
+        }
+        else
+        {
+            DBG("Resonance: sostenuto pedal pressed");
+            // save which keys are currently depressed when sustain pedal is pushed down
+            for (int i = 0; i < 128; i++)
+            {
+                if (keysDepressed.test (i))
+                {
+                    sostenutoPedalNotesDown.set (i, true);
+                }
+            }
+        }
+    }
 }
 
 void ResonanceProcessor::handleMidiTargetMessages(int noteNumber, int velocity, int channel, juce::MidiBuffer& outMidiMessages)
