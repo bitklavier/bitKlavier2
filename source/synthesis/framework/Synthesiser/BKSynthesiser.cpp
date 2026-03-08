@@ -454,11 +454,11 @@ void BKSynthesiser::noteOn (const int midiChannel,
          * been filled aligned with transpositions
          */
         float velocityScaled = velocity;
-        if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size())
-        //redundant. size must be > 0 if we are this loop   && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
-        {
-            velocityScaled *= noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)];
-        }
+        // if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size())
+        // //redundant. size must be > 0 if we are this loop   && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
+        // {
+        //     velocityScaled *= noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)];
+        // }
 
         tuneTranspositions = noteOnSpecs[midiNoteNumber].useAttachedTuning;
 
@@ -479,13 +479,15 @@ void BKSynthesiser::noteOn (const int midiChannel,
             if (sound->appliesToNote (closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
                 //DBG ("playing note " + juce::String (midiNoteNumber) + " with transp " + juce::String (transp) + " and velocity " + juce::String(velocityScaled));
+                // DBG("transpositionGain = " << noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)]);
                 auto* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
                 startVoice (newvoice,
                     sound,
                     midiChannel,
                     midiNoteNumber,
                     velocityScaled,
-                    transp);
+                    transp,
+                    noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)]);
 
                 break;
             }
@@ -498,7 +500,8 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
     const int midiChannel,
     const int midiNoteNumber,
     const float velocity,
-    const float transposition)
+    const float transposition,
+    float transpositionGain)
 {
     /**
      * save this voice, since it might be one of several associated with this midiNoteNumber
@@ -513,7 +516,7 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
         if (voice->currentlyPlayingSound != nullptr)
             voice->stopNote (0.0f, false);
 
-        voice->setGain (juce::Decibels::decibelsToGain (synthGain.getCurrentValue()));
+        voice->setGain (juce::Decibels::decibelsToGain (synthGain.getCurrentValue()) * transpositionGain);
         voice->currentlyPlayingNote = midiNoteNumber;
         voice->currentPlayingMidiChannel = midiChannel;
         voice->noteOnTime = ++lastNoteOnCounter;

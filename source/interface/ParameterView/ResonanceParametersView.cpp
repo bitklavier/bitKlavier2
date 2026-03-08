@@ -9,7 +9,6 @@ void ResonanceParametersView::timerCallback(void)
     /*
      * probably a more direct way to do this without a timer...
      */
-    sparams_.heldKeymap.keyStates.load();
     heldKeysKeyboard->redoImage();
 }
 

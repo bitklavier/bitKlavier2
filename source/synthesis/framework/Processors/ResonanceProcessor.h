@@ -258,8 +258,8 @@ struct ResonanceParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr variance {
         juce::ParameterID { "rvariance", 100 },
         "OVERLAP SENSITIVITY",
-        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.1f),
-        0.1f,
+        chowdsp::ParamUtils::createNormalisableRange (0.0f, 1.f, 0.5f),
+        0.5f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
         true
@@ -268,7 +268,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     /*
      * maps to delay time before resonantString becomes active after held initiated
      * have decided NOT to expose this to the UI, at least not for now. it's just
-     * not convincing enough to warrant the users attention.
+     * not convincing enough to warrant the user's attention.
      */
     chowdsp::FloatParameter::Ptr smoothness {
         juce::ParameterID { "rsmoothness", 100 },
@@ -589,7 +589,8 @@ public:
                 nullptr,
                 nullptr
             );
-        }else {
+        }
+        else {
             auto* samples = parent.getSamples();
 
             addSoundSet(
@@ -636,6 +637,7 @@ private:
     void updatePartialStructure();
     void resetPartialStructure();       // clear it
     void printPartialStructure();
+
     bool firstNoteOn;  // set this to true every block; if we get a noteOn message, updatePartialStructure and set to false
 
     std::array<std::unique_ptr<ResonantString>, MaxHeldKeys> resonantStringsArray;

@@ -89,12 +89,12 @@ public:
         if (isModulation_ && modulationState.isValid())
         {
             modulationState.setProperty(IDs::absoluteTuning, s, nullptr);
-            DBG("UI modulationState: " + modulationState.toXmlString());
+            // DBG("UI modulationState: " + modulationState.toXmlString());
         }
         else if (isModulated_ && defaultState.isValid())
         {
             defaultState.setProperty(IDs::absoluteTuning, s, nullptr);
-            DBG("UI defaultState: " + defaultState.toXmlString());
+            // DBG("UI defaultState: " + defaultState.toXmlString());
         }
     }
 
@@ -233,13 +233,13 @@ public:
         if (isModulation_ && modulationState.isValid())
         {
             modulationState.setProperty(IDs::circularTuning, s, nullptr);
-            DBG("UI modulationState: " + modulationState.toXmlString());
+            // DBG("UI modulationState: " + modulationState.toXmlString());
             // issue: this should set the tuningType to custom, and then modify whatever is in custom
         }
         else if (isModulated_ && defaultState.isValid())
         {
             defaultState.setProperty(IDs::circularTuning, s, nullptr);
-            DBG("UI defaultState: " + defaultState.toXmlString());
+            // DBG("UI defaultState: " + defaultState.toXmlString());
         }
     }
 

@@ -276,9 +276,12 @@ void ResonantString::ringString(int midiNote, int velocity, juce::MidiBuffer& ou
                  */
                 float offsetDifference = std::fabs(heldPartialOffset - struckPartialOffset);
                 if(offsetDifference > 1.) offsetDifference = 1.;
-                float partialOverlap = heldPartialGain * struckPartialGain * (1. - offsetDifference);
-                float sensitivityCoeff = 1. / (*_rparams->variance * 100. + 1.);
+                float partialOverlap = (1. - offsetDifference);
+                float varianceTemp = std::powf(*_rparams->variance, 5.);
+                float sensitivityCoeff = 1. / (varianceTemp * 100. + 1.);
                 float varianceGainScale = std::powf(partialOverlap, sensitivityCoeff);
+                float gainOverlap = std::powf(heldPartialGain * struckPartialGain, 0.25);
+                varianceGainScale = gainOverlap * std::powf(varianceGainScale, 10.);
 
                 currentVelocity = static_cast<float>(velocity/128.);
                 _noteOnSpecMap[heldKey].channel = channel;
@@ -386,6 +389,7 @@ void ResonantString::finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages)
 {
     if(active && sendMIDImsg)
     {
+        // auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, 1.f);
         auto newmsg = juce::MidiMessage::noteOn (channel, heldKey, currentVelocity);
         outMidiMessages.addEvent (newmsg, 1);
         sendMIDImsg = false;
@@ -694,7 +698,7 @@ void ResonanceProcessor::toggleSympString(int noteNumber, juce::MidiBuffer& outM
         if (_string->heldKey == noteNumber && (_string->active || _string->stringJustAdded))
         {
             _string->removeString(noteNumber, outMidiMessages);
-            state.params.heldKeymap.keyStates.load().set(noteNumber, false);
+            state.params.heldKeymap.setKeyState(noteNumber, false);
             return;
         }
     }
@@ -709,13 +713,14 @@ void ResonanceProcessor::addSympStrings(int noteNumber)
     // this first approach will always move forward through the channels, which might be useful
     // for letting noteOffs resolve and so on, but shouldn't make a difference if we've
     // handled everything correctly
+
     for (int i = currentHeldKey + 1; i < currentHeldKey + resonantStringsArray.size() + 1; i++)
     {
         if (!resonantStringsArray[i % resonantStringsArray.size()]->active)
         {
             currentHeldKey = i % resonantStringsArray.size();
             resonantStringsArray[currentHeldKey]->addString(noteNumber);
-            state.params.heldKeymap.keyStates.load().set(noteNumber, true);
+            state.params.heldKeymap.setKeyState(noteNumber, true);
             return;
         }
     }
@@ -762,7 +767,6 @@ void ResonanceProcessor::keyPressed(int noteNumber, int velocity, int channel, j
     {
         // then, add this new string and its partials to the currently available sympathetic strings
         addSympStrings(noteNumber);
-//        state.params.heldKeymap.keyStates.set(noteNumber, true);
     }
 }
 
@@ -782,7 +786,7 @@ void ResonanceProcessor::keyReleased(int noteNumber, int velocity, int channel, 
                 if(_string->heldKey == noteNumber)
                     _string->removeString (noteNumber, outMidiMessages);
             }
-            state.params.heldKeymap.keyStates.load().set(noteNumber, false);
+            state.params.heldKeymap.setKeyState(noteNumber, false);
         }
         if (doRing) {}
     }

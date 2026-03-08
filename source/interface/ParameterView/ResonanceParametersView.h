@@ -66,8 +66,8 @@ public:
                 slider_labels.emplace_back(slider_label);
                 floatAttachments.emplace_back (std::move (attachment));
                 if ( // make group of params to display together
-                param_->paramID == "rpresence" ||
-                param_->paramID == "rsustain")
+                    param_->paramID == "rpresence" ||
+                    param_->paramID == "rsustain")
                 {
                     _sliders_row1.emplace_back (std::move (slider));
                 }
@@ -122,7 +122,7 @@ public:
         addStateModulatedComponent(gainsKeyboard.get());
         gainsKeyboard->setName("gains");
         gainsKeyboard->setAvailableRange(0, numKeys);
-        gainsKeyboard->setMinMidMaxValues(-100., -50., 0., 2); // min, mid, max, display resolution; dBFS
+        gainsKeyboard->setMinMidMaxValues(-100.f, 0.f, 6.f, 2); // min, mid, max, display resolution; dBFS
         gainsKeyboard->setOctaveForMiddleC(5);
 
         gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
@@ -192,7 +192,7 @@ public:
 
     void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey, juce::ModifierKeys mods = juce::ModifierKeys()) override
     {
-        DBG("BKKeymapKeyboardChanged called in ResonanceParametersView " + juce::String(lastKey));
+        // DBG("BKKeymapKeyboardChanged called in ResonanceParametersView " + juce::String(lastKey));
         sparams_.heldKeymap_changedInUI = lastKey; // notify processor that the held keymap has changed vai the UI
     }
 

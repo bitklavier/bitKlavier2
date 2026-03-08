@@ -315,19 +315,19 @@ void BKTuningKeyboardSlider::mouseDrag(const juce::MouseEvent& e)
     {
         auto myNote  = lastKeyPressed;
         bool isBlackKey = juce::MidiMessage::isMidiNoteBlack (myNote);
-        DBG(juce::String((int)isBlackKey) + " is black key");
+        // DBG(juce::String((int)isBlackKey) + " is black key");
         float dragPos = (float)e.y / keyboard->getHeight();
         if(isBlackKey) dragPos /= keyboard->getBlackNoteLengthProportion();
 
         dragPos = 1. - 2. * dragPos;
         if(dragPos > 0.) dragPos = dragPos * dragPos;
         else dragPos = -1. * dragPos * dragPos;
-        DBG("BKTuningKeyboardSlider::mouseDrag dragPos = " + juce::String(dragPos));
+        // DBG("BKTuningKeyboardSlider::mouseDrag dragPos = " + juce::String(dragPos));
 
         float outval;
         if (dragPos > 0) outval = keyboard->midRange + dragPos * (keyboard->maxRange - keyboard->midRange);
         else outval = keyboard->midRange + dragPos * (keyboard->midRange - keyboard->minRange);
-        DBG("BKTuningKeyboardSlider::mouseDrag outval = " + juce::String(outval));
+        // DBG("BKTuningKeyboardSlider::mouseDrag outval = " + juce::String(outval));
         auto val  = std::clamp(outval, keyboard->minRange, keyboard->maxRange);
        // tuningState->setKeyOffset(myNote, dragPos * 50.);
         keyboardValueTF.setText(juce::String(val, displayResolution), juce::dontSendNotification);

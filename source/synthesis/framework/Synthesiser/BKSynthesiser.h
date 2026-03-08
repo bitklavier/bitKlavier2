@@ -416,7 +416,8 @@ protected:
                     int midiChannel,
                     int midiNoteNumber,
                     float velocity,
-                    float transposition);
+                    float transposition,
+                    float transpositionGain = 1.f);
 
                 /** Stops a given voice.
                     You should never need to call this, it's used internally by noteOff, but is protected
