@@ -9,6 +9,7 @@ void ResonanceParametersView::timerCallback(void)
     /*
      * probably a more direct way to do this without a timer...
      */
+    allNotesOffButton->setToggleState(false, juce::NotificationType::dontSendNotification);
     heldKeysKeyboard->redoImage();
 }
 
@@ -54,8 +55,10 @@ void ResonanceParametersView::resized()
     juce::Rectangle<int> keyboardsRect = bounds.removeFromRight(bounds.getWidth() * 0.5);
     keyboardsRect.reduce(largepadding, largepadding);
     juce::Rectangle<int> spectrumMenuArea = keyboardsRect.removeFromTop(menu_section_height);
-    spectrumMenuArea.reduce(spectrumMenuArea.getWidth() * 0.25, 0);
-    spectrum_combo_box->setBounds(spectrumMenuArea);
+    //spectrumMenuArea.reduce(spectrumMenuArea.getWidth() * 0.25, 0);
+    // spectrum_combo_box->setBounds(spectrumMenuArea);
+    spectrum_combo_box->setBounds(spectrumMenuArea.removeFromLeft(spectrumMenuArea.getWidth() * 0.3));
+    allNotesOffButton->setBounds(spectrumMenuArea.removeFromRight(spectrumMenuArea.getWidth() * 0.3));
 
     /*
      * todo: scale keyboard height; add to Skin

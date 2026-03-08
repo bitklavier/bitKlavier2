@@ -129,6 +129,13 @@ public:
         addOpenGlComponent(gainsKeyboard_label);
         gainsKeyboard_label->setJustification(juce::Justification::centredBottom);
 
+        allNotesOffButton = std::make_unique<SynthButton>("allNotesOff");
+        allNotesOffButton_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.rAllNotesOff, listeners,*allNotesOffButton, nullptr);
+        allNotesOffButton->setComponentID("allNotesOff");
+        addSynthButton(allNotesOffButton.get(), true);
+        allNotesOffButton->setText("all notes off!");
+        allNotesOffButton->setToggleable(true);
+
         // ADSR
         envSection = std::make_unique<EnvelopeSection>( params.env ,listeners, *this);
         addSubSection (envSection.get());
@@ -230,6 +237,10 @@ public:
 
     std::unique_ptr<OpenGLComboBox> spectrum_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> spectrum_attachment;
+
+    // for all notes off
+    std::unique_ptr<SynthButton> allNotesOffButton;
+    std::unique_ptr<chowdsp::ButtonAttachment> allNotesOffButton_attachment;
 
     chowdsp::ScopedCallbackList resonanceCallbacks;
 

@@ -176,7 +176,8 @@ struct ResonanceParams : chowdsp::ParamHolder
             smoothness,
             env,
             stretch,
-            spectrum);
+            spectrum,
+            rAllNotesOff);
 
         // params that are audio-rate modulatable are added to vector of all continuously modulatable params
         doForAllParameters ([this] (auto& param, size_t) {
@@ -305,6 +306,16 @@ struct ResonanceParams : chowdsp::ParamHolder
         SpectralType::None,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
+
+    /**
+     * to catch presses of the all notes off button
+     */
+        chowdsp::BoolParameter::Ptr rAllNotesOff {
+            juce::ParameterID { "rAllNotesOff", 100},
+            "all notes off",
+            false
+        };
+
 
     // adsr
     EnvParams env;
@@ -474,6 +485,7 @@ public:
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
     void tuningStateInvalidated() override;
+    bool clear_resonant_strings(juce::MidiBuffer& outMidiMessages);
     /*
      * this is where we define the buses for audio in/out, including the param modulation channels
      *      the "discreteChannels" number is currently just by hand set based on the max that this particularly preparation could have
@@ -514,6 +526,15 @@ public:
     void setA4Frequency(float freq)
     {
         resonanceSynth->setA4Frequency(freq);
+    }
+
+    void allNotesOff()
+    {
+        DBG("ResonanceProcessor::allNotesOff");
+        for (int i = 1; i <= 16; i++)
+            resonanceSynth->allNotesOff(i, false);
+
+        removeAllResonantStrings = true;
     }
 
 //    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)
@@ -649,7 +670,10 @@ private:
     std::bitset<128> sostenutoPedalNotesDown;
     bool sostenutoIsDown = false;
 
+    bool removeAllResonantStrings = false;
     bool bypassed = false;
+
+    chowdsp::ScopedCallbackList resonanceCallbacks;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonanceProcessor)
 };

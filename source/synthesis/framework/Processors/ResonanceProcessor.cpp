@@ -450,6 +450,18 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
             addSympStrings (i);
         }
     }
+
+    resonanceCallbacks += {state.getParameterListeners().addParameterListener(
+        state.params.rAllNotesOff,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() {
+            if (*state.params.rAllNotesOff)
+            {
+                allNotesOff();
+                state.params.rAllNotesOff->setParameterValue (false);
+            }
+        })
+    };
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -516,8 +528,33 @@ void ResonanceProcessor::tuningStateInvalidated() {
     }
 }
 
+bool ResonanceProcessor::clear_resonant_strings (juce::MidiBuffer& outMidiMessages)
+{
+    if (removeAllResonantStrings)
+    {
+        for (size_t i = 0; i < resonantStringsArray.size(); ++i)
+        {
+            resonantStringsArray[i]; // turn everything off here
+            for (int i = 0; i < 128; i++)
+            {
+                for (auto& _string : resonantStringsArray)
+                {
+                    if (_string->heldKey == i)
+                        _string->removeString (i, outMidiMessages);
+                }
+                state.params.heldKeymap.setKeyState (i, false);
+            }
+        }
+        removeAllResonantStrings = false;
+        return true;
+    }
+    return false;
+}
 void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
+    if (clear_resonant_strings (outMidiMessages))
+        return;
+
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
     for (auto& spec : noteOnSpecMap)
     {
