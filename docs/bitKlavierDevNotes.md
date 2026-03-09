@@ -85,6 +85,7 @@ Typing as I do MidiFilter and Resonance
   - border width is set by `kMeterPixel` in BKItem.h
 - preparation icon size is set in `ConstructionSite::perform`?
 - popup size is set in `FullInterface::resized()`, `prep_popup->setBounds`, as fraction of full window size
+  - also, note that i had tried to make Tempo smaller than the others preps in `FullInterface::prepDisplay` but ran into some difficulties with mod displays; fixable, but leaving for now
 ---------
 ## Quick Bug/Feature Notes
 - [ ] lots of work remaining on state-mod UIs, in particular their visibility

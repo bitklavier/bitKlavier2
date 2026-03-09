@@ -337,11 +337,11 @@ void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, co
     float prepScale_x_save = prepScale_x;
     float prepScale_y_save = prepScale_y;
     prepScale_x = prepScale_y = 1.;
-    if (synth_section->getName() == "Tempo")
-    {
-        prepScale_x = 0.6;
-        prepScale_y = 0.5;
-    }
+    // if (synth_section->getName() == "Tempo")
+    // {
+    //     prepScale_x = 0.6;
+    //     prepScale_y = 0.5;
+    // }
     prep_popup->setContent (std::move(synth_section),v);
     prep_popup->setVisible (true);
 

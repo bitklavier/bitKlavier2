@@ -111,6 +111,7 @@ void BlendronicProcessor::updateDelayParameters()
     float smoothRate = (pulseLength * delayDelta) / (state.params.smoothingTimes.sliderVals[smoothIndex].load() * 0.001f);
     if (delayDelta == 0 || pulseLength == INFINITY) smoothRate = INFINITY;
 
+    DBG("updateDelayParameters, delay length target = " + juce::String(numSamplesDelay) + " smoothRate = " + juce::String(smoothRate) + "");
     delay->setDelayTargetLength(numSamplesDelay);
     delay->setSmoothRate(smoothRate); // this is really a rate, not a duration
     // DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load()) << " feedbackIndex = " << feedbackIndex << "");
