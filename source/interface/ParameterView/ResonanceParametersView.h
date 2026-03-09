@@ -82,7 +82,7 @@ public:
         variousControlsBorder = std::make_shared<OpenGL_LabeledBorder>("various controls border", "Resonance Controls");
         addBorder(variousControlsBorder.get());
 
-        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true);
+        fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true, false, false);
         addStateModulatedComponent(fundamentalKeyboard.get());
         fundamentalKeyboard->setName("fundamental");
         fundamentalKeyboard->setAvailableRange(0, numKeys);
@@ -92,7 +92,7 @@ public:
         addOpenGlComponent(fundamentalKeyboard_label);
         fundamentalKeyboard_label->setJustification(juce::Justification::centredBottom);
 
-        closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap, false);
+        closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap, false, false, false, false);
         addStateModulatedComponent(closestKeyboard.get());
         closestKeyboard->setName("closest");
         closestKeyboard->setAvailableRange(0, numKeys);
@@ -102,8 +102,7 @@ public:
         addOpenGlComponent(closestKeyboard_label);
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
 
-        heldKeysKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.heldKeymap, false);
-        heldKeysKeyboard->showLiveState = false;
+        heldKeysKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.heldKeymap, false, false, true);
         addStateModulatedComponent(heldKeysKeyboard.get());
         heldKeysKeyboard->setName("heldKeys");
         heldKeysKeyboard->addMyListener(this);
