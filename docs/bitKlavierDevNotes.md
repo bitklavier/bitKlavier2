@@ -412,6 +412,7 @@ To set the version number for the application and plugin, you should modify the 
 3.  **`CMakeLists.txt`**: The main configuration file uses `CURRENT_VERSION` to:
   *   Set the project version: `project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})`
   *   Define a preprocessor macro: `VERSION="${CURRENT_VERSION}"` (line 198) which can be used in your C++ code.
+4. also, need to update const `juce::String getApplicationName() override { return "bitKlavier4"; }` in main.cpp
 
 ### To change the version:
 1.  Open the `VERSION` file in the project root.

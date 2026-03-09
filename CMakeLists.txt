@@ -192,7 +192,7 @@ target_compile_definitions(SharedCode
     VERSION="${CURRENT_VERSION}"
         JUCE_MODULE_AVAILABLE_chowdsp_plugin_state=1
     # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
-    PRODUCT_NAME_WITHOUT_VERSION="bitKlavier2"
+    PRODUCT_NAME_WITHOUT_VERSION="bitKlavier4"
 )
 
 
