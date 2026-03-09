@@ -82,9 +82,6 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     smoothIndex = 0;
     feedbackIndex = 0;
 
-    /**
-     * todo: get General Settings
-     */
     pulseLength.reset(sampleRate, 0.05);
     float initialPulseLength = getPulseLength() * (_generalSettingsPeriodMultiplier * _periodMultiplier);
     pulseLength.setCurrentAndTargetValue(initialPulseLength);
