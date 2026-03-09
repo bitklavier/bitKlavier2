@@ -8,7 +8,6 @@ BlendronicDelay::BlendronicDelay(float delayLength, float smoothValue, float smo
      dBufferSize(delayBufferSize),
      dDelayGain(1.0f),
      dDelayLength(delayLength),
-     dSmoothValue(smoothValue),
      dSmoothRate(smoothRate),
      sampleRate(sr)
 {
@@ -17,8 +16,8 @@ BlendronicDelay::BlendronicDelay(float delayLength, float smoothValue, float smo
      *          - i'm assuming the constructor is called every time the sample rate is changed?
      */
     delayLinear = std::make_unique<BKDelayL>(dDelayLength, dBufferSize, dDelayGain, sampleRate);
-    dSmooth = std::make_unique<BKEnvelope>(dSmoothValue, dDelayLength, sampleRate);
-    dSmooth->setRate(dSmoothRate);
+    smoothedDelayLength.reset(sampleRate, 0.01);
+    smoothedDelayLength.setCurrentAndTargetValue(delayLength);
 
     DBG("Create bdelay");
 }
@@ -35,7 +34,7 @@ void BlendronicDelay::scalePrevious(float coefficient, int offset, int channel)
 
 void BlendronicDelay::tick(float* inL, float* inR)
 {
-    setDelayLength(dSmooth->tick());
+    setDelayLength(smoothedDelayLength.getNextValue());
     delayLinear->tick(inL, inR);
 }
 
@@ -56,6 +55,8 @@ BKDelayL::BKDelayL() :
        feedback(0.9),
        sampleRate(44100.)
 {
+    smoothedFeedback.reset(sampleRate, 0.005);
+    smoothedFeedback.setCurrentAndTargetValue(feedback);
     inputs = juce::AudioBuffer<float>(2, bufferSize);
     inputs.clear();
     setLength(0.0);
@@ -69,12 +70,14 @@ BKDelayL::BKDelayL(float delayLength, int bufferSize, float delayGain, double sr
      gain(delayGain),
      lastFrameLeft(0),
      lastFrameRight(0),
-     sampleRate(sr)
+     sampleRate(sr),
+     feedback(0.9)
 {
+    smoothedFeedback.reset(sampleRate, 0.005);
+    smoothedFeedback.setCurrentAndTargetValue(feedback);
     inputs = juce::AudioBuffer<float>(2, bufferSize);
     inputs.clear();
     setLength(delayLength);
-    feedback = 0.9;
 }
 
 BKDelayL::~BKDelayL()
@@ -145,6 +148,12 @@ void BKDelayL::scalePrevious(float coefficient, int offset, int channel)
     inputs.setSample(channel, (inPoint + offset) % inputs.getNumSamples(), inputs.getSample(channel, (inPoint + offset) % inputs.getNumSamples()) * coefficient);
 }
 
+void BKDelayL::setFeedback(float fb)
+{
+    feedback = fb;
+    smoothedFeedback.setTargetValue(fb);
+}
+
 void BKDelayL::tick(float* inL, float* inR)
 {
     // check the inPoint boundary
@@ -169,8 +178,9 @@ void BKDelayL::tick(float* inL, float* inR)
     if (++outPoint >= inputs.getNumSamples()) outPoint = 0;
 
     // feedback of last output is added here now
-    inputs.addSample(0, inPoint, lastFrameLeft * feedback);
-    inputs.addSample(1, inPoint, lastFrameRight * feedback);
+    float currentFeedback = smoothedFeedback.getNextValue();
+    inputs.addSample(0, inPoint, lastFrameLeft * currentFeedback);
+    inputs.addSample(1, inPoint, lastFrameRight * currentFeedback);
 
     // increment the position samples are written to
     inPoint++;

@@ -297,9 +297,10 @@ private:
     void clearNextDelayBlock(int numSamples);
     void tick(float* inL, float* inR);
 
-    float pulseLength;      // Length in seconds of a pulse (1.0 length beat)
+    juce::SmoothedValue<float> pulseLength;      // Length in seconds of a pulse (1.0 length beat)
     float numSamplesBeat;   // Length in samples of the current step in the beat pattern
     float numSamplesDelay;  // Length in samples of the current step in the delay pattern
+    float smoothRate; 
 
     juce::uint64 sampleTimer; // Sample count for timing param sequence steps
 

@@ -41,7 +41,7 @@ public:
     void setLength(float delayLength);
     void setBufferSize(int size);
     inline void setGain(float delayGain) { gain = delayGain; }
-    inline void setFeedback(float fb) { feedback = fb; }
+    void setFeedback(float fb);
 //    inline int getInPoint() { return inPoint; }
 //    inline int getOutPoint() { return outPoint; }
 
@@ -73,6 +73,7 @@ private:
     float alpha;
     float omAlpha;
     float feedback;
+    juce::SmoothedValue<float> smoothedFeedback;
     float nextOutput;
 //    bool doNextOutLeft;
 //    bool doNextOutRight;
@@ -135,9 +136,10 @@ public:
     inline const juce::AudioBuffer<float>* getDelayBuffer() const noexcept { return delayLinear->getBuffer(); }
 
     inline void setDelayLength(float delayLength) { dDelayLength = delayLength; delayLinear->setLength(delayLength); }
-    inline void setDelayTargetLength(float delayLength) { dSmooth->setTarget(delayLength); }
+    inline void setDelayTargetLength(float delayLength) { smoothedDelayLength.setTargetValue(delayLength); }
+    inline void setDelayValueAndTargetLength(float delayLength) { smoothedDelayLength.setCurrentAndTargetValue(delayLength); }
     inline void setFeedback(float fb) { delayLinear->setFeedback(fb); }
-    inline void setSampleRate(double sr) { sampleRate = sr; delayLinear->setSampleRate(sr); dSmooth->setSampleRate(sr); }
+    inline void setSampleRate(double sr) { sampleRate = sr; delayLinear->setSampleRate(sr); smoothedDelayLength.reset(sr, 0.05); }
     inline void clear() { delayLinear->clear(); /*delayLinear->reset();*/ }
 
     inline void toggleInput()
@@ -155,7 +157,6 @@ public:
     inline void setSmoothRate(float smoothRate)
     {
         dSmoothRate = smoothRate;
-        dSmooth->setRate(smoothRate);
     }
 
     void scalePrevious(float coefficient, int offset, int channel);
@@ -163,11 +164,10 @@ public:
 
 private:
     std::unique_ptr<BKDelayL> delayLinear;
-    std::unique_ptr<BKEnvelope> dSmooth;
+    juce::SmoothedValue<float> smoothedDelayLength;
     float dBufferSize;
     float dDelayGain;
     float dDelayLength;
-    float dSmoothValue;
     float dSmoothRate;
 
     double sampleRate;

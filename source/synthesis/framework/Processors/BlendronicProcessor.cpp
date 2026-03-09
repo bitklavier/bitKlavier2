@@ -35,7 +35,9 @@ BlendronicProcessor::BlendronicProcessor (SynthBase& parent, const juce::ValueTr
     // bufferDebugger = new BufferDebugger();
 
     // note: we are setting the buffer size to 10 seconds max here (delayBufferSize)
-    delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, getSampleRate());
+    double initialSR = getSampleRate();
+    if (initialSR <= 0) initialSR = 44100.0;
+    delay = std::make_unique<BlendronicDelay>(44100 * 10., 0., 1, 44100 * 10, initialSR);
 
     /*
      * state-change parameter stuff (for multisliders)
@@ -73,7 +75,7 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     prevBeat = state.params.beatLengths.sliderVals[0].load();
     prevDelay = state.params.delayLengths.sliderVals[0].load();
 
-    delay->setSampleRate(getSampleRate());
+    delay->setSampleRate(sampleRate);
 
     beatIndex = 0;
     delayIndex = 0;
@@ -83,14 +85,21 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     /**
      * todo: get General Settings
      */
-    pulseLength = getPulseLength();
-    pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
-    numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load();
-    numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * getSampleRate() * pulseLength;
+    pulseLength.reset(sampleRate, 0.05);
+    float initialPulseLength = getPulseLength() * (_generalSettingsPeriodMultiplier * _periodMultiplier);
+    pulseLength.setCurrentAndTargetValue(initialPulseLength);
 
-    if (pulseLength == INFINITY)
+    numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load();
+
+    numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * sampleRate * initialPulseLength;
+
+    float initialDelayDelta = fabsf(prevDelay - state.params.delayLengths.sliderVals[delayIndex].load());
+    float initialSmoothRate = (initialPulseLength * initialDelayDelta) / (state.params.smoothingTimes.sliderVals[smoothIndex].load() * 0.001f);
+    if (initialDelayDelta == 0 || initialPulseLength == INFINITY) initialSmoothRate = INFINITY;
+    smoothRate = initialSmoothRate;
+
+    if (initialPulseLength == INFINITY)
     {
-        numSamplesBeat = INFINITY;
         numSamplesBeat = 0;
     }
 
@@ -102,17 +111,27 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void BlendronicProcessor::updateDelayParameters()
 {
-    numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * pulseLength * getSampleRate();
-    if (pulseLength == INFINITY) numSamplesDelay = 0;
+    float currentPulseLength = pulseLength.getTargetValue();
+    numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * currentPulseLength * getSampleRate();
+    if (currentPulseLength == INFINITY) numSamplesDelay = 0;
 
     float delayDelta = fabsf(prevDelay - state.params.delayLengths.sliderVals[delayIndex].load());
     prevDelay = state.params.delayLengths.sliderVals[delayIndex].load();
 
-    float smoothRate = (pulseLength * delayDelta) / (state.params.smoothingTimes.sliderVals[smoothIndex].load() * 0.001f);
-    if (delayDelta == 0 || pulseLength == INFINITY) smoothRate = INFINITY;
+    float newSmoothRate = (currentPulseLength * delayDelta) / (state.params.smoothingTimes.sliderVals[smoothIndex].load() * 0.001f);
+    if (delayDelta == 0 || currentPulseLength == INFINITY) newSmoothRate = INFINITY;
+    smoothRate = newSmoothRate;
 
-    DBG("updateDelayParameters, delay length target = " + juce::String(numSamplesDelay) + " smoothRate = " + juce::String(smoothRate) + "");
-    delay->setDelayTargetLength(numSamplesDelay);
+    // DBG("updateDelayParameters, delay length target = " + juce::String(numSamplesDelay) + " smoothRate = " + juce::String(smoothRate) + "");
+    if (!pulseLength.isSmoothing()) // default behavior, allowing for immediate changes in delay length
+    {
+        delay->setDelayValueAndTargetLength(numSamplesDelay);
+    }
+    else
+    {
+        delay->setDelayTargetLength(numSamplesDelay); // otherwise, if the Tempo is currently changing, smooth the delay time changes
+    }
+
     delay->setSmoothRate(smoothRate); // this is really a rate, not a duration
     // DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load()) << " feedbackIndex = " << feedbackIndex << "");
     delay->setFeedback(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load());
@@ -162,10 +181,12 @@ void BlendronicProcessor::tick(float* inL, float* inR)
     // used for pause/play
     if (!blendronicActive) return;
 
+    float currentPulseLength = pulseLength.getNextValue();
+
     /**
      * todo: does this ever get called, given the same check later in tick()?
      */
-    if (pulseLength != prevPulseLength) numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load() * pulseLength * getSampleRate();
+    if (currentPulseLength != prevPulseLength) numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load() * currentPulseLength * getSampleRate();
 
     // Check for beat change
     if (sampleTimer >= numSamplesBeat)
@@ -185,7 +206,7 @@ void BlendronicProcessor::tick(float* inL, float* inR)
         if (feedbackIndex >= state.params.feedbackCoeffs.sliderVals_size) feedbackIndex = 0;
 
         // Update numSamplesBeat for the new beat and reset sampleTimer
-        numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load() * pulseLength * getSampleRate();
+        numSamplesBeat = state.params.beatLengths.sliderVals[beatIndex].load() * currentPulseLength * getSampleRate();
         sampleTimer = 0;
 
         updateDelayParameters();
@@ -193,14 +214,16 @@ void BlendronicProcessor::tick(float* inL, float* inR)
 
     sampleTimer++;
 
-    if (pulseLength != prevPulseLength)
+    if (currentPulseLength != prevPulseLength)
     {
         // Set parameters of the delay object
         updateDelayParameters();
-        prevPulseLength = pulseLength;
+        prevPulseLength = currentPulseLength;
     }
 
     // Tick the delay
+    delay->setDelayLength(numSamplesDelay);
+    delay->setSmoothRate(smoothRate);
     delay->tick(inL, inR);
 
 }
@@ -282,8 +305,9 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
      *      pulseLength = (60.0 / (tempoPrep->getSubdivisions() * tempoPrep->getTempo()));
      *      pulseLength *= (general->getPeriodMultiplier() * tempo->getPeriodMultiplier());
      */
-    pulseLength = getPulseLength();
-    pulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
+    float newPulseLength = getPulseLength();
+    newPulseLength *= (_generalSettingsPeriodMultiplier * _periodMultiplier);
+    pulseLength.setTargetValue(newPulseLength);
 
 
     // process any mod changes to the multisliders
