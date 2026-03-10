@@ -109,6 +109,7 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 void BlendronicProcessor::updateDelayParameters()
 {
     float currentPulseLength = pulseLength.getTargetValue();
+    float oldNumSamplesDelay = numSamplesDelay;
     numSamplesDelay = state.params.delayLengths.sliderVals[delayIndex].load() * currentPulseLength * getSampleRate();
     if (currentPulseLength == INFINITY) numSamplesDelay = 0;
 
@@ -119,19 +120,23 @@ void BlendronicProcessor::updateDelayParameters()
     if (delayDelta == 0 || currentPulseLength == INFINITY) newSmoothRate = INFINITY;
     smoothRate = newSmoothRate;
 
-    // DBG("updateDelayParameters, delay length target = " + juce::String(numSamplesDelay) + " smoothRate = " + juce::String(smoothRate) + "");
+    delay->setSmoothRate(smoothRate); // this is really a rate, not a duration
+    // DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load()) << " feedbackIndex = " << feedbackIndex << "");
+    delay->setFeedback(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load());
     if (!pulseLength.isSmoothing()) // default behavior, allowing for immediate changes in delay length
     {
+        DBG("updateDelayParameters immediately, delay length target = " + juce::String(numSamplesDelay) + " smoothRate = " + juce::String(smoothRate) + "");
+        // need to call delayLine reset first, with old numSamplesDelay, then call setDelayTargetLength(numSamplesDelay)
+        // or go back to the old way, using Envelope
         delay->setDelayValueAndTargetLength(numSamplesDelay);
     }
     else
     {
+        DBG("Tempo changhing, smooth update");
         delay->setDelayTargetLength(numSamplesDelay); // otherwise, if the Tempo is currently changing, smooth the delay time changes
     }
 
-    delay->setSmoothRate(smoothRate); // this is really a rate, not a duration
-    // DBG("feedback coeff = " + juce::String(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load()) << " feedbackIndex = " << feedbackIndex << "");
-    delay->setFeedback(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load());
+
 
     // DBG("===== BlendronicProcessor::updateDelayParameters =====");
     // DBG("beat length    = " + juce::String(state.params.beatLengths.sliderVals[beatIndex]));
