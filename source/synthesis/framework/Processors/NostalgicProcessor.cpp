@@ -60,6 +60,9 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
         state.params.undertowEnv.releaseParam->setParameterValue (2000.f);
     } // else use values saved in VT
 
+    sustainPedalNotesDown.reset();
+    sostenutoPedalNotesDown.reset();
+
     parent.getValueTree().addListener(this);
     loadSamples();
 }
@@ -115,12 +118,16 @@ void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
     for (auto const& tp : *paramVals)
     {
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
+        {
             noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (tp->getCurrentValue());
+            noteOnSpecMap[noteOnNumber].transpositionGains.add (1.);
+        }
         i++;
     }
 
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].transpositionGains.addIfNotAlreadyThere (1.);
     noteOnSpecMap[noteOnNumber].useAttachedTuning = state.params.transpose.transpositionUsesTuning->get();
 }
 
@@ -264,15 +271,13 @@ void NostalgicProcessor::handle_sustain_pedal (juce::MidiBuffer& outMidiMessages
             // go through all the on bits in sustainPedalsDown and add noteOffs for them
             for (size_t i = 0; i < sustainPedalNotesDown.size(); ++i)
             {
-                if (sustainPedalNotesDown[i])
+                if (sustainPedalNotesDown.test(i))
                 {
                     if (!keysDepressed.test (i) && // if key is still depressed, don't trigger nostalgic note
                         holdCheck (i) && // check the hold time
-                        state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown && // check the mode
-                        velocities[i] > 0) // make sure it has a non-zero velocity
+                        state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown) //&& // check the mode
                     {
                         handleNostalgicNote (i, clusterMin, outMidiMessages);
-                        velocities.set (i, 0);
                     }
                 }
             }
@@ -285,7 +290,7 @@ void NostalgicProcessor::handle_sustain_pedal (juce::MidiBuffer& outMidiMessages
             // save which keys are currently depressed when sustain pedal is pushed down
             for (int i = 0; i < 128; i++)
             {
-                sustainPedalNotesDown.set (i, velocities[i] > 0);
+                if (keysDepressed.test (i)) sustainPedalNotesDown.set (i, true);
             }
         }
     }
@@ -302,15 +307,13 @@ void NostalgicProcessor::handle_sostenuto_pedal (juce::MidiBuffer& outMidiMessag
             // go through all the on bits in sustainPedalsDown and add noteOffs for them
             for (size_t i = 0; i < sostenutoPedalNotesDown.size(); ++i)
             {
-                if (sostenutoPedalNotesDown[i])
+                if (sostenutoPedalNotesDown.test(i))
                 {
                     if (!keysDepressed.test (i) && // if key is still depressed, don't trigger nostalgic note
                         holdCheck (i) && // check the hold time
-                        state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown && // check the mode
-                        velocities[i] > 0) // make sure it has a non-zero velocity
+                        state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown) //&& // check the mode
                     {
                         handleNostalgicNote (i, clusterMin, outMidiMessages);
-                        velocities.set (i, 0);
                     }
                 }
             }
@@ -323,7 +326,7 @@ void NostalgicProcessor::handle_sostenuto_pedal (juce::MidiBuffer& outMidiMessag
             // save which keys are currently depressed when sustain pedal is pushed down
             for (int i = 0; i < 128; i++)
             {
-                sostenutoPedalNotesDown.set (i, velocities[i] > 0);
+                if (keysDepressed.test (i)) sostenutoPedalNotesDown.set (i, true);
             }
         }
     }
@@ -383,8 +386,11 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 noteOnSpecMap[note].envParams.sustain = *state.params.undertowEnv.sustainParam;
                 noteOnSpecMap[note].envParams.release = *state.params.undertowEnv.releaseParam * .001;
 
+                noteOnSpecMap[note].transpositionGains.addIfNotAlreadyThere (1.);
+
                 reverseNote.isReverse = false;
 
+                DBG("forward Note On msg: " << note << ", velocity: " << velocities[note]);
                 auto forwardOnMsg = juce::MidiMessage::noteOn (1, note, velocities[note]);
                 outMidiMessages.addEvent(forwardOnMsg, 0);
             }
@@ -414,6 +420,8 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
                 velocities.set(message.getNoteNumber(), message.getVelocity());
                 noteLengthTimers.set(message.getNoteNumber(), 1);
                 keysDepressed.set(message.getNoteNumber(), true);
+                if (sustainIsDown)
+                    sustainPedalNotesDown.set(message.getNoteNumber(), true);
 
                 // if we're syncing with synchronic
                 if (state.params.nostalgicTriggeredBy->get() == NostalgicComboBox::Sync_KeyDown)
@@ -426,21 +434,22 @@ void NostalgicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
             // check cluster and play the associated reverse note
             // note: we DO want to track noteOff messages if we are bypassed
             //  - but ONLY if they are from a noteOn when we were NOT bypassed
-            //     - we use velocities to check that
             if (message.isNoteOff() &&
                 holdCheck(message.getNoteNumber()) &&
                 state.params.nostalgicTriggeredBy->get() != NostalgicComboBox::Sync_KeyDown &&
-                velocities[message.getNoteNumber()] > 0 && // noteOn pressed when not bypassed
+                // velocities[message.getNoteNumber()] > 0 && // noteOn pressed when not bypassed
+                keysDepressed.test(message.getNoteNumber()) &&
                 !sustainIsDown && // sustain pedal is not down
                 !sostenutoPedalNotesDown.test(message.getNoteNumber())) // continue sustaining for sostenuto notes
             {
                 handleNostalgicNote(message.getNoteNumber(), clusterMin, outMidiMessages);
-                velocities.set(message.getNoteNumber(),0);
+                // velocities.set(message.getNoteNumber(),0);
             }
 
             // just to keep track of which keys are depressed, for sustain pedal handling
             if (message.isNoteOff())
                 keysDepressed.set(message.getNoteNumber(), false);
+
         }
         if (doClear)
         {

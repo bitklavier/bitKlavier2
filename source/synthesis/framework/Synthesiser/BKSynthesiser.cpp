@@ -391,7 +391,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
-    /**
+     /**
      * if the following is true, then we have a mismatch between noteOnSpec for a
      * particular noteOn(midiNoteNumber) within the same the same block, which
      * shouldn't happen for reasonably small blocks and actual humans
@@ -403,7 +403,10 @@ void BKSynthesiser::noteOn (const int midiChannel,
      * mute instruments with gain turned all the way down
      */
     if (synthGain <= -80.f)
+    {
+        DBG("BKSynthesiser::noteOn, synthGain <= -80.f, returning early");
         return;
+    }
 
     /**
      * moved this out of the loop below because it was messing up voice handling with multiple transpositions
@@ -478,7 +481,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
              */
             if (sound->appliesToNote (closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
-                //DBG ("playing note " + juce::String (midiNoteNumber) + " with transp " + juce::String (transp) + " and velocity " + juce::String(velocityScaled));
+                // DBG ("playing note " + juce::String (midiNoteNumber) + " with transp " + juce::String (transp) + " and velocity " + juce::String(velocityScaled));
                 // DBG("transpositionGain = " << noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)]);
                 auto* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
                 startVoice (newvoice,
@@ -503,6 +506,7 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
     const float transposition,
     float transpositionGain)
 {
+    DBG("startVoice, transpositionGain = " << transpositionGain);
     /**
      * save this voice, since it might be one of several associated with this midiNoteNumber
      * and we will need to be able to stop it on noteOff(midiNoteNumber)

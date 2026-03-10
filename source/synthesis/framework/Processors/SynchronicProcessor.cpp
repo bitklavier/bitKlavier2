@@ -495,12 +495,14 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         if(state.params.transpositions.sliderDepths[cluster->transpCounter].load() == 0)
                         {
                             noteOnSpecMap[newNote].transpositions.addIfNotAlreadyThere(0.);
+                            noteOnSpecMap[newNote].transpositionGains.addIfNotAlreadyThere(1.);
                         }
 
                         // add the rest of the transpositions
                         for (int i = 0; i < state.params.transpositions.sliderDepths[cluster->transpCounter].load(); i++)
                         {
                             noteOnSpecMap[newNote].transpositions.add(state.params.transpositions.sliderVals[cluster->transpCounter][i].load());
+                            noteOnSpecMap[newNote].transpositionGains.add(1.);
                         }
                         noteOnSpecMap[newNote].useAttachedTuning = *state.params.transpositionUsesTuning;
 
