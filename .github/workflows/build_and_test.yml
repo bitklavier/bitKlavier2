@@ -92,7 +92,8 @@ jobs:
 
       - name: Install macOS Deps
         if: ${{ matrix.name == 'macOS' }}
-        run: brew install ninja osxutils
+        run: brew install ninja osxutils gettext
+        # gettext provides envsubst
 
       # This block can be removed once 15.1 is default (JUCE requires it when building on macOS 14)
       - name: Use latest Xcode on system (macOS)
@@ -190,18 +191,25 @@ jobs:
           plutil -replace BundleIsRelocatable -bool NO standalone.plist
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
 
-          # Synthesize using the relative paths from the project root
-          productbuild --synthesize \
-            --package "packaging/${{ env.PRODUCT_NAME }}.app.pkg" \
-            --package "packaging/${{ env.PRODUCT_NAME }}.au.pkg" \
-            --package "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg" \
-            distribution.xml
+          # Create the distribution.xml from the template
+          export VERSION=$VERSION
+          # envsubst is often not in the PATH on macOS runners even after brew install gettext
+          if [ -f /usr/local/opt/gettext/bin/envsubst ]; then
+            ENVSUBST=/usr/local/opt/gettext/bin/envsubst
+          elif [ -f /opt/homebrew/opt/gettext/bin/envsubst ]; then
+            ENVSUBST=/opt/homebrew/opt/gettext/bin/envsubst
+          else
+            ENVSUBST=envsubst
+          fi
+          $ENVSUBST < packaging/distribution.xml.template > packaging/distribution.xml
 
           # Build the final installer
-          productbuild --resources ./packaging/resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "packaging/${{ env.ARTIFACT_NAME }}.pkg"
+          # We run from packaging dir so relative paths in distribution.xml match
+          cd packaging
+          productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg"
 
-          xcrun notarytool submit "packaging/${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
-          xcrun stapler staple "packaging/${{ env.ARTIFACT_NAME }}.pkg"
+          xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+          xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
 
       - name: Zip
         if: ${{ matrix.name == 'Linux' }}
