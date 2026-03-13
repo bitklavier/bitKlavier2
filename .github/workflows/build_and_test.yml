@@ -190,7 +190,8 @@ jobs:
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
           
           cd packaging
-          productbuild --synthesize --package "${{ env.PRODUCT_NAME }}.app.pkg" distribution.xml 
+#          productbuild --synthesize --package "${{ env.PRODUCT_NAME }}.app.pkg" distribution.xml
+          productbuild --synthesize --package "packaging/${{ env.PRODUCT_NAME }}.app.pkg" --package "packaging/${{ env.PRODUCT_NAME }}.au.pkg" --package "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg" distribution.xml
           productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg" 
 
          
