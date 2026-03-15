@@ -182,13 +182,13 @@ jobs:
 
       - name: pkgbuild, Productbuild and Notarize
         if: ${{ matrix.name == 'macOS' }}
-        timeout-minutes: 5
+        timeout-minutes: 15
         run: |
           VERSION=$(cat VERSION)
-          # Download and unzip resources into a temporary scripts folder
+          # Download resources into a temporary scripts folder
           mkdir -p packaging/scripts
           curl -L "https://manyarrowsmusic.com/bitKlavier/bitKlavier_InstallerResources.zip" -o "packaging/scripts/resources.zip"
-          unzip -o "packaging/scripts/resources.zip" -d "packaging/scripts/"
+          # We no longer unzip here to keep the package small and avoid file explosion
           cp packaging/resources/postinstall packaging/scripts/postinstall
           chmod +x packaging/scripts/postinstall
 
