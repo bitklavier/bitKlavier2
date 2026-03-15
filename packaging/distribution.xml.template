@@ -15,6 +15,7 @@
         <line choice="app" />
         <line choice="vst3" />
         <line choice="au" />
+        <line choice="resources" />
     </choices-outline>
 
     <choice id="app" visible="true" start_selected="true" title="${PRODUCT_NAME} Standalone">
@@ -27,6 +28,10 @@
 
     <choice id="au" visible="true" start_selected="true" title="${PRODUCT_NAME} AU">
         <pkg-ref id="${BUNDLE_ID}.au.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.au.pkg</pkg-ref>
+    </choice>
+
+    <choice id="resources" visible="true" start_selected="true" title="Additional Resources (Sound Samples)">
+        <pkg-ref id="${BUNDLE_ID}.resources.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.resources.pkg</pkg-ref>
     </choice>
 
 </installer-gui-script>

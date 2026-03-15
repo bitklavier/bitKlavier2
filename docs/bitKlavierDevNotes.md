@@ -543,3 +543,6 @@ the "build_and_test.yml" file in .github/workflows/ is where the installer is cr
   - I've been downloading the installer and making it available via Dropbox
     - but maybe there is a way to make it available via GitHub? 
 - I have found Junie helpful in editing the yml file
+- I have a `bitKlavier_InstallerResources.zip` file on my siteGround server that the GitHub actions will roll into the installer.
+  - that can be updated with new resources before pushing
+  - does take a while to build the installer, like 15' or so, and the installer is big (1.13GB) because of all the samples.

@@ -185,21 +185,32 @@ jobs:
         timeout-minutes: 15
         run: |
           VERSION=$(cat VERSION)
-          # Download resources into a temporary scripts folder
-          mkdir -p packaging/scripts
-          curl -L "https://manyarrowsmusic.com/bitKlavier/bitKlavier_InstallerResources.zip" -o "packaging/scripts/resources.zip"
-          # We no longer unzip here to keep the package small and avoid file explosion
-          cp packaging/resources/postinstall packaging/scripts/postinstall
-          chmod +x packaging/scripts/postinstall
+          # Prepare scripts for individual components
+          mkdir -p packaging/pkg_scripts/resources
+          curl -L "https://manyarrowsmusic.com/bitKlavier/bitKlavier_InstallerResources.zip" -o "packaging/pkg_scripts/resources/resources.zip"
+          cp packaging/resources/postinstall packaging/pkg_scripts/resources/postinstall
+          chmod +x packaging/pkg_scripts/resources/postinstall
 
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.au.pkg" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3.pkg" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
 
-          # Standalone is special, needs a boolean to always install in /Applications
+          # Standalone
           pkgbuild --analyze --root "$(dirname "${{ env.STANDALONE_PATH }}")" standalone.plist
           plutil -replace BundleIsRelocatable -bool NO standalone.plist
-          # We bundle the scripts (including postinstall and samples) into the standalone package
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --scripts packaging/scripts --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
+          pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
+
+          # Additional Resources Component (Estimated at 1.1GB = 1153434 KB)
+          # We create an "empty" package that just runs the script
+          mkdir -p packaging/empty_root
+          # Use --install-location to a dummy path that won't be seen
+          pkgbuild --identifier "${{ env.BUNDLE_ID }}.resources.pkg" --version $VERSION --root packaging/empty_root --scripts packaging/pkg_scripts/resources --install-location "/tmp/.bitKlavierResources" "packaging/${{ env.PRODUCT_NAME }}.resources.pkg"
+          
+          # Force the installer to report 1.1GB for the resources package
+          # We do this by expanding, patching PackageInfo, and flattening
+          pkgutil --expand "packaging/${{ env.PRODUCT_NAME }}.resources.pkg" "packaging/resources_expanded"
+          sed -i '' 's/installKBytes="0"/installKBytes="1153434"/' "packaging/resources_expanded/PackageInfo"
+          pkgutil --flatten "packaging/resources_expanded" "packaging/${{ env.PRODUCT_NAME }}.resources.pkg"
+          rm -rf "packaging/resources_expanded"
 
           # Create the distribution.xml from the template
           export VERSION=$VERSION
