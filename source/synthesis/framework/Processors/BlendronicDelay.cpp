@@ -34,6 +34,13 @@ void BlendronicDelay::scalePrevious(float coefficient, int offset, int channel)
 
 void BlendronicDelay::tick(float* inL, float* inR)
 {
+    /*
+     * todo:
+     *  - go back to using the Envelope for setting the delay length
+     *  - and then use this smoothedDelayLength only when the Tempo is being modulated
+     *      - or just use Envelope all the time actually
+     *      - the problem with the juce::smoothedValue stuff is that you can't reset the rate without resetting the value immediately
+     */
     setDelayLength(smoothedDelayLength.getNextValue());
     delayLinear->tick(inL, inR);
 }

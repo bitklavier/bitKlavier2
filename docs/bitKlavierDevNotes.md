@@ -534,3 +534,12 @@ The "cables" in the Construction Site use `OpenGlLine`. While these are well-opt
 2.  **In `FullInterface.cpp`**: Add logic to call `open_gl_context_.triggerRepaint()` only when animations are active or when a UI interaction occurs.
 3.  **In `ModulationManager.cpp`**: Implement a check to skip meter updates if the audio engine reports no activity.
 4.  **Across Interface Components**: Ensure timers are stopped when components are hidden or when the plugin window is closed.
+
+### Installer notes
+the "build_and_test.yml" file in .github/workflows/ is where the installer is created, and the code signing and notorization happens
+- every time you push, it will create a new installer
+- you find the installer on the bitKlavier GitHub site, under Actions
+  - click on the most recent Action, scroll down to find the installer link at the very bottom of the page
+  - I've been downloading the installer and making it available via Dropbox
+    - but maybe there is a way to make it available via GitHub? 
+- I have found Junie helpful in editing the yml file
