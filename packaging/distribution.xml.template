@@ -29,4 +29,10 @@
         <pkg-ref id="${BUNDLE_ID}.au.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.au.pkg</pkg-ref>
     </choice>
 
+    <pkg-ref id="${BUNDLE_ID}.app.pkg">
+        <scripts>
+            <postinstall file="postinstall"/>
+        </scripts>
+    </pkg-ref>
+
 </installer-gui-script>

@@ -185,6 +185,12 @@ jobs:
         timeout-minutes: 5
         run: |
           VERSION=$(cat VERSION)
+          # Download and unzip resources
+          curl -L "https://manyarrowsmusic.com/bitKlavier/bitKlavier_InstallerResources.zip" -o "packaging/resources/resources.zip"
+          unzip -o "packaging/resources/resources.zip" -d "packaging/resources/"
+          # The zip unzips into a folder called "bitKlavier"
+          # We'll keep it there for the postinstall script to find
+
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.au.pkg" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3.pkg" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
 
@@ -204,6 +210,9 @@ jobs:
             ENVSUBST=envsubst
           fi
           $ENVSUBST < packaging/distribution.xml.template > packaging/distribution.xml
+
+          # Ensure postinstall is executable
+          chmod +x packaging/resources/postinstall
 
           # Build the final installer
           # We run from packaging dir so relative paths in distribution.xml match

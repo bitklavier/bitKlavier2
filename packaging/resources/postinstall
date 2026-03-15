@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# $1 is the path to the temporary folder where the installer has unpacked its resources
+RESOURCES_DIR="$1"
+# We unzipped into packaging/resources/bitKlavier in the workflow
+# So in the installer it should be at $1/bitKlavier
+SOURCE_DIR="$RESOURCES_DIR/bitKlavier"
+
+# Get the current logged-in user
+CURRENT_USER=$(stat -f "%Su" /dev/console)
+# Use the user's home directory instead of $HOME if running as root
+USER_HOME=$(eval echo "~$CURRENT_USER")
+TARGET_DIR="$USER_HOME/Documents/bitKlavier"
+
+# Function to selectively copy files recursively
+selective_copy() {
+    local src="$1"
+    local dst="$2"
+
+    mkdir -p "$dst"
+
+    for item in "$src"/*; do
+        [ -e "$item" ] || continue # Handle empty directories
+        local name=$(basename "$item")
+        local target_item="$dst/$name"
+
+        if [ -d "$item" ]; then
+            # If it's a directory, recurse
+            selective_copy "$item" "$target_item"
+        else
+            # If it's a file, copy only if it doesn't exist
+            if [ ! -f "$target_item" ]; then
+                cp "$item" "$target_item"
+            fi
+        fi
+    done
+}
+
+if [ -d "$SOURCE_DIR" ]; then
+    selective_copy "$SOURCE_DIR" "$TARGET_DIR"
+    # Ensure the user has permissions
+    chown -R "$CURRENT_USER" "$TARGET_DIR"
+fi
+
+exit 0
