@@ -18,7 +18,7 @@ env:
   SCCACHE_GHA_ENABLED: true
   SCCACHE_CACHE_MULTIARCH: 1
   IPP_DIR: C:\Program Files (x86)\Intel\oneAPI\ipp\latest\lib\cmake\ipp
-  INCLUDE_RESOURCES: true
+  INCLUDE_RESOURCES: false
 
 defaults:
   run:
@@ -218,13 +218,15 @@ jobs:
             rm -rf "packaging/resources_expanded"
 
             export RESOURCES_CHOICE_LINE='<line choice="resources" />'
-            export RESOURCES_CHOICE_DEFINITION='<choice id="resources" visible="true" start_selected="true" title="Additional Resources (Sound Samples)"><pkg-ref id="${BUNDLE_ID}.resources.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.resources.pkg</pkg-ref></choice>'
+            export RESOURCES_CHOICE_DEFINITION="<choice id=\"resources\" visible=\"true\" start_selected=\"true\" title=\"Additional Resources (Sound Samples)\"><pkg-ref id=\"${{ env.BUNDLE_ID }}.resources.pkg\" version=\"${VERSION}\" onConclusion=\"none\">${{ env.PRODUCT_NAME }}.resources.pkg</pkg-ref></choice>"
           else
-            export RESOURCES_CHOICE_LINE=''
-            export RESOURCES_CHOICE_DEFINITION=''
+            export RESOURCES_CHOICE_LINE=""
+            export RESOURCES_CHOICE_DEFINITION=""
           fi
 
           # Create the distribution.xml from the template
+          export PRODUCT_NAME=${{ env.PRODUCT_NAME }}
+          export BUNDLE_ID=${{ env.BUNDLE_ID }}
           export VERSION=$VERSION
           # envsubst is often not in the PATH on macOS runners even after brew install gettext
           if [ -f /usr/local/opt/gettext/bin/envsubst ]; then
