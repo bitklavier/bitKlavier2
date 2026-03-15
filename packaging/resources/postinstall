@@ -1,22 +1,32 @@
 #!/bin/bash
 
-# $1 is the path to the temporary folder where the installer has unpacked its resources
-RESOURCES_DIR="$1"
-# We unzipped into packaging/resources/bitKlavier in the workflow
-# So in the installer it should be at $1/bitKlavier
+# Log file for debugging
+LOG_FILE="/tmp/bitklavier_install.log"
+echo "Postinstall script started at $(date)" > "$LOG_FILE"
+
+# For a script bundled with pkgbuild --scripts, $(dirname "$0") is the path to the script folder
+RESOURCES_DIR=$(dirname "$0")
+echo "RESOURCES_DIR: $RESOURCES_DIR" >> "$LOG_FILE"
+
+# We unzipped into a folder called "bitKlavier" in the scripts directory
 SOURCE_DIR="$RESOURCES_DIR/bitKlavier"
+echo "SOURCE_DIR: $SOURCE_DIR" >> "$LOG_FILE"
 
 # Get the current logged-in user
 CURRENT_USER=$(stat -f "%Su" /dev/console)
+echo "CURRENT_USER: $CURRENT_USER" >> "$LOG_FILE"
+
 # Use the user's home directory instead of $HOME if running as root
 USER_HOME=$(eval echo "~$CURRENT_USER")
 TARGET_DIR="$USER_HOME/Documents/bitKlavier"
+echo "TARGET_DIR: $TARGET_DIR" >> "$LOG_FILE"
 
 # Function to selectively copy files recursively
 selective_copy() {
     local src="$1"
     local dst="$2"
 
+    echo "selective_copy from $src to $dst" >> "$LOG_FILE"
     mkdir -p "$dst"
 
     for item in "$src"/*; do
@@ -30,7 +40,10 @@ selective_copy() {
         else
             # If it's a file, copy only if it doesn't exist
             if [ ! -f "$target_item" ]; then
+                echo "Copying $name to $dst" >> "$LOG_FILE"
                 cp "$item" "$target_item"
+            else
+                echo "Skipping $name, already exists" >> "$LOG_FILE"
             fi
         fi
     done
@@ -40,6 +53,10 @@ if [ -d "$SOURCE_DIR" ]; then
     selective_copy "$SOURCE_DIR" "$TARGET_DIR"
     # Ensure the user has permissions
     chown -R "$CURRENT_USER" "$TARGET_DIR"
+    echo "Successfully copied samples and set permissions." >> "$LOG_FILE"
+else
+    echo "ERROR: SOURCE_DIR not found: $SOURCE_DIR" >> "$LOG_FILE"
 fi
 
+echo "Postinstall script finished at $(date)" >> "$LOG_FILE"
 exit 0
