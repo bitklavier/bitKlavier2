@@ -546,3 +546,5 @@ the "build_and_test.yml" file in .github/workflows/ is where the installer is cr
 - I have a `bitKlavier_InstallerResources.zip` file on my siteGround server that the GitHub actions will roll into the installer.
   - that can be updated with new resources before pushing
   - does take a while to build the installer, like 15' or so, and the installer is big (1.13GB) because of all the samples.
+  - we have a ` INCLUDE_RESOURCES: true` flag in the build_and_test.yml file; when set to false, it won't include samples, making a much smaller installer.
+  - 

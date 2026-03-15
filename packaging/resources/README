@@ -1,11 +1,11 @@
 Thanks for installing bitKlavier!
 
-This will place the following files in your ~/Documents directory:
+This will place the following files in your ~/Documents/bitKlavier directory:
 - galleries
 - soundfonts
 - samples
 
-please don't move these folders or rename the folders; bitKlavier needs them to work.
+please don't move these folders or rename the folders; bitKlavier needs them to work. It will not overwrite existing files in those folders, so your own galleries should be safe (making a backup is alway as good idea of course!).
 
 and also the bitKlavier application will be put in your Applications folder, and the AU/VST3 plugins in your Library/Audio/Plug-Ins folder.
 Enjoy!
