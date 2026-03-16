@@ -390,6 +390,7 @@ void SynthSection::initOpenGlComponents(OpenGlWrapper &open_gl) {
 }
 
 void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) {
+#if JUCE_DEBUG
     // Helper to map GL error code to a readable name (debug aid)
     auto glErrorName = [](GLenum gl) -> const char* {
         switch (gl) {
@@ -404,11 +405,15 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
             default: return "GL_UNKNOWN_ERROR";
         }
     };
+#endif
+
     if (background_) {
-        // Clear any pre-existing errors so failures are attributed correctly
+#if JUCE_DEBUG
         while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
         const juce::String bgType = juce::String(typeid(*background_).name());
+#endif
         background_->render(open_gl);
+#if JUCE_DEBUG
         GLenum glb = juce::gl::glGetError();
         if (glb != juce::gl::GL_NO_ERROR)
         {
@@ -417,25 +422,30 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
                 + " code=" + juce::String((int) glb) + " (" + juce::String(glErrorName(glb)) + ")");
         }
         _ASSERT(glb == juce::gl::GL_NO_ERROR);
+#endif
     }
+
     for (auto &sub_section: sub_sections_) {
         if (sub_section->isVisible() && !sub_section->isAlwaysOnTop())
             sub_section->renderOpenGlComponents(open_gl, animate);
     }
 
     for (auto &open_gl_component: open_gl_components_) {
+#if JUCE_DEBUG
         if (!open_gl_component) {
             DBG("[GL] warning: null OpenGL component found in open_gl_components_ (normal pass), skipping");
             continue;
         }
-        const juce::String compNameRaw = open_gl_component ? open_gl_component->getName() : juce::String("<null>");
+        const juce::String compNameRaw = open_gl_component->getName();
         const juce::String compName = compNameRaw.isNotEmpty() ? compNameRaw : juce::String("<unnamed>");
         const juce::String compType = juce::String(typeid(*open_gl_component.get()).name());
+#endif
         if (!open_gl_component->isInit()) {
-            //DBG("[GL] init start: component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
-            // Clear any pre-existing GL errors so we attribute errors to this component's init
+#if JUCE_DEBUG
             while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
+#endif
             open_gl_component->init(open_gl);
+#if JUCE_DEBUG
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
@@ -444,12 +454,14 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
                     + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
+#endif
         }
         if (open_gl_component->isVisible() && !open_gl_component->isAlwaysOnTop()) {
-            //DBG("[GL] render start (not always-on-top): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
-            // Clear any pre-existing GL errors so we attribute errors to this component's render
+#if JUCE_DEBUG
             while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
+#endif
             open_gl_component->render(open_gl, animate);
+#if JUCE_DEBUG
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
@@ -458,6 +470,7 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
                     + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
+#endif
         }
     }
 
@@ -467,17 +480,21 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
     }
 
     for (auto &open_gl_component: open_gl_components_) {
+#if JUCE_DEBUG
         if (!open_gl_component) {
             DBG("[GL] warning: null OpenGL component found in open_gl_components_ (AOT pass), skipping");
             continue;
         }
-        const juce::String compNameRaw = open_gl_component ? open_gl_component->getName() : juce::String("<null>");
+        const juce::String compNameRaw = open_gl_component->getName();
         const juce::String compName = compNameRaw.isNotEmpty() ? compNameRaw : juce::String("<unnamed>");
         const juce::String compType = juce::String(typeid(*open_gl_component.get()).name());
+#endif
         if (!open_gl_component->isInit()) {
-            //DBG("[GL] init start (always-on-top pass): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+#if JUCE_DEBUG
             while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
+#endif
             open_gl_component->init(open_gl);
+#if JUCE_DEBUG
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
@@ -486,11 +503,14 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
                     + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
+#endif
         }
         if (open_gl_component->isVisible() && open_gl_component->isAlwaysOnTop()) {
-            //DBG("[GL] render start (always-on-top): component='" + compName + "' ptr=" + juce::String::toHexString((juce::uint64) (uintptr_t) open_gl_component.get()));
+#if JUCE_DEBUG
             while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
+#endif
             open_gl_component->render(open_gl, animate);
+#if JUCE_DEBUG
             GLenum gl = juce::gl::glGetError();
             if (gl != juce::gl::GL_NO_ERROR)
             {
@@ -499,10 +519,9 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
                     + " code=" + juce::String((int) gl) + " (" + juce::String(glErrorName(gl)) + ")");
             }
             _ASSERT(gl == juce::gl::GL_NO_ERROR);
+#endif
         }
     }
-//    if(background_)
-//        background_->render(open_gl);
 }
 
 void SynthSection::destroyOpenGlComponents(OpenGlWrapper &open_gl) {

@@ -1055,18 +1055,21 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
 
         if (e.originalComponent == this || e.originalComponent->getName() == "cableView" || e.originalComponent->getName() == "bkitem")
         {
-            // selectorLasso.toFront(false); // Move this after beginLasso or use addChildComponent
+            // First, add the lasso to the parent and make it visible.
+            // JUCE LassoComponent::beginLasso often asserts if the component is not showing.
+            addChildComponent(selectorLasso);
+            selectorLasso.setVisible(true);
+            selectorLasso.toFront(false);
 
             selectorLasso.endLasso();
             selectorLasso.beginLasso(e, &preparationSelector);
-            addChildComponent(selectorLasso);
-            selectorLasso.setVisible(true);
+
+            // Give it a tiny size so it's initially visible as a dot at the mouse position
+            selectorLasso.dragLasso(e.withNewPosition(e.position + juce::Point<float>(0.1f, 0.1f)));
 
             lassoVisual->setVisible(true);
             lassoVisual->setBounds(selectorLasso.getBounds());
             lassoVisual->redrawImage(true);
-
-            // Removed fake drag as it might be interfering with correct initial lasso state
         }
     } else if (itemToSelect != nullptr && !e.mods.isPopupMenu()) {
         if (e.mods.isShiftDown())
