@@ -12,11 +12,6 @@ NOTE: bitKlavier2 is the GitHub Repository name for bitKlavier versions 4 and hi
 <br>
 <br>
 
-## License
-This project is made available under the [GPLv3 license](https://www.gnu.org/licenses/quick-guide-gplv3.en.html)
-<br>
-<br>
-
 ## Development Setup
 
 ### Prerequisites
