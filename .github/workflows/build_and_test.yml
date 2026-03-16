@@ -18,12 +18,13 @@ env:
   SCCACHE_GHA_ENABLED: true
   SCCACHE_CACHE_MULTIARCH: 1
   IPP_DIR: C:\Program Files (x86)\Intel\oneAPI\ipp\latest\lib\cmake\ipp
+  INCLUDE_RESOURCES: false
 
 defaults:
   run:
     shell: bash
 
-# jobs are run in paralell on different machines
+# jobs are run in parallel on different machines
 # all steps run in series
 jobs:
   build_and_test:
@@ -182,18 +183,50 @@ jobs:
 
       - name: pkgbuild, Productbuild and Notarize
         if: ${{ matrix.name == 'macOS' }}
-        timeout-minutes: 5
+        timeout-minutes: 15
         run: |
           VERSION=$(cat VERSION)
+          # Prepare scripts for individual components
+          mkdir -p packaging/pkg_scripts/resources
+          
+          if [ "${{ env.INCLUDE_RESOURCES }}" = "true" ]; then
+            curl -L "https://manyarrowsmusic.com/bitKlavier/bitKlavier_InstallerResources.zip" -o "packaging/pkg_scripts/resources/resources.zip"
+            cp packaging/resources/postinstall packaging/pkg_scripts/resources/postinstall
+            chmod +x packaging/pkg_scripts/resources/postinstall
+          fi
+
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.au.pkg" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3.pkg" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
 
-          # Standalone is special, needs a boolean to always install in /Applications
+          # Standalone
           pkgbuild --analyze --root "$(dirname "${{ env.STANDALONE_PATH }}")" standalone.plist
           plutil -replace BundleIsRelocatable -bool NO standalone.plist
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
 
+          if [ "${{ env.INCLUDE_RESOURCES }}" = "true" ]; then
+            # Additional Resources Component (Estimated at 1.1GB = 1153434 KB)
+            # We create an "empty" package that just runs the script
+            mkdir -p packaging/empty_root
+            # Use --install-location to a dummy path that won't be seen
+            pkgbuild --identifier "${{ env.BUNDLE_ID }}.resources.pkg" --version $VERSION --root packaging/empty_root --scripts packaging/pkg_scripts/resources --install-location "/tmp/.bitKlavierResources" "packaging/${{ env.PRODUCT_NAME }}.resources.pkg"
+            
+            # Force the installer to report 1.1GB for the resources package
+            # We do this by expanding, patching PackageInfo, and flattening
+            pkgutil --expand "packaging/${{ env.PRODUCT_NAME }}.resources.pkg" "packaging/resources_expanded"
+            sed -i '' 's/installKBytes="0"/installKBytes="1153434"/' "packaging/resources_expanded/PackageInfo"
+            pkgutil --flatten "packaging/resources_expanded" "packaging/${{ env.PRODUCT_NAME }}.resources.pkg"
+            rm -rf "packaging/resources_expanded"
+
+            export RESOURCES_CHOICE_LINE='<line choice="resources" />'
+            export RESOURCES_CHOICE_DEFINITION="<choice id=\"resources\" visible=\"true\" start_selected=\"true\" title=\"Additional Resources (Sound Samples)\"><pkg-ref id=\"${{ env.BUNDLE_ID }}.resources.pkg\" version=\"${VERSION}\" onConclusion=\"none\">${{ env.PRODUCT_NAME }}.resources.pkg</pkg-ref></choice>"
+          else
+            export RESOURCES_CHOICE_LINE=""
+            export RESOURCES_CHOICE_DEFINITION=""
+          fi
+
           # Create the distribution.xml from the template
+          export PRODUCT_NAME=${{ env.PRODUCT_NAME }}
+          export BUNDLE_ID=${{ env.BUNDLE_ID }}
           export VERSION=$VERSION
           # envsubst is often not in the PATH on macOS runners even after brew install gettext
           if [ -f /usr/local/opt/gettext/bin/envsubst ]; then

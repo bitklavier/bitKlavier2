@@ -133,30 +133,60 @@ public:
     BlendronicDelay(float delayLength, float smoothValue, float smoothDuration, int delayBufferSize, double sr);
     ~BlendronicDelay();
 
-    inline const juce::AudioBuffer<float>* getDelayBuffer() const noexcept { return delayLinear->getBuffer(); }
+    const juce::AudioBuffer<float>* getDelayBuffer() const noexcept { return delayLinear->getBuffer(); }
 
-    inline void setDelayLength(float delayLength) { dDelayLength = delayLength; delayLinear->setLength(delayLength); }
-    inline void setDelayTargetLength(float delayLength) { smoothedDelayLength.setTargetValue(delayLength); }
-    inline void setDelayValueAndTargetLength(float delayLength) { smoothedDelayLength.setCurrentAndTargetValue(delayLength); }
-    inline void setFeedback(float fb) { delayLinear->setFeedback(fb); }
-    inline void setSampleRate(double sr) { sampleRate = sr; delayLinear->setSampleRate(sr); smoothedDelayLength.reset(sr, 0.05); }
-    inline void clear() { delayLinear->clear(); /*delayLinear->reset();*/ }
+    void setDelayLength(float delayLength)
+    {
+        dDelayLength = delayLength; delayLinear->setLength(delayLength);
+    }
 
-    inline void toggleInput()
+    void setDelayLengthFromTempo(float delayLength)
+    {
+        tempoIsChanging = true; // Tempo is being modulated, so need to use that smoothing
+        dSmooth_fromTempo.setTargetValue(delayLength);
+        dSmooth_fromBlendronic->setTarget (delayLength);
+    }
+
+    void setDelayLengthFromBlendronic(float delayLength)
+    {
+        tempoIsChanging = false; // Tempo is static, so just use internal smoothing
+        dSmooth_fromTempo.setCurrentAndTargetValue(delayLength);
+        dSmooth_fromBlendronic->setTarget (delayLength);
+    }
+
+    void setFeedback(float fb)
+    {
+        delayLinear->setFeedback(fb);
+    }
+
+    void setSampleRate(double sr)
+    {
+        sampleRate = sr; delayLinear->setSampleRate(sr);
+        dSmooth_fromTempo.reset(sr, 0.05);
+        dSmooth_fromBlendronic->setSampleRate (sr);
+    }
+
+    void clear()
+    {
+        delayLinear->clear(); /*delayLinear->reset();*/
+    }
+
+    void toggleInput()
     {
         if (delayLinear->dInputOpen) delayLinear->dInputOpen = false;
         else delayLinear->dInputOpen = true;
     }
 
-    inline void toggleOutput()
+    void toggleOutput()
     {
         if (delayLinear->dOutputOpen) delayLinear->dOutputOpen = false;
         else delayLinear->dOutputOpen = true;
     }
 
-    inline void setSmoothRate(float smoothRate)
+    void setSmoothRate(float smoothRate)
     {
         dSmoothRate = smoothRate;
+        dSmooth_fromBlendronic->setRate(smoothRate);
     }
 
     void scalePrevious(float coefficient, int offset, int channel);
@@ -164,7 +194,10 @@ public:
 
 private:
     std::unique_ptr<BKDelayL> delayLinear;
-    juce::SmoothedValue<float> smoothedDelayLength;
+    juce::SmoothedValue<float> dSmooth_fromTempo; // use when Tempo is changing
+    std::unique_ptr<BKEnvelope> dSmooth_fromBlendronic;            // use when Tempo is static, so internal changes can vary
+    bool tempoIsChanging = false;
+    float dSmoothValue;
     float dBufferSize;
     float dDelayGain;
     float dDelayLength;

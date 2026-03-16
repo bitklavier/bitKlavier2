@@ -101,7 +101,7 @@ void BlendronicProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     }
 
     delay->setDelayLength(numSamplesDelay);
-    delay->setDelayTargetLength(numSamplesDelay);
+    delay->setDelayLengthFromTempo(numSamplesDelay);
 
     updateDelayParameters();
 }
@@ -125,18 +125,14 @@ void BlendronicProcessor::updateDelayParameters()
     delay->setFeedback(state.params.feedbackCoeffs.sliderVals[feedbackIndex].load());
     if (!pulseLength.isSmoothing()) // default behavior, allowing for immediate changes in delay length
     {
-        DBG("updateDelayParameters immediately, delay length target = " + juce::String(numSamplesDelay) + " smoothRate = " + juce::String(smoothRate) + "");
-        // need to call delayLine reset first, with old numSamplesDelay, then call setDelayTargetLength(numSamplesDelay)
-        // or go back to the old way, using Envelope
-        delay->setDelayValueAndTargetLength(numSamplesDelay);
+        // DBG("updateDelayParameters internally, delay length target = " + juce::String(numSamplesDelay) + " smoothRate = " + juce::String(smoothRate) + "");
+        delay->setDelayLengthFromBlendronic(numSamplesDelay);
     }
     else
     {
-        DBG("Tempo changhing, smooth update");
-        delay->setDelayTargetLength(numSamplesDelay); // otherwise, if the Tempo is currently changing, smooth the delay time changes
+        // DBG("Tempo changhing, smooth update");
+        delay->setDelayLengthFromTempo(numSamplesDelay); // otherwise, if the Tempo is currently changing, smooth the delay time changes
     }
-
-
 
     // DBG("===== BlendronicProcessor::updateDelayParameters =====");
     // DBG("beat length    = " + juce::String(state.params.beatLengths.sliderVals[beatIndex]));
