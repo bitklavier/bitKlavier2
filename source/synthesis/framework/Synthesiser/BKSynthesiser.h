@@ -253,7 +253,7 @@ class BKSynthesiser
                     both to the audio output buffer and the midi input buffer, so any midi events
                     with timestamps outside the specified region will be ignored.
                 */
-                void renderNextBlock (juce::AudioBuffer<float>& outputAudio,
+                virtual void renderNextBlock (juce::AudioBuffer<float>& outputAudio,
                     const juce::MidiBuffer& inputMidi,
                     int startSample,
                     int numSamples);
@@ -363,6 +363,8 @@ class BKSynthesiser
                     }
                 }
 
+                mutable juce::CriticalSection stealLock;
+
 protected:
                 //==============================================================================
                 /** This is used to control access to the rendering callback and the note trigger methods. */
@@ -382,6 +384,9 @@ protected:
                 */
                 virtual void renderVoices (juce::AudioBuffer<float>& outputAudio,
                 int startSample, int numSamples);
+
+                // becomes false when there are no voices active; protected so subclasses can update it
+                bool someVoicesActive = true;
 
 
                 /** Searches through the voices to find one that's not currently playing, and
@@ -437,7 +442,6 @@ private:
                 bool subBlockSubdivisionIsStrict = false;
                 bool shouldStealNotes = true;
                 juce::BigInteger sustainPedalsDown;
-                mutable juce::CriticalSection stealLock;
                 mutable juce::Array<BKSynthesiserVoice*> usableVoicesToStealArray;
 
                 bool keyReleaseSynth = false;           // by default, synths play on keyPress (noteOn), not the opposite!
@@ -485,9 +489,6 @@ private:
 
                 // will be true if this synth is not in the active Piano, but is in the Gallery otherwise, so part of the AudioGraph
                 bool bypassed = false;
-
-                // becomes false when there are no voices active
-                bool someVoicesActive = true;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

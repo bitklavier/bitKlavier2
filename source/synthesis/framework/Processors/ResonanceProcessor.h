@@ -33,6 +33,7 @@
 
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
+#include "Synthesiser/ResonanceBKSynthesiser.h"
 #include "target_types.h"
 #include "TuningUtils.h"
 #include <PreparationStateImpl.h>
@@ -624,6 +625,10 @@ public:
     }
 
 private:
+    // Set to true to use the multi-threaded (Audio Workgroup) synthesiser;
+    // set to false to fall back to the original sequential implementation for A/B comparison.
+    static constexpr bool useMultiThreadedSynth = true;
+
     std::unique_ptr<BKSynthesiser> resonanceSynth;
 
     /* the two primary modes, set by target msgs
