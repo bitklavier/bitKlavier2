@@ -347,7 +347,7 @@ class BKSynthesiser
 //                }
                 void setNoteOnSpecMap(std::array<NoteOnSpec, MaxMidiNotes>& inspecs)
                 {
-                    noteOnSpecs = inspecs;
+                    noteOnSpecs = &inspecs;
                 }
 
                 BKSynthesizerState getSynthesizerState()
@@ -471,7 +471,7 @@ private:
                 std::bitset<MaxMidiNotes> activeNotes;
 
                 //std::map<int, NoteOnSpec> noteOnSpecs;
-                std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecs;
+                std::array<NoteOnSpec, MaxMidiNotes>* noteOnSpecs = nullptr;
 
                 TuningState* tuning = nullptr;
 

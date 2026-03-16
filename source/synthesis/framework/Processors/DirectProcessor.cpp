@@ -211,6 +211,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     if (hammerSynth->hasSamples())
     {
         hammerSynth->setBypassed (false);
+        hammerSynth->setNoteOnSpecMap(noteOnSpecMap);
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -224,6 +225,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     if (pedalSynth->hasSamples())
     {
         pedalSynth->setBypassed (false);
+        pedalSynth->setNoteOnSpecMap(noteOnSpecMap);
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
@@ -292,24 +294,28 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
     if (mainSynth->hasSamples())
     {
         mainSynth->setBypassed (true);
+        mainSynth->setNoteOnSpecMap(noteOnSpecMap);
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (hammerSynth->hasSamples())
     {
         hammerSynth->setBypassed (true);
+        hammerSynth->setNoteOnSpecMap(noteOnSpecMap);
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->setBypassed (true);
+        releaseResonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (pedalSynth->hasSamples())
     {
         pedalSynth->setBypassed (true);
+        pedalSynth->setNoteOnSpecMap(noteOnSpecMap);
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 

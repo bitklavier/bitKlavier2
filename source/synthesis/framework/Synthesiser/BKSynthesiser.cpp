@@ -21,12 +21,6 @@ BKSynthesiser::BKSynthesiser (EnvParams& params, chowdsp::GainDBParameter& gain)
         playingVoicesByNote[chan] = prototypeNotesArray;
     }
 
-    // init the noteOnSpecs to default; will be overridden by some preparations
-    for (int i = 0; i < MaxMidiNotes; ++i)
-    {
-        noteOnSpecs[i] = NoteOnSpec {};
-    }
-
     activeNotes.reset();
     voices.ensureStorageAllocated (300);
     usableVoicesToStealArray.ensureStorageAllocated (301);
@@ -391,12 +385,15 @@ void BKSynthesiser::noteOn (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
+    if (noteOnSpecs == nullptr)
+        return;
+
      /**
      * if the following is true, then we have a mismatch between noteOnSpec for a
      * particular noteOn(midiNoteNumber) within the same the same block, which
      * shouldn't happen for reasonably small blocks and actual humans
      */
-    if (midiChannel != noteOnSpecs[midiNoteNumber].channel)
+    if (midiChannel != (*noteOnSpecs)[midiNoteNumber].channel)
         return;
 
     /**
@@ -415,13 +412,13 @@ void BKSynthesiser::noteOn (const int midiChannel,
     // If hitting a note that's still ringing, stop it first (it could be
     // still playing because of the sustain or sostenuto pedal).
     //if(!noteOnSpecs.contains(midiNoteNumber))
-    //    if(!noteOnSpecs[midiNoteNumber].overrideDefaultEnvParams)
+    //    if(!(*noteOnSpecs)[midiNoteNumber].overrideDefaultEnvParams)
     //    {
     //        for (auto* voice : voices)
     //            if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
     //                stopVoice (voice, 1.0f, true);
     //    }
-    //    else if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
+    //    else if ((*noteOnSpecs)[midiNoteNumber].stopSameCurrentNote)
     //    {
     //        /*
     //        * the default behavior is to stop an existing note = midiNoteNumber
@@ -433,7 +430,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
     //               stopVoice (voice, 1.0f, true);
     //    }
 
-    if (noteOnSpecs[midiNoteNumber].stopSameCurrentNote)
+    if ((*noteOnSpecs)[midiNoteNumber].stopSameCurrentNote)
     {
         /*
         * the default behavior is to stop an existing note = midiNoteNumber
@@ -450,20 +447,20 @@ void BKSynthesiser::noteOn (const int midiChannel,
      *      as set by currentTransposition sliders in Direct/Nostalgic/Synchronic.
      *      iterate through each currentTransposition here, but they are all tracked by the same original midiNoteNumber
      */
-    for (auto transp : noteOnSpecs[midiNoteNumber].transpositions)
+    for (auto transp : (*noteOnSpecs)[midiNoteNumber].transpositions)
     {
         /*
          * adjust the velocity of this transposition by the transpositionGain in noteOnSpec, if it has
          * been filled aligned with transpositions
          */
         float velocityScaled = velocity;
-        // if (noteOnSpecs[midiNoteNumber].transpositionGains.size() == noteOnSpecs[midiNoteNumber].transpositions.size())
-        // //redundant. size must be > 0 if we are this loop   && noteOnSpecs[midiNoteNumber].transpositions.size() > 0)
+        // if ((*noteOnSpecs)[midiNoteNumber].transpositionGains.size() == (*noteOnSpecs)[midiNoteNumber].transpositions.size())
+        // //redundant. size must be > 0 if we are this loop   && (*noteOnSpecs)[midiNoteNumber].transpositions.size() > 0)
         // {
-        //     velocityScaled *= noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)];
+        //     velocityScaled *= (*noteOnSpecs)[midiNoteNumber].transpositionGains[(*noteOnSpecs)[midiNoteNumber].transpositions.indexOf (transp)];
         // }
 
-        tuneTranspositions = noteOnSpecs[midiNoteNumber].useAttachedTuning;
+        tuneTranspositions = (*noteOnSpecs)[midiNoteNumber].useAttachedTuning;
 
         for (auto* sound : *sounds)
         {
@@ -482,7 +479,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
             if (sound->appliesToNote (closestKey) && sound->appliesToChannel (midiChannel) && sound->appliesToVelocity (velocity))
             {
                 // DBG ("playing note " + juce::String (midiNoteNumber) + " with transp " + juce::String (transp) + " and velocity " + juce::String(velocityScaled));
-                // DBG("transpositionGain = " << noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)]);
+                // DBG("transpositionGain = " << (*noteOnSpecs)[midiNoteNumber].transpositionGains[(*noteOnSpecs)[midiNoteNumber].transpositions.indexOf (transp)]);
                 auto* newvoice = findFreeVoice (sound, midiChannel, midiNoteNumber, shouldStealNotes);
                 startVoice (newvoice,
                     sound,
@@ -490,7 +487,7 @@ void BKSynthesiser::noteOn (const int midiChannel,
                     midiNoteNumber,
                     velocityScaled,
                     transp,
-                    noteOnSpecs[midiNoteNumber].transpositionGains[noteOnSpecs[midiNoteNumber].transpositions.indexOf (transp)]);
+                    (*noteOnSpecs)[midiNoteNumber].transpositionGains[(*noteOnSpecs)[midiNoteNumber].transpositions.indexOf (transp)]);
 
                 break;
             }
@@ -528,11 +525,11 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
         voice->setKeyDown (true);
         voice->setSostenutoPedalDown (false);
         voice->setSustainPedalDown (sustainPedalsDown[midiChannel]);
-        voice->setTargetSustainTime (noteOnSpecs[midiNoteNumber].sustainTime);
+        voice->setTargetSustainTime ((*noteOnSpecs)[midiNoteNumber].sustainTime);
 
-        if (noteOnSpecs[midiNoteNumber].overrideDefaultEnvParams)
+        if ((*noteOnSpecs)[midiNoteNumber].overrideDefaultEnvParams)
         {
-            voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
+            voice->copyAmpEnv ((*noteOnSpecs)[midiNoteNumber].envParams);
         }
         else
         {
@@ -551,8 +548,8 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
             //                tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
             //                sound,
             //                lastPitchWheelValues[midiChannel - 1],
-            //                noteOnSpecs[midiNoteNumber].startTime,
-            //                noteOnSpecs[midiNoteNumber].startDirection);
+            //                (*noteOnSpecs)[midiNoteNumber].startTime,
+            //                (*noteOnSpecs)[midiNoteNumber].startDirection);
         }
 
         voice->startNote (
@@ -562,8 +559,8 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
             tuneTranspositions, // bool: whether to tune using Tuning, or just literally by transposition value given previously
             sound,
             lastPitchWheelValues[midiChannel - 1],
-            noteOnSpecs[midiNoteNumber].startTime,
-            noteOnSpecs[midiNoteNumber].startDirection);
+            (*noteOnSpecs)[midiNoteNumber].startTime,
+            (*noteOnSpecs)[midiNoteNumber].startDirection);
     }
 }
 
@@ -584,7 +581,10 @@ void BKSynthesiser::noteOff (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
-    if (midiChannel != noteOnSpecs[midiNoteNumber].channel)
+    if (noteOnSpecs == nullptr)
+        return;
+
+    if (midiChannel != (*noteOnSpecs)[midiNoteNumber].channel)
         return;
 
     /**
@@ -600,8 +600,8 @@ void BKSynthesiser::noteOff (const int midiChannel,
 
         voice->setKeyDown (false);
 
-        if (noteOnSpecs[midiNoteNumber].overrideDefaultEnvParams && noteOnSpecs[midiNoteNumber].channel == midiChannel)
-            voice->copyAmpEnv (noteOnSpecs[midiNoteNumber].envParams);
+        if ((*noteOnSpecs)[midiNoteNumber].overrideDefaultEnvParams && (*noteOnSpecs)[midiNoteNumber].channel == midiChannel)
+            voice->copyAmpEnv ((*noteOnSpecs)[midiNoteNumber].envParams);
 
         if (!voice->ignoreNoteOff)
         {
