@@ -1053,26 +1053,20 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
         if (!e.mods.isShiftDown())
             preparationSelector.getLassoSelection().deselectAll();
 
-        if (e.originalComponent == this || e.originalComponent->getName() == "cableView")
+        if (e.originalComponent == this || e.originalComponent->getName() == "cableView" || e.originalComponent->getName() == "bkitem")
         {
-            addChildComponent(selectorLasso);
-            selectorLasso.setVisible(true);
-            selectorLasso.toFront(false);
+            // selectorLasso.toFront(false); // Move this after beginLasso or use addChildComponent
 
             selectorLasso.endLasso();
             selectorLasso.beginLasso(e, &preparationSelector);
+            addChildComponent(selectorLasso);
+            selectorLasso.setVisible(true);
 
             lassoVisual->setVisible(true);
             lassoVisual->setBounds(selectorLasso.getBounds());
             lassoVisual->redrawImage(true);
 
-            //////Fake drag so the lasso will select anything we click and drag////////
-            auto thisPoint = e.getPosition();
-            thisPoint.addXY(1, 1);
-            selectorLasso.dragLasso(e.withNewPosition(thisPoint));
-
-            lassoVisual->setBounds(selectorLasso.getBounds());
-            lassoVisual->redrawImage(true);
+            // Removed fake drag as it might be interfering with correct initial lasso state
         }
     } else if (itemToSelect != nullptr && !e.mods.isPopupMenu()) {
         if (e.mods.isShiftDown())

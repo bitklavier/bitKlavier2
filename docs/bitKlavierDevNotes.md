@@ -474,6 +474,10 @@ DLT: I'm not sure we should touch this right now, as there are all sorts of comp
   - you can also set breakpoints in the code and step through it
   - in CLion, you can also "Run:Attach to Process" to attach to the running process, if it is not already attached
 
+## `Instruments` application
+- in XCode (need to show package contents, navigate to Contents/MacOS/Instruments)
+- very useful for checking on performance bottle necks and so on
+
 ## "Unit" Testing and Plugin Tests
 ### Galleries to check, in both Standalone and Plugin Formats:
 - RampModSave_test.bk2
