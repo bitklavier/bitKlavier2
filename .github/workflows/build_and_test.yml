@@ -18,7 +18,7 @@ env:
   SCCACHE_GHA_ENABLED: true
   SCCACHE_CACHE_MULTIARCH: 1
   IPP_DIR: C:\Program Files (x86)\Intel\oneAPI\ipp\latest\lib\cmake\ipp
-  INCLUDE_RESOURCES: falseqqqq
+  INCLUDE_RESOURCES: false
 
 defaults:
   run:
