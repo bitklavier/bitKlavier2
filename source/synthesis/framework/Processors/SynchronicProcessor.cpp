@@ -212,7 +212,7 @@ float SynchronicProcessor::getTimeToBeatMS(float beatsToSkip)
     numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
     // set the timeToReturn for the next beat
-    juce::uint64 timeToReturn = 0;
+    juce::int64 timeToReturn = 0;
     if(numSamplesBeat > cluster->getPhasor())
         timeToReturn = numSamplesBeat - cluster->getPhasor(); //next beat
     if (timeToReturn < 0.100f * getSampleRate()) beatsToSkip++; // a little padding so we skip a beat that we are nearly simultaneous with
@@ -356,7 +356,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     // keep track of how long keys have been held down, for holdTime check
     for (auto key : keysDepressed)
     {
-        juce::uint64 time = holdTimers.getUnchecked(key) + numSamples;
+        juce::int64 time = holdTimers.getUnchecked(key) + numSamples;
         holdTimers.setUnchecked(key, time);
     }
 
@@ -394,7 +394,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             //check to see if enough time has passed for next beat
             if (cluster->getPhasor() >= numSamplesBeat)
             {
-                // DBG("phasor = " << cluster->getPhasor() << ", numSamplesBeat = " << numSamplesBeat);
+                DBG("phasor = " << cluster->getPhasor() << ", numSamplesBeat = " << numSamplesBeat);
                 // if patternSync has been set by a target message, reset the phase of all the counters
                 if (cluster->doPatternSync)
                 {
@@ -703,7 +703,7 @@ void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
 
 bool SynchronicProcessor::holdCheck(int noteNumber)
 {
-    juce::uint64 hold = holdTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
+    juce::int64 hold = holdTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
 
     float holdmin = *state.params.holdTimeMinMaxParams.holdTimeMinParam;
     float holdmax = *state.params.holdTimeMinMaxParams.holdTimeMaxParam;
@@ -920,7 +920,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
                 {
                     cluster->setShouldPlay(true);
 
-                    if (isNewCluster)
+                    if (isNewCluster || cluster->getPhasor() > numSamplesBeat - 50) // not sure if this little buffer is useful, but should prevent synchronic pulses from happening exactly with noteOns
                     {
                         cluster->setBeatPhasor(0);
                         cluster->resetPatternPhase();
@@ -961,7 +961,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
          * todo: check this
          *       - and also add the General Settings and Tempo adjustments
          */
-        juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
+        juce::int64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
         // reset beat timing, for ALL clusters
         for (auto& ci : clusterLayers)
@@ -1081,7 +1081,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
                         clusterLayers[i]->setShouldPlay (true);
 
                         //start right away
-                        juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
+                        juce::int64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
                         clusterLayers[i]->setBeatPhasor (phasor);
                     }
                 }
@@ -1104,7 +1104,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
     if (doBeatSync)
     {
         //start right away
-        juce::uint64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
+        juce::int64 phasor = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
         // reset the phase for ALL clusters
         for (auto& ci : clusterLayers)

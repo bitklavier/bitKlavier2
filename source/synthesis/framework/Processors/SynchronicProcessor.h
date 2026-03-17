@@ -350,7 +350,7 @@ class SynchronicCluster
      * we also decrement the timing phasor by the amount of time to the next beat
      * - typically called every beat, so the phasor reset is akin to the counter increments
      */
-    inline void step(juce::uint64 numSamplesBeat)
+    inline void step(juce::int64 numSamplesBeat)
     {
         // set the phasor back by the number of samples to the next beat
         phasor -= numSamplesBeat;
@@ -429,12 +429,12 @@ class SynchronicCluster
 
     inline juce::Array<int> getCluster() { return cluster; }
     inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)
+    inline void setBeatPhasor(juce::int64 c)
     {
         phasor = c;
         //DBG("resetting beat phasor");
     }
-    inline const juce::uint64 getPhasor(void) const noexcept { return phasor; }
+    inline const juce::int64 getPhasor(void) const noexcept { return phasor; }
 
     inline void addNote(int note)
     {
@@ -472,7 +472,7 @@ class SynchronicCluster
     SynchronicParams* _sparams;
 
     juce::Array<int> cluster;
-    juce::uint64 phasor;
+    juce::int64 phasor;
 
     bool shouldPlay;
 
@@ -668,10 +668,10 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     // temporary, replace with Tempo info
     float tempoTemp = 120.;
 
-    juce::uint64 thresholdSamples;
-    juce::uint64 clusterThresholdTimer;
-    juce::uint64 syncThresholdTimer;
-    juce::Array<juce::uint64> holdTimers;
+    juce::int64 thresholdSamples;
+    juce::int64 clusterThresholdTimer;
+    juce::int64 syncThresholdTimer;
+    juce::Array<juce::int64> holdTimers;
 
     /*
      * the `clusters` array holds clusters to manage the 'layers' feature in bK
@@ -700,8 +700,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     juce::Array<int> patternSyncKeysDepressed;
     juce::Array<juce::uint8> clusterVelocities; // NOT scaled 0-1, as with the old bK
 
-    juce::uint64 numSamplesBeat = 0;   // = beatThresholdSamples * beatMultiplier
-    juce::uint64 beatThresholdSamples; // # samples in a beat, as set by tempo
+    juce::int64 numSamplesBeat = 0;   // = beatThresholdSamples * beatMultiplier
+    juce::int64 beatThresholdSamples; // # samples in a beat, as set by tempo
 
     /*
      * noteOnSpecMap
