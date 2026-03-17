@@ -407,7 +407,9 @@ BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulat
     editValsTextField->setMultiLine(true);
     editValsTextField->setName("PARAMTXTEDIT");
     editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    editValsTextField->setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     editValsTextField->addListener(this);
+    editValsTextField->addMouseListener(this, false);
     addAndMakeVisible(*editValsTextField);
 
     // for rotating the slider values
@@ -1169,6 +1171,7 @@ void BKMultiSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
 
 void BKMultiSlider::textEditorTextChanged(juce::TextEditor& tf)
 {
+    repaint();
 }
 
 
@@ -1411,10 +1414,16 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
 
     undertowValueTF.setName("ut");
     undertowValueTF.addListener(this);
+    undertowValueTF.addMouseListener(this, false);
+    undertowValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    undertowValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     addChildComponent(undertowValueTF);
 
     wavedistanceValueTF.setName("wd");
     wavedistanceValueTF.addListener(this);
+    wavedistanceValueTF.addMouseListener(this, false);
+    wavedistanceValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    wavedistanceValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     addChildComponent(wavedistanceValueTF);
 
     wavedistanceName.setText("wave distance (ms)", juce::dontSendNotification);
@@ -1561,6 +1570,7 @@ void BKWaveDistanceUndertowSlider::textEditorReturnKeyPressed(juce::TextEditor& 
 void BKWaveDistanceUndertowSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
     focusLostByEscapeKey = false;
+    repaint();
 }
 
 void BKWaveDistanceUndertowSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
@@ -1641,10 +1651,11 @@ BKStackedSlider::BKStackedSlider(
     editValsTextField->setMultiLine(true);
     editValsTextField->setName("PARAMTXTEDIT");
     editValsTextField->addListener(this);
+    editValsTextField->addMouseListener(this, false);
     editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    editValsTextField->setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     addAndMakeVisible(*editValsTextField);
     editValsTextField->setVisible(false);
-    editValsTextField->setInterceptsMouseClicks(false, false);
     setInterceptsMouseClicks(true, true);
 
     numSliders = 12;
@@ -1936,6 +1947,7 @@ void BKStackedSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
 
 void BKStackedSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
+    repaint();
 }
 
 void BKStackedSlider::resetRanges()
@@ -2122,16 +2134,20 @@ StateModulatedComponent(stateDefault),
     minValueTF.setText(juce::String(sliderDefaultMin));
     minValueTF.setName("minvalue");
     minValueTF.addListener(this);
+    minValueTF.addMouseListener(this, false);
     minValueTF.setSelectAllWhenFocused(true);
     minValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    minValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     addAndMakeVisible(minValueTF);
 
     maxValueTF.setText(juce::String(sliderDefaultMax));
     maxValueTF.setName("maxvalue");
     maxValueTF.addListener(this);
+    maxValueTF.addMouseListener(this, false);
     maxValueTF.setSelectAllWhenFocused(true);
     maxValueTF.setJustification(juce::Justification(2));
     maxValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    maxValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     addAndMakeVisible(maxValueTF);
 
     minSlider.setSliderStyle(juce::Slider::LinearHorizontal);
@@ -2330,7 +2346,7 @@ void BKRangeSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 void BKRangeSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
     focusLostByEscapeKey = false;
-
+    repaint();
 }
 
 
