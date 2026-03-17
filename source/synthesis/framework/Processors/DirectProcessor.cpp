@@ -90,12 +90,16 @@ void DirectProcessor::updateMidiNoteTranspositions(int noteOnNumber)
     for (auto const& tp : *paramVals)
     {
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
+        {
             noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (tp->getCurrentValue());
+            noteOnSpecMap[noteOnNumber].transpositionGains.add (1.);
+        }
         i++;
     }
 
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].transpositionGains.addIfNotAlreadyThere (1.);
     noteOnSpecMap[noteOnNumber].useAttachedTuning = state.params.transpose.transpositionUsesTuning->get();
 }
 

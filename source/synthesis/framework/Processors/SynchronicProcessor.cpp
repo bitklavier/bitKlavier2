@@ -748,8 +748,8 @@ bool SynchronicProcessor::updateCurrentCluster()
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
 
-        //DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
-        //DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        // DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
+        // DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }
@@ -861,7 +861,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
     keysDepressedForSustain.set(noteNumber, velocity > 0);
     if (sustainIsDown)
         sustainPedalNotesDown.set(noteNumber, true);
-    // don't add for sostenuto here! only set when the the pedal is pressed
+    // don't add for sostenuto here! only set when the sustain pedal is pressed
 
     // set all the modes, handled below (like doCluster, etc...)
     // only one mode will be set for each keyPressed call
