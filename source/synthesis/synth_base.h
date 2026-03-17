@@ -71,6 +71,7 @@ public:
     bitklavier::ParamOffsetBank &getParamOffsetBank();
 
     bool loadFromFile(juce::File preset, std::string &error);
+    bool loadGalleryFromValueTree(const juce::ValueTree &state);
     //unused but could be useful for future mpe and or midi mapping functionality
     void setMpeEnabled(bool enabled);
     bool isMidiMapped(const std::string &name);

@@ -17,11 +17,12 @@ public:
         save,
         saveAs,
         load,
+        importLegacy           = 0x30101,
         showPluginListEditor   = 0x30100
     };
 
     void getAllCommands(juce::Array<juce::CommandID> &commands) override {
-        commands.addArray({undo, redo, save, saveAs, load, showPluginListEditor});
+        commands.addArray({undo, redo, save, saveAs, load, importLegacy, showPluginListEditor});
     }
 
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override {
@@ -45,6 +46,9 @@ public:
             case load:
                 info.setInfo("Load", "Load New Preset", "File", 0);
                 info.addDefaultKeypress('l', juce::ModifierKeys::commandModifier);
+                break;
+            case importLegacy:
+                info.setInfo("Import Legacy Gallery...", "Import a legacy bitKlavier 1 gallery", "File", 0);
                 break;
             case showPluginListEditor:
                 info.setInfo("Show Plugins", "Show Plugins", "Options", 0);

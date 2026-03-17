@@ -117,6 +117,7 @@ public:
     void openSaveDialog();
     void openLoadDialog();
     void saveCurrentGallery();
+    void importLegacyGallery();
     void externalPresetLoaded(juce::File preset);
     void setGuiSize(float scale);
     bool loadFromFile(juce::File preset, std::string& error);

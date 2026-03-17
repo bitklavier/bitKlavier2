@@ -18,6 +18,7 @@
 #include "CompressorParameterView.h"
 #include "ConstructionSite.h"
 #include "EQParameterView.h"
+#include "LegacyGalleryImporter.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
 #include "juce_core/unit_tests/juce_UnitTestCategories.h"
@@ -337,6 +338,45 @@ void SynthGuiInterface::openLoadDialog()
         }
         loading = false;
     });
+}
+
+void SynthGuiInterface::importLegacyGallery()
+{
+    filechooser = std::make_unique<juce::FileChooser> (
+        "Import Legacy bitKlavier Gallery",
+        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+        "*.xml");
+
+    filechooser->launchAsync (
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+        [this] (const juce::FileChooser& fc)
+        {
+            auto results = fc.getResults();
+            if (results.isEmpty()) return;
+
+            juce::String errorMessage;
+            auto newTree = LegacyGalleryImporter::importFromFile (results[0], errorMessage);
+
+            if (! newTree.isValid())
+            {
+                juce::AlertWindow::showMessageBoxAsync (
+                    juce::MessageBoxIconType::WarningIcon,
+                    "Import Failed",
+                    errorMessage.isEmpty() ? "Could not import the legacy gallery." : errorMessage);
+                return;
+            }
+
+            getSynth()->loadGalleryFromValueTree (newTree);
+            updateHostDisplay();
+
+            if (gui_ && gui_->header_)
+            {
+                gui_->header_->gallerySelectText->setText (
+                    results[0].getFileNameWithoutExtension() + " (imported)");
+                gui_->header_->updateCurrentPianoName();
+            }
+            setPianoSwitchTriggerThreadMessage();
+        });
 }
 
 void SynthGuiInterface::openSaveDialog()

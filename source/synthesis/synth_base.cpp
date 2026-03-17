@@ -634,6 +634,29 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
         collectSoundsetRefsRecursive (node.getChild(i), out);
 }
 
+bool SynthBase::loadGalleryFromValueTree (const juce::ValueTree& state)
+{
+    if (auto* gui = getGuiInterface())
+        gui->removeAllGuiListeners();
+
+    pauseProcessing (true);
+    clearAllBackend();
+    pauseProcessing (false);
+
+    engine_->resetEngine();
+
+    if (! loadFromValueTree (state))
+        return false;
+
+    if (auto* gui = getGuiInterface())
+    {
+        gui->updateFullGui();
+        gui->notifyFresh();
+    }
+
+    return true;
+}
+
 bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 {
     if (!preset.exists())

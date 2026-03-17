@@ -17,6 +17,7 @@
 #include "header_section.h"
 #include "ConstructionSite.h"
 #include "FullInterface.h"
+#include "LegacyGalleryImporter.h"
 #include "SampleLoadManager.h"
 #include "load_save.h"
 #include "main_section.h"
@@ -719,6 +720,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(1, "Save");
         options.addItem(2, "Save As");
         options.addItem(3, "Gallery Settings");
+        options.addItem(4, "Import Legacy Gallery...");
         options.addItem(separator);
 
         // Build directories/files tree
@@ -867,6 +869,11 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 true);
                 return;
             }
+            if (selection == 4) {
+                DBG("import legacy gallery");
+                importLegacyGallery();
+                return;
+            }
 
             // Handle file selections
             if (selection >= kGalleryIdBase) {
@@ -974,6 +981,49 @@ void HeaderSection::loadGallery()
 {
     SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
     parent->openLoadDialog();
+}
+
+void HeaderSection::importLegacyGallery()
+{
+    SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
+    if (parent == nullptr) return;
+
+    filechooser = std::make_unique<juce::FileChooser> (
+        "Import Legacy bitKlavier Gallery",
+        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+        "*.xml");
+
+    filechooser->launchAsync (
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+        [parent] (const juce::FileChooser& fc)
+        {
+            auto results = fc.getResults();
+            if (results.isEmpty()) return;
+
+            juce::String errorMessage;
+            auto newTree = LegacyGalleryImporter::importFromFile (results[0], errorMessage);
+
+            if (! newTree.isValid())
+            {
+                juce::AlertWindow::showMessageBoxAsync (
+                    juce::MessageBoxIconType::WarningIcon,
+                    "Import Failed",
+                    errorMessage.isEmpty() ? "Could not import the legacy gallery." : errorMessage);
+                return;
+            }
+
+            std::string loadError;
+            parent->getSynth()->loadGalleryFromValueTree (newTree);
+            parent->updateHostDisplay();
+
+            if (parent->getGui() != nullptr && parent->getGui()->header_ != nullptr)
+            {
+                parent->getGui()->header_->gallerySelectText->setText (
+                    results[0].getFileNameWithoutExtension() + " (imported)");
+                parent->getGui()->header_->updateCurrentPianoName();
+            }
+            parent->setPianoSwitchTriggerThreadMessage();
+        });
 }
 
 void HeaderSection::saveGallery()

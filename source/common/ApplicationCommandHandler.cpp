@@ -42,6 +42,12 @@ ApplicationCommandHandler::ApplicationCommandHandler(SynthGuiInterface* gui) : j
                 return true;
             }
 
+            case importLegacy:
+            {
+                parent->importLegacyGallery();
+                return true;
+            }
+
             case CommandIDs::showPluginListEditor:
             {
                 if (parent->pluginListWindow == nullptr)

@@ -38,6 +38,8 @@ public:
             menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::load);
             menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::save);
             menu.addCommandItem(&commandManager,SynthGuiInterface::CommandIDs::saveAs);
+            menu.addSeparator();
+            menu.addCommandItem(&commandManager,ApplicationCommandHandler::CommandIDs::importLegacy);
         } else if (menuName == "Edit") {
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::undo);
             menu.addCommandItem(&commandManager, ApplicationCommandHandler::CommandIDs::redo);
