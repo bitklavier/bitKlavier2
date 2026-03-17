@@ -428,7 +428,9 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         if(cluster->beatCounter == 0) playNow = false;
 
                         // we want the timing of the first played beat to align properly
-                        else if (cluster->beatCounter == 1) cluster->setBeatPhasor(0);
+                        // else if (cluster->beatCounter == 1) cluster->setBeatPhasor(0);
+                        else if (cluster->beatCounter == 1)
+                            cluster->setBeatPhasor(cluster->getPhasor() % numSamplesBeat);
 
                         // otherwise, step the parameter values as usual
                         else cluster->step(numSamplesBeat);
@@ -439,7 +441,10 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     {
                         // to get the timing of the next beat correct
                         //  - note that postStep() also takes care not to increment the beat multiplier counter
-                        if (cluster->beatCounter == 0) cluster->setBeatPhasor(0);
+                        // if (cluster->beatCounter == 0) cluster->setBeatPhasor(0);
+                        if (cluster->beatCounter == 0)
+                            cluster->setBeatPhasor(cluster->getPhasor() % numSamplesBeat);
+
 
                         // otherwise step the parameter values as usual
                         else cluster->step(numSamplesBeat);
@@ -748,8 +753,8 @@ bool SynchronicProcessor::updateCurrentCluster()
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
 
-        // DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
-        // DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
+        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }
@@ -920,7 +925,17 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
                 {
                     cluster->setShouldPlay(true);
 
-                    if (isNewCluster || cluster->getPhasor() > numSamplesBeat - 50) // not sure if this little buffer is useful, but should prevent synchronic pulses from happening exactly with noteOns
+                    // we might be in a cluster (so isNewCluster is false) but have a new beat already
+                    // in the case when the tempo is high and the clusterThreshold is also high
+                    // I've added a little buffer here (* 1.1) to account for Human Time, and the fact
+                    // that every beat has a natural width to it; otherwise we get some unnatural skipping
+                    // in the Synchronic pulse sometimes
+                    if (cluster->getPhasor() > numSamplesBeat * 1.1)
+                    {
+                        cluster->setBeatPhasor(cluster->getPhasor() % numSamplesBeat);
+                    }
+
+                    if (isNewCluster)
                     {
                         cluster->setBeatPhasor(0);
                         cluster->resetPatternPhase();
