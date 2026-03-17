@@ -148,7 +148,7 @@ double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
 int TuningState::getClosestKey(int noteNum, float transp, bool tuneTranspositions)
 {
     // adaptive/spring tunings ignore semitone width...
-    if(getTuningType() != TuningType::Static || getTuningType() != TuningType::Scala_KBM)
+    if(getTuningType() == TuningType::Spring_Tuning || getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
         return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()) + transp);
     }
