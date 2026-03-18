@@ -930,7 +930,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
                     // I've added a little buffer here (* 1.1) to account for Human Time, and the fact
                     // that every beat has a natural width to it; otherwise we get some unnatural skipping
                     // in the Synchronic pulse sometimes
-                    // Prelude #2: Continuing is a piece that is sensitive to this; trying playing it with a metronome
+                    // `Prelude #2: Continuing` is a piece that is sensitive to this; trying playing it with a metronome
                     if (cluster->getPhasor() > numSamplesBeat * 1.1)
                     {
                         cluster->setBeatPhasor(cluster->getPhasor() % numSamplesBeat);

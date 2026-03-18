@@ -1053,7 +1053,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
         if (!e.mods.isShiftDown())
             preparationSelector.getLassoSelection().deselectAll();
 
-        if (e.originalComponent == this || e.originalComponent->getName() == "cableView" || e.originalComponent->getName() == "bkitem")
+        if (!cableView.cableBeingDragged())
         {
             // First, add the lasso to the parent and make it visible.
             // JUCE LassoComponent::beginLasso often asserts if the component is not showing.
