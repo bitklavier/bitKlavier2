@@ -81,6 +81,15 @@ private:
                                                 const juce::String& name,
                                                 int instanceIndex);
 
+    // PianoMap has no gallery-level definition; all info comes from the piano item.
+    static juce::ValueTree convertPianoMap     (uint32_t nodeID,
+                                                const juce::String& uuid,
+                                                int x, int y,
+                                                const juce::String& name,
+                                                int instanceIndex,
+                                                int selectedPianoIndex,
+                                                const juce::String& selectedPianoName);
+
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
@@ -125,10 +134,10 @@ private:
         OldNostalgic  = 2,
         OldTuning     = 3,
         OldResonance  = 4,
-        OldKeymap     = 5,   // keymap as connection target
+        OldKeymap     = 5,
         OldBlendronic = 6,
         OldTempo      = 7,
-        OldKeymapMain = 12   // keymap as root item
+        OldPianoMap   = 12
     };
 
     // Maps old type code to new-format element tag name

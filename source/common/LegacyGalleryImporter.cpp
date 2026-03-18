@@ -86,9 +86,9 @@ juce::String LegacyGalleryImporter::tagForOldType (int oldType)
         case OldTuning:     return "tuning";
         case OldResonance:  return "resonance";
         case OldKeymap:     return "keymap";
-        case OldKeymapMain: return "keymap";
         case OldBlendronic: return "blendronic";
         case OldTempo:      return "tempo";
+        case OldPianoMap:   return "pianoMap";
         default:            return {};
     }
 }
@@ -98,7 +98,7 @@ int LegacyGalleryImporter::newTypeForOldType (int oldType)
     // Maps old layout type codes to new "type" attribute values.
     // New type IDs (from Identifiers.h preparationIDs array index):
     // 0=keymap, 1=direct, 2=synchronic, 3=nostalgic, 4=blendronic,
-    // 5=resonance, 6=tuning, 7=tempo
+    // 5=resonance, 6=tuning, 7=tempo, 12=pianoMap
     switch (oldType)
     {
         case OldDirect:     return 1;
@@ -107,9 +107,9 @@ int LegacyGalleryImporter::newTypeForOldType (int oldType)
         case OldTuning:     return 6;
         case OldResonance:  return 5;
         case OldKeymap:     return 0;
-        case OldKeymapMain: return 0;
         case OldBlendronic: return 4;
         case OldTempo:      return 7;
+        case OldPianoMap:   return 12;
         default:            return -1;
     }
 }
@@ -1163,6 +1163,42 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
 }
 
 // ---------------------------------------------------------------------------
+// PianoMap converter
+// ---------------------------------------------------------------------------
+
+juce::ValueTree LegacyGalleryImporter::convertPianoMap (uint32_t nodeID,
+                                                          const juce::String& uuid,
+                                                          int x, int y,
+                                                          const juce::String& name,
+                                                          int instanceIndex,
+                                                          int selectedPianoIndex,
+                                                          const juce::String& selectedPianoName)
+{
+    juce::ValueTree vt ("pianoMap");
+    vt.setProperty ("type",              12,                                         nullptr);
+    vt.setProperty ("width",             135.0f,                                     nullptr);
+    vt.setProperty ("height",            90.0f,                                      nullptr);
+    vt.setProperty ("x_y",              juce::String(x) + ", " + juce::String(y),   nullptr);
+    vt.setProperty ("uuid",              uuid,                                        nullptr);
+    vt.setProperty ("soundset",          "syncglobal",                               nullptr);
+    vt.setProperty ("nodeID",            (int64_t) nodeID,                           nullptr);
+    vt.setProperty ("name",              name,                                        nullptr);
+    vt.setProperty ("numIns",            1,                                           nullptr);
+    vt.setProperty ("selectedPianoIndex",selectedPianoIndex,                          nullptr);
+    vt.setProperty ("selectedPianoName", selectedPianoName,                           nullptr);
+
+    vt.addChild (juce::ValueTree ("MODULATABLE_PARAMS"), -1, nullptr);
+
+    juce::ValueTree port ("PORT");
+    port.setProperty ("nodeID", (int64_t) nodeID,                      nullptr);
+    port.setProperty ("chIdx",  4096, nullptr);  // AudioProcessorGraph::midiChannelIndex
+    port.setProperty ("isIn",   1,                                     nullptr);
+    vt.addChild (port, -1, nullptr);
+
+    return vt;
+}
+
+// ---------------------------------------------------------------------------
 // Main import entry point
 // ---------------------------------------------------------------------------
 
@@ -1220,6 +1256,23 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
             prepsByTagAndId[tag][id] = child;
         }
         // Skip: resonance, general, equalizer, compressor (handled separately or ignored)
+    }
+
+    // Build a map from old piano Id (1-indexed, from <piano Id="N">) to
+    // 0-indexed position in the gallery. PianoMap uses the old Id to reference
+    // the target piano; we need to convert that to the new 0-indexed format.
+    std::map<int, int>    pianoIdToIndex;   // old Id → 0-based position
+    std::map<int, juce::String> pianoIdToName; // old Id → piano name
+    {
+        int idx = 0;
+        for (auto* p = xmlDoc->getChildByName ("piano"); p != nullptr;
+             p = p->getNextElementWithTagName ("piano"))
+        {
+            int pid = p->getIntAttribute ("Id", idx + 1);
+            pianoIdToIndex[pid] = idx;
+            pianoIdToName[pid]  = p->getStringAttribute ("name", "Piano " + juce::String (idx + 1));
+            ++idx;
+        }
     }
 
     // Instance counter per preparation type (for naming)
@@ -1313,6 +1366,50 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
             return nodeID;
         };
 
+        // Pre-pass: register all PianoMap items in this piano before the main walk.
+        // This ensures that when a keymap's <connections> references a pianoMap, the
+        // pianoMap is already in instToNodeID and getOrCreatePrep can return its nodeID.
+        // (In the old XML, the pianoMap standalone wrapper often appears AFTER the keymap
+        // wrapper that lists it as a connection target, so the lazy-creation in
+        // getOrCreatePrep would fail to find a global <pianoMap> definition.)
+        for (auto* itemWrapper = pianoEl->getFirstChildElement(); itemWrapper != nullptr;
+             itemWrapper = itemWrapper->getNextElement())
+        {
+            if (itemWrapper->getTagName().toLowerCase() != "item") continue;
+            const juce::XmlElement* selfItem = itemWrapper->getFirstChildElement();
+            if (selfItem == nullptr || selfItem->getTagName().toLowerCase() != "item") continue;
+            if (selfItem->getIntAttribute ("type", -1) != OldPianoMap) continue;
+
+            int selfId = selfItem->getIntAttribute ("Id", -1);
+            juce::String instKey = "pianoMap_" + juce::String (selfId);
+            if (instToNodeID.count (instKey)) continue;  // already registered
+
+            int oldTargetPianoId = selfItem->getIntAttribute ("piano", -1);
+            int targetIdx  = 0;
+            juce::String targetName;
+            auto idxIt = pianoIdToIndex.find (oldTargetPianoId);
+            if (idxIt != pianoIdToIndex.end())
+            {
+                targetIdx  = idxIt->second;
+                targetName = pianoIdToName[oldTargetPianoId];
+            }
+
+            juce::String uuid = newUUID();
+            uint32_t nodeID   = juce::Uuid (uuid).getTimeLow();
+            instToNodeID[instKey] = nodeID;
+            instToUUID[instKey]   = uuid;
+
+            int& counter = instanceCounters["pianoMap"];
+            ++counter;
+            juce::String instName = "pianoMap " + juce::String (counter);
+            int pmX = (int) selfItem->getDoubleAttribute ("X", 0.0);
+            int pmY = (int) selfItem->getDoubleAttribute ("Y", 0.0);
+
+            auto prepVT = convertPianoMap (nodeID, uuid, pmX, pmY,
+                                           instName, counter, targetIdx, targetName);
+            preparations.addChild (prepVT, -1, nullptr);
+        }
+
         // Walk the piano's <item> children.
         // Each <item> wrapper contains one inner <item> (the "self" node) and
         // a <connections> child (what this node drives).
@@ -1332,6 +1429,11 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
 
             // Skip default preparations (Id=-1) that aren't actually in the layout
             // (they appear only as non-active targets) — let them be created on demand.
+
+            // PianoMap (type 12): already registered and created in the pre-pass above.
+            // No outgoing connections to process for PianoMap items.
+            if (selfType == OldPianoMap)
+                continue;
 
             uint32_t selfNodeID = getOrCreatePrep (selfType, selfId, selfX, selfY);
             if (selfNodeID == 0) continue; // unsupported type
@@ -1371,6 +1473,33 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                     tc.setProperty ("src",   (int64_t) selfNodeID, nullptr);
                     tc.setProperty ("dest",  (int64_t) connNodeID, nullptr);
                     modConnections.addChild (tc, -1, nullptr);
+                }
+                else if (selfType == OldSynchronic && connType == OldNostalgic)
+                {
+                    // Synchronic → Nostalgic: only valid when the nostalgic is in
+                    // Synchronic playback mode (mode == 2). Emit a SYNCHRONICCONNECTION;
+                    // otherwise skip — a regular CONNECTION would be a stray cable.
+                    int nostalgicMode = 0;
+                    auto tagIt2 = prepsByTagAndId.find ("nostalgic");
+                    if (tagIt2 != prepsByTagAndId.end())
+                    {
+                        auto idIt2 = tagIt2->second.find (connId);
+                        if (idIt2 != tagIt2->second.end())
+                        {
+                            const juce::XmlElement* np = idIt2->second->getChildByName ("params");
+                            if (np != nullptr)
+                                nostalgicMode = np->getIntAttribute ("mode", 0);
+                        }
+                    }
+                    if (nostalgicMode == 2)
+                    {
+                        juce::ValueTree sc ("SYNCHRONICCONNECTION");
+                        sc.setProperty ("isMod", 0,                    nullptr);
+                        sc.setProperty ("src",   (int64_t) selfNodeID, nullptr);
+                        sc.setProperty ("dest",  (int64_t) connNodeID, nullptr);
+                        modConnections.addChild (sc, -1, nullptr);
+                    }
+                    // else: nostalgic is not in Synchronic mode — no connection needed
                 }
                 else
                 {
