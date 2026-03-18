@@ -490,8 +490,9 @@ DLT: I'm not sure we should touch this right now, as there are all sorts of comp
 - LFO_test.bk2
 ### Pluginval
 - check both AU and VST3 versions, with Release buulds
-  - might need to rescan them in Pluginval first
+  - might need to remove then rescan them in Pluginval first
   - Pluginval's console should indicate that they passed all tests
+  - best if it's not trying to load some crazy patch; run bK on its own first with Basic Piano, so that automatically opens when pluginval runs its tests
 
 ## Analysis of bitKlavier CPU Load (Idle State)
 

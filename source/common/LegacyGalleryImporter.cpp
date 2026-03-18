@@ -333,6 +333,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     int   pulseTrig = 1; // 0=NoteOn 1=FirstNoteOn in new format enum
     float cThickness = 8.0f;
     float numLayers  = 1.0f;
+    float outputGain = 0.0f;
 
     if (params != nullptr)
     {
@@ -345,6 +346,8 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         // mode: 0=noteOn driven, 1=firstNoteOn in old; new pulseTriggeredBy: 1=FirstNoteOn
         int mode     = params->getIntAttribute ("mode", 0);
         pulseTrig    = (mode == 0) ? 0 : 1;
+        // gain (linear) → OutputGain (dB)
+        outputGain   = gainToDb ((float) params->getDoubleAttribute ("gain", 1.0));
     }
 
     vt.setProperty ("numPulses",       numPulses,  nullptr);
@@ -352,7 +355,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     vt.setProperty ("cThickness",      cThickness, nullptr);
     vt.setProperty ("cMin",            cMin,       nullptr);
     vt.setProperty ("Send",            0.0f,       nullptr);
-    vt.setProperty ("OutputGain",      0.0f,       nullptr);
+    vt.setProperty ("OutputGain",      outputGain, nullptr);
     vt.setProperty ("noteOnGain",      0.0f,       nullptr);
     vt.setProperty ("pulseTriggeredBy",pulseTrig,  nullptr);
     vt.setProperty ("determinesCluster", 0,        nullptr);
@@ -534,7 +537,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     mp.addChild (makeModParam ("cThickness", 1.0f, 20.0f,  0.9276416301727295f, cThickness),-1, nullptr);
     mp.addChild (makeModParam ("cMin",       20.0f, 2000.0f,0.9855645895004272f, cMin),     -1, nullptr);
     mp.addChild (makeModParam ("Send",       -80.0f, 6.0f, 2.0f, 0.0f),                     -1, nullptr);
-    mp.addChild (makeModParam ("OutputGain", -80.0f, 6.0f, 2.0f, 0.0f),                     -1, nullptr);
+    mp.addChild (makeModParam ("OutputGain", -80.0f, 6.0f, 2.0f, outputGain),               -1, nullptr);
     mp.addChild (makeModParam ("noteOnGain", -80.0f, 6.0f, 2.0f, 0.0f),                     -1, nullptr);
     mp.addChild (makeModParam ("attack",    0.0f, 10000.0f, 0.2313782125711441f, attack),    -1, nullptr);
     mp.addChild (makeModParam ("decay",     0.0f, 1000.0f,  1.0f, decay),                   -1, nullptr);
@@ -605,34 +608,78 @@ juce::ValueTree LegacyGalleryImporter::convertNostalgic (const juce::XmlElement&
     const juce::XmlElement* params = el.getChildByName ("params");
 
     float main = 0.0f, send = 0.0f, outputGain = 0.0f;
-    float lengthMult = 1.0f, beatsToSkip = 3.0f;
+    float lengthMult = 1.0f, beatsToSkip = 0.0f;
     float clusterMin = 1.0f, clusterThresh = 150.0f;
-    int   mode = 1;
+    float waveDistance = 0.0f, undertow = 0.0f;
+    int   mode = 0;  // old mode maps to nostalgicTriggeredBy
 
     if (params != nullptr)
     {
-        main        = gainToDb ((float) params->getDoubleAttribute ("gain", 0.0));
-        lengthMult  = (float) params->getDoubleAttribute ("lengthMultiplier", 1.0);
-        beatsToSkip = (float) params->getDoubleAttribute ("beatsToSkip", 3.0);
-        clusterMin  = (float) params->getDoubleAttribute ("clusterMin", 1.0);
+        main          = gainToDb ((float) params->getDoubleAttribute ("gain", 1.0));
+        lengthMult    = (float) params->getDoubleAttribute ("lengthMultiplier", 1.0);
+        beatsToSkip   = (float) params->getDoubleAttribute ("beatsToSkip", 0.0);
+        clusterMin    = (float) params->getDoubleAttribute ("clusterMin", 1.0);
         clusterThresh = (float) params->getDoubleAttribute ("clusterThreshold", 150.0);
-        mode        = params->getIntAttribute ("mode", 1);
+        mode          = params->getIntAttribute ("mode", 0);
+        waveDistance  = (float) params->getDoubleAttribute ("waveDistance", 0.0);
+        undertow      = (float) params->getDoubleAttribute ("undertow", 0.0);
     }
 
-    vt.setProperty ("Main",         main,         nullptr);
-    vt.setProperty ("Send",         send,         nullptr);
-    vt.setProperty ("OutputGain",   outputGain,   nullptr);
-    vt.setProperty ("noteOnGainNostalgic", 0.0f,  nullptr);
-    vt.setProperty ("lengthMultiplier",  lengthMult,   nullptr);
-    vt.setProperty ("beatsToSkip",       beatsToSkip,  nullptr);
-    vt.setProperty ("ClusterMin",        clusterMin,   nullptr);
-    vt.setProperty ("ClusterThresh",     clusterThresh,nullptr);
-    vt.setProperty ("mode",              mode,         nullptr);
+    // Transpositions: count f* attributes on the <transposition> child
+    std::vector<float> transpositions;
+    if (params != nullptr)
+    {
+        const juce::XmlElement* transpEl = params->getChildByName ("transposition");
+        if (transpEl != nullptr)
+        {
+            for (int fi = 0; fi < 12; ++fi)
+            {
+                juce::String attrName = "f" + juce::String (fi);
+                if (transpEl->hasAttribute (attrName))
+                    transpositions.push_back ((float) transpEl->getDoubleAttribute (attrName, 0.0));
+                else
+                    break;
+            }
+        }
+    }
+    if (transpositions.empty())
+        transpositions.push_back (0.0f);
+
+    int sliderValsSize = (int) transpositions.size();
+
+    vt.setProperty ("Main",                main,         nullptr);
+    vt.setProperty ("Send",                send,         nullptr);
+    vt.setProperty ("OutputGain",          outputGain,   nullptr);
+    vt.setProperty ("noteOnGainNostalgic", 0.0f,         nullptr);
+    vt.setProperty ("lengthMultiplier",    lengthMult,   nullptr);
+    vt.setProperty ("beatsToSkip",         beatsToSkip,  nullptr);
+    vt.setProperty ("BeatsToSkip",         beatsToSkip,  nullptr);
+    vt.setProperty ("ClusterMin",          clusterMin,   nullptr);
+    vt.setProperty ("ClusterThresh",       clusterThresh,nullptr);
+    vt.setProperty ("mode",                2,            nullptr);  // new format default; old mode → nostalgicTriggeredBy
+    vt.setProperty ("nostalgicTriggeredBy",mode,         nullptr);
+    vt.setProperty ("NostalgicUseTuning",  0,            nullptr);
     vt.setProperty ("holdMin",  0.0f,     nullptr);
     vt.setProperty ("holdMax",  12000.0f, nullptr);
+    vt.setProperty ("holdTimeMinParam",    0.0f,         nullptr);
+    vt.setProperty ("holdTimeMaxParam",    12000.0f,     nullptr);
+    vt.setProperty ("lastHoldTimeParam",   0.0f,         nullptr);
+    vt.setProperty ("holdtimemin",         0.0f,         nullptr);
+    vt.setProperty ("holdtimemax",         12000.0f,     nullptr);
     vt.setProperty ("keyOnReset",   0,    nullptr);
     vt.setProperty ("UseTuning",    0,    nullptr);
     vt.setProperty ("notify",       1,    nullptr);
+    vt.setProperty ("wavedistance", waveDistance, nullptr);
+    vt.setProperty ("undertow",     undertow,     nullptr);
+    vt.setProperty ("NoteLengthMultiplier", lengthMult, nullptr);
+    vt.setProperty ("sliderValsSize",   (float) sliderValsSize, nullptr);
+
+    // Set t0..t11 transposition attributes
+    for (int ti = 0; ti < 12; ++ti)
+    {
+        float val = (ti < sliderValsSize) ? transpositions[ti] : 0.0f;
+        vt.setProperty ("t" + juce::String (ti), val, nullptr);
+    }
 
     // Reverse ADSR
     float rAttack = 30.0f, rDecay = 3.0f, rSustain = 1.0f, rRelease = 50.0f;
@@ -647,10 +694,21 @@ juce::ValueTree LegacyGalleryImporter::convertNostalgic (const juce::XmlElement&
             rRelease = (float) radsr->getDoubleAttribute ("f3", 50.0);
         }
     }
-    vt.setProperty ("reverseAttack",  rAttack,  nullptr);
-    vt.setProperty ("reverseDecay",   rDecay,   nullptr);
-    vt.setProperty ("reverseSustain", rSustain, nullptr);
-    vt.setProperty ("reverseRelease", rRelease, nullptr);
+    vt.setProperty ("reverseAttack",      rAttack,  nullptr);
+    vt.setProperty ("reverseDecay",       rDecay,   nullptr);
+    vt.setProperty ("reverseSustain",     rSustain, nullptr);
+    vt.setProperty ("reverseRelease",     rRelease, nullptr);
+    // Capital-named variants (used by new-format processor)
+    vt.setProperty ("Reverseattack",      rAttack,  nullptr);
+    vt.setProperty ("Reversedecay",       rDecay,   nullptr);
+    vt.setProperty ("Reversesustain",     rSustain, nullptr);
+    vt.setProperty ("Reverserelease",     rRelease, nullptr);
+    vt.setProperty ("Reverseattackpower", 0.0f,     nullptr);
+    vt.setProperty ("Reversedecaypower",  0.0f,     nullptr);
+    vt.setProperty ("Reversereleasepower",0.0f,     nullptr);
+    vt.setProperty ("Reversehold",        0.0f,     nullptr);
+    vt.setProperty ("Reversedelay",       0.0f,     nullptr);
+    vt.setProperty ("Reversenotify",      1,        nullptr);
 
     // Undertow ADSR
     float uAttack = 50.0f, uDecay = 3.0f, uSustain = 1.0f, uRelease = 2000.0f;
@@ -665,23 +723,57 @@ juce::ValueTree LegacyGalleryImporter::convertNostalgic (const juce::XmlElement&
             uRelease = (float) uadsr->getDoubleAttribute ("f3", 2000.0);
         }
     }
-    vt.setProperty ("undertowAttack",  uAttack,  nullptr);
-    vt.setProperty ("undertowDecay",   uDecay,   nullptr);
-    vt.setProperty ("undertowSustain", uSustain, nullptr);
-    vt.setProperty ("undertowRelease", uRelease, nullptr);
+    vt.setProperty ("undertowAttack",      uAttack,  nullptr);
+    vt.setProperty ("undertowDecay",       uDecay,   nullptr);
+    vt.setProperty ("undertowSustain",     uSustain, nullptr);
+    vt.setProperty ("undertowRelease",     uRelease, nullptr);
+    // Capital-named variants
+    vt.setProperty ("Undertowattack",      uAttack,  nullptr);
+    vt.setProperty ("Undertowdecay",       uDecay,   nullptr);
+    vt.setProperty ("Undertowsustain",     uSustain, nullptr);
+    vt.setProperty ("Undertowrelease",     uRelease, nullptr);
+    vt.setProperty ("Undertowattackpower", 0.0f,     nullptr);
+    vt.setProperty ("Undertowdecaypower",  0.0f,     nullptr);
+    vt.setProperty ("Undertowreleasepower",0.0f,     nullptr);
+    vt.setProperty ("Undertowhold",        0.0f,     nullptr);
+    vt.setProperty ("Undertowdelay",       0.0f,     nullptr);
+    vt.setProperty ("Undertownotify",      1,        nullptr);
 
     // MODULATABLE_PARAMS
     juce::ValueTree mp ("MODULATABLE_PARAMS");
-    mp.addChild (makeModParam ("Main",         -80.0f, 6.0f, 2.0f, main),         -1, nullptr);
-    mp.addChild (makeModParam ("Send",         -80.0f, 6.0f, 2.0f, send),         -1, nullptr);
-    mp.addChild (makeModParam ("OutputGain",   -80.0f, 6.0f, 2.0f, outputGain),   -1, nullptr);
-    mp.addChild (makeModParam ("noteOnGainNostalgic", -80.0f, 6.0f, 2.0f, 0.0f),  -1, nullptr);
-    mp.addChild (makeModParam ("NoteLengthMultiplier", 0.0f, 10.0f, 2.0f, lengthMult), -1, nullptr);
-    mp.addChild (makeModParam ("BeatsToSkip",  0.0f, 10.0f, 1.0f, beatsToSkip),   -1, nullptr);
-    mp.addChild (makeModParam ("ClusterMin",   1.0f, 10.0f, 1.0f, clusterMin),    -1, nullptr);
-    mp.addChild (makeModParam ("ClusterThresh",0.0f, 1000.0f, 2.0f, clusterThresh),-1, nullptr);
+    mp.addChild (makeModParam ("Send",                -80.0f, 6.0f, 2.0f, send),          -1, nullptr);
+    mp.addChild (makeModParam ("OutputGain",          -80.0f, 6.0f, 2.0f, outputGain),    -1, nullptr);
+    mp.addChild (makeModParam ("NoteLengthMultiplier",0.0f, 10.0f, 2.0f, lengthMult),     -1, nullptr);
+    mp.addChild (makeModParam ("BeatsToSkip",         0.0f, 10.0f, 1.0f, beatsToSkip),    -1, nullptr);
+    mp.addChild (makeModParam ("ClusterMin",          1.0f, 10.0f, 1.0f, clusterMin),     -1, nullptr);
+    mp.addChild (makeModParam ("ClusterThresh",       0.0f, 1000.0f, 2.0f, clusterThresh),-1, nullptr);
+    mp.addChild (makeModParam ("noteOnGainNostalgic", -80.0f, 6.0f, 2.0f, 0.0f),          -1, nullptr);
+    mp.addChild (makeModParam ("Reverseattack",       0.0f, 10000.0f, 0.2313782125711441f, rAttack),  -1, nullptr);
+    mp.addChild (makeModParam ("Reversedecay",        0.0f, 1000.0f,  1.0f, rDecay),      -1, nullptr);
+    mp.addChild (makeModParam ("Reversesustain",      0.0f, 1.0f,     1.0f, rSustain),    -1, nullptr);
+    mp.addChild (makeModParam ("Reverserelease",      0.0f, 10000.0f, 0.2313782125711441f, rRelease), -1, nullptr);
+    mp.addChild (makeModParam ("Reverseattackpower",  -10.0f, 10.0f,  1.0f, 0.0f),        -1, nullptr);
+    mp.addChild (makeModParam ("Reversedelay",        0.0f, 1000.0f,  1.0f, 0.0f),        -1, nullptr);
+    mp.addChild (makeModParam ("Undertowattack",      0.0f, 10000.0f, 0.2313782125711441f, uAttack),  -1, nullptr);
+    mp.addChild (makeModParam ("Undertowdecay",       0.0f, 1000.0f,  1.0f, uDecay),      -1, nullptr);
+    mp.addChild (makeModParam ("Undertowsustain",     0.0f, 1.0f,     1.0f, uSustain),    -1, nullptr);
+    mp.addChild (makeModParam ("Undertowrelease",     0.0f, 10000.0f, 0.2313782125711441f, uRelease), -1, nullptr);
+    mp.addChild (makeModParam ("Undertowattackpower", -10.0f, 10.0f,  1.0f, 0.0f),        -1, nullptr);
+    mp.addChild (makeModParam ("Undertowdelay",       0.0f, 1000.0f,  1.0f, 0.0f),        -1, nullptr);
     vt.addChild (mp, -1, nullptr);
-    vt.addChild (juce::ValueTree ("PARAM_DEFAULT"), -1, nullptr);
+
+    // PARAM_DEFAULT — store transpositions and wave/undertow values
+    juce::ValueTree paramDefault ("PARAM_DEFAULT");
+    for (int ti = 0; ti < sliderValsSize; ++ti)
+        paramDefault.setProperty ("t" + juce::String (ti), transpositions[ti], nullptr);
+    if (waveDistance != 0.0f || undertow != 0.0f)
+    {
+        paramDefault.setProperty ("holdtimemin", 0.0f,        nullptr);
+        paramDefault.setProperty ("holdtimemax", 12000.0f,    nullptr);
+        paramDefault.setProperty ("wavedist",    waveDistance, nullptr);
+        paramDefault.setProperty ("undertow",    undertow,     nullptr);
+    }
+    vt.addChild (paramDefault, -1, nullptr);
 
     // PORTs
     for (auto [chIdx, isIn] : std::initializer_list<std::pair<int,int>> {{4096,1},{0,0},{2,0}})
@@ -753,6 +845,7 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
             case 6:  tuningSystem = 12; break; // Meantone (closest match)
             case 7:  tuningSystem = 11; break; // Werckmeister III
             case 8:  tuningSystem = 6;  break; // Custom
+            case 14: tuningSystem = 12; break; // Quarter-comma Meantone (alt code)
             default: tuningSystem = 0;  break; // ET fallback
         }
 
@@ -1516,64 +1609,6 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
             }
         }
 
-        // --- Add Tempo preparation ---
-        // In the old format, Tempo is defined at the gallery level and is implicitly
-        // connected to all Synchronic preparations in the piano. It never appears as
-        // a piano <item type=7>, so we must add it explicitly.
-        // Use the first non-default (Id != -1) tempo definition, if any.
-        {
-            const juce::XmlElement* tempoEl = nullptr;
-            auto tempoIt = prepsByTagAndId.find ("tempo");
-            if (tempoIt != prepsByTagAndId.end())
-            {
-                // prefer first Id > 0
-                for (auto& kv : tempoIt->second)
-                {
-                    if (kv.first >= 0)
-                    {
-                        tempoEl = kv.second;
-                        break;
-                    }
-                }
-                // fallback to Id=-1 default
-                if (tempoEl == nullptr)
-                {
-                    auto defIt = tempoIt->second.find (-1);
-                    if (defIt != tempoIt->second.end())
-                        tempoEl = defIt->second;
-                }
-            }
-
-            if (tempoEl != nullptr)
-            {
-                // Collect all synchronic nodeIDs that were created for this piano
-                std::vector<uint32_t> syncNodeIDs;
-                for (auto& kv : instToNodeID)
-                {
-                    if (kv.first.startsWith ("synchronic_"))
-                        syncNodeIDs.push_back (kv.second);
-                }
-
-                if (! syncNodeIDs.empty())
-                {
-                    // Create the tempo preparation (use getOrCreatePrep so it's idempotent)
-                    // Place it at a sensible default position (near the top)
-                    uint32_t tempoNodeID = getOrCreatePrep (OldTempo, tempoEl->getIntAttribute ("Id", -1), 680, 115);
-
-                    if (tempoNodeID != 0)
-                    {
-                        for (uint32_t syncID : syncNodeIDs)
-                        {
-                            juce::ValueTree tc ("TEMPOCONNECTION");
-                            tc.setProperty ("isMod", 0,                     nullptr);
-                            tc.setProperty ("src",   (int64_t) tempoNodeID, nullptr);
-                            tc.setProperty ("dest",  (int64_t) syncID,      nullptr);
-                            modConnections.addChild (tc, -1, nullptr);
-                        }
-                    }
-                }
-            }
-        }
 
         pianoVT.addChild (preparations,   -1, nullptr);
         pianoVT.addChild (connections,     -1, nullptr);

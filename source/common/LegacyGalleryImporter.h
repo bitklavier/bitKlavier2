@@ -127,16 +127,16 @@ private:
                                             const juce::String& prefix,
                                             int maxCount);
 
-    // Old item type codes in the piano layout
+    // Old item type codes in the piano layout (from old bitKlavier AudioConstants.h cPreparationIdToType)
     enum OldItemType {
         OldDirect     = 0,
         OldSynchronic = 1,
         OldNostalgic  = 2,
         OldTuning     = 3,
-        OldResonance  = 4,
+        OldTempo      = 4,
         OldKeymap     = 5,
-        OldBlendronic = 6,
-        OldTempo      = 7,
+        OldBlendronic = 16,
+        OldResonance  = 18,
         OldPianoMap   = 12
     };
 
