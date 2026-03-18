@@ -512,15 +512,53 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     vt.setProperty ("beat_length_multipliersStates", blStates, nullptr);
     vt.setProperty ("beat_length_multipliersStatesSize", (int) juce::StringArray::fromTokens(blStates, " ", "").size(), nullptr);
 
-    // Transpositions — first transposition offset only (old: transpOffsets/t0 f0)
-    vt.setProperty ("transpositionsSliderValsSize",    1, nullptr);
-    vt.setProperty ("transpositionsSliderVals",        "0.000000/", nullptr);
-    vt.setProperty ("transpositionsActiveValsSize",   12, nullptr);
-    vt.setProperty ("transpositionsActiveVals",        "true false false false false false false false false false false false ", nullptr);
-    vt.setProperty ("transpositionsVals",              "0.000000/", nullptr);
-    vt.setProperty ("transpositionsSize",              1, nullptr);
-    vt.setProperty ("transpositionsStates",            "true false false false false false false false false false false false", nullptr);
-    vt.setProperty ("transpositionsStatesSize",        12, nullptr);
+    // Transpositions (old: <transpOffsets> with <t0 f0="..." f1="..."/>, <t1 ...>, etc.)
+    // Each slot tN can have multiple f* values; new format: slots separated by "/",
+    // multiple values within a slot separated by ",".  e.g. "1.0/2.0,-5.0/4.4/"
+    // Active states come from <transpOffsetsStates b0="..." b1="..." .../>
+    juce::String transpVals, transpStates;
+    int transpSize = 0;
+    if (params != nullptr)
+    {
+        const juce::XmlElement* toEl = params->getChildByName ("transpOffsets");
+        if (toEl != nullptr)
+        {
+            // Each child of transpOffsets is a slot: <t0 f0="..." f1="..."/>
+            for (auto* slotEl = toEl->getFirstChildElement(); slotEl != nullptr;
+                 slotEl = slotEl->getNextElement())
+            {
+                juce::String slotStr;
+                for (int fi = 0; fi < 12; ++fi)
+                {
+                    juce::String fk = "f" + juce::String (fi);
+                    if (! slotEl->hasAttribute (fk)) break;
+                    if (fi > 0) slotStr += ",";
+                    slotStr += juce::String ((float) slotEl->getDoubleAttribute (fk, 0.0), 6);
+                }
+                transpVals += slotStr + "/";
+                ++transpSize;
+            }
+        }
+        const juce::XmlElement* tsEl = params->getChildByName ("transpOffsetsStates");
+        if (tsEl != nullptr)
+            transpStates = parseIndexedBools (*tsEl, "b", 12);
+    }
+    if (transpVals.isEmpty())   { transpVals  = "0.000000/"; transpSize = 1; }
+    if (transpStates.isEmpty()) transpStates = "true false false false false false false false false false false false";
+
+    // Build the 12-element active vals string (pad with "false" up to 12)
+    juce::StringArray statesArr = juce::StringArray::fromTokens (transpStates, " ", "");
+    while (statesArr.size() < 12) statesArr.add ("false");
+    juce::String transpActiveVals = statesArr.joinIntoString (" ") + " ";
+
+    vt.setProperty ("transpositionsSliderValsSize",  transpSize,        nullptr);
+    vt.setProperty ("transpositionsSliderVals",       transpVals,        nullptr);
+    vt.setProperty ("transpositionsActiveValsSize",  12,                 nullptr);
+    vt.setProperty ("transpositionsActiveVals",       transpActiveVals,  nullptr);
+    vt.setProperty ("transpositionsVals",             transpVals,        nullptr);
+    vt.setProperty ("transpositionsSize",             transpSize,        nullptr);
+    vt.setProperty ("transpositionsStates",           transpStates,      nullptr);
+    vt.setProperty ("transpositionsStatesSize",       12,                nullptr);
 
     vt.setProperty ("holdtimemin", 0.0f,    nullptr);
     vt.setProperty ("holdtimemax", 22143.0f,nullptr);
@@ -549,10 +587,10 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
 
     // PARAM_DEFAULT
     juce::ValueTree pd ("PARAM_DEFAULT");
-    pd.setProperty ("transpositionsVals",   "0.000000/", nullptr);
-    pd.setProperty ("transpositionsSize",   1, nullptr);
-    pd.setProperty ("transpositionsStates", "true false false false false false false false false false false false", nullptr);
-    pd.setProperty ("transpositionsStatesSize", 12, nullptr);
+    pd.setProperty ("transpositionsVals",       transpVals,   nullptr);
+    pd.setProperty ("transpositionsSize",       transpSize,   nullptr);
+    pd.setProperty ("transpositionsStates",     transpStates, nullptr);
+    pd.setProperty ("transpositionsStatesSize", 12,           nullptr);
     pd.setProperty ("accentsVals",          accVals, nullptr);
     pd.setProperty ("accentsSize",          (int) juce::StringArray::fromTokens(accVals, " ", "").size(), nullptr);
     pd.setProperty ("accentsStates",        accStates, nullptr);
