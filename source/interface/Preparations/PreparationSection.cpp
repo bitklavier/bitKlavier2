@@ -576,7 +576,8 @@ void PreparationSection::mouseDrag(const juce::MouseEvent &e) {
             auto mousePosInSite = e.getEventRelativeTo(site).getPosition();
             site->drag_offset_ = mousePosInSite - this->getPosition();
 
-            site->original_drag_centre_ = getBounds().getCentre();
+            // Store world-space original centre (screen pos + scroll offset)
+            site->original_drag_centre_ = getBounds().getCentre() + site->scroll_offset_;
             site->has_original_drag_centre_ = true;
         }
     }
@@ -597,4 +598,26 @@ void PreparationSection::moved()
     // //undo.beg
     // x = this->getX();
     // y = this->getY();
+}
+
+void PreparationSection::valueTreePropertyChanged(juce::ValueTree& v, const juce::Identifier& i)
+{
+    tracktion::engine::ValueTreeObjectList<BKPort>::valueTreePropertyChanged(v, i);
+    if (i == IDs::x_y)
+    {
+        auto worldPos = juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty(i));
+        if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+            this->setCentrePosition(worldPos - site->scroll_offset_);
+        else
+            this->setCentrePosition(worldPos);
+    }
+    else if (i == IDs::width || i == IDs::height)
+    {
+        if (v.hasProperty(IDs::width) && v.hasProperty(IDs::height))
+        {
+            auto oldCenter = getBounds().getCentre();
+            setSize(v.getProperty(IDs::width), v.getProperty(IDs::height));
+            setCentrePosition(oldCenter);
+        }
+    }
 }

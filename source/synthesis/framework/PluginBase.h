@@ -224,7 +224,7 @@ namespace bitklavier {
          * generates mappings between audio-rate modulatable parameters and the audio channel the modulation comes in on
          *      from a modification preparation
          *      modulations like this come on an audio channel
-         *      this is on a separate bus from the regular audio graph that carries audio between preparations
+         *      this is on a separate bus from the regular audio graph that carries audio between preparations lo
          */
         void setupModulationMappings() {
             auto mod_params = v.getOrCreateChildWithName(IDs::MODULATABLE_PARAMS, nullptr);

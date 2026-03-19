@@ -104,22 +104,8 @@ public:
     // void valueTreeParentChanged (juce::ValueTree&) override;
     void valueTreeRedirected(juce::ValueTree &) override;
 
-    void valueTreePropertyChanged(juce::ValueTree &v, const juce::Identifier &i) override {
-        tracktion::engine::ValueTreeObjectList<BKPort>::valueTreePropertyChanged(v, i);
-        if (i == IDs::x_y)
-        {
-            this->setCentrePosition (juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty (i)));
-        }
-        else if (i == IDs::width || i == IDs::height)
-        {
-            if (v.hasProperty(IDs::width) && v.hasProperty(IDs::height))
-            {
-                auto oldCenter = getBounds().getCentre();
-                setSize(v.getProperty(IDs::width), v.getProperty(IDs::height));
-                setCentrePosition(oldCenter);
-            }
-        }
-    }
+    void valueTreePropertyChanged(juce::ValueTree &v, const juce::Identifier &i) override;
+
 
     bool isSuitableType(const juce::ValueTree &v) const override {
         return v.hasType(IDs::PORT);

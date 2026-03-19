@@ -384,7 +384,7 @@ private:
 class OpenGlScrollBar : public juce::ScrollBar
 {
 public:
-  OpenGlScrollBar() : juce::ScrollBar(true), bar_(new OpenGlScrollQuad())
+  explicit OpenGlScrollBar(bool isVertical = true) : juce::ScrollBar(isVertical), bar_(new OpenGlScrollQuad())
   {
     bar_->setTargetComponent(this);
     addAndMakeVisible(bar_.get());
@@ -397,7 +397,8 @@ public:
   {
     juce::ScrollBar::resized();
     bar_->setBounds(getLocalBounds());
-    bar_->setRounding(getWidth() * 0.25f);
+    // Use the smaller dimension for rounding so both horizontal and vertical bars look correct
+    bar_->setRounding(std::min(getWidth(), getHeight()) * 0.25f);
   }
 
   void mouseEnter(const juce::MouseEvent &e) override
