@@ -227,6 +227,11 @@ public:
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
 
+    void allNotesOff()
+    {
+        delay->clear();
+    }
+
     juce::AudioProcessor::BusesProperties blendronicBusLayout()
     {
         return BusesProperties()

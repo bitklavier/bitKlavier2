@@ -16,6 +16,7 @@
 
 #include "sound_engine.h"
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "BlendronicProcessor.h"
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 #include <algorithm>
@@ -98,9 +99,19 @@ namespace bitklavier {
     void SoundEngine::allNotesOff() {
         auto nodes = processorGraph->getNodes();
         for (auto node : nodes) {
-            if (auto* a = dynamic_cast<KeymapProcessor*>(node->getProcessor()))
-                { a->allNotesOff();}
-
+            auto* p = node->getProcessor();
+            if (auto* a = dynamic_cast<KeymapProcessor*>(p))
+                a->allNotesOff();
+            else if (auto* a = dynamic_cast<DirectProcessor*>(p))
+                a->allNotesOff();
+            else if (auto* a = dynamic_cast<SynchronicProcessor*>(p))
+                a->allNotesOff();
+            else if (auto* a = dynamic_cast<NostalgicProcessor*>(p))
+                a->allNotesOff();
+            else if (auto* a = dynamic_cast<BlendronicProcessor*>(p))
+                a->allNotesOff();
+            else if (auto* a = dynamic_cast<ResonanceProcessor*>(p))
+                a->allNotesOff();
         }
     }
 

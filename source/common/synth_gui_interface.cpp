@@ -121,6 +121,11 @@ bool SynthGuiInterface::perform(const InvocationInfo & info) {
                 juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
                 return true;
             }
+            case CommandIDs::allNotesOffCmd:
+            {
+                allNotesOff();
+                return true;
+            }
             case CommandIDs::showPluginListEditor:
             {
                 if (pluginListWindow == nullptr)

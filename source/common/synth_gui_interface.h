@@ -62,11 +62,12 @@ public:
         save,
         saveAs,
         load,
+        allNotesOffCmd,
         showPluginListEditor   = 0x30100
     };
 
     void getAllCommands(juce::Array<juce::CommandID> &commands) override {
-        commands.addArray({undo, redo, showPluginListEditor});
+        commands.addArray({undo, redo, allNotesOffCmd, showPluginListEditor});
     }
 
     void getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info) override {
@@ -79,7 +80,10 @@ public:
                 info.setInfo("Redo", "Redo last action", "Edit", 0);
                 info.addDefaultKeypress('z', juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier);
             break;
-
+            case allNotesOffCmd:
+                info.setInfo("All Notes Off", "Stop all sounding notes", "Play", 0);
+                info.addDefaultKeypress(juce::KeyPress::spaceKey, juce::ModifierKeys::noModifiers);
+            break;
             case showPluginListEditor:
                 info.setInfo("Show Plugins", "Show Plugins", "Options", 0);
                 info.addDefaultKeypress ('p', juce::ModifierKeys::commandModifier);

@@ -348,10 +348,24 @@ public:
         if(tuning !=nullptr) tuning->removeListener(this);
     }
 
-
-
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
+
+    void allNotesOff()
+    {
+        nostalgicSynth->allNotesOff(1, false);
+
+        velocities.clearQuick();
+        noteLengthTimers.clearQuick();
+        reverseTimers.clearQuick();
+        clusterNotes.clearQuick();
+
+        sustainPedalNotesDown.reset();
+        sostenutoPedalNotesDown.reset();
+
+        clusterTimer = 0;
+        clusterCount = 0;
+    }
 
     // void setupModulationMappings();
 

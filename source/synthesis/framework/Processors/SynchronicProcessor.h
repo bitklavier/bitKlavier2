@@ -520,6 +520,28 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         synchronicSynth->addSoundSet (s);
     }
 
+    void allNotesOff()
+    {
+        synchronicSynth->allNotesOff(1, false);
+        slimCluster.clearQuick();
+        clusterNotes.clearQuick();
+        keysDepressed.clearQuick();
+        clusterKeysDepressed.clearQuick();
+
+        for (int i = 0; i < 128; i++)
+        {
+            holdTimers.add(0);
+            clusterVelocities.add(0);
+        }
+
+        inCluster = false;
+
+        for (auto& cl : clusterLayers)
+        {
+            cl->reset();
+        }
+    }
+
     void setA4Frequency(double newA4)
     {
         synchronicSynth->setA4Frequency(newA4);

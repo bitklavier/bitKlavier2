@@ -279,6 +279,14 @@ public:
         }
     }
 
+    void allNotesOff()
+    {
+        mainSynth->allNotesOff(1, false);
+        hammerSynth->allNotesOff(1, false);
+        releaseResonanceSynth->allNotesOff(1, false);
+        pedalSynth->allNotesOff(1, false);
+    }
+
     void loadSamples() override {
         juce::String soundset = v.getProperty(IDs::soundset, IDs::syncglobal.toString());
         if (soundset == IDs::syncglobal.toString()) {

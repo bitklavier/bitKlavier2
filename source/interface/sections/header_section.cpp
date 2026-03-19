@@ -751,6 +751,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         options.addItem(3, "Gallery Settings");
         options.addItem(4, "Import Legacy Gallery...");
+        options.addItem(5, "All Notes Off");
         options.addItem(separator);
 
         // Use a high base to avoid clashing with command IDs above
@@ -917,6 +918,10 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             if (selection == 4) {
                 DBG("import legacy gallery");
                 importLegacyGallery();
+                return;
+            }
+            if (selection == 5) {
+                parent->allNotesOff();
                 return;
             }
 
