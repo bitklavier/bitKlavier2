@@ -52,7 +52,7 @@ void TempoParametersView::resized()
     bounds.removeFromBottom(large_padding * 2);
 
     // adaptive params
-    adaptiveSection->setBounds(bounds);
+    adaptiveSection->setBounds(bounds.removeFromTop(knob_section_height * 2 + large_padding * 3));
     // juce::Rectangle<int> adaptiveKnobsBounds = bounds.removeFromTop(knob_section_height + large_padding * 3);
     // adaptiveSection->setBounds(adaptiveKnobsBounds);
 
