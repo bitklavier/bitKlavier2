@@ -722,7 +722,10 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         active_file_ = preset;
         // Save last opened gallery path to user preferences immediately
         if (user_prefs && user_prefs->tree.isValid())
+        {
             user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
+            user_prefs->userPreferences->addRecentGallery (preset);
+        }
         pendingPresetTree = parsed;
         presetPending.store (true);
 
@@ -742,7 +745,10 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     active_file_ = preset;
     // Save last opened gallery path to user preferences
     if (user_prefs && user_prefs->tree.isValid())
+    {
         user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
+        user_prefs->userPreferences->addRecentGallery (preset);
+    }
 
     if (auto* gui = getGuiInterface())
     {
@@ -782,6 +788,8 @@ bool SynthBase::saveToFile(juce::File preset)
 
     // Update active file on successful save
     active_file_ = preset;
+    if (user_prefs && user_prefs->tree.isValid())
+        user_prefs->userPreferences->addRecentGallery (preset);
     return true;
 }
 

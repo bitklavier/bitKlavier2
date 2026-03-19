@@ -719,12 +719,39 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(0, "Load");
         options.addItem(1, "Save");
         options.addItem(2, "Save As");
-        options.addItem(3, "Gallery Settings");
-        options.addItem(4, "Import Legacy Gallery...");
-        options.addItem(separator);
 
         // Build directories/files tree
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+
+        // "Load Recent" submenu (IDs 500–598; 599 = "Clear Recent Files")
+        const int kRecentIdBase = 500;
+        auto recentIdToFile = std::make_shared<std::map<int, juce::File>>();
+        {
+            auto recentFiles = parent->getSynth()->user_prefs->userPreferences->getRecentGalleries();
+            PopupItems recentMenu;
+            recentMenu.name = "Load Recent";
+            if (recentFiles.isEmpty())
+            {
+                PopupItems emptyItem ("(No recent files)", false);
+                recentMenu.addItem (emptyItem);
+            }
+            else
+            {
+                for (int i = 0; i < recentFiles.size(); ++i)
+                {
+                    int thisId = kRecentIdBase + i;
+                    (*recentIdToFile)[thisId] = recentFiles[i];
+                    recentMenu.addItem (thisId, recentFiles[i].getFileNameWithoutExtension().toStdString());
+                }
+                recentMenu.addItem (separator);
+                recentMenu.addItem (kRecentIdBase + 99, "Clear Recent Files");
+            }
+            options.addItem (recentMenu);
+        }
+
+        options.addItem(3, "Gallery Settings");
+        options.addItem(4, "Import Legacy Gallery...");
+        options.addItem(separator);
 
         // Use a high base to avoid clashing with command IDs above
         const int kGalleryIdBase = 1000;
@@ -802,6 +829,24 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         juce::Point<int> position(gallerySelector->getX(), gallerySelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
+            // Handle recent-file selections (IDs kRecentIdBase to kRecentIdBase+98)
+            if (selection >= kRecentIdBase && selection < kRecentIdBase + 99)
+            {
+                auto it = recentIdToFile->find (selection);
+                if (it != recentIdToFile->end())
+                {
+                    std::string error;
+                    if (! parent->loadFromFile (it->second, error))
+                        DBG (juce::String ("Failed to load recent gallery: ") + error);
+                }
+                return;
+            }
+            // "Clear Recent Files"
+            if (selection == kRecentIdBase + 99)
+            {
+                parent->getSynth()->user_prefs->userPreferences->clearRecentGalleries();
+                return;
+            }
             // Handle command items first
             if (selection == 0) {
                 DBG("load gallery");

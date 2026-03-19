@@ -54,6 +54,10 @@ public:
         if (! tree.hasProperty ("last_gallery_path"))
             tree.setProperty ("last_gallery_path", juce::String(), nullptr);
 
+        // Recent galleries list (child ValueTree, up to kMaxRecentGalleries entries)
+        if (! tree.getChildWithName ("recentGalleries").isValid())
+            tree.appendChild (juce::ValueTree ("recentGalleries"), nullptr);
+
         if (! tree.getChildWithName (IDs::midiPrefs).isValid())
             tree.appendChild (juce::ValueTree (IDs::midiPrefs), nullptr);
 
@@ -84,6 +88,58 @@ public:
 
     void valueTreeChanged() override {
         file.replaceWithText(tree.toXmlString());
+    }
+
+    static constexpr int kMaxRecentGalleries = 10;
+
+    // Prepend a file to the recent-galleries list, deduplicating and capping at kMaxRecentGalleries.
+    void addRecentGallery (const juce::File& f)
+    {
+        auto recentNode = tree.getChildWithName ("recentGalleries");
+        if (! recentNode.isValid())
+            return;
+
+        const juce::String path = f.getFullPathName();
+
+        // Remove any existing entry for this path so it will move to the front
+        for (int i = recentNode.getNumChildren() - 1; i >= 0; --i)
+        {
+            if (recentNode.getChild (i).getProperty ("path").toString() == path)
+                recentNode.removeChild (i, nullptr);
+        }
+
+        // Insert at front
+        juce::ValueTree entry ("gallery");
+        entry.setProperty ("path", path, nullptr);
+        recentNode.addChild (entry, 0, nullptr);
+
+        // Trim to max
+        while (recentNode.getNumChildren() > kMaxRecentGalleries)
+            recentNode.removeChild (recentNode.getNumChildren() - 1, nullptr);
+    }
+
+    // Returns up to kMaxRecentGalleries recent gallery files (skips missing files).
+    juce::Array<juce::File> getRecentGalleries() const
+    {
+        juce::Array<juce::File> result;
+        auto recentNode = tree.getChildWithName ("recentGalleries");
+        if (! recentNode.isValid())
+            return result;
+
+        for (int i = 0; i < recentNode.getNumChildren(); ++i)
+        {
+            juce::File f (recentNode.getChild (i).getProperty ("path").toString());
+            if (f.existsAsFile())
+                result.add (f);
+        }
+        return result;
+    }
+
+    void clearRecentGalleries()
+    {
+        auto recentNode = tree.getChildWithName ("recentGalleries");
+        if (recentNode.isValid())
+            recentNode.removeAllChildren (nullptr);
     }
     juce::AudioPluginFormatManager formatManager;
     juce::KnownPluginList knownPluginList;
