@@ -86,7 +86,7 @@ public:
             if (visible)
             {
                 setUsingNativeTitleBar (true);
-                setResizable (true, true);
+                setResizable (false, false);
             }
             //setConstrainer(constrainer_);
             editor_ = new SynthEditor (visible);

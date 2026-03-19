@@ -33,7 +33,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     int width = std::round (window_size * bitklavier::kDefaultWindowWidth);
     int height = std::round (window_size * bitklavier::kDefaultWindowHeight);
 
-    setResizable (true, true);
+    setResizable (false, false);
     setSize (width, height);
     gui_->addKeyListener (commandManager.getKeyMappings());
 
