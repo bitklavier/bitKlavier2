@@ -464,7 +464,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                  *  another example: clusterMax=20, clusterCap=8; play a rapid ascending scale more than 8 and less than 20 notes, then stop; only last 8 notes will be in the cluster. If your scale exceeds 20 notes then it won't play.
                  */
                 slimCluster.clearQuick();
-                for(int i = 0; i < clusterNotes.size() && i <= *state.params.clusterThickness; i++)
+                for(int i = 0; i < clusterNotes.size() && i <= (int)std::round(*state.params.clusterThickness); i++)
                 {
                     slimCluster.addIfNotAlreadyThere(clusterNotes.getUnchecked(i));
                 }
@@ -749,7 +749,7 @@ bool SynchronicProcessor::updateCurrentCluster()
         clusterLayers[currentLayerIndex]->reset();
 
         // turn off oldest cluster
-        int oldestClusterIndex = currentLayerIndex - *state.params.numLayers;
+        int oldestClusterIndex = currentLayerIndex - (int)std::round(*state.params.numLayers);
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
 
