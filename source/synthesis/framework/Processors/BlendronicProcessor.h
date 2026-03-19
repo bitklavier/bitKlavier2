@@ -232,6 +232,7 @@ public:
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), true)
             .withInput ("Input", juce::AudioChannelSet::stereo(), true)
+            .withInput ("Send Pad", juce::AudioChannelSet::stereo(), true)  // Padding: absorbs Send output channels so Modulation starts at inputChan >= numOuts (gets read-only zero buffer)
 
             /**
              * IMPORTANT: set discreteChannels here equal to the number of params you want to continuously modulate!!

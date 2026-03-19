@@ -23,6 +23,7 @@
 #include "PluginScannerSubprocess.h"
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_core/juce_core.h>
+#include <cstdlib>
 void handleBitklavierCrash (void* data)
 {
     //LoadSave::writeCrashLog(juce::SystemStats::getStackBacktrace());

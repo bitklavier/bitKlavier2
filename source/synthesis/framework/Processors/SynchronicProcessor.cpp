@@ -394,7 +394,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
             //check to see if enough time has passed for next beat
             if (cluster->getPhasor() >= numSamplesBeat)
             {
-                DBG("phasor = " << cluster->getPhasor() << ", numSamplesBeat = " << numSamplesBeat);
+                // DBG("phasor = " << cluster->getPhasor() << ", numSamplesBeat = " << numSamplesBeat);
                 // if patternSync has been set by a target message, reset the phase of all the counters
                 if (cluster->doPatternSync)
                 {
@@ -753,8 +753,8 @@ bool SynchronicProcessor::updateCurrentCluster()
         while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         clusterLayers[oldestClusterIndex]->reset();
 
-        DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
-        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        // DBG("num layers = " + juce::String(static_cast<int>(*state.params.numLayers)));
+        // DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }

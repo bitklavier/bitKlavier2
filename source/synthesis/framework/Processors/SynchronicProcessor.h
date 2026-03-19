@@ -219,8 +219,7 @@ struct SynchronicParams : chowdsp::ParamHolder
         juce::ParameterID{"noteOnGain", 100},
         "NoteOn Gain Scalar",
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
-        0.0f,
-        true};
+        0.0f};
 
     // the two min/max params
     ClusterMinMaxParams clusterMinMaxParams;
@@ -401,8 +400,12 @@ class SynchronicCluster
                 beatMultiplierCounter = 0;
         }
 
-        //DBG("numPulses = " << *_sparams->numPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << (int)*_sparams->skipFirst);
-        if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - *_sparams->skipFirst))
+        int maxPulses = (int) std::round(*_sparams->numPulses);
+        int skipOffset = *_sparams->skipFirst ? 1 : 0;
+        DBG("maxPulses = " << maxPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << skipOffset);
+
+        // if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - skipOffset))
+        if (++beatCounter > (maxPulses - skipOffset))
         {
             shouldPlay = false;
         }
@@ -626,7 +629,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     {
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
-            .withInput("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+            .withInput("Input", juce::AudioChannelSet::stereo(), true)    // Main Input (not used for audio, but must be enabled to keep Modulation bus off channel 0)
+            .withInput("Send Pad", juce::AudioChannelSet::stereo(), true)  // Padding: absorbs Send output channels so Modulation starts at inputChan >= numOuts (gets read-only zero buffer)
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
@@ -634,7 +638,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
              *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
              *                  - the main params: numPulses, numLayers, clusterThickness, clusterThreshold, OutputSendParam, outputGain,
              */
-            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10 * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10  * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(), false)             // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send", juce::AudioChannelSet::stereo(), true);                 // Send channel (right outputs)
     }

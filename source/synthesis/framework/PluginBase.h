@@ -30,9 +30,9 @@ namespace bitklavier {
         InternalProcessor() : juce::AudioProcessor() {
         }
 
-        #if JUCE_DEBUG
-        juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
-        #endif
+        // #if JUCE_DEBUG
+        // juce::ScopedPointer<BufferDebugger> bufferDebugger = new BufferDebugger();
+        // #endif
 
         virtual void setTuning(TuningProcessor *tun) {
             tuning = tun;
@@ -213,10 +213,10 @@ namespace bitklavier {
                 p->applyMonophonicModulation(*in);
                 parent.getParamOffsetBank().setOffset(p->getParamOffsetIndex(), p->getCurrentValue());
                 p->applyMonophonicModulation(*in + *in_continous);
-                #if JUCE_DEBUG
-                bufferDebugger->capture("m"+juce::String(channel) + "    " + p->getParameterID(), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
-                bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)) + " " + p->getParameterID(), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
-                #endif
+                // #if JUCE_DEBUG
+                // bufferDebugger->capture("m"+juce::String(channel) + "    " + p->getParameterID(), modBus.getReadPointer(channel), modBus.getNumSamples(), -1.f, 1.f);
+                // bufferDebugger->capture("mc"+juce::String(channel + (numInputChannels/2)) + " " + p->getParameterID(), modBus.getReadPointer(channel + (numInputChannels/2)), modBus.getNumSamples(), -1.f, 1.f);
+                // #endif
             }
         }
 

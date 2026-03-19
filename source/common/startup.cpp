@@ -15,16 +15,21 @@
  */
 
 #include "startup.h"
+#include <cstdlib>
+#include <juce_core/juce_core.h>
+
+#if JUCE_MAC && DEBUG
+struct MacOSLogSilencer {
+    MacOSLogSilencer() {
+        setenv("OS_ACTIVITY_MODE", "disable", 1);
+    }
+};
+static MacOSLogSilencer silence;
+#endif
+
 //#include "synth_base.h"
 
 void Startup::doStartupChecks(/*MidiManager* midi_manager*/) {
-
-
-
-
-
-
-
 }
 
 bool Startup::isComputerCompatible() {
