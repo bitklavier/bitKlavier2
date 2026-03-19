@@ -413,24 +413,38 @@ void SynthGuiInterface::saveCurrentGallery()
         return;
     }
 
-    // Protect the default "Basic Piano" from accidental overwrite with Cmd+S
-    // Detect the known installed location in the user's Documents/bitKlavier/galleries
-    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
-                    .getChildFile("Documents")
-                    .getChildFile("bitKlavier")
-                    .getChildFile("galleries");
-    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    // Protect built-in/read-only galleries from accidental overwrite with Cmd+S.
+    auto galleries = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                         .getChildFile("Documents")
+                         .getChildFile("bitKlavier")
+                         .getChildFile("galleries");
 
-    const auto activePath = active.getFullPathName();
-    if (activePath == basicA.getFullPathName()
-        || activePath == basicB.getFullPathName()
-        || activePath == basicC.getFullPathName())
+    // Basic Piano is a file directly in galleries/
+    juce::File basicPiano = galleries.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    if (active == basicPiano)
     {
-        // Use Save As so the default preset isn't overwritten
         openSaveDialog();
         return;
+    }
+
+    // These are folders; any file inside them is protected
+    static const juce::StringArray kProtectedFolders {
+        "1. Examples",
+        "2. Nostalgic Synchronic",
+        "3. Mikroetudes",
+        "4. Machines for Listening",
+        "5. bK commissions",
+        "6. Preludes"
+    };
+
+    const auto activeParent = active.getParentDirectory();
+    for (const auto& folder : kProtectedFolders)
+    {
+        if (activeParent == galleries.getChildFile(folder))
+        {
+            openSaveDialog();
+            return;
+        }
     }
 
     // Otherwise save to the currently active file

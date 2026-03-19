@@ -1046,22 +1046,38 @@ void HeaderSection::saveCurrentGallery()
         return;
     }
 
-    // Protect the default "Basic Piano" preset from being overwritten by Save (Cmd+S)
-    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
-                    .getChildFile("Documents")
-                    .getChildFile("bitKlavier")
-                    .getChildFile("galleries");
-    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
-    const auto activePath = activeFile.getFullPathName();
-    if (activePath == basicA.getFullPathName()
-        || activePath == basicB.getFullPathName()
-        || activePath == basicC.getFullPathName())
+    // Protect built-in/read-only galleries from accidental overwrite.
+    auto galleries = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                         .getChildFile("Documents")
+                         .getChildFile("bitKlavier")
+                         .getChildFile("galleries");
+
+    // Basic Piano is a file directly in galleries/
+    juce::File basicPiano = galleries.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    if (activeFile == basicPiano)
     {
-        // Route to Save As instead
         saveGallery();
         return;
+    }
+
+    // These are folders; any file inside them is protected
+    static const juce::StringArray kProtectedFolders {
+        "1. Examples",
+        "2. Nostalgic Synchronic",
+        "3. Mikroetudes",
+        "4. Machines for Listening",
+        "5. bK commissions",
+        "6. Preludes"
+    };
+
+    const auto activeParent = activeFile.getParentDirectory();
+    for (const auto& folder : kProtectedFolders)
+    {
+        if (activeParent == galleries.getChildFile(folder))
+        {
+            saveGallery();
+            return;
+        }
     }
 
     // Delegate save to backend helper which handles sync and file I/O
