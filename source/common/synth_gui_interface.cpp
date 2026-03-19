@@ -398,6 +398,8 @@ void SynthGuiInterface::openSaveDialog()
                 {
                     if (gui_ && gui_->header_ && gui_->header_->gallerySelectText)
                         gui_->header_->gallerySelectText->setText(file.getFileNameWithoutExtension());
+                    if (gui_)
+                        gui_->showSaveNotification();
                 }
             }
         });
@@ -448,7 +450,8 @@ void SynthGuiInterface::saveCurrentGallery()
     }
 
     // Otherwise save to the currently active file
-    synth_->saveToFile(active);
+    if (synth_->saveToFile(active) && gui_)
+        gui_->showSaveNotification();
 }
 
 void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)

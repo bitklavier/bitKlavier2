@@ -1085,6 +1085,13 @@ void HeaderSection::saveCurrentGallery()
     {
         if (gallerySelectText)
             gallerySelectText->setText(activeFile.getFileNameWithoutExtension());
+
+        showPopupDisplay(this, "Saved", juce::BubbleComponent::below, true);
+        juce::Component::SafePointer<HeaderSection> safe(this);
+        juce::Timer::callAfterDelay(1500, [safe]() {
+            if (safe)
+                safe->hidePopupDisplay(true);
+        });
     }
 }
 

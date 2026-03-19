@@ -85,6 +85,7 @@ public :
 
     void popupDisplay(juce::Component* source, const std::string& text,
         juce::BubbleComponent::BubblePlacement placement, bool primary);
+    void showSaveNotification();
 
     void prepDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v );
     void modDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v);

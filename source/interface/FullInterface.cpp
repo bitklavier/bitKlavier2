@@ -322,6 +322,23 @@ void FullInterface::popupDisplay (juce::Component* source, const std::string& te
     display->setVisible (true);
 }
 
+void FullInterface::showSaveNotification()
+{
+    if (header_ == nullptr)
+        return;
+
+    PopupDisplay* display = popup_display_1_.get();
+    juce::Rectangle<int> anchor = getLocalArea (header_.get(), header_->getLocalBounds());
+    display->setContent ("Saved", anchor, juce::BubbleComponent::below);
+    display->setVisible (true);
+
+    juce::Component::SafePointer<FullInterface> safe (this);
+    juce::Timer::callAfterDelay (1500, [safe]() {
+        if (safe)
+            safe->hideDisplay (true);
+    });
+}
+
 void FullInterface::hideSoundsetSelector()
 {
     DBG("FullInterface::hideSoundsetSelector()");

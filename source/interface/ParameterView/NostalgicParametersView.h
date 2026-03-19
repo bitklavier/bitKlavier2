@@ -42,7 +42,7 @@ public:
         // menus
         if (auto* nostalgicParams = dynamic_cast<NostalgicParams*>(&params)) {
             nostalgicTriggeredBy_combo_box = std::make_unique<OpenGLComboBox>(nostalgicParams->nostalgicTriggeredBy->paramID.toStdString());
-            nostalgicTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*nostalgicParams->nostalgicTriggeredBy.get(), listeners, *nostalgicTriggeredBy_combo_box, nullptr);
+            nostalgicTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*nostalgicParams->nostalgicTriggeredBy.get(), listeners, *nostalgicTriggeredBy_combo_box, pluginState.undoManager);
             // disable sync key up/down if synchronic isn't connected
             if (!nparams_.synchronicConnected)
             {
@@ -63,7 +63,7 @@ public:
 
         // key-on reset button
         keyOnReset = std::make_unique<SynthButton>(params.keyOnReset->paramID);
-        keyOnReset_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.keyOnReset, listeners, *keyOnReset, nullptr);
+        keyOnReset_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.keyOnReset, listeners, *keyOnReset, pluginState.undoManager);
         keyOnReset->setComponentID(params.keyOnReset->paramID);
         addSynthButton(keyOnReset.get(), true);
         keyOnReset->setText("key-on reset?");
@@ -74,7 +74,7 @@ public:
         noteLengthMult_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         noteLengthMult_knob->setPopupPlacement(juce::BubbleComponent::below);
         noteLengthMult_knob->setShowPopupOnHover(true);
-        noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, nullptr);
+        noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, pluginState.undoManager);
         noteLengthMult_knob->addAttachment(noteLengthMult_knob_attachment.get());
 
         noteLengthMult_knob_label = std::make_shared<PlainTextComponent>(noteLengthMult_knob->getName(), params.noteLengthMultParam->getName(20));
@@ -86,7 +86,7 @@ public:
         beatsToSkip_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         beatsToSkip_knob->setPopupPlacement(juce::BubbleComponent::below);
         beatsToSkip_knob->setShowPopupOnHover(true);
-        beatsToSkip_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.beatsToSkipParam, listeners, *beatsToSkip_knob, nullptr);
+        beatsToSkip_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.beatsToSkipParam, listeners, *beatsToSkip_knob, pluginState.undoManager);
         beatsToSkip_knob->addAttachment(beatsToSkip_knob_attachment.get());
 
         beatsToSkip_knob_label = std::make_shared<PlainTextComponent>(beatsToSkip_knob->getName(), params.beatsToSkipParam->getName(20));
@@ -98,7 +98,7 @@ public:
         clusterMin_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterMin_knob->setPopupPlacement(juce::BubbleComponent::below);
         clusterMin_knob->setShowPopupOnHover(true);
-        clusterMin_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterMinParam, listeners, *clusterMin_knob, nullptr);
+        clusterMin_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterMinParam, listeners, *clusterMin_knob, pluginState.undoManager);
         clusterMin_knob->addAttachment(clusterMin_knob_attachment.get());
 
         clusterMin_knob_label = std::make_shared<PlainTextComponent>(clusterMin_knob->getName(), params.clusterMinParam->getName(20));
@@ -110,7 +110,7 @@ public:
         clusterThreshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         clusterThreshold_knob->setPopupPlacement(juce::BubbleComponent::below);
         clusterThreshold_knob->setShowPopupOnHover(true);
-        clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshParam, listeners, *clusterThreshold_knob, nullptr);
+        clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshParam, listeners, *clusterThreshold_knob, pluginState.undoManager);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
 
         clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), params.clusterThreshParam->getName(20));
