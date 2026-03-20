@@ -90,6 +90,7 @@ public :
     void prepDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v );
     void modDisplay(std::unique_ptr<SynthSection> synth_section, const juce::ValueTree& v);
     void hideSoundsetSelector();
+    void clearFooterLiveKeys();
 
     std::unique_ptr<SinglePopupSelector> popup_selector_;
     std::unique_ptr<PreparationPopup> prep_popup;

@@ -489,6 +489,8 @@ std::vector<std::string> SynthGuiInterface::getAllPianoNames()
 void SynthGuiInterface::allNotesOff()
 {
     synth_->getEngine()->allNotesOff();
+    if (gui_)
+        gui_->clearFooterLiveKeys();
 }
 
 void SynthGuiInterface::setPianoSwitchTriggerThreadMessage()

@@ -345,6 +345,12 @@ void FullInterface::hideSoundsetSelector()
     prep_popup->hideSoundsetSelector();
 }
 
+void FullInterface::clearFooterLiveKeys()
+{
+    if (footer_)
+        footer_->clearLiveKeys();
+}
+
 void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, const juce::ValueTree &v)
 {
     prep_popup->reset();
