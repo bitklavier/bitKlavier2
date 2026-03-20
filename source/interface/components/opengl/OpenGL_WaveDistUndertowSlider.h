@@ -111,6 +111,21 @@ public:
         // mouseInteraction = false;
     }
 
+    bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override
+    {
+        if (key.isKeyCode (juce::KeyPress::leftKey)
+            || key.isKeyCode (juce::KeyPress::rightKey)
+            || key.isKeyCode (juce::KeyPress::upKey)
+            || key.isKeyCode (juce::KeyPress::downKey)
+            || key.isKeyCode (juce::KeyPress::homeKey)
+            || key.isKeyCode (juce::KeyPress::endKey))
+        {
+            redoImage();
+        }
+
+        return false;
+    }
+
     void mouseUp(const juce::MouseEvent &event) override {
         OpenGlAutoImageComponent<BKWaveDistanceUndertowSlider>::mouseUp(event);
         redoImage();

@@ -77,7 +77,8 @@ class BKMultiSlider :
     public StateModulatedComponent,
     public juce::Slider::Listener,
     public juce::TextEditor::Listener,
-    public juce::ImageButton::Listener
+    public juce::ImageButton::Listener,
+    public juce::KeyListener
 {
 
 public:
@@ -227,6 +228,7 @@ public:
     void textEditorFocusLost(juce::TextEditor& textEditor) override;
     void textEditorTextChanged(juce::TextEditor&) override;
     void buttonClicked(juce::Button* button) override;
+    bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override;
     void showModifyPopupMenu(int which);
     static void sliderModifyMenuCallback (const int result, BKMultiSlider* slider, int which);
 
@@ -299,7 +301,8 @@ public:
 
 class BKStackedSlider : public StateModulatedComponent, // needed for this to be param-state modulatable
                         public juce::Slider::Listener,
-                        public juce::TextEditor::Listener
+                        public juce::TextEditor::Listener,
+                        public juce::KeyListener
 {
 public:
     BKStackedSlider (
@@ -336,6 +339,7 @@ public:
     void mouseUp (const juce::MouseEvent& e) override;
     void mouseMove (const juce::MouseEvent& e) override;
     void mouseDoubleClick (const juce::MouseEvent& e) override;
+    bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override;
 
     inline juce::TextEditor* getTextEditor (void)
     {
@@ -470,7 +474,8 @@ typedef enum BKRangeSliderType {
 
 class BKRangeSlider : public StateModulatedComponent,
                       public juce::Slider::Listener,
-                      public juce::TextEditor::Listener
+                      public juce::TextEditor::Listener,
+                      public juce::KeyListener
 #if JUCE_IOS
     ,
                       public WantsBigOne
@@ -577,6 +582,7 @@ public:
     void textEditorFocusLost (juce::TextEditor& textEditor) override;
     void textEditorEscapeKeyPressed (juce::TextEditor& textEditor) override;
     void textEditorTextChanged (juce::TextEditor& textEditor) override;
+    bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override;
     void resized() override;
     void sliderDragEnded (juce::Slider* slider) override;
     void mouseDown (const juce::MouseEvent& event) override;
@@ -625,7 +631,8 @@ private:
 
 class BKWaveDistanceUndertowSlider : public StateModulatedComponent,
                                     public juce::Slider::Listener,
-                                    public juce::TextEditor::Listener
+                                    public juce::TextEditor::Listener,
+                                    public juce::KeyListener
 
 {
 public:
@@ -646,6 +653,7 @@ public:
     void textEditorFocusLost(juce::TextEditor& textEditor) override;
     void textEditorEscapeKeyPressed (juce::TextEditor& textEditor) override;
     void textEditorTextChanged(juce::TextEditor& textEditor) override;
+    bool keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent) override;
 
     // inline juce::TextEditor* getTextEditor(NostalgicParameterType which)
     // {

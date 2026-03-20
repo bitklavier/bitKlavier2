@@ -409,6 +409,7 @@ BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulat
     editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     editValsTextField->setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     editValsTextField->addListener(this);
+    editValsTextField->addKeyListener(this);
     editValsTextField->addMouseListener(this, false);
     addAndMakeVisible(*editValsTextField);
 
@@ -1174,6 +1175,21 @@ void BKMultiSlider::textEditorTextChanged(juce::TextEditor& tf)
     repaint();
 }
 
+bool BKMultiSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
+}
+
 
 void BKMultiSlider::textEditorFocusLost(juce::TextEditor& textEditor)
 {
@@ -1417,6 +1433,7 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
     undertowValueTF.addMouseListener(this, false);
     undertowValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     undertowValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    undertowValueTF.addKeyListener(this);
     addChildComponent(undertowValueTF);
 
     wavedistanceValueTF.setName("wd");
@@ -1424,6 +1441,7 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
     wavedistanceValueTF.addMouseListener(this, false);
     wavedistanceValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     wavedistanceValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    wavedistanceValueTF.addKeyListener(this);
     addChildComponent(wavedistanceValueTF);
 
     wavedistanceName.setText("wave distance (ms)", juce::dontSendNotification);
@@ -1569,8 +1587,22 @@ void BKWaveDistanceUndertowSlider::textEditorReturnKeyPressed(juce::TextEditor& 
 
 void BKWaveDistanceUndertowSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
-    focusLostByEscapeKey = false;
     repaint();
+}
+
+bool BKWaveDistanceUndertowSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
 }
 
 void BKWaveDistanceUndertowSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
@@ -1654,6 +1686,7 @@ BKStackedSlider::BKStackedSlider(
     editValsTextField->addMouseListener(this, false);
     editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     editValsTextField->setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    editValsTextField->addKeyListener(this);
     addAndMakeVisible(*editValsTextField);
     editValsTextField->setVisible(false);
     setInterceptsMouseClicks(true, true);
@@ -1950,6 +1983,21 @@ void BKStackedSlider::textEditorTextChanged(juce::TextEditor& textEditor)
     repaint();
 }
 
+bool BKStackedSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
+}
+
 void BKStackedSlider::resetRanges()
 {
     double sliderMinTemp = std::min(sliderMin, sliderMinDefault);
@@ -2138,6 +2186,7 @@ StateModulatedComponent(stateDefault),
     minValueTF.setSelectAllWhenFocused(true);
     minValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     minValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    minValueTF.addKeyListener(this);
     addAndMakeVisible(minValueTF);
 
     maxValueTF.setText(juce::String(sliderDefaultMax));
@@ -2148,6 +2197,7 @@ StateModulatedComponent(stateDefault),
     maxValueTF.setJustification(juce::Justification(2));
     maxValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
     maxValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    maxValueTF.addKeyListener(this);
     addAndMakeVisible(maxValueTF);
 
     minSlider.setSliderStyle(juce::Slider::LinearHorizontal);
@@ -2345,8 +2395,22 @@ void BKRangeSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 
 void BKRangeSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
-    focusLostByEscapeKey = false;
     repaint();
+}
+
+bool BKRangeSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
 }
 
 
