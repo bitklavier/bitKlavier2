@@ -331,6 +331,7 @@ class SynchronicCluster
         phasor = 0;
         envelopeCounter = 0;
         shouldPlay = false;
+        cluster.ensureStorageAllocated(128);
     }
 
     ~SynchronicCluster() {}
@@ -371,12 +372,15 @@ class SynchronicCluster
         int envelopeLoopCount = 0;
         while (!_sparams->isEnvelopeActive(envelopeCounter)) // skip untoggled envelopes
         {
-            DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
+            // DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
             envelopeCounter++;
             if (envelopeCounter >= _sparams->numEnvelopes)
                 envelopeCounter = 0;
             if (++envelopeLoopCount >= _sparams->numEnvelopes)
-                break; // all envelopes inactive; use whatever envelopeCounter is at
+            {
+                envelopeCounter = 0;
+                break; // all envelopes inactive, which shouldn't happen...
+            }
         }
     }
 
@@ -405,7 +409,7 @@ class SynchronicCluster
 
         int maxPulses = (int) std::round(*_sparams->numPulses);
         int skipOffset = *_sparams->skipFirst ? 1 : 0;
-        DBG("maxPulses = " << maxPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << skipOffset);
+        // DBG("maxPulses = " << maxPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << skipOffset);
 
         // if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - skipOffset))
         if (++beatCounter > (maxPulses - skipOffset))
@@ -433,8 +437,8 @@ class SynchronicCluster
         cluster.clearQuick();
     }
 
-    inline juce::Array<int> getCluster() { return cluster; }
-    inline void setCluster(juce::Array<int> c) { cluster = c; }
+    inline juce::Array<int>& getCluster() { return cluster; }
+    // inline void setCluster(juce::Array<int> c) { cluster = c; }
     inline void setBeatPhasor(juce::int64 c)
     {
         phasor = c;
@@ -533,8 +537,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
 
         for (int i = 0; i < 128; i++)
         {
-            holdTimers.add(0);
-            clusterVelocities.add(0);
+            holdTimers.set(i, 0);
+            clusterVelocities.set(i, 0);
         }
 
         inCluster = false;

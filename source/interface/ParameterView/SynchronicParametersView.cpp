@@ -80,7 +80,7 @@ void SynchronicParametersView::resized()
     //leftColumn.removeFromTop(smallpadding);
     int leftColumnWidth = leftColumn.getWidth();
 
-    envSection->setBounds(leftColumn.removeFromBottom(knob_section_height * 3));
+    envSection->setBounds(leftColumn.removeFromBottom(knob_section_height * 2.75));
     leftColumn.removeFromBottom(smallpadding);
     clusterMinMaxSlider->setBounds(leftColumn.removeFromBottom(knob_section_height));
     leftColumn.removeFromBottom(smallpadding);

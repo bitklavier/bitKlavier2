@@ -83,10 +83,12 @@ SynchronicProcessor::SynchronicProcessor(SynthBase& parent, const juce::ValueTre
     /*
      * Init Synchronic params
      */
+    holdTimers.ensureStorageAllocated(128);
+    clusterVelocities.ensureStorageAllocated(128);
     for (int i = 0; i < 128; i++)
     {
-        holdTimers.add(0);
-        clusterVelocities.add(0);
+        holdTimers.set(i, 0);
+        clusterVelocities.set(i, 0);
     }
 
     inCluster = false;
@@ -139,8 +141,8 @@ bool SynchronicProcessor::checkClusterMinMax (int clusterNotesSize)
     bool passCluster = false;
 
     //in the normal case, where cluster is within a range defined by clusterMin and Max
-    int sClusterMin = *state.params.clusterMinMaxParams.clusterMinParam;
-    int sClusterMax = *state.params.clusterMinMaxParams.clusterMaxParam;
+    int sClusterMin = (int)std::round(*state.params.clusterMinMaxParams.clusterMinParam);
+    int sClusterMax = (int)std::round(*state.params.clusterMinMaxParams.clusterMaxParam);
     int rescaledMax = state.params.clusterMinMaxParams.clusterMaxParam.get()->getNormalisableRange().end;
 
     // DBG("SynchronicProcessor::checkClusterMinMax, clusterMin = " << sClusterMin << ", clusterMax = " << sClusterMax << ", clusterNotesSize = " << clusterNotesSize);
