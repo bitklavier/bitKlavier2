@@ -1167,8 +1167,17 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     {
         if (e.originalComponent->findParentComponentOfClass<juce::ScrollBar>() != nullptr
             || dynamic_cast<juce::ScrollBar*>(e.originalComponent) != nullptr)
+        {
+            DBG("ConstructionSite::mouseDown - BLOCKED by scrollbar guard, originalComponent: " << e.originalComponent->getName());
             return;
+        }
     }
+
+    DBG("ConstructionSite::mouseDown - originalComponent: "
+        << (e.originalComponent ? e.originalComponent->getName() : juce::String("null"))
+        << "  typeid: " << (e.originalComponent ? juce::String(typeid(*e.originalComponent).name()) : juce::String("null"))
+        << "  left=" << (int)e.mods.isLeftButtonDown()
+        << "  popup=" << (int)e.mods.isPopupMenu());
 
     // if you don't hit a cable, set all cables to be unselected
     cableView.hitTestCables (e.position);
@@ -1177,12 +1186,16 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     if (itemToSelect == nullptr)
         itemToSelect = dynamic_cast<PreparationSection*>(e.originalComponent);
 
+    DBG("ConstructionSite::mouseDown - itemToSelect=" << (itemToSelect ? itemToSelect->getName() : juce::String("null"))
+        << "  cableBeingDragged=" << (int)cableView.cableBeingDragged());
+
     if (e.mods.isLeftButtonDown() && !e.mods.isPopupMenu() && itemToSelect == nullptr) {
         if (!e.mods.isShiftDown())
             preparationSelector.getLassoSelection().deselectAll();
 
         if (!cableView.cableBeingDragged())
         {
+            DBG("ConstructionSite::mouseDown - STARTING LASSO");
             // First, add the lasso to the parent and make it visible.
             // JUCE LassoComponent::beginLasso often asserts if the component is not showing.
             addChildComponent(selectorLasso);
