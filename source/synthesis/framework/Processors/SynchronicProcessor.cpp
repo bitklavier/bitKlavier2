@@ -753,8 +753,13 @@ bool SynchronicProcessor::updateCurrentCluster()
         // turn off oldest cluster
         int oldestClusterIndex = currentLayerIndex - (int)std::round(*state.params.numLayers);
         //while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
-        if (clusterLayers.size() != 0) // should always be != 0
-            oldestClusterIndex = (oldestClusterIndex % clusterLayers.size() + clusterLayers.size()) % clusterLayers.size();
+        if (oldestClusterIndex < 0)
+        {
+            if (clusterLayers.size() > 0) // clusterLayers.size() should always be != 0
+                oldestClusterIndex = (oldestClusterIndex % clusterLayers.size() + clusterLayers.size()) % clusterLayers.size();
+            else
+                oldestClusterIndex = 0;
+        }
 
         clusterLayers[oldestClusterIndex]->reset();
 
