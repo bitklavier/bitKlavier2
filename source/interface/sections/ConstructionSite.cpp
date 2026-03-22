@@ -1198,6 +1198,8 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
             lassoVisual->setVisible(true);
             lassoVisual->setBounds(selectorLasso.getBounds());
             lassoVisual->redrawImage(true);
+            DBG("ConstructionSite::mouseDown - lasso started, visible=" << (int)selectorLasso.isVisible()
+                << " hasParent=" << (int)(selectorLasso.getParentComponent() != nullptr));
         }
     } else if (itemToSelect != nullptr && !e.mods.isPopupMenu()) {
         if (e.mods.isShiftDown())
@@ -1447,9 +1449,12 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
     if (e.mods.isRightButtonDown())
         return;
 
+    DBG("ConstructionSite::mouseDrag - lassoVisible=" << (int)selectorLasso.isVisible()
+        << " hasParent=" << (int)(selectorLasso.getParentComponent() != nullptr));
+
     if (selectorLasso.isVisible())
     {
-        // DBG("ConstructionSite::mouseDrag - dragging lasso");
+        DBG("ConstructionSite::mouseDrag - dragging lasso, pos=" << e.getPosition().toString());
         selectorLasso.toFront(false);
         selectorLasso.dragLasso(e);
         selectorLasso.repaint();
