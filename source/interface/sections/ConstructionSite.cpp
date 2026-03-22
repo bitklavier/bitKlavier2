@@ -1198,8 +1198,6 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
             lassoVisual->setVisible(true);
             lassoVisual->setBounds(selectorLasso.getBounds());
             lassoVisual->redrawImage(true);
-            juce::Logger::writeToLog("mouseDown: lasso started, visible=" + juce::String((int)selectorLasso.isVisible())
-                + " hasParent=" + juce::String((int)(selectorLasso.getParentComponent() != nullptr)));
         }
     } else if (itemToSelect != nullptr && !e.mods.isPopupMenu()) {
         if (e.mods.isShiftDown())
@@ -1449,12 +1447,8 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
     if (e.mods.isRightButtonDown())
         return;
 
-    juce::Logger::writeToLog("mouseDrag: lassoVisible=" + juce::String((int)selectorLasso.isVisible())
-        + " hasParent=" + juce::String((int)(selectorLasso.getParentComponent() != nullptr)));
-
     if (selectorLasso.isVisible())
     {
-        juce::Logger::writeToLog("mouseDrag: dragging lasso, pos=" + e.getPosition().toString());
         selectorLasso.toFront(false);
         selectorLasso.dragLasso(e);
         selectorLasso.repaint();
