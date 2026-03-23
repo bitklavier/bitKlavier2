@@ -328,10 +328,14 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     const juce::XmlElement* params = el.getChildByName ("params");
 
     // numPulses (old: numBeats)
-    float numPulses = 20.0f;
-    float cMin      = 500.0f;
-    int   skipFirst = 1;
-    int   pulseTrig = 1; // 0=NoteOn 1=FirstNoteOn in new format enum
+    float numPulses  = 20.0f;
+    float cMin       = 500.0f;
+    float clusterMin = 1.0f;
+    float clusterMax = 100000.0f;
+    float holdMin    = 0.0f;
+    float holdMax    = 12000.0f;
+    int   skipFirst  = 0;
+    int   pulseTrig  = 0;
     float cThickness = 8.0f;
     float numLayers  = 1.0f;
     float outputGain = 0.0f;
@@ -341,8 +345,11 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         int numBeats = params->getIntAttribute ("numBeats", 20);
         numPulses    = (float) numBeats;
         cMin         = (float) params->getDoubleAttribute ("clusterThresh", 500.0);
+        clusterMin   = (float) params->getDoubleAttribute ("clusterMin", 1.0);
+        clusterMax   = (float) params->getDoubleAttribute ("clusterMax", 100000.0);
+        holdMin      = (float) params->getDoubleAttribute ("holdMin", 0.0);
+        holdMax      = (float) params->getDoubleAttribute ("holdMax", 12000.0);
         int beatsToSkip = params->getIntAttribute ("beatsToSkip", 0);
-        // beatsToSkip < 0 means skip first in old format
         skipFirst    = (beatsToSkip != 0) ? 1 : 0;
         // mode: 0=noteOn driven, 1=firstNoteOn in old; new pulseTriggeredBy: 1=FirstNoteOn
         int mode     = params->getIntAttribute ("mode", 0);
@@ -363,11 +370,11 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     vt.setProperty ("skipFirst",        skipFirst, nullptr);
     vt.setProperty ("UseTuning",        0,         nullptr);
     vt.setProperty ("updateUIState",    0,         nullptr);
-    vt.setProperty ("clustermin",       1.0f,      nullptr);
-    vt.setProperty ("clustermax",       100000.0f, nullptr);
-    vt.setProperty ("LastCluster",      1.0f,      nullptr);
-    vt.setProperty ("holdTimeMinParam", 0.0f,      nullptr);
-    vt.setProperty ("holdTimeMaxParam", 12000.0f,  nullptr);
+    vt.setProperty ("clustermin",       clusterMin, nullptr);
+    vt.setProperty ("clustermax",       clusterMax, nullptr);
+    vt.setProperty ("LastCluster",      1.0f,       nullptr);
+    vt.setProperty ("holdTimeMinParam", holdMin,    nullptr);
+    vt.setProperty ("holdTimeMaxParam", holdMax,    nullptr);
     vt.setProperty ("lastHoldTimeParam",0.0f,      nullptr);
 
     // ADSR (single envelope from params, used for all beats initially)
@@ -431,7 +438,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     vt.setProperty ("releasepower", 0.0f, nullptr);
     vt.setProperty ("hold",  0.0f, nullptr);
     vt.setProperty ("delay", 0.0f, nullptr);
-    vt.setProperty ("notify", 1, nullptr);
+    vt.setProperty ("notify", 0, nullptr);
 
     vt.setProperty ("envelope_sequence_attacks",      seqAttacks,  nullptr);
     vt.setProperty ("envelope_sequence_decays",       seqDecays,   nullptr);
@@ -509,10 +516,6 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         vt.setProperty ("sustain_length_multipliersSliderVals",       toSliderVals (slVals),         nullptr);
         vt.setProperty ("sustain_length_multipliersActiveValsSize",  12,                             nullptr);
         vt.setProperty ("sustain_length_multipliersActiveVals",       padStates12 (slStates),        nullptr);
-        vt.setProperty ("sustain_length_multipliersVals",             slVals,                        nullptr);
-        vt.setProperty ("sustain_length_multipliersSize",             slSize,                        nullptr);
-        vt.setProperty ("sustain_length_multipliersStates",           padStates12NoTrail (slStates), nullptr);
-        vt.setProperty ("sustain_length_multipliersStatesSize",       12,                            nullptr);
     }
 
     // Beat length multipliers (old: beatMultipliers)
@@ -536,10 +539,6 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         vt.setProperty ("beat_length_multipliersSliderVals",       toSliderVals (blVals),         nullptr);
         vt.setProperty ("beat_length_multipliersActiveValsSize",  12,                             nullptr);
         vt.setProperty ("beat_length_multipliersActiveVals",       padStates12 (blStates),        nullptr);
-        vt.setProperty ("beat_length_multipliersVals",             blVals,                        nullptr);
-        vt.setProperty ("beat_length_multipliersSize",             blSize,                        nullptr);
-        vt.setProperty ("beat_length_multipliersStates",           padStates12NoTrail (blStates), nullptr);
-        vt.setProperty ("beat_length_multipliersStatesSize",       12,                            nullptr);
     }
 
     // Transpositions (old: <transpOffsets> with <t0 f0="..." f1="..."/>, <t1 ...>, etc.)
@@ -585,13 +584,9 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     vt.setProperty ("transpositionsSliderVals",       transpVals,        nullptr);
     vt.setProperty ("transpositionsActiveValsSize",  12,                 nullptr);
     vt.setProperty ("transpositionsActiveVals",       transpActiveVals,  nullptr);
-    vt.setProperty ("transpositionsVals",             transpVals,        nullptr);
-    vt.setProperty ("transpositionsSize",             transpSize,        nullptr);
-    vt.setProperty ("transpositionsStates",           transpStates,      nullptr);
-    vt.setProperty ("transpositionsStatesSize",       12,                nullptr);
 
-    vt.setProperty ("holdtimemin", 0.0f,    nullptr);
-    vt.setProperty ("holdtimemax", 22143.0f,nullptr);
+    vt.setProperty ("holdtimemin", holdMin, nullptr);
+    vt.setProperty ("holdtimemax", holdMax, nullptr);
     vt.setProperty ("currentlyEditing", 0.0f, nullptr);
 
     // Envelope flags (which beats are active)
@@ -633,10 +628,10 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     pd.setProperty ("beatlength_multipliersSize",          juce::StringArray::fromTokens (blVals, " ", "").size(), nullptr);
     pd.setProperty ("beatlength_multipliersStates",        padStates12NoTrail (blStates),  nullptr);
     pd.setProperty ("beatlength_multipliersStatesSize",    12,                             nullptr);
-    pd.setProperty ("clustermin",    1.0f,     nullptr);
-    pd.setProperty ("clustermax",    100000.0f,nullptr);
-    pd.setProperty ("holdtimemin",   0.0f,     nullptr);
-    pd.setProperty ("holdtimemax",   22143.0f, nullptr);
+    pd.setProperty ("clustermin",    clusterMin, nullptr);
+    pd.setProperty ("clustermax",    clusterMax, nullptr);
+    pd.setProperty ("holdtimemin",   holdMin,    nullptr);
+    pd.setProperty ("holdtimemax",   holdMax,    nullptr);
     vt.addChild (pd, -1, nullptr);
 
     // PORTs

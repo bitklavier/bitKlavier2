@@ -315,45 +315,15 @@ void ResonanceBKSynthesiser::renderNextBlock (juce::AudioBuffer<float>& outputAu
     // Step 3: Update someVoicesActive
     //--------------------------------------------------------------------------
     someVoicesActive = false;
-    int activeVoiceCount = 0;
     for (auto* v : voices)
     {
         if (v->isVoiceActive())
-        {
             someVoicesActive = true;
-            ++activeVoiceCount;
-        }
     }
 
-    int activeGraveyardCount = 0;
-    int graveyardEnvNonZero  = 0;
     for (auto* v : graveyardVoices)
     {
         if (v->isVoiceActive())
-        {
             someVoicesActive = true;
-            ++activeGraveyardCount;
-            if (v->getAmpEnvValue() > 0.0f) ++graveyardEnvNonZero;
-        }
-    }
-
-    // Immediate diagnostic whenever graveyard count changes
-    static int lastGraveyardCount = 0;
-    if (activeGraveyardCount != lastGraveyardCount)
-    {
-        lastGraveyardCount = activeGraveyardCount;
-        DBG ("ResonanceBKSynthesiser step3: activeVoices=" + juce::String (activeVoiceCount)
-             + " graveyardActive=" + juce::String (activeGraveyardCount)
-             + " graveyardEnvNonZero=" + juce::String (graveyardEnvNonZero));
-    }
-
-    // Periodic diagnostic: print active voice counts every ~500 blocks
-    static int diagBlockCounter = 0;
-    if (++diagBlockCounter >= 500)
-    {
-        diagBlockCounter = 0;
-        DBG ("ResonanceBKSynthesiser: activeVoices=" + juce::String (activeVoiceCount)
-             + " graveyardActive=" + juce::String (activeGraveyardCount)
-             + " totalVoices=" + juce::String (voices.size()));
     }
 }
