@@ -91,7 +91,7 @@ class BKSynthesiser
                 /** Removes and deletes one of the sounds. */
 //                void removeSound (int index);
 
-                void addSoundSet(juce::ReferenceCountedArray<BKSynthesiserSound>*);
+                void addSoundSet(juce::ReferenceCountedArray<BKSynthesiserSound>*, int numVoices = 300);
                 //==============================================================================
                 /** If set to true, then the mainSynth will try to take over an existing voice if
                     it runs out and needs to play another note.
@@ -372,6 +372,18 @@ protected:
 
                 juce::OwnedArray< BKSynthesiserVoice> voices;
 
+                /** Pre-allocated pool of voices used to fade out stolen notes click-free.
+                    Populated in addSoundSet() with the same voice type as the main pool.
+                    Never steal-targeted; rendered alongside regular voices.
+                */
+                static constexpr int kGraveyardSize = 128;
+                juce::OwnedArray<BKSynthesiserVoice> graveyardVoices;
+
+                /** Returns the first graveyard slot that is not currently active,
+                    or nullptr if all 32 slots are busy (extremely rare).
+                */
+                BKSynthesiserVoice* findFreeGraveyardSlot() const noexcept;
+
                 juce::ReferenceCountedArray<BKSynthesiserSound>* sounds;
 
                 // juce::ReferenceCountedArray<BKSamplerSound<SFZRegion>>* soundfont_sounds;
@@ -387,6 +399,11 @@ protected:
 
                 // becomes false when there are no voices active; protected so subclasses can update it
                 bool someVoicesActive = true;
+
+                /** Set at the start of each noteOn transposition loop so findVoiceToSteal
+                    can avoid stealing voices started in the same burst (they have noteOnTime
+                    >= currentNoteOnBurstStart and haven't rendered yet). */
+                juce::uint32 currentNoteOnBurstStart = 0;
 
 
                 /** Searches through the voices to find one that's not currently playing, and

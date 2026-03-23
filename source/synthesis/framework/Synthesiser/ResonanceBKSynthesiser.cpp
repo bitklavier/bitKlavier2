@@ -136,9 +136,15 @@ BKSynthesiserVoice* ResonanceBKSynthesiser::findVoiceToSteal (BKSynthesiserSound
         top = nullptr;
 
     // Single linear pass: track the best candidate in each priority tier.
-    BKSynthesiserVoice* oldestReleased  = nullptr; // released (no key/pedal)
-    BKSynthesiserVoice* oldestNoFinger  = nullptr; // key up but still sounding
-    BKSynthesiserVoice* oldestUnprotected = nullptr; // any non-protected voice
+    // In the MT path, voices set up in the current MIDI-processing step have not
+    // yet rendered (envelopeVal == 0). Stealing them produces a silent graveyard
+    // slot that dies instantly. We therefore add an extra "unrendered" tier below
+    // the normal tiers — use those only as a last resort, and they get hard-cut
+    // in startVoice (no graveyard needed for a silent voice).
+    BKSynthesiserVoice* oldestReleased    = nullptr; // released (no key/pedal)
+    BKSynthesiserVoice* oldestNoFinger    = nullptr; // key up but still sounding
+    BKSynthesiserVoice* oldestUnprotected = nullptr; // any non-protected, rendered voice
+    BKSynthesiserVoice* oldestUnrendered  = nullptr; // not yet rendered (envVal == 0)
 
     for (auto* voice : voices)
     {
@@ -153,6 +159,20 @@ BKSynthesiserVoice* ResonanceBKSynthesiser::findVoiceToSteal (BKSynthesiserSound
 
         if (voice == low || voice == top)
             continue;
+
+        // Skip voices started in the same noteOn burst — they haven't rendered yet
+        // and stealing them produces a silent graveyard slot. They are inaudible
+        // so a hard-cut is fine; the caller (startVoice) will detect envVal==0.
+        const bool startedThisBurst = (voice->noteOnTime >= currentNoteOnBurstStart);
+        const bool hasRendered = (voice->getAmpEnvValue() > 0.0f);
+
+        if (startedThisBurst || !hasRendered)
+        {
+            // Unrendered or started this burst — lowest priority, any is fine
+            if (oldestUnrendered == nullptr || voice->wasStartedBefore (*oldestUnrendered))
+                oldestUnrendered = voice;
+            continue;
+        }
 
         if (voice->isPlayingButReleased())
         {
@@ -173,6 +193,7 @@ BKSynthesiserVoice* ResonanceBKSynthesiser::findVoiceToSteal (BKSynthesiserSound
     if (oldestReleased    != nullptr) return oldestReleased;
     if (oldestNoFinger    != nullptr) return oldestNoFinger;
     if (oldestUnprotected != nullptr) return oldestUnprotected;
+    if (oldestUnrendered  != nullptr) return oldestUnrendered;
 
     // Only protected voices remain — steal top first, then low.
     jassert (low != nullptr);
@@ -233,11 +254,17 @@ void ResonanceBKSynthesiser::renderNextBlock (juce::AudioBuffer<float>& outputAu
     const juce::ScopedLock sl (lock);
 
     //--------------------------------------------------------------------------
-    // Step 1: Render all currently-active voices in parallel for the full block.
-    // We do this before processing MIDI so that voices triggered in this block
-    // will be heard on the next block — acceptable for a sympathetic resonance
-    // synth where per-sample MIDI accuracy is not critical.
+    // Step 1: Render all currently-active voices in parallel.
+    // This runs BEFORE MIDI so that when stealing occurs in step 2, existing
+    // voices already have envVal > 0 and can be properly graveyard-faded.
+    // Voices started in step 2 will render on the next block — one block of
+    // latency is acceptable for sympathetic resonance.
     //--------------------------------------------------------------------------
+
+    // Render active graveyard slots on the main thread.
+    for (auto* v : graveyardVoices)
+        if (v->isVoiceActive())
+            v->renderNextBlock (outputAudio, startSample, numSamples);
 
     const int totalVoices = voices.size();
 
@@ -271,9 +298,9 @@ void ResonanceBKSynthesiser::renderNextBlock (juce::AudioBuffer<float>& outputAu
             outputAudio.addFrom (ch, startSample, scratchBuffers[w], ch, startSample, numSamples);
 
     //--------------------------------------------------------------------------
-    // Step 2: Process all MIDI events in the block to update voice state.
-    // This mirrors the MIDI-handling loop in processNextBlock() but without
-    // any calls to renderVoices().
+    // Step 2: Process all MIDI events. Voices started here render next block.
+    // Because step 1 already rendered existing voices, they now have envVal > 0
+    // and will be properly graveyard-faded if stolen during this MIDI pass.
     //--------------------------------------------------------------------------
     for (const auto& meta : inputMidi)
     {
@@ -288,12 +315,45 @@ void ResonanceBKSynthesiser::renderNextBlock (juce::AudioBuffer<float>& outputAu
     // Step 3: Update someVoicesActive
     //--------------------------------------------------------------------------
     someVoicesActive = false;
+    int activeVoiceCount = 0;
     for (auto* v : voices)
     {
         if (v->isVoiceActive())
         {
             someVoicesActive = true;
-            break;
+            ++activeVoiceCount;
         }
+    }
+
+    int activeGraveyardCount = 0;
+    int graveyardEnvNonZero  = 0;
+    for (auto* v : graveyardVoices)
+    {
+        if (v->isVoiceActive())
+        {
+            someVoicesActive = true;
+            ++activeGraveyardCount;
+            if (v->getAmpEnvValue() > 0.0f) ++graveyardEnvNonZero;
+        }
+    }
+
+    // Immediate diagnostic whenever graveyard count changes
+    static int lastGraveyardCount = 0;
+    if (activeGraveyardCount != lastGraveyardCount)
+    {
+        lastGraveyardCount = activeGraveyardCount;
+        DBG ("ResonanceBKSynthesiser step3: activeVoices=" + juce::String (activeVoiceCount)
+             + " graveyardActive=" + juce::String (activeGraveyardCount)
+             + " graveyardEnvNonZero=" + juce::String (graveyardEnvNonZero));
+    }
+
+    // Periodic diagnostic: print active voice counts every ~500 blocks
+    static int diagBlockCounter = 0;
+    if (++diagBlockCounter >= 500)
+    {
+        diagBlockCounter = 0;
+        DBG ("ResonanceBKSynthesiser: activeVoices=" + juce::String (activeVoiceCount)
+             + " graveyardActive=" + juce::String (activeGraveyardCount)
+             + " totalVoices=" + juce::String (voices.size()));
     }
 }

@@ -187,4 +187,5 @@ void FooterSection::clearKeymapDisplay()
 void FooterSection::clearLiveKeys()
 {
     keyboard_component_->clearAllLiveKeys();
+    keyboard_component_->clearAllKeyStates();
 }

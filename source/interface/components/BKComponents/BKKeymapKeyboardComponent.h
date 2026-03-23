@@ -193,6 +193,12 @@ public:
         keyboard_.clearAllLiveKeys();
     }
 
+    virtual void clearAllKeyStates()
+    {
+        keyboard_state_.setAllKeysState(false);
+        keyboard_.repaint();
+    }
+
     // Keymap selection display overlay (orange) — separate from live MIDI (red)
     virtual void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
     {

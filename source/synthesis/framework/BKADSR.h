@@ -107,6 +107,9 @@ public:
     /** Returns true if the envelope is in its attack, decay, sustain or release stage. */
     bool isActive() const noexcept                    { return state != State::idle; }
 
+    /** Returns the current envelope amplitude (for diagnostics). */
+    float getCurrentValue() const noexcept            { return envelopeVal; }
+
     //==============================================================================
     /** Sets the sample rate that will be used for the envelope.
 
@@ -166,6 +169,29 @@ public:
             {
                 reset();
             }
+        }
+    }
+
+    /** Forces the envelope immediately into a release with the given time,
+        regardless of current state.  Used by the graveyard steal mechanism to
+        ensure a fast, click-free fade even when the envelope is already
+        in release with a different (possibly slower) rate.
+    */
+    void forceRelease (float releaseTimeSeconds) noexcept
+    {
+        if (state == State::idle) return;
+
+        // envelopeVal represents the current output amplitude.
+        // Compute a release rate that decays from envelopeVal to zero
+        // in exactly releaseTimeSeconds.
+        if (releaseTimeSeconds > 0.0f && envelopeVal > 0.0f)
+        {
+            releaseRate = envelopeVal / (releaseTimeSeconds * (float) sampleRate);
+            state = State::release;
+        }
+        else
+        {
+            reset();
         }
     }
 

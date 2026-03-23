@@ -124,6 +124,12 @@ public:
         needsRedo_ = true;
     }
 
+    void clearAllKeyStates() override
+    {
+        BKKeymapKeyboardComponent::clearAllKeyStates();
+        needsRedo_ = true;
+    }
+
     void setKeymapDisplayKeyState (int midiNoteNumber, bool isDown)
     {
         if (midiNoteNumber >= 0 && midiNoteNumber < 128)

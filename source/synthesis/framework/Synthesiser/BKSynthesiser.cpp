@@ -72,7 +72,7 @@ void BKSynthesiser::removeVoice (const int index)
     voices.remove (index);
 }
 
-void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>* s)
+void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>* s, int numVoices)
 {
     if(s == nullptr) {
         sounds = nullptr;
@@ -81,26 +81,74 @@ void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>
     const juce::ScopedLock sl (lock);
 
     voices.clearQuick (false);
+    graveyardVoices.clearQuick (false);
+
     if (s->getFirst() != nullptr)
     {
-        for (int i = 0; i < 300; i++)
+        const bool isSFZ = (s->getFirst()->getSoundSampleType() == SoundSampleType::SFZ);
+
+        for (int i = 0; i < numVoices; i++)
         {
-            if (s->getFirst()->getSoundSampleType() == SoundSampleType::SFZ)
+            if (isSFZ)
             {
                 auto* v = new BKSamplerVoice<SFZRegion>();
                 v->setTuning (tuning);
+                v->setCurrentPlaybackSampleRate (sampleRate);
                 voices.add (v);
             }
             else
             {
                 auto* v = new BKSamplerVoice<juce::AudioFormatReader>();
                 v->setTuning (tuning);
+                v->setCurrentPlaybackSampleRate (sampleRate);
                 voices.add (v);
+            }
+        }
+
+        for (int i = 0; i < kGraveyardSize; i++)
+        {
+            if (isSFZ)
+            {
+                auto* v = new BKSamplerVoice<SFZRegion>();
+                v->setTuning (tuning);
+                v->setCurrentPlaybackSampleRate (sampleRate);
+                graveyardVoices.add (v);
+            }
+            else
+            {
+                auto* v = new BKSamplerVoice<juce::AudioFormatReader>();
+                v->setTuning (tuning);
+                v->setCurrentPlaybackSampleRate (sampleRate);
+                graveyardVoices.add (v);
             }
         }
     }
     sounds = s;
 }
+
+BKSynthesiserVoice* BKSynthesiser::findFreeGraveyardSlot() const noexcept
+{
+    if (graveyardVoices.isEmpty())
+    {
+        DBG ("BKSynthesiser::findFreeGraveyardSlot: graveyardVoices is EMPTY!");
+        return nullptr;
+    }
+
+    BKSynthesiserVoice* oldest = nullptr;
+    for (auto* v : graveyardVoices)
+    {
+        if (! v->isVoiceActive())
+            return v;   // ideal: completely free slot
+        // track the oldest active graveyard slot as a fallback
+        if (oldest == nullptr || v->wasStartedBefore (*oldest))
+            oldest = v;
+    }
+    // All slots busy — return the oldest (most-faded) one as a last resort.
+    // The caller will overwrite it, causing a minor pop, but this is rare.
+    DBG ("BKSynthesiser: all graveyard slots busy, reusing oldest");
+    return oldest;
+}
+
 //
 //void BKSynthesiser::clearSounds()
 //{
@@ -143,6 +191,9 @@ void BKSynthesiser::setCurrentPlaybackSampleRate (const double newRate)
         sampleRate = newRate;
 
         for (auto* voice : voices)
+            voice->setCurrentPlaybackSampleRate (newRate);
+
+        for (auto* voice : graveyardVoices)
             voice->setCurrentPlaybackSampleRate (newRate);
     }
 }
@@ -242,6 +293,15 @@ void BKSynthesiser::renderVoices (juce::AudioBuffer<float>& buffer, int startSam
         voice->renderNextBlock (buffer, startSample, numSamples);
         if (voice->isVoiceActive())
             someVoicesActive = true;
+    }
+
+    for (auto* voice : graveyardVoices)
+    {
+        if (voice->isVoiceActive())
+        {
+            voice->renderNextBlock (buffer, startSample, numSamples);
+            someVoicesActive = true;
+        }
     }
 }
 
@@ -394,7 +454,12 @@ void BKSynthesiser::noteOn (const int midiChannel,
      * shouldn't happen for reasonably small blocks and actual humans
      */
     if (midiChannel != (*noteOnSpecs)[midiNoteNumber].channel)
+    {
+        DBG ("BKSynthesiser::noteOn DROPPED ch=" + juce::String (midiChannel)
+             + " note=" + juce::String (midiNoteNumber)
+             + " specCh=" + juce::String ((*noteOnSpecs)[midiNoteNumber].channel));
         return;
+    }
 
     /**
      * mute instruments with gain turned all the way down
@@ -439,7 +504,10 @@ void BKSynthesiser::noteOn (const int midiChannel,
         */
         for (auto* voice : voices)
             if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
+            {
+                // DBG("BKSynthesiser::noteOn, stopping voice " << voice->getCurrentlyPlayingNote() << " for midiNoteNumber " << midiNoteNumber);
                 stopVoice (voice, 1.0f, true);
+            }
     }
 
     /**
@@ -447,6 +515,12 @@ void BKSynthesiser::noteOn (const int midiChannel,
      *      as set by currentTransposition sliders in Direct/Nostalgic/Synchronic.
      *      iterate through each currentTransposition here, but they are all tracked by the same original midiNoteNumber
      */
+    DBG ("BKSynthesiser::noteOn note=" + juce::String(midiNoteNumber) + " ch=" + juce::String(midiChannel)
+         + " transpositions=" + juce::String((*noteOnSpecs)[midiNoteNumber].transpositions.size())
+         + " activeVoices=" + juce::String([this]{ int n=0; for(auto* v:voices) if(v->isVoiceActive()) ++n; return n; }()));
+    // Record the counter value before the burst so findVoiceToSteal can protect
+    // voices started in this same noteOn call (they haven't rendered yet).
+    currentNoteOnBurstStart = lastNoteOnCounter + 1;
     for (auto transp : (*noteOnSpecs)[midiNoteNumber].transpositions)
     {
         /*
@@ -513,7 +587,44 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
     //if (voice != nullptr && sound != nullptr)
     {
         if (voice->currentlyPlayingSound != nullptr)
-            voice->stopNote (0.0f, false);
+        {
+            auto* graveyardSlot = findFreeGraveyardSlot();
+
+            // Only use the graveyard if the voice has audible amplitude to fade out.
+            // Voices stolen before their first render block (envelopeVal == 0) are
+            // silent — just hard-stop them, no graveyard slot needed.
+            const float sourceEnvVal = voice->getAmpEnvValue();
+            if (graveyardSlot != nullptr && sourceEnvVal > 0.001f)
+            {
+                // If the slot was still active (oldest-slot fallback), hard-stop it first
+                // so copyStateTo starts from a clean slate.
+                if (graveyardSlot->isVoiceActive())
+                    graveyardSlot->stopNote (0.0f, false);
+
+                // Snapshot the full mid-sustain state BEFORE touching the voice,
+                // so the graveyard slot gets the live ADSR level, not the release state.
+                voice->copyStateTo (graveyardSlot);
+
+                // Force the graveyard slot into a 3ms release from its current
+                // amplitude, regardless of what state the ADSR was in.
+                // forceRelease() updates the releaseRate even when the ADSR is
+                // already in release (unlike the normal noteOff() guard).
+                // Then stopNote(true) sets tailOff without overwriting the rate.
+                DBG ("startVoice: graveyard steal, slotActive=" + juce::String ((int) graveyardSlot->isVoiceActive())
+                     + " envVal=" + juce::String (sourceEnvVal, 3));
+                graveyardSlot->forceAmpEnvRelease (0.003f);
+                graveyardSlot->stopNote (0.0f, true);
+
+                // Hard-stop the original — the slot handles the fade.
+                voice->stopNote (0.0f, false);
+            }
+            else
+            {
+                // Voice is silent (envVal near 0) or no graveyard slot — hard cut.
+                DBG ("startVoice: hard cut, envVal=" + juce::String (sourceEnvVal, 3));
+                voice->stopNote (0.0f, false);
+            }
+        }
 
         voice->setGain (juce::Decibels::decibelsToGain (synthGain.getCurrentValue()) * transpositionGain);
         voice->currentlyPlayingNote = midiNoteNumber;
@@ -583,7 +694,12 @@ void BKSynthesiser::noteOff (const int midiChannel,
         return;
 
     if (midiChannel != (*noteOnSpecs)[midiNoteNumber].channel)
+    {
+        DBG ("BKSynthesiser::noteOff DROPPED ch=" + juce::String (midiChannel)
+             + " note=" + juce::String (midiNoteNumber)
+             + " specCh=" + juce::String ((*noteOnSpecs)[midiNoteNumber].channel));
         return;
+    }
 
     /**
      * go through all voices that were triggered by this particular midiNoteNumber and turn them off
@@ -782,7 +898,10 @@ BKSynthesiserVoice* BKSynthesiser::findFreeVoice (BKSynthesiserSound* soundToPla
             return voice;
 
     if (stealIfNoneAvailable)
+    {
+        DBG("BKSynthesiser::findFreeVoice -- stealing voice!");
         return findVoiceToSteal (soundToPlay, midiChannel, midiNoteNumber);
+    }
 
     return nullptr;
 }

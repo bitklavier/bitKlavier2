@@ -522,7 +522,8 @@ public:
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
-        resonanceSynth->addSoundSet (s);
+        static constexpr int kResonanceMaxVoices = 256;
+        resonanceSynth->addSoundSet (s, kResonanceMaxVoices);
     }
 
     void setA4Frequency(float freq)

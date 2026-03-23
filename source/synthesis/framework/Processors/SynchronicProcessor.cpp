@@ -763,8 +763,8 @@ bool SynchronicProcessor::updateCurrentCluster()
 
         clusterLayers[oldestClusterIndex]->reset();
 
-        DBG("num layers = " + juce::String((int)std::round(*state.params.numLayers)));
-        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        // DBG("num layers = " + juce::String((int)std::round(*state.params.numLayers)));
+        // DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }

@@ -233,13 +233,29 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     bool isEnvelopeActive(int which)
     {
-        for (auto& _ep : *envelopeSequence.getBoolParams())
-        {
-            //"envelope10"
-            if (_ep->getParameterID() == "envelope" + juce::String(which))
-            {
-                return *_ep;
-            }
+        // for (auto& _ep : *envelopeSequence.getBoolParams())
+        // {
+        //     //"envelope10"
+        //     if (_ep->getParameterID() == "envelope" + juce::String(which))
+        //     {
+        //         return *_ep;
+        //     }
+        // }
+
+        switch(which) {
+            case 0:  return *envelopeSequence.envelope0;
+            case 1:  return *envelopeSequence.envelope1;
+            case 2:  return *envelopeSequence.envelope2;
+            case 3:  return *envelopeSequence.envelope3;
+            case 4:  return *envelopeSequence.envelope4;
+            case 5:  return *envelopeSequence.envelope5;
+            case 6:  return *envelopeSequence.envelope6;
+            case 7:  return *envelopeSequence.envelope7;
+            case 8:  return *envelopeSequence.envelope8;
+            case 9:  return *envelopeSequence.envelope9;
+            case 10:  return *envelopeSequence.envelope10;
+            case 11:  return *envelopeSequence.envelope11;
+            default: return false;
         }
     }
 
@@ -329,6 +345,11 @@ class SynchronicCluster
     SynchronicCluster(SynchronicParams* inparams) : _sparams(inparams)
     {
         phasor = 0;
+        beatCounter = 0;
+        beatMultiplierCounter = 0;
+        accentMultiplierCounter = 0;
+        lengthMultiplierCounter = 0;
+        transpCounter = 0;
         envelopeCounter = 0;
         shouldPlay = false;
         cluster.ensureStorageAllocated(128);
@@ -524,7 +545,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
-        synchronicSynth->addSoundSet (s);
+        static constexpr int kSynchronicMaxVoices = 128; // might want to increase this to 128
+        synchronicSynth->addSoundSet (s, kSynchronicMaxVoices);
     }
 
     void allNotesOff()

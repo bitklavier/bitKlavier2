@@ -190,13 +190,15 @@ public:
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     override {
-        mainSynth->addSoundSet(s);
+        static constexpr int kDirectMaxVoices = 128; // 10 fingers * 10 transpositions + some....
+        static constexpr int kDirectReleaseSynthVoices = 32; // probably don't need this many for hammers and so on, but not a big deal
+        mainSynth->addSoundSet(s, kDirectMaxVoices);
         state.params.hammerLoaded->setParameterValue( h != nullptr);
-        hammerSynth->addSoundSet(h);
+        hammerSynth->addSoundSet(h, kDirectReleaseSynthVoices);
         state.params.resonanceLoaded->setParameterValue( r != nullptr);
-        releaseResonanceSynth->addSoundSet(r);
+        releaseResonanceSynth->addSoundSet(r, kDirectReleaseSynthVoices);
         state.params.pedalLoaded->setParameterValue( p != nullptr);
-        pedalSynth->addSoundSet(p);
+        pedalSynth->addSoundSet(p, kDirectReleaseSynthVoices);
     }
 
     void setA4Frequency(double newA4)
