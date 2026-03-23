@@ -254,6 +254,9 @@ void FullInterface::resized()
     int voice_padding = findValue (Skin::kLargePadding);
     int top_height = kTopHeight * ratio;
 
+    if (!header_ || !footer_ || !main_ || !prep_popup || !mod_popup)
+        return;
+
     header_->setTabOffset (2 * voice_padding);
     header_->setBounds (left, top, width, top_height);
     footer_->setBounds (left, height - 90, width, 90);
@@ -312,7 +315,8 @@ void FullInterface::reset()
 }
 
 void FullInterface::removeAllGuiListeners() {
-    main_->removeAllGuiListeners();
+    if (main_)
+        main_->removeAllGuiListeners();
 }
 
 void FullInterface::popupDisplay (juce::Component* source, const std::string& text, juce::BubbleComponent::BubblePlacement placement, bool primary)
@@ -439,7 +443,8 @@ void FullInterface::renderOpenGL()
     if (render_scale != last_render_scale_)
     {
         last_render_scale_ = render_scale;
-        juce::MessageManager::callAsync ([=] { checkShouldReposition (true); });
+        juce::Component::SafePointer<FullInterface> safe (this);
+        juce::MessageManager::callAsync ([safe] { if (safe) safe->checkShouldReposition (true); });
     }
 
     juce::ScopedLock lock (open_gl_critical_section_);
