@@ -432,7 +432,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         // we want the timing of the first played beat to align properly
                         // else if (cluster->beatCounter == 1) cluster->setBeatPhasor(0);
                         else if (cluster->beatCounter == 1)
-                            cluster->setBeatPhasor(cluster->getPhasor() % numSamplesBeat);
+                            cluster->setBeatPhasor(numSamplesBeat > 0 ? cluster->getPhasor() % numSamplesBeat : 0);
 
                         // otherwise, step the parameter values as usual
                         else cluster->step(numSamplesBeat);
@@ -445,7 +445,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         //  - note that postStep() also takes care not to increment the beat multiplier counter
                         // if (cluster->beatCounter == 0) cluster->setBeatPhasor(0);
                         if (cluster->beatCounter == 0)
-                            cluster->setBeatPhasor(cluster->getPhasor() % numSamplesBeat);
+                            cluster->setBeatPhasor(numSamplesBeat > 0 ? cluster->getPhasor() % numSamplesBeat : 0);
 
 
                         // otherwise step the parameter values as usual
@@ -941,7 +941,7 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
                     // that every beat has a natural width to it; otherwise we get some unnatural skipping
                     // in the Synchronic pulse sometimes
                     // `Prelude #2: Continuing` is a piece that is sensitive to this; trying playing it with a metronome
-                    if (cluster->getPhasor() > numSamplesBeat * 1.1)
+                    if (numSamplesBeat > 0 && cluster->getPhasor() > numSamplesBeat * 1.1)
                     {
                         cluster->setBeatPhasor(cluster->getPhasor() % numSamplesBeat);
                     }
