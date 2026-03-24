@@ -1054,13 +1054,13 @@ void ResonanceProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
     {
-        auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+        auto sendgainmult = 100. * bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
         buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
         buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
     }
 
     // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    auto outputgainmult = 100. * bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
 }

@@ -195,7 +195,7 @@ juce::ValueTree LegacyGalleryImporter::convertDirect (const juce::XmlElement& el
     if (params != nullptr)
     {
         mainDb    = gainToDb ((float) params->getDoubleAttribute ("gain",      0.0));
-        hammersDb = gainToDb ((float) params->getDoubleAttribute ("hammerGain", 0.0));
+        hammersDb = gainToDb ((float) params->getDoubleAttribute ("hammerGain", 0.0)) - 20.f; // compensate for old hammer gain being too high
         resonDb   = gainToDb ((float) params->getDoubleAttribute ("resGain",    0.0));
     }
 
@@ -237,8 +237,10 @@ juce::ValueTree LegacyGalleryImporter::convertDirect (const juce::XmlElement& el
     // sliderValsSize = number of f* attributes actually present in <transposition>.
     // This controls how many transposition slots are active.
     int transpCount = 1;
+    int useTuning = 0;
     if (params != nullptr)
     {
+        useTuning = params->getIntAttribute ("transpUsesTuning", 0);
         const juce::XmlElement* transp = params->getChildByName ("transposition");
         if (transp != nullptr)
         {
@@ -256,7 +258,7 @@ juce::ValueTree LegacyGalleryImporter::convertDirect (const juce::XmlElement& el
         }
     }
     vt.setProperty ("sliderValsSize", (float) transpCount, nullptr);
-    vt.setProperty ("UseTuning",      0,    nullptr);
+    vt.setProperty ("UseTuning",      useTuning,           nullptr);
 
     // MODULATABLE_PARAMS
     const float kDbMin = -80.0f, kDbMax = 6.0f, kDbSkew = 2.0f;
@@ -336,6 +338,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     float holdMax    = 12000.0f;
     int   skipFirst  = 0;
     int   pulseTrig  = 0;
+    int   useTuning  = 0;
     float cThickness = 8.0f;
     float numLayers  = 1.0f;
     float outputGain = 0.0f;
@@ -356,6 +359,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         pulseTrig    = (mode == 0) ? 0 : 1;
         // gain (linear) → OutputGain (dB)
         outputGain   = gainToDb ((float) params->getDoubleAttribute ("gain", 1.0));
+        useTuning    = params->getIntAttribute ("transpUsesTuning", 0);
     }
 
     vt.setProperty ("numPulses",       numPulses,  nullptr);
@@ -368,7 +372,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     vt.setProperty ("pulseTriggeredBy",pulseTrig,  nullptr);
     vt.setProperty ("determinesCluster", 0,        nullptr);
     vt.setProperty ("skipFirst",        skipFirst, nullptr);
-    vt.setProperty ("UseTuning",        0,         nullptr);
+    vt.setProperty ("UseTuning",        useTuning, nullptr);
     vt.setProperty ("updateUIState",    0,         nullptr);
     vt.setProperty ("clustermin",       clusterMin, nullptr);
     vt.setProperty ("clustermax",       clusterMax, nullptr);
@@ -675,6 +679,7 @@ juce::ValueTree LegacyGalleryImporter::convertNostalgic (const juce::XmlElement&
     float clusterMin = 1.0f, clusterThresh = 150.0f;
     float waveDistance = 0.0f, undertow = 0.0f;
     int   mode = 0;  // old mode maps to nostalgicTriggeredBy
+    int   useTuning = 0;
 
     if (params != nullptr)
     {
@@ -686,6 +691,7 @@ juce::ValueTree LegacyGalleryImporter::convertNostalgic (const juce::XmlElement&
         mode          = params->getIntAttribute ("mode", 0);
         waveDistance  = (float) params->getDoubleAttribute ("waveDistance", 0.0);
         undertow      = (float) params->getDoubleAttribute ("undertow", 0.0);
+        useTuning     = params->getIntAttribute ("transpUsesTuning", 0);
     }
 
     // Transpositions: count f* attributes on the <transposition> child
@@ -729,9 +735,9 @@ juce::ValueTree LegacyGalleryImporter::convertNostalgic (const juce::XmlElement&
     vt.setProperty ("lastHoldTimeParam",   0.0f,         nullptr);
     vt.setProperty ("holdtimemin",         0.0f,         nullptr);
     vt.setProperty ("holdtimemax",         12000.0f,     nullptr);
-    vt.setProperty ("keyOnReset",   0,    nullptr);
-    vt.setProperty ("UseTuning",    0,    nullptr);
-    vt.setProperty ("notify",       1,    nullptr);
+    vt.setProperty ("keyOnReset",   0,         nullptr);
+    vt.setProperty ("UseTuning",    useTuning, nullptr);
+    vt.setProperty ("notify",       1,         nullptr);
     vt.setProperty ("wavedistance", waveDistance, nullptr);
     vt.setProperty ("undertow",     undertow,     nullptr);
     vt.setProperty ("NoteLengthMultiplier", lengthMult, nullptr);
@@ -874,6 +880,7 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
     const juce::XmlElement* params = el.getChildByName ("params");
 
     int   tuningSystem = 1; // 1 = Equal Temperament in new format
+    int   tuningType   = 0;
     int   fundamental  = 0;
     float offset       = 0.0f;
     float rate = 100.0f, drag = 0.98f;
@@ -895,7 +902,8 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
     {
         oldScale    = params->getIntAttribute ("scale", 2);
         fundamental = params->getIntAttribute ("fundamental", 0);
-        offset      = (float) params->getDoubleAttribute ("offset", 0.0);
+        offset      = (float) params->getDoubleAttribute ("offset", 0.0) * 100.0f; // semitones → cents
+        tuningType  = params->getIntAttribute ("adaptiveSystem", 0);
 
         switch (oldScale)
         {
@@ -926,7 +934,7 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
 
     vt.setProperty ("fundamental",    fundamental,    nullptr);
     vt.setProperty ("tuningSystem",   tuningSystem,   nullptr);
-    vt.setProperty ("tuningType",     0,              nullptr);
+    vt.setProperty ("tuningType",     tuningType,     nullptr);
     vt.setProperty ("lastNote",       0.0f,           nullptr);
     vt.setProperty ("semitonewidth",  100.0f,         nullptr);
     vt.setProperty ("reffundamental", 0,              nullptr);
@@ -985,8 +993,8 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
     for (int i = 1; i <= 12; ++i)
         vt.setProperty ("useLocalOrFundamental" + juce::String(i), 1, nullptr);
 
-    // Custom scale → circularTuning (old f0..f11 are in semitones, new uses cents)
-    juce::String circTuning = "0 0 0 0 0 0 0 0 0 0 0 0";
+    // Custom scale → circularTuning (old f0..f11 are already in cents)
+    juce::String circTuning = "0 0 0 0 0 0 0 0 0 0 0 0 ";
     if (params != nullptr)
     {
         const juce::XmlElement* cs = params->getChildByName ("customScale");
@@ -997,10 +1005,8 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
             {
                 juce::String key = "f" + juce::String(i);
                 if (! cs->hasAttribute (key)) break;
-                float semitones = (float) cs->getDoubleAttribute (key, 0.0);
-                float cents = semitones * 100.0f;
-                if (i > 0) parts += " ";
-                parts += juce::String (cents, 4);
+                float cents = (float) cs->getDoubleAttribute (key, 0.0);
+                parts += juce::String (cents, 2) + " ";
             }
             if (parts.isNotEmpty()) circTuning = parts;
         }
@@ -1033,7 +1039,7 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
     juce::ValueTree pd ("PARAM_DEFAULT");
     pd.setProperty ("fundamental",   fundamental,  nullptr);
     pd.setProperty ("tuningSystem",  tuningSystem, nullptr);
-    pd.setProperty ("tuningType",    0,            nullptr);
+    pd.setProperty ("tuningType",    tuningType,   nullptr);
     pd.setProperty ("absoluteTuning","",           nullptr);
     pd.setProperty ("circularTuning", circTuning,  nullptr);
     vt.addChild (pd, -1, nullptr);
