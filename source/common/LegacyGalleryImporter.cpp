@@ -879,7 +879,7 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
 
     const juce::XmlElement* params = el.getChildByName ("params");
 
-    int   tuningSystem = 1; // 1 = Equal Temperament in new format
+    int   tuningSystem = 0; // 0 = Equal_Temperament in new format (TuningSystemNames index)
     int   tuningType   = 0;
     int   fundamental  = 0;
     float offset       = 0.0f;
@@ -887,16 +887,23 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
     float tetherStiffness = 0.5f, intervalStiffness = 0.5f;
     float tetherWeightGlobal = 0.5f, tetherWeightSecGlobal = 0.1f;
 
-    // Map old scale index to new tuningSystem index.
-    // TuningSystemNames vector (tuning_systems.h) defines the new indices:
-    // 0=Equal_Temperament, 1=Partial, 2=Just, 3=Duodene, 4=Otonal, 5=Utonal,
-    // 6=Custom, 7=Pythagorean, 8=Grammateus, 9=Kirnberger_II, 10=Kirnberger_III,
-    // 11=Werkmeister_III, 12=Quarter2Comma_Meantone, ...
+    // Map old TuningSystem enum value to new TuningSystemNames index (tuning_systems.h).
     //
-    // Old scale values (from old bitKlavier source):
-    // 0=ET, 1=Partial, 2=ET, 3=JI, 4=Pythagorean, 5=Quarter-comma Meantone,
-    // 6=Meantone (general), 7=Werckmeister III, 8=Custom
-    int oldScale = 2; // Equal Temperament default
+    // Old TuningSystem enum (0-indexed):
+    //  0=PartialTuning, 1=JustTuning, 2=EqualTemperament,
+    //  3=AdaptiveTuning, 4=AdaptiveAnchoredTuning, 5=DuodeneTuning,
+    //  6=OtonalTuning, 7=UtonalTuning, 8=CustomTuning, 9=Pythagorean,
+    //  10=Grammateus, 11=KirnbergerII, 12=KirnbergerIII, 13=WerkmeisterIII,
+    //  14=QuarterCommaMeantone ... 39=HarrisonStrict
+    //
+    // New TuningSystemNames indices:
+    //  0=Equal_Temperament, 1=Partial, 2=Just, 3=Duodene, 4=Otonal,
+    //  5=Utonal, 6=Custom, 7=Pythagorean, 8=Grammateus, 9=Kirnberger_II,
+    //  10=Kirnberger_III, 11=Werkmeister_III, 12=Quarter_Comma_Meantone ...
+    //
+    // For old >= 5: new = old - 2 (names match exactly with 2-index offset).
+    // Old 3 & 4 (Adaptive modes) have no new equivalent; fall back to ET.
+    int oldScale = 2; // EqualTemperament default
 
     if (params != nullptr)
     {
@@ -907,17 +914,15 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
 
         switch (oldScale)
         {
-            case 0:  tuningSystem = 0;  break; // ET
-            case 1:  tuningSystem = 1;  break; // Partial
-            case 2:  tuningSystem = 0;  break; // ET
-            case 3:  tuningSystem = 2;  break; // Just
-            case 4:  tuningSystem = 7;  break; // Pythagorean
-            case 5:  tuningSystem = 12; break; // Quarter-comma Meantone
-            case 6:  tuningSystem = 12; break; // Meantone (closest match)
-            case 7:  tuningSystem = 11; break; // Werckmeister III
-            case 8:  tuningSystem = 6;  break; // Custom
-            case 14: tuningSystem = 12; break; // Quarter-comma Meantone (alt code)
-            default: tuningSystem = 0;  break; // ET fallback
+            case 0:  tuningSystem = 1;  break; // PartialTuning → Partial
+            case 1:  tuningSystem = 2;  break; // JustTuning → Just
+            case 2:  tuningSystem = 0;  break; // EqualTemperament → Equal_Temperament
+            case 3:  tuningSystem = 0;  break; // AdaptiveTuning → ET (no direct equivalent)
+            case 4:  tuningSystem = 0;  break; // AdaptiveAnchoredTuning → ET (no direct equivalent)
+            default:
+                // Old 5-39 → new 3-37 (new = old - 2)
+                tuningSystem = (oldScale >= 5 && oldScale <= 39) ? (oldScale - 2) : 0;
+                break;
         }
 
         const juce::XmlElement* st = params->getChildByName ("springtuning");
@@ -1723,7 +1728,7 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                 else if (selfType == OldSynchronic && connType == OldNostalgic)
                 {
                     // Synchronic → Nostalgic: only valid when the nostalgic is in
-                    // Synchronic playback mode (mode == 2). Emit a SYNCHRONICCONNECTION;
+                    // Synchronic playback mode (old mode == 1). Emit a SYNCHRONICCONNECTION;
                     // otherwise skip — a regular CONNECTION would be a stray cable.
                     int nostalgicMode = 0;
                     auto tagIt2 = prepsByTagAndId.find ("nostalgic");
@@ -1737,7 +1742,7 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                                 nostalgicMode = np->getIntAttribute ("mode", 0);
                         }
                     }
-                    if (nostalgicMode == 2)
+                    if (nostalgicMode == 1)
                     {
                         juce::ValueTree sc ("SYNCHRONICCONNECTION");
                         sc.setProperty ("isMod", 0,                    nullptr);
