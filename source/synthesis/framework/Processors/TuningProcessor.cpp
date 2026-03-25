@@ -719,6 +719,7 @@ void TuningState::loadKBMFile(std::string fname)
 
 void TuningState::mapScalaToInternalTuning()
 {
+    DBG("Mapping Scala to internal tuning ");
     // for non 12-tet systems, map to absolute tuning
     if (currentScalaTuning.scale.count != 12)
     {
@@ -733,6 +734,8 @@ void TuningState::mapScalaToInternalTuning()
         // reset circular stuff
         fundamental->setParameterValue (PitchClass::C);
         tuningSystem->setParameterValue(TuningSystem::Equal_Temperament);
+        // Same no-op guard as the circular path: explicitly reset circularTuningOffset to ET values.
+        setOffsetsFromTuningSystem(TuningSystem::Equal_Temperament, 0, circularTuningOffset, circularTuningOffset_custom);
 
         // //set offset, taking into account Scala tuningFrequency; seems to don't need/want this for absolute offsets
         // offsetKnobParam.offSetSliderParam->setParameterValue (0.); // need to zero it out first, since getStaticTargetFrequency will use it from the previous setting
@@ -763,10 +766,17 @@ void TuningState::mapScalaToInternalTuning()
             float equal = et.tones[i].cents;
             float offset = micro - equal;
             circularTuningOffset_custom[(i+1)%12] = offset;
+            DBG("offset = " << offset);
         }
 
         // set the scale to Custom
         tuningSystem->setParameterValue(TuningSystem::Custom);
+
+        // AudioParameterChoice::operator= is a no-op when the value doesn't change,
+        // so the tuningSystem listener (which calls setOffsetsFromTuningSystem) may not
+        // fire if tuningSystem was already Custom. Always update circularTuningOffset
+        // directly so the live audio values reflect the new circularTuningOffset_custom.
+        setOffsetsFromTuningSystem(TuningSystem::Custom, newf, circularTuningOffset, circularTuningOffset_custom);
 
         // set offset, taking into account Scala tuningFrequency
         offsetKnobParam.offSetSliderParam->setParameterValue (0.); // need to zero it out first, since getStaticTargetFrequency will use it from the previous setting
