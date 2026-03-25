@@ -378,9 +378,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         else clusterThresholdTimer += numSamples;
     }
 
-    /**
-     * todo: adaptive tempo stuff as needed, along with General Settings
-     */
     // from the attached Tempo preparation: number of samples per beat
     // update this every block, for adaptive tempo updates
     beatThresholdSamples = getBeatThresholdSeconds() * getSampleRate();
@@ -390,8 +387,15 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
     {
         if (cluster->getShouldPlay())
         {
-            // adjust samples per beat by beat length multiplier, for this beat
-            numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
+            // if this is the first beat and we are not skipping the first beat, we need to set numSamplesBeat based on the LAST beatLengthMultiplier
+            if (!*state.params.skipFirst && cluster->beatCounter == 0)
+            {
+                numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[state.params.beatLengthMultipliers.sliderVals_size - 1].load();
+            }
+
+            // otherwise, just multiplier the beatLength by this beat's multiplier
+            else
+                numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[cluster->beatMultiplierCounter].load();
 
             //check to see if enough time has passed for next beat
             if (cluster->getPhasor() >= numSamplesBeat)
@@ -418,7 +422,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                 bool playNow = true;
 
                 // easy case: if we are skipping the first pattern value, we always increment the pattern counters, in step()
-                if(*state.params.skipFirst) cluster->step(numSamplesBeat);
+                if(*state.params.skipFirst)
+                    cluster->step(numSamplesBeat);
 
                 // it gets messy when we are not skipping the first pattern value
                 else
@@ -427,7 +432,11 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     if(sMode == Any_NoteOn || sMode == First_NoteOn)
                     {
                         // we don't want to play a cluster immediately with the noteOn message
-                        if(cluster->beatCounter == 0) playNow = false;
+                        DBG("beatCounter == " << cluster->beatCounter);
+                        if(cluster->beatCounter == 0)
+                        {
+                            playNow = false;
+                        }
 
                         // we want the timing of the first played beat to align properly
                         // else if (cluster->beatCounter == 1) cluster->setBeatPhasor(0);
@@ -436,6 +445,8 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
 
                         // otherwise, step the parameter values as usual
                         else cluster->step(numSamplesBeat);
+
+                        DBG("numSamplesBeat = " << numSamplesBeat);
                     }
 
                     // then the noteOff triggered cases

@@ -150,7 +150,11 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
     // adaptive/spring tunings ignore semitone width...
     if(getTuningType() == TuningType::Spring_Tuning || getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()) + transp);
+        /**
+         * todo: tuneTranspositions is currently ignored
+         *          - either implement it in some way, or hide useTuning button for these types
+         */
+        return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()));
     }
 
     // first check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
