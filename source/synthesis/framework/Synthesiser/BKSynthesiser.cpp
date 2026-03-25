@@ -223,10 +223,20 @@ void BKSynthesiser::processNextBlock (juce::AudioBuffer<floatType>& outputAudio,
      * if we are in a bypassed state, and have already handled all vestigial midinotes,
      * just render any remaining active voices and skip the rest
      */
-    if (bypassed && activeNotes == 0)
+    if (bypassed && activeNotes == 0) // activeNotes => actual heldKeys
     {
-        if (targetChannels > 0 && someVoicesActive)
+        if (targetChannels > 0 && someVoicesActive) // someVoicesActive => notes that are actually still sounding, due to envelope or pedal
+        {
+            // might have sustain or sostenuto pedal to cleanup
+            std::for_each (midiIterator,
+                midiData.cend(),
+                [&] (const juce::MidiMessageMetadata& meta) {
+                    if (meta.getMessage().isController())
+                        handleMidiEvent (meta.getMessage());
+                });
+
             renderVoices (outputAudio, startSample, numSamples);
+        }
         return;
     }
 
@@ -394,9 +404,18 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
          * so we need to keep track of currently active notes and only activate noteOffs for those: activeNotes array of bools
          */
 
-        if (m.isNoteOn())
+        if (m.isAllNotesOff() || m.isAllSoundOff())
         {
-            DBG ("BKSynthesizer Note On (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            allNotesOff (channel, true);
+        }
+        else if (m.isController())
+        {
+            // DBG("bypassed state, handling controller");
+            handleController (channel, m.getControllerNumber(), m.getControllerValue());
+        }
+        else if (m.isNoteOn())
+        {
+            // DBG ("BKSynthesizer Note On (bypassed) " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;

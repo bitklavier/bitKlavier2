@@ -186,8 +186,16 @@ void PreparationSection::setPortInfo() {
         {
             auto processor = node->getProcessor();
 
+            // Keymap, Tuning, and Tempo have dummy audio input buses (to keep the Modulation
+            // bus off channel 0) — not real user-connectable audio inputs.
+            const auto prepType = static_cast<int>(state.getProperty(IDs::type));
+            const bool skipAudioInputPort =
+                (prepType == bitklavier::BKPreparationType::PreparationTypeKeymap) ||
+                (prepType == bitklavier::BKPreparationType::PreparationTypeTuning) ||
+                (prepType == bitklavier::BKPreparationType::PreparationTypeTempo);
+
             //check if main audio input bus/ is enabled
-            if (processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
+            if (!skipAudioInputPort && processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
                 for (int i = 0; i < processor->getMainBusNumInputChannels(); i+=2) {
                     juce::ValueTree v{IDs::PORT};
                     v.setProperty(IDs::nodeID,
