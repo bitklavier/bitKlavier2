@@ -193,6 +193,7 @@ private:
     std::shared_ptr<OpenGlLine> _line;
 
     bool editing_comment_;
+    bool is_rebuilding_ = false;
     juce::OwnedArray<juce::HashMap<int, int>> pastemap;
     friend class ModulationLineView;
     ModulationLineView modulationLineView;

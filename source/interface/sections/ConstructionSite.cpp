@@ -915,8 +915,6 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->setSkinValues(default_skin, false);
     s->setDefaultColor();
     s->setSizeRatio(size_ratio_);
-    s->setCentrePosition (s->curr_point);
-    // s->setCentrePosition(s->x, s->y);
     s->setSize(s->width, s->height);
     s->resized();
 
@@ -941,7 +939,8 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
         plugin_components.push_back (std::move (s));
     }
 
-    updateScrollBars();
+    if (!is_rebuilding_)
+        updateScrollBars();
 }
 
 void ConstructionSite::linkedPiano() {
@@ -1509,7 +1508,9 @@ void ConstructionSite::setActivePiano() {
         connection_list = gui_data->synth->getActiveConnectionList();
 
     prep_list->addListener (this);
+    is_rebuilding_ = true;
     prep_list->rebuildAllGui();
+    is_rebuilding_ = false;
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
