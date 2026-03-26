@@ -916,6 +916,17 @@ void SynchronicProcessor::keyPressed(int noteNumber, int velocity, int channel)
 
         if(!doPausePlay)
         {
+            // deal with AnyNoteOff and LastNoteOff
+            if (sMode == Any_NoteOff || sMode == Last_NoteOff)
+            {
+                // we are going to turn them all off for now
+                // if we want to do more layer specific control for this particular situation, work that out later
+                for (auto& cl : clusterLayers)
+                {
+                    cl->setShouldPlay(false);
+                }
+            }
+
             // OnOffMode determines whether the keyOffs or keyOns determine whether notes are within the cluster threshold
             // - here, we only look at keyOns
             if (onOffMode == Key_On) // onOffMode.value is set by the "determines cluster"

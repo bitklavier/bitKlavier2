@@ -354,9 +354,11 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         holdMax      = (float) params->getDoubleAttribute ("holdMax", 12000.0);
         int beatsToSkip = params->getIntAttribute ("beatsToSkip", 0);
         skipFirst    = (beatsToSkip != 0) ? 1 : 0;
-        // mode: 0=noteOn driven, 1=firstNoteOn in old; new pulseTriggeredBy: 1=FirstNoteOn
-        int mode     = params->getIntAttribute ("mode", 0);
-        pulseTrig    = (mode == 0) ? 0 : 1;
+        // Old SynchronicSyncMode enum (mode attr): 0=FirstNoteOnSync, 1=AnyNoteOnSync,
+        // 2=FirstNoteOffSync, 3=AnyNoteOffSync, 4=LastNoteOffSync.
+        // New SynchronicPulseTriggerType enum index order is identical, so direct copy.
+        // Note: 'onOffMode' is a different field; 'mode' is the SynchronicSyncMode.
+        pulseTrig = params->getIntAttribute ("mode", 0);
         // gain (linear) → OutputGain (dB)
         outputGain   = gainToDb ((float) params->getDoubleAttribute ("gain", 1.0));
         useTuning    = params->getIntAttribute ("transpUsesTuning", 0);
