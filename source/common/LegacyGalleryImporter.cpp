@@ -77,6 +77,40 @@ juce::String LegacyGalleryImporter::parseIndexedBools (const juce::XmlElement& e
     return result;
 }
 
+int LegacyGalleryImporter::mapOldTuningSystem (int oldScale)
+{
+    // Map old TuningSystem enum → new TuningSystemNames sequential index.
+    // Old: 0=PartialTuning, 1=JustTuning, 2=EqualTemperament,
+    //      3=AdaptiveTuning, 4=AdaptiveAnchoredTuning, 5+=others (new = old-2)
+    switch (oldScale)
+    {
+        case 0:  return 1;  // PartialTuning → Partial
+        case 1:  return 2;  // JustTuning → Just
+        case 2:  return 0;  // EqualTemperament → Equal_Temperament
+        case 3:  return 0;  // AdaptiveTuning → ET (no direct equivalent)
+        case 4:  return 0;  // AdaptiveAnchoredTuning → ET (no direct equivalent)
+        default: return (oldScale >= 5 && oldScale <= 39) ? (oldScale - 2) : 0;
+    }
+}
+
+bool LegacyGalleryImporter::isOldModType (int t)
+{
+    return t >= OldDirectMod && t <= OldTempoMod; // 6..10
+}
+
+juce::String LegacyGalleryImporter::modDataTagForOldType (int t)
+{
+    switch (t)
+    {
+        case OldDirectMod:     return "moddirect";
+        case OldSynchronicMod: return "modsynchronic";
+        case OldNostalgicMod:  return "modnostalgic";
+        case OldTuningMod:     return "modtuning";
+        case OldTempoMod:      return "modtempo";
+        default:               return {};
+    }
+}
+
 juce::String LegacyGalleryImporter::tagForOldType (int oldType)
 {
     switch (oldType)
@@ -889,22 +923,6 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
     float tetherStiffness = 0.5f, intervalStiffness = 0.5f;
     float tetherWeightGlobal = 0.5f, tetherWeightSecGlobal = 0.1f;
 
-    // Map old TuningSystem enum value to new TuningSystemNames index (tuning_systems.h).
-    //
-    // Old TuningSystem enum (0-indexed):
-    //  0=PartialTuning, 1=JustTuning, 2=EqualTemperament,
-    //  3=AdaptiveTuning, 4=AdaptiveAnchoredTuning, 5=DuodeneTuning,
-    //  6=OtonalTuning, 7=UtonalTuning, 8=CustomTuning, 9=Pythagorean,
-    //  10=Grammateus, 11=KirnbergerII, 12=KirnbergerIII, 13=WerkmeisterIII,
-    //  14=QuarterCommaMeantone ... 39=HarrisonStrict
-    //
-    // New TuningSystemNames indices:
-    //  0=Equal_Temperament, 1=Partial, 2=Just, 3=Duodene, 4=Otonal,
-    //  5=Utonal, 6=Custom, 7=Pythagorean, 8=Grammateus, 9=Kirnberger_II,
-    //  10=Kirnberger_III, 11=Werkmeister_III, 12=Quarter_Comma_Meantone ...
-    //
-    // For old >= 5: new = old - 2 (names match exactly with 2-index offset).
-    // Old 3 & 4 (Adaptive modes) have no new equivalent; fall back to ET.
     int oldScale = 2; // EqualTemperament default
 
     if (params != nullptr)
@@ -913,19 +931,7 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
         fundamental = params->getIntAttribute ("fundamental", 0);
         offset      = (float) params->getDoubleAttribute ("offset", 0.0) * 100.0f; // semitones → cents
         tuningType  = params->getIntAttribute ("adaptiveSystem", 0);
-
-        switch (oldScale)
-        {
-            case 0:  tuningSystem = 1;  break; // PartialTuning → Partial
-            case 1:  tuningSystem = 2;  break; // JustTuning → Just
-            case 2:  tuningSystem = 0;  break; // EqualTemperament → Equal_Temperament
-            case 3:  tuningSystem = 0;  break; // AdaptiveTuning → ET (no direct equivalent)
-            case 4:  tuningSystem = 0;  break; // AdaptiveAnchoredTuning → ET (no direct equivalent)
-            default:
-                // Old 5-39 → new 3-37 (new = old - 2)
-                tuningSystem = (oldScale >= 5 && oldScale <= 39) ? (oldScale - 2) : 0;
-                break;
-        }
+        tuningSystem = mapOldTuningSystem (oldScale);
 
         const juce::XmlElement* st = params->getChildByName ("springtuning");
         if (st != nullptr)
@@ -1493,10 +1499,12 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
     }
 
     // Build lookup maps: old preparation type tag → map of Id → XmlElement*
-    // We support: direct, synchronic, nostalgic, tuning, tempo, keymap, blendronic
+    // We support: direct, synchronic, nostalgic, tuning, tempo, keymap, blendronic.
+    // Also collect modification data elements (modTuning, modDirect, etc.).
     // Resonance is silently skipped.
     using PrepMap = std::map<int, const juce::XmlElement*>;
     std::map<juce::String, PrepMap> prepsByTagAndId;
+    std::map<juce::String, PrepMap> modsByTagAndId;  // "modtuning", "moddirect", etc.
 
     for (auto* child = xmlDoc->getFirstChildElement(); child != nullptr;
          child = child->getNextElement())
@@ -1507,6 +1515,12 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
         {
             int id = child->getIntAttribute ("Id", -1);
             prepsByTagAndId[tag][id] = child;
+        }
+        else if (tag == "modtuning"    || tag == "moddirect"    ||
+                 tag == "modsynchronic"|| tag == "modnostalgic" || tag == "modtempo")
+        {
+            int id = child->getIntAttribute ("Id", -1);
+            modsByTagAndId[tag][id] = child;
         }
         // Skip: resonance, general, equalizer, compressor (handled separately or ignored)
     }
@@ -1546,12 +1560,15 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
         juce::ValueTree connections   ("CONNECTIONS");
         juce::ValueTree modConnections ("MODCONNECTIONS");
 
-        // Maps (oldType, oldId, pianoIdx) → nodeID for this piano instance
-        // Key: (tag, id)
-        struct InstKey { juce::String tag; int id; };
-        // Use map indexed by tag+id string
-        std::map<juce::String, uint32_t> instToNodeID;
+        // Maps (tag, id) → nodeID / UUID for regular preparations in this piano
+        std::map<juce::String, uint32_t>    instToNodeID;
         std::map<juce::String, juce::String> instToUUID;
+
+        // Modulation / Reset node data for this piano
+        struct ModNodeInfo { uint32_t nodeID; juce::String uuid; juce::String procUUID; };
+        std::map<juce::String, ModNodeInfo> modInstData;       // "mod_{type}_{id}" → info
+        std::map<juce::String, uint32_t>    resetInstToNodeID; // "reset_{id}" → nodeID
+        std::map<uint32_t, uint32_t>        prepToModNodeID;   // targetPrepNodeID → modNodeID
 
         // Helper to get or create a new-format preparation for a given (type, id)
         // Returns the nodeID, and adds the prep to `preparations` if not already added.
@@ -1663,6 +1680,200 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
             preparations.addChild (prepVT, -1, nullptr);
         }
 
+        // Pre-pass 2: Create modulation and reset nodes for all modification/reset items.
+        for (auto* itemWrapper = pianoEl->getFirstChildElement(); itemWrapper != nullptr;
+             itemWrapper = itemWrapper->getNextElement())
+        {
+            if (itemWrapper->getTagName().toLowerCase() != "item") continue;
+            const juce::XmlElement* selfItem = itemWrapper->getFirstChildElement();
+            if (selfItem == nullptr || selfItem->getTagName().toLowerCase() != "item") continue;
+
+            int selfType = selfItem->getIntAttribute ("type", -1);
+            int selfId   = selfItem->getIntAttribute ("Id",   -1);
+            int selfX    = (int) selfItem->getDoubleAttribute ("X", 0.0);
+            int selfY    = (int) selfItem->getDoubleAttribute ("Y", 0.0);
+
+            if (isOldModType (selfType))
+            {
+                juce::String key = "mod_" + juce::String (selfType) + "_" + juce::String (selfId);
+                if (modInstData.count (key)) continue;
+
+                int& counter = instanceCounters["modulation"];
+                ++counter;
+                juce::String nodeUUID = newUUID();
+                uint32_t     nodeID   = juce::Uuid (nodeUUID).getTimeLow();
+                juce::String procUUID = newUUID();
+                modInstData[key] = { nodeID, nodeUUID, procUUID };
+
+                juce::ValueTree modVT ("modulation");
+                modVT.setProperty ("type",     10,      nullptr);
+                modVT.setProperty ("width",    60.0f,   nullptr);
+                modVT.setProperty ("height",   60.0f,   nullptr);
+                modVT.setProperty ("x_y",      juce::String (selfX) + ", " + juce::String (selfY), nullptr);
+                modVT.setProperty ("uuid",     nodeUUID,      nullptr);
+                modVT.setProperty ("soundset", "syncglobal",  nullptr);
+                modVT.setProperty ("nodeID",   (int64_t) nodeID, nullptr);
+                modVT.setProperty ("name",     "modulation " + juce::String (counter), nullptr);
+                modVT.setProperty ("numIns",   1, nullptr);
+
+                juce::ValueTree port ("PORT");
+                port.setProperty ("nodeID",   (int64_t) nodeID, nullptr);
+                port.setProperty ("chIdx",    4096,  nullptr);
+                port.setProperty ("isIn",     1,     nullptr);
+                port.setProperty ("yOffset",  1.0f,  nullptr);
+                modVT.addChild (port, -1, nullptr);
+
+                juce::ValueTree proc ("modulationproc");
+                proc.setProperty ("type",    "state", nullptr);
+                proc.setProperty ("isState", 1,       nullptr);
+                proc.setProperty ("uuid",    procUUID, nullptr);
+                modVT.addChild (proc, -1, nullptr);
+
+                preparations.addChild (modVT, -1, nullptr);
+            }
+            else if (selfType == OldReset)
+            {
+                juce::String key = "reset_" + juce::String (selfId);
+                if (resetInstToNodeID.count (key)) continue;
+
+                int& counter = instanceCounters["reset"];
+                ++counter;
+                juce::String nodeUUID = newUUID();
+                uint32_t     nodeID   = juce::Uuid (nodeUUID).getTimeLow();
+                resetInstToNodeID[key] = nodeID;
+
+                juce::ValueTree resetVT ("reset");
+                resetVT.setProperty ("type",     11,     nullptr);
+                resetVT.setProperty ("width",    60.0f,  nullptr);
+                resetVT.setProperty ("height",   60.0f,  nullptr);
+                resetVT.setProperty ("x_y",      juce::String (selfX) + ", " + juce::String (selfY), nullptr);
+                resetVT.setProperty ("uuid",     nodeUUID,     nullptr);
+                resetVT.setProperty ("soundset", "syncglobal", nullptr);
+                resetVT.setProperty ("nodeID",   (int64_t) nodeID, nullptr);
+                resetVT.setProperty ("name",     "reset " + juce::String (counter), nullptr);
+                resetVT.setProperty ("numIns",   1, nullptr);
+
+                juce::ValueTree port ("PORT");
+                port.setProperty ("nodeID", (int64_t) nodeID, nullptr);
+                port.setProperty ("chIdx",  4096, nullptr);
+                port.setProperty ("isIn",   1,    nullptr);
+                resetVT.addChild (port, -1, nullptr);
+
+                preparations.addChild (resetVT, -1, nullptr);
+            }
+        }
+
+        // Pass A: Process modification items → MODCONNECTION + ModulationConnections.
+        // Must run before the main walk so prepToModNodeID is populated when resets are processed.
+        for (auto* itemWrapper = pianoEl->getFirstChildElement(); itemWrapper != nullptr;
+             itemWrapper = itemWrapper->getNextElement())
+        {
+            if (itemWrapper->getTagName().toLowerCase() != "item") continue;
+            const juce::XmlElement* selfItem = itemWrapper->getFirstChildElement();
+            if (selfItem == nullptr || selfItem->getTagName().toLowerCase() != "item") continue;
+
+            int selfType = selfItem->getIntAttribute ("type", -1);
+            int selfId   = selfItem->getIntAttribute ("Id",   -1);
+            if (! isOldModType (selfType)) continue;
+
+            juce::String modKey = "mod_" + juce::String (selfType) + "_" + juce::String (selfId);
+            auto modIt = modInstData.find (modKey);
+            if (modIt == modInstData.end()) continue;
+            const ModNodeInfo& modInfo = modIt->second;
+
+            const juce::XmlElement* modEl = nullptr;
+            juce::String modDataTag = modDataTagForOldType (selfType);
+            if (! modDataTag.isEmpty())
+            {
+                auto tagIt = modsByTagAndId.find (modDataTag);
+                if (tagIt != modsByTagAndId.end())
+                {
+                    auto idIt = tagIt->second.find (selfId);
+                    if (idIt != tagIt->second.end())
+                        modEl = idIt->second;
+                }
+            }
+            const juce::XmlElement* modParams = (modEl != nullptr) ? modEl->getChildByName ("params") : nullptr;
+            const juce::XmlElement* modDirty  = (modEl != nullptr) ? modEl->getChildByName ("dirty")  : nullptr;
+
+            const juce::XmlElement* connsEl = itemWrapper->getChildByName ("connections");
+            if (connsEl == nullptr) continue;
+
+            for (auto* connItem = connsEl->getFirstChildElement(); connItem != nullptr;
+                 connItem = connItem->getNextElement())
+            {
+                if (connItem->getTagName().toLowerCase() != "item") continue;
+
+                int connType = connItem->getIntAttribute ("type", -1);
+                int connId   = connItem->getIntAttribute ("Id",   -1);
+                int connX    = (int) connItem->getDoubleAttribute ("X", 0.0);
+                int connY    = (int) connItem->getDoubleAttribute ("Y", 0.0);
+
+                uint32_t targetNodeID = getOrCreatePrep (connType, connId, connX, connY);
+                if (targetNodeID == 0) continue;
+
+                // MODCONNECTION: modulation node → target preparation
+                juce::ValueTree mc ("MODCONNECTION");
+                mc.setProperty ("isMod", 1,                        nullptr);
+                mc.setProperty ("src",   (int64_t) modInfo.nodeID, nullptr);
+                mc.setProperty ("dest",  (int64_t) targetNodeID,   nullptr);
+                modConnections.addChild (mc, -1, nullptr);
+
+                prepToModNodeID[targetNodeID] = modInfo.nodeID;
+
+                // ModulationConnections: one per dirty parameter
+                if (selfType == OldTuningMod && modDirty != nullptr && modParams != nullptr)
+                {
+                    juce::String targetTag  = tagForOldType (connType);
+                    juce::String targetUUID = instToUUID[targetTag + "_" + juce::String (connId)];
+                    juce::String srcStr     = modInfo.uuid + "_state-" + modInfo.procUUID + "_mod";
+
+                    auto addModConn = [&] (const juce::String& newParamName, const juce::var& newValue)
+                    {
+                        juce::ValueTree c ("ModulationConnection");
+                        c.setProperty ("uuid",    newUUID(),  nullptr);
+                        c.setProperty ("isState", 1,          nullptr);
+                        c.setProperty ("src",     srcStr,     nullptr);
+                        c.setProperty ("dest",    targetUUID + "_" + newParamName, nullptr);
+                        c.setProperty (newParamName, newValue, nullptr);
+                        modConnections.addChild (c, -1, nullptr);
+                    };
+
+                    if (modDirty->getIntAttribute ("d0",  0))
+                        addModConn ("offset",
+                            juce::var ((float) modParams->getDoubleAttribute ("offset", 0.0) * 100.0f));
+                    if (modDirty->getIntAttribute ("d1",  0))
+                        addModConn ("tuningSystem",
+                            juce::var (mapOldTuningSystem (modParams->getIntAttribute ("scale", 0))));
+                    if (modDirty->getIntAttribute ("d2",  0))
+                        addModConn ("fundamental",
+                            juce::var (modParams->getIntAttribute ("fundamental", 0)));
+                    if (modDirty->getIntAttribute ("d3",  0))
+                        addModConn ("tAdaptiveIntervalScale",
+                            juce::var (mapOldTuningSystem (modParams->getIntAttribute ("adaptiveIntervalScale", 0))));
+                    if (modDirty->getIntAttribute ("d4",  0))
+                        addModConn ("tAdaptiveInversional",
+                            juce::var (modParams->getIntAttribute ("adaptiveInversional", 0)));
+                    if (modDirty->getIntAttribute ("d5",  0))
+                        addModConn ("tAdaptiveAnchorScale",
+                            juce::var (mapOldTuningSystem (modParams->getIntAttribute ("adaptiveAnchorScale", 0))));
+                    if (modDirty->getIntAttribute ("d6",  0))
+                        addModConn ("tAdaptiveAnchorFundamental",
+                            juce::var (modParams->getIntAttribute ("adaptiveAnchorFund", 0)));
+                    if (modDirty->getIntAttribute ("d7",  0))
+                        addModConn ("tAdaptiveClusterThresh",
+                            juce::var ((float) modParams->getDoubleAttribute ("adaptiveClusterThresh", 0.0)));
+                    if (modDirty->getIntAttribute ("d8",  0))
+                        addModConn ("tAdaptiveHistory",
+                            juce::var ((float) modParams->getDoubleAttribute ("adaptiveHistory", 1.0)));
+                    if (modDirty->getIntAttribute ("d11", 0))
+                        addModConn ("tuningType",
+                            juce::var (modParams->getIntAttribute ("adaptiveSystem", 0)));
+                }
+            }
+        }
+
+        // Main walk: process regular preparations and resets.
         // Walk the piano's <item> children.
         // Each <item> wrapper contains one inner <item> (the "self" node) and
         // a <connections> child (what this node drives).
@@ -1680,13 +1891,45 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
             int selfX    = (int) selfItem->getDoubleAttribute ("X", 0.0);
             int selfY    = (int) selfItem->getDoubleAttribute ("Y", 0.0);
 
-            // Skip default preparations (Id=-1) that aren't actually in the layout
-            // (they appear only as non-active targets) — let them be created on demand.
+            // PianoMap (type 12): already registered in pre-pass 1.
+            if (selfType == OldPianoMap) continue;
+            // Modifications (type 6-10): handled in Pass A above.
+            if (isOldModType (selfType)) continue;
 
-            // PianoMap (type 12): already registered and created in the pre-pass above.
-            // No outgoing connections to process for PianoMap items.
-            if (selfType == OldPianoMap)
+            // Handle Reset items
+            if (selfType == OldReset)
+            {
+                juce::String resetKey = "reset_" + juce::String (selfId);
+                auto rit = resetInstToNodeID.find (resetKey);
+                if (rit == resetInstToNodeID.end()) continue;
+                uint32_t resetNodeID = rit->second;
+
+                const juce::XmlElement* connsEl = itemWrapper->getChildByName ("connections");
+                if (connsEl == nullptr) continue;
+                for (auto* connItem = connsEl->getFirstChildElement(); connItem != nullptr;
+                     connItem = connItem->getNextElement())
+                {
+                    if (connItem->getTagName().toLowerCase() != "item") continue;
+                    int connType = connItem->getIntAttribute ("type", -1);
+                    int connId   = connItem->getIntAttribute ("Id",   -1);
+                    int connX    = (int) connItem->getDoubleAttribute ("X", 0.0);
+                    int connY    = (int) connItem->getDoubleAttribute ("Y", 0.0);
+
+                    // Reset targets the same preparation as its modification.
+                    // Map target prep → modulation node, then emit RESETCONNECTION.
+                    uint32_t targetNodeID = getOrCreatePrep (connType, connId, connX, connY);
+                    if (targetNodeID == 0) continue;
+                    auto modForPrepIt = prepToModNodeID.find (targetNodeID);
+                    if (modForPrepIt == prepToModNodeID.end()) continue;
+
+                    juce::ValueTree rc ("RESETCONNECTION");
+                    rc.setProperty ("isMod", 1,                               nullptr);
+                    rc.setProperty ("src",   (int64_t) resetNodeID,           nullptr);
+                    rc.setProperty ("dest",  (int64_t) modForPrepIt->second,  nullptr);
+                    modConnections.addChild (rc, -1, nullptr);
+                }
                 continue;
+            }
 
             uint32_t selfNodeID = getOrCreatePrep (selfType, selfId, selfX, selfY);
             if (selfNodeID == 0) continue; // unsupported type
@@ -1705,7 +1948,24 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                 int connX    = (int) connItem->getDoubleAttribute ("X", 0.0);
                 int connY    = (int) connItem->getDoubleAttribute ("Y", 0.0);
 
-                uint32_t connNodeID = getOrCreatePrep (connType, connId, connX, connY);
+                // Connection targets can be regular preps, modulation nodes, or reset nodes.
+                uint32_t connNodeID = 0;
+                if (isOldModType (connType))
+                {
+                    auto mkey = "mod_" + juce::String (connType) + "_" + juce::String (connId);
+                    auto mit  = modInstData.find (mkey);
+                    connNodeID = (mit != modInstData.end()) ? mit->second.nodeID : 0;
+                }
+                else if (connType == OldReset)
+                {
+                    auto rkey = "reset_" + juce::String (connId);
+                    auto rit2 = resetInstToNodeID.find (rkey);
+                    connNodeID = (rit2 != resetInstToNodeID.end()) ? rit2->second : 0;
+                }
+                else
+                {
+                    connNodeID = getOrCreatePrep (connType, connId, connX, connY);
+                }
                 if (connNodeID == 0) continue;
 
                 // Decide connection type

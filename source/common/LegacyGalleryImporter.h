@@ -129,15 +129,21 @@ private:
 
     // Old item type codes in the piano layout (from old bitKlavier AudioConstants.h cPreparationIdToType)
     enum OldItemType {
-        OldDirect     = 0,
-        OldSynchronic = 1,
-        OldNostalgic  = 2,
-        OldTuning     = 3,
-        OldTempo      = 4,
-        OldKeymap     = 5,
-        OldBlendronic = 16,
-        OldResonance  = 18,
-        OldPianoMap   = 12
+        OldDirect        = 0,
+        OldSynchronic    = 1,
+        OldNostalgic     = 2,
+        OldTuning        = 3,
+        OldTempo         = 4,
+        OldKeymap        = 5,
+        OldDirectMod     = 6,
+        OldSynchronicMod = 7,
+        OldNostalgicMod  = 8,
+        OldTuningMod     = 9,
+        OldTempoMod      = 10,
+        OldPianoMap      = 12,
+        OldReset         = 13,
+        OldBlendronic    = 16,
+        OldResonance     = 18,
     };
 
     // Maps old type code to new-format element tag name
@@ -145,4 +151,13 @@ private:
 
     // Maps old type code to new-format "type" attribute value
     static int newTypeForOldType (int oldType);
+
+    // Map old TuningSystem enum value → new TuningSystemNames sequential index
+    static int mapOldTuningSystem (int oldScale);
+
+    // Returns true for modification item types (6–10)
+    static bool isOldModType (int oldType);
+
+    // Returns the gallery-level element tag for a modification type (e.g. OldTuningMod → "modtuning")
+    static juce::String modDataTagForOldType (int oldType);
 };
