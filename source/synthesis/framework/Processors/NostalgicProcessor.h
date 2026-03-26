@@ -353,6 +353,7 @@ public:
 
     void allNotesOff()
     {
+        DBG("Nostalgic::allNotesOff called");
         nostalgicSynth->allNotesOff(1, false);
 
         velocities.clearQuick();

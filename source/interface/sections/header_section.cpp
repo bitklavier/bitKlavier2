@@ -327,7 +327,6 @@ void HeaderSection::addPiano()
     gallery.appendChild(piano, nullptr);
 
     pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
-    interface->allNotesOff();
     resized();
 }
 
@@ -412,7 +411,6 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
 
     // 6) UI updates
     pianoSelectText->setText(newPiano.getProperty(IDs::name));
-    interface->allNotesOff();
     resized();
 
     // Optional: ensure lines are built after components exist
@@ -550,9 +548,6 @@ void HeaderSection::deletePiano()
     if (pianoToActivate.isValid())
         pianoSelectText->setText(pianoToActivate.getProperty(IDs::name).toString());
 
-    if (interface != nullptr)
-        interface->allNotesOff();
-
     resized();
 }
 
@@ -614,7 +609,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 pianoSelectText->setText(names[selection - itemCounter]);
                 auto interface = findParentComponentOfClass<SynthGuiInterface>();
                 interface->setPianoSwitchTriggerThreadMessage();
-                interface->allNotesOff();
                 for (auto vt: gallery) {
                     if (vt.hasType(IDs::PIANO)) {
                         vt.setProperty(IDs::isActive, 0, nullptr);

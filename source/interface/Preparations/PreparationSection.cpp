@@ -325,41 +325,42 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
     hasStartedDrag_ = false;
 
-    if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
-    {
-        FullInterface* fullInterface = findParentComponentOfClass<FullInterface>();
-        if (fullInterface && fullInterface->header_)
-        {
-            std::vector<std::string> pianoNames = fullInterface->header_->getAllPianoNames();
-            PopupItems menu("add linked prep to...");
-            int id = 1;
-            for (const auto& name : pianoNames)
-            {
-                menu.addItem(id++, name);
-            }
-
-            showPopupSelector(this, e.getPosition(), menu, [this, pianoNames](int id, int selectedIndex) {
-                if (selectedIndex >= 0 && selectedIndex < pianoNames.size())
-                {
-                    DBG("Selected piano to add linked prep to: " << pianoNames[selectedIndex]);
-                    juce::ValueTree linked_piano{IDs::linkedPrep};
-                    auto gallery = state.getParent().getParent().getParent();
-                    auto new_piano = gallery.getChildWithProperty(IDs::name, juce::String(pianoNames[selectedIndex]));
-                    auto p  = state.getProperty(IDs::nodeID);
-                    auto type = state.getProperty(IDs::type);
-                    auto currPianoName = state.getParent().getParent().getProperty(IDs::name);
-
-                    linked_piano.setProperty(IDs::nodeID, p,nullptr);
-                    linked_piano.setProperty(IDs::linkedType,type,nullptr);
-                    linked_piano.setProperty(IDs::linkedPianoName, currPianoName, nullptr);
-
-                    new_piano.getChildWithName(IDs::PREPARATIONS).appendChild(linked_piano,nullptr);
-
-
-                }
-            });
-        }
-    }
+    // leaving this out for now; can uncomment if we decide to support linked preps in the future
+    // if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
+    // {
+    //     FullInterface* fullInterface = findParentComponentOfClass<FullInterface>();
+    //     if (fullInterface && fullInterface->header_)
+    //     {
+    //         std::vector<std::string> pianoNames = fullInterface->header_->getAllPianoNames();
+    //         PopupItems menu("add linked prep to...");
+    //         int id = 1;
+    //         for (const auto& name : pianoNames)
+    //         {
+    //             menu.addItem(id++, name);
+    //         }
+    //
+    //         showPopupSelector(this, e.getPosition(), menu, [this, pianoNames](int id, int selectedIndex) {
+    //             if (selectedIndex >= 0 && selectedIndex < pianoNames.size())
+    //             {
+    //                 DBG("Selected piano to add linked prep to: " << pianoNames[selectedIndex]);
+    //                 juce::ValueTree linked_piano{IDs::linkedPrep};
+    //                 auto gallery = state.getParent().getParent().getParent();
+    //                 auto new_piano = gallery.getChildWithProperty(IDs::name, juce::String(pianoNames[selectedIndex]));
+    //                 auto p  = state.getProperty(IDs::nodeID);
+    //                 auto type = state.getProperty(IDs::type);
+    //                 auto currPianoName = state.getParent().getParent().getProperty(IDs::name);
+    //
+    //                 linked_piano.setProperty(IDs::nodeID, p,nullptr);
+    //                 linked_piano.setProperty(IDs::linkedType,type,nullptr);
+    //                 linked_piano.setProperty(IDs::linkedPianoName, currPianoName, nullptr);
+    //
+    //                 new_piano.getChildWithName(IDs::PREPARATIONS).appendChild(linked_piano,nullptr);
+    //
+    //
+    //             }
+    //         });
+    //     }
+    // }
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {
