@@ -710,9 +710,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         PopupItems separator ("separator");
         separator.enabled = false; // non-selectable separator line
         separator.id = -1;
-        options.addItem(0, "Load");
-        options.addItem(1, "Save");
-        options.addItem(2, "Save As");
+        options.addItem(0, ("Load (" + juce::String::charToString(0x2318) + "L)").toStdString());
+        options.addItem(1, ("Save (" + juce::String::charToString(0x2318) + "S)").toStdString());
+        options.addItem(2, ("Save As (" + juce::String::charToString(0x21e7) + juce::String::charToString(0x2318) + "S)").toStdString());
 
         // Build directories/files tree
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -745,7 +745,8 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         options.addItem(3, "Gallery Settings");
         options.addItem(4, "Import Legacy Gallery...");
-        options.addItem(5, "All Notes Off");
+        // options.addItem(5, ("All Notes Off (" + juce::String::charToString(0x2423) + ")").toStdString());
+        options.addItem(5, ("All Notes Off (spacebar)"));
         options.addItem(separator);
 
         // Use a high base to avoid clashing with command IDs above
@@ -939,11 +940,11 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         disabledItem.id = -1; // will be a separator line
 
         int specialItemBase = 1000;
-        options.addItem(specialItemBase + 0, "Select All (command-a)");
-        options.addItem(specialItemBase + 1, "Horizontally Align Selected (shift-h)");
-        options.addItem(specialItemBase + 2, "Vertically Align Selected (shift-v)");
-        options.addItem(specialItemBase + 3, "Copy (command-c)");
-        options.addItem(specialItemBase + 4, "Paste (command-v)");
+        options.addItem(specialItemBase + 0, ("Select All (" + juce::String::charToString(0x2318) + "A)").toStdString());
+        options.addItem(specialItemBase + 1, ("Horizontally Align Selected (" + juce::String::charToString(0x21e7) + "H)").toStdString());
+        options.addItem(specialItemBase + 2, ("Vertically Align Selected (" + juce::String::charToString(0x21e7) + "V)").toStdString());
+        options.addItem(specialItemBase + 3, ("Copy (" + juce::String::charToString(0x2318) + "C)").toStdString());
+        options.addItem(specialItemBase + 4, ("Paste (" + juce::String::charToString(0x2318) + "V)").toStdString());
         options.addItem(disabledItem);
 
         PopupItems prepOptions = parent->getPreparationPopupItems();
@@ -961,8 +962,8 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 case PT::PreparationTypeTempo:        return baseName + " (m)";
                 case PT::PreparationTypeTuning:       return baseName + " (t)";
                 case PT::PreparationTypeModulation:   return baseName + " (c)";
-                case PT::PreparationTypeMidiFilter:   return baseName + " (shift-f)";
-                case PT::PreparationTypeMidiTarget:   return baseName + " (shift-t)";
+                case PT::PreparationTypeMidiFilter:   return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "F)").toStdString();
+                case PT::PreparationTypeMidiTarget:   return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "T)").toStdString();
                 case PT::PreparationTypePianoMap:     return baseName + " (p)";
                 case PT::PreparationTypeReset:        return baseName + " (\\)";
                 default:                              return baseName; // no shortcut defined or shown
