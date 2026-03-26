@@ -217,7 +217,9 @@ float SynchronicProcessor::getTimeToBeatMS(float beatsToSkip)
     juce::int64 timeToReturn = 0;
     if(numSamplesBeat > cluster->getPhasor())
         timeToReturn = numSamplesBeat - cluster->getPhasor(); //next beat
-    if (timeToReturn < 0.100f * getSampleRate()) beatsToSkip++; // a little padding so we skip a beat that we are nearly simultaneous with
+
+    if (timeToReturn < 0.100f * getSampleRate())
+        beatsToSkip++; // a little padding so we skip a beat that we are nearly simultaneous with
 
     // add to that if we're skipping beats
     int myBeat = cluster->beatMultiplierCounter;
@@ -226,9 +228,6 @@ float SynchronicProcessor::getTimeToBeatMS(float beatsToSkip)
         if (++myBeat >= state.params.beatLengthMultipliers.sliderVals_size)
             myBeat = 0;
 
-        /**
-         * todo: add general and tempo period multipliers
-         */
         timeToReturn += state.params.beatLengthMultipliers.sliderVals[myBeat].load() * beatThresholdSamples;
     }
 

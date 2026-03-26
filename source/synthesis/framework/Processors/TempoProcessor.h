@@ -56,7 +56,7 @@ struct TempoParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr tempoParam {
         juce::ParameterID { "tempo", 100 },
         "TEMPO",
-        chowdsp::ParamUtils::createNormalisableRange (40.0f, 208.0f, 124.0f),
+        chowdsp::ParamUtils::createNormalisableRange (20.0f, 208.0f, 124.0f),
         120.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,

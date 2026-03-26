@@ -329,7 +329,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
     {
         if (m.isNoteOn())
         {
-            // DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;
@@ -347,7 +347,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
         }
         else if (m.isNoteOff())
         {
-            // DBG ("BKSynthesizer Note Off " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            DBG ("BKSynthesizer Note Off " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
             if (pedalSynth)
                 return;
 
@@ -588,6 +588,22 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
     float transpositionGain)
 {
     // DBG("startVoice, transpositionGain = " << transpositionGain);
+
+    // If this voice was previously tracked under a different note, remove it from that
+    // entry first. Without this, a noteOff for the old note would find the stolen voice
+    // and stop it even though it is now playing the new note.
+    if (voice->currentlyPlayingNote >= 0 && voice->currentlyPlayingSound != nullptr)
+    {
+        const int oldNote    = voice->currentlyPlayingNote;
+        const int oldChannel = voice->currentPlayingMidiChannel;
+        if (oldChannel >= 1 && oldChannel <= 16)
+        {
+            auto oldList = playingVoicesByNote[oldChannel - 1].getUnchecked (oldNote);
+            oldList.removeFirstMatchingValue (voice);
+            playingVoicesByNote[oldChannel - 1].set (oldNote, oldList);
+        }
+    }
+
     /**
      * save this voice, since it might be one of several associated with this midiNoteNumber
      * and we will need to be able to stop it on noteOff(midiNoteNumber)
@@ -601,6 +617,8 @@ void BKSynthesiser::startVoice (BKSynthesiserVoice* const voice,
         if (voice->currentlyPlayingSound != nullptr)
         {
             auto* graveyardSlot = findFreeGraveyardSlot();
+            DBG("accessing graveyard slot!");
+
 
             // Only use the graveyard if the voice has audible amplitude to fade out.
             // Voices stolen before their first render block (envelopeVal == 0) are
@@ -721,6 +739,12 @@ void BKSynthesiser::noteOff (const int midiChannel,
         if (voice->currentPlayingMidiChannel != midiChannel)
             continue;
 
+        // Skip voices that no longer belong to this note — they either finished
+        // naturally (currentlyPlayingNote == -1) or were stolen and reassigned
+        // to a different note before this noteOff arrived.
+        if (voice->currentlyPlayingNote != midiNoteNumber)
+            continue;
+
         voice->setKeyDown (false);
 
         if ((*noteOnSpecs)[midiNoteNumber].overrideDefaultEnvParams && (*noteOnSpecs)[midiNoteNumber].channel == midiChannel)
@@ -730,6 +754,7 @@ void BKSynthesiser::noteOff (const int midiChannel,
         {
             if (!(voice->isSustainPedalDown() || voice->isSostenutoPedalDown()))
             {
+                DBG("stopping voice, for midiNote " << voice->currentlyPlayingNote);
                 stopVoice (voice, velocity, allowTailOff);
             }
         }

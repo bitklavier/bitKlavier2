@@ -1114,7 +1114,7 @@ juce::ValueTree LegacyGalleryImporter::convertTempo (const juce::XmlElement& el,
 
     // MODULATABLE_PARAMS
     juce::ValueTree mp ("MODULATABLE_PARAMS");
-    mp.addChild (makeModParam ("tempo",        40.0f, 1120.0f, 1.0f, tempo),        -1, nullptr);
+    mp.addChild (makeModParam ("tempo",        20.0f, 1120.0f, 1.0f, tempo),        -1, nullptr);
     mp.addChild (makeModParam ("subdivisions", 0.009999999776482582f, 32.0f, 0.9995490908622742f, subdivisions), -1, nullptr);
     mp.addChild (makeModParam ("history",      1.0f, 10.0f, 0.854755699634552f, history), -1, nullptr);
     vt.addChild (mp, -1, nullptr);
