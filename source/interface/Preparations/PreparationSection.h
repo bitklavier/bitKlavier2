@@ -154,6 +154,7 @@ public:
         // auto popup = getPrepPopup();
         // showPrepPopup(std::move(popup),state,bitklavier::BKPreparationTypeNil);
         auto popup = getPrepPopup();
+        if (!popup) return;
         auto safeThis = juce::Component::SafePointer<SynthSection> (this);
         juce::MessageManager::callAsync ([safeThis, popup = std::move(popup), thisState = state] () mutable
         {
