@@ -502,6 +502,11 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
         std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
     }
 
+    // final output gain stage, from rightmost slider in NostalgicParametersView
+    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    buffer.applyGain(0, 0, numSamples, outputgainmult);
+    buffer.applyGain(1, 0, numSamples, outputgainmult);
+
     // main level meter update
     std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
     std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
@@ -537,7 +542,7 @@ void NostalgicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
         buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
     }
 
-    // final output gain stage, from rightmost slider in DirectParametersView
+    // final output gain stage, from rightmost slider in NostalgicParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
