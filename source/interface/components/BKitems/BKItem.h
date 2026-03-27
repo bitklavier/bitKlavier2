@@ -12,11 +12,13 @@
 class BKItem : /*public DraggableComponent,*/ public juce::Button {
 public:
 
-BKItem (bitklavier::BKPreparationType type);
+    BKItem (bitklavier::BKPreparationType type);
     void mouseDown (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
     void mouseDoubleClick (const juce::MouseEvent& e) override;
     void mouseDrag(const juce::MouseEvent& e) override;
+
+    bitklavier::BKPreparationType getType() const { return type_; }
 
     // void paint(juce::Graphics& g) override;
     void setIcons (const juce::Path& layer_1, const juce::Path& layer_2, const juce::Path& layer_3)
@@ -49,19 +51,26 @@ BKItem (bitklavier::BKPreparationType type);
 
         if (!pathBounds.isEmpty())
         {
-            // Compute uniform scaling factor
+            // Compute scaling factors
             float scaleX = targetArea.getWidth()  / pathBounds.getWidth();
             float scaleY = targetArea.getHeight() / pathBounds.getHeight();
-            float uniformScale = std::min(scaleX, scaleY); // Keep aspect ratio
 
-            // Compute the center offset after scaling
-            juce::Point<float> pathCentre = pathBounds.getCentre();
-            juce::Point<float> targetCentre = targetArea.getCentre();
-
-            juce::AffineTransform transform =
-                juce::AffineTransform::translation(-pathCentre.x, -pathCentre.y)   // move to origin
-                .scaled(uniformScale)                                              // scale
-                .translated(targetCentre.x, targetCentre.y);                       // move to target center
+            juce::AffineTransform transform;
+            if (type_ == bitklavier::BKPreparationType::PreparationTypeComment)
+            {
+                // Non-uniform scaling for comments
+                transform = juce::AffineTransform::translation(-pathBounds.getCentreX(), -pathBounds.getCentreY())
+                                .scaled(scaleX, scaleY)
+                                .translated(targetArea.getCentreX(), targetArea.getCentreY());
+            }
+            else
+            {
+                // Uniform scaling for other preparations to keep aspect ratio
+                float uniformScale = std::min(scaleX, scaleY);
+                transform = juce::AffineTransform::translation(-pathBounds.getCentreX(), -pathBounds.getCentreY())
+                                .scaled(uniformScale)
+                                .translated(targetArea.getCentreX(), targetArea.getCentreY());
+            }
 
             layer_1_.applyTransform(transform);
         }
@@ -85,6 +94,9 @@ BKItem (bitklavier::BKPreparationType type);
     {
         prep_color_ = col;
     }
+
+    void setSelected(bool selected) { selected_ = selected; }
+    bool isSelected() const { return selected_; }
 
     // Returns the visual bounds used for port placement. If the item draws its icon
     // directly in paintButton() without populating layer_1_, fall back to the
@@ -119,10 +131,12 @@ protected:
     std::vector<Listener*> listeners_;
     std::shared_ptr<OpenGlImageComponent> image_component_;
 
+    bitklavier::BKPreparationType type_;
     juce::Path layer_2_;
     juce::Path layer_3_;
     juce::Path layer_4_;
     juce::Colour prep_color_;
+    bool selected_ = false;
     bool wasJustDragged;
 };
 
@@ -182,7 +196,7 @@ public:
 
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 
@@ -242,9 +256,52 @@ public:
         g.setColour(c);
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
+};
+
+class CommentItem : public BKItem
+{
+public:
+    CommentItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeComment)
+    {
+
+    }
+
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
+    {
+        // Ascertains the current window size
+        juce::Rectangle<float> bounds = getLocalBounds().toFloat();
+
+        // Retrieves and sets the color
+        g.setColour(juce::Colours::grey);
+        g.fillPath(layer_1_);
+
+        g.setColour(selected_ ? juce::Colours::white : juce::Colours::grey);
+        g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
+
+        // Draw comment text
+        g.setColour(juce::Colours::white);
+        g.setFont(16.0f);
+        if (commentText.isEmpty())
+        {
+            g.drawFittedText("double click to type.", getLocalBounds().reduced(10), juce::Justification::left, 100);
+        }
+        else
+        {
+            g.drawFittedText(commentText, getLocalBounds().reduced(10), juce::Justification::left, 100);
+        }
+    }
+
+    void setCommentText(const juce::String& text)
+    {
+        commentText = text;
+        redoImage();
+    }
+
+private:
+    juce::String commentText;
 };
 
 class NostalgicItem : public BKItem
@@ -301,7 +358,7 @@ public:
         g.setColour(c);
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 
@@ -361,7 +418,7 @@ public:
         g.setColour(c);
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered));
     }
 
@@ -420,7 +477,7 @@ public:
         g.setColour(c);
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 
@@ -479,7 +536,7 @@ public:
         g.setColour(c);
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
@@ -522,7 +579,7 @@ public:
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
         g.fillPath(layer2);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 
@@ -566,7 +623,7 @@ public:
         c = findColour(Skin::kWidgetPrimary1, true);
         g.setColour(c);
         g.fillPath(layer2);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
@@ -683,7 +740,7 @@ public:
         g.fillPath(stopSign);
 
         // White border
-        g.setColour(juce::Colours::white);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(stopSign, juce::PathStrokeType(6.0f));
     }
 };
@@ -728,7 +785,7 @@ public:
         g.fillPath(stopSign);
 
         // White border
-        g.setColour(juce::Colours::white);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(stopSign, juce::PathStrokeType(6.0f));
     }
 };
@@ -758,7 +815,7 @@ public:
             g.fillPath(targetPaths[0]);
 
             // White border
-            g.setColour(juce::Colours::white);
+            g.setColour(selected_ ? juce::Colours::white : prep_color_);
             g.strokePath(targetPaths[0], juce::PathStrokeType(6.0f));
         }
 
@@ -809,7 +866,7 @@ public:
         g.fillPath(pianoQuad);
 
         // White border
-        g.setColour(juce::Colours::white);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(pianoQuad, juce::PathStrokeType(6.0f));
     }
 };
@@ -868,7 +925,7 @@ public:
         g.setColour(c);
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 };
@@ -927,7 +984,7 @@ public:
         g.setColour(c);
         g.fillPath(layer2);
         g.fillPath(layer3);
-        g.setColour(prep_color_);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 };

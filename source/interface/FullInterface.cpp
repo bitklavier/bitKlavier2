@@ -253,10 +253,11 @@ void FullInterface::resized()
     setSizeRatio (ratio);
     int voice_padding = findValue (Skin::kLargePadding);
     int top_height = kTopHeight * ratio;
+    int footer_height = 90 * ratio;
 
     header_->setTabOffset (2 * voice_padding);
     header_->setBounds (left, top, width, top_height);
-    footer_->setBounds (left, height - 90, width, 90);
+    footer_->setBounds (left, height - footer_height, width, footer_height);
     juce::Rectangle<int> new_bounds (0, 0, width, height);
     main_->setBounds (new_bounds);
     prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() * prepScale_x / (1.2 * display_scale_), new_bounds.getHeight() * prepScale_y / (1.24 * display_scale_ ));

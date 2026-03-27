@@ -5,7 +5,8 @@
 
 #include "ConstructionSite.h"
 #include "Preparations.h"
-
+#include "CommentPreparation.h"
+#include "CommentProcessor.h"
 #include "sound_engine.h"
 #include "synth_gui_interface.h"
 #include "open_gl_line.h"
@@ -31,7 +32,7 @@ static constexpr std::array<std::pair<float, float>,
     /* 10 Modulation */ { 100.0f, 100.0f },
     /* 11 Reset      */ { 100.0f, 100.0f },
     /* 12 PianoMap   */ { 150.0f, 120.0f },
-    /* 13 Comment    */ { 100.0f, 100.0f },
+    /* 13 Comment    */ { 245.0f, 125.0f },
     /* 14 Compressor */ { 245.0f, 125.0f },
     /* 15 EQ         */ { 245.0f, 125.0f },
     /* 16 VST        */ { 245.0f, 125.0f },
@@ -81,6 +82,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(IDs::tempo, TempoPreparation::create);
     nodeFactory.Register(IDs::nostalgic, NostalgicPreparation::create);
     nodeFactory.Register(IDs::resonance, ResonancePreparation::create);
+    nodeFactory.Register(IDs::comment, CommentPreparation::create);
 
     lassoVisual = std::make_shared<OpenGlImageComponent>("lassoVisual");
     lassoVisual->setComponent(&selectorLasso);
@@ -115,7 +117,8 @@ enum CommandIDs {
     nudgeRight = 0x062c,
     selectAll = 0x062d,
     copy = 0x062e,
-    paste = 0x062f
+    paste = 0x062f,
+    comment = 0x0630
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
@@ -142,7 +145,8 @@ void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
         nudgeRight,
         selectAll,
         copy,
-        paste});
+        paste,
+        comment});
 }
 
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
@@ -204,6 +208,10 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
         case pianoswitch:
             info.setInfo("Pianoswitch", "Create Pianoswitch Preparation", "Edit", 0);
             info.addDefaultKeypress('p', juce::ModifierKeys::noModifiers);
+            break;
+        case comment:
+            info.setInfo("Comment", "Create Comment Preparation", "Edit", 0);
+            info.addDefaultKeypress('/', juce::ModifierKeys::noModifiers);
             break;
         case horizontallyAlignSelected:
             info.setInfo("Horizontally Align Selected", "Aligns Selected Preparations Horizontally", "Edit", 0);
@@ -417,6 +425,22 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                                              juce::Point<int>(lastX, lastY)), nullptr);
 
                 prep_list->appendChild(t,  &undo);
+                return true;
+            }
+            case comment:
+            {
+                prepWidth = 245.0f;
+                prepHeight = 125.0f;
+                prepWidth *= prepScale;
+                prepHeight *= prepScale;
+                juce::ValueTree t(IDs::comment);
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeComment, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX, lastY)), nullptr);
+
+                prep_list->appendChild(t, &undo);
                 return true;
             }
             case modulation:
@@ -1273,6 +1297,16 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     if (e.mods.isCtrlDown())
         return;
 #endif
+
+    // If we're on a CommentPreparation, it might have handled resizing
+    if (auto* commentPrep = e.originalComponent->findParentComponentOfClass<CommentPreparation>())
+    {
+        return;
+    }
+    if (dynamic_cast<CommentPreparation*>(e.originalComponent) != nullptr)
+    {
+        return;
+    }
 
     //    DBG(e.x);
     //    DBG(e.y);

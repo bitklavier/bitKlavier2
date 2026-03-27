@@ -123,9 +123,12 @@ void FooterSection::paintBackground(juce::Graphics &g) {
 
 void FooterSection::resized() {
     auto bounds = getLocalBounds();
-    const int keySelectorWidth = 1000;
-    const int buttonWidth      = 120;
+    const float keyboardWidthRatio = 1000.0f / 1400.0f; // based on original hardcoded values
+    const int keySelectorWidth = getWidth() * keyboardWidthRatio;
     const int padding          = findValue(Skin::kLargePadding);
+
+    const float buttonWidthRatio = 120.0f / 1400.0f;
+    const int buttonWidth = getWidth() * buttonWidthRatio;
 
     // body_->setRounding(findValue(Skin::kBodyRounding));
     // body_->setColor(juce::Colours::black);
@@ -145,7 +148,7 @@ void FooterSection::resized() {
 
     bounds.removeFromLeft (padding*2);
     bounds.removeFromRight (padding*2);
-    int meterHeight = 50;
+    int meterHeight = 50 * (getHeight() / 90.0f); // Scale meter height with footer height
     int y = bounds.getY() + (bounds.getHeight() - meterHeight) / 2 + 5;
     if (levelMeter)
         levelMeter->setBounds(bounds.getX(), y, bounds.getWidth(), meterHeight);

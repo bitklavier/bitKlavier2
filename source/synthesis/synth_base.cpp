@@ -42,6 +42,7 @@
 #include "PianoSwitchProcessor.h"
 #include "BlendronicProcessor.h"
 #include "ResetProcessor.h"
+#include "CommentProcessor.h"
 
 // For saving last opened gallery path
 #include "UserPreferences.h"
@@ -105,6 +106,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     prepFactory.template registerType<PianoSwitchProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::pianoMap.toString().toStdString());
     prepFactory.template registerType<TempoProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::tempo.toString().toStdString());
     prepFactory.template registerType<NostalgicProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::nostalgic.toString().toStdString());
+    prepFactory.template registerType<bitklavier::CommentProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::comment.toString().toStdString());
 
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);

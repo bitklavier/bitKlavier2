@@ -60,7 +60,7 @@ namespace
     }
 }
 
-    BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem"), prep_color_(juce::Colours::white)
+    BKItem::BKItem (bitklavier::BKPreparationType type) : juce::Button("bkitem"), type_(type), prep_color_(juce::Colours::white)
 {
     image_component_ = std::make_shared<OpenGlImageComponent>();
     image_component_->setComponent(this);

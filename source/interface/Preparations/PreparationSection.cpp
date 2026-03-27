@@ -103,9 +103,11 @@ juce::AudioProcessor *PreparationSection::getProcessor() const {
 
 void PreparationSection::changeListenerCallback(juce::ChangeBroadcaster *source) {
     if (selectedSet->isSelected(this)) {
+        item->setSelected(true);
         item->setColor(juce::Colours::white);
         isSelected = true;
     } else {
+        item->setSelected(false);
         item->setColor(findColour(Skin::kWidgetPrimary1, true));
         isSelected = false;
     }

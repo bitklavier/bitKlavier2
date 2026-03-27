@@ -23,6 +23,8 @@ namespace IDs
     DECLARE_ID (BUSCOMPRESSOR)
 
     DECLARE_ID (name)
+    DECLARE_ID (comment)
+    DECLARE_ID (commentText)
 
     DECLARE_ID (PREPARATION)
     DECLARE_ID (id)
@@ -145,7 +147,7 @@ namespace IDs
 }
 
 // order should match BKPreparationType in common.h
-static const std::array<juce::Identifier, 13> preparationIDs {
+static const std::array<juce::Identifier, 14> preparationIDs {
     IDs::keymap,
     IDs::direct,
     IDs::synchronic,
@@ -158,7 +160,8 @@ static const std::array<juce::Identifier, 13> preparationIDs {
     IDs::midiTarget,
     IDs::modulation,
     IDs::reset,
-    IDs::pianoMap
+    IDs::pianoMap,
+    IDs::comment
 };
 
 #undef DECLARE_ID
