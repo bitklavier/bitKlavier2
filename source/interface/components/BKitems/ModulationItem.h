@@ -26,8 +26,8 @@ public:
         c = findColour(Skin::kWidgetPrimary2, true);
         g.setColour(c);
         g.fillPath(layer_1_);
-        g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
-
+        g.setColour(selected_ ? juce::Colours::white : juce::Colours::black);
+        g.strokePath(layer_1_, juce::PathStrokeType (1.0f));
     }
     bool hitTest(int x, int y) override
     {

@@ -740,8 +740,8 @@ public:
         g.fillPath(stopSign);
 
         // White border
-        g.setColour(selected_ ? juce::Colours::white : prep_color_);
-        g.strokePath(stopSign, juce::PathStrokeType(6.0f));
+        g.setColour(selected_ ? juce::Colours::white : juce::Colours::black);
+        g.strokePath(stopSign, juce::PathStrokeType(1.0f));
     }
 };
 
@@ -785,8 +785,8 @@ public:
         g.fillPath(stopSign);
 
         // White border
-        g.setColour(selected_ ? juce::Colours::white : prep_color_);
-        g.strokePath(stopSign, juce::PathStrokeType(6.0f));
+        g.setColour(selected_ ? juce::Colours::white : juce::Colours::black);
+        g.strokePath(stopSign, juce::PathStrokeType(1.0f));
     }
 };
 
@@ -815,8 +815,8 @@ public:
             g.fillPath(targetPaths[0]);
 
             // White border
-            g.setColour(selected_ ? juce::Colours::white : prep_color_);
-            g.strokePath(targetPaths[0], juce::PathStrokeType(6.0f));
+            g.setColour(selected_ ? juce::Colours::white : juce::Colours::black);
+            g.strokePath(targetPaths[0], juce::PathStrokeType(1.0f));
         }
 
         // Fill the middle circle with white
