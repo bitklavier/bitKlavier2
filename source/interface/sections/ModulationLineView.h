@@ -19,6 +19,7 @@ public:
     ConstructionSite& site;
 
     void renderOpenGlComponents (OpenGlWrapper& open_gl, bool animate) override;
+    void destroyOpenGlComponents (OpenGlWrapper& open_gl) override;
 
     juce::Point<int> mouse_drag_position_;
     juce::Component* current_source_;

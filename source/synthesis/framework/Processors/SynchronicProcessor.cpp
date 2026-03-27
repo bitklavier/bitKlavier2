@@ -748,7 +748,7 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
  * updates what the current cluster is, and turns off older clusters
  * @return whether this is a newcluster or not (bool)
  */
-    bool SynchronicProcessor::updateCurrentCluster()
+bool SynchronicProcessor::updateCurrentCluster()
 {
     bool ncluster = false;
 
@@ -757,17 +757,16 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
     {
         // move to the next layer
         currentLayerIndex++;
-        if (currentLayerIndex >= clusterLayers.size()) currentLayerIndex = 0;
+        if (currentLayerIndex >= (int)clusterLayers.size()) currentLayerIndex = 0;
         clusterLayers[currentLayerIndex]->reset();
 
         // turn off oldest cluster
         int oldestClusterIndex = currentLayerIndex - (int)std::round(*state.params.numLayers);
-        //DBG("oldestClusterIndex = " << oldestClusterIndex);
-        //while (oldestClusterIndex < 0) oldestClusterIndex += clusterLayers.size();
         if (oldestClusterIndex < 0)
         {
-            if (clusterLayers.size() > 0) // clusterLayers.size() should always be != 0
-                oldestClusterIndex = (oldestClusterIndex % clusterLayers.size() + clusterLayers.size()) % clusterLayers.size();
+            int n = (int)clusterLayers.size();
+            if (n > 0)
+                oldestClusterIndex = (oldestClusterIndex % n + n) % n;
             else
                 oldestClusterIndex = 0;
         }
@@ -775,7 +774,7 @@ bool SynchronicProcessor::holdCheck(int noteNumber)
         clusterLayers[oldestClusterIndex]->reset();
 
         // DBG("num layers = " + juce::String((int)std::round(*state.params.numLayers)));
-        DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
+        // DBG("new cluster = " + juce::String(currentLayerIndex) + " and turning off cluster " + juce::String(oldestClusterIndex));
 
         ncluster = true;
     }
@@ -1121,7 +1120,7 @@ void SynchronicProcessor::keyReleased(int noteNumber, int channel)
             // depending on the mode, and whether this is a first or last note, reset the beat and pattern phase and start playing
             if ((sMode == First_NoteOff && nextOffIsFirst) || (sMode == Any_NoteOff) || (sMode == Last_NoteOff && clusterKeysDepressed.size() == 0))
             {
-                for (int i = clusterLayers.size(); --i >= 0;)
+                for (int i = (int)clusterLayers.size(); --i >= 0;)
                 {
                     if (clusterLayers[i]->containsNote (noteNumber))
                     {

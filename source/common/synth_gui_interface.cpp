@@ -310,11 +310,14 @@ void SynthGuiInterface::confirmDiscardAndPerform (std::function<void()> action)
         .withMessage ("The current gallery has unsaved changes.")
         .withButton ("Save")
         .withButton ("Don't Save")
-        .withButton ("Cancel");
+        .withButton ("Cancel")
+        .withAssociatedComponent (gui_.get());
 
     juce::WeakReference<SynthGuiInterface> weakThis (this);
 
-    messageBox = juce::AlertWindow::showScopedAsync (opts,
+    // Use native OS dialog (NSAlert on macOS) to avoid creating JUCE-rendered
+    // components with OpenGL resources that could outlive the OpenGL context on quit.
+    messageBox = juce::NativeMessageBox::showScopedAsync (opts,
         [weakThis, action, canSave, active] (int result) mutable
         {
             if (weakThis == nullptr) return;

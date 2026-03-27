@@ -254,7 +254,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
     // simple case: no transpositions and no semitone width adjustments
     if (currentTransposition == 0 && getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote) == 0.)
     {
-        double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
+        double workingOffset = circularTuningOffset[(currentlyPlayingNote) % (int)circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
         //DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
@@ -267,14 +267,14 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
     {
         if (!tuneTranspositions)
         {
-            double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
+            double workingOffset = circularTuningOffset[(currentlyPlayingNote) % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, getGlobalTuningReference());
         }
         else
         {
-            double workingOffset = circularTuningOffset[(currentlyPlayingNote + (int)std::round(currentTransposition)) % circularTuningOffset.size()] * .01;
+            double workingOffset = circularTuningOffset[(currentlyPlayingNote + (int)std::round(currentTransposition)) % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote + (int)std::round(currentTransposition)] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, getGlobalTuningReference());
@@ -287,7 +287,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         double midiNoteAdjustment = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote);
         int midiNoteNumberTemp = std::round(currentlyPlayingNote + midiNoteAdjustment);
         double workingOffset = (currentlyPlayingNote + midiNoteAdjustment) - midiNoteNumberTemp;
-        workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
+        workingOffset += circularTuningOffset[(midiNoteNumberTemp) % (int)circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
         workingOffset += getOverallOffset();
         //DBG(" TuningState::getStaticTargetFrequency with getSemitoneWidthOffsetForMidiNote, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " midiNoteAdjustment = " + juce::String(midiNoteAdjustment));
@@ -303,7 +303,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
             int tuningNote = std::round(currentlyPlayingNote + workingOffset);
             int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset);
             workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp; // fractional offset
-            workingOffset += circularTuningOffset[tuningNote % circularTuningOffset.size()] * .01;
+            workingOffset += circularTuningOffset[tuningNote % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[tuningNote] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) midiNoteNumberTemp, getGlobalTuningReference());
@@ -313,7 +313,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
             double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote + currentTransposition); // transposition is also impacted by semitone width in Tuning
             int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset);
             workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp; // fractional offset
-            workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
+            workingOffset += circularTuningOffset[(midiNoteNumberTemp) % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) midiNoteNumberTemp, getGlobalTuningReference());
@@ -524,7 +524,7 @@ void TuningState::keyPressed(int noteNumber)
 
             const std::array<float, 12> anchorTuning = getOffsetsFromTuningSystem(getAdaptiveAnchorScale());
             adaptiveFundamentalFreq = mtof(
-                noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % anchorTuning.size()],
+                noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % (int)anchorTuning.size()],
                 getGlobalTuningReference()
             );
             updateAdaptiveFundamentalValue(noteNumber);

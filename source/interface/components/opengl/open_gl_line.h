@@ -13,6 +13,7 @@ public:
     void paintBackground(juce::Graphics& g) override;
     void init(OpenGlWrapper& open_gl);
     void render(OpenGlWrapper& open_gl, bool animate);
+    void destroy(OpenGlWrapper& open_gl) override;
     void resized() override;
     bool isInit() override;
 

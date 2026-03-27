@@ -80,8 +80,8 @@ void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>
     }
     const juce::ScopedLock sl (lock);
 
-    voices.clearQuick (false);
-    graveyardVoices.clearQuick (false);
+    voices.clearQuick (true);
+    graveyardVoices.clearQuick (true);
 
     if (s->getFirst() != nullptr)
     {

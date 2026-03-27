@@ -309,14 +309,22 @@ public:
 
     void systemRequestedQuit() override
     {
-        if (auto* gui = main_window_->editor_->getGuiInterface())
+        auto* gui = main_window_->editor_->getGuiInterface();
+        if (gui == nullptr || ! gui->isDirty())
         {
-            gui->confirmDiscardAndPerform ([this] { quit(); });
+            // Defer quit() so applicationShouldTerminate: returns NSTerminateCancel
+            // rather than NSTerminateNow.  NSTerminateNow causes exit() without
+            // unwinding JUCEApplicationBase::main()'s stack, skipping
+            // ScopedJuceInitialiser_GUI::~dtor / shutdownJuce_GUI() and leaving
+            // OpenGL objects alive when static destructors fire.
+            juce::MessageManager::callAsync ([this] { quit(); });
+            return;
         }
-        else
-        {
-            quit();
-        }
+
+        // Dirty: show dialog. With an associated component the NSAlert is a
+        // non-blocking sheet whose completion handler fires on the message
+        // thread, so calling quit() directly is safe.
+        gui->confirmDiscardAndPerform ([this] { quit(); });
     }
 
     void anotherInstanceStarted (const juce::String& command_line) override
