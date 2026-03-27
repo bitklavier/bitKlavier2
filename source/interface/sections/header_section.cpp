@@ -972,6 +972,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 case PT::PreparationTypeMidiTarget:   return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "T)").toStdString();
                 case PT::PreparationTypePianoMap:     return baseName + " (p)";
                 case PT::PreparationTypeReset:        return baseName + " (\\)";
+                case PT::PreparationTypeComment:      return baseName + " (/)";
                 default:                              return baseName; // no shortcut defined or shown
             }
         };
