@@ -271,27 +271,36 @@ public:
 
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
     {
-        // Ascertains the current window size
-        juce::Rectangle<float> bounds = getLocalBounds().toFloat();
-
-        // Retrieves and sets the color
         g.setColour(juce::Colours::grey);
         g.fillPath(layer_1_);
 
         g.setColour(selected_ ? juce::Colours::white : juce::Colours::grey);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
 
-        // Draw comment text
         g.setColour(juce::Colours::white);
-        g.setFont(16.0f);
-        if (commentText.isEmpty())
+
+        const auto textBounds = getLocalBounds().reduced(10);
+        const auto& displayText = commentText.isEmpty() ? juce::String("double click to type.") : commentText;
+
+        // Scale the font down from 16pt until the laid-out text height fits, minimum 8pt.
+        float fontSize = 16.0f;
+        if (textBounds.getWidth() > 0 && textBounds.getHeight() > 0)
         {
-            g.drawFittedText("double click to type.", getLocalBounds().reduced(10), juce::Justification::left, 100);
+            for (float size = 16.0f; size >= 8.0f; size -= 1.0f)
+            {
+                fontSize = size;
+                juce::AttributedString as;
+                as.setJustification(juce::Justification::left);
+                as.append(displayText, g.getCurrentFont().withHeight(size));
+                juce::TextLayout layout;
+                layout.createLayout(as, (float) textBounds.getWidth());
+                if (layout.getHeight() <= (float) textBounds.getHeight())
+                    break;
+            }
         }
-        else
-        {
-            g.drawFittedText(commentText, getLocalBounds().reduced(10), juce::Justification::left, 100);
-        }
+
+        g.setFont(fontSize);
+        g.drawFittedText(displayText, textBounds, juce::Justification::left, 100);
     }
 
     void setCommentText(const juce::String& text)
@@ -866,8 +875,8 @@ public:
         g.fillPath(pianoQuad);
 
         // White border
-        g.setColour(selected_ ? juce::Colours::white : prep_color_);
-        g.strokePath(pianoQuad, juce::PathStrokeType(6.0f));
+        g.setColour(selected_ ? juce::Colours::white : juce::Colours::black);
+        g.strokePath(pianoQuad, juce::PathStrokeType(1.0f));
     }
 };
 

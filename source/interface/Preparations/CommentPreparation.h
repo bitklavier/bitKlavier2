@@ -5,6 +5,7 @@
 #include "CommentProcessor.h"
 #include "FullInterface.h"
 #include "PreparationSection.h"
+#include "open_gl_image_component.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 class CommentPreparation : public PreparationSection, public juce::TextEditor::Listener, public juce::ComponentListener
@@ -33,7 +34,7 @@ public:
 
 private:
     void stopEditing();
-    juce::TextEditor textEditor;
+    OpenGlTextEditor textEditor;
     juce::ResizableBorderComponent resizer;
     juce::ComponentBoundsConstrainer constrainer;
 };

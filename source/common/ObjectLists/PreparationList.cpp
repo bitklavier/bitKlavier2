@@ -8,6 +8,7 @@
 #include "KeymapProcessor.h"
 #include "ModulationProcessor.h"
 #include "PianoSwitchProcessor.h"
+#include "CommentProcessor.h"
 #include "../UserPreferences.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v, juce::UndoManager* um) : tracktion::engine::ValueTreeObjectList<
@@ -240,6 +241,8 @@ void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrap
     jassert(dynamic_cast<PianoSwitchProcessor*>(dst->proc)==nullptr);
     if(dynamic_cast<KeymapProcessor*>(dst->proc))
         return;
+    if(dynamic_cast<bitklavier::CommentProcessor*>(dst->proc))
+        return;
     for (auto& piano_switch_array : synth.preparationLists) {
         for (auto piano_switch : piano_switch_array->pianoSwitchProcessors) {
             // synth.addModulationConnection(piano_switch->node_id, dst->node_id);
@@ -255,7 +258,7 @@ void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapp
     jassert(dynamic_cast<PianoSwitchProcessor*>(piano_switch->proc));
     for (auto& piano_switch_array : synth.preparationLists) {
         for (auto processor : piano_switch_array->objects) {
-            if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr)
+            if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr && dynamic_cast<bitklavier::CommentProcessor*>(processor->proc) == nullptr)
                 if(!synth.addModulationConnection(piano_switch->node_id,processor->node_id))
                     jassertfalse;
             // else

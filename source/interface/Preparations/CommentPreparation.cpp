@@ -12,7 +12,8 @@ CommentPreparation::CommentPreparation (
                                                    node,
                                                    *_synth_gui_interface->getUndoManager()
                                                    ),
-                                               resizer (this, &constrainer)
+                                               resizer (this, &constrainer),
+                                               textEditor ("commentEditor")
 {
     constrainer.setMinimumSize(40, 40);
 
@@ -20,11 +21,11 @@ CommentPreparation::CommentPreparation (
     cItem->setCommentText(state.getProperty(IDs::commentText).toString());
     item = std::move(cItem);
 
+    // Item image component renders first (background layer)
     addOpenGlComponent (item->getImageComponent(), true);
     _open_gl.context.executeOnGLThread ([this] (juce::OpenGLContext& context) {
         item->getImageComponent()->init (_open_gl);
-    },
-        false);
+    }, false);
 
     addAndMakeVisible (item.get());
     setSkinOverride (Skin::kDirect);
@@ -32,12 +33,24 @@ CommentPreparation::CommentPreparation (
     width = state.getProperty(IDs::width);
     height = state.getProperty(IDs::height);
 
+    // Text editor as regular JUCE component (handles keyboard/mouse events).
+    // The image component must be registered (setting parent_) before any call
+    // that triggers resized(), such as setMultiLine.
     addChildComponent(textEditor);
+    addOpenGlComponent (textEditor.getImageComponent(), false);
+    _open_gl.context.executeOnGLThread ([this] (juce::OpenGLContext& context) {
+        textEditor.getImageComponent()->init (_open_gl);
+    }, false);
+    textEditor.getImageComponent()->setActive(false);
+
     textEditor.setMultiLine(true);
     textEditor.setReturnKeyStartsNewLine(true);
     textEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colours::grey);
     textEditor.setColour(juce::TextEditor::textColourId, juce::Colours::white);
     textEditor.setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentWhite);
+    textEditor.setColour(juce::CaretComponent::caretColourId, juce::Colours::white);
+    textEditor.setColour(juce::TextEditor::highlightColourId, juce::Colours::white.withAlpha(0.4f));
+    textEditor.setColour(juce::TextEditor::highlightedTextColourId, juce::Colours::white);
     textEditor.setJustification(juce::Justification::left);
     textEditor.addListener(this);
 
@@ -74,15 +87,15 @@ void CommentPreparation::paintBackground (juce::Graphics& g)
 void CommentPreparation::mouseDoubleClick (const juce::MouseEvent& event)
 {
     textEditor.setText(state.getProperty(IDs::commentText).toString(), false);
+    textEditor.getImageComponent()->setActive(true);
     textEditor.setVisible(true);
     textEditor.grabKeyboardFocus();
+    textEditor.redoImage();
 }
 
 void CommentPreparation::textEditorReturnKeyPressed (juce::TextEditor& editor)
 {
-    // For multiline, return might just be a new line, but maybe we want cmd+return to finish?
-    // User said "when you close the preparation, the text is reflected".
-    // I'll use focus lost as the trigger for finishing.
+    // multiline: return starts a new line; focus lost saves.
 }
 
 void CommentPreparation::textEditorFocusLost (juce::TextEditor& editor)
@@ -93,6 +106,7 @@ void CommentPreparation::textEditorFocusLost (juce::TextEditor& editor)
 void CommentPreparation::textEditorEscapeKeyPressed (juce::TextEditor& editor)
 {
     textEditor.setVisible(false);
+    textEditor.getImageComponent()->setActive(false);
 }
 
 void CommentPreparation::textEditorTextChanged (juce::TextEditor& editor)
@@ -106,6 +120,7 @@ void CommentPreparation::stopEditing()
     {
         state.setProperty(IDs::commentText, textEditor.getText(), &undo);
         textEditor.setVisible(false);
+        textEditor.getImageComponent()->setActive(false);
     }
 }
 
