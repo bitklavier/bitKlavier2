@@ -109,7 +109,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     setOpaque (true);
     open_gl_context_.setContinuousRepainting (true);
     open_gl_context_.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
-    // open_gl_context_.setSwapInterval (0);
+    open_gl_context_.setSwapInterval (1); // cap render loop at display refresh rate (V-Sync)
     open_gl_context_.setRenderer (this);
     //componentpaintingenabled fixes flickering
     open_gl_context_.setComponentPaintingEnabled (false); // set to true, and the non-OpenGL components will draw
@@ -253,15 +253,17 @@ void FullInterface::resized()
     setSizeRatio (ratio);
     int voice_padding = findValue (Skin::kLargePadding);
     int top_height = kTopHeight * ratio;
-    int footer_height = 90 * ratio;
+    if (!header_ || !footer_ || !main_ || !prep_popup || !mod_popup)
+        return;
 
     header_->setTabOffset (2 * voice_padding);
     header_->setBounds (left, top, width, top_height);
-    footer_->setBounds (left, height - footer_height, width, footer_height);
-    juce::Rectangle<int> new_bounds (0, 0, width, height);
+    footer_->setBounds (left, height - 90, width, 90);
+    juce::Rectangle<int> new_bounds (0, 0, width, height - 90);
     main_->setBounds (new_bounds);
-    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() * prepScale_x / (1.2 * display_scale_), new_bounds.getHeight() * prepScale_y / (1.24 * display_scale_ ));
-    mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.24 * display_scale_));
+    prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() * prepScale_x / (1.2 * display_scale_), new_bounds.getHeight() * prepScale_y / (1.12 * display_scale_ ));
+    // prep_popup->setBounds (voice_padding, header_->getBottom() + voice_padding, new_bounds.getWidth() * prepScale_x / (1.2 * display_scale_), new_bounds.getHeight() * prepScale_y / (1.24 * display_scale_ ));
+    mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.12 * display_scale_));
     about_section_->setBounds (new_bounds);
     loading_section->setBounds (new_bounds);
     if (getWidth() && getHeight())
@@ -312,7 +314,8 @@ void FullInterface::reset()
 }
 
 void FullInterface::removeAllGuiListeners() {
-    main_->removeAllGuiListeners();
+    if (main_)
+        main_->removeAllGuiListeners();
 }
 
 void FullInterface::popupDisplay (juce::Component* source, const std::string& text, juce::BubbleComponent::BubblePlacement placement, bool primary)
@@ -322,10 +325,33 @@ void FullInterface::popupDisplay (juce::Component* source, const std::string& te
     display->setVisible (true);
 }
 
+void FullInterface::showSaveNotification()
+{
+    if (header_ == nullptr)
+        return;
+
+    PopupDisplay* display = popup_display_1_.get();
+    juce::Rectangle<int> anchor = getLocalArea (header_.get(), header_->getLocalBounds());
+    display->setContent ("Saved", anchor, juce::BubbleComponent::below);
+    display->setVisible (true);
+
+    juce::Component::SafePointer<FullInterface> safe (this);
+    juce::Timer::callAfterDelay (1500, [safe]() {
+        if (safe)
+            safe->hideDisplay (true);
+    });
+}
+
 void FullInterface::hideSoundsetSelector()
 {
     DBG("FullInterface::hideSoundsetSelector()");
     prep_popup->hideSoundsetSelector();
+}
+
+void FullInterface::clearFooterLiveKeys()
+{
+    if (footer_)
+        footer_->clearLiveKeys();
 }
 
 void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, const juce::ValueTree &v)
@@ -416,7 +442,8 @@ void FullInterface::renderOpenGL()
     if (render_scale != last_render_scale_)
     {
         last_render_scale_ = render_scale;
-        juce::MessageManager::callAsync ([=] { checkShouldReposition (true); });
+        juce::Component::SafePointer<FullInterface> safe (this);
+        juce::MessageManager::callAsync ([safe] { if (safe) safe->checkShouldReposition (true); });
     }
 
     juce::ScopedLock lock (open_gl_critical_section_);

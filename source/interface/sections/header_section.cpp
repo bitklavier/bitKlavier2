@@ -326,7 +326,6 @@ void HeaderSection::addPiano()
     gallery.appendChild(piano, nullptr);
 
     pianoSelectText->setText(getActivePiano().getProperty(IDs::name));
-    interface->allNotesOff();
     resized();
 }
 
@@ -411,7 +410,6 @@ void HeaderSection::duplicatePiano (const juce::ValueTree pianoToCopy)
 
     // 6) UI updates
     pianoSelectText->setText(newPiano.getProperty(IDs::name));
-    interface->allNotesOff();
     resized();
 
     // Optional: ensure lines are built after components exist
@@ -549,9 +547,6 @@ void HeaderSection::deletePiano()
     if (pianoToActivate.isValid())
         pianoSelectText->setText(pianoToActivate.getProperty(IDs::name).toString());
 
-    if (interface != nullptr)
-        interface->allNotesOff();
-
     resized();
 }
 
@@ -613,7 +608,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 pianoSelectText->setText(names[selection - itemCounter]);
                 auto interface = findParentComponentOfClass<SynthGuiInterface>();
                 interface->setPianoSwitchTriggerThreadMessage();
-                interface->allNotesOff();
                 for (auto vt: gallery) {
                     if (vt.hasType(IDs::PIANO)) {
                         vt.setProperty(IDs::isActive, 0, nullptr);
@@ -715,14 +709,44 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         PopupItems separator ("separator");
         separator.enabled = false; // non-selectable separator line
         separator.id = -1;
-        options.addItem(0, "Load");
-        options.addItem(1, "Save");
-        options.addItem(2, "Save As");
-        options.addItem(3, "Gallery Settings");
-        options.addItem(separator);
+        options.addItem(0, ("Load (" + juce::String::charToString(0x2318) + "L)").toStdString());
+        options.addItem(1, ("Save (" + juce::String::charToString(0x2318) + "S)").toStdString());
+        options.addItem(2, ("Save As (" + juce::String::charToString(0x21e7) + juce::String::charToString(0x2318) + "S)").toStdString());
 
         // Build directories/files tree
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+
+        // "Load Recent" submenu (IDs 500–598; 599 = "Clear Recent Files")
+        const int kRecentIdBase = 500;
+        auto recentIdToFile = std::make_shared<std::map<int, juce::File>>();
+        {
+            auto recentFiles = parent->getSynth()->user_prefs->userPreferences->getRecentGalleries();
+            PopupItems recentMenu;
+            recentMenu.name = "Load Recent";
+            if (recentFiles.isEmpty())
+            {
+                PopupItems emptyItem ("(No recent files)", false);
+                recentMenu.addItem (emptyItem);
+            }
+            else
+            {
+                for (int i = 0; i < recentFiles.size(); ++i)
+                {
+                    int thisId = kRecentIdBase + i;
+                    (*recentIdToFile)[thisId] = recentFiles[i];
+                    recentMenu.addItem (thisId, recentFiles[i].getFileNameWithoutExtension().toStdString());
+                }
+                recentMenu.addItem (separator);
+                recentMenu.addItem (kRecentIdBase + 99, "Clear Recent Files");
+            }
+            options.addItem (recentMenu);
+        }
+
+        options.addItem(3, "Gallery Settings");
+        options.addItem(4, "Import Legacy Gallery...");
+        // options.addItem(5, ("All Notes Off (" + juce::String::charToString(0x2423) + ")").toStdString());
+        options.addItem(5, ("All Notes Off (spacebar)"));
+        options.addItem(separator);
 
         // Use a high base to avoid clashing with command IDs above
         const int kGalleryIdBase = 1000;
@@ -800,6 +824,28 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         juce::Point<int> position(gallerySelector->getX(), gallerySelector->getBottom());
         showPopupSelector(this, position, options, [=](int selection, int) {
+            // Handle recent-file selections (IDs kRecentIdBase to kRecentIdBase+98)
+            if (selection >= kRecentIdBase && selection < kRecentIdBase + 99)
+            {
+                auto it = recentIdToFile->find (selection);
+                if (it != recentIdToFile->end())
+                {
+                    juce::File fileToLoad = it->second;
+                    parent->confirmDiscardAndPerform ([parent, fileToLoad]
+                    {
+                        std::string error;
+                        if (! parent->loadFromFile (fileToLoad, error))
+                            DBG (juce::String ("Failed to load recent gallery: ") + error);
+                    });
+                }
+                return;
+            }
+            // "Clear Recent Files"
+            if (selection == kRecentIdBase + 99)
+            {
+                parent->getSynth()->user_prefs->userPreferences->clearRecentGalleries();
+                return;
+            }
             // Handle command items first
             if (selection == 0) {
                 DBG("load gallery");
@@ -867,15 +913,27 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 true);
                 return;
             }
+            if (selection == 4) {
+                DBG("import legacy gallery");
+                importLegacyGallery();
+                return;
+            }
+            if (selection == 5) {
+                parent->allNotesOff();
+                return;
+            }
 
             // Handle file selections
             if (selection >= kGalleryIdBase) {
                 auto it = idToFile->find(selection);
                 if (it != idToFile->end()) {
-                    std::string error;
-                    if (!parent->loadFromFile(it->second, error)) {
-                        DBG(juce::String("Failed to load gallery: ") + error);
-                    }
+                    juce::File fileToLoad = it->second;
+                    parent->confirmDiscardAndPerform ([parent, fileToLoad]
+                    {
+                        std::string error;
+                        if (! parent->loadFromFile (fileToLoad, error))
+                            DBG (juce::String ("Failed to load gallery: ") + error);
+                    });
                 }
             }
         }, {}, 1.5f);
@@ -888,11 +946,11 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         disabledItem.id = -1; // will be a separator line
 
         int specialItemBase = 1000;
-        options.addItem(specialItemBase + 0, "Select All (command-a)");
-        options.addItem(specialItemBase + 1, "Horizontally Align Selected (shift-h)");
-        options.addItem(specialItemBase + 2, "Vertically Align Selected (shift-v)");
-        options.addItem(specialItemBase + 3, "Copy (command-c)");
-        options.addItem(specialItemBase + 4, "Paste (command-v)");
+        options.addItem(specialItemBase + 0, ("Select All (" + juce::String::charToString(0x2318) + "A)").toStdString());
+        options.addItem(specialItemBase + 1, ("Horizontally Align Selected (" + juce::String::charToString(0x21e7) + "H)").toStdString());
+        options.addItem(specialItemBase + 2, ("Vertically Align Selected (" + juce::String::charToString(0x21e7) + "V)").toStdString());
+        options.addItem(specialItemBase + 3, ("Copy (" + juce::String::charToString(0x2318) + "C)").toStdString());
+        options.addItem(specialItemBase + 4, ("Paste (" + juce::String::charToString(0x2318) + "V)").toStdString());
         options.addItem(disabledItem);
 
         PopupItems prepOptions = parent->getPreparationPopupItems();
@@ -910,8 +968,8 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 case PT::PreparationTypeTempo:        return baseName + " (m)";
                 case PT::PreparationTypeTuning:       return baseName + " (t)";
                 case PT::PreparationTypeModulation:   return baseName + " (c)";
-                case PT::PreparationTypeMidiFilter:   return baseName + " (shift-f)";
-                case PT::PreparationTypeMidiTarget:   return baseName + " (shift-t)";
+                case PT::PreparationTypeMidiFilter:   return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "F)").toStdString();
+                case PT::PreparationTypeMidiTarget:   return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "T)").toStdString();
                 case PT::PreparationTypePianoMap:     return baseName + " (p)";
                 case PT::PreparationTypeReset:        return baseName + " (\\)";
                 default:                              return baseName; // no shortcut defined or shown
@@ -976,6 +1034,13 @@ void HeaderSection::loadGallery()
     parent->openLoadDialog();
 }
 
+void HeaderSection::importLegacyGallery()
+{
+    // Delegate to SynthGuiInterface which handles the dirty-check dialog
+    if (auto* parent = findParentComponentOfClass<SynthGuiInterface>())
+        parent->importLegacyGallery();
+}
+
 void HeaderSection::saveGallery()
 {
     SynthGuiInterface *interface = findParentComponentOfClass<SynthGuiInterface>();
@@ -996,22 +1061,38 @@ void HeaderSection::saveCurrentGallery()
         return;
     }
 
-    // Protect the default "Basic Piano" preset from being overwritten by Save (Cmd+S)
-    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
-                    .getChildFile("Documents")
-                    .getChildFile("bitKlavier")
-                    .getChildFile("galleries");
-    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
-    const auto activePath = activeFile.getFullPathName();
-    if (activePath == basicA.getFullPathName()
-        || activePath == basicB.getFullPathName()
-        || activePath == basicC.getFullPathName())
+    // Protect built-in/read-only galleries from accidental overwrite.
+    auto galleries = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
+                         .getChildFile("Documents")
+                         .getChildFile("bitKlavier")
+                         .getChildFile("galleries");
+
+    // Basic Piano is a file directly in galleries/
+    juce::File basicPiano = galleries.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
+    if (activeFile == basicPiano)
     {
-        // Route to Save As instead
         saveGallery();
         return;
+    }
+
+    // These are folders; any file inside them is protected
+    static const juce::StringArray kProtectedFolders {
+        "1. Examples",
+        "2. Nostalgic Synchronic",
+        "3. Mikroetudes",
+        "4. Machines for Listening",
+        "5. bK commissions",
+        "6. Preludes"
+    };
+
+    const auto activeParent = activeFile.getParentDirectory();
+    for (const auto& folder : kProtectedFolders)
+    {
+        if (activeParent == galleries.getChildFile(folder))
+        {
+            saveGallery();
+            return;
+        }
     }
 
     // Delegate save to backend helper which handles sync and file I/O
@@ -1019,6 +1100,13 @@ void HeaderSection::saveCurrentGallery()
     {
         if (gallerySelectText)
             gallerySelectText->setText(activeFile.getFileNameWithoutExtension());
+
+        showPopupDisplay(this, "Saved", juce::BubbleComponent::below, true);
+        juce::Component::SafePointer<HeaderSection> safe(this);
+        juce::Timer::callAfterDelay(1500, [safe]() {
+            if (safe)
+                safe->hidePopupDisplay(true);
+        });
     }
 }
 

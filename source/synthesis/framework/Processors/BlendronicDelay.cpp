@@ -8,6 +8,7 @@ BlendronicDelay::BlendronicDelay(float delayLength, float smoothValue, float smo
      dBufferSize(delayBufferSize),
      dDelayGain(1.0f),
      dDelayLength(delayLength),
+     dSmoothValue(smoothValue),
      dSmoothRate(smoothRate),
      sampleRate(sr)
 {
@@ -16,8 +17,10 @@ BlendronicDelay::BlendronicDelay(float delayLength, float smoothValue, float smo
      *          - i'm assuming the constructor is called every time the sample rate is changed?
      */
     delayLinear = std::make_unique<BKDelayL>(dDelayLength, dBufferSize, dDelayGain, sampleRate);
-    smoothedDelayLength.reset(sampleRate, 0.01);
-    smoothedDelayLength.setCurrentAndTargetValue(delayLength);
+    dSmooth_fromBlendronic = std::make_unique<BKEnvelope>(dSmoothValue, dDelayLength, sampleRate);
+    dSmooth_fromBlendronic->setRate(dSmoothRate);
+    dSmooth_fromTempo.reset(sampleRate, 0.01);
+    dSmooth_fromTempo.setCurrentAndTargetValue(delayLength);
 
     DBG("Create bdelay");
 }
@@ -34,7 +37,18 @@ void BlendronicDelay::scalePrevious(float coefficient, int offset, int channel)
 
 void BlendronicDelay::tick(float* inL, float* inR)
 {
-    setDelayLength(smoothedDelayLength.getNextValue());
+    /*
+     * todo:
+     *  - go back to using the Envelope for setting the delay length
+     *  - and then use this smoothedDelayLength only when the Tempo is being modulated
+     *      - or just use Envelope all the time actually
+     *      - the problem with the juce::smoothedValue stuff is that you can't reset the rate without resetting the value immediately
+     */
+    if (!tempoIsChanging)
+        setDelayLength(dSmooth_fromBlendronic->tick()); // need to sort out when to do this vs the following line
+    else
+        setDelayLength(dSmooth_fromTempo.getNextValue());
+
     delayLinear->tick(inL, inR);
 }
 

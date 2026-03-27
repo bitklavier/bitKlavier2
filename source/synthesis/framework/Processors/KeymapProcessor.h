@@ -131,7 +131,7 @@ public:
     bool isMidiEffect() const override { return false; }
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-    juce::AudioProcessor::BusesProperties  keymapBusLayout() { return BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+    juce::AudioProcessor::BusesProperties  keymapBusLayout() { return BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), true)   // Main Input (not used for audio, but must be enabled to keep Modulation bus off channel 0)
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!

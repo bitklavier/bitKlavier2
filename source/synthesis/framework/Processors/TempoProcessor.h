@@ -56,7 +56,7 @@ struct TempoParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr tempoParam {
         juce::ParameterID { "tempo", 100 },
         "TEMPO",
-        chowdsp::ParamUtils::createNormalisableRange (40.0f, 208.0f, 124.0f),
+        chowdsp::ParamUtils::createNormalisableRange (20.0f, 208.0f, 124.0f),
         120.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
@@ -144,7 +144,7 @@ public:
         // three modulatable params: tempo, subdivisions, and history; *2 because modulation and reset require their own channels
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), false) // Main Output
-            .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+            .withInput ("Input", juce::AudioChannelSet::stereo(), true)   // Main Input (not used for audio, but must be enabled to keep Modulation bus off channel 0)
             .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (3 * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false) // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send", juce::AudioChannelSet::stereo(), false); // Send channel (right outputs)

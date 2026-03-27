@@ -221,6 +221,7 @@ void SynthBase::clearAllGuiListeners()
 void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenAdded)
 {
+    is_dirty_.store(true);
     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
         //DBG ("SynthBase::valueTreeChildAdded -- added piano");
@@ -254,6 +255,7 @@ void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenRemoved,
     int indexFromWhichChildWasRemoved)
 {
+    is_dirty_.store(true);
     if (childWhichHasBeenRemoved.hasType (IDs::ModulationConnection))
     {
         if (disconnectModulation (childWhichHasBeenRemoved))
@@ -270,6 +272,7 @@ void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
 void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
     const juce::Identifier& property)
 {
+    is_dirty_.store(true);
     if (property == IDs::isActive && treeWhosePropertyHasChanged.hasType (IDs::PIANO) && static_cast<int> (treeWhosePropertyHasChanged.getProperty (IDs::isActive)) == 1)
     {
         if (getGuiInterface())
@@ -636,6 +639,29 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
         collectSoundsetRefsRecursive (node.getChild(i), out);
 }
 
+bool SynthBase::loadGalleryFromValueTree (const juce::ValueTree& state)
+{
+    if (auto* gui = getGuiInterface())
+        gui->removeAllGuiListeners();
+
+    pauseProcessing (true);
+    clearAllBackend();
+    pauseProcessing (false);
+
+    engine_->resetEngine();
+
+    if (! loadFromValueTree (state))
+        return false;
+
+    if (auto* gui = getGuiInterface())
+    {
+        gui->updateFullGui();
+        gui->notifyFresh();
+    }
+
+    return true;
+}
+
 bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
 {
     if (!preset.exists())
@@ -701,7 +727,10 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         active_file_ = preset;
         // Save last opened gallery path to user preferences immediately
         if (user_prefs && user_prefs->tree.isValid())
+        {
             user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
+            user_prefs->userPreferences->addRecentGallery (preset);
+        }
         pendingPresetTree = parsed;
         presetPending.store (true);
 
@@ -721,7 +750,10 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     active_file_ = preset;
     // Save last opened gallery path to user preferences
     if (user_prefs && user_prefs->tree.isValid())
+    {
         user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
+        user_prefs->userPreferences->addRecentGallery (preset);
+    }
 
     if (auto* gui = getGuiInterface())
     {
@@ -761,6 +793,9 @@ bool SynthBase::saveToFile(juce::File preset)
 
     // Update active file on successful save
     active_file_ = preset;
+    is_dirty_.store(false);
+    if (user_prefs && user_prefs->tree.isValid())
+        user_prefs->userPreferences->addRecentGallery (preset);
     return true;
 }
 
@@ -1200,11 +1235,13 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
 
     auto param_index =  parameter_tree.getParent().indexOf(parameter_tree);// parameter_tree.getProperty (IDs::channel, -1);
-    auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, 1, connection->modulation_output_bus_index); //1 is mod
-    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index);
+    int srcModBusIdx = getBusIndexByName (source_node->getProcessor(), "Modulation", false);
+    int dstModBusIdx = getBusIndexByName (dest_node->getProcessor(), "Modulation", true);
+    auto source_index = source_node->getProcessor()->getChannelIndexInProcessBlockBuffer (false, srcModBusIdx, connection->modulation_output_bus_index);
+    auto dest_index = dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, dstModBusIdx, param_index);
     if(connection->isContinuousMod) {
-        auto numInputChannels = dest_node->getProcessor()->getChannelCountOfBus(true,1) / 2;
-        dest_index  =  dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, 1, param_index + numInputChannels);
+        auto numInputChannels = dest_node->getProcessor()->getChannelCountOfBus(true, dstModBusIdx) / 2;
+        dest_index  =  dest_node->getProcessor()->getChannelIndexInProcessBlockBuffer (true, dstModBusIdx, param_index + numInputChannels);
     }
     //do the final backend adding
     if (!parameter_tree.isValid() || !mod_src.isValid())

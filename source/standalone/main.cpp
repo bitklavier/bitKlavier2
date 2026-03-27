@@ -23,6 +23,7 @@
 #include "PluginScannerSubprocess.h"
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_core/juce_core.h>
+#include <cstdlib>
 void handleBitklavierCrash (void* data)
 {
     //LoadSave::writeCrashLog(juce::SystemStats::getStackBacktrace());
@@ -85,7 +86,7 @@ public:
             if (visible)
             {
                 setUsingNativeTitleBar (true);
-                setResizable (true, true);
+                setResizable (false, false);
             }
             //setConstrainer(constrainer_);
             editor_ = new SynthEditor (visible);
@@ -308,7 +309,22 @@ public:
 
     void systemRequestedQuit() override
     {
-        quit();
+        auto* gui = main_window_->editor_->getGuiInterface();
+        if (gui == nullptr || ! gui->isDirty())
+        {
+            // Defer quit() so applicationShouldTerminate: returns NSTerminateCancel
+            // rather than NSTerminateNow.  NSTerminateNow causes exit() without
+            // unwinding JUCEApplicationBase::main()'s stack, skipping
+            // ScopedJuceInitialiser_GUI::~dtor / shutdownJuce_GUI() and leaving
+            // OpenGL objects alive when static destructors fire.
+            juce::MessageManager::callAsync ([this] { quit(); });
+            return;
+        }
+
+        // Dirty: show dialog. With an associated component the NSAlert is a
+        // non-blocking sheet whose completion handler fires on the message
+        // thread, so calling quit() directly is safe.
+        gui->confirmDiscardAndPerform ([this] { quit(); });
     }
 
     void anotherInstanceStarted (const juce::String& command_line) override

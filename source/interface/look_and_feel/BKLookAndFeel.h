@@ -23,6 +23,8 @@ public:
     {
         setColour(juce::TextEditor::backgroundColourId,   juce::Colours::goldenrod);
         setColour(juce::TextEditor::textColourId,         juce::Colours::black);
+        setColour(juce::TextEditor::highlightColourId,    juce::Colours::darkgrey);
+        setColour(juce::CaretComponent::caretColourId,    juce::Colours::black);
     }
 };
 
@@ -49,6 +51,8 @@ public:
         setColour(juce::TextEditor::backgroundColourId, juce::Colours::black);
         setColour(juce::TextEditor::textColourId, juce::Colours::antiquewhite);
         setColour(juce::TextEditor::outlineColourId, juce::Colours::antiquewhite);
+        setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+        setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
 
         setColour(juce::Label::textColourId, juce::Colours::antiquewhite);
 

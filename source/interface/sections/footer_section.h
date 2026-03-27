@@ -35,6 +35,9 @@ public:
     /** Clear any keymap highlight from the footer keyboard */
     void clearKeymapDisplay();
 
+    /** Clear live (MIDI-driven) key highlights from the footer keyboard */
+    void clearLiveKeys();
+
   private:
     std::shared_ptr<PeakMeterSection> levelMeter;
 

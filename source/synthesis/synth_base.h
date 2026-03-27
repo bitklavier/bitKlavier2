@@ -71,6 +71,7 @@ public:
     bitklavier::ParamOffsetBank &getParamOffsetBank();
 
     bool loadFromFile(juce::File preset, std::string &error);
+    bool loadGalleryFromValueTree(const juce::ValueTree &state);
     //unused but could be useful for future mpe and or midi mapping functionality
     void setMpeEnabled(bool enabled);
     bool isMidiMapped(const std::string &name);
@@ -83,6 +84,8 @@ public:
 
     void clearActiveFile() { active_file_ = juce::File(); }
     juce::File getActiveFile() { return active_file_; }
+    bool isDirty() const { return is_dirty_.load(); }
+    void markClean() { is_dirty_.store(false); }
     juce::ValueTree &getValueTree();
     juce::UndoManager &getUndoManager();
 
@@ -279,6 +282,7 @@ protected:
     std::shared_ptr<SynthBase *> self_reference_;
 
     juce::File active_file_;
+    std::atomic<bool> is_dirty_ { false };
 
     bool expired_;
 

@@ -188,8 +188,16 @@ void PreparationSection::setPortInfo() {
         {
             auto processor = node->getProcessor();
 
+            // Keymap, Tuning, and Tempo have dummy audio input buses (to keep the Modulation
+            // bus off channel 0) — not real user-connectable audio inputs.
+            const auto prepType = static_cast<int>(state.getProperty(IDs::type));
+            const bool skipAudioInputPort =
+                (prepType == bitklavier::BKPreparationType::PreparationTypeKeymap) ||
+                (prepType == bitklavier::BKPreparationType::PreparationTypeTuning) ||
+                (prepType == bitklavier::BKPreparationType::PreparationTypeTempo);
+
             //check if main audio input bus/ is enabled
-            if (processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
+            if (!skipAudioInputPort && processor->getBus(true, 0) != nullptr && processor->getBus(true, 0)->isEnabled()) {
                 for (int i = 0; i < processor->getMainBusNumInputChannels(); i+=2) {
                     juce::ValueTree v{IDs::PORT};
                     v.setProperty(IDs::nodeID,
@@ -319,41 +327,42 @@ void PreparationSection::mouseDown(const juce::MouseEvent &e) {
     pointBeforDrag = this->getPosition();
     hasStartedDrag_ = false;
 
-    if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
-    {
-        FullInterface* fullInterface = findParentComponentOfClass<FullInterface>();
-        if (fullInterface && fullInterface->header_)
-        {
-            std::vector<std::string> pianoNames = fullInterface->header_->getAllPianoNames();
-            PopupItems menu("add linked prep to...");
-            int id = 1;
-            for (const auto& name : pianoNames)
-            {
-                menu.addItem(id++, name);
-            }
-
-            showPopupSelector(this, e.getPosition(), menu, [this, pianoNames](int id, int selectedIndex) {
-                if (selectedIndex >= 0 && selectedIndex < pianoNames.size())
-                {
-                    DBG("Selected piano to add linked prep to: " << pianoNames[selectedIndex]);
-                    juce::ValueTree linked_piano{IDs::linkedPrep};
-                    auto gallery = state.getParent().getParent().getParent();
-                    auto new_piano = gallery.getChildWithProperty(IDs::name, juce::String(pianoNames[selectedIndex]));
-                    auto p  = state.getProperty(IDs::nodeID);
-                    auto type = state.getProperty(IDs::type);
-                    auto currPianoName = state.getParent().getParent().getProperty(IDs::name);
-
-                    linked_piano.setProperty(IDs::nodeID, p,nullptr);
-                    linked_piano.setProperty(IDs::linkedType,type,nullptr);
-                    linked_piano.setProperty(IDs::linkedPianoName, currPianoName, nullptr);
-
-                    new_piano.getChildWithName(IDs::PREPARATIONS).appendChild(linked_piano,nullptr);
-
-
-                }
-            });
-        }
-    }
+    // leaving this out for now; can uncomment if we decide to support linked preps in the future
+    // if (e.mods.isCtrlDown() || e.mods.isRightButtonDown())
+    // {
+    //     FullInterface* fullInterface = findParentComponentOfClass<FullInterface>();
+    //     if (fullInterface && fullInterface->header_)
+    //     {
+    //         std::vector<std::string> pianoNames = fullInterface->header_->getAllPianoNames();
+    //         PopupItems menu("add linked prep to...");
+    //         int id = 1;
+    //         for (const auto& name : pianoNames)
+    //         {
+    //             menu.addItem(id++, name);
+    //         }
+    //
+    //         showPopupSelector(this, e.getPosition(), menu, [this, pianoNames](int id, int selectedIndex) {
+    //             if (selectedIndex >= 0 && selectedIndex < pianoNames.size())
+    //             {
+    //                 DBG("Selected piano to add linked prep to: " << pianoNames[selectedIndex]);
+    //                 juce::ValueTree linked_piano{IDs::linkedPrep};
+    //                 auto gallery = state.getParent().getParent().getParent();
+    //                 auto new_piano = gallery.getChildWithProperty(IDs::name, juce::String(pianoNames[selectedIndex]));
+    //                 auto p  = state.getProperty(IDs::nodeID);
+    //                 auto type = state.getProperty(IDs::type);
+    //                 auto currPianoName = state.getParent().getParent().getProperty(IDs::name);
+    //
+    //                 linked_piano.setProperty(IDs::nodeID, p,nullptr);
+    //                 linked_piano.setProperty(IDs::linkedType,type,nullptr);
+    //                 linked_piano.setProperty(IDs::linkedPianoName, currPianoName, nullptr);
+    //
+    //                 new_piano.getChildWithName(IDs::PREPARATIONS).appendChild(linked_piano,nullptr);
+    //
+    //
+    //             }
+    //         });
+    //     }
+    // }
 }
 
 void PreparationSection::itemDropped(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails) {
@@ -578,7 +587,8 @@ void PreparationSection::mouseDrag(const juce::MouseEvent &e) {
             auto mousePosInSite = e.getEventRelativeTo(site).getPosition();
             site->drag_offset_ = mousePosInSite - this->getPosition();
 
-            site->original_drag_centre_ = getBounds().getCentre();
+            // Store world-space original centre (screen pos + scroll offset)
+            site->original_drag_centre_ = getBounds().getCentre() + site->scroll_offset_;
             site->has_original_drag_centre_ = true;
         }
     }
@@ -599,4 +609,26 @@ void PreparationSection::moved()
     // //undo.beg
     // x = this->getX();
     // y = this->getY();
+}
+
+void PreparationSection::valueTreePropertyChanged(juce::ValueTree& v, const juce::Identifier& i)
+{
+    tracktion::engine::ValueTreeObjectList<BKPort>::valueTreePropertyChanged(v, i);
+    if (i == IDs::x_y)
+    {
+        auto worldPos = juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty(i));
+        if (auto* site = dynamic_cast<ConstructionSite*>(getParentComponent()))
+            this->setCentrePosition(worldPos - site->scroll_offset_);
+        else
+            this->setCentrePosition(worldPos);
+    }
+    else if (i == IDs::width || i == IDs::height)
+    {
+        if (v.hasProperty(IDs::width) && v.hasProperty(IDs::height))
+        {
+            auto oldCenter = getBounds().getCentre();
+            setSize(v.getProperty(IDs::width), v.getProperty(IDs::height));
+            setCentrePosition(oldCenter);
+        }
+    }
 }

@@ -122,44 +122,47 @@ void EQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuff
     state.getParameterListeners().callAudioThreadBroadcasters();
     state.params.processStateChanges();
 
-    int numSamples = buffer.getNumSamples();
-
-    // apply the input gain multiplier
-    auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
-    buffer.applyGain(0, 0, numSamples, inputgainmult);
-    buffer.applyGain(1, 0, numSamples, inputgainmult);
-
-    // input level meter update stuff
-    std::get<0> (state.params.inputLevels) = buffer.getRMSLevel (0, 0, numSamples);
-    std::get<1> (state.params.inputLevels) = buffer.getRMSLevel (1, 0, numSamples);
-
-    juce::dsp::AudioBlock<float> block(buffer);
-    auto leftBlock = block.getSingleChannelBlock(0);
-    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-    state.params.leftChain.process(leftContext);
-    if (buffer.getNumChannels() > 1)
+    if (*state.params.activeEq)
     {
-        auto rightBlock = block.getSingleChannelBlock(1);
-        juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-        state.params.rightChain.process(rightContext);
+        int numSamples = buffer.getNumSamples();
+
+        // apply the input gain multiplier
+        auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
+        buffer.applyGain(0, 0, numSamples, inputgainmult);
+        buffer.applyGain(1, 0, numSamples, inputgainmult);
+
+        // input level meter update stuff
+        std::get<0> (state.params.inputLevels) = buffer.getRMSLevel (0, 0, numSamples);
+        std::get<1> (state.params.inputLevels) = buffer.getRMSLevel (1, 0, numSamples);
+
+        juce::dsp::AudioBlock<float> block(buffer);
+        auto leftBlock = block.getSingleChannelBlock(0);
+        juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+        state.params.leftChain.process(leftContext);
+        if (buffer.getNumChannels() > 1)
+        {
+            auto rightBlock = block.getSingleChannelBlock(1);
+            juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+            state.params.rightChain.process(rightContext);
+        }
+
+        // handle the send
+        // int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+        // auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
+        // buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+        // buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+
+        // send level meter update
+        // std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
+        // std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+
+        // final output gain stage, from rightmost slider in DirectParametersView
+        auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+        buffer.applyGain(0, 0, numSamples, outputgainmult);
+        buffer.applyGain(1, 0, numSamples, outputgainmult);
+
+        // main level meter update
+        std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
+        std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
     }
-
-    // handle the send
-    // int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-    // auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
-    // buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
-    // buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
-
-    // send level meter update
-    // std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
-    // std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
-
-    // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain(0, 0, numSamples, outputgainmult);
-    buffer.applyGain(1, 0, numSamples, outputgainmult);
-
-    // main level meter update
-    std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
-    std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
 }

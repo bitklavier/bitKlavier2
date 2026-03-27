@@ -148,9 +148,13 @@ double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
 int TuningState::getClosestKey(int noteNum, float transp, bool tuneTranspositions)
 {
     // adaptive/spring tunings ignore semitone width...
-    if(getTuningType() != TuningType::Static || getTuningType() != TuningType::Scala_KBM)
+    if(getTuningType() == TuningType::Spring_Tuning || getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()) + transp);
+        /**
+         * todo: tuneTranspositions is currently ignored
+         *          - either implement it in some way, or hide useTuning button for these types
+         */
+        return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()));
     }
 
     // first check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
@@ -250,7 +254,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
     // simple case: no transpositions and no semitone width adjustments
     if (currentTransposition == 0 && getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote) == 0.)
     {
-        double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
+        double workingOffset = circularTuningOffset[(currentlyPlayingNote) % (int)circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
         //DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
@@ -263,14 +267,14 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
     {
         if (!tuneTranspositions)
         {
-            double workingOffset = circularTuningOffset[(currentlyPlayingNote) % circularTuningOffset.size()] * .01;
+            double workingOffset = circularTuningOffset[(currentlyPlayingNote) % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, getGlobalTuningReference());
         }
         else
         {
-            double workingOffset = circularTuningOffset[(currentlyPlayingNote + (int)std::round(currentTransposition)) % circularTuningOffset.size()] * .01;
+            double workingOffset = circularTuningOffset[(currentlyPlayingNote + (int)std::round(currentTransposition)) % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[currentlyPlayingNote + (int)std::round(currentTransposition)] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) currentlyPlayingNote + currentTransposition, getGlobalTuningReference());
@@ -283,7 +287,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         double midiNoteAdjustment = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote);
         int midiNoteNumberTemp = std::round(currentlyPlayingNote + midiNoteAdjustment);
         double workingOffset = (currentlyPlayingNote + midiNoteAdjustment) - midiNoteNumberTemp;
-        workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
+        workingOffset += circularTuningOffset[(midiNoteNumberTemp) % (int)circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
         workingOffset += getOverallOffset();
         //DBG(" TuningState::getStaticTargetFrequency with getSemitoneWidthOffsetForMidiNote, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " midiNoteAdjustment = " + juce::String(midiNoteAdjustment));
@@ -299,7 +303,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
             int tuningNote = std::round(currentlyPlayingNote + workingOffset);
             int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset);
             workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp; // fractional offset
-            workingOffset += circularTuningOffset[tuningNote % circularTuningOffset.size()] * .01;
+            workingOffset += circularTuningOffset[tuningNote % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[tuningNote] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) midiNoteNumberTemp, getGlobalTuningReference());
@@ -309,7 +313,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
             double workingOffset = getSemitoneWidthOffsetForMidiNote(currentlyPlayingNote + currentTransposition); // transposition is also impacted by semitone width in Tuning
             int midiNoteNumberTemp = std::round(currentlyPlayingNote + currentTransposition + workingOffset);
             workingOffset += currentlyPlayingNote + currentTransposition - midiNoteNumberTemp; // fractional offset
-            workingOffset += circularTuningOffset[(midiNoteNumberTemp) % circularTuningOffset.size()] * .01;
+            workingOffset += circularTuningOffset[(midiNoteNumberTemp) % (int)circularTuningOffset.size()] * .01;
             workingOffset += absoluteTuningOffset[midiNoteNumberTemp] * .01;
             workingOffset += getOverallOffset();
             return mtof (workingOffset + (double) midiNoteNumberTemp, getGlobalTuningReference());
@@ -520,7 +524,7 @@ void TuningState::keyPressed(int noteNumber)
 
             const std::array<float, 12> anchorTuning = getOffsetsFromTuningSystem(getAdaptiveAnchorScale());
             adaptiveFundamentalFreq = mtof(
-                noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % anchorTuning.size()],
+                noteNumber + anchorTuning[(noteNumber + getAdaptiveAnchorFundamental()) % (int)anchorTuning.size()],
                 getGlobalTuningReference()
             );
             updateAdaptiveFundamentalValue(noteNumber);
@@ -715,6 +719,7 @@ void TuningState::loadKBMFile(std::string fname)
 
 void TuningState::mapScalaToInternalTuning()
 {
+    DBG("Mapping Scala to internal tuning ");
     // for non 12-tet systems, map to absolute tuning
     if (currentScalaTuning.scale.count != 12)
     {
@@ -729,6 +734,8 @@ void TuningState::mapScalaToInternalTuning()
         // reset circular stuff
         fundamental->setParameterValue (PitchClass::C);
         tuningSystem->setParameterValue(TuningSystem::Equal_Temperament);
+        // Same no-op guard as the circular path: explicitly reset circularTuningOffset to ET values.
+        setOffsetsFromTuningSystem(TuningSystem::Equal_Temperament, 0, circularTuningOffset, circularTuningOffset_custom);
 
         // //set offset, taking into account Scala tuningFrequency; seems to don't need/want this for absolute offsets
         // offsetKnobParam.offSetSliderParam->setParameterValue (0.); // need to zero it out first, since getStaticTargetFrequency will use it from the previous setting
@@ -759,10 +766,17 @@ void TuningState::mapScalaToInternalTuning()
             float equal = et.tones[i].cents;
             float offset = micro - equal;
             circularTuningOffset_custom[(i+1)%12] = offset;
+            DBG("offset = " << offset);
         }
 
         // set the scale to Custom
         tuningSystem->setParameterValue(TuningSystem::Custom);
+
+        // AudioParameterChoice::operator= is a no-op when the value doesn't change,
+        // so the tuningSystem listener (which calls setOffsetsFromTuningSystem) may not
+        // fire if tuningSystem was already Custom. Always update circularTuningOffset
+        // directly so the live audio values reflect the new circularTuningOffset_custom.
+        setOffsetsFromTuningSystem(TuningSystem::Custom, newf, circularTuningOffset, circularTuningOffset_custom);
 
         // set offset, taking into account Scala tuningFrequency
         offsetKnobParam.offSetSliderParam->setParameterValue (0.); // need to zero it out first, since getStaticTargetFrequency will use it from the previous setting

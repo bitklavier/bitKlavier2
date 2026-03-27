@@ -91,7 +91,7 @@ class BKSynthesiser
                 /** Removes and deletes one of the sounds. */
 //                void removeSound (int index);
 
-                void addSoundSet(juce::ReferenceCountedArray<BKSynthesiserSound>*);
+                void addSoundSet(juce::ReferenceCountedArray<BKSynthesiserSound>*, int numVoices = 300);
                 //==============================================================================
                 /** If set to true, then the mainSynth will try to take over an existing voice if
                     it runs out and needs to play another note.
@@ -253,7 +253,7 @@ class BKSynthesiser
                     both to the audio output buffer and the midi input buffer, so any midi events
                     with timestamps outside the specified region will be ignored.
                 */
-                void renderNextBlock (juce::AudioBuffer<float>& outputAudio,
+                virtual void renderNextBlock (juce::AudioBuffer<float>& outputAudio,
                     const juce::MidiBuffer& inputMidi,
                     int startSample,
                     int numSamples);
@@ -347,7 +347,7 @@ class BKSynthesiser
 //                }
                 void setNoteOnSpecMap(std::array<NoteOnSpec, MaxMidiNotes>& inspecs)
                 {
-                    noteOnSpecs = inspecs;
+                    noteOnSpecs = &inspecs;
                 }
 
                 BKSynthesizerState getSynthesizerState()
@@ -363,12 +363,26 @@ class BKSynthesiser
                     }
                 }
 
+                mutable juce::CriticalSection stealLock;
+
 protected:
                 //==============================================================================
                 /** This is used to control access to the rendering callback and the note trigger methods. */
                 juce::CriticalSection lock;
 
                 juce::OwnedArray< BKSynthesiserVoice> voices;
+
+                /** Pre-allocated pool of voices used to fade out stolen notes click-free.
+                    Populated in addSoundSet() with the same voice type as the main pool.
+                    Never steal-targeted; rendered alongside regular voices.
+                */
+                static constexpr int kGraveyardSize = 128;
+                juce::OwnedArray<BKSynthesiserVoice> graveyardVoices;
+
+                /** Returns the first graveyard slot that is not currently active,
+                    or nullptr if all 32 slots are busy (extremely rare).
+                */
+                BKSynthesiserVoice* findFreeGraveyardSlot() const noexcept;
 
                 juce::ReferenceCountedArray<BKSynthesiserSound>* sounds;
 
@@ -382,6 +396,14 @@ protected:
                 */
                 virtual void renderVoices (juce::AudioBuffer<float>& outputAudio,
                 int startSample, int numSamples);
+
+                // becomes false when there are no voices active; protected so subclasses can update it
+                bool someVoicesActive = true;
+
+                /** Set at the start of each noteOn transposition loop so findVoiceToSteal
+                    can avoid stealing voices started in the same burst (they have noteOnTime
+                    >= currentNoteOnBurstStart and haven't rendered yet). */
+                juce::uint32 currentNoteOnBurstStart = 0;
 
 
                 /** Searches through the voices to find one that's not currently playing, and
@@ -437,7 +459,6 @@ private:
                 bool subBlockSubdivisionIsStrict = false;
                 bool shouldStealNotes = true;
                 juce::BigInteger sustainPedalsDown;
-                mutable juce::CriticalSection stealLock;
                 mutable juce::Array<BKSynthesiserVoice*> usableVoicesToStealArray;
 
                 bool keyReleaseSynth = false;           // by default, synths play on keyPress (noteOn), not the opposite!
@@ -471,7 +492,7 @@ private:
                 std::bitset<MaxMidiNotes> activeNotes;
 
                 //std::map<int, NoteOnSpec> noteOnSpecs;
-                std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecs;
+                std::array<NoteOnSpec, MaxMidiNotes>* noteOnSpecs = nullptr;
 
                 TuningState* tuning = nullptr;
 
@@ -485,9 +506,6 @@ private:
 
                 // will be true if this synth is not in the active Piano, but is in the Gallery otherwise, so part of the AudioGraph
                 bool bypassed = false;
-
-                // becomes false when there are no voices active
-                bool someVoicesActive = true;
 
                 JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BKSynthesiser)
         };

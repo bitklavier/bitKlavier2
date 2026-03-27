@@ -190,13 +190,15 @@ public:
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     override {
-        mainSynth->addSoundSet(s);
+        static constexpr int kDirectMaxVoices = 128; // 10 fingers * 10 transpositions + some....
+        static constexpr int kDirectReleaseSynthVoices = 32; // probably don't need this many for hammers and so on, but not a big deal
+        mainSynth->addSoundSet(s, kDirectMaxVoices);
         state.params.hammerLoaded->setParameterValue( h != nullptr);
-        hammerSynth->addSoundSet(h);
+        hammerSynth->addSoundSet(h, kDirectReleaseSynthVoices);
         state.params.resonanceLoaded->setParameterValue( r != nullptr);
-        releaseResonanceSynth->addSoundSet(r);
+        releaseResonanceSynth->addSoundSet(r, kDirectReleaseSynthVoices);
         state.params.pedalLoaded->setParameterValue( p != nullptr);
-        pedalSynth->addSoundSet(p);
+        pedalSynth->addSoundSet(p, kDirectReleaseSynthVoices);
     }
 
     void setA4Frequency(double newA4)
@@ -215,7 +217,8 @@ public:
     juce::AudioProcessor::BusesProperties directBusLayout() {
         return BusesProperties()
                 .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
-                .withInput("Input", juce::AudioChannelSet::stereo(), false) // Main Input (not used here)
+                .withInput("Input", juce::AudioChannelSet::stereo(), true) // Main Input (not used for audio, but must be enabled to keep Modulation bus off channel 0)
+                .withInput("Send Pad", juce::AudioChannelSet::stereo(), true)  // Padding: absorbs Send output channels so Modulation starts at inputChan >= numOuts (gets read-only zero buffer)
 
                 /**
                  * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
@@ -276,6 +279,14 @@ public:
                 samples->contains(soundset + "Pedals") ? (*samples)[soundset + "Pedals"] : nullptr
             );
         }
+    }
+
+    void allNotesOff()
+    {
+        mainSynth->allNotesOff(1, false);
+        hammerSynth->allNotesOff(1, false);
+        releaseResonanceSynth->allNotesOff(1, false);
+        pedalSynth->allNotesOff(1, false);
     }
 
     void loadSamples() override {

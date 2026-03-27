@@ -91,6 +91,22 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     lassoVisual->setAlwaysOnTop(true);
     lassoVisual->setStatic(false);
     addOpenGlComponent(lassoVisual, false, true);
+
+    horizontal_scrollbar_ = std::make_unique<OpenGlScrollBar>(false); // horizontal
+    horizontal_scrollbar_->setRangeLimits(0.0, 4000.0);
+    horizontal_scrollbar_->setCurrentRange(0.0, 800.0);
+    horizontal_scrollbar_->addListener(this);
+    addAndMakeVisible(horizontal_scrollbar_.get());
+    addOpenGlComponent(horizontal_scrollbar_->getGlComponent());
+    horizontal_scrollbar_->setAlwaysOnTop(true);
+
+    vertical_scrollbar_ = std::make_unique<OpenGlScrollBar>(true); // vertical
+    vertical_scrollbar_->setRangeLimits(0.0, 4000.0);
+    vertical_scrollbar_->setCurrentRange(0.0, 600.0);
+    vertical_scrollbar_->addListener(this);
+    addAndMakeVisible(vertical_scrollbar_.get());
+    addOpenGlComponent(vertical_scrollbar_->getGlComponent());
+    vertical_scrollbar_->setAlwaysOnTop(true);
 }
 
 // Define your command IDs
@@ -274,7 +290,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeDirect, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -284,7 +300,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeNostalgic, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -298,7 +314,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeKeymap, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
 
                 juce::ValueTree midiInput(IDs::midiInput);
                 midiInput.setProperty(IDs::midiDeviceId, IDs::defaultMidiInput.toString(), nullptr);
@@ -313,7 +329,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeResonance, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
-                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -328,7 +344,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeSynchronic, nullptr);
                  t.setProperty(IDs::width, prepWidth, nullptr);
                  t.setProperty(IDs::height, prepHeight, nullptr);
-                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
+                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
                  prep_list->appendChild(t,  &undo);
                  return true;
             }
@@ -342,7 +358,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                  t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeBlendronic, nullptr);
                  t.setProperty(IDs::width, prepWidth, nullptr);
                  t.setProperty(IDs::height, prepHeight, nullptr);
-                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX, lastY)), nullptr);
+                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
                  prep_list->appendChild(t,  &undo);
                  return true;
             }
@@ -357,7 +373,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX, lastY)), nullptr);
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
                 prep_list->appendChild(t,  &undo);
                 return true;
             }
@@ -372,7 +388,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX, lastY)), nullptr);
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
 
                 // t.setProperty(IDs::x, lastX - 125 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 245 / 2, nullptr);
@@ -390,7 +406,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                                             juce::Point<int>(lastX, lastY)), nullptr);
+                                             juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
 
                 prep_list->appendChild(t,  &undo);
                 return true;
@@ -406,7 +422,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                                             juce::Point<int>(lastX, lastY)), nullptr);
+                                             juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
 
                 prep_list->appendChild(t,  &undo);
                 return true;
@@ -422,7 +438,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                                             juce::Point<int>(lastX, lastY)), nullptr);
+                                             juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
 
                 prep_list->appendChild(t,  &undo);
                 return true;
@@ -454,7 +470,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX, lastY)), nullptr);
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
@@ -471,7 +487,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
-                    juce::Point<int>(lastX, lastY)), nullptr);
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
 
                 // t.setProperty(IDs::x, lastX - 100 / 2, nullptr);
                 // t.setProperty(IDs::y, lastY - 100 / 2, nullptr);
@@ -493,8 +509,9 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                     for (int i = 0; i < lasso.getNumSelected(); ++i)
                     {
                         auto* fc = lasso.getSelectedItem(i);
-                        auto center = fc->getBounds().getCentre();
-                        fc->curr_point = juce::Point<int>(center.getX(), avgY);
+                        // getBounds() is screen-space; add scroll_offset_ to get world coords
+                        auto center = fc->getBounds().getCentre() + scroll_offset_;
+                        fc->curr_point = juce::Point<int>(center.getX(), avgY + scroll_offset_.y);
                     }
                     cableView._update();
                     modulationLineView._update();
@@ -516,8 +533,9 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                     for (int i = 0; i < lasso.getNumSelected(); ++i)
                     {
                         auto* fc = lasso.getSelectedItem(i);
-                        auto center = fc->getBounds().getCentre();
-                        fc->curr_point = juce::Point<int>(avgX, center.getY());
+                        // getBounds() is screen-space; add scroll_offset_ to get world coords
+                        auto center = fc->getBounds().getCentre() + scroll_offset_;
+                        fc->curr_point = juce::Point<int>(avgX + scroll_offset_.x, center.getY());
                     }
                     cableView._update();
                     modulationLineView._update();
@@ -534,7 +552,7 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 {
                     undo.beginNewTransaction();
                     juce::Point<int> delta(0, 0);
-                    const int amount = 5; // small amount as requested
+                    const int amount = 5;
 
                     if (info.commandID == nudgeUp) delta.setY(-amount);
                     else if (info.commandID == nudgeDown) delta.setY(amount);
@@ -544,7 +562,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                     for (int i = 0; i < lasso.getNumSelected(); ++i)
                     {
                         auto* fc = lasso.getSelectedItem(i);
-                        auto center = fc->getBounds().getCentre();
+                        // getBounds() is screen-space; add scroll_offset_ to get world coords
+                        auto center = fc->getBounds().getCentre() + scroll_offset_;
                         fc->curr_point = center + delta;
                     }
                     cableView._update();
@@ -920,8 +939,6 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->setSkinValues(default_skin, false);
     s->setDefaultColor();
     s->setSizeRatio(size_ratio_);
-    s->setCentrePosition (s->curr_point);
-    // s->setCentrePosition(s->x, s->y);
     s->setSize(s->width, s->height);
     s->resized();
 
@@ -937,10 +954,17 @@ void ConstructionSite::moduleAdded(PluginInstanceWrapper* wrapper) {
     s->addListener(this);
     s->setNodeInfo();
 
+    // Adjust display position for current scroll offset
+    auto worldCentre = juce::VariantConverter<juce::Point<int>>::fromVar(s->state.getProperty(IDs::x_y));
+    s->setCentrePosition(worldCentre - scroll_offset_);
+
     {
         juce::ScopedLock lock (open_gl_critical_section_);
         plugin_components.push_back (std::move (s));
     }
+
+    if (!is_rebuilding_)
+        updateScrollBars();
 }
 
 void ConstructionSite::linkedPiano() {
@@ -997,16 +1021,100 @@ void ConstructionSite::paintBackground(juce::Graphics &g) {
      * todo: setup color setting better, or document how/where to set these colors
      */
     paintBody(g, getLocalBounds(), juce::Colours::burlywood.withMultipliedBrightness(0.4));
+
+    // Tint the scrollbar gutter area so it looks distinct from the canvas
+    juce::Colour gutterColour = juce::Colours::black.withAlpha(0.3f);
+    int sbThick = kScrollBarThickness;
+    g.setColour(gutterColour);
+    g.fillRect(getWidth() - sbThick, 0, sbThick, getHeight() - sbThick);
+    g.fillRect(0, getHeight() - sbThick, getWidth() - sbThick, sbThick);
+
+    // Update scrollbar colours
+    juce::Colour barColour = findColour(Skin::kLightenScreen, true);
+    if (horizontal_scrollbar_) horizontal_scrollbar_->setColor(barColour);
+    if (vertical_scrollbar_)   vertical_scrollbar_->setColor(barColour);
+
     paintChildrenBackgrounds(g);
 }
 
 void ConstructionSite::resized()
 {
-    cableView.setBounds(getLocalBounds());
-    cableView.updateCablePositions();
-    modulationLineView.setBounds(getLocalBounds());
+    auto bounds = getLocalBounds();
+    int sbThick = kScrollBarThickness;
 
+    // Reserve space for scrollbars along the right and bottom edges
+    auto contentBounds = bounds.withTrimmedRight(sbThick).withTrimmedBottom(sbThick);
+
+    cableView.setBounds(contentBounds);
+    cableView.updateCablePositions();
+    modulationLineView.setBounds(contentBounds);
+
+    if (horizontal_scrollbar_ != nullptr)
+    {
+        horizontal_scrollbar_->setBounds(0, bounds.getBottom() - sbThick,
+                                         bounds.getWidth() - sbThick, sbThick);
+        horizontal_scrollbar_->setCurrentRange(scroll_offset_.x, contentBounds.getWidth(), juce::dontSendNotification);
+    }
+    if (vertical_scrollbar_ != nullptr)
+    {
+        vertical_scrollbar_->setBounds(bounds.getRight() - sbThick, 0,
+                                       sbThick, bounds.getHeight() - sbThick);
+        vertical_scrollbar_->setCurrentRange(scroll_offset_.y, contentBounds.getHeight(), juce::dontSendNotification);
+    }
+
+    updateScrollBars();
     SynthSection::resized();
+}
+
+void ConstructionSite::repositionAllItems()
+{
+    for (auto& comp : plugin_components)
+    {
+        auto worldCentre = juce::VariantConverter<juce::Point<int>>::fromVar(comp->state.getProperty(IDs::x_y));
+        comp->setCentrePosition(worldCentre - scroll_offset_);
+    }
+    cableView.updateCablePositions();
+    modulationLineView._update();
+}
+
+void ConstructionSite::updateScrollBars()
+{
+    int contentW = getWidth()  - kScrollBarThickness;
+    int contentH = getHeight() - kScrollBarThickness;
+
+    // Compute the bounding box of all item world positions
+    int maxX = contentW;
+    int maxY = contentH;
+    for (auto& comp : plugin_components)
+    {
+        auto worldCentre = juce::VariantConverter<juce::Point<int>>::fromVar(comp->state.getProperty(IDs::x_y));
+        int halfW = comp->getWidth()  / 2;
+        int halfH = comp->getHeight() / 2;
+        maxX = std::max(maxX, worldCentre.x + halfW + kCanvasMargin);
+        maxY = std::max(maxY, worldCentre.y + halfH + kCanvasMargin);
+    }
+
+    if (horizontal_scrollbar_ != nullptr)
+    {
+        horizontal_scrollbar_->setRangeLimits(0.0, (double)maxX, juce::dontSendNotification);
+        horizontal_scrollbar_->setCurrentRange((double)scroll_offset_.x, (double)contentW, juce::dontSendNotification);
+    }
+    if (vertical_scrollbar_ != nullptr)
+    {
+        vertical_scrollbar_->setRangeLimits(0.0, (double)maxY, juce::dontSendNotification);
+        vertical_scrollbar_->setCurrentRange((double)scroll_offset_.y, (double)contentH, juce::dontSendNotification);
+    }
+}
+
+void ConstructionSite::scrollBarMoved(juce::ScrollBar* scrollBar, double newRangeStart)
+{
+    int newStart = (int)newRangeStart;
+    if (scrollBar == horizontal_scrollbar_.get())
+        scroll_offset_.setX(newStart);
+    else if (scrollBar == vertical_scrollbar_.get())
+        scroll_offset_.setY(newStart);
+
+    repositionAllItems();
 }
 
 void ConstructionSite::redraw(void) {
@@ -1043,6 +1151,17 @@ void ConstructionSite::prepareItemDrag(BKItem *item, const juce::MouseEvent &e, 
     //    }
 }
 
+void ConstructionSite::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
+{
+    if (wheel.deltaX != 0.0f && horizontal_scrollbar_ != nullptr)
+        horizontal_scrollbar_->setCurrentRangeStart(
+            scroll_offset_.x - (int)(wheel.deltaX * 60.0f));
+
+    if (wheel.deltaY != 0.0f && vertical_scrollbar_ != nullptr)
+        vertical_scrollbar_->setCurrentRangeStart(
+            scroll_offset_.y - (int)(wheel.deltaY * 60.0f));
+}
+
 void ConstructionSite::mouseMove(const juce::MouseEvent &eo) {
     juce::MouseEvent e = eo.getEventRelativeTo(this);
     //juce::MouseEvent a = eo.getEventRelativeTo(this);
@@ -1066,6 +1185,14 @@ void ConstructionSite::mouseMove(const juce::MouseEvent &eo) {
 void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     juce::MouseEvent e = eo.getEventRelativeTo(this);
 
+    // Ignore clicks that originate from within a scrollbar — let the scrollbar handle them
+    if (e.originalComponent != nullptr)
+    {
+        if (e.originalComponent->findParentComponentOfClass<juce::ScrollBar>() != nullptr
+            || dynamic_cast<juce::ScrollBar*>(e.originalComponent) != nullptr)
+            return;
+    }
+
     // if you don't hit a cable, set all cables to be unselected
     cableView.hitTestCables (e.position);
 
@@ -1077,8 +1204,10 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
         if (!e.mods.isShiftDown())
             preparationSelector.getLassoSelection().deselectAll();
 
-        if (e.originalComponent == this || e.originalComponent->getName() == "cableView")
+        if (!cableView.cableBeingDragged())
         {
+            // First, add the lasso to the parent and make it visible.
+            // JUCE LassoComponent::beginLasso often asserts if the component is not showing.
             addChildComponent(selectorLasso);
             selectorLasso.setVisible(true);
             selectorLasso.toFront(false);
@@ -1086,15 +1215,10 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
             selectorLasso.endLasso();
             selectorLasso.beginLasso(e, &preparationSelector);
 
+            // Give it a tiny size so it's initially visible as a dot at the mouse position
+            selectorLasso.dragLasso(e.withNewPosition(e.position + juce::Point<float>(0.1f, 0.1f)));
+
             lassoVisual->setVisible(true);
-            lassoVisual->setBounds(selectorLasso.getBounds());
-            lassoVisual->redrawImage(true);
-
-            //////Fake drag so the lasso will select anything we click and drag////////
-            auto thisPoint = e.getPosition();
-            thisPoint.addXY(1, 1);
-            selectorLasso.dragLasso(e.withNewPosition(thisPoint));
-
             lassoVisual->setBounds(selectorLasso.getBounds());
             lassoVisual->redrawImage(true);
         }
@@ -1178,7 +1302,7 @@ void ConstructionSite::addItem (int selection, bool center)
         {
             t.setProperty(IDs::x_y,
                juce::VariantConverter<juce::Point<int>>::toVar(
-                   juce::Point<int>(lastX, lastY)),
+                   juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)),
                nullptr);
         }
 
@@ -1220,7 +1344,7 @@ void ConstructionSite::addItem (int selection, bool center)
         {
             t.setProperty(IDs::x_y,
                juce::VariantConverter<juce::Point<int>>::toVar(
-                   juce::Point<int>(lastX, lastY)),
+                   juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)),
                nullptr);
         }
 
@@ -1358,7 +1482,6 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
 
     if (selectorLasso.isVisible())
     {
-        // DBG("ConstructionSite::mouseDrag - dragging lasso");
         selectorLasso.toFront(false);
         selectorLasso.dragLasso(e);
         selectorLasso.repaint();
@@ -1419,10 +1542,17 @@ void ConstructionSite::setActivePiano() {
         connection_list = gui_data->synth->getActiveConnectionList();
 
     prep_list->addListener (this);
+    is_rebuilding_ = true;
     prep_list->rebuildAllGui();
+    is_rebuilding_ = false;
 
     cableView.setActivePiano();
     modulationLineView.setActivePiano();
+
+    // Reset scroll position when switching pianos
+    scroll_offset_ = juce::Point<int>(0, 0);
+    repositionAllItems();
+    updateScrollBars();
 
     DBG("***** done setActivePiano() *****");
     DBG("");

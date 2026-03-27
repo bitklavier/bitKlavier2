@@ -805,6 +805,12 @@ public:
         float startTimeMS=0.f,
         Direction startDirection= Direction::forward) = 0;
 
+    /** Copies all audio-rendering state into target so it can continue fading
+        out independently after this voice has been stolen.  The default
+        implementation does nothing; BKSamplerVoice<T> overrides it.
+    */
+    virtual void copyStateTo (BKSynthesiserVoice* /*target*/) const {}
+
     /** Returns true if this voice started playing its current note before the other voice did. */
     bool wasStartedBefore (const BKSynthesiserVoice& other) const noexcept;
     double currentSampleRate = 44100.0;
@@ -826,6 +832,19 @@ public:
     {
         updateAmpEnv(parameters);
     }
+
+    /** Forces the ADSR immediately into a short release regardless of current
+        state.  Used by the graveyard steal mechanism so graveyard slots always
+        fade out in exactly releaseTimeSeconds from the current amplitude level.
+    */
+    void forceAmpEnvRelease (float releaseTimeSeconds) noexcept
+    {
+        ampEnv.forceRelease (releaseTimeSeconds);
+    }
+
+    /** Returns the current ADSR output amplitude (0..1).
+        Used by findVoiceToSteal to prefer stealing voices that have actually rendered. */
+    float getAmpEnvValue() const noexcept { return ampEnv.getCurrentValue(); }
 
     void setTargetSustainTime(float sustainTimeMS)
     {
@@ -1124,6 +1143,56 @@ public:
             render(outputBuffer, startSample, numSamples);
     }
 
+    /** Copies all rendering state into target (must be a BKSamplerVoice<T> of the
+        same type) so it can fade out independently as a graveyard voice.
+        Call this AFTER stopNote(0.f, true) so the ampEnv is already in release.
+    */
+    void copyStateTo (BKSynthesiserVoice* target) const override
+    {
+        auto* t = static_cast<BKSamplerVoice<T>*> (target);
+
+        // BKSynthesiserVoice public fields
+        t->currentlyPlayingNote      = currentlyPlayingNote;
+        t->currentlyPlayingSound     = currentlyPlayingSound;
+        t->currentSampleRate         = currentSampleRate;
+        t->currentA4Freq             = currentA4Freq;
+        t->noteOnTime                = noteOnTime;
+        t->currentPlayingMidiChannel = currentPlayingMidiChannel;
+        t->keyIsDown                 = keyIsDown;
+        t->sustainPedalDown          = sustainPedalDown;
+        t->sostenutoPedalDown        = sostenutoPedalDown;
+        t->ignoreNoteOff             = ignoreNoteOff;
+
+        // BKSynthesiserVoice protected fields
+        t->voiceGain                 = voiceGain;
+        t->targetSustainTime_samples = targetSustainTime_samples;
+        t->ampEnv                    = ampEnv;
+        t->tuning                    = tuning;
+
+        // BKSamplerVoice<T> private fields
+        t->samplerSound              = samplerSound;
+        t->currentTransposition      = currentTransposition;
+        t->tuneTranspositions        = tuneTranspositions;
+        t->targetFreqAtStartNote     = targetFreqAtStartNote;
+        t->level                     = level;
+        t->sampleBegin               = sampleBegin;
+        t->sampleEnd                 = sampleEnd;
+        t->sampleIncrement           = sampleIncrement;
+        t->loop_end                  = loop_end;
+        t->loop_start                = loop_start;
+        t->loopingForSustain         = loopingForSustain;
+        t->currentSamplePos          = currentSamplePos;
+        t->currentSampleEnd          = currentSampleEnd;
+        t->currentSampleStart        = currentSampleStart;
+        t->startTimeOffset           = startTimeOffset;
+        t->tailOff                   = tailOff;
+        t->currentDirection          = currentDirection;
+        t->currentSustainTime_samples = currentSustainTime_samples;
+
+        if constexpr (std::is_same_v<T, SFZRegion>)
+            t->ampeg = ampeg;
+    }
+
     double getCurrentSamplePosition() const
     {
         return currentSamplePos;
@@ -1237,8 +1306,18 @@ private:
 
         // update the ADSR
         float ampEnvLast = ampEnv.getNextSample();
-        if (ampEnv.isActive() && isTailingOff() && ampEnvLast < 0.001f)
+        // Stop when tailing off and ADSR is done or near-silent.
+        // Also stop if ADSR is idle regardless of tailOff — this catches "zombie"
+        // voices whose ADSR hit 0 without tailOff being set (e.g., sustain=0 or
+        // a graveyard voice whose envelopeVal was already 0 at steal time).
+        if (isTailingOff() && (!ampEnv.isActive() || ampEnvLast < 0.001f))
         {
+            stopNote();
+            return false;
+        }
+        if (!ampEnv.isActive())
+        {
+            // ADSR idle but tailOff not set — voice is outputting silence. Free it.
             stopNote();
             return false;
         }
@@ -1375,13 +1454,18 @@ private:
         }
 
         float ampEnvLast = ampEnv.getNextSample();
-        if (ampEnv.isActive() && isTailingOff())
+        // Also stop when the ADSR went idle without passing through the 0.001
+        // threshold (can happen with very short releases whose step size > 0.001).
+        if (isTailingOff() && (!ampEnv.isActive() || ampEnvLast < 0.001))
         {
-            if (ampEnvLast < 0.001)
-            {
-                stopNote();
-                return false;
-            }
+            stopNote();
+            return false;
+        }
+        // ADSR idle but tailOff not set — zombie voice outputting silence. Free it.
+        if (!ampEnv.isActive())
+        {
+            stopNote();
+            return false;
         }
 
         auto pos = (int)currentSamplePos;

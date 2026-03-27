@@ -1,0 +1,645 @@
+module system_catch_test_spec [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/catch_test_spec.hpp"
+  export *
+}
+
+module juce_core {
+  header "/Users/dan/Code/bitKlavier2/JUCE/modules/juce_core/juce_core.h"
+  export *
+}
+
+module system_type_traits [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/type_traits"
+  export *
+}
+
+module catch_reporter_helpers {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/reporters/catch_reporter_helpers.hpp"
+  export *
+}
+
+module system_stdexcept [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/stdexcept"
+  export *
+}
+
+module system_numeric [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/numeric"
+  export *
+}
+
+module system_cassert [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cassert"
+  export *
+}
+
+module juce_audio_basics {
+  header "/Users/dan/Code/bitKlavier2/JUCE/modules/juce_audio_basics/juce_audio_basics.h"
+  export *
+}
+
+module open_gl_component {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/opengl/open_gl_component.h"
+  export *
+}
+
+module system_catch_unique_ptr [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_unique_ptr.hpp"
+  export *
+}
+
+module system_cmath [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cmath"
+  export *
+}
+
+module juce_gui_basics {
+  header "/Users/dan/Code/bitKlavier2/JUCE/modules/juce_gui_basics/juce_gui_basics.h"
+  export *
+}
+
+module synth_section {
+  header "/Users/dan/Code/bitKlavier2/source/interface/sections/synth_section.h"
+  export *
+}
+
+module EnvParams {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/framework/ParamHolders/EnvParams.h"
+  export *
+}
+
+module system_types [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/types.h"
+  export *
+}
+
+module synth_slider {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/synth_slider.h"
+  export *
+}
+
+module system_TargetConditionals [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h"
+  export *
+}
+
+module system_stdint [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/stdint.h"
+  export *
+}
+
+module open_gl_combo_box {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/opengl/open_gl_combo_box.h"
+  export *
+}
+
+module chowdsp_plugin_state {
+  header "/Users/dan/Code/bitKlavier2/third_party/chowdsp_utils/modules/plugin/chowdsp_plugin_state/chowdsp_plugin_state.h"
+  export *
+}
+
+module synth_button {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/synth_button.h"
+  export *
+}
+
+module system_cstdio [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdio"
+  export *
+}
+
+module system_memory [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/memory"
+  export *
+}
+
+module system_cstdlib [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdlib"
+  export *
+}
+
+module tracktion_ValueTreeUtilities {
+  header "/Users/dan/Code/bitKlavier2/third_party/tracktion_engine/tracktion_ValueTreeUtilities.h"
+  export *
+}
+
+module catch_reporter_streaming_base {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/reporters/catch_reporter_streaming_base.hpp"
+  export *
+}
+
+module system_catch_compiler_capabilities [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_compiler_capabilities.hpp"
+  export *
+}
+
+module system_catch_platform [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_platform.hpp"
+  export *
+}
+
+module catch_test_case_info {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/catch_test_case_info.hpp"
+  export *
+}
+
+module system_array [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/array"
+  export *
+}
+
+module system_catch_stringref [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_stringref.hpp"
+  export *
+}
+
+module ConstructionSite {
+  header "/Users/dan/Code/bitKlavier2/source/interface/sections/ConstructionSite.h"
+  export *
+}
+
+module VariantConverters {
+  header "/Users/dan/Code/bitKlavier2/source/common/valuetree_utils/VariantConverters.h"
+  export *
+}
+
+module paths {
+  header "/Users/dan/Code/bitKlavier2/source/interface/look_and_feel/paths.h"
+  export *
+}
+
+module config {
+  header "/Users/dan/Code/bitKlavier2/third_party/chowdsp_utils/modules/common/chowdsp_reflection/third_party/pfr/include/pfr/detail/config.hpp"
+  export *
+}
+
+module juce_audio_processors {
+  header "/Users/dan/Code/bitKlavier2/JUCE/modules/juce_audio_processors/juce_audio_processors.h"
+  export *
+}
+
+module popup_browser {
+  header "/Users/dan/Code/bitKlavier2/source/interface/sections/popup_browser.h"
+  export *
+}
+
+module FullInterface {
+  header "/Users/dan/Code/bitKlavier2/source/interface/FullInterface.h"
+  export *
+}
+
+module system_climits [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/climits"
+  export *
+}
+
+module ModulationProcessor {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/framework/ModulationProcessor.h"
+  export *
+}
+
+module system_math [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/math.h"
+  export *
+}
+
+module system_string_v1 [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/string"
+  export *
+}
+
+module Sample {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/framework/Synthesiser/Sample.h"
+  export *
+}
+
+module modulation_manager {
+  header "/Users/dan/Code/bitKlavier2/source/modulation/modulation_manager.h"
+  export *
+}
+
+module system_catch_tostring [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/catch_tostring.hpp"
+  export *
+}
+
+module SFZSample {
+  header "/Users/dan/Code/bitKlavier2/third_party/sfzq/SFZPlayer/SFZSample.h"
+  export *
+}
+
+module common {
+  header "/Users/dan/Code/bitKlavier2/source/common/common.h"
+  export *
+}
+
+module system_catch_move_and_forward [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_move_and_forward.hpp"
+  export *
+}
+
+module chowdsp_sources {
+  header "/Users/dan/Code/bitKlavier2/third_party/chowdsp_utils/modules/dsp/chowdsp_sources/chowdsp_sources.h"
+  export *
+}
+
+module catch_context {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_context.hpp"
+  export *
+}
+
+module system_cstdint [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdint"
+  export *
+}
+
+module system_iosfwd [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iosfwd"
+  export *
+}
+
+module catch_enforce {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_enforce.hpp"
+  export *
+}
+
+module BinaryData {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/juce_binarydata_Assets/JuceLibraryCode/BinaryData.h"
+  export *
+}
+
+module system_AvailabilityMacros [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityMacros.h"
+  export *
+}
+
+module system_fstream [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/fstream"
+  export *
+}
+
+module chowdsp_core {
+  header "/Users/dan/Code/bitKlavier2/third_party/chowdsp_utils/modules/common/chowdsp_core/chowdsp_core.h"
+  export *
+}
+
+module shaders {
+  header "/Users/dan/Code/bitKlavier2/source/interface/look_and_feel/shaders.h"
+  export *
+}
+
+module system_set [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/set"
+  export *
+}
+
+module system_string_view [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/string_view"
+  export *
+}
+
+module system_exception [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/exception"
+  export *
+}
+
+module system_vector [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/vector"
+  export *
+}
+
+module system_istream [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/istream"
+  export *
+}
+
+module fonts {
+  header "/Users/dan/Code/bitKlavier2/source/interface/look_and_feel/fonts.h"
+  export *
+}
+
+module system_cstring [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cstring"
+  export *
+}
+
+module system_mutex [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/mutex"
+  export *
+}
+
+module open_gl_image_component {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/opengl/open_gl_image_component.h"
+  export *
+}
+
+module catch_console_colour {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_console_colour.hpp"
+  export *
+}
+
+module system_iostream [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iostream"
+  export *
+}
+
+module synth_gui_interface {
+  header "/Users/dan/Code/bitKlavier2/source/common/synth_gui_interface.h"
+  export *
+}
+
+module system_catch_source_line_info [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_source_line_info.hpp"
+  export *
+}
+
+module UserPreferences {
+  header "/Users/dan/Code/bitKlavier2/source/common/UserPreferences.h"
+  export *
+}
+
+module system_catch_interfaces_capture [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/interfaces/catch_interfaces_capture.hpp"
+  export *
+}
+
+module system_string [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/string.h"
+  export *
+}
+
+module system_catch_reusable_string_stream [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_reusable_string_stream.hpp"
+  export *
+}
+
+module juce_dsp {
+  header "/Users/dan/Code/bitKlavier2/JUCE/modules/juce_dsp/juce_dsp.h"
+  export *
+}
+
+module system_stddef [system] {
+  header "/Users/dan/Library/Caches/JetBrains/Air/downloaded_artifacts/jbclangd_6643671286d3b06e91ccf84e391c52b5/include/stddef.h"
+  export *
+}
+
+module system_initializer_list [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/initializer_list"
+  export *
+}
+
+module system_complex [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/complex"
+  export *
+}
+
+module system_stddef_v1 [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/stddef.h"
+  export *
+}
+
+module system_atomic [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/atomic"
+  export *
+}
+
+module system_iomanip [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iomanip"
+  export *
+}
+
+module default_look_and_feel {
+  header "/Users/dan/Code/bitKlavier2/source/interface/look_and_feel/default_look_and_feel.h"
+  export *
+}
+
+module skin {
+  header "/Users/dan/Code/bitKlavier2/source/interface/look_and_feel/skin.h"
+  export *
+}
+
+module system_version [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/version"
+  export *
+}
+
+module utils {
+  header "/Users/dan/Code/bitKlavier2/source/common/utils.h"
+  export *
+}
+
+module PreparationSection {
+  header "/Users/dan/Code/bitKlavier2/source/interface/Preparations/PreparationSection.h"
+  export *
+}
+
+module BKItem {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/BKitems/BKItem.h"
+  export *
+}
+
+module system_cerrno [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cerrno"
+  export *
+}
+
+module sequence_tuple {
+  header "/Users/dan/Code/bitKlavier2/third_party/chowdsp_utils/modules/common/chowdsp_reflection/third_party/pfr/include/pfr/detail/sequence_tuple.hpp"
+  export *
+}
+
+module Identifiers {
+  header "/Users/dan/Code/bitKlavier2/source/common/Identifiers.h"
+  export *
+}
+
+module chowdsp_plugin_utils {
+  header "/Users/dan/Code/bitKlavier2/third_party/chowdsp_utils/modules/plugin/chowdsp_plugin_utils/chowdsp_plugin_utils.h"
+  export *
+}
+
+module system_ctime [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/ctime"
+  export *
+}
+
+module catch_string_manip {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_string_manip.hpp"
+  export *
+}
+
+module system_cctype [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cctype"
+  export *
+}
+
+module system_algorithm [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/algorithm"
+  export *
+}
+
+module system_catch_noncopyable [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_noncopyable.hpp"
+  export *
+}
+
+module array_to_string {
+  header "/Users/dan/Code/bitKlavier2/source/common/array_to_string.h"
+  export *
+}
+
+module system_optional [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/optional"
+  export *
+}
+
+module KeymapProcessor {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/framework/Processors/KeymapProcessor.h"
+  export *
+}
+
+module ModulationConnection {
+  header "/Users/dan/Code/bitKlavier2/source/modulation/ModulationConnection.h"
+  export *
+}
+
+module open_gl_multi_quad {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/opengl/open_gl_multi_quad.h"
+  export *
+}
+
+module juce_data_structures {
+  header "/Users/dan/Code/bitKlavier2/JUCE/modules/juce_data_structures/juce_data_structures.h"
+  export *
+}
+
+module system_new [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/new"
+  export *
+}
+
+module system_utility [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/utility"
+  export *
+}
+
+module system_cstddef [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/cstddef"
+  export *
+}
+
+module system_catch_interfaces_registry_hub [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/interfaces/catch_interfaces_registry_hub.hpp"
+  export *
+}
+
+module BKSliders {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/BKComponents/BKSliders.h"
+  export *
+}
+
+module PreparationStateImpl {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/framework/PreparationStateImpl.h"
+  export *
+}
+
+module system_catch_user_config [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-build/generated-includes/catch2/catch_user_config.hpp"
+  export *
+}
+
+module OpenGL_LabeledBorder {
+  header "/Users/dan/Code/bitKlavier2/source/interface/components/opengl/OpenGL_LabeledBorder.h"
+  export *
+}
+
+module system_tuple [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/tuple"
+  export *
+}
+
+module system_iterator [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iterator"
+  export *
+}
+
+module synth_base {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/synth_base.h"
+  export *
+}
+
+module system_sstream [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/sstream"
+  export *
+}
+
+module system_ostream [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/ostream"
+  export *
+}
+
+module PluginBase {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/framework/PluginBase.h"
+  export *
+}
+
+module sound_engine {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/sound_engine/sound_engine.h"
+  export *
+}
+
+module TuningProcessor {
+  header "/Users/dan/Code/bitKlavier2/source/synthesis/framework/Processors/TuningProcessor.h"
+  export *
+}
+
+module catch_stdstreams {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/internal/catch_stdstreams.hpp"
+  export *
+}
+
+module system_typeinfo [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/typeinfo"
+  export *
+}
+
+module juce_TargetPlatform {
+  header "/Users/dan/Code/bitKlavier2/JUCE/modules/juce_core/system/juce_TargetPlatform.h"
+  export *
+}
+
+module system_catch_interfaces_config [system] {
+  header "/Users/dan/Code/bitKlavier2/cmake-build-release/_deps/catch2-src/src/catch2/interfaces/catch_interfaces_config.hpp"
+  export *
+}
+
+module system_limits [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/limits"
+  export *
+}
+
+module system_stdlib [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/stdlib.h"
+  export *
+}
+
+module ModulatorBase {
+  header "/Users/dan/Code/bitKlavier2/source/modulation/ModulatorBase.h"
+  export *
+}
+
+module peak_meter_section {
+  header "/Users/dan/Code/bitKlavier2/source/interface/sections/peak_meter_section.h"
+  export *
+}
+
+module system_map [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/map"
+  export *
+}
+
+module system_functional [system] {
+  header "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/functional"
+  export *
+}
+

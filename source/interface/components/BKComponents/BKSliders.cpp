@@ -407,7 +407,10 @@ BKMultiSlider::BKMultiSlider(const juce::ValueTree& stateDefault) : StateModulat
     editValsTextField->setMultiLine(true);
     editValsTextField->setName("PARAMTXTEDIT");
     editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    editValsTextField->setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
     editValsTextField->addListener(this);
+    editValsTextField->addKeyListener(this);
+    editValsTextField->addMouseListener(this, false);
     addAndMakeVisible(*editValsTextField);
 
     // for rotating the slider values
@@ -958,6 +961,16 @@ int BKMultiSlider::whichSlider (const juce::MouseEvent &e)
 {
     int x = e.x;
 
+    if (inLineMode)
+    {
+        if (sliderArea.getWidth() > 0 && !sliders.isEmpty())
+        {
+            int which = (int)((float)x * sliders.size() / sliderArea.getWidth());
+            if (which >= 0 && which < sliders.size()) return which;
+        }
+        return -1;
+    }
+
     BKSubSlider* refSlider = sliders[0]->operator[](0);
     if (refSlider != nullptr)
     {
@@ -1002,6 +1015,11 @@ int BKMultiSlider::whichSubSlider (int which)
 int BKMultiSlider::whichSubSlider (int which, const juce::MouseEvent &e)
 {
     if(which < 0) return 0;
+
+    // in line mode sliders have no bounds, so getPositionOfValue() is meaningless;
+    // fall back to the value-distance version which uses currentInvisibleSliderValue
+    if (inLineMode)
+        return whichSubSlider(which);
 
     int whichSub = 0;
     float refDistance;
@@ -1109,22 +1127,96 @@ void BKMultiSlider::resized()
 
     bigInvisibleSlider->setBounds(area.toNearestInt());
 
+    sliderArea = area;
     sliderWidth = (float)area.getWidth() / sliders.size();
+    inLineMode = (sliderWidth < 3.0f);
 
     for (int i = 0; i < sliders.size(); i++)
     {
-        juce::Rectangle<float> sliderArea (area.removeFromLeft(sliderWidth));
+        juce::Rectangle<float> oneSliderBounds (area.removeFromLeft(sliderWidth));
         for(int j = 0; j < sliders[i]->size(); j++)
         {
             BKSubSlider* currentSlider = sliders[i]->operator[](j);
             if(currentSlider != nullptr)
             {
-                currentSlider->setBounds(sliderArea.toNearestInt());
+                if (inLineMode)
+                    currentSlider->setVisible(false);
+                else
+                {
+                    currentSlider->setVisible(true);
+                    currentSlider->setBounds(oneSliderBounds.toNearestInt());
+                }
             }
         }
     }
 
     bigInvisibleSlider->toFront(false);
+}
+
+
+void BKMultiSlider::paint(juce::Graphics& g)
+{
+    if (!inLineMode || sliders.isEmpty()) return;
+
+    float rangeSpan = (float)(sliderMax - sliderMin);
+    if (rangeSpan == 0.f) return;
+
+    float slotW = sliderArea.getWidth() / (float)sliders.size();
+
+    // subtle background
+    g.setColour(juce::Colours::black.withAlpha(0.15f));
+    g.fillRect(sliderArea);
+
+    // zero line when range spans zero
+    if (sliderMin < 0.0 && sliderMax > 0.0)
+    {
+        float zeroY = sliderArea.getBottom() - (float)(-sliderMin / rangeSpan) * sliderArea.getHeight();
+        g.setColour(juce::Colours::white.withAlpha(0.2f));
+        g.drawHorizontalLine((int)zeroY, sliderArea.getX(), sliderArea.getRight());
+    }
+
+    auto activeCol  = activeSliderLookAndFeel.findColour(juce::Slider::thumbColourId);
+    auto passiveCol = passiveSliderLookAndFeel.findColour(juce::Slider::thumbColourId);
+
+    // build polyline segments, broken at inactive (gap) sliders
+    juce::Path linePath;
+    bool segmentOpen = false;
+
+    for (int i = 0; i < sliders.size(); i++)
+    {
+        bool isActive = (i < whichSlidersActive.size()) && whichSlidersActive[i];
+        if (!isActive) { segmentOpen = false; continue; }
+
+        float val   = (float)allSliderVals[i][0];
+        float normY = juce::jlimit(0.f, 1.f, (val - (float)sliderMin) / rangeSpan);
+        float x     = sliderArea.getX() + (i + 0.5f) * slotW;
+        float y     = sliderArea.getBottom() - normY * sliderArea.getHeight();
+
+        if (segmentOpen)
+            linePath.lineTo(x, y);
+        else
+        {
+            linePath.startNewSubPath(x, y);
+            segmentOpen = true;
+        }
+    }
+
+    g.setColour(activeCol.withMultipliedAlpha(0.8f));
+    g.strokePath(linePath, juce::PathStrokeType(1.5f));
+
+    // dots drawn on top of lines
+    float dotR = juce::jmax(1.0f, juce::jmin(slotW * 0.45f, 3.5f));
+    for (int i = 0; i < sliders.size(); i++)
+    {
+        bool isActive = (i < whichSlidersActive.size()) && whichSlidersActive[i];
+        float val   = (float)allSliderVals[i][0];
+        float normY = juce::jlimit(0.f, 1.f, (val - (float)sliderMin) / rangeSpan);
+        float x     = sliderArea.getX() + (i + 0.5f) * slotW;
+        float y     = sliderArea.getBottom() - normY * sliderArea.getHeight();
+
+        g.setColour(isActive ? activeCol : passiveCol);
+        g.fillEllipse(x - dotR, y - dotR, dotR * 2.f, dotR * 2.f);
+    }
 }
 
 
@@ -1169,6 +1261,22 @@ void BKMultiSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
 
 void BKMultiSlider::textEditorTextChanged(juce::TextEditor& tf)
 {
+    repaint();
+}
+
+bool BKMultiSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
 }
 
 
@@ -1411,10 +1519,18 @@ BKWaveDistanceUndertowSlider::BKWaveDistanceUndertowSlider (juce::String name, d
 
     undertowValueTF.setName("ut");
     undertowValueTF.addListener(this);
+    undertowValueTF.addMouseListener(this, false);
+    undertowValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    undertowValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    undertowValueTF.addKeyListener(this);
     addChildComponent(undertowValueTF);
 
     wavedistanceValueTF.setName("wd");
     wavedistanceValueTF.addListener(this);
+    wavedistanceValueTF.addMouseListener(this, false);
+    wavedistanceValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    wavedistanceValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    wavedistanceValueTF.addKeyListener(this);
     addChildComponent(wavedistanceValueTF);
 
     wavedistanceName.setText("wave distance (ms)", juce::dontSendNotification);
@@ -1560,7 +1676,22 @@ void BKWaveDistanceUndertowSlider::textEditorReturnKeyPressed(juce::TextEditor& 
 
 void BKWaveDistanceUndertowSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
-    focusLostByEscapeKey = false;
+    repaint();
+}
+
+bool BKWaveDistanceUndertowSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
 }
 
 void BKWaveDistanceUndertowSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
@@ -1641,10 +1772,12 @@ BKStackedSlider::BKStackedSlider(
     editValsTextField->setMultiLine(true);
     editValsTextField->setName("PARAMTXTEDIT");
     editValsTextField->addListener(this);
+    editValsTextField->addMouseListener(this, false);
     editValsTextField->setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    editValsTextField->setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    editValsTextField->addKeyListener(this);
     addAndMakeVisible(*editValsTextField);
     editValsTextField->setVisible(false);
-    editValsTextField->setInterceptsMouseClicks(false, false);
     setInterceptsMouseClicks(true, true);
 
     numSliders = 12;
@@ -1936,6 +2069,22 @@ void BKStackedSlider::textEditorEscapeKeyPressed (juce::TextEditor& textEditor)
 
 void BKStackedSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
+    repaint();
+}
+
+bool BKStackedSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
 }
 
 void BKStackedSlider::resetRanges()
@@ -2122,16 +2271,22 @@ StateModulatedComponent(stateDefault),
     minValueTF.setText(juce::String(sliderDefaultMin));
     minValueTF.setName("minvalue");
     minValueTF.addListener(this);
+    minValueTF.addMouseListener(this, false);
     minValueTF.setSelectAllWhenFocused(true);
     minValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    minValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    minValueTF.addKeyListener(this);
     addAndMakeVisible(minValueTF);
 
     maxValueTF.setText(juce::String(sliderDefaultMax));
     maxValueTF.setName("maxvalue");
     maxValueTF.addListener(this);
+    maxValueTF.addMouseListener(this, false);
     maxValueTF.setSelectAllWhenFocused(true);
     maxValueTF.setJustification(juce::Justification(2));
     maxValueTF.setColour(juce::TextEditor::highlightColourId, juce::Colours::darkgrey);
+    maxValueTF.setColour(juce::CaretComponent::caretColourId, juce::Colours::antiquewhite);
+    maxValueTF.addKeyListener(this);
     addAndMakeVisible(maxValueTF);
 
     minSlider.setSliderStyle(juce::Slider::LinearHorizontal);
@@ -2329,8 +2484,22 @@ void BKRangeSlider::textEditorReturnKeyPressed(juce::TextEditor& textEditor)
 
 void BKRangeSlider::textEditorTextChanged(juce::TextEditor& textEditor)
 {
-    focusLostByEscapeKey = false;
+    repaint();
+}
 
+bool BKRangeSlider::keyPressed (const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    if (key.isKeyCode (juce::KeyPress::leftKey)
+        || key.isKeyCode (juce::KeyPress::rightKey)
+        || key.isKeyCode (juce::KeyPress::upKey)
+        || key.isKeyCode (juce::KeyPress::downKey)
+        || key.isKeyCode (juce::KeyPress::homeKey)
+        || key.isKeyCode (juce::KeyPress::endKey))
+    {
+        repaint();
+    }
+
+    return false;
 }
 
 

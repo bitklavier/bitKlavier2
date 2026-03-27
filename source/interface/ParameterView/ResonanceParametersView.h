@@ -54,7 +54,7 @@ public:
                 //param_->paramID == "rsmoothness") // i'm not persuaded this is a useful parameter to expose
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
-                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), pluginState.undoManager);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
@@ -141,7 +141,7 @@ public:
 
         // spectrum choices
         spectrum_combo_box = std::make_unique<OpenGLComboBox>(params.spectrum->paramID.toStdString());
-        spectrum_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*params.spectrum.get(), listeners, *spectrum_combo_box, nullptr);
+        spectrum_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*params.spectrum.get(), listeners, *spectrum_combo_box, pluginState.undoManager);
         addComboBox(spectrum_combo_box.get(), true, true);
 
         // the level meter and output gain slider (right side of preparation popup)

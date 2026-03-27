@@ -186,6 +186,10 @@ TuningParametersView::TuningParametersView(
         chowdsp::ParameterListenerThread::MessageThread,
         [this]() {
             if (params.tMapScaleToInternal.get()->get()) {
+                // Sync text editors first: clicking the button may not have caused focus loss yet,
+                // so currentScalaTuning may be stale if the user typed directly without pressing Enter.
+                params.tuningState.setScalaScaleFromString(sclTextEditor->getText().toStdString());
+                params.tuningState.setKBMFromString(kbmTextEditor->getText().toStdString());
                 params.tuningState.mapScalaToInternalTuning();
                 params.tMapScaleToInternal->setParameterValue(false);
                 absolutekeyboard->redoImage();

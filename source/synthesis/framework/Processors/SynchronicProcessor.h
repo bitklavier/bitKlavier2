@@ -219,8 +219,7 @@ struct SynchronicParams : chowdsp::ParamHolder
         juce::ParameterID{"noteOnGain", 100},
         "NoteOn Gain Scalar",
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
-        0.0f,
-        true};
+        0.0f};
 
     // the two min/max params
     ClusterMinMaxParams clusterMinMaxParams;
@@ -234,13 +233,29 @@ struct SynchronicParams : chowdsp::ParamHolder
 
     bool isEnvelopeActive(int which)
     {
-        for (auto& _ep : *envelopeSequence.getBoolParams())
-        {
-            //"envelope10"
-            if (_ep->getParameterID() == "envelope" + juce::String(which))
-            {
-                return *_ep;
-            }
+        // for (auto& _ep : *envelopeSequence.getBoolParams())
+        // {
+        //     //"envelope10"
+        //     if (_ep->getParameterID() == "envelope" + juce::String(which))
+        //     {
+        //         return *_ep;
+        //     }
+        // }
+
+        switch(which) {
+            case 0:  return *envelopeSequence.envelope0;
+            case 1:  return *envelopeSequence.envelope1;
+            case 2:  return *envelopeSequence.envelope2;
+            case 3:  return *envelopeSequence.envelope3;
+            case 4:  return *envelopeSequence.envelope4;
+            case 5:  return *envelopeSequence.envelope5;
+            case 6:  return *envelopeSequence.envelope6;
+            case 7:  return *envelopeSequence.envelope7;
+            case 8:  return *envelopeSequence.envelope8;
+            case 9:  return *envelopeSequence.envelope9;
+            case 10:  return *envelopeSequence.envelope10;
+            case 11:  return *envelopeSequence.envelope11;
+            default: return false;
         }
     }
 
@@ -330,8 +345,14 @@ class SynchronicCluster
     SynchronicCluster(SynchronicParams* inparams) : _sparams(inparams)
     {
         phasor = 0;
+        beatCounter = 0;
+        beatMultiplierCounter = 0;
+        accentMultiplierCounter = 0;
+        lengthMultiplierCounter = 0;
+        transpCounter = 0;
         envelopeCounter = 0;
         shouldPlay = false;
+        cluster.ensureStorageAllocated(128);
     }
 
     ~SynchronicCluster() {}
@@ -350,7 +371,7 @@ class SynchronicCluster
      * we also decrement the timing phasor by the amount of time to the next beat
      * - typically called every beat, so the phasor reset is akin to the counter increments
      */
-    inline void step(juce::uint64 numSamplesBeat)
+    inline void step(juce::int64 numSamplesBeat)
     {
         // set the phasor back by the number of samples to the next beat
         phasor -= numSamplesBeat;
@@ -368,13 +389,19 @@ class SynchronicCluster
         if (++envelopeCounter >= _sparams->numEnvelopes)
             envelopeCounter = 0;
 
-        // skip the inactive envelopes
+        // skip the inactive envelopes; guard against infinite loop if all envelopes are inactive
+        int envelopeLoopCount = 0;
         while (!_sparams->isEnvelopeActive(envelopeCounter)) // skip untoggled envelopes
         {
-            //DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
+            // DBG("looking for next active envelope, envelopeCounter = " << envelopeCounter);
             envelopeCounter++;
             if (envelopeCounter >= _sparams->numEnvelopes)
                 envelopeCounter = 0;
+            if (++envelopeLoopCount >= _sparams->numEnvelopes)
+            {
+                envelopeCounter = 0;
+                break; // all envelopes inactive, which shouldn't happen...
+            }
         }
     }
 
@@ -401,8 +428,12 @@ class SynchronicCluster
                 beatMultiplierCounter = 0;
         }
 
-        //DBG("numPulses = " << *_sparams->numPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << (int)*_sparams->skipFirst);
-        if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - *_sparams->skipFirst))
+        int maxPulses = (int) std::round(*_sparams->numPulses);
+        int skipOffset = *_sparams->skipFirst ? 1 : 0;
+        // DBG("maxPulses = " << maxPulses << ", beatCounter = " << beatCounter << ", skipFirst = " << skipOffset);
+
+        // if (++beatCounter > (static_cast<int>(*_sparams->numPulses) - skipOffset))
+        if (++beatCounter > (maxPulses - skipOffset))
         {
             shouldPlay = false;
         }
@@ -427,14 +458,14 @@ class SynchronicCluster
         cluster.clearQuick();
     }
 
-    inline juce::Array<int> getCluster() { return cluster; }
-    inline void setCluster(juce::Array<int> c) { cluster = c; }
-    inline void setBeatPhasor(juce::uint64 c)
+    inline juce::Array<int>& getCluster() { return cluster; }
+    // inline void setCluster(juce::Array<int> c) { cluster = c; }
+    inline void setBeatPhasor(juce::int64 c)
     {
         phasor = c;
         //DBG("resetting beat phasor");
     }
-    inline const juce::uint64 getPhasor(void) const noexcept { return phasor; }
+    inline const juce::int64 getPhasor(void) const noexcept { return phasor; }
 
     inline void addNote(int note)
     {
@@ -472,7 +503,7 @@ class SynchronicCluster
     SynchronicParams* _sparams;
 
     juce::Array<int> cluster;
-    juce::uint64 phasor;
+    juce::int64 phasor;
 
     bool shouldPlay;
 
@@ -514,7 +545,30 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
-        synchronicSynth->addSoundSet (s);
+        static constexpr int kSynchronicMaxVoices = 128; // might want to increase this to 128
+        synchronicSynth->addSoundSet (s, kSynchronicMaxVoices);
+    }
+
+    void allNotesOff()
+    {
+        synchronicSynth->allNotesOff(1, false);
+        slimCluster.clearQuick();
+        clusterNotes.clearQuick();
+        keysDepressed.clearQuick();
+        clusterKeysDepressed.clearQuick();
+
+        for (int i = 0; i < 128; i++)
+        {
+            holdTimers.set(i, 0);
+            clusterVelocities.set(i, 0);
+        }
+
+        inCluster = false;
+
+        for (auto& cl : clusterLayers)
+        {
+            cl->reset();
+        }
     }
 
     void setA4Frequency(double newA4)
@@ -626,7 +680,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     {
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
-            .withInput("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+            .withInput("Input", juce::AudioChannelSet::stereo(), true)    // Main Input (not used for audio, but must be enabled to keep Modulation bus off channel 0)
+            .withInput("Send Pad", juce::AudioChannelSet::stereo(), true)  // Padding: absorbs Send output channels so Modulation starts at inputChan >= numOuts (gets read-only zero buffer)
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
@@ -634,7 +689,7 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
              *                  - the ADSR params: attackParam, decayParam, sustainParam, releaseParam, and
              *                  - the main params: numPulses, numLayers, clusterThickness, clusterThreshold, OutputSendParam, outputGain,
              */
-            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10 * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput("Modulation", juce::AudioChannelSet::discreteChannels(10  * 2), true) // Mod inputs; numChannels for the number of mods we want to enable
             .withOutput("Modulation", juce::AudioChannelSet::mono(), false)             // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send", juce::AudioChannelSet::stereo(), true);                 // Send channel (right outputs)
     }
@@ -668,10 +723,10 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     // temporary, replace with Tempo info
     float tempoTemp = 120.;
 
-    juce::uint64 thresholdSamples;
-    juce::uint64 clusterThresholdTimer;
-    juce::uint64 syncThresholdTimer;
-    juce::Array<juce::uint64> holdTimers;
+    juce::int64 thresholdSamples;
+    juce::int64 clusterThresholdTimer;
+    juce::int64 syncThresholdTimer;
+    juce::Array<juce::int64> holdTimers;
 
     /*
      * the `clusters` array holds clusters to manage the 'layers' feature in bK
@@ -700,8 +755,8 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
     juce::Array<int> patternSyncKeysDepressed;
     juce::Array<juce::uint8> clusterVelocities; // NOT scaled 0-1, as with the old bK
 
-    juce::uint64 numSamplesBeat = 0;   // = beatThresholdSamples * beatMultiplier
-    juce::uint64 beatThresholdSamples; // # samples in a beat, as set by tempo
+    juce::int64 numSamplesBeat = 0;   // = beatThresholdSamples * beatMultiplier
+    juce::int64 beatThresholdSamples; // # samples in a beat, as set by tempo
 
     /*
      * noteOnSpecMap

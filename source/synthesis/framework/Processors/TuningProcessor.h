@@ -158,7 +158,7 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     const bool getAdaptiveInversional() const noexcept { return adaptiveParams.tAdaptiveInversional->get(); }
     const int getAdaptiveClusterThresh() const noexcept { return adaptiveParams.tAdaptiveClusterThresh->get(); }
-    const int getAdaptiveHistory() const noexcept { return adaptiveParams.tAdaptiveHistory->get(); }
+    const int getAdaptiveHistory() const noexcept { return std::round(adaptiveParams.tAdaptiveHistory->get()); }
     const int getAdaptiveAnchorFundamental() const noexcept { return (int)adaptiveParams.tAdaptiveAnchorFundamental->get(); }
     const TuningSystem getAdaptiveIntervalScale() const noexcept { return adaptiveParams.tAdaptiveIntervalScale->get(); }
     const TuningSystem getAdaptiveAnchorScale() const noexcept { return adaptiveParams.tAdaptiveAnchorScale->get(); }
@@ -346,7 +346,7 @@ public:
     juce::AudioProcessor::BusesProperties tuningBusLayout() {
         return BusesProperties()
                 .withOutput("Output", juce::AudioChannelSet::stereo(), false)
-                .withInput ("Input", juce::AudioChannelSet::stereo(), false)
+                .withInput ("Input", juce::AudioChannelSet::stereo(), true)  // must be enabled to keep Modulation bus off channel 0
                 // 22 = modulatableParams.size()
                 .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(22 * 2),true)
                 .withOutput("Modulation", juce::AudioChannelSet::mono(),false);  // Modulation send channel; disabled for all but Modulation preps!

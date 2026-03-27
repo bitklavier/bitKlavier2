@@ -33,6 +33,7 @@
 
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
+#include "Synthesiser/ResonanceBKSynthesiser.h"
 #include "target_types.h"
 #include "TuningUtils.h"
 #include <PreparationStateImpl.h>
@@ -495,7 +496,8 @@ public:
     {
         return BusesProperties()
             .withOutput("Output",       juce::AudioChannelSet::stereo(), true)      // Main Output
-            .withInput ("Input",        juce::AudioChannelSet::stereo(), false)     // Main Input (not used here)
+            .withInput ("Input",        juce::AudioChannelSet::stereo(), true)       // Main Input (not used for audio, but must be enabled to keep Modulation bus off channel 0)
+            .withInput ("Send Pad",     juce::AudioChannelSet::stereo(), true)       // Padding: absorbs Send output channels so Modulation starts at inputChan >= numOuts (gets read-only zero buffer)
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
@@ -520,7 +522,8 @@ public:
         juce::ReferenceCountedArray<BKSynthesiserSound > *r, // release samples
         juce::ReferenceCountedArray<BKSynthesiserSound > *p) // pedal samples
     {
-        resonanceSynth->addSoundSet (s);
+        static constexpr int kResonanceMaxVoices = 512;
+        resonanceSynth->addSoundSet (s, kResonanceMaxVoices);
     }
 
     void setA4Frequency(float freq)
@@ -624,6 +627,10 @@ public:
     }
 
 private:
+    // Set to true to use the multi-threaded (Audio Workgroup) synthesiser;
+    // set to false to fall back to the original sequential implementation for A/B comparison.
+    static constexpr bool useMultiThreadedSynth = true;
+
     std::unique_ptr<BKSynthesiser> resonanceSynth;
 
     /* the two primary modes, set by target msgs

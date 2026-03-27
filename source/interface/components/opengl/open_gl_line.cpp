@@ -236,6 +236,34 @@ void OpenGlLine::render(OpenGlWrapper& open_gl, bool animate) {
     open_gl.context.extensions.glBindVertexArray(0);
 }
 
+void OpenGlLine::destroy(OpenGlWrapper& open_gl)
+{
+    color_uniform_      = nullptr;
+    scale_uniform_      = nullptr;
+    boost_uniform_      = nullptr;
+    line_width_uniform_ = nullptr;
+    position_attribute_ = nullptr;
+    shader_ = nullptr;
+
+    if (vao_ != 0)
+    {
+        open_gl.context.extensions.glDeleteVertexArrays(1, &vao_);
+        vao_ = 0;
+    }
+    if (vertex_buffer_ != 0)
+    {
+        open_gl.context.extensions.glDeleteBuffers(1, &vertex_buffer_);
+        vertex_buffer_ = 0;
+    }
+    if (indices_buffer_ != 0)
+    {
+        open_gl.context.extensions.glDeleteBuffers(1, &indices_buffer_);
+        indices_buffer_ = 0;
+    }
+    _init = false;
+    OpenGlComponent::destroy(open_gl);
+}
+
 // Resized logic
 void OpenGlLine::resized() {
 //    OpenGlComponent::resized();

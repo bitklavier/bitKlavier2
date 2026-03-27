@@ -90,12 +90,16 @@ void DirectProcessor::updateMidiNoteTranspositions(int noteOnNumber)
     for (auto const& tp : *paramVals)
     {
         if (state.params.transpose.numActiveSliders->getCurrentValue() > i)
+        {
             noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (tp->getCurrentValue());
+            noteOnSpecMap[noteOnNumber].transpositionGains.add (1.);
+        }
         i++;
     }
 
     // make sure that the first slider is always represented
     noteOnSpecMap[noteOnNumber].transpositions.addIfNotAlreadyThere (state.params.transpose.t0->getCurrentValue());
+    noteOnSpecMap[noteOnNumber].transpositionGains.addIfNotAlreadyThere (1.);
     noteOnSpecMap[noteOnNumber].useAttachedTuning = state.params.transpose.transpositionUsesTuning->get();
 }
 
@@ -208,24 +212,26 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
-    if (hammerSynth->hasSamples())
-    {
-        hammerSynth->setBypassed (false);
-        hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-    }
-
-    if (releaseResonanceSynth->hasSamples())
-    {
-        releaseResonanceSynth->setBypassed (false);
-        releaseResonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
-        releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-    }
-
-    if (pedalSynth->hasSamples())
-    {
-        pedalSynth->setBypassed (false);
-        pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-    }
+    // if (hammerSynth->hasSamples())
+    // {
+    //     hammerSynth->setBypassed (false);
+    //     hammerSynth->setNoteOnSpecMap(noteOnSpecMap);
+    //     hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    // }
+    //
+    // if (releaseResonanceSynth->hasSamples())
+    // {
+    //     releaseResonanceSynth->setBypassed (false);
+    //     releaseResonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
+    //     releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    // }
+    //
+    // if (pedalSynth->hasSamples())
+    // {
+    //     pedalSynth->setBypassed (false);
+    //     pedalSynth->setNoteOnSpecMap(noteOnSpecMap);
+    //     pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    // }
 
     // send goes out the right outlets: prefader send
     /*
@@ -292,24 +298,28 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
     if (mainSynth->hasSamples())
     {
         mainSynth->setBypassed (true);
+        mainSynth->setNoteOnSpecMap(noteOnSpecMap);
         mainSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (hammerSynth->hasSamples())
     {
         hammerSynth->setBypassed (true);
+        hammerSynth->setNoteOnSpecMap(noteOnSpecMap);
         hammerSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (releaseResonanceSynth->hasSamples())
     {
         releaseResonanceSynth->setBypassed (true);
+        releaseResonanceSynth->setNoteOnSpecMap(noteOnSpecMap);
         releaseResonanceSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
     if (pedalSynth->hasSamples())
     {
         pedalSynth->setBypassed (true);
+        pedalSynth->setNoteOnSpecMap(noteOnSpecMap);
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 

@@ -104,22 +104,8 @@ public:
     // void valueTreeParentChanged (juce::ValueTree&) override;
     void valueTreeRedirected(juce::ValueTree &) override;
 
-    void valueTreePropertyChanged(juce::ValueTree &v, const juce::Identifier &i) override {
-        tracktion::engine::ValueTreeObjectList<BKPort>::valueTreePropertyChanged(v, i);
-        if (i == IDs::x_y)
-        {
-            this->setCentrePosition (juce::VariantConverter<juce::Point<int>>::fromVar(v.getProperty (i)));
-        }
-        else if (i == IDs::width || i == IDs::height)
-        {
-            if (v.hasProperty(IDs::width) && v.hasProperty(IDs::height))
-            {
-                auto oldCenter = getBounds().getCentre();
-                setSize(v.getProperty(IDs::width), v.getProperty(IDs::height));
-                setCentrePosition(oldCenter);
-            }
-        }
-    }
+    void valueTreePropertyChanged(juce::ValueTree &v, const juce::Identifier &i) override;
+
 
     bool isSuitableType(const juce::ValueTree &v) const override {
         return v.hasType(IDs::PORT);
@@ -168,6 +154,7 @@ public:
         // auto popup = getPrepPopup();
         // showPrepPopup(std::move(popup),state,bitklavier::BKPreparationTypeNil);
         auto popup = getPrepPopup();
+        if (!popup) return;
         auto safeThis = juce::Component::SafePointer<SynthSection> (this);
         juce::MessageManager::callAsync ([safeThis, popup = std::move(popup), thisState = state] () mutable
         {

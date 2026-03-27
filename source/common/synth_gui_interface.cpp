@@ -18,6 +18,7 @@
 #include "CompressorParameterView.h"
 #include "ConstructionSite.h"
 #include "EQParameterView.h"
+#include "LegacyGalleryImporter.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
 #include "juce_core/unit_tests/juce_UnitTestCategories.h"
@@ -118,6 +119,11 @@ bool SynthGuiInterface::perform(const InvocationInfo & info) {
             case redo:
             {
                 juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, "Redo", "Redo triggered");
+                return true;
+            }
+            case CommandIDs::allNotesOffCmd:
+            {
+                allNotesOff();
                 return true;
             }
             case CommandIDs::showPluginListEditor:
@@ -249,10 +255,94 @@ void SynthGuiInterface::notifyChange() {
 }
 
 void SynthGuiInterface::notifyFresh() {
+    if (synth_)
+        synth_->markClean();
+
     if (gui_ == nullptr)
         return;
 
     gui_->notifyFresh();
+}
+
+bool SynthGuiInterface::isDirty() const
+{
+    return synth_ && synth_->isDirty();
+}
+
+static bool isProtectedGallery (const juce::File& file)
+{
+    auto galleries = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
+                         .getChildFile ("Documents")
+                         .getChildFile ("bitKlavier")
+                         .getChildFile ("galleries");
+
+    juce::File basicPiano = galleries.getChildFile ("Basic Piano")
+                                .withFileExtension (bitklavier::kPresetExtension.c_str());
+    if (file == basicPiano)
+        return true;
+
+    static const juce::StringArray kProtectedFolders {
+        "1. Examples", "2. Nostalgic Synchronic", "3. Mikroetudes",
+        "4. Machines for Listening", "5. bK commissions", "6. Preludes"
+    };
+    const auto parent = file.getParentDirectory();
+    for (const auto& folder : kProtectedFolders)
+        if (parent == galleries.getChildFile (folder))
+            return true;
+
+    return false;
+}
+
+void SynthGuiInterface::confirmDiscardAndPerform (std::function<void()> action)
+{
+    if (! isDirty())
+    {
+        action();
+        return;
+    }
+
+    auto active  = getActiveFile();
+    bool canSave = active != juce::File() && ! isProtectedGallery (active);
+
+    juce::MessageBoxOptions opts = juce::MessageBoxOptions()
+        .withIconType (juce::MessageBoxIconType::QuestionIcon)
+        .withTitle ("Unsaved Changes")
+        .withMessage ("The current gallery has unsaved changes.")
+        .withButton ("Save")
+        .withButton ("Don't Save")
+        .withButton ("Cancel")
+        .withAssociatedComponent (gui_.get());
+
+    juce::WeakReference<SynthGuiInterface> weakThis (this);
+
+    // Use native OS dialog (NSAlert on macOS) to avoid creating JUCE-rendered
+    // components with OpenGL resources that could outlive the OpenGL context on quit.
+    messageBox = juce::NativeMessageBox::showScopedAsync (opts,
+        [weakThis, action, canSave, active] (int result) mutable
+        {
+            if (weakThis == nullptr) return;
+            // For a 3-button AlertWindow, JUCE maps: button1→1, button2→2, button3(Cancel/Escape)→0
+            if (result == 1) // Save
+            {
+                if (canSave)
+                {
+                    weakThis->getSynth()->saveToFile (active);
+                    if (weakThis->getGui())
+                        weakThis->getGui()->showSaveNotification();
+                    action();
+                }
+                else
+                {
+                    // No in-place save possible — open Save As; user retries the action after
+                    weakThis->openSaveDialog();
+                }
+            }
+            else if (result == 2) // Don't Save
+            {
+                action();
+            }
+            // result == 0: Cancel or Escape — do nothing
+        });
 }
 
 void SynthGuiInterface::updateHostDisplay (const juce::AudioProcessor::ChangeDetails& details)
@@ -317,26 +407,68 @@ juce::File SynthGuiInterface::getActiveFile()
 
 void SynthGuiInterface::openLoadDialog()
 {
-    auto active_file = getActiveFile();
-    filechooser = std::make_unique<juce::FileChooser> ("Open Gallery", active_file, juce::String ("*.") + bitklavier::kPresetExtension);
+    confirmDiscardAndPerform ([this]
+    {
+        auto active_file = getActiveFile();
+        filechooser = std::make_unique<juce::FileChooser> ("Open Gallery", active_file, juce::String ("*.") + bitklavier::kPresetExtension);
 
-    auto flags = juce::FileBrowserComponent::openMode
-                 | juce::FileBrowserComponent::canSelectFiles;
-    filechooser->launchAsync (flags, [this] (const juce::FileChooser& fc) {
-        if (fc.getResult() == juce::File {})
+        auto flags = juce::FileBrowserComponent::openMode
+                     | juce::FileBrowserComponent::canSelectFiles;
+        filechooser->launchAsync (flags, [this] (const juce::FileChooser& fc)
         {
-            return;
-        }
+            if (fc.getResult() == juce::File {})
+                return;
 
-        std::string error;
-        juce::File choice = fc.getResult();
-        loading = true;
-        if (!this->loadFromFile (choice, error))
-        {
-            DBG (error);
-        }
-        loading = false;
+            std::string error;
+            juce::File choice = fc.getResult();
+            loading = true;
+            if (! this->loadFromFile (choice, error))
+                DBG (error);
+            loading = false;
+        });
     });
+}
+
+void SynthGuiInterface::importLegacyGallery()
+{
+    confirmDiscardAndPerform ([this]
+    {
+    filechooser = std::make_unique<juce::FileChooser> (
+        "Import Legacy bitKlavier Gallery",
+        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+        "*.xml");
+
+    filechooser->launchAsync (
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+        [this] (const juce::FileChooser& fc)
+        {
+            auto results = fc.getResults();
+            if (results.isEmpty()) return;
+
+            juce::String errorMessage;
+            auto newTree = LegacyGalleryImporter::importFromFile (results[0], errorMessage);
+
+            if (! newTree.isValid())
+            {
+                juce::AlertWindow::showMessageBoxAsync (
+                    juce::MessageBoxIconType::WarningIcon,
+                    "Import Failed",
+                    errorMessage.isEmpty() ? "Could not import the legacy gallery." : errorMessage);
+                return;
+            }
+
+            getSynth()->loadGalleryFromValueTree (newTree);
+            updateHostDisplay();
+
+            if (gui_ && gui_->header_)
+            {
+                gui_->header_->gallerySelectText->setText (
+                    results[0].getFileNameWithoutExtension() + " (imported)");
+                gui_->header_->updateCurrentPianoName();
+            }
+            setPianoSwitchTriggerThreadMessage();
+        });
+    }); // confirmDiscardAndPerform
 }
 
 void SynthGuiInterface::openSaveDialog()
@@ -358,6 +490,8 @@ void SynthGuiInterface::openSaveDialog()
                 {
                     if (gui_ && gui_->header_ && gui_->header_->gallerySelectText)
                         gui_->header_->gallerySelectText->setText(file.getFileNameWithoutExtension());
+                    if (gui_)
+                        gui_->showSaveNotification();
                 }
             }
         });
@@ -365,36 +499,14 @@ void SynthGuiInterface::openSaveDialog()
 
 void SynthGuiInterface::saveCurrentGallery()
 {
-    // If there is no active file yet (brand‑new document), fall back to "Save As..."
     auto active = getActiveFile();
-    if (active == juce::File())
+    if (active == juce::File() || isProtectedGallery (active))
     {
         openSaveDialog();
         return;
     }
-
-    // Protect the default "Basic Piano" from accidental overwrite with Cmd+S
-    // Detect the known installed location in the user's Documents/bitKlavier/galleries
-    auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
-                    .getChildFile("Documents")
-                    .getChildFile("bitKlavier")
-                    .getChildFile("galleries");
-    juce::File basicA = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicB = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());
-    juce::File basicC = docs.getChildFile("BasicPiano").withFileExtension(bitklavier::kPresetExtension.c_str());
-
-    const auto activePath = active.getFullPathName();
-    if (activePath == basicA.getFullPathName()
-        || activePath == basicB.getFullPathName()
-        || activePath == basicC.getFullPathName())
-    {
-        // Use Save As so the default preset isn't overwritten
-        openSaveDialog();
-        return;
-    }
-
-    // Otherwise save to the currently active file
-    synth_->saveToFile(active);
+    if (synth_->saveToFile (active) && gui_)
+        gui_->showSaveNotification();
 }
 
 void SynthGuiInterface::setActivePiano (const juce::ValueTree& v)
@@ -427,6 +539,8 @@ std::vector<std::string> SynthGuiInterface::getAllPianoNames()
 void SynthGuiInterface::allNotesOff()
 {
     synth_->getEngine()->allNotesOff();
+    if (gui_)
+        gui_->clearFooterLiveKeys();
 }
 
 void SynthGuiInterface::setPianoSwitchTriggerThreadMessage()

@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Log file for debugging
+LOG_FILE="/tmp/bitklavier_install.log"
+echo "Postinstall script started at $(date)" > "$LOG_FILE"
+
+# For a script bundled with pkgbuild --scripts, $(dirname "$0") is the path to the script folder
+RESOURCES_DIR=$(dirname "$0")
+echo "RESOURCES_DIR: $RESOURCES_DIR" >> "$LOG_FILE"
+
+# The resources are now in a zip file to keep the installer package lightweight
+RESOURCES_ZIP="$RESOURCES_DIR/resources.zip"
+echo "RESOURCES_ZIP: $RESOURCES_ZIP" >> "$LOG_FILE"
+
+# Get the current logged-in user
+CURRENT_USER=$(stat -f "%Su" /dev/console)
+echo "CURRENT_USER: $CURRENT_USER" >> "$LOG_FILE"
+
+# Use the user's home directory instead of $HOME if running as root
+USER_HOME=$(eval echo "~$CURRENT_USER")
+TARGET_DIR="$USER_HOME/Documents/bitKlavier"
+echo "TARGET_DIR: $TARGET_DIR" >> "$LOG_FILE"
+
+if [ -f "$RESOURCES_ZIP" ]; then
+    echo "Unzipping resources to /tmp/bitKlavier_temp" >> "$LOG_FILE"
+    mkdir -p /tmp/bitKlavier_temp
+    unzip -o "$RESOURCES_ZIP" -d /tmp/bitKlavier_temp >> "$LOG_FILE" 2>&1
+    
+    # The zip unzips into a folder called "bitKlavier"
+    SOURCE_DIR="/tmp/bitKlavier_temp/bitKlavier"
+    
+    if [ -d "$SOURCE_DIR" ]; then
+        # Function to selectively copy files recursively
+        selective_copy() {
+            local src="$1"
+            local dst="$2"
+
+            echo "selective_copy from $src to $dst" >> "$LOG_FILE"
+            mkdir -p "$dst"
+
+            for item in "$src"/*; do
+                [ -e "$item" ] || continue # Handle empty directories
+                local name=$(basename "$item")
+                local target_item="$dst/$name"
+
+                if [ -d "$item" ]; then
+                    # If it's a directory, recurse
+                    selective_copy "$item" "$target_item"
+                else
+                    # If it's a file, copy only if it doesn't exist
+                    if [ ! -f "$target_item" ]; then
+                        echo "Copying $name to $dst" >> "$LOG_FILE"
+                        cp "$item" "$target_item"
+                    else
+                        echo "Skipping $name, already exists" >> "$LOG_FILE"
+                    fi
+                fi
+            done
+        }
+
+        selective_copy "$SOURCE_DIR" "$TARGET_DIR"
+        
+        # Ensure the user has permissions
+        chown -R "$CURRENT_USER" "$TARGET_DIR"
+        echo "Successfully copied samples and set permissions." >> "$LOG_FILE"
+        
+        # Cleanup temp files
+        rm -rf /tmp/bitKlavier_temp
+    else
+        echo "ERROR: bitKlavier directory not found in zip" >> "$LOG_FILE"
+    fi
+else
+    echo "ERROR: RESOURCES_ZIP not found: $RESOURCES_ZIP" >> "$LOG_FILE"
+fi
+
+echo "Postinstall script finished at $(date)" >> "$LOG_FILE"
+exit 0

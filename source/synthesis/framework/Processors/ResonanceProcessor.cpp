@@ -401,9 +401,12 @@ void ResonantString::finalizeNoteOnMessage(juce::MidiBuffer& outMidiMessages)
  * ========================== ResonanceProcessor ==========================
  */
 ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um) :
-        PluginBase (parent, vt, um, resonanceBusLayout()),
-        resonanceSynth (new BKSynthesiser (state.params.env, state.params.noteOnGain))
+        PluginBase (parent, vt, um, resonanceBusLayout())
 {
+    if (useMultiThreadedSynth)
+        resonanceSynth = std::make_unique<ResonanceBKSynthesiser> (state.params.env, state.params.noteOnGain);
+    else
+        resonanceSynth = std::make_unique<BKSynthesiser> (state.params.env, state.params.noteOnGain);
     parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
         (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "gainsKeyboard", &(state.params.gainsKeyboardState.stateChanges)));
 
@@ -468,6 +471,17 @@ void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
     resonanceSynth->setCurrentPlaybackSampleRate (sampleRate);
+
+    if (useMultiThreadedSynth)
+    {
+        if (auto* rSynth = dynamic_cast<ResonanceBKSynthesiser*> (resonanceSynth.get()))
+        {
+            juce::AudioWorkgroup workgroup;
+            if (parent.manager != nullptr)
+                workgroup = parent.manager->getDeviceAudioWorkgroup();
+            rSynth->prepareWorkgroup (workgroup, samplesPerBlock, sampleRate, getTotalNumOutputChannels());
+        }
+    }
 }
 
 bool ResonanceProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout& layouts) const
@@ -1040,13 +1054,13 @@ void ResonanceProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
     {
-        auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+        auto sendgainmult = 100. * bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
         buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
         buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
     }
 
     // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    auto outputgainmult = 100. * bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
 }

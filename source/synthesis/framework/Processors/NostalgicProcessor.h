@@ -348,10 +348,25 @@ public:
         if(tuning !=nullptr) tuning->removeListener(this);
     }
 
-
-
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
+
+    void allNotesOff()
+    {
+        DBG("Nostalgic::allNotesOff called");
+        nostalgicSynth->allNotesOff(1, false);
+
+        velocities.clearQuick();
+        noteLengthTimers.clearQuick();
+        reverseTimers.clearQuick();
+        clusterNotes.clearQuick();
+
+        sustainPedalNotesDown.reset();
+        sostenutoPedalNotesDown.reset();
+
+        clusterTimer = 0;
+        clusterCount = 0;
+    }
 
     // void setupModulationMappings();
 
@@ -410,7 +425,8 @@ public:
 
         return BusesProperties()
             .withOutput("Output", juce::AudioChannelSet::stereo(), true) // Main Output
-            .withInput ("Input", juce::AudioChannelSet::stereo(), false)  // Main Input (not used here)
+            .withInput ("Input", juce::AudioChannelSet::stereo(), true)    // Main Input (not used for audio, but must be enabled to keep Modulation bus off channel 0)
+            .withInput ("Send Pad", juce::AudioChannelSet::stereo(), true)  // Padding: absorbs Send output channels so Modulation starts at inputChan >= numOuts (gets read-only zero buffer)
 
             /**
              * IMPORTANT: set discreteChannels below equal to the number of params you want to continuously modulate!!
@@ -483,11 +499,9 @@ public:
      */
     std::array<NoteOnSpec, MaxMidiNotes> noteOnSpecMap;
     juce::Array<float> updatedTransps;
-    // juce::Array<int> keysDepressed;   //current keys that are depressed
     juce::Array<juce::uint8> velocities;
     juce::Array<float> noteLengthTimers;
     juce::Array<NostalgicNoteData> reverseTimers;
-    juce::Array<float> undertowTimers;
     juce::Array<NostalgicNoteData> clusterNotes;
     float clusterTimer;
     int clusterCount;

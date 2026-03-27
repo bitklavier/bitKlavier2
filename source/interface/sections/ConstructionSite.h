@@ -10,18 +10,19 @@
 #include "PluginWindow.h"
 #include "PreparationSelector.h"
 #include "templates/Factory.h"
+#include "open_gl_multi_quad.h"
 
 class OpenGlLine;
 class SynthGuiInterface;
 typedef Loki::Factory<std::unique_ptr<PreparationSection>, juce::Identifier, const juce::ValueTree&, SynthGuiInterface*> NodeFactory;
 class ConstructionSite : public SynthSection,
-
                          public juce::DragAndDropContainer,
                          public juce::DragAndDropTarget,
                          // public juce::ChangeListener,
                          private PreparationList::Listener,
                          public PreparationSection::Listener,
-                         public juce::ApplicationCommandTarget
+                         public juce::ApplicationCommandTarget,
+                         public juce::ScrollBar::Listener
 
 {
 public:
@@ -63,6 +64,19 @@ public:
     juce::Viewport* view;
     juce::Point<float> mouse;
     OpenGlWrapper& open_gl;
+
+    // Scroll offset (world-space origin that maps to the top-left of the visible area)
+    juce::Point<int> scroll_offset_;
+
+    static constexpr int kScrollBarThickness = 12;
+    static constexpr int kCanvasMargin       = 200; // extra space beyond the furthest item
+
+    // Reposition every item so its centre sits at (curr_point - scroll_offset_)
+    void repositionAllItems();
+    // Recompute the scrollable canvas extent from current item positions and update bar ranges
+    void updateScrollBars();
+    // Called when the user scrolls
+    void scrollBarMoved (juce::ScrollBar* scrollBar, double newRangeStart);
     juce::ValueTree parent;
     juce::ValueTree getState()
     {
@@ -126,18 +140,21 @@ public:
                 {
                     auto* fc = preparationSelector.getLassoSelection().getSelectedItem(i);
                     fc->undo.beginNewTransaction();
-                    fc->curr_point = fc->getBounds().getCentre() + delta;
+                    // getBounds().getCentre() is screen-space; add scroll_offset_ to get world coords
+                    fc->curr_point = fc->getBounds().getCentre() + scroll_offset_ + delta;
                 }
             }
             else if (src != nullptr)
             {
                 auto* nonConstSrc = const_cast<PreparationSection*>(src);
                 nonConstSrc->undo.beginNewTransaction();
-                nonConstSrc->curr_point = mouse_drag_position_ - drag_offset_;
+                // mouse_drag_position_ and drag_offset_ are screen-space; add scroll_offset_ for world coords
+                nonConstSrc->curr_point = mouse_drag_position_ - drag_offset_ + scroll_offset_;
             }
 
             cableView._update();
             modulationLineView._update();
+            updateScrollBars();
         }
         item_dropped_on_prep_ = false;
         last_drop_target_ = nullptr;
@@ -176,6 +193,7 @@ private:
     std::shared_ptr<OpenGlLine> _line;
 
     bool editing_comment_;
+    bool is_rebuilding_ = false;
     juce::OwnedArray<juce::HashMap<int, int>> pastemap;
     friend class ModulationLineView;
     ModulationLineView modulationLineView;
@@ -218,6 +236,7 @@ public:
     void mouseMove (const juce::MouseEvent& e) override;
     void draw (void);
     void prepareItemDrag (BKItem* item, const juce::MouseEvent& e, bool center);
+    void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
 
     juce::UndoManager& undo;
 
@@ -225,6 +244,9 @@ private:
 
     BKItem* getItemAtPoint (const int X, const int Y);
     SynthGuiData *gui_data;
+
+    std::unique_ptr<OpenGlScrollBar> horizontal_scrollbar_;
+    std::unique_ptr<OpenGlScrollBar> vertical_scrollbar_;
 
     JUCE_LEAK_DETECTOR (ConstructionSite)
 };

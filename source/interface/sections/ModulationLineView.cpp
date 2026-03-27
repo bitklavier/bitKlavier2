@@ -64,6 +64,17 @@ void ModulationLineView::renderOpenGlComponents (OpenGlWrapper& open_gl, bool an
     }
 }
 
+void ModulationLineView::destroyOpenGlComponents (OpenGlWrapper& open_gl)
+{
+    juce::ScopedLock lock (open_gl_lock);
+    for (auto* line : objects)
+    {
+        if (line != nullptr && line->line != nullptr && line->line->isInit())
+            line->line->destroy (open_gl);
+    }
+    SynthSection::destroyOpenGlComponents (open_gl);
+}
+
 //probably want to move this to construction site leaving here for now
 void ModulationLineView::preparationDragged (juce::Component* comp, const juce::MouseEvent& e)
 {
@@ -248,15 +259,17 @@ void ModulationLineView::removeModConnection (bitklavier::ModConnection* c)
     if ((juce::OpenGLContext::getCurrentContext() == nullptr))
     {
         at->setVisible (false);
-        site.open_gl.context.executeOnGLThread ([this, &at] (juce::OpenGLContext& openGLContext) {
-            //can't use destroy component since lineveiw renders the lines directy from the array as opposed to adding them
-            // to the open_gl_components vector... why?
-            // idk maybe try to make it instantiate using addopenglcomponent and find out.. for now
-            // i'll kep neing laxy --davis --4/25/25
-            at->line->destroy (this->site.open_gl);
-            //DBG("delete Line");
+        site.open_gl.context.executeOnGLThread ([this, at] (juce::OpenGLContext& openGLContext) {
+            if (at->line)
+                at->line->destroy (this->site.open_gl);
         },
             true);
+    }
+    else
+    {
+        // Already on the GL thread (e.g. called during context teardown) — destroy directly
+        if (at->line)
+            at->line->destroy (site.open_gl);
     }
     // DBG ("delete line object");
     {

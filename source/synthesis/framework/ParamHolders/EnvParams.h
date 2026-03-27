@@ -44,8 +44,7 @@ struct EnvParams : public chowdsp::ParamHolder
         juce::ParameterID { idPrepend+"delay", 100 },
         "Delay",
         chowdsp::ParamUtils::createNormalisableRange (0.0f, 1000.0f, 500.0f),
-        0.0f,
-        true
+        0.0f
     };
 
     // Attack param
@@ -64,8 +63,7 @@ struct EnvParams : public chowdsp::ParamHolder
         chowdsp::ParamUtils::createNormalisableRange (-10.0f, 10.0f, 0.0f),
         0.0f,
         &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal,
-        true
+        &chowdsp::ParamUtils::stringToFloatVal
     };
 
     // Hold param

@@ -132,7 +132,7 @@ juce::Rectangle<int> AboutSection::getInfoRect() {
 
     int x = 20 * size_ratio_;
     int y = 75 * size_ratio_;
-    info_height = getHeight() - 200;
+    info_height = getHeight() - 100;
 
     return juce::Rectangle<int>(x, y, info_width, info_height);
 }

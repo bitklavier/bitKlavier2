@@ -290,10 +290,7 @@ void CableView::removeConnection(bitklavier::Connection *c) {
 void CableView::updateCablePositions()
 {
     for (auto* cable : objects)
-    {
-        cable->updateStartPoint();
-        cable->updateEndPoint();
-    }
+        cable->resizeToFit();
 }
 void CableView::connectionAdded(bitklavier::Connection *c) {
 

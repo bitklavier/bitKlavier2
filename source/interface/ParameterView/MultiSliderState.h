@@ -13,7 +13,7 @@
  * todo: make much larger (2048?) mostly for Pascal!
  * or only do that for MultiSlider2dState?
  */
-#define MAXMULTISLIDERLENGTH 128
+#define MAXMULTISLIDERLENGTH 2048
 
 /**
  * for a multislider, we have a sequence of values, sometimes with gaps,
