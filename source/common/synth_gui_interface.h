@@ -122,6 +122,11 @@ public:
     void openLoadDialog();
     void saveCurrentGallery();
     void importLegacyGallery();
+    bool isDirty() const;
+    /** Shows a "Save / Don't Save / Cancel" dialog if the gallery is dirty, then calls
+        @p action if the user chooses to proceed (Save or Don't Save).  If the gallery
+        is clean the action is called immediately without a dialog. */
+    void confirmDiscardAndPerform (std::function<void()> action);
     void externalPresetLoaded(juce::File preset);
     void setGuiSize(float scale);
     bool loadFromFile(juce::File preset, std::string& error);

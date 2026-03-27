@@ -309,7 +309,14 @@ public:
 
     void systemRequestedQuit() override
     {
-        quit();
+        if (auto* gui = main_window_->editor_->getGuiInterface())
+        {
+            gui->confirmDiscardAndPerform ([this] { quit(); });
+        }
+        else
+        {
+            quit();
+        }
     }
 
     void anotherInstanceStarted (const juce::String& command_line) override

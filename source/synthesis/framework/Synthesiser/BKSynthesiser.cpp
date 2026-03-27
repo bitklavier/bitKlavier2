@@ -329,7 +329,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
     {
         if (m.isNoteOn())
         {
-            DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            // DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
 
             if (pedalSynth)
                 return;
@@ -347,7 +347,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
         }
         else if (m.isNoteOff())
         {
-            DBG ("BKSynthesizer Note Off " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
+            // DBG ("BKSynthesizer Note Off " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
             if (pedalSynth)
                 return;
 
@@ -754,7 +754,7 @@ void BKSynthesiser::noteOff (const int midiChannel,
         {
             if (!(voice->isSustainPedalDown() || voice->isSostenutoPedalDown()))
             {
-                DBG("stopping voice, for midiNote " << voice->currentlyPlayingNote);
+                // DBG("stopping voice, for midiNote " << voice->currentlyPlayingNote);
                 stopVoice (voice, velocity, allowTailOff);
             }
         }

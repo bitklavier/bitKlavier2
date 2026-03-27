@@ -219,6 +219,7 @@ void SynthBase::clearAllGuiListeners()
 void SynthBase::valueTreeChildAdded (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenAdded)
 {
+    is_dirty_.store(true);
     if (childWhichHasBeenAdded.hasType (IDs::PIANO))
     {
         //DBG ("SynthBase::valueTreeChildAdded -- added piano");
@@ -252,6 +253,7 @@ void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
     juce::ValueTree& childWhichHasBeenRemoved,
     int indexFromWhichChildWasRemoved)
 {
+    is_dirty_.store(true);
     if (childWhichHasBeenRemoved.hasType (IDs::ModulationConnection))
     {
         if (disconnectModulation (childWhichHasBeenRemoved))
@@ -268,6 +270,7 @@ void SynthBase::valueTreeChildRemoved (juce::ValueTree& parentTree,
 void SynthBase::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged,
     const juce::Identifier& property)
 {
+    is_dirty_.store(true);
     if (property == IDs::isActive && treeWhosePropertyHasChanged.hasType (IDs::PIANO) && static_cast<int> (treeWhosePropertyHasChanged.getProperty (IDs::isActive)) == 1)
     {
         if (getGuiInterface())
@@ -788,6 +791,7 @@ bool SynthBase::saveToFile(juce::File preset)
 
     // Update active file on successful save
     active_file_ = preset;
+    is_dirty_.store(false);
     if (user_prefs && user_prefs->tree.isValid())
         user_prefs->userPreferences->addRecentGallery (preset);
     return true;

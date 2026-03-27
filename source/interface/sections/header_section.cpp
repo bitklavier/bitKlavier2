@@ -17,7 +17,6 @@
 #include "header_section.h"
 #include "ConstructionSite.h"
 #include "FullInterface.h"
-#include "LegacyGalleryImporter.h"
 #include "SampleLoadManager.h"
 #include "load_save.h"
 #include "main_section.h"
@@ -831,9 +830,13 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 auto it = recentIdToFile->find (selection);
                 if (it != recentIdToFile->end())
                 {
-                    std::string error;
-                    if (! parent->loadFromFile (it->second, error))
-                        DBG (juce::String ("Failed to load recent gallery: ") + error);
+                    juce::File fileToLoad = it->second;
+                    parent->confirmDiscardAndPerform ([parent, fileToLoad]
+                    {
+                        std::string error;
+                        if (! parent->loadFromFile (fileToLoad, error))
+                            DBG (juce::String ("Failed to load recent gallery: ") + error);
+                    });
                 }
                 return;
             }
@@ -924,10 +927,13 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
             if (selection >= kGalleryIdBase) {
                 auto it = idToFile->find(selection);
                 if (it != idToFile->end()) {
-                    std::string error;
-                    if (!parent->loadFromFile(it->second, error)) {
-                        DBG(juce::String("Failed to load gallery: ") + error);
-                    }
+                    juce::File fileToLoad = it->second;
+                    parent->confirmDiscardAndPerform ([parent, fileToLoad]
+                    {
+                        std::string error;
+                        if (! parent->loadFromFile (fileToLoad, error))
+                            DBG (juce::String ("Failed to load gallery: ") + error);
+                    });
                 }
             }
         }, {}, 1.5f);
@@ -1030,45 +1036,9 @@ void HeaderSection::loadGallery()
 
 void HeaderSection::importLegacyGallery()
 {
-    SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
-    if (parent == nullptr) return;
-
-    filechooser = std::make_unique<juce::FileChooser> (
-        "Import Legacy bitKlavier Gallery",
-        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
-        "*.xml");
-
-    filechooser->launchAsync (
-        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-        [parent] (const juce::FileChooser& fc)
-        {
-            auto results = fc.getResults();
-            if (results.isEmpty()) return;
-
-            juce::String errorMessage;
-            auto newTree = LegacyGalleryImporter::importFromFile (results[0], errorMessage);
-
-            if (! newTree.isValid())
-            {
-                juce::AlertWindow::showMessageBoxAsync (
-                    juce::MessageBoxIconType::WarningIcon,
-                    "Import Failed",
-                    errorMessage.isEmpty() ? "Could not import the legacy gallery." : errorMessage);
-                return;
-            }
-
-            std::string loadError;
-            parent->getSynth()->loadGalleryFromValueTree (newTree);
-            parent->updateHostDisplay();
-
-            if (parent->getGui() != nullptr && parent->getGui()->header_ != nullptr)
-            {
-                parent->getGui()->header_->gallerySelectText->setText (
-                    results[0].getFileNameWithoutExtension() + " (imported)");
-                parent->getGui()->header_->updateCurrentPianoName();
-            }
-            parent->setPianoSwitchTriggerThreadMessage();
-        });
+    // Delegate to SynthGuiInterface which handles the dirty-check dialog
+    if (auto* parent = findParentComponentOfClass<SynthGuiInterface>())
+        parent->importLegacyGallery();
 }
 
 void HeaderSection::saveGallery()
