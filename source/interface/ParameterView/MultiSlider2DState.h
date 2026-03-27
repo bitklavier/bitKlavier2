@@ -13,7 +13,7 @@
  * todo: make much larger (2048?) mostly for Pascal!
  * or only do that for MultiSlider2dState?
  */
-#define MAXMULTISLIDER2DLENGTH 128
+#define MAXMULTISLIDER2DLENGTH 2048
 #define MAXMULTISLIDER2DVALS 10 // max transpositions per each slider
 
 /**

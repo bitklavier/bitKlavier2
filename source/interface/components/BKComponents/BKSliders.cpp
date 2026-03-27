@@ -961,6 +961,16 @@ int BKMultiSlider::whichSlider (const juce::MouseEvent &e)
 {
     int x = e.x;
 
+    if (inLineMode)
+    {
+        if (sliderArea.getWidth() > 0 && !sliders.isEmpty())
+        {
+            int which = (int)((float)x * sliders.size() / sliderArea.getWidth());
+            if (which >= 0 && which < sliders.size()) return which;
+        }
+        return -1;
+    }
+
     BKSubSlider* refSlider = sliders[0]->operator[](0);
     if (refSlider != nullptr)
     {
@@ -1005,6 +1015,11 @@ int BKMultiSlider::whichSubSlider (int which)
 int BKMultiSlider::whichSubSlider (int which, const juce::MouseEvent &e)
 {
     if(which < 0) return 0;
+
+    // in line mode sliders have no bounds, so getPositionOfValue() is meaningless;
+    // fall back to the value-distance version which uses currentInvisibleSliderValue
+    if (inLineMode)
+        return whichSubSlider(which);
 
     int whichSub = 0;
     float refDistance;
@@ -1112,22 +1127,96 @@ void BKMultiSlider::resized()
 
     bigInvisibleSlider->setBounds(area.toNearestInt());
 
+    sliderArea = area;
     sliderWidth = (float)area.getWidth() / sliders.size();
+    inLineMode = (sliderWidth < 3.0f);
 
     for (int i = 0; i < sliders.size(); i++)
     {
-        juce::Rectangle<float> sliderArea (area.removeFromLeft(sliderWidth));
+        juce::Rectangle<float> oneSliderBounds (area.removeFromLeft(sliderWidth));
         for(int j = 0; j < sliders[i]->size(); j++)
         {
             BKSubSlider* currentSlider = sliders[i]->operator[](j);
             if(currentSlider != nullptr)
             {
-                currentSlider->setBounds(sliderArea.toNearestInt());
+                if (inLineMode)
+                    currentSlider->setVisible(false);
+                else
+                {
+                    currentSlider->setVisible(true);
+                    currentSlider->setBounds(oneSliderBounds.toNearestInt());
+                }
             }
         }
     }
 
     bigInvisibleSlider->toFront(false);
+}
+
+
+void BKMultiSlider::paint(juce::Graphics& g)
+{
+    if (!inLineMode || sliders.isEmpty()) return;
+
+    float rangeSpan = (float)(sliderMax - sliderMin);
+    if (rangeSpan == 0.f) return;
+
+    float slotW = sliderArea.getWidth() / (float)sliders.size();
+
+    // subtle background
+    g.setColour(juce::Colours::black.withAlpha(0.15f));
+    g.fillRect(sliderArea);
+
+    // zero line when range spans zero
+    if (sliderMin < 0.0 && sliderMax > 0.0)
+    {
+        float zeroY = sliderArea.getBottom() - (float)(-sliderMin / rangeSpan) * sliderArea.getHeight();
+        g.setColour(juce::Colours::white.withAlpha(0.2f));
+        g.drawHorizontalLine((int)zeroY, sliderArea.getX(), sliderArea.getRight());
+    }
+
+    auto activeCol  = activeSliderLookAndFeel.findColour(juce::Slider::thumbColourId);
+    auto passiveCol = passiveSliderLookAndFeel.findColour(juce::Slider::thumbColourId);
+
+    // build polyline segments, broken at inactive (gap) sliders
+    juce::Path linePath;
+    bool segmentOpen = false;
+
+    for (int i = 0; i < sliders.size(); i++)
+    {
+        bool isActive = (i < whichSlidersActive.size()) && whichSlidersActive[i];
+        if (!isActive) { segmentOpen = false; continue; }
+
+        float val   = (float)allSliderVals[i][0];
+        float normY = juce::jlimit(0.f, 1.f, (val - (float)sliderMin) / rangeSpan);
+        float x     = sliderArea.getX() + (i + 0.5f) * slotW;
+        float y     = sliderArea.getBottom() - normY * sliderArea.getHeight();
+
+        if (segmentOpen)
+            linePath.lineTo(x, y);
+        else
+        {
+            linePath.startNewSubPath(x, y);
+            segmentOpen = true;
+        }
+    }
+
+    g.setColour(activeCol.withMultipliedAlpha(0.8f));
+    g.strokePath(linePath, juce::PathStrokeType(1.5f));
+
+    // dots drawn on top of lines
+    float dotR = juce::jmax(1.0f, juce::jmin(slotW * 0.45f, 3.5f));
+    for (int i = 0; i < sliders.size(); i++)
+    {
+        bool isActive = (i < whichSlidersActive.size()) && whichSlidersActive[i];
+        float val   = (float)allSliderVals[i][0];
+        float normY = juce::jlimit(0.f, 1.f, (val - (float)sliderMin) / rangeSpan);
+        float x     = sliderArea.getX() + (i + 0.5f) * slotW;
+        float y     = sliderArea.getBottom() - normY * sliderArea.getHeight();
+
+        g.setColour(isActive ? activeCol : passiveCol);
+        g.fillEllipse(x - dotR, y - dotR, dotR * 2.f, dotR * 2.f);
+    }
 }
 
 

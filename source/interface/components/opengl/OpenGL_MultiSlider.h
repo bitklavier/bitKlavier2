@@ -248,10 +248,8 @@ public:
     */
     void paint(juce::Graphics& g) override {
         if (isModulation_)
-        {
             g.fillAll(juce::Colours::black); // choose your opaque BG
-            BKMultiSlider::paint(g);
-        }
+        BKMultiSlider::paint(g); // draws line graph in line mode; no-op otherwise
     }
 
     juce::String name_;

@@ -393,8 +393,9 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         // New SynchronicPulseTriggerType enum index order is identical, so direct copy.
         // Note: 'onOffMode' is a different field; 'mode' is the SynchronicSyncMode.
         pulseTrig = params->getIntAttribute ("mode", 0);
-        // gain (linear) → OutputGain (dB)
-        outputGain   = gainToDb ((float) params->getDoubleAttribute ("gain", 1.0));
+        // gain (linear) → OutputGain (dB), unclamped so values above 6 dB are preserved
+        float rawLinGain = (float) params->getDoubleAttribute ("gain", 1.0);
+        outputGain = rawLinGain > 0.0f ? juce::Decibels::gainToDecibels (rawLinGain) : -80.0f;
         useTuning    = params->getIntAttribute ("transpUsesTuning", 0);
     }
 
@@ -497,19 +498,13 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         for (auto& t : toks) out += t + " ";
         return out;
     };
-    // Helper: pad a space-separated bool string to exactly 12 entries with trailing space
-    auto padStates12 = [] (const juce::String& s) -> juce::String
+    // Helper: trim trailing "false" entries (minimum size 1) and return as StringArray
+    auto trimTrailingFalse = [] (const juce::String& s) -> juce::StringArray
     {
         juce::StringArray arr = juce::StringArray::fromTokens (s, " ", "");
-        while (arr.size() < 12) arr.add ("false");
-        return arr.joinIntoString (" ") + " ";
-    };
-    // Helper: pad a space-separated bool string to exactly 12 entries, no trailing space
-    auto padStates12NoTrail = [] (const juce::String& s) -> juce::String
-    {
-        juce::StringArray arr = juce::StringArray::fromTokens (s, " ", "");
-        while (arr.size() < 12) arr.add ("false");
-        return arr.joinIntoString (" ");
+        while (arr.size() > 1 && arr[arr.size() - 1] == "false")
+            arr.remove (arr.size() - 1);
+        return arr;
     };
 
     // Accent multipliers (old: accentMultipliers f0..fN)
@@ -520,19 +515,20 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         const juce::XmlElement* accStEl = params->getChildByName ("accentMultipliersStates");
         if (accEl != nullptr)
         {
-            accVals = parseIndexedFloats (*accEl, "f", 12);
+            accVals = parseIndexedFloats (*accEl, "f", 256);
             if (accStEl != nullptr)
-                accStates = parseIndexedBools (*accStEl, "b", 12);
+                accStates = parseIndexedBools (*accStEl, "b", 256);
         }
     }
     if (accVals.isEmpty())   accVals   = "1.0";
     if (accStates.isEmpty()) accStates = "true";
+    juce::StringArray accActiveArr = trimTrailingFalse (accStates);
     {
         int accSize = juce::StringArray::fromTokens (accVals, " ", "").size();
-        vt.setProperty ("accentsSliderValsSize",  accSize,                    nullptr);
-        vt.setProperty ("accentsSliderVals",       toSliderVals (accVals),     nullptr);
-        vt.setProperty ("accentsActiveValsSize",  12,                          nullptr);
-        vt.setProperty ("accentsActiveVals",       padStates12 (accStates),    nullptr);
+        vt.setProperty ("accentsSliderValsSize",  accSize,                                    nullptr);
+        vt.setProperty ("accentsSliderVals",       toSliderVals (accVals),                     nullptr);
+        vt.setProperty ("accentsActiveValsSize",  (int) accActiveArr.size(),                   nullptr);
+        vt.setProperty ("accentsActiveVals",       accActiveArr.joinIntoString (" ") + " ",    nullptr);
     }
 
     // Sustain/length multipliers (old: lengthMultipliers)
@@ -543,19 +539,20 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         const juce::XmlElement* slStEl = params->getChildByName ("lengthMultipliersStates");
         if (slEl != nullptr)
         {
-            slVals = parseIndexedFloats (*slEl, "f", 12);
+            slVals = parseIndexedFloats (*slEl, "f", 256);
             if (slStEl != nullptr)
-                slStates = parseIndexedBools (*slStEl, "b", 12);
+                slStates = parseIndexedBools (*slStEl, "b", 256);
         }
     }
     if (slVals.isEmpty())   slVals   = "1.0";
     if (slStates.isEmpty()) slStates = "true";
+    juce::StringArray slActiveArr = trimTrailingFalse (slStates);
     {
         int slSize = juce::StringArray::fromTokens (slVals, " ", "").size();
-        vt.setProperty ("sustain_length_multipliersSliderValsSize",  slSize,                        nullptr);
-        vt.setProperty ("sustain_length_multipliersSliderVals",       toSliderVals (slVals),         nullptr);
-        vt.setProperty ("sustain_length_multipliersActiveValsSize",  12,                             nullptr);
-        vt.setProperty ("sustain_length_multipliersActiveVals",       padStates12 (slStates),        nullptr);
+        vt.setProperty ("sustain_length_multipliersSliderValsSize",  slSize,                                    nullptr);
+        vt.setProperty ("sustain_length_multipliersSliderVals",       toSliderVals (slVals),                     nullptr);
+        vt.setProperty ("sustain_length_multipliersActiveValsSize",  (int) slActiveArr.size(),                   nullptr);
+        vt.setProperty ("sustain_length_multipliersActiveVals",       slActiveArr.joinIntoString (" ") + " ",    nullptr);
     }
 
     // Beat length multipliers (old: beatMultipliers)
@@ -566,19 +563,20 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         const juce::XmlElement* blStEl = params->getChildByName ("beatMultipliersStates");
         if (blEl != nullptr)
         {
-            blVals = parseIndexedFloats (*blEl, "f", 12);
+            blVals = parseIndexedFloats (*blEl, "f", 256);
             if (blStEl != nullptr)
-                blStates = parseIndexedBools (*blStEl, "b", 12);
+                blStates = parseIndexedBools (*blStEl, "b", 256);
         }
     }
     if (blVals.isEmpty())   blVals   = "1.0";
     if (blStates.isEmpty()) blStates = "true";
+    juce::StringArray blActiveArr = trimTrailingFalse (blStates);
     {
         int blSize = juce::StringArray::fromTokens (blVals, " ", "").size();
-        vt.setProperty ("beat_length_multipliersSliderValsSize",  blSize,                        nullptr);
-        vt.setProperty ("beat_length_multipliersSliderVals",       toSliderVals (blVals),         nullptr);
-        vt.setProperty ("beat_length_multipliersActiveValsSize",  12,                             nullptr);
-        vt.setProperty ("beat_length_multipliersActiveVals",       padStates12 (blStates),        nullptr);
+        vt.setProperty ("beat_length_multipliersSliderValsSize",  blSize,                                    nullptr);
+        vt.setProperty ("beat_length_multipliersSliderVals",       toSliderVals (blVals),                     nullptr);
+        vt.setProperty ("beat_length_multipliersActiveValsSize",  (int) blActiveArr.size(),                   nullptr);
+        vt.setProperty ("beat_length_multipliersActiveVals",       blActiveArr.joinIntoString (" ") + " ",    nullptr);
     }
 
     // Transpositions (old: <transpOffsets> with <t0 f0="..." f1="..."/>, <t1 ...>, etc.)
@@ -610,20 +608,21 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         }
         const juce::XmlElement* tsEl = params->getChildByName ("transpOffsetsStates");
         if (tsEl != nullptr)
-            transpStates = parseIndexedBools (*tsEl, "b", 12);
+            transpStates = parseIndexedBools (*tsEl, "b", 256);
     }
     if (transpVals.isEmpty())   { transpVals  = "0.000000/"; transpSize = 1; }
-    if (transpStates.isEmpty()) transpStates = "true false false false false false false false false false false false";
+    if (transpStates.isEmpty()) transpStates = "true";
 
-    // Build the 12-element active vals string (pad with "false" up to 12)
-    juce::StringArray statesArr = juce::StringArray::fromTokens (transpStates, " ", "");
-    while (statesArr.size() < 12) statesArr.add ("false");
-    juce::String transpActiveVals = statesArr.joinIntoString (" ") + " ";
-
-    vt.setProperty ("transpositionsSliderValsSize",  transpSize,        nullptr);
-    vt.setProperty ("transpositionsSliderVals",       transpVals,        nullptr);
-    vt.setProperty ("transpositionsActiveValsSize",  12,                 nullptr);
-    vt.setProperty ("transpositionsActiveVals",       transpActiveVals,  nullptr);
+    // Active vals: all transpSize slots are active (true)
+    {
+        juce::StringArray transpActiveArr;
+        for (int i = 0; i < transpSize; ++i) transpActiveArr.add ("true");
+        juce::String transpActiveVals = transpActiveArr.joinIntoString (" ") + " ";
+        vt.setProperty ("transpositionsSliderValsSize",  transpSize,        nullptr);
+        vt.setProperty ("transpositionsSliderVals",       transpVals,        nullptr);
+        vt.setProperty ("transpositionsActiveValsSize",  transpSize,         nullptr);
+        vt.setProperty ("transpositionsActiveVals",       transpActiveVals,  nullptr);
+    }
 
     vt.setProperty ("holdtimemin", holdMin, nullptr);
     vt.setProperty ("holdtimemax", holdMax, nullptr);
@@ -635,12 +634,12 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
 
     // MODULATABLE_PARAMS
     juce::ValueTree mp ("MODULATABLE_PARAMS");
-    mp.addChild (makeModParam ("numPulses",  1.0f, 100.0f, 0.9855645895004272f, numPulses), -1, nullptr);
+    mp.addChild (makeModParam ("numPulses",  1.0f, juce::jmax (100.0f, (float) numPulses), 0.9855645895004272f, (float) numPulses), -1, nullptr);
     mp.addChild (makeModParam ("numLayers",  1.0f, 10.0f,  0.854755699634552f, numLayers),  -1, nullptr);
     mp.addChild (makeModParam ("cThickness", 1.0f, 20.0f,  0.9276416301727295f, cThickness),-1, nullptr);
     mp.addChild (makeModParam ("cMin",       20.0f, 2000.0f,0.9855645895004272f, cMin),     -1, nullptr);
     mp.addChild (makeModParam ("Send",       -80.0f, 6.0f, 2.0f, 0.0f),                     -1, nullptr);
-    mp.addChild (makeModParam ("OutputGain", -80.0f, 6.0f, 2.0f, outputGain),               -1, nullptr);
+    mp.addChild (makeModParam ("OutputGain", -80.0f, juce::jmax (6.0f, outputGain), 2.0f, outputGain), -1, nullptr);
     mp.addChild (makeModParam ("noteOnGain", -80.0f, 6.0f, 2.0f, 0.0f),                     -1, nullptr);
     mp.addChild (makeModParam ("attack",    0.0f, 10000.0f, 0.2313782125711441f, attack),    -1, nullptr);
     mp.addChild (makeModParam ("decay",     0.0f, 1000.0f,  1.0f, decay),                   -1, nullptr);
@@ -655,19 +654,19 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
     pd.setProperty ("transpositionsVals",       transpVals,   nullptr);
     pd.setProperty ("transpositionsSize",       transpSize,   nullptr);
     pd.setProperty ("transpositionsStates",     transpStates, nullptr);
-    pd.setProperty ("transpositionsStatesSize", 12,           nullptr);
-    pd.setProperty ("accentsVals",                         accVals,                        nullptr);
+    pd.setProperty ("transpositionsStatesSize", transpSize,   nullptr);
+    pd.setProperty ("accentsVals",                         accVals,                            nullptr);
     pd.setProperty ("accentsSize",                         juce::StringArray::fromTokens (accVals, " ", "").size(), nullptr);
-    pd.setProperty ("accentsStates",                       padStates12NoTrail (accStates), nullptr);
-    pd.setProperty ("accentsStatesSize",                   12,                             nullptr);
-    pd.setProperty ("sustainlength_multipliersVals",       slVals,                         nullptr);
+    pd.setProperty ("accentsStates",                       accActiveArr.joinIntoString (" "),   nullptr);
+    pd.setProperty ("accentsStatesSize",                   (int) accActiveArr.size(),            nullptr);
+    pd.setProperty ("sustainlength_multipliersVals",       slVals,                              nullptr);
     pd.setProperty ("sustainlength_multipliersSize",       juce::StringArray::fromTokens (slVals, " ", "").size(), nullptr);
-    pd.setProperty ("sustainlength_multipliersStates",     padStates12NoTrail (slStates),  nullptr);
-    pd.setProperty ("sustainlength_multipliersStatesSize", 12,                             nullptr);
-    pd.setProperty ("beatlength_multipliersVals",          blVals,                         nullptr);
+    pd.setProperty ("sustainlength_multipliersStates",     slActiveArr.joinIntoString (" "),    nullptr);
+    pd.setProperty ("sustainlength_multipliersStatesSize", (int) slActiveArr.size(),             nullptr);
+    pd.setProperty ("beatlength_multipliersVals",          blVals,                              nullptr);
     pd.setProperty ("beatlength_multipliersSize",          juce::StringArray::fromTokens (blVals, " ", "").size(), nullptr);
-    pd.setProperty ("beatlength_multipliersStates",        padStates12NoTrail (blStates),  nullptr);
-    pd.setProperty ("beatlength_multipliersStatesSize",    12,                             nullptr);
+    pd.setProperty ("beatlength_multipliersStates",        blActiveArr.joinIntoString (" "),    nullptr);
+    pd.setProperty ("beatlength_multipliersStatesSize",    (int) blActiveArr.size(),             nullptr);
     pd.setProperty ("clustermin",    clusterMin, nullptr);
     pd.setProperty ("clustermax",    clusterMax, nullptr);
     pd.setProperty ("holdtimemin",   holdMin,    nullptr);
@@ -1252,20 +1251,16 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
         for (auto& t : toks) out += t + " ";
         return out;
     };
-    auto padStates12 = [] (const juce::String& s) -> juce::String
+    // Helper: trim trailing "false" entries (minimum size 1) and return as StringArray
+    auto trimTrailingFalse = [] (const juce::String& s) -> juce::StringArray
     {
         juce::StringArray arr = juce::StringArray::fromTokens (s, " ", "");
-        while (arr.size() < 12) arr.add ("false");
-        return arr.joinIntoString (" ") + " ";
-    };
-    auto padStates12NoTrail = [] (const juce::String& s) -> juce::String
-    {
-        juce::StringArray arr = juce::StringArray::fromTokens (s, " ", "");
-        while (arr.size() < 12) arr.add ("false");
-        return arr.joinIntoString (" ");
+        while (arr.size() > 1 && arr[arr.size() - 1] == "false")
+            arr.remove (arr.size() - 1);
+        return arr;
     };
 
-    // Beat lengths (old: <beats f0..fN/> and <beatsStates b0..b11/>)
+    // Beat lengths (old: <beats f0..fN/> and <beatsStates b0..bN/>)
     juce::String beatVals = "4.0", beatStates = "true";
     if (params != nullptr)
     {
@@ -1273,28 +1268,29 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
         const juce::XmlElement* bStEl = params->getChildByName ("beatsStates");
         if (bEl != nullptr)
         {
-            beatVals = parseIndexedFloats (*bEl, "f", 12);
+            beatVals = parseIndexedFloats (*bEl, "f", 256);
             if (bStEl != nullptr)
-                beatStates = parseIndexedBools (*bStEl, "b", 12);
+                beatStates = parseIndexedBools (*bStEl, "b", 256);
         }
     }
+    juce::StringArray beatActiveArr = trimTrailingFalse (beatStates);
     {
         int sz = juce::StringArray::fromTokens (beatVals, " ", "").size();
-        vt.setProperty ("beatLengthsVals",              beatVals,                      nullptr);
-        vt.setProperty ("beatLengthsSize",              sz,                            nullptr);
-        vt.setProperty ("beatLengthsStates",            padStates12NoTrail (beatStates), nullptr);
-        vt.setProperty ("beatLengthsStatesSize",        12,                            nullptr);
-        vt.setProperty ("beat_lengthsVals",             beatVals,                      nullptr);
-        vt.setProperty ("beat_lengthsSize",             sz,                            nullptr);
-        vt.setProperty ("beat_lengthsStates",           padStates12NoTrail (beatStates), nullptr);
-        vt.setProperty ("beat_lengthsStatesSize",       12,                            nullptr);
-        vt.setProperty ("beat_lengthsSliderValsSize",   sz,                            nullptr);
-        vt.setProperty ("beat_lengthsSliderVals",       toSliderVals (beatVals),        nullptr);
-        vt.setProperty ("beat_lengthsActiveValsSize",   12,                            nullptr);
-        vt.setProperty ("beat_lengthsActiveVals",       padStates12 (beatStates),       nullptr);
+        vt.setProperty ("beatLengthsVals",              beatVals,                                    nullptr);
+        vt.setProperty ("beatLengthsSize",              sz,                                          nullptr);
+        vt.setProperty ("beatLengthsStates",            beatActiveArr.joinIntoString (" "),           nullptr);
+        vt.setProperty ("beatLengthsStatesSize",        (int) beatActiveArr.size(),                  nullptr);
+        vt.setProperty ("beat_lengthsVals",             beatVals,                                    nullptr);
+        vt.setProperty ("beat_lengthsSize",             sz,                                          nullptr);
+        vt.setProperty ("beat_lengthsStates",           beatActiveArr.joinIntoString (" "),           nullptr);
+        vt.setProperty ("beat_lengthsStatesSize",       (int) beatActiveArr.size(),                  nullptr);
+        vt.setProperty ("beat_lengthsSliderValsSize",   sz,                                          nullptr);
+        vt.setProperty ("beat_lengthsSliderVals",       toSliderVals (beatVals),                      nullptr);
+        vt.setProperty ("beat_lengthsActiveValsSize",   (int) beatActiveArr.size(),                  nullptr);
+        vt.setProperty ("beat_lengthsActiveVals",       beatActiveArr.joinIntoString (" ") + " ",    nullptr);
     }
 
-    // Delay lengths (old: <delayLengths f0..fN/> and <delayLengthsStates b0..b11/>)
+    // Delay lengths (old: <delayLengths f0..fN/> and <delayLengthsStates b0..bN/>)
     juce::String delVals = "4.0", delStates = "true";
     if (params != nullptr)
     {
@@ -1302,28 +1298,29 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
         const juce::XmlElement* dStEl = params->getChildByName ("delayLengthsStates");
         if (dEl != nullptr)
         {
-            delVals = parseIndexedFloats (*dEl, "f", 12);
+            delVals = parseIndexedFloats (*dEl, "f", 256);
             if (dStEl != nullptr)
-                delStates = parseIndexedBools (*dStEl, "b", 12);
+                delStates = parseIndexedBools (*dStEl, "b", 256);
         }
     }
+    juce::StringArray delActiveArr = trimTrailingFalse (delStates);
     {
         int sz = juce::StringArray::fromTokens (delVals, " ", "").size();
-        vt.setProperty ("delayLengthsVals",             delVals,                       nullptr);
-        vt.setProperty ("delayLengthsSize",             sz,                            nullptr);
-        vt.setProperty ("delayLengthsStates",           padStates12NoTrail (delStates), nullptr);
-        vt.setProperty ("delayLengthsStatesSize",       12,                            nullptr);
-        vt.setProperty ("delay_lengthsVals",            delVals,                       nullptr);
-        vt.setProperty ("delay_lengthsSize",            sz,                            nullptr);
-        vt.setProperty ("delay_lengthsStates",          padStates12NoTrail (delStates), nullptr);
-        vt.setProperty ("delay_lengthsStatesSize",      12,                            nullptr);
-        vt.setProperty ("delay_lengthsSliderValsSize",  sz,                            nullptr);
-        vt.setProperty ("delay_lengthsSliderVals",      toSliderVals (delVals),         nullptr);
-        vt.setProperty ("delay_lengthsActiveValsSize",  12,                            nullptr);
-        vt.setProperty ("delay_lengthsActiveVals",      padStates12 (delStates),        nullptr);
+        vt.setProperty ("delayLengthsVals",             delVals,                                   nullptr);
+        vt.setProperty ("delayLengthsSize",             sz,                                        nullptr);
+        vt.setProperty ("delayLengthsStates",           delActiveArr.joinIntoString (" "),          nullptr);
+        vt.setProperty ("delayLengthsStatesSize",       (int) delActiveArr.size(),                 nullptr);
+        vt.setProperty ("delay_lengthsVals",            delVals,                                   nullptr);
+        vt.setProperty ("delay_lengthsSize",            sz,                                        nullptr);
+        vt.setProperty ("delay_lengthsStates",          delActiveArr.joinIntoString (" "),          nullptr);
+        vt.setProperty ("delay_lengthsStatesSize",      (int) delActiveArr.size(),                 nullptr);
+        vt.setProperty ("delay_lengthsSliderValsSize",  sz,                                        nullptr);
+        vt.setProperty ("delay_lengthsSliderVals",      toSliderVals (delVals),                     nullptr);
+        vt.setProperty ("delay_lengthsActiveValsSize",  (int) delActiveArr.size(),                 nullptr);
+        vt.setProperty ("delay_lengthsActiveVals",      delActiveArr.joinIntoString (" ") + " ",   nullptr);
     }
 
-    // Smooth/smoothing times (old: <smoothLengths f0..fN/> and <smoothLengthsStates b0..b11/>)
+    // Smooth/smoothing times (old: <smoothLengths f0..fN/> and <smoothLengthsStates b0..bN/>)
     juce::String smVals = "50.0", smStates = "true";
     if (params != nullptr)
     {
@@ -1331,25 +1328,26 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
         const juce::XmlElement* smStEl = params->getChildByName ("smoothLengthsStates");
         if (smEl != nullptr)
         {
-            smVals = parseIndexedFloats (*smEl, "f", 12);
+            smVals = parseIndexedFloats (*smEl, "f", 256);
             if (smStEl != nullptr)
-                smStates = parseIndexedBools (*smStEl, "b", 12);
+                smStates = parseIndexedBools (*smStEl, "b", 256);
         }
     }
+    juce::StringArray smActiveArr = trimTrailingFalse (smStates);
     {
         int sz = juce::StringArray::fromTokens (smVals, " ", "").size();
-        vt.setProperty ("smoothingTimesVals",              smVals,                       nullptr);
-        vt.setProperty ("smoothingTimesSize",              sz,                           nullptr);
-        vt.setProperty ("smoothingTimesStates",            padStates12NoTrail (smStates), nullptr);
-        vt.setProperty ("smoothingTimesStatesSize",        12,                           nullptr);
-        vt.setProperty ("smoothing_timesVals",             smVals,                       nullptr);
-        vt.setProperty ("smoothing_timesSize",             sz,                           nullptr);
-        vt.setProperty ("smoothing_timesStates",           padStates12NoTrail (smStates), nullptr);
-        vt.setProperty ("smoothing_timesStatesSize",       12,                           nullptr);
-        vt.setProperty ("smoothing_timesSliderValsSize",   sz,                           nullptr);
-        vt.setProperty ("smoothing_timesSliderVals",       toSliderVals (smVals),         nullptr);
-        vt.setProperty ("smoothing_timesActiveValsSize",   12,                           nullptr);
-        vt.setProperty ("smoothing_timesActiveVals",       padStates12 (smStates),        nullptr);
+        vt.setProperty ("smoothingTimesVals",              smVals,                                   nullptr);
+        vt.setProperty ("smoothingTimesSize",              sz,                                       nullptr);
+        vt.setProperty ("smoothingTimesStates",            smActiveArr.joinIntoString (" "),          nullptr);
+        vt.setProperty ("smoothingTimesStatesSize",        (int) smActiveArr.size(),                 nullptr);
+        vt.setProperty ("smoothing_timesVals",             smVals,                                   nullptr);
+        vt.setProperty ("smoothing_timesSize",             sz,                                       nullptr);
+        vt.setProperty ("smoothing_timesStates",           smActiveArr.joinIntoString (" "),          nullptr);
+        vt.setProperty ("smoothing_timesStatesSize",       (int) smActiveArr.size(),                 nullptr);
+        vt.setProperty ("smoothing_timesSliderValsSize",   sz,                                       nullptr);
+        vt.setProperty ("smoothing_timesSliderVals",       toSliderVals (smVals),                     nullptr);
+        vt.setProperty ("smoothing_timesActiveValsSize",   (int) smActiveArr.size(),                 nullptr);
+        vt.setProperty ("smoothing_timesActiveVals",       smActiveArr.joinIntoString (" ") + " ",   nullptr);
     }
 
     // Feedback coefficients (old: <feedbackCoefficients f0..fN/> and <feedbackCoefficientsStates/>)
@@ -1360,25 +1358,26 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
         const juce::XmlElement* fbStEl = params->getChildByName ("feedbackCoefficientsStates");
         if (fbEl != nullptr)
         {
-            fbVals = parseIndexedFloats (*fbEl, "f", 12);
+            fbVals = parseIndexedFloats (*fbEl, "f", 256);
             if (fbStEl != nullptr)
-                fbStates = parseIndexedBools (*fbStEl, "b", 12);
+                fbStates = parseIndexedBools (*fbStEl, "b", 256);
         }
     }
+    juce::StringArray fbActiveArr = trimTrailingFalse (fbStates);
     {
         int sz = juce::StringArray::fromTokens (fbVals, " ", "").size();
-        vt.setProperty ("feedbackCoeffsVals",              fbVals,                       nullptr);
-        vt.setProperty ("feedbackCoeffsSize",              sz,                           nullptr);
-        vt.setProperty ("feedbackCoeffsStates",            padStates12NoTrail (fbStates), nullptr);
-        vt.setProperty ("feedbackCoeffsStatesSize",        12,                           nullptr);
-        vt.setProperty ("feedback_coefficientsVals",       fbVals,                       nullptr);
-        vt.setProperty ("feedback_coefficientsSize",       sz,                           nullptr);
-        vt.setProperty ("feedback_coefficientsStates",     padStates12NoTrail (fbStates), nullptr);
-        vt.setProperty ("feedback_coefficientsStatesSize", 12,                           nullptr);
-        vt.setProperty ("feedback_coeffsSliderValsSize",   sz,                           nullptr);
-        vt.setProperty ("feedback_coeffsSliderVals",       toSliderVals (fbVals),         nullptr);
-        vt.setProperty ("feedback_coeffsActiveValsSize",   12,                           nullptr);
-        vt.setProperty ("feedback_coeffsActiveVals",       padStates12 (fbStates),        nullptr);
+        vt.setProperty ("feedbackCoeffsVals",              fbVals,                                   nullptr);
+        vt.setProperty ("feedbackCoeffsSize",              sz,                                       nullptr);
+        vt.setProperty ("feedbackCoeffsStates",            fbActiveArr.joinIntoString (" "),          nullptr);
+        vt.setProperty ("feedbackCoeffsStatesSize",        (int) fbActiveArr.size(),                 nullptr);
+        vt.setProperty ("feedback_coefficientsVals",       fbVals,                                   nullptr);
+        vt.setProperty ("feedback_coefficientsSize",       sz,                                       nullptr);
+        vt.setProperty ("feedback_coefficientsStates",     fbActiveArr.joinIntoString (" "),          nullptr);
+        vt.setProperty ("feedback_coefficientsStatesSize", (int) fbActiveArr.size(),                 nullptr);
+        vt.setProperty ("feedback_coeffsSliderValsSize",   sz,                                       nullptr);
+        vt.setProperty ("feedback_coeffsSliderVals",       toSliderVals (fbVals),                     nullptr);
+        vt.setProperty ("feedback_coeffsActiveValsSize",   (int) fbActiveArr.size(),                 nullptr);
+        vt.setProperty ("feedback_coeffsActiveVals",       fbActiveArr.joinIntoString (" ") + " ",   nullptr);
     }
 
     // MODULATABLE_PARAMS
@@ -1390,22 +1389,22 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
 
     // PARAM_DEFAULT
     juce::ValueTree pd ("PARAM_DEFAULT");
-    pd.setProperty ("beat_lengthsVals",              beatVals,                      nullptr);
+    pd.setProperty ("beat_lengthsVals",              beatVals,                                    nullptr);
     pd.setProperty ("beat_lengthsSize",              juce::StringArray::fromTokens (beatVals, " ", "").size(), nullptr);
-    pd.setProperty ("beat_lengthsStates",            padStates12NoTrail (beatStates), nullptr);
-    pd.setProperty ("beat_lengthsStatesSize",        12,                            nullptr);
-    pd.setProperty ("delay_lengthsVals",             delVals,                       nullptr);
+    pd.setProperty ("beat_lengthsStates",            beatActiveArr.joinIntoString (" "),           nullptr);
+    pd.setProperty ("beat_lengthsStatesSize",        (int) beatActiveArr.size(),                  nullptr);
+    pd.setProperty ("delay_lengthsVals",             delVals,                                     nullptr);
     pd.setProperty ("delay_lengthsSize",             juce::StringArray::fromTokens (delVals, " ", "").size(), nullptr);
-    pd.setProperty ("delay_lengthsStates",           padStates12NoTrail (delStates), nullptr);
-    pd.setProperty ("delay_lengthsStatesSize",       12,                            nullptr);
-    pd.setProperty ("smoothing_timesVals",           smVals,                        nullptr);
+    pd.setProperty ("delay_lengthsStates",           delActiveArr.joinIntoString (" "),            nullptr);
+    pd.setProperty ("delay_lengthsStatesSize",       (int) delActiveArr.size(),                   nullptr);
+    pd.setProperty ("smoothing_timesVals",           smVals,                                      nullptr);
     pd.setProperty ("smoothing_timesSize",           juce::StringArray::fromTokens (smVals, " ", "").size(), nullptr);
-    pd.setProperty ("smoothing_timesStates",         padStates12NoTrail (smStates),  nullptr);
-    pd.setProperty ("smoothing_timesStatesSize",     12,                            nullptr);
-    pd.setProperty ("feedback_coefficientsVals",     fbVals,                        nullptr);
+    pd.setProperty ("smoothing_timesStates",         smActiveArr.joinIntoString (" "),             nullptr);
+    pd.setProperty ("smoothing_timesStatesSize",     (int) smActiveArr.size(),                    nullptr);
+    pd.setProperty ("feedback_coefficientsVals",     fbVals,                                      nullptr);
     pd.setProperty ("feedback_coefficientsSize",     juce::StringArray::fromTokens (fbVals, " ", "").size(), nullptr);
-    pd.setProperty ("feedback_coefficientsStates",   padStates12NoTrail (fbStates),  nullptr);
-    pd.setProperty ("feedback_coefficientsStatesSize", 12,                          nullptr);
+    pd.setProperty ("feedback_coefficientsStates",   fbActiveArr.joinIntoString (" "),             nullptr);
+    pd.setProperty ("feedback_coefficientsStatesSize", (int) fbActiveArr.size(),                  nullptr);
     vt.addChild (pd, -1, nullptr);
 
     // PORTs

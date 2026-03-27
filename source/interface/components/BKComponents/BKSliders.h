@@ -233,6 +233,7 @@ public:
     static void sliderModifyMenuCallback (const int result, BKMultiSlider* slider, int which);
 
     void resized() override;
+    void paint(juce::Graphics& g) override;
 
 
     // *** Instance Variables *** //
@@ -270,6 +271,10 @@ public:
     int sliderHeight;
     float sliderWidth;
     int displaySliderWidth;
+
+    // line mode: engaged when sliderWidth falls below threshold (too many sliders to show as bars)
+    bool inLineMode = false;
+    juce::Rectangle<float> sliderArea; // slider region used by paint() and whichSlider() in line mode
 
     // by default, how many sliders to show (12)
     int numDefaultSliders;
