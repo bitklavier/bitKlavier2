@@ -54,6 +54,28 @@ CommentPreparation::CommentPreparation (
     textEditor.setJustification(juce::Justification::left);
     textEditor.addListener(this);
 
+    // Load formatting state from ValueTree
+    textEditor.bold_        = (bool)(int) state.getProperty (IDs::commentBold,       0);
+    textEditor.italic_      = (bool)(int) state.getProperty (IDs::commentItalic,     0);
+    textEditor.alignment_   =       (int) state.getProperty (IDs::commentAlignment,  0);
+    textEditor.background_  =       (int) state.getProperty (IDs::commentBackground, 0);
+    juce::String colorStr = state.getProperty (IDs::commentColor, juce::Colours::white.toString());
+    textEditor.textColor_ = juce::Colour::fromString (colorStr);
+
+    // Callback: save formatting to ValueTree and update the display item
+    textEditor.onFormatChanged = [this]
+    {
+        state.setProperty (IDs::commentBold,       (int) textEditor.bold_,          &undo);
+        state.setProperty (IDs::commentItalic,    (int) textEditor.italic_,        &undo);
+        state.setProperty (IDs::commentAlignment, textEditor.alignment_,           &undo);
+        state.setProperty (IDs::commentBackground, textEditor.background_,         &undo);
+        state.setProperty (IDs::commentColor,     textEditor.textColor_.toString(), &undo);
+        syncFormattingToItem();
+    };
+
+    // Apply initial formatting to the display item
+    syncFormattingToItem();
+
     addAndMakeVisible(resizer);
     addComponentListener(this);
 }
@@ -124,14 +146,37 @@ void CommentPreparation::stopEditing()
     }
 }
 
+void CommentPreparation::syncFormattingToItem()
+{
+    if (auto* cItem = dynamic_cast<CommentItem*>(item.get()))
+    {
+        CommentItem::Formatting f;
+        f.bold       = textEditor.bold_;
+        f.italic     = textEditor.italic_;
+        f.alignment  = textEditor.alignment_;
+        f.textColor  = textEditor.textColor_;
+        f.background = textEditor.background_;
+        cItem->setFormatting (f);
+    }
+}
+
 void CommentPreparation::valueTreePropertyChanged (juce::ValueTree& v, const juce::Identifier& i)
 {
     PreparationSection::valueTreePropertyChanged(v, i);
     if (i == IDs::commentText)
     {
         if (auto* cItem = dynamic_cast<CommentItem*>(item.get()))
-        {
-            cItem->setCommentText(v.getProperty(IDs::commentText).toString());
-        }
+            cItem->setCommentText (v.getProperty (IDs::commentText).toString());
+    }
+    else if (i == IDs::commentBold || i == IDs::commentItalic ||
+             i == IDs::commentAlignment || i == IDs::commentColor || i == IDs::commentBackground)
+    {
+        textEditor.bold_       = (bool)(int) state.getProperty (IDs::commentBold,       0);
+        textEditor.italic_     = (bool)(int) state.getProperty (IDs::commentItalic,     0);
+        textEditor.alignment_  =       (int) state.getProperty (IDs::commentAlignment,  0);
+        textEditor.background_ =       (int) state.getProperty (IDs::commentBackground, 0);
+        juce::String colorStr = state.getProperty (IDs::commentColor, juce::Colours::white.toString());
+        textEditor.textColor_ = juce::Colour::fromString (colorStr);
+        syncFormattingToItem();
     }
 }

@@ -25,6 +25,11 @@ namespace IDs
     DECLARE_ID (name)
     DECLARE_ID (comment)
     DECLARE_ID (commentText)
+    DECLARE_ID (commentBold)
+    DECLARE_ID (commentItalic)
+    DECLARE_ID (commentAlignment)
+    DECLARE_ID (commentColor)
+    DECLARE_ID (commentBackground)
 
     DECLARE_ID (PREPARATION)
     DECLARE_ID (id)

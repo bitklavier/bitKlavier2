@@ -264,23 +264,41 @@ public:
 class CommentItem : public BKItem
 {
 public:
-    CommentItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeComment)
+    struct Formatting
     {
+        bool bold = false;
+        bool italic = false;
+        int alignment = 0;   // 0=left, 1=center, 2=right
+        juce::Colour textColor = juce::Colours::white;
+        int background = 0;  // 0=default (grey), 1=black, 2=transparent
+    };
 
-    }
+    CommentItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeComment) {}
 
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
     {
-        g.setColour(juce::Colours::grey);
-        g.fillPath(layer_1_);
+        juce::Colour bgCol = formatting_.background == 1 ? juce::Colours::black
+                           : formatting_.background == 2 ? juce::Colours::transparentBlack
+                           : juce::Colours::grey;
+        if (formatting_.background != 2)
+        {
+            g.setColour(bgCol);
+            g.fillPath(layer_1_);
+        }
 
         g.setColour(selected_ ? juce::Colours::white : juce::Colours::grey);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
 
-        g.setColour(juce::Colours::white);
+        g.setColour(formatting_.textColor);
 
         const auto textBounds = getLocalBounds().reduced(10);
         const auto& displayText = commentText.isEmpty() ? juce::String("double click to type.") : commentText;
+
+        juce::Justification just = formatting_.alignment == 1 ? juce::Justification::horizontallyCentred
+                                 : formatting_.alignment == 2 ? juce::Justification::right
+                                 : juce::Justification::left;
+        int styleFlags = (formatting_.bold   ? juce::Font::bold   : 0)
+                       | (formatting_.italic ? juce::Font::italic : 0);
 
         // Scale the font down from 16pt until the laid-out text height fits, minimum 8pt.
         float fontSize = 16.0f;
@@ -290,8 +308,8 @@ public:
             {
                 fontSize = size;
                 juce::AttributedString as;
-                as.setJustification(juce::Justification::left);
-                as.append(displayText, g.getCurrentFont().withHeight(size));
+                as.setJustification(just);
+                as.append(displayText, g.getCurrentFont().withHeight(size).withStyle(styleFlags));
                 juce::TextLayout layout;
                 layout.createLayout(as, (float) textBounds.getWidth());
                 if (layout.getHeight() <= (float) textBounds.getHeight())
@@ -299,8 +317,8 @@ public:
             }
         }
 
-        g.setFont(fontSize);
-        g.drawFittedText(displayText, textBounds, juce::Justification::left, 100);
+        g.setFont(g.getCurrentFont().withHeight(fontSize).withStyle(styleFlags));
+        g.drawFittedText(displayText, textBounds, just, 100);
     }
 
     void setCommentText(const juce::String& text)
@@ -309,8 +327,15 @@ public:
         redoImage();
     }
 
+    void setFormatting(const Formatting& f)
+    {
+        formatting_ = f;
+        redoImage();
+    }
+
 private:
     juce::String commentText;
+    Formatting formatting_;
 };
 
 class NostalgicItem : public BKItem
