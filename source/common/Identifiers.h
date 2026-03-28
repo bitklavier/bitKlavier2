@@ -30,6 +30,7 @@ namespace IDs
     DECLARE_ID (commentAlignment)
     DECLARE_ID (commentColor)
     DECLARE_ID (commentBackground)
+    DECLARE_ID (commentVerticalAlignment)
 
     DECLARE_ID (PREPARATION)
     DECLARE_ID (id)

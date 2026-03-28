@@ -18,7 +18,8 @@ public:
     bool italic_ = false;
     int alignment_ = 0;   // 0=left, 1=center, 2=right
     juce::Colour textColor_ = juce::Colours::white;
-    int background_ = 0;  // 0=default (grey), 1=black, 2=transparent
+    int background_ = 0;    // 0=default (grey), 1=black, 2=transparent
+    int vAlignment_ = 0;   // 0=top, 1=middle, 2=bottom
 
     std::function<void()> onFormatChanged;
 
@@ -31,7 +32,13 @@ public:
         alignMenu.addItem (0x5001, "Left",   true, alignment_ == 0);
         alignMenu.addItem (0x5002, "Center", true, alignment_ == 1);
         alignMenu.addItem (0x5003, "Right",  true, alignment_ == 2);
-        menu.addSubMenu ("Alignment", alignMenu);
+        menu.addSubMenu ("Horizontal Alignment", alignMenu);
+
+        juce::PopupMenu vAlignMenu;
+        vAlignMenu.addItem (0x5040, "Top",    true, vAlignment_ == 0);
+        vAlignMenu.addItem (0x5041, "Middle", true, vAlignment_ == 1);
+        vAlignMenu.addItem (0x5042, "Bottom", true, vAlignment_ == 2);
+        menu.addSubMenu ("Vertical Alignment", vAlignMenu);
 
         menu.addItem (0x5010, "Bold",   true, bold_);
         menu.addItem (0x5011, "Italic", true, italic_);
@@ -70,6 +77,9 @@ public:
             case 0x5030: background_ = 0; break;
             case 0x5031: background_ = 1; break;
             case 0x5032: background_ = 2; break;
+            case 0x5040: vAlignment_ = 0; break;
+            case 0x5041: vAlignment_ = 1; break;
+            case 0x5042: vAlignment_ = 2; break;
             default: OpenGlTextEditor::performPopupMenuAction (id); return;
         }
         applyFormattingOverride();

@@ -270,7 +270,8 @@ public:
         bool italic = false;
         int alignment = 0;   // 0=left, 1=center, 2=right
         juce::Colour textColor = juce::Colours::white;
-        int background = 0;  // 0=default (grey), 1=black, 2=transparent
+        int background = 0;   // 0=default (grey), 1=black, 2=transparent
+        int vAlignment = 0;  // 0=top, 1=middle, 2=bottom
     };
 
     CommentItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeComment) {}
@@ -301,7 +302,9 @@ public:
                        | (formatting_.italic ? juce::Font::italic : 0);
 
         // Scale the font down from 16pt until the laid-out text height fits, minimum 8pt.
+        // Keep the final layout so we can use its height for vertical alignment.
         float fontSize = 16.0f;
+        float layoutHeight = (float) textBounds.getHeight();
         if (textBounds.getWidth() > 0 && textBounds.getHeight() > 0)
         {
             for (float size = 16.0f; size >= 8.0f; size -= 1.0f)
@@ -312,13 +315,29 @@ public:
                 as.append(displayText, g.getCurrentFont().withHeight(size).withStyle(styleFlags));
                 juce::TextLayout layout;
                 layout.createLayout(as, (float) textBounds.getWidth());
-                if (layout.getHeight() <= (float) textBounds.getHeight())
+                layoutHeight = layout.getHeight();
+                if (layoutHeight <= (float) textBounds.getHeight())
                     break;
             }
         }
 
+        // Apply vertical alignment by offsetting the draw rect.
+        auto drawBounds = textBounds;
+        if (formatting_.vAlignment == 1)  // middle
+        {
+            int offset = ((int) textBounds.getHeight() - (int) layoutHeight) / 2;
+            drawBounds = textBounds.withY (textBounds.getY() + juce::jmax (0, offset))
+                                   .withHeight ((int) layoutHeight + 1);
+        }
+        else if (formatting_.vAlignment == 2)  // bottom
+        {
+            int offset = (int) textBounds.getHeight() - (int) layoutHeight;
+            drawBounds = textBounds.withY (textBounds.getY() + juce::jmax (0, offset))
+                                   .withHeight ((int) layoutHeight + 1);
+        }
+
         g.setFont(g.getCurrentFont().withHeight(fontSize).withStyle(styleFlags));
-        g.drawFittedText(displayText, textBounds, just, 100);
+        g.drawFittedText(displayText, drawBounds, just, 100);
     }
 
     void setCommentText(const juce::String& text)

@@ -90,6 +90,12 @@ private:
                                                 int selectedPianoIndex,
                                                 const juce::String& selectedPianoName);
 
+    // Comment has no gallery-level definition; all info comes from the piano item.
+    static juce::ValueTree convertComment      (const juce::XmlElement& selfItem,
+                                                uint32_t nodeID,
+                                                const juce::String& uuid,
+                                                const juce::String& name);
+
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
@@ -142,6 +148,7 @@ private:
         OldTempoMod      = 10,
         OldPianoMap      = 12,
         OldReset         = 13,
+        OldComment       = 15,
         OldBlendronic    = 16,
         OldResonance     = 18,
     };

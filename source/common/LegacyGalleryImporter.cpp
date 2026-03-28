@@ -1457,6 +1457,33 @@ juce::ValueTree LegacyGalleryImporter::convertPianoMap (uint32_t nodeID,
 }
 
 // ---------------------------------------------------------------------------
+// Comment converter
+// ---------------------------------------------------------------------------
+
+juce::ValueTree LegacyGalleryImporter::convertComment (const juce::XmlElement& selfItem,
+                                                        uint32_t nodeID,
+                                                        const juce::String& uuid,
+                                                        const juce::String& name)
+{
+    float w = (float) selfItem.getDoubleAttribute ("W", 147.0);
+    float h = (float) selfItem.getDoubleAttribute ("H", 75.0);
+    int   x = (int)   selfItem.getDoubleAttribute ("X", 0.0);
+    int   y = (int)   selfItem.getDoubleAttribute ("Y", 0.0);
+
+    juce::ValueTree vt ("comment");
+    vt.setProperty ("type",        13,                                        nullptr);
+    vt.setProperty ("width",       w,                                         nullptr);
+    vt.setProperty ("height",      h,                                         nullptr);
+    vt.setProperty ("x_y",        juce::String(x) + ", " + juce::String(y),  nullptr);
+    vt.setProperty ("uuid",        uuid,                                       nullptr);
+    vt.setProperty ("nodeID",      (int64_t) nodeID,                          nullptr);
+    vt.setProperty ("name",        name,                                       nullptr);
+    vt.setProperty ("commentText", selfItem.getStringAttribute ("text", ""),  nullptr);
+
+    return vt;
+}
+
+// ---------------------------------------------------------------------------
 // Main import entry point
 // ---------------------------------------------------------------------------
 
@@ -1927,6 +1954,18 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                     rc.setProperty ("dest",  (int64_t) modForPrepIt->second,  nullptr);
                     modConnections.addChild (rc, -1, nullptr);
                 }
+                continue;
+            }
+
+            // Comment (type 15): standalone label, no connections needed.
+            if (selfType == OldComment)
+            {
+                juce::String uuid   = newUUID();
+                uint32_t nodeID     = juce::Uuid (uuid).getTimeLow();
+                int& counter        = instanceCounters["comment"];
+                ++counter;
+                juce::String instName = "comment " + juce::String (counter);
+                preparations.addChild (convertComment (*selfItem, nodeID, uuid, instName), -1, nullptr);
                 continue;
             }
 
