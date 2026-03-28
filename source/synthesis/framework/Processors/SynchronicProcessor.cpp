@@ -490,7 +490,6 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     {
                         // put together the midi message
                         int newNote = slimCluster[n];
-                        //auto newTransp = state.params.transpositions.sliderVals[cluster->transpCounter][0].load();
                         float velocityMultiplier = state.params.accents.sliderVals[cluster->accentMultiplierCounter];
                         auto newmsg = juce::MidiMessage::noteOn (1, newNote, static_cast<juce::uint8>(velocityMultiplier * clusterVelocities.getUnchecked(newNote)));
 
@@ -511,16 +510,24 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         // need to make sure that slider has at least one transposition
                         if(state.params.transpositions.sliderDepths[cluster->transpCounter].load() == 0)
                         {
-                            noteOnSpecMap[newNote].transpositions.addIfNotAlreadyThere(0.);
-                            noteOnSpecMap[newNote].transpositionGains.addIfNotAlreadyThere(1.);
+                            if (newNote <= 108)  // The Le Boeuf Constraint ;--}
+                            {
+                                noteOnSpecMap[newNote].transpositions.addIfNotAlreadyThere(0.);
+                                noteOnSpecMap[newNote].transpositionGains.addIfNotAlreadyThere(1.);
+                            }
                         }
 
                         // add the rest of the transpositions
                         for (int i = 0; i < state.params.transpositions.sliderDepths[cluster->transpCounter].load(); i++)
                         {
-                            noteOnSpecMap[newNote].transpositions.add(state.params.transpositions.sliderVals[cluster->transpCounter][i].load());
-                            noteOnSpecMap[newNote].transpositionGains.add(1.);
+                            auto newTransp = state.params.transpositions.sliderVals[cluster->transpCounter][i].load();
+                            if (newNote + newTransp <= 108) // The Le Boeuf Constraint ;--}
+                            {
+                                noteOnSpecMap[newNote].transpositions.add(state.params.transpositions.sliderVals[cluster->transpCounter][i].load());
+                                noteOnSpecMap[newNote].transpositionGains.add(1.);
+                            }
                         }
+
                         noteOnSpecMap[newNote].useAttachedTuning = *state.params.transpositionUsesTuning;
 
                         // calculate total envelope time
