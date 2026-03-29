@@ -260,6 +260,13 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
         }
         e.lastRaw0 = e.tmp.getSample(0, 0);
     }
+
+    // Clear MIDI output so no events propagate to downstream processors via the
+    // MIDI ordering edges added for state modulation connections. ModulationProcessor
+    // reads MIDI (to detect note-ons for retrigger) but must not pass it through,
+    // otherwise preparations connected via state modulation would receive duplicate
+    // note events (once from the Keymap directly, once via this processor).
+    midiMessages.clear();
 }
 
 void bitklavier::ModulationProcessor::addModulator(ModulatorBase *mod) {

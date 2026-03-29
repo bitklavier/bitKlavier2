@@ -1473,8 +1473,24 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
     if (connection->processor)
         connection->processor->removeListener (connection);
     state_connections_.remove (connection);
-    // engine_->removeConnection (connection->connection_);
-        connection->connection_ = {};
+
+    // Remove the MIDI ordering edge only when no remaining state connection
+    // is still using the same ModulationProcessor → destination edge.
+    if (connection->connection_.source.nodeID.uid != 0)
+    {
+        bool edgeStillNeeded = false;
+        for (auto* other : state_connections_)
+        {
+            if (other->connection_ == connection->connection_)
+            {
+                edgeStillNeeded = true;
+                break;
+            }
+        }
+        if (! edgeStillNeeded)
+            engine_->removeConnection (connection->connection_);
+    }
+    connection->connection_ = {};
     if (connection->parent_processor)
         connection->parent_processor->removeModulationConnection (connection);
     connection->state.getParent().removeChild (connection->state, nullptr);
@@ -1569,6 +1585,19 @@ void SynthBase::connectStateModulation (bitklavier::StateConnection* connection,
 
     connection->processor->addListener (connection);
     connection->parent_processor->addModulationConnection (connection);
+
+    // Add a MIDI ordering edge from the ModulationProcessor to the destination so the
+    // audio graph always processes the ModulationProcessor before the destination.
+    // This guarantees state changes are queued (via modulationTriggered) before the
+    // destination calls processStateChanges() in its own processBlock.
+    // ModulationProcessor declares producesMidi()=false and never writes to midiMessages,
+    // so this edge carries no MIDI data — it only constrains execution order.
+    juce::AudioProcessorGraph::Connection midiOrderingConn {
+        { source_node->nodeID, juce::AudioProcessorGraph::midiChannelIndex },
+        { dest_node->nodeID,   juce::AudioProcessorGraph::midiChannelIndex }
+    };
+    connection->connection_ = midiOrderingConn;
+    engine_->addConnection (midiOrderingConn); // no-op if already present (shared edge)
 }
 
 bool SynthBase::connectStateModulation (const std::string& source, const std::string& destination)

@@ -47,7 +47,11 @@ namespace bitklavier {
             return true;
         }
 
-        bool producesMidi() const override { return false; }
+        // Must return true so JUCE's AudioProcessorGraph accepts MIDI connections
+        // FROM this processor (used as ordering edges for state modulation).
+        // processBlock clears midiMessages before returning, so no MIDI data
+        // ever actually flows downstream through those edges.
+        bool producesMidi() const override { return true; }
 
         bool isMidiEffect() const override { return false; }
 

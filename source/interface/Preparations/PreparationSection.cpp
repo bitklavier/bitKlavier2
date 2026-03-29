@@ -283,7 +283,7 @@ void PreparationSection::setPortInfo() {
                 }
             }
 
-            if (processor->producesMidi()) {
+            if (processor->producesMidi() && prepType != bitklavier::BKPreparationType::PreparationTypeModulation) {
                 juce::ValueTree v{IDs::PORT};
                 v.setProperty(IDs::nodeID,
                               juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(this->pluginID),
