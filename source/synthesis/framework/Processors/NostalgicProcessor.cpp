@@ -472,7 +472,8 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     // set up the block
     state.getParameterListeners().callAudioThreadBroadcasters();
     processContinuousModulations(buffer);
-    state.params.processStateChanges();
+    state.params.transpose.processStateChanges();
+    state.params.holdTimeMinMaxParams.processStateChanges();
     int numSamples = buffer.getNumSamples();
 
     buffer.clear();

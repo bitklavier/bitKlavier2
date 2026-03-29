@@ -1896,6 +1896,38 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                         addModConn ("tuningType",
                             juce::var (modParams->getIntAttribute ("adaptiveSystem", 0)));
                 }
+                else if ((selfType == OldDirectMod || selfType == OldNostalgicMod)
+                         && modDirty != nullptr && modParams != nullptr)
+                {
+                    juce::String targetTag  = tagForOldType (connType);
+                    juce::String targetUUID = instToUUID[targetTag + "_" + juce::String (connId)];
+                    juce::String srcStr     = modInfo.uuid + "_state-" + modInfo.procUUID + "_mod";
+
+                    // Direct: d1 = transposition dirty; Nostalgic: d3 = transposition dirty
+                    int transpDirtyIdx = (selfType == OldDirectMod) ? 1 : 3;
+
+                    if (modDirty->getIntAttribute ("d" + juce::String (transpDirtyIdx), 0))
+                    {
+                        const juce::XmlElement* transpEl = modParams->getChildByName ("transposition");
+                        if (transpEl != nullptr)
+                        {
+                            juce::ValueTree c ("ModulationConnection");
+                            c.setProperty ("uuid",    newUUID(), nullptr);
+                            c.setProperty ("isState", 1,         nullptr);
+                            c.setProperty ("src",     srcStr,    nullptr);
+                            c.setProperty ("dest",    targetUUID + "_transpose", nullptr);
+
+                            for (int ti = 0; ; ++ti)
+                            {
+                                juce::String attr = "f" + juce::String (ti);
+                                if (! transpEl->hasAttribute (attr)) break;
+                                c.setProperty ("t" + juce::String (ti),
+                                               (float) transpEl->getDoubleAttribute (attr, 0.0), nullptr);
+                            }
+                            modConnections.addChild (c, -1, nullptr);
+                        }
+                    }
+                }
             }
         }
 
