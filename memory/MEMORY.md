@@ -13,6 +13,17 @@ Fix (three files):
 - `ModulationProcessor.h`: `producesMidi()` returns `true` (JUCE's `canConnect()` rejects MIDI edges from processors where this is false).
 - `ModulationProcessor.cpp` end of `processBlock`: `midiMessages.clear()` — prevents Keymap MIDI from leaking downstream as duplicate note events through the ordering edge.
 
+### Ramp mod fires one block late when same key triggers note + ramp change (fixed on danwork9)
+Two separate issues, both needed fixing:
+
+**Issue 1 — Graph ordering:** `connectModulation` adds an audio bus edge (ModProc output → dest input) but the audio edge alone is unreliable for ordering. Without a guaranteed constraint, ModulationProcessor could run after DirectProcessor.
+- `ModulationConnection.h`: added `midi_ordering_conn_` field to store the MIDI ordering edge (analogous to `StateConnection::connection_`).
+- `synth_base.cpp` `connectModulation(ModulationConnection*)`: after adding the audio edge, also add MIDI ordering edge `ModulationProcessor → dest`, store in `midi_ordering_conn_`. `disconnectModulation(ModulationConnection*)`: remove edge only when no other ramp-mod or state-mod connection uses the same pair (both disconnect functions now cross-check the other list).
+
+**Issue 2 — Ramp time minimum:** `RampParams::time` had a 10ms minimum, so the ramp's first sample value was ~0.00227 (essentially zero). `processContinuousModulations` reads only the first sample (`*in`), so no modulation was applied on the first press. The carry mechanism made the second press work.
+- `RampModulator.h`: changed range min/default from 10ms to 0ms.
+- `RampModulator.cpp` `setTime()`: added `timeToDest <= 0` branch that does `value_ = target_; state_ = 0` — instant jump. The existing `timeToDest < 1.0` floor remains to guard non-zero near-zero values.
+
 ## Piano Switching Performance (ConstructionSite)
 
 Quick wins landed on branch `danwork8` (March 2026):

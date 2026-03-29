@@ -28,9 +28,16 @@ void RampModulatorProcessor::setTarget( float target )
 
 void RampModulatorProcessor::setTime( float timeToDest )
 {
-    if ( timeToDest <= 1.0 ) {
-        timeToDest = 1.;
+    if ( timeToDest <= 0.0f )
+    {
+        // Instant: jump directly to target on the first sample
+        value_ = target_;
+        state_ = 0;
+        return;
     }
+
+    if ( timeToDest < 1.0f )
+        timeToDest = 1.0f; // avoid division by near-zero
 
     rate_ = fabs(target_ - value_) / ( timeToDest * sampleRate * 0.001 );
     //DBG("rate = " << rate_ << " timeToDest = " << timeToDest << " value_ = " << value_ << " target_ = " << target_ << " sampleRate = " << sampleRate << "");

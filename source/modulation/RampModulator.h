@@ -18,8 +18,8 @@ struct RampParams : public chowdsp::ParamHolder {
     {
         juce::ParameterID{"Time",100},
         "Value Change Time",
-        juce::NormalisableRange{10.f,10000.f,1.f,2.f,false},
-        10.f
+        juce::NormalisableRange{0.f,10000.f,1.f,2.f,false},
+        0.f
     };
 };
 

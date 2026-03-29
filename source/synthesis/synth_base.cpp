@@ -1263,6 +1263,20 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         }
 
         bool connectionAdded = engine_->addConnection (connection->connection_);
+
+        // Add a MIDI ordering edge from ModulationProcessor to the destination so the
+        // audio graph always processes ModulationProcessor before the destination.
+        // This mirrors the same fix applied for state modulation connections and
+        // guarantees that ramp audio is written to the Modulation bus before the
+        // destination calls processContinuousModulations() in its own processBlock.
+        // ModulationProcessor clears midiMessages at the end of processBlock so no
+        // MIDI data flows downstream through this edge.
+        juce::AudioProcessorGraph::Connection midiOrderingConn {
+            { source_node->nodeID, juce::AudioProcessorGraph::midiChannelIndex },
+            { dest_node->nodeID,   juce::AudioProcessorGraph::midiChannelIndex }
+        };
+        connection->midi_ordering_conn_ = midiOrderingConn;
+        engine_->addConnection (midiOrderingConn); // no-op if edge already present
     }
 }
 
@@ -1474,8 +1488,8 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
         connection->processor->removeListener (connection);
     state_connections_.remove (connection);
 
-    // Remove the MIDI ordering edge only when no remaining state connection
-    // is still using the same ModulationProcessor → destination edge.
+    // Remove the MIDI ordering edge only when no remaining state or ramp-mod
+    // connection is still using the same ModulationProcessor → destination edge.
     if (connection->connection_.source.nodeID.uid != 0)
     {
         bool edgeStillNeeded = false;
@@ -1485,6 +1499,17 @@ void SynthBase::disconnectModulation (bitklavier::StateConnection* connection)
             {
                 edgeStillNeeded = true;
                 break;
+            }
+        }
+        if (! edgeStillNeeded)
+        {
+            for (auto* other : mod_connections_)
+            {
+                if (other->midi_ordering_conn_ == connection->connection_)
+                {
+                    edgeStillNeeded = true;
+                    break;
+                }
             }
         }
         if (! edgeStillNeeded)
@@ -1511,6 +1536,36 @@ void SynthBase::disconnectModulation (bitklavier::ModulationConnection* connecti
     if (connection->parent_processor)
         connection->parent_processor->removeModulationConnection (connection, destination_name);
     connection->connection_ = {};
+
+    // Remove the MIDI ordering edge, but only if no other ramp-mod or state-mod
+    // connection is still using the same ModulationProcessor → destination edge.
+    if (connection->midi_ordering_conn_.source.nodeID.uid != 0)
+    {
+        bool edgeStillNeeded = false;
+        for (auto* other : mod_connections_)
+        {
+            if (other->midi_ordering_conn_ == connection->midi_ordering_conn_)
+            {
+                edgeStillNeeded = true;
+                break;
+            }
+        }
+        if (! edgeStillNeeded)
+        {
+            for (auto* other : state_connections_)
+            {
+                if (other->connection_ == connection->midi_ordering_conn_)
+                {
+                    edgeStillNeeded = true;
+                    break;
+                }
+            }
+        }
+        if (! edgeStillNeeded)
+            engine_->removeConnection (connection->midi_ordering_conn_);
+    }
+    connection->midi_ordering_conn_ = {};
+
     um.beginNewTransaction();
     connection->state.getParent().removeChild (connection->state, nullptr);
 }

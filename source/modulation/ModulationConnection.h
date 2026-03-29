@@ -132,6 +132,7 @@ class ModulationProcessor;
         bool stereo_;
         bool defaultBipolar;
         juce::AudioProcessorGraph::Connection connection_;
+        juce::AudioProcessorGraph::Connection midi_ordering_conn_; // MIDI edge for graph ordering (ModulationProcessor -> dest)
         ModulationProcessor* parent_processor;
         ModulatorBase* processor;
         int modulation_output_bus_index;
