@@ -1928,6 +1928,110 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                         }
                     }
                 }
+                else if (selfType == OldSynchronicMod && modDirty != nullptr && modParams != nullptr)
+                {
+                    juce::String targetTag  = tagForOldType (connType);
+                    juce::String targetUUID = instToUUID[targetTag + "_" + juce::String (connId)];
+                    juce::String srcStr     = modInfo.uuid + "_state-" + modInfo.procUUID + "_mod";
+
+                    // Helper lambda for simple 1D multisliders (beat, length, accent).
+                    // Dirty-bit indices vary across bK1 versions, so we use data non-defaultness
+                    // instead: emit a connection only if the element has >1 value or its single
+                    // value differs from the multiplicative default of 1.0.
+                    auto makeMultiSliderConn = [&] (const juce::String& destSuffix,
+                                                     const juce::String& valsElName,
+                                                     const juce::String& statesElName)
+                    {
+                        const juce::XmlElement* valsEl   = modParams->getChildByName (valsElName);
+                        const juce::XmlElement* statesEl = modParams->getChildByName (statesElName);
+                        if (valsEl == nullptr) return;
+
+                        // Skip if data is at its default (single slot = 1.0)
+                        bool multipleVals   = valsEl->hasAttribute ("f1");
+                        bool singleDiffers  = ! multipleVals &&
+                                              std::abs ((float) valsEl->getDoubleAttribute ("f0", 1.0) - 1.0f) > 1e-4f;
+                        if (! multipleVals && ! singleDiffers) return;
+
+                        juce::String valsStr = parseIndexedFloats (*valsEl, "f", 256);
+                        int numVals = juce::StringArray::fromTokens (valsStr, " ", "").size();
+
+                        juce::String statesStr = (statesEl != nullptr)
+                            ? parseIndexedBools (*statesEl, "b", 12)
+                            : "true false false false false false false false false false false false";
+
+                        juce::ValueTree c ("ModulationConnection");
+                        c.setProperty ("uuid",    newUUID(), nullptr);
+                        c.setProperty ("isState", 1,         nullptr);
+                        c.setProperty ("src",     srcStr,    nullptr);
+                        c.setProperty ("dest",    targetUUID + "_" + destSuffix, nullptr);
+                        c.setProperty (destSuffix + "Vals",       valsStr,   nullptr);
+                        c.setProperty (destSuffix + "Size",       numVals,   nullptr);
+                        c.setProperty (destSuffix + "States",     statesStr, nullptr);
+                        c.setProperty (destSuffix + "StatesSize", 12,        nullptr);
+                        modConnections.addChild (c, -1, nullptr);
+                    };
+
+                    makeMultiSliderConn ("beat_length_multipliers",    "beatMultipliers",   "beatMultipliersStates");
+                    makeMultiSliderConn ("sustain_length_multipliers", "lengthMultipliers", "lengthMultipliersStates");
+                    makeMultiSliderConn ("accents",                    "accentMultipliers", "accentMultipliersStates");
+
+                    // transpOffsets → transpositions (2D: comma-sep inner vals, slash-sep slots).
+                    // Emit only if non-default (default = single slot t0 with f0=0.0).
+                    {
+                        const juce::XmlElement* transpOffsetsEl     = modParams->getChildByName ("transpOffsets");
+                        const juce::XmlElement* transpOffsetsStates = modParams->getChildByName ("transpOffsetsStates");
+
+                        if (transpOffsetsEl != nullptr)
+                        {
+                            // Determine non-defaultness before building the string
+                            bool transpNonDefault = transpOffsetsEl->getNumChildElements() > 1;
+                            if (! transpNonDefault)
+                            {
+                                auto* firstSlot = transpOffsetsEl->getFirstChildElement();
+                                if (firstSlot != nullptr)
+                                    transpNonDefault = firstSlot->hasAttribute ("f1") ||
+                                                       std::abs ((float) firstSlot->getDoubleAttribute ("f0", 0.0)) > 1e-4f;
+                            }
+
+                            if (transpNonDefault)
+                            {
+                                juce::String transpVals;
+                                int numSlots = 0;
+
+                                for (auto* slot = transpOffsetsEl->getFirstChildElement();
+                                     slot != nullptr;
+                                     slot = slot->getNextElement())
+                                {
+                                    juce::String slotStr;
+                                    for (int fi = 0; ; ++fi)
+                                    {
+                                        juce::String fattr = "f" + juce::String (fi);
+                                        if (! slot->hasAttribute (fattr)) break;
+                                        if (fi > 0) slotStr += ",";
+                                        slotStr += juce::String ((float) slot->getDoubleAttribute (fattr, 0.0), 6);
+                                    }
+                                    transpVals += slotStr + "/";
+                                    ++numSlots;
+                                }
+
+                                juce::String statesStr = (transpOffsetsStates != nullptr)
+                                    ? parseIndexedBools (*transpOffsetsStates, "b", 12)
+                                    : "true false false false false false false false false false false false";
+
+                                juce::ValueTree c ("ModulationConnection");
+                                c.setProperty ("uuid",    newUUID(), nullptr);
+                                c.setProperty ("isState", 1,         nullptr);
+                                c.setProperty ("src",     srcStr,    nullptr);
+                                c.setProperty ("dest",    targetUUID + "_transpositions", nullptr);
+                                c.setProperty ("transpositionsVals",       transpVals, nullptr);
+                                c.setProperty ("transpositionsSize",       numSlots,   nullptr);
+                                c.setProperty ("transpositionsStates",     statesStr,  nullptr);
+                                c.setProperty ("transpositionsStatesSize", 12,         nullptr);
+                                modConnections.addChild (c, -1, nullptr);
+                            }
+                        }
+                    }
+                }
             }
         }
 

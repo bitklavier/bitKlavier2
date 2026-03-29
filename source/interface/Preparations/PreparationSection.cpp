@@ -174,6 +174,7 @@ void PreparationSection::setNodeInfo() {
             auto &processor = *node->getProcessor();
             if (objects.isEmpty()) {
                 juce::MessageManager::callAsync([safeComp = juce::Component::SafePointer<PreparationSection>(this)] {
+                    if (safeComp == nullptr) return;
                     safeComp->setPortInfo();
                 });
             }

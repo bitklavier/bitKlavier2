@@ -1391,10 +1391,17 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
     std::getline (src_stream, src_uuid_str, '_');
     std::getline (dst_stream, dst_uuid_str, '_');
 
-    auto activePiano = getActivePianoValueTree();
-    if (activePiano.isValid())
+    // Use the piano that owns this connection, not just the currently-active piano.
+    // When loading a gallery, non-active pianos have their connections processed while
+    // activePiano still points to the first (active) piano, so searching activePiano's
+    // preparations for another piano's UUIDs always fails.  findParentWithType walks
+    // up from v to find the correct owning PIANO tree; fall back to activePiano only
+    // if v has not yet been attached to a piano (e.g., during a live drag-drop).
+    auto parentPiano = findParentWithType (v, IDs::PIANO);
+    auto searchPiano = parentPiano.isValid() ? parentPiano : getActivePianoValueTree();
+    if (searchPiano.isValid())
     {
-        auto preparations = activePiano.getChildWithName (IDs::PREPARATIONS);
+        auto preparations = searchPiano.getChildWithName (IDs::PREPARATIONS);
         auto mod_src = preparations.getChildWithProperty (IDs::uuid, juce::String (src_uuid_str));
         auto mod_dst = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid_str));
         
@@ -1416,6 +1423,11 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
         if (create)
         {
             connection = getStateBank().createConnection (v.getProperty (IDs::src).toString().toStdString(), v.getProperty (IDs::dest).toString().toStdString());
+            if (connection == nullptr)
+            {
+                DBG ("SynthBase::connectModulation: state connection pool exhausted — increase kMaxStateConnections");
+                return false;
+            }
             connection->state = v;
             connection->setChange (v);
 

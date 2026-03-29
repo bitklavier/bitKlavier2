@@ -72,8 +72,8 @@ namespace bitklavier {
     constexpr int kNumMidiChannels = 16;
     constexpr int kFirstMidiChannel = 0;
     constexpr int kLastMidiChannel = kNumMidiChannels - 1;
-    constexpr int kMaxModulationConnections = 50;
-    constexpr int kMaxStateConnections = 50;
+    constexpr int kMaxModulationConnections = 256;
+    constexpr int kMaxStateConnections = 256;
 
 
     enum VoiceEvent {
