@@ -300,7 +300,7 @@ class OpenGlSlider : public juce::Slider {
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OpenGlSlider)
 };
 
-class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, public juce::ValueTree::Listener {
+class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, public juce::ValueTree::Listener, public juce::Timer {
   public:
     enum MenuId {
       kCancel = 0,
@@ -370,6 +370,8 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
     double getValueFromAdjusted(double value);
     void setValueFromAdjusted(double value);
     virtual void parentHierarchyChanged() override;
+
+    void timerCallback() override;
 
     virtual double snapValue(double attemptedValue, DragMode dragMode) override;
 

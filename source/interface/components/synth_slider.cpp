@@ -18,6 +18,7 @@
 #include <cmath>
 #include "FullInterface.h"
 #include "ModulationConnection.h"
+#include "modulation_manager.h"
 #include "curve_look_and_feel.h"
 #include "fonts.h"
 #include "skin.h"
@@ -347,6 +348,9 @@ void SynthSlider::mouseEnter(const juce::MouseEvent &e) {
     if (show_popup_on_hover_)
         showPopup(true);
 
+    if (attachment != nullptr && !getConnections().empty())
+        startTimer(33);
+
     hovering_ = true;
     redoImage();
 }
@@ -356,7 +360,9 @@ void SynthSlider::mouseExit(const juce::MouseEvent &e) {
     for (SynthSlider::SliderListener *listener: slider_listeners_)
         listener->hoverEnded(this);
 
+    stopTimer();
     hidePopup(true);
+    hidePopup(false);
     hovering_ = false;
     redoImage();
 }
@@ -714,6 +720,19 @@ void SynthSlider::hidePopup(bool primary) {
     parent_->hidePopupDisplay(primary);
 }
 
+void SynthSlider::timerCallback() {
+    if (parent_ == nullptr || !hovering_ || attachment == nullptr)
+        return;
+
+    juce::Component* anchor = this;
+    if (auto* fi = findParentComponentOfClass<FullInterface>()) {
+        if (auto* knob = fi->modulation_manager->getVisibleHoverKnobFor(this))
+            anchor = knob;
+    }
+    parent_->showPopupDisplay(anchor, getTextFromValue(getLiveModulation()).toStdString(),
+                              juce::BubbleComponent::right, false);
+}
+
 juce::String SynthSlider::formatValue(float value) {
     juce::String format;
     //  if (details_.value_scale == bitklavier::ValueDetails::kIndexed)
@@ -797,7 +816,7 @@ std::vector<bitklavier::ModulationConnection *> SynthSlider::getConnections() {
         return std::vector<bitklavier::ModulationConnection *>();
 
     SynthBase *synth = synth_interface_->getSynth();
-    return synth->getDestinationConnections(getName().toStdString());
+    return synth->getDestinationConnections(getComponentID().toStdString());
 }
 
 void SynthSlider::setRotaryTextEntryBounds() {

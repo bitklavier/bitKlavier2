@@ -302,6 +302,7 @@ public OpenGLComboBox::Listener
     void modulationDraggedToHoverSlider(ModulationAmountKnob* hover_slider);
     void modulationDraggedToComponent(juce::Component* component, bool bipolar);
     void setTemporaryModulationBipolar(juce::Component* component, bool bipolar);
+    ModulationAmountKnob* getVisibleHoverKnobFor(SynthSlider* dest);
     void endModulationMap() override;
     void modulationLostFocus(ModulationButton* source) override;
 

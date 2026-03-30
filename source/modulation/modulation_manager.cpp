@@ -3153,6 +3153,14 @@ void ModulationManager::makeModulationsVisible(SynthSlider *destination, bool vi
     }
 }
 
+ModulationAmountKnob* ModulationManager::getVisibleHoverKnobFor(SynthSlider* dest) {
+    for (auto& knob : modulation_hover_sliders_) {
+        if (knob && knob->isVisible() && knob->destination == dest)
+            return knob.get();
+    }
+    return nullptr;
+}
+
 void ModulationManager::positionModulationAmountSlidersInside(const std::string &source,
                                                               std::vector<bitklavier::ModulationConnection *>
                                                               connections) {
