@@ -1749,10 +1749,14 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                 port.setProperty ("yOffset",  1.0f,  nullptr);
                 modVT.addChild (port, -1, nullptr);
 
+                // OldTempoMod uses a continuous ramp modulation; all others are state.
+                bool isRamp = (selfType == OldTempoMod);
                 juce::ValueTree proc ("modulationproc");
-                proc.setProperty ("type",    "state", nullptr);
-                proc.setProperty ("isState", 1,       nullptr);
-                proc.setProperty ("uuid",    procUUID, nullptr);
+                proc.setProperty ("type",    isRamp ? "ramp" : "state", nullptr);
+                proc.setProperty ("isState", isRamp ? 0 : 1,            nullptr);
+                proc.setProperty ("uuid",    procUUID,                   nullptr);
+                if (isRamp)
+                    proc.setProperty ("Time", 0.0f, nullptr);
                 modVT.addChild (proc, -1, nullptr);
 
                 preparations.addChild (modVT, -1, nullptr);
@@ -1862,7 +1866,7 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                         c.setProperty ("src",     srcStr,     nullptr);
                         c.setProperty ("dest",    targetUUID + "_" + newParamName, nullptr);
                         c.setProperty (newParamName, newValue, nullptr);
-                        modConnections.addChild (c, -1, nullptr);
+                        mc.addChild (c, -1, nullptr);
                     };
 
                     if (modDirty->getIntAttribute ("d0",  0))
@@ -1924,7 +1928,7 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                                 c.setProperty ("t" + juce::String (ti),
                                                (float) transpEl->getDoubleAttribute (attr, 0.0), nullptr);
                             }
-                            modConnections.addChild (c, -1, nullptr);
+                            mc.addChild (c, -1, nullptr);
                         }
                     }
                 }
@@ -1968,7 +1972,7 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                         c.setProperty (destSuffix + "Size",       numVals,   nullptr);
                         c.setProperty (destSuffix + "States",     statesStr, nullptr);
                         c.setProperty (destSuffix + "StatesSize", 12,        nullptr);
-                        modConnections.addChild (c, -1, nullptr);
+                        mc.addChild (c, -1, nullptr);
                     };
 
                     makeMultiSliderConn ("beat_length_multipliers",    "beatMultipliers",   "beatMultipliersStates");
@@ -2027,9 +2031,71 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                                 c.setProperty ("transpositionsSize",       numSlots,   nullptr);
                                 c.setProperty ("transpositionsStates",     statesStr,  nullptr);
                                 c.setProperty ("transpositionsStatesSize", 12,         nullptr);
-                                modConnections.addChild (c, -1, nullptr);
+                                mc.addChild (c, -1, nullptr);
                             }
                         }
+                    }
+                }
+                else if (selfType == OldTempoMod && modParams != nullptr)
+                {
+                    juce::String targetTag  = tagForOldType (connType);
+                    juce::String targetUUID = instToUUID[targetTag + "_" + juce::String (connId)];
+                    // Ramp modulation source: uses "_ramp-" in src (not "_state-")
+                    juce::String srcStr = modInfo.uuid + "_ramp-" + modInfo.procUUID + "_mod";
+
+                    // Get the base values (sliderval) from the target tempo prep's legacy params
+                    float baseTempoSlider  = 120.0f;
+                    float baseSubdivSlider = 1.0f;
+                    {
+                        auto tagIt = prepsByTagAndId.find ("tempo");
+                        if (tagIt != prepsByTagAndId.end())
+                        {
+                            auto idIt = tagIt->second.find (connId);
+                            if (idIt != tagIt->second.end())
+                            {
+                                const juce::XmlElement* tp = idIt->second->getChildByName ("params");
+                                if (tp != nullptr)
+                                {
+                                    baseTempoSlider  = (float) tp->getDoubleAttribute ("tempo",        120.0);
+                                    baseSubdivSlider = (float) tp->getDoubleAttribute ("subdivisions", 1.0);
+                                }
+                            }
+                        }
+                    }
+
+                    float modTempo  = (float) modParams->getDoubleAttribute ("tempo",        120.0);
+                    float modSubdiv = (float) modParams->getDoubleAttribute ("subdivisions", 1.0);
+
+                    // Continuous mod for tempo
+                    if (std::abs (modTempo - baseTempoSlider) > 0.1f)
+                    {
+                        constexpr float tempoMin = 20.0f, tempoMax = 1120.0f;
+                        float mod0to1 = (modTempo - baseTempoSlider) / (tempoMax - tempoMin);
+                        juce::ValueTree c ("ModulationConnection");
+                        c.setProperty ("uuid",      newUUID(),           nullptr);
+                        c.setProperty ("isState",   0,                   nullptr);
+                        c.setProperty ("src",       srcStr,              nullptr);
+                        c.setProperty ("dest",      targetUUID + "_tempo", nullptr);
+                        c.setProperty ("sliderval", baseTempoSlider,     nullptr);
+                        c.setProperty ("mod0to1",   mod0to1,             nullptr);
+                        c.setProperty ("modAmt",    modTempo,            nullptr);
+                        mc.addChild (c, -1, nullptr);
+                    }
+
+                    // Continuous mod for subdivisions
+                    if (std::abs (modSubdiv - baseSubdivSlider) > 0.001f)
+                    {
+                        constexpr float subdivMin = 0.009999999776482582f, subdivMax = 32.0f;
+                        float mod0to1 = (modSubdiv - baseSubdivSlider) / (subdivMax - subdivMin);
+                        juce::ValueTree c ("ModulationConnection");
+                        c.setProperty ("uuid",      newUUID(),                   nullptr);
+                        c.setProperty ("isState",   0,                           nullptr);
+                        c.setProperty ("src",       srcStr,                      nullptr);
+                        c.setProperty ("dest",      targetUUID + "_subdivisions", nullptr);
+                        c.setProperty ("sliderval", baseSubdivSlider,            nullptr);
+                        c.setProperty ("mod0to1",   mod0to1,                     nullptr);
+                        c.setProperty ("modAmt",    modSubdiv,                   nullptr);
+                        mc.addChild (c, -1, nullptr);
                     }
                 }
             }

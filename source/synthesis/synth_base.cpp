@@ -1167,18 +1167,32 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     DBG (src_modulator_uuid_and_name);
 
     //get actual value tree representations from string uuids
-    auto activePiano = getActivePianoValueTree();
-    if (! activePiano.isValid())
+    // Search all pianos for the one whose PREPARATIONS contain the source UUID.
+    // Using only the active piano fails for non-active pianos (e.g., during gallery load
+    // when connections for inactive pianos are processed while a different piano is active).
+    juce::ValueTree owningPiano;
+    for (int i = 0; i < tree.getNumChildren(); ++i)
     {
-        DBG ("connectModulation: no active piano, skipping.");
+        auto child = tree.getChild (i);
+        if (! child.hasType (IDs::PIANO)) continue;
+        auto preps = child.getChildWithName (IDs::PREPARATIONS);
+        if (preps.getChildWithProperty (IDs::uuid, juce::String (src_uuid)).isValid())
+        {
+            owningPiano = child;
+            break;
+        }
+    }
+    if (! owningPiano.isValid())
+    {
+        DBG ("connectModulation: owning piano not found for src uuid " + juce::String (src_uuid) + ", skipping.");
         return;
     }
 
-    auto preparations = activePiano.getChildWithName (IDs::PREPARATIONS);
-    auto mod_src = preparations.getChildWithProperty (IDs::uuid, juce::String (src_uuid));
-    auto mod_dst = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
-    auto mod_connections = activePiano.getChildWithName (IDs::MODCONNECTIONS);
-    auto mod_connection = getChildWithPropertyAndType (mod_connections, IDs::dest, mod_dst.getProperty (IDs::nodeID), IDs::MODCONNECTION);
+    auto preparations    = owningPiano.getChildWithName (IDs::PREPARATIONS);
+    auto mod_src         = preparations.getChildWithProperty (IDs::uuid, juce::String (src_uuid));
+    auto mod_dst         = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    auto mod_connections = owningPiano.getChildWithName (IDs::MODCONNECTIONS);
+    auto mod_connection  = getChildWithPropertyAndType (mod_connections, IDs::dest, mod_dst.getProperty (IDs::nodeID), IDs::MODCONNECTION);
 
     if (! mod_connection.isValid())
     {
