@@ -1113,6 +1113,36 @@ int SynthBase::getNumModulations (const std::string& destination)
     return connections;
 }
 
+void SynthBase::resetModulationsForPrep(const std::string& prepUUID)
+{
+    const std::string prefix = prepUUID + "_";
+
+    // Collect unique ModulationProcessors that own connections targeting this prep,
+    // then request a full audio-thread reset on each. This mirrors what the Reset
+    // preparation does via its audio bus signal: triggerResets() → calculateReset()
+    // per connection + ParamOffsetBank reset + modulator value reset to 0.
+    std::vector<bitklavier::ModulationProcessor*> processorsToReset;
+    for (auto* connection : mod_connections_)
+    {
+        if (connection->destination_name.rfind(prefix, 0) == 0
+            && connection->parent_processor != nullptr)
+        {
+            if (std::find(processorsToReset.begin(), processorsToReset.end(),
+                          connection->parent_processor) == processorsToReset.end())
+                processorsToReset.push_back(connection->parent_processor);
+        }
+    }
+    for (auto* proc : processorsToReset)
+        proc->requestResetAllContinuousModsRT();
+
+    // State connections: push defaultState via lock-free queue (unchanged).
+    for (auto* connection : state_connections_)
+    {
+        if (connection->destination_name.rfind(prefix, 0) == 0)
+            connection->resetTriggered();
+    }
+}
+
 bitklavier::ModulationConnectionBank& SynthBase::getModulationBank()
 {
     jassert(engine_ != nullptr); // will fire during construction if you hit it too early

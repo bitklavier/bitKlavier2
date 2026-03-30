@@ -119,6 +119,9 @@ juce::ValueTree curr_vt;
     std::shared_ptr<PlainTextComponent> soundfontPresetSelectText;
     std::unique_ptr<juce::ShapeButton> soundfontPresetSelector;
 
+    std::unique_ptr<juce::ShapeButton> resetModsButton_;
+    std::shared_ptr<PlainTextComponent> resetModsText_;
+
     /*
      * omit prepSelector for now
      */

@@ -1309,6 +1309,19 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
     addOpenGlComponent(exit_button_->getGlComponent());
     exit_button_->addListener(this);
     exit_button_->setShape(Paths::exitX());
+
+    resetModsButton_ = std::make_unique<juce::ShapeButton>("ResetMods", juce::Colour(0xff666666),
+                                                            juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(resetModsButton_.get());
+    resetModsButton_->addListener(this);
+    resetModsButton_->setTriggeredOnMouseDown(true);
+    resetModsButton_->setShape(juce::Path(), true, true, true);
+    resetModsButton_->setVisible(!ismod);
+    resetModsText_ = std::make_shared<PlainTextComponent>("Reset Mods Text", "Reset Mods");
+    addOpenGlComponent(resetModsText_);
+    resetModsText_->setJustification(juce::Justification::centred);
+    resetModsText_->setVisible(!ismod);
+
     constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
 }
 
@@ -1432,6 +1445,12 @@ void PreparationPopup::repaintPrepBackground() {
 void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == exit_button_.get()) {
         reset();
+    } else if (clicked_button == resetModsButton_.get()) {
+        if (curr_vt.isValid()) {
+            SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
+            if (parent != nullptr)
+                parent->resetModulationsForPrep(curr_vt);
+        }
     } else if (clicked_button == sampleSelector.get()) {
         PopupItems options;
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -1584,6 +1603,22 @@ void PreparationPopup::resized() {
         soundfontPresetSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));
         soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
         soundfontPresetSelectText->setTextSize(label_text_height);
+
+        {
+            const juce::Identifier vtType = curr_vt.isValid() ? curr_vt.getType() : juce::Identifier{};
+            const bool showResetMods = !is_modulation_
+                && curr_vt.isValid()
+                && vtType != IDs::keymap
+                && vtType != IDs::midiFilter
+                && vtType != IDs::midiTarget;
+            resetModsButton_->setVisible(showResetMods);
+            resetModsText_->setVisible(showResetMods);
+            if (showResetMods) {
+                resetModsButton_->setBounds(header_bounds.removeFromRight(90).reduced(5));
+                resetModsText_->setBounds(resetModsButton_->getBounds());
+                resetModsText_->setTextSize(label_text_height);
+            }
+        }
 
         /*
          * omit the prepSelector for now, until we develop a more robust "linked" prep setup

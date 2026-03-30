@@ -47,6 +47,7 @@ void SynthGuiInterface::connectModulation (bitklavier::ModulationConnection* con
 void SynthGuiInterface::setModulationValues (const std::string& source, const std::string& destination, float amount, bool bipolar, bool stereo, bool bypass) {}
 void SynthGuiInterface::disconnectModulation (std::string source, std::string destination) {}
 void SynthGuiInterface::disconnectModulation (bitklavier::ModulationConnection* connection) {}
+void SynthGuiInterface::resetModulationsForPrep(const juce::ValueTree& prepVT) {}
 void SynthGuiInterface::setFocus() {}
 void SynthGuiInterface::notifyChange() {}
 void SynthGuiInterface::notifyFresh() {}
@@ -209,6 +210,11 @@ void SynthGuiInterface::disconnectModulation(bitklavier::ModulationConnection *c
 void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection *connection) {
     // synth_->disconnectModulation(connection);
     notifyModulationsChanged();
+}
+
+void SynthGuiInterface::resetModulationsForPrep(const juce::ValueTree& prepVT) {
+    const std::string prepUUID = prepVT.getProperty(IDs::uuid).toString().toStdString();
+    synth_->resetModulationsForPrep(prepUUID);
 }
 
 bool SynthGuiInterface::loadFromFile(juce::File preset, std::string &error) {

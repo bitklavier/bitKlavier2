@@ -110,6 +110,7 @@ public:
     void disconnectStateModulation(std::string source, std::string destination);
     void disconnectModulation(bitklavier::ModulationConnection* connection);
     void disconnectModulation(bitklavier::StateConnection* connection);
+    void resetModulationsForPrep(const juce::ValueTree& prepVT);
     void notifyModulationsChanged();
     void notifyPrepPopupMoved();
     void  addProcessor(std::unique_ptr<juce::AudioPluginInstance> instance );

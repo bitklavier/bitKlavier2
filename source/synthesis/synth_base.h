@@ -167,6 +167,8 @@ public:
 
     int getNumModulations(const std::string &destination);
 
+    void resetModulationsForPrep(const std::string &prepUUID);
+
     void requestResetAllContinuousModsRT();
 
     virtual SynthGuiInterface *getGuiInterface() = 0;
