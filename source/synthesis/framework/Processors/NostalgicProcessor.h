@@ -513,6 +513,7 @@ public:
     juce::Array<float> noteLengthTimers;
     juce::Array<NostalgicNoteData> reverseTimers;
     juce::Array<NostalgicNoteData> clusterNotes;
+    juce::Array<int> newpositions;
     float clusterTimer;
     int clusterCount;
     bool inCluster = false;

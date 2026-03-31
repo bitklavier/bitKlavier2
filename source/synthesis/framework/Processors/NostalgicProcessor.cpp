@@ -23,6 +23,7 @@ NostalgicProcessor::NostalgicProcessor (SynthBase& parent, const juce::ValueTree
     noteLengthTimers.ensureStorageAllocated(128);
     reverseTimers.ensureStorageAllocated(500);
     clusterNotes.ensureStorageAllocated(100);
+    newpositions.ensureStorageAllocated(500);
 
     clusterTimer = 0;
     clusterCount = 0;
@@ -189,7 +190,8 @@ void NostalgicProcessor::playReverseNote(NostalgicNoteData& noteData, juce::Midi
 
 void NostalgicProcessor::updateNoteVisualization()
 {
-    juce::Array<int> newpositions;
+    // juce::Array<int> newpositions;
+    newpositions.clearQuick();
     for(auto &note : reverseTimers)
     {
         if (note.isReverse)
