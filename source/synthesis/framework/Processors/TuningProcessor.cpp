@@ -126,7 +126,8 @@ double TuningState::getSemitoneWidth()
 double TuningState::getSemitoneWidthOffsetForMidiNote(double midiNoteNumber)
 {
     double offset;
-    if (fabs(getSemitoneWidth() - 100.) < 1.) offset = 0.; // return 0 for cases within a cent of 100
+    // return 0 for cases within 0.1 cent of 100. Jenny Beck's piece requires accuracy of 0.1cents!
+    if (fabs(getSemitoneWidth() - 100.) < 0.1) offset = 0.;
     else offset = .01 * (midiNoteNumber - getSemitoneWidthFundamental()) * (getSemitoneWidth() - 100.);
     return offset;
 }

@@ -356,10 +356,20 @@ public:
         DBG("Nostalgic::allNotesOff called");
         nostalgicSynth->allNotesOff(1, false);
 
-        velocities.clearQuick();
-        noteLengthTimers.clearQuick();
+        // velocities.clearQuick();
+        // noteLengthTimers.clearQuick();
         reverseTimers.clearQuick();
-        clusterNotes.clearQuick();
+        //clusterNotes.clearQuick();
+
+        for (auto& n : clusterNotes)
+        {
+            n.undertowDurationMs = 0;
+            n.undertowDurationSamples = 0;
+            n.waveDistanceMs = 0;
+            n.isReverse = true;
+            n.reverseTimerSamples.store(0);
+            n.undertowTimerSamples.store(0);
+        }
 
         sustainPedalNotesDown.reset();
         sostenutoPedalNotesDown.reset();
