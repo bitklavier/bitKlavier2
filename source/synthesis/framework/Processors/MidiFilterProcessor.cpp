@@ -159,13 +159,31 @@ void MidiFilterProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                         midiMessages.addEvent (offmsg, mi.samplePosition);
                     }
                 }
-                else
+                else if (!(*state.params.ascendingNotesOnly || *state.params.descendingNotesOnly || *state.params.unisonNotesOnly))
                 {
                     if (*state.params.invertNoteOnOff)
                         midiMessages.addEvent (swapNoteOnNoteOff (message), mi.samplePosition);
                     else
                         midiMessages.addEvent (message, mi.samplePosition);
                 }
+
+                else if (*state.params.ascendingNotesOnly && message.getNoteNumber() > lastNote)
+                {
+                    DBG("ascending note");
+                    midiMessages.addEvent (message, mi.samplePosition);
+                }
+                else if (*state.params.descendingNotesOnly && message.getNoteNumber() < lastNote)
+                {
+                    DBG("descending note");
+                    midiMessages.addEvent (message, mi.samplePosition);
+                }
+                else if (*state.params.unisonNotesOnly && message.getNoteNumber() == lastNote)
+                {
+                    DBG("repeated note");
+                    midiMessages.addEvent (message, mi.samplePosition);
+                }
+
+                lastNote = message.getNoteNumber();
             }
 
             if (message.isNoteOff() && !*state.params.ignoreNoteOff)

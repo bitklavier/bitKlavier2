@@ -25,7 +25,10 @@ struct MidiFilterParams : chowdsp::ParamHolder
             ignoreSustainPedal,
             sostenutoMode,
             notesAreSustainPedal,
-            notesAreSostenutoPedal);
+            notesAreSostenutoPedal,
+            ascendingNotesOnly,
+            descendingNotesOnly,
+            unisonNotesOnly);
     }
 
     chowdsp::BoolParameter::Ptr ignoreNoteOn {
@@ -43,6 +46,24 @@ struct MidiFilterParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr invertNoteOnOff {
         juce::ParameterID { "invertNoteOnOff", 100},
         "invert noteOn/Off",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr ascendingNotesOnly {
+        juce::ParameterID { "ascendingNotesOnly", 100},
+        "ascending notes only",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr descendingNotesOnly {
+        juce::ParameterID { "descendingNotesOnly", 100},
+        "descending notes only",
+        false
+    };
+
+    chowdsp::BoolParameter::Ptr unisonNotesOnly {
+        juce::ParameterID { "unisonNotesOnly", 100},
+        "repeated notes only",
         false
     };
 
@@ -134,6 +155,7 @@ public:
 
 private:
     std::bitset<128> noteOnState;
+    int lastNote = -1; //for determining ascending vs descending
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiFilterProcessor)
 };
