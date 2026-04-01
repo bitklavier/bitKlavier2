@@ -98,6 +98,14 @@ public:
     void setSelected(bool selected) { selected_ = selected; }
     bool isSelected() const { return selected_; }
 
+    bool hasAudioInput() const
+    {
+        return type_ == bitklavier::BKPreparationType::PreparationTypeBlendronic ||
+               type_ == bitklavier::BKPreparationType::PreparationTypeCompressor ||
+               type_ == bitklavier::BKPreparationType::PreparationTypeEQ ||
+               type_ == bitklavier::BKPreparationType::PreparationTypeVST;
+    }
+
     // Returns the visual bounds used for port placement. If the item draws its icon
     // directly in paintButton() without populating layer_1_, fall back to the
     // component's local bounds with a small reduction for margins.

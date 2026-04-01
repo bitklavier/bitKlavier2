@@ -458,11 +458,19 @@ void PreparationSection::resized() {
             if (item == nullptr)
                 continue;
 
-            // Determine bounds reference for port placement.
-            // For MidiTarget, MidiFilter, and Modulation, items may draw their icon in paintButton()
-            // instead of populating layer_1_, so use BKItem::getVisualBounds() for those.
-            auto transformedBounds = item->layer_1_.getBounds();
             const auto prepType = static_cast<int>(state.getProperty(IDs::type));
+            const bool isAudioPort = !port->pin.isMIDI();
+            if (isInput && isAudioPort && !item->hasAudioInput())
+            {
+                port->setVisible(false);
+                continue;
+            }
+            else
+            {
+                port->setVisible(true);
+            }
+
+            auto transformedBounds = item->layer_1_.getBounds();
             const bool useVisualBounds = (prepType == bitklavier::BKPreparationType::PreparationTypeMidiTarget) ||
                                           (prepType == bitklavier::BKPreparationType::PreparationTypeMidiFilter) ||
                                           (prepType == bitklavier::BKPreparationType::PreparationTypeModulation);
