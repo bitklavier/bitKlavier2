@@ -616,8 +616,9 @@ float TuningState::adaptiveCalculate(int midiNoteNumber)
 void TuningState::adaptiveReset()
 {
     DBG("adaptiveReset");
-    adaptiveFundamentalNote = -1;
-    updateAdaptiveFundamentalValue(getFundamental());
+    // adaptiveFundamentalNote = -1;
+    // updateAdaptiveFundamentalValue(getFundamental());
+    updateAdaptiveFundamentalValue(intFromPitchClass(adaptiveParams.tAdaptiveAnchorFundamental->get()));
     adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     adaptiveHistoryCounter = 0;
 }

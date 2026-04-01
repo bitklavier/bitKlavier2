@@ -187,7 +187,7 @@ struct TuningState : bitklavier::StateChangeableParameter
     /*
      * Adaptive vars
      */
-    int adaptiveFundamentalNote = -1;
+    int adaptiveFundamentalNote = 60;
     float adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     int adaptiveHistoryCounter = 0;
     float clusterTimeMS = 0.;
