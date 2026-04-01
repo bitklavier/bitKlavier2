@@ -1219,8 +1219,12 @@ private:
                 // continuous, with frequency updated every block
                 sampleIncrement.setTargetValue (
                     getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
-                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
-                    currentA4Freq / 440.);
+                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+
+                // sampleIncrement.setTargetValue (
+                //     getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
+                //     samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+                //     currentA4Freq / 440.);
             }
             // else if(tuning->getTuningType() == Static || tuning->getTuningType() == Adaptive || tuning->getTuningType() == Adaptive_Anchored || tuning->getTuningType() == Scala_KBM)
             else
@@ -1235,8 +1239,12 @@ private:
 
                 sampleIncrement.setTargetValue (
                     targetFreqAtStartNote / samplerSound->getCentreFrequencyInHz() *
-                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
-                    currentA4Freq / 440.);
+                    samplerSound->getSample()->getSampleRate() / this->currentSampleRate);
+
+                // sampleIncrement.setTargetValue (
+                //     targetFreqAtStartNote / samplerSound->getCentreFrequencyInHz() *
+                //     samplerSound->getSample()->getSampleRate() / this->currentSampleRate *
+                //     currentA4Freq / 440.);
             }
         }
         // otherwise just return ET

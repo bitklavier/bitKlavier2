@@ -258,8 +258,8 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         double workingOffset = circularTuningOffset[(currentlyPlayingNote) % (int)circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
-        //DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
-        //DBG(" TuningState::getStaticTargetFrequency, about to return " + juce::String(mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference())));
+        DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
+        // DBG(" TuningState::getStaticTargetFrequency, about to return " + juce::String(mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference())));
         return mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference());
     }
 
@@ -387,8 +387,7 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      */
     else if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        // don't need to do A440 adjustment here, since it's done internally
-        lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote) * intervalToRatio(getOverallOffset());
+        lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote) * intervalToRatio(getOverallOffset());// * getGlobalTuningReference() / 440.0;
 
         /*
          * handle transpositions
@@ -616,6 +615,8 @@ float TuningState::adaptiveCalculate(int midiNoteNumber)
 
 void TuningState::adaptiveReset()
 {
+    DBG("adaptiveReset");
+    adaptiveFundamentalNote = -1;
     updateAdaptiveFundamentalValue(getFundamental());
     adaptiveFundamentalFreq = mtof(adaptiveFundamentalNote, getGlobalTuningReference());
     adaptiveHistoryCounter = 0;
