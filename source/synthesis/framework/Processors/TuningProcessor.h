@@ -79,6 +79,7 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     void initializeSpiralNotes();
     void printSpiralNotes();
+    void updateSpiralNotes();
 
     // ****************************************** PARAMETERS ***************************************** //
 

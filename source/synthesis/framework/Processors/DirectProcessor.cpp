@@ -270,9 +270,13 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      *          the answer is: yes! chowdsp handles the threading for us!
      */
     // get last synthesizer state and update things accordingly
-    lastSynthState = mainSynth->getSynthesizerState();
-    if (tuning != nullptr)
-        tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
+    // lastSynthState = mainSynth->getSynthesizerState();
+    // if (tuning != nullptr)
+    //     tuning->getState().params.tuningState.updateLastFrequency (lastSynthState.lastPitch);
+    /*
+     * todo: remove all of the lastSynthState stuff? don't think we need it anymore, since Tuning is now
+     *      handling its updates internally so it can run autonomously and not depend on a connected Direct
+     */
 }
 
 /**

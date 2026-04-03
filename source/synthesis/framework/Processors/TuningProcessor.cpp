@@ -358,12 +358,6 @@ double TuningState::getScalaTargetFrequency (int currentlyPlayingNote, double cu
  */
 double TuningState::getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions)
 {
-    /**
-     * todo: need to be able to get A4frequency from gallery/app preferences
-     *          all the tuning systems below are handling it properly now, so once getGlobalTuningReference
-     *          gets its value from the preferences settings, should be good to go
-     */
-
     /*
      * Spring Tuning, if active
      */
@@ -387,7 +381,8 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      */
     else if(getTuningType() == TuningType::Adaptive || getTuningType() == Adaptive_Anchored)
     {
-        lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote) * intervalToRatio(getOverallOffset());// * getGlobalTuningReference() / 440.0;
+        // global tuning handled internally
+        lastFrequencyTarget = adaptiveCalculate(currentlyPlayingNote) * intervalToRatio(getOverallOffset());
 
         /*
          * handle transpositions
@@ -421,7 +416,8 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      *      - we use a std::array<std::atomic<float>, 128> for thread safety, and index it by midinote number
      */
      if (currentTransposition == 0 && spiralNotes[currentlyPlayingNote].load() > 0)
-             spiralNotes[currentlyPlayingNote].store(lastFrequencyTarget);
+         spiralNotes[currentlyPlayingNote].store(lastFrequencyTarget);
+    // NOTE: all of the above about spiralNotes has been moved to keyPressed and updateSpiralNotes, so that Tuning can work autonomously and not depend on being connected to Direct
 
 //     printSpiralNotes();
      return lastFrequencyTarget;
@@ -513,7 +509,6 @@ void TuningState::keyPressed(int noteNumber)
             adaptiveHistoryCounter = 0;
             adaptiveFundamentalFreq = adaptiveFundamentalFreq * adaptiveCalculateRatio(noteNumber);
             updateAdaptiveFundamentalValue(noteNumber);
-
         }
     }
     else if (type == Adaptive_Anchored)
@@ -541,12 +536,11 @@ void TuningState::keyPressed(int noteNumber)
     clusterTimeMS = 0;
 
     /*
-     * add the current note to the spiral, using for atomic assignment
+     * add the current note to the spiral
      */
     auto newf= getTargetFrequency (noteNumber, 0, true);
-    // spiralNotes[noteNumber].store(lastFrequencyTarget);
     spiralNotes[noteNumber].store(newf);
-
+    updateLastFrequency(newf);
 }
 
 void TuningState::keyReleased(int noteNumber)
@@ -638,6 +632,19 @@ void TuningState::printSpiralNotes()
         if(currentFreq > 0)
         {
             DBG("Spiral Note " + juce::String(i) + " = " + juce::String(currentFreq));
+        }
+    }
+}
+
+void TuningState::updateSpiralNotes()
+{
+    for (int i=0; i < spiralNotes.size(); i++)
+    {
+        auto currentFreq = spiralNotes[i].load();
+        if(currentFreq > 0)
+        {
+            //spiralNotes[i].store(getTargetFrequency(i, 0, true));
+            getTargetFrequency(i, 0, true); //store happens inside getTargetFrequency
         }
     }
 }
@@ -976,17 +983,6 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     state.getParameterListeners().callAudioThreadBroadcasters();
 
     /*
-     * start/stop spring tuning if necessary
-     */
-    if (state.params.tuningState.tuningType->get() == TuningType::Spring_Tuning)
-    {
-        if (!state.params.tuningState.springTuner->isTimerRunning())
-            state.params.tuningState.springTuner->rateChanged();
-    }
-    else if (state.params.tuningState.springTuner->isTimerRunning())
-        state.params.tuningState.springTuner->stopTimer();
-
-    /*
      * increment timer for tuningType tuning cluster measurements.
      *      - will get reset elsewhere
      */
@@ -1003,6 +999,20 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         {
             handleMidiEvent (meta.getMessage());
         });
+
+    /*
+     * start/stop spring tuning if necessary
+     */
+    if (state.params.tuningState.tuningType->get() == TuningType::Spring_Tuning)
+    {
+        if (!state.params.tuningState.springTuner->isTimerRunning())
+            state.params.tuningState.springTuner->rateChanged();
+
+        //update spiral here as well
+        state.params.tuningState.updateSpiralNotes();
+    }
+    else if (state.params.tuningState.springTuner->isTimerRunning())
+        state.params.tuningState.springTuner->stopTimer();
 }
 
 void TuningProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
