@@ -359,10 +359,28 @@ public:
         r.length       = (int) m_sfz.sample->num_samples;
 
         r.ch0 = b->channel_start (0);
-        r.ch1 = (b->num_channels > 1) ? b->channel_start (1) : nullptr;
+        if (b->num_channels > 1)
+        {
+            // SFZ stereo interleaved WAV: ch1 is one sample-width past ch0.
+            r.ch1 = b->channel_start (1);
+        }
+        else if (m_sfz.is_stereo_sf2 && m_sfz.right_sample_offset > 0)
+        {
+            // SF2 stereo linked pair: both channels live in the same flat mono
+            // smpl buffer.  Offset ch1 so that:
+            //   readAt(1, abs_pos) == right_sample[abs_pos - left_start]
+            // i.e.  ch1 + abs_pos*stride = data + right_start*stride
+            //                               + (abs_pos - left_start)*stride
+            //   =>  ch1 = data + (right_start - left_start)*stride
+            ptrdiff_t adj = (ptrdiff_t) m_sfz.right_sample_offset
+                          - (ptrdiff_t) m_sfz.offset;
+            r.ch1 = r.ch0 + adj * (ptrdiff_t) r.stride;
+            r.num_channels = 2;
+        }
 
         return r;
     }
+
 private:
     SFZRegion& m_sfz;
 
@@ -504,7 +522,7 @@ public:
         params.sustain = region.ampeg.sustain;
         params.release = region.ampeg.release;
 
-        // params.pan     = region.pan;
+        sfzPan = region.pan;
         // params.volume  = region.volume;
 
         // ---------------------------
@@ -519,7 +537,12 @@ public:
         // ---------------------------
         // CENTER FREQUENCY
         // ---------------------------
-        setCentreFrequencyInHz(mtof(rootMidiNote));
+        // Subtract transpose (SF2 coarseTune) so the sampleIncrement formula
+        // centreFreq = mtof(rootMidiNote - transpose), giving:
+        //   sampleIncrement = targetFreq / centreFreq = mtof(played) / mtof(root - T)
+        //                   = mtof(played) * 2^(T/12) / mtof(root)
+        // which matches the sfzq reference: note_hz(played + T) / note_hz(root)
+        setCentreFrequencyInHz(mtof(rootMidiNote - transpose));
     }
 
     //==============================================================================
@@ -610,6 +633,7 @@ public:
     //int layerId;
     int rootMidiNote;
     int transpose;
+    float sfzPan = 0.0f; // SF2/SFZ pan: -100=full left, 0=center, +100=full right
     SoundSampleType getSoundSampleType() const override {
         return sampleType;
     }
@@ -1346,8 +1370,14 @@ private:
         float r = (reader.num_channels > 1 && reader.ch1 != nullptr)
                     ? (reader.readAt (1, pos) * (float) ia + reader.readAt (1, nextPos) * (float) a) : l;
 
-        m_Buffer.setSample (0, 0, l);
-        m_Buffer.setSample (1, 0, r);
+        // Apply SFZ/SF2 pan: -100=full left, 0=center, +100=full right.
+        // At pan=0 both gains are 1.0 (no change to existing behaviour).
+        const float pan_v = samplerSound->sfzPan;
+        const float gainL = (pan_v <= 0.f) ? 1.0f : (100.0f - pan_v) / 100.0f;
+        const float gainR = (pan_v >= 0.f) ? 1.0f : (100.0f + pan_v) / 100.0f;
+
+        m_Buffer.setSample (0, 0, l * gainL);
+        m_Buffer.setSample (1, 0, r * gainR);
 
         m_Buffer.applyGain (level.getTargetValue());
         if (ampEnv.isActive())

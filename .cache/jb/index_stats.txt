@@ -1,4 +1,4 @@
-Indexing took 41 seconds
+Indexing took 23 seconds
 Indexing strategy: LightModules
 MMap generator: v1
 Header to module strategy: min usages threshold = 8, min module size = 0kb
@@ -7,11 +7,11 @@ Number of unique errors = 39
 Number of compiled modules = 0
 Number of reused modules = 0
 Number of merged definitions = 0
-Number of skipped bodies = 5632
+Number of skipped bodies = 6549
 Number of accepts via secondary include = 0
 Number of rejects via secondary include = 0
-SIDYes = 9580, SIDNo = 29981, SIDUnsure = 85309
-SIFYes = 5579, SIFNo = 231922
+SIDYes = 9578, SIDNo = 28473, SIDUnsure = 84673
+SIFYes = 5491, SIFNo = 232010
 Modules cache size = 0.00 B
 No failed modules
 File /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h: 1 errors
@@ -65,14 +65,14 @@ File /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types.
 File /Users/dtrueman/Code/bitKlavier2/source/synthesis/synth_base.cpp: 1 errors
 [0, 0]  - too many errors emitted, stopping now
 Processed 3 TUs in
- - real time = 41241ms
- - indexing CPU time = 42326ms
- - symbols writing CPU time = 23795ms
- - symbols reading CPU time = 1304ms
- - waiting to finish time = 18574ms
-TU [/Users/dtrueman/Code/bitKlavier2/source/synthesis/sound_engine/sound_engine.cpp] processed in 6328ms and succeed.
-TU [/Users/dtrueman/Code/bitKlavier2/source/synthesis/synth_base.cpp] processed in 14495ms and succeed.
-TU [/Users/dtrueman/Code/bitKlavier2/source/synthesis/framework/Processors/EQProcessor.cpp] processed in 21503ms and succeed.
+ - real time = 23665ms
+ - indexing CPU time = 33626ms
+ - symbols writing CPU time = 7885ms
+ - symbols reading CPU time = 450ms
+ - waiting to finish time = 7065ms
+TU [/Users/dtrueman/Code/bitKlavier2/source/synthesis/sound_engine/sound_engine.cpp] processed in 6067ms and succeed.
+TU [/Users/dtrueman/Code/bitKlavier2/source/synthesis/synth_base.cpp] processed in 11050ms and succeed.
+TU [/Users/dtrueman/Code/bitKlavier2/source/synthesis/framework/Processors/EQProcessor.cpp] processed in 16509ms and succeed.
 
 WAIT TIME:
 Waiting for symbol files took 0ms

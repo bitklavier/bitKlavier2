@@ -1013,6 +1013,9 @@ void TuningProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
     else if (state.params.tuningState.springTuner->isTimerRunning())
         state.params.tuningState.springTuner->stopTimer();
+
+    // if (state.params.tuningState.tuningType->get() == TuningType::Adaptive || state.params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored)
+    //     state.params.tuningState.updateSpiralNotes();
 }
 
 void TuningProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

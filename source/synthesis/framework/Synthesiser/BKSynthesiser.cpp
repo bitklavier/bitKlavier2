@@ -572,8 +572,6 @@ void BKSynthesiser::noteOn (const int midiChannel,
                     velocityScaled,
                     transp,
                     (*noteOnSpecs)[midiNoteNumber].transpositionGains[(*noteOnSpecs)[midiNoteNumber].transpositions.indexOf (transp)]);
-
-                break;
             }
         }
     }
