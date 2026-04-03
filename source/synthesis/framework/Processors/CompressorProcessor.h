@@ -14,7 +14,8 @@ enum CompressorPresetComboBox {
     Piano = 1 << 1,
     Piano_2 = 1 << 2,
     Brick_Wall = 1 << 3,
-    Aggressive = 1 << 4
+    Aggressive = 1 << 4,
+    CompressorCustom = 1 << 5
 };
 
 // ********************************************************************************************* //
@@ -246,7 +247,6 @@ public:
     void applyCompressionToBuffer(float* src, int numSamples);
     void applyBallistics(float* src, int numSamples);
     float processPeakBranched(const float& in);
-
 private:
     juce::AudioBuffer<float> originalSignal;
     std::vector<float> sidechainSignal;
@@ -273,6 +273,11 @@ private:
     juce::Atomic<float> gainReduction;
     juce::Atomic<float> currentInput;
     juce::Atomic<float> currentOutput;
+
+    // Timestamp (ms) set the moment the user selects a preset (MessageThread listener).
+    // MT Custom-detection listeners skip switching to Custom while < 200ms have elapsed,
+    // covering the ~20ms timer delay for preset-driven param changes to propagate.
+    juce::int64 presetAppliedAtMs = -1;
 
     chowdsp::ScopedCallbackList compressorCallbacks;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompressorProcessor)

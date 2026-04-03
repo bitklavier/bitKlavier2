@@ -556,6 +556,12 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
 
     tree.copyPropertiesAndChildrenFrom (state, nullptr);
 
+    // copyPropertiesAndChildrenFrom replaces all children, so the VT nodes that
+    // compressorProcessor->v and eqProcessor->v reference are now stale.
+    // Update them to the newly-loaded nodes and re-deserialize their params.
+    if (engine_ != nullptr)
+        engine_->loadBusProcessorsFromValueTree (tree);
+
     juce::MessageManager::callAsync ([this] { flushPendingConnections(); });
 
     setBatchLoading(false);
@@ -777,6 +783,10 @@ bool SynthBase::saveToFile(juce::File preset)
         if (vt.hasType (IDs::PIANO))
             vt.getChildWithName (IDs::PREPARATIONS).setProperty ("sync", 1, nullptr);
     }
+
+    // sync bus processors (EQ and Compressor) directly to their valuetrees
+    if (engine_ != nullptr)
+        engine_->syncBusProcessorsToValueTree();
 
     auto xml = getValueTree().createXml();
     if (xml == nullptr)

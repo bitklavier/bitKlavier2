@@ -265,6 +265,60 @@ namespace bitklavier {
         }
     }
 
+    void SoundEngine::loadBusProcessorsFromValueTree (juce::ValueTree& rootTree)
+    {
+        // After tree.copyPropertiesAndChildrenFrom(), the old VT SharedObjects that
+        // compressorProcessor->v and eqProcessor->v reference are no longer in the tree.
+        // Find the new child VTs and update the processors.
+        auto loadProc = [] (auto* proc, juce::ValueTree newVT)
+        {
+            if (proc == nullptr || ! newVT.isValid())
+                return;
+
+            proc->v = newVT;  // update the VT reference to the newly-loaded node
+
+            // Pass the unique_ptr directly to match the SerializedType overload of
+            // deserialize — passing .get() would hit the XmlElement* overload, which
+            // wraps the raw pointer in a second unique_ptr and causes a double-free.
+            chowdsp::Serialization::deserialize<bitklavier::XMLSerializer> (newVT.createXml(), proc->getState());
+        };
+
+        loadProc (compressorProcessor.get(), rootTree.getChildWithName (IDs::BUSCOMPRESSOR));
+        loadProc (eqProcessor.get(),         rootTree.getChildWithName (IDs::BUSEQ));
+
+        // For legacy saves that stored a named preset alongside individually-modified params,
+        // force Custom so the preset listener does not override the loaded param values.
+        if (compressorProcessor != nullptr)
+            compressorProcessor->getState().params.presets->setParameterValue (CompressorPresetComboBox::CompressorCustom);
+        if (eqProcessor != nullptr)
+            eqProcessor->getState().params.presets->setParameterValue (EqPresetComboBox::EqCustom);
+    }
+
+    void SoundEngine::syncBusProcessorsToValueTree()
+    {
+        // Use auto* so we can call getState() (defined on PluginBase, not InternalProcessor).
+        // We call getState().serialize() directly rather than getStateInformation() because
+        // getStateInformation() bails early when PARAM_DEFAULT is missing — bus processors
+        // are not created through the normal preparation path and never get that child.
+        auto syncProc = [] (auto* proc)
+        {
+            if (proc == nullptr) return;
+            juce::MemoryBlock data;
+            proc->getState().serialize (data);
+            if (data.isEmpty()) return;
+            auto xml = juce::parseXML (juce::String::createStringFromData (data.getData(), (int) data.getSize()));
+            if (xml == nullptr) return;
+            auto paramVT = juce::ValueTree::fromXml (*xml);
+            for (int i = 0; i < paramVT.getNumProperties(); ++i)
+            {
+                auto propName = paramVT.getPropertyName (i);
+                proc->v.setProperty (propName, paramVT.getProperty (propName), nullptr);
+            }
+        };
+        syncProc (compressorProcessor.get());
+        syncProc (eqProcessor.get());
+    }
+
     void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {
         if (gainProcessor || compressorProcessor || eqProcessor)
             return;
@@ -278,7 +332,7 @@ namespace bitklavier {
         // compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
         // eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
         gainProcessor       = std::make_unique<GainProcessor>(parent, tree, &parent.getUndoManager());
-        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buseq, &parent.getUndoManager());
-        eqProcessor         = std::make_unique<EQProcessor>(parent, buscompressor, &parent.getUndoManager());
+        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buscompressor, &parent.getUndoManager());
+        eqProcessor         = std::make_unique<EQProcessor>(parent, buseq, &parent.getUndoManager());
     }
 } // namespace bitklavier

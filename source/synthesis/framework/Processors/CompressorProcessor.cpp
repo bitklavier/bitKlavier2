@@ -11,6 +11,7 @@
 CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
     : PluginBase (parent, vt, um, compressorBusLayout())
 {
+    this->v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
     parent.getValueTree().addListener(this);
     originalSignal.setSize(2, 512);
     sidechainSignal.resize(512, 0.0f);
@@ -29,7 +30,7 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
         })
     };
 
-    // calculates attack in s and alphaattack when attack changes
+    // AudioThread: update alpha coefficients when attack/release change.
     compressorCallbacks += {state.getParameterListeners().addParameterListener(
         state.params.attack,
         chowdsp::ParameterListenerThread::AudioThread,
@@ -39,7 +40,6 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
         })
     };
 
-    // calculates release in s and alpharelease when release changes
     compressorCallbacks += {state.getParameterListeners().addParameterListener(
         state.params.release,
         chowdsp::ParameterListenerThread::AudioThread,
@@ -49,7 +49,38 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
         })
     };
 
-    // sets parameter values when preset changes
+    // MessageThread: switch to Custom when user edits any preset-controlled param.
+    // Fires immediately for UI edits (parameterValueChanged), but ~20ms after audio-thread
+    // preset changes (timer). The timestamp guards against that delayed firing.
+    auto setCustomIfUserEdit = [this]()
+    {
+        if (juce::Time::currentTimeMillis() - presetAppliedAtMs > 200)
+            state.params.presets->setParameterValue (CompressorPresetComboBox::CompressorCustom);
+    };
+
+    for (auto* param : { static_cast<juce::RangedAudioParameter*> (state.params.attack.get()),
+                         static_cast<juce::RangedAudioParameter*> (state.params.release.get()),
+                         static_cast<juce::RangedAudioParameter*> (state.params.activeCompressor.get()),
+                         static_cast<juce::RangedAudioParameter*> (state.params.threshold.get()),
+                         static_cast<juce::RangedAudioParameter*> (state.params.ratio.get()),
+                         static_cast<juce::RangedAudioParameter*> (state.params.makeup.get()),
+                         static_cast<juce::RangedAudioParameter*> (state.params.knee.get()) })
+    {
+        compressorCallbacks += {state.getParameterListeners().addParameterListener (
+            *param,
+            chowdsp::ParameterListenerThread::MessageThread,
+            setCustomIfUserEdit)};
+    }
+
+    // MessageThread: record when a named preset is selected. Fires synchronously before
+    // the AudioThread listener applies the preset values, so the timestamp is always set
+    // before the timer-delayed MT param listeners could fire.
+    compressorCallbacks += {state.getParameterListeners().addParameterListener(
+        state.params.presets,
+        chowdsp::ParameterListenerThread::MessageThread,
+        [this]() { presetAppliedAtMs = juce::Time::currentTimeMillis(); })};
+
+    // AudioThread: apply preset values when preset changes.
     compressorCallbacks += {state.getParameterListeners().addParameterListener(
         state.params.presets,
         chowdsp::ParameterListenerThread::AudioThread,
@@ -316,3 +347,4 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
     }
 }
+

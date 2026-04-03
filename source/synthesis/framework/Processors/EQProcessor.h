@@ -15,6 +15,7 @@ enum EqPresetComboBox {
     EqOff = 1 << 0,
     Highshelf = 1 << 1,
     Lowshelf = 1 << 2,
+    EqCustom = 1 << 3,
 };
 
 // ********************************************************************************************* //
@@ -190,12 +191,12 @@ struct EQParams : chowdsp::ParamHolder
             peak3FilterParams.filterQ->getCurrentValue(),
             juce::Decibels::decibelsToGain(peak3FilterParams.filterGain->getCurrentValue()));
 
-        *leftChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
-        *leftChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
-        *leftChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
-        *rightChain.get<ChainPositions::Peak1>().coefficients = *peak1Coefficients;
-        *rightChain.get<ChainPositions::Peak2>().coefficients = *peak2Coefficients;
-        *rightChain.get<ChainPositions::Peak3>().coefficients = *peak3Coefficients;
+        leftChain.get<ChainPositions::Peak1>().coefficients = peak1Coefficients;
+        leftChain.get<ChainPositions::Peak2>().coefficients = peak2Coefficients;
+        leftChain.get<ChainPositions::Peak3>().coefficients = peak3Coefficients;
+        rightChain.get<ChainPositions::Peak1>().coefficients = peak1Coefficients;
+        rightChain.get<ChainPositions::Peak2>().coefficients = peak2Coefficients;
+        rightChain.get<ChainPositions::Peak3>().coefficients = peak3Coefficients;
 
         leftChain.setBypassed<ChainPositions::Peak1>(!peak1FilterParams.filterActive->get());
         leftChain.setBypassed<ChainPositions::Peak2>(!peak2FilterParams.filterActive->get());
@@ -225,35 +226,27 @@ struct EQParams : chowdsp::ParamHolder
         // breaks omitted on purpose to facilitate fall through
         switch(lowCutSlope) {
             case 48: {
-                *leftLowCutChain.get<Slope::S48>().coefficients =
-                *lowCutCoefficients[Slope::S48];
+                leftLowCutChain.get<Slope::S48>().coefficients = lowCutCoefficients[Slope::S48];
                 leftLowCutChain.setBypassed<Slope::S48>(!loCutFilterParams.filterActive->get());
-                *rightLowCutChain.get<Slope::S48>().coefficients =
-                *lowCutCoefficients[Slope::S48];
+                rightLowCutChain.get<Slope::S48>().coefficients = lowCutCoefficients[Slope::S48];
                 rightLowCutChain.setBypassed<Slope::S48>(!loCutFilterParams.filterActive->get());
             }
             case 36: {
-                *leftLowCutChain.get<Slope::S36>().coefficients =
-                *lowCutCoefficients[Slope::S36];
+                leftLowCutChain.get<Slope::S36>().coefficients = lowCutCoefficients[Slope::S36];
                 leftLowCutChain.setBypassed<Slope::S36>(!loCutFilterParams.filterActive->get());
-                *rightLowCutChain.get<Slope::S36>().coefficients =
-                *lowCutCoefficients[Slope::S36];
+                rightLowCutChain.get<Slope::S36>().coefficients = lowCutCoefficients[Slope::S36];
                 rightLowCutChain.setBypassed<Slope::S36>(!loCutFilterParams.filterActive->get());
             }
             case 24: {
-                *leftLowCutChain.get<Slope::S24>().coefficients =
-                *lowCutCoefficients[Slope::S24];
+                leftLowCutChain.get<Slope::S24>().coefficients = lowCutCoefficients[Slope::S24];
                 leftLowCutChain.setBypassed<Slope::S24>(!loCutFilterParams.filterActive->get());
-                *rightLowCutChain.get<Slope::S24>().coefficients =
-                *lowCutCoefficients[Slope::S24];
+                rightLowCutChain.get<Slope::S24>().coefficients = lowCutCoefficients[Slope::S24];
                 rightLowCutChain.setBypassed<Slope::S24>(!loCutFilterParams.filterActive->get());
             }
             case 12: {
-                *leftLowCutChain.get<Slope::S12>().coefficients =
-                *lowCutCoefficients[Slope::S12];
+                leftLowCutChain.get<Slope::S12>().coefficients = lowCutCoefficients[Slope::S12];
                 leftLowCutChain.setBypassed<Slope::S12>(!loCutFilterParams.filterActive->get());
-                *rightLowCutChain.get<Slope::S12>().coefficients =
-                *lowCutCoefficients[Slope::S12];
+                rightLowCutChain.get<Slope::S12>().coefficients = lowCutCoefficients[Slope::S12];
                 rightLowCutChain.setBypassed<Slope::S12>(!loCutFilterParams.filterActive->get());
             }
         }
@@ -279,27 +272,27 @@ struct EQParams : chowdsp::ParamHolder
         // breaks omitted on purpose to facilitate fall through
         switch(highCutSlope) {
             case 48: {
-                *leftHighCutChain.get<Slope::S48>().coefficients = *highCutCoefficients[Slope::S48];
+                leftHighCutChain.get<Slope::S48>().coefficients = highCutCoefficients[Slope::S48];
                 leftHighCutChain.setBypassed<Slope::S48>(!hiCutFilterParams.filterActive->get());
-                *rightHighCutChain.get<Slope::S48>().coefficients = *highCutCoefficients[Slope::S48];
+                rightHighCutChain.get<Slope::S48>().coefficients = highCutCoefficients[Slope::S48];
                 rightHighCutChain.setBypassed<Slope::S48>(!hiCutFilterParams.filterActive->get());
             }
             case 36: {
-                *leftHighCutChain.get<Slope::S36>().coefficients = *highCutCoefficients[Slope::S36];
+                leftHighCutChain.get<Slope::S36>().coefficients = highCutCoefficients[Slope::S36];
                 leftHighCutChain.setBypassed<Slope::S36>(!hiCutFilterParams.filterActive->get());
-                *rightHighCutChain.get<Slope::S36>().coefficients = *highCutCoefficients[Slope::S36];
+                rightHighCutChain.get<Slope::S36>().coefficients = highCutCoefficients[Slope::S36];
                 rightHighCutChain.setBypassed<Slope::S36>(!hiCutFilterParams.filterActive->get());
             }
             case 24: {
-                *leftHighCutChain.get<Slope::S24>().coefficients = *highCutCoefficients[Slope::S24];
+                leftHighCutChain.get<Slope::S24>().coefficients = highCutCoefficients[Slope::S24];
                 leftHighCutChain.setBypassed<Slope::S24>(!hiCutFilterParams.filterActive->get());
-                *rightHighCutChain.get<Slope::S24>().coefficients = *highCutCoefficients[Slope::S24];
+                rightHighCutChain.get<Slope::S24>().coefficients = highCutCoefficients[Slope::S24];
                 rightHighCutChain.setBypassed<Slope::S24>(!hiCutFilterParams.filterActive->get());
             }
             case 12: {
-                *leftHighCutChain.get<Slope::S12>().coefficients = *highCutCoefficients[Slope::S12];
+                leftHighCutChain.get<Slope::S12>().coefficients = highCutCoefficients[Slope::S12];
                 leftHighCutChain.setBypassed<Slope::S12>(!hiCutFilterParams.filterActive->get());
-                *rightHighCutChain.get<Slope::S12>().coefficients = *highCutCoefficients[Slope::S12];
+                rightHighCutChain.get<Slope::S12>().coefficients = highCutCoefficients[Slope::S12];
                 rightHighCutChain.setBypassed<Slope::S12>(!hiCutFilterParams.filterActive->get());
             }
         }
@@ -384,7 +377,6 @@ public:
 
     bool hasEditor() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
-
     void resetToDefaults()
     {
         state.params.activeEq->setParameterValue(false);
@@ -397,6 +389,11 @@ public:
     }
 
 private:
+    // Timestamp (ms) set the moment the user selects a preset (MessageThread listener).
+    // MT Custom-detection listeners skip switching to Custom while < 200ms have elapsed,
+    // covering the ~20ms timer delay for preset-driven param changes to propagate.
+    juce::int64 presetAppliedAtMs = -1;
+
     chowdsp::ScopedCallbackList eqCallbacks;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EQProcessor)
 };

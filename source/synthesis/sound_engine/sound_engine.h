@@ -607,6 +607,8 @@ namespace bitklavier
         {
             return eqProcessor.get();
         };
+        void syncBusProcessorsToValueTree();
+        void loadBusProcessorsFromValueTree (juce::ValueTree& rootTree);
         GainProcessor* getMainVolumeProcessor()
         {
             return gainProcessor.get();

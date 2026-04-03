@@ -1,4 +1,3 @@
-//
 // LegacyGalleryImporter.cpp
 // bitKlavier2
 //
@@ -226,18 +225,20 @@ juce::ValueTree LegacyGalleryImporter::convertDirect (const juce::XmlElement& el
     float mainDb    = -80.0f;
     float hammersDb = -80.0f;
     float resonDb   = 0.0f;
+    float sendDb    = 0.0f;
     if (params != nullptr)
     {
         mainDb    = gainToDb ((float) params->getDoubleAttribute ("gain",      0.0));
         hammersDb = gainToDb ((float) params->getDoubleAttribute ("hammerGain", 0.0)) - 20.f; // compensate for old hammer gain being too high
         resonDb   = gainToDb ((float) params->getDoubleAttribute ("resGain",    0.0));
+        sendDb    = gainToDb ((float) params->getDoubleAttribute ("blendronicGain", 1.0));
     }
 
     vt.setProperty ("Main",      mainDb,    nullptr);
     vt.setProperty ("Hammers",   hammersDb, nullptr);
     vt.setProperty ("Resonance", resonDb,   nullptr);
     vt.setProperty ("Pedal",     -6.0f,     nullptr);
-    vt.setProperty ("Send",      0.0f,      nullptr);
+    vt.setProperty ("Send",      sendDb,    nullptr);
     vt.setProperty ("OutputGain",0.0f,      nullptr);
     vt.setProperty ("resonanceLoaded", 1,   nullptr);
     vt.setProperty ("hammerLoaded",    1,   nullptr);
@@ -301,7 +302,7 @@ juce::ValueTree LegacyGalleryImporter::convertDirect (const juce::XmlElement& el
     mp.addChild (makeModParam ("Hammers",     kDbMin, kDbMax, kDbSkew, hammersDb), -1, nullptr);
     mp.addChild (makeModParam ("Resonance",   kDbMin, kDbMax, kDbSkew, resonDb),   -1, nullptr);
     mp.addChild (makeModParam ("Pedal",       kDbMin, kDbMax, kDbSkew, -6.0f),     -1, nullptr);
-    mp.addChild (makeModParam ("Send",        kDbMin, kDbMax, kDbSkew, 0.0f),      -1, nullptr);
+    mp.addChild (makeModParam ("Send",        kDbMin, kDbMax, kDbSkew, sendDb),    -1, nullptr);
     mp.addChild (makeModParam ("OutputGain",  kDbMin, kDbMax, kDbSkew, 0.0f),      -1, nullptr);
     mp.addChild (makeModParam ("attack",      0.0f, 10000.0f, 0.2313782125711441f, attack),  -1, nullptr);
     mp.addChild (makeModParam ("decay",       0.0f, 1000.0f,  1.0f, decay),        -1, nullptr);
@@ -1233,7 +1234,7 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
     vt.setProperty ("soundset","syncglobal",                    nullptr);
     vt.setProperty ("nodeID",  (int64_t) nodeID,                nullptr);
     vt.setProperty ("name",    name,                            nullptr);
-    vt.setProperty ("numIns",  1,                               nullptr);
+    vt.setProperty ("numIns",  2,                               nullptr);
     vt.setProperty ("numOuts", 2,                               nullptr);
 
     vt.setProperty ("InputGain",  0.0f, nullptr);
@@ -1407,8 +1408,9 @@ juce::ValueTree LegacyGalleryImporter::convertBlendronic (const juce::XmlElement
     pd.setProperty ("feedback_coefficientsStatesSize", (int) fbActiveArr.size(),                  nullptr);
     vt.addChild (pd, -1, nullptr);
 
-    // PORTs
-    for (auto [chIdx, isIn] : std::initializer_list<std::pair<int,int>> {{4096,1},{0,0},{2,0}})
+    // PORTs: Blendronic has an audio input port (chIdx=0, isIn=1) in addition to
+    // the standard MIDI input and two audio outputs.
+    for (auto [chIdx, isIn] : std::initializer_list<std::pair<int,int>> {{0,1},{4096,1},{0,0},{2,0}})
     {
         juce::ValueTree port ("PORT");
         port.setProperty ("nodeID", (int64_t) nodeID, nullptr);
@@ -2254,9 +2256,23 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                     }
                     // else: nostalgic is not in Synchronic mode — no connection needed
                 }
+                else if (selfType == OldBlendronic)
+                {
+                    // In the legacy format, items listed in Blendronic's <connections>
+                    // are the audio *sources* that feed into Blendronic (not destinations).
+                    // Emit: connNodeID Send output (chIdx=2) → selfNodeID (Blendronic audio in).
+                    juce::ValueTree conn ("CONNECTION");
+                    conn.setProperty ("isMod",      0,                     nullptr);
+                    conn.setProperty ("src",        (int64_t) connNodeID,  nullptr);
+                    conn.setProperty ("srcIdx",     2,                     nullptr);
+                    conn.setProperty ("dest",       (int64_t) selfNodeID,  nullptr);
+                    conn.setProperty ("destIdx",    0,                     nullptr);
+                    conn.setProperty ("isSelected", 0,                     nullptr);
+                    connections.addChild (conn, -1, nullptr);
+                }
                 else
                 {
-                    // All other connections: standard audio CONNECTION
+                    // All other connections: standard MIDI CONNECTION
                     juce::ValueTree conn ("CONNECTION");
                     conn.setProperty ("isMod",    0,                    nullptr);
                     conn.setProperty ("src",      (int64_t) selfNodeID, nullptr);

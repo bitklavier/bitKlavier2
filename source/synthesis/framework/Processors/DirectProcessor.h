@@ -99,7 +99,7 @@ struct DirectParams : chowdsp::ParamHolder {
         juce::ParameterID{"Pedal", 100},
         "PEDAL",
         juce::NormalisableRange{rangeStart, rangeEnd, 0.0f, skewFactor, false},
-        -6.0f,
+        -18.0f,
         true,
         //v.getChildWithProperty("parameter", "Pedal")
     };

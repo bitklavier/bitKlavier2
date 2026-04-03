@@ -12,13 +12,19 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::Un
 {
     // parent.getValueTree().addListener(this);
     // state.params.sampleRate = getSampleRate();
-    // recalculate coefficients
+    // MessageThread: recalculate coefficients and switch to Custom when a param changes.
+    // Fires immediately for UI edits, but ~20ms after audio-thread preset changes (timer).
+    // The timestamp guards against that delayed firing switching the menu back to Custom.
     state.params.doForAllParameters ([this] (auto& param, size_t) {
+        if (juce::String (param.getParameterID()) == "eqPresets" ||
+            juce::String (param.getParameterID()) == "resetEq")
+            return;
         eqCallbacks += {state.getParameterListeners().addParameterListener(
-            param,
-            chowdsp::ParameterListenerThread::AudioThread,
+            param, chowdsp::ParameterListenerThread::MessageThread,
             [this]() {
-                    this->state.params.updateCoefficients();
+                this->state.params.updateCoefficients();
+                if (juce::Time::currentTimeMillis() - presetAppliedAtMs > 200)
+                    state.params.presets->setParameterValue (EqPresetComboBox::EqCustom);
             })
         };
     });
@@ -33,6 +39,15 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::Un
             })
         };
 
+        // MessageThread: record when a named preset is selected. Fires synchronously before
+        // the AudioThread listener applies the preset values, so the timestamp is always set
+        // before the timer-delayed MT param listeners could fire.
+        eqCallbacks += {state.getParameterListeners().addParameterListener(
+            state.params.presets,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() { presetAppliedAtMs = juce::Time::currentTimeMillis(); })};
+
+        // AudioThread: apply preset values when preset changes.
         eqCallbacks += {state.getParameterListeners().addParameterListener(
         state.params.presets,
             chowdsp::ParameterListenerThread::AudioThread,
@@ -166,3 +181,4 @@ void EQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuff
         std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
     }
 }
+

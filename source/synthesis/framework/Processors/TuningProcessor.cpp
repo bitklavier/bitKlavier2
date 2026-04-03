@@ -258,7 +258,7 @@ double TuningState::getStaticTargetFrequency (int currentlyPlayingNote, double c
         double workingOffset = circularTuningOffset[(currentlyPlayingNote) % (int)circularTuningOffset.size()] * .01;
         workingOffset += absoluteTuningOffset[currentlyPlayingNote] * .01;
         workingOffset += getOverallOffset();
-        DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
+        // DBG(" TuningState::getStaticTargetFrequency, workingOffset = " + juce::String(workingOffset) + " currentlyPlayingNote = " + juce::String(currentlyPlayingNote) + " global tuning reference = " + juce::String(getGlobalTuningReference()));
         // DBG(" TuningState::getStaticTargetFrequency, about to return " + juce::String(mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference())));
         return mtof (workingOffset + (double) currentlyPlayingNote, getGlobalTuningReference());
     }
@@ -543,7 +543,9 @@ void TuningState::keyPressed(int noteNumber)
     /*
      * add the current note to the spiral, using for atomic assignment
      */
-    spiralNotes[noteNumber].store(lastFrequencyTarget);
+    auto newf= getTargetFrequency (noteNumber, 0, true);
+    // spiralNotes[noteNumber].store(lastFrequencyTarget);
+    spiralNotes[noteNumber].store(newf);
 
 }
 
