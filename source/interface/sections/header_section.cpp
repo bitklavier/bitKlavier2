@@ -529,6 +529,11 @@ void HeaderSection::deletePiano()
     // Capture the node to activate BEFORE removal (indices are valid now)
     juce::ValueTree pianoToActivate = gallery.getChild(targetChildIdx);
 
+    // Clear isActive on the piano being deleted before removing it.
+    // The deleted node's data persists in memory (ref-counted), so without this
+    // getActivePreparationList() would find the stale entry and return the wrong list.
+    gallery.getChild(activeChildIdx).setProperty(IDs::isActive, 0, nullptr);
+
     // Remove the active piano
     gallery.removeChild(activeChildIdx, nullptr);
 

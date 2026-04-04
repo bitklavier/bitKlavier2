@@ -298,7 +298,8 @@ juce::ValueTree SynthBase::getActivePreparationListValueTree()
 {
     for (auto& preparation : preparationLists)
     {
-        if (preparation->getValueTree().getParent().getProperty (IDs::isActive))
+        auto pianoVT = preparation->getValueTree().getParent();
+        if (pianoVT.isValid() && pianoVT.getParent().isValid() && pianoVT.getProperty (IDs::isActive))
             return preparation->getValueTree();
     }
     return {};
@@ -343,7 +344,8 @@ PreparationList* SynthBase::getActivePreparationList()
 {
     for (auto& preparation : preparationLists)
     {
-        if (preparation->getValueTree().getParent().getProperty (IDs::isActive))
+        auto pianoVT = preparation->getValueTree().getParent();
+        if (pianoVT.isValid() && pianoVT.getParent().isValid() && pianoVT.getProperty (IDs::isActive))
             return preparation.get();
     }
     return nullptr;
@@ -354,7 +356,8 @@ bitklavier::ConnectionList* SynthBase::getActiveConnectionList()
     DBG("bitklavier::ConnectionList* SynthBase::getActiveConnectionList()");
     for (auto& connection : connectionLists)
     {
-        if (connection->getValueTree().getParent().getProperty (IDs::isActive))
+        auto pianoVT = connection->getValueTree().getParent();
+        if (pianoVT.isValid() && pianoVT.getParent().isValid() && pianoVT.getProperty (IDs::isActive))
             return connection.get();
     }
     return nullptr;
@@ -364,7 +367,8 @@ bitklavier::ModConnectionList* SynthBase::getActiveModConnectionList()
 {
     for (auto& connection : mod_connection_lists_)
     {
-        if (connection->getValueTree().getParent().getProperty (IDs::isActive))
+        auto pianoVT = connection->getValueTree().getParent();
+        if (pianoVT.isValid() && pianoVT.getParent().isValid() && pianoVT.getProperty (IDs::isActive))
             return connection.get();
     }
     return nullptr;
