@@ -364,19 +364,6 @@ public:
             // SFZ stereo interleaved WAV: ch1 is one sample-width past ch0.
             r.ch1 = b->channel_start (1);
         }
-        else if (m_sfz.is_stereo_sf2 && m_sfz.right_sample_offset > 0)
-        {
-            // SF2 stereo linked pair: both channels live in the same flat mono
-            // smpl buffer.  Offset ch1 so that:
-            //   readAt(1, abs_pos) == right_sample[abs_pos - left_start]
-            // i.e.  ch1 + abs_pos*stride = data + right_start*stride
-            //                               + (abs_pos - left_start)*stride
-            //   =>  ch1 = data + (right_start - left_start)*stride
-            ptrdiff_t adj = (ptrdiff_t) m_sfz.right_sample_offset
-                          - (ptrdiff_t) m_sfz.offset;
-            r.ch1 = r.ch0 + adj * (ptrdiff_t) r.stride;
-            r.num_channels = 2;
-        }
 
         return r;
     }
