@@ -547,6 +547,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
 
     // Accent multipliers (old: accentMultipliers f0..fN)
     juce::String accVals, accStates;
+    bool hasAccStates = false;
     if (params != nullptr)
     {
         const juce::XmlElement* accEl   = params->getChildByName ("accentMultipliers");
@@ -555,12 +556,27 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         {
             accVals = parseIndexedFloats (*accEl, "f", 256);
             if (accStEl != nullptr)
-                accStates = parseIndexedBools (*accStEl, "b", 256);
+            {
+                accStates    = parseIndexedBools (*accStEl, "b", 256);
+                hasAccStates = true;
+            }
         }
     }
-    if (accVals.isEmpty())   accVals   = "1.0";
-    if (accStates.isEmpty()) accStates = "true";
-    juce::StringArray accActiveArr = trimTrailingFalse (accStates);
+    if (accVals.isEmpty()) accVals = "1.0";
+    juce::StringArray accActiveArr;
+    if (hasAccStates)
+    {
+        if (accStates.isEmpty()) accStates = "true";
+        accActiveArr = trimTrailingFalse (accStates);
+    }
+    else
+    {
+        // Old format: no states element present. Generate a full 12-element active-states
+        // array where the first N slots (= number of defined values) are active.
+        int nActive = juce::StringArray::fromTokens (accVals, " ", "").size();
+        for (int i = 0; i < 12; ++i)
+            accActiveArr.add (i < nActive ? "true" : "false");
+    }
     {
         int accSize = juce::StringArray::fromTokens (accVals, " ", "").size();
         vt.setProperty ("accentsSliderValsSize",  accSize,                                    nullptr);
@@ -571,6 +587,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
 
     // Sustain/length multipliers (old: lengthMultipliers)
     juce::String slVals, slStates;
+    bool hasSlStates = false;
     if (params != nullptr)
     {
         const juce::XmlElement* slEl   = params->getChildByName ("lengthMultipliers");
@@ -579,12 +596,25 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         {
             slVals = parseIndexedFloats (*slEl, "f", 256);
             if (slStEl != nullptr)
-                slStates = parseIndexedBools (*slStEl, "b", 256);
+            {
+                slStates    = parseIndexedBools (*slStEl, "b", 256);
+                hasSlStates = true;
+            }
         }
     }
-    if (slVals.isEmpty())   slVals   = "1.0";
-    if (slStates.isEmpty()) slStates = "true";
-    juce::StringArray slActiveArr = trimTrailingFalse (slStates);
+    if (slVals.isEmpty()) slVals = "1.0";
+    juce::StringArray slActiveArr;
+    if (hasSlStates)
+    {
+        if (slStates.isEmpty()) slStates = "true";
+        slActiveArr = trimTrailingFalse (slStates);
+    }
+    else
+    {
+        int nActive = juce::StringArray::fromTokens (slVals, " ", "").size();
+        for (int i = 0; i < 12; ++i)
+            slActiveArr.add (i < nActive ? "true" : "false");
+    }
     {
         int slSize = juce::StringArray::fromTokens (slVals, " ", "").size();
         vt.setProperty ("sustain_length_multipliersSliderValsSize",  slSize,                                    nullptr);
@@ -595,6 +625,7 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
 
     // Beat length multipliers (old: beatMultipliers)
     juce::String blVals, blStates;
+    bool hasBlStates = false;
     if (params != nullptr)
     {
         const juce::XmlElement* blEl   = params->getChildByName ("beatMultipliers");
@@ -603,12 +634,25 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         {
             blVals = parseIndexedFloats (*blEl, "f", 256);
             if (blStEl != nullptr)
-                blStates = parseIndexedBools (*blStEl, "b", 256);
+            {
+                blStates    = parseIndexedBools (*blStEl, "b", 256);
+                hasBlStates = true;
+            }
         }
     }
-    if (blVals.isEmpty())   blVals   = "1.0";
-    if (blStates.isEmpty()) blStates = "true";
-    juce::StringArray blActiveArr = trimTrailingFalse (blStates);
+    if (blVals.isEmpty()) blVals = "1.0";
+    juce::StringArray blActiveArr;
+    if (hasBlStates)
+    {
+        if (blStates.isEmpty()) blStates = "true";
+        blActiveArr = trimTrailingFalse (blStates);
+    }
+    else
+    {
+        int nActive = juce::StringArray::fromTokens (blVals, " ", "").size();
+        for (int i = 0; i < 12; ++i)
+            blActiveArr.add (i < nActive ? "true" : "false");
+    }
     {
         int blSize = juce::StringArray::fromTokens (blVals, " ", "").size();
         vt.setProperty ("beat_length_multipliersSliderValsSize",  blSize,                                    nullptr);
@@ -1746,42 +1790,70 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
         // (In the old XML, the pianoMap standalone wrapper often appears AFTER the keymap
         // wrapper that lists it as a connection target, so the lazy-creation in
         // getOrCreatePrep would fail to find a global <pianoMap> definition.)
-        for (auto* itemWrapper = pianoEl->getFirstChildElement(); itemWrapper != nullptr;
-             itemWrapper = itemWrapper->getNextElement())
+        //
+        // Very old format (pre-bK1 mid-era): pianoMap items appear only as <connections>
+        // children of keymap items, not as standalone top-level items. Both cases are handled
+        // via tryRegisterPianoMap below.
         {
-            if (itemWrapper->getTagName().toLowerCase() != "item") continue;
-            const juce::XmlElement* selfItem = itemWrapper->getFirstChildElement();
-            if (selfItem == nullptr || selfItem->getTagName().toLowerCase() != "item") continue;
-            if (selfItem->getIntAttribute ("type", -1) != OldPianoMap) continue;
-
-            int selfId = selfItem->getIntAttribute ("Id", -1);
-            juce::String instKey = "pianoMap_" + juce::String (selfId);
-            if (instToNodeID.count (instKey)) continue;  // already registered
-
-            int oldTargetPianoId = selfItem->getIntAttribute ("piano", -1);
-            int targetIdx  = 0;
-            juce::String targetName;
-            auto idxIt = pianoIdToIndex.find (oldTargetPianoId);
-            if (idxIt != pianoIdToIndex.end())
+            auto tryRegisterPianoMap = [&] (const juce::XmlElement* pmEl)
             {
-                targetIdx  = idxIt->second;
-                targetName = pianoIdToName[oldTargetPianoId];
+                if (pmEl->getIntAttribute ("type", -1) != OldPianoMap) return;
+                int pmId = pmEl->getIntAttribute ("Id", -1);
+                juce::String pmKey = "pianoMap_" + juce::String (pmId);
+                if (instToNodeID.count (pmKey)) return;  // already registered
+
+                int oldTargetPianoId = pmEl->getIntAttribute ("piano", -1);
+                int pmTargetIdx = 0;
+                juce::String pmTargetName;
+                auto idxIt = pianoIdToIndex.find (oldTargetPianoId);
+                if (idxIt != pianoIdToIndex.end())
+                {
+                    pmTargetIdx  = idxIt->second;
+                    pmTargetName = pianoIdToName[oldTargetPianoId];
+                }
+
+                juce::String pmUUID = newUUID();
+                uint32_t pmNodeID   = juce::Uuid (pmUUID).getTimeLow();
+                instToNodeID[pmKey] = pmNodeID;
+                instToUUID[pmKey]   = pmUUID;
+
+                int& pmCounter = instanceCounters["pianoMap"];
+                ++pmCounter;
+                juce::String pmInstName = "pianoMap " + juce::String (pmCounter);
+                int pmX = (int) pmEl->getDoubleAttribute ("X", 0.0);
+                int pmY = (int) pmEl->getDoubleAttribute ("Y", 0.0);
+
+                preparations.addChild (convertPianoMap (pmNodeID, pmUUID, pmX, pmY,
+                                                        pmInstName, pmCounter,
+                                                        pmTargetIdx, pmTargetName),
+                                       -1, nullptr);
+            };
+
+            for (auto* itemWrapper = pianoEl->getFirstChildElement(); itemWrapper != nullptr;
+                 itemWrapper = itemWrapper->getNextElement())
+            {
+                if (itemWrapper->getTagName().toLowerCase() != "item") continue;
+                const juce::XmlElement* selfItem = itemWrapper->getFirstChildElement();
+                if (selfItem == nullptr || selfItem->getTagName().toLowerCase() != "item") continue;
+
+                // Case 1: selfItem itself is a pianoMap (newer legacy format).
+                tryRegisterPianoMap (selfItem);
+
+                // Case 2: itemWrapper's <connections> contain pianoMap items.
+                // In very old legacy format, pianoMap only appears as a connection
+                // target of another item (e.g. a keymap), never as a standalone top-level
+                // item, so it is never encountered as selfItem in Case 1.
+                const juce::XmlElement* wrapperConns = itemWrapper->getChildByName ("connections");
+                if (wrapperConns != nullptr)
+                {
+                    for (auto* ci = wrapperConns->getFirstChildElement(); ci != nullptr;
+                         ci = ci->getNextElement())
+                    {
+                        if (ci->getTagName().toLowerCase() == "item")
+                            tryRegisterPianoMap (ci);
+                    }
+                }
             }
-
-            juce::String uuid = newUUID();
-            uint32_t nodeID   = juce::Uuid (uuid).getTimeLow();
-            instToNodeID[instKey] = nodeID;
-            instToUUID[instKey]   = uuid;
-
-            int& counter = instanceCounters["pianoMap"];
-            ++counter;
-            juce::String instName = "pianoMap " + juce::String (counter);
-            int pmX = (int) selfItem->getDoubleAttribute ("X", 0.0);
-            int pmY = (int) selfItem->getDoubleAttribute ("Y", 0.0);
-
-            auto prepVT = convertPianoMap (nodeID, uuid, pmX, pmY,
-                                           instName, counter, targetIdx, targetName);
-            preparations.addChild (prepVT, -1, nullptr);
         }
 
         // Pre-pass 2: Create modulation and reset nodes for all modification/reset items.
