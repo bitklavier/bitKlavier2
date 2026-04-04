@@ -195,6 +195,13 @@ public:
     bool changeSFZPresetAndUpdateTree (const juce::String& currentSfzKey,
                                   int newPresetIndex,
                                  juce::ValueTree& targetTree);
+
+    // Walks a ValueTree and replaces any soundset values that use the legacy
+    // "#N" index notation (e.g. "filename.sf2||#7") with the actual preset name
+    // by loading the soundfont metadata from disk.  Call this on the gallery
+    // tree immediately after LegacyGalleryImporter::importFromFile().
+    void resolveSubsoundIndicesInTree (juce::ValueTree& tree);
+
 private:
     SFZSound* findSFZSoundByName (const juce::String& sfzName) const;
     SynthBase* parent;

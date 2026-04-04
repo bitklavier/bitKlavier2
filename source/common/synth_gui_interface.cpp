@@ -454,6 +454,11 @@ void SynthGuiInterface::importLegacyGallery()
             juce::String errorMessage;
             auto newTree = LegacyGalleryImporter::importFromFile (results[0], errorMessage);
 
+            // Resolve any "#N" subsound-index placeholders to actual preset names
+            // by loading soundfont metadata from disk (regions only, no audio).
+            if (newTree.isValid())
+                getSampleLoadManager()->resolveSubsoundIndicesInTree (newTree);
+
             if (! newTree.isValid())
             {
                 juce::AlertWindow::showMessageBoxAsync (

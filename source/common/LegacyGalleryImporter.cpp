@@ -97,6 +97,33 @@ bool LegacyGalleryImporter::isOldModType (int t)
     return t >= OldDirectMod && t <= OldTempoMod; // 6..10
 }
 
+// ---------------------------------------------------------------------------
+// Converts a legacy per-preparation soundset to the new format.
+// useGlobal: true if the preparation should sync to the gallery soundset.
+// legacySoundSet: the old "*SoundSet" string, e.g. "Orgue de salon.sf2.subsound7"
+//
+// Old format: "filename.sf2.subsoundN"  →  new format: "filename.sf2||#N"
+// useGlobal true or empty string        →  "syncglobal"
+// ---------------------------------------------------------------------------
+static juce::String convertLegacySoundSet (bool useGlobal, const juce::String& legacySoundSet)
+{
+    if (useGlobal || legacySoundSet.isEmpty())
+        return "syncglobal";
+
+    static const juce::String kToken (".subsound");
+    const int idx = legacySoundSet.lastIndexOf (kToken);
+    if (idx >= 0)
+    {
+        juce::String filename   = legacySoundSet.substring (0, idx);
+        juce::String indexStr   = legacySoundSet.substring (idx + kToken.length());
+        int          subsoundN  = indexStr.getIntValue();
+        return filename + "||#" + juce::String (subsoundN);
+    }
+
+    // Non-soundfont or unrecognised format: pass through as-is.
+    return legacySoundSet;
+}
+
 juce::String LegacyGalleryImporter::modDataTagForOldType (int t)
 {
     switch (t)
@@ -336,6 +363,16 @@ juce::ValueTree LegacyGalleryImporter::convertDirect (const juce::XmlElement& el
         port.setProperty ("chIdx",  2,                 nullptr);
         port.setProperty ("isIn",   0,                 nullptr);
         vt.addChild (port, -1, nullptr);
+    }
+
+    // Per-preparation soundset (overrides the default "syncglobal" set above)
+    if (params != nullptr)
+    {
+        bool useGlobal = (params->getIntAttribute ("directUseGlobalSoundSet", 1) != 0);
+        vt.setProperty ("soundset",
+                        convertLegacySoundSet (useGlobal,
+                            params->getStringAttribute ("directSoundSet", "")),
+                        nullptr);
     }
 
     return vt;
@@ -684,6 +721,16 @@ juce::ValueTree LegacyGalleryImporter::convertSynchronic (const juce::XmlElement
         vt.addChild (port, -1, nullptr);
     }
 
+    // Per-preparation soundset
+    if (params != nullptr)
+    {
+        bool useGlobal = (params->getIntAttribute ("synchronicUseGlobalSoundSet", 1) != 0);
+        vt.setProperty ("soundset",
+                        convertLegacySoundSet (useGlobal,
+                            params->getStringAttribute ("synchronicSoundSet", "")),
+                        nullptr);
+    }
+
     return vt;
 }
 
@@ -888,6 +935,16 @@ juce::ValueTree LegacyGalleryImporter::convertNostalgic (const juce::XmlElement&
         port.setProperty ("chIdx",  chIdx,             nullptr);
         port.setProperty ("isIn",   isIn,              nullptr);
         vt.addChild (port, -1, nullptr);
+    }
+
+    // Per-preparation soundset
+    if (params != nullptr)
+    {
+        bool useGlobal = (params->getIntAttribute ("nostalgicUseGlobalSoundSet", 1) != 0);
+        vt.setProperty ("soundset",
+                        convertLegacySoundSet (useGlobal,
+                            params->getStringAttribute ("nostalgicSoundSet", "")),
+                        nullptr);
     }
 
     return vt;
@@ -1513,7 +1570,26 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
 
     // Create the root GALLERY ValueTree
     juce::ValueTree gallery ("GALLERY");
-    gallery.setProperty ("soundset", "Yamaha_Default", nullptr);
+
+    // Determine gallery-level soundset from legacy sampleType / soundfontURL / soundfontInst.
+    // sampleType == 4 means the gallery uses a soundfont; other values default to Yamaha_Default.
+    {
+        int sampleType = xmlDoc->getIntAttribute ("sampleType", 0);
+        if (sampleType == 4)
+        {
+            juce::String sfURL  = xmlDoc->getStringAttribute ("soundfontURL",  "");
+            int          sfInst = xmlDoc->getIntAttribute    ("soundfontInst", 0);
+            if (sfURL.isNotEmpty())
+                gallery.setProperty ("soundset", sfURL + "||#" + juce::String (sfInst), nullptr);
+            else
+                gallery.setProperty ("soundset", "Yamaha_Default", nullptr);
+        }
+        else
+        {
+            gallery.setProperty ("soundset", "Yamaha_Default", nullptr);
+        }
+    }
+
     gallery.setProperty ("uuid",     newUUID(),         nullptr);
 
     // Global settings from <general>

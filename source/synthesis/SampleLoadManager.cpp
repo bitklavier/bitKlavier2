@@ -538,6 +538,72 @@ bool SampleLoadManager::selectSFZPreset(const juce::String &sfzName,
     return true;
 }
 
+void SampleLoadManager::resolveSubsoundIndicesInTree (juce::ValueTree& tree)
+{
+    juce::File soundfontsDir (
+        preferences->userPreferences->tree.getProperty ("default_soundfonts_path").toString());
+
+    // Cache: soundfont base filename → loaded SFZSound (regions only, no audio data)
+    std::map<juce::String, std::unique_ptr<SFZSound>> sfCache;
+
+    std::function<void (juce::ValueTree&)> walk = [&] (juce::ValueTree& node)
+    {
+        auto soundsetVar = node.getProperty (IDs::soundset);
+        if (soundsetVar.isString())
+        {
+            juce::String soundsetKey = soundsetVar.toString();
+            juce::String preset = sfzPresetFromKey (soundsetKey);
+
+            if (preset.startsWith ("#"))
+            {
+                const int index    = preset.substring (1).getIntValue();
+                juce::String base  = sfzBaseFromKey (soundsetKey);
+
+                // Find or load the soundfont metadata
+                SFZSound* sfz = nullptr;
+                auto it = sfCache.find (base);
+                if (it == sfCache.end())
+                {
+                    juce::File sfFile = soundfontsDir.getChildFile (base);
+                    if (sfFile.existsAsFile())
+                    {
+                        const juce::String ext = sfFile.getFileExtension().toLowerCase();
+                        std::unique_ptr<SFZSound> newSound;
+                        if (ext == ".sf2")
+                            newSound = std::make_unique<SF2Sound> (sfFile.getFullPathName().toStdString());
+                        else if (ext == ".sfz")
+                            newSound = std::make_unique<SFZSound> (sfFile.getFullPathName().toStdString());
+                        if (newSound)
+                            newSound->load_regions(); // metadata only — no audio loaded
+                        sfCache.emplace (base, std::move (newSound));
+                    }
+                    else
+                    {
+                        sfCache.emplace (base, nullptr); // mark as tried-and-failed
+                    }
+                    it = sfCache.find (base);
+                }
+                if (it != sfCache.end())
+                    sfz = it->second.get();
+
+                if (sfz != nullptr && index >= 0 && index < sfz->num_subsounds())
+                {
+                    juce::String actualName (sfz->subsound_name (index));
+                    node.setProperty (IDs::soundset, makeSFZKey (base, actualName), nullptr);
+                }
+            }
+        }
+
+        for (int i = 0; i < node.getNumChildren(); ++i)
+        {
+            auto child = node.getChild (i);
+            walk (child);
+        }
+    };
+
+    walk (tree);
+}
+
 bool SampleLoadManager::changeSFZPresetAndUpdateTree(const juce::String &currentSfzKey,
                                                      int newPresetIndex,
                                                      juce::ValueTree &targetTree) {
@@ -990,8 +1056,27 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
 
     auto preset = sfzPresetFromKey(progress->soundsetName);
     if (preset.isNotEmpty()) {
-        int index = subsoundIndexForName(*sound,preset);
-        sound->use_subsound(index);
+        if (preset.startsWith ("#"))
+        {
+            // Index-based preset from legacy gallery import ("filename.sf2||#N").
+            // Resolve the index to the actual subsound name so that markComplete()
+            // stores the proper key and updates the ValueTree correctly.
+            const int index = preset.substring (1).getIntValue();
+            if (index >= 0 && index < sound->num_subsounds())
+            {
+                juce::String actualName (sound->subsound_name (index));
+                sound->use_subsound (index);
+                // Replace the "#N" token in soundsetName with the resolved name.
+                progress->soundsetName = makeSFZKey (
+                    sfzBaseFromKey (juce::String (progress->soundsetName)),
+                    actualName).toStdString();
+            }
+        }
+        else
+        {
+            int index = subsoundIndexForName(*sound,preset);
+            sound->use_subsound(index);
+        }
     }
     // dBFS stuff not currently relevant for soundfonts
     float dBFSBelow = -100.0f;
