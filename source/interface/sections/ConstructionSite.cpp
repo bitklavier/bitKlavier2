@@ -588,6 +588,30 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
 
                 auto& lasso = preparationSelector.getLassoSelection();
                 auto lassoCopy  = lasso;
+
+                // If a Keymap is being deleted, clear the footer display now.
+                // changeListenerCallback won't fire because removeModule destroys the
+                // PreparationSection (and removes it as a change listener) before the
+                // async sendChangeMessage() from deselectAll() can deliver the callback.
+                {
+                    bool deletingKeymap = false;
+                    for (auto* prep : lassoCopy)
+                    {
+                        if (dynamic_cast<KeymapProcessor*> (prep->getProcessor()) != nullptr)
+                        {
+                            deletingKeymap = true;
+                            break;
+                        }
+                    }
+                    if (deletingKeymap)
+                    {
+                        if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+                            if (auto* gui = iface->getGui())
+                                if (gui->footer_)
+                                    gui->footer_->clearKeymapDisplay();
+                    }
+                }
+
                 lasso.deselectAll();
 
                 juce::Array<juce::ValueTree> prepsToRemove;
