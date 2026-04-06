@@ -253,7 +253,7 @@ void PreparationList::prependAllPianoChangeProcessorsTo(const PluginInstanceWrap
 
 }
 
-//this gets called on creation for a piano swithc
+//this gets called on creation for a piano switch
 void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapper *piano_switch) {
     jassert(dynamic_cast<PianoSwitchProcessor*>(piano_switch->proc));
     for (auto& piano_switch_array : synth.preparationLists) {
@@ -261,9 +261,26 @@ void PreparationList::prependPianoChangeProcessorToAll(const PluginInstanceWrapp
             if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr && dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr && dynamic_cast<bitklavier::CommentProcessor*>(processor->proc) == nullptr)
                 if(!synth.addModulationConnection(piano_switch->node_id,processor->node_id))
                     jassertfalse;
-            // else
-            //     DBG(juce::String("did not prepend") + juce::String(processor->state.getProperty(IDs::type)));
+        }
+    }
 
+    // During construction, this PreparationList is not yet in synth.preparationLists (the
+    // emplace_back that owns us hasn't returned yet), so the loop above misses all same-piano
+    // processors.  Add those connections here when the list isn't registered yet.
+    bool isAlreadyInList = false;
+    for (const auto& pl : synth.preparationLists)
+        if (pl.get() == this) { isAlreadyInList = true; break; }
+
+    if (!isAlreadyInList)
+    {
+        for (auto processor : objects)
+        {
+            if (processor == piano_switch) continue;
+            if (dynamic_cast<PianoSwitchProcessor*>(processor->proc) == nullptr &&
+                dynamic_cast<KeymapProcessor*>(processor->proc) == nullptr &&
+                dynamic_cast<bitklavier::CommentProcessor*>(processor->proc) == nullptr)
+                if (!synth.addModulationConnection(piano_switch->node_id, processor->node_id))
+                    jassertfalse;
         }
     }
 }

@@ -460,6 +460,8 @@ void BKSynthesiser::noteOn (const int midiChannel,
 {
     const juce::ScopedLock sl (lock);
 
+    DBG("BKSynthesiser::noteOn " << midiNoteNumber << " " << velocity);
+
     if (noteOnSpecs == nullptr)
         return;
 

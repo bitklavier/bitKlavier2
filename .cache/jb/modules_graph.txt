@@ -1,7 +1,8 @@
-4
+5
 0
 {"Hash":"","Name":"","Path":"/Users/dtrueman/Code/bitKlavier2/source/synthesis/sound_engine/sound_engine.cpp"}
 {"Hash":"","Name":"","Path":"/Users/dtrueman/Code/bitKlavier2/source/common/LegacyGalleryImporter.cpp"}
 {"Hash":"","Name":"","Path":"/Users/dtrueman/Code/bitKlavier2/source/synthesis/synth_base.cpp"}
+{"Hash":"","Name":"","Path":"/Users/dtrueman/Code/bitKlavier2/source/synthesis/framework/Synthesiser/BKSynthesiser.cpp"}
 {"Hash":"","Name":"","Path":"/Users/dtrueman/Code/bitKlavier2/source/synthesis/framework/Processors/EQProcessor.cpp"}
 0
