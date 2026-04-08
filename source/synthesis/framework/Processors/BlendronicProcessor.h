@@ -68,6 +68,7 @@ struct BlendronicParams : chowdsp::ParamHolder
         add (
             outputGain,
             inputGain,
+            externalGain,
             outputSend,
             updateUIState);
 
@@ -107,12 +108,21 @@ struct BlendronicParams : chowdsp::ParamHolder
         false,
     };
 
-    // To adjust the gain of signals coming in to blendronic
+    // To adjust the gain of signals coming in internally (from other preparations)
     chowdsp::GainDBParameter::Ptr inputGain {
          juce::ParameterID { "InputGain", 100 },
-         "Input Gain",
+         "Internal Gain",
          juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
          0.0f,
+         true
+    };
+
+    // To adjust the gain of external audio input (mic/line in standalone, DAW sidechain in plugin)
+    chowdsp::GainDBParameter::Ptr externalGain {
+         juce::ParameterID { "ExternalGain", 100 },
+         "External Gain",
+         juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+         rangeStart,  // default: fully off (-80dB); user raises it to enable external input
          true
     };
 
@@ -191,6 +201,7 @@ struct BlendronicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
 
     /*
      * for keeping track of the current multislider lengths
@@ -210,7 +221,8 @@ struct BlendronicNonParameterState : chowdsp::NonParamState
 };
 
 class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<BlendronicParams, BlendronicNonParameterState>>,
-                            public juce::ValueTree::Listener
+                            public juce::ValueTree::Listener,
+                            public bitklavier::ExternalAudioInputReceiver
 {
 public:
     BlendronicProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -226,6 +238,9 @@ public:
     void handleMidiTargetMessages(juce::MidiBuffer& midiMessages);
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     void processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
+
+    // ExternalAudioInputReceiver — called by SoundEngine::addNode at construction time
+    void setExternalInputBuffer (const juce::AudioBuffer<float>* buf) override { externalInputBuffer = buf; }
 
     void allNotesOff()
     {
@@ -316,6 +331,10 @@ private:
 
     // Values of previous step values for smoothing. Saved separately from param arrays to account for changes to the sequences
     float prevBeat, prevDelay, prevPulseLength;
+
+    // Non-owning pointer to SoundEngine's pre-allocated external input buffer.
+    // Set once by setExternalInputBuffer() at node construction time; null-checked before use.
+    const juce::AudioBuffer<float>* externalInputBuffer = nullptr;
 
     juce::ScopedPointer<BufferDebugger> bufferDebugger;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BlendronicProcessor)

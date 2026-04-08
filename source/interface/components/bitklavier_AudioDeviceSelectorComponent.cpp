@@ -40,47 +40,6 @@
 namespace bitklavier
 {
 
-    struct SimpleDeviceManagerInputLevelMeter final : public juce::Component,
-                                                      public juce::Timer
-    {
-        SimpleDeviceManagerInputLevelMeter (juce::AudioDeviceManager& m)  : manager (m)
-        {
-            startTimerHz (20);
-            inputLevelGetter = manager.getInputLevelGetter();
-        }
-
-        void timerCallback() override
-        {
-            if (isShowing())
-            {
-                auto newLevel = (float) inputLevelGetter->getCurrentLevel();
-
-                if (std::abs (level - newLevel) > 0.005f)
-                {
-                    level = newLevel;
-                    repaint();
-                }
-            }
-            else
-            {
-                level = 0;
-            }
-        }
-
-        void paint (juce::Graphics& g) override
-        {
-            // (add a bit of a skew to make the level more obvious)
-            getLookAndFeel().drawLevelMeter (g, getWidth(), getHeight(),
-                                             (float) std::exp (std::log (level) / 3.0));
-        }
-
-        juce::AudioDeviceManager& manager;
-        juce::AudioDeviceManager::LevelMeter::Ptr inputLevelGetter;
-        float level = 0;
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleDeviceManagerInputLevelMeter)
-    };
-
     static void drawTextLayout (juce::Graphics& g, juce::Component& owner, juce::StringRef text, const juce::Rectangle<int>& textBounds, bool enabled)
     {
         const auto textColour = owner.findColour (juce::ListBox::textColourId, true).withMultipliedAlpha (enabled ? 1.0f : 0.6f);
@@ -349,9 +308,6 @@ namespace bitklavier
             if (inputDeviceDropDown != nullptr)
             {
                 auto row = r.removeFromTop (h);
-
-                inputLevelMeter->setBounds (row.removeFromRight (testButton != nullptr ? testButton->getWidth() : row.getWidth() / 6));
-                row.removeFromRight (space);
                 inputDeviceDropDown->setBounds (row);
                 r.removeFromTop (space);
             }
@@ -629,7 +585,6 @@ namespace bitklavier
         std::unique_ptr<juce::ComboBox> outputDeviceDropDown, inputDeviceDropDown, sampleRateDropDown, bufferSizeDropDown;
         std::unique_ptr<juce::Label> outputDeviceLabel, inputDeviceLabel, sampleRateLabel, bufferSizeLabel, inputChanLabel, outputChanLabel;
         std::unique_ptr<juce::TextButton> testButton;
-        std::unique_ptr<juce::Component> inputLevelMeter;
         std::unique_ptr<juce::TextButton> showUIButton, showAdvancedSettingsButton, resetDeviceButton;
 
         int findSelectedDeviceIndex (bool isInput) const
@@ -765,8 +720,6 @@ namespace bitklavier
                     inputDeviceLabel = std::make_unique<juce::Label> (juce::String{}, TRANS ("Input:"));
                     inputDeviceLabel->attachToComponent (inputDeviceDropDown.get(), true);
 
-                    inputLevelMeter = std::make_unique<SimpleDeviceManagerInputLevelMeter> (*setup.manager);
-                    addAndMakeVisible (inputLevelMeter.get());
                 }
 
                 addNamesToDeviceBox (*inputDeviceDropDown, true);
@@ -1085,7 +1038,8 @@ namespace bitklavier
                                                                 bool showMidiInputOptions,
                                                                 bool showMidiOutputSelector,
                                                                 bool showChannelsAsStereoPairsToUse,
-                                                                bool hideAdvancedOptionsWithButtonToUse, juce::ValueTree tree)
+                                                                bool hideAdvancedOptionsWithButtonToUse,
+                                                                juce::ValueTree tree)
             : deviceManager (dm),
               itemHeight (24),
               minOutputChannels (minOutputChannelsToUse),
@@ -1234,7 +1188,7 @@ namespace bitklavier
         if (midiInputsList != nullptr)
         {
             midiInputsList->setRowHeight (juce::jmin (22, itemHeight));
-            midiInputsList->setBounds (r.removeFromTop (midiInputsList->getBestHeight (juce::jmin (itemHeight * 8,
+            midiInputsList->setBounds (r.removeFromTop (midiInputsList->getBestHeight (juce::jmin (itemHeight * 4,
                                                                                              getHeight() - r.getY() - space - itemHeight))));
             r.removeFromTop (space);
         }

@@ -23,13 +23,15 @@
 #include "UserPreferences.h"
 #include "bitklavier_AudioDeviceSelectorComponent.h"
 
-class OpenGlDeviceSelector : public OpenGlAutoImageComponent<bitklavier::AudioDeviceSelectorComponent> {
+class OpenGlDeviceSelector : public OpenGlAutoImageComponent<bitklavier::AudioDeviceSelectorComponent>,
+                             private juce::Timer {
   public:
     OpenGlDeviceSelector(juce::AudioDeviceManager& device_manager,
                          int min_audio_input_channels, int max_audioInput_channels,
                          int min_audio_output_channels, int max_audioOutput_channels,
                          bool show_midi_input_options, bool show_midi_output_selector,
-                         bool show_channels_as_stereo_pairs, bool hide_advanced_options_with_button, juce::ValueTree tree) :
+                         bool show_channels_as_stereo_pairs, bool hide_advanced_options_with_button,
+                         juce::ValueTree tree) :
         OpenGlAutoImageComponent<bitklavier::AudioDeviceSelectorComponent>(device_manager,
                                                                min_audio_input_channels, max_audioInput_channels,
                                                                min_audio_output_channels, max_audioOutput_channels,
@@ -45,6 +47,17 @@ class OpenGlDeviceSelector : public OpenGlAutoImageComponent<bitklavier::AudioDe
     virtual void resized() override {
       OpenGlAutoImageComponent<bitklavier::AudioDeviceSelectorComponent>::resized();
       if (isShowing())
+        redoImage();
+    }
+
+    void visibilityChanged() override {
+        if (isShowing())
+            startTimerHz(15);
+        else
+            stopTimer();
+    }
+
+    void timerCallback() override {
         redoImage();
     }
 

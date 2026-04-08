@@ -21,6 +21,21 @@ template<typename T>
 class BKSamplerSound;
 
 namespace bitklavier {
+
+    /**
+     * Interface for preparations that can receive external audio input (mic/line in standalone,
+     * or DAW sidechain in plugin format). Implement this on any processor that wants to mix in
+     * external audio alongside its internal audio input.
+     *
+     * SoundEngine::addNode automatically detects this interface and injects a pointer to its
+     * pre-allocated externalInputBuffer, so the processor can read from it each processBlock.
+     */
+    class ExternalAudioInputReceiver {
+    public:
+        virtual ~ExternalAudioInputReceiver() = default;
+        virtual void setExternalInputBuffer(const juce::AudioBuffer<float>* buf) = 0;
+    };
+
     class InternalProcessor : public juce::AudioProcessor {
     public:
         InternalProcessor(juce::AudioProcessor::BusesProperties layout,

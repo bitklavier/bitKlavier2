@@ -54,7 +54,8 @@ private juce::ChangeListener
     bool showMidiInputOptions,
     bool showMidiOutputSelector,
     bool showChannelsAsStereoPairs,
-    bool hideAdvancedOptionsWithButton, juce::ValueTree tree);
+    bool hideAdvancedOptionsWithButton,
+    juce::ValueTree tree);
 
     /** Destructor */
     ~AudioDeviceSelectorComponent() override;

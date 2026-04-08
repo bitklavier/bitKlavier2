@@ -115,7 +115,7 @@ PeakMeterSection::PeakMeterSection(
         volume_->setSliderStyle(juce::Slider::LinearBarVertical);
         peak_meter_label = std::make_shared<PlainTextComponent>("peak_meter", "Gain");
         addOpenGlComponent(peak_meter_label);
-        peak_meter_label->setTextSize (12.0f);
+        peak_meter_label->setTextSize (11.0f);
         peak_meter_label->setJustification(juce::Justification::centredLeft);
         peak_meter_label->setRotation(-90);
     }

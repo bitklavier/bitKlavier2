@@ -83,10 +83,15 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
-        // and for input level meter/slider
+        // internal input level meter/slider (audio from other preparations bussed into Blendronic)
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
-        inLevelMeter->setLabel("Input");
+        inLevelMeter->setLabel("Internal");
         addSubSection(inLevelMeter.get());
+
+        // external input level meter/slider (mic/line in standalone, DAW sidechain in plugin)
+        externalLevelMeter = std::make_shared<PeakMeterSection>(name, params.externalGain, listeners, &params.externalLevels);
+        externalLevelMeter->setLabel("External");
+        addSubSection(externalLevelMeter.get());
 
         /*
          * listen for changes from mods/resets, redraw as needed
@@ -148,6 +153,7 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
     std::shared_ptr<PeakMeterSection> inLevelMeter;
+    std::shared_ptr<PeakMeterSection> externalLevelMeter;
 
     BlendronicParams& bparams_;
 

@@ -59,7 +59,59 @@ namespace bitklavier
             gainProcessor->prepareToPlay (sampleRate, samplesPerBlock);
             eqProcessor->prepareToPlay (sampleRate, samplesPerBlock);
             compressorProcessor->prepareToPlay (sampleRate, samplesPerBlock);
+            externalInputBuffer.setSize (2, samplesPerBlock, false, true, true);
+            // Decay to 1% of peak in ~1.5 seconds; recomputed whenever buffer size / sample rate changes
+            externalInputDecayFactor_ = std::exp (std::log (0.01f) * (float) samplesPerBlock / (float) (sampleRate * 1.5));
         }
+
+        /**
+         * Copy stereo external audio (mic/line in standalone, DAW sidechain in plugin) into the
+         * shared externalInputBuffer so that ExternalAudioInputReceiver processors can read it
+         * during the upcoming processBlock call. Must be called on the audio thread before
+         * processAudioAndMidi each block.
+         */
+        void setExternalInput (const juce::AudioBuffer<float>& src, int numActiveInputChannels)
+        {
+            // numActiveInputChannels is the true number of active input channels from the device.
+            // src.getNumChannels() is max(inputs, outputs), so a mono device with stereo output
+            // gives a 2-channel buffer where only channel 0 has mic data — the numChannels == 1
+            // check on src alone would never fire. We use numActiveInputChannels instead.
+            const int numSamples  = juce::jmin (src.getNumSamples(), externalInputBuffer.getNumSamples());
+            const int numChannels = juce::jmin (numActiveInputChannels, src.getNumChannels(), externalInputBuffer.getNumChannels());
+
+            if (numChannels == 0)
+            {
+                // No active input (standalone with no mic, or plugin sidechain disconnected)
+                externalInputBuffer.clear();
+                externalInputDisplayPeak_ = 0.0f;
+                externalInputPeakLevel.store (0.0f, std::memory_order_relaxed);
+                return;
+            }
+
+            for (int ch = 0; ch < numChannels; ++ch)
+                externalInputBuffer.copyFrom (ch, 0, src, ch, 0, numSamples);
+            // mono input: duplicate channel 0 to channel 1 so Blendronic gets signal on both sides
+            if (numChannels == 1)
+                externalInputBuffer.copyFrom (1, 0, externalInputBuffer, 0, 0, numSamples);
+
+            // Compute fast-attack / slow-decay peak for the about-section input meter
+            float blockPeak = 0.0f;
+            if (numChannels > 0 && numSamples > 0)
+            {
+                for (int ch = 0; ch < numChannels; ++ch)
+                    blockPeak = juce::jmax (blockPeak, externalInputBuffer.getMagnitude (ch, 0, numSamples));
+            }
+            if (blockPeak > externalInputDisplayPeak_)
+                externalInputDisplayPeak_ = blockPeak;
+            else
+                externalInputDisplayPeak_ *= externalInputDecayFactor_;
+
+            externalInputPeakLevel.store (externalInputDisplayPeak_, std::memory_order_relaxed);
+        }
+
+        // Peak level of the most recent external input block, updated on the audio thread.
+        // Safe to read from the message thread via std::atomic load.
+        std::atomic<float> externalInputPeakLevel { 0.0f };
 
         int getDefaultSampleRate() { return kDefaultSampleRate; }
 
@@ -129,6 +181,14 @@ namespace bitklavier
         // Registry of UI live MIDI listeners to attach to future MidiManagers
         std::vector<MidiManager::LiveMidiListener*> live_ui_listeners_;
 
+        /**
+         * Pre-allocated stereo buffer for external audio input (mic/line in standalone,
+         * DAW sidechain in plugin format). Resized in prepareToPlay. Populated each block
+         * by setExternalInput() before processAudioAndMidi runs. ExternalAudioInputReceiver
+         * processors hold a non-owning pointer to this and read from it in processBlock.
+         */
+        juce::AudioBuffer<float> externalInputBuffer { 2, 512 };
+
         juce::AudioProcessorGraph::NodeID getNextUID() noexcept
         {
             return juce::AudioProcessorGraph::NodeID (++(lastUID.uid));
@@ -153,7 +213,13 @@ namespace bitklavier
 
             auto processor = node->getProcessor();
 
-            // --- 2. MIDI AUTO-CONNECTION ---
+            // --- 2. EXTERNAL AUDIO INPUT INJECTION ---
+            // If this processor can receive external audio (mic/line or DAW sidechain),
+            // give it a non-owning pointer to our pre-allocated externalInputBuffer.
+            if (auto* receiver = dynamic_cast<bitklavier::ExternalAudioInputReceiver*> (processor))
+                receiver->setExternalInputBuffer (&externalInputBuffer);
+
+            // --- 3. MIDI AUTO-CONNECTION ---
             // In bitKlavier, we handle host MIDI injection manually into Keymap objects
             // via injectHostMidi(). We bypass the standard graph auto-connections for host MIDI
             // to ensure messages only reach non-Keymap objects through explicit graph wiring.
@@ -163,7 +229,7 @@ namespace bitklavier
             if (getBatchLoading())
                 return node;
 
-            // --- 3. AUDIO OUTPUT AUTO-CONNECTION ---
+            // --- 4. AUDIO OUTPUT AUTO-CONNECTION ---
             // Identification: Should this processor's audio be automatically wired to the main output?
             // We skip processors that are strictly for modulation (like ModulationProcessor)
             // because their "Main Bus" might contain non-audio signals.
@@ -658,6 +724,9 @@ namespace bitklavier
         std::atomic<double> pendingTempoMultiplier { 1.0 };
         std::atomic<bool>   tempoMultiplierDirty { false };
         std::atomic<bool>   isBatchLoading { false };
+
+        float externalInputDisplayPeak_ = 0.0f;   // smoothed peak, audio-thread only
+        float externalInputDecayFactor_  = 0.965f; // per-block decay, recomputed in prepareToPlay
 
         std::unique_ptr<juce::AudioProcessorGraph> processorGraph;
 

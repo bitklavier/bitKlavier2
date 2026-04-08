@@ -325,14 +325,33 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     // bufferDebugger->capture("L", buffer.getReadPointer(0), numSamples, -1.f, 1.f);
     // bufferDebugger->capture("R", buffer.getReadPointer(1), numSamples, -1.f, 1.f);
 
-    // apply the input gain multiplier
+    // apply the internal input gain multiplier (audio from other preparations)
     auto inputgainmult = bitklavier::utils::dbToMagnitude (state.params.inputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, inputgainmult);
     buffer.applyGain(1, 0, numSamples, inputgainmult);
 
-    // input level meter update stuff
+    // internal level meter — measured after internal gain, before external is added
     std::get<0> (state.params.inputLevels) = buffer.getRMSLevel (0, 0, numSamples);
     std::get<1> (state.params.inputLevels) = buffer.getRMSLevel (1, 0, numSamples);
+
+    // mix in external audio input (mic/line in standalone, DAW sidechain in plugin)
+    if (externalInputBuffer != nullptr)
+    {
+        const int extSamples = juce::jmin (numSamples, externalInputBuffer->getNumSamples());
+        auto extgainmult = bitklavier::utils::dbToMagnitude (state.params.externalGain->getCurrentValue());
+
+        // meter shows the gain-adjusted external level independently of the internal signal
+        std::get<0> (state.params.externalLevels) = externalInputBuffer->getRMSLevel (0, 0, extSamples) * extgainmult;
+        std::get<1> (state.params.externalLevels) = externalInputBuffer->getRMSLevel (1, 0, extSamples) * extgainmult;
+
+        buffer.addFrom (0, 0, *externalInputBuffer, 0, 0, extSamples, extgainmult);
+        buffer.addFrom (1, 0, *externalInputBuffer, 1, 0, extSamples, extgainmult);
+    }
+    else
+    {
+        std::get<0> (state.params.externalLevels) = 0.0f;
+        std::get<1> (state.params.externalLevels) = 0.0f;
+    }
 
     // get the pointers for the samples to read from and write to
     auto outL = buffer.getWritePointer(0, 0);

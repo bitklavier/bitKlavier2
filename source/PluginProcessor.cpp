@@ -27,6 +27,9 @@ PluginProcessor::PluginProcessor()
               .withInput ("Input", juce::AudioChannelSet::stereo(), true)
     #endif
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+    #if JucePlugin_IsSynth
+              .withInput  ("Sidechain", juce::AudioChannelSet::stereo(), false)
+    #endif
 #endif
       ),
       SynthBase (nullptr)
@@ -138,6 +141,15 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
         return false;
     #endif
 
+    // Sidechain input bus (bus 0 for synths) must be stereo or disabled
+    #if JucePlugin_IsSynth
+    {
+        auto sideChain = layouts.getChannelSet (true, 0);
+        if (!sideChain.isDisabled() && sideChain != juce::AudioChannelSet::stereo())
+            return false;
+    }
+    #endif
+
     return true;
 #endif
 }
@@ -160,6 +172,25 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
+
+    // Route DAW sidechain to Blendronic (and any other ExternalAudioInputReceiver processors).
+    // The sidechain bus is input bus 0 for this synth plugin; Logic Pro activates it via the
+    // "Side Chain" menu in the channel strip.
+    #if JucePlugin_IsSynth
+    if (engine_ != nullptr)
+    {
+        auto* sidechainBus = getBus (true, 0);
+        if (sidechainBus != nullptr && sidechainBus->isEnabled())
+        {
+            auto sideChainBuf = getBusBuffer (buffer, true, 0);
+            engine_->setExternalInput (sideChainBuf, sideChainBuf.getNumChannels());
+        }
+        else
+        {
+            engine_->setExternalInput (juce::AudioBuffer<float>(), 0);
+        }
+    }
+    #endif
 
     // Forward host playhead to our internal graph so sub-processors (e.g., Tempo) can query it
     if (engine_ != nullptr)

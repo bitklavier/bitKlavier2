@@ -61,9 +61,15 @@ void BlendronicParametersView::resized()
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft(title_width);
     bounds.removeFromLeft(smallpadding);
-    inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
+    bounds.removeFromTop(8);      // push meters down a few pixels so label tops aren't clipped
+    bounds.removeFromBottom(20);  // shorten all meters (and multisliders) by 20px
 
-    // bounds for level meter on right side
+    // left group: Internal then External meters
+    inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
+    bounds.removeFromLeft(smallpadding);
+    externalLevelMeter->setBounds(bounds.removeFromLeft(title_width));
+
+    // right group: Main then Send meters
     juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
     levelMeter->setBounds(meterArea);
 

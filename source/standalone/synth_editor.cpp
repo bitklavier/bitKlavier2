@@ -49,13 +49,13 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
   //computer_keyboard_ = std::make_unique<SynthComputerKeyboard>(engine_.get(), keyboard_state_.get());
   current_time_ = 0.0;
 
-  setAudioChannels(0, bitklavier::kNumChannels);
+  setAudioChannels(bitklavier::kNumChannels, bitklavier::kNumChannels);
 
   juce::AudioDeviceManager::AudioDeviceSetup setup;
   deviceManager.getAudioDeviceSetup(setup);
   setup.sampleRate = bitklavier::kDefaultSampleRate;
   setup.bufferSize = 128;
-  deviceManager.initialise(0, bitklavier::kNumChannels, nullptr, true, "", &setup);
+  deviceManager.initialise(bitklavier::kNumChannels, bitklavier::kNumChannels, nullptr, true, "", &setup);
 
   if (deviceManager.getCurrentAudioDevice() == nullptr) {
     const juce::OwnedArray<juce::AudioIODeviceType>& device_types = deviceManager.getAvailableDeviceTypes();
@@ -164,6 +164,17 @@ void SynthEditor::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer) 
 ////    processAudio(buffer.buffer, bitklavier::kNumChannels, current_samples, b);
 //    current_time_ += current_samples * sample_time;
 //  }
+    // Pass mic/line input to Blendronic (and any future ExternalAudioInputReceiver preparations)
+    // before the graph runs. The input audio is in channels 0-1 at this point; processAudioAndMidi
+    // will overwrite those channels with synthesized output.
+    // Query the device for the true active input channel count — the buffer's channel count is
+    // max(inputs, outputs), so a mono device with stereo output reports 2 channels even though
+    // only channel 0 has real input data.
+    int numActiveInputCh = 0;
+    if (auto* device = deviceManager.getCurrentAudioDevice())
+        numActiveInputCh = device->getActiveInputChannels().countNumberOfSetBits();
+    engine_->setExternalInput(*buffer.buffer, numActiveInputCh);
+
     processAudioAndMidi(*buffer.buffer, midi_messages);
 
 }

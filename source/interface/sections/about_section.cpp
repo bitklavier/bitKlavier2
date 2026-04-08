@@ -58,7 +58,8 @@ void AboutSection::resized() {
         juce::AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
         if (device_manager) {
           device_selector_ = std::make_unique<OpenGlDeviceSelector>(
-              *device_manager, 0, 0, bitklavier::kNumChannels, bitklavier::kNumChannels, true, false, false, false, parent->getSynth()->user_prefs->tree);
+              *device_manager, 0, bitklavier::kNumChannels, bitklavier::kNumChannels, bitklavier::kNumChannels,
+              true, false, false, false, parent->getSynth()->user_prefs->tree);
           addAndMakeVisible(device_selector_.get());
           addOpenGlComponent(device_selector_->getImageComponent());
         }
