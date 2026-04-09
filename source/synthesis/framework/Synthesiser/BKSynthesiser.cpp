@@ -327,6 +327,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
 
     if (!bypassed)
     {
+        DBG("BKSynthesiser::handleMidiEvent, m.isController = " << (int)m.isController());
         if (m.isNoteOn())
         {
             // DBG ("BKSynthesizer Note On " + juce::String (m.getNoteNumber()) + " " + juce::String (m.getVelocity()));
@@ -385,6 +386,7 @@ void BKSynthesiser::handleMidiEvent (const juce::MidiMessage& m)
         }
         else if (m.isController())
         {
+            DBG("about to handle controller");
             handleController (channel, m.getControllerNumber(), m.getControllerValue());
         }
         else if (m.isProgramChange())
@@ -715,6 +717,8 @@ void BKSynthesiser::noteOff (const int midiChannel,
     const float velocity,
     const bool allowTailOff)
 {
+    DBG("BKSynthesiser::noteOff " << midiNoteNumber << " " << velocity);
+
     const juce::ScopedLock sl (lock);
 
     if (noteOnSpecs == nullptr)
@@ -830,7 +834,7 @@ void BKSynthesiser::handleChannelPressure (int midiChannel, int channelPressureV
 
 void BKSynthesiser::handleSustainPedal (int midiChannel, bool isDown)
 {
-    //DBG ("BKSynthesiser::handleSustainPedal");
+    DBG ("BKSynthesiser::handleSustainPedal");
     jassert (midiChannel > 0 && midiChannel <= 16);
     const juce::ScopedLock sl (lock);
 

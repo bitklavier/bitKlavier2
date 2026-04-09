@@ -35,6 +35,8 @@ void ResonanceParametersView::resized()
 
     // bounds for level meter on right side
     juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
+    meterArea.removeFromTop(8);      // push meters down a few pixels so label tops aren't clipped
+    meterArea.removeFromBottom(20);  // shorten all meters (and multisliders) by 20px
     levelMeter->setBounds(meterArea);
 
     bounds.removeFromRight(smallpadding);

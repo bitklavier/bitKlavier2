@@ -157,6 +157,16 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 {
     state.params.velocityMinMax.processStateChanges();
 
+    // // print them out for now
+    // for (auto mi : midiMessages)
+    // {
+    //     auto message = mi.getMessage();
+    //
+    //     mi.samplePosition;
+    //     mi.data;
+    //     DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
+    // }
+
     midiMessages.clear();
     int num_samples = buffer.getNumSamples();
 
@@ -193,17 +203,14 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
                 state.params.warpedvelocity = newvelocity;
             }
         }
-    }
 
-    // print them out for now
-    //    for (auto mi : midiMessages)
-    //    {
-    //        auto message = mi.getMessage();
-    //
-    //        mi.samplePosition;
-    //        mi.data;
-    //        DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
-    //    }
+        // make sure all controller messages go through; sustain pedal, for instance, regardless of whether notes are selected
+        // since we can't track pedal state by note
+        if (message.getMessage().isController())
+        {
+            midiMessages.addEvent (message.getMessage(), message.samplePosition);
+        }
+    }
 
     // DBG("keymap");
 }
