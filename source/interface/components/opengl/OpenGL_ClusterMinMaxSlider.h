@@ -146,7 +146,19 @@ public:
     }
 
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
+        double newval = textEditor.getText().getDoubleValue();
+
+        // Expand the chowdsp parameter ranges BEFORE the parent calls setValue (via SliderAttachment).
+        // Without this, the attachment normalizes the new slider value against the old (unexpanded)
+        // parameter range and clamps it, losing the typed out-of-range value.
+        if (textEditor.getName() == "minvalue" && newval < params->clusterMinParam->range.start)
+            params->clusterMinParam->range.start = (float)newval;
+        if (textEditor.getName() == "maxvalue" && newval > params->clusterMaxParam->range.end)
+            params->clusterMaxParam->range.end = (float)newval;
+
+        mouseInteraction = true;
         OpenGlAutoImageComponent<BKRangeSlider>::textEditorReturnKeyPressed(textEditor);
+        mouseInteraction = false;
         redoImage();
     }
 

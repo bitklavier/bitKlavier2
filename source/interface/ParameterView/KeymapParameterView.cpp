@@ -240,7 +240,7 @@ void KeymapParameterView::resized() {
 
     // velocity sliders, knobs and invert button
     juce::Rectangle velocityControlsRect = area.removeFromLeft(area.getWidth() * 0.5);
-    velocityControlsRect.reduce(velocityControlsRect.getWidth() * 0.2, velocityControlsRect.getHeight() * 0.2);
+    velocityControlsRect.reduce(velocityControlsRect.getWidth() * 0.2, velocityControlsRect.getHeight() * 0.1);
 
     juce::Rectangle velocityKnobsRect = velocityControlsRect.removeFromTop(
         knobsectionheight * 2 + comboboxheight + largepadding * 5);
@@ -264,7 +264,7 @@ void KeymapParameterView::resized() {
 
     velocityKnobsRect.removeFromTop(largepadding);
 
-    velocityMinMaxSlider->setBounds(velocityControlsRect.removeFromTop(knobsectionheight));
+    velocityMinMaxSlider->setBounds(velocityControlsRect.removeFromTop(knobsectionheight + largepadding));
 
     juce::Rectangle<int> label_rect1(asymmetricalWarp_knob->getX(), asymmetricalWarp_knob->getBottom() - 10,
                                      asymmetricalWarp_knob->getWidth(), labelsectionheight);
