@@ -1109,6 +1109,13 @@ namespace bitklavier
             if (bufSize > 0)         setup.bufferSize       = (juce::uint32) bufSize;
             else                     setup.bufferSize       = 128;
 
+            auto inputChStr = prefs.getProperty("inputChannels", juce::String()).toString();
+            if (inputChStr.isNotEmpty())
+            {
+                setup.inputChannels.parseString(inputChStr, 16);
+                setup.useDefaultInputChannels = false;
+            }
+
             juce::String err = deviceManager.setAudioDeviceSetup(setup, true);
             juce::ignoreUnused(err); // if restore fails, we just continue with current defaults
         }
@@ -1299,6 +1306,7 @@ namespace bitklavier
         prefs.setProperty("inputDevice", setup.inputDeviceName, nullptr);
         prefs.setProperty("sampleRate", setup.sampleRate, nullptr);
         prefs.setProperty("bufferSize", (int) setup.bufferSize, nullptr);
+        prefs.setProperty("inputChannels", setup.inputChannels.toString(16), nullptr);
     }
 
     void AudioDeviceSelectorComponent::handleBluetoothButton()
