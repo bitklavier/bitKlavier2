@@ -137,6 +137,8 @@ class SynthSection : public juce::Component, public juce::Slider::Listener,
 //                               const PopupItems& options, std::function<void(int)> callback);
     void showPopupDisplay(juce::Component* source, const std::string& text,
                           juce::BubbleComponent::BubblePlacement placement, bool primary);
+    void showPopupDisplay(juce::Component* source, juce::Rectangle<int> sourceBoundsOverride,
+                          const std::string& text, juce::BubbleComponent::BubblePlacement placement, bool primary);
     void hidePopupDisplay(bool primary);
 
     void showTextInputBox(const juce::String& title,

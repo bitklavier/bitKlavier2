@@ -325,6 +325,14 @@ void FullInterface::popupDisplay (juce::Component* source, const std::string& te
     display->setVisible (true);
 }
 
+void FullInterface::popupDisplay(juce::Component* source, juce::Rectangle<int> sourceBoundsOverride,
+                                  const std::string& text, juce::BubbleComponent::BubblePlacement placement, bool primary)
+{
+    PopupDisplay* display = primary ? popup_display_1_.get() : popup_display_2_.get();
+    display->setContent(text, getLocalArea(source, sourceBoundsOverride), placement);
+    display->setVisible(true);
+}
+
 void FullInterface::showSaveNotification()
 {
     if (header_ == nullptr)

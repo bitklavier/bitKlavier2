@@ -1201,6 +1201,13 @@ void SynthSection::showPopupDisplay(juce::Component *source, const std::string &
         parent->popupDisplay(source, text, placement, primary);
 }
 
+void SynthSection::showPopupDisplay(juce::Component *source, juce::Rectangle<int> sourceBoundsOverride,
+                                    const std::string &text, juce::BubbleComponent::BubblePlacement placement, bool primary) {
+    FullInterface *parent = findParentComponentOfClass<FullInterface>();
+    if (parent)
+        parent->popupDisplay(source, sourceBoundsOverride, text, placement, primary);
+}
+
 void SynthSection::hidePopupDisplay(bool primary) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent)

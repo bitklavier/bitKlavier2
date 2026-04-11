@@ -720,16 +720,23 @@ void SynthSlider::hidePopup(bool primary) {
     parent_->hidePopupDisplay(primary);
 }
 
+juce::Rectangle<int> SynthSlider::getKnobSleeveBounds() const {
+    if (parent_ == nullptr || !isRotary())
+        return getLocalBounds();
+    float cx = getWidth() / 2.0f;
+    float cy = getHeight() / 2.0f + findValue(Skin::kKnobOffset);
+    float r = knob_size_scale_ * findValue(Skin::kKnobBodySize) / 2.0f;
+    if (r <= 0.0f)
+        return getLocalBounds();
+    return juce::Rectangle<float>(cx - r, cy - r, 2.0f * r, 2.0f * r).toNearestInt();
+}
+
 void SynthSlider::timerCallback() {
     if (parent_ == nullptr || !hovering_ || attachment == nullptr)
         return;
 
-    juce::Component* anchor = this;
-    if (auto* fi = findParentComponentOfClass<FullInterface>()) {
-        if (auto* knob = fi->modulation_manager->getVisibleHoverKnobFor(this))
-            anchor = knob;
-    }
-    parent_->showPopupDisplay(anchor, getTextFromValue(getLiveModulation()).toStdString(),
+    parent_->showPopupDisplay(this, getKnobSleeveBounds(),
+                              getTextFromValue(getLiveModulation()).toStdString(),
                               juce::BubbleComponent::right, false);
 }
 

@@ -41,6 +41,12 @@ void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap) const
                 c->calculateReset(currentTotal,raw0);
                 parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
             }
+            // Clear the scratch buffer so that a stopped modulator (LFO that was
+            // halted mid-cycle) immediately outputs zero on the next block instead
+            // of continuing to apply its last non-zero sample values.
+            // For a running LFO, triggerReset() resets phase to 0, so the next
+            // getNextAudioBlock() will fill this buffer with fresh sin(0)=0 values.
+            e.tmp.clear();
             e.mod->triggerReset();
         }
     }
@@ -186,14 +192,16 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                 }
                 const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
 
-                // const float carry = c->lastAppliedPrev_.load(std::memory_order_relaxed);
-                // c->setCarryActive(carry);
-                c->updateScalingAudioThread(currentTotal, raw0);
-                // const float currentTotal = parent.getParamOffsetBank().getOffset(c->getDestParamIndex());
-                // c->setCurrentTotalBaseValue(baseNoThis);
-                // c->lockScaling();
-                // c->updateScalingAudioThread(currentTotal);
-                c->lockScaling();
+                if (c->isContinuousMod.load(std::memory_order_relaxed)) {
+                    // LFO: use the carry-free single-arg overload; don't lock so
+                    // the scale stays live and can be updated on future retrigers.
+                    c->updateScalingAudioThread(currentTotal);
+                } else {
+                    // Ramp: two-arg overload captures carry for smooth re-triggers,
+                    // then lock the scale for the duration of the ramp.
+                    c->updateScalingAudioThread(currentTotal, raw0);
+                    c->lockScaling();
+                }
             }
 
             // restart the ramp (or whatever mod) now
@@ -225,24 +233,19 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     (!mod->isDefaultBipolar && !c->isBipolar());
 
             if (polarityMatches) {
-                // Carry-crossfade only for ramps
-                // if ( c->carryActive_.load(std::memory_order_acquire)) {
+                if (c->isContinuousMod.load(std::memory_order_relaxed)) {
+                    // LFO: bipolar src, no carry — just scale
+                    for (int s = 0; s < buffer.getNumSamples(); ++s)
+                        dest[s] += src[s] * scale;
+                } else {
+                    // Ramp: carry for smooth re-triggers
                     const float carry = c->carryApplied_.load(std::memory_order_relaxed);
-
-                    for (int s = 0; s < buffer.getNumSamples(); ++s) {
-                        const float r = src[s]; // ramp raw 0..1
-                        dest[s] +=  carry + r * scale;
-                        // dest[s] +=  carry + r * scale;
-                    }
+                    for (int s = 0; s < buffer.getNumSamples(); ++s)
+                        dest[s] += carry + src[s] * scale;
 
                     if (src[buffer.getNumSamples() - 1] >= 0.9999f)
                         c->carryActive_.store(false, std::memory_order_release);
-
-                    // c->lastApplied_.store(src[0] * scale, std::memory_order_relaxed);
-                // } else {
-                    // buffer.addFrom(outCh, 0, src, buffer.getNumSamples(), scale);
-                    // c->lastApplied_.store(src[0] * scale, std::memory_order_relaxed);
-                // }
+                }
             } else if (mod->isDefaultBipolar && !c->isBipolar()) {
                 // bipolar src -> unipolar dest
                 for (int s = 0; s < buffer.getNumSamples(); ++s) {

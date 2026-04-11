@@ -463,6 +463,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
     void setPopupPrefix(juce::String prefix) { popup_prefix_ = prefix; }
     void setKnobSizeScale(float scale) { knob_size_scale_ = scale; }
     float getKnobSizeScale() const override { return knob_size_scale_; }
+    juce::Rectangle<int> getKnobSleeveBounds() const;
     void useSuffix(bool use) { use_suffix_ = use; }
     void setExtraModulationTarget(juce::Component* component) { extra_modulation_target_ = component; }
     juce::Component* getExtraModulationTarget() { return extra_modulation_target_; }
