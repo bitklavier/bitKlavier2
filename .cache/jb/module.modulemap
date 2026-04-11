@@ -1,0 +1,130 @@
+module system_array [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/array"
+  export *
+}
+
+module juce_core {
+  header "/Users/dtrueman/Code/bitKlavier2/JUCE/modules/juce_core/juce_core.h"
+  export *
+}
+
+module system_cstring [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstring"
+  export *
+}
+
+module system_stdexcept [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdexcept"
+  export *
+}
+
+module system_climits [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/climits"
+  export *
+}
+
+module system_optional [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/optional"
+  export *
+}
+
+module juce_audio_basics {
+  header "/Users/dtrueman/Code/bitKlavier2/JUCE/modules/juce_audio_basics/juce_audio_basics.h"
+  export *
+}
+
+module system_string [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string"
+  export *
+}
+
+module juce_data_structures {
+  header "/Users/dtrueman/Code/bitKlavier2/JUCE/modules/juce_data_structures/juce_data_structures.h"
+  export *
+}
+
+module system_cstddef [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstddef"
+  export *
+}
+
+module system_cmath [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cmath"
+  export *
+}
+
+module system_ios [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/ios"
+  export *
+}
+
+module system_compare [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/compare"
+  export *
+}
+
+module system_stddef [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX26.4.sdk/usr/include/c++/v1/stddef.h"
+  export *
+}
+
+module system_initializer_list [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/initializer_list"
+  export *
+}
+
+module system_TargetConditionals [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/TargetConditionals.h"
+  export *
+}
+
+module system_tuple [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/tuple"
+  export *
+}
+
+module system_cstdint [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdint"
+  export *
+}
+
+module system_atomic [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/atomic"
+  export *
+}
+
+module system_iosfwd [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/iosfwd"
+  export *
+}
+
+module system_stdint [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/stdint.h"
+  export *
+}
+
+module system_string_view [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/string_view"
+  export *
+}
+
+module system_vector [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/vector"
+  export *
+}
+
+module system_cstdlib [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdlib"
+  export *
+}
+
+module system_version [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/version"
+  export *
+}
+
+module system_limits [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/limits"
+  export *
+}
+
