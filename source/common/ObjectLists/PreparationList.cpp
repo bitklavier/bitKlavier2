@@ -9,6 +9,7 @@
 #include "ModulationProcessor.h"
 #include "PianoSwitchProcessor.h"
 #include "CommentProcessor.h"
+#include "VSTModulationBridge.h"
 #include "../UserPreferences.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v, juce::UndoManager* um) : tracktion::engine::ValueTreeObjectList<
@@ -90,16 +91,102 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
         // createUuidProperty(state);
         rawPtr = temporary_instance.get();
         temporary_instance->prepareToPlay(synth.getSampleRate(), synth.getBufferSize());
-        node_ptr = synth.addProcessor(std::move(temporary_instance),
-                                      juce::AudioProcessorGraph::NodeID(
-                                          juce::Uuid(state.getProperty(IDs::uuid).toString()).getTimeLow()));
+
+        // ------------------------------------------------------------------
+        // Create a VSTModulationBridge for this plugin.
+        // The bridge sits upstream of the VST in the graph and applies
+        // modulation values from the ModulationProcessor to the VST's params.
+        // Its ValueTree is stored as a child of the VST's state ValueTree so
+        // that connectModulation can locate it via a recursive search.
+        // ------------------------------------------------------------------
+
+        // Retrieve (or assign) a stable bridge UUID stored on the VST state.
+        if (!state.hasProperty(IDs::bridgeUuid))
+            state.setProperty(IDs::bridgeUuid, juce::Uuid().toString(), nullptr);
+        const juce::String bridgeUuidStr = state.getProperty(IDs::bridgeUuid).toString();
+
+        // Get or create the bridge ValueTree as a child of the VST state VT.
+        juce::ValueTree bridgeVt = state.getOrCreateChildWithName(IDs::vstbridge, nullptr);
+        bridgeVt.setProperty(IDs::uuid, bridgeUuidStr, nullptr);
+
+        const auto bridgeNodeID = juce::AudioProcessorGraph::NodeID(
+            juce::Uuid(bridgeUuidStr).getTimeLow());
+
+        auto* rawVSTPtr = temporary_instance.get();
+        auto bridge = std::make_unique<VSTModulationBridge>(
+            rawVSTPtr, bridgeVt, synth);
+        bridge->prepareToPlay(synth.getSampleRate(), synth.getBufferSize());
+        bridge->setupModulatableParams();
+
+        auto bridgeNodePtr = synth.addProcessor(std::move(bridge), bridgeNodeID);
+        bridgeVt.setProperty(IDs::nodeID,
+            juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(bridgeNodeID),
+            nullptr);
+
+        // Add the VST plugin node itself.
+        const auto vstNodeID = juce::AudioProcessorGraph::NodeID(
+            juce::Uuid(state.getProperty(IDs::uuid).toString()).getTimeLow());
+        node_ptr = synth.addProcessor(std::move(temporary_instance), vstNodeID);
+
+        // Enforce Bridge → VST ordering via a MIDI ordering edge so that the
+        // bridge's processBlock (which calls param->setValue) always runs before
+        // the VST plugin's processBlock within each audio callback.
+        if (bridgeNodePtr != nullptr && node_ptr != nullptr)
+        {
+            juce::AudioProcessorGraph::Connection midiOrder {
+                { bridgeNodeID, juce::AudioProcessorGraph::midiChannelIndex },
+                { vstNodeID,    juce::AudioProcessorGraph::midiChannelIndex }
+            };
+            synth.addConnection(midiOrder);
+        }
     } else {
         createUuidProperty(state);
         rawPtr = temporary_instance.get();
         temporary_instance->prepareToPlay(synth.getSampleRate(), synth.getBufferSize());
-        node_ptr = synth.addProcessor(std::move(temporary_instance),
-                                      juce::AudioProcessorGraph::NodeID(
-                                          juce::Uuid(state.getProperty(IDs::uuid).toString()).getTimeLow()));
+
+        if (static_cast<int>(state.getProperty(IDs::type)) ==
+            bitklavier::BKPreparationType::PreparationTypeVST)
+        {
+            // Bridge creation for async-loaded VST (new plugin added via UI).
+            if (!state.hasProperty(IDs::bridgeUuid))
+                state.setProperty(IDs::bridgeUuid, juce::Uuid().toString(), nullptr);
+            const juce::String bridgeUuidStr = state.getProperty(IDs::bridgeUuid).toString();
+
+            juce::ValueTree bridgeVt = state.getOrCreateChildWithName(IDs::vstbridge, nullptr);
+            bridgeVt.setProperty(IDs::uuid, bridgeUuidStr, nullptr);
+
+            const auto bridgeNodeID = juce::AudioProcessorGraph::NodeID(
+                juce::Uuid(bridgeUuidStr).getTimeLow());
+
+            auto* rawVSTPtr = temporary_instance.get();
+            auto bridge = std::make_unique<VSTModulationBridge>(rawVSTPtr, bridgeVt, synth);
+            bridge->prepareToPlay(synth.getSampleRate(), synth.getBufferSize());
+            bridge->setupModulatableParams();
+
+            auto bridgeNodePtr = synth.addProcessor(std::move(bridge), bridgeNodeID);
+            bridgeVt.setProperty(IDs::nodeID,
+                juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(bridgeNodeID),
+                nullptr);
+
+            const auto vstNodeID = juce::AudioProcessorGraph::NodeID(
+                juce::Uuid(state.getProperty(IDs::uuid).toString()).getTimeLow());
+            node_ptr = synth.addProcessor(std::move(temporary_instance), vstNodeID);
+
+            if (bridgeNodePtr != nullptr && node_ptr != nullptr)
+            {
+                juce::AudioProcessorGraph::Connection midiOrder {
+                    { bridgeNodeID, juce::AudioProcessorGraph::midiChannelIndex },
+                    { vstNodeID,    juce::AudioProcessorGraph::midiChannelIndex }
+                };
+                synth.addConnection(midiOrder);
+            }
+        }
+        else
+        {
+            node_ptr = synth.addProcessor(std::move(temporary_instance),
+                                          juce::AudioProcessorGraph::NodeID(
+                                              juce::Uuid(state.getProperty(IDs::uuid).toString()).getTimeLow()));
+        }
     }
     if (node_ptr) {
         node_ptr->properties.set(
@@ -110,7 +197,17 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
         //sendChangeMessage();
     }
 
-    return new PluginInstanceWrapper(rawPtr, state, node_ptr->nodeID);
+    auto* wrapper = new PluginInstanceWrapper(rawPtr, state, node_ptr->nodeID);
+
+    // If a bridge was created for this VST, store its NodeID for cleanup.
+    if (state.hasProperty(IDs::bridgeUuid))
+    {
+        const juce::String buuid = state.getProperty(IDs::bridgeUuid).toString();
+        wrapper->bridgeNodeID = juce::AudioProcessorGraph::NodeID(
+            juce::Uuid(buuid).getTimeLow());
+    }
+
+    return wrapper;
 }
 
 void PreparationList::deleteObject(PluginInstanceWrapper *at) {
@@ -120,6 +217,14 @@ void PreparationList::deleteObject(PluginInstanceWrapper *at) {
     // find and delete cables and modulation lines associated with this preparation section
     synth.deleteConnectionsWithId(at->node_id);
     synth.removeProcessor(at->node_id);
+
+    // If a VSTModulationBridge was created for this VST plugin, remove it too.
+    if (at->bridgeNodeID.uid != 0)
+    {
+        synth.deleteConnectionsWithId(at->bridgeNodeID);
+        synth.removeProcessor(at->bridgeNodeID);
+    }
+
     pianoSwitchProcessors.erase(std::remove(pianoSwitchProcessors.begin(), pianoSwitchProcessors.end(), at), pianoSwitchProcessors.end());
     delete at;
 }

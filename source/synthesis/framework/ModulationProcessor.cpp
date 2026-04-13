@@ -124,7 +124,8 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     if (auto* modOutBus = getBus(false, 1)) {
         for (int ch = 0; ch < modOutBus->getNumberOfChannels(); ++ch) {
             int absIdx = getChannelIndexInProcessBlockBuffer(false, 1, ch);
-            buffer.clear(absIdx, 0, buffer.getNumSamples());
+            if (absIdx >= 0 && absIdx < buffer.getNumChannels())
+                buffer.clear(absIdx, 0, buffer.getNumSamples());
         }
     }
 
@@ -132,7 +133,8 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
     if (auto* disabledBus = getBus(false, 0)) {
         for (int ch = 0; ch < disabledBus->getNumberOfChannels(); ++ch) {
             int absIdx = getChannelIndexInProcessBlockBuffer(false, 0, ch);
-            buffer.clear(absIdx, 0, buffer.getNumSamples());
+            if (absIdx >= 0 && absIdx < buffer.getNumChannels())
+                buffer.clear(absIdx, 0, buffer.getNumSamples());
         }
     }
 
@@ -201,6 +203,12 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
                     // then lock the scale for the duration of the ramp.
                     c->updateScalingAudioThread(currentTotal, raw0);
                     c->lockScaling();
+                    DBG("[ModProc doRetrig] dst=" + juce::String(c->destination_name)
+                        + " outCh=" + juce::String(c->modulation_output_bus_index)
+                        + " bufChs=" + juce::String(buffer.getNumChannels())
+                        + " destIdx=" + juce::String(c->getDestParamIndex())
+                        + " modAmt=" + juce::String(c->modAmt_.load())
+                        + " lockedScale=" + juce::String(c->getScalingForDSP()));
                 }
             }
 
@@ -216,8 +224,12 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
         for (auto *c: e.connections) {
             if (!c) continue;
 
-            const int outCh = c->modulation_output_bus_index;
-            if ( outCh >=  buffer.getNumChannels())
+            // Convert bus-relative channel index to absolute buffer channel index.
+            // modulation_output_bus_index is relative to output bus 1 ("Modulation").
+            // The audio graph connection is established with the same absolute index
+            // (see connectModulation in synth_base.cpp), so they must match here.
+            const int outCh = getChannelIndexInProcessBlockBuffer(false, 1, c->modulation_output_bus_index);
+            if (outCh < 0 || outCh >= buffer.getNumChannels())
                 continue;
 
             auto *dest = buffer.getWritePointer(outCh);
@@ -327,7 +339,14 @@ void bitklavier::ModulationProcessor::addModulationConnection(ModulationConnecti
     all_modulation_connections_.push_back(connection);
 
     auto it = std::find(modulators_.begin(), modulators_.end(), connection->processor);
-    if (it == modulators_.end() || *it == nullptr) return;
+    if (it == modulators_.end() || *it == nullptr)
+    {
+        DBG ("[addModulationConnection] EARLY RETURN: processor not found"
+             "  dst=" + juce::String (connection->destination_name)
+             + "  processorIsNull=" + juce::String (connection->processor == nullptr ? 1 : 0)
+             + "  modulators_.size()=" + juce::String ((int) modulators_.size()));
+        return;
+    }
 
     const auto index = (size_t) std::distance(modulators_.begin(), it);
     if (index >= mod_routing.size()) return;

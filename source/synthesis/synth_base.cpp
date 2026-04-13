@@ -1234,7 +1234,16 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
 
     auto preparations    = owningPiano.getChildWithName (IDs::PREPARATIONS);
     auto mod_src         = preparations.getChildWithProperty (IDs::uuid, juce::String (src_uuid));
-    auto mod_dst         = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+
+    // Primary search: direct child of PREPARATIONS.
+    // Fallback: search one level deeper to find VSTModulationBridge ValueTrees
+    // stored as children of their parent VST preparation's ValueTree.
+    auto mod_dst = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    if (! mod_dst.isValid())
+    {
+        for (int i = 0; i < preparations.getNumChildren() && ! mod_dst.isValid(); ++i)
+            mod_dst = preparations.getChild (i).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
+    }
     auto mod_connections = owningPiano.getChildWithName (IDs::MODCONNECTIONS);
     auto mod_connection  = getChildWithPropertyAndType (mod_connections, IDs::dest, mod_dst.getProperty (IDs::nodeID), IDs::MODCONNECTION);
 
@@ -1309,7 +1318,13 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
     }
     else if (mod_connections_.count (connection) == 0)
     {
-        connection->setDestParamIndex(getParamOffsetBank().getIndexIfExists(connection->destination_name));
+        const int destIdx = getParamOffsetBank().getIndexIfExists(connection->destination_name);
+        connection->setDestParamIndex(destIdx);
+        DBG ("[connectModulation] dst=" + juce::String(connection->destination_name)
+             + "  destParamIdx=" + juce::String(destIdx)
+             + "  modAmt=" + juce::String(connection->modAmt_.load())
+             + "  scalingVal=" + juce::String(connection->getScaling())
+             + "  procIsNull=" + juce::String(connection->processor == nullptr ? 1 : 0));
         mod_connections_.push_back (connection);
         connection->connection_ = { { source_node->nodeID, source_index }, { dest_node->nodeID, dest_index } };
 
@@ -1321,6 +1336,9 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         }
 
         bool connectionAdded = engine_->addConnection (connection->connection_);
+        DBG ("[connectModulation] audioConnectionAdded=" + juce::String(connectionAdded ? 1 : 0)
+             + "  src_ch=" + juce::String(source_index)
+             + "  dst_ch=" + juce::String(dest_index));
 
         // Add a MIDI ordering edge from ModulationProcessor to the destination so the
         // audio graph always processes ModulationProcessor before the destination.
@@ -1462,11 +1480,24 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
         auto preparations = searchPiano.getChildWithName (IDs::PREPARATIONS);
         auto mod_src = preparations.getChildWithProperty (IDs::uuid, juce::String (src_uuid_str));
         auto mod_dst = preparations.getChildWithProperty (IDs::uuid, juce::String (dst_uuid_str));
-        
+        // VSTModulationBridge ValueTrees are grandchildren of PREPARATIONS (stored as a child
+        // of the VST prep's ValueTree).  Search one level deeper if the direct search failed.
+        if (! mod_dst.isValid())
+        {
+            for (int i = 0; i < preparations.getNumChildren() && ! mod_dst.isValid(); ++i)
+                mod_dst = preparations.getChild (i).getChildWithProperty (IDs::uuid, juce::String (dst_uuid_str));
+        }
+
         auto src_node_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID));
         auto dst_node_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID));
         
-        if (getNodeForId (src_node_id) == nullptr || getNodeForId (dst_node_id) == nullptr)
+        const bool srcFound = getNodeForId (src_node_id) != nullptr;
+        const bool dstFound = getNodeForId (dst_node_id) != nullptr;
+        DBG ("[connectModulation VT] src=" + v.getProperty (IDs::src).toString()
+             + "  dst=" + v.getProperty (IDs::dest).toString()
+             + "  srcFound=" + juce::String (srcFound ? 1 : 0)
+             + "  dstFound=" + juce::String (dstFound ? 1 : 0));
+        if (! srcFound || ! dstFound)
         {
             pendingModulations.push_back ({ v, (bool)v.getProperty (IDs::isState) });
             return false;

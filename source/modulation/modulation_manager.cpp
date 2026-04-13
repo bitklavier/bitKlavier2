@@ -411,7 +411,8 @@ void ModulationAmountKnob::setDestinationSlider(SynthSlider *dest) {
         this->setNormalisableRange (dest->getNormalisableRange());
         //this->setRange(dest->getMinimum(), dest->getMaximum(), 0.f);
 
-    this->textFromValueFunction = dest->attachment->getParameter()->getStringFromValueFunction();
+    if (dest->attachment != nullptr)
+        this->textFromValueFunction = dest->attachment->getParameter()->getStringFromValueFunction();
 }
 
 juce::Colour ModulationAmountKnob::getInternalColor() {
@@ -1005,8 +1006,26 @@ void ModulationManager::componentAdded() {
     if (!uniqueModPrefixes.empty())
         _src = *uniqueModPrefixes.begin();
 
-    auto dest = base->getActivePianoValueTree().getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_dst));
-    auto src =  base->getActivePianoValueTree().getChildWithName(IDs::PREPARATIONS).getChildWithProperty(IDs::uuid, juce::String(_src));
+    auto preparationsVt = base->getActivePianoValueTree().getChildWithName(IDs::PREPARATIONS);
+    auto dest = preparationsVt.getChildWithProperty(IDs::uuid, juce::String(_dst));
+    // If not found as a direct child and NO modulation-source buttons are visible
+    // (_src is empty), also search one level deeper so that VSTModulationBridge state
+    // trees (grandchildren of PREPARATIONS, nested inside their plugin prep node) are
+    // found.  We intentionally skip this deeper search when _src is non-empty: in that
+    // case both the VST panel (prepDisplay) and the modulation-source panel (modDisplay)
+    // are open simultaneously, and letting dest become valid would push us into the
+    // isConnected check — which uses IDs::nodeID comparisons that the VST MODCONNECTIONS
+    // format doesn't satisfy, causing sliders to be incorrectly cleared.
+    if (!dest.isValid() && !_dst.empty() && _src.empty())
+    {
+        for (int i = 0; i < preparationsVt.getNumChildren(); ++i)
+        {
+            dest = preparationsVt.getChild(i).getChildWithProperty(IDs::uuid, juce::String(_dst));
+            if (dest.isValid())
+                break;
+        }
+    }
+    auto src = preparationsVt.getChildWithProperty(IDs::uuid, juce::String(_src));
     if (dest.isValid() && src.isValid()) {
         auto *interface = findParentComponentOfClass<SynthGuiInterface>();
         //check the modconnections array first to see if there is psuedoconnection
@@ -2607,6 +2626,15 @@ void ModulationManager::setModulationValues(std::string source, std::string dest
     setModulationAmounts();
     setModulationSliderValues(index, amount);
     setModulationSliderBipolar(index, bipolar);
+
+    // Update the backend connection's modAmt_ so it's non-zero when the next trigger fires.
+    // Without this, modAmt_ stays 0 for new connections and updateScalingAudioThread computes
+    // zero scaling, so nothing happens. We only update modAmt_ here — NOT scalingValue_ — so
+    // the ramp's current audio output (which may be non-zero from a prior run) has no immediate
+    // effect. updateScalingAudioThread will compute scalingValue_ from modAmt_ on the next trigger.
+    bitklavier::ModulationConnection* connection = getConnection(source, destination);
+    if (connection != nullptr)
+        connection->setModulationAmount(amount);
 
     modifying_ = false;
 }

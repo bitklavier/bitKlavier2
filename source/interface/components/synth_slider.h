@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <cmath>
+#include <limits>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "curve_look_and_feel.h"
@@ -485,11 +487,17 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
 
   void addAttachment(chowdsp::SliderAttachment* at){attachment = at;}
 
+  // Called by VSTParamAttachment on each audio-thread modulation update.
+  // Stores the live (potentially modulated) value without moving the knob,
+  // so the modulation-meter arc can show the offset from the base value.
+  void setLiveModulatedValue (float v) { liveModulatedValue_ = v; }
+
   float getLiveModulation() const {
-
       if (attachment)  return attachment->getParameter()->getCurrentValue();
-
-      return getValue();
+      // If a live modulated value has been pushed (e.g. by VSTParamAttachment),
+      // return it so the modulation-meter arc reflects the actual offset.
+      if (!std::isnan (liveModulatedValue_))  return liveModulatedValue_;
+      return (float)getValue();
     }
 
     std::shared_ptr<OpenGlComponent> getTextEditorComponent() { return text_entry_->getImageComponent(); }
@@ -554,6 +562,10 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
     std::unique_ptr<OpenGlTextEditor> text_entry_;
 
     std::vector<SliderListener*> slider_listeners_;
+
+    // Live (modulated) value pushed by VSTParamAttachment each audio block.
+    // NaN means no override — getLiveModulation() falls back to getValue().
+    float liveModulatedValue_ = std::numeric_limits<float>::quiet_NaN();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthSlider)
 };

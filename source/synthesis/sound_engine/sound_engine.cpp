@@ -77,8 +77,24 @@ namespace bitklavier {
          */
         for (int i = 3; i < nodes.size(); i++){
             auto node = nodes[i];
-            auto tree = curr_piano.getChildWithProperty(IDs::nodeID,
-                juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(node->nodeID));
+            const auto nodeIDVar = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar(node->nodeID);
+
+            // Search direct children of PREPARATIONS first.
+            auto tree = curr_piano.getChildWithProperty(IDs::nodeID, nodeIDVar);
+
+            // If not found, also search one level deeper: some nodes (e.g. VSTModulationBridge)
+            // store their VT as a child of their parent VST's state node rather than as a
+            // direct child of PREPARATIONS.
+            if (!tree.isValid())
+            {
+                for (int ci = 0; ci < curr_piano.getNumChildren(); ++ci)
+                {
+                    tree = curr_piano.getChild(ci).getChildWithProperty(IDs::nodeID, nodeIDVar);
+                    if (tree.isValid())
+                        break;
+                }
+            }
+
             if (tree.isValid()) {
                 node->setBypassed(false);
             } else {

@@ -348,7 +348,13 @@ void SynthSlider::mouseEnter(const juce::MouseEvent &e) {
     if (show_popup_on_hover_)
         showPopup(true);
 
-    if (attachment != nullptr && !getConnections().empty())
+    // For show_popup_on_hover_ parameter sliders (e.g. VST param sliders), always
+    // start the live-value timer so the secondary popup appears to the right of
+    // the sleeve.  Exclude modulation-amount knobs (isModulationKnob()) — those
+    // knobs also have show_popup_on_hover_ but should not show a second bubble.
+    // For regular sliders the old condition applies: only show when modulation
+    // connections exist (i.e. the live value may actually differ from the base).
+    if ((show_popup_on_hover_ && !isModulationKnob()) || (attachment != nullptr && !getConnections().empty()))
         startTimer(33);
 
     hovering_ = true;
@@ -448,6 +454,8 @@ juce::String SynthSlider::getTextFromValue(double value) {
 void SynthSlider::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged,
                                            const juce::Identifier &property) {
     if (treeWhosePropertyHasChanged.hasType(IDs::MODULATABLE_PARAM)) {
+        if (attachment == nullptr)
+            return;
         attachment->getParameter()->range = juce::NormalisableRange<float>{
             treeWhosePropertyHasChanged.getProperty(IDs::start, 0),
             treeWhosePropertyHasChanged.getProperty(IDs::end, 0),
@@ -732,11 +740,12 @@ juce::Rectangle<int> SynthSlider::getKnobSleeveBounds() const {
 }
 
 void SynthSlider::timerCallback() {
-    if (parent_ == nullptr || !hovering_ || attachment == nullptr)
+    if (parent_ == nullptr || !hovering_)
         return;
 
+    const float liveVal = getLiveModulation();
     parent_->showPopupDisplay(this, getKnobSleeveBounds(),
-                              getTextFromValue(getLiveModulation()).toStdString(),
+                              getTextFromValue(liveVal).toStdString(),
                               juce::BubbleComponent::right, false);
 }
 

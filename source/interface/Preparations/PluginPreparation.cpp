@@ -27,7 +27,36 @@ PluginPreparation::PluginPreparation (const juce::ValueTree& v, OpenGlWrapper &o
 
 std::unique_ptr<SynthSection> PluginPreparation::getPrepPopup()
 {
-    return nullptr;//std::make_unique<PluginParametersView>(proc.getState(), proc.getState().params,proc.v.getProperty(IDs::uuid).toString(), open_gl);
+    auto* interface = findParentComponentOfClass<SynthGuiInterface>();
+    if (interface == nullptr)
+        return nullptr;
+
+    // The VST plugin's own processor.
+    auto* vstNode = interface->getSynth()->getNodeForId (pluginID);
+    if (vstNode == nullptr)
+        return nullptr;
+    auto* pluginInstance = dynamic_cast<juce::AudioPluginInstance*> (vstNode->getProcessor());
+    if (pluginInstance == nullptr)
+        return nullptr;
+
+    // The bridge UUID is stored on the VST's state ValueTree.
+    const juce::String bridgeUuidStr = state.getProperty (IDs::bridgeUuid).toString();
+    if (bridgeUuidStr.isEmpty())
+        return nullptr;
+
+    const auto bridgeNodeID = juce::AudioProcessorGraph::NodeID (
+        juce::Uuid (bridgeUuidStr).getTimeLow());
+    auto* bridgeNode = interface->getSynth()->getNodeForId (bridgeNodeID);
+    if (bridgeNode == nullptr)
+        return nullptr;
+
+    auto* bridge = dynamic_cast<VSTModulationBridge*> (bridgeNode->getProcessor());
+    if (bridge == nullptr)
+        return nullptr;
+
+    return std::make_unique<VSTParametersView> (
+        pluginInstance, bridge, interface->getGui()->open_gl_,
+        juce::AudioProcessorGraph::Node::Ptr (vstNode));
 }
 
 

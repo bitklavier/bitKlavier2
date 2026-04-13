@@ -1013,6 +1013,14 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
         }
     }
     if (index == -1) jassertfalse;
+
+    // Close any open native plugin window for the node being removed.
+    for (int wi = activePluginWindows.size() - 1; wi >= 0; --wi)
+    {
+        if (activePluginWindows[wi]->node->nodeID == wrapper->node_id)
+            activePluginWindows.remove (wi);
+    }
+
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     interface->getGui()->mod_popup->reset();
     interface->getGui()->prep_popup->reset();

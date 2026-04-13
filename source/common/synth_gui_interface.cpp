@@ -213,7 +213,12 @@ void SynthGuiInterface::disconnectModulation(bitklavier::StateConnection *connec
 }
 
 void SynthGuiInterface::resetModulationsForPrep(const juce::ValueTree& prepVT) {
-    const std::string prepUUID = prepVT.getProperty(IDs::uuid).toString().toStdString();
+    // VST plugin preps store their modulation bridge as a child of type IDs::vstbridge.
+    // Modulation connections target the bridge UUID (destination_name = bridgeUUID_slot),
+    // not the plugin prep UUID, so pass the bridge UUID when present.
+    auto bridgeVt = prepVT.getChildWithName(IDs::vstbridge);
+    const juce::ValueTree& targetVt = bridgeVt.isValid() ? bridgeVt : prepVT;
+    const std::string prepUUID = targetVt.getProperty(IDs::uuid).toString().toStdString();
     synth_->resetModulationsForPrep(prepUUID);
 }
 

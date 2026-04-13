@@ -12,6 +12,8 @@
 
 #include "UserPreferences.h"
 #include "synth_base.h"
+#include "VSTParametersView.h"
+#include "VSTModulationBridge.h"
 /************************************************************************************/
 /*             CLASS: PluginPreparation, inherits from PreparationSection           */
 /************************************************************************************/
@@ -39,13 +41,17 @@ public:
     void resized() override;
     void paintBackground(juce::Graphics &g);
 
-
-    void mouseDoubleClick(const juce::MouseEvent &event) override {
-      for (auto list: listeners_) {
-          auto interface = findParentComponentOfClass<SynthGuiInterface>();
-          list->createWindow(interface->getSynth()->getNodeForId(pluginID),PluginWindow::Type::normal);
-      }
-  }
+    void mouseDoubleClick(const juce::MouseEvent &event) override
+    {
+        // Open the native plugin editor window.
+        // The VSTParametersView is shown via the attached Modification prep's double-click.
+        for (auto list: listeners_)
+        {
+            auto* interface = findParentComponentOfClass<SynthGuiInterface>();
+            list->createWindow (interface->getSynth()->getNodeForId (pluginID),
+                                PluginWindow::Type::normal);
+        }
+    }
 
 
 

@@ -130,6 +130,9 @@ class PluginInstanceWrapper  {
     }
     juce::AudioProcessor* proc;
     juce::AudioProcessorGraph::NodeID node_id;
+    // Non-zero when proc is a VST AudioPluginInstance: the NodeID of the
+    // VSTModulationBridge that sits upstream of this VST in the graph.
+    juce::AudioProcessorGraph::NodeID bridgeNodeID {};
     juce::ValueTree state;
     void returnModulatedParamsToDefault() {
         for (auto param_default: state) {
@@ -202,6 +205,17 @@ public:
         {
             for(auto obj : objects)
             {
+                // VST plugins store binary state — must NOT call data.toString() on them
+                // (String::fromUTF8 asserts on non-UTF-8 data).  Check for the PLUGIN
+                // child first and take the base64 path directly.
+                if (obj->state.getChildWithName(IDs::PLUGIN).isValid())
+                {
+                    juce::MemoryBlock m;
+                    obj->proc->getStateInformation (m);
+                    obj->state.getOrCreateChildWithName("STATE",nullptr).setProperty ("base64",m.toBase64Encoding(),nullptr);
+                }
+                else
+                {
                 juce::MemoryBlock data;
                 obj->proc->getStateInformation(data);
                 auto xml = juce::parseXML(data.toString());
@@ -220,11 +234,6 @@ public:
                     //not what they may have been modulated to
                     obj->returnModulatedParamsToDefault();
                 }
-                else if ( obj->state.getChildWithName(IDs::PLUGIN).isValid() ) {
-
-                    juce::MemoryBlock m;
-                    obj->proc->getStateInformation (m);
-                    obj->state.getOrCreateChildWithName("STATE",nullptr).setProperty ("base64",m.toBase64Encoding(),nullptr);
                 }
                 if (obj->state.getChildWithName(IDs::modulationproc).isValid()) {
                     obj->state.setProperty(IDs::sync,1,nullptr);

@@ -135,6 +135,8 @@ namespace IDs
     DECLARE_ID(tuning)
     DECLARE_ID(tempo)
     DECLARE_ID(vst)
+    DECLARE_ID(vstbridge)
+    DECLARE_ID(bridgeUuid)
     DECLARE_ID(keymap)
     DECLARE_ID(noConnection)
     DECLARE_ID(linkedPrep)
