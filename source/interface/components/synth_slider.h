@@ -462,6 +462,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
     void setTextEntryWidthPercent(float percent) { text_entry_height_percent_ = percent; redoImage(); }
     void setShiftIndexAmount(int shift_amount) { shift_index_amount_ = shift_amount; }
     void setShowPopupOnHover(bool show) { show_popup_on_hover_ = show; }
+    void setShowSecondaryPopupOnHover(bool show) { show_secondary_popup_on_hover_ = show; }
     void setPopupPrefix(juce::String prefix) { popup_prefix_ = prefix; }
     void setKnobSizeScale(float scale) { knob_size_scale_ = scale; }
     float getKnobSizeScale() const override { return knob_size_scale_; }
@@ -522,6 +523,7 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
     void notifyModulationsChanged();*/
 
     bool show_popup_on_hover_;
+    bool show_secondary_popup_on_hover_;
     juce::String popup_prefix_;
     bool scroll_enabled_;
     bool bipolar_modulation_;

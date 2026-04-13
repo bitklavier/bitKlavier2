@@ -186,6 +186,7 @@ void OpenGlSlider::setColors() {
 
 SynthSlider::SynthSlider(juce::String name, const juce::ValueTree &_vt) : OpenGlSlider(name),
                                                                           show_popup_on_hover_(false),
+                                                                          show_secondary_popup_on_hover_(true),
                                                                           scroll_enabled_(true),
                                                                           bipolar_modulation_(false),
                                                                           stereo_modulation_(false),
@@ -354,7 +355,7 @@ void SynthSlider::mouseEnter(const juce::MouseEvent &e) {
     // knobs also have show_popup_on_hover_ but should not show a second bubble.
     // For regular sliders the old condition applies: only show when modulation
     // connections exist (i.e. the live value may actually differ from the base).
-    if ((show_popup_on_hover_ && !isModulationKnob()) || (attachment != nullptr && !getConnections().empty()))
+    if ((show_popup_on_hover_ && !isModulationKnob() && show_secondary_popup_on_hover_) || (attachment != nullptr && !getConnections().empty()))
         startTimer(33);
 
     hovering_ = true;

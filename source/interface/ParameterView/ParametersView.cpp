@@ -35,14 +35,28 @@ namespace bitklavier {
             OpenGLComboBox() : OpenGlAutoImageComponent<juce::ComboBox> ("Combo box")
             {
                 image_component_ = std::make_shared<OpenGlImageComponent> ();
-                setLookAndFeel(DefaultLookAndFeel::instance());
+                setLookAndFeel(&laf_);
                 image_component_->setComponent(this);
             }
+            ~OpenGLComboBox() { setLookAndFeel(nullptr); }
             virtual void resized() override
             {
                 OpenGlAutoImageComponent<juce::ComboBox>::resized();
                 redoImage();
             }
+            void valueChanged(juce::Value& value) override
+            {
+                OpenGlAutoImageComponent<juce::ComboBox>::valueChanged(value);
+                redoImage();
+            }
+            private:
+            struct SmallFontLAF : public juce::LookAndFeel_V4
+            {
+                juce::Font getComboBoxFont (juce::ComboBox&) override
+                {
+                    return juce::Font (11.0f);
+                }
+            } laf_;
         };
         class ChoiceParameterComponent : public juce::Component {
         public:
@@ -80,6 +94,8 @@ namespace bitklavier {
                 parent.addSlider(slider.get(), false);
                 slider->parentHierarchyChanged();
                 slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setShowPopupOnHover(true);
+                slider->setShowSecondaryPopupOnHover(false);
                 _ASSERT(slider->getSectionParent() != nullptr);
             }
 
@@ -268,9 +284,7 @@ namespace bitklavier {
     }
 
     void ParametersView::resized() {
-        if (comps.size() != 2)
-            placeKnobsInArea(getLocalBounds(), comps);
-        else if (comps.size() == 2)
+        if (comps.size() == 2)
         {
             /*
              * so we can fuss around with the placement of a knob and a button in the LFO mod
@@ -291,6 +305,31 @@ namespace bitklavier {
             area.reduce(widget_margin, widget_margin);
             button->setBounds(area.removeFromBottom(button_height));
         }
+        else if (comps.size() == 3)
+        {
+            // LFO 3-component layout: freq knob on left, waveShape combobox above auto toggle on right.
+            juce::Rectangle<int> area = getLocalBounds();
+            int widget_margin = findValue(Skin::kWidgetMargin);
+            int button_height = findValue(Skin::kComboMenuHeight);
+
+            auto& knob   = comps[0]; // frequency knob
+            auto& combo  = comps[1]; // waveShape combobox
+            auto& toggle = comps[2]; // auto toggle
+
+            juce::Rectangle<int> knob_area = area.removeFromLeft(area.getWidth() / 2 - knob->getWidth() / 2).removeFromBottom(area.getHeight() / 1.25);
+            knob_area.reduce(widget_margin, widget_margin);
+            knob->setBounds(knob_area);
+
+            juce::Rectangle<int> toggle_area = area.removeFromBottom(button_height);
+            toggle_area.reduce(widget_margin,  widget_margin / 2);
+            toggle_area.removeFromBottom(widget_margin / 2);
+            toggle->setBounds(toggle_area);
+
+            area.removeFromRight(widget_margin);
+            combo->setBounds(area.removeFromBottom(button_height * 2));
+        }
+        else
+            placeKnobsInArea(getLocalBounds(), comps);
     }
 
     void ParametersView::init_()

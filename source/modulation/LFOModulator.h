@@ -12,7 +12,7 @@
 struct LFOParams : public chowdsp::ParamHolder {
     LFOParams(const juce::ValueTree& v) : chowdsp::ParamHolder("lfo")
     {
-        add(freq, automaticStart);
+        add(freq, waveShape, automaticStart);
     }
 
     chowdsp::FreqHzParameter::Ptr freq
@@ -21,7 +21,15 @@ struct LFOParams : public chowdsp::ParamHolder {
         juce::ParameterID{"Frequency",100},
         "LFO Frequency",
         juce::NormalisableRange{0.001f,10.f,.001f},
-        0.001f
+        1.0f
+    };
+
+    chowdsp::ChoiceParameter::Ptr waveShape
+    {
+        juce::ParameterID { "waveShape", 100 },
+        "Wave Shape",
+        juce::StringArray { "Sine", "Square", "SawUp", "SawDown", "Triangle", "Random" },
+        0 // default: Sine
     };
 
     chowdsp::BoolParameter::Ptr automaticStart
@@ -52,17 +60,25 @@ public :
 
     void triggerModulation() override
     {
-        // turn the lfo on/off
-        // - starts/stops in place.
-        // - use Reset prep if you want to reset the phase as well
-        if (lfo_on) lfo_on = false;
-        else lfo_on = true;
+        // Start the LFO. Phase is NOT reset here; use Reset prep to reset phase.
+        lfo_on = true;
         ModulatorBase::triggerModulation();
     }
 
     void triggerReset() override
     {
-        reset(); //just reset the phase of the LFO
+        reset(); // Reset phase — called only by Reset preparation.
+    }
+
+    void stopModulation() override
+    {
+        lfo_on = false; // Called on noteOff; phase is preserved.
+    }
+
+    // Called on a second noteOn in toggle mode: stop without resetting phase.
+    void triggerNoteOnStop() override
+    {
+        lfo_on = false;
     }
 
     static constexpr ModulatorType type = ModulatorType::AUDIO;
@@ -91,18 +107,48 @@ public :
         // DBG("resetting phase, lastSample = " << lastSample);
     }
 
-    float getNextSample()
+    float getNextSample(int shape = 0)
     {
-        float sample = std::sin(phase);
-        phase += phaseIncrement;
+        float sample;
+        const float pi = juce::MathConstants<float>::pi;
 
+        // Detect the start of a new cycle for Sample+Hold (phase near 0).
+        const bool isNewCycle = (phase < phaseIncrement);
+
+        switch (shape)
+        {
+            case 1: // Square
+                sample = (phase < pi) ? 1.0f : -1.0f;
+                break;
+            case 2: // Sawtooth Up: ramps -1 → +1
+                sample = phase / pi - 1.0f;
+                break;
+            case 3: // Sawtooth Down: ramps +1 → -1
+                sample = 1.0f - phase / pi;
+                break;
+            case 4: // Triangle
+                sample = (phase < pi) ? (phase / pi * 2.0f - 1.0f)
+                                      : (3.0f - phase / pi * 2.0f);
+                break;
+            case 5: // Sample & Hold — new value at start of each cycle
+                if (isNewCycle)
+                    sampleHoldValue = juce::Random::getSystemRandom().nextFloat() * 2.0f - 1.0f;
+                sample = sampleHoldValue;
+                break;
+            default: // Sine
+                sample = std::sin(phase);
+                break;
+        }
+
+        phase += phaseIncrement;
         if (phase > juce::MathConstants<float>::twoPi)
             phase -= juce::MathConstants<float>::twoPi;
 
         return lastSample = sample;
     }
     void continuousReset() override {
-        triggerReset();
+        // No-op: LFO does not reset phase on noteOn retrigger.
+        // Phase only resets via Reset preparation (triggerReset).
     }
 private:
     float sampleRate = 44100.0f;
@@ -111,6 +157,7 @@ private:
     float phase = 0.0f;
     float phaseIncrement = 0.0f;
     float lastSample = 0.0f;
+    float sampleHoldValue = 0.0f;
     bool lfo_on = false;
 };
 

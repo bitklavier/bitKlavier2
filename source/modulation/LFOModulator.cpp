@@ -19,9 +19,10 @@ void LFOModulatorProcessor::getNextAudioBlock(juce::AudioBuffer<float>& buffer,j
     {
         setFrequency(_state.params.freq->getCurrentValue());
 
+        const int shape = _state.params.waveShape->getIndex();
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
-            float lfoValue = getNextSample(); // Ranges -depth to +depth
+            float lfoValue = getNextSample(shape); // Ranges -depth to +depth
 
             for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
             {

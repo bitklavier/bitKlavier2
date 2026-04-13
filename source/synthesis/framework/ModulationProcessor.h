@@ -185,7 +185,7 @@ namespace bitklavier {
         std::atomic<int> activeSnapshotIndex { 0 }; // audio reads this
         // Call this whenever graph changes (message thread only)
         void rebuildAndPublishSnapshot();
-        void triggerResets(RoutingSnapshot& snap) const;
+        void triggerResets(RoutingSnapshot& snap, bool fromNoteOn = false) const;
 
         // Optional: make bus resizing safer by suspending processing while changing buses
         struct ScopedSuspendProcessing

@@ -28,7 +28,7 @@ juce::AudioProcessor(
     isToggle = vtToggle;
 }
 
-void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap) const
+void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap, bool fromNoteOn) const
 {
     for (auto &e: snap.mods)
     {
@@ -41,13 +41,13 @@ void bitklavier::ModulationProcessor::triggerResets(RoutingSnapshot& snap) const
                 c->calculateReset(currentTotal,raw0);
                 parent.getParamOffsetBank().setOffset(c->getDestParamIndex(), c->currentDestinationSliderVal);
             }
-            // Clear the scratch buffer so that a stopped modulator (LFO that was
-            // halted mid-cycle) immediately outputs zero on the next block instead
-            // of continuing to apply its last non-zero sample values.
-            // For a running LFO, triggerReset() resets phase to 0, so the next
-            // getNextAudioBlock() will fill this buffer with fresh sin(0)=0 values.
             e.tmp.clear();
-            e.mod->triggerReset();
+            if (fromNoteOn)
+                // Toggle second-noteOn: let each modulator decide (LFO stops but keeps phase).
+                e.mod->triggerNoteOnStop();
+            else
+                // Reset prep or pendingResetAll: full reset including phase.
+                e.mod->triggerReset();
         }
     }
 }
@@ -138,23 +138,29 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
         }
     }
 
-    // MIDI note-on => request retrigger
+    // MIDI note-on/off => request retrigger or stop
     for (auto msg: midiMessages) {
         if (msg.getMessage().isNoteOn())
         {
             if (isModded && isToggle)
             {
-                //do reset
-                triggerResets(snap);
+                // Second noteOn in toggle mode: stop each modulator without phase reset.
+                triggerResets(snap, true /*fromNoteOn*/);
                 isModded = false;
             }
-            else // trigger the mods
+            else
             {
                 for (auto &e: snap.mods)
                     if (e.mod != nullptr)
                         e.mod->pendingRetrigger.store(true, std::memory_order_release);
                 isModded = true;
             }
+        }
+        else if (msg.getMessage().isNoteOff())
+        {
+            for (auto &e: snap.mods)
+                if (e.mod != nullptr)
+                    e.mod->pendingStop.store(true, std::memory_order_release);
         }
     }
 
@@ -216,6 +222,10 @@ void bitklavier::ModulationProcessor::processBlock(juce::AudioBuffer<float> &buf
             mod->continuousReset();
             mod->triggerModulation();
         }
+
+        const bool doStop = mod->pendingStop.exchange(false, std::memory_order_acq_rel);
+        if (doStop)
+            mod->stopModulation();
 
         // NOW generate the audio AFTER retrigger/reset, so e.tmp matches new state
         mod->getNextAudioBlock(e.tmp, midiMessages);

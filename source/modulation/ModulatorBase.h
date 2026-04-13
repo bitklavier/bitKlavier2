@@ -86,6 +86,14 @@ public:
     std::atomic<bool> pendingRetrigger { false };
     void requestRetrigger() noexcept { pendingRetrigger.store(true, std::memory_order_release); }
 
+    std::atomic<bool> pendingStop { false };
+    virtual void stopModulation() {}
+
+    // Called on a second noteOn in toggle mode. Default delegates to triggerReset() so
+    // Ramp and other modulators retain existing behavior. LFO overrides to stop without
+    // resetting phase.
+    virtual void triggerNoteOnStop() { triggerReset(); }
+
     bitklavier::ModulationProcessor* parent_;
     static constexpr ModulatorType type = ModulatorType::AUDIO;
 //    std::vector<bitklavier::ModulationConnection*> connections;
