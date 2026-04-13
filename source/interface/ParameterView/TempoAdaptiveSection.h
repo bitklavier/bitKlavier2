@@ -35,7 +35,7 @@ public:
     std::shared_ptr<OpenGL_LabeledBorder> adaptiveKnobsBorder;
 
 private:
-    TempoProcessor* processor;
+    juce::WeakReference<TempoProcessor> processor;
     TempoParams& params;
 };
 

@@ -127,8 +127,10 @@ public:
 
     std::shared_ptr<OpenGL_LabeledBorder> primaryKnobsBorder;
 
-    TempoProcessor* processor;
+    juce::WeakReference<TempoProcessor> processor;
     TempoParams& params_;
+
+    void stopAllTimers() override { stopTimer(); }
 
     void updateAdaptiveSectionVisibility();
     void timerCallback() override;
