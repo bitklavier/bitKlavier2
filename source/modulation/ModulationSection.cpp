@@ -33,7 +33,7 @@ mod_button(new ModulationButton(editor->getComponentID()+"_mod"))
     }
     else if (v.getProperty(IDs::type) == "ramp")
     {
-        borderLabel = "smooth value change";
+        borderLabel = "smooth change";
     }
     modBorder = std::make_shared<OpenGL_LabeledBorder>("mod border", borderLabel);
     addBorder(modBorder.get());

@@ -11,7 +11,7 @@
 struct RampParams : public chowdsp::ParamHolder {
     RampParams(const juce::ValueTree& v) : chowdsp::ParamHolder("value")
     {
-        add(time);
+        add(time, curve);
     }
 
     chowdsp::TimeMsParameter::Ptr time //ms
@@ -20,6 +20,16 @@ struct RampParams : public chowdsp::ParamHolder {
         "Value Change Time",
         juce::NormalisableRange{0.f,10000.f,1.f,2.f,false},
         0.f
+    };
+
+    chowdsp::FloatParameter::Ptr curve
+    {
+        juce::ParameterID{"Curve",100},
+        "Curve",
+        chowdsp::ParamUtils::createNormalisableRange(0.1f, 100.f, 1.0f),
+        1.0f,
+        [] (float val) { return juce::String(val, 2); },
+        [] (const juce::String& s) { return s.getFloatValue(); }
     };
 };
 
@@ -52,6 +62,14 @@ public :
     float target_{0.f};
     float rate_ {0.001f};
     int state_{0};
+
+    // Curve ramp state
+    float pos_ {0.f};        // normalized position [0,1] through current ramp
+    float posRate_ {0.f};    // advance per sample = 1 / totalSamples
+    float startValue_ {0.f}; // value_ at ramp start, for interpolation
+    float logK_ {0.f};       // precomputed log(curve), updated in setTime
+    float invKMinus1_ {0.f}; // precomputed 1/(curve-1), updated in setTime
+
     void continuousReset() override {
         triggerReset();
     }

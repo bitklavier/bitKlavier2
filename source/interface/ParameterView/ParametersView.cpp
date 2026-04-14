@@ -284,7 +284,17 @@ namespace bitklavier {
     }
 
     void ParametersView::resized() {
-        if (comps.size() == 2)
+        if (comps.size() == 2 && all_sliders_v.size() == 2)
+        {
+            // Two knobs (e.g. Time + Curve): place side-by-side in the bottom knob-row area
+            int large_padding = findValue(Skin::kLargePadding);
+            juce::Rectangle<int> area = getLocalBounds();
+            int widget_margin = findValue(Skin::kWidgetMargin);
+            juce::Rectangle<int> knobs_area = area.removeFromBottom(getKnobSectionHeight());
+            knobs_area.reduce(widget_margin, 0);
+            placeKnobsInArea(knobs_area, comps);
+        }
+        else if (comps.size() == 2)
         {
             /*
              * so we can fuss around with the placement of a knob and a button in the LFO mod

@@ -39,26 +39,35 @@ void RampModulatorProcessor::setTime( float timeToDest )
     if ( timeToDest < 1.0f )
         timeToDest = 1.0f; // avoid division by near-zero
 
-    rate_ = fabs(target_ - value_) / ( timeToDest * sampleRate * 0.001 );
-    //DBG("rate = " << rate_ << " timeToDest = " << timeToDest << " value_ = " << value_ << " target_ = " << target_ << " sampleRate = " << sampleRate << "");
+    float totalSamples = timeToDest * sampleRate * 0.001f;
+    rate_ = fabsf(target_ - value_) / totalSamples; // kept for compatibility
+    posRate_ = 1.0f / totalSamples;
+    pos_ = 0.0f;
+    startValue_ = value_;
+
+    float k = *_state.params.curve;
+    if (fabsf(k - 1.0f) > 1e-5f)
+    {
+        logK_ = logf(k);
+        invKMinus1_ = 1.0f / (k - 1.0f);
+    }
 }
 
 float RampModulatorProcessor::getNextSample()
 {
     if ( state_ ) {
-        if ( target_ > value_ ) {
-            value_ += rate_;
-            if ( value_ >= target_ ) {
-                value_ = target_;
-                state_ = 0;
-            }
-        }
-        else {
-            value_ -= rate_;
-            if ( value_ <= target_ ) {
-                value_ = target_;
-                state_ = 0;
-            }
+        pos_ += posRate_;
+        if ( pos_ >= 1.0f ) {
+            pos_ = 1.0f;
+            value_ = target_;
+            state_ = 0;
+        } else if ( fabsf(*_state.params.curve - 1.0f) < 1e-5f ) {
+            // linear: cheap lerp, no expf
+            value_ = startValue_ + (target_ - startValue_) * pos_;
+        } else {
+            // dt_asymwarp inline: (k^pos - 1) / (k - 1)
+            float warped = (expf(pos_ * logK_) - 1.0f) * invKMinus1_;
+            value_ = startValue_ + (target_ - startValue_) * warped;
         }
     }
 
@@ -106,7 +115,6 @@ SynthSection *RampModulatorProcessor::createEditor() {
 void RampModulatorProcessor::retriggerFrom(float current)
 {
     DBG("RampModulatorProcessor::retriggerFrom = " << current);
-    // note, this always gets a current = 0, but it still keeps continuity, just the time changes, so the continuity must be because of something else
     // Keep continuity: start from the current output level
     value_ = juce::jlimit (0.0f, 1.0f, current);
 
@@ -114,7 +122,7 @@ void RampModulatorProcessor::retriggerFrom(float current)
     target_ = 1.0f;
     state_ = 1;
 
-    // Recompute rate based on (target_ - value_) and current time
+    // setTime resets pos_=0 and startValue_=value_, then precomputes curve constants
     setTime (*_state.params.time);
 
     // this function doesn't currently do anything
