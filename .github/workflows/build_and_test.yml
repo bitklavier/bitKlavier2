@@ -183,7 +183,7 @@ jobs:
 
       - name: pkgbuild, Productbuild and Notarize
         if: ${{ matrix.name == 'macOS' }}
-        timeout-minutes: 15
+        timeout-minutes: 45
         run: |
           VERSION=$(cat VERSION)
           # Prepare scripts for individual components
