@@ -48,13 +48,17 @@ public:
 private:
     void parameterValueChanged (int, float newValue) override
     {
-        // Push the modulated value as the "live" value so the modulation-meter arc
-        // shows the offset from the base value.  We deliberately do NOT call
-        // slider_.setValue() here, so the knob stays at the user-set base position
-        // (matching how regular prep sliders behave with chowdsp attachments).
+        // Called when the parameter changes from any source OTHER than the bridge's
+        // own param->setValue() (which does not fire listeners).  This includes:
+        //   - the native plugin UI (user drags a knob in the plugin window)
+        //   - our own sliderValueChanged → setValueNotifyingHost (same value back)
+        // Update the knob position and bridge base so both stay in sync with the
+        // native UI.  dontSendNotification prevents a feedback loop via sliderValueChanged.
         juce::MessageManager::callAsync ([this, newValue]
         {
-            slider_.setLiveModulatedValue (newValue);
+            slider_.setValue (newValue, juce::dontSendNotification);
+            slider_.redoImage();   // setValue+dontSendNotification skips valueChanged→redoImage
+            bridge_.setBaseValue (slot_, newValue);
         });
     }
 
