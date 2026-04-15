@@ -107,7 +107,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     about_section_->toFront (true);
     loading_section->toFront (true);
     setOpaque (true);
-    open_gl_context_.setContinuousRepainting (true);
+    open_gl_context_.setContinuousRepainting (false);
     open_gl_context_.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
     open_gl_context_.setSwapInterval (1); // cap render loop at display refresh rate (V-Sync)
     open_gl_context_.setRenderer (this);
@@ -115,7 +115,7 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     open_gl_context_.setComponentPaintingEnabled (false); // set to true, and the non-OpenGL components will draw
     open_gl_context_.attachTo (*this);
 
-    ///startTimer(100);
+    startTimer (33); // ~30Hz repaint rate
 }
 
 FullInterface::~FullInterface()
@@ -290,7 +290,10 @@ void FullInterface::hideLoadingSection() {
 void FullInterface::animate (bool animate)
 {
     if (animate_ != animate)
-        open_gl_context_.setContinuousRepainting (animate);
+    {
+        if (animate) startTimer (33);
+        else stopTimer();
+    }
 
     animate_ = animate;
     SynthSection::animate (animate);

@@ -84,7 +84,8 @@ bool DirectProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesL
  */
 void DirectProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 {
-    noteOnSpecMap[noteOnNumber].transpositions.clear();
+    noteOnSpecMap[noteOnNumber].transpositions.clearQuick();
+    noteOnSpecMap[noteOnNumber].transpositionGains.clearQuick();
     auto paramVals = state.params.transpose.getFloatParams();
     int i = 0;
     for (auto const& tp : *paramVals)

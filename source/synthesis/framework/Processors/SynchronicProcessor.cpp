@@ -505,6 +505,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                         noteOnSpecMap[newNote].envParams.releasePower = state.params.envelopeSequence.envStates.releasePowers[cluster->envelopeCounter];
 
                         noteOnSpecMap[newNote].transpositions.clearQuick();
+                        noteOnSpecMap[newNote].transpositionGains.clearQuick();
                         //noteOnSpecMap[newNote].transpositions.add(newTransp);
 
                         // need to make sure that slider has at least one transposition

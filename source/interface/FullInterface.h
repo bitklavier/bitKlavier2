@@ -44,10 +44,9 @@ public :
 
     }
 
-    void timerCallback()   // to avoid flickering when resizing the window
+    void timerCallback() override
     {
-//        open_gl_context_.attachTo(*this);
-//        stopTimer();
+        open_gl_context_.triggerRepaint();
     }
 
     int getPixelMultiple() const override { return pixel_multiple_; }

@@ -113,7 +113,7 @@ void NostalgicProcessor::tuningStateInvalidated() {
 
 void NostalgicProcessor::updateMidiNoteTranspositions(int noteOnNumber)
 {
-    noteOnSpecMap[noteOnNumber].transpositions.clear();
+    noteOnSpecMap[noteOnNumber].transpositions.clearQuick();
     auto paramVals = state.params.transpose.getFloatParams();
     int i = 0;
     for (auto const& tp : *paramVals)
