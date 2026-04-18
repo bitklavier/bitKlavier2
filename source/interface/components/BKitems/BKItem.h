@@ -753,9 +753,7 @@ class VSTItem : public BKItem {
         // g.strokePath(layer2, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
         // g.strokePath(layer3, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
 
-        // VST outline uses the preparation accent colour
-        //g.setColour(prep_color_);
-        g.setColour(juce::Colour::fromRGB(0xEE, 0x2A, 0x7B));
+        g.setColour(selected_ ? juce::Colours::white : juce::Colour::fromRGB(0xEE, 0x2A, 0x7B));
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
     }
 };

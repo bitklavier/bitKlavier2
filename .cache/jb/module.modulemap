@@ -298,11 +298,6 @@ module catch_enforce {
   export *
 }
 
-module BinaryData {
-  header "/Users/dtrueman/Code/bitKlavier2/cmake-build-debug/juce_binarydata_Assets/JuceLibraryCode/BinaryData.h"
-  export *
-}
-
 module system_fstream [system] {
   header "/Library/Developer/CommandLineTools/SDKs/MacOSX26.4.sdk/usr/include/c++/v1/fstream"
   export *
@@ -358,13 +353,18 @@ module catch_console_colour {
   export *
 }
 
-module system_iostream [system] {
-  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/iostream"
+module system_chrono [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/chrono"
   export *
 }
 
 module synth_gui_interface {
   header "/Users/dtrueman/Code/bitKlavier2/source/common/synth_gui_interface.h"
+  export *
+}
+
+module system_iostream [system] {
+  header "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/iostream"
   export *
 }
 
