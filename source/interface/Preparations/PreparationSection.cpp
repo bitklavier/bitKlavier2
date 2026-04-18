@@ -518,8 +518,20 @@ void PreparationSection::resized() {
                 const float x = isInput
                       ? transformedBounds.getX() - portSize / 2 - BKItem::kMeterPixel
                       : transformedBounds.getRight() - portSize / 2 + BKItem::kMeterPixel;
+                // Count only visible audio (non-MIDI) ports for Y centering. Using
+                // getBusCount would include internal buses (Send Pad, Modulation) that
+                // don't correspond to user-facing ports, causing off-center placement.
+                int audioPortCount = 0, audioPortIndex = 0;
+                for (auto* p : objects)
+                {
+                    if (p->isInput == isInput && !p->pin.isMIDI())
+                    {
+                        if (p == port) audioPortIndex = audioPortCount;
+                        ++audioPortCount;
+                    }
+                }
                 float yBase = transformedBounds.getY() + transformedBounds.getHeight() * (
-                      1.0f - ((1.0f + indexPos) / (totalSpaces + 1.0f))) - portSize / 2;
+                      1.0f - ((1.0f + audioPortIndex) / (audioPortCount + 1.0f))) - portSize / 2;
                 float yOffset = 0.0f;
                 if (useVisualBounds)
                 {
