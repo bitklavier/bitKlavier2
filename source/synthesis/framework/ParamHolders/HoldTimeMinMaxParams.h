@@ -9,8 +9,8 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 
 static float holdTimeMinMax_rangeMin = 0.f;
-static float holdTimeMinMax_rangeMax = 12000.f;
-static float holdTimeMinMax_rangeMid = 1500.f;
+static float holdTimeMinMax_rangeMax = 120000.f;
+static float holdTimeMinMax_rangeMid = 60000.f;
 
 struct HoldTimeMinMaxParams : chowdsp::ParamHolder
 {
@@ -30,7 +30,7 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
         juce::ParameterID { "holdTimeMaxParam", 100 },
         "Hold Time Max",
         chowdsp::ParamUtils::createNormalisableRange (holdTimeMinMax_rangeMin, holdTimeMinMax_rangeMax, holdTimeMinMax_rangeMid),
-        120000.0f
+        60000.0f
     };
 
     // Last velocity param

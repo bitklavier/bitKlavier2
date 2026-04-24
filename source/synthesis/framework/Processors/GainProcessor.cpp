@@ -45,9 +45,10 @@ void GainProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
 
     // final output gain stage, from rightmost slider in DirectParametersView
     auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
-    buffer.applyGain(0, 0, numSamples, outputgainmult);
-    buffer.applyGain(1, 0, numSamples, outputgainmult);
+    const int numChannels = buffer.getNumChannels();
+    for (int ch = 0; ch < numChannels; ++ch)
+        buffer.applyGain (ch, 0, numSamples, outputgainmult);
     // main level meter update
-    std::get<0> (state.params.outputLevels) = buffer.getRMSLevel (0, 0, numSamples);
-    std::get<1> (state.params.outputLevels) = buffer.getRMSLevel (1, 0, numSamples);
+    std::get<0> (state.params.outputLevels) = numChannels > 0 ? buffer.getRMSLevel (0, 0, numSamples) : 0.0f;
+    std::get<1> (state.params.outputLevels) = numChannels > 1 ? buffer.getRMSLevel (1, 0, numSamples) : 0.0f;
 }
