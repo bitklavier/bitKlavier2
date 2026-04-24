@@ -33,3 +33,5 @@ codesign
 
 # ignore doxygen stuff
 html
+
+.cache/
