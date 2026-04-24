@@ -93,6 +93,12 @@ public:
         presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Power and Presets");
         addBorder(presetsBorder.get());
 
+        powerCallbacks_ += {listeners.addParameterListener(
+            eqparams_.activeEq,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() { updateControlsEnabled(eqparams_.activeEq->get()); })};
+        updateControlsEnabled(eqparams_.activeEq->get());
+
         // redraw eq graph
         eqparams_.doForAllParameters ([this, &listeners] (auto& param, size_t) {
             eqRedoImageCallbacks += {listeners.addParameterListener(
@@ -104,6 +110,15 @@ public:
                 })
             };
         });
+    }
+
+    void updateControlsEnabled(bool active)
+    {
+        loCutSection->setControlsEnabled(active);
+        peak1Section->setControlsEnabled(active);
+        peak2Section->setControlsEnabled(active);
+        peak3Section->setControlsEnabled(active);
+        hiCutSection->setControlsEnabled(active);
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -119,6 +134,7 @@ public:
     std::shared_ptr<PlainTextComponent> prepTitle;
 
     chowdsp::ScopedCallbackList eqRedoImageCallbacks;
+    chowdsp::ScopedCallbackList powerCallbacks_;
 
     // active eq & reset buttons
     std::unique_ptr<SynthButton> activeEq_toggle;

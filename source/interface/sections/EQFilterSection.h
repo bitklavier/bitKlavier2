@@ -26,6 +26,7 @@ public:
     ~EQPeakFilterSection() override {}
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
+    void setControlsEnabled(bool enabled);
 
 private:
     std::unique_ptr<filter_button> peak_filter_button;
@@ -58,6 +59,7 @@ public:
     ~EQCutFilterSection() override {}
     void paintBackground(juce::Graphics& g) override;
     void resized() override;
+    void setControlsEnabled(bool enabled);
 
 private:
     std::unique_ptr<filter_button> cut_filter_button;

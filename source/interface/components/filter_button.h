@@ -20,6 +20,12 @@ public:
         image_component_->redrawImage(true);
     }
 
+    void enablementChanged() override
+    {
+        image_component_->redrawImage(true);
+        repaint();
+    }
+
 private:
     juce::Image image_;
     std::shared_ptr<OpenGlImageComponent> image_component_;

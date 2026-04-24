@@ -21,7 +21,7 @@ void filter_button::paintButton (juce::Graphics& g,
                                  bool,
                                  bool)
 {
-    auto opacity = getToggleState() ? 1.0f : 0.5f;
+    auto opacity = isEnabled() ? (getToggleState() ? 1.0f : 0.5f) : 0.3f;
 
     g.setOpacity(opacity);
     g.drawImageWithin(image_,

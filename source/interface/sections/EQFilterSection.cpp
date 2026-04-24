@@ -199,3 +199,23 @@ void EQCutFilterSection::resized()
     slope_knob_label->setTextSize (knobLabelSize);
     SynthSection::resized();
 }
+
+void EQPeakFilterSection::setControlsEnabled (bool enabled)
+{
+    peak_filter_button->setEnabled(enabled);
+    freq_knob->setEnabled(enabled);
+    freq_knob->setActive(enabled);
+    gain_knob->setEnabled(enabled);
+    gain_knob->setActive(enabled);
+    q_knob->setEnabled(enabled);
+    q_knob->setActive(enabled);
+}
+
+void EQCutFilterSection::setControlsEnabled (bool enabled)
+{
+    cut_filter_button->setEnabled(enabled);
+    freq_knob->setEnabled(enabled);
+    freq_knob->setActive(enabled);
+    slope_knob->setEnabled(enabled);
+    slope_knob->setActive(enabled);
+}

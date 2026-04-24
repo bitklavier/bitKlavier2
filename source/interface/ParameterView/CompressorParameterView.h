@@ -167,8 +167,24 @@ public:
         presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Power and Presets");
         addBorder(presetsBorder.get());
 
+        powerCallbacks_ += {listeners.addParameterListener(
+            compressorParams_.activeCompressor,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() { updateKnobsEnabled(compressorParams_.activeCompressor->get()); })};
+        updateKnobsEnabled(compressorParams_.activeCompressor->get());
+
         // for updating the compressorMeter
         startTimer(50);
+    }
+
+    void updateKnobsEnabled(bool active)
+    {
+        for (auto* knob : { attack_knob.get(), release_knob.get(), threshold_knob.get(),
+                            makeup_knob.get(), ratio_knob.get(), knee_knob.get() })
+        {
+            knob->setEnabled(active);
+            knob->setActive(active);
+        }
     }
 
     void timerCallback() override;
@@ -246,6 +262,7 @@ public:
     std::shared_ptr<OpenGL_LabeledBorder> compressorControlsBorder;
     std::shared_ptr<OpenGL_LabeledBorder> presetsBorder;
 
+    chowdsp::ScopedCallbackList powerCallbacks_;
     CompressorParams& compressorParams_;
     void resized() override;
 };

@@ -71,13 +71,13 @@ void CompressorParameterView::resized()
     knobSection.removeFromLeft (colPadding);
     threshold_knob->setBounds(knobSection.removeFromLeft(colWidth));
     knobSection.removeFromLeft (colPadding);
-    makeup_knob->setBounds(knobSection.removeFromLeft(colWidth));
-    knobSection.removeFromLeft (colPadding);
     // mix_knob->setBounds(knobSection.removeFromLeft(colWidth));
     // knobSection.removeFromLeft (colPadding);
     ratio_knob->setBounds(knobSection.removeFromLeft(colWidth));
     knobSection.removeFromLeft (colPadding);
     knee_knob->setBounds(knobSection.removeFromLeft(colWidth));
+    knobSection.removeFromLeft (colPadding);
+    makeup_knob->setBounds(knobSection.removeFromLeft(colWidth));
     knobSection.removeFromLeft (colPadding);
 
     juce::Rectangle<int> attack_label_rect (attack_knob->getX(), attack_knob->getBottom() - largepadding, attack_knob->getWidth(), labelsectionheight );

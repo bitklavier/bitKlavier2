@@ -41,10 +41,10 @@ struct CompressorParams : chowdsp::ParamHolder
             attack,
             release,
             threshold,
-            makeup,
             // mix,
             ratio,
             knee,
+            makeup,
             presets);
     }
 
