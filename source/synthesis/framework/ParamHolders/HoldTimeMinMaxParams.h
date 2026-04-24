@@ -30,7 +30,7 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
         juce::ParameterID { "holdTimeMaxParam", 100 },
         "Hold Time Max",
         chowdsp::ParamUtils::createNormalisableRange (holdTimeMinMax_rangeMin, holdTimeMinMax_rangeMax, holdTimeMinMax_rangeMid),
-        12000.0f
+        120000.0f
     };
 
     // Last velocity param
