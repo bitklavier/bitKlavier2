@@ -378,6 +378,12 @@ void MidiManager::processMidiMessage(const juce::MidiMessage& midi_message, int 
 
 //add messages from actual device callback
 void MidiManager::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage &midi_message) {
+    // System realtime messages (Clock 0xF8, Active Sense 0xFE, Reset 0xFF, etc.) are 1-byte
+    // with no data bytes. Processors downstream call getNoteNumber() before type-checking,
+    // which reads uninitialized memory for these messages -> UB / crash. Discard them.
+    if (midi_message.getRawData()[0] >= 0xF8)
+        return;
+
     // Notify UI listeners (on message thread) for note on/off for visualisation only
     if (midi_message.isNoteOnOrOff())
     {

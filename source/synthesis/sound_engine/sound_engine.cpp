@@ -170,7 +170,8 @@ namespace bitklavier {
             if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
             {
                 for (const auto metadata : midiMessages)
-                    kp->postExternalMidi (metadata.getMessage());
+                    if (metadata.getMessage().getRawData()[0] < 0xF8)
+                        kp->postExternalMidi (metadata.getMessage());
             }
         }
     }
