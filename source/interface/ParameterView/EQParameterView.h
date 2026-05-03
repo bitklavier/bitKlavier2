@@ -38,21 +38,21 @@ public:
         // menus
         if (auto* eqParams = dynamic_cast<EQParams*>(&params)) {
             presets_combo_box = std::make_unique<OpenGLComboBox>(eqParams->presets->paramID.toStdString());
-            presets_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*eqParams->presets.get(), listeners, *presets_combo_box, nullptr);
+            presets_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*eqParams->presets.get(), listeners, *presets_combo_box, pluginState.undoManager);
             addAndMakeVisible(presets_combo_box.get());
             addOpenGlComponent(presets_combo_box->getImageComponent());
         }
 
         // bypass EQ button
         activeEq_toggle = std::make_unique<SynthButton>(eqparams_.activeEq->paramID);
-        activeEq_attachment = std::make_unique<chowdsp::ButtonAttachment>(eqparams_.activeEq, listeners, *activeEq_toggle, nullptr);
+        activeEq_attachment = std::make_unique<chowdsp::ButtonAttachment>(eqparams_.activeEq, listeners, *activeEq_toggle, pluginState.undoManager);
         activeEq_toggle->setComponentID(eqparams_.activeEq->paramID);
         addSynthButton(activeEq_toggle.get(), true);
         activeEq_toggle->setText("power");
 
         // reset EQ button
         reset_button = std::make_unique<SynthButton>("reset");
-        reset_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.resetEq,listeners,*reset_button,nullptr);
+        reset_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.resetEq,listeners,*reset_button,pluginState.undoManager);
         reset_button->setComponentID("reset");
         addSynthButton(reset_button.get(), true);
         reset_button->setText("reset");
@@ -63,15 +63,15 @@ public:
         addAndMakeVisible(equalizerGraph.get());
 
         // eq filter sections
-        loCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.loCutFilterParams, listeners, *this);
+        loCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.loCutFilterParams, listeners, *this, pluginState.undoManager);
         addSubSection (loCutSection.get());
-        peak1Section = std::make_unique<EQPeakFilterSection>(name, eqparams_.peak1FilterParams, listeners, *this);
+        peak1Section = std::make_unique<EQPeakFilterSection>(name, eqparams_.peak1FilterParams, listeners, *this, pluginState.undoManager);
         addSubSection(peak1Section.get());
-        peak2Section = std::make_unique<EQPeakFilterSection>(name, eqparams_.peak2FilterParams, listeners, *this);
+        peak2Section = std::make_unique<EQPeakFilterSection>(name, eqparams_.peak2FilterParams, listeners, *this, pluginState.undoManager);
         addSubSection(peak2Section.get());
-        peak3Section = std::make_unique<EQPeakFilterSection>(name, eqparams_.peak3FilterParams, listeners, *this);
+        peak3Section = std::make_unique<EQPeakFilterSection>(name, eqparams_.peak3FilterParams, listeners, *this, pluginState.undoManager);
         addSubSection(peak3Section.get());
-        hiCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.hiCutFilterParams, listeners, *this);
+        hiCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.hiCutFilterParams, listeners, *this, pluginState.undoManager);
         addSubSection(hiCutSection.get());
 
         // the level meter and output gain slider (right side of preparation popup)

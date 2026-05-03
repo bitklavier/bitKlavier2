@@ -3,9 +3,13 @@
 //
 
 #include "EQParameterView.h"
+#include "FullInterface.h"
 
 void EQParameterView::resized()
 {
+    if (auto* parent = findParentComponentOfClass<FullInterface>())
+        parent->hideSoundsetSelector();
+
     // width of the title at left, used in all preparations
     int title_width = getTitleWidth();
 

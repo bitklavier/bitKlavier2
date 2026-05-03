@@ -3,6 +3,7 @@
 //
 
 #include "CompressorParameterView.h"
+#include "FullInterface.h"
 
 void CompressorParameterView::timerCallback()
 {
@@ -11,6 +12,9 @@ void CompressorParameterView::timerCallback()
 
 void CompressorParameterView::resized()
 {
+    if (auto* parent = findParentComponentOfClass<FullInterface>())
+        parent->hideSoundsetSelector();
+
     // width of the title at left, used in all preparations
     int title_width = getTitleWidth();
     int smallpadding = findValue(Skin::kPadding);

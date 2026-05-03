@@ -30,7 +30,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     addAndMakeVisible(eqButton.get());
     eqButton->addListener(this);
     eqButton->setLookAndFeel(TextLookAndFeel::instance());
-    eqButton->setButtonText("EQ");
+    eqButton->setButtonText("Equalizer");
 
     compressorButton = std::make_unique<OpenGlTextButton>("footer_compressor");
     addOpenGlComponent(compressorButton->getGlComponent());
@@ -163,11 +163,11 @@ void FooterSection::reset() {
 void FooterSection::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == compressorButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
-        showPrepPopup(interface->getCompressorPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeCompressor);
+        showPrepPopup(interface->getCompressorPopup(), {}, bitklavier::BKPreparationType::PreparationTypeCompressor);
     }
     else if (clicked_button == eqButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
-        showPrepPopup(interface->getEQPopup(),gallery,bitklavier::BKPreparationType::PreparationTypeEQ);
+        showPrepPopup(interface->getEQPopup(), {}, bitklavier::BKPreparationType::PreparationTypeEQ);
     }
     SynthSection::buttonClicked(clicked_button);
 }

@@ -21,7 +21,8 @@ public:
         juce::String name,
         EQPeakFilterParams &params,
         chowdsp::ParameterListeners &listeners,
-        SynthSection &parent);
+        SynthSection &parent,
+        juce::UndoManager* undoManager = nullptr);
 
     ~EQPeakFilterSection() override {}
     void paintBackground(juce::Graphics& g) override;
@@ -54,7 +55,8 @@ public:
         juce::String name,
         EQCutFilterParams &params,
         chowdsp::ParameterListeners &listeners,
-        SynthSection &parent);
+        SynthSection &parent,
+        juce::UndoManager* undoManager = nullptr);
 
     ~EQCutFilterSection() override {}
     void paintBackground(juce::Graphics& g) override;

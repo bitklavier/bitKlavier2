@@ -8,7 +8,8 @@ EQPeakFilterSection::EQPeakFilterSection (
     juce::String name,
     EQPeakFilterParams &params,
     chowdsp::ParameterListeners &listeners,
-    SynthSection &parent)  : SynthSection(name)
+    SynthSection &parent,
+    juce::UndoManager* undoManager)  : SynthSection(name)
 {
     setComponentID(parent.getComponentID());
     setName("eqpeakfilter");
@@ -20,7 +21,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     BinaryData::peak_pngSize);
 
     peak_filter_button = std::make_unique<filter_button>(peakImage);
-    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*peak_filter_button,nullptr);
+    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*peak_filter_button,undoManager);
     addOpenGlComponent (peak_filter_button->getImageComponent());
     addAndMakeVisible(peak_filter_button.get());
 
@@ -29,7 +30,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     freq_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     freq_knob->setPopupPlacement(juce::BubbleComponent::below);
     freq_knob->setShowPopupOnHover(true);
-    freq_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterFreq, listeners, *freq_knob, nullptr);
+    freq_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterFreq, listeners, *freq_knob, undoManager);
     freq_knob->addAttachment(freq_knob_attachment.get());
 
     gain_knob = std::make_unique<SynthSlider>(params.filterGain->paramID, params.filterGain->getModParam());
@@ -37,7 +38,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     gain_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     gain_knob->setPopupPlacement(juce::BubbleComponent::below);
     gain_knob->setShowPopupOnHover(true);
-    gain_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterGain, listeners, *gain_knob, nullptr);
+    gain_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterGain, listeners, *gain_knob, undoManager);
     gain_knob->addAttachment(gain_knob_attachment.get());
 
     q_knob = std::make_unique<SynthSlider>(params.filterQ->paramID, params.filterQ->getModParam());
@@ -45,7 +46,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     q_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     q_knob->setPopupPlacement(juce::BubbleComponent::below);
     q_knob->setShowPopupOnHover(true);
-    q_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterQ, listeners, *q_knob, nullptr);
+    q_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterQ, listeners, *q_knob, undoManager);
     q_knob->addAttachment(q_knob_attachment.get());
 
     freq_knob_label = std::make_shared<PlainTextComponent>(freq_knob->getName(), "FREQ");
@@ -112,7 +113,8 @@ EQCutFilterSection::EQCutFilterSection (
     juce::String name,
     EQCutFilterParams &params,
     chowdsp::ParameterListeners &listeners,
-    SynthSection &parent)  : SynthSection(name)
+    SynthSection &parent,
+    juce::UndoManager* undoManager)  : SynthSection(name)
 {
     setComponentID(parent.getComponentID());
     setName("eqcutfilter");
@@ -131,7 +133,7 @@ EQCutFilterSection::EQCutFilterSection (
     }
     else cut_filter_button = std::make_unique<filter_button>(hicutImage);
 
-    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*cut_filter_button,nullptr);
+    filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*cut_filter_button,undoManager);
     addOpenGlComponent (cut_filter_button->getImageComponent());
     addAndMakeVisible(cut_filter_button.get());
 
@@ -140,7 +142,7 @@ EQCutFilterSection::EQCutFilterSection (
     freq_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     freq_knob->setPopupPlacement(juce::BubbleComponent::below);
     freq_knob->setShowPopupOnHover(true);
-    freq_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterFreq, listeners, *freq_knob, nullptr);
+    freq_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterFreq, listeners, *freq_knob, undoManager);
     freq_knob->addAttachment(freq_knob_attachment.get());
 
     slope_knob = std::make_unique<SynthSlider>(params.filterSlope->paramID, params.filterSlope->getModParam());
@@ -148,7 +150,7 @@ EQCutFilterSection::EQCutFilterSection (
     slope_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slope_knob->setPopupPlacement(juce::BubbleComponent::below);
     slope_knob->setShowPopupOnHover(true);
-    slope_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterSlope, listeners, *slope_knob, nullptr);
+    slope_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterSlope, listeners, *slope_knob, undoManager);
     slope_knob->addAttachment(slope_knob_attachment.get());
 
     freq_knob_label = std::make_shared<PlainTextComponent>(freq_knob->getName(), "FREQ");

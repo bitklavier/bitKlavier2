@@ -30,7 +30,7 @@ public:
         // menus
         if (auto* compressorParams = dynamic_cast<CompressorParams*>(&params)) {
             presets_combo_box = std::make_unique<OpenGLComboBox>(compressorParams->presets->paramID.toStdString());
-            presets_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*compressorParams->presets.get(), listeners, *presets_combo_box, nullptr);
+            presets_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*compressorParams->presets.get(), listeners, *presets_combo_box, pluginState.undoManager);
             addAndMakeVisible(presets_combo_box.get());
             addOpenGlComponent(presets_combo_box->getImageComponent());
         }
@@ -48,14 +48,14 @@ public:
 
         // power EQ button
         activeCompressor_toggle = std::make_unique<SynthButton>(compressorParams_.activeCompressor->paramID);
-        activeCompressor_attachment = std::make_unique<chowdsp::ButtonAttachment>(compressorParams_.activeCompressor, listeners, *activeCompressor_toggle, nullptr);
+        activeCompressor_attachment = std::make_unique<chowdsp::ButtonAttachment>(compressorParams_.activeCompressor, listeners, *activeCompressor_toggle, pluginState.undoManager);
         activeCompressor_toggle->setComponentID(compressorParams_.activeCompressor->paramID);
         addSynthButton(activeCompressor_toggle.get(), true);
         activeCompressor_toggle->setText("power");
 
         // reset EQ button
         reset_button = std::make_unique<SynthButton>("reset");
-        reset_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(compressorParams_.resetCompressor,listeners,*reset_button,nullptr);
+        reset_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(compressorParams_.resetCompressor,listeners,*reset_button,pluginState.undoManager);
         reset_button->setComponentID("reset");
         addSynthButton(reset_button.get(), true);
         reset_button->setText("reset");
@@ -82,7 +82,7 @@ public:
         attack_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         attack_knob->setPopupPlacement(juce::BubbleComponent::below);
         attack_knob->setShowPopupOnHover(true);
-        attack_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attack, listeners, *attack_knob, nullptr);
+        attack_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attack, listeners, *attack_knob, pluginState.undoManager);
         attack_knob->addAttachment(attack_knob_attachment.get());
 
         release_knob = std::make_unique<SynthSlider>(params.release->paramID, params.release->getModParam());
@@ -90,7 +90,7 @@ public:
         release_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         release_knob->setPopupPlacement(juce::BubbleComponent::below);
         release_knob->setShowPopupOnHover(true);
-        release_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.release, listeners, *release_knob, nullptr);
+        release_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.release, listeners, *release_knob, pluginState.undoManager);
         release_knob->addAttachment(release_knob_attachment.get());
 
         threshold_knob = std::make_unique<SynthSlider>(params.threshold->paramID, params.threshold->getModParam());
@@ -98,7 +98,7 @@ public:
         threshold_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         threshold_knob->setPopupPlacement(juce::BubbleComponent::below);
         threshold_knob->setShowPopupOnHover(true);
-        threshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.threshold, listeners, *threshold_knob, nullptr);
+        threshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.threshold, listeners, *threshold_knob, pluginState.undoManager);
         threshold_knob->addAttachment(threshold_knob_attachment.get());
 
         makeup_knob = std::make_unique<SynthSlider>(params.makeup->paramID, params.makeup->getModParam());
@@ -106,7 +106,7 @@ public:
         makeup_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         makeup_knob->setPopupPlacement(juce::BubbleComponent::below);
         makeup_knob->setShowPopupOnHover(true);
-        makeup_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.makeup, listeners, *makeup_knob, nullptr);
+        makeup_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.makeup, listeners, *makeup_knob, pluginState.undoManager);
         makeup_knob->addAttachment(makeup_knob_attachment.get());
 
         // mix_knob = std::make_unique<SynthSlider>(params.mix->paramID, params.mix->getModParam());
@@ -122,7 +122,7 @@ public:
         ratio_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         ratio_knob->setPopupPlacement(juce::BubbleComponent::below);
         ratio_knob->setShowPopupOnHover(true);
-        ratio_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.ratio, listeners, *ratio_knob, nullptr);
+        ratio_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.ratio, listeners, *ratio_knob, pluginState.undoManager);
         ratio_knob->addAttachment(ratio_knob_attachment.get());
 
         knee_knob = std::make_unique<SynthSlider>(params.knee->paramID, params.knee->getModParam());
@@ -130,7 +130,7 @@ public:
         knee_knob->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         knee_knob->setPopupPlacement(juce::BubbleComponent::below);
         knee_knob->setShowPopupOnHover(true);
-        knee_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.knee, listeners, *knee_knob, nullptr);
+        knee_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.knee, listeners, *knee_knob, pluginState.undoManager);
         knee_knob->addAttachment(knee_knob_attachment.get());
 
         // knob labels

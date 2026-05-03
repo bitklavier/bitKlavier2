@@ -57,7 +57,7 @@ public:
                 param_->paramID == "subdivisions")
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID, param_->getModParam());
-                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), nullptr);
+                auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), pluginState.undoManager);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
                 slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
@@ -74,7 +74,7 @@ public:
         if (auto* tempoParams = dynamic_cast<TempoParams*>(&params))
         {
             tempoMode = std::make_unique<OpenGLComboBox>(tempoParams->tempoModeOptions->paramID.toStdString());
-            tempoMode_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tempoParams->tempoModeOptions.get(), listeners, *tempoMode, nullptr);
+            tempoMode_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tempoParams->tempoModeOptions.get(), listeners, *tempoMode, pluginState.undoManager);
             addAndMakeVisible(tempoMode.get());
             addOpenGlComponent(tempoMode->getImageComponent());
         }
