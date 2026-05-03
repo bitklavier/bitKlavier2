@@ -189,6 +189,10 @@ public:
     void deactivateAllAfter(int where, juce::NotificationType notify);
     void deactivateAllBefore(int where, juce::NotificationType notify);
 
+    // hooks for subclasses to set mouseInteraction before/after async menu callbacks
+    virtual void menuInteractionWillChange() {}
+    virtual void menuInteractionDidChange() {}
+
     // slider values can be edited directly via a text editor
     // values in brackets will be collected at one index
     // for example: "0 [1 2 3] 4" will have three active sliders, and the second one will have three subsliders

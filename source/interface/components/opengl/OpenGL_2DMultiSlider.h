@@ -128,6 +128,9 @@ public:
         mouseInteraction = false;
     }
 
+    void menuInteractionWillChange() override { mouseInteraction = true; }
+    void menuInteractionDidChange() override { redoImage(); mouseInteraction = false; }
+
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
         mouseInteraction = true;
         OpenGlAutoImageComponent<BKMultiSlider>::textEditorReturnKeyPressed(textEditor);
