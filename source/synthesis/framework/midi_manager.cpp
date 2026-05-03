@@ -384,21 +384,34 @@ void MidiManager::handleIncomingMidiMessage(juce::MidiInput* source, const juce:
     if (midi_message.getRawData()[0] >= 0xF8)
         return;
 
-    // Notify UI listeners (on message thread) for note on/off for visualisation only
-    if (midi_message.isNoteOnOrOff())
+    // Remap any channel message arriving on channels 2-16 to channel 1.
+    // bitKlavier uses channel numbers internally for modulation targets, so external
+    // devices sending on non-1 channels would be misrouted without this.
+    auto msg = midi_message;
+    if (msg.getChannel() > 1)
     {
-        const int note = midi_message.getNoteNumber();
-        const bool down = midi_message.isNoteOn();
-        const int ch = midi_message.getChannel();
-        const float v01 = down ? (midi_message.getVelocity() / 127.0f) : 0.0f;
+        const juce::uint8* d = msg.getRawData();
+        const int size = msg.getRawDataSize();
+        juce::uint8 remapped[3] = { juce::uint8 (d[0] & 0xF0),
+                                    size > 1 ? d[1] : juce::uint8 (0),
+                                    size > 2 ? d[2] : juce::uint8 (0) };
+        msg = juce::MidiMessage (remapped, size, msg.getTimeStamp());
+    }
+
+    // Notify UI listeners (on message thread) for note on/off for visualisation only
+    if (msg.isNoteOnOrOff())
+    {
+        const int note = msg.getNoteNumber();
+        const bool down = msg.isNoteOn();
+        const int ch = msg.getChannel();
+        const float v01 = down ? (msg.getVelocity() / 127.0f) : 0.0f;
         juce::MessageManager::callAsync ([this, note, down, ch, v01]
         {
             live_listeners_.call (&LiveMidiListener::midiNoteChanged, note, down, ch, v01);
         });
     }
 
-    // Still enqueue to the audio thread collector
-    midi_collector_.addMessageToQueue(midi_message);
+    midi_collector_.addMessageToQueue (msg);
 }
 
 //be sure that this would be filled with the correct start and numsamples

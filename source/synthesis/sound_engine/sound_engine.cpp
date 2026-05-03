@@ -170,8 +170,20 @@ namespace bitklavier {
             if (auto* kp = dynamic_cast<KeymapProcessor*> (node->getProcessor()))
             {
                 for (const auto metadata : midiMessages)
-                    if (metadata.getMessage().getRawData()[0] < 0xF8)
-                        kp->postExternalMidi (metadata.getMessage());
+                {
+                    auto msg = metadata.getMessage();
+                    if (msg.getRawData()[0] >= 0xF8) continue;
+                    if (msg.getChannel() > 1)
+                    {
+                        const juce::uint8* d = msg.getRawData();
+                        const int size = msg.getRawDataSize();
+                        juce::uint8 remapped[3] = { juce::uint8 (d[0] & 0xF0),
+                                                    size > 1 ? d[1] : juce::uint8 (0),
+                                                    size > 2 ? d[2] : juce::uint8 (0) };
+                        msg = juce::MidiMessage (remapped, size, msg.getTimeStamp());
+                    }
+                    kp->postExternalMidi (msg);
+                }
             }
         }
     }
