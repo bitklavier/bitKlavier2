@@ -156,6 +156,16 @@ void ModulationLineView::tuningDropped (const juce::ValueTree& source, const juc
     //protects against short/accidental drag drops
     if (sourceId == destId)
         return;
+    for (auto* existing : connection_list->objects)
+    {
+        if (existing->state.hasType (IDs::TUNINGCONNECTION)
+            && existing->src_id == sourceId
+            && existing->dest_id == destId)
+        {
+            connection_list->removeChild (existing->state, &undoManager);
+            return;
+        }
+    }
     //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
     juce::ValueTree _connection (IDs::TUNINGCONNECTION);
     _connection.setProperty (IDs::isMod, false, nullptr);
@@ -175,6 +185,16 @@ void ModulationLineView::tempoDropped (const juce::ValueTree& source, const juce
     //protects against short/accidental drag drops
     if (sourceId == destId)
         return;
+    for (auto* existing : connection_list->objects)
+    {
+        if (existing->state.hasType (IDs::TEMPOCONNECTION)
+            && existing->src_id == sourceId
+            && existing->dest_id == destId)
+        {
+            connection_list->removeChild (existing->state, &undoManager);
+            return;
+        }
+    }
     // only connect to blendronic or synchronic
     if (static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeBlendronic ||
         static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeSynchronic)
@@ -199,6 +219,16 @@ void ModulationLineView::synchronicDropped (const juce::ValueTree& source, const
     //protects against short/accidental drag drops
     if (sourceId == destId)
         return;
+    for (auto* existing : connection_list->objects)
+    {
+        if (existing->state.hasType (IDs::SYNCHRONICCONNECTION)
+            && existing->src_id == sourceId
+            && existing->dest_id == destId)
+        {
+            connection_list->removeChild (existing->state, &undoManager);
+            return;
+        }
+    }
     // only connect to blendronic or synchronic
     if (static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeNostalgic)
     {
