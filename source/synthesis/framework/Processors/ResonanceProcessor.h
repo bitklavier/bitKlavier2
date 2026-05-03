@@ -149,7 +149,7 @@ static const std::string GenderKeys      = "0 12 18 26 29 34";
 // f, 1.52f, 3.46f, 3.92f.
 static const std::string BonangOffsets   = "0:0 7:25 21:49 42:-35";
 static const std::string BonangGains     = "0:0 7:0 21:0 42:0";
-static const std::string BonangKeys      = "0:0 7 21 42";
+static const std::string BonangKeys      = "0 7 21 42";
 
 // Gong: f, 1.49f, 1.67f, 2f, 2.67f, 2.98f, 3.47f, 3.98f, 5.97f, 6.94f
 static const std::string GongOffsets   = "0:0 7:-9.6 9:-12 12:0 17:0 19:-9.6 22:-46 24:-8.7 31:-6.7 34:-46";
