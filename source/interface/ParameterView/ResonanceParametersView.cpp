@@ -11,6 +11,10 @@ void ResonanceParametersView::timerCallback(void)
      */
     allNotesOffButton->setToggleState(false, juce::NotificationType::dontSendNotification);
     heldKeysKeyboard->redoImage();
+    closestKeyboard->redoImage();
+    fundamentalKeyboard->redoImage();
+    offsetsKeyboard->redoImage();
+    gainsKeyboard->redoImage();
 }
 
 void ResonanceParametersView::resized()

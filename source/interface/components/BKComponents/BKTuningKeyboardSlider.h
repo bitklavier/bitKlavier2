@@ -136,7 +136,10 @@ public:
         //keyboard->setMinMidMaxValues(min, mid, max);
     }
 
-    void setOctaveForMiddleC(int octave) { keyboard->setOctaveForMiddleC(octave);};
+    void setOctaveForMiddleC(int octave) { keyboard->setOctaveForMiddleC(octave); }
+    int  getOctaveForMiddleC() const     { return keyboard->getOctaveForMiddleC(); }
+    int  getMinKey() const               { return minKey; }
+    int  getMaxKey() const               { return maxKey; }
 
     inline void setDimensionRatio(float r) { ratio = r; }
 

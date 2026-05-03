@@ -1815,8 +1815,8 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
             }
         }
     }
-    // if (connection)
-    //     connectStateModulation (connection);
+    if (create && connection)
+        connectStateModulation (connection, connection->state);
     return create;
 }
 

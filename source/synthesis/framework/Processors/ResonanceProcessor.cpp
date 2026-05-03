@@ -16,6 +16,7 @@
 #include "Synthesiser/Sample.h"
 #include "common.h"
 #include "synth_base.h"
+#include "array_to_string.h"
 
 /*
  * ========================== ResonanceParams class ==========================
@@ -192,6 +193,16 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
     }
+
+    // Update defaultState VTs so that a Reset returns to the newly chosen preset
+    gainsKeyboardState.stateChanges.defaultState.setProperty (
+        IDs::absoluteTuning, atomicArrayToStringWithIndex (gainsKeyboardState.absoluteTuningOffset), nullptr);
+    offsetsKeyboardState.stateChanges.defaultState.setProperty (
+        IDs::absoluteTuning, atomicArrayToStringWithIndex (offsetsKeyboardState.absoluteTuningOffset), nullptr);
+    closestKeymapStateChanges.defaultState.setProperty (
+        IDs::keymapBits, getOnKeyString (closestKeymap.keyStates.load()), nullptr);
+    fundamentalKeymapStateChanges.defaultState.setProperty (
+        IDs::keymapBits, getOnKeyString (fundamentalKeymap.keyStates.load()), nullptr);
 }
 
 /*
@@ -427,6 +438,39 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         state.params.offsetsKeyboardState.stateChanges.defaultState.setProperty(IDs::absoluteTuning, "60:0", nullptr);
     }
 
+    // Register keymap state change buffers (fundamental, closest, held)
+    auto uuid = v.getProperty (IDs::uuid).toString().toStdString();
+
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (uuid + "_" + "fundamentalKeyboard", &(state.params.fundamentalKeymapStateChanges)));
+    state.params.fundamentalKeymapStateChanges.defaultState = v.getOrCreateChildWithName ("FUNDAMENTAL_KM_DEFAULT", nullptr);
+    if (! state.params.fundamentalKeymapStateChanges.defaultState.hasProperty (IDs::keymapBits)
+        || state.params.fundamentalKeymapStateChanges.defaultState.getProperty (IDs::keymapBits).isVoid())
+    {
+        state.params.fundamentalKeymapStateChanges.defaultState.setProperty (
+            IDs::keymapBits, getOnKeyString (state.params.fundamentalKeymap.keyStates.load()), nullptr);
+    }
+
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (uuid + "_" + "closestKeyboard", &(state.params.closestKeymapStateChanges)));
+    state.params.closestKeymapStateChanges.defaultState = v.getOrCreateChildWithName ("CLOSEST_KM_DEFAULT", nullptr);
+    if (! state.params.closestKeymapStateChanges.defaultState.hasProperty (IDs::keymapBits)
+        || state.params.closestKeymapStateChanges.defaultState.getProperty (IDs::keymapBits).isVoid())
+    {
+        state.params.closestKeymapStateChanges.defaultState.setProperty (
+            IDs::keymapBits, getOnKeyString (state.params.closestKeymap.keyStates.load()), nullptr);
+    }
+
+    parent.getStateBank().addParam (std::make_pair<std::string, bitklavier::ParameterChangeBuffer*>
+        (uuid + "_" + "heldKeysKeyboard", &(state.params.heldKeymapStateChanges)));
+    state.params.heldKeymapStateChanges.defaultState = v.getOrCreateChildWithName ("HELDKEYS_KM_DEFAULT", nullptr);
+    if (! state.params.heldKeymapStateChanges.defaultState.hasProperty (IDs::keymapBits)
+        || state.params.heldKeymapStateChanges.defaultState.getProperty (IDs::keymapBits).isVoid())
+    {
+        state.params.heldKeymapStateChanges.defaultState.setProperty (
+            IDs::keymapBits, getOnKeyString (state.params.heldKeymap.keyStates.load()), nullptr);
+    }
+
     for (int i = 0; i < MaxMidiNotes; ++i)
     {
         noteOnSpecMap[i] = NoteOnSpec{};
@@ -566,8 +610,8 @@ bool ResonanceProcessor::clear_resonant_strings (juce::MidiBuffer& outMidiMessag
 }
 void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce::MidiBuffer& outMidiMessages, int numSamples)
 {
-    if (clear_resonant_strings (outMidiMessages))
-        return;
+    // if (clear_resonant_strings (outMidiMessages))
+    //     return;
 
     // start with a clean slate of noteOn specifications; assuming normal noteOns without anything special
     for (auto& spec : noteOnSpecMap)
@@ -597,6 +641,18 @@ void ResonanceProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juce
 
         state.params.heldKeymap_changedInUI = 0;
     }
+
+    // Drain heldKeymap changes queued by processStateChanges (state modulation / reset)
+    if (! state.params.pendingHeldKeymapAdds.empty())
+    {
+        updatePartialStructure();
+        for (int key : state.params.pendingHeldKeymapAdds)
+            addSympStrings (key);
+        state.params.pendingHeldKeymapAdds.clear();
+    }
+    for (int key : state.params.pendingHeldKeymapRemovals)
+        keyReleased (key, 64, 1, outMidiMessages);
+    state.params.pendingHeldKeymapRemovals.clear();
 
     /*
      * process incoming MIDI messages, including the target messages

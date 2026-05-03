@@ -108,6 +108,16 @@ void ModulationLineView::modulationDropped (const juce::ValueTree& source, const
     //protects against short/accidental drag drops
     if (sourceId == destId)
         return;
+    for (auto* existing : connection_list->objects)
+    {
+        if (existing->state.hasType (IDs::MODCONNECTION)
+            && existing->src_id == sourceId
+            && existing->dest_id == destId)
+        {
+            connection_list->removeChild (existing->state, &undoManager);
+            return;
+        }
+    }
     //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
 
     //right now is does make a connection on the backend but i think this should probably change once all this is fully implemented

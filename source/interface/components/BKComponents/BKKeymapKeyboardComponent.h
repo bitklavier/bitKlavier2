@@ -230,6 +230,9 @@ public:
     // set to false if all the edit, key, clear buttons are not needed
     bool useHelperButtons = false;
 
+    // set true in cloned modulation views so resized() insets the keyboard inside the border
+    bool showBorderInset = false;
+
     int keyboardSize, minKey, maxKey;
     int lastKeyPressed = -1;
 

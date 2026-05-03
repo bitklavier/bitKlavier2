@@ -83,6 +83,8 @@ public:
         addBorder(variousControlsBorder.get());
 
         fundamentalKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.fundamentalKeymap, false, true, false, false);
+        fundamentalKeyboard->setComponentID("fundamentalKeyboard");
+        fundamentalKeyboard->defaultState = params.fundamentalKeymapStateChanges.defaultState;
         addStateModulatedComponent(fundamentalKeyboard.get());
         fundamentalKeyboard->setName("fundamental");
         fundamentalKeyboard->setAvailableRange(0, numKeys);
@@ -93,6 +95,8 @@ public:
         fundamentalKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         closestKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.closestKeymap, false, false, false, false);
+        closestKeyboard->setComponentID("closestKeyboard");
+        closestKeyboard->defaultState = params.closestKeymapStateChanges.defaultState;
         addStateModulatedComponent(closestKeyboard.get());
         closestKeyboard->setName("closest");
         closestKeyboard->setAvailableRange(0, numKeys);
@@ -103,11 +107,14 @@ public:
         closestKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         heldKeysKeyboard = std::make_unique<OpenGLKeymapKeyboardComponent>(params.heldKeymap, false, false, true);
+        heldKeysKeyboard->setComponentID("heldKeysKeyboard");
+        heldKeysKeyboard->defaultState = params.heldKeymapStateChanges.defaultState;
         addStateModulatedComponent(heldKeysKeyboard.get());
         heldKeysKeyboard->setName("heldKeys");
         heldKeysKeyboard->addMyListener(this);
 
         offsetsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->offsetsKeyboardState);
+        offsetsKeyboard->setComponentID("offsetsKeyboard");
         addStateModulatedComponent(offsetsKeyboard.get());
         offsetsKeyboard->setName("offsets");
         offsetsKeyboard->setAvailableRange(0, numKeys);
@@ -118,6 +125,7 @@ public:
         offsetsKeyboard_label->setJustification(juce::Justification::centredBottom);
 
         gainsKeyboard = std::make_unique<OpenGLAbsoluteKeyboardSlider>(dynamic_cast<ResonanceParams*>(&params)->gainsKeyboardState);
+        gainsKeyboard->setComponentID("gainsKeyboard");
         addStateModulatedComponent(gainsKeyboard.get());
         gainsKeyboard->setName("gains");
         gainsKeyboard->setAvailableRange(0, numKeys);

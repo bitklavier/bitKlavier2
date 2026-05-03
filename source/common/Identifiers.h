@@ -138,6 +138,7 @@ namespace IDs
     DECLARE_ID(vstbridge)
     DECLARE_ID(bridgeUuid)
     DECLARE_ID(keymap)
+    DECLARE_ID(keymapBits)
     DECLARE_ID(noConnection)
     DECLARE_ID(linkedPrep)
     DECLARE_ID(linkedType)

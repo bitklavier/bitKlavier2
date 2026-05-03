@@ -11,6 +11,8 @@
 #include "../../common/ObjectLists/PreparationList.h"
 #include "../../../synthesis/synth_base.h"
 #include "../../../synthesis/sound_engine/sound_engine.h"
+#include "../../common/array_to_string.h"
+#include "../../common/utils.h"
 
 class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKeyboardComponent>,
                                      public BKKeymapKeyboardComponent::Listener,
@@ -24,6 +26,9 @@ public:
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
+        isModulated_ = true;
+        isModulation_ = false;
+
         // Receive UI-driven selection changes
         addMyListener(this);
 
@@ -32,6 +37,21 @@ public:
 
         if (showLiveState)
             startTimer (33); // ~30 Hz for visual MIDI updates
+    }
+
+    // Default constructor used by clone() to create modulation editor instances
+    OpenGLKeymapKeyboardComponent() : OpenGLKeymapKeyboardComponent(mod_key_state, false, false, false, false)
+    {
+        isModulated_ = false;
+        isModulation_ = true;
+        postUInotesToEngine_ = false;
+
+        sliderBorder.setColour (juce::GroupComponent::outlineColourId, findColour (Skin::kRotaryArc));
+        sliderBorder.setColour (juce::GroupComponent::textColourId,    findColour (Skin::kRotaryArc));
+        sliderBorder.setText ("MODIFIED");
+        sliderBorder.setTextLabelPosition (juce::Justification::centred);
+        addAndMakeVisible (sliderBorder);
+        showBorderInset = true;
     }
 
     ~OpenGLKeymapKeyboardComponent() override
@@ -46,17 +66,29 @@ public:
     }
 
     virtual void resized() override {
+        if (isModulation_)
+            sliderBorder.setBounds (getLocalBounds());
         OpenGlAutoImageComponent::resized();
         redoImage();
     }
 
+    void paint(juce::Graphics& g) override {
+        if (isModulation_)
+        {
+            g.fillAll(juce::Colours::black);
+            BKKeymapKeyboardComponent::paint(g);
+        }
+    }
+
     void mouseDrag(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseDrag(e);
+        saveKeyStateToValueTree();
         redoImage();
     }
 
     void mouseDown(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseDown(e);
+        saveKeyStateToValueTree();
         redoImage();
     }
 
@@ -199,14 +231,45 @@ public:
         }
     }
 
+    OpenGLKeymapKeyboardComponent* clone() override
+    {
+        auto* c = new OpenGLKeymapKeyboardComponent();
+        c->setAvailableRange (minKey, maxKey);
+        c->setOctaveForMiddleC (keyboard_.getOctaveForMiddleC());
+        c->isMonophonic = isMonophonic;
+        return c;
+    }
+
+    void syncToValueTree() override
+    {
+        auto prop = modulationState.getProperty(IDs::keymapBits);
+        if (!prop.isVoid())
+        {
+            keyboard_state_.keyStates.store(bitklavier::utils::stringToBitset(prop.toString()));
+            redoImage();
+        }
+    }
+
     bool postUInotesToEngine_ { false };
     bool showLiveState = true;
+
+    inline static KeymapKeyboardState mod_key_state;
 
     void setShowOctaveLabels(bool show) { setOctaveLabelsEnabled(show); }
     void setOctaveForMiddleC(int octaveNum) { BKKeymapKeyboardComponent::setOctaveForMiddleC(octaveNum); }
     bool getIsMonophonic() const { return isMonophonic; }
 
 private:
+    void saveKeyStateToValueTree()
+    {
+        auto bits = keyboard_state_.keyStates.load();
+        juce::String s = getOnKeyString(bits);
+        if (isModulation_ && modulationState.isValid())
+            modulationState.setProperty(IDs::keymapBits, s, nullptr);
+        else if (isModulated_ && defaultState.isValid())
+            defaultState.setProperty(IDs::keymapBits, s, nullptr);
+    }
+
     void tryRegisterLiveListener()
     {
         if (registeredLive_) return;
@@ -229,6 +292,7 @@ private:
         registeredLive_ = false;
     }
 
+    juce::GroupComponent sliderBorder;
     KeymapKeyboardState& _params;
     bool registeredLive_ { false };
     bool needsRedo_ { false };

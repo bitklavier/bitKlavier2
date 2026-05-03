@@ -333,6 +333,15 @@ struct ResonanceParams : chowdsp::ParamHolder
     KeymapKeyboardState heldKeymap;
     std::atomic<int> heldKeymap_changedInUI = 0; // note number for key that was changed
 
+    // State change buffers for keymap state modulation
+    bitklavier::ParameterChangeBuffer fundamentalKeymapStateChanges;
+    bitklavier::ParameterChangeBuffer closestKeymapStateChanges;
+    bitklavier::ParameterChangeBuffer heldKeymapStateChanges;
+
+    // Pending heldKeymap changes from state modulation; drained by ProcessMIDIBlock
+    std::vector<int> pendingHeldKeymapAdds;
+    std::vector<int> pendingHeldKeymapRemovals;
+
     void setSpectrumFromMenu(int menuChoice);
 
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
@@ -348,24 +357,50 @@ struct ResonanceParams : chowdsp::ParamHolder
 
     void processStateChanges() override
     {
-//        transpositions.processStateChanges();
-//        accents.processStateChanges();
-//        sustainLengthMultipliers.processStateChanges();
-//        beatLengthMultipliers.processStateChanges();
-//
-//        // signal the UI to redraw the sliders
-//        if( transpositions.updateUI == true || accents.updateUI == true || sustainLengthMultipliers.updateUI == true || beatLengthMultipliers.updateUI == true)
-//        {
-//            /*
-//             * need to actually change the value for the listener to get the message
-//             * we're just using updateUIState as a way to notify the UI, and its actual value doesn't matter
-//             * so we switch it everything we one of the sliders gets modded.
-//             */
-//            if(updateUIState->get())
-//                updateUIState->setValueNotifyingHost(false);
-//            else
-//                updateUIState->setValueNotifyingHost(true);
-//        }
+        gainsKeyboardState.processStateChanges();
+        offsetsKeyboardState.processStateChanges();
+
+        auto processKeymapBuf = [](bitklavier::ParameterChangeBuffer& buf, KeymapKeyboardState& km)
+        {
+            juce::SpinLock::ScopedTryLockType lock { buf.changeLock };
+            if (! lock.isLocked()) return;
+            for (auto& [idx, vt] : buf.changeState)
+            {
+                auto prop = vt.getProperty (IDs::keymapBits);
+                if (! prop.isVoid())
+                    km.keyStates.store (bitklavier::utils::stringToBitset (prop.toString()));
+            }
+            buf.changeState.clear();
+        };
+
+        processKeymapBuf (fundamentalKeymapStateChanges, fundamentalKeymap);
+        processKeymapBuf (closestKeymapStateChanges,    closestKeymap);
+
+        // heldKeymap: compute diff so ProcessMIDIBlock can add/remove resonant strings
+        {
+            juce::SpinLock::ScopedTryLockType lock { heldKeymapStateChanges.changeLock };
+            if (lock.isLocked())
+            {
+                for (auto& [idx, vt] : heldKeymapStateChanges.changeState)
+                {
+                    auto prop = vt.getProperty (IDs::keymapBits);
+                    if (! prop.isVoid())
+                    {
+                        auto oldBits = heldKeymap.keyStates.load();
+                        auto newBits = bitklavier::utils::stringToBitset (prop.toString());
+                        heldKeymap.keyStates.store (newBits);
+                        for (int k = 0; k < 128; ++k)
+                        {
+                            if (! oldBits[k] && newBits[k])
+                                pendingHeldKeymapAdds.push_back (k);
+                            else if (oldBits[k] && ! newBits[k])
+                                pendingHeldKeymapRemovals.push_back (k);
+                        }
+                    }
+                }
+                heldKeymapStateChanges.changeState.clear();
+            }
+        }
     }
 };
 
@@ -537,7 +572,11 @@ public:
         for (int i = 1; i <= 16; i++)
             resonanceSynth->allNotesOff(i, false);
 
-        removeAllResonantStrings = true;
+        /*
+         * we don't want to remove heldKeys, we just want to turn off playing notes
+         * so we will NOT set removeAllResonantStrings, and can remove the call to clear_resonant_strings
+         */
+        //removeAllResonantStrings = true;
     }
 
 //    void valueTreePropertyChanged(juce::ValueTree& t, const juce::Identifier& property)

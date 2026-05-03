@@ -139,7 +139,10 @@ public:
 
 
     OpenGLAbsoluteKeyboardSlider *clone() override {
-        return new OpenGLAbsoluteKeyboardSlider();
+        auto* c = new OpenGLAbsoluteKeyboardSlider();
+        c->setAvailableRange (getMinKey(), getMaxKey());
+        c->setOctaveForMiddleC (getOctaveForMiddleC());
+        return c;
     }
 
     /**

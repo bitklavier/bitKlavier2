@@ -6,10 +6,12 @@
 #include "array_to_string.h"
 
 void BKKeymapKeyboardComponent::resized() {
-    float heightUnit = getHeight() * 0.1;
-    float widthUnit = getWidth() * 0.1;
-
     juce::Rectangle<int> area (getLocalBounds());
+    if (showBorderInset)
+        area.reduce (10, 10);
+
+    float heightUnit = area.getHeight() * 0.1;
+    float widthUnit  = area.getWidth()  * 0.1;
     float keyboardHeight = 8 * heightUnit;
     juce::Rectangle<int> keymapRow = area.removeFromBottom(10 * heightUnit);
 
@@ -46,7 +48,7 @@ void BKKeymapKeyboardComponent::mouseUp(const juce::MouseEvent& e) {
 }
 
 void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
-    if (keyboardValsTextField->hasKeyboardFocus(false)) {
+    if (useHelperButtons && keyboardValsTextField && keyboardValsTextField->hasKeyboardFocus(false)) {
         keyboardValsTextField->mouseDown(e);
     }
     else if(e.y >= 0 && e.y <= keyboard_.getHeight()) {
@@ -77,7 +79,7 @@ void BKKeymapKeyboardComponent::mouseDown(const juce::MouseEvent& e) {
 }
 
 void BKKeymapKeyboardComponent::mouseDrag(const juce::MouseEvent& e) {
-    if (keyboardValsTextField->hasKeyboardFocus(false)) {
+    if (useHelperButtons && keyboardValsTextField && keyboardValsTextField->hasKeyboardFocus(false)) {
         keyboardValsTextField->mouseDrag(e);
         return;
     }
