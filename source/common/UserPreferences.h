@@ -87,6 +87,7 @@ public:
     }
 
     void valueTreeChanged() override {
+        file.getParentDirectory().createDirectory();
         file.replaceWithText(tree.toXmlString());
     }
 
