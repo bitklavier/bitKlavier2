@@ -47,73 +47,66 @@ std::unique_ptr<SynthSection> ModulationPreparation::getPrepPopup()
 
 void ModulationPreparation::mouseDoubleClick (const juce::MouseEvent&)
 {
-    // If this modulation prep is connected to a VST parameter, also show the
-    // VSTParametersView (knob grid) in addition to the normal modulation popup.
-    // Connections live in PIANO/MODCONNECTIONS as ModulationConnection children:
-    //   IDs::src  = "<thisUUID>_<modDetails>"
-    //   IDs::dest = "<bridgeUUID>_<slotIdx>"   (slotIdx is a pure integer)
-
-    const juce::String myUuid = state.getProperty (IDs::uuid).toString();
+    // If this modulation prep is wired to a VST, show VSTParametersView in prepDisplay.
+    // Detect via MODCONNECTION NodeID-based src/dest (present as soon as the user
+    // drags mod→VST, before any per-parameter ModulationConnections are created).
 
     auto pianoVt = state.getParent().getParent();
     if (pianoVt.isValid())
     {
-        auto modConnectionsVt = pianoVt.getChildWithName (IDs::MODCONNECTIONS);
-        juce::String foundBridgeUuid;
-
-        auto checkConn = [&] (const juce::ValueTree& conn)
+        if (auto* interface = findParentComponentOfClass<SynthGuiInterface>())
         {
-            if (! conn.hasType (IDs::ModulationConnection)) return;
-            const juce::String src = conn.getProperty (IDs::src).toString();
-            if (! src.startsWith (myUuid + "_")) return;
-            const juce::String dest = conn.getProperty (IDs::dest).toString();
-            const int lastUnder = dest.lastIndexOfChar ('_');
-            if (lastUnder <= 0) return;
-            const juce::String slotPart = dest.substring (lastUnder + 1);
-            if (slotPart.isNotEmpty() && slotPart.containsOnly ("0123456789"))
-                foundBridgeUuid = dest.substring (0, lastUnder);
-        };
+            const auto myNodeID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                state.getProperty (IDs::nodeID));
 
-        for (int i = 0; i < modConnectionsVt.getNumChildren(); ++i)
-        {
-            auto child = modConnectionsVt.getChild (i);
-            if (child.hasType (IDs::ModulationConnection))
-                checkConn (child);
-            else if (child.hasType (IDs::MODCONNECTION))
-                for (int j = 0; j < child.getNumChildren(); ++j)
-                    checkConn (child.getChild (j));
-        }
+            auto preparationsVt   = pianoVt.getChildWithName (IDs::PREPARATIONS);
+            auto modConnectionsVt = pianoVt.getChildWithName (IDs::MODCONNECTIONS);
 
-        if (foundBridgeUuid.isNotEmpty())
-        {
-            if (auto* interface = findParentComponentOfClass<SynthGuiInterface>())
+            for (int i = 0; i < modConnectionsVt.getNumChildren() && i >= 0; ++i)
             {
-                const auto bridgeNodeID = juce::AudioProcessorGraph::NodeID (
-                    juce::Uuid (foundBridgeUuid).getTimeLow());
-                auto* bridgeNode = interface->getSynth()->getNodeForId (bridgeNodeID);
-                if (bridgeNode)
+                auto conn = modConnectionsVt.getChild (i);
+                if (! conn.hasType (IDs::MODCONNECTION)) continue;
+
+                const auto srcID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                    conn.getProperty (IDs::src));
+                if (srcID != myNodeID) continue;
+
+                const auto destID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                    conn.getProperty (IDs::dest));
+
+                // Find the destination prep VT by NodeID, then look for a vstbridge child.
+                for (int j = 0; j < preparationsVt.getNumChildren(); ++j)
                 {
-                    if (auto* bridge = dynamic_cast<VSTModulationBridge*> (bridgeNode->getProcessor()))
-                    {
-                        auto vstPrepVt = bridge->getBridgeState().getParent();
-                        const auto vstNodeID =
-                            juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
-                                vstPrepVt.getProperty (IDs::nodeID));
-                        auto* vstNode = interface->getSynth()->getNodeForId (vstNodeID);
-                        if (vstNode)
-                        {
-                            if (auto* pluginInstance =
-                                    dynamic_cast<juce::AudioPluginInstance*> (vstNode->getProcessor()))
-                            {
-                                auto popup = std::make_unique<VSTParametersView> (
-                                    pluginInstance, bridge,
-                                    interface->getGui()->open_gl_,
-                                    juce::AudioProcessorGraph::Node::Ptr (vstNode));
-                                showPrepPopup (std::move (popup), vstPrepVt,
-                                               bitklavier::BKPreparationTypeNil);
-                            }
-                        }
-                    }
+                    auto destPrepVt = preparationsVt.getChild (j);
+                    const auto prepNodeID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                        destPrepVt.getProperty (IDs::nodeID));
+                    if (prepNodeID != destID) continue;
+
+                    auto bridgeVt = destPrepVt.getChildWithName (IDs::vstbridge);
+                    if (! bridgeVt.isValid()) break;
+
+                    const juce::String bridgeUuidStr = bridgeVt.getProperty (IDs::uuid).toString();
+                    const auto bridgeNodeID = juce::AudioProcessorGraph::NodeID (
+                        juce::Uuid (bridgeUuidStr).getTimeLow());
+                    auto* bridgeNode = interface->getSynth()->getNodeForId (bridgeNodeID);
+                    if (bridgeNode == nullptr) break;
+
+                    auto* bridge = dynamic_cast<VSTModulationBridge*> (bridgeNode->getProcessor());
+                    if (bridge == nullptr) break;
+
+                    auto* vstNode = interface->getSynth()->getNodeForId (destID);
+                    if (vstNode == nullptr) break;
+
+                    auto* pluginInstance = dynamic_cast<juce::AudioPluginInstance*> (vstNode->getProcessor());
+                    if (pluginInstance == nullptr) break;
+
+                    auto popup = std::make_unique<VSTParametersView> (
+                        pluginInstance, bridge,
+                        interface->getGui()->open_gl_,
+                        juce::AudioProcessorGraph::Node::Ptr (vstNode));
+                    showPrepPopup (std::move (popup), destPrepVt,
+                                   bitklavier::BKPreparationTypeNil);
+                    break;
                 }
             }
         }
