@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 #include <chowdsp_serialization/chowdsp_serialization.h>
 namespace bitklavier

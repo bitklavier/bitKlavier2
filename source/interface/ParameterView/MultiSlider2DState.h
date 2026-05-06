@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //
 // Created by Dan Trueman on 11/13/25.
 // 2D version of MultiSlider, for Synchronic Transpositions multislider

@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // All test files are included in the executable via the Glob in CMakeLists.txt
 
 #include "juce_gui_basics/juce_gui_basics.h"

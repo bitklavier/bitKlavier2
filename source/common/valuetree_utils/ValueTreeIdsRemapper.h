@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef VALUETREE_IDS_REMAPPER_H
 #define VALUETREE_IDS_REMAPPER_H
 

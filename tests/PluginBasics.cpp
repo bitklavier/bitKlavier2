@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "helpers/test_helpers.h"
 #include <PluginProcessor.h>
 #include <catch2/catch_test_macros.hpp>

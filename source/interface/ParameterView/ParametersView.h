@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 /*
  *  Currently using this only for Modulation Parameters
  *   - might need to modify if used elsewhere

@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef VALUE_TREE_EDITOR_H_INCLUDED
 #define VALUE_TREE_EDITOR_H_INCLUDED
 #include <juce_gui_basics/juce_gui_basics.h>

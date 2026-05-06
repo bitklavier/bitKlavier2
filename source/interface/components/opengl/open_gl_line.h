@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef BITKLAVIER2_OPEN_GL_INSTANCED_LINES_H
 #define BITKLAVIER2_OPEN_GL_INSTANCED_LINES_H
 

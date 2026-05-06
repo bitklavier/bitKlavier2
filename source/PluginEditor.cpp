@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "PluginEditor.h"
 #include "interface/FullInterface.h"
 #include "interface/look_and_feel/default_look_and_feel.h"

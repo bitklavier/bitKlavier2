@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 /* Copyright 2013-2019 Matt Tytel
 *
 * vital is free software: you can redistribute it and/or modify

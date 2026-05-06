@@ -1,3 +1,6 @@
+// Copyright (C) 2022-2025 Dan Trueman
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef BUFFER_VISUALISER_H_INCLUDED
 #define BUFFER_VISUALISER_H_INCLUDED
 
