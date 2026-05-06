@@ -21,6 +21,7 @@
 #include "CompressorParameterView.h"
 #include "ConstructionSite.h"
 #include "EQParameterView.h"
+#include "ReverbParameterView.h"
 #include "LegacyGalleryImporter.h"
 #include "SampleLoadManager.h"
 #include "UserPreferences.h"
@@ -718,6 +719,11 @@ std::unique_ptr<SynthSection> SynthGuiInterface::getCompressorPopup() {
 std::unique_ptr<SynthSection> SynthGuiInterface::getEQPopup() {
     auto proc = synth_->getEngine()->getEQProcessor();
     return std::make_unique<EQParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper());
+}
+
+std::unique_ptr<SynthSection> SynthGuiInterface::getReverbPopup() {
+    auto proc = synth_->getEngine()->getReverbProcessor();
+    return std::make_unique<ReverbParameterView> (proc->getState(), proc->getState().params, proc->v.getProperty (IDs::uuid).toString(), getOpenGlWrapper(), proc);
 }
 
 #endif

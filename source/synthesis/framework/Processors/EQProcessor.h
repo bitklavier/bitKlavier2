@@ -36,7 +36,6 @@ struct EQParams : chowdsp::ParamHolder
     EQParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("eq")
     {
             add(activeEq,
-                resetEq,
                 inputGain,
                 outputSend,
                 outputGain,
@@ -62,13 +61,6 @@ struct EQParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr activeEq {
         juce::ParameterID { "activeEq", 100 },
         "activeEq",
-        false
-    };
-
-    // reset bool
-    chowdsp::BoolParameter::Ptr resetEq {
-        juce::ParameterID { "resetEq", 100},
-        "reset",
         false
     };
 
@@ -388,7 +380,6 @@ public:
         state.params.peak2FilterParams.resetToDefault();
         state.params.peak3FilterParams.resetToDefault();
         state.params.hiCutFilterParams.resetToDefault();
-        state.params.resetEq->setParameterValue(false);
     }
 
 private:

@@ -226,6 +226,15 @@ juce::ValueTree LegacyGalleryImporter::makeDefaultBusCompressor()
     return vt;
 }
 
+juce::ValueTree LegacyGalleryImporter::makeDefaultBusReverb()
+{
+    juce::ValueTree vt ("BUSREVERB");
+    vt.setProperty ("type",     17,            nullptr);
+    vt.setProperty ("uuid",     newUUID(),     nullptr);
+    vt.setProperty ("soundset", "syncglobal",  nullptr);
+    return vt;
+}
+
 // ---------------------------------------------------------------------------
 // Per-preparation converters
 // ---------------------------------------------------------------------------
@@ -2448,6 +2457,7 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
     // Add default bus processors
     gallery.addChild (makeDefaultBusEQ(),         -1, nullptr);
     gallery.addChild (makeDefaultBusCompressor(), -1, nullptr);
+    gallery.addChild (makeDefaultBusReverb(),     -1, nullptr);
     gallery.addChild (juce::ValueTree ("MODULATABLE_PARAMS"), -1, nullptr);
 
     return gallery;

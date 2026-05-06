@@ -30,14 +30,6 @@ public:
         // we need to grab the listeners for this preparation here, so we can pass them to components below
         auto& listeners = pluginState.getParameterListeners();
 
-        // menus
-        if (auto* compressorParams = dynamic_cast<CompressorParams*>(&params)) {
-            presets_combo_box = std::make_unique<OpenGLComboBox>(compressorParams->presets->paramID.toStdString());
-            presets_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*compressorParams->presets.get(), listeners, *presets_combo_box, pluginState.undoManager);
-            addAndMakeVisible(presets_combo_box.get());
-            addOpenGlComponent(presets_combo_box->getImageComponent());
-        }
-
         prepTitle = std::make_shared<PlainTextComponent>(getName(), getName());
         addOpenGlComponent(prepTitle);
         prepTitle->setJustification(juce::Justification::centredLeft);
@@ -56,12 +48,6 @@ public:
         addSynthButton(activeCompressor_toggle.get(), true);
         activeCompressor_toggle->setText("power");
 
-        // reset EQ button
-        reset_button = std::make_unique<SynthButton>("reset");
-        reset_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(compressorParams_.resetCompressor,listeners,*reset_button,pluginState.undoManager);
-        reset_button->setComponentID("reset");
-        addSynthButton(reset_button.get(), true);
-        reset_button->setText("reset");
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
@@ -170,14 +156,51 @@ public:
         presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Power and Presets");
         addBorder(presetsBorder.get());
 
+        presetsButton = std::make_unique<OpenGlTextButton> ("compressorPresets");
+        addOpenGlComponent (presetsButton->getGlComponent());
+        addAndMakeVisible (presetsButton.get());
+        presetsButton->addListener (this);
+        presetsButton->setLookAndFeel (DefaultLookAndFeel::instance());
+
         powerCallbacks_ += {listeners.addParameterListener(
             compressorParams_.activeCompressor,
             chowdsp::ParameterListenerThread::MessageThread,
             [this]() { updateKnobsEnabled(compressorParams_.activeCompressor->get()); })};
         updateKnobsEnabled(compressorParams_.activeCompressor->get());
 
+        powerCallbacks_ += {listeners.addParameterListener(
+            compressorParams_.presets,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() { updatePresetButtonText(); })};
+        updatePresetButtonText();
+
         // for updating the compressorMeter
         startTimer(50);
+    }
+
+    void buttonClicked (juce::Button* b) override
+    {
+        if (b == presetsButton.get())
+        {
+            juce::PopupMenu menu;
+            for (int i = 0; i < compressorParams_.presets->choices.size(); ++i)
+                menu.addItem (i + 1, compressorParams_.presets->choices[i]);
+            menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (presetsButton.get()),
+                [this] (int result)
+                {
+                    static const CompressorPresetComboBox vals[] = {
+                        Default, Piano, Piano_2, Brick_Wall, Aggressive, CompressorCustom };
+                    if (result >= 1 && result <= 6)
+                        compressorParams_.presets->setParameterValue (vals[result - 1]);
+                });
+            return;
+        }
+        SynthSection::buttonClicked (b);
+    }
+
+    void updatePresetButtonText()
+    {
+        presetsButton->setText (compressorParams_.presets->choices[compressorParams_.presets->getIndex()]);
     }
 
     void updateKnobsEnabled(bool active)
@@ -221,15 +244,11 @@ public:
     // compressor meter
     std::shared_ptr<OpenGL_CompressorMeter> compressorMeter;
 
-    // preset combo box menu
-    std::unique_ptr<OpenGLComboBox> presets_combo_box;
-    std::unique_ptr<chowdsp::ComboBoxAttachment> presets_attachment;
+    std::unique_ptr<OpenGlTextButton> presetsButton;
 
-    // active eq & reset buttons
+    // active compressor button
     std::unique_ptr<SynthButton> activeCompressor_toggle;
     std::unique_ptr<chowdsp::ButtonAttachment> activeCompressor_attachment;
-    std::unique_ptr<SynthButton> reset_button;
-    std::unique_ptr<chowdsp::ButtonAttachment> reset_button_attachment;
 
     // level meters
     std::shared_ptr<PeakMeterSection> levelMeter;

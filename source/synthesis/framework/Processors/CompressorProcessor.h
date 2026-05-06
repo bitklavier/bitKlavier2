@@ -37,7 +37,6 @@ struct CompressorParams : chowdsp::ParamHolder
     CompressorParams(const juce::ValueTree& v) : chowdsp::ParamHolder ("compressor")
     {
         add(activeCompressor,
-            resetCompressor,
             inputGain,
             outputSend,
             outputGain,
@@ -55,13 +54,6 @@ struct CompressorParams : chowdsp::ParamHolder
     chowdsp::BoolParameter::Ptr activeCompressor {
         juce::ParameterID { "activeCompressor", 100 },
         "activeCompressor",
-        false
-    };
-
-    // reset bool
-    chowdsp::BoolParameter::Ptr resetCompressor {
-        juce::ParameterID { "resetCompressor", 100},
-        "resetCompressor",
         false
     };
 

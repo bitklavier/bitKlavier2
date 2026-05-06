@@ -910,6 +910,7 @@ void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juc
     engine_->processAudioAndMidi (audio_buffer, midi_buffer);
     engine_->getEQProcessor()->processBlock (audio_buffer, midi_buffer);
     engine_->getCompressorProcessor()->processBlock (audio_buffer, midi_buffer);
+    engine_->getReverbProcessor()->processBlock (audio_buffer, midi_buffer);
     engine_->getMainVolumeProcessor()->processBlock (audio_buffer, midi_buffer);
 
     total_samples_passed += audio_buffer.getNumSamples();

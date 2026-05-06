@@ -19,8 +19,7 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::Un
     // Fires immediately for UI edits, but ~20ms after audio-thread preset changes (timer).
     // The timestamp guards against that delayed firing switching the menu back to Custom.
     state.params.doForAllParameters ([this] (auto& param, size_t) {
-        if (juce::String (param.getParameterID()) == "eqPresets" ||
-            juce::String (param.getParameterID()) == "resetEq")
+        if (juce::String (param.getParameterID()) == "eqPresets")
             return;
         eqCallbacks += {state.getParameterListeners().addParameterListener(
             param, chowdsp::ParameterListenerThread::MessageThread,
@@ -31,17 +30,6 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::Un
             })
         };
     });
-     // to catch presses of the reset button
-        eqCallbacks += {state.getParameterListeners().addParameterListener(
-            state.params.resetEq,
-            chowdsp::ParameterListenerThread::AudioThread,
-            [this]() {
-                if (state.params.resetEq.get()->get()) {
-                    resetToDefaults();
-                }
-            })
-        };
-
         // MessageThread: record when a named preset is selected. Fires synchronously before
         // the AudioThread listener applies the preset values, so the timestamp is always set
         // before the timer-delayed MT param listeners could fire.

@@ -24,6 +24,8 @@ namespace IDs
     DECLARE_ID (PREPARATIONS)
     DECLARE_ID (BUSEQ)
     DECLARE_ID (BUSCOMPRESSOR)
+    DECLARE_ID (BUSREVERB)
+    DECLARE_ID (reverbPreset)
 
     DECLARE_ID (name)
     DECLARE_ID (comment)

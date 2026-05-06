@@ -52,10 +52,11 @@ void EQParameterView::resized()
     presets_rect.reduce(largepadding, largepadding * 1.5);
     presets_rect.removeFromTop (largepadding);
 
-    activeEq_toggle->setBounds(presets_rect.removeFromLeft(presets_rect.getWidth() / 3.));
-    reset_button->setBounds(presets_rect.removeFromRight(presets_rect.getWidth() / 2.));
-    presets_rect.reduce(largepadding, 0);
-    presets_combo_box->setBounds(presets_rect);
+    const int btnGap = 4;
+    const int btnW   = (presets_rect.getWidth() - btnGap) / 2;
+    activeEq_toggle->setBounds (presets_rect.removeFromLeft (btnW));
+    presets_rect.removeFromLeft (btnGap);
+    presetsButton->setBounds (presets_rect);
 
     bounds.removeFromTop (largepadding);
     //bounds.removeFromBottom (largepadding);

@@ -109,6 +109,7 @@ namespace bitklavier {
         PreparationTypeCompressor,
         PreparationTypeEQ,
         PreparationTypeVST,
+        PreparationTypeReverb,
         BKPreparationTypeNil,
     } BKPreparationType;
 
@@ -134,7 +135,8 @@ namespace bitklavier {
         {PreparationTypeComment,    "Comment"},
         {PreparationTypeCompressor, "Compressor"},
         {PreparationTypeEQ,         "EQ"},
-        {PreparationTypeVST,        "VST"}
+        {PreparationTypeVST,        "VST"},
+        {PreparationTypeReverb,     "Reverb"}
     };
 
 } // namespace bitKlavier

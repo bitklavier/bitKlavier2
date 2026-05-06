@@ -24,6 +24,7 @@
 #include "DirectProcessor.h"
 #include "EQProcessor.h"
 #include "GainProcessor.h"
+#include "ReverbProcessor.h"
 #include "ModulationConnection.h"
 #include "ModulationProcessor.h"
 #include "NostalgicProcessor.h"
@@ -676,6 +677,10 @@ namespace bitklavier
         {
             return eqProcessor.get();
         };
+        ReverbProcessor* getReverbProcessor()
+        {
+            return reverbProcessor.get();
+        };
         void syncBusProcessorsToValueTree();
         void loadBusProcessorsFromValueTree (juce::ValueTree& rootTree);
         GainProcessor* getMainVolumeProcessor()
@@ -742,6 +747,7 @@ namespace bitklavier
         std::unique_ptr<GainProcessor> gainProcessor ;
         std::unique_ptr<CompressorProcessor> compressorProcessor ;
         std::unique_ptr<EQProcessor> eqProcessor ;
+        std::unique_ptr<ReverbProcessor> reverbProcessor ;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SoundEngine)
     };
 } // namespace vital

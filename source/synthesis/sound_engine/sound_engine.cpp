@@ -317,6 +317,7 @@ namespace bitklavier {
 
         loadProc (compressorProcessor.get(), rootTree.getChildWithName (IDs::BUSCOMPRESSOR));
         loadProc (eqProcessor.get(),         rootTree.getChildWithName (IDs::BUSEQ));
+        loadProc (reverbProcessor.get(),     rootTree.getChildWithName (IDs::BUSREVERB));
 
         // For legacy saves that stored a named preset alongside individually-modified params,
         // force Custom so the preset listener does not override the loaded param values.
@@ -349,22 +350,24 @@ namespace bitklavier {
         };
         syncProc (compressorProcessor.get());
         syncProc (eqProcessor.get());
+        syncProc (reverbProcessor.get());
     }
 
     void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {
-        if (gainProcessor || compressorProcessor || eqProcessor)
+        if (gainProcessor || compressorProcessor || eqProcessor || reverbProcessor)
             return;
         juce::ValueTree buseq (IDs::BUSEQ);
         juce::ValueTree buscompressor (IDs::BUSCOMPRESSOR);
+        juce::ValueTree busreverb (IDs::BUSREVERB);
         tree.appendChild (buseq, nullptr);
         tree.appendChild (buscompressor, nullptr);
-        buseq.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
-        buscompressor.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
-        // gainProcessor = std::make_unique<GainProcessor>(parent,tree);
-        // compressorProcessor = std::make_unique<CompressorProcessor>(parent,buseq);
-        // eqProcessor = std::make_unique<EQProcessor>(parent,buscompressor);
-        gainProcessor       = std::make_unique<GainProcessor>(parent, tree, &parent.getUndoManager());
-        compressorProcessor = std::make_unique<CompressorProcessor>(parent, buscompressor, &parent.getUndoManager());
-        eqProcessor         = std::make_unique<EQProcessor>(parent, buseq, &parent.getUndoManager());
+        tree.appendChild (busreverb, nullptr);
+        buseq.setProperty (IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
+        buscompressor.setProperty (IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
+        busreverb.setProperty (IDs::type, bitklavier::BKPreparationType::PreparationTypeReverb, nullptr);
+        gainProcessor       = std::make_unique<GainProcessor>      (parent, tree,          &parent.getUndoManager());
+        compressorProcessor = std::make_unique<CompressorProcessor> (parent, buscompressor, &parent.getUndoManager());
+        eqProcessor         = std::make_unique<EQProcessor>         (parent, buseq,         &parent.getUndoManager());
+        reverbProcessor     = std::make_unique<ReverbProcessor>     (parent, busreverb,     &parent.getUndoManager());
     }
 } // namespace bitklavier

@@ -20,19 +20,6 @@ CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTr
     sidechainSignal.resize(512, 0.0f);
     rawSidechainSignal = sidechainSignal.data();
 
-    // to catch presses of the reset button
-    compressorCallbacks += {state.getParameterListeners().addParameterListener(
-        state.params.resetCompressor,
-        chowdsp::ParameterListenerThread::AudioThread,
-        [this]() {
-            if (state.params.resetCompressor.get()->get()) {
-                // todo make this a function or just set all parameters here?
-                // state.params.loCutFilterParams.resetToDefault();
-                state.params.resetCompressor->setParameterValue(false);
-            }
-        })
-    };
-
     // AudioThread: update alpha coefficients when attack/release change.
     compressorCallbacks += {state.getParameterListeners().addParameterListener(
         state.params.attack,

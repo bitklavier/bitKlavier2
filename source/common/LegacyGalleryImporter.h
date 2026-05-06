@@ -120,6 +120,9 @@ private:
     // Build the default <BUSCOMPRESSOR> ValueTree
     static juce::ValueTree makeDefaultBusCompressor();
 
+    // Build the default <BUSREVERB> ValueTree
+    static juce::ValueTree makeDefaultBusReverb();
+
     // Convert an old linear gain (0..N) to dB, clamped to [-80, 6]
     // Old format used linear multipliers; new format uses dB.
     static float gainToDb (float linearGain);

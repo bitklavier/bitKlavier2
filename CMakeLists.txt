@@ -47,8 +47,8 @@ juce_add_module(modules/melatonin_audio_sparklines)
 # Add any other modules you want modules here, before the juce_add_plugin call
 message("-- Adding external libraries" )
 add_subdirectory(third_party/chowdsp_utils)
-add_subdirectory(third_party/sfzq/SFZPlayer
-)
+add_subdirectory(third_party/sfzq/SFZPlayer)
+add_subdirectory(third_party/freeverb3)
 
 # Add CLAP format
 
@@ -238,7 +238,8 @@ target_link_libraries(SharedCode
     ${CHOWDSP_DEPENDENCIES}
     ${JUCE_DEPENDENCIES}
     melatonin_audio_sparklines
-        sfzero
+    sfzero
+    freeverb3
 )
 
 

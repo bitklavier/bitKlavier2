@@ -38,14 +38,6 @@ public:
         prepTitle->setFontType (PlainTextComponent::kTitle);
         prepTitle->setRotation (-90);
 
-        // menus
-        if (auto* eqParams = dynamic_cast<EQParams*>(&params)) {
-            presets_combo_box = std::make_unique<OpenGLComboBox>(eqParams->presets->paramID.toStdString());
-            presets_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*eqParams->presets.get(), listeners, *presets_combo_box, pluginState.undoManager);
-            addAndMakeVisible(presets_combo_box.get());
-            addOpenGlComponent(presets_combo_box->getImageComponent());
-        }
-
         // bypass EQ button
         activeEq_toggle = std::make_unique<SynthButton>(eqparams_.activeEq->paramID);
         activeEq_attachment = std::make_unique<chowdsp::ButtonAttachment>(eqparams_.activeEq, listeners, *activeEq_toggle, pluginState.undoManager);
@@ -53,12 +45,6 @@ public:
         addSynthButton(activeEq_toggle.get(), true);
         activeEq_toggle->setText("power");
 
-        // reset EQ button
-        reset_button = std::make_unique<SynthButton>("reset");
-        reset_button_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.resetEq,listeners,*reset_button,pluginState.undoManager);
-        reset_button->setComponentID("reset");
-        addSynthButton(reset_button.get(), true);
-        reset_button->setText("reset");
 
         // EQ Graph
         equalizerGraph = std::make_unique<OpenGL_EqualizerGraph> (&params, listeners);
@@ -93,6 +79,12 @@ public:
         inLevelMeter->setLabel("In");
         addSubSection(inLevelMeter.get());
 
+        presetsButton = std::make_unique<OpenGlTextButton> ("eqPresets");
+        addOpenGlComponent (presetsButton->getGlComponent());
+        addAndMakeVisible (presetsButton.get());
+        presetsButton->addListener (this);
+        presetsButton->setLookAndFeel (DefaultLookAndFeel::instance());
+
         presetsBorder = std::make_shared<OpenGL_LabeledBorder>("presets border", "Power and Presets");
         addBorder(presetsBorder.get());
 
@@ -101,6 +93,12 @@ public:
             chowdsp::ParameterListenerThread::MessageThread,
             [this]() { updateControlsEnabled(eqparams_.activeEq->get()); })};
         updateControlsEnabled(eqparams_.activeEq->get());
+
+        powerCallbacks_ += {listeners.addParameterListener(
+            eqparams_.presets,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]() { updatePresetButtonText(); })};
+        updatePresetButtonText();
 
         // redraw eq graph
         eqparams_.doForAllParameters ([this, &listeners] (auto& param, size_t) {
@@ -113,6 +111,30 @@ public:
                 })
             };
         });
+    }
+
+    void buttonClicked (juce::Button* b) override
+    {
+        if (b == presetsButton.get())
+        {
+            juce::PopupMenu menu;
+            for (int i = 0; i < eqparams_.presets->choices.size(); ++i)
+                menu.addItem (i + 1, eqparams_.presets->choices[i]);
+            menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (presetsButton.get()),
+                [this] (int result)
+                {
+                    static const EqPresetComboBox vals[] = { EqOff, Highshelf, Lowshelf, EqCustom };
+                    if (result >= 1 && result <= 4)
+                        eqparams_.presets->setParameterValue (vals[result - 1]);
+                });
+            return;
+        }
+        SynthSection::buttonClicked (b);
+    }
+
+    void updatePresetButtonText()
+    {
+        presetsButton->setText (eqparams_.presets->choices[eqparams_.presets->getIndex()]);
     }
 
     void updateControlsEnabled(bool active)
@@ -142,12 +164,8 @@ public:
     // active eq & reset buttons
     std::unique_ptr<SynthButton> activeEq_toggle;
     std::unique_ptr<chowdsp::ButtonAttachment> activeEq_attachment;
-    std::unique_ptr<SynthButton> reset_button;
-    std::unique_ptr<chowdsp::ButtonAttachment> reset_button_attachment;
 
-    // preset combo box menu
-    std::unique_ptr<OpenGLComboBox> presets_combo_box;
-    std::unique_ptr<chowdsp::ComboBoxAttachment> presets_attachment;
+    std::unique_ptr<OpenGlTextButton> presetsButton;
 
     // equalizer graph
     std::shared_ptr<OpenGL_EqualizerGraph> equalizerGraph;

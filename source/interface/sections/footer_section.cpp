@@ -42,6 +42,13 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     compressorButton->setLookAndFeel(TextLookAndFeel::instance());
     compressorButton->setButtonText("Compressor");
 
+    reverbButton = std::make_unique<OpenGlTextButton>("footer_reverb");
+    addOpenGlComponent(reverbButton->getGlComponent());
+    addAndMakeVisible(reverbButton.get());
+    reverbButton->addListener(this);
+    reverbButton->setLookAndFeel(TextLookAndFeel::instance());
+    reverbButton->setButtonText("Reverberator");
+
     auto engine = data->synth->getEngine();
     if (engine)
     {
@@ -141,13 +148,13 @@ void FooterSection::resized() {
 
     bounds.removeFromLeft(padding);
     auto postFX = bounds.removeFromLeft(buttonWidth);
-    postFX.removeFromTop (padding);
-    postFX.removeFromBottom (padding);
-    auto halfHeight = postFX.getHeight() / 2;
+    const int btnH    = int (findValue(Skin::kTextButtonHeight) * 1.2f);
+    const int btnGap  = 2;
+    const int bottom  = postFX.getBottom();
 
-    auto eqArea = postFX.removeFromTop(halfHeight);
-    eqButton->setBounds(eqArea.withY(halfHeight/2).withHeight (findValue(Skin::kTextButtonHeight)*1.5));
-    compressorButton->setBounds(postFX.withY((halfHeight/2)*3).withHeight (findValue(Skin::kTextButtonHeight)*1.5));
+    eqButton->setBounds         (postFX.withY (bottom - btnH * 3 - btnGap * 2).withHeight (btnH));
+    compressorButton->setBounds (postFX.withY (bottom - btnH * 2 - btnGap    ).withHeight (btnH));
+    reverbButton->setBounds     (postFX.withY (bottom - btnH                  ).withHeight (btnH));
 
     bounds.removeFromLeft (padding*2);
     bounds.removeFromRight (padding*2);
@@ -171,6 +178,10 @@ void FooterSection::buttonClicked(juce::Button *clicked_button) {
     else if (clicked_button == eqButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         showPrepPopup(interface->getEQPopup(), {}, bitklavier::BKPreparationType::PreparationTypeEQ);
+    }
+    else if (clicked_button == reverbButton.get()) {
+        auto interface = findParentComponentOfClass<SynthGuiInterface>();
+        showPrepPopup(interface->getReverbPopup(), {}, bitklavier::BKPreparationType::PreparationTypeReverb);
     }
     SynthSection::buttonClicked(clicked_button);
 }

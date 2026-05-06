@@ -50,6 +50,7 @@ public:
     std::unique_ptr<OpenGLKeymapKeyboardComponent> keyboard_component_;
     std::unique_ptr<OpenGlTextButton> eqButton;
     std::unique_ptr<OpenGlTextButton> compressorButton;
+    std::unique_ptr<OpenGlTextButton> reverbButton;
 
     juce::ValueTree gallery;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FooterSection)

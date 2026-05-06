@@ -162,6 +162,7 @@ public:
     juce::CriticalSection* getOpenGlCriticalSection();
     std::unique_ptr<SynthSection> getCompressorPopup();
     std::unique_ptr<SynthSection> getEQPopup();
+    std::unique_ptr<SynthSection> getReverbPopup();
 
     // ok to be public?
     std::unique_ptr<FullInterface> gui_;
