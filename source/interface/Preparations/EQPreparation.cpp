@@ -46,7 +46,7 @@ std::unique_ptr<SynthSection> EQPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
         if (auto* proc = dynamic_cast<EQProcessor*> (getProcessor()))
-            return std::make_unique<EQParameterView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+            return std::make_unique<EQParameterView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl, true);
 
     return nullptr;
 }

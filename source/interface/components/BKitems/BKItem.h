@@ -106,6 +106,7 @@ public:
         return type_ == bitklavier::BKPreparationType::PreparationTypeBlendronic ||
                type_ == bitklavier::BKPreparationType::PreparationTypeCompressor ||
                type_ == bitklavier::BKPreparationType::PreparationTypeEQ ||
+               type_ == bitklavier::BKPreparationType::PreparationTypeReverb ||
                type_ == bitklavier::BKPreparationType::PreparationTypeVST;
     }
 
@@ -980,6 +981,7 @@ public:
 
         g.setColour(findColour(Skin::kShadow, true));
         g.drawImageAt(shadow_, 0, 0, true);
+        g.setColour(juce::Colours::black);
         g.fillPath(layer_1_);
 
         juce::Colour c;
@@ -1039,6 +1041,7 @@ public:
 
         g.setColour(findColour(Skin::kShadow, true));
         g.drawImageAt(shadow_, 0, 0, true);
+        g.setColour(juce::Colours::black);
         g.fillPath(layer_1_);
 
         juce::Colour c;
@@ -1048,6 +1051,43 @@ public:
         g.fillPath(layer3);
         g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
+    }
+};
+
+class ReverbItem : public BKItem
+{
+public:
+    ReverbItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeReverb)
+    {
+    }
+
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+    {
+        juce::Rectangle<float> bounds = getLocalBounds().toFloat();
+
+        float layer_2_x = bounds.getX() + (bounds.getWidth() / 11);
+        float layer_2_y = bounds.getY() + (bounds.getHeight() / 8);
+        float layer_2_width = bounds.getWidth() * 9 / 11;
+        float layer_2_height = bounds.getHeight() * 3 / 4;
+
+        juce::Path layer2 = layer_2_;
+        layer2.applyTransform(layer2.getTransformToScaleToFit(layer_2_x,
+                                                                  layer_2_y,
+                                                                  layer_2_width,
+                                                                  layer_2_height,
+                                                                  false));
+
+        g.setColour(findColour(Skin::kShadow, true));
+        g.drawImageAt(shadow_, 0, 0, true);
+        g.setColour(juce::Colours::black);
+        g.fillPath(layer_1_);
+
+        juce::Colour c;
+        c = findColour(Skin::kWidgetPrimary1, true);
+        g.setColour(c);
+        g.fillPath(layer2);
+        g.setColour(selected_ ? juce::Colours::white : prep_color_);
+        g.strokePath(layer_1_, juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered));
     }
 };
 

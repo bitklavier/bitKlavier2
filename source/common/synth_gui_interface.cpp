@@ -665,12 +665,16 @@ PopupItems SynthGuiInterface::getPreparationPopupItems()
         // 'type' is the BKPreparationType
         // 'name' is the std::string
         printf("Type ID: %d | Display Name: %s\n", (int)type, name.c_str());
-        if (type <= bitklavier::BKPreparationType::PreparationTypeComment) // leave out those above this for now
+        if (type <= bitklavier::BKPreparationType::PreparationTypeComment ||
+            type == bitklavier::BKPreparationType::PreparationTypeCompressor ||
+            type == bitklavier::BKPreparationType::PreparationTypeEQ ||
+            type == bitklavier::BKPreparationType::PreparationTypeReverb)
             popup.addItem(type, name);
         if (type == bitklavier::BKPreparationType::PreparationTypeResonance ||
             type == bitklavier::BKPreparationType::PreparationTypeTempo ||
             type == bitklavier::BKPreparationType::PreparationTypeMidiTarget ||
-            type == bitklavier::BKPreparationType::PreparationTypeComment)
+            type == bitklavier::BKPreparationType::PreparationTypeComment ||
+            type == bitklavier::BKPreparationType::PreparationTypeReverb)
             popup.addItem(separator);
     }
 

@@ -23,10 +23,14 @@ void ReverbParameterView::resized()
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft (title_width + smallpadding);
 
-    // In/Out level meters on left and right edges
+    // Level meters on left and right edges
+    if (isPrepVersion_ && externalLevelMeter)
+        externalLevelMeter->setBounds (bounds.removeFromLeft (title_width));
     inLevelMeter->setBounds (bounds.removeFromLeft (title_width));
     bounds.removeFromRight  (int (title_width * 0.85f));
     levelMeter->setBounds   (bounds.removeFromRight (title_width));
+    if (isPrepVersion_ && sendLevelMeter)
+        sendLevelMeter->setBounds (bounds.removeFromRight (title_width));
 
     bounds.removeFromTop (largepadding * 6);
     bounds.reduce (largepadding * 6, largepadding);

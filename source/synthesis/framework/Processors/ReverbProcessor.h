@@ -91,12 +91,18 @@ struct ReverbParams : chowdsp::ParamHolder
     ReverbParams (const juce::ValueTree& /*v*/) : chowdsp::ParamHolder ("reverb")
     {
         add (activeReverb,
-             inputGain, outputGain,
+             inputGain, externalGain, outputGain, outputSend,
              dryLevel, earlyLevel, lateLevel,
              size, width, predelay, diffuse,
              lowCut, lowXover, lowMult,
              highCut, highXover, highMult,
              spin, wander, decay, earlySend, modulation);
+
+        doForAllParameters ([this] (auto& param, size_t) {
+            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.emplace_back(sliderParam);
+        });
     }
 
     chowdsp::BoolParameter::Ptr activeReverb {
@@ -105,42 +111,51 @@ struct ReverbParams : chowdsp::ParamHolder
     chowdsp::GainDBParameter::Ptr inputGain {
         juce::ParameterID { "reverbInputGain", 100 }, "Input Gain",
         juce::NormalisableRange { gainRangeStart, gainRangeEnd, 0.0f, gainSkew, false }, 0.0f, true };
+    chowdsp::GainDBParameter::Ptr externalGain {
+        juce::ParameterID { "reverbExternalGain", 100 }, "External Gain",
+        juce::NormalisableRange { gainRangeStart, gainRangeEnd, 0.0f, gainSkew, false }, gainRangeStart, true };
     chowdsp::GainDBParameter::Ptr outputGain {
         juce::ParameterID { "reverbOutputGain", 100 }, "Output Gain",
         juce::NormalisableRange { gainRangeStart, gainRangeEnd, 0.0f, gainSkew, false }, 0.0f, true };
 
+    chowdsp::GainDBParameter::Ptr outputSend {
+        juce::ParameterID { "reverbSend", 100 }, "Send",
+        juce::NormalisableRange { gainRangeStart, gainRangeEnd, 0.0f, gainSkew, false }, 0.0f, true };
+
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
 
     // 18 reverb parameters
     chowdsp::FloatParameter::Ptr dryLevel {
         juce::ParameterID { "reverbDry", 100 }, "Dry Level",
         juce::NormalisableRange { 0.f, 100.f }, 0.f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr earlyLevel {
         juce::ParameterID { "reverbEarly", 100 }, "Early Level",
         juce::NormalisableRange { 0.f, 100.f }, 0.f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr lateLevel {
         juce::ParameterID { "reverbLate", 100 }, "Late Level",
         juce::NormalisableRange { 0.f, 100.f }, 0.f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr size {
         juce::ParameterID { "reverbSize", 100 }, "Size",
         juce::NormalisableRange { 10.f, 60.f }, 10.f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr width {
         juce::ParameterID { "reverbWidth", 100 }, "Width",
         juce::NormalisableRange { 50.f, 150.f }, 50.f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr predelay {
         juce::ParameterID { "reverbPredelay", 100 }, "Predelay",
         juce::NormalisableRange { 0.f, 100.f }, 0.f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr diffuse {
         juce::ParameterID { "reverbDiffuse", 100 }, "Diffuse",
         juce::NormalisableRange { 0.f, 100.f }, 0.f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr lowCut {
         juce::ParameterID { "reverbLowCut", 100 }, "Low Cut",
         juce::NormalisableRange { 0.f, 200.f }, 0.f,
@@ -176,7 +191,7 @@ struct ReverbParams : chowdsp::ParamHolder
     chowdsp::FloatParameter::Ptr decay {
         juce::ParameterID { "reverbDecay", 100 }, "Decay",
         chowdsp::ParamUtils::createNormalisableRange (0.1f, 10.f, 1.f, 0.01f), 0.1f,
-        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, false };
+        &chowdsp::ParamUtils::floatValToString, &chowdsp::ParamUtils::stringToFloatVal, true };
     chowdsp::FloatParameter::Ptr earlySend {
         juce::ParameterID { "reverbEarlySend", 100 }, "Early Send",
         juce::NormalisableRange { 0.f, 100.f }, 0.f,
@@ -196,11 +211,14 @@ struct ReverbNonParameterState : chowdsp::NonParamState
 // ReverbProcessor
 // ──────────────────────────────────────────────────────────────────────
 class ReverbProcessor
-    : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<ReverbParams, ReverbNonParameterState>>
+    : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<ReverbParams, ReverbNonParameterState>>,
+      public bitklavier::ExternalAudioInputReceiver
 {
 public:
     ReverbProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager*);
     ~ReverbProcessor() = default;
+
+    void setExternalInputBuffer (const juce::AudioBuffer<float>* buf) override { externalInputBuffer = buf; }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -220,7 +238,7 @@ public:
             .withOutput ("Output",     juce::AudioChannelSet::stereo(),               true)
             .withInput  ("Input",      juce::AudioChannelSet::stereo(),               true)
             .withInput  ("Send Pad",   juce::AudioChannelSet::stereo(),               true)
-            .withInput  ("Modulation", juce::AudioChannelSet::discreteChannels (10),  true)
+            .withInput  ("Modulation", juce::AudioChannelSet::discreteChannels (24),  true) // 12 modulatable params × 2 channels (ramp + LFO)
             .withOutput ("Modulation", juce::AudioChannelSet::mono(),                 false)
             .withOutput ("Send",       juce::AudioChannelSet::stereo(),               true);
     }
@@ -247,6 +265,8 @@ private:
     float lateOutBuf_[2][kBufSize];
 
     double sampleRate_ = 44100.0;
+
+    const juce::AudioBuffer<float>* externalInputBuffer = nullptr;
 
     juce::int64 presetAppliedAtMs_ = -1;
     chowdsp::ScopedCallbackList reverbCallbacks_;

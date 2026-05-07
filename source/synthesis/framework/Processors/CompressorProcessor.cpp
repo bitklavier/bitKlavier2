@@ -250,9 +250,28 @@ void CompressorProcessor::applyBallistics(float* src, int numSamples)
 void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
+    if (v.getType() != IDs::BUSCOMPRESSOR)
+        processContinuousModulations (buffer);
     state.params.processStateChanges();
+
+    // mix in external audio (mic/line in standalone, DAW sidechain in plugin)
+    if (externalInputBuffer != nullptr)
+    {
+        const int extSamples = juce::jmin (buffer.getNumSamples(), externalInputBuffer->getNumSamples());
+        const auto extgainmult = bitklavier::utils::dbToMagnitude (state.params.externalGain->getCurrentValue());
+        buffer.addFrom (0, 0, *externalInputBuffer, 0, 0, extSamples, extgainmult);
+        buffer.addFrom (1, 0, *externalInputBuffer, 1, 0, extSamples, extgainmult);
+        std::get<0> (state.params.externalLevels) = externalInputBuffer->getRMSLevel (0, 0, extSamples) * extgainmult;
+        std::get<1> (state.params.externalLevels) = externalInputBuffer->getRMSLevel (1, 0, extSamples) * extgainmult;
+    }
+    else
+    {
+        std::get<0> (state.params.externalLevels) = 0.0f;
+        std::get<1> (state.params.externalLevels) = 0.0f;
+    }
+
     int numSamples = buffer.getNumSamples();
-    int numChannels = buffer.getNumChannels();
+    int numChannels = juce::jmin (buffer.getNumChannels(), 2);
 
     if (*state.params.activeCompressor)
     {
@@ -318,14 +337,17 @@ void CompressorProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         gainReduction.set(state.params.maxGainReduction.load());
 
         // handle the send
-        // int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-        // auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
-        // buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
-        // buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+        int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+        if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
+        {
+            auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
+            buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+            buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
 
-        // send level meter update
-        // std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
-        // std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+            // send level meter update
+            std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
+            std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+        }
 
         // final output gain stage, from rightmost slider in DirectParametersView
         auto outputgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputGain);

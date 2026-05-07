@@ -46,6 +46,9 @@
 #include "BlendronicProcessor.h"
 #include "ResetProcessor.h"
 #include "CommentProcessor.h"
+#include "EQProcessor.h"
+#include "CompressorProcessor.h"
+#include "ReverbProcessor.h"
 
 // For saving last opened gallery path
 #include "UserPreferences.h"
@@ -110,6 +113,9 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     prepFactory.template registerType<TempoProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::tempo.toString().toStdString());
     prepFactory.template registerType<NostalgicProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::nostalgic.toString().toStdString());
     prepFactory.template registerType<bitklavier::CommentProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::comment.toString().toStdString());
+    prepFactory.template registerType<CompressorProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::compressor.toString().toStdString());
+    prepFactory.template registerType<EQProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::eq.toString().toStdString());
+    prepFactory.template registerType<ReverbProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::reverb.toString().toStdString());
 
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);

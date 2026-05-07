@@ -1070,6 +1070,30 @@ class Paths {
 
         return paths;
     }
+
+    static juce::Array<juce::Path> eqPaths()
+    {
+        juce::Array<juce::Path> arr;
+        arr.add(fromSvgData((const void*)BinaryData::Layer_1_eq_svg, BinaryData::Layer_1_eq_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_2_eq_svg, BinaryData::Layer_2_eq_svgSize));
+        return arr;
+    }
+
+    static juce::Array<juce::Path> compressorPaths()
+    {
+        juce::Array<juce::Path> arr;
+        arr.add(fromSvgData((const void*)BinaryData::Layer_1_compressor_svg, BinaryData::Layer_1_compressor_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_2_compressor_svg, BinaryData::Layer_2_compressor_svgSize));
+        return arr;
+    }
+
+    static juce::Array<juce::Path> reverbPaths()
+    {
+        juce::Array<juce::Path> arr;
+        arr.add(fromSvgData((const void*)BinaryData::Layer_1_reverb_svg, BinaryData::Layer_1_reverb_svgSize));
+        arr.add(fromSvgData((const void*)BinaryData::Layer_2_reverb_svg, BinaryData::Layer_2_reverb_svgSize));
+        return arr;
+    }
 };
 
 

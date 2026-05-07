@@ -981,6 +981,9 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 case PT::PreparationTypePianoMap:     return baseName + " (p)";
                 case PT::PreparationTypeReset:        return baseName + " (\\)";
                 case PT::PreparationTypeComment:      return baseName + " (/)";
+                case PT::PreparationTypeCompressor:   return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "C)").toStdString();
+                case PT::PreparationTypeEQ:           return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "E)").toStdString();
+                case PT::PreparationTypeReverb:       return (juce::String(baseName) + " (" + juce::String::charToString(0x21e7) + "R)").toStdString();
                 default:                              return baseName; // no shortcut defined or shown
             }
         };

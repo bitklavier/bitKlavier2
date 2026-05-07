@@ -34,7 +34,7 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
     juce::AudioProcessorGraph::Node::Ptr node_ptr;
     juce::ValueTree state = v;
 
-    if (temporary_instance == nullptr && static_cast<int>(state.getProperty(IDs::type)) <
+    if (temporary_instance == nullptr && static_cast<int>(state.getProperty(IDs::type)) !=
         bitklavier::BKPreparationType::PreparationTypeVST) {
        auto processor = synth.prepFactory.create(v.getType().toString().toStdString(), std::any(std::tie(synth,v, um)));
         rawPtr = processor.get();

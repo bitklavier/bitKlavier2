@@ -37,12 +37,13 @@ void EQParameterView::resized()
     // reset_button->setBounds(resetBounds);
     //bounds.removeFromTop (60);
 
+    if (isPrepVersion_ && externalLevelMeter)
+        externalLevelMeter->setBounds(bounds.removeFromLeft(title_width));
     inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
-    bounds.removeFromRight(title_width*.85);
+    bounds.removeFromRight(int(title_width * 0.85));
     levelMeter->setBounds(bounds.removeFromRight(title_width));
-
-    // bounds.removeFromRight(smallpadding);
-    // sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
+    if (isPrepVersion_ && sendLevelMeter)
+        sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
     bounds.reduce(largepadding, largepadding);
 

@@ -126,7 +126,25 @@ bool EQProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayou
 void EQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
+    if (v.getType() != IDs::BUSEQ)
+        processContinuousModulations (buffer);
     state.params.processStateChanges();
+
+    // mix in external audio (mic/line in standalone, DAW sidechain in plugin)
+    if (externalInputBuffer != nullptr)
+    {
+        const int extSamples = juce::jmin (buffer.getNumSamples(), externalInputBuffer->getNumSamples());
+        const auto extgainmult = bitklavier::utils::dbToMagnitude (state.params.externalGain->getCurrentValue());
+        buffer.addFrom (0, 0, *externalInputBuffer, 0, 0, extSamples, extgainmult);
+        buffer.addFrom (1, 0, *externalInputBuffer, 1, 0, extSamples, extgainmult);
+        std::get<0> (state.params.externalLevels) = externalInputBuffer->getRMSLevel (0, 0, extSamples) * extgainmult;
+        std::get<1> (state.params.externalLevels) = externalInputBuffer->getRMSLevel (1, 0, extSamples) * extgainmult;
+    }
+    else
+    {
+        std::get<0> (state.params.externalLevels) = 0.0f;
+        std::get<1> (state.params.externalLevels) = 0.0f;
+    }
 
     if (*state.params.activeEq)
     {
@@ -153,14 +171,17 @@ void EQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuff
         }
 
         // handle the send
-        // int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-        // auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
-        // buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
-        // buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
+        int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
+        if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
+        {
+            auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
+            buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
+            buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
 
-        // send level meter update
-        // std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
-        // std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+            // send level meter update
+            std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
+            std::get<1> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex+1, 0, numSamples);
+        }
 
         // final output gain stage, from rightmost slider in DirectParametersView
         auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());

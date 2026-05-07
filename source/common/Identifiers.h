@@ -129,6 +129,9 @@ namespace IDs
 
     DECLARE_ID(direct)
     DECLARE_ID(blendronic)
+    DECLARE_ID(eq)
+    DECLARE_ID(compressor)
+    DECLARE_ID(reverb)
     DECLARE_ID(reset)
     DECLARE_ID(midiFilter)
     DECLARE_ID(pianoMap)
@@ -161,7 +164,7 @@ namespace IDs
 }
 
 // order should match BKPreparationType in common.h
-static const std::array<juce::Identifier, 14> preparationIDs {
+static const std::array<juce::Identifier, 18> preparationIDs {
     IDs::keymap,
     IDs::direct,
     IDs::synchronic,
@@ -175,7 +178,11 @@ static const std::array<juce::Identifier, 14> preparationIDs {
     IDs::modulation,
     IDs::reset,
     IDs::pianoMap,
-    IDs::comment
+    IDs::comment,
+    IDs::compressor,
+    IDs::eq,
+    IDs::vst,
+    IDs::reverb
 };
 
 #undef DECLARE_ID

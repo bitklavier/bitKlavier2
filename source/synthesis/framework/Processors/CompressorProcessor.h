@@ -38,6 +38,7 @@ struct CompressorParams : chowdsp::ParamHolder
     {
         add(activeCompressor,
             inputGain,
+            externalGain,
             outputSend,
             outputGain,
             attack,
@@ -48,6 +49,12 @@ struct CompressorParams : chowdsp::ParamHolder
             knee,
             makeup,
             presets);
+
+        doForAllParameters ([this] (auto& param, size_t) {
+            if (auto* sliderParam = dynamic_cast<chowdsp::FloatParameter*> (&param))
+                if (sliderParam->supportsMonophonicModulation())
+                    modulatableParams.emplace_back(sliderParam);
+        });
     }
 
     // active bool
@@ -57,7 +64,7 @@ struct CompressorParams : chowdsp::ParamHolder
         false
     };
 
-    // To adjust the gain of signals coming in to blendronic
+    // To adjust the gain of signals coming in (internal audio from graph)
     chowdsp::GainDBParameter::Ptr inputGain {
         juce::ParameterID { "InputGain", 100 },
         "Input Gain",
@@ -65,6 +72,15 @@ struct CompressorParams : chowdsp::ParamHolder
         0.0f,
         true
    };
+
+    // Gain for external (mic/line/sidechain) input
+    chowdsp::GainDBParameter::Ptr externalGain {
+        juce::ParameterID { "externalGain", 100 },
+        "External Gain",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        rangeStart,
+        true
+    };
 
     // Gain for output send (for other blendronics, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSend {
@@ -93,6 +109,7 @@ struct CompressorParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
 
     // attack 0 to 100.00ms, center 50, default 0
     chowdsp::TimeMsParameter::Ptr attack //ms
@@ -183,7 +200,8 @@ struct CompressorNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 
 class CompressorProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<CompressorParams, CompressorNonParameterState>>,
-                        public juce::ValueTree::Listener
+                            public juce::ValueTree::Listener,
+                            public bitklavier::ExternalAudioInputReceiver
 {
 public:
     CompressorProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -197,6 +215,8 @@ public:
     }
 
 
+
+    void setExternalInputBuffer (const juce::AudioBuffer<float>* buf) override { externalInputBuffer = buf; }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -229,7 +249,7 @@ public:
              /**
               * todo: check the number of discrete channels to match needs here
               */
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (16), true) // Mod inputs; 8 modulatable params × 2 channels (ramp + LFO)
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
     }
@@ -273,6 +293,8 @@ private:
     // MT Custom-detection listeners skip switching to Custom while < 200ms have elapsed,
     // covering the ~20ms timer delay for preset-driven param changes to propagate.
     juce::int64 presetAppliedAtMs = -1;
+
+    const juce::AudioBuffer<float>* externalInputBuffer = nullptr;
 
     chowdsp::ScopedCallbackList compressorCallbacks;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CompressorProcessor)

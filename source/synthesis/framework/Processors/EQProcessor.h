@@ -37,6 +37,7 @@ struct EQParams : chowdsp::ParamHolder
     {
             add(activeEq,
                 inputGain,
+                externalGain,
                 outputSend,
                 outputGain,
                 loCutFilterParams,
@@ -64,7 +65,7 @@ struct EQParams : chowdsp::ParamHolder
         false
     };
 
-    // To adjust the gain of signals coming in to blendronic
+    // To adjust the gain of signals coming in to the EQ (internal audio from graph)
     chowdsp::GainDBParameter::Ptr inputGain {
         juce::ParameterID { "InputGain", 100 },
         "Input Gain",
@@ -72,6 +73,15 @@ struct EQParams : chowdsp::ParamHolder
         0.0f,
         true
    };
+
+    // Gain for external (mic/line/sidechain) input
+    chowdsp::GainDBParameter::Ptr externalGain {
+        juce::ParameterID { "externalGain", 100 },
+        "External Gain",
+        juce::NormalisableRange { rangeStart, rangeEnd, 0.0f, skewFactor, false },
+        rangeStart,
+        true
+    };
 
     // Gain for output send (for other blendronics, VSTs, etc...)
     chowdsp::GainDBParameter::Ptr outputSend {
@@ -108,6 +118,7 @@ struct EQParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+    std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
 
     // filters
     EQCutFilterParams loCutFilterParams{"loCut"};
@@ -319,7 +330,8 @@ struct EQNonParameterState : chowdsp::NonParamState
 // ********************************************************************************************* //
 
 class EQProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<EQParams, EQNonParameterState>>,
-                        public juce::ValueTree::Listener
+                    public juce::ValueTree::Listener,
+                    public bitklavier::ExternalAudioInputReceiver
 {
 public:
     EQProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -328,7 +340,9 @@ public:
         parent.getValueTree().removeListener(this);
     }
 
-     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void setExternalInputBuffer (const juce::AudioBuffer<float>* buf) override { externalInputBuffer = buf; }
+
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
 
     // void setupModulationMappings();
@@ -364,7 +378,7 @@ public:
              /**
               * todo: check the number of discrete channels to match needs here
               */
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (10), true) // Mod inputs; numChannels for the number of mods we want to enable
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (30), true) // Mod inputs; 15 modulatable params × 2 channels (ramp + LFO)
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false)  // Modulation send channel; disabled for all but Modulation preps!
             .withOutput("Send",juce::AudioChannelSet::stereo(),true);       // Send channel (right outputs)
     }
@@ -387,6 +401,8 @@ private:
     // MT Custom-detection listeners skip switching to Custom while < 200ms have elapsed,
     // covering the ~20ms timer delay for preset-driven param changes to propagate.
     juce::int64 presetAppliedAtMs = -1;
+
+    const juce::AudioBuffer<float>* externalInputBuffer = nullptr;
 
     chowdsp::ScopedCallbackList eqCallbacks;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EQProcessor)

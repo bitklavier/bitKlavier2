@@ -17,10 +17,10 @@
 #include "OpenGL_EqualizerGraph.h"
 
 class EQFilterSection;
-class EQParameterView : public SynthSection
+class EQParameterView : public SynthSection, private juce::Timer
 {
 public:
-    EQParameterView (chowdsp::PluginState& pluginState, EQParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), eqparams_ (params)
+    EQParameterView (chowdsp::PluginState& pluginState, EQParams& params, juce::String name, OpenGlWrapper* open_gl, bool isPrepVersion = false) : SynthSection (""), eqparams_ (params), isPrepVersion_ (isPrepVersion)
     {
         // the name that will appear in the UI as the name of the section
         setName ("eq");
@@ -63,21 +63,28 @@ public:
         hiCutSection = std::make_unique<EQCutFilterSection>(name, eqparams_.hiCutFilterParams, listeners, *this, pluginState.undoManager);
         addSubSection(hiCutSection.get());
 
-        // the level meter and output gain slider (right side of preparation popup)
-        // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
+        // Internal (graph audio) input meter
+        inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
+        inLevelMeter->setLabel(isPrepVersion_ ? "Internal" : "In");
+        addSubSection(inLevelMeter.get());
+
+        // Main output meter
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
-        levelMeter->setLabel("Out");
+        levelMeter->setLabel(isPrepVersion_ ? "Main" : "Out");
         addSubSection(levelMeter.get());
 
-        // similar for send level meter/slider
-        // sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
-        // sendLevelMeter->setLabel("Send");
-        // addSubSection(sendLevelMeter.get());
+        if (isPrepVersion_)
+        {
+            // External (mic/line/sidechain) input meter
+            externalLevelMeter = std::make_shared<PeakMeterSection>(name, params.externalGain, listeners, &params.externalLevels);
+            externalLevelMeter->setLabel("External");
+            addSubSection(externalLevelMeter.get());
 
-        // and for input level meter/slider
-        inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
-        inLevelMeter->setLabel("In");
-        addSubSection(inLevelMeter.get());
+            // Send output meter
+            sendLevelMeter = std::make_shared<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
+            sendLevelMeter->setLabel("Send");
+            addSubSection(sendLevelMeter.get());
+        }
 
         presetsButton = std::make_unique<OpenGlTextButton> ("eqPresets");
         addOpenGlComponent (presetsButton->getGlComponent());
@@ -111,6 +118,17 @@ public:
                 })
             };
         });
+
+        // Poll at ~30Hz to update the graph when continuous modulation is active
+        // (applyMonophonicModulation doesn't fire parameterValueChanged, so listeners
+        // won't catch modulation-driven changes)
+        startTimerHz (30);
+    }
+
+    void timerCallback() override
+    {
+        eqparams_.updateCoefficients();
+        equalizerGraph->redoImage();
     }
 
     void buttonClicked (juce::Button* b) override
@@ -181,6 +199,9 @@ public:
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
     std::shared_ptr<PeakMeterSection> inLevelMeter;
+    std::shared_ptr<PeakMeterSection> externalLevelMeter;
+
+    bool isPrepVersion_ = false;
 
     std::shared_ptr<OpenGL_LabeledBorder> presetsBorder;
 

@@ -9,6 +9,9 @@
 #include "ConstructionSite.h"
 #include "Preparations.h"
 #include "CommentPreparation.h"
+#include "EQPreparation.h"
+#include "CompressorPreparation.h"
+#include "ReverbPreparation.h"
 #include "CommentProcessor.h"
 #include "sound_engine.h"
 #include "synth_gui_interface.h"
@@ -39,6 +42,7 @@ static constexpr std::array<std::pair<float, float>,
     /* 14 Compressor */ { 245.0f, 125.0f },
     /* 15 EQ         */ { 245.0f, 125.0f },
     /* 16 VST        */ { 245.0f, 125.0f },
+    /* 17 Reverb     */ { 245.0f, 125.0f },
 }};
 
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
@@ -86,6 +90,9 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(IDs::nostalgic, NostalgicPreparation::create);
     nodeFactory.Register(IDs::resonance, ResonancePreparation::create);
     nodeFactory.Register(IDs::comment, CommentPreparation::create);
+    nodeFactory.Register(IDs::eq, EQPreparation::create);
+    nodeFactory.Register(IDs::compressor, CompressorPreparation::create);
+    nodeFactory.Register(IDs::reverb, ReverbPreparation::create);
 
     lassoVisual = std::make_shared<OpenGlImageComponent>("lassoVisual");
     lassoVisual->setComponent(&selectorLasso);
@@ -137,7 +144,10 @@ enum CommandIDs {
     selectAll = 0x062d,
     copy = 0x062e,
     paste = 0x062f,
-    comment = 0x0630
+    comment = 0x0630,
+    eq = 0x0631,
+    compressor = 0x0632,
+    reverb = 0x0633
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
@@ -165,7 +175,10 @@ void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
         selectAll,
         copy,
         paste,
-        comment});
+        comment,
+        eq,
+        compressor,
+        reverb});
 }
 
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
@@ -231,6 +244,18 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
         case comment:
             info.setInfo("Comment", "Create Comment Preparation", "Edit", 0);
             info.addDefaultKeypress('/', juce::ModifierKeys::noModifiers);
+            break;
+        case eq:
+            info.setInfo("EQ", "Create EQ Preparation", "Edit", 0);
+            info.addDefaultKeypress('e', juce::ModifierKeys::shiftModifier);
+            break;
+        case compressor:
+            info.setInfo("Compressor", "Create Compressor Preparation", "Edit", 0);
+            info.addDefaultKeypress('c', juce::ModifierKeys::shiftModifier);
+            break;
+        case reverb:
+            info.setInfo("Reverb", "Create Reverb Preparation", "Edit", 0);
+            info.addDefaultKeypress('r', juce::ModifierKeys::shiftModifier);
             break;
         case horizontallyAlignSelected:
             info.setInfo("Horizontally Align Selected", "Aligns Selected Preparations Horizontally", "Edit", 0);
@@ -459,6 +484,39 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
                     juce::Point<int>(lastX, lastY)), nullptr);
 
+                prep_list->appendChild(t, &undo);
+                return true;
+            }
+            case eq:
+            {
+                juce::ValueTree t(IDs::eq);
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeEQ, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
+                prep_list->appendChild(t, &undo);
+                return true;
+            }
+            case compressor:
+            {
+                juce::ValueTree t(IDs::compressor);
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeCompressor, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
+                prep_list->appendChild(t, &undo);
+                return true;
+            }
+            case reverb:
+            {
+                juce::ValueTree t(IDs::reverb);
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeReverb, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
                 prep_list->appendChild(t, &undo);
                 return true;
             }
@@ -1309,7 +1367,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
 void ConstructionSite::addItem (int selection, bool center)
 {
     float prepScale = 0.6;
-    if (selection < bitklavier::BKPreparationType::PreparationTypeVST) {
+    if (selection != bitklavier::BKPreparationType::PreparationTypeVST) {
         //const auto idx = static_cast<size_t>(selection - 1);
         const auto idx = static_cast<size_t>(selection);
         jassert (idx < prepSizes.size());

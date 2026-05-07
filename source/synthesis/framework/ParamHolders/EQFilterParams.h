@@ -84,7 +84,7 @@ struct EQPeakFilterParams : chowdsp::ParamHolder
         12.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
-        true
+        false
     };
 
     void resetToDefault()
@@ -139,7 +139,7 @@ struct EQCutFilterParams : chowdsp::ParamHolder
         12.0f,
         &chowdsp::ParamUtils::floatValToString,
         &chowdsp::ParamUtils::stringToFloatVal,
-        true
+        false
     };
 
     void resetToDefault()

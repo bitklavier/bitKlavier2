@@ -50,11 +50,12 @@ namespace
         if (type == bitklavier::BKPreparationType::PreparationTypeVST)
             return Paths::vstPaths();
 
-        // todo: make GUIs and set paths for EQ & Compressor
         if (type == bitklavier::BKPreparationType::PreparationTypeEQ)
-            return Paths::directPaths();
+            return Paths::eqPaths();
         if (type == bitklavier::BKPreparationType::PreparationTypeCompressor)
-            return Paths::directPaths();
+            return Paths::compressorPaths();
+        if (type == bitklavier::BKPreparationType::PreparationTypeReverb)
+            return Paths::reverbPaths();
 
 //        if (type == bitklavier::BKPreparationType::PreparationTypeMidiFilter)
 //            return Paths::midiFilterPaths();

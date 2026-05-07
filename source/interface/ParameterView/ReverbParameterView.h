@@ -14,8 +14,8 @@ class ReverbParameterView : public SynthSection, public juce::Timer, public juce
 public:
     ReverbParameterView (chowdsp::PluginState& pluginState, ReverbParams& params,
                          juce::String name, OpenGlWrapper* open_gl,
-                         ReverbProcessor* proc)
-        : SynthSection (""), reverbParams_ (params), proc_ (proc)
+                         ReverbProcessor* proc, bool isPrepVersion = false)
+        : SynthSection (""), reverbParams_ (params), proc_ (proc), isPrepVersion_ (isPrepVersion)
     {
         setName ("reverb");
         setLookAndFeel (DefaultLookAndFeel::instance());
@@ -48,14 +48,25 @@ public:
         presetsButton->setLookAndFeel (DefaultLookAndFeel::instance());
         updatePresetButtonText();
 
-        // In/Out meters
+        // Input/output meters
         inLevelMeter = std::make_unique<PeakMeterSection> (name, params.inputGain, listeners, &params.inputLevels);
-        inLevelMeter->setLabel ("In");
+        inLevelMeter->setLabel (isPrepVersion_ ? "Internal" : "In");
         addSubSection (inLevelMeter.get());
 
         levelMeter = std::make_unique<PeakMeterSection> (name, params.outputGain, listeners, &params.outputLevels);
-        levelMeter->setLabel ("Out");
+        levelMeter->setLabel (isPrepVersion_ ? "Main" : "Out");
         addSubSection (levelMeter.get());
+
+        if (isPrepVersion_)
+        {
+            externalLevelMeter = std::make_unique<PeakMeterSection> (name, params.externalGain, listeners, &params.externalLevels);
+            externalLevelMeter->setLabel ("External");
+            addSubSection (externalLevelMeter.get());
+
+            sendLevelMeter = std::make_unique<PeakMeterSection> (name, params.outputSend, listeners, &params.sendLevels);
+            sendLevelMeter->setLabel ("Send");
+            addSubSection (sendLevelMeter.get());
+        }
 
         // Borders
         presetsBorder  = std::make_shared<OpenGL_LabeledBorder> ("presets border",   "Power and Presets");
@@ -220,6 +231,10 @@ public:
 
     std::unique_ptr<PeakMeterSection> inLevelMeter;
     std::unique_ptr<PeakMeterSection> levelMeter;
+    std::unique_ptr<PeakMeterSection> externalLevelMeter;
+    std::unique_ptr<PeakMeterSection> sendLevelMeter;
+
+    bool isPrepVersion_ = false;
 
     std::shared_ptr<OpenGL_LabeledBorder> presetsBorder;
     std::shared_ptr<OpenGL_LabeledBorder> group1Border, group2Border, group3Border, group4Border, group5Border;
