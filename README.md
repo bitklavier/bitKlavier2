@@ -67,6 +67,7 @@ Dependencies live in two places:
 - tracktion_engine — selected utility files from [Tracktion Engine](https://github.com/Tracktion/tracktion_engine) (not the full library)
 - juce-toys — LLDB helpers (`juce_lldb_xcode.py`) for more readable JUCE types in the debugger
 - sfzq — SoundFont player
+- freeverb3 — freeverb3 reverb implementation
 
 **`JUCE/`** — [JUCE 8](https://github.com/juce-framework/JUCE) framework, included as a git submodule.
 

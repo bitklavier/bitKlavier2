@@ -124,6 +124,19 @@ public:
             addAndMakeVisible(allOnButton);
             addAndMakeVisible(keysCB);
             addAndMakeVisible(keysButton);
+
+            transposeDownButton.setName("KSLIDER_TRANSPOSE_DOWN");
+            transposeDownButton.addListener(this);
+            transposeDownButton.setButtonText("-");
+            transposeDownButton.setTooltip("Shift selected keys down a half-step");
+
+            transposeUpButton.setName("KSLIDER_TRANSPOSE_UP");
+            transposeUpButton.addListener(this);
+            transposeUpButton.setButtonText("+");
+            transposeUpButton.setTooltip("Shift selected keys up a half-step");
+
+            addAndMakeVisible(transposeDownButton);
+            addAndMakeVisible(transposeUpButton);
         }
     }
 
@@ -228,6 +241,8 @@ public:
     juce::TextButton clearButton;
     juce::TextButton allOnButton;
     juce::TextButton keysButton;
+    juce::TextButton transposeDownButton;
+    juce::TextButton transposeUpButton;
     juce::ComboBox keysCB;
 
     // set to false if all the edit, key, clear buttons are not needed

@@ -42,6 +42,12 @@ void BKKeymapKeyboardComponent::resized() {
         textSlab.removeFromLeft(4);
         keysButton.setBounds(textSlab.removeFromLeft(widthUnit));
 
+        textSlab.removeFromLeft(20);
+        int transposeW = (int)(widthUnit * 0.55f);
+        transposeDownButton.setBounds(textSlab.removeFromLeft(transposeW));
+        textSlab.removeFromLeft(4);
+        transposeUpButton.setBounds(textSlab.removeFromLeft(transposeW));
+
         keyboardValsTextField->setBounds(keyboard_.getBounds());
     }
 }
@@ -137,6 +143,16 @@ void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
     else if (button == &allOnButton) {
         //keyboard_state_.keyStates.load().set();
         keyboard_state_.setAllKeysState(true);
+    }
+    else if (button == &transposeDownButton)
+    {
+        keyboard_state_.keyStates.store(keyboard_state_.keyStates.load() >> 1);
+        keyboard_.repaint();
+    }
+    else if (button == &transposeUpButton)
+    {
+        keyboard_state_.keyStates.store(keyboard_state_.keyStates.load() << 1);
+        keyboard_.repaint();
     }
     else if (button == &keysButton)
     {
