@@ -73,7 +73,8 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     cableView.setAlwaysOnTop(true);
     addSubSection(&modulationLineView);
     modulationLineView.setAlwaysOnTop(false);
-    prep_list->addListener(this);
+    if (prep_list != nullptr)
+        prep_list->addListener(this);
 
     nodeFactory.Register(IDs::direct, DirectPreparation::create);
     nodeFactory.Register(IDs::blendronic, BlendronicPreparation::create);
@@ -1105,7 +1106,8 @@ void ConstructionSite::removeModule(PluginInstanceWrapper* wrapper){
 ConstructionSite::~ConstructionSite(void) {
     removeMouseListener(&cableView);
     removeChildComponent(&selectorLasso);
-    prep_list->removeListener(this);
+    if (prep_list != nullptr)
+        prep_list->removeListener(this);
 }
 
 void ConstructionSite::paintBackground(juce::Graphics &g) {

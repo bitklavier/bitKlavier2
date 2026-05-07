@@ -20,6 +20,10 @@ class EQFilterSection;
 class EQParameterView : public SynthSection, private juce::Timer
 {
 public:
+    ~EQParameterView() { stopTimer(); }
+
+    void stopAllTimers() override { stopTimer(); }
+
     EQParameterView (chowdsp::PluginState& pluginState, EQParams& params, juce::String name, OpenGlWrapper* open_gl, bool isPrepVersion = false) : SynthSection (""), eqparams_ (params), isPrepVersion_ (isPrepVersion)
     {
         // the name that will appear in the UI as the name of the section
