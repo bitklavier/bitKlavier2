@@ -23,7 +23,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     body_->setBounds(getLocalBounds());
     addOpenGlComponent(body_);
 
-    keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(keymap_, false, false, true);
+    keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(keymap_, false, false, true, true, false);
     keyboard_component_->setOctaveForMiddleC(4);
     addStateModulatedComponent(keyboard_component_.get());
     addAndMakeVisible(keyboard_component_.get());
@@ -148,20 +148,33 @@ void FooterSection::resized() {
 
     bounds.removeFromLeft(padding);
     auto postFX = bounds.removeFromLeft(buttonWidth);
-    const int btnH    = int (findValue(Skin::kTextButtonHeight) * 1.2f);
-    const int btnGap  = 2;
-    const int bottom  = postFX.getBottom();
+    // const int btnH    = int (findValue(Skin::kTextButtonHeight) * 1.2f);
+    // const int btnGap  = 2;
+    // const int bottom  = postFX.getBottom();
+    //
+    // eqButton->setBounds         (postFX.withY (bottom - btnH * 3 - btnGap * 2).withHeight (btnH));
+    // compressorButton->setBounds (postFX.withY (bottom - btnH * 2 - btnGap    ).withHeight (btnH));
+    // reverbButton->setBounds     (postFX.withY (bottom - btnH                  ).withHeight (btnH));
 
-    eqButton->setBounds         (postFX.withY (bottom - btnH * 3 - btnGap * 2).withHeight (btnH));
-    compressorButton->setBounds (postFX.withY (bottom - btnH * 2 - btnGap    ).withHeight (btnH));
-    reverbButton->setBounds     (postFX.withY (bottom - btnH                  ).withHeight (btnH));
+    postFX.reduce(0, 4);
+    int FXButtonHeight = (postFX.getHeight() - 4) / 3; // subtract 4 for spacing
+    reverbButton->setBounds(postFX.removeFromBottom(FXButtonHeight));
+    postFX.removeFromBottom(2);
+    compressorButton->setBounds(postFX.removeFromBottom(FXButtonHeight));
+    postFX.removeFromBottom(2);
+    eqButton->setBounds(postFX.removeFromBottom(FXButtonHeight));
 
     bounds.removeFromLeft (padding*2);
     bounds.removeFromRight (padding*2);
-    int meterHeight = 50 * (getHeight() / 90.0f); // Scale meter height with footer height
-    int y = bounds.getY() + (bounds.getHeight() - meterHeight) / 2 + 5;
+    bounds.reduce(0, padding);
     if (levelMeter)
-        levelMeter->setBounds(bounds.getX(), y, bounds.getWidth(), meterHeight);
+        levelMeter->setBounds(bounds);
+
+    // int meterHeight = 50 * (getHeight() / 90.0f); // Scale meter height with footer height
+    // int y = bounds.getY() + (bounds.getHeight() - meterHeight) / 2 + 5;
+    // if (levelMeter)
+    //     levelMeter->setBounds(bounds.getX(), y, bounds.getWidth(), meterHeight);
+    //
     SynthSection::resized();
 }
 

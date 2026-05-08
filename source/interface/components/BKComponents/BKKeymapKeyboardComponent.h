@@ -59,13 +59,14 @@ class BKKeymapKeyboardComponent : public StateModulatedComponent,
                                   public juce::Button::Listener,
                                   public juce::ComboBox::Listener {
 public:
-    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state, bool helperButtons = true, bool isMono = false, bool showOctaveLabels = false) :
+    BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state, bool helperButtons = true, bool isMono = false, bool showOctaveLabels = false, bool shorten_ = true) :
                   StateModulatedComponent(juce::ValueTree{}),
                   keyboard_state_(*keyboard_state),
                   keyboard_(BKOnOffKeyboardComponent::horizontalKeyboard, keyboard_state->keyStates){
 
         useHelperButtons = helperButtons;
         isMonophonic = isMono;
+        shorten = shorten_;
 
         minKey = 21; // 21
         maxKey = 108; // 108
@@ -250,6 +251,9 @@ public:
 
     // set true in cloned modulation views so resized() insets the keyboard inside the border
     bool showBorderInset = false;
+
+    // shorten the keys to make room for other buttons
+    bool shorten = true;
 
     int keyboardSize, minKey, maxKey;
     int lastKeyPressed = -1;

@@ -15,7 +15,8 @@ void BKKeymapKeyboardComponent::resized() {
 
     float heightUnit = area.getHeight() * 0.1;
     float widthUnit  = area.getWidth()  * 0.1;
-    float keyboardHeight = 8 * heightUnit;
+    float keyboardHeight = 10 * heightUnit;
+    if (shorten || useHelperButtons) keyboardHeight = 8 * heightUnit;
     juce::Rectangle<int> keymapRow = area.removeFromBottom(10 * heightUnit);
 
     float keyWidth = keymapRow.getWidth() / round((maxKey - minKey) * 7./12 + 1); //num white keys

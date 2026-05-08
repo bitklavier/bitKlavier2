@@ -40,7 +40,7 @@ KeymapParameterView::KeymapParameterView(
 
     auto &listeners = proc.getState().getParameterListeners();
 
-    keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params.keyboard_state, true, false, true, true);
+    keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params.keyboard_state, true, false, true, false, true);
     keyboard_component_->postUInotesToEngine_ = false;
     // keyboard_component_->setShowOctaveLabels (true);
     addStateModulatedComponent(keyboard_component_.get());

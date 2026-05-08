@@ -22,8 +22,8 @@ class OpenGLKeymapKeyboardComponent: public OpenGlAutoImageComponent<BKKeymapKey
                                      public MidiManager::LiveMidiListener,
                                      private juce::Timer {
 public:
-    OpenGLKeymapKeyboardComponent(KeymapKeyboardState& params, bool helperButtons = true, bool isMono = false, bool showOctaveLabels = false, bool showLiveState = true) :
-        OpenGlAutoImageComponent (&params, helperButtons, isMono, showOctaveLabels), _params(params)
+    OpenGLKeymapKeyboardComponent(KeymapKeyboardState& params, bool helperButtons = true, bool isMono = false, bool showOctaveLabels = false, bool showLiveState = true, bool shorten = true) :
+        OpenGlAutoImageComponent (&params, helperButtons, isMono, showOctaveLabels, shorten), _params(params)
     {
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
