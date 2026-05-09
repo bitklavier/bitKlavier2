@@ -390,7 +390,7 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
         if (cluster->getShouldPlay())
         {
             // if this is the first beat and we are not skipping the first beat, we need to set numSamplesBeat based on the LAST beatLengthMultiplier
-            if (!*state.params.skipFirst && cluster->beatCounter == 0)
+            if (!*state.params.skipFirst && cluster->beatCounter == 0 && state.params.beatLengthMultipliers.sliderVals_size > 1)
             {
                 numSamplesBeat = beatThresholdSamples * state.params.beatLengthMultipliers.sliderVals[state.params.beatLengthMultipliers.sliderVals_size - 1].load();
             }
