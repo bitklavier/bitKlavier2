@@ -18,11 +18,23 @@ KeymapProcessor::KeymapProcessor (SynthBase& parent, const juce::ValueTree& vt, 
                                                                                      keymapBusLayout()),
                                                                                  _midi (std::make_unique<MidiManager> (&keyboard_state, parent.manager, vt))
 {
-    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
+    auto uuid = v.getProperty (IDs::uuid).toString().toStdString();
 
+    state.params.velocityMinMax.stateChanges.defaultState = v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
     parent.getStateBank().addParam (std::make_pair<std::string,
-        bitklavier::ParameterChangeBuffer*> (v.getProperty (IDs::uuid).toString().toStdString() + "_" + "velocityminmax",
+        bitklavier::ParameterChangeBuffer*> (uuid + "_" + "velocityminmax",
         &(state.params.velocityMinMax.stateChanges)));
+
+    state.params.keymapStateChanges.defaultState = v.getOrCreateChildWithName ("KEYMAP_KM_DEFAULT", nullptr);
+    if (! state.params.keymapStateChanges.defaultState.hasProperty (IDs::keymapBits)
+        || state.params.keymapStateChanges.defaultState.getProperty (IDs::keymapBits).isVoid())
+    {
+        state.params.keymapStateChanges.defaultState.setProperty (
+            IDs::keymapBits, getOnKeyString (state.params.keyboard_state.keyStates.load()), nullptr);
+    }
+    parent.getStateBank().addParam (std::make_pair<std::string,
+        bitklavier::ParameterChangeBuffer*> (uuid + "_" + "keyboard",
+        &(state.params.keymapStateChanges)));
 
     // Ensure any UI components already registered with the SoundEngine as live MIDI listeners
     // are attached to this processor's MidiManager as soon as it is constructed.
@@ -159,6 +171,20 @@ bool KeymapProcessor::checkVelocityRange (float velocity)
 void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     state.params.velocityMinMax.processStateChanges();
+
+    {
+        juce::SpinLock::ScopedTryLockType lock { state.params.keymapStateChanges.changeLock };
+        if (lock.isLocked())
+        {
+            for (auto& [idx, vt] : state.params.keymapStateChanges.changeState)
+            {
+                auto prop = vt.getProperty (IDs::keymapBits);
+                if (! prop.isVoid())
+                    state.params.keyboard_state.keyStates.store (bitklavier::utils::stringToBitset (prop.toString()));
+            }
+            state.params.keymapStateChanges.changeState.clear();
+        }
+    }
 
     // // print them out for now
     // for (auto mi : midiMessages)

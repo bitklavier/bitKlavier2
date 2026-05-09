@@ -245,6 +245,7 @@ private:
 
     KeymapParams& params;
     KeymapProcessor &proc;
+    std::bitset<128> lastDisplayedKeyStates_;
 
     // prep title, vertical, left side
     std::shared_ptr<PlainTextComponent> prepTitle;

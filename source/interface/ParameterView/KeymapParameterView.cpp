@@ -11,7 +11,7 @@ KeymapParameterView::KeymapParameterView(
     KeymapProcessor &_proc,
     KeymapParams &kparams,
     juce::String name,
-    OpenGlWrapper *open_gl) : proc(_proc), params(kparams), SynthSection("") {
+    OpenGlWrapper *open_gl) : proc(_proc), params(kparams), lastDisplayedKeyStates_(kparams.keyboard_state.keyStates.load()), SynthSection("") {
     setName("keymap");
     setLookAndFeel(DefaultLookAndFeel::instance());
     setComponentID(name);
@@ -43,7 +43,9 @@ KeymapParameterView::KeymapParameterView(
     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(params.keyboard_state, true, false, true, false, true);
     keyboard_component_->postUInotesToEngine_ = false;
     // keyboard_component_->setShowOctaveLabels (true);
+    keyboard_component_->setComponentID("keyboard");
     addStateModulatedComponent(keyboard_component_.get());
+    keyboard_component_->defaultState = params.keymapStateChanges.defaultState;
     addAndMakeVisible(keyboard_component_.get());
 
     velocityMinMaxSlider = std::make_unique<OpenGL_VelocityMinMaxSlider>(&params.velocityMinMax, listeners, _proc.getState());
@@ -300,6 +302,13 @@ void KeymapParameterView::resized() {
 void KeymapParameterView::timerCallback(void) {
     velocityMinMaxSlider->setDisplayValue(params.velocityMinMax.lastVelocityParam);
     velocityMinMaxSlider->redoImage();
+
+    auto currentKeyStates = params.keyboard_state.keyStates.load();
+    if (currentKeyStates != lastDisplayedKeyStates_)
+    {
+        lastDisplayedKeyStates_ = currentKeyStates;
+        keyboard_component_->redoImage();
+    }
 
     auto interface = findParentComponentOfClass<SynthGuiInterface>();
     if (interface != NULL)

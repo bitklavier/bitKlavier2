@@ -98,6 +98,7 @@ struct KeymapParams : chowdsp::ParamHolder
     };
 
     KeymapKeyboardState keyboard_state;
+    bitklavier::ParameterChangeBuffer keymapStateChanges;
     VelocityMinMaxParams velocityMinMax;
 
     std::atomic<float> invelocity;
