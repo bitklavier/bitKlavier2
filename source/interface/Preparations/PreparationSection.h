@@ -28,7 +28,8 @@ class SynthGuiInterface;
 
 class PreparationSection
         : public SynthSection, public BKItem::Listener, public BKPort::Listener, public juce::ChangeListener,
-          public tracktion::engine::ValueTreeObjectList<BKPort>, public juce::DragAndDropTarget {
+          public tracktion::engine::ValueTreeObjectList<BKPort>, public juce::DragAndDropTarget,
+          private juce::Timer {
 public:
     static constexpr float kItemPaddingY = 2.0f;
     static constexpr float kItemPaddingX = 2.0f;
@@ -190,6 +191,8 @@ public:
     virtual std::unique_ptr<SynthSection> getPrepPopup() {}
 
     void setNodeInfo();
+    void parentHierarchyChanged() override;
+    void timerCallback() override;
     juce::AudioProcessor* getProcessor() const;
     juce::CachedValue<juce::Uuid> uuid;
 
@@ -216,6 +219,7 @@ protected:
 private:
     juce::Point<int> pointBeforDrag; // e.getEventRelativeTo (componentToDrag).getMouseDownPosition();
     bool isSelected = true;
+    bool timerStarted_ = false;
 
 };
 

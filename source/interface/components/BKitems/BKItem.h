@@ -160,6 +160,9 @@ public:
 
     }
 
+    void setActive (bool active) { active_ = active; }
+    bool isActive() const { return active_; }
+
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
     {
         // Ascertains the current window size
@@ -208,10 +211,17 @@ public:
 
         g.fillPath(layer2);
         g.fillPath(layer3);
+        if (active_)
+        {
+            g.setColour(juce::Colours::yellow);
+            g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel * 2.5f, juce::PathStrokeType::mitered));
+        }
         g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_,juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered) );
     }
 
+private:
+    bool active_ = false;
 };
 
 class DirectItem : public BKItem

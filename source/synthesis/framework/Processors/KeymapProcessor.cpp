@@ -196,6 +196,13 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     //     DBG (printMidi (message, "") +  " velocity = " + juce::String(mi.getMessage().getVelocity()));
     // }
 
+    if (resetTracking_.exchange (false, std::memory_order_relaxed))
+    {
+        trackedNoteOns_.reset();
+        activeVoiceCount_ = 0;
+        isActive_.store (false, std::memory_order_relaxed);
+    }
+
     midiMessages.clear();
     int num_samples = buffer.getNumSamples();
 
@@ -205,6 +212,21 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
 
     for (auto message : in_midi_messages)
     {
+        // Clear highlight tracking on noteOff regardless of current keymap state
+        if (message.getMessage().isNoteOff())
+        {
+            const int note = message.getMessage().getNoteNumber();
+            if (trackedNoteOns_.test (note))
+            {
+                trackedNoteOns_.reset (note);
+                if (--activeVoiceCount_ <= 0)
+                {
+                    activeVoiceCount_ = 0;
+                    isActive_.store (false, std::memory_order_relaxed);
+                }
+            }
+        }
+
         if (state.params.keyboard_state.keyStates.load().test (message.getMessage().getNoteNumber()))
         {
             if (message.getMessage().isNoteOn())
@@ -212,6 +234,15 @@ void KeymapProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
                 state.params.velocityMinMax.lastVelocityParam = message.getMessage().getVelocity();
                 if (!checkVelocityRange (message.getMessage().getVelocity()))
                     continue;
+
+                // Track this passing noteOn for ConstructionSite highlight
+                const int note = message.getMessage().getNoteNumber();
+                if (!trackedNoteOns_.test (note))
+                {
+                    trackedNoteOns_.set (note);
+                    if (++activeVoiceCount_ == 1)
+                        isActive_.store (true, std::memory_order_relaxed);
+                }
             }
 
             float oldvelocity = message.getMessage().getVelocity() / 127.0;
@@ -255,6 +286,7 @@ void KeymapProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
 void KeymapProcessor::allNotesOff()
 {
     _midi->allNotesOff();
+    resetTracking_.store (true, std::memory_order_relaxed);
 }
 
 void KeymapProcessor::postExternalMidi (const juce::MidiMessage& msg)

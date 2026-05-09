@@ -153,8 +153,16 @@ public:
     float applyVelocityCurve(float velocity);
     bool checkVelocityRange(float velocity);
 
+    bool isActive() const { return isActive_.load (std::memory_order_relaxed); }
+
 private:
     juce::MidiKeyboardState keyboard_state;
+
+    // Active-note tracking for ConstructionSite highlight (audio thread only except isActive_)
+    std::bitset<128> trackedNoteOns_;
+    int activeVoiceCount_ = 0;
+    std::atomic<bool> isActive_ { false };
+    std::atomic<bool> resetTracking_ { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (KeymapProcessor)
 };

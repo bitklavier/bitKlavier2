@@ -656,3 +656,33 @@ void PreparationSection::valueTreePropertyChanged(juce::ValueTree& v, const juce
         }
     }
 }
+
+void PreparationSection::parentHierarchyChanged()
+{
+    if (!timerStarted_ && getParentComponent() != nullptr)
+    {
+        if (dynamic_cast<KeymapProcessor*> (getProcessor()) != nullptr)
+        {
+            startTimer (33);
+            timerStarted_ = true;
+        }
+    }
+}
+
+void PreparationSection::timerCallback()
+{
+    auto* kp = dynamic_cast<KeymapProcessor*> (getProcessor());
+    if (kp == nullptr)
+        return;
+
+    auto* keymapItem = dynamic_cast<KeymapItem*> (item.get());
+    if (keymapItem == nullptr)
+        return;
+
+    const bool active = kp->isActive();
+    if (keymapItem->isActive() != active)
+    {
+        keymapItem->setActive (active);
+        keymapItem->redoImage();
+    }
+}
