@@ -130,15 +130,6 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     gallerySelector->setTriggeredOnMouseDown(true);
     gallerySelector->setShape(juce::Path(), true, true, true);
 
-    VSTSelectText = std::make_shared<PlainTextComponent>("VST", "add");
-    addOpenGlComponent(VSTSelectText);
-    VSTSelector = std::make_unique<juce::ShapeButton>("VSTSelector", juce::Colour(0xff666666),
-                                                        juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
-    addAndMakeVisible(VSTSelector.get());
-    VSTSelector->addListener(this);
-    VSTSelector->setTriggeredOnMouseDown(true);
-    VSTSelector->setShape(juce::Path(), true, true, true);
-
     globalSoundset_label = std::make_shared<PlainTextComponent>("globalsamples", "Global Soundset");
     addOpenGlComponent(globalSoundset_label);
     globalSoundset_label->setTextSize (12.0f);
@@ -169,12 +160,6 @@ HeaderSection::HeaderSection(const juce::ValueTree &gal) : SynthSection("header_
     preparationSelect_label->setTextSize (12.0f);
     preparationSelect_label->setFontType (PlainTextComponent::kTitle);
     preparationSelect_label->setJustification(juce::Justification::centred);
-
-    VSTSelect_label = std::make_shared<PlainTextComponent>("addvst", "VST");
-    addOpenGlComponent(VSTSelect_label);
-    VSTSelect_label->setTextSize (12.0f);
-    VSTSelect_label->setFontType (PlainTextComponent::kTitle);
-    VSTSelect_label->setJustification(juce::Justification::centred);
 
     setSkinOverride(Skin::kHeader);
 }
@@ -259,7 +244,6 @@ void HeaderSection::resized() {
     fb.items.add(juce::FlexItem(*gallerySelector).withFlex(1.0f));
     fb.items.add(juce::FlexItem(*pianoSelector).withFlex(1.0f));
     fb.items.add(juce::FlexItem(*preparationsSelector).withFlex(1.0f));
-    fb.items.add(juce::FlexItem(*VSTSelector).withFlex(1.0f));
     fb.items.add(juce::FlexItem(*sampleSelector).withFlex(1.0f));
     fb.items.add(juce::FlexItem(*soundfontPresetSelector).withFlex(1.0f));
     fb.performLayout(headerArea2);
@@ -272,10 +256,10 @@ void HeaderSection::resized() {
     // doing this one with a loop, for fun...
     juce::Component* labels[] = {
         galleries_label.get(), currentPiano_label.get(), preparationSelect_label.get(),
-        VSTSelect_label.get(), globalSoundset_label.get(), soundfontPreset_label.get()
+        globalSoundset_label.get(), soundfontPreset_label.get()
     };
 
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 5; ++i)
     {
         fbl.items.add(juce::FlexItem(*labels[i]).withFlex(1.0f));
     }
@@ -288,8 +272,6 @@ void HeaderSection::resized() {
     pianoSelectText->setTextSize(label_text_height);
     preparationSelectText->setBounds(preparationsSelector->getBounds());
     preparationSelectText->setTextSize(label_text_height);
-    VSTSelectText->setBounds(VSTSelector->getBounds());
-    VSTSelectText->setTextSize(label_text_height);
     sampleSelectText->setBounds(sampleSelector->getBounds());
     sampleSelectText->setTextSize(label_text_height);
     soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
@@ -961,7 +943,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         options.addItem(specialItemBase + 4, ("Paste (" + juce::String::charToString(0x2318) + "V)").toStdString());
         options.addItem(disabledItem);
 
-        PopupItems prepOptions = parent->getPreparationPopupItems();
+        PopupItems prepOptions = parent->getPluginPopupItems();
 
         auto appendShortcut = [] (int prepId, const std::string& baseName) -> std::string {
             using PT = bitklavier::BKPreparationType;
@@ -990,7 +972,7 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
 
         for (const auto& item : prepOptions.items)
         {
-            if (!item.enabled || item.id == -1 || item.name == "separator")
+            if (!item.enabled || item.id == -1 || item.name == "separator" || !item.items.empty())
             {
                 options.addItem(item);
                 continue;
@@ -1021,15 +1003,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
                 parent->gui_->main_->constructionSite_->addItem(selection, true);
             }
         }, {}, 1.25f);
-    } else if (clicked_button == VSTSelector.get()) {
-        SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-        PopupItems options = parent->getVSTPopupItems();
-        DBG("HeaderSection::buttonClicked VSTSelector clicked. Options size: " << options.size());
-
-        juce::Point<int> position(VSTSelector->getX(), VSTSelector->getBottom());
-        showPopupSelector(this, position, options, [=](int selection, int a) {
-            parent->gui_->main_->constructionSite_->addItem(selection, true);
-        });
     } else if (clicked_button == loadButton.get()) {
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
         parent->openLoadDialog();
@@ -1143,7 +1116,8 @@ void HeaderSection::notifyFresh() {
         //soundfontPreset_label->setVisible (true);
     } else {
         soundfontPresetSelector->setVisible(false);
-        soundfontPresetSelectText->setVisible(false);
+        soundfontPresetSelectText->setText("---");
+        soundfontPresetSelectText->setVisible(true);
         //soundfontPreset_label->setVisible (false);
     }
     static juce::var nullVar;

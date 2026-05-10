@@ -1360,7 +1360,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     auto cancel = [=]() {
 
     };
-        showPopupSelector(this, e.getPosition(), _parent->getPreparationPopupItems(),callback,cancel);
+        showPopupSelector(this, e.getPosition(), _parent->getPluginPopupItems(),callback,cancel);
     }
     // Stop trying to make a connection on blank space click
     connect = false;
