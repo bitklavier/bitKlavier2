@@ -601,7 +601,7 @@ static bool containsDuplicateNames (const juce::Array<juce::PluginDescription>& 
     return false;
 }
 
-static constexpr int menuIDBase = bitklavier::BKPreparationType::PreparationTypeVST;
+static constexpr int menuIDBase = bitklavier::BKPreparationType::BKPreparationTypeNil;
 static void addToMenu (const juce::KnownPluginList::PluginTree& tree,
     PopupItems& m,
     const juce::Array<juce::PluginDescription>& allPlugins,

@@ -1369,7 +1369,7 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
 void ConstructionSite::addItem (int selection, bool center)
 {
     float prepScale = 0.6;
-    if (selection != bitklavier::BKPreparationType::PreparationTypeVST) {
+    if (selection < bitklavier::BKPreparationType::BKPreparationTypeNil) {
         //const auto idx = static_cast<size_t>(selection - 1);
         const auto idx = static_cast<size_t>(selection);
         jassert (idx < prepSizes.size());
@@ -1443,7 +1443,7 @@ void ConstructionSite::addItem (int selection, bool center)
                nullptr);
         }
 
-        auto desc = _parent->getSynth()->user_prefs->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::PreparationTypeVST)];
+        auto desc = _parent->getSynth()->user_prefs->userPreferences->pluginDescriptionsAndPreference[selection - static_cast<int>(bitklavier::BKPreparationType::BKPreparationTypeNil)];
         juce::ValueTree plugin = juce::ValueTree::fromXml(*desc.pluginDescription.createXml());
         t.addChild(plugin,-1, &undo);
         prep_list->addPlugin(desc.pluginDescription,t);
