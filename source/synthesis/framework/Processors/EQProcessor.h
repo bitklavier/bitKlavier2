@@ -142,6 +142,11 @@ struct EQParams : chowdsp::ParamHolder
     // Used for BusEQ which has no continuous modulations.
     std::atomic<bool> needsCoeffUpdate { true };
 
+    // Pre-allocated coefficient objects, wired into the filter chains by prepareCoefficients().
+    // updateCoefficients() writes into these in-place — no heap activity on the audio thread.
+    juce::dsp::IIR::Coefficients<float>::Ptr peak1Coeffs, peak2Coeffs, peak3Coeffs;
+    juce::dsp::IIR::Coefficients<float>::Ptr loCutCoeffs[4], hiCutCoeffs[4];
+
     // Computes magnitude entirely from parameter values — safe to call from any thread
     // without touching the audio-thread-owned filter chain objects.
     double magForFreq(double freq) {
@@ -188,128 +193,162 @@ struct EQParams : chowdsp::ParamHolder
         return mag;
     }
 
+    // Writes peak-filter biquad coefficients in-place. Matches JUCE's makePeakFilter formula.
+    static void fillPeakCoeffs (float* c, float freq, float Q, float gainFactor, double sr) noexcept
+    {
+        double A       = std::sqrt ((double) gainFactor);
+        double w0      = juce::MathConstants<double>::twoPi * freq / sr;
+        double alpha   = std::sin (w0) / (2.0 * Q);
+        double cos_w0  = std::cos (w0);
+        double aTimesA = alpha * A;
+        double aOverA  = alpha / A;
+        double a0      = 1.0 + aOverA;
+        c[0] = (float) ((1.0 + aTimesA) / a0);
+        c[1] = (float) ((-2.0 * cos_w0) / a0);
+        c[2] = (float) ((1.0 - aTimesA) / a0);
+        c[3] = (float) ((-2.0 * cos_w0) / a0);   // a1/a0
+        c[4] = (float) ((1.0 - aOverA)  / a0);   // a2/a0
+    }
+
+    // Writes one biquad stage of a Butterworth highpass cascade in-place.
+    // Uses JUCE's pole formula: B = -2*cos(π*(2*i + N - 1)/(2*N)), i = stageIndex+1.
+    static void fillHighpassButterworthStage (float* c, float freq, double sr, int totalOrder, int stageIndex) noexcept
+    {
+        double B      = -2.0 * std::cos (juce::MathConstants<double>::pi
+                                         * (2.0 * (stageIndex + 1) + totalOrder - 1)
+                                         / (2.0 * totalOrder));
+        double omega  = std::tan (juce::MathConstants<double>::pi * freq / sr);
+        double omega2 = omega * omega;
+        double a0     = 1.0 + B * omega + omega2;
+        double a1     = 2.0 * (omega2 - 1.0);
+        double a2     = 1.0 - B * omega + omega2;
+        c[0] = (float) ( 1.0 / a0);
+        c[1] = (float) (-2.0 / a0);
+        c[2] = (float) ( 1.0 / a0);
+        c[3] = (float) (a1   / a0);
+        c[4] = (float) (a2   / a0);
+    }
+
+    // Writes one biquad stage of a Butterworth lowpass cascade in-place.
+    static void fillLowpassButterworthStage (float* c, float freq, double sr, int totalOrder, int stageIndex) noexcept
+    {
+        double B      = -2.0 * std::cos (juce::MathConstants<double>::pi
+                                         * (2.0 * (stageIndex + 1) + totalOrder - 1)
+                                         / (2.0 * totalOrder));
+        double omega  = std::tan (juce::MathConstants<double>::pi * freq / sr);
+        double omega2 = omega * omega;
+        double a0     = 1.0 + B * omega + omega2;
+        double a1     = 2.0 * (omega2 - 1.0);
+        double a2     = 1.0 - B * omega + omega2;
+        c[0] = (float) (omega2        / a0);
+        c[1] = (float) (2.0 * omega2  / a0);
+        c[2] = (float) (omega2        / a0);
+        c[3] = (float) (a1            / a0);
+        c[4] = (float) (a2            / a0);
+    }
+
+    // Allocates coefficient objects and wires them into the filter chains.
+    // Must be called from prepareToPlay (prepare thread) before audio starts.
+    // After this, updateCoefficients() writes values in-place without any heap activity.
+    void prepareCoefficients (double sr)
+    {
+        sampleRate = sr;
+        auto identity = [] { return juce::dsp::IIR::Coefficients<float>::Ptr (
+            new juce::dsp::IIR::Coefficients<float> (1, 0, 0, 1, 0, 0)); };
+
+        peak1Coeffs = identity();
+        peak2Coeffs = identity();
+        peak3Coeffs = identity();
+        leftChain.get<ChainPositions::Peak1>().coefficients  = peak1Coeffs;
+        rightChain.get<ChainPositions::Peak1>().coefficients = peak1Coeffs;
+        leftChain.get<ChainPositions::Peak2>().coefficients  = peak2Coeffs;
+        rightChain.get<ChainPositions::Peak2>().coefficients = peak2Coeffs;
+        leftChain.get<ChainPositions::Peak3>().coefficients  = peak3Coeffs;
+        rightChain.get<ChainPositions::Peak3>().coefficients = peak3Coeffs;
+
+        for (int i = 0; i < 4; ++i) loCutCoeffs[i] = identity();
+        leftChain.get<ChainPositions::LowCut>().get<0>().coefficients  = loCutCoeffs[0];
+        leftChain.get<ChainPositions::LowCut>().get<1>().coefficients  = loCutCoeffs[1];
+        leftChain.get<ChainPositions::LowCut>().get<2>().coefficients  = loCutCoeffs[2];
+        leftChain.get<ChainPositions::LowCut>().get<3>().coefficients  = loCutCoeffs[3];
+        rightChain.get<ChainPositions::LowCut>().get<0>().coefficients = loCutCoeffs[0];
+        rightChain.get<ChainPositions::LowCut>().get<1>().coefficients = loCutCoeffs[1];
+        rightChain.get<ChainPositions::LowCut>().get<2>().coefficients = loCutCoeffs[2];
+        rightChain.get<ChainPositions::LowCut>().get<3>().coefficients = loCutCoeffs[3];
+
+        for (int i = 0; i < 4; ++i) hiCutCoeffs[i] = identity();
+        leftChain.get<ChainPositions::HighCut>().get<0>().coefficients  = hiCutCoeffs[0];
+        leftChain.get<ChainPositions::HighCut>().get<1>().coefficients  = hiCutCoeffs[1];
+        leftChain.get<ChainPositions::HighCut>().get<2>().coefficients  = hiCutCoeffs[2];
+        leftChain.get<ChainPositions::HighCut>().get<3>().coefficients  = hiCutCoeffs[3];
+        rightChain.get<ChainPositions::HighCut>().get<0>().coefficients = hiCutCoeffs[0];
+        rightChain.get<ChainPositions::HighCut>().get<1>().coefficients = hiCutCoeffs[1];
+        rightChain.get<ChainPositions::HighCut>().get<2>().coefficients = hiCutCoeffs[2];
+        rightChain.get<ChainPositions::HighCut>().get<3>().coefficients = hiCutCoeffs[3];
+    }
+
+    // Writes current parameter values into the pre-allocated coefficient arrays.
+    // No heap allocation — safe to call every audio block.
     void updateCoefficients()
     {
-        // state.params.sampleRate = getSampleRate();
-        auto peak1Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
+        if (peak1Coeffs == nullptr) return; // not yet prepared
+
+        fillPeakCoeffs (peak1Coeffs->getRawCoefficients(),
             peak1FilterParams.filterFreq->getCurrentValue(),
             peak1FilterParams.filterQ->getCurrentValue(),
-            juce::Decibels::decibelsToGain(peak1FilterParams.filterGain->getCurrentValue()));
-        auto peak2Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
+            juce::Decibels::decibelsToGain (peak1FilterParams.filterGain->getCurrentValue()),
+            sampleRate);
+        fillPeakCoeffs (peak2Coeffs->getRawCoefficients(),
             peak2FilterParams.filterFreq->getCurrentValue(),
             peak2FilterParams.filterQ->getCurrentValue(),
-            juce::Decibels::decibelsToGain(peak2FilterParams.filterGain->getCurrentValue()));
-        auto peak3Coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(44100,
+            juce::Decibels::decibelsToGain (peak2FilterParams.filterGain->getCurrentValue()),
+            sampleRate);
+        fillPeakCoeffs (peak3Coeffs->getRawCoefficients(),
             peak3FilterParams.filterFreq->getCurrentValue(),
             peak3FilterParams.filterQ->getCurrentValue(),
-            juce::Decibels::decibelsToGain(peak3FilterParams.filterGain->getCurrentValue()));
+            juce::Decibels::decibelsToGain (peak3FilterParams.filterGain->getCurrentValue()),
+            sampleRate);
 
-        leftChain.get<ChainPositions::Peak1>().coefficients = peak1Coefficients;
-        leftChain.get<ChainPositions::Peak2>().coefficients = peak2Coefficients;
-        leftChain.get<ChainPositions::Peak3>().coefficients = peak3Coefficients;
-        rightChain.get<ChainPositions::Peak1>().coefficients = peak1Coefficients;
-        rightChain.get<ChainPositions::Peak2>().coefficients = peak2Coefficients;
-        rightChain.get<ChainPositions::Peak3>().coefficients = peak3Coefficients;
+        leftChain.setBypassed<ChainPositions::Peak1>  (!peak1FilterParams.filterActive->get());
+        leftChain.setBypassed<ChainPositions::Peak2>  (!peak2FilterParams.filterActive->get());
+        leftChain.setBypassed<ChainPositions::Peak3>  (!peak3FilterParams.filterActive->get());
+        rightChain.setBypassed<ChainPositions::Peak1> (!peak1FilterParams.filterActive->get());
+        rightChain.setBypassed<ChainPositions::Peak2> (!peak2FilterParams.filterActive->get());
+        rightChain.setBypassed<ChainPositions::Peak3> (!peak3FilterParams.filterActive->get());
 
-        leftChain.setBypassed<ChainPositions::Peak1>(!peak1FilterParams.filterActive->get());
-        leftChain.setBypassed<ChainPositions::Peak2>(!peak2FilterParams.filterActive->get());
-        leftChain.setBypassed<ChainPositions::Peak3>(!peak3FilterParams.filterActive->get());
-        rightChain.setBypassed<ChainPositions::Peak1>(!peak1FilterParams.filterActive->get());
-        rightChain.setBypassed<ChainPositions::Peak2>(!peak2FilterParams.filterActive->get());
-        rightChain.setBypassed<ChainPositions::Peak3>(!peak3FilterParams.filterActive->get());
+        int loCutOrder  = (int) loCutFilterParams.filterSlope->getCurrentValue() / 6;
+        bool loCutOn    = loCutFilterParams.filterActive->get();
+        float loCutFreq = loCutFilterParams.filterFreq->getCurrentValue();
+        for (int i = 0; i < 4; ++i)
+            fillHighpassButterworthStage (loCutCoeffs[i]->getRawCoefficients(), loCutFreq, sampleRate, loCutOrder, i);
 
-        // calculate and set low cut filter coefficients
-        int lowCutSlope = loCutFilterParams.filterSlope->getCurrentValue();
-        auto lowCutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(
-            loCutFilterParams.filterFreq->getCurrentValue(),
-            44100,
-            lowCutSlope / 6);
+        auto& leftLo  = leftChain.get<ChainPositions::LowCut>();
+        auto& rightLo = rightChain.get<ChainPositions::LowCut>();
+        leftLo.setBypassed<Slope::S12>  (!loCutOn || loCutOrder < 2);
+        leftLo.setBypassed<Slope::S24>  (!loCutOn || loCutOrder < 4);
+        leftLo.setBypassed<Slope::S36>  (!loCutOn || loCutOrder < 6);
+        leftLo.setBypassed<Slope::S48>  (!loCutOn || loCutOrder < 8);
+        rightLo.setBypassed<Slope::S12> (!loCutOn || loCutOrder < 2);
+        rightLo.setBypassed<Slope::S24> (!loCutOn || loCutOrder < 4);
+        rightLo.setBypassed<Slope::S36> (!loCutOn || loCutOrder < 6);
+        rightLo.setBypassed<Slope::S48> (!loCutOn || loCutOrder < 8);
 
-        auto& leftLowCutChain = leftChain.get<ChainPositions::LowCut>();
-        leftLowCutChain.setBypassed<Slope::S12>(true);
-        leftLowCutChain.setBypassed<Slope::S24>(true);
-        leftLowCutChain.setBypassed<Slope::S36>(true);
-        leftLowCutChain.setBypassed<Slope::S48>(true);
-        auto& rightLowCutChain = rightChain.get<ChainPositions::LowCut>();
-        rightLowCutChain.setBypassed<Slope::S12>(true);
-        rightLowCutChain.setBypassed<Slope::S24>(true);
-        rightLowCutChain.setBypassed<Slope::S36>(true);
-        rightLowCutChain.setBypassed<Slope::S48>(true);
+        int hiCutOrder  = (int) hiCutFilterParams.filterSlope->getCurrentValue() / 6;
+        bool hiCutOn    = hiCutFilterParams.filterActive->get();
+        float hiCutFreq = hiCutFilterParams.filterFreq->getCurrentValue();
+        for (int i = 0; i < 4; ++i)
+            fillLowpassButterworthStage (hiCutCoeffs[i]->getRawCoefficients(), hiCutFreq, sampleRate, hiCutOrder, i);
 
-        // breaks omitted on purpose to facilitate fall through
-        switch(lowCutSlope) {
-            case 48: {
-                leftLowCutChain.get<Slope::S48>().coefficients = lowCutCoefficients[Slope::S48];
-                leftLowCutChain.setBypassed<Slope::S48>(!loCutFilterParams.filterActive->get());
-                rightLowCutChain.get<Slope::S48>().coefficients = lowCutCoefficients[Slope::S48];
-                rightLowCutChain.setBypassed<Slope::S48>(!loCutFilterParams.filterActive->get());
-            }
-            case 36: {
-                leftLowCutChain.get<Slope::S36>().coefficients = lowCutCoefficients[Slope::S36];
-                leftLowCutChain.setBypassed<Slope::S36>(!loCutFilterParams.filterActive->get());
-                rightLowCutChain.get<Slope::S36>().coefficients = lowCutCoefficients[Slope::S36];
-                rightLowCutChain.setBypassed<Slope::S36>(!loCutFilterParams.filterActive->get());
-            }
-            case 24: {
-                leftLowCutChain.get<Slope::S24>().coefficients = lowCutCoefficients[Slope::S24];
-                leftLowCutChain.setBypassed<Slope::S24>(!loCutFilterParams.filterActive->get());
-                rightLowCutChain.get<Slope::S24>().coefficients = lowCutCoefficients[Slope::S24];
-                rightLowCutChain.setBypassed<Slope::S24>(!loCutFilterParams.filterActive->get());
-            }
-            case 12: {
-                leftLowCutChain.get<Slope::S12>().coefficients = lowCutCoefficients[Slope::S12];
-                leftLowCutChain.setBypassed<Slope::S12>(!loCutFilterParams.filterActive->get());
-                rightLowCutChain.get<Slope::S12>().coefficients = lowCutCoefficients[Slope::S12];
-                rightLowCutChain.setBypassed<Slope::S12>(!loCutFilterParams.filterActive->get());
-            }
-        }
-
-        // calculate and set high cut filter coefficients
-        int highCutSlope = hiCutFilterParams.filterSlope->getCurrentValue();
-        auto highCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(
-            hiCutFilterParams.filterFreq->getCurrentValue(),
-            44100,
-            highCutSlope / 6);
-
-        auto& leftHighCutChain = leftChain.get<ChainPositions::HighCut>();
-        leftHighCutChain.setBypassed<Slope::S12>(true);
-        leftHighCutChain.setBypassed<Slope::S24>(true);
-        leftHighCutChain.setBypassed<Slope::S36>(true);
-        leftHighCutChain.setBypassed<Slope::S48>(true);
-        auto& rightHighCutChain = rightChain.get<ChainPositions::HighCut>();
-        rightHighCutChain.setBypassed<Slope::S12>(true);
-        rightHighCutChain.setBypassed<Slope::S24>(true);
-        rightHighCutChain.setBypassed<Slope::S36>(true);
-        rightHighCutChain.setBypassed<Slope::S48>(true);
-
-        // breaks omitted on purpose to facilitate fall through
-        switch(highCutSlope) {
-            case 48: {
-                leftHighCutChain.get<Slope::S48>().coefficients = highCutCoefficients[Slope::S48];
-                leftHighCutChain.setBypassed<Slope::S48>(!hiCutFilterParams.filterActive->get());
-                rightHighCutChain.get<Slope::S48>().coefficients = highCutCoefficients[Slope::S48];
-                rightHighCutChain.setBypassed<Slope::S48>(!hiCutFilterParams.filterActive->get());
-            }
-            case 36: {
-                leftHighCutChain.get<Slope::S36>().coefficients = highCutCoefficients[Slope::S36];
-                leftHighCutChain.setBypassed<Slope::S36>(!hiCutFilterParams.filterActive->get());
-                rightHighCutChain.get<Slope::S36>().coefficients = highCutCoefficients[Slope::S36];
-                rightHighCutChain.setBypassed<Slope::S36>(!hiCutFilterParams.filterActive->get());
-            }
-            case 24: {
-                leftHighCutChain.get<Slope::S24>().coefficients = highCutCoefficients[Slope::S24];
-                leftHighCutChain.setBypassed<Slope::S24>(!hiCutFilterParams.filterActive->get());
-                rightHighCutChain.get<Slope::S24>().coefficients = highCutCoefficients[Slope::S24];
-                rightHighCutChain.setBypassed<Slope::S24>(!hiCutFilterParams.filterActive->get());
-            }
-            case 12: {
-                leftHighCutChain.get<Slope::S12>().coefficients = highCutCoefficients[Slope::S12];
-                leftHighCutChain.setBypassed<Slope::S12>(!hiCutFilterParams.filterActive->get());
-                rightHighCutChain.get<Slope::S12>().coefficients = highCutCoefficients[Slope::S12];
-                rightHighCutChain.setBypassed<Slope::S12>(!hiCutFilterParams.filterActive->get());
-            }
-        }
-        // DBG(leftHighCutChain.get<Slope::S12>().coefficients->getMagnitudeForFrequency(1000, 48000));
+        auto& leftHi  = leftChain.get<ChainPositions::HighCut>();
+        auto& rightHi = rightChain.get<ChainPositions::HighCut>();
+        leftHi.setBypassed<Slope::S12>  (!hiCutOn || hiCutOrder < 2);
+        leftHi.setBypassed<Slope::S24>  (!hiCutOn || hiCutOrder < 4);
+        leftHi.setBypassed<Slope::S36>  (!hiCutOn || hiCutOrder < 6);
+        leftHi.setBypassed<Slope::S48>  (!hiCutOn || hiCutOrder < 8);
+        rightHi.setBypassed<Slope::S12> (!hiCutOn || hiCutOrder < 2);
+        rightHi.setBypassed<Slope::S24> (!hiCutOn || hiCutOrder < 4);
+        rightHi.setBypassed<Slope::S36> (!hiCutOn || hiCutOrder < 6);
+        rightHi.setBypassed<Slope::S48> (!hiCutOn || hiCutOrder < 8);
     }
     enum Slope {
         S12,

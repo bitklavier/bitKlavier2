@@ -115,6 +115,7 @@ void EQProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     const auto spec = juce::dsp::ProcessSpec { sampleRate, (uint32_t) samplesPerBlock, (uint32_t) getMainBusNumInputChannels() };
     state.params.leftChain.prepare(spec);
     state.params.rightChain.prepare(spec);
+    state.params.prepareCoefficients (sampleRate);
     state.params.updateCoefficients();
 }
 
