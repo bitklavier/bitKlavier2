@@ -117,7 +117,6 @@ public:
                 param,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this]() {
-                    this->eqparams_.updateCoefficients();
                     this->equalizerGraph->redoImage();
                 })
             };
@@ -131,7 +130,6 @@ public:
 
     void timerCallback() override
     {
-        eqparams_.updateCoefficients();
         equalizerGraph->redoImage();
     }
 

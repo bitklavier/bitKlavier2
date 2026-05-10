@@ -24,7 +24,7 @@ EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::Un
         eqCallbacks += {state.getParameterListeners().addParameterListener(
             param, chowdsp::ParameterListenerThread::MessageThread,
             [this]() {
-                this->state.params.updateCoefficients();
+                state.params.needsCoeffUpdate.store (true);
                 if (juce::Time::currentTimeMillis() - presetAppliedAtMs > 200)
                     state.params.presets->setParameterValue (EqPresetComboBox::EqCustom);
             })
@@ -126,8 +126,13 @@ bool EQProcessor::isBusesLayoutSupported (const juce::AudioProcessor::BusesLayou
 void EQProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
-    if (v.getType() != IDs::BUSEQ)
+    if (v.getType() != IDs::BUSEQ) {
         processContinuousModulations (buffer);
+        state.params.updateCoefficients();
+        state.params.needsCoeffUpdate.store (false);
+    } else if (state.params.needsCoeffUpdate.exchange (false)) {
+        state.params.updateCoefficients();
+    }
     state.params.processStateChanges();
 
     // mix in external audio (mic/line in standalone, DAW sidechain in plugin)

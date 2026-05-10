@@ -138,45 +138,52 @@ struct EQParams : chowdsp::ParamHolder
 
     double sampleRate = 44100;
 
+    // Set by message-thread listeners; checked by the audio thread in processBlock.
+    // Used for BusEQ which has no continuous modulations.
+    std::atomic<bool> needsCoeffUpdate { true };
+
+    // Computes magnitude entirely from parameter values — safe to call from any thread
+    // without touching the audio-thread-owned filter chain objects.
     double magForFreq(double freq) {
-        double mag = 1.f;
+        double mag = 1.0;
 
-        // Since leftChain and state.params.rightChain use the same coefficients, it's fine to just get them from left
-        if (!leftChain.isBypassed<ChainPositions::Peak1>())
-            mag *= leftChain.get<ChainPositions::Peak1>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if (!leftChain.isBypassed<ChainPositions::Peak2>())
-            mag *= leftChain.get<ChainPositions::Peak2>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if (!leftChain.isBypassed<ChainPositions::Peak3>())
-            mag *= leftChain.get<ChainPositions::Peak3>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (peak1FilterParams.filterActive->get()) {
+            auto c = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate,
+                peak1FilterParams.filterFreq->getCurrentValue(),
+                peak1FilterParams.filterQ->getCurrentValue(),
+                juce::Decibels::decibelsToGain(peak1FilterParams.filterGain->getCurrentValue()));
+            mag *= c->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (peak2FilterParams.filterActive->get()) {
+            auto c = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate,
+                peak2FilterParams.filterFreq->getCurrentValue(),
+                peak2FilterParams.filterQ->getCurrentValue(),
+                juce::Decibels::decibelsToGain(peak2FilterParams.filterGain->getCurrentValue()));
+            mag *= c->getMagnitudeForFrequency(freq, sampleRate);
+        }
+        if (peak3FilterParams.filterActive->get()) {
+            auto c = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate,
+                peak3FilterParams.filterFreq->getCurrentValue(),
+                peak3FilterParams.filterQ->getCurrentValue(),
+                juce::Decibels::decibelsToGain(peak3FilterParams.filterGain->getCurrentValue()));
+            mag *= c->getMagnitudeForFrequency(freq, sampleRate);
+        }
 
-        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<0>())
-            mag *= leftChain.get<ChainPositions::LowCut>().get<0>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<1>())
-            mag *= leftChain.get<ChainPositions::LowCut>().get<1>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<2>())
-            mag *= leftChain.get<ChainPositions::LowCut>().get<2>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if(!leftChain.get<ChainPositions::LowCut>().isBypassed<3>())
-            mag *= leftChain.get<ChainPositions::LowCut>().get<3>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (loCutFilterParams.filterActive->get()) {
+            int order = (int)loCutFilterParams.filterSlope->getCurrentValue() / 6;
+            auto cs = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(
+                loCutFilterParams.filterFreq->getCurrentValue(), sampleRate, order);
+            for (int i = 0; i < cs.size(); ++i)
+                mag *= cs[i]->getMagnitudeForFrequency(freq, sampleRate);
+        }
 
-        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<0>())
-            mag *= leftChain.get<ChainPositions::HighCut>().get<0>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<1>())
-            mag *= leftChain.get<ChainPositions::HighCut>().get<1>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<2>())
-            mag *= leftChain.get<ChainPositions::HighCut>().get<2>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if(!leftChain.get<ChainPositions::HighCut>().isBypassed<3>())
-            mag *= leftChain.get<ChainPositions::HighCut>().get<3>()
-            .coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (hiCutFilterParams.filterActive->get()) {
+            int order = (int)hiCutFilterParams.filterSlope->getCurrentValue() / 6;
+            auto cs = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(
+                hiCutFilterParams.filterFreq->getCurrentValue(), sampleRate, order);
+            for (int i = 0; i < cs.size(); ++i)
+                mag *= cs[i]->getMagnitudeForFrequency(freq, sampleRate);
+        }
 
         return mag;
     }
