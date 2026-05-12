@@ -68,9 +68,9 @@ void BlendronicParametersView::resized()
     bounds.removeFromBottom(20);  // shorten all meters (and multisliders) by 20px
 
     // left group: Internal then External meters
-    inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
-    bounds.removeFromLeft(smallpadding);
     externalLevelMeter->setBounds(bounds.removeFromLeft(title_width));
+    bounds.removeFromLeft(smallpadding);
+    inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
 
     // right group: Main then Send meters
     juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
