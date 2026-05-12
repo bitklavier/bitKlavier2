@@ -48,6 +48,8 @@ void BKKeymapKeyboardComponent::resized() {
         transposeDownButton.setBounds(textSlab.removeFromLeft(transposeW));
         textSlab.removeFromLeft(4);
         transposeUpButton.setBounds(textSlab.removeFromLeft(transposeW));
+        textSlab.removeFromLeft(4);
+        invertButton.setBounds(textSlab.removeFromLeft(widthUnit));
 
         keyboardValsTextField->setBounds(keyboard_.getBounds());
     }
@@ -153,6 +155,15 @@ void BKKeymapKeyboardComponent::buttonClicked(juce::Button* button) {
     else if (button == &transposeUpButton)
     {
         keyboard_state_.keyStates.store(keyboard_state_.keyStates.load() << 1);
+        keyboard_.repaint();
+    }
+    else if (button == &invertButton)
+    {
+        auto current = keyboard_state_.keyStates.load();
+        std::bitset<128> inverted;
+        for (int i = minKey; i <= maxKey; ++i)
+            inverted.set(i, !current.test(i));
+        keyboard_state_.keyStates.store(inverted);
         keyboard_.repaint();
     }
     else if (button == &keysButton)

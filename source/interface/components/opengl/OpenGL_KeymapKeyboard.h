@@ -102,6 +102,7 @@ public:
 
     void buttonClicked(juce::Button *b) override {
         OpenGlAutoImageComponent::buttonClicked(b);
+        saveKeyStateToValueTree();
         redoImage();
     }
 

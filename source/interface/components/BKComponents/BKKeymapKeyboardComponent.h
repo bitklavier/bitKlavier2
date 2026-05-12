@@ -136,8 +136,14 @@ public:
             transposeUpButton.setButtonText("+");
             transposeUpButton.setTooltip("Shift selected keys up a half-step");
 
+            invertButton.setName("KSLIDER_INVERT");
+            invertButton.addListener(this);
+            invertButton.setButtonText("invert");
+            invertButton.setTooltip("Invert selected keys within the piano range");
+
             addAndMakeVisible(transposeDownButton);
             addAndMakeVisible(transposeUpButton);
+            addAndMakeVisible(invertButton);
         }
     }
 
@@ -246,6 +252,7 @@ public:
     juce::TextButton keysButton;
     juce::TextButton transposeDownButton;
     juce::TextButton transposeUpButton;
+    juce::TextButton invertButton;
     juce::ComboBox keysCB;
 
     // set to false if all the edit, key, clear buttons are not needed
