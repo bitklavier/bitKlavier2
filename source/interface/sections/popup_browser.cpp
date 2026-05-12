@@ -1060,6 +1060,22 @@ void SinglePopupSelector::resized() {
         body_->setBounds(bounds);
         border_->setBounds(bounds);
     }
+    else if (subMenuOnLeft_)
+    {
+        // Submenu goes on the LEFT, main list stays on the RIGHT,
+        // so the main list remains visually anchored when the submenu opens.
+        int subWidth = popup_list_1->getBrowseWidth();
+        int mainWidth = getWidth() - subWidth;
+        popup_list_1->setBounds(1, rounding, subWidth - 2, getHeight() - 2 * rounding);
+        popup_list_->setBounds(subWidth + 1, rounding, mainWidth - 2, getHeight() - 2 * rounding);
+
+        juce::Rectangle<int> leftBounds = bounds.removeFromLeft(subWidth);
+        body_1->setBounds(leftBounds);
+        border_1->setBounds(leftBounds);
+
+        body_->setBounds(bounds);
+        border_->setBounds(bounds);
+    }
     else
     {
         int leftWidth = getWidth() / 2;
@@ -1137,42 +1153,54 @@ void SinglePopupSelector::updateSize() {
     FullInterface* parent = findParentComponentOfClass<FullInterface>();
     if (parent) {
         juce::Rectangle<int> bounds(0, 0, std::ceil(parent->getWidth()), std::ceil(parent->getHeight()));
-        setPosition(getPosition(), bounds);
+        setPosition(anchorPosition_, bounds);
     }
 }
 
 void SinglePopupSelector::setPosition(juce::Point<int> position, juce::Rectangle<int> bounds) {
+    anchorPosition_ = position;
+
     int rounding = findValue(Skin::kBodyRounding);
-    int width = popup_list_->getBrowseWidth();
+    int mainWidth = popup_list_->getBrowseWidth();
     int desiredContentHeight = popup_list_->getBrowseHeight();
+    int totalWidth = mainWidth;
 
     if (popup_list_1->isVisible())
     {
-        width *= 2;
+        int subWidth = popup_list_1->getBrowseWidth();
+        totalWidth = mainWidth + subWidth;
         desiredContentHeight = std::max(desiredContentHeight, popup_list_1->getBrowseHeight());
     }
 
     const int rowHeight = popup_list_->getRowHeight();
-    
-    // Maximum content height we can show within the given bounds while preserving rounded margins
     const int maxContentHeight = std::max(0, bounds.getHeight() - 2 * rounding);
-    // Ensure at least one row is visible if there are any items
     const int minContentHeight = std::min(desiredContentHeight, std::max(0, rowHeight));
     const int contentHeight = juce::jlimit(minContentHeight, maxContentHeight, desiredContentHeight);
     int height = contentHeight + 2 * rounding;
 
     int x = position.x;
     int y = position.y;
-    if (x + width > bounds.getRight())
-        x -= width;
-    // Clamp Y so the popup stays entirely within bounds even when very tall
+
+    if (popup_list_1->isVisible() && subMenuOnLeft_)
+    {
+        // Submenu extends LEFT of the main list anchor: shift component left by subWidth
+        // so the main list (right half) stays at position.x.
+        int subWidth = totalWidth - mainWidth;
+        x = position.x - subWidth;
+        x = std::max(x, bounds.getX());
+    }
+    else
+    {
+        if (x + totalWidth > bounds.getRight())
+            x -= totalWidth;
+    }
+
     if (y + height > bounds.getBottom())
         y = bounds.getBottom() - height;
     if (y < bounds.getY())
         y = bounds.getY();
-    
-    // DBG("SinglePopupSelector::setPosition final bounds: " << x << ", " << y << ", " << width << ", " << height);
-    setBounds(x, y, width, height);
+
+    setBounds(x, y, totalWidth, height);
 }
 
 DualPopupSelector::DualPopupSelector() : SynthSection("Dual Popup Selector"),

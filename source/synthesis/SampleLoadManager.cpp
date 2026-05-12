@@ -536,6 +536,51 @@ bool SampleLoadManager::sfzHasPresets(const juce::String &sfzName) const {
     return false;
 }
 
+juce::StringArray SampleLoadManager::getOrLoadSFZPresetNamesLightweight(const juce::String& baseFilename) {
+    // Check sfzBanks: any loaded key whose base matches
+    for (const auto& [key, sfz] : sfzBanks) {
+        auto keyBase = juce::String(key).upToFirstOccurrenceOf("||", false, false);
+        if (keyBase == baseFilename && sfz) {
+            juce::StringArray presets;
+            for (int i = 0; i < sfz->num_subsounds(); ++i)
+                presets.add(juce::String(sfz->subsound_name(i)));
+            const juce::juce_wchar bellChar = 7;
+            for (auto& s : presets)
+                s = s.removeCharacters(juce::String::charToString(bellChar));
+            return presets;
+        }
+    }
+
+    // Check metadata cache
+    if (auto it = sfzPresetMetadataCache_.find(baseFilename.toStdString()); it != sfzPresetMetadataCache_.end())
+        return it->second;
+
+    // Lightweight load: read file structure only, no PCM data
+    juce::String soundfontsPath = preferences->userPreferences->tree.getProperty("default_soundfonts_path");
+    juce::File sfFile = juce::File(soundfontsPath).getChildFile(baseFilename);
+
+    juce::StringArray presets;
+    if (sfFile.existsAsFile()) {
+        const juce::String ext = sfFile.getFileExtension().toLowerCase();
+        std::unique_ptr<SFZSound> tempSound;
+        if (ext == ".sf2")
+            tempSound = std::make_unique<SF2Sound>(sfFile.getFullPathName().toStdString());
+        else if (ext == ".sfz")
+            tempSound = std::make_unique<SFZSound>(sfFile.getFullPathName().toStdString());
+        if (tempSound) {
+            tempSound->load_regions();
+            const juce::juce_wchar bellChar = 7;
+            for (int i = 0; i < tempSound->num_subsounds(); ++i) {
+                juce::String name(tempSound->subsound_name(i));
+                presets.add(name.removeCharacters(juce::String::charToString(bellChar)));
+            }
+        }
+    }
+
+    sfzPresetMetadataCache_[baseFilename.toStdString()] = presets;
+    return presets;
+}
+
 bool SampleLoadManager::selectSFZPreset(const juce::String &sfzName,
                                         const juce::String &presetName) {
     return true;

@@ -245,7 +245,6 @@ void HeaderSection::resized() {
     fb.items.add(juce::FlexItem(*pianoSelector).withFlex(1.0f));
     fb.items.add(juce::FlexItem(*preparationsSelector).withFlex(1.0f));
     fb.items.add(juce::FlexItem(*sampleSelector).withFlex(1.0f));
-    fb.items.add(juce::FlexItem(*soundfontPresetSelector).withFlex(1.0f));
     fb.performLayout(headerArea2);
 
     juce::FlexBox fbl;
@@ -253,13 +252,12 @@ void HeaderSection::resized() {
     fbl.alignContent = juce::FlexBox::AlignContent::stretch;
     fbl.alignItems = juce::FlexBox::AlignItems::stretch;
 
-    // doing this one with a loop, for fun...
     juce::Component* labels[] = {
         galleries_label.get(), currentPiano_label.get(), preparationSelect_label.get(),
-        globalSoundset_label.get(), soundfontPreset_label.get()
+        globalSoundset_label.get()
     };
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         fbl.items.add(juce::FlexItem(*labels[i]).withFlex(1.0f));
     }
@@ -274,8 +272,6 @@ void HeaderSection::resized() {
     preparationSelectText->setTextSize(label_text_height);
     sampleSelectText->setBounds(sampleSelector->getBounds());
     sampleSelectText->setTextSize(label_text_height);
-    soundfontPresetSelectText->setBounds(soundfontPresetSelector->getBounds());
-    soundfontPresetSelectText->setTextSize(label_text_height);
 
     SynthSection::resized();
 }
@@ -548,30 +544,64 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         PopupItems options;
 
         PopupItems separator ("separator");
-        separator.enabled = false; // This makes it non-selectable
-        separator.id = -1; // will be a separator line
+        separator.enabled = false;
+        separator.id = -1;
 
         SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
-        auto string_names = parent->getSampleLoadManager()->getAllSampleSets();
-        for (int i = 0; i < string_names.size(); i++) {
-            if (string_names[i] == "menuSeparator")
+        auto* slm = parent->getSampleLoadManager();
+        auto string_names = slm->getAllSampleSets();
+
+        const int kPresetBase = 10000;
+        // Maps flat index (selection - kPresetBase) to (soundfontBaseName, presetName)
+        auto presetItemData = std::make_shared<std::vector<std::pair<juce::String, juce::String>>>();
+
+        for (int i = 0; i < (int)string_names.size(); i++) {
+            if (string_names[i] == "menuSeparator") {
                 options.addItem(separator);
-            else
+                continue;
+            }
+            juce::String name(string_names[i]);
+            if (name.contains(".sf2") || name.contains(".sfz")) {
+                auto presets = slm->getOrLoadSFZPresetNamesLightweight(name);
+                if (presets.size() > 1) {
+                    PopupItems sfzItem;
+                    sfzItem.name = string_names[i];
+                    for (int p = 0; p < presets.size(); ++p) {
+                        int presetId = kPresetBase + (int)presetItemData->size();
+                        presetItemData->push_back({name, presets[p]});
+                        sfzItem.addItem(presetId, presets[p].toStdString());
+                    }
+                    options.addItem(sfzItem);
+                } else {
+                    options.addItem(i, string_names[i]);
+                }
+            } else {
                 options.addItem(i, string_names[i]);
+            }
         }
+
         juce::Point<int> position(sampleSelector->getX(), sampleSelector->getBottom());
 
-        /*
-         * todo: it looks like the global sample set if being set with the gallery, but it should
-         *          be set (saved and restored) with each piano
-         */
         showPopupSelector(this, position, options, [=](int selection, int) {
             SynthGuiInterface *_parent = findParentComponentOfClass<SynthGuiInterface>();
-            _parent->getSampleLoadManager()->loadSamples(_parent->getSampleLoadManager()->getAllSampleSets()[selection], _parent->getSynth()->getValueTree());
-            sampleSelectText->setText(_parent->getSampleLoadManager()->getAllSampleSets()[selection]);
-            resized();
-            notifyFresh();
-        });
+            auto* _slm = _parent->getSampleLoadManager();
+
+            if (selection >= kPresetBase) {
+                int idx = selection - kPresetBase;
+                if (idx < 0 || idx >= (int)presetItemData->size())
+                    return;
+                auto [baseName, presetName] = (*presetItemData)[idx];
+                juce::String key = baseName + "||" + presetName;
+                sampleSelectText->setText(baseName + ": " + presetName);
+                resized();
+                _slm->loadSamples(key, _parent->getSynth()->getValueTree());
+            } else if (selection >= 0 && selection < (int)_slm->getAllSampleSets().size()) {
+                juce::String name(_slm->getAllSampleSets()[selection]);
+                sampleSelectText->setText(name);
+                resized();
+                _slm->loadSamples(name, _parent->getSynth()->getValueTree());
+            }
+        }, {}, 1.0f, true);
     } else if (clicked_button == pianoSelector.get()) {
         PopupItems options;
         auto names = getAllPianoNames();
@@ -1105,29 +1135,20 @@ void HeaderSection::notifyChange() {
 void HeaderSection::notifyFresh() {
     if (!gallery.isValid())
         return;
-    // gallery.getProperty("soundset").upToFirstOccurrenceOf("||", false, false);
-    sampleSelectText->setText(gallery.getProperty(IDs::soundset).toString().upToFirstOccurrenceOf("||", false, false));
+
+    auto soundsetKey = gallery.getProperty(IDs::soundset).toString();
+    auto base = soundsetKey.upToFirstOccurrenceOf("||", false, false);
+    auto preset = soundsetKey.fromFirstOccurrenceOf("||", false, false);
+
+    if (preset.isNotEmpty())
+        sampleSelectText->setText(base + ": " + preset);
+    else
+        sampleSelectText->setText(base);
+
+    soundfontPresetSelector->setVisible(false);
+    soundfontPresetSelectText->setVisible(false);
+
     resized();
-    auto sfzName = gallery.getProperty(IDs::soundset).toString();
-    auto parent = findParentComponentOfClass<SynthGuiInterface>();
-    if (parent->getSampleLoadManager()->sfzHasPresets(gallery.getProperty(IDs::soundset).toString())) {
-        soundfontPresetSelector->setVisible(true);
-        soundfontPresetSelectText->setVisible(true);
-        //soundfontPreset_label->setVisible (true);
-    } else {
-        soundfontPresetSelector->setVisible(false);
-        soundfontPresetSelectText->setText("---");
-        soundfontPresetSelectText->setVisible(true);
-        //soundfontPreset_label->setVisible (false);
-    }
-    static juce::var nullVar;
-    // auto val = gallery.getProperty(IDs::soundfont_preset);
-    auto val = gallery.getProperty(IDs::soundset).toString().
-    fromFirstOccurrenceOf("||", false, false);
-    if (val.isNotEmpty()) {
-        // const auto presetName = val.toString();
-        soundfontPresetSelectText->setText(val);
-    }
 }
 
 //void HeaderSection::setPresetBrowserVisibility(bool visible) {

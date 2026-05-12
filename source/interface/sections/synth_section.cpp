@@ -1219,10 +1219,10 @@ void SynthSection::hidePopupDisplay(bool primary) {
 
 void SynthSection::showPopupSelector(juce::Component *source, juce::Point<int> position, const PopupItems &options,
                                      std::function<void(int,int)> callback, std::function<void()> cancel,
-                                     float width_scale) {
+                                     float width_scale, bool sub_menu_on_left) {
     FullInterface *parent = findParentComponentOfClass<FullInterface>();
     if (parent)
-        parent->popupSelector(source, position, options, callback, cancel, width_scale);
+        parent->popupSelector(source, position, options, callback, cancel, width_scale, sub_menu_on_left);
 }
 
 void SynthSection::showPrepPopup(std::unique_ptr<SynthSection> prep,const juce::ValueTree &v, bitklavier::BKPreparationType type) {

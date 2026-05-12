@@ -156,6 +156,7 @@ public:
     std::map<juce::String, juce::ReferenceCountedArray<BKSynthesiserSound>*> samplerSoundset;
     std::map<std::string, std::shared_ptr<SampleSetProgress>> soundsetProgressMap;
     std::unordered_map<juce::String, std::unique_ptr<SFZSound>> sfzBanks; // key = sfzName.toStdString()
+    std::map<std::string, juce::StringArray> sfzPresetMetadataCache_; // base filename -> preset names
     // perhaps these should be moved to utils or something
     juce::Array<juce::String> allPitches;
     juce::Array<juce::String> allPitchClasses = { "A", "A#", "Bb", "B", "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab" };
@@ -195,6 +196,10 @@ public:
     bool sfzHasPresets (const juce::String& sfzName) const;
     bool selectSFZPreset (const juce::String& sfzName,
                           const juce::String& presetName);
+    // Returns preset names for a soundfont by base filename. Uses sfzBanks if
+    // already loaded, otherwise does a lightweight (no PCM) metadata scan.
+    // Results are cached, so repeated calls are cheap.
+    juce::StringArray getOrLoadSFZPresetNamesLightweight (const juce::String& baseFilename);
     bool changeSFZPresetAndUpdateTree (const juce::String& currentSfzKey,
                                   int newPresetIndex,
                                  juce::ValueTree& targetTree);

@@ -83,7 +83,8 @@ public :
     }
     void hideDisplay(bool primary);
     void popupSelector(juce::Component* source, juce::Point<int> position, const PopupItems& options,
-        std::function<void(int,int)> callback, std::function<void()> cancel, float width_scale = 1.0f);
+        std::function<void(int,int)> callback, std::function<void()> cancel, float width_scale = 1.0f,
+        bool sub_menu_on_left = false);
 
     void popupDisplay(juce::Component* source, const std::string& text,
         juce::BubbleComponent::BubblePlacement placement, bool primary);

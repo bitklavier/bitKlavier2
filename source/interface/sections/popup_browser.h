@@ -262,8 +262,10 @@ public:
 
     void setCallback(std::function<void(int,int)> callback) { callback_ = std::move(callback); }
     void setCancelCallback(std::function<void()> cancel) { cancel_ = std::move(cancel); }
+    void setSubMenuOnLeft(bool v) { subMenuOnLeft_ = v; }
 
     void showSelections(const PopupItems& selections) {
+        subMenuOnLeft_ = false;
         popup_list_->setSelections(selections);
         popup_list_1->setVisible(false);
         border_1->setVisible(false);
@@ -281,6 +283,8 @@ private:
     std::function<void()> cancel_;
     std::unique_ptr<PopupList> popup_list_;
     std::unique_ptr<PopupList> popup_list_1;
+    juce::Point<int> anchorPosition_;
+    bool subMenuOnLeft_ = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SinglePopupSelector)
 };
