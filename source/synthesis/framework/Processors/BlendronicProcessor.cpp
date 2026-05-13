@@ -311,6 +311,9 @@ void BlendronicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     pulseLength.setTargetValue(newPulseLength);
 
 
+    state.getParameterListeners().callAudioThreadBroadcasters();
+    processContinuousModulations (buffer);
+
     // process any mod changes to the multisliders
     state.params.processStateChanges();
 

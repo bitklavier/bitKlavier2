@@ -93,8 +93,8 @@ struct BlendronicParams : chowdsp::ParamHolder
          * note, if we want more continuous mod params, in addition to adding them above
          * we need to adjust juce::AudioProcessor::BusesProperties blendronicBusLayout()
          * so that:
-         *      '.withInput ("Modulation", juce::AudioChannelSet::discreteChannels (3), true)'
-         * sets dicreteChannels to the correct number
+         *      '.withInput ("Modulation", juce::AudioChannelSet::discreteChannels (N * 2), true)'
+         * sets discreteChannels to N * 2 where N is the number of modulatable params
          */
     }
 
@@ -259,9 +259,9 @@ public:
 
             /**
              * IMPORTANT: set discreteChannels here equal to the number of params you want to continuously modulate!!
-             *              for blendronic, we have three: outputGain, outputSend, inGain
+             *              for blendronic, we have four: outputGain, outputSend, inputGain, externalGain
              */
-            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (3), true)
+            .withInput ("Modulation", juce::AudioChannelSet::discreteChannels (4 * 2), true) // 4 modulatable params × 2 channels (ramp + LFO)
             .withOutput("Modulation", juce::AudioChannelSet::mono(),false)
             .withOutput("Send",juce::AudioChannelSet::stereo(),true);
     }
