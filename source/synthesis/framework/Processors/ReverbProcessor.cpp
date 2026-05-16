@@ -129,6 +129,10 @@ void ReverbProcessor::applyPreset (int idx)
 void ReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& /*midi*/)
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
+    // Bus processors are called directly from processAudioAndMidi with a plain stereo buffer,
+    // not through the AudioProcessorGraph, so the modulation bus channels are not present in the
+    // buffer. processContinuousModulations would read out-of-bounds. Modulation of bus processor
+    // params requires routing them through the graph first.
     if (v.getType() != IDs::BUSREVERB)
         processContinuousModulations (buffer);
     state.params.processStateChanges();

@@ -2625,6 +2625,12 @@ void ModulationManager::setModulationValues(std::string source, std::string dest
     modifying_ = true;
     //  parent->setModulationValues(source, destination, amount, bipolar, stereo, bypass);
     int index = getModulationIndex(source, destination);
+    if (index < 0) {
+        // Connection not found (e.g. destination is a bus processor not in any piano's PREPARATIONS,
+        // or connectModulation failed silently). Bail out to avoid out-of-bounds array access.
+        modifying_ = false;
+        return;
+    }
     //  notifyModulationValueChanged(index);
     setModulationAmounts();
     setModulationSliderValues(index, amount);

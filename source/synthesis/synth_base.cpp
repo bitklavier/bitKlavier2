@@ -1254,6 +1254,10 @@ void SynthBase::connectModulation (bitklavier::ModulationConnection* connection)
         for (int i = 0; i < preparations.getNumChildren() && ! mod_dst.isValid(); ++i)
             mod_dst = preparations.getChild (i).getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
     }
+    // Final fallback: bus processors (BUSREVERB, BUSEQ, BUSCOMPRESSOR) are direct children
+    // of the root gallery tree, not inside any piano's PREPARATIONS.
+    if (! mod_dst.isValid())
+        mod_dst = tree.getChildWithProperty (IDs::uuid, juce::String (dst_uuid));
     auto mod_connections = owningPiano.getChildWithName (IDs::MODCONNECTIONS);
     auto mod_connection  = getChildWithPropertyAndType (mod_connections, IDs::dest, mod_dst.getProperty (IDs::nodeID), IDs::MODCONNECTION);
 
@@ -1497,6 +1501,9 @@ bool SynthBase::connectModulation (const juce::ValueTree& v)
             for (int i = 0; i < preparations.getNumChildren() && ! mod_dst.isValid(); ++i)
                 mod_dst = preparations.getChild (i).getChildWithProperty (IDs::uuid, juce::String (dst_uuid_str));
         }
+        // Bus processors (BUSREVERB, BUSEQ, BUSCOMPRESSOR) are direct children of the root tree.
+        if (! mod_dst.isValid())
+            mod_dst = tree.getChildWithProperty (IDs::uuid, juce::String (dst_uuid_str));
 
         auto src_node_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_src.getProperty (IDs::nodeID));
         auto dst_node_id = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (mod_dst.getProperty (IDs::nodeID));
