@@ -356,19 +356,28 @@ public:
     else
       hover_amount_ = std::max(0.0f, hover_amount_ - kHoverChange);
 
-    if (last_hover != hover_amount_)
-    {
-      if (shrink_left_)
-        setQuadHorizontal(0, -1.0f, 1.0f + hover_amount_);
-      else
-        setQuadHorizontal(0, 0.0f - hover_amount_, 1.0f + hover_amount_);
-    }
-
     juce::Range<double> range = scroll_bar_->getCurrentRange();
     juce::Range<double> total_range = scroll_bar_->getRangeLimit();
     float start_ratio = (range.getStart() - total_range.getStart()) / total_range.getLength();
     float end_ratio = (range.getEnd() - total_range.getStart()) / total_range.getLength();
-    setQuadVertical(0, 1.0f - 2.0f * end_ratio, 2.0f * (end_ratio - start_ratio));
+
+    if (scroll_bar_->isVertical())
+    {
+      if (last_hover != hover_amount_)
+      {
+        if (shrink_left_)
+          setQuadHorizontal(0, -1.0f, 1.0f + hover_amount_);
+        else
+          setQuadHorizontal(0, 0.0f - hover_amount_, 1.0f + hover_amount_);
+      }
+      setQuadVertical(0, 1.0f - 2.0f * end_ratio, 2.0f * (end_ratio - start_ratio));
+    }
+    else
+    {
+      if (last_hover != hover_amount_)
+        setQuadVertical(0, -1.0f, 1.0f + hover_amount_);
+      setQuadHorizontal(0, -1.0f + 2.0f * start_ratio, 2.0f * (end_ratio - start_ratio));
+    }
 
     OpenGlQuad::render(open_gl, animate);
   }
