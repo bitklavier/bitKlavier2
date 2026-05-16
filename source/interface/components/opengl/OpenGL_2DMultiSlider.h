@@ -171,7 +171,11 @@ public:
             || key.isKeyCode (juce::KeyPress::homeKey)
             || key.isKeyCode (juce::KeyPress::endKey))
         {
-            redoImage();
+            // Defer redoImage() so the text editor processes the key first,
+            // ensuring the cursor position is correct when we capture the image.
+            juce::MessageManager::callAsync ([safeThis = juce::Component::SafePointer<OpenGL_2DMultiSlider> (this)]() {
+                if (safeThis != nullptr) safeThis->redoImage();
+            });
         }
         return false;
     }
