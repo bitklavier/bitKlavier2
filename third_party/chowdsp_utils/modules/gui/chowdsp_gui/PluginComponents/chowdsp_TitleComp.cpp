@@ -20,7 +20,7 @@ void TitleComp::paint (juce::Graphics& g)
 
     auto drawText = [&curFont, &g, &b] (const juce::String& text)
     {
-        auto width = curFont.getStringWidth (text);
+        auto width = juce::GlyphArrangement::getStringWidthInt (curFont, text);
         g.drawFittedText (text, b.removeFromLeft (width), juce::Justification::left, 1);
     };
 

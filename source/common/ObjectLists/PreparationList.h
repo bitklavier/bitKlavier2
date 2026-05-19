@@ -29,7 +29,7 @@ public:
     double getTailLengthSeconds() const override                                  { return inner->getTailLengthSeconds(); }
     bool acceptsMidi() const override                                             { return inner->acceptsMidi(); }
     bool producesMidi() const override                                            { return inner->producesMidi(); }
-    juce::AudioProcessorEditor* createEditor() override                                 { return inner->createEditor(); }
+    juce::AudioProcessorEditor* createEditor() override                                 { return inner->createEditorAndMakeActive(); }
     bool hasEditor() const override                                               { return inner->hasEditor(); }
     int getNumPrograms() override                                                 { return inner->getNumPrograms(); }
     int getCurrentProgram() override                                              { return inner->getCurrentProgram(); }

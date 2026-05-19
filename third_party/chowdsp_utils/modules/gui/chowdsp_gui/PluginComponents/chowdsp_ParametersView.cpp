@@ -98,9 +98,7 @@ namespace parameters_view_detail
         {
             auto area = getLocalBounds();
 
-            parameterName.setBounds (area.removeFromLeft (parameterName
-                                                              .getFont()
-                                                              .getStringWidth (parameterName.getText())
+            parameterName.setBounds (area.removeFromLeft (juce::GlyphArrangement::getStringWidthInt (parameterName.getFont(), parameterName.getText())
                                                           * 11 / 10));
             parameterComp->setBounds (area);
         }

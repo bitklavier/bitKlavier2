@@ -1,0 +1,38 @@
+diff --git a/modules/juce_opengl/native/juce_OpenGL_mac.h b/modules/juce_opengl/native/juce_OpenGL_mac.h
+index 7e39fb4605..70bc41afb9 100644
+--- a/modules/juce_opengl/native/juce_OpenGL_mac.h
++++ b/modules/juce_opengl/native/juce_OpenGL_mac.h
+@@ -311,6 +311,21 @@ public:
+     {
+         MouseForwardingNSOpenGLViewClass()  : ObjCClass ("JUCEGLView_")
+         {
++            addMethod (@selector (mouseDown:), [] (id self, SEL, NSEvent* ev)
++            {
++                [[(NSOpenGLView*) self superview] mouseDown: ev];
++            });
++
++            addMethod (@selector (mouseUp:), [] (id self, SEL, NSEvent* ev)
++            {
++                [[(NSOpenGLView*) self superview] mouseUp: ev];
++            });
++
++            addMethod (@selector (mouseDragged:), [] (id self, SEL, NSEvent* ev)
++            {
++                [[(NSOpenGLView*) self superview] mouseDragged: ev];
++            });
++
+             addMethod (@selector (rightMouseDown:), [] (id self, SEL, NSEvent* ev)
+             {
+                 [[(NSOpenGLView*) self superview] rightMouseDown: ev];
+@@ -321,6 +336,11 @@ public:
+                 [[(NSOpenGLView*) self superview] rightMouseUp:   ev];
+             });
+ 
++            addMethod (@selector (rightMouseDragged:), [] (id self, SEL, NSEvent* ev)
++            {
++                [[(NSOpenGLView*) self superview] rightMouseDragged: ev];
++            });
++
+             addMethod (@selector (acceptsFirstMouse:), [] (id, SEL, NSEvent*) -> BOOL
+             {
+                 return YES;

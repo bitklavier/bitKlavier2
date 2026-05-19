@@ -39,6 +39,38 @@ project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
 # Locally, you must run `git submodule update --init --recursive` once
 # and later `git submodule update --remote --merge` to keep it up to date
 # On Github Actions, this is done as a part of actions/checkout
+
+# Apply local patches to JUCE that haven't been accepted upstream yet.
+# Each patch is idempotent: if already applied, it is skipped silently.
+if(APPLE)
+    set(JUCE_PATCHES
+        juce_opengl_mac_mouse_forwarding  # forward mouseDown/Up/Dragged + rightMouseDragged through NSOpenGLView
+    )
+    foreach(PATCH_NAME ${JUCE_PATCHES})
+        set(PATCH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/patches/${PATCH_NAME}.patch")
+        execute_process(
+            COMMAND git apply --check "${PATCH_FILE}"
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/JUCE"
+            RESULT_VARIABLE PATCH_CHECK_RESULT
+            OUTPUT_QUIET
+            ERROR_QUIET
+        )
+        if(PATCH_CHECK_RESULT EQUAL 0)
+            message(STATUS "Applying JUCE patch: ${PATCH_NAME}")
+            execute_process(
+                COMMAND git apply "${PATCH_FILE}"
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/JUCE"
+                RESULT_VARIABLE PATCH_RESULT
+            )
+            if(NOT PATCH_RESULT EQUAL 0)
+                message(FATAL_ERROR "Failed to apply JUCE patch: ${PATCH_NAME}")
+            endif()
+        else()
+            message(STATUS "JUCE patch already applied (skipping): ${PATCH_NAME}")
+        endif()
+    endforeach()
+endif()
+
 add_subdirectory(JUCE)
 # Link to any other modules you added (with juce_add_module) here!
 message("-- Adding juce modules")

@@ -32,7 +32,7 @@ void TooltipComponent::paint (juce::Graphics& g)
 
         auto whitespace = juce::String();
         auto font = g.getCurrentFont();
-        while (font.getStringWidth (whitespace) < font.getStringWidth (name + ": "))
+        while (juce::GlyphArrangement::getStringWidthInt (font, whitespace) < juce::GlyphArrangement::getStringWidthInt (font, name + ": "))
             whitespace += " ";
 
         g.setColour (findColour (textColourID));
