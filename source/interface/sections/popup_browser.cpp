@@ -107,7 +107,7 @@ void PopupDisplay::setContent(const std::string &text, juce::Rectangle<int> boun
     juce::Font font = Fonts::instance()->proportional_light().withPointHeight(height * 0.5f);
     int padding = height / 4;
     int buffer = padding * 2 + 2;
-    int width = ((font.getStringWidth(text) / mult) + buffer);
+    int width = ((juce::GlyphArrangement::getStringWidthInt(font, text) / mult) + buffer);
 
     int middle_x = bounds.getX() + bounds.getWidth() / 2;
     int middle_y = bounds.getY() + bounds.getHeight() / 2;

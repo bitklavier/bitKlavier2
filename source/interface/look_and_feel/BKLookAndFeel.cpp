@@ -114,7 +114,7 @@ void BKWindowLAF::drawDocumentWindowTitleBar (juce::DocumentWindow& window, juce
     juce::Font font (h * 0.65f, juce::Font::plain);
     g.setFont (font);
     
-    auto textW = font.getStringWidth (window.getName());
+    auto textW = juce::GlyphArrangement::getStringWidthInt (font, window.getName());
     auto iconW = 0;
     auto iconH = 0;
     

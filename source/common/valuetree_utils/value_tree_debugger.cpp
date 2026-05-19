@@ -114,7 +114,7 @@ public juce::PropertyPanel
 
             juce::String typeName = t.getType().toString();
 
-            const float nameWidth = font.getStringWidthFloat (typeName);
+            const float nameWidth = juce::GlyphArrangement::getStringWidth (font, typeName);
             const float propertyX = padding + nameWidth;
 
             g.setColour (juce::Colours::black);

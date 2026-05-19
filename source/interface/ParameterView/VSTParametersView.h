@@ -204,7 +204,7 @@ public:
         // Shift the title component DOWN by (textW - titleW) / 2 to compensate.
         const juce::Font titleFont =
             Fonts::instance()->proportional_title().withPointHeight (titleSize);
-        const int textW      = titleFont.getStringWidth ("VST Modifications");
+        const int textW      = juce::GlyphArrangement::getStringWidthInt (titleFont, "VST Modifications");
         const int titleShift = juce::jmax (0, (textW - titleW) / 2);
 
         juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft (titleW);
