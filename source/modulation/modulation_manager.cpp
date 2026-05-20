@@ -713,8 +713,7 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
             editing_comboBox_mod.popup_menu = comp->clone();
             editing_comboBox_mod.modulation = connection->state;
             editing_comboBox_mod.paramID = comp->getParamID();
-            static juce::var nullVar;
-            if(editing_comboBox_mod.modulation.getProperty(editing_comboBox_mod.paramID)!=nullVar) {
+            if(editing_comboBox_mod.modulation.hasProperty(editing_comboBox_mod.paramID)) {
                 int ticked  = static_cast <int>(editing_comboBox_mod.modulation.getProperty(editing_comboBox_mod.paramID)) + 1;
                 for (juce::PopupMenu::MenuItemIterator iterator (*editing_comboBox_mod.popup_menu, true); iterator.next();)
                 {
@@ -754,8 +753,7 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
             editing_button_mod.popup_menu->addItem(2,"On",true,false);
             editing_button_mod.modulation = connection->state;
             editing_button_mod.paramID = comp->getComponentID().fromLastOccurrenceOf("_", false, false);
-            static juce::var nullVar;
-            if(editing_button_mod.modulation.getProperty(editing_button_mod.paramID)!=nullVar) {
+            if(editing_button_mod.modulation.hasProperty(editing_button_mod.paramID)) {
                 int ticked  = static_cast <int>(editing_button_mod.modulation.getProperty(editing_button_mod.paramID)) + 1;
                 // editing_comboBox_mod.popup_menu.s
                 for (juce::PopupMenu::MenuItemIterator iterator (*editing_button_mod.popup_menu, true); iterator.next();)
