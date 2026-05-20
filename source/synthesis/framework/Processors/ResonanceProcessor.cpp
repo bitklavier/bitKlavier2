@@ -31,7 +31,10 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
     std::bitset<128> new_state;
     switch (spectrum->get())
     {
-        case PianoLow :
+        case SpectralType::Custom :
+            return; // user-customized state — don't overwrite
+
+        case SpectralType::PianoLow :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(OvertoneGains_A0, gainsKeyboardState.absoluteTuningOffset);
@@ -42,7 +45,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case PianoMid :
+        case SpectralType::PianoMid :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(OvertoneGains_A3, gainsKeyboardState.absoluteTuningOffset);
@@ -53,7 +56,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case PianoHigh :
+        case SpectralType::PianoHigh :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(OvertoneGains_A7, gainsKeyboardState.absoluteTuningOffset);
@@ -64,7 +67,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case Overtones8 :
+        case SpectralType::Overtones8 :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(OvertoneGains_O8, gainsKeyboardState.absoluteTuningOffset);
@@ -75,7 +78,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case Overtones20 :
+        case SpectralType::Overtones20 :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(OvertoneGains_O20, gainsKeyboardState.absoluteTuningOffset);
@@ -86,7 +89,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case Undertones8 :
+        case SpectralType::Undertones8 :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(UndertoneGains_U8, gainsKeyboardState.absoluteTuningOffset);
@@ -97,7 +100,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(52, true);
             break;
 
-        case Undertones20 :
+        case SpectralType::Undertones20 :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(UndertoneGains_U20, gainsKeyboardState.absoluteTuningOffset);
@@ -108,7 +111,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(52, true);
             break;
 
-        case OverUnderTones :
+        case SpectralType::OverUnderTones :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(UnderOvertoneGains, gainsKeyboardState.absoluteTuningOffset);
@@ -119,7 +122,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(26, true); // D fundamental, mid-keyboard
             break;
 
-        case MetalBar :
+        case SpectralType::MetalBar :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(MetalBarGains, gainsKeyboardState.absoluteTuningOffset);
@@ -130,7 +133,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case MajorBell :
+        case SpectralType::MajorBell :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(MajorBellGains, gainsKeyboardState.absoluteTuningOffset);
@@ -141,7 +144,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(12, true);
             break;
 
-        case MinorBell :
+        case SpectralType::MinorBell :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(MinorBellGains, gainsKeyboardState.absoluteTuningOffset);
@@ -152,7 +155,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(12, true);
             break;
 
-        case Saron :
+        case SpectralType::Saron :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(SaronGains, gainsKeyboardState.absoluteTuningOffset);
@@ -163,7 +166,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case Gender :
+        case SpectralType::Gender :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(GenderGains, gainsKeyboardState.absoluteTuningOffset);
@@ -174,7 +177,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case Bonang :
+        case SpectralType::Bonang :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(BonangGains, gainsKeyboardState.absoluteTuningOffset);
@@ -185,7 +188,7 @@ void ResonanceParams::setSpectrumFromMenu(int menuChoice)
             fundamentalKeymap.setKeyState(0, true);
             break;
 
-        case Gong :
+        case SpectralType::Gong :
             gainsKeyboardState.setAllAbsoluteOffsets(0.);
             offsetsKeyboardState.setAllAbsoluteOffsets(0.);
             parseIndexValueStringToAtomicArray(GongGains, gainsKeyboardState.absoluteTuningOffset);
@@ -512,6 +515,14 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
             }
         })
     };
+
+    // Apply Overtones20 as the default preset for freshly-created preparations.
+    // Saved preparations have "partials" synced to the VT; a fresh one does not.
+    if (! v.hasProperty ("partials"))
+    {
+        state.params.spectrum->setParameterValue (SpectralType::PianoLow);
+        state.params.setSpectrumFromMenu (0);
+    }
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

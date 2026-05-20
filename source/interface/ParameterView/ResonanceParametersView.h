@@ -92,6 +92,7 @@ public:
         fundamentalKeyboard->setName("fundamental");
         fundamentalKeyboard->setAvailableRange(0, numKeys);
         fundamentalKeyboard->setOctaveForMiddleC(5);
+        fundamentalKeyboard->addMyListener(this);
 
         fundamentalKeyboard_label = std::make_shared<PlainTextComponent>("fundamental", "Fundamental");
         addOpenGlComponent(fundamentalKeyboard_label);
@@ -104,6 +105,7 @@ public:
         closestKeyboard->setName("closest");
         closestKeyboard->setAvailableRange(0, numKeys);
         closestKeyboard->setOctaveForMiddleC(5);
+        closestKeyboard->addMyListener(this);
 
         closestKeyboard_label = std::make_shared<PlainTextComponent>("closest", "Keys for Closest Partials");
         addOpenGlComponent(closestKeyboard_label);
@@ -122,6 +124,7 @@ public:
         offsetsKeyboard->setName("offsets");
         offsetsKeyboard->setAvailableRange(0, numKeys);
         offsetsKeyboard->setOctaveForMiddleC(5);
+        offsetsKeyboard->onChange = [&params]() { params.spectrum->setParameterValue(SpectralType::Custom); };
 
         offsetsKeyboard_label = std::make_shared<PlainTextComponent>("offsets", "Offsets from ET (cents) for Partials");
         addOpenGlComponent(offsetsKeyboard_label);
@@ -134,6 +137,7 @@ public:
         gainsKeyboard->setAvailableRange(0, numKeys);
         gainsKeyboard->setMinMidMaxValues(-100.f, 0.f, 6.f, 2); // min, mid, max, display resolution; dBFS
         gainsKeyboard->setOctaveForMiddleC(5);
+        gainsKeyboard->onChange = [&params]() { params.spectrum->setParameterValue(SpectralType::Custom); };
 
         gainsKeyboard_label = std::make_shared<PlainTextComponent>("gains", "Gains for Partials");
         addOpenGlComponent(gainsKeyboard_label);
@@ -209,8 +213,14 @@ public:
 
     void BKKeymapKeyboardChanged (juce::String name, std::bitset<128> keys, int lastKey, juce::ModifierKeys mods = juce::ModifierKeys()) override
     {
-        // DBG("BKKeymapKeyboardChanged called in ResonanceParametersView " + juce::String(lastKey));
-        sparams_.heldKeymap_changedInUI = lastKey; // notify processor that the held keymap has changed vai the UI
+        if (name == "heldKeys")
+        {
+            sparams_.heldKeymap_changedInUI = lastKey;
+        }
+        else if (name == "fundamental" || name == "closest")
+        {
+            sparams_.spectrum->setParameterValue (SpectralType::Custom);
+        }
     }
 
     chowdsp::ScopedCallbackList sliderChangedCallback;

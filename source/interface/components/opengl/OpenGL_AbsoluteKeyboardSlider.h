@@ -77,6 +77,8 @@ public:
      * valueTree: modulationState if the user is editing the modulation, or defaultState
      * is editing the actual absoluteKeyboard tuning slider
      */
+    std::function<void()> onChange;
+
     void mouseDrag(const juce::MouseEvent &e) override {
         OpenGlAutoImageComponent::mouseDrag(e);
         redoImage();
@@ -98,6 +100,7 @@ public:
         {
             defaultState.setProperty(IDs::absoluteTuning, s, nullptr);
             // DBG("UI defaultState: " + defaultState.toXmlString());
+            if (onChange) onChange();
         }
     }
 
@@ -109,6 +112,7 @@ public:
     void buttonClicked(juce::Button *b) override {
         OpenGlAutoImageComponent::buttonClicked(b);
         redoImage();
+        if (isModulated_ && onChange) onChange();
     }
 
     void textEditorReturnKeyPressed(juce::TextEditor &textEditor) override {
@@ -122,6 +126,7 @@ public:
         }
         else if (isModulated_ && defaultState.isValid()) {
             defaultState.setProperty(IDs::absoluteTuning, keyboardValsTextField->getText(), nullptr);
+            if (onChange) onChange();
         }
     }
 

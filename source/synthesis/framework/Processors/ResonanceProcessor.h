@@ -307,7 +307,7 @@ struct ResonanceParams : chowdsp::ParamHolder
     chowdsp::EnumChoiceParameter<SpectralType>::Ptr spectrum {
         juce::ParameterID { "rspectrum", 100 },
         "SpectralType",
-        SpectralType::None,
+        SpectralType::Custom,
         std::initializer_list<std::pair<char, char>> { { '_', ' ' }, { '1', '/' }, { '3', '\'' }, { '4', '#' }, { '5', 'b' } }
     };
 

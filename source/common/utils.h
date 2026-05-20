@@ -600,8 +600,8 @@ enum SelectChoice {
     Deselect = 1 << 1,
 };
 
-enum SpectralType {
-    None = 1 << 0,
+enum class SpectralType {
+    Custom = 1 << 0,
     Overtones8 = 1 << 1,
     Undertones8 = 1 << 2,
     Overtones20 = 1 << 3,
