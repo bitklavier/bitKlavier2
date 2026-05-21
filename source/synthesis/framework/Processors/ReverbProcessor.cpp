@@ -16,6 +16,10 @@ ReverbProcessor::ReverbProcessor (SynthBase& parent, const juce::ValueTree& vt, 
     : PluginBase (parent, vt, um, reverbBusLayout())
 {
     this->v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
+    // Reverb params are serialized as properties directly on v (e.g. reverbDry, reverbDecay).
+    // If any such property exists, PluginBase has already restored state and we must not
+    // overwrite it with the default preset.
+    const bool hasSavedState = this->v.hasProperty ("reverbDry");
 
     // Initialise freeverb3 objects (mirroring DragonflyReverbDSP constructor)
     early_.loadPresetReflection (FV3_EARLYREF_PRESET_1);
@@ -42,8 +46,11 @@ ReverbProcessor::ReverbProcessor (SynthBase& parent, const juce::ValueTree& vt, 
         oldParams_[i] = -1.f;
     }
 
-    // Apply default preset values to chowdsp params
-    applyPreset (kReverbDefaultPreset);
+    // Apply default preset values to chowdsp params only when there is no saved state;
+    // if state was already deserialized from the ValueTree by PluginBase, skip this so
+    // we don't overwrite the restored parameter values.
+    if (!hasSavedState)
+        applyPreset (kReverbDefaultPreset);
 
     // ── Listeners ──────────────────────────────────────────────────────
 

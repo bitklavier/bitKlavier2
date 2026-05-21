@@ -13,6 +13,8 @@
 EQProcessor::EQProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager *um)
     : PluginBase (parent, vt, um, eqBusLayout())
 {
+    this->v.getOrCreateChildWithName (IDs::PARAM_DEFAULT, nullptr);
+
     // parent.getValueTree().addListener(this);
     // state.params.sampleRate = getSampleRate();
     // MessageThread: recalculate coefficients and switch to Custom when a param changes.
