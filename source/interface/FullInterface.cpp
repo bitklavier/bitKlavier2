@@ -430,6 +430,7 @@ void FullInterface::popupSelector (juce::Component* source, juce::Point<int> pos
 
 void FullInterface::newOpenGLContextCreated()
 {
+    DBG ("newOpenGLContextCreated");
     double version_supported = juce::OpenGLShaderProgram::getLanguageVersion();
     unsupported_ = version_supported < kMinOpenGlVersion;
     if (unsupported_)
@@ -473,26 +474,20 @@ void FullInterface::openGLContextClosing()
 {
     if (unsupported_)
         return;
+    // Guard against being called more than once (AU hosts can trigger this twice on teardown)
+    if (shaders_ == nullptr)
+        return;
     DBG ("closing");
     background_.destroy (open_gl_);
-    prep_popup->destroyOpenGlComponents (open_gl_);
-    mod_popup->destroyOpenGlComponents (open_gl_);
+    if (prep_popup) prep_popup->destroyOpenGlComponents (open_gl_);
+    if (mod_popup) mod_popup->destroyOpenGlComponents (open_gl_);
     destroyOpenGlComponents (open_gl_);
-    removeSubSection(loading_section.get());
-    removeSubSection (main_.get());
-    removeSubSection (header_.get());
-    removeSubSection (footer_.get());
-
-    removeSubSection (prep_popup.get());
-    removeSubSection (mod_popup.get());
-
-    // main_.reset();
-    // main_->destroyOpenGlComponents(open_gl);
-    main_ = nullptr;
-    header_ = nullptr;
-    footer_ = nullptr;
-    prep_popup = nullptr;
-    mod_popup = nullptr;
+    if (loading_section) removeSubSection (loading_section.get());
+    if (main_)      { removeSubSection (main_.get());      main_      = nullptr; }
+    if (header_)    { removeSubSection (header_.get());    header_    = nullptr; }
+    if (footer_)    { removeSubSection (footer_.get());    footer_    = nullptr; }
+    if (prep_popup) { removeSubSection (prep_popup.get()); prep_popup = nullptr; }
+    if (mod_popup)  { removeSubSection (mod_popup.get());  mod_popup  = nullptr; }
 
     open_gl_.shaders = nullptr;
     shaders_ = nullptr;
