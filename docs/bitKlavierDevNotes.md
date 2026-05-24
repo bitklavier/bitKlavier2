@@ -1,5 +1,5 @@
 # Notes about how to do stuff in the bK codebase
-
+NOTE THAT THIS MIGHT BE OUTDATED BY NOW! but still potentially useful
 ---------
 ## Gui Layout Notes
 - FlexBox is nice. see `void HeaderSection::resized()`

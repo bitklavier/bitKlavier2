@@ -4,7 +4,7 @@
 
 bitKlavier 2 is a digital prepared piano audio plugin and standalone application built with JUCE 8. It uses the [PampleJuce](docs/PampleJuceREADME.md) CMake framework to avoid Projucer. The plugin supports AU, VST3, AUv3, and Standalone formats.
 
-- **Version:** Stored in the `VERSION` file (current: 4.0.1)
+- **Version:** Stored in the `VERSION` file (current: 4.9.10)
 - **Bundle ID:** `com.manyarrowsmusic.bitklavier`
 - **Manufacturer Code:** `Bitk` / Plugin Code: `B202`
 
@@ -56,14 +56,14 @@ source/
 └── modulation/                 # Modulation system (UI + backend)
 
 third_party/
-├── chowdsp_utils/              # DSP/GUI utilities, parameter system
 ├── melatonin_inspector/        # UI component inspector (limited with OpenGL)
 └── tracktion_engine/           # Utility files (not full engine)
 
 modules/
+├── chowdsp_utils/              # DSP/GUI utilities, parameter system
 └── melatonin_audio_sparklines/ # Console audio debug printing
 
-JUCE/                           # JUCE 8.0.12 (git submodule)
+JUCE/                           # JUCE 8.0.13 (git submodule)
 assets/                         # SVGs, fonts, default.bitklavierskin
 tests/                          # Catch2 unit tests
 ```
@@ -78,6 +78,7 @@ Key classes:
 - `SoundEngine` — top-level audio graph manager
 - `SynthBase` — base class with ValueTree state management
 - `BKSynthesiser` — custom JUCE synthesizer (see Performance section below)
+- `ResonanceBKSynthesiser` — multi-threaded synthesizer for Resonance preparation (see `RESONANCE_THREADING.md`)
 - `PluginProcessor` — inherits from both `juce::AudioProcessor` and `SynthBase`
 
 ### UI Architecture
@@ -105,7 +106,7 @@ The modulation bus channel count must be set precisely: `22 * 2` channels for 22
 
 ## Versioning
 
-Version is set in the `VERSION` file (e.g., `4.0.1`). The major number sets the binary suffix (`bitKlavier4`). After changing:
+Version is set in the `VERSION` file (e.g., `4.9.10`). The major number sets the binary suffix (`bitKlavier4`). After changing:
 1. Edit `VERSION`
 2. Update `juce::String getApplicationName()` in `main.cpp`
 3. Reload CMake
@@ -189,15 +190,15 @@ xcrun notarytool log <submission-id> --apple-id "dtrueman@princeton.edu" --team-
 
 ## Key External Dependencies
 
-| Library | Purpose |
-|---|---|
-| JUCE 8.0.12 | Audio plugin framework |
-| chowdsp_utils | Parameter system, DSP, preset management |
-| melatonin_inspector | UI debugging (limited with OpenGL) |
-| melatonin_audio_sparklines | Console audio visualization (debug) |
-| Catch2 3.8.1 | Unit testing |
-| spdlog | Logging |
-| magic_enum / nameof | Enum/name reflection |
+| Library | Purpose | Location |
+|---|---|---|
+| JUCE 8.0.13 | Audio plugin framework | (submodule) |
+| chowdsp_utils | Parameter system, DSP, preset management | modules/ |
+| melatonin_inspector | UI debugging (limited with OpenGL) | third_party/ |
+| melatonin_audio_sparklines | Console audio visualization (debug) | third_party/ |
+| Catch2 3.8.1 | Unit testing | (via CPM) |
+| spdlog | Logging | (via CPM) |
+| magic_enum / nameof | Enum/name reflection | (via CPM) |
 
 ## Performance: BKSynthesiser and ResonanceProcessor
 
@@ -230,36 +231,23 @@ Inside `BKSamplerVoice::renderNextBlock`:
 - `DirectProcessor`: `hammerSynth` and `pedalSynth` now also call `setNoteOnSpecMap` before `renderNextBlock` (they previously relied on the synthesiser's own default-initialised array — a latent bug exposed by this fix)
 - All four synthesisers in Direct, plus Nostalgic and Synchronic, are covered
 
-### Planned work: ResonanceBKSynthesiser (multithreaded voice rendering)
+### ResonanceBKSynthesiser Multi-Threading
 
-**Goal:** Parallelize `BKSynthesiser::renderVoices` for the Resonance preparation only, using JUCE Audio Workgroups, without affecting any other preparation.
+**Status:** ✅ Implemented (see `RESONANCE_THREADING.md` for details)
 
-**Design:**
-- Create `ResonanceBKSynthesiser` as a subclass of `BKSynthesiser`
-- Requires one change to `BKSynthesiser`: mark `renderVoices` as `virtual`
-- `ResonanceBKSynthesiser` overrides `renderVoices`:
-  - Pre-allocates K scratch `AudioBuffer<float>` objects at construction (one per worker thread, never allocated in the audio callback)
-  - On each block: distributes the 300-voice pool across K worker threads via lock-free FIFOs
-  - Each worker accumulates its voices into its scratch buffer
-  - Main thread waits at a `ThreadBarrier`, then sums scratch buffers into the output
-  - Worker threads join the `juce::AudioWorkgroup` via `WorkgroupToken` before processing
-  - `someVoicesActive` becomes `std::atomic<bool>`
-- `ResonanceProcessor` constructs `ResonanceBKSynthesiser` instead of `BKSynthesiser` — one line change in its constructor
-- A/B switching: toggling between the two implementations requires only changing that one constructor line (or a runtime boolean flag), making performance comparison straightforward
-
-**Key constraints:**
-- Audio Workgroups are macOS/iOS only — acceptable since bitKlavier targets macOS
-- Worker threads must be started with `startRealtimeThread()` and joined to the workgroup before processing
-- No heap allocation in the audio callback — all buffers and FIFOs pre-allocated
-- The existing `juce::CriticalSection lock` in `BKSynthesiser::processNextBlock` is held for MIDI handling but `renderVoices` runs inside it; the subclass override must coordinate carefully (workers operate on the voice array while the lock is held by the main thread — safe because voice list is not modified during rendering)
-
-**Reference:** JUCE AudioWorkgroup demo: `JUCE/examples/Audio/AudioWorkgroupDemo.h`
+The Resonance preparation now uses `ResonanceBKSynthesiser`, a multi-threaded voice renderer that distributes ~300-voice rendering across worker threads using JUCE Audio Workgroups. This is controlled by the `useMultiThreadedSynth` constant in `ResonanceProcessor.h`.
 
 ## General Performance Notes
 
 Known idle CPU issues (separate from the threading work above):
 - `FullInterface.cpp`: `setContinuousRepainting(true)` and `setSwapInterval(0)` cause high idle GPU/CPU usage — to be addressed separately
 - Gallery loading: `ConstructionSite::setActivePiano` does a full teardown/rebuild (acceptable in Release)
+
+## Related Documentation
+
+- `RESONANCE_THREADING.md` — Historical context and implementation details for multi-threaded Resonance
+- `../bitKlavierDevNotes.md` — Detailed development procedures
+- `../PampleJuceREADME.md` — CMake framework documentation
 
 ## Real-Time Programming Resources
 
