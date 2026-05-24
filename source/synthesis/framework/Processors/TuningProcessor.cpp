@@ -476,6 +476,15 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
 
     auto kbmString = deserial->getStringAttribute ("scalaKBM");
     paramHolder.tuningState.setKBMFromString(kbmString.toStdString());
+
+    /*
+     * explicitly re-apply spring tuning params after deserialization,
+     * since setValue() does not notify listeners
+     */
+    paramHolder.tuningState.springTuner->intervalScaleChanged();
+    paramHolder.tuningState.springTuner->intervalFundamentalChanged();
+    paramHolder.tuningState.springTuner->tetherScaleChanged();
+    paramHolder.tuningState.springTuner->tetherFundamentalChanged();
 }
 
 /**
@@ -918,6 +927,58 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
                     state.params.tuningState.fundamental->getIndex(),
                     state.params.tuningState.circularTuningOffset,
                     state.params.tuningState.circularTuningOffset_custom);
+            }
+        )
+    };
+
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+            state.params.tuningState.springTuningParams.scaleId,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]()
+            {
+                state.params.tuningState.springTuner->intervalScaleChanged();
+            }
+        )
+    };
+
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+            state.params.tuningState.springTuningParams.intervalFundamental,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]()
+            {
+                state.params.tuningState.springTuner->intervalFundamentalChanged();
+            }
+        )
+    };
+
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+            state.params.tuningState.springTuningParams.scaleId_tether,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]()
+            {
+                state.params.tuningState.springTuner->tetherScaleChanged();
+            }
+        )
+    };
+
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+            state.params.tuningState.springTuningParams.tetherFundamental,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]()
+            {
+                state.params.tuningState.springTuner->tetherFundamentalChanged();
             }
         )
     };

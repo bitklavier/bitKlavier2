@@ -136,6 +136,7 @@ Here's how you might approach a real task:
    
    Requirements:
    - Add FloatParameter to DirectParams
+   -- follow chowdsp pattern
    - Support audio-rate modulation
    - Add UI slider in DirectParametersView
    - Update modulation channel count if needed
