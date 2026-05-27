@@ -66,6 +66,15 @@ Fix: at end of `setModulationValues`, call `connection->setScalingValue(amount, 
 
 Also fixed: `VSTModulationBridge::acceptsMidi()` and `producesMidi()` now return `true` so MIDI ordering edges (ModProc→Bridge, Bridge→VST) can be added by the graph.
 
+## Mute/Solo System
+
+See `memory/mute_solo_system.md`. All 8 sound-making preps have M+S buttons. Key points:
+- 4 atomics per params struct: `muted_` (effective), `userMuted_` (intent), `soloed_`, `soloMuted_` (coordinator-imposed)
+- `IMuteSolable` interface in `source/synthesis/framework/Processors/IMuteSolable.h`
+- `SynthBase::coordinateSoloChanged` / `coordinateMuteChanged` coordinate across the active prep list
+- M button onClick reads `userMuted_` (not toggle state — button blinks during solo-mute)
+- Solo state is transient, not saved to galleries
+
 ## Piano Switching Performance (ConstructionSite)
 
 Quick wins landed on branch `danwork8` (March 2026):

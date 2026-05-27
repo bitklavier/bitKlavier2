@@ -43,8 +43,10 @@ ResonancePreparation::ResonancePreparation (
 std::unique_ptr<SynthSection> ResonancePreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
-        if (auto* proc = dynamic_cast<ResonanceProcessor*> (getProcessor()))
-            return std::make_unique<ResonanceParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+        if (auto* proc = dynamic_cast<ResonanceProcessor*> (getProcessor())) {
+            auto nodeId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (state.getProperty (IDs::nodeID));
+            return std::make_unique<ResonanceParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl, parent->getSynth(), nodeId);
+        }
 
     return nullptr;
 }

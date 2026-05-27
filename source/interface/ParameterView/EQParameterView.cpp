@@ -50,14 +50,18 @@ void EQParameterView::resized()
     if (isPrepVersion_ && sendLevelMeter)
         sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
-    if (isPrepVersion_ && muteButton_ && sendLevelMeter)
+    if (isPrepVersion_ && muteButton_ && soloButton_ && sendLevelMeter)
     {
         int muteLeft  = sendLevelMeter->getX();
         int muteRight = levelMeter->getRight();
         muteRow.setLeft(muteLeft);
         muteRow.setRight(muteRight);
         muteRow.removeFromTop(smallpadding);
-        muteButton_->setBounds(muteRow);
+        constexpr int kGap = 2;
+        int halfW = (muteRow.getWidth() - kGap) / 2;
+        muteButton_->setBounds(muteRow.removeFromLeft(halfW));
+        muteRow.removeFromLeft(kGap);
+        soloButton_->setBounds(muteRow);
     }
 
     bounds.reduce(largepadding, largepadding);

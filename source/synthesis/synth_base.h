@@ -296,6 +296,11 @@ public:
      juce::ValueTree getActivePreparationListValueTree();
     juce::ValueTree getActivePianoValueTree();
 
+    // Solo/mute coordination — call from the message thread after updating a prep's soloed_/userMuted_ field.
+    // Iterates all IMuteSolable processors in the active prep list and recomputes soloMuted_ + muted_.
+    void coordinateSoloChanged  (juce::AudioProcessorGraph::NodeID changedId, bool isOptionClick);
+    void coordinateMuteChanged  (juce::AudioProcessorGraph::NodeID changedId, bool newUserMuted, bool isOptionClick);
+
     bitklavier::ConnectionList *getActiveConnectionList();
 
     bitklavier::ModConnectionList *getActiveModConnectionList();

@@ -18,7 +18,8 @@
 class CompressorParameterView : public SynthSection, public juce::Timer
 {
 public:
-    CompressorParameterView (chowdsp::PluginState& pluginState, CompressorParams& params, juce::String name, OpenGlWrapper* open_gl, bool isPrepVersion = false) : SynthSection (""), compressorParams_ (params), isPrepVersion_ (isPrepVersion)
+    CompressorParameterView (chowdsp::PluginState& pluginState, CompressorParams& params, juce::String name, OpenGlWrapper* open_gl, bool isPrepVersion = false,
+                             SynthBase* synth = nullptr, juce::AudioProcessorGraph::NodeID nodeId = {}) : SynthSection (""), compressorParams_ (params), isPrepVersion_ (isPrepVersion), synth_(synth), nodeId_(nodeId)
     {
         // the name that will appear in the UI as the name of the section
         setName ("compressor");
@@ -72,10 +73,25 @@ public:
             addSubSection(sendLevelMeter.get());
 
             muteButton_ = std::make_unique<SynthButton>("mute");
-            muteButton_->setText("mute");
+            muteButton_->setText("M");
             addSynthButton(muteButton_.get(), true);
             muteButton_->onClick = [this]() {
-                compressorParams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+                bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+                bool newMuted = !compressorParams_.userMuted_.load(std::memory_order_relaxed);
+                compressorParams_.userMuted_.store(newMuted, std::memory_order_relaxed);
+                compressorParams_.muted_.store(newMuted || compressorParams_.soloMuted_.load(std::memory_order_relaxed),
+                                               std::memory_order_relaxed);
+                if (synth_) synth_->coordinateMuteChanged(nodeId_, newMuted, isOptionClick);
+            };
+
+            soloButton_ = std::make_unique<SynthButton>("solo");
+            soloButton_->setText("S");
+            addSynthButton(soloButton_.get(), true);
+            soloButton_->onClick = [this]() {
+                bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+                bool newSoloed = !compressorParams_.soloed_.load(std::memory_order_relaxed);
+                compressorParams_.soloed_.store(newSoloed, std::memory_order_relaxed);
+                if (synth_) synth_->coordinateSoloChanged(nodeId_, isOptionClick);
             };
         }
 
@@ -271,6 +287,10 @@ public:
     std::shared_ptr<PeakMeterSection> externalLevelMeter;
 
     std::unique_ptr<SynthButton> muteButton_;
+    std::unique_ptr<SynthButton> soloButton_;
+
+    SynthBase* synth_ = nullptr;
+    juce::AudioProcessorGraph::NodeID nodeId_;
 
     bool isPrepVersion_ = false;
 

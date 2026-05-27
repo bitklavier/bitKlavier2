@@ -18,6 +18,7 @@ Synchronic.h
 
 #pragma once
 
+#include "IMuteSolable.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
@@ -321,6 +322,9 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     // std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
     std::atomic<bool> muted_ { false };
+    std::atomic<bool> userMuted_ { false };
+    std::atomic<bool> soloed_ { false };
+    std::atomic<bool> soloMuted_ { false };
 };
 
 struct SynchronicNonParameterState : chowdsp::NonParamState
@@ -520,7 +524,9 @@ class SynchronicCluster
 
 #define MAX_CLUSTERS 10
 class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<SynchronicParams, SynchronicNonParameterState>>,
-                            public juce::ValueTree::Listener, public TuningListener
+                            public juce::ValueTree::Listener,
+                            public TuningListener,
+                            public IMuteSolable
 {
    public:
     SynchronicProcessor(SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -529,6 +535,11 @@ class SynchronicProcessor : public bitklavier::PluginBase<bitklavier::Preparatio
         parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
+
+    std::atomic<bool>& getMuted()    override { return state.params.muted_; }
+    std::atomic<bool>& getUserMuted() override { return state.params.userMuted_; }
+    std::atomic<bool>& getSoloed()   override { return state.params.soloed_; }
+    std::atomic<bool>& getSoloMuted() override { return state.params.soloMuted_; }
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

@@ -18,7 +18,8 @@
 class BlendronicParametersView : public SynthSection, public juce::Timer
 {
 public:
-    BlendronicParametersView (chowdsp::PluginState& pluginState, BlendronicParams& params, juce::String name, OpenGlWrapper* open_gl) : SynthSection (""), bparams_(params)
+    BlendronicParametersView (chowdsp::PluginState& pluginState, BlendronicParams& params, juce::String name, OpenGlWrapper* open_gl,
+                              SynthBase* synth = nullptr, juce::AudioProcessorGraph::NodeID nodeId = {}) : SynthSection (""), bparams_(params), synth_(synth), nodeId_(nodeId)
     {
         // the name that will appear in the UI as the name of the section
         setName ("blendronic");
@@ -124,10 +125,25 @@ public:
         feedbackCoeffsSlider->drawSliders(juce::dontSendNotification);
 
         muteButton_ = std::make_unique<SynthButton>("mute");
-        muteButton_->setText("mute");
+        muteButton_->setText("M");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
-            bparams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+            bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+            bool newMuted = !bparams_.userMuted_.load(std::memory_order_relaxed);
+            bparams_.userMuted_.store(newMuted, std::memory_order_relaxed);
+            bparams_.muted_.store(newMuted || bparams_.soloMuted_.load(std::memory_order_relaxed),
+                                  std::memory_order_relaxed);
+            if (synth_) synth_->coordinateMuteChanged(nodeId_, newMuted, isOptionClick);
+        };
+
+        soloButton_ = std::make_unique<SynthButton>("solo");
+        soloButton_->setText("S");
+        addSynthButton(soloButton_.get(), true);
+        soloButton_->onClick = [this]() {
+            bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+            bool newSoloed = !bparams_.soloed_.load(std::memory_order_relaxed);
+            bparams_.soloed_.store(newSoloed, std::memory_order_relaxed);
+            if (synth_) synth_->coordinateSoloChanged(nodeId_, isOptionClick);
         };
 
         // for updating the current sliders in multisliders
@@ -167,6 +183,10 @@ public:
     std::shared_ptr<PeakMeterSection> externalLevelMeter;
 
     std::unique_ptr<SynthButton> muteButton_;
+    std::unique_ptr<SynthButton> soloButton_;
+
+    SynthBase* synth_ = nullptr;
+    juce::AudioProcessorGraph::NodeID nodeId_;
 
     BlendronicParams& bparams_;
 

@@ -34,6 +34,7 @@
 
 #pragma once
 
+#include "IMuteSolable.h"
 #include "PluginBase.h"
 #include "target_types.h"
 #include "Identifiers.h"
@@ -217,6 +218,9 @@ struct BlendronicParams : chowdsp::ParamHolder
 
     // transient mute — not saved, not modulatable; toggled by UI button
     std::atomic<bool> muted_ { false };
+    std::atomic<bool> userMuted_ { false };
+    std::atomic<bool> soloed_ { false };
+    std::atomic<bool> soloMuted_ { false };
 };
 
 struct BlendronicNonParameterState : chowdsp::NonParamState
@@ -228,7 +232,8 @@ struct BlendronicNonParameterState : chowdsp::NonParamState
 
 class BlendronicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<BlendronicParams, BlendronicNonParameterState>>,
                             public juce::ValueTree::Listener,
-                            public bitklavier::ExternalAudioInputReceiver
+                            public bitklavier::ExternalAudioInputReceiver,
+                            public IMuteSolable
 {
 public:
     BlendronicProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -236,6 +241,11 @@ public:
     {
         parent.getValueTree().removeListener(this);
     }
+
+    std::atomic<bool>& getMuted()    override { return state.params.muted_; }
+    std::atomic<bool>& getUserMuted() override { return state.params.userMuted_; }
+    std::atomic<bool>& getSoloed()   override { return state.params.soloed_; }
+    std::atomic<bool>& getSoloMuted() override { return state.params.soloMuted_; }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

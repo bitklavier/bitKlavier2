@@ -23,7 +23,9 @@ public:
     ResonanceParametersView (chowdsp::PluginState& pluginState,
         ResonanceParams& params,
         juce::String name,
-        OpenGlWrapper* open_gl) : SynthSection (""), sparams_ (params)
+        OpenGlWrapper* open_gl,
+        SynthBase* synth = nullptr,
+        juce::AudioProcessorGraph::NodeID nodeId = {}) : SynthSection (""), sparams_ (params), synth_(synth), nodeId_(nodeId)
     {
         // the name that will appear in the UI as the name of the section
         setName ("resonance");
@@ -171,10 +173,25 @@ public:
         addSubSection(sendLevelMeter.get());
 
         muteButton_ = std::make_unique<SynthButton>("mute");
-        muteButton_->setText("mute");
+        muteButton_->setText("M");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
-            sparams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+            bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+            bool newMuted = !sparams_.userMuted_.load(std::memory_order_relaxed);
+            sparams_.userMuted_.store(newMuted, std::memory_order_relaxed);
+            sparams_.muted_.store(newMuted || sparams_.soloMuted_.load(std::memory_order_relaxed),
+                                  std::memory_order_relaxed);
+            if (synth_) synth_->coordinateMuteChanged(nodeId_, newMuted, isOptionClick);
+        };
+
+        soloButton_ = std::make_unique<SynthButton>("solo");
+        soloButton_->setText("S");
+        addSynthButton(soloButton_.get(), true);
+        soloButton_->onClick = [this]() {
+            bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+            bool newSoloed = !sparams_.soloed_.load(std::memory_order_relaxed);
+            sparams_.soloed_.store(newSoloed, std::memory_order_relaxed);
+            if (synth_) synth_->coordinateSoloChanged(nodeId_, isOptionClick);
         };
 
         resonanceCallbacks += {listeners.addParameterListener(
@@ -266,6 +283,10 @@ public:
     std::unique_ptr<chowdsp::ComboBoxAttachment> spectrum_attachment;
 
     std::unique_ptr<SynthButton> muteButton_;
+    std::unique_ptr<SynthButton> soloButton_;
+
+    SynthBase* synth_ = nullptr;
+    juce::AudioProcessorGraph::NodeID nodeId_;
 
     // for all notes off
     std::unique_ptr<SynthButton> allNotesOffButton;

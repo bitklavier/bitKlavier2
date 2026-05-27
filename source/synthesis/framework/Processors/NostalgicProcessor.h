@@ -10,6 +10,7 @@
 #include "EnvParams.h"
 #include "EnvelopeSequenceParams.h"
 #include "Identifiers.h"
+#include "IMuteSolable.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
@@ -201,6 +202,9 @@ struct NostalgicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
     std::atomic<bool> muted_ { false };
+    std::atomic<bool> userMuted_ { false };
+    std::atomic<bool> soloed_ { false };
+    std::atomic<bool> soloMuted_ { false };
 
     bool synchronicConnected = false;
 
@@ -342,7 +346,9 @@ private:
 // ********************************************************************************************* //
 
 class NostalgicProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<NostalgicParams, NostalgicNonParameterState>>,
-                        public juce::ValueTree::Listener, public TuningListener
+                        public juce::ValueTree::Listener,
+                        public TuningListener,
+                        public IMuteSolable
 {
 public:
     NostalgicProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -351,6 +357,11 @@ public:
         parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
+
+    std::atomic<bool>& getMuted()    override { return state.params.muted_; }
+    std::atomic<bool>& getUserMuted() override { return state.params.userMuted_; }
+    std::atomic<bool>& getSoloed()   override { return state.params.soloed_; }
+    std::atomic<bool>& getSoloMuted() override { return state.params.soloMuted_; }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}

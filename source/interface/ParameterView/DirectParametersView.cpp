@@ -41,14 +41,18 @@ void DirectParametersView::resized()
     sendmeterArea.removeFromTop(8);      // push meters down a few pixels so label tops aren't clipped
     sendLevelMeter->setBounds(sendmeterArea);
 
-    // place mute button spanning send and main meter columns
+    // place M and S buttons spanning send and main meter columns
     {
         int muteLeft  = sendLevelMeter->getX();
         int muteRight = levelMeter->getRight();
         muteRow.setLeft(muteLeft);
         muteRow.setRight(muteRight);
         muteRow.removeFromTop(smallpadding);
-        muteButton_->setBounds(muteRow);
+        constexpr int kGap = 2;
+        int halfW = (muteRow.getWidth() - kGap) / 2;
+        muteButton_->setBounds(muteRow.removeFromLeft(halfW));
+        muteRow.removeFromLeft(kGap);
+        soloButton_->setBounds(muteRow);
     }
 
     // how much vertical space will we need for all the components?
