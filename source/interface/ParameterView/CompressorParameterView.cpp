@@ -11,6 +11,19 @@
 void CompressorParameterView::timerCallback()
 {
     compressorMeter->update (compressorParams_.maxGainReduction.load());
+
+    if (isPrepVersion_ && muteButton_ && soloButton_) {
+        bool soloed    = compressorParams_.soloed_.load(std::memory_order_relaxed);
+        bool userMuted = compressorParams_.userMuted_.load(std::memory_order_relaxed);
+        bool soloMuted = compressorParams_.soloMuted_.load(std::memory_order_relaxed);
+        soloButton_->setToggleState(soloed, juce::dontSendNotification);
+        if (soloMuted && !userMuted) {
+            bool blinkPhase = (juce::Time::getMillisecondCounter() / 300) % 2;
+            muteButton_->setToggleState(blinkPhase, juce::dontSendNotification);
+        } else {
+            muteButton_->setToggleState(userMuted, juce::dontSendNotification);
+        }
+    }
 }
 
 void CompressorParameterView::resized()
@@ -48,14 +61,18 @@ void CompressorParameterView::resized()
     if (isPrepVersion_ && sendLevelMeter)
         sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
-    if (isPrepVersion_ && muteButton_ && sendLevelMeter)
+    if (isPrepVersion_ && muteButton_ && soloButton_ && sendLevelMeter)
     {
         int muteLeft  = sendLevelMeter->getX();
         int muteRight = levelMeter->getRight();
         muteRow.setLeft(muteLeft);
         muteRow.setRight(muteRight);
         muteRow.removeFromTop(smallpadding);
-        muteButton_->setBounds(muteRow);
+        constexpr int kGap = 2;
+        int halfW = (muteRow.getWidth() - kGap) / 2;
+        muteButton_->setBounds(muteRow.removeFromLeft(halfW));
+        muteRow.removeFromLeft(kGap);
+        soloButton_->setBounds(muteRow);
     }
 
     bounds.removeFromTop (largepadding * 6);

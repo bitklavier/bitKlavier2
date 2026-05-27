@@ -28,8 +28,10 @@ ReverbPreparation::ReverbPreparation (
 std::unique_ptr<SynthSection> ReverbPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
-        if (auto* proc = dynamic_cast<ReverbProcessor*> (getProcessor()))
-            return std::make_unique<ReverbParameterView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl, proc, true);
+        if (auto* proc = dynamic_cast<ReverbProcessor*> (getProcessor())) {
+            auto nodeId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (state.getProperty (IDs::nodeID));
+            return std::make_unique<ReverbParameterView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl, proc, true, parent->getSynth(), nodeId);
+        }
 
     return nullptr;
 }

@@ -9,6 +9,17 @@
 
 void BlendronicParametersView::timerCallback()
 {
+    bool soloed    = bparams_.soloed_.load(std::memory_order_relaxed);
+    bool userMuted = bparams_.userMuted_.load(std::memory_order_relaxed);
+    bool soloMuted = bparams_.soloMuted_.load(std::memory_order_relaxed);
+    soloButton_->setToggleState(soloed, juce::dontSendNotification);
+    if (soloMuted && !userMuted) {
+        bool blinkPhase = (juce::Time::getMillisecondCounter() / 300) % 2;
+        muteButton_->setToggleState(blinkPhase, juce::dontSendNotification);
+    } else {
+        muteButton_->setToggleState(userMuted, juce::dontSendNotification);
+    }
+
     /*
      * for updating the currently active sliders in the UI
      */
@@ -79,14 +90,19 @@ void BlendronicParametersView::resized()
     bounds.removeFromRight(smallpadding);
     sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
-    // mute button below Send and Main meters, spanning their combined width
+    // M and S buttons below Send and Main meters, spanning their combined width
     {
         int muteLeft  = sendLevelMeter->getX();
         int muteRight = levelMeter->getRight();
         int muteTop   = levelMeter->getBottom() + smallpadding;
         int muteH     = getLocalBounds().getBottom() - muteTop - smallpadding;
-        if (muteH > 0)
-            muteButton_->setBounds(muteLeft, muteTop, muteRight - muteLeft, muteH);
+        if (muteH > 0) {
+            constexpr int kGap = 2;
+            int totalW = muteRight - muteLeft;
+            int halfW  = (totalW - kGap) / 2;
+            muteButton_->setBounds(muteLeft, muteTop, halfW, muteH);
+            soloButton_->setBounds(muteLeft + halfW + kGap, muteTop, totalW - halfW - kGap, muteH);
+        }
     }
 
     bounds.reduce(largepadding, largepadding);

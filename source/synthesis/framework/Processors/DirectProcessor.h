@@ -9,6 +9,7 @@
 
 #include "EnvParams.h"
 #include "Identifiers.h"
+#include "IMuteSolable.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"
 #include "TransposeParams.h"
@@ -146,6 +147,9 @@ struct DirectParams : chowdsp::ParamHolder {
     std::tuple<std::atomic<float>, std::atomic<float> > outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::atomic<bool> muted_ { false };
+    std::atomic<bool> userMuted_ { false };
+    std::atomic<bool> soloed_ { false };
+    std::atomic<bool> soloMuted_ { false };
 
     /****************************************************************************************/
 };
@@ -162,7 +166,9 @@ struct DirectNonParameterState : chowdsp::NonParamState {
 
 class DirectProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<DirectParams,
                             DirectNonParameterState> >,
-                        public juce::ValueTree::Listener,public TuningListener {
+                        public juce::ValueTree::Listener,
+                        public TuningListener,
+                        public IMuteSolable {
 public:
     DirectProcessor(SynthBase &parent, const juce::ValueTree &v, juce::UndoManager* );
     ~DirectProcessor() {
@@ -174,6 +180,11 @@ public:
         parent.getValueTree().removeListener(this);
         if(tuning !=nullptr) tuning->removeListener(this);
     }
+
+    std::atomic<bool>& getMuted()    override { return state.params.muted_; }
+    std::atomic<bool>& getUserMuted() override { return state.params.userMuted_; }
+    std::atomic<bool>& getSoloed()   override { return state.params.soloed_; }
+    std::atomic<bool>& getSoloMuted() override { return state.params.soloMuted_; }
 
     void tuningStateInvalidated() override;
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;

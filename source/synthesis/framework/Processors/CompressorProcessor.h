@@ -7,6 +7,7 @@
 
 #pragma once
 #include "Identifiers.h"
+#include "IMuteSolable.h"
 #include "PluginBase.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
@@ -111,6 +112,9 @@ struct CompressorParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
     std::atomic<bool> muted_ { false };
+    std::atomic<bool> userMuted_ { false };
+    std::atomic<bool> soloed_ { false };
+    std::atomic<bool> soloMuted_ { false };
 
     // attack 0 to 100.00ms, center 50, default 0
     chowdsp::TimeMsParameter::Ptr attack //ms
@@ -202,7 +206,8 @@ struct CompressorNonParameterState : chowdsp::NonParamState
 
 class CompressorProcessor : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<CompressorParams, CompressorNonParameterState>>,
                             public juce::ValueTree::Listener,
-                            public bitklavier::ExternalAudioInputReceiver
+                            public bitklavier::ExternalAudioInputReceiver,
+                            public IMuteSolable
 {
 public:
     CompressorProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -215,7 +220,10 @@ public:
         currentOutput.set(-std::numeric_limits<float>::infinity());
     }
 
-
+    std::atomic<bool>& getMuted()    override { return state.params.muted_; }
+    std::atomic<bool>& getUserMuted() override { return state.params.userMuted_; }
+    std::atomic<bool>& getSoloed()   override { return state.params.soloed_; }
+    std::atomic<bool>& getSoloMuted() override { return state.params.soloMuted_; }
 
     void setExternalInputBuffer (const juce::AudioBuffer<float>* buf) override { externalInputBuffer = buf; }
 

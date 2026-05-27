@@ -18,6 +18,7 @@
  */
 #include "synth_base.h"
 
+#include "IMuteSolable.h"
 #include "SampleLoadManager.h"
 #include "FullInterface.h"
 #include "melatonin_audio_sparklines/melatonin_audio_sparklines.h"
@@ -358,6 +359,102 @@ PreparationList* SynthBase::getActivePreparationList()
             return preparation.get();
     }
     return nullptr;
+}
+
+void SynthBase::coordinateSoloChanged (juce::AudioProcessorGraph::NodeID changedId, bool isOptionClick)
+{
+    auto* list = getActivePreparationList();
+    if (! list) return;
+
+    // Determine whether the changed prep is now ON or OFF
+    bool changedIsNowSoloed = false;
+    for (auto* wrapper : list->objects)
+        if (wrapper->node_id == changedId)
+            if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+                changedIsNowSoloed = m->getSoloed().load (std::memory_order_relaxed);
+
+    if (isOptionClick)
+    {
+        if (changedIsNowSoloed)
+        {
+            // option-click Solo ON → exclusive: clear all other solos
+            for (auto* wrapper : list->objects)
+            {
+                if (wrapper->node_id == changedId) continue;
+                if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+                    m->getSoloed().store (false, std::memory_order_relaxed);
+            }
+        }
+        else
+        {
+            // option-click Solo OFF → if any others remain soloed, clear all
+            int remaining = 0;
+            for (auto* wrapper : list->objects)
+                if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+                    if (m->getSoloed().load (std::memory_order_relaxed))
+                        remaining++;
+            if (remaining > 0)
+                for (auto* wrapper : list->objects)
+                    if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+                        m->getSoloed().store (false, std::memory_order_relaxed);
+        }
+    }
+
+    // Recount after any option-click adjustments
+    int soloCount = 0;
+    for (auto* wrapper : list->objects)
+        if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+            if (m->getSoloed().load (std::memory_order_relaxed))
+                soloCount++;
+
+    // Update soloMuted and effective mute for every prep
+    for (auto* wrapper : list->objects)
+    {
+        if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+        {
+            bool isSoloed = m->getSoloed().load (std::memory_order_relaxed);
+            m->getSoloMuted().store ((soloCount > 0) && ! isSoloed, std::memory_order_relaxed);
+            m->updateEffectiveMute();
+        }
+    }
+}
+
+void SynthBase::coordinateMuteChanged (juce::AudioProcessorGraph::NodeID changedId, bool newUserMuted, bool isOptionClick)
+{
+    auto* list = getActivePreparationList();
+    if (! list) return;
+
+    if (isOptionClick && newUserMuted)
+    {
+        // option-click mute ON → unmute all OTHER preps
+        for (auto* wrapper : list->objects)
+        {
+            if (wrapper->node_id == changedId) continue;
+            if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+            {
+                m->getUserMuted().store (false, std::memory_order_relaxed);
+                m->updateEffectiveMute();
+            }
+        }
+    }
+    else if (isOptionClick && ! newUserMuted)
+    {
+        // option-click mute OFF: if multiple preps are muted, unmute all
+        int muteCount = 0;
+        for (auto* wrapper : list->objects)
+            if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+                if (m->getUserMuted().load (std::memory_order_relaxed))
+                    muteCount++;
+
+        if (muteCount > 0)
+            for (auto* wrapper : list->objects)
+                if (auto* m = dynamic_cast<IMuteSolable*> (wrapper->proc))
+                {
+                    m->getUserMuted().store (false, std::memory_order_relaxed);
+                    m->updateEffectiveMute();
+                }
+    }
+    // non-option-click: caller already wrote userMuted_ and called updateEffectiveMute() on itself
 }
 
 bitklavier::ConnectionList* SynthBase::getActiveConnectionList()

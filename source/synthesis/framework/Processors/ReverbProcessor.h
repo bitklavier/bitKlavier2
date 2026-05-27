@@ -10,6 +10,7 @@
 
 #pragma once
 #include "Identifiers.h"
+#include "IMuteSolable.h"
 #include "PluginBase.h"
 #include "utils.h"
 #include <PreparationStateImpl.h>
@@ -127,6 +128,9 @@ struct ReverbParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
     std::atomic<bool> muted_ { false };
+    std::atomic<bool> userMuted_ { false };
+    std::atomic<bool> soloed_ { false };
+    std::atomic<bool> soloMuted_ { false };
 
     // 18 reverb parameters
     chowdsp::FloatParameter::Ptr dryLevel {
@@ -213,11 +217,17 @@ struct ReverbNonParameterState : chowdsp::NonParamState
 // ──────────────────────────────────────────────────────────────────────
 class ReverbProcessor
     : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<ReverbParams, ReverbNonParameterState>>,
-      public bitklavier::ExternalAudioInputReceiver
+      public bitklavier::ExternalAudioInputReceiver,
+      public IMuteSolable
 {
 public:
     ReverbProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager*);
     ~ReverbProcessor() = default;
+
+    std::atomic<bool>& getMuted()    override { return state.params.muted_; }
+    std::atomic<bool>& getUserMuted() override { return state.params.userMuted_; }
+    std::atomic<bool>& getSoloed()   override { return state.params.soloed_; }
+    std::atomic<bool>& getSoloMuted() override { return state.params.soloMuted_; }
 
     void setExternalInputBuffer (const juce::AudioBuffer<float>* buf) override { externalInputBuffer = buf; }
 

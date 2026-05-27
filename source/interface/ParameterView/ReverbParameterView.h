@@ -15,8 +15,9 @@ class ReverbParameterView : public SynthSection, public juce::Timer, public juce
 public:
     ReverbParameterView (chowdsp::PluginState& pluginState, ReverbParams& params,
                          juce::String name, OpenGlWrapper* open_gl,
-                         ReverbProcessor* proc, bool isPrepVersion = false)
-        : SynthSection (""), reverbParams_ (params), proc_ (proc), isPrepVersion_ (isPrepVersion)
+                         ReverbProcessor* proc, bool isPrepVersion = false,
+                         SynthBase* synth = nullptr, juce::AudioProcessorGraph::NodeID nodeId = {})
+        : SynthSection (""), reverbParams_ (params), proc_ (proc), isPrepVersion_ (isPrepVersion), synth_(synth), nodeId_(nodeId)
     {
         setName ("reverb");
         setLookAndFeel (DefaultLookAndFeel::instance());
@@ -69,10 +70,25 @@ public:
             addSubSection (sendLevelMeter.get());
 
             muteButton_ = std::make_unique<SynthButton>("mute");
-            muteButton_->setText("mute");
+            muteButton_->setText("M");
             addSynthButton(muteButton_.get(), true);
             muteButton_->onClick = [this]() {
-                reverbParams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+                bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+                bool newMuted = !reverbParams_.userMuted_.load(std::memory_order_relaxed);
+                reverbParams_.userMuted_.store(newMuted, std::memory_order_relaxed);
+                reverbParams_.muted_.store(newMuted || reverbParams_.soloMuted_.load(std::memory_order_relaxed),
+                                           std::memory_order_relaxed);
+                if (synth_) synth_->coordinateMuteChanged(nodeId_, newMuted, isOptionClick);
+            };
+
+            soloButton_ = std::make_unique<SynthButton>("solo");
+            soloButton_->setText("S");
+            addSynthButton(soloButton_.get(), true);
+            soloButton_->onClick = [this]() {
+                bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+                bool newSoloed = !reverbParams_.soloed_.load(std::memory_order_relaxed);
+                reverbParams_.soloed_.store(newSoloed, std::memory_order_relaxed);
+                if (synth_) synth_->coordinateSoloChanged(nodeId_, isOptionClick);
             };
         }
 
@@ -160,7 +176,20 @@ public:
             proc_->v.removeListener (this);
     }
 
-    void timerCallback() override {}
+    void timerCallback() override {
+        if (isPrepVersion_ && muteButton_ && soloButton_) {
+            bool soloed    = reverbParams_.soloed_.load(std::memory_order_relaxed);
+            bool userMuted = reverbParams_.userMuted_.load(std::memory_order_relaxed);
+            bool soloMuted = reverbParams_.soloMuted_.load(std::memory_order_relaxed);
+            soloButton_->setToggleState(soloed, juce::dontSendNotification);
+            if (soloMuted && !userMuted) {
+                bool blinkPhase = (juce::Time::getMillisecondCounter() / 300) % 2;
+                muteButton_->setToggleState(blinkPhase, juce::dontSendNotification);
+            } else {
+                muteButton_->setToggleState(userMuted, juce::dontSendNotification);
+            }
+        }
+    }
     void stopAllTimers() override { stopTimer(); }
 
     void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier& id) override
@@ -243,6 +272,10 @@ public:
     std::unique_ptr<PeakMeterSection> sendLevelMeter;
 
     std::unique_ptr<SynthButton> muteButton_;
+    std::unique_ptr<SynthButton> soloButton_;
+
+    SynthBase* synth_ = nullptr;
+    juce::AudioProcessorGraph::NodeID nodeId_;
 
     bool isPrepVersion_ = false;
 

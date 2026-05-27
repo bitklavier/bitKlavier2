@@ -15,10 +15,12 @@
 #include "synth_section.h"
 #include "synth_slider.h"
 
-class DirectParametersView : public SynthSection{
+class DirectParametersView : public SynthSection, public juce::Timer {
 public:
     DirectParametersView(chowdsp::PluginState &pluginState, DirectParams &_params, juce::String name,
-                         OpenGlWrapper *open_gl) : SynthSection(""), params(_params) {
+                         OpenGlWrapper *open_gl,
+                         SynthBase* synth = nullptr,
+                         juce::AudioProcessorGraph::NodeID nodeId = {}) : SynthSection(""), params(_params), synth_(synth), nodeId_(nodeId) {
         // the name that will appear in the UI as the name of the section
         setName("direct");
 
@@ -99,11 +101,28 @@ public:
         addSubSection(sendLevelMeter.get());
 
         muteButton_ = std::make_unique<SynthButton>("mute");
-        muteButton_->setText("mute");
+        muteButton_->setText("M");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
-            params.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+            bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+            bool newMuted = !params.userMuted_.load(std::memory_order_relaxed);
+            params.userMuted_.store(newMuted, std::memory_order_relaxed);
+            params.muted_.store(newMuted || params.soloMuted_.load(std::memory_order_relaxed),
+                                std::memory_order_relaxed);
+            if (synth_) synth_->coordinateMuteChanged(nodeId_, newMuted, isOptionClick);
         };
+
+        soloButton_ = std::make_unique<SynthButton>("solo");
+        soloButton_->setText("S");
+        addSynthButton(soloButton_.get(), true);
+        soloButton_->onClick = [this]() {
+            bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
+            bool newSoloed = !params.soloed_.load(std::memory_order_relaxed);
+            params.soloed_.store(newSoloed, std::memory_order_relaxed);
+            if (synth_) synth_->coordinateSoloChanged(nodeId_, isOptionClick);
+        };
+
+        startTimer(250);
 
         //transpositionSlider->slider->resetRanges();
 
@@ -153,6 +172,19 @@ public:
         };
     }
 
+    void timerCallback() override {
+        bool soloed   = params.soloed_.load(std::memory_order_relaxed);
+        bool userMuted = params.userMuted_.load(std::memory_order_relaxed);
+        bool soloMuted = params.soloMuted_.load(std::memory_order_relaxed);
+        soloButton_->setToggleState(soloed, juce::dontSendNotification);
+        if (soloMuted && !userMuted) {
+            bool blinkPhase = (juce::Time::getMillisecondCounter() / 300) % 2;
+            muteButton_->setToggleState(blinkPhase, juce::dontSendNotification);
+        } else {
+            muteButton_->setToggleState(userMuted, juce::dontSendNotification);
+        }
+    }
+
     void paintBackground(juce::Graphics &g) override {
         setLabelFont(g);
         SynthSection::paintContainer(g);
@@ -181,6 +213,10 @@ public:
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
 
     std::unique_ptr<SynthButton> muteButton_;
+    std::unique_ptr<SynthButton> soloButton_;
+
+    SynthBase* synth_ = nullptr;
+    juce::AudioProcessorGraph::NodeID nodeId_;
 
     chowdsp::ScopedCallbackList disableSliderCallback;
 

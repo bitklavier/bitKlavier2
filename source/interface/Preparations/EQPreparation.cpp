@@ -45,8 +45,10 @@ EQPreparation::EQPreparation (
 std::unique_ptr<SynthSection> EQPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
-        if (auto* proc = dynamic_cast<EQProcessor*> (getProcessor()))
-            return std::make_unique<EQParameterView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl, true);
+        if (auto* proc = dynamic_cast<EQProcessor*> (getProcessor())) {
+            auto nodeId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (state.getProperty (IDs::nodeID));
+            return std::make_unique<EQParameterView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl, true, parent->getSynth(), nodeId);
+        }
 
     return nullptr;
 }

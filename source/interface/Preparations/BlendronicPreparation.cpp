@@ -44,8 +44,10 @@ BlendronicPreparation::BlendronicPreparation (
 std::unique_ptr<SynthSection> BlendronicPreparation::getPrepPopup()
 {
     if (auto parent = findParentComponentOfClass<SynthGuiInterface>())
-        if (auto* proc = dynamic_cast<BlendronicProcessor*> (getProcessor()))
-            return std::make_unique<BlendronicParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl);
+        if (auto* proc = dynamic_cast<BlendronicProcessor*> (getProcessor())) {
+            auto nodeId = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (state.getProperty (IDs::nodeID));
+            return std::make_unique<BlendronicParametersView> (proc->getState(), proc->getState().params, state.getProperty (IDs::uuid).toString(), open_gl, parent->getSynth(), nodeId);
+        }
 
     return nullptr;
 }

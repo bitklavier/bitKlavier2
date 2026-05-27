@@ -9,6 +9,17 @@
 
 void ResonanceParametersView::timerCallback(void)
 {
+    bool soloed    = sparams_.soloed_.load(std::memory_order_relaxed);
+    bool userMuted = sparams_.userMuted_.load(std::memory_order_relaxed);
+    bool soloMuted = sparams_.soloMuted_.load(std::memory_order_relaxed);
+    soloButton_->setToggleState(soloed, juce::dontSendNotification);
+    if (soloMuted && !userMuted) {
+        bool blinkPhase = (juce::Time::getMillisecondCounter() / 300) % 2;
+        muteButton_->setToggleState(blinkPhase, juce::dontSendNotification);
+    } else {
+        muteButton_->setToggleState(userMuted, juce::dontSendNotification);
+    }
+
     /*
      * probably a more direct way to do this without a timer...
      */
@@ -54,14 +65,18 @@ void ResonanceParametersView::resized()
     sendmeterArea.removeFromTop(8);      // push meters down a few pixels so label tops aren't clipped
     sendLevelMeter->setBounds(sendmeterArea);
 
-    // place mute button spanning send and main meter columns
+    // place M and S buttons spanning send and main meter columns
     {
         int muteLeft  = sendLevelMeter->getX();
         int muteRight = levelMeter->getRight();
         muteRow.setLeft(muteLeft);
         muteRow.setRight(muteRight);
         muteRow.removeFromTop(smallpadding);
-        muteButton_->setBounds(muteRow);
+        constexpr int kGap = 2;
+        int halfW = (muteRow.getWidth() - kGap) / 2;
+        muteButton_->setBounds(muteRow.removeFromLeft(halfW));
+        muteRow.removeFromLeft(kGap);
+        soloButton_->setBounds(muteRow);
     }
 
     //
