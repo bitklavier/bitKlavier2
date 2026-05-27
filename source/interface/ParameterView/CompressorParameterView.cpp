@@ -35,6 +35,11 @@ void CompressorParameterView::resized()
     bounds.removeFromLeft(title_width);
     bounds.removeFromLeft(smallpadding);
 
+    const int muteButtonH = 18;
+    juce::Rectangle<int> muteRow;
+    if (isPrepVersion_)
+        muteRow = bounds.removeFromBottom(muteButtonH + smallpadding);
+
     if (isPrepVersion_ && externalLevelMeter)
         externalLevelMeter->setBounds(bounds.removeFromLeft(title_width));
     inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
@@ -42,6 +47,16 @@ void CompressorParameterView::resized()
     levelMeter->setBounds(bounds.removeFromRight(title_width));
     if (isPrepVersion_ && sendLevelMeter)
         sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
+
+    if (isPrepVersion_ && muteButton_ && sendLevelMeter)
+    {
+        int muteLeft  = sendLevelMeter->getX();
+        int muteRight = levelMeter->getRight();
+        muteRow.setLeft(muteLeft);
+        muteRow.setRight(muteRight);
+        muteRow.removeFromTop(smallpadding);
+        muteButton_->setBounds(muteRow);
+    }
 
     bounds.removeFromTop (largepadding * 6);
     bounds.reduce(largepadding * 6, largepadding);

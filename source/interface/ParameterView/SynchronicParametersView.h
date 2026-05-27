@@ -200,6 +200,13 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
+        muteButton_ = std::make_unique<SynthButton>("mute");
+        muteButton_->setText("mute");
+        addSynthButton(muteButton_.get(), true);
+        muteButton_->onClick = [this]() {
+            sparams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+        };
+
         /*
          * listen for changes from mods/resets, redraw as needed
          */
@@ -353,6 +360,8 @@ public:
     // level meters with gain sliders
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
+
+    std::unique_ptr<SynthButton> muteButton_;
 
     SynchronicParams& sparams_;
 

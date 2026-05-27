@@ -126,6 +126,7 @@ struct ReverbParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
+    std::atomic<bool> muted_ { false };
 
     // 18 reverb parameters
     chowdsp::FloatParameter::Ptr dryLevel {

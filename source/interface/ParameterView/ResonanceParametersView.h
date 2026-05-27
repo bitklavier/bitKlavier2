@@ -170,6 +170,13 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
+        muteButton_ = std::make_unique<SynthButton>("mute");
+        muteButton_->setText("mute");
+        addSynthButton(muteButton_.get(), true);
+        muteButton_->onClick = [this]() {
+            sparams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+        };
+
         resonanceCallbacks += {listeners.addParameterListener(
             params.spectrum,
             chowdsp::ParameterListenerThread::MessageThread,
@@ -257,6 +264,8 @@ public:
 
     std::unique_ptr<OpenGLComboBox> spectrum_combo_box;
     std::unique_ptr<chowdsp::ComboBoxAttachment> spectrum_attachment;
+
+    std::unique_ptr<SynthButton> muteButton_;
 
     // for all notes off
     std::unique_ptr<SynthButton> allNotesOffButton;

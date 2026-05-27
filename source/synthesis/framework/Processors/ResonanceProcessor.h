@@ -349,6 +349,7 @@ struct ResonanceParams : chowdsp::ParamHolder
 
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
+    std::atomic<bool> muted_ { false };
 
     /* Custom serializer */
     template <typename Serializer>

@@ -245,11 +245,13 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
      * busIndex is different than channel # because each bus might have a number of channels
      */
 
+    const bool muted = state.params.muted_.load (std::memory_order_relaxed);
+
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
     {
-        auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
+        auto sendgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
         buffer.copyFrom (sendBufferIndex, 0, buffer.getReadPointer (0), buffer.getNumSamples(), sendgainmult);
         buffer.copyFrom (sendBufferIndex + 1, 0, buffer.getReadPointer (1), buffer.getNumSamples(), sendgainmult);
 
@@ -259,7 +261,7 @@ void DirectProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
 
     // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    auto outputgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain (0, 0, buffer.getNumSamples(), outputgainmult);
     buffer.applyGain (1, 0, buffer.getNumSamples(), outputgainmult);
 
@@ -331,14 +333,16 @@ void DirectProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, ju
         pedalSynth->renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     }
 
+    const bool muted = state.params.muted_.load (std::memory_order_relaxed);
+
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
-    auto sendgainmult = bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
+    auto sendgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (*state.params.outputSendParam);
     buffer.copyFrom (sendBufferIndex, 0, buffer.getReadPointer (0), buffer.getNumSamples(), sendgainmult);
     buffer.copyFrom (sendBufferIndex + 1, 0, buffer.getReadPointer (1), buffer.getNumSamples(), sendgainmult);
 
     // final output gain stage, from rightmost slider in DirectParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    auto outputgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain (0, 0, buffer.getNumSamples(), outputgainmult);
     buffer.applyGain (1, 0, buffer.getNumSamples(), outputgainmult);
 

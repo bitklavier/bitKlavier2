@@ -495,11 +495,13 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
         nostalgicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
 
+    const bool muted = state.params.muted_.load (std::memory_order_relaxed);
+
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
     {
-        auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+        auto sendgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
         buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
         buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
 
@@ -509,7 +511,7 @@ void NostalgicProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     }
 
     // final output gain stage, from rightmost slider in NostalgicParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    auto outputgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
 
@@ -539,17 +541,19 @@ void NostalgicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
         nostalgicSynth->renderNextBlock (buffer, outMidi, 0, buffer.getNumSamples());
     }
 
+    const bool muted = state.params.muted_.load (std::memory_order_relaxed);
+
     // handle the send
     int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
     if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
     {
-        auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
+        auto sendgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (state.params.outputSendGain->getCurrentValue());
         buffer.copyFrom(sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
         buffer.copyFrom(sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
     }
 
     // final output gain stage, from rightmost slider in NostalgicParametersView
-    auto outputgainmult = bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
+    auto outputgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (state.params.outputGain->getCurrentValue());
     buffer.applyGain(0, 0, numSamples, outputgainmult);
     buffer.applyGain(1, 0, numSamples, outputgainmult);
 }

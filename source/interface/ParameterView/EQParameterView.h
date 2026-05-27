@@ -88,6 +88,13 @@ public:
             sendLevelMeter = std::make_shared<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
             sendLevelMeter->setLabel("Send");
             addSubSection(sendLevelMeter.get());
+
+            muteButton_ = std::make_unique<SynthButton>("mute");
+            muteButton_->setText("mute");
+            addSynthButton(muteButton_.get(), true);
+            muteButton_->onClick = [this]() {
+                eqparams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+            };
         }
 
         presetsButton = std::make_unique<OpenGlTextButton> ("eqPresets");
@@ -202,6 +209,8 @@ public:
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
     std::shared_ptr<PeakMeterSection> inLevelMeter;
     std::shared_ptr<PeakMeterSection> externalLevelMeter;
+
+    std::unique_ptr<SynthButton> muteButton_;
 
     bool isPrepVersion_ = false;
 

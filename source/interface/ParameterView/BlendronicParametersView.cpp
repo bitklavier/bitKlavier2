@@ -79,6 +79,16 @@ void BlendronicParametersView::resized()
     bounds.removeFromRight(smallpadding);
     sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
 
+    // mute button below Send and Main meters, spanning their combined width
+    {
+        int muteLeft  = sendLevelMeter->getX();
+        int muteRight = levelMeter->getRight();
+        int muteTop   = levelMeter->getBottom() + smallpadding;
+        int muteH     = getLocalBounds().getBottom() - muteTop - smallpadding;
+        if (muteH > 0)
+            muteButton_->setBounds(muteLeft, muteTop, muteRight - muteLeft, muteH);
+    }
+
     bounds.reduce(largepadding, largepadding);
 
     // how much vertical space will we need for all the components?

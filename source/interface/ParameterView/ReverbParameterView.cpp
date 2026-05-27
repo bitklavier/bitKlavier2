@@ -23,6 +23,11 @@ void ReverbParameterView::resized()
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft (title_width + smallpadding);
 
+    const int muteButtonH = 18;
+    juce::Rectangle<int> muteRow;
+    if (isPrepVersion_)
+        muteRow = bounds.removeFromBottom(muteButtonH + smallpadding);
+
     // Level meters on left and right edges
     if (isPrepVersion_ && externalLevelMeter)
         externalLevelMeter->setBounds (bounds.removeFromLeft (title_width));
@@ -31,6 +36,16 @@ void ReverbParameterView::resized()
     levelMeter->setBounds   (bounds.removeFromRight (title_width));
     if (isPrepVersion_ && sendLevelMeter)
         sendLevelMeter->setBounds (bounds.removeFromRight (title_width));
+
+    if (isPrepVersion_ && muteButton_ && sendLevelMeter)
+    {
+        int muteLeft  = sendLevelMeter->getX();
+        int muteRight = levelMeter->getRight();
+        muteRow.setLeft(muteLeft);
+        muteRow.setRight(muteRight);
+        muteRow.removeFromTop(smallpadding);
+        muteButton_->setBounds(muteRow);
+    }
 
     bounds.removeFromTop (largepadding * 6);
     bounds.reduce (largepadding * 6, largepadding);

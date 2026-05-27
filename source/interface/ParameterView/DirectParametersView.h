@@ -11,6 +11,7 @@
 #include "TranspositionSliderSection.h"
 #include "envelope_section.h"
 #include "peak_meter_section.h"
+#include "synth_button.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 
@@ -97,6 +98,13 @@ public:
         sendLevelMeter->setLabel("Send");
         addSubSection(sendLevelMeter.get());
 
+        muteButton_ = std::make_unique<SynthButton>("mute");
+        muteButton_->setText("mute");
+        addSynthButton(muteButton_.get(), true);
+        muteButton_->onClick = [this]() {
+            params.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+        };
+
         //transpositionSlider->slider->resetRanges();
 
         disableSliderCallback += {
@@ -171,6 +179,8 @@ public:
     // level meter with output gain slider
     std::shared_ptr<PeakMeterSection> levelMeter;
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
+
+    std::unique_ptr<SynthButton> muteButton_;
 
     chowdsp::ScopedCallbackList disableSliderCallback;
 

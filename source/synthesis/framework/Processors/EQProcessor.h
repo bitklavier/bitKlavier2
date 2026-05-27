@@ -119,6 +119,7 @@ struct EQParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
+    std::atomic<bool> muted_ { false };
 
     // filters
     EQCutFilterParams loCutFilterParams{"loCut"};

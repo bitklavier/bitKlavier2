@@ -37,6 +37,11 @@ void EQParameterView::resized()
     // reset_button->setBounds(resetBounds);
     //bounds.removeFromTop (60);
 
+    const int muteButtonH = 18;
+    juce::Rectangle<int> muteRow;
+    if (isPrepVersion_)
+        muteRow = bounds.removeFromBottom(muteButtonH + smallpadding);
+
     if (isPrepVersion_ && externalLevelMeter)
         externalLevelMeter->setBounds(bounds.removeFromLeft(title_width));
     inLevelMeter->setBounds(bounds.removeFromLeft(title_width));
@@ -44,6 +49,16 @@ void EQParameterView::resized()
     levelMeter->setBounds(bounds.removeFromRight(title_width));
     if (isPrepVersion_ && sendLevelMeter)
         sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
+
+    if (isPrepVersion_ && muteButton_ && sendLevelMeter)
+    {
+        int muteLeft  = sendLevelMeter->getX();
+        int muteRight = levelMeter->getRight();
+        muteRow.setLeft(muteLeft);
+        muteRow.setRight(muteRight);
+        muteRow.removeFromTop(smallpadding);
+        muteButton_->setBounds(muteRow);
+    }
 
     bounds.reduce(largepadding, largepadding);
 

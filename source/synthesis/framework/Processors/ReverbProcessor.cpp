@@ -271,12 +271,14 @@ void ReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
         }
     }
 
+    const bool muted = state.params.muted_.load (std::memory_order_relaxed);
+
     // handle the send
     {
         int sendBufferIndex = getChannelIndexInProcessBlockBuffer (false, 2, 0);
         if (sendBufferIndex >= 0 && sendBufferIndex + 1 < buffer.getNumChannels())
         {
-            auto sendgainmult = bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
+            auto sendgainmult = muted ? 0.0f : bitklavier::utils::dbToMagnitude (state.params.outputSend->getCurrentValue());
             buffer.copyFrom (sendBufferIndex, 0, buffer.getReadPointer(0), numSamples, sendgainmult);
             buffer.copyFrom (sendBufferIndex+1, 0, buffer.getReadPointer(1), numSamples, sendgainmult);
             std::get<0> (state.params.sendLevels) = buffer.getRMSLevel (sendBufferIndex, 0, numSamples);
@@ -285,7 +287,7 @@ void ReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     }
 
     // Output gain
-    const float outGain = bitklavier::utils::dbToMagnitude (*state.params.outputGain);
+    const float outGain = muted ? 0.0f : bitklavier::utils::dbToMagnitude (*state.params.outputGain);
     buffer.applyGain (0, 0, numSamples, outGain);
     buffer.applyGain (1, 0, numSamples, outGain);
 

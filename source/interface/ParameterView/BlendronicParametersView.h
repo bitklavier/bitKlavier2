@@ -11,6 +11,7 @@
 #include "BlendronicProcessor.h"
 #include "OpenGL_MultiSlider.h"
 #include "peak_meter_section.h"
+#include "synth_button.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 
@@ -122,6 +123,13 @@ public:
         smoothingTimesSlider->drawSliders(juce::dontSendNotification);
         feedbackCoeffsSlider->drawSliders(juce::dontSendNotification);
 
+        muteButton_ = std::make_unique<SynthButton>("mute");
+        muteButton_->setText("mute");
+        addSynthButton(muteButton_.get(), true);
+        muteButton_->onClick = [this]() {
+            bparams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+        };
+
         // for updating the current sliders in multisliders
         startTimer(50);
 
@@ -157,6 +165,8 @@ public:
     std::shared_ptr<PeakMeterSection> sendLevelMeter;
     std::shared_ptr<PeakMeterSection> inLevelMeter;
     std::shared_ptr<PeakMeterSection> externalLevelMeter;
+
+    std::unique_ptr<SynthButton> muteButton_;
 
     BlendronicParams& bparams_;
 

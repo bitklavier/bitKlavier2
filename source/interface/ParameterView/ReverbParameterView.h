@@ -6,6 +6,7 @@
 #include "OpenGL_LabeledBorder.h"
 #include "default_look_and_feel.h"
 #include "peak_meter_section.h"
+#include "synth_button.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 
@@ -66,6 +67,13 @@ public:
             sendLevelMeter = std::make_unique<PeakMeterSection> (name, params.outputSend, listeners, &params.sendLevels);
             sendLevelMeter->setLabel ("Send");
             addSubSection (sendLevelMeter.get());
+
+            muteButton_ = std::make_unique<SynthButton>("mute");
+            muteButton_->setText("mute");
+            addSynthButton(muteButton_.get(), true);
+            muteButton_->onClick = [this]() {
+                reverbParams_.muted_.store(muteButton_->getToggleState(), std::memory_order_relaxed);
+            };
         }
 
         // Borders
@@ -233,6 +241,8 @@ public:
     std::unique_ptr<PeakMeterSection> levelMeter;
     std::unique_ptr<PeakMeterSection> externalLevelMeter;
     std::unique_ptr<PeakMeterSection> sendLevelMeter;
+
+    std::unique_ptr<SynthButton> muteButton_;
 
     bool isPrepVersion_ = false;
 
