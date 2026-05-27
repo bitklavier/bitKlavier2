@@ -214,6 +214,9 @@ struct BlendronicParams : chowdsp::ParamHolder
     std::atomic<int> delayLengths_current = 0;
     std::atomic<int> smoothingTimes_current = 0;
     std::atomic<int> feedbackCoeffs_current = 0;
+
+    // transient mute — not saved, not modulatable; toggled by UI button
+    std::atomic<bool> muted_ { false };
 };
 
 struct BlendronicNonParameterState : chowdsp::NonParamState

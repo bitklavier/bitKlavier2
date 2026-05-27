@@ -320,6 +320,7 @@ struct SynchronicParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> outputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     // std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
+    std::atomic<bool> muted_ { false };
 };
 
 struct SynchronicNonParameterState : chowdsp::NonParamState

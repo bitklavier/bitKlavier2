@@ -110,6 +110,7 @@ struct CompressorParams : chowdsp::ParamHolder
     std::tuple<std::atomic<float>, std::atomic<float>> sendLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> inputLevels;
     std::tuple<std::atomic<float>, std::atomic<float>> externalLevels;
+    std::atomic<bool> muted_ { false };
 
     // attack 0 to 100.00ms, center 50, default 0
     chowdsp::TimeMsParameter::Ptr attack //ms

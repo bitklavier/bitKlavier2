@@ -64,18 +64,29 @@ void SynchronicParametersView::resized()
     juce::Rectangle<int> bounds = getLocalBounds();
     bounds.removeFromLeft(title_width);
 
+    // reserve bottom strip for mute button before extracting meter areas
+    const int muteButtonH = 18;
+    auto muteRow = bounds.removeFromBottom(muteButtonH + smallpadding);
+
     // bounds for level meter on right side
     juce::Rectangle<int> meterArea = bounds.removeFromRight(title_width);
     meterArea.removeFromTop(8);      // push meters down a few pixels so label tops aren't clipped
-    meterArea.removeFromBottom(20);  // shorten all meters (and multisliders) by 20px
     levelMeter->setBounds(meterArea);
 
     bounds.removeFromRight(smallpadding);
     juce::Rectangle<int> sendmeterArea = bounds.removeFromRight(title_width);
     sendmeterArea.removeFromTop(8);      // push meters down a few pixels so label tops aren't clipped
-    sendmeterArea.removeFromBottom(20);  // shorten all meters (and multisliders) by 20px
     sendLevelMeter->setBounds(sendmeterArea);
-    // sendLevelMeter->setBounds(bounds.removeFromRight(title_width));
+
+    // place mute button spanning send and main meter columns
+    {
+        int muteLeft  = sendLevelMeter->getX();
+        int muteRight = levelMeter->getRight();
+        muteRow.setLeft(muteLeft);
+        muteRow.setRight(muteRight);
+        muteRow.removeFromTop(smallpadding);
+        muteButton_->setBounds(muteRow);
+    }
 
     //
     // *** done with meters placement section
