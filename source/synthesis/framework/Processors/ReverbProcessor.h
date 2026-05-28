@@ -31,7 +31,7 @@
 #undef fpclassify
 
 // ──────────────────────────────────────────────────────────────────────
-// Preset data (copied from Dragonfly Hall DistrhoPluginInfo.h)
+// Preset data (copied from Dragonfly Hall DistroPluginInfo.h)
 // order: dry, early, late, size, width, predelay, diffuse,
 //        lowCut, lowXover, lowMult, highCut, highXover, highMult,
 //        spin, wander, decay, earlySend, modulation
