@@ -228,6 +228,7 @@ private:
     LassoOutlineComponent selectorLasso;
     std::shared_ptr<OpenGlImageComponent> lassoVisual;
     bool lasso_active_ = false;
+    bool lasso_started_ = false; // true once beginLasso is called in the first mouseDrag
 
     friend class CableView;
     CableView cableView;
