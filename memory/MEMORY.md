@@ -79,7 +79,7 @@ See `memory/mute_solo_system.md`. All 8 sound-making preps have M+S buttons. Key
 
 ## macOS Sonoma: setVisible() During Mouse Event Dispatch Cancels Drag
 
-See `memory/setvisible_during_event_dispatch.md`. On Sonoma, calling `setVisible()` from within a mouse event handler cancels native NSView drag tracking — `mouseDrag` never fires. Root cause: `addMouseListener` double-invocation in MainSection caused `endLasso()` → `setVisible(false)` on every `mouseDown`. Fix: `!lasso_active_` guard prevents the second invocation from running lasso setup.
+See `memory/setvisible_during_event_dispatch.md`. On Sonoma, ANY `setVisible()` (true or false) during `mouseDown` cancels NSView drag tracking — including `setVisible(true)` via `beginLasso`. Complete fix: defer ALL lasso setup (beginLasso/setVisible) out of mouseDown entirely; call it in the first `mouseDrag` instead, gated by `lasso_started_`. Debug builds mask this because overhead hides the timing; always verify Sonoma drag fixes in Release.
 
 ## Piano Switching Performance (ConstructionSite)
 
