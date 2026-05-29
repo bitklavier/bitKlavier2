@@ -103,6 +103,10 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     lassoVisual->setStatic(false);
     addOpenGlComponent(lassoVisual, false, true);
 
+    // Keep selectorLasso permanently parented so beginLasso's getParentComponent() check
+    // always passes, and to avoid dynamic add/remove interacting with OpenGL hierarchy.
+    addChildComponent(selectorLasso);
+
     horizontal_scrollbar_ = std::make_unique<OpenGlScrollBar>(false); // horizontal
     horizontal_scrollbar_->setRangeLimits(0.0, 4000.0);
     horizontal_scrollbar_->setCurrentRange(0.0, 800.0);
@@ -1299,23 +1303,12 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
         if (!e.mods.isShiftDown())
             preparationSelector.getLassoSelection().deselectAll();
 
-        if (!cableView.cableBeingDragged())
+        if (!cableView.cableBeingDragged() && !lasso_active_)
         {
-            // First, add the lasso to the parent and make it visible.
-            // JUCE LassoComponent::beginLasso often asserts if the component is not showing.
-            addChildComponent(selectorLasso);
-            selectorLasso.setVisible(true);
+            lasso_active_ = true;
             selectorLasso.toFront(false);
-
             selectorLasso.endLasso();
             selectorLasso.beginLasso(e, &preparationSelector);
-
-            // Give it a tiny size so it's initially visible as a dot at the mouse position
-            selectorLasso.dragLasso(e.withNewPosition(e.position + juce::Point<float>(0.1f, 0.1f)));
-
-            lassoVisual->setVisible(true);
-            lassoVisual->setBounds(selectorLasso.getBounds());
-            lassoVisual->redrawImage(true);
         }
     } else if (itemToSelect != nullptr && !e.mods.isPopupMenu()) {
         if (e.mods.isShiftDown())
@@ -1503,7 +1496,7 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     selectorLasso.endLasso();
     selectorLasso.setVisible(false);
     lassoVisual->setVisible(false);
-    removeChildComponent(&selectorLasso);
+    lasso_active_ = false;
     if (editing_comment_) return;
 
     juce::MouseEvent e = eo.getEventRelativeTo(this);
@@ -1575,12 +1568,13 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
     if (e.mods.isRightButtonDown())
         return;
 
-    if (selectorLasso.isVisible())
+    if (lasso_active_)
     {
+        juce::MouseEvent eLasso = e.getEventRelativeTo(this);
         selectorLasso.toFront(false);
-        selectorLasso.dragLasso(e);
-        selectorLasso.repaint();
+        selectorLasso.dragLasso(eLasso);
 
+        lassoVisual->setVisible(true);
         lassoVisual->setBounds(selectorLasso.getBounds());
         lassoVisual->redrawImage(true);
     }

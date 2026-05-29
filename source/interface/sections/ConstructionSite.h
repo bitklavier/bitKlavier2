@@ -227,6 +227,7 @@ private:
     };
     LassoOutlineComponent selectorLasso;
     std::shared_ptr<OpenGlImageComponent> lassoVisual;
+    bool lasso_active_ = false;
 
     friend class CableView;
     CableView cableView;

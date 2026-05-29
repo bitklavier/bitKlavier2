@@ -1,5 +1,7 @@
 # bitKlavier2 Memory
 
+> **Note for Claude:** Always save new memories here (repo `memory/` folder) and update this file. The user-level auto-memory at `~/.claude/projects/.../memory/` is secondary.
+
 ## State Modulation — Known Fixes (March 2026)
 
 ### Nostalgic TransposeParams not applied (fixed on danwork9)
@@ -74,6 +76,10 @@ See `memory/mute_solo_system.md`. All 8 sound-making preps have M+S buttons. Key
 - `SynthBase::coordinateSoloChanged` / `coordinateMuteChanged` coordinate across the active prep list
 - M button onClick reads `userMuted_` (not toggle state — button blinks during solo-mute)
 - Solo state is transient, not saved to galleries
+
+## macOS Sonoma: setVisible() During Mouse Event Dispatch Cancels Drag
+
+See `memory/setvisible_during_event_dispatch.md`. On Sonoma, calling `setVisible()` from within a mouse event handler cancels native NSView drag tracking — `mouseDrag` never fires. Root cause: `addMouseListener` double-invocation in MainSection caused `endLasso()` → `setVisible(false)` on every `mouseDown`. Fix: `!lasso_active_` guard prevents the second invocation from running lasso setup.
 
 ## Piano Switching Performance (ConstructionSite)
 
