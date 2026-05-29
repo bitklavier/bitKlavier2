@@ -6,9 +6,17 @@ This guide explains when and how to use the documentation in `docs/ai-context/` 
 
 | AI Tool | When to Use Context | Which Files |
 |---------|-------------------|-------------|
-| **AI Chat** | Starting new topic/session | `CLAUDE.md` + topic-specific files |
-| **Junie Tasks** | Multi-file changes or core systems | `CLAUDE.md` for most tasks |
-| **Air** | Always for complex projects | `CLAUDE.md` + all relevant files |
+| **AI Chat** | Starting new topic/session, planning, or exploration | `CLAUDE.md` + topic-specific files |
+| **Claude Code / CLI** | Terminal-based implementation, repo investigation, multi-file tasks, running builds/tests, or tasks that benefit from subagents | `CLAUDE.md` for most tasks + relevant source/docs |
+| **Junie Tasks** | IDE-integrated structured tasks, multi-file changes, or core systems | `CLAUDE.md` for most tasks + relevant system docs |
+| **Air** | Broad architectural work, complex projects, or tasks needing maximum context | `CLAUDE.md` + all relevant files |
+
+## Tool Positioning
+
+- **AI Chat** is best for discussion, planning, debugging strategy, and exploring unfamiliar areas before implementation.
+- **Claude Code / CLI** is best for terminal-based implementation and repository investigation. Use it when you want the assistant to inspect/edit files, run builds or tests, coordinate multi-file work, or use subagents for parallel investigation.
+- **Junie Tasks** are best for IDE-integrated structured implementation work, especially when the task can be described clearly up front.
+- **Air** is best for broad, complex, or architectural work where maximum context and project-wide awareness are important.
 
 ## Available Context Files
 
@@ -20,7 +28,7 @@ This guide explains when and how to use the documentation in `docs/ai-context/` 
 
 ### ✅ Always Reference For:
 
-**Larger/Complex Tasks** (especially with Air):
+**Larger/Complex Tasks** especially with Claude Code / CLI, Junie Tasks, or Air:
 - Multi-file refactoring
 - Architectural changes
 - New feature implementation
@@ -128,7 +136,7 @@ Here's how you might approach a real task:
    Walk me through what's involved."
    ```
 
-2. **Implementation phase** (Junie Tasks or Air):
+2. **Implementation phase** (Claude Code / CLI, Junie Tasks, or Air):
    ```
    Context: docs/ai-context/CLAUDE.md, docs/bitKlavierDevNotes.md
    
