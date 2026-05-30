@@ -217,6 +217,13 @@ private:
             setInterceptsMouseClicks (false, false);
         }
 
+        // On Sonoma with signed/hardened runtime, setVisible() called from within
+        // a drag event handler (via LassoComponent::dragLasso) cancels the native drag,
+        // causing subsequent mouseDrag events to not be delivered.
+        // Display is handled by lassoVisual (OpenGlImageComponent), so this
+        // component never needs to be visible — suppress all setVisible calls.
+        void setVisible (bool) override {}
+
         void paint (juce::Graphics& g) override
         {
             g.setColour (juce::Colours::white.withAlpha (0.3f));

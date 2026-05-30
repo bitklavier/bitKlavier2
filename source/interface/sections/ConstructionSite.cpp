@@ -1580,13 +1580,15 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
         juce::MouseEvent eLasso = e.getEventRelativeTo(this);
         if (!lasso_started_)
         {
-            // beginLasso calls setVisible(true) — safe here in mouseDrag (not in mouseDown)
             selectorLasso.toFront(false);
             selectorLasso.endLasso();
             selectorLasso.beginLasso(eLasso, &preparationSelector);
             lasso_started_ = true;
+            fprintf(stderr, "bK CS mouseDrag: lasso_started_ SET true\n");
         }
+        fprintf(stderr, "bK CS mouseDrag: calling dragLasso lasso_started_=%d\n", (int)lasso_started_);
         selectorLasso.dragLasso(eLasso);
+        fprintf(stderr, "bK CS mouseDrag: dragLasso returned lasso_started_=%d\n", (int)lasso_started_);
 
         lassoVisual->setVisible(true);
         lassoVisual->setBounds(selectorLasso.getBounds());
