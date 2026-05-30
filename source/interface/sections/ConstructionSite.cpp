@@ -1306,9 +1306,9 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
         if (!cableView.cableBeingDragged() && !lasso_active_)
         {
             lasso_active_ = true;
-            selectorLasso.toFront(false);
-            selectorLasso.endLasso();
-            selectorLasso.beginLasso(e, &preparationSelector);
+            // Don't call beginLasso (setVisible) here: on Sonoma any setVisible()
+            // during mouseDown cancels the native drag, so mouseDrag never fires.
+            // beginLasso is deferred to the first mouseDrag call.
         }
     } else if (itemToSelect != nullptr && !e.mods.isPopupMenu()) {
         if (e.mods.isShiftDown())
@@ -1497,6 +1497,7 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
     selectorLasso.setVisible(false);
     lassoVisual->setVisible(false);
     lasso_active_ = false;
+    lasso_started_ = false;
     if (editing_comment_) return;
 
     juce::MouseEvent e = eo.getEventRelativeTo(this);
@@ -1571,7 +1572,13 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
     if (lasso_active_)
     {
         juce::MouseEvent eLasso = e.getEventRelativeTo(this);
-        selectorLasso.toFront(false);
+        if (!lasso_started_)
+        {
+            selectorLasso.toFront(false);
+            selectorLasso.endLasso();
+            selectorLasso.beginLasso(eLasso, &preparationSelector);
+            lasso_started_ = true;
+        }
         selectorLasso.dragLasso(eLasso);
 
         lassoVisual->setVisible(true);

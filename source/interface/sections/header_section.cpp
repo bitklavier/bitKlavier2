@@ -774,10 +774,6 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         auto idToFile = std::make_shared<std::map<int, juce::File>>();
         int nextId = kGalleryIdBase;
 
-        // Note: SinglePopupSelector supports only one submenu level, so we
-        // will show immediate subfolders under the base, and in each submenu
-        // only the immediate .bk2 files in that folder.
-
         // Resolve the base galleries path (expand ~ to home if present)
         auto galleriesPathVar = parent->getSynth()->user_prefs->userPreferences->tree.getProperty ("default_galleries_path");
         juce::String galleriesPath = galleriesPathVar.toString();
@@ -790,48 +786,56 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         }
         juce::File baseDir (galleriesPath);
 
+        // Recursive helper (Y-combinator style): fills `menu` with .bk2 files and
+        // subdirectory submenus for `dir`. Returns true if anything was found.
+        // Uses auto& self to avoid std::function overhead and capture-order issues.
+        auto buildDirMenu = [&](auto& self, const juce::File& dir, PopupItems& menu) -> bool {
+            LoadSave::FileSorterAscending sorter;
+            juce::Array<juce::File> files = dir.findChildFiles(juce::File::findFiles, false,
+                juce::String("*.") + bitklavier::kPresetExtension);
+            files.sort(sorter);
+            juce::Array<juce::File> subdirs = dir.findChildFiles(juce::File::findDirectories, false);
+            subdirs.sort(sorter);
+
+            for (auto& f : files) {
+                int thisId = nextId++;
+                (*idToFile)[thisId] = f;
+                menu.addItem(thisId, f.getFileNameWithoutExtension().toStdString());
+            }
+            for (auto& d : subdirs) {
+                PopupItems subMenu(d.getFileName().toStdString());
+                if (!self(self, d, subMenu))
+                    subMenu.addItem(PopupItems("(empty)", false));
+                menu.addItem(subMenu);
+            }
+            return !files.isEmpty() || !subdirs.isEmpty();
+        };
+
         bool foundAny = false;
         if (baseDir.isDirectory()) {
-            // Add files in root first
-            juce::Array<juce::File> rootFiles = baseDir.findChildFiles(juce::File::findFiles, false, juce::String("*.") + bitklavier::kPresetExtension);
             LoadSave::FileSorterAscending sorter;
+
+            // Root-level .bk2 files first
+            juce::Array<juce::File> rootFiles = baseDir.findChildFiles(juce::File::findFiles, false,
+                juce::String("*.") + bitklavier::kPresetExtension);
             rootFiles.sort(sorter);
-            for (auto &f : rootFiles) {
+            for (auto& f : rootFiles) {
                 int thisId = nextId++;
                 (*idToFile)[thisId] = f;
                 options.addItem(thisId, f.getFileNameWithoutExtension().toStdString());
                 foundAny = true;
             }
 
-            // add a separator between top-level galleries and subfolders
+            // Separator between root files and subdirectory submenus
             options.addItem(separator);
 
-            // Then add immediate subdirectories as single-level submenus showing
-            // only the files directly inside each subfolder.
+            // Subdirectories — recursively build nested submenus
             juce::Array<juce::File> dirs = baseDir.findChildFiles(juce::File::findDirectories, false);
             dirs.sort(sorter);
-            for (auto &d : dirs) {
-                PopupItems subMenu;
-                subMenu.name = d.getFileName().toStdString();
-
-                juce::Array<juce::File> folderFiles = d.findChildFiles(juce::File::findFiles, false, juce::String("*.") + bitklavier::kPresetExtension);
-                folderFiles.sort(sorter);
-
-                if (folderFiles.isEmpty()) {
-                    // Ensure the folder still appears by adding a disabled placeholder item.
-                    PopupItems emptyItem("(empty)", false);
-                    subMenu.addItem(emptyItem);
-                    options.addItem(subMenu);
-                    foundAny = true;
-                    continue;
-                }
-
-                for (auto &f : folderFiles) {
-                    int thisId = nextId++;
-                    (*idToFile)[thisId] = f;
-                    subMenu.addItem(thisId, f.getFileNameWithoutExtension().toStdString());
-                }
-
+            for (auto& d : dirs) {
+                PopupItems subMenu(d.getFileName().toStdString());
+                if (!buildDirMenu(buildDirMenu, d, subMenu))
+                    subMenu.addItem(PopupItems("(empty)", false));
                 options.addItem(subMenu);
                 foundAny = true;
             }

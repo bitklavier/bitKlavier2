@@ -84,8 +84,8 @@ void NostalgicParametersView::resized()
     bounds.removeFromRight(largepadding);
 
     // wave section goes on the bottom
-    bounds.removeFromBottom (largepadding);
-    waveSlider->setBounds(bounds.removeFromBottom (Skin::kKnobSectionHeight*7.5));
+    //bounds.removeFromBottom (largepadding);
+    waveSlider->setBounds(bounds.removeFromBottom (Skin::kKnobSectionHeight*6.5));
     bounds.removeFromBottom (largepadding);
 
     // middle row to divide into columns

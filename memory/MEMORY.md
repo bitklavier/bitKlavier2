@@ -79,7 +79,11 @@ See `memory/mute_solo_system.md`. All 8 sound-making preps have M+S buttons. Key
 
 ## macOS Sonoma: setVisible() During Mouse Event Dispatch Cancels Drag
 
-See `memory/setvisible_during_event_dispatch.md`. On Sonoma, calling `setVisible()` from within a mouse event handler cancels native NSView drag tracking — `mouseDrag` never fires. Root cause: `addMouseListener` double-invocation in MainSection caused `endLasso()` → `setVisible(false)` on every `mouseDown`. Fix: `!lasso_active_` guard prevents the second invocation from running lasso setup.
+See `memory/setvisible_during_event_dispatch.md`. Two-layer fix: (1) JUCE patch forwards mouseDown/Up/Dragged from NSOpenGLView to superview (root cause — NSOpenGLView swallows left-mouse events on Sonoma); (2) ConstructionSite defers beginLasso to first mouseDrag (any setVisible during mouseDown cancels drag). CI was silently skipping the JUCE patch due to git safe.directory — see [[ci-git-apply-safe-directory]].
+
+## GitHub Actions: git apply in submodule silently fails without safe.directory
+
+See `memory/ci_git_apply_safe_directory.md`. Always add `git config --global --add safe.directory <submodule>` before any git command in a submodule directory in CMake. Never use ERROR_QUIET when non-zero return has multiple meanings.
 
 ## Piano Switching Performance (ConstructionSite)
 

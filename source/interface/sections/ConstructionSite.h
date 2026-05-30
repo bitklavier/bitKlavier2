@@ -195,7 +195,7 @@ private:
     juce::CriticalSection open_gl_critical_section_;
     std::shared_ptr<OpenGlLine> _line;
 
-    bool editing_comment_;
+    bool editing_comment_ = false;
     bool is_rebuilding_ = false;
     juce::OwnedArray<juce::HashMap<int, int>> pastemap;
     friend class ModulationLineView;
@@ -215,7 +215,17 @@ private:
         LassoOutlineComponent()
         {
             setInterceptsMouseClicks (false, false);
+            // On Sonoma with signed/hardened runtime, setVisible() called during
+            // drag event dispatch cancels native drag tracking, so we suppress all
+            // future setVisible calls via the override below. Initialize visibleFlag
+            // to true here so that isVisible()/isShowing() return true — required for
+            // OpenGlImageComponent::render's setViewPort and isVisible() checks to pass.
+            Component::setVisible (true);
         }
+
+        // Suppress all setVisible calls to prevent Sonoma drag cancellation.
+        // visibleFlag is pre-initialized to true in the constructor above.
+        void setVisible (bool) override {}
 
         void paint (juce::Graphics& g) override
         {
@@ -228,6 +238,7 @@ private:
     LassoOutlineComponent selectorLasso;
     std::shared_ptr<OpenGlImageComponent> lassoVisual;
     bool lasso_active_ = false;
+    bool lasso_started_ = false; // true once beginLasso is called in the first mouseDrag
 
     friend class CableView;
     CableView cableView;

@@ -152,12 +152,9 @@ void CableView::mouseDown (const juce::MouseEvent& e)
 
 void CableView::mouseDrag (const juce::MouseEvent& e)
 {
-
     if (e.eventComponent == nullptr)
         return;
     mousePosition = e.getEventRelativeTo (this).getPosition();
-    const auto eventCompName = e.eventComponent->getName();
-
 }
 
 bool CableView::cableBeingDragged() const
