@@ -1299,9 +1299,6 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
     if (itemToSelect == nullptr)
         itemToSelect = dynamic_cast<PreparationSection*>(e.originalComponent);
 
-    fprintf(stderr, "bK CS mouseDown: leftBtn=%d popupMenu=%d itemToSelect=%p lasso_active_=%d\n",
-            (int)e.mods.isLeftButtonDown(), (int)e.mods.isPopupMenu(), (void*)itemToSelect, (int)lasso_active_);
-
     if (e.mods.isLeftButtonDown() && !e.mods.isPopupMenu() && itemToSelect == nullptr) {
         if (!e.mods.isShiftDown())
             preparationSelector.getLassoSelection().deselectAll();
@@ -1309,7 +1306,6 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
         if (!cableView.cableBeingDragged() && !lasso_active_)
         {
             lasso_active_ = true;
-            fprintf(stderr, "bK CS mouseDown: SET lasso_active_=true\n");
             // Don't call beginLasso (setVisible) here: on Sonoma any setVisible()
             // during mouseDown cancels the native drag, so mouseDrag never fires.
             // beginLasso is deferred to the first mouseDrag call.
@@ -1495,7 +1491,6 @@ void ConstructionSite::handlePluginPopup(int selection, int index) {
 }
 
 void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
-    fprintf(stderr, "bK CS mouseUp: lasso_active_=%d lasso_started_=%d\n", (int)lasso_active_, (int)lasso_started_);
     //inLasso = false;
     //    DBG ("mouseupconst");
     selectorLasso.endLasso();
@@ -1565,7 +1560,6 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
 }
 
 void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
-    fprintf(stderr, "bK CS mouseDrag: lasso_active_=%d lasso_started_=%d editing=%d\n", (int)lasso_active_, (int)lasso_started_, (int)editing_comment_);
     if (editing_comment_)
         return;
 
@@ -1586,7 +1580,6 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
             lasso_started_ = true;
         }
         selectorLasso.dragLasso(eLasso);
-        fprintf(stderr, "bK CS mouseDrag: dragLasso done lasso_started_=%d\n", (int)lasso_started_);
 
         lassoVisual->setVisible(true);
         lassoVisual->setBounds(selectorLasso.getBounds());
