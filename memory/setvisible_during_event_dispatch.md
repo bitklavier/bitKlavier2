@@ -69,7 +69,15 @@ If lasso setup requires `setVisible`, defer the entire setup block to the first 
 
 **Debug vs Release diagnostic gotcha:** A fix that only suppresses `setVisible(false)` (second invocation) may appear to work in Debug due to timing overhead masking the remaining `setVisible(true)` in the first invocation. Always verify the fix in a Release build on Sonoma.
 
+## Why CI builds failed even after the ConstructionSite fix
+
+The JUCE NSOpenGLView patch (`patches/juce_opengl_mac_mouse_forwarding.patch`) is the **deeper root fix** — without it, `mouseDragged:` events are swallowed by NSOpenGLView on Sonoma and never reach JUCE at all. Our ConstructionSite.cpp changes are also necessary but secondary.
+
+The patch was silently never applied in CI because `git apply --check` inside the JUCE submodule directory failed with `"fatal: unsafe repository"` (GitHub Actions ownership mismatch). `ERROR_QUIET` swallowed the error, the non-zero return was misread as "already applied", and the patch was skipped every CI run. See [[ci-git-apply-safe-directory]] for the fix.
+
 ## Key files
 - `source/interface/sections/ConstructionSite.cpp` — lasso mouseDown/mouseDrag/mouseUp logic
 - `source/interface/sections/ConstructionSite.h` — `lasso_active_`, `lasso_started_` flags
 - `source/interface/sections/main_section.cpp` — the `addMouseListener` registration
+- `patches/juce_opengl_mac_mouse_forwarding.patch` — the JUCE-level fix (NSOpenGLView event forwarding)
+- `CMakeLists.txt` lines 43–80 — patch application logic with safe.directory fix
