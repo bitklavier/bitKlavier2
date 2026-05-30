@@ -215,13 +215,16 @@ private:
         LassoOutlineComponent()
         {
             setInterceptsMouseClicks (false, false);
+            // On Sonoma with signed/hardened runtime, setVisible() called during
+            // drag event dispatch cancels native drag tracking, so we suppress all
+            // future setVisible calls via the override below. Initialize visibleFlag
+            // to true here so that isVisible()/isShowing() return true — required for
+            // OpenGlImageComponent::render's setViewPort and isVisible() checks to pass.
+            Component::setVisible (true);
         }
 
-        // On Sonoma with signed/hardened runtime, setVisible() called from within
-        // a drag event handler (via LassoComponent::dragLasso) cancels the native drag,
-        // causing subsequent mouseDrag events to not be delivered.
-        // Display is handled by lassoVisual (OpenGlImageComponent), so this
-        // component never needs to be visible — suppress all setVisible calls.
+        // Suppress all setVisible calls to prevent Sonoma drag cancellation.
+        // visibleFlag is pre-initialized to true in the constructor above.
         void setVisible (bool) override {}
 
         void paint (juce::Graphics& g) override

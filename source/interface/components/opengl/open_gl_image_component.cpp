@@ -110,7 +110,7 @@ bool OpenGlImageComponent::isInit()
 
 void OpenGlImageComponent::render(OpenGlWrapper& open_gl, bool animate) {
    juce::Component* component = component_ ? component_ : this;
-   if (!active_ || !setViewPort(component, open_gl) || !component->isVisible())
+   if (!active_ || !isVisible() || !setViewPort(component, open_gl) || !component->isVisible())
        return;
 
    image_.drawImage(open_gl);
