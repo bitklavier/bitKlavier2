@@ -250,9 +250,11 @@ public:
     void newSelection(PopupList* list, int id, int index) override;
 
     void focusLost(FocusChangeType cause) override {
-        setVisible(false);
-        if (cancel_)
-            cancel_();
+        if (!hasKeyboardFocus(true)) {
+            setVisible(false);
+            if (cancel_)
+                cancel_();
+        }
     }
 
     void setWidthScale(float scale) {

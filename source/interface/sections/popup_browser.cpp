@@ -1143,9 +1143,16 @@ void SinglePopupSelector::newSelection(PopupList* list, int id, int index) {
         } else if (cancel_)
             cancel_();
     } else if (list == popup_list_1.get()) {
-        cancel_ = nullptr;
-        callback_(id, index);
-        setVisible(false);
+        if (id >= 0 && !list->getSelectionItems(index).items.empty()) {
+            // Drill into sub-submenu by replacing popup_list_1's content in place
+            popup_list_1->setSelections(list->getSelectionItems(index));
+            popup_list_1->showSelected(true);
+            updateSize();
+        } else {
+            cancel_ = nullptr;
+            callback_(id, index);
+            setVisible(false);
+        }
     }
 }
 
