@@ -284,7 +284,7 @@ bool SynthGuiInterface::isDirty() const
     return synth_ && synth_->isDirty();
 }
 
-static bool isProtectedGallery (const juce::File& file)
+bool isProtectedGallery (const juce::File& file)
 {
     auto galleries = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
                          .getChildFile ("Documents")
@@ -297,8 +297,7 @@ static bool isProtectedGallery (const juce::File& file)
         return true;
 
     static const juce::StringArray kProtectedFolders {
-        "1. Examples", "2. Nostalgic Synchronic", "3. Mikroetudes",
-        "4. Machines for Listening", "5. bK commissions", "6. Preludes"
+        "1. bK Examples", "2. bK Compositions"
     };
     const auto parent = file.getParentDirectory();
     for (const auto& folder : kProtectedFolders)
