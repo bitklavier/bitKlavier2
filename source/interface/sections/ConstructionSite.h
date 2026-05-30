@@ -195,7 +195,7 @@ private:
     juce::CriticalSection open_gl_critical_section_;
     std::shared_ptr<OpenGlLine> _line;
 
-    bool editing_comment_;
+    bool editing_comment_ = false;
     bool is_rebuilding_ = false;
     juce::OwnedArray<juce::HashMap<int, int>> pastemap;
     friend class ModulationLineView;

@@ -1565,7 +1565,7 @@ void ConstructionSite::mouseUp(const juce::MouseEvent &eo) {
 }
 
 void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
-    fprintf(stderr, "bK CS mouseDrag: lasso_active_=%d lasso_started_=%d\n", (int)lasso_active_, (int)lasso_started_);
+    fprintf(stderr, "bK CS mouseDrag: lasso_active_=%d lasso_started_=%d editing=%d\n", (int)lasso_active_, (int)lasso_started_, (int)editing_comment_);
     if (editing_comment_)
         return;
 
@@ -1584,11 +1584,9 @@ void ConstructionSite::mouseDrag(const juce::MouseEvent &e) {
             selectorLasso.endLasso();
             selectorLasso.beginLasso(eLasso, &preparationSelector);
             lasso_started_ = true;
-            fprintf(stderr, "bK CS mouseDrag: lasso_started_ SET true\n");
         }
-        fprintf(stderr, "bK CS mouseDrag: calling dragLasso lasso_started_=%d\n", (int)lasso_started_);
         selectorLasso.dragLasso(eLasso);
-        fprintf(stderr, "bK CS mouseDrag: dragLasso returned lasso_started_=%d\n", (int)lasso_started_);
+        fprintf(stderr, "bK CS mouseDrag: dragLasso done lasso_started_=%d\n", (int)lasso_started_);
 
         lassoVisual->setVisible(true);
         lassoVisual->setBounds(selectorLasso.getBounds());
