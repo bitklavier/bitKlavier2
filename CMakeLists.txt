@@ -42,7 +42,18 @@ project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
 
 # Apply local patches to JUCE that haven't been accepted upstream yet.
 # Each patch is idempotent: if already applied, it is skipped silently.
+#
+# CI note: GitHub Actions may flag the JUCE submodule directory as an "unsafe
+# repository" (git safe.directory) because the runner user doesn't own it.
+# We add it to safe.directory so git apply works inside the submodule.
 if(APPLE)
+    execute_process(
+        COMMAND git config --global --add safe.directory "${CMAKE_CURRENT_SOURCE_DIR}/JUCE"
+        RESULT_VARIABLE SAFE_DIR_RESULT
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+
     set(JUCE_PATCHES
         juce_opengl_mac_mouse_forwarding  # forward mouseDown/Up/Dragged + rightMouseDragged through NSOpenGLView
     )
@@ -53,7 +64,7 @@ if(APPLE)
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/JUCE"
             RESULT_VARIABLE PATCH_CHECK_RESULT
             OUTPUT_QUIET
-            ERROR_QUIET
+            ERROR_VARIABLE PATCH_CHECK_ERROR
         )
         if(PATCH_CHECK_RESULT EQUAL 0)
             message(STATUS "Applying JUCE patch: ${PATCH_NAME}")
@@ -61,12 +72,17 @@ if(APPLE)
                 COMMAND git apply "${PATCH_FILE}"
                 WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/JUCE"
                 RESULT_VARIABLE PATCH_RESULT
+                ERROR_VARIABLE PATCH_ERROR
             )
             if(NOT PATCH_RESULT EQUAL 0)
-                message(FATAL_ERROR "Failed to apply JUCE patch: ${PATCH_NAME}")
+                message(FATAL_ERROR "Failed to apply JUCE patch '${PATCH_NAME}': ${PATCH_ERROR}")
             endif()
         else()
-            message(STATUS "JUCE patch already applied (skipping): ${PATCH_NAME}")
+            if(PATCH_CHECK_ERROR MATCHES "unsafe repository|dubious ownership")
+                message(FATAL_ERROR "git safe.directory not set for JUCE submodule — patch '${PATCH_NAME}' could not be checked: ${PATCH_CHECK_ERROR}")
+            else()
+                message(STATUS "JUCE patch already applied (skipping): ${PATCH_NAME}")
+            endif()
         endif()
     endforeach()
 endif()
