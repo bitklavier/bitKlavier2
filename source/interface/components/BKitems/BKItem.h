@@ -298,7 +298,7 @@ public:
 
     CommentItem() : BKItem(bitklavier::BKPreparationType::PreparationTypeComment) {}
 
-    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
+    void paintButton (juce::Graphics& g, bool, bool) override
     {
         juce::Colour bgCol = formatting_.background == 1 ? juce::Colours::black
                            : formatting_.background == 2 ? juce::Colours::transparentBlack
@@ -312,54 +312,51 @@ public:
         g.setColour(selected_ ? juce::Colours::white : juce::Colours::grey);
         g.strokePath(layer_1_, juce::PathStrokeType(kMeterPixel, juce::PathStrokeType::mitered));
 
-        g.setColour(formatting_.textColor);
-
         const auto textBounds = getLocalBounds().reduced(10);
-        const auto& displayText = commentText.isEmpty() ? juce::String("double click to type.") : commentText;
+        if (textBounds.getWidth() <= 0 || textBounds.getHeight() <= 0)
+            return;
+
+        const juce::String displayText = commentText.isEmpty()
+            ? juce::String("double click to type.")
+            : commentText;
 
         juce::Justification just = formatting_.alignment == 1 ? juce::Justification::horizontallyCentred
                                  : formatting_.alignment == 2 ? juce::Justification::right
                                  : juce::Justification::left;
-        int styleFlags = (formatting_.bold   ? juce::Font::bold   : 0)
-                       | (formatting_.italic ? juce::Font::italic : 0);
 
-        // Scale the font down from 16pt until the laid-out text height fits, minimum 8pt.
-        // Keep the final layout so we can use its height for vertical alignment.
-        float fontSize = 16.0f;
+        // Auto-scale: find the largest base font size (16→8pt) where the full
+        // parsed text fits. Headings within the text scale proportionally.
         float layoutHeight = (float) textBounds.getHeight();
-        if (textBounds.getWidth() > 0 && textBounds.getHeight() > 0)
+        juce::AttributedString bestAs;
+
+        for (float size = 16.0f; size >= 8.0f; size -= 1.0f)
         {
-            for (float size = 16.0f; size >= 8.0f; size -= 1.0f)
-            {
-                fontSize = size;
-                juce::AttributedString as;
-                as.setJustification(just);
-                as.append(displayText, g.getCurrentFont().withHeight(size).withStyle(styleFlags));
-                juce::TextLayout layout;
-                layout.createLayout(as, (float) textBounds.getWidth());
-                layoutHeight = layout.getHeight();
-                if (layoutHeight <= (float) textBounds.getHeight())
-                    break;
-            }
+            juce::Font base = g.getCurrentFont().withHeight(size);
+            auto as = buildMarkdownAttributedString(displayText, base, formatting_, just);
+            juce::TextLayout layout;
+            layout.createLayout(as, (float) textBounds.getWidth());
+            layoutHeight = layout.getHeight();
+            bestAs = std::move(as);
+            if (layoutHeight <= (float) textBounds.getHeight())
+                break;
         }
 
-        // Apply vertical alignment by offsetting the draw rect.
-        auto drawBounds = textBounds;
-        if (formatting_.vAlignment == 1)  // middle
+        // Vertical alignment offset
+        auto drawBounds = textBounds.toFloat();
+        if (formatting_.vAlignment == 1)
         {
-            int offset = ((int) textBounds.getHeight() - (int) layoutHeight) / 2;
-            drawBounds = textBounds.withY (textBounds.getY() + juce::jmax (0, offset))
-                                   .withHeight ((int) layoutHeight + 1);
+            float offset = ((float) textBounds.getHeight() - layoutHeight) * 0.5f;
+            drawBounds = drawBounds.withY (drawBounds.getY() + juce::jmax (0.0f, offset));
         }
-        else if (formatting_.vAlignment == 2)  // bottom
+        else if (formatting_.vAlignment == 2)
         {
-            int offset = (int) textBounds.getHeight() - (int) layoutHeight;
-            drawBounds = textBounds.withY (textBounds.getY() + juce::jmax (0, offset))
-                                   .withHeight ((int) layoutHeight + 1);
+            float offset = (float) textBounds.getHeight() - layoutHeight;
+            drawBounds = drawBounds.withY (drawBounds.getY() + juce::jmax (0.0f, offset));
         }
 
-        g.setFont(g.getCurrentFont().withHeight(fontSize).withStyle(styleFlags));
-        g.drawFittedText(displayText, drawBounds, just, 100);
+        juce::TextLayout finalLayout;
+        finalLayout.createLayout(bestAs, drawBounds.getWidth());
+        finalLayout.draw(g, drawBounds);
     }
 
     void setCommentText(const juce::String& text)
@@ -377,6 +374,216 @@ public:
 private:
     juce::String commentText;
     Formatting formatting_;
+
+    struct ParsedRun
+    {
+        juce::String text;
+        bool bold   = false;
+        bool italic = false;
+        juce::Colour color;
+    };
+
+    // Returns juce::Colours::transparentBlack as a sentinel for "not a valid name".
+    static juce::Colour colorFromName (const juce::String& name)
+    {
+        auto n = name.toLowerCase();
+        if (n == "white")      return juce::Colours::white;
+        if (n == "yellow")     return juce::Colours::yellow;
+        if (n == "cyan")       return juce::Colours::cyan;
+        if (n == "green")      return juce::Colours::lightgreen;
+        if (n == "lightgreen") return juce::Colours::lightgreen;
+        if (n == "coral")      return juce::Colours::coral;
+        if (n == "orange")     return juce::Colours::orange;
+        if (n == "red")        return juce::Colour (0xffff6666u);
+        if (n == "blue")       return juce::Colours::lightskyblue;
+        if (n == "pink")       return juce::Colours::lightpink;
+        return juce::Colours::transparentBlack; // sentinel: not a recognized name
+    }
+
+    static bool isValidColorName (const juce::String& name)
+    {
+        return colorFromName (name) != juce::Colours::transparentBlack;
+    }
+
+    // Parse inline Markdown spans within a single line of text.
+    // Supported: **bold**, *italic*, ***bold+italic***, {colorname}text{/colorname}
+    // baseBold/baseItalic are inherited from the line's heading level + global flags.
+    static juce::Array<ParsedRun> parseInlineMarkdown (
+        const juce::String& text,
+        bool baseBold,
+        bool baseItalic,
+        juce::Colour baseColor)
+    {
+        juce::Array<ParsedRun> runs;
+        const int len = text.length();
+        int pos = 0;
+        juce::String plain;
+
+        auto flushPlain = [&]()
+        {
+            if (plain.isNotEmpty())
+            {
+                runs.add ({ plain, baseBold, baseItalic, baseColor });
+                plain = juce::String();
+            }
+        };
+
+        while (pos < len)
+        {
+            const juce::juce_wchar c = text[pos];
+
+            if (c == '*')
+            {
+                const bool next1 = (pos + 1 < len && text[pos + 1] == '*');
+                const bool next2 = (pos + 2 < len && text[pos + 2] == '*');
+
+                if (next1 && next2)  // ***..***
+                {
+                    flushPlain();
+                    int close = text.indexOf (pos + 3, "***");
+                    if (close < 0) { plain += "***"; pos += 3; }
+                    else           { runs.add ({ text.substring (pos + 3, close), true, true, baseColor }); pos = close + 3; }
+                }
+                else if (next1)     // **...**
+                {
+                    flushPlain();
+                    int close = text.indexOf (pos + 2, "**");
+                    if (close < 0) { plain += "**"; pos += 2; }
+                    else           { runs.add ({ text.substring (pos + 2, close), true, baseItalic, baseColor }); pos = close + 2; }
+                }
+                else                // *...*
+                {
+                    flushPlain();
+                    int close = text.indexOf (pos + 1, "*");
+                    if (close < 0) { plain += "*"; pos += 1; }
+                    else           { runs.add ({ text.substring (pos + 1, close), baseBold, true, baseColor }); pos = close + 1; }
+                }
+            }
+            else if (c == '{')
+            {
+                // Check for {colorname}content{/colorname}
+                int closeBrace = text.indexOf (pos + 1, "}");
+                if (closeBrace > pos + 1)
+                {
+                    juce::String colorName = text.substring (pos + 1, closeBrace).trim();
+                    if (isValidColorName (colorName))
+                    {
+                        juce::String closeTag = "{/" + colorName + "}";
+                        int closePos = text.indexOf (closeBrace + 1, closeTag);
+                        if (closePos >= 0)
+                        {
+                            flushPlain();
+                            runs.add ({ text.substring (closeBrace + 1, closePos),
+                                        baseBold, baseItalic,
+                                        colorFromName (colorName) });
+                            pos = closePos + closeTag.length();
+                            continue;
+                        }
+                    }
+                }
+                plain += c;
+                ++pos;
+            }
+            else
+            {
+                plain += c;
+                ++pos;
+            }
+        }
+
+        flushPlain();
+        return runs;
+    }
+
+    // Build a fully attributed string from Markdown-annotated text.
+    //
+    // Heading syntax (must be at the start of a line):
+    //   # H1   — 1.8× base size, bold
+    //   ## H2  — 1.4× base size, bold
+    //   ### H3 — 1.15× base size, bold
+    //
+    // Inline syntax (anywhere on a line):
+    //   **bold**   *italic*   ***bold+italic***
+    //   {red}colored text{/red}
+    //   Color names: white yellow cyan green lightgreen coral orange red blue pink
+    static juce::AttributedString buildMarkdownAttributedString (
+        const juce::String& raw,
+        const juce::Font& baseFont,
+        const Formatting& fmt,
+        juce::Justification just)
+    {
+        juce::AttributedString as;
+        as.setJustification (just);
+        as.setWordWrap (juce::AttributedString::byWord);
+
+        // Normalize line endings then split
+        juce::StringArray lines;
+        lines.addTokens (raw.replace ("\r\n", "\n"), "\n", "");
+
+        for (int i = 0; i < lines.size(); ++i)
+        {
+            juce::String line = lines[i];
+
+            // Detect heading prefix and strip it
+            int headingLevel = 0;
+            if (line.startsWith ("### "))      { headingLevel = 3; line = line.substring (4); }
+            else if (line.startsWith ("## "))  { headingLevel = 2; line = line.substring (3); }
+            else if (line.startsWith ("# "))   { headingLevel = 1; line = line.substring (2); }
+
+            float sizeMult = headingLevel == 1 ? 1.8f
+                           : headingLevel == 2 ? 1.4f
+                           : headingLevel == 3 ? 1.15f
+                           : 1.0f;
+
+            // List markers — transform before inline parsing so that leading *
+            // isn't mistaken for an italic span opener.
+            //   - item  /  * item   →  bullet glyph (•  ◦  ▪ by indent depth)
+            //   1. item             →  kept as-is (number + dot render fine)
+            // Indent depth is determined by leading spaces (2 spaces = one level).
+            if (headingLevel == 0)
+            {
+                int leadSpaces = 0;
+                while (leadSpaces < line.length() && line[leadSpaces] == ' ')
+                    ++leadSpaces;
+
+                juce::String stripped = line.substring (leadSpaces);
+                if (stripped.startsWith ("- ") || stripped.startsWith ("* "))
+                {
+                    static const juce::juce_wchar kBullets[] = { 0x2022, 0x25E6, 0x25AA }; // •  ◦  ▪
+                    int level = juce::jmin (leadSpaces / 2, 2);
+                    juce::String indent;
+                    for (int s = 0; s < leadSpaces; ++s) indent += ' ';
+                    line = indent
+                         + juce::String::charToString (kBullets[level])
+                         + " "
+                         + stripped.substring (2);
+                }
+            }
+
+            // Headings are always bold; plain lines inherit the global setting
+            bool lineBold   = (headingLevel > 0) || fmt.bold;
+            bool lineItalic = fmt.italic;
+
+            juce::Font lineBaseFont = baseFont.withHeight (baseFont.getHeight() * sizeMult);
+
+            auto runs = parseInlineMarkdown (line, lineBold, lineItalic, fmt.textColor);
+
+            for (const auto& run : runs)
+            {
+                if (run.text.isNotEmpty())
+                {
+                    int style = (run.bold   ? juce::Font::bold   : 0)
+                              | (run.italic ? juce::Font::italic : 0);
+                    as.append (run.text, lineBaseFont.withStyle (style), run.color);
+                }
+            }
+
+            if (i < lines.size() - 1)
+                as.append ("\n", baseFont, fmt.textColor);
+        }
+
+        return as;
+    }
 };
 
 class NostalgicItem : public BKItem
