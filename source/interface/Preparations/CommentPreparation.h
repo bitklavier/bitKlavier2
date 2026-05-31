@@ -47,12 +47,16 @@ public:
         menu.addItem (0x5011, "Italic", true, italic_);
 
         juce::PopupMenu colorMenu;
+        colorMenu.addSectionHeader ("Default text color");
         colorMenu.addItem (0x5020, "White",       true, textColor_ == juce::Colours::white);
         colorMenu.addItem (0x5021, "Yellow",      true, textColor_ == juce::Colours::yellow);
         colorMenu.addItem (0x5022, "Cyan",        true, textColor_ == juce::Colours::cyan);
         colorMenu.addItem (0x5023, "Light Green", true, textColor_ == juce::Colours::lightgreen);
         colorMenu.addItem (0x5024, "Coral",       true, textColor_ == juce::Colours::coral);
         colorMenu.addItem (0x5025, "Orange",      true, textColor_ == juce::Colours::orange);
+        colorMenu.addItem (0x5026, "Red",         true, textColor_ == juce::Colour (0xffff6666u));
+        colorMenu.addItem (0x5027, "Blue",        true, textColor_ == juce::Colours::lightskyblue);
+        colorMenu.addItem (0x5028, "Pink",        true, textColor_ == juce::Colours::lightpink);
         menu.addSubMenu ("Color", colorMenu);
 
         juce::PopupMenu bgMenu;
@@ -60,6 +64,13 @@ public:
         bgMenu.addItem (0x5031, "Black",          true, background_ == 1);
         bgMenu.addItem (0x5032, "Transparent",    true, background_ == 2);
         menu.addSubMenu ("Background", bgMenu);
+
+        menu.addSeparator();
+        menu.addSectionHeader ("Inline: **bold**  *italic*  ***bold+italic***");
+        menu.addSectionHeader ("{red}colored{/red}  - colors: white yellow cyan green");
+        menu.addSectionHeader ("lightgreen coral orange red blue pink");
+        menu.addSectionHeader ("Headings (line start): # H1  ## H2  ### H3");
+        menu.addSectionHeader ("Lists: - item  * item  1. item  (indent 2 spaces to nest)");
     }
 
     void performPopupMenuAction (int id) override
@@ -75,8 +86,11 @@ public:
             case 0x5021: textColor_ = juce::Colours::yellow;     break;
             case 0x5022: textColor_ = juce::Colours::cyan;       break;
             case 0x5023: textColor_ = juce::Colours::lightgreen; break;
-            case 0x5024: textColor_ = juce::Colours::coral;      break;
-            case 0x5025: textColor_ = juce::Colours::orange;     break;
+            case 0x5024: textColor_ = juce::Colours::coral;              break;
+            case 0x5025: textColor_ = juce::Colours::orange;             break;
+            case 0x5026: textColor_ = juce::Colour (0xffff6666u);        break;
+            case 0x5027: textColor_ = juce::Colours::lightskyblue;       break;
+            case 0x5028: textColor_ = juce::Colours::lightpink;          break;
             case 0x5030: background_ = 0; break;
             case 0x5031: background_ = 1; break;
             case 0x5032: background_ = 2; break;
