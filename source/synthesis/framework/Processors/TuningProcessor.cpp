@@ -485,6 +485,9 @@ void TuningParams::deserialize (typename Serializer::DeserializedType deserial, 
     paramHolder.tuningState.springTuner->intervalFundamentalChanged();
     paramHolder.tuningState.springTuner->tetherScaleChanged();
     paramHolder.tuningState.springTuner->tetherFundamentalChanged();
+    paramHolder.tuningState.springTuner->dragChanged();
+    paramHolder.tuningState.springTuner->tetherStiffnessChanged();
+    paramHolder.tuningState.springTuner->intervalStiffnessChanged();
 }
 
 /**
