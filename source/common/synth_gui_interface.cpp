@@ -299,9 +299,8 @@ bool isProtectedGallery (const juce::File& file)
     static const juce::StringArray kProtectedFolders {
         "1. bK Examples", "2. bK Compositions"
     };
-    const auto parent = file.getParentDirectory();
     for (const auto& folder : kProtectedFolders)
-        if (parent == galleries.getChildFile (folder))
+        if (file.isAChildOf (galleries.getChildFile (folder)))
             return true;
 
     return false;
