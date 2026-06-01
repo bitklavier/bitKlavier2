@@ -485,19 +485,30 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
 
 // SampleLoadManager.cpp
 SFZSound *SampleLoadManager::findSFZSoundByName(const juce::String &sfzName) const {
+    // Exact key match first
     for (const auto &[name, sfz]: sfzBanks) {
-        if (!sfz)
-            continue;
-
-        // Choose ONE of these depending on what SFZSound exposes
-        // ------------------------------------------------------
-
-        // 1) If SFZSound has a name
+        if (!sfz) continue;
         if (name == sfzName)
             return sfz.get();
     }
-
+    // Fall back to base filename match: the SFZSound may be stored under a different
+    // preset key if the user has switched presets (sfzBanks is re-keyed on each switch,
+    // leaving stale null entries under old keys).
+    const auto base = sfzBaseFromKey(sfzName);
+    for (const auto &[name, sfz]: sfzBanks) {
+        if (!sfz) continue;
+        if (sfzBaseFromKey(juce::String(name)) == base)
+            return sfz.get();
+    }
     return nullptr;
+}
+
+static juce::String stripSFPresetControlChars(juce::String s) {
+    // Some SF2 files embed control characters (e.g. BEL/0x07) in preset names.
+    // JUCE's text shaper asserts on them, so strip them before any display.
+    for (juce::juce_wchar c = 1; c < 32; ++c)
+        s = s.removeCharacters(juce::String::charToString(c));
+    return s;
 }
 
 juce::StringArray SampleLoadManager::getSFZPresetNames(const juce::String &sfzName) const {
@@ -508,7 +519,7 @@ juce::StringArray SampleLoadManager::getSFZPresetNames(const juce::String &sfzNa
         presets.ensureStorageAllocated(n);
 
         for (int i = 0; i < n; ++i)
-            presets.add(juce::String(sfz->subsound_name(i)));
+            presets.add(stripSFPresetControlChars(juce::String(sfz->subsound_name(i))));
     }
 
     return presets;
@@ -517,13 +528,13 @@ juce::StringArray SampleLoadManager::getSFZPresetNames(const juce::String &sfzNa
 juce::String SampleLoadManager::getSelectedSFZPreset(const juce::String &sfzName) const {
     const auto preset = sfzPresetFromKey(sfzName);
     if (preset.isNotEmpty())
-        return preset;
+        return stripSFPresetControlChars(preset);
     if (auto *sfz = findSFZSoundByName(sfzName)) {
         const int selected = sfz->selected_subsound();
         const int num = sfz->num_subsounds();
 
         if (selected >= 0 && selected < num)
-            return juce::String(sfz->subsound_name(selected));
+            return stripSFPresetControlChars(juce::String(sfz->subsound_name(selected)));
     }
 
     return {};
@@ -657,8 +668,19 @@ bool SampleLoadManager::changeSFZPresetAndUpdateTree(const juce::String &current
                                                      juce::ValueTree &targetTree) {
     const juce::String base = sfzBaseFromKey(currentSfzKey);
 
-    // Exact-key lookup only
+    // Try exact key first, then fall back to base-name scan.
+    // sfzBanks gets re-keyed on each preset switch (emplace to new key, old key left null),
+    // so after switching back to a previously-loaded preset the exact key may be stale.
     auto it = sfzBanks.find(currentSfzKey.toStdString());
+    if (it == sfzBanks.end() || it->second == nullptr) {
+        it = sfzBanks.end();
+        for (auto candidate = sfzBanks.begin(); candidate != sfzBanks.end(); ++candidate) {
+            if (candidate->second && sfzBaseFromKey(juce::String(candidate->first)) == base) {
+                it = candidate;
+                break;
+            }
+        }
+    }
     if (it == sfzBanks.end() || it->second == nullptr)
         return false;
 
@@ -1123,6 +1145,11 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
         else
         {
             int index = subsoundIndexForName(*sound,preset);
+            if (index < 0)
+            {
+                DBG("loadSoundFont: preset name not found: " + preset + ", falling back to subsound 0");
+                index = 0;
+            }
             sound->use_subsound(index);
         }
     }
