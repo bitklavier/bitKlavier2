@@ -1123,6 +1123,11 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
         else
         {
             int index = subsoundIndexForName(*sound,preset);
+            if (index < 0)
+            {
+                DBG("loadSoundFont: preset name not found: " + preset + ", falling back to subsound 0");
+                index = 0;
+            }
             sound->use_subsound(index);
         }
     }

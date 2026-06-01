@@ -141,7 +141,7 @@ std::string SF2Sound::subsound_name(int which_subsound)
 
 void SF2Sound::use_subsound(int which_subsound)
 {
-	if (which_subsound >= (int) presets.size())
+	if (which_subsound < 0 || which_subsound >= (int) presets.size())
 		return;
 
 	selected_preset = which_subsound;
