@@ -503,6 +503,14 @@ SFZSound *SampleLoadManager::findSFZSoundByName(const juce::String &sfzName) con
     return nullptr;
 }
 
+static juce::String stripSFPresetControlChars(juce::String s) {
+    // Some SF2 files embed control characters (e.g. BEL/0x07) in preset names.
+    // JUCE's text shaper asserts on them, so strip them before any display.
+    for (juce::juce_wchar c = 1; c < 32; ++c)
+        s = s.removeCharacters(juce::String::charToString(c));
+    return s;
+}
+
 juce::StringArray SampleLoadManager::getSFZPresetNames(const juce::String &sfzName) const {
     juce::StringArray presets;
 
@@ -511,7 +519,7 @@ juce::StringArray SampleLoadManager::getSFZPresetNames(const juce::String &sfzNa
         presets.ensureStorageAllocated(n);
 
         for (int i = 0; i < n; ++i)
-            presets.add(juce::String(sfz->subsound_name(i)));
+            presets.add(stripSFPresetControlChars(juce::String(sfz->subsound_name(i))));
     }
 
     return presets;
@@ -520,13 +528,13 @@ juce::StringArray SampleLoadManager::getSFZPresetNames(const juce::String &sfzNa
 juce::String SampleLoadManager::getSelectedSFZPreset(const juce::String &sfzName) const {
     const auto preset = sfzPresetFromKey(sfzName);
     if (preset.isNotEmpty())
-        return preset;
+        return stripSFPresetControlChars(preset);
     if (auto *sfz = findSFZSoundByName(sfzName)) {
         const int selected = sfz->selected_subsound();
         const int num = sfz->num_subsounds();
 
         if (selected >= 0 && selected < num)
-            return juce::String(sfz->subsound_name(selected));
+            return stripSFPresetControlChars(juce::String(sfz->subsound_name(selected)));
     }
 
     return {};
