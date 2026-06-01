@@ -485,18 +485,21 @@ void SampleLoadManager::loadSamples_sub(bitklavier::utils::BKPianoSampleType thi
 
 // SampleLoadManager.cpp
 SFZSound *SampleLoadManager::findSFZSoundByName(const juce::String &sfzName) const {
+    // Exact key match first
     for (const auto &[name, sfz]: sfzBanks) {
-        if (!sfz)
-            continue;
-
-        // Choose ONE of these depending on what SFZSound exposes
-        // ------------------------------------------------------
-
-        // 1) If SFZSound has a name
+        if (!sfz) continue;
         if (name == sfzName)
             return sfz.get();
     }
-
+    // Fall back to base filename match: the SFZSound may be stored under a different
+    // preset key if the user has switched presets (sfzBanks is re-keyed on each switch,
+    // leaving stale null entries under old keys).
+    const auto base = sfzBaseFromKey(sfzName);
+    for (const auto &[name, sfz]: sfzBanks) {
+        if (!sfz) continue;
+        if (sfzBaseFromKey(juce::String(name)) == base)
+            return sfz.get();
+    }
     return nullptr;
 }
 
@@ -657,8 +660,19 @@ bool SampleLoadManager::changeSFZPresetAndUpdateTree(const juce::String &current
                                                      juce::ValueTree &targetTree) {
     const juce::String base = sfzBaseFromKey(currentSfzKey);
 
-    // Exact-key lookup only
+    // Try exact key first, then fall back to base-name scan.
+    // sfzBanks gets re-keyed on each preset switch (emplace to new key, old key left null),
+    // so after switching back to a previously-loaded preset the exact key may be stale.
     auto it = sfzBanks.find(currentSfzKey.toStdString());
+    if (it == sfzBanks.end() || it->second == nullptr) {
+        it = sfzBanks.end();
+        for (auto candidate = sfzBanks.begin(); candidate != sfzBanks.end(); ++candidate) {
+            if (candidate->second && sfzBaseFromKey(juce::String(candidate->first)) == base) {
+                it = candidate;
+                break;
+            }
+        }
+    }
     if (it == sfzBanks.end() || it->second == nullptr)
         return false;
 
