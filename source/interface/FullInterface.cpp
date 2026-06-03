@@ -385,6 +385,7 @@ void FullInterface::prepDisplay (std::unique_ptr<SynthSection> synth_section, co
     // }
     prep_popup->setContent (std::move(synth_section),v);
     prep_popup->setVisible (true);
+    prep_popup->grabKeyboardFocus();
 
     modulation_manager->added();
 
@@ -396,6 +397,7 @@ void FullInterface::modDisplay (std::unique_ptr<SynthSection> synth_section,cons
 {
     mod_popup->setContent (std::move(synth_section),v);
     mod_popup->setVisible (true);
+    mod_popup->grabKeyboardFocus();
     modulation_manager->added();
     resized();
 }
