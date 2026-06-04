@@ -50,5 +50,11 @@ public:
 private:
     double hostTempo = 120.0;
 
+    // True once setStateInformation has been called (i.e. the DAW is restoring a saved session).
+    // False when the plugin is first instantiated with no prior state — used to trigger a
+    // one-shot load of the Basic Piano default gallery.
+    bool setStateWasCalled_ = false;
+    bool defaultLoadAttempted_ = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

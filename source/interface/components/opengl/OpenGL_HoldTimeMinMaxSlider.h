@@ -40,7 +40,7 @@ public:
         isModulated_ = true;
         addMyListener(this);
 
-        rangeSliderBorder.setText("Hold Time");
+        rangeSliderBorder.setText("Hold Time (ms)");
         invisibleSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
 
 

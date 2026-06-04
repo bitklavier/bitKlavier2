@@ -190,7 +190,7 @@ void ModulationModuleSection::setEffectPositions() {
         y += effect_height_temp + padding;
     }
 
-    container_->setBounds(0, 0, viewport_.getWidth(), y - padding);
+    container_->setBounds(0, 0, viewport_.getWidth(), y);
 
     //update scroll position so we can see the most recently added mod
     juce::Point<int> position(0, y);

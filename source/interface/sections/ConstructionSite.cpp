@@ -1303,6 +1303,12 @@ void ConstructionSite::mouseDown(const juce::MouseEvent &eo) {
         if (!e.mods.isShiftDown())
             preparationSelector.getLassoSelection().deselectAll();
 
+        if (auto* iface = findParentComponentOfClass<SynthGuiInterface>())
+        {
+            iface->getGui()->prep_popup->reset();
+            iface->getGui()->mod_popup->reset();
+        }
+
         if (!cableView.cableBeingDragged() && !lasso_active_)
         {
             lasso_active_ = true;

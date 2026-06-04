@@ -11,7 +11,7 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
     juce::String name,
     EnvelopeSequenceParams &params,
     chowdsp::ParameterListeners &listeners,
-    SynthSection &parent) : _params(params)
+    SynthSection &parent) : SynthSection(name), _params(params)
 {
     for ( auto &param_ : *params.getBoolParams())
     {
@@ -47,6 +47,18 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
 
     envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", "Envelope Sequence");
     addBorder(envelopeBorder.get());
+
+    _currentLabel = std::make_shared<PlainTextComponent>("env_current_label", "current");
+    _currentLabel->setJustification(juce::Justification::centredRight);
+    addOpenGlComponent(_currentLabel);
+
+    _activeLabel = std::make_shared<PlainTextComponent>("env_active_label", "active");
+    _activeLabel->setJustification(juce::Justification::centredRight);
+    addOpenGlComponent(_activeLabel);
+
+    _editingLabel = std::make_shared<PlainTextComponent>("env_editing_label", "editing");
+    _editingLabel->setJustification(juce::Justification::centredRight);
+    addOpenGlComponent(_editingLabel);
 }
 
 int EnvelopeSequenceSection::getEnvelopeIndex(const juce::String& s)
@@ -129,21 +141,32 @@ void EnvelopeSequenceSection::resized() {
     area.removeFromTop(17);
     area.reduce(10, 0);
 
+    constexpr int labelWidth = 80;
+    auto labelColumn = area.removeFromLeft(labelWidth);
+
+    float labelTextSize = findValue(Skin::kButtonFontSize);
+    _currentLabel->setTextSize(labelTextSize);
+    _activeLabel->setTextSize(labelTextSize);
+    _editingLabel->setTextSize(labelTextSize);
+
     int heightSave = area.getHeight();
-    int envButtonWidth = area.getWidth()/_envActiveButtons.size();
+    int envButtonWidth = area.getWidth() / (int)_envActiveButtons.size();
 
     juce::Rectangle displayButtonsRow = area.removeFromTop(heightSave / 4);
+    _currentLabel->setBounds(labelColumn.removeFromTop(displayButtonsRow.getHeight()));
     for (auto& _b : _envPlayingButtons)
     {
         _b->setBounds(displayButtonsRow.removeFromLeft(envButtonWidth));
     }
 
     juce::Rectangle activeButtonRow = area.removeFromTop(heightSave / 2);
+    _activeLabel->setBounds(labelColumn.removeFromTop(activeButtonRow.getHeight()));
     for (auto& _b : _envActiveButtons)
     {
         _b->setBounds(activeButtonRow.removeFromLeft(envButtonWidth).reduced(smallpadding));
     }
 
+    _editingLabel->setBounds(labelColumn);
     for (auto& _b : _envEditButtons)
     {
         _b->setBounds(area.removeFromLeft(envButtonWidth));

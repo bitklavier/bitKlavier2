@@ -82,6 +82,12 @@ public:
 
     void buttonClicked(juce::Button* clicked_button) override;
 
+    bool keyPressed (const juce::KeyPress& key) override
+    {
+        if (key == juce::KeyPress::escapeKey) { reset(); return true; }
+        return false;
+    }
+
     void mouseDown (const juce::MouseEvent& e) override
     {
         myDragger.startDraggingComponent (this, e);
