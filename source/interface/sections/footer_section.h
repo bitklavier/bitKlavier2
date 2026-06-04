@@ -6,13 +6,13 @@
 //
 
 #pragma once
+#include "CompressorProcessor.h"
+#include "EQProcessor.h"
+#include "ReverbProcessor.h"
 #include "OpenGL_KeymapKeyboard.h"
 #include "open_gl_background.h"
 #include "peak_meter_section.h"
 #include "synth_section.h"
-
-class EQPreparation;
-class CompressorPreparation;
 
 class FooterSection : public SynthSection, BKKeymapKeyboardComponent::Listener
 {
@@ -53,6 +53,7 @@ public:
     std::unique_ptr<OpenGlTextButton> reverbButton;
 
     juce::ValueTree gallery;
+    chowdsp::ScopedCallbackList callbacks_;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FooterSection)
 };
 
