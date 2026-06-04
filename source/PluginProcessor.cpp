@@ -116,7 +116,35 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     engine_->setInputsOutputs (getMainBusNumInputChannels(),
         getMainBusNumOutputChannels());
 
-    //juce::ignoreUnused (sampleRate, samplesPerBlock);
+    // On first creation (no DAW session to restore), load Basic Piano so the plugin is
+    // playable immediately. setStateWasCalled_ is true when the DAW called setStateInformation
+    // before prepareToPlay, which is the contract all conforming hosts follow on session restore.
+    if (!setStateWasCalled_ && !defaultLoadAttempted_)
+    {
+        defaultLoadAttempted_ = true;
+        juce::MessageManager::callAsync ([this]()
+        {
+            auto galleries = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
+                                 .getChildFile ("Documents")
+                                 .getChildFile ("bitKlavier")
+                                 .getChildFile ("galleries");
+            juce::File basicPiano = galleries.getChildFile ("Basic Piano.bk2");
+            if (!basicPiano.existsAsFile())
+                basicPiano = galleries.getChildFile ("BasicPiano.bk2");
+            if (!basicPiano.existsAsFile())
+                return;
+
+            std::string error;
+            // Use the GUI-aware loadFromFile when the editor is already open (VST3 hosts
+            // often create the editor before prepareToPlay), so the gallery name label
+            // gets updated in the header. Fall back to the base version otherwise —
+            // PluginEditor's constructor will set the name from getActiveFile() when it opens.
+            if (auto* gui = getGuiInterface())
+                gui->loadFromFile (basicPiano, error);
+            else
+                loadFromFile (basicPiano, error);
+        });
+    }
 }
 
 void PluginProcessor::releaseResources()
@@ -251,6 +279,7 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
     // whose contents will have been created by the getStateInformation() call.
     // juce::ignoreUnused (data, sizeInBytes);
     DBG("PluginProcessor::setStateInformation");
+    setStateWasCalled_ = true; // DAW is restoring state; suppress default-gallery load
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
 
     if (xmlState != nullptr)
