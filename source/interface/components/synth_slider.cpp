@@ -249,6 +249,22 @@ SynthSlider::~SynthSlider() {
         vt.removeListener(this);
 }
 
+static juce::String modulationSourceDisplayName(const std::string& source_name)
+{
+    // source_name format: "<uuid>_<type>-<uuid>_mod"
+    auto s = juce::String(source_name);
+    int under = s.indexOfChar('_');
+    if (under < 0) return s;
+    auto after = s.substring(under + 1);
+    int dash = after.indexOfChar('-');
+    if (dash < 0) return s;
+    auto type = after.substring(0, dash);
+    if (type == "lfo")   return "LFO";
+    if (type == "ramp")  return "Ramp";
+    if (type == "state") return "State";
+    return type.substring(0, 1).toUpperCase() + type.substring(1);
+}
+
 PopupItems SynthSlider::createPopupMenu() {
     PopupItems options;
 
@@ -269,10 +285,18 @@ PopupItems SynthSlider::createPopupMenu() {
     if (!connections.empty())
         options.addItem(-1, "");
 
+    std::map<juce::String, int> nameCounts;
+    for (auto* c : connections)
+        nameCounts[modulationSourceDisplayName(c->source_name)]++;
+
+    std::map<juce::String, int> nameSeen;
     std::string disconnect = "Disconnect from ";
-    for (int i = 0; i < connections.size(); ++i) {
-        // std::string name = ModulationMatrix::getMenuSourceDisplayName(connections[i]->source_name).toStdString();
-        options.addItem(kModulationList + i, disconnect + connections[i]->source_name);
+    for (int i = 0; i < (int)connections.size(); ++i) {
+        juce::String displayName = modulationSourceDisplayName(connections[i]->source_name);
+        juce::String label = displayName;
+        if (nameCounts[displayName] > 1)
+            label += " " + juce::String(++nameSeen[displayName]);
+        options.addItem(kModulationList + i, (disconnect + label.toStdString()));
     }
 
     if (connections.size() > 1)
