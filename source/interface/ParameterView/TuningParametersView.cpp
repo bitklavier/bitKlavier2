@@ -405,7 +405,16 @@ void TuningParametersView::showCurrentTuningType()
 void TuningParametersView::keyboardSliderChanged(juce::String name)
 {
     if (name == "circular")
+    {
+        // If transitioning from a non-Custom system, copy the current tuning values
+        // into circularTuningOffset_custom so the drag note + remaining system values
+        // become the starting point for Custom (otherwise stale zeros overwrite the drag).
+        if (params.tuningState.tuningSystem->get() != TuningSystem::Custom)
+            copyAtomicArrayToAtomicArray(params.tuningState.circularTuningOffset,
+                                          params.tuningState.circularTuningOffset_custom);
+
         params.tuningState.tuningSystem->setParameterValue(TuningSystem::Custom);
+    }
 }
 
 /**
