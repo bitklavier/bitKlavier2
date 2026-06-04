@@ -885,44 +885,46 @@ void BKMultiSlider::mouseDoubleClick (const juce::MouseEvent &e)
 }
 
 
-// mouseDown: determines which subslider the mouseDown is nearest
-//            checks to see if ctrl is down, for contextual menu
+// mouseDown: sets slider value immediately at click position so a click (without drag) registers
 void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
 {
     if (event.mouseWasClicked())
     {
-        currentSubSlider = whichSubSlider(whichSlider(event));
         clickedHeight = event.y;
 
         if(event.mods.isCtrlDown())
         {
             showModifyPopupMenu(whichSlider(event));
+            return;
         }
 
-        // if(event.mods.isShiftDown())
-        // {
-        //     int which = whichSlider(event);
-        //
-        //     if(which >= 0) {
-        //
-        //         if (sliders[which]->size() == 0) addSubSlider(which, false, juce::sendNotification);
-        //
-        //         updateSliderVal(which, currentSubSlider, sliderDefault);
-        //
-        //         BKSubSlider* currentSlider = sliders[which]->operator[](0);
-        //         if (currentSlider != nullptr)
-        //         {
-        //             currentSlider->setValue(sliderDefault); //again, need to identify which subslider to get
-        //         }
-        //
-        //         displaySlider->setValue(sliderDefault);
-        //
-        //         listeners.call(&BKMultiSlider::Listener::multiSliderValueChanged,
-        //             getName(),
-        //             whichActiveSlider(which),
-        //             getOneSliderBank(which));
-        //     }
-        // }
+        int which = whichSlider(event);
+        if (which >= 0 && getHeight() > 0)
+        {
+            // Compute click value from y position — same formula as addActiveSubSlider
+            float clickValue = bigInvisibleSlider->proportionOfLengthToValue(1.f - (float(event.y) / float(getHeight())));
+            currentInvisibleSliderValue = clickValue;
+            currentSubSlider = whichSubSlider(which);
+
+            float val = event.mods.isShiftDown() ? round(clickValue) : clickValue;
+            updateSliderVal(which, currentSubSlider, val);
+
+            BKSubSlider* currentSlider = sliders[which]->operator[](currentSubSlider);
+            if (currentSlider != nullptr)
+            {
+                currentSlider->setValue(val);
+                displaySlider->setValue(val);
+                currentSlider->setLookAndFeel(&activeSliderLookAndFeel);
+                listeners.call(&BKMultiSlider::Listener::multiSliderAllValuesChanged,
+                    getName(),
+                    getAllActiveValues(),
+                    whichSlidersActive);
+            }
+        }
+        else
+        {
+            currentSubSlider = 0;
+        }
     }
 }
 
