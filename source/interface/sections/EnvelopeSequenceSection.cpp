@@ -48,15 +48,15 @@ EnvelopeSequenceSection::EnvelopeSequenceSection (
     envelopeBorder = std::make_shared<OpenGL_LabeledBorder>("envelope border", "Envelope Sequence");
     addBorder(envelopeBorder.get());
 
-    _currentLabel = std::make_shared<PlainTextComponent>("env_current_label", "current");
+    _currentLabel = std::make_shared<PlainTextComponent>("env_current_label", "current: ");
     _currentLabel->setJustification(juce::Justification::centredRight);
     addOpenGlComponent(_currentLabel);
 
-    _activeLabel = std::make_shared<PlainTextComponent>("env_active_label", "active");
+    _activeLabel = std::make_shared<PlainTextComponent>("env_active_label", "active: ");
     _activeLabel->setJustification(juce::Justification::centredRight);
     addOpenGlComponent(_activeLabel);
 
-    _editingLabel = std::make_shared<PlainTextComponent>("env_editing_label", "editing");
+    _editingLabel = std::make_shared<PlainTextComponent>("env_editing_label", "editing: ");
     _editingLabel->setJustification(juce::Justification::centredRight);
     addOpenGlComponent(_editingLabel);
 }
@@ -143,6 +143,7 @@ void EnvelopeSequenceSection::resized() {
 
     constexpr int labelWidth = 80;
     auto labelColumn = area.removeFromLeft(labelWidth);
+    labelColumn.removeFromBottom(smallpadding);
 
     float labelTextSize = findValue(Skin::kButtonFontSize);
     _currentLabel->setTextSize(labelTextSize);
@@ -153,7 +154,11 @@ void EnvelopeSequenceSection::resized() {
     int envButtonWidth = area.getWidth() / (int)_envActiveButtons.size();
 
     juce::Rectangle displayButtonsRow = area.removeFromTop(heightSave / 4);
-    _currentLabel->setBounds(labelColumn.removeFromTop(displayButtonsRow.getHeight()));
+
+    juce::Rectangle currentLabelRow = labelColumn.removeFromTop(displayButtonsRow.getHeight());
+    currentLabelRow.removeFromBottom(smallpadding / 2);
+    _currentLabel->setBounds(currentLabelRow);
+    //_currentLabel->setBounds(labelColumn.removeFromTop(displayButtonsRow.getHeight()));
     for (auto& _b : _envPlayingButtons)
     {
         _b->setBounds(displayButtonsRow.removeFromLeft(envButtonWidth));
