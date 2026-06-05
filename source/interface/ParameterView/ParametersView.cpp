@@ -98,7 +98,6 @@ namespace bitklavier {
                 slider->parentHierarchyChanged();
                 slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setShowPopupOnHover(true);
-                slider->setShowSecondaryPopupOnHover(false);
                 _ASSERT(slider->getSectionParent() != nullptr);
             }
 

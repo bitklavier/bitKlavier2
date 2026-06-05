@@ -189,7 +189,7 @@ void OpenGlSlider::setColors() {
 
 SynthSlider::SynthSlider(juce::String name, const juce::ValueTree &_vt) : OpenGlSlider(name),
                                                                           show_popup_on_hover_(false),
-                                                                          show_secondary_popup_on_hover_(true),
+                                                                          show_secondary_popup_on_hover_(false),
                                                                           scroll_enabled_(true),
                                                                           bipolar_modulation_(false),
                                                                           stereo_modulation_(false),
