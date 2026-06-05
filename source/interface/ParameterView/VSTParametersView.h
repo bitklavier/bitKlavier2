@@ -147,6 +147,7 @@ public:
             slider->setRange (0.0, 1.0, 0.0);
             slider->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
             slider->setShowPopupOnHover (true);
+            slider->setShowSecondaryPopupOnHover (true);
 
             const juce::String paramName = param->getName (40);
             slider->setTooltip (paramName);
