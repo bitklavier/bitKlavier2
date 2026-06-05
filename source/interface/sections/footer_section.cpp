@@ -66,6 +66,42 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
             );
             addSubSection(levelMeter.get());
         }
+
+        if (auto* eqProc = engine->getEQProcessor())
+        {
+            auto& state = eqProc->getState();
+            eqButton->setToggleState(state.params.activeEq->get(), juce::dontSendNotification);
+            callbacks_ += {state.getParameterListeners().addParameterListener(
+                state.params.activeEq,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this, eqProc]() {
+                    eqButton->setToggleState(eqProc->getState().params.activeEq->get(), juce::dontSendNotification);
+                })};
+        }
+
+        if (auto* compProc = engine->getCompressorProcessor())
+        {
+            auto& state = compProc->getState();
+            compressorButton->setToggleState(state.params.activeCompressor->get(), juce::dontSendNotification);
+            callbacks_ += {state.getParameterListeners().addParameterListener(
+                state.params.activeCompressor,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this, compProc]() {
+                    compressorButton->setToggleState(compProc->getState().params.activeCompressor->get(), juce::dontSendNotification);
+                })};
+        }
+
+        if (auto* reverbProc = engine->getReverbProcessor())
+        {
+            auto& state = reverbProc->getState();
+            reverbButton->setToggleState(state.params.activeReverb->get(), juce::dontSendNotification);
+            callbacks_ += {state.getParameterListeners().addParameterListener(
+                state.params.activeReverb,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this, reverbProc]() {
+                    reverbButton->setToggleState(reverbProc->getState().params.activeReverb->get(), juce::dontSendNotification);
+                })};
+        }
     }
     // setAlwaysOnTop(true);
     setSkinOverride(Skin::kHeader);
