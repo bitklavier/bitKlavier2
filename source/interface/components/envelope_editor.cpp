@@ -110,9 +110,7 @@ EnvelopeEditor::EnvelopeEditor(
 EnvelopeEditor::~EnvelopeEditor() { }
 
 void EnvelopeEditor::paintBackground(juce::Graphics& g) {
-  setBackgroundColor(findColour(Skin::kWidgetBackground, true));
-  OpenGlComponent::paintBackground(g);
-
+  g.fillAll(juce::Colours::black);
   setColors();
 }
 
@@ -873,7 +871,6 @@ void EnvelopeEditor::render(OpenGlWrapper& open_gl, bool animate) {
   drag_circle_.render(open_gl, animate);
   hover_circle_.render(open_gl, animate);
 
-  renderCorners(open_gl, animate);
 }
 
 void EnvelopeEditor::destroy(OpenGlWrapper& open_gl) {
