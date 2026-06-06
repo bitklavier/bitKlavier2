@@ -52,6 +52,10 @@ public:
     std::unique_ptr<OpenGlTextButton> compressorButton;
     std::unique_ptr<OpenGlTextButton> reverbButton;
 
+    EQProcessor* eqProc_ = nullptr;
+    CompressorProcessor* compProc_ = nullptr;
+    ReverbProcessor* reverbProc_ = nullptr;
+
     juce::ValueTree gallery;
     chowdsp::ScopedCallbackList callbacks_;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FooterSection)
