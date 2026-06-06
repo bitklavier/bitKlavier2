@@ -69,6 +69,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
 
         if (auto* eqProc = engine->getEQProcessor())
         {
+            eqProc_ = eqProc;
             auto& state = eqProc->getState();
             eqButton->setToggleState(state.params.activeEq->get(), juce::dontSendNotification);
             callbacks_ += {state.getParameterListeners().addParameterListener(
@@ -81,6 +82,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
 
         if (auto* compProc = engine->getCompressorProcessor())
         {
+            compProc_ = compProc;
             auto& state = compProc->getState();
             compressorButton->setToggleState(state.params.activeCompressor->get(), juce::dontSendNotification);
             callbacks_ += {state.getParameterListeners().addParameterListener(
@@ -93,6 +95,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
 
         if (auto* reverbProc = engine->getReverbProcessor())
         {
+            reverbProc_ = reverbProc;
             auto& state = reverbProc->getState();
             reverbButton->setToggleState(state.params.activeReverb->get(), juce::dontSendNotification);
             callbacks_ += {state.getParameterListeners().addParameterListener(
@@ -220,6 +223,17 @@ void FooterSection::reset() {
 }
 
 void FooterSection::buttonClicked(juce::Button *clicked_button) {
+    if (juce::ModifierKeys::getCurrentModifiers().isCtrlDown()) {
+        auto toggle = [](auto& param) { param->setValueNotifyingHost(param->get() ? 0.0f : 1.0f); };
+        if (clicked_button == compressorButton.get() && compProc_)
+            toggle(compProc_->getState().params.activeCompressor);
+        else if (clicked_button == eqButton.get() && eqProc_)
+            toggle(eqProc_->getState().params.activeEq);
+        else if (clicked_button == reverbButton.get() && reverbProc_)
+            toggle(reverbProc_->getState().params.activeReverb);
+        return;
+    }
+
     if (clicked_button == compressorButton.get()) {
         auto interface = findParentComponentOfClass<SynthGuiInterface>();
         showPrepPopup(interface->getCompressorPopup(), {}, bitklavier::BKPreparationType::PreparationTypeCompressor);
