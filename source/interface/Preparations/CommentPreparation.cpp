@@ -69,12 +69,24 @@ CommentPreparation::CommentPreparation (
     // Callback: save formatting to ValueTree and update the display item
     textEditor.onFormatChanged = [this]
     {
-        state.setProperty (IDs::commentBold,              (int) textEditor.bold_,    &undo);
-        state.setProperty (IDs::commentItalic,            (int) textEditor.italic_,  &undo);
-        state.setProperty (IDs::commentAlignment,         textEditor.alignment_,     &undo);
-        state.setProperty (IDs::commentVerticalAlignment, textEditor.vAlignment_,    &undo);
-        state.setProperty (IDs::commentBackground,        textEditor.background_,    &undo);
-        state.setProperty (IDs::commentColor,     textEditor.textColor_.toString(), &undo);
+        // Capture all values before any setProperty calls. Each setProperty fires
+        // valueTreePropertyChanged synchronously, which re-reads ALL properties from VT.
+        // On a fresh comment the earlier properties don't exist in VT yet, so those
+        // callbacks read stale defaults and overwrite textEditor.alignment_ etc. before
+        // we've had a chance to save the new value — causing the wrong value to be saved.
+        const int bold       = (int) textEditor.bold_;
+        const int italic     = (int) textEditor.italic_;
+        const int alignment  = textEditor.alignment_;
+        const int vAlignment = textEditor.vAlignment_;
+        const int background = textEditor.background_;
+        const juce::String color = textEditor.textColor_.toString();
+
+        state.setProperty (IDs::commentBold,              bold,       &undo);
+        state.setProperty (IDs::commentItalic,            italic,     &undo);
+        state.setProperty (IDs::commentAlignment,         alignment,  &undo);
+        state.setProperty (IDs::commentVerticalAlignment, vAlignment, &undo);
+        state.setProperty (IDs::commentBackground,        background, &undo);
+        state.setProperty (IDs::commentColor,             color,      &undo);
         syncFormattingToItem();
     };
 
