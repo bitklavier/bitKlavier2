@@ -92,6 +92,9 @@ void EQParameterView::resized()
     int totalWidth = bounds.getWidth();
     int colWidth = (totalWidth - 4 * colPadding) / 5;
 
+    if (isPrepVersion_)
+        bounds = bounds.withBottom(muteRow.getBottom());
+
     loCutSection->setBounds(bounds.removeFromLeft(colWidth));
     bounds.removeFromLeft(colPadding);
     peak1Section->setBounds(bounds.removeFromLeft(colWidth));
