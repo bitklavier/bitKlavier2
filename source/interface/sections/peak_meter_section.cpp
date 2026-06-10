@@ -136,6 +136,11 @@ void PeakMeterSection::setColor(juce::Colour color)
     peak_meter_label->setColor (color);
 }
 
+void PeakMeterSection::setVolumeTooltip (const juce::String& tip)
+{
+    volume_->setTooltip (tip);
+}
+
 void PeakMeterSection::resized() {
 
    juce::Rectangle<int> bounds = getLocalBounds();

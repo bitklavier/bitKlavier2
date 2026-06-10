@@ -81,21 +81,25 @@ public:
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
+        levelMeter->setVolumeTooltip ("Overall output volume of Blendronic");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
+        sendLevelMeter->setVolumeTooltip ("Volume of Blendronic output to connected effects");
         addSubSection(sendLevelMeter.get());
 
         // internal input level meter/slider (audio from other preparations bussed into Blendronic)
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
         inLevelMeter->setLabel("Internal");
+        inLevelMeter->setVolumeTooltip ("Level of audio bussed in from other preparations");
         addSubSection(inLevelMeter.get());
 
         // external input level meter/slider (mic/line in standalone, DAW sidechain in plugin)
         externalLevelMeter = std::make_shared<PeakMeterSection>(name, params.externalGain, listeners, &params.externalLevels);
         externalLevelMeter->setLabel("External");
+        externalLevelMeter->setVolumeTooltip ("Level of external input (mic/line in standalone, sidechain in plugin)");
         addSubSection(externalLevelMeter.get());
 
         /*
@@ -126,6 +130,7 @@ public:
 
         muteButton_ = std::make_unique<SynthButton>("mute");
         muteButton_->setText("M");
+        muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -138,6 +143,7 @@ public:
 
         soloButton_ = std::make_unique<SynthButton>("solo");
         soloButton_->setText("S");
+        soloButton_->setTooltip ("Solo this preparation. Option-click to solo only this one.");
         addSynthButton(soloButton_.get(), true);
         soloButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();

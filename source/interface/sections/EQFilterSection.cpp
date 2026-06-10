@@ -25,6 +25,7 @@ EQPeakFilterSection::EQPeakFilterSection (
 
     peak_filter_button = std::make_unique<filter_button>(peakImage);
     filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*peak_filter_button,undoManager);
+    peak_filter_button->setTooltip ("Enable or bypass this EQ band");
     addOpenGlComponent (peak_filter_button->getImageComponent());
     addAndMakeVisible(peak_filter_button.get());
 
@@ -35,6 +36,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     freq_knob->setShowPopupOnHover(true);
     freq_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterFreq, listeners, *freq_knob, undoManager);
     freq_knob->addAttachment(freq_knob_attachment.get());
+    freq_knob->setTooltip ("Band center frequency (Hz)");
 
     gain_knob = std::make_unique<SynthSlider>(params.filterGain->paramID, params.filterGain->getModParam());
     addSlider(gain_knob.get());
@@ -43,6 +45,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     gain_knob->setShowPopupOnHover(true);
     gain_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterGain, listeners, *gain_knob, undoManager);
     gain_knob->addAttachment(gain_knob_attachment.get());
+    gain_knob->setTooltip ("Band gain (dB)");
 
     q_knob = std::make_unique<SynthSlider>(params.filterQ->paramID, params.filterQ->getModParam());
     addSlider(q_knob.get());
@@ -51,6 +54,7 @@ EQPeakFilterSection::EQPeakFilterSection (
     q_knob->setShowPopupOnHover(true);
     q_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterQ, listeners, *q_knob, undoManager);
     q_knob->addAttachment(q_knob_attachment.get());
+    q_knob->setTooltip ("Band Q - higher values create a narrower, more resonant peak");
 
     freq_knob_label = std::make_shared<PlainTextComponent>(freq_knob->getName(), "FREQ");
     addOpenGlComponent(freq_knob_label);
@@ -137,6 +141,7 @@ EQCutFilterSection::EQCutFilterSection (
     else cut_filter_button = std::make_unique<filter_button>(hicutImage);
 
     filter_active_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.filterActive,listeners,*cut_filter_button,undoManager);
+    cut_filter_button->setTooltip ("Enable or bypass this cut filter");
     addOpenGlComponent (cut_filter_button->getImageComponent());
     addAndMakeVisible(cut_filter_button.get());
 
@@ -147,6 +152,7 @@ EQCutFilterSection::EQCutFilterSection (
     freq_knob->setShowPopupOnHover(true);
     freq_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterFreq, listeners, *freq_knob, undoManager);
     freq_knob->addAttachment(freq_knob_attachment.get());
+    freq_knob->setTooltip ("Cut filter frequency (Hz)");
 
     slope_knob = std::make_unique<SynthSlider>(params.filterSlope->paramID, params.filterSlope->getModParam());
     addSlider(slope_knob.get());
@@ -155,6 +161,7 @@ EQCutFilterSection::EQCutFilterSection (
     slope_knob->setShowPopupOnHover(true);
     slope_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.filterSlope, listeners, *slope_knob, undoManager);
     slope_knob->addAttachment(slope_knob_attachment.get());
+    slope_knob->setTooltip ("Filter slope (dB per octave) - higher values give a steeper rolloff");
 
     freq_knob_label = std::make_shared<PlainTextComponent>(freq_knob->getName(), "FREQ");
     addOpenGlComponent(freq_knob_label);

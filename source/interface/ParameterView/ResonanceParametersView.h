@@ -59,6 +59,14 @@ public:
                 //param_->paramID == "rsmoothness") // i'm not persuaded this is a useful parameter to expose
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID,param_->getModParam());
+                if (param_->paramID == "rpresence")
+                    slider->setTooltip ("Controls onset speed of resonance - higher values create a faster start");
+                else if (param_->paramID == "rsustain")
+                    slider->setTooltip ("Controls how long the resonance sustains");
+                else if (param_->paramID == "rvariance")
+                    slider->setTooltip ("Overlap sensitivity - higher values create more overlap between partials, resulting in more sympathetic resonance with more variable tuning of partials");
+                else if (param_->paramID == "rstretch")
+                    slider->setTooltip ("Inharmonicity stretch - applies Railsback-style stretch to partials, simulating natural piano string behavior");
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), pluginState.undoManager);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
@@ -150,6 +158,7 @@ public:
         allNotesOffButton->setComponentID("allNotesOff");
         addSynthButton(allNotesOffButton.get(), true);
         allNotesOffButton->setText("all notes off!");
+        allNotesOffButton->setTooltip ("Stop all currently sounding resonance");
         allNotesOffButton->setToggleable(true);
 
         // ADSR
@@ -159,21 +168,25 @@ public:
         // spectrum choices
         spectrum_combo_box = std::make_unique<OpenGLComboBox>(params.spectrum->paramID.toStdString());
         spectrum_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*params.spectrum.get(), listeners, *spectrum_combo_box, pluginState.undoManager);
+        spectrum_combo_box->setTooltip ("Select the spectral type defining the partial structure");
         addComboBox(spectrum_combo_box.get(), true, true);
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
+        levelMeter->setVolumeTooltip ("Master output level for this preparation");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
+        sendLevelMeter->setVolumeTooltip ("Signal level sent to connected effects");
         addSubSection(sendLevelMeter.get());
 
         muteButton_ = std::make_unique<SynthButton>("mute");
         muteButton_->setText("M");
+        muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -186,6 +199,7 @@ public:
 
         soloButton_ = std::make_unique<SynthButton>("solo");
         soloButton_->setText("S");
+        soloButton_->setTooltip ("Solo this preparation. Option-click to solo only this one.");
         addSynthButton(soloButton_.get(), true);
         soloButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();

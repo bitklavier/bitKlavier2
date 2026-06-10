@@ -25,6 +25,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
 
     keyboard_component_ = std::make_unique<OpenGLKeymapKeyboardComponent>(keymap_, false, false, true, true, false);
     keyboard_component_->setOctaveForMiddleC(4);
+    keyboard_component_->setTooltip ("Displays active MIDI notes from attached MIDI input; keys can be pressed directly to turn on and off notes. Also displays selected keys in currently selected Keymap; shift-click notes to toggle on/off in selected Keymap.");
     addStateModulatedComponent(keyboard_component_.get());
     addAndMakeVisible(keyboard_component_.get());
 
@@ -34,6 +35,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     eqButton->addListener(this);
     eqButton->setLookAndFeel(TextLookAndFeel::instance());
     eqButton->setButtonText("Equalizer");
+    eqButton->setTooltip ("Click to open Equalizer controls. Control-click to toggle power on/off.");
 
     compressorButton = std::make_unique<OpenGlTextButton>("footer_compressor");
     addOpenGlComponent(compressorButton->getGlComponent());
@@ -41,6 +43,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     compressorButton->addListener(this);
     compressorButton->setLookAndFeel(TextLookAndFeel::instance());
     compressorButton->setButtonText("Compressor");
+    compressorButton->setTooltip ("Click to open Compressor controls. Control-click to toggle power on/off.");
 
     reverbButton = std::make_unique<OpenGlTextButton>("footer_reverb");
     addOpenGlComponent(reverbButton->getGlComponent());
@@ -48,6 +51,7 @@ FooterSection::FooterSection(SynthGuiData *data) : SynthSection("footer_section"
     reverbButton->addListener(this);
     reverbButton->setLookAndFeel(TextLookAndFeel::instance());
     reverbButton->setButtonText("Reverberator");
+    reverbButton->setTooltip ("Click to open Reverberator controls. Control-click to toggle power on/off.");
 
     auto engine = data->synth->getEngine();
     if (engine)

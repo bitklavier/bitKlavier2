@@ -89,11 +89,13 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     attack_->parentHierarchyChanged();
     attack_->setShowPopupOnHover(true);
     attack_->setValue(params.attackParam->getDefaultValue());
+    attack_->setTooltip ("Attack time - how long the sound takes to reach full volume");
 
     attack_power_ = std::make_unique<SynthSlider>( "attack_power", juce::ValueTree{});
     addSlider(attack_power_.get());
     attack_power_->setRange(-10., 10.); // don't need to do this in the original Vital version, not sure why we need this here
     attack_power_->setVisible(false);
+    attack_power_->setTooltip ("Attack curve shape - 1.0 is linear; higher values make the ramp more convex");
 
     hold_ = std::make_unique<SynthSlider>("hold",juce::ValueTree{});
     addSlider(hold_.get());
@@ -108,11 +110,13 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     decay_->setPopupPlacement(juce::BubbleComponent::below);
     decay_->setShowPopupOnHover(true);
     decay_->setValue(params.decayParam->getDefaultValue());
+    decay_->setTooltip ("Decay time - how long the sound falls from peak to the sustain level");
 
     decay_power_ = std::make_unique<SynthSlider>( "decay_power",juce::ValueTree{});
     addSlider(decay_power_.get());
     decay_power_->setRange(-10., 10.);
     decay_power_->setVisible(false);
+    decay_power_->setTooltip ("Decay curve shape - 1.0 is linear; higher values make the ramp more convex");
 
     release_ = std::make_unique<SynthSlider>(params.releaseParam->paramID,params.releaseParam->getModParam());
     addSlider(release_.get());
@@ -120,11 +124,13 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     release_->setPopupPlacement(juce::BubbleComponent::below);
     release_->setShowPopupOnHover(true);
     release_->setValue(params.releaseParam->getDefaultValue());
+    release_->setTooltip ("Release time - how quickly the sound fades after releasing the key");
 
     release_power_ = std::make_unique<SynthSlider>( "release_power",juce::ValueTree{});
     addSlider(release_power_.get());
     release_power_->setRange(-10., 10.);
     release_power_->setVisible(false);
+    release_power_->setTooltip ("Release curve shape - 1.0 is linear; higher values make the ramp more convex");
 
     sustain_ = std::make_unique<SynthSlider>(params.sustainParam->paramID, params.sustainParam->getModParam());
     addSlider(sustain_.get());
@@ -132,6 +138,7 @@ EnvelopeSection::EnvelopeSection( EnvParams &params, chowdsp::ParameterListeners
     sustain_->setPopupPlacement(juce::BubbleComponent::below);
     sustain_->setShowPopupOnHover(true);
     sustain_->setValue(params.sustainParam->getDefaultValue());
+    sustain_->setTooltip ("Sustain level - volume held while the key is pressed");
 
     envelope_ = std::make_shared<EnvelopeEditor>("");
     addOpenGlComponent(envelope_);

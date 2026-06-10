@@ -22,6 +22,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     clusterThreshold_Slider->setShowPopupOnHover(true);
     clusterThreshold_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveClusterThresh, listeners, *clusterThreshold_Slider, pluginState.undoManager);
     clusterThreshold_Slider->addAttachment(clusterThreshold_SliderAttachment.get());
+    clusterThreshold_Slider->setTooltip ("If this time (ms) elapses between notes, the adaptive fundamental resets");
 
     history_Slider = std::make_unique<SynthSlider>(params.tAdaptiveHistory->paramID, params.tAdaptiveHistory->getModParam());
     addSlider(history_Slider.get());
@@ -30,11 +31,13 @@ AdaptiveTuningSection::AdaptiveTuningSection (
     history_Slider->setShowPopupOnHover(true);
     history_SliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.tAdaptiveHistory, listeners, *history_Slider, pluginState.undoManager);
     history_Slider->addAttachment(history_SliderAttachment.get());
+    history_Slider->setTooltip ("After this many notes are played, the adaptive fundamental resets");
 
     if (auto* tuningParams = dynamic_cast<AdaptiveTuningParams*>(&params)) {
         auto index = tuningParams->tAdaptiveIntervalScale->getIndex();
         adaptiveIntervalScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveIntervalScale->paramID.toStdString());
         adaptiveIntervalScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveIntervalScale, listeners, *adaptiveIntervalScale_ComboBox, pluginState.undoManager);
+        adaptiveIntervalScale_ComboBox->setTooltip ("Scale that sets how successive intervals are tuned");
         addComboBox(adaptiveIntervalScale_ComboBox.get(),true,true) ;
         setupTuningSystemMenu(adaptiveIntervalScale_ComboBox);
         adaptiveIntervalScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
@@ -42,6 +45,7 @@ AdaptiveTuningSection::AdaptiveTuningSection (
         index = tuningParams->tAdaptiveAnchorScale->getIndex();
         adaptiveAnchorScale_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorScale->paramID.toStdString());
         adaptiveAnchorScale_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorScale, listeners, *adaptiveAnchorScale_ComboBox, pluginState.undoManager);
+        adaptiveAnchorScale_ComboBox->setTooltip ("Determines where the moving fundamental is tuned to");
         addComboBox(adaptiveAnchorScale_ComboBox.get(),true,true);
         setupTuningSystemMenu(adaptiveAnchorScale_ComboBox);
         adaptiveAnchorScale_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
@@ -49,18 +53,21 @@ AdaptiveTuningSection::AdaptiveTuningSection (
 
     adaptiveAnchorFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tAdaptiveAnchorFundamental->paramID.toStdString());
     adaptiveAnchorFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tAdaptiveAnchorFundamental, listeners, *adaptiveAnchorFundamental_ComboBox, pluginState.undoManager);
+    adaptiveAnchorFundamental_ComboBox->setTooltip ("Sets the fundamental for the anchor scale");
     addComboBox(adaptiveAnchorFundamental_ComboBox.get(),true,true);
     useInversionOfIntervalScale_Toggle = std::make_unique<SynthButton>(params.tAdaptiveInversional->paramID);
     useInversionOfIntervalScale_ToggleAttachment = std::make_unique<chowdsp::ButtonAttachment>(params.tAdaptiveInversional,listeners,*useInversionOfIntervalScale_Toggle,pluginState.undoManager);
     useInversionOfIntervalScale_Toggle->setComponentID(params.tAdaptiveInversional->paramID);
     addSynthButton(useInversionOfIntervalScale_Toggle.get(), true);
     useInversionOfIntervalScale_Toggle->setText("invert?");
+    useInversionOfIntervalScale_Toggle->setTooltip ("When active, intervals will be tuned the same whether ascending or descending");
 
     resetButton = std::make_unique<SynthButton>("reset");
     resetButton_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.tReset,listeners,*resetButton, nullptr);
     resetButton->setComponentID("reset");
     addSynthButton(resetButton.get(), true);
     resetButton->setText("reset!");
+    resetButton->setTooltip ("Reset the adaptive tuning fundamental");
     resetButton->setToggleable(true); // this one is just to trigger a reset to the adaptive system
 
     currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");

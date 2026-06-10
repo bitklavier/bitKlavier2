@@ -25,6 +25,21 @@ SpringTuningSection::SpringTuningSection (
         auto attachment = std::make_unique<chowdsp::SliderAttachment>(*param_.get(), listeners, *slider.get(), pluginState.undoManager);
         slider->addAttachment(attachment.get());
 
+        if      (param_->paramID == "rate")
+            slider->setTooltip ("Update rate for the spring dynamics (Hz)");
+        else if (param_->paramID == "drag")
+            slider->setTooltip ("Friction/damping coefficient - higher values slow the spring response");
+        else if (param_->paramID == "intervalStiffness")
+            slider->setTooltip ("Overall stiffness of interval springs - how strongly active notes are pulled toward the target interval tuning");
+        else if (param_->paramID == "tetherStiffness")
+            slider->setTooltip ("Overall stiffness of tether/anchor springs - how strongly notes are pulled toward anchor points");
+        else if (param_->paramID == "tetherWeightGlobal")
+            slider->setTooltip ("Tether weight for the fundamental note's anchor spring");
+        else if (param_->paramID == "tetherWeightSecondaryGlobal")
+            slider->setTooltip ("Tether weight for all non-fundamental notes' anchor springs");
+        else if (param_->paramID.startsWith ("intervalWeight"))
+            slider->setTooltip ("Weight for this interval's spring - higher values make this interval pull more strongly toward just intonation");
+
         addSlider(slider.get());
         slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         slider->setShowPopupOnHover(true);
@@ -61,6 +76,7 @@ SpringTuningSection::SpringTuningSection (
         auto index = tuningParams->scaleId->getIndex();
         scaleId_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId->paramID.toStdString());
         scaleId_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId, listeners, *scaleId_ComboBox, pluginState.undoManager);
+        scaleId_ComboBox->setTooltip ("Select a temperament for the interval spring resting lengths");
         addComboBox(scaleId_ComboBox.get(),true,true);
         setupTuningSystemMenu(scaleId_ComboBox);
         scaleId_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
@@ -68,6 +84,7 @@ SpringTuningSection::SpringTuningSection (
         index = tuningParams->scaleId_tether->getIndex();
         scaleId_tether_ComboBox = std::make_unique<OpenGLComboBox>(params.scaleId_tether->paramID.toStdString());
         scaleId_tether_ComboBox_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.scaleId_tether, listeners, *scaleId_tether_ComboBox, pluginState.undoManager);
+        scaleId_tether_ComboBox->setTooltip ("Select a temperament for the tether/anchor spring locations");
         addComboBox(scaleId_tether_ComboBox.get(),true,true);
         setupTuningSystemMenu(scaleId_tether_ComboBox);
         scaleId_tether_ComboBox->setSelectedItemIndex(index,juce::sendNotificationSync);
@@ -83,6 +100,7 @@ SpringTuningSection::SpringTuningSection (
             button->setComponentID(param_->paramID);
             addSynthButton(button.get(), true);
             button->setButtonText("F");
+            button->setTooltip ("Set spring length relative to the Fundamental (F) rather than the local context");
             button->setHelpText("use the Current Fundamental to determine default interval spring lengths?");
 
             /*
@@ -117,10 +135,12 @@ SpringTuningSection::SpringTuningSection (
     // the tuning system fundamental combo boxes
     intervalFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.intervalFundamental->paramID.toStdString());
     intervalFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.intervalFundamental, listeners, *intervalFundamental_ComboBox, pluginState.undoManager);
+    intervalFundamental_ComboBox->setTooltip ("Set the fundamental note for the interval scale");
     addComboBox(intervalFundamental_ComboBox.get(),true,true);
 
     tetherFundamental_ComboBox = std::make_unique<OpenGLComboBox>(params.tetherFundamental->paramID.toStdString());
     tetherFundamental_ComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.tetherFundamental, listeners, *tetherFundamental_ComboBox, pluginState.undoManager);
+    tetherFundamental_ComboBox->setTooltip ("Set the fundamental note for the tether/anchor scale");
     addComboBox(tetherFundamental_ComboBox.get(),true,true);
     // labels...
     currentFundamental = std::make_shared<PlainTextComponent>("currentfundamental", "Current Fundamental = C");

@@ -48,16 +48,18 @@ public:
         activeCompressor_toggle->setComponentID(compressorParams_.activeCompressor->paramID);
         addSynthButton(activeCompressor_toggle.get(), true);
         activeCompressor_toggle->setText("power");
-
+        activeCompressor_toggle->setTooltip ("Enable or bypass the Compressor");
 
         // Internal (graph audio) input meter
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
         inLevelMeter->setLabel(isPrepVersion_ ? "Internal" : "In");
+        inLevelMeter->setVolumeTooltip ("Input level to Compressor");
         addSubSection(inLevelMeter.get());
 
         // Main output meter
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel(isPrepVersion_ ? "Main" : "Out");
+        levelMeter->setVolumeTooltip ("Compressor output level");
         addSubSection(levelMeter.get());
 
         if (isPrepVersion_)
@@ -65,15 +67,18 @@ public:
             // External (mic/line/sidechain) input meter
             externalLevelMeter = std::make_shared<PeakMeterSection>(name, params.externalGain, listeners, &params.externalLevels);
             externalLevelMeter->setLabel("External");
+            externalLevelMeter->setVolumeTooltip ("External input level (mic/line in standalone, sidechain in plugin)");
             addSubSection(externalLevelMeter.get());
 
             // Send output meter
             sendLevelMeter = std::make_shared<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
             sendLevelMeter->setLabel("Send");
+            sendLevelMeter->setVolumeTooltip ("Signal level sent to connected effects");
             addSubSection(sendLevelMeter.get());
 
             muteButton_ = std::make_unique<SynthButton>("mute");
             muteButton_->setText("M");
+            muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
             addSynthButton(muteButton_.get(), true);
             muteButton_->onClick = [this]() {
                 bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -86,6 +91,7 @@ public:
 
             soloButton_ = std::make_unique<SynthButton>("solo");
             soloButton_->setText("S");
+            soloButton_->setTooltip ("Solo this preparation. Option-click to solo only this one.");
             addSynthButton(soloButton_.get(), true);
             soloButton_->onClick = [this]() {
                 bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -103,6 +109,7 @@ public:
         attack_knob->setShowPopupOnHover(true);
         attack_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.attack, listeners, *attack_knob, pluginState.undoManager);
         attack_knob->addAttachment(attack_knob_attachment.get());
+        attack_knob->setTooltip ("Attack time - how quickly compression engages after the signal exceeds threshold (ms)");
 
         release_knob = std::make_unique<SynthSlider>(params.release->paramID, params.release->getModParam());
         addSlider(release_knob.get());
@@ -111,6 +118,7 @@ public:
         release_knob->setShowPopupOnHover(true);
         release_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.release, listeners, *release_knob, pluginState.undoManager);
         release_knob->addAttachment(release_knob_attachment.get());
+        release_knob->setTooltip ("Release time - how quickly compression disengages after the signal drops below threshold (ms)");
 
         threshold_knob = std::make_unique<SynthSlider>(params.threshold->paramID, params.threshold->getModParam());
         addSlider(threshold_knob.get());
@@ -119,6 +127,7 @@ public:
         threshold_knob->setShowPopupOnHover(true);
         threshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.threshold, listeners, *threshold_knob, pluginState.undoManager);
         threshold_knob->addAttachment(threshold_knob_attachment.get());
+        threshold_knob->setTooltip ("Level above which compression begins (dBFS)");
 
         makeup_knob = std::make_unique<SynthSlider>(params.makeup->paramID, params.makeup->getModParam());
         addSlider(makeup_knob.get());
@@ -127,6 +136,7 @@ public:
         makeup_knob->setShowPopupOnHover(true);
         makeup_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.makeup, listeners, *makeup_knob, pluginState.undoManager);
         makeup_knob->addAttachment(makeup_knob_attachment.get());
+        makeup_knob->setTooltip ("Makeup gain applied after compression to compensate for level reduction (dB)");
 
         // mix_knob = std::make_unique<SynthSlider>(params.mix->paramID, params.mix->getModParam());
         // addSlider(mix_knob.get());
@@ -143,6 +153,7 @@ public:
         ratio_knob->setShowPopupOnHover(true);
         ratio_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.ratio, listeners, *ratio_knob, pluginState.undoManager);
         ratio_knob->addAttachment(ratio_knob_attachment.get());
+        ratio_knob->setTooltip ("Compression ratio - how much the signal is reduced above threshold (e.g. 4:1)");
 
         knee_knob = std::make_unique<SynthSlider>(params.knee->paramID, params.knee->getModParam());
         addSlider(knee_knob.get());
@@ -151,6 +162,7 @@ public:
         knee_knob->setShowPopupOnHover(true);
         knee_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.knee, listeners, *knee_knob, pluginState.undoManager);
         knee_knob->addAttachment(knee_knob_attachment.get());
+        knee_knob->setTooltip ("Knee width - gradual vs sudden onset of compression at the threshold");
 
         // knob labels
         attack_knob_label = std::make_shared<PlainTextComponent>(attack_knob->getName(), "ATTACK");

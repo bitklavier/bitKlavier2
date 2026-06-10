@@ -40,7 +40,7 @@ public:
         activeReverb_toggle->setComponentID (params.activeReverb->paramID);
         addSynthButton (activeReverb_toggle.get(), true);
         activeReverb_toggle->setText ("power");
-
+        activeReverb_toggle->setTooltip ("Enable or bypass the Reverb effect");
 
         // Presets button (opens PopupMenu with bank submenus)
         presetsButton = std::make_unique<OpenGlTextButton> ("reverbPresets");
@@ -53,24 +53,29 @@ public:
         // Input/output meters
         inLevelMeter = std::make_unique<PeakMeterSection> (name, params.inputGain, listeners, &params.inputLevels);
         inLevelMeter->setLabel (isPrepVersion_ ? "Internal" : "In");
+        inLevelMeter->setVolumeTooltip ("Input level to Reverb");
         addSubSection (inLevelMeter.get());
 
         levelMeter = std::make_unique<PeakMeterSection> (name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel (isPrepVersion_ ? "Main" : "Out");
+        levelMeter->setVolumeTooltip ("Reverb output level");
         addSubSection (levelMeter.get());
 
         if (isPrepVersion_)
         {
             externalLevelMeter = std::make_unique<PeakMeterSection> (name, params.externalGain, listeners, &params.externalLevels);
             externalLevelMeter->setLabel ("External");
+            externalLevelMeter->setVolumeTooltip ("External input level (mic/line in standalone, sidechain in plugin)");
             addSubSection (externalLevelMeter.get());
 
             sendLevelMeter = std::make_unique<PeakMeterSection> (name, params.outputSend, listeners, &params.sendLevels);
             sendLevelMeter->setLabel ("Send");
+            sendLevelMeter->setVolumeTooltip ("Signal level sent to connected effects");
             addSubSection (sendLevelMeter.get());
 
             muteButton_ = std::make_unique<SynthButton>("mute");
             muteButton_->setText("M");
+            muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
             addSynthButton(muteButton_.get(), true);
             muteButton_->onClick = [this]() {
                 bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -83,6 +88,7 @@ public:
 
             soloButton_ = std::make_unique<SynthButton>("solo");
             soloButton_->setText("S");
+            soloButton_->setTooltip ("Solo this preparation. Option-click to solo only this one.");
             addSynthButton(soloButton_.get(), true);
             soloButton_->onClick = [this]() {
                 bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -111,13 +117,15 @@ public:
                               std::unique_ptr<SynthSlider>& knob,
                               std::unique_ptr<chowdsp::SliderAttachment>& attachment,
                               std::shared_ptr<PlainTextComponent>& label,
-                              const juce::String& labelText)
+                              const juce::String& labelText,
+                              const juce::String& tooltipText = {})
         {
             knob = std::make_unique<SynthSlider> (param->paramID, param->getModParam());
             addSlider (knob.get());
             knob->setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
             knob->setPopupPlacement (juce::BubbleComponent::below);
             knob->setShowPopupOnHover (true);
+            if (tooltipText.isNotEmpty()) knob->setTooltip (tooltipText);
             attachment = std::make_unique<chowdsp::SliderAttachment> (param, listeners, *knob, pluginState.undoManager);
             knob->addAttachment (attachment.get());
 
@@ -127,32 +135,32 @@ public:
         };
 
         // Group 1: Dry Level, Early Level, Early Send, Late Level
-        makeKnob (params.dryLevel,   dryLevel_knob,   dryLevel_att,   dryLevel_label,   "DRY");
-        makeKnob (params.earlyLevel, earlyLevel_knob, earlyLevel_att, earlyLevel_label, "EARLY");
-        makeKnob (params.earlySend,  earlySend_knob,  earlySend_att,  earlySend_label,  "SEND");
-        makeKnob (params.lateLevel,  lateLevel_knob,  lateLevel_att,  lateLevel_label,  "LATE");
+        makeKnob (params.dryLevel,   dryLevel_knob,   dryLevel_att,   dryLevel_label,   "DRY",      "Dry (unprocessed) signal level mixed into the output");
+        makeKnob (params.earlyLevel, earlyLevel_knob, earlyLevel_att, earlyLevel_label, "EARLY",    "Level of early reflections");
+        makeKnob (params.earlySend,  earlySend_knob,  earlySend_att,  earlySend_label,  "SEND",     "Amount of early reflections fed into the late reverb");
+        makeKnob (params.lateLevel,  lateLevel_knob,  lateLevel_att,  lateLevel_label,  "LATE",     "Level of the late reverb tail");
 
         // Group 2: Diffuse, Modulation, Spin, Wander
-        makeKnob (params.diffuse,    diffuse_knob,    diffuse_att,    diffuse_label,    "DIFFUSE");
-        makeKnob (params.modulation, modulation_knob, modulation_att, modulation_label, "MOD");
-        makeKnob (params.spin,       spin_knob,       spin_att,       spin_label,       "SPIN");
-        makeKnob (params.wander,     wander_knob,     wander_att,     wander_label,     "WANDER");
+        makeKnob (params.diffuse,    diffuse_knob,    diffuse_att,    diffuse_label,    "DIFFUSE",  "Diffusion - higher values create a denser, more diffuse reverb");
+        makeKnob (params.modulation, modulation_knob, modulation_att, modulation_label, "MOD",      "Modulation depth applied to the reverb to reduce metallic coloration");
+        makeKnob (params.spin,       spin_knob,       spin_att,       spin_label,       "SPIN",     "Rate of modulation in the reverb diffuser");
+        makeKnob (params.wander,     wander_knob,     wander_att,     wander_label,     "WANDER",   "Amount of random pitch wander applied to the reverb");
 
         // Group 3: Size, Width, Predelay, Decay
-        makeKnob (params.size,       size_knob,       size_att,       size_label,       "SIZE");
-        makeKnob (params.width,      width_knob,      width_att,      width_label,      "WIDTH");
-        makeKnob (params.predelay,   predelay_knob,   predelay_att,   predelay_label,   "PREDELAY");
-        makeKnob (params.decay,      decay_knob,      decay_att,      decay_label,      "DECAY");
+        makeKnob (params.size,       size_knob,       size_att,       size_label,       "SIZE",     "Perceived size of the reverb space");
+        makeKnob (params.width,      width_knob,      width_att,      width_label,      "WIDTH",    "Stereo width of the reverb output");
+        makeKnob (params.predelay,   predelay_knob,   predelay_att,   predelay_label,   "PREDELAY", "Delay before reverb begins (ms)");
+        makeKnob (params.decay,      decay_knob,      decay_att,      decay_label,      "DECAY",    "Reverb decay time - how long the tail rings out");
 
         // Group 4: High Cut, High Cross, High Mult
-        makeKnob (params.highCut,    highCut_knob,    highCut_att,    highCut_label,    "HI CUT");
-        makeKnob (params.highXover,  highXover_knob,  highXover_att,  highXover_label,  "HI CROSS");
-        makeKnob (params.highMult,   highMult_knob,   highMult_att,   highMult_label,   "HI MULT");
+        makeKnob (params.highCut,    highCut_knob,    highCut_att,    highCut_label,    "HI CUT",   "High frequency cutoff applied to the reverb tail");
+        makeKnob (params.highXover,  highXover_knob,  highXover_att,  highXover_label,  "HI CROSS", "Crossover frequency above which the high multiplier is applied");
+        makeKnob (params.highMult,   highMult_knob,   highMult_att,   highMult_label,   "HI MULT",  "Decay multiplier for frequencies above the high crossover");
 
         // Group 5: Low Cut, Low Cross, Low Mult
-        makeKnob (params.lowCut,     lowCut_knob,     lowCut_att,     lowCut_label,     "LO CUT");
-        makeKnob (params.lowXover,   lowXover_knob,   lowXover_att,   lowXover_label,   "LO CROSS");
-        makeKnob (params.lowMult,    lowMult_knob,    lowMult_att,    lowMult_label,    "LO MULT");
+        makeKnob (params.lowCut,     lowCut_knob,     lowCut_att,     lowCut_label,     "LO CUT",   "Low frequency cutoff applied to the reverb tail");
+        makeKnob (params.lowXover,   lowXover_knob,   lowXover_att,   lowXover_label,   "LO CROSS", "Crossover frequency below which the low multiplier is applied");
+        makeKnob (params.lowMult,    lowMult_knob,    lowMult_att,    lowMult_label,    "LO MULT",  "Decay multiplier for frequencies below the low crossover");
 
         // Enable/disable knobs based on power state
         powerCallbacks_ += { listeners.addParameterListener (

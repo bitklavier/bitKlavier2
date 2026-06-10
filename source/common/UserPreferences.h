@@ -64,6 +64,9 @@ public:
         if (! tree.getChildWithName (IDs::midiPrefs).isValid())
             tree.appendChild (juce::ValueTree (IDs::midiPrefs), nullptr);
 
+        if (! tree.hasProperty ("showHints"))
+            tree.setProperty ("showHints", true, nullptr);
+
         if (tree.getChildWithName ("KNOWNPLUGINS").isValid())
         {
             knownPluginList.recreateFromXml (*tree.getChildWithName ("KNOWNPLUGINS").createXml());

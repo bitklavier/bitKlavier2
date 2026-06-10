@@ -54,6 +54,7 @@ public:
                 nostalgicTriggeredBy_combo_box->setItemEnabled (2, false);
                 nostalgicTriggeredBy_combo_box->setItemEnabled (3, false);
             }
+            nostalgicTriggeredBy_combo_box->setTooltip ("Indicates how Nostalgic calculates length of reverse wave");
             addAndMakeVisible(nostalgicTriggeredBy_combo_box.get());
             addOpenGlComponent(nostalgicTriggeredBy_combo_box->getImageComponent());
         }
@@ -72,6 +73,7 @@ public:
         keyOnReset->setComponentID(params.keyOnReset->paramID);
         addSynthButton(keyOnReset.get(), true);
         keyOnReset->setText("key-on reset?");
+        keyOnReset->setTooltip ("Interrupts currently sounding Nostalgic notes of the same pitch");
 
         // knobs
         noteLengthMult_knob = std::make_unique<SynthSlider>(params.noteLengthMultParam->paramID, params.noteLengthMultParam->getModParam());
@@ -81,6 +83,7 @@ public:
         noteLengthMult_knob->setShowPopupOnHover(true);
         noteLengthMult_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.noteLengthMultParam, listeners, *noteLengthMult_knob, pluginState.undoManager);
         noteLengthMult_knob->addAttachment(noteLengthMult_knob_attachment.get());
+        noteLengthMult_knob->setTooltip ("Changes length of Nostalgic wave as a factor of note duration");
 
         noteLengthMult_knob_label = std::make_shared<PlainTextComponent>(noteLengthMult_knob->getName(), params.noteLengthMultParam->getName(20));
         addOpenGlComponent(noteLengthMult_knob_label);
@@ -93,6 +96,7 @@ public:
         beatsToSkip_knob->setShowPopupOnHover(true);
         beatsToSkip_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.beatsToSkipParam, listeners, *beatsToSkip_knob, pluginState.undoManager);
         beatsToSkip_knob->addAttachment(beatsToSkip_knob_attachment.get());
+        beatsToSkip_knob->setTooltip ("Indicates how long the Nostalgic wave lasts with respect to a linked Synchronic sequence");
 
         beatsToSkip_knob_label = std::make_shared<PlainTextComponent>(beatsToSkip_knob->getName(), params.beatsToSkipParam->getName(20));
         addOpenGlComponent(beatsToSkip_knob_label);
@@ -105,6 +109,7 @@ public:
         clusterMin_knob->setShowPopupOnHover(true);
         clusterMin_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterMinParam, listeners, *clusterMin_knob, pluginState.undoManager);
         clusterMin_knob->addAttachment(clusterMin_knob_attachment.get());
+        clusterMin_knob->setTooltip ("Minimum cluster size needed to trigger swell");
 
         clusterMin_knob_label = std::make_shared<PlainTextComponent>(clusterMin_knob->getName(), params.clusterMinParam->getName(20));
         addOpenGlComponent(clusterMin_knob_label);
@@ -117,6 +122,7 @@ public:
         clusterThreshold_knob->setShowPopupOnHover(true);
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshParam, listeners, *clusterThreshold_knob, pluginState.undoManager);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
+        clusterThreshold_knob->setTooltip ("Time between note releases (ms) to be included in a cluster");
 
         clusterThreshold_knob_label = std::make_shared<PlainTextComponent>(clusterThreshold_knob->getName(), params.clusterThreshParam->getName(20));
         addOpenGlComponent(clusterThreshold_knob_label);
@@ -142,15 +148,18 @@ public:
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
+        levelMeter->setVolumeTooltip ("Volume multiplier for Nostalgic notes");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
+        sendLevelMeter->setVolumeTooltip ("Volume multiplier for Nostalgic output to connected effects");
         addSubSection(sendLevelMeter.get());
 
         muteButton_ = std::make_unique<SynthButton>("mute");
         muteButton_->setText("M");
+        muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -163,6 +172,7 @@ public:
 
         soloButton_ = std::make_unique<SynthButton>("solo");
         soloButton_->setText("S");
+        soloButton_->setTooltip ("Solo this preparation. Option-click to solo only this one.");
         addSynthButton(soloButton_.get(), true);
         soloButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();

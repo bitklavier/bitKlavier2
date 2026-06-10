@@ -54,14 +54,17 @@ TuningParametersView::TuningParametersView(
         tuning_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningSystem->paramID.toStdString(), tuningParams->tuningState.tuningSystem->stateChanges.defaultState);
         setupTuningSystemMenu(tuning_combo_box);
         tuning_attachment= std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningSystem.get(), listeners, *tuning_combo_box, pluginState.undoManager);
+        tuning_combo_box->setTooltip ("Select from a range of preset temperaments");
         addComboBox(tuning_combo_box.get(), true, true);
 
         fundamental_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.fundamental->paramID.toStdString(), tuningParams->tuningState.fundamental->stateChanges.defaultState);
         fundamental_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.fundamental.get(), listeners, *fundamental_combo_box, pluginState.undoManager);
+        fundamental_combo_box->setTooltip ("Select the root note around which your temperament is generated");
         addComboBox(fundamental_combo_box.get(), true, true);
 
         tuningtype_combo_box = std::make_unique<OpenGLComboBox>(tuningParams->tuningState.tuningType->paramID.toStdString(), tuningParams->tuningState.tuningType->stateChanges.defaultState);
         tuningtype_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tuningParams->tuningState.tuningType.get(), listeners, *tuningtype_combo_box, pluginState.undoManager);
+        tuningtype_combo_box->setTooltip ("Select tuning system type: Static, Adaptive, or Spring");
         addComboBox(tuningtype_combo_box.get(), true, true);
     }
 
@@ -81,6 +84,7 @@ TuningParametersView::TuningParametersView(
     sclTextEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::white.withAlpha(0.5f));
     sclTextEditor->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::white);
     sclTextEditor->setFontSize(12.0f);
+    sclTextEditor->setTooltip ("Drag/Drop Scala file here to open, edit directly");
 
     kbmTextEditor = std::make_shared<OpenGlTextEditor>("KBMTXT");
     addOpenGlComponent(kbmTextEditor->getImageComponent());
@@ -97,6 +101,7 @@ TuningParametersView::TuningParametersView(
     kbmTextEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::white.withAlpha(0.5f));
     kbmTextEditor->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::white);
     kbmTextEditor->setFontSize(12.0f);
+    kbmTextEditor->setTooltip ("Drag/Drop KBM file here to open, edit directly");
 
     sclTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
     kbmTextEditor->getImageComponent()->setInterceptsMouseClicks(false, false);
@@ -109,6 +114,7 @@ TuningParametersView::TuningParametersView(
     mapScalaToInternal_button->setComponentID("mapScaleToInternal");
     addSynthButton(mapScalaToInternal_button.get(), true);
     mapScalaToInternal_button->setText("map Scala to internal tuning");
+    mapScalaToInternal_button->setTooltip ("Apply the loaded Scala/KBM tuning to the internal custom tuning");
     mapScalaToInternal_button->setToggleable(true);
 
     /*

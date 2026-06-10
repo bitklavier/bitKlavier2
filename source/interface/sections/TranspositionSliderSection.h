@@ -40,9 +40,11 @@ public:
 
         // what we want the button to show to the user
         on->setText("use Tuning?");
+        on->setTooltip ("Transpositions will be tuned using attached Tuning");
 
         //set component id to map to statechange params set in processor constructor
         slider->setComponentID("transpose");
+        slider->setTooltip ("Determines pitch (in semitones); control-click to add another voice, shift-drag to change by integer, double-click to edit all");
 
         //addStateModulatedComponent is needed for this complex slider to get picked up by modulations
         // since we have 12 individual sliders here, these will be wrapped into one state change for all together

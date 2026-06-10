@@ -78,6 +78,9 @@ private juce::ChangeListener
     /** Persist the current audio device setup to the provided ValueTree state. */
     void persistCurrentSetup();
 
+    /** Called immediately after the showHints toggle state changes. Set this to trigger a redraw. */
+    std::function<void()> onShowHintsChanged;
+
     //==============================================================================
     /** @internal */
     void resized() override;
@@ -109,6 +112,7 @@ private juce::ChangeListener
     std::unique_ptr<MidiOutputSelector> midiOutputSelector;
     std::unique_ptr<juce::Label> midiInputsLabel, midiOutputLabel;
     std::unique_ptr<juce::TextButton> bluetoothButton;
+    std::unique_ptr<juce::ToggleButton> showHintsButton;
     juce::ValueTree state;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioDeviceSelectorComponent)
 };
