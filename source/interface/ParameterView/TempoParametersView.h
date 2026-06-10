@@ -60,6 +60,10 @@ public:
                 param_->paramID == "subdivisions")
             {
                 auto slider = std::make_unique<SynthSlider> (param_->paramID, param_->getModParam());
+                if (param_->paramID == "tempo")
+                    slider->setTooltip ("Master tempo in beats per minute");
+                else if (param_->paramID == "subdivisions")
+                    slider->setTooltip ("Number of subdivisions per beat");
                 auto attachment = std::make_unique<chowdsp::SliderAttachment> (*param_.get(), listeners, *slider.get(), pluginState.undoManager);
                 slider->addAttachment(attachment.get()); // necessary for mods to be able to display properly
                 addSlider (slider.get()); // adds the slider to the synthSection
@@ -78,6 +82,7 @@ public:
         {
             tempoMode = std::make_unique<OpenGLComboBox>(tempoParams->tempoModeOptions->paramID.toStdString());
             tempoMode_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*tempoParams->tempoModeOptions.get(), listeners, *tempoMode, pluginState.undoManager);
+            tempoMode->setTooltip ("Indicates whether in Constant or Adaptive mode");
             addAndMakeVisible(tempoMode.get());
             addOpenGlComponent(tempoMode->getImageComponent());
         }

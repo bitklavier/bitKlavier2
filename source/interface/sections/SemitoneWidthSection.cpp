@@ -23,13 +23,16 @@ SemitoneWidthSection::SemitoneWidthSection (
     widthSlider_->setShowPopupOnHover(true);
     widthSliderAttachment = std::make_unique<chowdsp::SliderAttachment>(params.semitoneWidthSliderParam, listeners, *widthSlider_, pluginState.undoManager);
     widthSlider_->addAttachment(widthSliderAttachment.get());
+    widthSlider_->setTooltip ("Adjusts half step distance. 50 cents = quarter-tone keyboard, -100 cents = inverted keyboard");
 
     fundamentalComboBox = std::make_unique<OpenGLComboBox>(params.reffundamental->paramID.toStdString());
     fundamentalComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.reffundamental, listeners, *fundamentalComboBox, pluginState.undoManager);
+    fundamentalComboBox->setTooltip ("Set the root note when semitone width is not 100");
     addComboBox(fundamentalComboBox.get(),true,true);
 
     octaveComboBox = std::make_unique<OpenGLComboBox>(params.octave->paramID.toStdString());
     octaveComboBoxAttachment = std::make_unique<chowdsp::ComboBoxAttachment>(params.octave, listeners, *octaveComboBox, pluginState.undoManager);
+    octaveComboBox->setTooltip ("Set the octave for the root note");
     addComboBox(octaveComboBox.get(),true,true);
 
     width_label = std::make_shared<PlainTextComponent>(widthSlider_->getName(), params.semitoneWidthSliderParam->getName(20));

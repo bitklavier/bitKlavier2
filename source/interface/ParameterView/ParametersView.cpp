@@ -17,6 +17,8 @@ namespace bitklavier {
                     : button(std::make_shared<OpenGlToggleButton>(param.paramID)), attachment(param, listeners, *button, nullptr) {
                 setName(param.paramID);
                 setLookAndFeel(DefaultLookAndFeel::instance());
+                if (param.paramID == "automaticStart")
+                    button->setTooltip ("Restart the LFO automatically each time it is triggered");
                 parent.addButton(button.get());
             }
 
@@ -66,6 +68,8 @@ namespace bitklavier {
             ChoiceParameterComponent(chowdsp::ChoiceParameter &param, chowdsp::ParameterListeners& listeners,SynthSection &parent)
                     : attachment(param, listeners, box, nullptr) {
                 addAndMakeVisible(box);
+                if (param.paramID == "waveShape")
+                    box.setTooltip ("LFO waveform shape");
                 parent.addChildComponent (box);
                 parent.addOpenGlComponent (box.getImageComponent());
             }
@@ -90,6 +94,12 @@ namespace bitklavier {
                     : slider(std::make_shared<SynthSlider>(param.paramID,param.getModParam())), attachment(param, listeners, *slider, nullptr) {
                 setName(param.paramID);
                 slider->setTitle (param.getName(20));
+                if (param.paramID == "Time")
+                    slider->setTooltip ("Time to ramp from the current value to the target (ms)");
+                else if (param.paramID == "Curve")
+                    slider->setTooltip ("Curve shape - 1.0 is linear; higher values make the ramp more convex");
+                else if (param.paramID == "Frequency")
+                    slider->setTooltip ("LFO oscillation rate (Hz)");
                 DBG("SliderParameterComponent slider name = " << param.getName(20));
                 setLookAndFeel(DefaultLookAndFeel::instance());
                 slider->setScrollWheelEnabled(false);

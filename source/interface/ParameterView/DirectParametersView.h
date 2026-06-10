@@ -58,6 +58,14 @@ public:
                 param_->paramID == "Pedal"
                 ) {
                 auto slider = std::make_unique<SynthSlider>(param_->paramID, param_->getModParam());
+                if (param_->paramID == "Main")
+                    slider->setTooltip ("Primary piano signal - the direct piano sample");
+                else if (param_->paramID == "Hammers")
+                    slider->setTooltip ("Hammer release sounds - the mechanical thud when keys return. Requires hammer samples; greyed out if not available for this sampleset or soundfont.");
+                else if (param_->paramID == "Resonance")
+                    slider->setTooltip ("Sympathetic string resonance triggered by played notes. Requires resonance samples; greyed out if not available for this sampleset or soundfont.");
+                else if (param_->paramID == "Pedal")
+                    slider->setTooltip ("Open-string resonance when the sustain pedal is held. Requires pedal samples; greyed out if not available for this sampleset or soundfont.");
                 if (param_->paramID == "Hammers")
                     slider->setDisabled(!*this->params.hammerLoaded);
                 if (param_->paramID == "Resonance")
@@ -92,16 +100,19 @@ public:
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
+        levelMeter->setVolumeTooltip ("Master output level for this preparation (sent directly to speakers if not connected to other preparations).");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
         sendLevelMeter = std::make_unique<
             PeakMeterSection>(name, params.outputSendParam, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
+        sendLevelMeter->setVolumeTooltip ("Signal level sent to connected effects (Eq/Compressor/Reverb, Blendronic, VST)");
         addSubSection(sendLevelMeter.get());
 
         muteButton_ = std::make_unique<SynthButton>("mute");
         muteButton_->setText("M");
+        muteButton_->setTooltip ("Mute this preparation. Option-click to un-mute all others.");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -114,6 +125,7 @@ public:
 
         soloButton_ = std::make_unique<SynthButton>("solo");
         soloButton_->setText("S");
+        soloButton_->setTooltip ("Solo this preparation. Option-click to un-solo all others.");
         addSynthButton(soloButton_.get(), true);
         soloButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();

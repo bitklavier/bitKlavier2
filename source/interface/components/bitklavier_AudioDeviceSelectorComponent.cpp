@@ -1161,6 +1161,15 @@ namespace bitklavier
             midiOutputLabel.reset();
         }
 
+        showHintsButton = std::make_unique<juce::ToggleButton> (TRANS ("Show hints"));
+        showHintsButton->setToggleState ((bool) state.getProperty ("showHints", true), juce::dontSendNotification);
+        addAndMakeVisible (showHintsButton.get());
+        showHintsButton->onClick = [this] {
+            state.setProperty ("showHints", showHintsButton->getToggleState(), nullptr);
+            if (onShowHintsChanged)
+                onShowHintsChanged();
+        };
+
         deviceManager.addChangeListener (this);
         updateAllControls();
     }
@@ -1206,6 +1215,12 @@ namespace bitklavier
         if (bluetoothButton != nullptr)
         {
             bluetoothButton->setBounds (r.removeFromTop (24));
+            r.removeFromTop (space);
+        }
+
+        if (showHintsButton != nullptr)
+        {
+            showHintsButton->setBounds (r.removeFromTop (24));
             r.removeFromTop (space);
         }
 

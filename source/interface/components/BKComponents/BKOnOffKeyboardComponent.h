@@ -10,7 +10,7 @@
 
 #include "juce_audio_utils/juce_audio_utils.h"
 
-class BKOnOffKeyboardComponent : public juce::KeyboardComponentBase{
+class BKOnOffKeyboardComponent : public juce::KeyboardComponentBase, public juce::SettableTooltipClient {
 public:
     enum ColourIds
     {

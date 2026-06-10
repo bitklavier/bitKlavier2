@@ -62,6 +62,7 @@ KeymapParameterView::KeymapParameterView(
     asymmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(
         params.velocityCurve_asymWarp, listeners, *asymmetricalWarp_knob, _proc.getState().undoManager);
     asymmetricalWarp_knob->addAttachment(asymmetricalWarp_knob_attach.get());
+    asymmetricalWarp_knob->setTooltip ("Asymmetrical warp of the velocity curve");
 
     symmetricalWarp_knob = std::make_unique<SynthSlider>(params.velocityCurve_symWarp->paramID,
                                                          params.velocityCurve_symWarp->getModParam());
@@ -72,6 +73,7 @@ KeymapParameterView::KeymapParameterView(
     symmetricalWarp_knob_attach = std::make_unique<chowdsp::SliderAttachment>(
         params.velocityCurve_symWarp, listeners, *symmetricalWarp_knob, _proc.getState().undoManager);
     symmetricalWarp_knob->addAttachment(symmetricalWarp_knob_attach.get());
+    symmetricalWarp_knob->setTooltip ("Symmetrical warp of the velocity curve");
 
     scale_knob = std::make_unique<SynthSlider>(params.velocityCurve_scale->paramID,
                                                params.velocityCurve_scale->getModParam());
@@ -82,6 +84,7 @@ KeymapParameterView::KeymapParameterView(
     scale_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_scale, listeners, *scale_knob,
                                                                     _proc.getState().undoManager);
     scale_knob->addAttachment(scale_knob_attach.get());
+    scale_knob->setTooltip ("Velocity scale multiplier");
 
     offset_knob = std::make_unique<SynthSlider>(params.velocityCurve_offset->paramID,
                                                 params.velocityCurve_offset->getModParam());
@@ -92,6 +95,7 @@ KeymapParameterView::KeymapParameterView(
     offset_knob_attach = std::make_unique<chowdsp::SliderAttachment>(params.velocityCurve_offset, listeners,
                                                                      *offset_knob, _proc.getState().undoManager);
     offset_knob->addAttachment(offset_knob_attach.get());
+    offset_knob->setTooltip ("Velocity offset");
 
     invert = std::make_unique<SynthButton>(params.velocityCurve_invert->paramID);
     invert_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.velocityCurve_invert, listeners, *invert,
@@ -99,6 +103,7 @@ KeymapParameterView::KeymapParameterView(
     invert->setComponentID(params.velocityCurve_invert->paramID);
     addSynthButton(invert.get(), true, true);
     invert->setText("invert?");
+    invert->setTooltip ("Invert the velocity curve");
 
     asymmetricalWarp_knob_label = std::make_shared<PlainTextComponent>(asymmetricalWarp_knob->getName(),
                                                                        params.velocityCurve_asymWarp->getName(20));

@@ -49,7 +49,7 @@ public:
         activeEq_toggle->setComponentID(eqparams_.activeEq->paramID);
         addSynthButton(activeEq_toggle.get(), true);
         activeEq_toggle->setText("power");
-
+        activeEq_toggle->setTooltip ("Enable or bypass the EQ");
 
         // EQ Graph
         equalizerGraph = std::make_unique<OpenGL_EqualizerGraph> (&params, listeners);
@@ -71,11 +71,13 @@ public:
         // Internal (graph audio) input meter
         inLevelMeter = std::make_unique<PeakMeterSection>(name, params.inputGain, listeners, &params.inputLevels);
         inLevelMeter->setLabel(isPrepVersion_ ? "Internal" : "In");
+        inLevelMeter->setVolumeTooltip ("Input level to EQ");
         addSubSection(inLevelMeter.get());
 
         // Main output meter
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel(isPrepVersion_ ? "Main" : "Out");
+        levelMeter->setVolumeTooltip ("EQ output level");
         addSubSection(levelMeter.get());
 
         if (isPrepVersion_)
@@ -83,15 +85,18 @@ public:
             // External (mic/line/sidechain) input meter
             externalLevelMeter = std::make_shared<PeakMeterSection>(name, params.externalGain, listeners, &params.externalLevels);
             externalLevelMeter->setLabel("External");
+            externalLevelMeter->setVolumeTooltip ("External input level (mic/line in standalone, sidechain in plugin)");
             addSubSection(externalLevelMeter.get());
 
             // Send output meter
             sendLevelMeter = std::make_shared<PeakMeterSection>(name, params.outputSend, listeners, &params.sendLevels);
             sendLevelMeter->setLabel("Send");
+            sendLevelMeter->setVolumeTooltip ("Signal level sent to connected effects");
             addSubSection(sendLevelMeter.get());
 
             muteButton_ = std::make_unique<SynthButton>("mute");
             muteButton_->setText("M");
+            muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
             addSynthButton(muteButton_.get(), true);
             muteButton_->onClick = [this]() {
                 bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -104,6 +109,7 @@ public:
 
             soloButton_ = std::make_unique<SynthButton>("solo");
             soloButton_->setText("S");
+            soloButton_->setTooltip ("Solo this preparation. Option-click to solo only this one.");
             addSynthButton(soloButton_.get(), true);
             soloButton_->onClick = [this]() {
                 bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();

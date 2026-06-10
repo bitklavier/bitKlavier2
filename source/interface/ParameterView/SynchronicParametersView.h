@@ -60,11 +60,13 @@ public:
         if (auto* synchronicParams = dynamic_cast<SynchronicParams*>(&params)) {
             pulseTriggeredBy_combo_box = std::make_unique<OpenGLComboBox>(synchronicParams->pulseTriggeredBy->paramID.toStdString());
             pulseTriggeredBy_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*synchronicParams->pulseTriggeredBy.get(), listeners, *pulseTriggeredBy_combo_box, pluginState.undoManager);
+            pulseTriggeredBy_combo_box->setTooltip ("Determines which aspect of MIDI signal triggers the Synchronic sequence");
             addAndMakeVisible(pulseTriggeredBy_combo_box.get());
             addOpenGlComponent(pulseTriggeredBy_combo_box->getImageComponent());
 
             determinesCluster_combo_box = std::make_unique<OpenGLComboBox>(synchronicParams->determinesCluster->paramID.toStdString());
             determinesCluster_attachment = std::make_unique<chowdsp::ComboBoxAttachment>(*synchronicParams->determinesCluster.get(), listeners, *determinesCluster_combo_box, pluginState.undoManager);
+            determinesCluster_combo_box->setTooltip ("Determines whether MIDI note-on or note-off is used to measure cluster");
             addAndMakeVisible(determinesCluster_combo_box.get());
             addOpenGlComponent(determinesCluster_combo_box->getImageComponent());
         }
@@ -86,6 +88,7 @@ public:
         numPulses_knob->setShowPopupOnHover(true);
         numPulses_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numPulses, listeners, *numPulses_knob, pluginState.undoManager);
         numPulses_knob->addAttachment(numPulses_knob_attachment.get()); // needed for mods!!
+        numPulses_knob->setTooltip ("Number of steps/repetitions in the Synchronic pulse");
 
         numLayers_knob = std::make_unique<SynthSlider>(params.numLayers->paramID,params.numLayers->getModParam());
         addSlider(numLayers_knob.get());
@@ -94,6 +97,7 @@ public:
         numLayers_knob->setShowPopupOnHover(true);
         numLayers_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.numLayers, listeners, *numLayers_knob, pluginState.undoManager);
         numLayers_knob->addAttachment(numLayers_knob_attachment.get());
+        numLayers_knob->setTooltip ("Number of simultaneous layers of pulses");
 
         clusterThickness_knob = std::make_unique<SynthSlider>(params.clusterThickness->paramID,params.clusterThickness->getModParam());
         addSlider(clusterThickness_knob.get());
@@ -102,6 +106,7 @@ public:
         clusterThickness_knob->setShowPopupOnHover(true);
         clusterThickness_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThickness, listeners, *clusterThickness_knob, pluginState.undoManager);
         clusterThickness_knob->addAttachment(clusterThickness_knob_attachment.get());
+        clusterThickness_knob->setTooltip ("Maximum number of notes in the sounding pulse");
 
         clusterThreshold_knob = std::make_unique<SynthSlider>(params.clusterThreshold->paramID,params.clusterThreshold->getModParam());
         addSlider(clusterThreshold_knob.get());
@@ -110,6 +115,7 @@ public:
         clusterThreshold_knob->setShowPopupOnHover(true);
         clusterThreshold_knob_attachment = std::make_unique<chowdsp::SliderAttachment>(params.clusterThreshold, listeners, *clusterThreshold_knob, pluginState.undoManager);
         clusterThreshold_knob->addAttachment(clusterThreshold_knob_attachment.get());
+        clusterThreshold_knob->setTooltip ("Successive notes spaced by less than this time (ms) are grouped as a cluster");
 
         numPulses_knob_label = std::make_shared<PlainTextComponent>(numPulses_knob->getName(), params.numPulses->getName(20));
         addOpenGlComponent(numPulses_knob_label);
@@ -183,26 +189,31 @@ public:
         useTuning->setComponentID(params.transpositionUsesTuning->paramID);
         addSynthButton(useTuning.get(), true);
         useTuning->setText("use Tuning?");
+        useTuning->setTooltip ("Non-zero transpositions will be tuned using an attached Tuning preparation");
 
         skipFirst = std::make_unique<SynthButton>(params.skipFirst->paramID);
         skipFirst_attachment = std::make_unique<chowdsp::ButtonAttachment>(params.skipFirst, listeners, *skipFirst, pluginState.undoManager);
         skipFirst->setComponentID(params.skipFirst->paramID);
         addSynthButton(skipFirst.get(), true);
         skipFirst->setText("skip first?");
+        skipFirst->setTooltip ("Skip the first column of sequenced parameters for the first cycle");
 
         // the level meter and output gain slider (right side of preparation popup)
         // need to pass it the param.outputGain and the listeners so it can attach to the slider and update accordingly
         levelMeter = std::make_unique<PeakMeterSection>(name, params.outputGain, listeners, &params.outputLevels);
         levelMeter->setLabel("Main");
+        levelMeter->setVolumeTooltip ("Overall volume of Synchronic pulse");
         addSubSection(levelMeter.get());
 
         // similar for send level meter/slider
         sendLevelMeter = std::make_unique<PeakMeterSection>(name, params.outputSendGain, listeners, &params.sendLevels);
         sendLevelMeter->setLabel("Send");
+        sendLevelMeter->setVolumeTooltip ("Volume of Synchronic output to connected effects");
         addSubSection(sendLevelMeter.get());
 
         muteButton_ = std::make_unique<SynthButton>("mute");
         muteButton_->setText("M");
+        muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
         addSynthButton(muteButton_.get(), true);
         muteButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();
@@ -215,6 +226,7 @@ public:
 
         soloButton_ = std::make_unique<SynthButton>("solo");
         soloButton_->setText("S");
+        soloButton_->setTooltip ("Solo this preparation. Option-click to solo only this one.");
         addSynthButton(soloButton_.get(), true);
         soloButton_->onClick = [this]() {
             bool isOptionClick = juce::ModifierKeys::currentModifiers.isAltDown();

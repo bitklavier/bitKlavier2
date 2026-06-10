@@ -33,6 +33,7 @@ public:
 
     void setLabel(juce::String newLabel);
     void setColor(juce::Colour color);
+    void setVolumeTooltip (const juce::String& tip);
     void resized() override;
     void paintBackground(juce::Graphics& g) override;
 

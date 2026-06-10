@@ -27,7 +27,7 @@
 class SynthSection;
 class OpenGlCorners;
 
-class OpenGlComponent : public juce::Component
+class OpenGlComponent : public juce::Component, public juce::SettableTooltipClient
 {
 public:
   static bool setViewPort(juce::Component *component, juce::Rectangle<int> bounds, OpenGlWrapper &open_gl);

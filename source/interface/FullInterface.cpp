@@ -109,6 +109,11 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
 
     about_section_->toFront (true);
     loading_section->toFront (true);
+
+    if ((bool) synth_data->synth->user_prefs->tree.getProperty ("showHints", true))
+        tooltipWindow_ = std::make_unique<juce::TooltipWindow> (nullptr, 700);
+    synth_data->synth->user_prefs->tree.addListener (this);
+
     setOpaque (true);
     open_gl_context_.setContinuousRepainting (false);
     open_gl_context_.setOpenGLVersionRequired (juce::OpenGLContext::openGL3_2);
@@ -123,7 +128,21 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
 
 FullInterface::~FullInterface()
 {
+    if (synthInterface_)
+        synthInterface_->getSynth()->user_prefs->tree.removeListener (this);
     open_gl_context_.detach();
+}
+
+void FullInterface::valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property)
+{
+    if (property == juce::Identifier ("showHints"))
+    {
+        bool show = (bool) tree.getProperty ("showHints", true);
+        if (show && tooltipWindow_ == nullptr)
+            tooltipWindow_ = std::make_unique<juce::TooltipWindow> (nullptr, 700);
+        else if (! show)
+            tooltipWindow_.reset();
+    }
 }
 
 void FullInterface::paintBackground (juce::Graphics& g)

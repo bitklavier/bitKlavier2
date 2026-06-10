@@ -45,6 +45,7 @@ class OpenGlDeviceSelector : public OpenGlAutoImageComponent<bitklavier::AudioDe
         image_component_ = std::make_shared<OpenGlImageComponent>();
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
+        onShowHintsChanged = [this] { redoImage(); };
     }
 
     virtual void resized() override {

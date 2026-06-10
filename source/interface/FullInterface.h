@@ -33,7 +33,7 @@ namespace bitklavier
 }
 
 class FullInterface : public SynthSection, public juce::OpenGLRenderer, public HeaderSection::Listener,
-                   juce::DragAndDropContainer, private juce::Timer
+                   juce::DragAndDropContainer, private juce::Timer, private juce::ValueTree::Listener
 {
 
 public :
@@ -145,6 +145,10 @@ private :
 
     float prepScale_x = 1.;
     float prepScale_y = 1.;
+
+    std::unique_ptr<juce::TooltipWindow> tooltipWindow_;
+
+    void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier& property) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FullInterface)
 };

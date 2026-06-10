@@ -30,6 +30,7 @@ public:
             offsetKnob->setShowPopupOnHover(true);
             offsetKnobAttachment = std::make_unique<chowdsp::SliderAttachment>(params.offSetSliderParam, listeners, *offsetKnob, pluginState.undoManager);
             offsetKnob->addAttachment(offsetKnobAttachment.get()); // for modulations
+            offsetKnob->setTooltip ("Raise or lower the entire temperament in cents");
 
             offset_label = std::make_shared<PlainTextComponent>(offsetKnob->getName(), params.offSetSliderParam->getName(20));
             addOpenGlComponent(offset_label);

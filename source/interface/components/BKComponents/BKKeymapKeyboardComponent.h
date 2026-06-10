@@ -55,10 +55,16 @@ typedef enum WholetoneType
 } WholetoneType;
 
 class BKKeymapKeyboardComponent : public StateModulatedComponent,
+                                  public juce::SettableTooltipClient,
                                   public juce::TextEditor::Listener,
                                   public juce::Button::Listener,
                                   public juce::ComboBox::Listener {
 public:
+    void setTooltip (const juce::String& tip) override {
+        juce::SettableTooltipClient::setTooltip (tip);
+        keyboard_.setTooltip (tip);
+    }
+
     BKKeymapKeyboardComponent(KeymapKeyboardState* keyboard_state, bool helperButtons = true, bool isMono = false, bool showOctaveLabels = false, bool shorten_ = true) :
                   StateModulatedComponent(juce::ValueTree{}),
                   keyboard_state_(*keyboard_state),
