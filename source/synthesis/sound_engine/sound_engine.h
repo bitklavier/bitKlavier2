@@ -681,7 +681,7 @@ namespace bitklavier
         {
             return reverbProcessor.get();
         };
-        void syncBusProcessorsToValueTree();
+        void syncBusProcessorsToValueTree (juce::ValueTree& rootTree);
         void loadBusProcessorsFromValueTree (juce::ValueTree& rootTree);
         GainProcessor* getMainVolumeProcessor()
         {

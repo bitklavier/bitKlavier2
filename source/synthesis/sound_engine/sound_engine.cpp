@@ -325,17 +325,37 @@ namespace bitklavier {
             compressorProcessor->getState().params.presets->setParameterValue (CompressorPresetComboBox::CompressorCustom);
         if (eqProcessor != nullptr)
             eqProcessor->getState().params.presets->setParameterValue (EqPresetComboBox::EqCustom);
+
+        // Legacy gallery with no <BUSREVERB>: match fresh-startup behavior by turning power off.
+        // Otherwise the reverb keeps whatever power state was set earlier in the session.
+        if (reverbProcessor != nullptr && ! rootTree.getChildWithName (IDs::BUSREVERB).isValid())
+            reverbProcessor->getState().params.activeReverb->setParameterValue (false);
     }
 
-    void SoundEngine::syncBusProcessorsToValueTree()
+    void SoundEngine::syncBusProcessorsToValueTree (juce::ValueTree& rootTree)
     {
         // Use auto* so we can call getState() (defined on PluginBase, not InternalProcessor).
         // We call getState().serialize() directly rather than getStateInformation() because
         // getStateInformation() bails early when PARAM_DEFAULT is missing — bus processors
         // are not created through the normal preparation path and never get that child.
-        auto syncProc = [] (auto* proc)
+        auto syncProc = [&rootTree] (auto* proc, const juce::Identifier& childType, int prepType)
         {
             if (proc == nullptr) return;
+
+            // If the loaded gallery didn't include this bus VT, proc->v was left pointing at the
+            // orphaned VT from startup (loadBusProcessorsFromValueTree early-returns on invalid
+            // newVT). Re-link proc->v to the live tree by creating a fresh child so this save
+            // and subsequent loads include the state.
+            if (! proc->v.isValid() || proc->v.getParent() != rootTree)
+            {
+                auto fresh = juce::ValueTree (childType);
+                fresh.setProperty (IDs::type, prepType, nullptr);
+                createUuidProperty (fresh);
+                fresh.setProperty (IDs::soundset, IDs::syncglobal.toString(), nullptr);
+                rootTree.appendChild (fresh, nullptr);
+                proc->v = fresh;
+            }
+
             juce::MemoryBlock data;
             proc->getState().serialize (data);
             if (data.isEmpty()) return;
@@ -348,9 +368,9 @@ namespace bitklavier {
                 proc->v.setProperty (propName, paramVT.getProperty (propName), nullptr);
             }
         };
-        syncProc (compressorProcessor.get());
-        syncProc (eqProcessor.get());
-        syncProc (reverbProcessor.get());
+        syncProc (compressorProcessor.get(), IDs::BUSCOMPRESSOR, BKPreparationType::PreparationTypeCompressor);
+        syncProc (eqProcessor.get(),         IDs::BUSEQ,         BKPreparationType::PreparationTypeEQ);
+        syncProc (reverbProcessor.get(),     IDs::BUSREVERB,     BKPreparationType::PreparationTypeReverb);
     }
 
     void SoundEngine::addDefaultChain(SynthBase& parent, juce::ValueTree& tree) {
