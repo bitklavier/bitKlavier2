@@ -894,9 +894,9 @@ bool SynthBase::saveToFile(juce::File preset)
             vt.getChildWithName (IDs::PREPARATIONS).setProperty ("sync", 1, nullptr);
     }
 
-    // sync bus processors (EQ and Compressor) directly to their valuetrees
+    // sync bus processors (EQ, Compressor, Reverb) directly to their valuetrees
     if (engine_ != nullptr)
-        engine_->syncBusProcessorsToValueTree();
+        engine_->syncBusProcessorsToValueTree (tree);
 
     auto xml = getValueTree().createXml();
     if (xml == nullptr)

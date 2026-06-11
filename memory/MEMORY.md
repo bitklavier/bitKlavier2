@@ -85,6 +85,10 @@ See `memory/setvisible_during_event_dispatch.md`. Two-layer fix: (1) JUCE patch 
 
 See `memory/ci_git_apply_safe_directory.md`. Always add `git config --global --add safe.directory <submodule>` before any git command in a submodule directory in CMake. Never use ERROR_QUIET when non-zero return has multiple meanings.
 
+## BUSREVERB power state not saving/restoring (fixed Jun 11 2026)
+
+See `memory/busreverb_save_bug.md`. Root cause: after `tree.copyPropertiesAndChildrenFrom(state)` during gallery load, if the loaded file lacks `<BUSREVERB>`, `reverbProcessor->v` is left orphaned and subsequent saves write to the dangling VT, perpetuating the missing-BUSREVERB state. Save-path fix in `syncBusProcessorsToValueTree` detects orphaned `proc->v` and creates a fresh child in the live tree before serializing. Load-path adds an explicit `activeReverb = false` reset when the loaded gallery has no `<BUSREVERB>` so legacy galleries match fresh-startup behavior (power off).
+
 ## Piano Switching Performance (ConstructionSite)
 
 Quick wins landed on branch `danwork8` (March 2026):
