@@ -306,8 +306,19 @@ PopupItems SynthSlider::createPopupMenu() {
             options.addItem(kOpenModulationList + i, ("Open " + displayLabels[i]).toStdString());
 
     std::string disconnect = "Disconnect from ";
-    for (int i = 0; i < (int)connections.size(); ++i)
-        options.addItem(kModulationList + i, (disconnect + displayLabels[i].toStdString()));
+    for (int i = 0; i < (int)connections.size(); ++i) {
+        // "Ramp"/"LFO" are the internal modulation type names; users know them
+        // as a "Value Change Mod" / "Oscillating Change Mod". Substitute only
+        // here; "Open Ramp"/"Open LFO" in the multi-connection case are left
+        // alone since they pair with the source name.
+        juce::String label = displayLabels[i];
+        auto srcName = modulationSourceDisplayName(connections[i]->source_name);
+        if (srcName == "Ramp")
+            label = label.replace("Ramp", "Value Change Mod");
+        else if (srcName == "LFO")
+            label = label.replace("LFO", "Oscillating Change Mod");
+        options.addItem(kModulationList + i, (disconnect + label.toStdString()));
+    }
 
     if (connections.size() > 1)
         options.addItem(kClearModulations, "Disconnect all modulations");

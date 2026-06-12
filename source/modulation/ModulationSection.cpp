@@ -28,15 +28,15 @@ mod_button(new ModulationButton(editor->getComponentID()+"_mod"))
     juce::String borderLabel;
     if (v.getProperty(IDs::isState))
     {
-        borderLabel = "state change";
+        borderLabel = "State Change";
     }
     else if (v.getProperty(IDs::type) == "lfo")
     {
-        borderLabel = "oscillating change";
+        borderLabel = "Oscillating Change";
     }
     else if (v.getProperty(IDs::type) == "ramp")
     {
-        borderLabel = "smooth change";
+        borderLabel = "Value Change";
     }
     modBorder = std::make_shared<OpenGL_LabeledBorder>("mod border", borderLabel);
     addBorder(modBorder.get());

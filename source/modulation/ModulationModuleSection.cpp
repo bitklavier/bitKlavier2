@@ -207,9 +207,9 @@ void ModulationModuleSection::setEffectPositions() {
 PopupItems ModulationModuleSection::createPopupMenu()
 {
     PopupItems options;
-    options.addItem(1, "value (smoothed)" );
-    options.addItem(2, "oscillator (lfo)");
-    options.addItem(3, "state");
+    options.addItem(1, "Value Change" );
+    options.addItem(2, "Oscillating Change");
+    options.addItem(3, "State Change");
     return options;
 }
 

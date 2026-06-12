@@ -453,8 +453,6 @@ void ModulationIndicator::mouseDown(const juce::MouseEvent &e) {
         options.addItem(kOpenModPopup, "Open Mod Popup");
         options.addItem(kDisconnect, "Remove");
 
-        options.addItem(-1, "");
-
         hovering_ = false;
 
         auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
