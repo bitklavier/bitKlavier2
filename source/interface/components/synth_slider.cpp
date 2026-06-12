@@ -290,14 +290,24 @@ PopupItems SynthSlider::createPopupMenu() {
         nameCounts[modulationSourceDisplayName(c->source_name)]++;
 
     std::map<juce::String, int> nameSeen;
-    std::string disconnect = "Disconnect from ";
+    std::vector<juce::String> displayLabels (connections.size());
     for (int i = 0; i < (int)connections.size(); ++i) {
         juce::String displayName = modulationSourceDisplayName(connections[i]->source_name);
         juce::String label = displayName;
         if (nameCounts[displayName] > 1)
             label += " " + juce::String(++nameSeen[displayName]);
-        options.addItem(kModulationList + i, (disconnect + label.toStdString()));
+        displayLabels[i] = label;
     }
+
+    if (connections.size() == 1)
+        options.addItem(kOpenModulationList, "Open Mod Popup");
+    else
+        for (int i = 0; i < (int)connections.size(); ++i)
+            options.addItem(kOpenModulationList + i, ("Open " + displayLabels[i]).toStdString());
+
+    std::string disconnect = "Disconnect from ";
+    for (int i = 0; i < (int)connections.size(); ++i)
+        options.addItem(kModulationList + i, (disconnect + displayLabels[i].toStdString()));
 
     if (connections.size() > 1)
         options.addItem(kClearModulations, "Disconnect all modulations");
@@ -846,6 +856,12 @@ void SynthSlider::handlePopupResult(int result) {
         }
         auto parent = findParentComponentOfClass<SynthGuiInterface>();
         parent->notifyModulationsChanged();
+    } else if (result >= kOpenModulationList && result < kModulationList) {
+        const int idx = result - kOpenModulationList;
+        if (idx >= 0 && idx < (int)connections.size())
+            if (auto* parent = findParentComponentOfClass<SynthGuiInterface>())
+                parent->getGui()->modulation_manager->openModulationPopupForSource(
+                    connections[idx]->source_name);
     }
     //  else if (result >= kModulationList) {
     //    int connection_index = result - kModulationList;

@@ -315,7 +315,8 @@ class SynthSlider : public OpenGlSlider, public juce::TextEditor::Listener, publ
       kManualEntry,
       // kRangeResize,
       kClearModulations,
-      kModulationList
+      kOpenModulationList = 1000,  // "Open <ModName>" items, IDs kOpenModulationList + i
+      kModulationList = 2000       // "Disconnect from <ModName>" items, IDs kModulationList + i
     };
 
     static constexpr int kDefaultFormatLength = 5;

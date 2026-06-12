@@ -164,8 +164,15 @@ public:
         {
             if (safeThis == nullptr) return;
             safeThis->showPrepPopup (std::move (popup), thisState, bitklavier::BKPreparationTypeNil);
+            if (auto* prepSection = dynamic_cast<PreparationSection*> (safeThis.getComponent()))
+                prepSection->syncConnectedModulationPopup();
         });
     }
+
+    // Open the popup for the Modification prep connected to this preparation, if exactly one
+    // is connected. Closes any visible modulation popup otherwise. Skips work if the matching
+    // modulation popup is already showing.
+    void syncConnectedModulationPopup();
 
     ///drraganddrop for line view and modulator
     //should be using this function probably instead of if in itemdropped. but i want all preps to go back to
