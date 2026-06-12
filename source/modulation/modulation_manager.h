@@ -48,6 +48,7 @@ class ModulationAmountKnob : public SynthSlider {
       kToggleBypass,
       kToggleBipolar,
       kToggleStereo,
+      kOpenModPopup,
     };
 
     class Listener {
@@ -170,6 +171,7 @@ public:
         kToggleBypass,
         kToggleBipolar,
         kToggleStereo,
+        kOpenModPopup,
     };
     ModulationIndicator (juce::String name, int index, const juce::ValueTree &v):
     OpenGlQuad(Shaders::kRoundedRectangleFragment) , index_(index), state(v)
@@ -315,6 +317,11 @@ public OpenGLComboBox::Listener
 
     void preparationClosed(bool isModulation);
     void clearModulationSource();
+
+    // Open the popup for the Modification preparation identified by the given source name
+    // (format: "<modUuid>_<rest>" — only the leading UUID is used). No-op if the modulation
+    // is not found, or if the mod popup is already showing the same VT.
+    void openModulationPopupForSource(const std::string& sourceName);
     void disconnectModulation(ModulationIndicator* modulation_knob) override;
     void disconnectModulation(ModulationAmountKnob* modulation_knob) override;
     void setModulationSettings(ModulationAmountKnob* modulation_knob);

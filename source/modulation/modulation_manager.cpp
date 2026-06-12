@@ -275,6 +275,7 @@ void ModulationAmountKnob::mouseDown(const juce::MouseEvent &e) {
 
         PopupItems options;
         options.addItem(kManualEntry, "Enter Value");
+        options.addItem(kOpenModPopup, "Open Mod Popup");
         options.addItem(kDisconnect, "Remove Modification");
         //options.addItem(kToggleBypass, bypass_ ? "Unbypass" : "Bypass");
         //options.addItem(kToggleBipolar, bipolar_ ? "Make Unipolar" : "Make Bipolar");
@@ -353,6 +354,12 @@ void ModulationAmountKnob::handleModulationMenuCallback(int result) {
     if (result == kDisconnect) {
         for (Listener *listener: listeners_)
             listener->disconnectModulation(this);
+    } else if (result == kOpenModPopup) {
+        if (auto* parent = findParentComponentOfClass<SynthGuiInterface>())
+        {
+            const auto src = state.getProperty(IDs::src).toString().toStdString();
+            parent->getGui()->modulation_manager->openModulationPopupForSource(src);
+        }
     } else if (result == kToggleBypass)
         toggleBypass();
     else if (result == kToggleBipolar) {
@@ -443,6 +450,7 @@ void ModulationIndicator::mouseDown(const juce::MouseEvent &e) {
         mouseExit(e);
 
         PopupItems options;
+        options.addItem(kOpenModPopup, "Open Mod Popup");
         options.addItem(kDisconnect, "Remove");
 
         options.addItem(-1, "");
@@ -466,6 +474,12 @@ void ModulationIndicator::handleModulationMenuCallback(int result) {
     if (result == kDisconnect) {
         for (Listener *listener: listeners_)
             listener->disconnectModulation(this);
+    } else if (result == kOpenModPopup) {
+        if (auto* parent = findParentComponentOfClass<SynthGuiInterface>())
+        {
+            const auto src = state.getProperty(IDs::src).toString().toStdString();
+            parent->getGui()->modulation_manager->openModulationPopupForSource(src);
+        }
     }
 }
 
@@ -3446,5 +3460,51 @@ void ModulationManager::setVisibleMeterBounds() {
             meter.second->setBounds(local_bounds);
         }
     }
+}
+
+void ModulationManager::openModulationPopupForSource(const std::string& sourceName)
+{
+    if (sourceName.empty())
+        return;
+
+    auto* fullInterface = findParentComponentOfClass<FullInterface>();
+    auto* guiInterface  = findParentComponentOfClass<SynthGuiInterface>();
+    if (fullInterface == nullptr || guiInterface == nullptr || fullInterface->mod_popup == nullptr)
+        return;
+
+    // source_name format is "<modUuid>_<rest>" — extract the leading UUID.
+    const auto under = sourceName.find('_');
+    const juce::String modUuid = juce::String (under == std::string::npos
+                                                   ? sourceName
+                                                   : sourceName.substr(0, under));
+    if (modUuid.isEmpty())
+        return;
+
+    auto pianoVt        = base->getActivePianoValueTree();
+    auto preparationsVt = pianoVt.getChildWithName (IDs::PREPARATIONS);
+    auto modPrepVt      = preparationsVt.getChildWithProperty (IDs::uuid, modUuid);
+    if (! modPrepVt.isValid() || modPrepVt.getType() != IDs::modulation)
+        return;
+
+    auto* modPopup = fullInterface->mod_popup.get();
+    if (modPopup->isVisible() && modPopup->getCurrentVT() == modPrepVt)
+        return;
+
+    const auto modNodeID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+        modPrepVt.getProperty (IDs::nodeID));
+    auto* node = guiInterface->getSynth()->getNodeForId (modNodeID);
+    if (node == nullptr)
+        return;
+    auto* modProc = dynamic_cast<bitklavier::ModulationProcessor*> (node->getProcessor());
+    if (modProc == nullptr || modProc->mod_list == nullptr)
+        return;
+
+    auto popup = std::make_unique<ModulationModuleSection> (
+        modProc->mod_list.get(),
+        modPrepVt,
+        fullInterface->modulation_manager.get(),
+        *guiInterface->getUndoManager());
+
+    fullInterface->modDisplay (std::move (popup), modPrepVt);
 }
 

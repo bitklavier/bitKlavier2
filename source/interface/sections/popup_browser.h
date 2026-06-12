@@ -116,6 +116,7 @@ public:
     std::map<std::string, ModulationButton *> getAllModulationButtons() override;
     std::map<std::string, SynthButton*> getAllButtons() override;
     std::map<std::string, StateModulatedComponent*> getAllStateModulatedComponents() override;
+    const juce::ValueTree& getCurrentVT() const { return curr_vt; }
     // void addListener(Listener* listener) {listeners_.push_back(listener);}
 
 private:

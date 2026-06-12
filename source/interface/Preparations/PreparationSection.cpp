@@ -10,8 +10,12 @@
 #include "ConstructionSite.h"
 #include "FullInterface.h"
 #include "ModulationPreparation.h"
+#include "ModulationModuleSection.h"
+#include "ModulationProcessor.h"
+#include "popup_browser.h"
 #include "synth_base.h"
 #include "KeymapProcessor.h"
+#include <set>
 
 namespace {
 // Helper to apply default per-port MIDI Y offsets for a specific preparation type.
@@ -685,4 +689,109 @@ void PreparationSection::timerCallback()
         keymapItem->setActive (active);
         keymapItem->redoImage();
     }
+}
+
+void PreparationSection::syncConnectedModulationPopup()
+{
+    auto* fullInterface = findParentComponentOfClass<FullInterface>();
+    auto* guiInterface  = findParentComponentOfClass<SynthGuiInterface>();
+    if (fullInterface == nullptr || guiInterface == nullptr || fullInterface->mod_popup == nullptr)
+        return;
+
+    // state's parent is PREPARATIONS; its parent is the PIANO.
+    auto pianoVt = state.getParent().getParent();
+    if (! pianoVt.isValid())
+        return;
+
+    auto modConnectionsVt = pianoVt.getChildWithName (IDs::MODCONNECTIONS);
+    auto preparationsVt   = pianoVt.getChildWithName (IDs::PREPARATIONS);
+
+    const auto myNodeID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+        state.getProperty (IDs::nodeID));
+
+    // Collect unique modulation src NodeIDs whose dest is this preparation.
+    std::set<juce::AudioProcessorGraph::NodeID> connectedModSrcIds;
+    if (modConnectionsVt.isValid())
+    {
+        for (int i = 0; i < modConnectionsVt.getNumChildren(); ++i)
+        {
+            auto conn = modConnectionsVt.getChild (i);
+            if (! conn.hasType (IDs::MODCONNECTION)) continue;
+
+            const auto destID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                conn.getProperty (IDs::dest));
+            if (destID != myNodeID) continue;
+
+            const auto srcID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                conn.getProperty (IDs::src));
+            connectedModSrcIds.insert (srcID);
+        }
+    }
+
+    auto* modPopup = fullInterface->mod_popup.get();
+
+    // If the visible mod popup already belongs to one of this prep's connected mods,
+    // leave it alone — the user is in the middle of editing that mod (e.g. to add a
+    // second connection to this same prep) and we shouldn't interrupt them.
+    if (modPopup->isVisible() && preparationsVt.isValid())
+    {
+        const auto& visibleVt = modPopup->getCurrentVT();
+        if (visibleVt.isValid())
+        {
+            const auto visibleNodeID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                visibleVt.getProperty (IDs::nodeID));
+            if (connectedModSrcIds.count (visibleNodeID) > 0)
+                return;
+        }
+    }
+
+    // No relevant popup visible. If exactly one mod is connected, auto-open it; otherwise
+    // (0 or multiple) close any visible popup so the user never sees a mod popup that
+    // doesn't relate to the current preparation.
+    if (connectedModSrcIds.size() != 1)
+    {
+        if (modPopup->isVisible())
+            modPopup->reset();
+        return;
+    }
+
+    const auto srcNodeID = *connectedModSrcIds.begin();
+    juce::ValueTree modPrepVt;
+    if (preparationsVt.isValid())
+    {
+        for (int j = 0; j < preparationsVt.getNumChildren(); ++j)
+        {
+            auto child = preparationsVt.getChild (j);
+            const auto prepNodeID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                child.getProperty (IDs::nodeID));
+            if (prepNodeID == srcNodeID)
+            {
+                modPrepVt = child;
+                break;
+            }
+        }
+    }
+
+    if (! modPrepVt.isValid() || modPrepVt.getType() != IDs::modulation)
+    {
+        if (modPopup->isVisible())
+            modPopup->reset();
+        return;
+    }
+
+    auto* node = guiInterface->getSynth()->getNodeForId (srcNodeID);
+    if (node == nullptr)
+        return;
+
+    auto* modProc = dynamic_cast<bitklavier::ModulationProcessor*> (node->getProcessor());
+    if (modProc == nullptr || modProc->mod_list == nullptr)
+        return;
+
+    auto popup = std::make_unique<ModulationModuleSection> (
+        modProc->mod_list.get(),
+        modPrepVt,
+        fullInterface->modulation_manager.get(),
+        *guiInterface->getUndoManager());
+
+    fullInterface->modDisplay (std::move (popup), modPrepVt);
 }
