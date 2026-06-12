@@ -254,6 +254,20 @@ public:
     }
 
     /*
+     * Pin the state-mod hover indicators to the top-left of the slider area, within sliderBorder.
+     * Width capped at displaySliderWidth — indicators shrink uniformly when the row would overflow.
+     * Clones (isModulation_) keep ModulationManager's default placement.
+     */
+    juce::Rectangle<int> getHoverIndicatorBounds(int numIndicators, int defaultIndicatorSize) override {
+        if (isModulation_ || numIndicators <= 0) return {};
+        int totalDesired = numIndicators * defaultIndicatorSize;
+        int width = juce::jmin(totalDesired, displaySliderWidth);
+        int indicatorSize = width / numIndicators;
+        // matches BKMultiSlider::resized() inner-area inset: removeFromTop(5) + reduce(10,10)
+        return { 10, 15, indicatorSize * numIndicators, indicatorSize };
+    }
+
+    /*
     * this is for making the modulation UI view opaque
     */
     void paint(juce::Graphics& g) override {

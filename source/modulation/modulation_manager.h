@@ -255,7 +255,8 @@ class ModulationManager : public SynthSection,
                           public ModulesInterface::Listener,
 public ModulationIndicator::Listener,
 public StateModulatedComponent::Listener,
-public OpenGLComboBox::Listener
+public OpenGLComboBox::Listener,
+public juce::KeyListener
 // public juce::ValueTree::Listener
 {
   public:
@@ -438,6 +439,23 @@ public OpenGLComboBox::Listener
     OpenGlQuad editing_rotary_amount_quad_;
     OpenGlQuad editing_linear_amount_quad_;
     StateModulatedComponent* editing_state_component_ = nullptr;
+    bitklavier::StateConnection* editing_state_connection_ = nullptr;
+    bool listening_for_edit_dismiss_ = false;
+    // Suppress the ModulationButton::focusLost → modulationLostFocus → clearModulationSource chain
+    // that fires when the editor clone steals keyboard focus on open. Without this, the current
+    // modulator is wiped (current_modulator_ = nullptr) and all selected/hover indicators hide.
+    bool suppress_modulator_focus_loss_ = false;
+
+    void dismissEditingStateComponent();
+    void beginListeningForEditDismiss();
+    void endListeningForEditDismiss();
+
+public:
+    // Click-outside dismiss for editing_state_component_ (active only while editing).
+    void mouseDown(const juce::MouseEvent& e) override;
+    // Esc dismiss for editing_state_component_.
+    bool keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) override;
+private:
 
     typedef struct comboBoxMod {
         juce::PopupMenu* popup_menu = nullptr;
