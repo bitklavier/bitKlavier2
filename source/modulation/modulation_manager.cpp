@@ -453,8 +453,6 @@ void ModulationIndicator::mouseDown(const juce::MouseEvent &e) {
         options.addItem(kOpenModPopup, "Open Mod Popup");
         options.addItem(kDisconnect, "Remove");
 
-        options.addItem(-1, "");
-
         hovering_ = false;
 
         auto callback = [=](int selection, int) { handleModulationMenuCallback(selection); };
@@ -612,6 +610,8 @@ ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase *bas
         modulation_hover_indicators_[i]->addModulationIndicatorListener(this);
         modulation_hover_indicators_[i]->setLookAndFeel(DefaultLookAndFeel::instance());
         modulation_hover_indicators_[i]->setColor(juce::Colours::white);
+        // Keep destination-side indicators above the editor clone (which is added later at destination_bounds).
+        modulation_hover_indicators_[i]->setAlwaysOnTop(true);
 
         //        modulation_selected_indicators_[i] = std::make_unique<ModulationIndicator>(name, i, state_bank.atIndex(i)->state);
         //        addAndMakeVisible(modulation_indicators_[i].get());
@@ -627,6 +627,8 @@ ModulationManager::ModulationManager(const juce::ValueTree &tree, SynthBase *bas
         selected_modulation_indicators_[i]->setLookAndFeel(DefaultLookAndFeel::instance());
         selected_modulation_indicators_[i]->setColor(juce::Colours::greenyellow);
         selected_modulation_indicators_[i]->setParent(this);
+        // Keep destination-side indicators above the editor clone (which is added later at destination_bounds).
+        selected_modulation_indicators_[i]->setAlwaysOnTop(true);
     }
 }
 
@@ -648,6 +650,30 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
 
     bitklavier::StateConnection *connection = getStateConnection(index);
 
+    // Toggle: clicking the indicator whose connection is currently being edited closes the editor.
+    if (editing_state_component_ != nullptr && editing_state_connection_ == connection) {
+        dismissEditingStateComponent();
+        return;
+    }
+
+    // Promote the clicked connection's source to current_modulator_ so its selected indicator turns
+    // green (visual cue: "this is what's being edited"). Mirrors the visual state when a connection
+    // is freshly created — the source was already current at that moment.
+    // modulationSelected hides all hover indicators wholesale; if the destination is currently hovered,
+    // restore them so non-current connections keep their slots visible alongside the new current one.
+    if (connection && !connection->source_name.empty() && modulation_buttons_.count(connection->source_name)) {
+        modulationSelected(modulation_buttons_[connection->source_name]);
+        if (state_model_lookup_.count(connection->destination_name)) {
+            if (auto *destComp = state_model_lookup_[connection->destination_name]) {
+                // Indicator (alwaysOnTop) sits on top of the destination, so destComp->hovering_ may
+                // be false even though the cursor is over the destination's bounds — use geometry.
+                auto mousePos = juce::Desktop::getInstance().getMainMouseSource().getScreenPosition().toInt();
+                if (destComp->getScreenBounds().contains(mousePos))
+                    makeModulationsVisible(destComp, true);
+            }
+        }
+    }
+
     for (auto [name, comp]: state_model_lookup_) {
         if (name == connection->destination_name) {
             if(comp == nullptr) {
@@ -663,15 +689,7 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
 
             if (editing_state_component_ != nullptr && editing_state_component_->getComponentID() != juce::String(
                     connection->destination_name)) {
-                auto *parent = findParentComponentOfClass<SynthGuiInterface>();
-                editing_state_component_->setVisible(false);
-                editing_state_component_->getImageComponent()->setVisible(false);
-                parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &context) {
-                    auto *parent = findParentComponentOfClass<SynthGuiInterface>();
-                    destroyOpenGlComponent(*editing_state_component_->getImageComponent(), *parent->getOpenGlWrapper());
-                }, true);
-                delete editing_state_component_;
-                editing_state_component_ = nullptr;
+                dismissEditingStateComponent();
             } else if (editing_state_component_ != nullptr && editing_state_component_->getComponentID() ==
                        juce::String(connection->destination_name)) {
                 // Same destination editor is already open: retarget it to this specific connection
@@ -708,6 +726,8 @@ void ModulationManager::modulationClicked(ModulationIndicator *indicator)
             editing_state_component_->syncToValueTree();
             setStateModulationValues(connection->source_name, connection->destination_name, connection->state);
             editing_state_component_->getImageComponent()->redrawImage(true);
+            editing_state_connection_ = connection;
+            beginListeningForEditDismiss();
         }
     }
 
@@ -800,7 +820,94 @@ void ModulationManager::createModulationSlider(std::string name, SynthSlider *sl
     all_destinations_.push_back(std::move(destination));
 }
 
-ModulationManager::~ModulationManager() { if (editing_state_component_ != nullptr) delete editing_state_component_; }
+ModulationManager::~ModulationManager() {
+    endListeningForEditDismiss();
+    if (editing_state_component_ != nullptr) delete editing_state_component_;
+}
+
+void ModulationManager::dismissEditingStateComponent() {
+    if (editing_state_component_ == nullptr) {
+        editing_state_connection_ = nullptr;
+        endListeningForEditDismiss();
+        return;
+    }
+    // Capture the destination name before deletion — used below to restore hover indicators if the
+    // mouse is still over that destination (e.g. Esc / toggle / click-on-indicator cases).
+    auto destName = editing_state_component_->getComponentID().toStdString();
+    auto *parent = findParentComponentOfClass<SynthGuiInterface>();
+    editing_state_component_->setVisible(false);
+    editing_state_component_->getImageComponent()->setVisible(false);
+    if (parent != nullptr) {
+        parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &context) {
+            auto *p = findParentComponentOfClass<SynthGuiInterface>();
+            if (p && editing_state_component_)
+                destroyOpenGlComponent(*editing_state_component_->getImageComponent(), *p->getOpenGlWrapper());
+        }, true);
+    }
+    delete editing_state_component_;
+    editing_state_component_ = nullptr;
+    editing_state_connection_ = nullptr;
+    endListeningForEditDismiss();
+
+    // Restore hover indicators for the destination if the mouse is still over it. The clone covered
+    // the destination while open, so destComp->hovering_ was cleared; geometry check is reliable.
+    if (state_model_lookup_.count(destName)) {
+        if (auto *destComp = state_model_lookup_[destName]) {
+            auto mousePos = juce::Desktop::getInstance().getMainMouseSource().getScreenPosition().toInt();
+            if (destComp->getScreenBounds().contains(mousePos))
+                makeModulationsVisible(destComp, true);
+        }
+    }
+}
+
+void ModulationManager::beginListeningForEditDismiss() {
+    if (listening_for_edit_dismiss_) return;
+    juce::Desktop::getInstance().addGlobalMouseListener(this);
+    // Attach Esc listener to the clone itself, not the top level — so Esc is consumed only when
+    // focus is in the clone subtree; otherwise the prep popup gets Esc normally (staged dismissal).
+    if (editing_state_component_ != nullptr) {
+        editing_state_component_->setWantsKeyboardFocus(true);
+        editing_state_component_->addKeyListener(this);
+        suppress_modulator_focus_loss_ = true;
+        editing_state_component_->grabKeyboardFocus();
+        suppress_modulator_focus_loss_ = false;
+    }
+    listening_for_edit_dismiss_ = true;
+}
+
+void ModulationManager::endListeningForEditDismiss() {
+    if (!listening_for_edit_dismiss_) return;
+    juce::Desktop::getInstance().removeGlobalMouseListener(this);
+    // Key listener auto-clears when editing_state_component_ is destroyed.
+    listening_for_edit_dismiss_ = false;
+}
+
+void ModulationManager::mouseDown(const juce::MouseEvent &e) {
+    if (editing_state_component_ == nullptr) return;
+    auto *clicked = e.eventComponent;
+    if (clicked == nullptr) return;
+    // Click inside the editor clone: don't dismiss (user is editing).
+    if (clicked == editing_state_component_ || editing_state_component_->isParentOf(clicked))
+        return;
+    // Click on a destination-side indicator: let modulationClicked handle toggle/retarget.
+    for (auto &ind : modulation_hover_indicators_) {
+        if (!ind) continue;
+        if (clicked == ind.get() || ind->isParentOf(clicked)) return;
+    }
+    for (auto &ind : selected_modulation_indicators_) {
+        if (!ind) continue;
+        if (clicked == ind.get() || ind->isParentOf(clicked)) return;
+    }
+    dismissEditingStateComponent();
+}
+
+bool ModulationManager::keyPressed(const juce::KeyPress &key, juce::Component * /*originating*/) {
+    if (editing_state_component_ != nullptr && key == juce::KeyPress::escapeKey) {
+        dismissEditingStateComponent();
+        return true;
+    }
+    return false;
+}
 
 void ModulationManager::resized() {
     float meter_thickness = findValue(Skin::kKnobModMeterArcThickness);
@@ -1709,6 +1816,8 @@ void ModulationManager::endModulationMap() {
 
 void ModulationManager::modulationLostFocus(ModulationButton *source) {
     //DBG("DBG: Function: " << __func__ << " | File: " << __FILE__ << " | Line: " << __LINE__);
+    if (suppress_modulator_focus_loss_)
+        return;
     source->setActiveModulation(false);
     clearModulationSource();
 }
@@ -2447,6 +2556,16 @@ void ModulationManager::connectStateModulation(std::string source, std::string d
     modifying_ = true;
     parent->connectStateModulation(source, destination);
     modifying_ = false;
+
+    // Refresh indicator placements so newly-added connections lay out alongside existing ones
+    // instead of overlapping at the same slot until the next hover.
+    if (current_modulator_)
+        makeCurrentStateModulatorsVisible();
+    if (state_model_lookup_.count(destination)) {
+        if (auto *destComp = state_model_lookup_[destination])
+            if (destComp->hovering_)
+                makeModulationsVisible(destComp, true);
+    }
 }
 
 
@@ -2489,6 +2608,15 @@ void ModulationManager::removeStateModulation(std::string source, std::string de
     modifying_ = true;
     parent->disconnectStateModulation(source, destination);
     modulationsChanged(destination);
+    // modulationsChanged early-returns for state-mod destinations (not in destination_lookup_),
+    // so refresh state-mod indicators here so remaining connections re-flow to the right slots.
+    if (current_modulator_)
+        makeCurrentStateModulatorsVisible();
+    if (state_model_lookup_.count(destination)) {
+        if (auto *destComp = state_model_lookup_[destination])
+            if (destComp->hovering_)
+                makeModulationsVisible(destComp, true);
+    }
     modifying_ = false;
     positionModulationAmountSliders();
 }
@@ -2879,6 +3007,25 @@ void ModulationManager::makeCurrentStateModulatorsVisible() {
             return;
         juce::Rectangle<int> destination_bounds = getLocalArea(destination, destination->getLocalBounds());
 
+        // Honour a StateModulatedComponent's custom hover-indicator placement (e.g. multisliders pin to top-left).
+        // Slot index within the destination's full connection list — keeps selected and hover indicators aligned.
+        if (auto *state_dest = dynamic_cast<StateModulatedComponent *>(destination)) {
+            auto destConns = parent->getSynth()->getDestinationStateConnections(connection->destination_name);
+            int total_slots = (int) destConns.size();
+            int slotIdx = 0;
+            for (int i = 0; i < total_slots; ++i)
+                if (destConns[i] == connection) { slotIdx = i; break; }
+            juce::Rectangle<int> customLocal = state_dest->getHoverIndicatorBounds(total_slots, width);
+            if (!customLocal.isEmpty()) {
+                juce::Rectangle<int> customGlobal = getLocalArea(state_dest, customLocal);
+                int slot_size = customGlobal.getWidth() / juce::jmax(1, total_slots);
+                selected_indicator->setBounds(customGlobal.getX() + slotIdx * slot_size,
+                                              customGlobal.getY(), slot_size, slot_size);
+                selected_indicator->makeVisible(destination->isShowing());
+                continue;
+            }
+        }
+
         int center_x = destination_bounds.getCentreX();
         int left = destination_bounds.getX();
         int right = destination_bounds.getRight();
@@ -2982,54 +3129,60 @@ void ModulationManager::makeModulationsVisible(StateModulatedComponent *destinat
         return;
 
     std::vector<bitklavier::StateConnection *> connections = parent->getSynth()->getDestinationStateConnections(name);
+    int total_slots = (int) connections.size();
+    int hover_indicator_width = size_ratio_ * 24.0f;
+    juce::Rectangle<int> destination_bounds = getLocalArea(destination, destination->getLocalBounds());
+
+    // Pre-flight the custom-bounds query with the FULL connection count, so slot widths scale to total connections
+    // (not just the count of non-current ones). Slot-indexed layout (custom path) keeps selected and hover
+    // indicators in agreement; the default center-below path keeps its existing nullptr-placeholder layout.
+    juce::Rectangle<int> customLocal = destination->getHoverIndicatorBounds(total_slots, hover_indicator_width);
+
     std::vector<ModulationIndicator *> modulation_hover_indicators;
+    std::vector<int> hover_slot_indices; // parallel to modulation_hover_indicators (custom path only)
     bool current_modulation_showing = false;
-    for (bitklavier::StateConnection *connection: connections) {
+    for (int i = 0; i < total_slots; ++i) {
+        bitklavier::StateConnection *connection = connections[i];
         int index = connection->index_in_all_mods;
         ModulationIndicator *indicator = modulation_hover_indicators_[index].get();
         if (current_modulator_ && current_modulator_->getComponentID() == juce::String(connection->source_name))
             current_modulation_showing = true;
-        else
+        else {
             modulation_hover_indicators.push_back(indicator);
+            hover_slot_indices.push_back(i);
+        }
         indicator->setSource(connection->source_name);
     }
 
-    int hover_indicator_width = size_ratio_ * 24.0f;
-    if (current_modulation_showing) {
+    if (customLocal.isEmpty() && current_modulation_showing) {
+        // Center-below path: keep the legacy nullptr-placeholder logic that reserves the middle slot for the selected indicator.
         auto position = modulation_hover_indicators.begin() + (modulation_hover_indicators.size() + 1) / 2;
         modulation_hover_indicators.insert(position, nullptr);
         if (modulation_hover_indicators.size() % 2 == 0)
             modulation_hover_indicators.insert(modulation_hover_indicators.end(), nullptr);
     }
-    int num_sliders = (int) modulation_hover_indicators.size();
+    int num_sliders = customLocal.isEmpty() ? (int) modulation_hover_indicators.size() : total_slots;
 
-    juce::Rectangle<int> destination_bounds = getLocalArea(destination, destination->getLocalBounds());
-    int x = destination_bounds.getRight();
-    int y = destination_bounds.getBottom();
-    int beginning_offset = hover_indicator_width * num_sliders / 2;
+    int x = 0, y = 0;
     int delta_x = 0;
     int delta_y = 0;
+    int effective_size = hover_indicator_width;
+    juce::Rectangle<int> customGlobal;
+    if (!customLocal.isEmpty()) {
+        customGlobal = getLocalArea(destination, customLocal);
+        effective_size = customGlobal.getWidth() / juce::jmax(1, num_sliders);
+    }
 
-    juce::BubbleComponent::BubblePlacement placement = juce::BubbleComponent::below;
-    //; destination->getModulationPlacement();
-    if (placement == juce::BubbleComponent::below) {
+    if (!customLocal.isEmpty()) {
+        // Slot-based placement: each connection occupies its own slot at top-left. x/delta_x are unused;
+        // the layout loop below computes per-slot bounds via hover_slot_indices.
+    } else {
+        // Default placement: centered below the destination.
+        int beginning_offset = hover_indicator_width * num_sliders / 2;
         x = destination_bounds.getCentreX() - beginning_offset;
+        y = destination_bounds.getBottom();
         delta_x = hover_indicator_width;
     }
-    //    else if (placement == juce::BubbleComponent::above) {
-    //        x = destination_bounds.getCentreX() - beginning_offset;
-    //        y = destination_bounds.getY() - hover_slider_width;
-    //        delta_x = hover_slider_width;
-    //    }
-    //    else if (placement == juce::BubbleComponent::left) {
-    //        x = destination_bounds.getX() - hover_slider_width;
-    //        y = destination_bounds.getCentreY() - beginning_offset;
-    //        delta_y = hover_slider_width;
-    //    }
-    //    else {
-    //        y = destination_bounds.getCentreY() - beginning_offset;
-    //        delta_y = hover_slider_width;
-    //    }
 
     std::unordered_set<ModulationIndicator *> lookup(modulation_hover_indicators.begin(),
                                                      modulation_hover_indicators.end());
@@ -3038,16 +3191,24 @@ void ModulationManager::makeModulationsVisible(StateModulatedComponent *destinat
             hover_indicator->makeVisible(false);
     }
 
-    for (ModulationIndicator *hover_indicator: modulation_hover_indicators) {
-        if (hover_indicator) {
-            //            hover_indicator->setPopupPlacement(placement);
-            hover_indicator->setBounds(x, y, hover_indicator_width, hover_indicator_width);
+    if (!customLocal.isEmpty()) {
+        for (size_t i = 0; i < modulation_hover_indicators.size(); ++i) {
+            ModulationIndicator *hover_indicator = modulation_hover_indicators[i];
+            if (!hover_indicator) continue;
+            int slotIdx = hover_slot_indices[i];
+            hover_indicator->setBounds(customGlobal.getX() + slotIdx * effective_size,
+                                       customGlobal.getY(), effective_size, effective_size);
             hover_indicator->makeVisible(visible);
-            // hover_indicator->redoImage();
-            //DBG("make visible statemodcomp");
         }
-        x += delta_x;
-        y += delta_y;
+    } else {
+        for (ModulationIndicator *hover_indicator: modulation_hover_indicators) {
+            if (hover_indicator) {
+                hover_indicator->setBounds(x, y, effective_size, effective_size);
+                hover_indicator->makeVisible(visible);
+            }
+            x += delta_x;
+            y += delta_y;
+        }
     }
 }
 

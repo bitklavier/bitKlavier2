@@ -1377,14 +1377,20 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
         //            repaintPrepBackground();
         //        }
         DBG("delete and set prep_view to nullptr");
-        prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper()); {
+        prep_view->destroyOpenGlComponents(*_parent->getOpenGlWrapper());
+        {
             juce::ScopedLock lock(*_parent->getOpenGlCriticalSection());
+            // ModulationManager holds raw pointers into the popup contents we're about to
+            // destroy — most importantly current_modulator_, which the OpenGL render thread
+            // dereferences every frame in drawCurrentModulator(). Wipe those before tearing
+            // the SynthSection down so the next render frame sees nullptr instead of a
+            // dangling ModulationButton*.
+            if (auto* full = findParentComponentOfClass<FullInterface>())
+                if (full->modulation_manager)
+                    full->modulation_manager->clearModulationSource();
             removeSubSection(prep_view.get());
+            prep_view.reset(nullptr);
         }
-        // //do not use ->reset that is a synthsection function. i want to reset the actual ptr
-        // parent->getOpenGlWrapper()->context.executeOnGLThread([this](juce::OpenGLContext &openGLContext) {
-        // },true);
-        prep_view.reset(nullptr);
 
         setVisible(false);
     }

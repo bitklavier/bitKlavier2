@@ -57,6 +57,13 @@ struct StateModulatedComponent : juce::Component
 
     //should be replaced by valuetree wrapper or something along those lines
     virtual void syncToValueTree() = 0;
+
+    // Custom placement for ModulationManager's hover indicators, in this component's local coords.
+    // Return an empty rect to use ModulationManager's default (centered below the component).
+    virtual juce::Rectangle<int> getHoverIndicatorBounds(int numIndicators, int defaultIndicatorSize) {
+        juce::ignoreUnused(numIndicators, defaultIndicatorSize);
+        return {};
+    }
     juce::ValueTree modulationState;
     juce::ValueTree defaultState;// {IDs::PARAM_DEFAULT};
 

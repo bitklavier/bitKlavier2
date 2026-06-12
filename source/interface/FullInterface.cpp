@@ -76,6 +76,12 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     mod_popup->setAlwaysOnTop (true);
     mod_popup->setWantsKeyboardFocus (true);
 
+    // Order matters for OpenGL render: AOT sub-sections render in sub_sections_ order.
+    // modulation_manager must come AFTER prep/mod popups (so indicators + state-mod editor clone
+    // draw on top of the multisliders inside the popups) but BEFORE popup_selector_/popup_display_
+    // (so the right-click contextual menu and tooltips draw on top of the clone).
+    addSubSection (modulation_manager.get());
+
     popup_selector_ = std::make_unique<SinglePopupSelector>();
     addSubSection (popup_selector_.get());
     popup_selector_->setVisible (false);
@@ -104,8 +110,6 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
     addSubSection (loading_section.get(), false);
     loading_section->setAlwaysOnTop(true);
     addChildComponent (loading_section.get());
-
-    addSubSection (modulation_manager.get());
 
     about_section_->toFront (true);
     loading_section->toFront (true);

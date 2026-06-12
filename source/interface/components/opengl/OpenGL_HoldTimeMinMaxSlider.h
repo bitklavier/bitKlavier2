@@ -266,10 +266,10 @@ public:
 private :
     OpenGL_HoldTimeMinMaxSlider() : OpenGlAutoImageComponent<BKRangeSlider>(
                                        "HoldTimeRange", // slider name
-                                       0.f, // min
-                                       12000.f, // max
-                                       defmin = 0.f, // default min
-                                       defmax = 12000.f, // default max
+                                       holdTimeMinMax_rangeMin, // min
+                                       holdTimeMinMax_rangeMax, // max
+                                       defmin = (int) holdTimeMinMax_rangeMin, // default min
+                                       defmax = (int) holdTimeMinMax_rangeMax, // default max
                                        1.f, // increment
                                        juce::ValueTree{})
     {
@@ -277,10 +277,8 @@ private :
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
-        setMinValue (params->holdTimeMinParam->getNormalisableRange().start, juce::dontSendNotification);
-        setMaxValue (params->holdTimeMaxParam->getNormalisableRange().end, juce::dontSendNotification);
-        defmin = params->holdTimeMinParam->getNormalisableRange().start;
-        defmax = params->holdTimeMaxParam->getNormalisableRange().end;
+        // NOTE: `params` is null in the clone — do not dereference it here.
+        // Range/defaults are already supplied by the parent BKRangeSlider initializer above.
 
         isModulation_ = true;
         addMyListener(this);
