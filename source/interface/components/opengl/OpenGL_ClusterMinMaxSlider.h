@@ -289,10 +289,8 @@ private :
         setLookAndFeel(DefaultLookAndFeel::instance());
         image_component_->setComponent(this);
 
-        setMinValue (params->clusterMinParam->getNormalisableRange().start, juce::dontSendNotification);
-        setMaxValue (params->clusterMinParam->getNormalisableRange().end, juce::dontSendNotification);
-        defmin = params->clusterMinParam->getNormalisableRange().start;
-        defmax = params->clusterMaxParam->getNormalisableRange().end;
+        // NOTE: `params` is null in the clone — do not dereference it here.
+        // Range/defaults are already supplied by the parent BKRangeSlider initializer above.
 
         isModulation_ = true;
         addMyListener(this);
