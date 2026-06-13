@@ -119,11 +119,21 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     // On first creation (no DAW session to restore), load Basic Piano so the plugin is
     // playable immediately. setStateWasCalled_ is true when the DAW called setStateInformation
     // before prepareToPlay, which is the contract all conforming hosts follow on session restore.
+    //
+    // The pre-queue check is a fast path; the queued lambda re-checks the same conditions
+    // at fire time. This matters because Logic AU has been observed to call prepareToPlay
+    // before setStateInformation, in which case this guard would queue a BasicPiano load
+    // that then races setStateInformation's saved-gallery restore and clobbers it.
     if (!setStateWasCalled_ && !defaultLoadAttempted_)
     {
         defaultLoadAttempted_ = true;
         juce::MessageManager::callAsync ([this]()
         {
+            // Re-check at fire time: if setStateInformation ran in the interim and started
+            // a restore (or one is otherwise in flight), defer to it and do nothing.
+            if (setStateWasCalled_ || isSamplesLoading() || hasPendingPreset())
+                return;
+
             auto galleries = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
                                  .getChildFile ("Documents")
                                  .getChildFile ("bitKlavier")
@@ -260,12 +270,13 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 
     juce::ValueTree state ("bitKlavierPluginState");
 
-    if (user_prefs != nullptr)
-    {
-        juce::String lastPath = user_prefs->tree.getProperty ("last_gallery_path");
-        DBG("PluginProcessor::getStateInformation, lastPath = " + lastPath + "");
-        state.setProperty ("last_gallery_path", lastPath, nullptr);
-    }
+    // Per-instance: write THIS plugin's currently-loaded gallery, not the process-wide
+    // user_prefs "last_gallery_path" (which is shared via juce::SharedResourcePointer
+    // across every plugin instance in the host — Logic with two bitKlavier tracks would
+    // otherwise see whichever gallery was loaded last and save the same path into both
+    // tracks' state blocks, so both tracks restore to the same gallery).
+    const juce::String lastPath = getActiveFile().getFullPathName();
+    state.setProperty ("last_gallery_path", lastPath, nullptr);
 
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     // Add a unique value every time you save; otherwise some DAWS (like Reaper) might ignore this save

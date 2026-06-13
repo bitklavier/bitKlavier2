@@ -859,8 +859,10 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     {
         // Set active file immediately so UI Save Current knows the target
         active_file_ = preset;
-        // Save last opened gallery path to user preferences immediately
-        if (user_prefs && user_prefs->tree.isValid())
+        // user_prefs is process-wide shared state persisted to disk; only standalone
+        // should mutate it, so plugin instances can't dictate standalone's next-launch
+        // gallery or pollute its recent-galleries menu.
+        if (isStandaloneApp() && user_prefs && user_prefs->tree.isValid())
         {
             user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
             user_prefs->userPreferences->addRecentGallery (preset);
@@ -880,23 +882,51 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
         return false;
     }
 
+    // Critical: invalidate any prior pendingPresetTree from an earlier deferred load
+    // that is still in flight. Without this, when its async sample job eventually
+    // finishes, finishedSampleLoading would apply the STALE pending tree and overwrite
+    // the gallery we just loaded synchronously. Concretely: prepareToPlay's BasicPiano
+    // auto-load queues pendingPresetTree=BasicPiano with async sample work; Logic then
+    // setStateInformation → loadFromFile(SavedGallery) which hits the immediate path
+    // because BasicPiano's loadSamples already populated the soundset cache; without
+    // this clear, BasicPiano stomps the saved gallery when its job completes.
+    if (presetPending.load())
+    {
+        presetPending.store (false);
+        pendingPresetTree = juce::ValueTree{};
+    }
+
     // Successful immediate load: set active file
     active_file_ = preset;
-    // Save last opened gallery path to user preferences
-    if (user_prefs && user_prefs->tree.isValid())
+    // Standalone-only: see deferred-path comment above.
+    if (isStandaloneApp() && user_prefs && user_prefs->tree.isValid())
     {
         user_prefs->tree.setProperty("last_gallery_path", preset.getFullPathName(), nullptr);
         user_prefs->userPreferences->addRecentGallery (preset);
     }
 
+    // Explicit setActivePiano. Mirrors what finishedSampleLoading does for the
+    // deferred path. Without this, the engine's active-piano state stays pinned to
+    // whatever a previous load set (e.g. a BasicPiano auto-load that finished and
+    // called setActivePiano before this restore arrived), and the construction
+    // site stays bound to the previous piano's GUI as well. valueTreeChildAdded
+    // would call gui->setActivePiano during the loadFromValueTree above, but only
+    // when both the GUI exists AND the listener happens to fire for the active
+    // piano child — neither is guaranteed in plugin restore flows.
     if (auto* gui = getGuiInterface())
     {
         gui->updateFullGui();
         gui->notifyFresh();
-        // gui->setActivePiano (getActivePianoValueTree());
+        const auto active = getActivePianoValueTree();
+        if (active.isValid())
+            gui->setActivePiano (active);
     }
-
-    // setActivePiano (parsed, SwitchTriggerThread::MessageThread);
+    else
+    {
+        const auto active = getActivePianoValueTree();
+        if (active.isValid())
+            setActivePiano (active, SwitchTriggerThread::MessageThread);
+    }
     return true;
 }
 
@@ -932,7 +962,8 @@ bool SynthBase::saveToFile(juce::File preset)
     // Update active file on successful save
     active_file_ = preset;
     is_dirty_.store(false);
-    if (user_prefs && user_prefs->tree.isValid())
+    // Standalone-only: don't pollute the standalone's recent-galleries menu from a plugin save.
+    if (isStandaloneApp() && user_prefs && user_prefs->tree.isValid())
         user_prefs->userPreferences->addRecentGallery (preset);
     return true;
 }
@@ -1016,6 +1047,12 @@ void SynthBase::finishedSampleLoading()
         setActivePiano (getActivePianoValueTree(), SwitchTriggerThread::MessageThread);
     }
     samplesLoading.store (false);
+    // Authoritative samplesLoaded write. Previously this was set speculatively from
+    // SynthGuiInterface's ctor whenever loadSamples returned true, but loadSamples
+    // returns true for the "already loading" branch too — so it would flip to true
+    // before any samples actually finished, defeating the loading overlay logic in
+    // PluginEditor and SynthGuiInterface.
+    samplesLoaded = true;
 }
 
 void SynthBase::processAudioAndMidi (juce::AudioBuffer<float>& audio_buffer, juce::MidiBuffer& midi_buffer)

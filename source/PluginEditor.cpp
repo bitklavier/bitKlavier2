@@ -51,7 +51,33 @@ PluginEditor::PluginEditor (PluginProcessor& p)
             gui_->header_->gallerySelectText->setText(getActiveFile().getFileNameWithoutExtension());
     }
 
-    // setActivePiano(processorRef.getActivePianoValueTree());
+    // Bind the construction site to the active piano when the editor opens AFTER a
+    // saved-state restore has already completed. In that case no PIANO children are
+    // being added (so valueTreeChildAdded won't fire) and finishedSampleLoading has
+    // already run without a GUI to inform — so without this call the construction
+    // site stays in its default-empty state until the user does something.
+    //
+    // This MUST be deferred via callAsync, not done synchronously here. The reason is
+    // that Cable::connectionAdded routes its visibility setup through executeOnGLThread,
+    // which silently no-ops if the OpenGL context hasn't been attached yet. While we're
+    // still inside the PluginEditor ctor, the editor hasn't been added to Logic's host
+    // window — the GL context isn't attached, the GL job is dropped, the subsequent
+    // setVisible(true) callAsync is never queued, and cables stay invisible. Posting
+    // via callAsync lets the host add us to its window first, attach the GL context,
+    // and only then have CableView create cables that actually become visible.
+    //
+    // We also re-read getActivePianoValueTree() INSIDE the lambda — capturing it now
+    // would be the same stale-tree bug the original code had during in-flight restore.
+    juce::WeakReference<SynthGuiInterface> weakThis (this);
+    juce::MessageManager::callAsync ([weakThis]()
+    {
+        if (auto* self = weakThis.get())
+        {
+            if (self->getSynth()->isSamplesLoading() || self->getSynth()->hasPendingPreset())
+                return;
+            self->setActivePiano (self->getSynth()->getActivePianoValueTree());
+        }
+    });
 }
 
 PluginEditor::~PluginEditor()
