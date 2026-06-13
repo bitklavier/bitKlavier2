@@ -89,6 +89,8 @@ public:
 
     SynthGuiInterface *getGuiInterface() override { return this; }
 
+    bool isStandaloneApp() const override { return true; }
+
     juce::AudioDeviceManager *getAudioDeviceManager() override { return &deviceManager; }
 
     void timerCallback() override;

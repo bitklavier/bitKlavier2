@@ -76,39 +76,52 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
         : -1;
 
     bool firstLoad = !synth_->samplesLoaded; // for plugin formats, we don't want to reload samples every time the plugin window is opened
-    if (defaultIndex >= 0 && firstLoad) {
-        synth_->samplesLoaded = synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
+    // Skip the speculative Yamaha_Default load when a saved-state restore is already
+    // in flight (the restore is loading its own soundsets). Calling loadSamples again
+    // would otherwise route to the already-in-progress entry and return true without
+    // queueing a real job, which the old code interpreted as "loading done" — flipping
+    // samplesLoaded to true before any samples actually finished. The authoritative
+    // samplesLoaded=true write now lives in SynthBase::finishedSampleLoading.
+    const bool restoreInFlight = synth_->isSamplesLoading() || synth_->hasPendingPreset();
+    bool launchLoadQueued = false;
+    if (defaultIndex >= 0 && firstLoad && !restoreInFlight) {
+        // Was the soundset already cached before this call? If so, loadSamples will hit
+        // the cache-hit branch — useful work (writing IDs::soundset, refreshing
+        // processors) still happens, but no async job is queued and finishedSampleLoading
+        // will NOT fire to set samplesLoaded=true. Flip it ourselves in that case.
+        const bool alreadyCached = synth_->sampleLoadManager->isSoundsetLoaded(sets[defaultIndex]);
+        const bool ok = synth_->sampleLoadManager->loadSamples(sets[defaultIndex], synth_->getValueTree());
+        if (alreadyCached && ok)
+            synth_->samplesLoaded = true;
+        else if (ok)
+            launchLoadQueued = true;
     }
 
     if (use_gui)
     {
         SynthGuiData synth_data (synth_);
         gui_ = std::make_unique<FullInterface> (&synth_data, commandManager, this);
-        // Only show the loading overlay if the launch load was actually
-        // queued. If Yamaha_Default was missing or unparseable, loadSamples
-        // returned false (and posted its own alert), so there is nothing
+        // Show the loading overlay if a restore is still landing, OR if we just queued
+        // the launch Yamaha_Default load. If Yamaha_Default was missing or unparseable,
+        // loadSamples returned false (and posted its own alert) and there is nothing
         // to wait for — showing the overlay would hang the UI.
-        if (firstLoad && synth_->samplesLoaded) gui_->showLoadingSection();
+        if (firstLoad && (restoreInFlight || launchLoadQueued)) gui_->showLoadingSection();
         //else setActivePiano(synth_->getActivePianoValueTree());
         // for registering hotkeys etc.
         commandManager.registerAllCommandsForTarget(this);
         if (defaultIndex >= 0)
             gui_->header_->setSampleSelectText(sets[defaultIndex]);
 
-        // otherwise, in plugins the saved gallery will load but won't show its construction site or make sound unless reloaded
-        #if JUCE_PLUGINHOST_VST3 || JUCE_PLUGINHOST_AU
-        juce::WeakReference<SynthGuiInterface> weakThis (this);
-        auto activePianoTree = synth_->getActivePianoValueTree();
-
-        juce::MessageManager::callAsync ([weakThis, activePianoTree]()
-        {
-            if (weakThis != nullptr)
-            {
-                DBG("SynthGuiInterface::SynthGuiInterface--juce::MessageManager::callAsync ");
-                weakThis->setActivePiano (activePianoTree);
-            }
-        });
-        #endif
+        // Binding the construction site to the active piano is handled by:
+        //   - SynthBase::valueTreeChildAdded (fires when the saved gallery's PIANO
+        //     children are copied into tree by loadFromValueTree, after the GUI exists),
+        //   - SynthBase::finishedSampleLoading (explicit setActivePiano on the GUI when
+        //     restore completes after the editor is already open),
+        //   - PluginEditor's ctor itself (explicit setActivePiano when the editor opens
+        //     AFTER restore has already completed, so neither of the above fires).
+        // A speculative callAsync here is unsafe: it captures the active piano *now*,
+        // which may still be the default empty "New Piano" if restore is in flight, then
+        // fires later (possibly after restore lands the saved gallery) and clobbers it.
     }
 }
 

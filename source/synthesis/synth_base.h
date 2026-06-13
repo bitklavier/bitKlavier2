@@ -88,6 +88,13 @@ public:
     void clearActiveFile() { active_file_ = juce::File(); }
     juce::File getActiveFile() { return active_file_; }
     bool isDirty() const { return is_dirty_.load(); }
+
+    // True only in the standalone app. user_prefs is a process-wide singleton
+    // (juce::SharedResourcePointer<UserPreferences>) persisted to disk, so plugin
+    // instances must not write to it — otherwise loading a gallery in Logic would
+    // dictate which gallery the standalone opens next, and recent-galleries entries
+    // from plugin sessions would pollute the standalone's menu. Overridden by SynthEditor.
+    virtual bool isStandaloneApp() const { return false; }
     void markClean() { is_dirty_.store(false); }
     juce::ValueTree &getValueTree();
     juce::UndoManager &getUndoManager();
@@ -224,6 +231,13 @@ public:
     void clearAllGuiListeners();
 
     bool samplesLoaded = false;
+
+    // True while loadFromFile is waiting on async sample loading to finish before
+    // it can apply pendingPresetTree. Use this to detect "a saved-state restore is
+    // in flight" from outside SynthBase (PluginProcessor, SynthGuiInterface,
+    // PluginEditor) so concurrent default-gallery loads can defer.
+    bool hasPendingPreset() const { return presetPending.load() && pendingPresetTree.isValid(); }
+    bool isSamplesLoading() const { return samplesLoading.load(); }
 
 protected:
     // Holds the parsed preset tree until samples finish loading
