@@ -90,10 +90,23 @@ void SampleLoadManager::handleAsyncUpdate() {
 
         if (progress->completedJobs == progress->totalJobs)
         {
-            DBG ("Soundset " + name + " finished loading.");
-            progress->currentProgress = 1.0f;
+            if (progress->hadFailure.load())
+            {
+                // The job(s) finished but reported a permanent failure
+                // (e.g. soundfont file missing or unparseable).
+                // Don't call markComplete() — we don't want target trees
+                // to bind to a half-loaded soundset key.
+                DBG ("Soundset " + name + " finished with errors; not writing soundset key.");
+                postSoundsetLoadAlert (juce::String (name),
+                                       SoundsetLoadStatus::BadFormat);
+            }
+            else
+            {
+                DBG ("Soundset " + name + " finished loading.");
+                progress->currentProgress = 1.0f;
 
-            progress->markComplete(); // Message thread safe
+                progress->markComplete(); // Message thread safe
+            }
 
             // erase returns the next iterator
             it = soundsetProgressMap.erase (it);
@@ -253,8 +266,89 @@ static bool isGalleryTree(const juce::ValueTree &vt)
     return vt.isValid() && vt.hasType(IDs::GALLERY); // change IDs::gallery if needed
 }
 
+SampleLoadManager::SoundsetLoadStatus
+SampleLoadManager::validateSoundset (const juce::String& soundsetName) const
+{
+    const bool isSoundFont = soundsetName.contains (".sf2") || soundsetName.contains (".sfz");
+
+    if (isSoundFont)
+    {
+        juce::File baseDir (
+            preferences->userPreferences->tree.getProperty ("default_soundfonts_path").toString());
+        juce::File f = baseDir.getChildFile (sfzBaseFromKey (soundsetName));
+
+        if (! f.existsAsFile())
+            return SoundsetLoadStatus::MissingSoundfont;
+
+        const juce::String ext = f.getFileExtension().toLowerCase();
+        if (ext != ".sf2" && ext != ".sfz")
+            return SoundsetLoadStatus::UnsupportedFormat;
+
+        return SoundsetLoadStatus::Ok;
+    }
+
+    juce::File baseDir (
+        preferences->userPreferences->tree.getProperty ("default_sample_path").toString());
+    juce::File directory = baseDir.getChildFile (soundsetName);
+
+    if (! directory.exists() || ! directory.isDirectory())
+        return SoundsetLoadStatus::MissingDir;
+
+    // At least one of the four bK subfolders must hold a .wav we could load.
+    // Subfolder names match bitklavier::utils::BKPianoSampleType_string.
+    for (auto* sub : { "main", "hammer", "resonance", "pedal" })
+    {
+        juce::File subdir = directory.getChildFile (sub);
+        if (subdir.isDirectory())
+        {
+            auto wavs = subdir.findChildFiles (juce::File::findFiles, false, "*.wav");
+            if (! wavs.isEmpty())
+                return SoundsetLoadStatus::Ok;
+        }
+    }
+
+    return SoundsetLoadStatus::EmptyDir;
+}
+
+void SampleLoadManager::postSoundsetLoadAlert (const juce::String& soundsetName,
+                                               SoundsetLoadStatus status) const
+{
+    juce::String msg;
+    switch (status)
+    {
+        case SoundsetLoadStatus::MissingDir:
+            msg = "The sound set folder \"" + soundsetName
+                + "\" could not be found.\n\nbitKlavier will continue without it.";
+            break;
+        case SoundsetLoadStatus::EmptyDir:
+            msg = "The sound set \"" + soundsetName
+                + "\" was found but contains no usable samples.\n\nbitKlavier will continue without it.";
+            break;
+        case SoundsetLoadStatus::MissingSoundfont:
+            msg = "The soundfont file \"" + soundsetName
+                + "\" could not be found.\n\nbitKlavier will continue without it.";
+            break;
+        case SoundsetLoadStatus::UnsupportedFormat:
+            msg = "The soundfont file \"" + soundsetName
+                + "\" is not a supported format.\n\nbitKlavier will continue without it.";
+            break;
+        case SoundsetLoadStatus::BadFormat:
+            msg = "The soundfont file \"" + soundsetName
+                + "\" could not be loaded — it may be corrupted or empty.\n\nbitKlavier will continue without it.";
+            break;
+        default:
+            return;
+    }
+
+    juce::AlertWindow::showMessageBoxAsync (
+        juce::MessageBoxIconType::WarningIcon,
+        "Sound set not loaded",
+        msg);
+}
+
 bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
-                                    const juce::ValueTree &targetTree)
+                                    const juce::ValueTree &targetTree,
+                                    bool reportErrorsHere)
 {
     DBG("At line " << __LINE__ << " in function " << __PRETTY_FUNCTION__);
 
@@ -283,6 +377,19 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
         if (vtToWrite.isValid())
             it->second->targetTrees.addIfNotAlreadyThere (vtToWrite);
         return true;
+    }
+
+    // Fail-fast validation. We do this BEFORE startSampleLoading() so the
+    // "Samples Loading..." overlay is never shown for a load that has no work
+    // to do — otherwise no SampleLoadJob is queued, no triggerAsyncUpdate
+    // ever fires, and the overlay hangs forever.
+    const SoundsetLoadStatus status = validateSoundset (soundsetName);
+    if (status != SoundsetLoadStatus::Ok)
+    {
+        DBG ("Soundset \"" + soundsetName + "\" failed validation; not queueing load");
+        if (reportErrorsHere)
+            postSoundsetLoadAlert (soundsetName, status);
+        return false;
     }
 
     // Build directory for this soundset
@@ -314,7 +421,6 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     if (vtToWrite.isValid())
         progressPtr->targetTrees.addIfNotAlreadyThere (vtToWrite); // store where to write soundset / completion callbacks
     progressPtr->load_manager = this;
-    parent->startSampleLoading();
 
     /*
      * handle soundfonts, otherwise move on to regular bK sample types
@@ -324,6 +430,7 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
         progressPtr->totalJobs++; // one job per sample type
         progressPtr->isSoundFont = true;
         progressPtr->soundset = new juce::ReferenceCountedArray<BKSynthesiserSound>();
+        parent->startSampleLoading();
         sampleLoader.addJob(new SampleLoadJob(directory,
 
                                               this, progressPtr,
@@ -333,17 +440,8 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     }
 
     /*
-     * not a soundfont, so loading regular bK sample type
+     * not a soundfont — load regular bK sample types
      */
-
-    ///todo: add warning popup and call to  notify the hideloadingsection
-    /// function so it never hangs
-    if (!directory.exists()) {
-        DBG("Soundset dir does not exist: " + directory.getFullPathName());
-        return false;
-    }
-    // (Optional debug listing)
-
     MyComparator sorter;
     auto allSamples = directory.findChildFiles(juce::File::findFiles, false, "*.wav");
     allSamples.sort(sorter);
@@ -356,6 +454,21 @@ bool SampleLoadManager::loadSamples(const juce::String &soundsetName,
     loadSamples_sub(bitklavier::utils::BKPianoHammer, soundsetName.toStdString());
     loadSamples_sub(bitklavier::utils::BKPianoReleaseResonance, soundsetName.toStdString());
     loadSamples_sub(bitklavier::utils::BKPianoPedal, soundsetName.toStdString());
+
+    // Defence-in-depth: if validation said Ok but every loadSamples_sub
+    // returned without adding a job (e.g. .wav files are not in the bK
+    // naming convention so they all got filtered out), don't show the
+    // overlay — there is nothing to wait for. Surface the failure.
+    if (progressPtr->totalJobs.load() == 0)
+    {
+        DBG ("Soundset \"" + soundsetName + "\" produced no SampleLoadJobs; treating as empty");
+        soundsetProgressMap.erase (soundsetName.toStdString());
+        if (reportErrorsHere)
+            postSoundsetLoadAlert (soundsetName, SoundsetLoadStatus::EmptyDir);
+        return false;
+    }
+
+    parent->startSampleLoading();
     return true;
 }
 
@@ -809,7 +922,20 @@ juce::ThreadPoolJob::JobStatus SampleLoadJob::runJob() {
      * beforehand
      */
 
+    // A soundfont job has no per-pitch reader vector — its only work is
+    // loadSoundFont(). If that returns false the file is gone or malformed;
+    // re-queueing would busy-loop the worker. Mark the failure on `progress`
+    // so handleAsyncUpdate() can alert the user, then exit cleanly.
+    const bool isSoundFontJob = sampleReaderVector.empty()
+                                && sfzFile.getFullPathName().isNotEmpty();
+
     if (!loadSamples()) {
+        if (isSoundFontJob)
+        {
+            if (progress)
+                progress->hadFailure.store (true);
+            return jobHasFinished;
+        }
         return jobNeedsRunningAgain;
     }
     return jobHasFinished;
@@ -1213,6 +1339,16 @@ bool SampleLoadJob::loadSoundFont(juce::File sfzFile) {
             " | key " + juce::String(region->lokey) + "-" + juce::String(region->hikey) +
             " | vel " + juce::String(region->lovel) + "-" + juce::String(region->hivel));
     }
+    // A successful parse with zero regions means the file was unreadable
+    // or empty — don't cache it, and surface the failure so the caller can
+    // alert the user instead of leaving a silent no-sound state.
+    if (sound->num_regions() == 0)
+    {
+        DBG ("loadSoundFont: " + sfzFile.getFileName()
+            + " produced no regions; treating as failed load");
+        return false;
+    }
+
     if (sound->num_subsounds() > 0 && preset.isEmpty()) {
         progress->presetName = sound->subsound_name(0);
         samplerLoader.sfzBanks[makeSFZKey(progress->soundsetName,progress->presetName) ] = std::move(sound);

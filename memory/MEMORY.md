@@ -93,6 +93,10 @@ See `memory/busreverb_save_bug.md`. Root cause: after `tree.copyPropertiesAndChi
 
 See `memory/clone_constructor_null_params.md`. The private no-arg clone constructors for `OpenGL_ClusterMinMaxSlider` and `OpenGL_HoldTimeMinMaxSlider` dereferenced `params` (always null on the clone path), crashing on indicator click. HoldTime also had a typo in its literal max (`12000.f` vs the real `120000.f`) that was masked on the regular path but tripped `setSkewFactorFromMidPoint` once the deref was removed. Pass the shared `*_rangeMin/Max` constants to the parent `BKRangeSlider` constructor, never literals.
 
+## Sample loading lifecycle and failure handling (fixed Jun 13 2026)
+
+See `memory/sample_load_lifecycle.md`. The "Samples Loading…" overlay is only dismissed via `~SampleLoadJob → triggerAsyncUpdate → handleAsyncUpdate → finishedSampleLoading` — so calling `startSampleLoading()` without queuing a job hangs forever. Pre-validate via `validateSoundset()` and only show the overlay after a job is queued. Also covers: `SampleLoadJob::runJob` two failure modes (soundfont = permanent → `jobHasFinished` + `progress->hadFailure`; pitch path = transient → `jobNeedsRunningAgain` via `continueValue`); soundfont silent-success-with-zero-regions edge; `loadSamples`'s `reportErrorsHere` flag for caller-aggregated alerts; `samplesLoaded` semantic (load was initiated, not finished); `BKPianoSampleType_string` subdir names are lowercase with leading slashes.
+
 ## Piano Switching Performance (ConstructionSite)
 
 Quick wins landed on branch `danwork8` (March 2026):
