@@ -49,6 +49,11 @@ struct SampleSetProgress
     std::atomic<int> totalJobs { 0 };
     std::atomic<int> completedJobs { 0 };
 
+    // Set by a SampleLoadJob when it gives up permanently (e.g. soundfont
+    // file missing, unsupported extension, parse produced zero regions).
+    // Read on the message thread in SampleLoadManager::handleAsyncUpdate.
+    std::atomic<bool> hadFailure { false };
+
     juce::Array<juce::ValueTree> targetTrees;       // trees to update when loading completes
     juce::String soundsetName;        // actual sample set name to set into the tree
     juce::String presetName;
@@ -134,7 +139,27 @@ public:
     bool isShuttingDown() const noexcept { return shuttingDown.load (std::memory_order_relaxed); }
     juce::CriticalSection& getSoundsetLock() { return soundsetLock; }
 
-    bool loadSamples (const juce::String& soundsetName, const juce::ValueTree& targetTreee = juce::ValueTree{});
+    // Reasons loadSamples may fail before queuing any work, plus the
+    // runtime failure path (BadFormat) raised by a SampleLoadJob.
+    enum class SoundsetLoadStatus
+    {
+        Ok,
+        MissingDir,         // sample folder does not exist
+        EmptyDir,           // folder exists but no usable .wav files in any subdir
+        MissingSoundfont,   // .sf2/.sfz file does not exist
+        UnsupportedFormat,  // soundfont with an extension we don't handle
+        BadFormat           // soundfont parsed but produced no usable regions
+    };
+
+    SoundsetLoadStatus validateSoundset (const juce::String& soundsetName) const;
+
+    // reportErrorsHere=true (the default) means loadSamples shows its own
+    // AlertWindow on validation failure. Callers that aggregate failures
+    // across multiple soundsets (e.g. gallery load) pass false and surface
+    // a single consolidated alert themselves.
+    bool loadSamples (const juce::String& soundsetName,
+                      const juce::ValueTree& targetTreee = juce::ValueTree{},
+                      bool reportErrorsHere = true);
     void loadSamples_sub (bitklavier::utils::BKPianoSampleType thisSampleType,std::string);
     juce::Array<juce::File> samplesByPitch (juce::String whichPitch, juce::Array<juce::File> inFiles);
     bool isSoundsetLoaded (const juce::String& baseName) const
@@ -212,6 +237,8 @@ public:
 
 private:
     SFZSound* findSFZSoundByName (const juce::String& sfzName) const;
+    void postSoundsetLoadAlert (const juce::String& soundsetName,
+                                SoundsetLoadStatus status) const;
     SynthBase* parent;
     std::promise<void> loadPromise;
     juce::ValueTree temp_prep_tree;

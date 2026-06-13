@@ -84,7 +84,11 @@ SynthGuiInterface::SynthGuiInterface (SynthBase* synth, bool use_gui) : synth_ (
     {
         SynthGuiData synth_data (synth_);
         gui_ = std::make_unique<FullInterface> (&synth_data, commandManager, this);
-        if (firstLoad) gui_->showLoadingSection();
+        // Only show the loading overlay if the launch load was actually
+        // queued. If Yamaha_Default was missing or unparseable, loadSamples
+        // returned false (and posted its own alert), so there is nothing
+        // to wait for — showing the overlay would hang the UI.
+        if (firstLoad && synth_->samplesLoaded) gui_->showLoadingSection();
         //else setActivePiano(synth_->getActivePianoValueTree());
         // for registering hotkeys etc.
         commandManager.registerAllCommandsForTarget(this);

@@ -802,18 +802,36 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     collectSoundsetRefsRecursive (parsed, soundsetRefs);
 
     bool needsAsyncLoads = false;
+    juce::StringArray failedSoundsets;
 
     // ---------- Queue sample loads ----------
+    // Pre-validation failures (missing folder / missing soundfont / empty
+    // sample tree) are collected here and surfaced as a SINGLE consolidated
+    // alert below — one OK click for the whole gallery, regardless of how
+    // many soundsets are missing. Per-load alerting is suppressed via the
+    // reportErrorsHere=false flag.
     if (sampleLoadManager != nullptr)
     {
         for (auto& ref : soundsetRefs)
         {
             if (! sampleLoadManager->isSoundsetLoaded (ref.name))
             {
-                needsAsyncLoads = true;
-                sampleLoadManager->loadSamples (ref.name, ref.target);
+                if (sampleLoadManager->loadSamples (ref.name, ref.target, /*reportErrorsHere=*/false))
+                    needsAsyncLoads = true;
+                else
+                    failedSoundsets.add (ref.name);
             }
         }
+    }
+
+    if (! failedSoundsets.isEmpty())
+    {
+        juce::AlertWindow::showMessageBoxAsync (
+            juce::MessageBoxIconType::WarningIcon,
+            "Sound sets not loaded",
+            "The following sound sets referenced by this gallery could not be loaded:\n\n"
+                + failedSoundsets.joinIntoString ("\n")
+                + "\n\nbitKlavier will continue without them. Preparations using these sound sets will be silent.");
     }
 
 
