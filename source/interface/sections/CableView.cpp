@@ -227,6 +227,24 @@ void CableView::endDraggingConnector (const juce::MouseEvent& e)
             return;
         }
 
+        // MIDITarget cannot connect to/from MIDIFilter, Modulation, Reset, or another MIDITarget
+        if (auto* srcComp = site.getComponentForPlugin(connection.source.nodeID))
+        {
+            if (auto* dstComp = site.getComponentForPlugin(connection.destination.nodeID))
+            {
+                const auto srcType = static_cast<int>(srcComp->state.getProperty(IDs::type));
+                const auto dstType = static_cast<int>(dstComp->state.getProperty(IDs::type));
+                auto isDisallowedPeer = [](int t) {
+                    return t == bitklavier::BKPreparationType::PreparationTypeMidiFilter
+                        || t == bitklavier::BKPreparationType::PreparationTypeMidiTarget
+                        || t == bitklavier::BKPreparationType::PreparationTypeModulation
+                        || t == bitklavier::BKPreparationType::PreparationTypeReset;
+                };
+                if ((srcType == bitklavier::BKPreparationType::PreparationTypeMidiTarget && isDisallowedPeer(dstType))
+                    || (dstType == bitklavier::BKPreparationType::PreparationTypeMidiTarget && isDisallowedPeer(srcType)))
+                    return;
+            }
+        }
 
         juce::ValueTree my_connection(IDs::CONNECTION);
         my_connection.setProperty(IDs::isMod, 0, nullptr);
