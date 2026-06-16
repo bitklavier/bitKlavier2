@@ -13,7 +13,7 @@
 
 static float holdTimeMinMax_rangeMin = 0.f;
 static float holdTimeMinMax_rangeMax = 120000.f;
-static float holdTimeMinMax_rangeMid = 60000.f;
+static float holdTimeMinMax_rangeMid = 12000.f;
 
 struct HoldTimeMinMaxParams : chowdsp::ParamHolder
 {

@@ -20,9 +20,9 @@ public:
         chowdsp::ParameterListeners &listeners) : OpenGlAutoImageComponent<BKRangeSlider>(
                                                       "Accepted Hold Time Range", // slider name
                                                       0.f, // min
-                                                      12000.f, // max
+                                                      holdTimeMinMax_rangeMax, // max
                                                       defmin = 0.f, // default min
-                                                      defmax = 12000.f, // default max
+                                                      defmax = holdTimeMinMax_rangeMax, // default max
                                                       1, //increment
                                                       _params->stateChanges.defaultState
                                                       ),
@@ -42,6 +42,9 @@ public:
 
         rangeSliderBorder.setText("Hold Time (ms)");
         invisibleSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
+        minSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
+        maxSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
+        displaySlider->setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
 
 
         /**
@@ -283,6 +286,7 @@ private :
         invisibleSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
         minSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
         maxSlider.setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
+        displaySlider->setSkewFactorFromMidPoint(holdTimeMinMax_rangeMid);
     }
 
     int defmin, defmax;
