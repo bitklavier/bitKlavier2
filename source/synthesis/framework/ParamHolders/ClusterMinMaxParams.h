@@ -34,7 +34,7 @@ struct ClusterMinMaxParams : chowdsp::ParamHolder
 {
     ClusterMinMaxParams() : chowdsp::ParamHolder("Cluster")
     {
-        add(clusterMinParam, clusterMaxParam, lastClusterParam);
+        add(clusterMinParam, clusterMaxParam);
     }
 
     chowdsp::FloatParameter::Ptr clusterMinParam {
@@ -55,24 +55,12 @@ struct ClusterMinMaxParams : chowdsp::ParamHolder
         &chowdsp::ParamUtils::stringToFloatVal
     };
 
-    // Last velocity param
     /**
-     * this will be updated in BKSynthesizer (via lastSynthState), and then can be accessed for display
-     * in the velocityMinMaxslider
-     *
-     * note that we need to add a callback in OpenGL_VelocityMinMaxSlider.h so that the slider is notified
-     * when this value changes. since we are using a legacy bK UI component for the velocityMinMax slider
-     * we need this callback, to trigger a redraw and so on, something we don't need to do with the
-     * newer OpenGL components we're using (like the levelMeter)
+     * Last measured cluster size, written from the audio thread by the owning processor
+     * and polled by the parameter view's Timer. Lock-free std::atomic; mirrors the
+     * VelocityMinMaxParams::lastVelocityParam pattern. Not part of the persisted state.
      */
-    chowdsp::FloatParameter::Ptr lastClusterParam {
-        juce::ParameterID { "LastCluster", 100 },
-        "LastCluster",
-        chowdsp::ParamUtils::createNormalisableRange (clusterMinMax_rangeMin, clusterMinMax_rangeMax, clusterMinMax_rangeMid),
-        1.0f,
-        &chowdsp::ParamUtils::floatValToString,
-        &chowdsp::ParamUtils::stringToFloatVal
-    };
+    std::atomic<float> lastClusterParam { 1.0f };
 
     /**
      * this is called every block, but doesn't do anything unless there is a "changeState"

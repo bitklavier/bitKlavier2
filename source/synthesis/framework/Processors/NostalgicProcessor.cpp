@@ -562,6 +562,12 @@ bool NostalgicProcessor::holdCheck(int noteNumber)
 {
     juce::uint64 hold = noteLengthTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
     // DBG(juce::String(hold));
+
+    // publish the measured hold time for the live display indicator on the Hold Time slider
+    // (polled by NostalgicParametersView's Timer); store regardless of in-range result so
+    // the user sees what was held when adjusting the range
+    state.params.holdTimeMinMaxParams.lastHoldTimeParam.store(static_cast<float>(hold), std::memory_order_relaxed);
+
     auto holdmin = state.params.holdTimeMinMaxParams.holdTimeMinParam->getCurrentValue();
     auto holdmax = state.params.holdTimeMinMaxParams.holdTimeMaxParam->getCurrentValue();
 

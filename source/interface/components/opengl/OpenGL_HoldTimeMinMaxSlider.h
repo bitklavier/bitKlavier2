@@ -102,22 +102,11 @@ public:
                         maxSlider.getValue());
                     redoImage();
                 }
-                ),
-            /**
-             * this callback is to notify this slider when the lastVelocityParam is changed.
-             * since we're using a legacy bK component for the velocityMinMax slider, we
-             * want this callback to trigger the value update and redoImage. We don't
-             * need that for the newer OpenGL UI elements, which will just update automatically
-             * when the param changes.
-             * also, since this is not a slider that the user touches, we don't need a SliderAttachment
-             */
-            listeners.addParameterListener(_params->lastHoldTimeParam,
-                chowdsp::ParameterListenerThread::MessageThread,
-                [this] {
-                    setDisplayValue(this->params->lastHoldTimeParam->getCurrentValue());
-                    redoImage();
-                }
                 )
+            // Display value is no longer driven by a parameter listener — the owning
+            // ParametersView's Timer polls HoldTimeMinMaxParams::lastHoldTimeParam (atomic)
+            // and calls setDisplayValue() directly. See VelocityMinMaxSlider / KeymapParameterView
+            // for the same pattern.
         };
     }
 

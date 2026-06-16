@@ -19,7 +19,7 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
 {
     HoldTimeMinMaxParams() : chowdsp::ParamHolder("HoldTime")
     {
-        add(holdTimeMinParam, holdTimeMaxParam, lastHoldTimeParam);
+        add(holdTimeMinParam, holdTimeMaxParam);
     }
 
     chowdsp::TimeMsParameter::Ptr holdTimeMinParam {
@@ -36,22 +36,12 @@ struct HoldTimeMinMaxParams : chowdsp::ParamHolder
         60000.0f
     };
 
-    // Last velocity param
     /**
-     * this will be updated in BKSynthesizer (via lastSynthState), and then can be accessed for display
-     * in the velocityMinMaxslider
-     *
-     * note that we need to add a callback in OpenGL_VelocityMinMaxSlider.h so that the slider is notified
-     * when this value changes. since we are using a legacy bK UI component for the velocityMinMax slider
-     * we need this callback, to trigger a redraw and so on, something we don't need to do with the
-     * newer OpenGL components we're using (like the levelMeter)
+     * Last measured hold time (ms), written from the audio thread by the owning processor
+     * and polled by the parameter view's Timer. Lock-free std::atomic; mirrors the
+     * VelocityMinMaxParams::lastVelocityParam pattern. Not part of the persisted state.
      */
-    chowdsp::TimeMsParameter::Ptr lastHoldTimeParam {
-        juce::ParameterID { "lastHoldTimeParam", 100 },
-        "lastHoldTimeParam",
-        chowdsp::ParamUtils::createNormalisableRange (holdTimeMinMax_rangeMin, holdTimeMinMax_rangeMax, holdTimeMinMax_rangeMid),
-        0.0f
-    };
+    std::atomic<float> lastHoldTimeParam { 0.0f };
 
     /**
      * this is called every block, but doesn't do anything unless there is a "changeState"

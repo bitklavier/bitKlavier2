@@ -45,6 +45,17 @@ void SynchronicParametersView::timerCallback()
     }
 
     envSequenceSection->setCurrentlyPlayingEnvelope(sparams_.envelopesCurrent.load());
+
+    // live display values on the two range sliders. The Hold Time slider is greyed/disabled
+    // when not in a NoteOff trigger mode — gate its update on isEnabled() so the display
+    // freezes while disabled (matches the visual dim).
+    if (holdTimeMinMaxSlider->isEnabled())
+    {
+        holdTimeMinMaxSlider->setDisplayValue(sparams_.holdTimeMinMaxParams.lastHoldTimeParam.load(std::memory_order_relaxed));
+        holdTimeMinMaxSlider->redoImage();
+    }
+    clusterMinMaxSlider->setDisplayValue(sparams_.clusterMinMaxParams.lastClusterParam.load(std::memory_order_relaxed));
+    clusterMinMaxSlider->redoImage();
 }
 
 void SynchronicParametersView::resized()

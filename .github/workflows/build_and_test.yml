@@ -204,13 +204,13 @@ jobs:
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
 
           if [ "${{ env.INCLUDE_RESOURCES }}" = "true" ]; then
-            # Additional Resources Component (Estimated at 1.1GB = 1153434 KB)
+            # Additional Resources Component (Estimated at 1.3GB = 1153434 KB)
             # We create an "empty" package that just runs the script
             mkdir -p packaging/empty_root
             # Use --install-location to a dummy path that won't be seen
             pkgbuild --identifier "${{ env.BUNDLE_ID }}.resources.pkg" --version $VERSION --root packaging/empty_root --scripts packaging/pkg_scripts/resources --install-location "/tmp/.bitKlavierResources" "packaging/${{ env.PRODUCT_NAME }}.resources.pkg"
             
-            # Force the installer to report 1.1GB for the resources package
+            # Force the installer to report 1.3GB for the resources package
             # We do this by expanding, patching PackageInfo, and flattening
             pkgutil --expand "packaging/${{ env.PRODUCT_NAME }}.resources.pkg" "packaging/resources_expanded"
             sed -i '' 's/installKBytes="0"/installKBytes="1153434"/' "packaging/resources_expanded/PackageInfo"
