@@ -29,6 +29,10 @@ void NostalgicParametersView::timerCallback()
         }
         waveSlider->updateSliderPositionsGL (positionsCopy);
     }
+
+    // live display value on the Hold Time range slider, polled from the audio-thread atomic
+    holdTimeMinMaxSlider->setDisplayValue(nparams_.holdTimeMinMaxParams.lastHoldTimeParam.load(std::memory_order_relaxed));
+    holdTimeMinMaxSlider->redoImage();
 }
 
 void NostalgicParametersView::resized()

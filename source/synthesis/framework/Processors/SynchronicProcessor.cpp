@@ -484,6 +484,12 @@ void SynchronicProcessor::ProcessMIDIBlock(juce::MidiBuffer& inMidiMessages, juc
                     slimCluster.addIfNotAlreadyThere(clusterNotes.getUnchecked(i));
                 }
 
+                // publish the measured cluster size for the live display indicator on the
+                // Cluster Min/Max slider (polled by SynchronicParametersView's Timer); store
+                // regardless of in-range result so the user can see actual counts when tuning
+                state.params.clusterMinMaxParams.lastClusterParam.store(
+                    static_cast<float>(clusterNotes.size()), std::memory_order_relaxed);
+
                 // check to see whether number of notes played is within cluster min/max
                 // if so, play it, if playNow is true (set just above)
                 if (playNow && checkClusterMinMax (clusterNotes.size()))
@@ -736,6 +742,11 @@ void SynchronicProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer
 bool SynchronicProcessor::holdCheck(int noteNumber)
 {
     juce::int64 hold = holdTimers.getUnchecked(noteNumber) * (1000.0 / getSampleRate());
+
+    // publish the measured hold time for the live display indicator on the Hold Time slider
+    // (polled by SynchronicParametersView's Timer); store regardless of in-range result so
+    // the user sees what was held when adjusting the range
+    state.params.holdTimeMinMaxParams.lastHoldTimeParam.store(static_cast<float>(hold), std::memory_order_relaxed);
 
     float holdmin = *state.params.holdTimeMinMaxParams.holdTimeMinParam;
     float holdmax = *state.params.holdTimeMinMaxParams.holdTimeMaxParam;
