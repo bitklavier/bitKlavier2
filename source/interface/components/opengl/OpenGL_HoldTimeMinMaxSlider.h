@@ -114,6 +114,7 @@ public:
             listeners.addParameterListener(_params->lastHoldTimeParam,
                 chowdsp::ParameterListenerThread::MessageThread,
                 [this] {
+                    if (!isEnabled()) return; // freeze display when slider is disabled (e.g. NoteOn trigger modes)
                     setDisplayValue(this->params->lastHoldTimeParam->getCurrentValue());
                     redoImage();
                 }

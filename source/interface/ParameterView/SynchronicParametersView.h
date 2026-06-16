@@ -175,6 +175,26 @@ public:
         holdTimeMinMaxSlider->setComponentID ("holdtime_min_max");
         addStateModulatedComponent (holdTimeMinMaxSlider.get());
 
+        // grey out / disable the Hold Time range slider when not in a NoteOff trigger mode
+        // (holdTimeMinMaxParams only affects pulse triggering on First/Any/Last NoteOff)
+        auto updateHoldTimeEnabled = [this]() {
+            auto mode = sparams_.pulseTriggeredBy->get();
+            bool relevant = (mode == SynchronicPulseTriggerType::First_NoteOff
+                          || mode == SynchronicPulseTriggerType::Any_NoteOff
+                          || mode == SynchronicPulseTriggerType::Last_NoteOff);
+            holdTimeMinMaxSlider->setEnabled(relevant);
+            if (relevant) holdTimeMinMaxSlider->setBright();
+            else          holdTimeMinMaxSlider->setDim(0.4f);
+            holdTimeMinMaxSlider->redoImage();
+        };
+        sliderChangedCallback += {
+            listeners.addParameterListener(
+                params.pulseTriggeredBy,
+                chowdsp::ParameterListenerThread::MessageThread,
+                updateHoldTimeEnabled)
+        };
+        updateHoldTimeEnabled();
+
         // envelope/ADSR controller UI
         envSection = std::make_unique<EnvelopeSection>(params.env, listeners, *this, pluginState.undoManager);
         addSubSection (envSection.get());

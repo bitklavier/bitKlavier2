@@ -2356,6 +2356,8 @@ void BKRangeSlider::setDim(float alphaVal)
     showName.setAlpha(alphaVal);
     minValueTF.setAlpha(alphaVal);
     maxValueTF.setAlpha(alphaVal);
+    rangeSliderBorder.setAlpha(alphaVal);
+    if (displaySlider) displaySlider->setAlpha(alphaVal);
 }
 
 void BKRangeSlider::setBright()
@@ -2365,6 +2367,8 @@ void BKRangeSlider::setBright()
     showName.setAlpha(1.);
     minValueTF.setAlpha(1.);
     maxValueTF.setAlpha(1.);
+    rangeSliderBorder.setAlpha(1.);
+    if (displaySlider) displaySlider->setAlpha(1.);
 }
 
 
