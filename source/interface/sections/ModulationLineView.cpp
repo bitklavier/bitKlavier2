@@ -146,11 +146,22 @@ void ModulationLineView::resetDropped (const juce::ValueTree& source, const juce
     //protects against short/accidental drag drops
     if (sourceId == destId)
         return;
-    //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
 
-    //right now is does make a connection on the backend but i think this should probably change once all this is fully implemented
-    //actual connections should be children of modconnection vtrees
-    //does this add a connection to the backend audio proceessor graph or just the value tree - davis -- 4/25/25
+    // only allow Reset → Modulation connections
+    if (static_cast<int>(destination.getProperty(IDs::type)) != bitklavier::PreparationTypeModulation)
+        return;
+
+    for (auto* existing : connection_list->objects)
+    {
+        if (existing->state.hasType (IDs::RESETCONNECTION)
+            && existing->src_id == sourceId
+            && existing->dest_id == destId)
+        {
+            connection_list->removeChild (existing->state, &undoManager);
+            return;
+        }
+    }
+
     juce::ValueTree _connection (IDs::RESETCONNECTION);
     _connection.setProperty (IDs::isMod, 1, nullptr);
     _connection.setProperty (IDs::src, juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::toVar (sourceId), nullptr);
