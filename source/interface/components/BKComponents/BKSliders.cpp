@@ -839,6 +839,21 @@ void BKMultiSlider::mouseMove(const juce::MouseEvent& e)
 // mouseDoubleClick: opens text window for editing slider values directly
 void BKMultiSlider::mouseDoubleClick (const juce::MouseEvent &e)
 {
+    // Undo the value change from the preceding mouseDown so the text editor shows the original value
+    if (preDoubleClickWhich_ >= 0)
+    {
+        updateSliderVal(preDoubleClickWhich_, preDoubleClickSub_, preDoubleClickValue_);
+        BKSubSlider* s = sliders[preDoubleClickWhich_]->operator[](preDoubleClickSub_);
+        if (s != nullptr)
+        {
+            s->setValue(preDoubleClickValue_);
+            displaySlider->setValue(preDoubleClickValue_);
+            listeners.call(&BKMultiSlider::Listener::multiSliderAllValuesChanged,
+                getName(), getAllActiveValues(), whichSlidersActive);
+        }
+        preDoubleClickWhich_ = -1;
+    }
+
     int which = whichSlider(e);
     int whichSave = which;
 
@@ -899,6 +914,10 @@ void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
             return;
         }
 
+        // Second click of a double-click — skip value change; mouseDoubleClick fires next
+        if (event.getNumberOfClicks() >= 2)
+            return;
+
         int which = whichSlider(event);
         if (which >= 0 && getHeight() > 0)
         {
@@ -906,6 +925,18 @@ void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
             float clickValue = bigInvisibleSlider->proportionOfLengthToValue(1.f - (float(event.y) / float(getHeight())));
             currentInvisibleSliderValue = clickValue;
             currentSubSlider = whichSubSlider(which);
+
+            // Save pre-click value so mouseDoubleClick can restore it if needed
+            if (which < allSliderVals.size() && currentSubSlider < allSliderVals[which].size())
+            {
+                preDoubleClickWhich_ = which;
+                preDoubleClickSub_   = currentSubSlider;
+                preDoubleClickValue_ = allSliderVals[which][currentSubSlider];
+            }
+            else
+            {
+                preDoubleClickWhich_ = -1;
+            }
 
             float val = event.mods.isShiftDown() ? round(clickValue) : clickValue;
             updateSliderVal(which, currentSubSlider, val);
@@ -925,6 +956,7 @@ void BKMultiSlider::mouseDown (const juce::MouseEvent &event)
         else
         {
             currentSubSlider = 0;
+            preDoubleClickWhich_ = -1;
         }
     }
 }

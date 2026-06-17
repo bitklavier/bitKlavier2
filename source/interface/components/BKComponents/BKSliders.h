@@ -268,6 +268,11 @@ public:
     bool skewFromMidpoint;
     float clickedHeight;
 
+    // saved state for double-click: undo the mouseDown value change before opening text editor
+    float preDoubleClickValue_ = 0.f;
+    int   preDoubleClickWhich_ = -1;
+    int   preDoubleClickSub_   = -1;
+
     // default values
     double sliderMin, sliderMax, sliderMinDefault, sliderMaxDefault;
     double sliderDefault;
