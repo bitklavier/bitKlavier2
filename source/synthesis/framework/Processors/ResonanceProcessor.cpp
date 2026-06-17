@@ -1017,6 +1017,9 @@ void ResonanceProcessor::handleMidiTargetMessages(int noteNumber, int velocity, 
             // add or subtract this particular sympathetic string
             toggleSympString(noteNumber, outMidiMessages);
             break;
+        case ResonanceTargetModReset:
+            resetContinuousModulations();
+            break;
     }
 }
 

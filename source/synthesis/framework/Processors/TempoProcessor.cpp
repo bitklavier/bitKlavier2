@@ -158,10 +158,7 @@ void TempoProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
         }
     }
 
-    if (state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Sustain_Time || state.params.tempoModeOptions->get() == TempoModeType::Adaptive2Time_Between_Notes)
-    {
-        ProcessMIDIBlock(midiMessages, buffer.getNumSamples());
-    }
+    ProcessMIDIBlock(midiMessages, buffer.getNumSamples());
 
     // since this is an instrument source; doesn't take audio in, other than mods handled above
     buffer.clear();
