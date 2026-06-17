@@ -18,7 +18,8 @@ juce::String BKfloatArrayToString(juce::Array<float> arr)
     juce::String s = "";
     for (auto key : arr)
     {
-        s.append(juce::String(key), 6);
+        float k = (std::abs(key) < 1e-6f) ? 0.0f : key;
+        s.append(juce::String(k), 6);
         s.append(" ", 1);
     }
     return s;
