@@ -131,13 +131,6 @@ public:
         mouseInteraction = false;
     }
 
-    void mouseDoubleClick(const juce::MouseEvent &e) override {
-        mouseInteraction = true;
-        OpenGlAutoImageComponent<BKMultiSlider>::mouseDoubleClick(e);
-        redoImage();
-        mouseInteraction = false;
-    }
-
     void menuInteractionWillChange() override { mouseInteraction = true; }
     void menuInteractionDidChange() override { redoImage(); mouseInteraction = false; }
 
