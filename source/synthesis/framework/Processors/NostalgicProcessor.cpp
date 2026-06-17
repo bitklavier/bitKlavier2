@@ -152,6 +152,9 @@ void NostalgicProcessor::handleMidiTargetMessages(int channel)
         case NostalgicTargetClear:
             doClear = true;
             break;
+        case NostalgicTargetModReset:
+            resetContinuousModulations();
+            break;
     }
 }
 /*
