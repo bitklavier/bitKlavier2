@@ -298,6 +298,8 @@ void FullInterface::resized()
 
 void FullInterface::showAboutSection()
 {
+    prep_popup->reset();
+    mod_popup->reset();
     juce::ScopedLock lock (open_gl_critical_section_);
     about_section_->setVisible (true);
 }
