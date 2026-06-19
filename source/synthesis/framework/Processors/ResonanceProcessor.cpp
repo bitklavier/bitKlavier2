@@ -523,6 +523,11 @@ ResonanceProcessor::ResonanceProcessor(SynthBase& parent, const juce::ValueTree&
         state.params.spectrum->setParameterValue (SpectralType::PianoLow);
         state.params.setSpectrumFromMenu (0);
     }
+
+    // Set Resonance-specific default release (2500ms) for freshly-created preparations.
+    // Saved preparations already have "release" serialized in the VT; skip for those.
+    if (! v.hasProperty ("release"))
+        state.params.env.releaseParam->setParameterValue (2500.f);
 }
 
 void ResonanceProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

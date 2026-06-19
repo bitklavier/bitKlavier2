@@ -35,3 +35,6 @@ codesign
 html
 
 .cache/
+
+# Claude Code worktrees (linked working trees, not submodules)
+.claude/worktrees/
