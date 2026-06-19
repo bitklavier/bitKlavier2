@@ -112,3 +112,6 @@ See `memory/piano_cache.md` for full design and trade-offs. Key risks that need 
 - Cache invalidation: `prep_list->removeListener(this)` is called when a piano is hidden, so ValueTree changes (add/delete prep, undo) while it's cached won't update the cache → stale restore
 - `all_sliders_` map accumulation: `removeSubSection` doesn't clean those maps, so cached pianos leave stale entries that could affect modulation display
 - Memory: all pianos' GL textures and component trees stay alive simultaneously
+
+## No git worktrees for this project
+- [No worktrees](feedback_no_worktrees.md) — don't use EnterWorktree; .claude/worktrees/ clutters CLion file search
